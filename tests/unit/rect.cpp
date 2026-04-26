@@ -32,8 +32,8 @@ TEST_CASE("Rect: construction with values") {
 
 TEST_CASE("Rect: construction from Point and Size") {
         Point2Di32 pos(5, 10);
-        Size2Di32 size(30, 40);
-        Rect2Di32 r(pos, size);
+        Size2Di32  size(30, 40);
+        Rect2Di32  r(pos, size);
         CHECK(r.x() == 5);
         CHECK(r.y() == 10);
         CHECK(r.width() == 30);

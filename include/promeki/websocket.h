@@ -78,32 +78,32 @@ class HttpResponse;
  * echoed verbatim by the server route helper.
  */
 class WebSocket : public ObjectBase {
-        PROMEKI_OBJECT(WebSocket, ObjectBase)
+                PROMEKI_OBJECT(WebSocket, ObjectBase)
         public:
                 /** @brief Convenience list type. */
                 using List = promeki::List<WebSocket *>;
 
                 /** @brief High-level connection state. */
                 enum State {
-                        Disconnected,           ///< No socket is attached.
-                        Connecting,             ///< TCP / TLS / HTTP upgrade in flight (client side).
-                        Connected,              ///< Frames may flow in either direction.
-                        Closing                 ///< Local or remote close in progress.
+                        Disconnected, ///< No socket is attached.
+                        Connecting,   ///< TCP / TLS / HTTP upgrade in flight (client side).
+                        Connected,    ///< Frames may flow in either direction.
+                        Closing       ///< Local or remote close in progress.
                 };
 
                 /** @brief Standard close codes (RFC 6455 §7.4). */
                 enum CloseCode : uint16_t {
-                        CloseNormal             = 1000,
-                        CloseGoingAway          = 1001,
-                        CloseProtocolError      = 1002,
-                        CloseUnsupportedData    = 1003,
-                        CloseNoStatus           = 1005,  ///< Reserved; never sent
-                        CloseAbnormal           = 1006,  ///< Reserved; never sent
-                        CloseInvalidPayload     = 1007,
-                        ClosePolicyViolation    = 1008,
-                        CloseMessageTooBig      = 1009,
-                        CloseMissingExtension   = 1010,
-                        CloseInternalError      = 1011
+                        CloseNormal = 1000,
+                        CloseGoingAway = 1001,
+                        CloseProtocolError = 1002,
+                        CloseUnsupportedData = 1003,
+                        CloseNoStatus = 1005, ///< Reserved; never sent
+                        CloseAbnormal = 1006, ///< Reserved; never sent
+                        CloseInvalidPayload = 1007,
+                        ClosePolicyViolation = 1008,
+                        CloseMessageTooBig = 1009,
+                        CloseMissingExtension = 1010,
+                        CloseInternalError = 1011
                 };
 
                 /** @brief Default upper bound on a single message in bytes. */
@@ -212,8 +212,7 @@ class WebSocket : public ObjectBase {
                  * tearing the socket down.  No-op if the socket is
                  * already in @ref Closing or @ref Disconnected.
                  */
-                void disconnect(uint16_t code = CloseNormal,
-                                const String &reason = String());
+                void disconnect(uint16_t code = CloseNormal, const String &reason = String());
 
                 /**
                  * @brief Force-closes the socket without a close handshake.
@@ -261,24 +260,24 @@ class WebSocket : public ObjectBase {
 
         private:
                 struct Impl;
-                UniquePtr<Impl>         _impl;
+                UniquePtr<Impl> _impl;
 
-                EventLoop               *_loop = nullptr;
-                TcpSocket               *_socket = nullptr;     ///< Owned, parented onto this.
-                int                     _ioHandle = -1;
-                State                   _state = Disconnected;
-                bool                    _isClient = false;      ///< True when we sent the upgrade
+                EventLoop *_loop = nullptr;
+                TcpSocket *_socket = nullptr; ///< Owned, parented onto this.
+                int        _ioHandle = -1;
+                State      _state = Disconnected;
+                bool       _isClient = false; ///< True when we sent the upgrade
 
-                Url                     _url;
-                String                  _requestedSubprotocols;
-                String                  _negotiatedSubprotocol;
-                String                  _expectedAccept;        ///< Sec-WebSocket-Accept we expect from server
-                int64_t                 _maxMessageBytes = DefaultMaxMessageBytes;
-                bool                    _useTls = false;
-                bool                    _handshakeDone = false; ///< TLS handshake done (wss://)
+                Url     _url;
+                String  _requestedSubprotocols;
+                String  _negotiatedSubprotocol;
+                String  _expectedAccept; ///< Sec-WebSocket-Accept we expect from server
+                int64_t _maxMessageBytes = DefaultMaxMessageBytes;
+                bool    _useTls = false;
+                bool    _handshakeDone = false; ///< TLS handshake done (wss://)
 
 #if PROMEKI_ENABLE_TLS
-                SslContext::Ptr         _sslContext;
+                SslContext::Ptr _sslContext;
 #endif
 
                 void onIoReady(int fd, uint32_t events);

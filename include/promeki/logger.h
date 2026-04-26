@@ -28,8 +28,8 @@ PROMEKI_NAMESPACE_BEGIN
 /** @brief Extracts the file name from a full path at compile time. */
 static consteval const char *sourceFileName(const char *path) {
         const char *ret = path;
-        for(const char *p = path; *p; ++p) {
-                if(*p == '/' || *p == '\\') ret = p + 1;
+        for (const char *p = path; *p; ++p) {
+                if (*p == '/' || *p == '\\') ret = p + 1;
         }
         return ret;
 }
@@ -42,46 +42,55 @@ static consteval const char *sourceFileName(const char *path) {
 
 // Variadic macros for logging at various levels
 
-#define PROMEKI_DEBUG(name) \
-        namespace { \
-                [[maybe_unused]] static const char *_promeki_debug_name = PROMEKI_STRINGIFY(name); \
-                [[maybe_unused]] static bool _promeki_debug_enabled = \
-                promekiRegisterDebug(&_promeki_debug_enabled, PROMEKI_STRINGIFY(name), PROMEKI_SOURCE_FILE, __LINE__); \
+#define PROMEKI_DEBUG(name)                                                                                            \
+        namespace {                                                                                                    \
+                [[maybe_unused]] static const char *_promeki_debug_name = PROMEKI_STRINGIFY(name);                     \
+                [[maybe_unused]] static bool        _promeki_debug_enabled = promekiRegisterDebug(                     \
+                        &_promeki_debug_enabled, PROMEKI_STRINGIFY(name), PROMEKI_SOURCE_FILE, __LINE__);       \
         }
 
-#define promekiLogImpl(_plevel, format, ...) \
-        do { if(!(_plevel) || (_plevel) >= Logger::defaultLogger().level()) \
-                Logger::defaultLogger().log(_plevel, PROMEKI_SOURCE_FILE, __LINE__, String::sprintf(format, ##__VA_ARGS__)); \
-        } while(0)
+#define promekiLogImpl(_plevel, format, ...)                                                                           \
+        do {                                                                                                           \
+                if (!(_plevel) || (_plevel) >= Logger::defaultLogger().level())                                        \
+                        Logger::defaultLogger().log(_plevel, PROMEKI_SOURCE_FILE, __LINE__,                            \
+                                                    String::sprintf(format, ##__VA_ARGS__));                           \
+        } while (0)
 #define promekiLog(level, format, ...) promekiLogImpl(level, format, ##__VA_ARGS__)
 #define promekiLogSync() Logger::defaultLogger().sync()
-#define promekiLogStackTrace(_plevel) \
-        do { if(!(_plevel) || (_plevel) >= Logger::defaultLogger().level()) \
-                Logger::defaultLogger().log(_plevel, PROMEKI_SOURCE_FILE, __LINE__, promekiStackTrace()); \
-        } while(0)
+#define promekiLogStackTrace(_plevel)                                                                                  \
+        do {                                                                                                           \
+                if (!(_plevel) || (_plevel) >= Logger::defaultLogger().level())                                        \
+                        Logger::defaultLogger().log(_plevel, PROMEKI_SOURCE_FILE, __LINE__, promekiStackTrace());      \
+        } while (0)
 
 #ifdef PROMEKI_DEBUG_ENABLE
-#define promekiDebug(format, ...) if(_promeki_debug_enabled) { \
-        Logger::defaultLogger().log(Logger::LogLevel::Debug, PROMEKI_SOURCE_FILE, __LINE__, \
-                String::sprintf(format, ##__VA_ARGS__)); }
+#define promekiDebug(format, ...)                                                                                      \
+        if (_promeki_debug_enabled) {                                                                                  \
+                Logger::defaultLogger().log(Logger::LogLevel::Debug, PROMEKI_SOURCE_FILE, __LINE__,                    \
+                                            String::sprintf(format, ##__VA_ARGS__));                                   \
+        }
 #else
 #define promekiDebug(format, ...)
 #endif
 
-#define promekiInfo(format, ...)  promekiLog(Logger::LogLevel::Info,  format, ##__VA_ARGS__)
-#define promekiWarn(format, ...)  promekiLog(Logger::LogLevel::Warn,  format, ##__VA_ARGS__)
-#define promekiErr(format, ...)   promekiLog(Logger::LogLevel::Err,   format, ##__VA_ARGS__)
+#define promekiInfo(format, ...) promekiLog(Logger::LogLevel::Info, format, ##__VA_ARGS__)
+#define promekiWarn(format, ...) promekiLog(Logger::LogLevel::Warn, format, ##__VA_ARGS__)
+#define promekiErr(format, ...) promekiLog(Logger::LogLevel::Err, format, ##__VA_ARGS__)
 
 bool promekiRegisterDebug(bool *enabler, const char *name, const char *file, int line);
 
-#define PROMEKI_BENCHMARK_BEGIN(name) \
-        TimeStamp _promeki_debug_timestamp_##name; \
-        if(_promeki_debug_enabled) { _promeki_debug_timestamp_##name = TimeStamp::now(); }
+#define PROMEKI_BENCHMARK_BEGIN(name)                                                                                  \
+        TimeStamp _promeki_debug_timestamp_##name;                                                                     \
+        if (_promeki_debug_enabled) {                                                                                  \
+                _promeki_debug_timestamp_##name = TimeStamp::now();                                                    \
+        }
 
-#define PROMEKI_BENCHMARK_END(name) \
-        if(_promeki_debug_enabled) { \
-                Logger::defaultLogger().log(Logger::LogLevel::Debug, __FILE__, __LINE__, String::sprintf("[%s] %s took %.9lf sec", \
-                        _promeki_debug_name, PROMEKI_STRINGIFY(name), _promeki_debug_timestamp_##name.elapsedSeconds())); \
+#define PROMEKI_BENCHMARK_END(name)                                                                                    \
+        if (_promeki_debug_enabled) {                                                                                  \
+                Logger::defaultLogger().log(Logger::LogLevel::Debug, __FILE__, __LINE__,                               \
+                                            String::sprintf("[%s] %s took %.9lf sec", _promeki_debug_name,             \
+                                                            PROMEKI_STRINGIFY(name),                                   \
+                                                            _promeki_debug_timestamp_##name.elapsedSeconds()));        \
         }
 
 /**
@@ -114,27 +123,27 @@ class Logger {
         public:
                 /** @brief Severity levels for log messages. */
                 enum LogLevel {
-                        Force   = 0,      ///< @brief Forced messages are always logged.
-                        Debug   = 1,      ///< @brief Debug-level messages.
-                        Info    = 2,      ///< @brief Informational messages.
-                        Warn    = 3,      ///< @brief Warning messages.
-                        Err     = 4       ///< @brief Error messages.
+                        Force = 0, ///< @brief Forced messages are always logged.
+                        Debug = 1, ///< @brief Debug-level messages.
+                        Info = 2,  ///< @brief Informational messages.
+                        Warn = 3,  ///< @brief Warning messages.
+                        Err = 4    ///< @brief Error messages.
                 };
 
                 /** @brief A single log entry. */
                 struct LogEntry {
-                        DateTime        ts;
-                        LogLevel        level;
-                        const char *    file;
-                        int             line;
-                        uint64_t        threadId;
-                        String          msg;
+                                DateTime    ts;
+                                LogLevel    level;
+                                const char *file;
+                                int         line;
+                                uint64_t    threadId;
+                                String      msg;
                 };
 
                 /** @brief Context passed to formatters, combining entry data with resolved thread name. */
                 struct LogFormat {
-                        const LogEntry  *entry;
-                        const String    *threadName;
+                                const LogEntry *entry;
+                                const String   *threadName;
                 };
 
                 /**
@@ -169,8 +178,7 @@ class Logger {
                  * @ref EventLoop, marshal the entry across via
                  * @ref EventLoop::postCallable rather than blocking.
                  */
-                using LogListener = std::function<void(const LogEntry &entry,
-                                                       const String &threadName)>;
+                using LogListener = std::function<void(const LogEntry &entry, const String &threadName)>;
 
                 /** @brief Default size of the in-memory history ring used for replay. */
                 static constexpr size_t DefaultHistorySize = 1024;
@@ -202,12 +210,12 @@ class Logger {
 
                 /** @brief Plain-value description of a registered debug channel. */
                 struct DebugChannel {
-                        String  name;           ///< Channel name as passed to PROMEKI_DEBUG.
-                        String  file;           ///< Source file containing the registration.
-                        int     line = 0;       ///< Line number of the registration.
-                        bool    enabled = false;///< Current enabled state.
+                                String name;            ///< Channel name as passed to PROMEKI_DEBUG.
+                                String file;            ///< Source file containing the registration.
+                                int    line = 0;        ///< Line number of the registration.
+                                bool   enabled = false; ///< Current enabled state.
 
-                        using List = promeki::List<DebugChannel>;
+                                using List = promeki::List<DebugChannel>;
                 };
 
                 /**
@@ -270,9 +278,7 @@ class Logger {
                  * @brief Returns the current minimum log level.
                  * @return The log level as an integer.
                  */
-                int level() const {
-                        return _level.value();
-                }
+                int level() const { return _level.value(); }
 
                 /**
                  * @brief Enqueues a single log message.
@@ -305,7 +311,7 @@ class Logger {
                  * @param filename Path to the log file. The file is opened by the worker thread.
                  */
                 void setLogFile(const String &filename) {
-                        if(_terminating.value()) return;
+                        if (_terminating.value()) return;
                         _queue.emplace(CmdSetFile{filename});
                 }
 
@@ -323,9 +329,7 @@ class Logger {
                  * @brief Returns whether console logging is enabled.
                  * @return true if console output is active.
                  */
-                bool consoleLoggingEnabled() const {
-                        return _consoleLogging.value();
-                }
+                bool consoleLoggingEnabled() const { return _consoleLogging.value(); }
 
                 /**
                  * @brief Enables or disables console (stderr) log output.
@@ -362,7 +366,7 @@ class Logger {
                                 Mutex::Locker lock(_formatterMutex);
                                 _fileFormatter = formatter ? formatter : defaultFileFormatter();
                         }
-                        if(_terminating.value()) return;
+                        if (_terminating.value()) return;
                         _queue.emplace(CmdSetFormatter{std::move(formatter), false});
                 }
 
@@ -376,7 +380,7 @@ class Logger {
                                 Mutex::Locker lock(_formatterMutex);
                                 _consoleFormatter = formatter ? formatter : defaultConsoleFormatter();
                         }
-                        if(_terminating.value()) return;
+                        if (_terminating.value()) return;
                         _queue.emplace(CmdSetFormatter{std::move(formatter), true});
                 }
 
@@ -441,11 +445,11 @@ class Logger {
                  *         timeout elapsed first.
                  */
                 Error sync(unsigned int timeoutMs = 0) {
-                        if(_terminating.value()) return Error::Ok;
-                        auto p = std::make_shared<Promise<void>>();
+                        if (_terminating.value()) return Error::Ok;
+                        auto         p = std::make_shared<Promise<void>>();
                         Future<void> f = p->future();
                         _queue.emplace(CmdSync{std::move(p)});
-                        if(timeoutMs == 0) {
+                        if (timeoutMs == 0) {
                                 f.waitForFinished();
                                 return Error::Ok;
                         }
@@ -453,71 +457,67 @@ class Logger {
                 }
 
         private:
-
                 struct CmdSetThreadName {
-                        uint64_t        threadId;
-                        String          name;
+                                uint64_t threadId;
+                                String   name;
                 };
 
                 struct CmdSetFile {
-                        String          filename;
+                                String filename;
                 };
 
                 struct CmdSetFormatter {
-                        LogFormatter    formatter;
-                        bool            console;
+                                LogFormatter formatter;
+                                bool         console;
                 };
 
                 struct CmdSync {
-                        std::shared_ptr<Promise<void>> promise;
+                                std::shared_ptr<Promise<void>> promise;
                 };
 
                 struct CmdInstallListener {
-                        LogListener     listener;
-                        size_t          replayCount;
-                        std::shared_ptr<Promise<ListenerHandle>> promise;
+                                LogListener                              listener;
+                                size_t                                   replayCount;
+                                std::shared_ptr<Promise<ListenerHandle>> promise;
                 };
 
                 struct CmdRemoveListener {
-                        ListenerHandle  handle;
-                        std::shared_ptr<Promise<void>> promise;
+                                ListenerHandle                 handle;
+                                std::shared_ptr<Promise<void>> promise;
                 };
 
                 struct CmdTerminate {};
 
-                using Command = std::variant<LogEntry, CmdSetThreadName, CmdSetFile,
-                        CmdSetFormatter, CmdSync, CmdInstallListener,
-                        CmdRemoveListener, CmdTerminate>;
+                using Command = std::variant<LogEntry, CmdSetThreadName, CmdSetFile, CmdSetFormatter, CmdSync,
+                                             CmdInstallListener, CmdRemoveListener, CmdTerminate>;
 
                 struct ListenerEntry {
-                        ListenerHandle  handle;
-                        LogListener     fn;
+                                ListenerHandle handle;
+                                LogListener    fn;
                 };
 
                 struct HistoryEntry {
-                        LogEntry        entry;
-                        String          threadName;
+                                LogEntry entry;
+                                String   threadName;
                 };
 
-                std::thread             _thread;
-                Atomic<int>             _level;
-                Atomic<bool>            _consoleLogging;
-                Atomic<bool>            _terminating{false};
-                Atomic<size_t>          _historySize{DefaultHistorySize};
-                Atomic<uint64_t>        _nextListenerHandle{0};
-                Queue<Command>          _queue;
-                mutable Mutex           _formatterMutex;
-                LogFormatter            _fileFormatter;
-                LogFormatter            _consoleFormatter;
-                Map<uint64_t, String>   _threadNames;
-                List<ListenerEntry>     _listeners;     ///< Worker-thread only.
-                Deque<HistoryEntry>     _history;       ///< Worker-thread only.
+                std::thread           _thread;
+                Atomic<int>           _level;
+                Atomic<bool>          _consoleLogging;
+                Atomic<bool>          _terminating{false};
+                Atomic<size_t>        _historySize{DefaultHistorySize};
+                Atomic<uint64_t>      _nextListenerHandle{0};
+                Queue<Command>        _queue;
+                mutable Mutex         _formatterMutex;
+                LogFormatter          _fileFormatter;
+                LogFormatter          _consoleFormatter;
+                Map<uint64_t, String> _threadNames;
+                List<ListenerEntry>   _listeners; ///< Worker-thread only.
+                Deque<HistoryEntry>   _history;   ///< Worker-thread only.
 
-                void worker();
-                void writeLog(const LogEntry &cmd, class FileIODevice *logFile);
+                void                worker();
+                void                writeLog(const LogEntry &cmd, class FileIODevice *logFile);
                 class FileIODevice *openLogFile(const String &filename, class FileIODevice *existing);
-
 };
 
 PROMEKI_NAMESPACE_END
-

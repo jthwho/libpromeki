@@ -46,8 +46,7 @@ class ResizeEvent : public Event {
                  * @brief Constructs a ResizeEvent.
                  * @param size The new widget size.
                  */
-                ResizeEvent(const Size2Di32 &size)
-                        : Event(Resize), _size(size) {}
+                ResizeEvent(const Size2Di32 &size) : Event(Resize), _size(size) {}
 
                 /** @brief Returns the new size. */
                 const Size2Di32 &size() const { return _size; }
@@ -61,10 +60,10 @@ class ResizeEvent : public Event {
  * @ingroup widget
  */
 enum FocusPolicy {
-        NoFocus,        ///< Widget cannot receive focus.
-        TabFocus,       ///< Widget can receive focus via Tab or equivalent.
-        ClickFocus,     ///< Widget can receive focus via direct activation.
-        StrongFocus     ///< Widget can receive focus via Tab or direct activation.
+        NoFocus,    ///< Widget cannot receive focus.
+        TabFocus,   ///< Widget can receive focus via Tab or equivalent.
+        ClickFocus, ///< Widget can receive focus via direct activation.
+        StrongFocus ///< Widget can receive focus via Tab or direct activation.
 };
 
 /**
@@ -72,12 +71,12 @@ enum FocusPolicy {
  * @ingroup widget
  */
 enum SizePolicy {
-        SizeFixed,              ///< Fixed size, does not grow or shrink.
-        SizeMinimum,            ///< Can grow, prefers minimum size.
-        SizeMaximum,            ///< Can shrink, prefers maximum size.
-        SizePreferred,          ///< Prefers sizeHint(), can grow or shrink.
-        SizeExpanding,          ///< Takes all available space.
-        SizeMinimumExpanding    ///< Prefers minimum but takes extra space.
+        SizeFixed,           ///< Fixed size, does not grow or shrink.
+        SizeMinimum,         ///< Can grow, prefers minimum size.
+        SizeMaximum,         ///< Can shrink, prefers maximum size.
+        SizePreferred,       ///< Prefers sizeHint(), can grow or shrink.
+        SizeExpanding,       ///< Takes all available space.
+        SizeMinimumExpanding ///< Prefers minimum but takes extra space.
 };
 
 /**
@@ -99,7 +98,7 @@ enum SizePolicy {
  * relationships, event dispatch, and timer support.
  */
 class Widget : public ObjectBase {
-        PROMEKI_OBJECT(Widget, ObjectBase)
+                PROMEKI_OBJECT(Widget, ObjectBase)
         public:
                 /**
                  * @brief Constructs a Widget.
@@ -129,9 +128,7 @@ class Widget : public ObjectBase {
                 int height() const { return _geometry.height(); }
 
                 /** @brief Returns the size. */
-                Size2Di32 size() const {
-                        return Size2Di32(_geometry.width(), _geometry.height());
-                }
+                Size2Di32 size() const { return Size2Di32(_geometry.width(), _geometry.height()); }
 
                 /** @brief Returns the minimum size constraint. */
                 const Size2Di32 &minimumSize() const { return _minimumSize; }
@@ -292,16 +289,16 @@ class Widget : public ObjectBase {
         private:
                 friend class Layout;
 
-                Rect2Di32       _geometry;
-                Size2Di32       _minimumSize;
-                Size2Di32       _maximumSize = Size2Di32(9999, 9999);
-                SizePolicy      _sizePolicy = SizePreferred;
-                FocusPolicy     _focusPolicy = NoFocus;
-                bool            _visible = true;
-                bool            _enabled = true;
-                bool            _focused = false;
-                bool            _dirty = true;
-                Layout          *_layout = nullptr;
+                Rect2Di32   _geometry;
+                Size2Di32   _minimumSize;
+                Size2Di32   _maximumSize = Size2Di32(9999, 9999);
+                SizePolicy  _sizePolicy = SizePreferred;
+                FocusPolicy _focusPolicy = NoFocus;
+                bool        _visible = true;
+                bool        _enabled = true;
+                bool        _focused = false;
+                bool        _dirty = true;
+                Layout     *_layout = nullptr;
 };
 
 PROMEKI_NAMESPACE_END

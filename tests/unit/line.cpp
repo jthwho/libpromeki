@@ -21,7 +21,7 @@ TEST_CASE("Line2Di32: default construction") {
 TEST_CASE("Line2Di32: construction with points") {
         Point2Di32 s(1, 2);
         Point2Di32 e(3, 4);
-        Line2Di32 l(s, e);
+        Line2Di32  l(s, e);
         CHECK(l.start().x() == 1);
         CHECK(l.start().y() == 2);
         CHECK(l.end().x() == 3);
@@ -45,7 +45,7 @@ TEST_CASE("Line2Df: float specialization") {
 TEST_CASE("Line3Di32: 3D line") {
         Point3Di32 s(1, 2, 3);
         Point3Di32 e(4, 5, 6);
-        Line3Di32 l(s, e);
+        Line3Di32  l(s, e);
         CHECK(l.start().x() == 1);
         CHECK(l.start().y() == 2);
         CHECK(l.start().z() == 3);

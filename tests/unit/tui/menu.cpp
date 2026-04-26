@@ -53,7 +53,7 @@ TEST_CASE("TuiMenu: setTitle") {
 }
 
 TEST_CASE("TuiMenu: addAction") {
-        TuiMenu menu("File");
+        TuiMenu    menu("File");
         TuiAction *open = menu.addAction("Open");
         TuiAction *save = menu.addAction("Save");
 
@@ -102,8 +102,8 @@ TEST_CASE("TuiMenuBar: default construction") {
 
 TEST_CASE("TuiMenuBar: addMenu") {
         TuiMenuBar bar;
-        TuiMenu *file = bar.addMenu("File");
-        TuiMenu *edit = bar.addMenu("Edit");
+        TuiMenu   *file = bar.addMenu("File");
+        TuiMenu   *edit = bar.addMenu("Edit");
 
         CHECK(file != nullptr);
         CHECK(edit != nullptr);

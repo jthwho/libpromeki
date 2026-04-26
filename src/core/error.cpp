@@ -15,17 +15,15 @@
 #include <promeki/util.h>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
-#       include <Windows.h>
+#include <Windows.h>
 #endif
 
-#define DEFINE_ERROR(error, errno, description) \
-{ \
-        .id = Error::error, \
-        .name = PROMEKI_STRINGIFY(error), \
-        .desc = description, \
-        .systemErrorName = PROMEKI_STRINGIFY(errno), \
-        .systemError = errno \
-}
+#define DEFINE_ERROR(error, errno, description)                                                                        \
+        {.id = Error::error,                                                                                           \
+         .name = PROMEKI_STRINGIFY(error),                                                                             \
+         .desc = description,                                                                                          \
+         .systemErrorName = PROMEKI_STRINGIFY(errno),                                                                  \
+         .systemError = errno}
 
 #define NONE -1
 #define OK 0
@@ -33,11 +31,11 @@
 PROMEKI_NAMESPACE_BEGIN
 
 struct ErrorData {
-        Error::Code             id;
-        String                  name;
-        String                  desc;
-        String                  systemErrorName;
-        int                     systemError;            // Standard errno that provides the same function (or -1 if none)
+                Error::Code id;
+                String      name;
+                String      desc;
+                String      systemErrorName;
+                int         systemError; // Standard errno that provides the same function (or -1 if none)
 };
 
 static StructDatabase<Error::Code, ErrorData> db = {
@@ -108,15 +106,14 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(PipelineRuntimeError, NONE, "MediaPipeline stage reported a runtime error"),
         DEFINE_ERROR(InspectorDiscontinuityDetected, NONE, "Inspector observed at least one discontinuity"),
         DEFINE_ERROR(Empty, NONE, "Container or queue is empty"),
-        DEFINE_ERROR(NotFound, NONE, "Requested element or value was not found")
-};
+        DEFINE_ERROR(NotFound, NONE, "Requested element or value was not found")};
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {
         static StructDatabase<int, Error::Code> sysdb = []() {
                 StructDatabase<int, Error::Code> tmp;
-                for(const auto &item : db.database()) {
+                for (const auto &item : db.database()) {
                         int systemError = item.second.systemError;
-                        if(systemError == NONE) continue;
+                        if (systemError == NONE) continue;
                         tmp.database()[systemError] = item.second.id;
                 }
                 return tmp;
@@ -125,9 +122,9 @@ static StructDatabase<int, Error::Code> &posixErrorDb() {
 }
 
 Error Error::syserr(int errnum) {
-        auto &sysdb = posixErrorDb();
+        auto       &sysdb = posixErrorDb();
         const auto &val = sysdb.database().find(errnum);
-        if(val == sysdb.database().end()) {
+        if (val == sysdb.database().end()) {
                 promekiWarn("Error::syserr() can't translate error %d:%s", errnum, std::strerror(errnum));
                 return UnsupportedSystemError;
         }
@@ -144,34 +141,34 @@ Error Error::syserr() {
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
 Error Error::syserr(DWORD e) {
-        switch(e) {
-                case ERROR_SUCCESS:             return Ok;
-                case ERROR_ACCESS_DENIED:       return PermissionDenied;
-                case ERROR_NOT_ENOUGH_MEMORY:   return NoMem;
-                case ERROR_OUTOFMEMORY:         return NoMem;
-                case ERROR_INVALID_PARAMETER:   return Invalid;
-                case ERROR_INVALID_ADDRESS:     return BadAddress;
-                case ERROR_BUSY:                return Busy;
-                case ERROR_ALREADY_EXISTS:      return Exists;
-                case ERROR_FILE_NOT_FOUND:      return NotExist;
-                case ERROR_PATH_NOT_FOUND:      return NotExist;
-                case ERROR_DISK_FULL:           return NoSpace;
-                case ERROR_HANDLE_DISK_FULL:    return NoSpace;
-                case ERROR_WRITE_PROTECT:       return ReadOnly;
-                case ERROR_TIMEOUT:             return Timeout;
-                case ERROR_SEM_TIMEOUT:         return Timeout;
-                case ERROR_WORKING_SET_QUOTA:   return NoMem;
-                case ERROR_INVALID_HANDLE:      return BadFileDesc;
+        switch (e) {
+                case ERROR_SUCCESS: return Ok;
+                case ERROR_ACCESS_DENIED: return PermissionDenied;
+                case ERROR_NOT_ENOUGH_MEMORY: return NoMem;
+                case ERROR_OUTOFMEMORY: return NoMem;
+                case ERROR_INVALID_PARAMETER: return Invalid;
+                case ERROR_INVALID_ADDRESS: return BadAddress;
+                case ERROR_BUSY: return Busy;
+                case ERROR_ALREADY_EXISTS: return Exists;
+                case ERROR_FILE_NOT_FOUND: return NotExist;
+                case ERROR_PATH_NOT_FOUND: return NotExist;
+                case ERROR_DISK_FULL: return NoSpace;
+                case ERROR_HANDLE_DISK_FULL: return NoSpace;
+                case ERROR_WRITE_PROTECT: return ReadOnly;
+                case ERROR_TIMEOUT: return Timeout;
+                case ERROR_SEM_TIMEOUT: return Timeout;
+                case ERROR_WORKING_SET_QUOTA: return NoMem;
+                case ERROR_INVALID_HANDLE: return BadFileDesc;
                 case ERROR_TOO_MANY_OPEN_FILES: return TooManyOpenFiles;
-                case ERROR_NOT_SUPPORTED:       return NotSupported;
-                case ERROR_SHARING_VIOLATION:   return Busy;
-                case ERROR_LOCK_VIOLATION:      return Busy;
-                case ERROR_DIR_NOT_EMPTY:       return Exists;
-                case ERROR_DIRECTORY:           return NotDir;
-                case ERROR_FILE_TOO_LARGE:      return TooLarge;
-                case ERROR_BROKEN_PIPE:         return IOError;
-                case ERROR_NO_DATA:             return IOError;
-                case ERROR_OPERATION_ABORTED:   return Interrupt;
+                case ERROR_NOT_SUPPORTED: return NotSupported;
+                case ERROR_SHARING_VIOLATION: return Busy;
+                case ERROR_LOCK_VIOLATION: return Busy;
+                case ERROR_DIR_NOT_EMPTY: return Exists;
+                case ERROR_DIRECTORY: return NotDir;
+                case ERROR_FILE_TOO_LARGE: return TooLarge;
+                case ERROR_BROKEN_PIPE: return IOError;
+                case ERROR_NO_DATA: return IOError;
+                case ERROR_OPERATION_ABORTED: return Interrupt;
                 default:
                         promekiWarn("Error::syserr() can't translate Windows error %lu", (unsigned long)e);
                         return UnsupportedSystemError;
@@ -196,11 +193,11 @@ int Error::systemError() const {
 }
 
 Error Error::syserr(const std::error_code &ec) {
-        if(!ec) return Ok;
+        if (!ec) return Ok;
 #if defined(PROMEKI_PLATFORM_WINDOWS)
         // On Windows, system_category uses Windows error codes.
         // generic_category uses POSIX errno values.
-        if(ec.category() == std::system_category()) {
+        if (ec.category() == std::system_category()) {
                 return syserr(static_cast<DWORD>(ec.value()));
         }
 #endif
@@ -210,4 +207,3 @@ Error Error::syserr(const std::error_code &ec) {
 }
 
 PROMEKI_NAMESPACE_END
-

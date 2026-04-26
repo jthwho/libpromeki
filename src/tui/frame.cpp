@@ -13,36 +13,33 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-TuiFrame::TuiFrame(const String &title, ObjectBase *parent)
-        : TuiWidget(parent), _title(title) {
-}
+TuiFrame::TuiFrame(const String &title, ObjectBase *parent) : TuiWidget(parent), _title(title) {}
 
 TuiFrame::~TuiFrame() = default;
 
 void TuiFrame::setTitle(const String &title) {
-        if(_title == title) return;
+        if (_title == title) return;
         _title = title;
         update();
 }
 
 Rect2Di32 TuiFrame::contentRect() const {
-        return Rect2Di32(1, 1,
-                      std::max(0, width() - 2), std::max(0, height() - 2));
+        return Rect2Di32(1, 1, std::max(0, width() - 2), std::max(0, height() - 2));
 }
 
 Size2Di32 TuiFrame::sizeHint() const {
-        if(layout()) {
-                int contentHeight = 0;
-                int maxWidth = 0;
+        if (layout()) {
+                int         contentHeight = 0;
+                int         maxWidth = 0;
                 const auto &widgets = layout()->widgets();
-                int mt, mr, mb, ml;
+                int         mt, mr, mb, ml;
                 layout()->margins(mt, mr, mb, ml);
-                for(size_t i = 0; i < widgets.size(); ++i) {
-                        if(!widgets[i]) continue;
+                for (size_t i = 0; i < widgets.size(); ++i) {
+                        if (!widgets[i]) continue;
                         auto hint = widgets[i]->sizeHint();
                         contentHeight += hint.height();
                         maxWidth = std::max(maxWidth, hint.width());
-                        if(i > 0) contentHeight += layout()->spacing();
+                        if (i > 0) contentHeight += layout()->spacing();
                 }
                 contentHeight += mt + mb;
                 maxWidth += ml + mr;
@@ -50,36 +47,34 @@ Size2Di32 TuiFrame::sizeHint() const {
                 int w = std::max(maxWidth + 2, static_cast<int>(_title.length()) + 4);
                 return Size2Di32(w, contentHeight + 2);
         }
-        return Size2Di32(
-                static_cast<int>(_title.length()) + 4, 4);
+        return Size2Di32(static_cast<int>(_title.length()) + 4, 4);
 }
 
 void TuiFrame::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
-        if(!app) return;
+        if (!app) return;
 
         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
-        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
+        Rect2Di32  clipRect(screenPos.x(), screenPos.y(), width(), height());
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        bool focused = hasFocus();
-        bool enabled = isEnabled();
+        bool              focused = hasFocus();
+        bool              enabled = isEnabled();
 
-        TuiStyle borderStyle = pal.style(TuiPalette::Mid, focused, enabled)
-                                .merged(pal.style(TuiPalette::Window, focused, enabled));
+        TuiStyle borderStyle =
+                pal.style(TuiPalette::Mid, focused, enabled).merged(pal.style(TuiPalette::Window, focused, enabled));
         painter.setStyle(borderStyle);
         painter.fillRect(Rect2Di32(0, 0, width(), height()));
         painter.drawRect(Rect2Di32(0, 0, width(), height()));
 
-        TuiStyle titleStyle = pal.style(TuiPalette::WindowText, focused, enabled)
-                                .merged(borderStyle);
+        TuiStyle titleStyle = pal.style(TuiPalette::WindowText, focused, enabled).merged(borderStyle);
         painter.setStyle(titleStyle);
 
         // Draw title
-        if(!_title.isEmpty() && width() > 4) {
+        if (!_title.isEmpty() && width() > 4) {
                 String display = String(" ") + _title + " ";
-                if(static_cast<int>(display.length()) > width() - 2) {
+                if (static_cast<int>(display.length()) > width() - 2) {
                         display = display.substr(0, width() - 2);
                 }
                 painter.drawText(1, 0, display);
@@ -87,7 +82,7 @@ void TuiFrame::paintEvent(PaintEvent *) {
 }
 
 void TuiFrame::resizeEvent(ResizeEvent *) {
-        if(layout()) {
+        if (layout()) {
                 layout()->calculateLayout(contentRect());
         }
 }

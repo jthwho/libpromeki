@@ -69,8 +69,8 @@ class NvdecVideoDecoder : public VideoDecoder {
         public:
                 /** @brief Which codec this instance accepts on input. */
                 enum Codec {
-                        Codec_H264,   ///< H.264 / AVC.
-                        Codec_HEVC    ///< H.265 / HEVC.
+                        Codec_H264, ///< H.264 / AVC.
+                        Codec_HEVC  ///< H.265 / HEVC.
                 };
 
                 /**
@@ -89,17 +89,17 @@ class NvdecVideoDecoder : public VideoDecoder {
                  */
                 static List<int> supportedOutputList();
 
-                void configure(const MediaConfig &config) override;
-                Error submitPayload(const CompressedVideoPayload::Ptr &payload) override;
+                void                          configure(const MediaConfig &config) override;
+                Error                         submitPayload(const CompressedVideoPayload::Ptr &payload) override;
                 UncompressedVideoPayload::Ptr receiveVideoPayload() override;
-                Error flush() override;
-                Error reset() override;
+                Error                         flush() override;
+                Error                         reset() override;
 
         private:
                 class Impl;
                 using ImplPtr = UniquePtr<Impl>;
                 ImplPtr _impl;
-                Codec _codec;
+                Codec   _codec;
 };
 
 PROMEKI_NAMESPACE_END

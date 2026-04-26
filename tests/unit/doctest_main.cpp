@@ -19,8 +19,8 @@ using namespace promeki;
 class LogStreambuf : public std::streambuf {
         protected:
                 int overflow(int ch) override {
-                        if(ch == '\n' || ch == EOF) {
-                                if(!_line.isEmpty()) {
+                        if (ch == '\n' || ch == EOF) {
+                                if (!_line.isEmpty()) {
                                         promekiInfo("%s", _line.cstr());
                                         _line.clear();
                                 }
@@ -31,7 +31,7 @@ class LogStreambuf : public std::streambuf {
                 }
 
                 int sync() override {
-                        if(!_line.isEmpty()) {
+                        if (!_line.isEmpty()) {
                                 promekiInfo("%s", _line.cstr());
                                 _line.clear();
                         }
@@ -43,14 +43,14 @@ class LogStreambuf : public std::streambuf {
 };
 
 int main(int argc, char **argv) {
-        bool verbose = false;
-        bool useDefaultLogger = false;
-        int filteredArgc = 0;
+        bool   verbose = false;
+        bool   useDefaultLogger = false;
+        int    filteredArgc = 0;
         char **filteredArgv = new char *[argc];
-        for(int i = 0; i < argc; i++) {
-                if(std::string(argv[i]) == "--verbose") {
+        for (int i = 0; i < argc; i++) {
+                if (std::string(argv[i]) == "--verbose") {
                         verbose = true;
-                } else if(std::string(argv[i]) == "--logger") {
+                } else if (std::string(argv[i]) == "--logger") {
                         useDefaultLogger = true;
                         verbose = true;
                 } else {
@@ -58,15 +58,12 @@ int main(int argc, char **argv) {
                 }
         }
 
-        if(!useDefaultLogger) {
+        if (!useDefaultLogger) {
                 Logger::defaultLogger().setConsoleFormatter(
-                        [](const Logger::LogFormat &fmt) -> String {
-                                return fmt.entry->msg;
-                        }
-                );
+                        [](const Logger::LogFormat &fmt) -> String { return fmt.entry->msg; });
         }
 
-        if(!verbose) {
+        if (!verbose) {
                 Logger::defaultLogger().setConsoleLoggingEnabled(false);
                 CrashHandler::setConsoleTraceEnabled(false);
         }
@@ -81,7 +78,7 @@ int main(int argc, char **argv) {
 
         doctest::Context context;
         context.applyCommandLine(filteredArgc, filteredArgv);
-        if(verbose) context.setCout(&logstream);
+        if (verbose) context.setCout(&logstream);
         int res = context.run();
 
         promekiLogSync();

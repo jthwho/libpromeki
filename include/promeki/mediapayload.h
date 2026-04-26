@@ -100,7 +100,7 @@ class VariantSpec;
  */
 class MediaPayload {
         public:
-                RefCount _promeki_refct;
+                RefCount              _promeki_refct;
                 virtual MediaPayload *_promeki_clone() const = 0;
 
                 /** @brief Shared-pointer alias for pipeline-wide payload handoff. */
@@ -127,12 +127,19 @@ class MediaPayload {
                  * compete for the same bit range as the base flags.
                  */
                 enum Flag : uint64_t {
-                        None         = 0,          ///< No flags set.
-                        Keyframe     = 1ull << 0,  ///< Self-contained decode entry point (trivially true for uncompressed payloads).
-                        Discardable  = 1ull << 1,  ///< Non-reference payload — safe to drop without affecting later decode.
-                        Corrupt      = 1ull << 2,  ///< Payload is known to be corrupt; pair with @c Metadata::CorruptReason when a message is available.
-                        EndOfStream  = 1ull << 3,  ///< Terminal payload in the stream.
-                        IntraRefresh = 1ull << 4,  ///< Intra-coded but not a random-access point — part of a gradual refresh cycle (distinct from @c Keyframe).
+                        None = 0, ///< No flags set.
+                        Keyframe =
+                                1ull
+                                << 0, ///< Self-contained decode entry point (trivially true for uncompressed payloads).
+                        Discardable = 1ull
+                                      << 1, ///< Non-reference payload — safe to drop without affecting later decode.
+                        Corrupt =
+                                1ull
+                                << 2, ///< Payload is known to be corrupt; pair with @c Metadata::CorruptReason when a message is available.
+                        EndOfStream = 1ull << 3, ///< Terminal payload in the stream.
+                        IntraRefresh =
+                                1ull
+                                << 4, ///< Intra-coded but not a random-access point — part of a gradual refresh cycle (distinct from @c Keyframe).
                 };
 
                 /** @brief Constructs an empty payload (no data, default timestamps). */
@@ -146,7 +153,7 @@ class MediaPayload {
                  * natively a list; a single-plane payload is
                  * constructed by passing a list-of-one.
                  */
-                explicit MediaPayload(const BufferView &data) : _data(data) { }
+                explicit MediaPayload(const BufferView &data) : _data(data) {}
 
                 MediaPayload(const MediaPayload &) = default;
                 MediaPayload(MediaPayload &&) = default;
@@ -181,9 +188,9 @@ class MediaPayload {
                  * plane."
                  */
                 virtual bool isValid() const {
-                        if(_data.isEmpty()) return false;
-                        for(auto v : _data) {
-                                if(v.isValid()) return true;
+                        if (_data.isEmpty()) return false;
+                        for (auto v : _data) {
+                                if (v.isValid()) return true;
                         }
                         return false;
                 }
@@ -326,14 +333,14 @@ class MediaPayload {
                  * condition (e.g. @c setFlag(Keyframe, picType==IDR)).
                  */
                 void setFlag(Flag f, bool on) {
-                        if(on) addFlag(f);
-                        else   removeFlag(f);
+                        if (on)
+                                addFlag(f);
+                        else
+                                removeFlag(f);
                 }
 
                 /** @brief Returns true when the given flag is set. */
-                bool hasFlag(Flag f) const {
-                        return (_flags & static_cast<uint64_t>(f)) != 0;
-                }
+                bool hasFlag(Flag f) const { return (_flags & static_cast<uint64_t>(f)) != 0; }
 
                 /**
                  * @brief Returns a short human-readable name for a
@@ -408,8 +415,10 @@ class MediaPayload {
 
                 /** @brief Sets (or clears) the @c EndOfStream flag. */
                 void markEndOfStream(bool v = true) {
-                        if(v) addFlag(EndOfStream);
-                        else  removeFlag(EndOfStream);
+                        if (v)
+                                addFlag(EndOfStream);
+                        else
+                                removeFlag(EndOfStream);
                 }
 
                 /**
@@ -423,13 +432,11 @@ class MediaPayload {
                  */
                 void markCorrupt(const String &reason = String()) {
                         addFlag(Corrupt);
-                        if(!reason.isEmpty()) metadata().set(Metadata::CorruptReason, reason);
+                        if (!reason.isEmpty()) metadata().set(Metadata::CorruptReason, reason);
                 }
 
                 /** @brief Returns the recorded corruption reason, or an empty string. */
-                String corruptReason() const {
-                        return metadata().getAs<String>(Metadata::CorruptReason);
-                }
+                String corruptReason() const { return metadata().getAs<String>(Metadata::CorruptReason); }
 
                 // ---- Metadata ---------------------------------------------
 
@@ -471,14 +478,10 @@ class MediaPayload {
                  * Lets pipeline glue land on the concrete type without
                  * exposing @c dynamic_cast at call sites.
                  */
-                template<typename T> const T *as() const {
-                        return dynamic_cast<const T *>(this);
-                }
+                template <typename T> const T *as() const { return dynamic_cast<const T *>(this); }
 
                 /** @copydoc as() const */
-                template<typename T> T *as() {
-                        return dynamic_cast<T *>(this);
-                }
+                template <typename T> T *as() { return dynamic_cast<T *>(this); }
 
                 // ---- Exclusive ownership ----------------------------------
 
@@ -495,9 +498,7 @@ class MediaPayload {
                  * @ref isExclusiveExtras — the base plane-list check
                  * always runs first.
                  */
-                bool isExclusive() const {
-                        return _data.isExclusive() && isExclusiveExtras();
-                }
+                bool isExclusive() const { return _data.isExclusive() && isExclusiveExtras(); }
 
                 // ---- DataStream serialisation ------------------------------
 
@@ -598,17 +599,14 @@ class MediaPayload {
                  * @ref PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH to
                  * generate the override uniformly.
                  */
-                virtual std::optional<Variant> variantLookupResolve(
-                        const String &key, Error *err = nullptr) const = 0;
+                virtual std::optional<Variant> variantLookupResolve(const String &key, Error *err = nullptr) const = 0;
 
                 /**
                  * @brief Assigns @p value under @p key into this
                  *        payload, dispatching through the most-derived
                  *        VariantLookup registry.  @sa @ref variantLookupResolve.
                  */
-                virtual bool variantLookupAssign(
-                        const String &key, const Variant &value,
-                        Error *err = nullptr) = 0;
+                virtual bool variantLookupAssign(const String &key, const Variant &value, Error *err = nullptr) = 0;
 
                 /**
                  * @brief Returns the declared @ref VariantSpec for
@@ -616,8 +614,7 @@ class MediaPayload {
                  *        VariantLookup registry.  @sa
                  *        @ref variantLookupResolve.
                  */
-                virtual const VariantSpec *variantLookupSpecFor(
-                        const String &key, Error *err = nullptr) const = 0;
+                virtual const VariantSpec *variantLookupSpecFor(const String &key, Error *err = nullptr) const = 0;
 
                 /**
                  * @brief Returns the scalar key names the most-derived
@@ -674,16 +671,15 @@ class MediaPayload {
                  * @ref Buffer::Ptr::modify on each extra field that
                  * holds a shared @ref Buffer.
                  */
-                virtual void ensureExclusiveExtras() { }
+                virtual void ensureExclusiveExtras() {}
 
         public:
-
         private:
-                BufferView       _data;
-                MediaTimeStamp   _pts;
-                MediaTimeStamp   _dts;
-                int              _streamIndex = 0;
-                uint64_t         _flags = 0;
+                BufferView     _data;
+                MediaTimeStamp _pts;
+                MediaTimeStamp _dts;
+                int            _streamIndex = 0;
+                uint64_t       _flags = 0;
 };
 
 /** @brief Writes a MediaPayload::Ptr to a DataStream. */
@@ -703,18 +699,18 @@ DataStream &operator>>(DataStream &s, MediaPayload::Ptr &p);
  * PROMEKI_REGISTER_MEDIAPAYLOAD(UncompressedVideoPayload, "UVdp");
  * @endcode
  */
-#define PROMEKI_REGISTER_MEDIAPAYLOAD(Cls, fourccStr) \
-        namespace { \
-                struct Cls##_MediaPayloadRegistrar { \
-                        Cls##_MediaPayloadRegistrar() { \
-                                ::promeki::MediaPayload::registerSubclass( \
-                                        ::promeki::FourCC(fourccStr).value(), \
-                                        []() -> ::promeki::MediaPayload::Ptr { \
-                                                return ::promeki::Cls::Ptr::create(); \
-                                        }); \
-                        } \
-                }; \
-                static Cls##_MediaPayloadRegistrar s_##Cls##_mediaPayloadRegistrar; \
+#define PROMEKI_REGISTER_MEDIAPAYLOAD(Cls, fourccStr)                                                                  \
+        namespace {                                                                                                    \
+                struct Cls##_MediaPayloadRegistrar {                                                                   \
+                                Cls##_MediaPayloadRegistrar() {                                                        \
+                                        ::promeki::MediaPayload::registerSubclass(                                     \
+                                                ::promeki::FourCC(fourccStr).value(),                                  \
+                                                []() -> ::promeki::MediaPayload::Ptr {                                 \
+                                                        return ::promeki::Cls::Ptr::create();                          \
+                                                });                                                                    \
+                                }                                                                                      \
+                };                                                                                                     \
+                static Cls##_MediaPayloadRegistrar s_##Cls##_mediaPayloadRegistrar;                                    \
         }
 
 /**
@@ -743,26 +739,25 @@ DataStream &operator>>(DataStream &s, MediaPayload::Ptr &p);
  * };
  * @endcode
  */
-#define PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH(Self) \
-        std::optional<::promeki::Variant> variantLookupResolve( \
-                const ::promeki::String &key, ::promeki::Error *err = nullptr) const override { \
-                return ::promeki::VariantLookup<Self>::resolveDirect(*this, key, err); \
-        } \
-        bool variantLookupAssign( \
-                const ::promeki::String &key, const ::promeki::Variant &value, \
-                ::promeki::Error *err = nullptr) override { \
-                return ::promeki::VariantLookup<Self>::assignDirect(*this, key, value, err); \
-        } \
-        const ::promeki::VariantSpec *variantLookupSpecFor( \
-                const ::promeki::String &key, ::promeki::Error *err = nullptr) const override { \
-                return ::promeki::VariantLookup<Self>::specForDirect(key, err); \
-        } \
-        ::promeki::StringList variantLookupScalarNames() const override { \
-                return ::promeki::VariantLookup<Self>::registeredScalars(); \
-        } \
-        ::promeki::StringList variantLookupDump( \
-                const ::promeki::String &indent = ::promeki::String()) const override { \
-                return ::promeki::VariantLookup<Self>::dump(*this, indent); \
+#define PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH(Self)                                                                     \
+        std::optional<::promeki::Variant> variantLookupResolve(const ::promeki::String &key,                           \
+                                                               ::promeki::Error        *err = nullptr) const override {       \
+                return ::promeki::VariantLookup<Self>::resolveDirect(*this, key, err);                                 \
+        }                                                                                                              \
+        bool variantLookupAssign(const ::promeki::String &key, const ::promeki::Variant &value,                        \
+                                 ::promeki::Error *err = nullptr) override {                                           \
+                return ::promeki::VariantLookup<Self>::assignDirect(*this, key, value, err);                           \
+        }                                                                                                              \
+        const ::promeki::VariantSpec *variantLookupSpecFor(const ::promeki::String &key,                               \
+                                                           ::promeki::Error        *err = nullptr) const override {           \
+                return ::promeki::VariantLookup<Self>::specForDirect(key, err);                                        \
+        }                                                                                                              \
+        ::promeki::StringList variantLookupScalarNames() const override {                                              \
+                return ::promeki::VariantLookup<Self>::registeredScalars();                                            \
+        }                                                                                                              \
+        ::promeki::StringList variantLookupDump(const ::promeki::String &indent = ::promeki::String())                 \
+                const override {                                                                                       \
+                return ::promeki::VariantLookup<Self>::dump(*this, indent);                                            \
         }
 
 PROMEKI_NAMESPACE_END

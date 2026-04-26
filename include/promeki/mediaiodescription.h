@@ -56,7 +56,7 @@ PROMEKI_NAMESPACE_BEGIN
  * supported by design.
  */
 class MediaIODescription {
-        PROMEKI_SHARED_FINAL(MediaIODescription)
+                PROMEKI_SHARED_FINAL(MediaIODescription)
         public:
                 /** @brief Shared pointer alias. */
                 using Ptr = SharedPtr<MediaIODescription>;
@@ -73,7 +73,7 @@ class MediaIODescription {
                  * Mirrors @ref MediaIO::FrameCountUnknown so callers
                  * can compare against either constant interchangeably.
                  */
-                static constexpr FrameCount FrameCountUnknown  = FrameCount::unknown();
+                static constexpr FrameCount FrameCountUnknown = FrameCount::unknown();
 
                 /** @brief Sentinel for an unbounded source (live device). */
                 static constexpr FrameCount FrameCountInfinite = FrameCount::infinity();
@@ -314,28 +314,28 @@ class MediaIODescription {
                 bool operator!=(const MediaIODescription &other) const { return !(*this == other); }
 
         private:
-                String          _backendName;
-                String          _backendDescription;
+                String _backendName;
+                String _backendDescription;
 
-                String          _name;
-                UUID            _uuid;
-                int             _localId = -1;
+                String _name;
+                UUID   _uuid;
+                int    _localId = -1;
 
-                bool            _canBeSource     = false;
-                bool            _canBeSink       = false;
-                bool            _canBeTransform  = false;
+                bool _canBeSource = false;
+                bool _canBeSink = false;
+                bool _canBeTransform = false;
 
                 MediaDesc::List _producibleFormats;
                 MediaDesc::List _acceptableFormats;
                 MediaDesc       _preferredFormat;
 
-                bool            _canSeek    = false;
-                FrameCount      _frameCount;
-                FrameRate       _frameRate;
-                Metadata        _containerMetadata;
+                bool       _canSeek = false;
+                FrameCount _frameCount;
+                FrameRate  _frameRate;
+                Metadata   _containerMetadata;
 
-                Error           _probeStatus = Error::Ok;
-                String          _probeMessage;
+                Error  _probeStatus = Error::Ok;
+                String _probeMessage;
 };
 
 /** @brief Writes a MediaIODescription to a DataStream. */

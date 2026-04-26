@@ -17,21 +17,21 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-#define PROMEKI_WELL_KNOWN_FRAME_RATES \
-    X(FPS_Invalid,  "INV",      0,          1) \
-    X(FPS_120,      "120",      120,        1) \
-    X(FPS_119_88,    "119.88",   120000,     1001) \
-    X(FPS_100,      "100",      100,        1) \
-    X(FPS_60,       "60",       60,         1) \
-    X(FPS_59_94,     "59.94",    60000,      1001) \
-    X(FPS_50,       "50",       50,         1) \
-    X(FPS_48,       "48",       48,         1) \
-    X(FPS_47_95,     "47.95",    48000,      1001) \
-    X(FPS_30,       "30",       30,         1) \
-    X(FPS_29_97,     "29.97",    30000,      1001) \
-    X(FPS_25,       "25",       25,         1) \
-    X(FPS_24,       "24",       24,         1) \
-    X(FPS_23_98,     "23.98",    24000,      1001)
+#define PROMEKI_WELL_KNOWN_FRAME_RATES                                                                                 \
+        X(FPS_Invalid, "INV", 0, 1)                                                                                    \
+        X(FPS_120, "120", 120, 1)                                                                                      \
+        X(FPS_119_88, "119.88", 120000, 1001)                                                                          \
+        X(FPS_100, "100", 100, 1)                                                                                      \
+        X(FPS_60, "60", 60, 1)                                                                                         \
+        X(FPS_59_94, "59.94", 60000, 1001)                                                                             \
+        X(FPS_50, "50", 50, 1)                                                                                         \
+        X(FPS_48, "48", 48, 1)                                                                                         \
+        X(FPS_47_95, "47.95", 48000, 1001)                                                                             \
+        X(FPS_30, "30", 30, 1)                                                                                         \
+        X(FPS_29_97, "29.97", 30000, 1001)                                                                             \
+        X(FPS_25, "25", 25, 1)                                                                                         \
+        X(FPS_24, "24", 24, 1)                                                                                         \
+        X(FPS_23_98, "23.98", 24000, 1001)
 
 /**
  * @brief Represents a video frame rate as a rational number.
@@ -112,7 +112,7 @@ class FrameRate {
                 };
 #undef X
 
-                struct WellKnown;       ///< @brief See @ref FrameRate::WellKnown defined below.
+                struct WellKnown; ///< @brief See @ref FrameRate::WellKnown defined below.
 
                 /**
                  * @brief Returns the canonical list of well-known frame rates.
@@ -185,12 +185,12 @@ class FrameRate {
                  * @return The frame period as a Duration.
                  */
                 Duration frameDuration() const {
-                        if(!isValid()) return Duration();
+                        if (!isValid()) return Duration();
                         // Period in ns = denom * 1e9 / num.  Use 64-bit
                         // math so 1001 * 1e9 doesn't overflow.
                         int64_t num = static_cast<int64_t>(_fps.numerator());
                         int64_t den = static_cast<int64_t>(_fps.denominator());
-                        int64_t ns  = (den * INT64_C(1'000'000'000) + num / 2) / num;
+                        int64_t ns = (den * INT64_C(1'000'000'000) + num / 2) / num;
                         return Duration::fromNanoseconds(ns);
                 }
 
@@ -246,7 +246,7 @@ class FrameRate {
                  *         invalid or @p tickRate is non-positive.
                  */
                 int64_t cumulativeTicks(int64_t tickRate, int64_t frameIndex) const {
-                        if(!isValid() || tickRate <= 0 || frameIndex < 0) return 0;
+                        if (!isValid() || tickRate <= 0 || frameIndex < 0) return 0;
                         const int64_t num = static_cast<int64_t>(_fps.numerator());
                         const int64_t den = static_cast<int64_t>(_fps.denominator());
                         return (frameIndex * tickRate * den) / num;
@@ -276,8 +276,8 @@ class FrameRate {
                  *         frame rate is invalid or @p sampleRate is non-positive.
                  */
                 size_t samplesPerFrame(int64_t sampleRate, int64_t frameIndex) const {
-                        if(!isValid() || sampleRate <= 0 || frameIndex < 0) return 0;
-                        const int64_t cumNow  = cumulativeTicks(sampleRate, frameIndex);
+                        if (!isValid() || sampleRate <= 0 || frameIndex < 0) return 0;
+                        const int64_t cumNow = cumulativeTicks(sampleRate, frameIndex);
                         const int64_t cumNext = cumulativeTicks(sampleRate, frameIndex + 1);
                         return static_cast<size_t>(cumNext - cumNow);
                 }
@@ -339,7 +339,7 @@ class FrameRate {
                 bool operator!=(const FrameRate &other) const { return _fps != other._fps; }
 
         private:
-                RationalType    _fps;
+                RationalType _fps;
 };
 
 /**
@@ -355,11 +355,10 @@ class FrameRate {
  * enclosing class to be complete.
  */
 struct FrameRate::WellKnown {
-        String     label;
-        FrameRate  rate;
+                String    label;
+                FrameRate rate;
 };
 
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::FrameRate);
-

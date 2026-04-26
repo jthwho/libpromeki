@@ -105,7 +105,7 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class PixelMemLayout {
         public:
-                static constexpr size_t MaxComps  = 8; ///< Maximum number of components per pixel.
+                static constexpr size_t MaxComps = 8;  ///< Maximum number of components per pixel.
                 static constexpr size_t MaxPlanes = 4; ///< Maximum number of planes per format.
 
                 /**
@@ -116,128 +116,128 @@ class PixelMemLayout {
                  * starts at UserDefined.
                  */
                 enum ID {
-                        Invalid              = 0,    ///< Invalid or uninitialized pixel format.
+                        Invalid = 0, ///< Invalid or uninitialized pixel format.
 
                         // -- Interleaved 4:4:4 (byte-aligned) --
-                        I_4x8                = 1,    ///< 4 components, 8 bits each, interleaved (4 bytes/pixel).
-                        I_3x8                = 2,    ///< 3 components, 8 bits each, interleaved (3 bytes/pixel).
+                        I_4x8 = 1, ///< 4 components, 8 bits each, interleaved (4 bytes/pixel).
+                        I_3x8 = 2, ///< 3 components, 8 bits each, interleaved (3 bytes/pixel).
 
                         // -- Interleaved 4:4:4 (DPX/Cineon packed) --
-                        I_3x10_DPX           = 3,    ///< 3 components, 10 bits, DPX packed (30 bits in 4 bytes).
+                        I_3x10_DPX = 3, ///< 3 components, 10 bits, DPX packed (30 bits in 4 bytes).
 
                         // -- Interleaved 4:2:2 YUYV --
-                        I_422_3x8            = 4,    ///< 3 components, 8 bits, 4:2:2 YUYV interleaved.
-                        I_422_3x10           = 5,    ///< 3 components, 10 bits, 4:2:2 YUYV interleaved.
+                        I_422_3x8 = 4,  ///< 3 components, 8 bits, 4:2:2 YUYV interleaved.
+                        I_422_3x10 = 5, ///< 3 components, 10 bits, 4:2:2 YUYV interleaved.
 
                         // -- Interleaved 4:2:2 UYVY --
-                        I_422_UYVY_3x8       = 6,    ///< 3 components, 8 bits, 4:2:2 UYVY interleaved.
-                        I_422_UYVY_3x10_LE   = 7,    ///< 3 components, 10 bits in 16-bit LE words, 4:2:2 UYVY.
-                        I_422_UYVY_3x10_BE   = 8,    ///< 3 components, 10 bits in 16-bit BE words, 4:2:2 UYVY.
-                        I_422_UYVY_3x12_LE   = 9,    ///< 3 components, 12 bits in 16-bit LE words, 4:2:2 UYVY.
-                        I_422_UYVY_3x12_BE   = 10,   ///< 3 components, 12 bits in 16-bit BE words, 4:2:2 UYVY.
+                        I_422_UYVY_3x8 = 6,      ///< 3 components, 8 bits, 4:2:2 UYVY interleaved.
+                        I_422_UYVY_3x10_LE = 7,  ///< 3 components, 10 bits in 16-bit LE words, 4:2:2 UYVY.
+                        I_422_UYVY_3x10_BE = 8,  ///< 3 components, 10 bits in 16-bit BE words, 4:2:2 UYVY.
+                        I_422_UYVY_3x12_LE = 9,  ///< 3 components, 12 bits in 16-bit LE words, 4:2:2 UYVY.
+                        I_422_UYVY_3x12_BE = 10, ///< 3 components, 12 bits in 16-bit BE words, 4:2:2 UYVY.
 
                         // -- Interleaved 4:2:2 v210 --
-                        I_422_v210           = 11,   ///< 3 components, 10 bits, 4:2:2 v210 packed (3x10 in 32-bit words).
+                        I_422_v210 = 11, ///< 3 components, 10 bits, 4:2:2 v210 packed (3x10 in 32-bit words).
 
                         // -- Planar 4:2:2 --
-                        P_422_3x8            = 12,   ///< 3 planes, 8-bit, 4:2:2 (Y + Cb half-width + Cr half-width).
-                        P_422_3x10_LE        = 13,   ///< 3 planes, 10-bit in 16-bit LE words, 4:2:2.
-                        P_422_3x10_BE        = 14,   ///< 3 planes, 10-bit in 16-bit BE words, 4:2:2.
-                        P_422_3x12_LE        = 15,   ///< 3 planes, 12-bit in 16-bit LE words, 4:2:2.
-                        P_422_3x12_BE        = 16,   ///< 3 planes, 12-bit in 16-bit BE words, 4:2:2.
+                        P_422_3x8 = 12,     ///< 3 planes, 8-bit, 4:2:2 (Y + Cb half-width + Cr half-width).
+                        P_422_3x10_LE = 13, ///< 3 planes, 10-bit in 16-bit LE words, 4:2:2.
+                        P_422_3x10_BE = 14, ///< 3 planes, 10-bit in 16-bit BE words, 4:2:2.
+                        P_422_3x12_LE = 15, ///< 3 planes, 12-bit in 16-bit LE words, 4:2:2.
+                        P_422_3x12_BE = 16, ///< 3 planes, 12-bit in 16-bit BE words, 4:2:2.
 
                         // -- Planar 4:2:0 --
-                        P_420_3x8            = 17,   ///< 3 planes, 8-bit, 4:2:0 (Y + Cb quarter + Cr quarter).
-                        P_420_3x10_LE        = 18,   ///< 3 planes, 10-bit in 16-bit LE words, 4:2:0.
-                        P_420_3x10_BE        = 19,   ///< 3 planes, 10-bit in 16-bit BE words, 4:2:0.
-                        P_420_3x12_LE        = 20,   ///< 3 planes, 12-bit in 16-bit LE words, 4:2:0.
-                        P_420_3x12_BE        = 21,   ///< 3 planes, 12-bit in 16-bit BE words, 4:2:0.
+                        P_420_3x8 = 17,     ///< 3 planes, 8-bit, 4:2:0 (Y + Cb quarter + Cr quarter).
+                        P_420_3x10_LE = 18, ///< 3 planes, 10-bit in 16-bit LE words, 4:2:0.
+                        P_420_3x10_BE = 19, ///< 3 planes, 10-bit in 16-bit BE words, 4:2:0.
+                        P_420_3x12_LE = 20, ///< 3 planes, 12-bit in 16-bit LE words, 4:2:0.
+                        P_420_3x12_BE = 21, ///< 3 planes, 12-bit in 16-bit BE words, 4:2:0.
 
                         // -- Semi-planar 4:2:0 (NV12) --
-                        SP_420_8             = 22,   ///< 2 planes, 8-bit, 4:2:0 NV12 (Y + interleaved CbCr).
-                        SP_420_10_LE         = 23,   ///< 2 planes, 10-bit in 16-bit LE words, 4:2:0 NV12.
-                        SP_420_10_BE         = 24,   ///< 2 planes, 10-bit in 16-bit BE words, 4:2:0 NV12.
-                        SP_420_12_LE         = 25,   ///< 2 planes, 12-bit in 16-bit LE words, 4:2:0 NV12.
-                        SP_420_12_BE         = 26,   ///< 2 planes, 12-bit in 16-bit BE words, 4:2:0 NV12.
+                        SP_420_8 = 22,     ///< 2 planes, 8-bit, 4:2:0 NV12 (Y + interleaved CbCr).
+                        SP_420_10_LE = 23, ///< 2 planes, 10-bit in 16-bit LE words, 4:2:0 NV12.
+                        SP_420_10_BE = 24, ///< 2 planes, 10-bit in 16-bit BE words, 4:2:0 NV12.
+                        SP_420_12_LE = 25, ///< 2 planes, 12-bit in 16-bit LE words, 4:2:0 NV12.
+                        SP_420_12_BE = 26, ///< 2 planes, 12-bit in 16-bit BE words, 4:2:0 NV12.
 
                         // -- Interleaved 4:4:4 (10/12/16-bit in 16-bit words) --
-                        I_4x10_LE            = 27,   ///< 4 components, 10 bits in 16-bit LE words (8 bytes/pixel).
-                        I_4x10_BE            = 28,   ///< 4 components, 10 bits in 16-bit BE words (8 bytes/pixel).
-                        I_3x10_LE            = 29,   ///< 3 components, 10 bits in 16-bit LE words (6 bytes/pixel).
-                        I_3x10_BE            = 30,   ///< 3 components, 10 bits in 16-bit BE words (6 bytes/pixel).
-                        I_4x12_LE            = 31,   ///< 4 components, 12 bits in 16-bit LE words (8 bytes/pixel).
-                        I_4x12_BE            = 32,   ///< 4 components, 12 bits in 16-bit BE words (8 bytes/pixel).
-                        I_3x12_LE            = 33,   ///< 3 components, 12 bits in 16-bit LE words (6 bytes/pixel).
-                        I_3x12_BE            = 34,   ///< 3 components, 12 bits in 16-bit BE words (6 bytes/pixel).
-                        I_4x16_LE            = 35,   ///< 4 components, 16 bits LE (8 bytes/pixel).
-                        I_4x16_BE            = 36,   ///< 4 components, 16 bits BE (8 bytes/pixel).
-                        I_3x16_LE            = 37,   ///< 3 components, 16 bits LE (6 bytes/pixel).
-                        I_3x16_BE            = 38,   ///< 3 components, 16 bits BE (6 bytes/pixel).
+                        I_4x10_LE = 27, ///< 4 components, 10 bits in 16-bit LE words (8 bytes/pixel).
+                        I_4x10_BE = 28, ///< 4 components, 10 bits in 16-bit BE words (8 bytes/pixel).
+                        I_3x10_LE = 29, ///< 3 components, 10 bits in 16-bit LE words (6 bytes/pixel).
+                        I_3x10_BE = 30, ///< 3 components, 10 bits in 16-bit BE words (6 bytes/pixel).
+                        I_4x12_LE = 31, ///< 4 components, 12 bits in 16-bit LE words (8 bytes/pixel).
+                        I_4x12_BE = 32, ///< 4 components, 12 bits in 16-bit BE words (8 bytes/pixel).
+                        I_3x12_LE = 33, ///< 3 components, 12 bits in 16-bit LE words (6 bytes/pixel).
+                        I_3x12_BE = 34, ///< 3 components, 12 bits in 16-bit BE words (6 bytes/pixel).
+                        I_4x16_LE = 35, ///< 4 components, 16 bits LE (8 bytes/pixel).
+                        I_4x16_BE = 36, ///< 4 components, 16 bits BE (8 bytes/pixel).
+                        I_3x16_LE = 37, ///< 3 components, 16 bits LE (6 bytes/pixel).
+                        I_3x16_BE = 38, ///< 3 components, 16 bits BE (6 bytes/pixel).
 
                         // -- Monochrome (single component) --
-                        I_1x8                = 39,   ///< 1 component, 8 bits (1 byte/pixel).
-                        I_1x10_LE            = 40,   ///< 1 component, 10 bits in 16-bit LE word (2 bytes/pixel).
-                        I_1x10_BE            = 41,   ///< 1 component, 10 bits in 16-bit BE word (2 bytes/pixel).
-                        I_1x12_LE            = 42,   ///< 1 component, 12 bits in 16-bit LE word (2 bytes/pixel).
-                        I_1x12_BE            = 43,   ///< 1 component, 12 bits in 16-bit BE word (2 bytes/pixel).
-                        I_1x16_LE            = 44,   ///< 1 component, 16 bits LE (2 bytes/pixel).
-                        I_1x16_BE            = 45,   ///< 1 component, 16 bits BE (2 bytes/pixel).
+                        I_1x8 = 39,     ///< 1 component, 8 bits (1 byte/pixel).
+                        I_1x10_LE = 40, ///< 1 component, 10 bits in 16-bit LE word (2 bytes/pixel).
+                        I_1x10_BE = 41, ///< 1 component, 10 bits in 16-bit BE word (2 bytes/pixel).
+                        I_1x12_LE = 42, ///< 1 component, 12 bits in 16-bit LE word (2 bytes/pixel).
+                        I_1x12_BE = 43, ///< 1 component, 12 bits in 16-bit BE word (2 bytes/pixel).
+                        I_1x16_LE = 44, ///< 1 component, 16 bits LE (2 bytes/pixel).
+                        I_1x16_BE = 45, ///< 1 component, 16 bits BE (2 bytes/pixel).
 
                         // -- Float half-precision (16-bit IEEE 754) --
-                        I_4xF16_LE           = 46,   ///< 4 components, half-float LE (8 bytes/pixel).
-                        I_4xF16_BE           = 47,   ///< 4 components, half-float BE (8 bytes/pixel).
-                        I_3xF16_LE           = 48,   ///< 3 components, half-float LE (6 bytes/pixel).
-                        I_3xF16_BE           = 49,   ///< 3 components, half-float BE (6 bytes/pixel).
-                        I_1xF16_LE           = 50,   ///< 1 component, half-float LE (2 bytes/pixel).
-                        I_1xF16_BE           = 51,   ///< 1 component, half-float BE (2 bytes/pixel).
+                        I_4xF16_LE = 46, ///< 4 components, half-float LE (8 bytes/pixel).
+                        I_4xF16_BE = 47, ///< 4 components, half-float BE (8 bytes/pixel).
+                        I_3xF16_LE = 48, ///< 3 components, half-float LE (6 bytes/pixel).
+                        I_3xF16_BE = 49, ///< 3 components, half-float BE (6 bytes/pixel).
+                        I_1xF16_LE = 50, ///< 1 component, half-float LE (2 bytes/pixel).
+                        I_1xF16_BE = 51, ///< 1 component, half-float BE (2 bytes/pixel).
 
                         // -- Float single-precision (32-bit IEEE 754) --
-                        I_4xF32_LE           = 52,   ///< 4 components, float LE (16 bytes/pixel).
-                        I_4xF32_BE           = 53,   ///< 4 components, float BE (16 bytes/pixel).
-                        I_3xF32_LE           = 54,   ///< 3 components, float LE (12 bytes/pixel).
-                        I_3xF32_BE           = 55,   ///< 3 components, float BE (12 bytes/pixel).
-                        I_1xF32_LE           = 56,   ///< 1 component, float LE (4 bytes/pixel).
-                        I_1xF32_BE           = 57,   ///< 1 component, float BE (4 bytes/pixel).
+                        I_4xF32_LE = 52, ///< 4 components, float LE (16 bytes/pixel).
+                        I_4xF32_BE = 53, ///< 4 components, float BE (16 bytes/pixel).
+                        I_3xF32_LE = 54, ///< 3 components, float LE (12 bytes/pixel).
+                        I_3xF32_BE = 55, ///< 3 components, float BE (12 bytes/pixel).
+                        I_1xF32_LE = 56, ///< 1 component, float LE (4 bytes/pixel).
+                        I_1xF32_BE = 57, ///< 1 component, float BE (4 bytes/pixel).
 
                         // -- 10:10:10:2 packed (3x10-bit + 1x2-bit in 32 bits) --
-                        I_10_10_10_2_LE      = 58,   ///< 4 components (10+10+10+2 bits) in 32-bit LE word.
-                        I_10_10_10_2_BE      = 59,   ///< 4 components (10+10+10+2 bits) in 32-bit BE word.
+                        I_10_10_10_2_LE = 58, ///< 4 components (10+10+10+2 bits) in 32-bit LE word.
+                        I_10_10_10_2_BE = 59, ///< 4 components (10+10+10+2 bits) in 32-bit BE word.
 
                         // -- Semi-planar 4:2:0 NV21 (CrCb order) --
-                        SP_420_NV21_8        = 60,   ///< 2 planes, 8-bit, 4:2:0 NV21 (Y + interleaved CrCb).
-                        SP_420_NV21_10_LE    = 61,   ///< 2 planes, 10-bit in 16-bit LE words, 4:2:0 NV21.
-                        SP_420_NV21_10_BE    = 62,   ///< 2 planes, 10-bit in 16-bit BE words, 4:2:0 NV21.
-                        SP_420_NV21_12_LE    = 63,   ///< 2 planes, 12-bit in 16-bit LE words, 4:2:0 NV21.
-                        SP_420_NV21_12_BE    = 64,   ///< 2 planes, 12-bit in 16-bit BE words, 4:2:0 NV21.
+                        SP_420_NV21_8 = 60,     ///< 2 planes, 8-bit, 4:2:0 NV21 (Y + interleaved CrCb).
+                        SP_420_NV21_10_LE = 61, ///< 2 planes, 10-bit in 16-bit LE words, 4:2:0 NV21.
+                        SP_420_NV21_10_BE = 62, ///< 2 planes, 10-bit in 16-bit BE words, 4:2:0 NV21.
+                        SP_420_NV21_12_LE = 63, ///< 2 planes, 12-bit in 16-bit LE words, 4:2:0 NV21.
+                        SP_420_NV21_12_BE = 64, ///< 2 planes, 12-bit in 16-bit BE words, 4:2:0 NV21.
 
                         // -- Semi-planar 4:2:2 (NV16) --
-                        SP_422_8             = 65,   ///< 2 planes, 8-bit, 4:2:2 NV16 (Y + interleaved CbCr).
-                        SP_422_10_LE         = 66,   ///< 2 planes, 10-bit in 16-bit LE words, 4:2:2 NV16.
-                        SP_422_10_BE         = 67,   ///< 2 planes, 10-bit in 16-bit BE words, 4:2:2 NV16.
-                        SP_422_12_LE         = 68,   ///< 2 planes, 12-bit in 16-bit LE words, 4:2:2 NV16.
-                        SP_422_12_BE         = 69,   ///< 2 planes, 12-bit in 16-bit BE words, 4:2:2 NV16.
+                        SP_422_8 = 65,     ///< 2 planes, 8-bit, 4:2:2 NV16 (Y + interleaved CbCr).
+                        SP_422_10_LE = 66, ///< 2 planes, 10-bit in 16-bit LE words, 4:2:2 NV16.
+                        SP_422_10_BE = 67, ///< 2 planes, 10-bit in 16-bit BE words, 4:2:2 NV16.
+                        SP_422_12_LE = 68, ///< 2 planes, 12-bit in 16-bit LE words, 4:2:2 NV16.
+                        SP_422_12_BE = 69, ///< 2 planes, 12-bit in 16-bit BE words, 4:2:2 NV16.
 
                         // -- Planar 4:1:1 --
-                        P_411_3x8            = 70,   ///< 3 planes, 8-bit, 4:1:1 (Y + Cb quarter-width + Cr quarter-width).
+                        P_411_3x8 = 70, ///< 3 planes, 8-bit, 4:1:1 (Y + Cb quarter-width + Cr quarter-width).
 
                         // -- 16-bit YCbCr additions --
-                        P_422_3x16_LE        = 71,   ///< 3 planes, 16-bit LE, 4:2:2.
-                        P_422_3x16_BE        = 72,   ///< 3 planes, 16-bit BE, 4:2:2.
-                        P_420_3x16_LE        = 73,   ///< 3 planes, 16-bit LE, 4:2:0.
-                        P_420_3x16_BE        = 74,   ///< 3 planes, 16-bit BE, 4:2:0.
-                        SP_420_16_LE         = 75,   ///< 2 planes, 16-bit LE, 4:2:0 NV12.
-                        SP_420_16_BE         = 76,   ///< 2 planes, 16-bit BE, 4:2:0 NV12.
-                        I_422_UYVY_3x16_LE   = 77,   ///< 3 components, 16-bit LE, 4:2:2 UYVY.
-                        I_422_UYVY_3x16_BE   = 78,   ///< 3 components, 16-bit BE, 4:2:2 UYVY.
+                        P_422_3x16_LE = 71,      ///< 3 planes, 16-bit LE, 4:2:2.
+                        P_422_3x16_BE = 72,      ///< 3 planes, 16-bit BE, 4:2:2.
+                        P_420_3x16_LE = 73,      ///< 3 planes, 16-bit LE, 4:2:0.
+                        P_420_3x16_BE = 74,      ///< 3 planes, 16-bit BE, 4:2:0.
+                        SP_420_16_LE = 75,       ///< 2 planes, 16-bit LE, 4:2:0 NV12.
+                        SP_420_16_BE = 76,       ///< 2 planes, 16-bit BE, 4:2:0 NV12.
+                        I_422_UYVY_3x16_LE = 77, ///< 3 components, 16-bit LE, 4:2:2 UYVY.
+                        I_422_UYVY_3x16_BE = 78, ///< 3 components, 16-bit BE, 4:2:2 UYVY.
 
                         // -- Planar 4:4:4 (RGB / YUV 4:4:4) --
-                        P_444_3x8            = 79,   ///< 3 planes, 8-bit, 4:4:4 (equal-sized planes, no subsampling).
-                        P_444_3x10_LE        = 81,   ///< 3 planes, 10-bit in 16-bit LE words, 4:4:4.
+                        P_444_3x8 = 79,     ///< 3 planes, 8-bit, 4:4:4 (equal-sized planes, no subsampling).
+                        P_444_3x10_LE = 81, ///< 3 planes, 10-bit in 16-bit LE words, 4:4:4.
 
                         // -- DPX Method B packed --
-                        I_3x10_DPX_B         = 80,   ///< 3 components, 10 bits, DPX Method B packed (30 bits in 4 bytes).
+                        I_3x10_DPX_B = 80, ///< 3 components, 10 bits, DPX Method B packed (30 bits in 4 bytes).
 
-                        UserDefined          = 1024  ///< First ID available for user-registered types.
+                        UserDefined = 1024 ///< First ID available for user-registered types.
                 };
 
                 /** @brief Chroma subsampling mode. */
@@ -268,35 +268,35 @@ class PixelMemLayout {
 
                 /** @brief Describes a single component within the pixel format. */
                 struct CompDesc {
-                        int    plane;      ///< Index of the plane this component resides in.
-                        size_t bits;       ///< Number of bits used by this component.
-                        size_t byteOffset; ///< Byte offset of this component within the pixel block.
+                                int    plane;      ///< Index of the plane this component resides in.
+                                size_t bits;       ///< Number of bits used by this component.
+                                size_t byteOffset; ///< Byte offset of this component within the pixel block.
                 };
 
                 /** @brief Describes a single image plane. */
                 struct PlaneDesc {
-                        String name;              ///< Human-readable name for the plane.
-                        size_t hSubsampling = 1;  ///< Horizontal subsampling (1 = full, 2 = half width).
-                        size_t vSubsampling = 1;  ///< Vertical subsampling (1 = full, 2 = half height).
-                        size_t bytesPerSample = 0;///< Bytes per sample in this plane (0 = use block math).
+                                String name;               ///< Human-readable name for the plane.
+                                size_t hSubsampling = 1;   ///< Horizontal subsampling (1 = full, 2 = half width).
+                                size_t vSubsampling = 1;   ///< Vertical subsampling (1 = full, 2 = half height).
+                                size_t bytesPerSample = 0; ///< Bytes per sample in this plane (0 = use block math).
                 };
 
                 /** @brief Immutable data record for a pixel format. */
                 struct Data {
-                        ID              id = Invalid;                   ///< Unique format identifier.
-                        String          name;                           ///< Short format name (e.g. "I_4x8").
-                        String          desc;                           ///< Human-readable description.
-                        Sampling        sampling = SamplingUndefined;   ///< Chroma subsampling mode.
-                        size_t          pixelsPerBlock = 0;             ///< Number of pixels in one encoded block.
-                        size_t          bytesPerBlock = 0;              ///< Number of bytes in one encoded block.
-                        size_t          compCount = 0;                  ///< Number of components per pixel.
-                        CompDesc        comps[MaxComps] = {};           ///< Component descriptors.
-                        size_t          planeCount = 0;                 ///< Number of planes.
-                        PlaneDesc       planes[MaxPlanes] = {};         ///< Plane descriptors.
-                        ChromaSitingH   chromaSitingH = ChromaHUndefined; ///< Horizontal chroma siting.
-                        ChromaSitingV   chromaSitingV = ChromaVUndefined; ///< Vertical chroma siting.
+                                ID            id = Invalid;                 ///< Unique format identifier.
+                                String        name;                         ///< Short format name (e.g. "I_4x8").
+                                String        desc;                         ///< Human-readable description.
+                                Sampling      sampling = SamplingUndefined; ///< Chroma subsampling mode.
+                                size_t        pixelsPerBlock = 0;           ///< Number of pixels in one encoded block.
+                                size_t        bytesPerBlock = 0;            ///< Number of bytes in one encoded block.
+                                size_t        compCount = 0;                ///< Number of components per pixel.
+                                CompDesc      comps[MaxComps] = {};         ///< Component descriptors.
+                                size_t        planeCount = 0;               ///< Number of planes.
+                                PlaneDesc     planes[MaxPlanes] = {};       ///< Plane descriptors.
+                                ChromaSitingH chromaSitingH = ChromaHUndefined; ///< Horizontal chroma siting.
+                                ChromaSitingV chromaSitingV = ChromaVUndefined; ///< Vertical chroma siting.
 
-                        /**
+                                /**
                          * @brief Computes the line stride for a given plane.
                          * @param d         Pointer to this Data record.
                          * @param planeIdx  Zero-based plane index.
@@ -305,10 +305,10 @@ class PixelMemLayout {
                          * @param lineAlign Alignment requirement in bytes.
                          * @return Line stride in bytes, or 0 if not applicable.
                          */
-                        size_t (*lineStrideFunc)(const Data *d, size_t planeIdx,
-                                                size_t width, size_t linePad, size_t lineAlign) = nullptr;
+                                size_t (*lineStrideFunc)(const Data *d, size_t planeIdx, size_t width, size_t linePad,
+                                                         size_t lineAlign) = nullptr;
 
-                        /**
+                                /**
                          * @brief Computes the total byte size of a given plane.
                          * @param d         Pointer to this Data record.
                          * @param planeIdx  Zero-based plane index.
@@ -318,9 +318,8 @@ class PixelMemLayout {
                          * @param lineAlign Alignment requirement in bytes.
                          * @return Plane size in bytes, or 0 if not applicable.
                          */
-                        size_t (*planeSizeFunc)(const Data *d, size_t planeIdx,
-                                               size_t width, size_t height,
-                                               size_t linePad, size_t lineAlign) = nullptr;
+                                size_t (*planeSizeFunc)(const Data *d, size_t planeIdx, size_t width, size_t height,
+                                                        size_t linePad, size_t lineAlign) = nullptr;
                 };
 
                 /**
@@ -451,9 +450,8 @@ class PixelMemLayout {
                  * @param lineAlign  Alignment requirement in bytes.
                  * @return Line stride in bytes, or 0 if the plane is invalid or no function is set.
                  */
-                size_t lineStride(size_t planeIndex, size_t width,
-                                  size_t linePad = 0, size_t lineAlign = 1) const {
-                        if(!isValidPlane(planeIndex) || d->lineStrideFunc == nullptr) return 0;
+                size_t lineStride(size_t planeIndex, size_t width, size_t linePad = 0, size_t lineAlign = 1) const {
+                        if (!isValidPlane(planeIndex) || d->lineStrideFunc == nullptr) return 0;
                         return d->lineStrideFunc(d, planeIndex, width, linePad, lineAlign);
                 }
 
@@ -466,9 +464,9 @@ class PixelMemLayout {
                  * @param lineAlign  Alignment requirement in bytes.
                  * @return Plane size in bytes, or 0 if the plane is invalid or no function is set.
                  */
-                size_t planeSize(size_t planeIndex, size_t width, size_t height,
-                                 size_t linePad = 0, size_t lineAlign = 1) const {
-                        if(!isValidPlane(planeIndex) || d->planeSizeFunc == nullptr) return 0;
+                size_t planeSize(size_t planeIndex, size_t width, size_t height, size_t linePad = 0,
+                                 size_t lineAlign = 1) const {
+                        if (!isValidPlane(planeIndex) || d->planeSizeFunc == nullptr) return 0;
                         return d->planeSizeFunc(d, planeIndex, width, height, linePad, lineAlign);
                 }
 
@@ -482,7 +480,7 @@ class PixelMemLayout {
                 const Data *data() const { return d; }
 
         private:
-                const Data *d = nullptr;
+                const Data        *d = nullptr;
                 static const Data *lookupData(ID id);
 };
 

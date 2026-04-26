@@ -27,10 +27,10 @@ class MouseEvent : public Event {
 
                 /** @brief Mouse button flags (bit values for combining). */
                 enum Button : uint8_t {
-                        NoButton     = 0x00,
-                        LeftButton   = 0x01,
+                        NoButton = 0x00,
+                        LeftButton = 0x01,
                         MiddleButton = 0x02,
-                        RightButton  = 0x04
+                        RightButton = 0x04
                 };
 
                 /** @brief Mouse action enumeration. */
@@ -45,11 +45,11 @@ class MouseEvent : public Event {
 
                 /** @brief Modifier flags (same as KeyEvent). */
                 enum Modifier : uint8_t {
-                        NoModifier    = 0x00,
+                        NoModifier = 0x00,
                         ShiftModifier = 0x01,
-                        CtrlModifier  = 0x02,
-                        AltModifier   = 0x04,
-                        MetaModifier  = 0x08
+                        CtrlModifier = 0x02,
+                        AltModifier = 0x04,
+                        MetaModifier = 0x08
                 };
 
                 /**
@@ -60,10 +60,10 @@ class MouseEvent : public Event {
                  * @param modifiers The modifier flags.
                  * @param buttons   Bitmask of all currently pressed buttons.
                  */
-                MouseEvent(const Point2Di32 &pos, Button button, Action action,
-                           uint8_t modifiers = NoModifier, uint8_t buttons = 0)
-                        : Event(Mouse), _pos(pos), _button(button),
-                          _action(action), _modifiers(modifiers), _buttons(buttons) {}
+                MouseEvent(const Point2Di32 &pos, Button button, Action action, uint8_t modifiers = NoModifier,
+                           uint8_t buttons = 0)
+                    : Event(Mouse), _pos(pos), _button(button), _action(action), _modifiers(modifiers),
+                      _buttons(buttons) {}
 
                 /** @brief Returns the mouse position (column, row). */
                 const Point2Di32 &pos() const { return _pos; }
@@ -96,11 +96,11 @@ class MouseEvent : public Event {
                 static String actionName(Action action);
 
         private:
-                Point2Di32         _pos;
-                Button          _button;
-                Action          _action;
-                uint8_t         _modifiers;
-                uint8_t         _buttons = 0;
+                Point2Di32 _pos;
+                Button     _button;
+                Action     _action;
+                uint8_t    _modifiers;
+                uint8_t    _buttons = 0;
 };
 
 PROMEKI_NAMESPACE_END

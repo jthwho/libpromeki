@@ -11,12 +11,8 @@
 PROMEKI_NAMESPACE_BEGIN
 
 namespace {
-        const char *kSharpNames[] = {
-                "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
-        };
-        const char *kFlatNames[] = {
-                "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"
-        };
+        const char *kSharpNames[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+        const char *kFlatNames[] = {"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"};
 } // namespace
 
 // --- Instance methods ---
@@ -70,17 +66,17 @@ String MidiNote::nameFromMidiNote(int midiNote) {
 
 MidiNote MidiNote::fromName(const String &name) {
         const std::string &s = name.str();
-        if(s.size() < 2) return MidiNote();
+        if (s.size() < 2) return MidiNote();
 
-        int pc      = -1;
+        int pc = -1;
         int nameLen = 0;
 
         // Try two-char pitch names first (e.g. "C#", "Db").
-        if(s.size() >= 3 && (s[1] == '#' || s[1] == 'b')) {
+        if (s.size() >= 3 && (s[1] == '#' || s[1] == 'b')) {
                 auto prefix = s.substr(0, 2);
-                for(int i = 0; i < 12; ++i) {
-                        if(prefix == kSharpNames[i] || prefix == kFlatNames[i]) {
-                                pc      = i;
+                for (int i = 0; i < 12; ++i) {
+                        if (prefix == kSharpNames[i] || prefix == kFlatNames[i]) {
+                                pc = i;
                                 nameLen = 2;
                                 break;
                         }
@@ -88,27 +84,27 @@ MidiNote MidiNote::fromName(const String &name) {
         }
 
         // Try single-char pitch name.
-        if(pc < 0) {
+        if (pc < 0) {
                 auto prefix = s.substr(0, 1);
-                for(int i = 0; i < 12; ++i) {
-                        if(prefix == kSharpNames[i]) {
-                                pc      = i;
+                for (int i = 0; i < 12; ++i) {
+                        if (prefix == kSharpNames[i]) {
+                                pc = i;
                                 nameLen = 1;
                                 break;
                         }
                 }
         }
 
-        if(pc < 0) return MidiNote();
+        if (pc < 0) return MidiNote();
 
         // Parse the octave number.
         auto octStr = s.substr(static_cast<size_t>(nameLen));
         try {
-                int oct  = std::stoi(octStr);
+                int oct = std::stoi(octStr);
                 int note = (oct + 1) * 12 + pc;
-                if(note < 0 || note > 127) return MidiNote();
+                if (note < 0 || note > 127) return MidiNote();
                 return MidiNote(static_cast<uint8_t>(note));
-        } catch(...) {
+        } catch (...) {
                 return MidiNote();
         }
 }

@@ -19,7 +19,7 @@ TEST_CASE("TuiScrollArea: default construction") {
 
 TEST_CASE("TuiScrollArea: setContentWidget") {
         TuiScrollArea area;
-        TuiWidget *content = new TuiWidget(&area);
+        TuiWidget    *content = new TuiWidget(&area);
         area.setContentWidget(content);
         CHECK(area.contentWidget() == content);
 }
@@ -54,7 +54,7 @@ TEST_CASE("TuiScrollArea: scrollTo") {
 
 TEST_CASE("TuiScrollArea: sizeHint") {
         TuiScrollArea area;
-        Size2Di32 hint = area.sizeHint();
+        Size2Di32     hint = area.sizeHint();
         CHECK(hint.width() >= 0);
         CHECK(hint.height() >= 0);
 }

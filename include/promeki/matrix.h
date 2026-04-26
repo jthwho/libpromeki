@@ -37,8 +37,7 @@ PROMEKI_NAMESPACE_BEGIN
  * auto inv = m.inverted();
  * @endcode
  */
-template <typename T, size_t W, size_t H>
-class Matrix {
+template <typename T, size_t W, size_t H> class Matrix {
         public:
                 /** @brief Type alias for a single row of the matrix. */
                 using RowDataType = Array<T, W>;
@@ -70,8 +69,8 @@ class Matrix {
                 static Matrix<T, W, H> rotationMatrix(T radians, size_t dim, Error *err = nullptr) {
                         static_assert(W == H, "Matrix can only be calculated for square matrices");
                         static_assert(W >= 2, "Matrix size must be at least 2x2 for rotation matrix generation.");
-                        if(dim >= W - 1) {
-                                if(err != nullptr) *err = Error::InvalidDimension;
+                        if (dim >= W - 1) {
+                                if (err != nullptr) *err = Error::InvalidDimension;
                                 return Matrix<T, W, H>();
                         }
 
@@ -98,43 +97,29 @@ class Matrix {
                  * @param index The row index.
                  * @return A mutable reference to the row.
                  */
-                RowDataType &operator[](size_t index) {
-                        return d[index];
-                }
+                RowDataType &operator[](size_t index) { return d[index]; }
 
                 /**
                  * @brief Accesses a row by index (const).
                  * @param index The row index.
                  * @return A const reference to the row.
                  */
-                const RowDataType &operator[](size_t index) const {
-                        return d[index];
-                }
+                const RowDataType &operator[](size_t index) const { return d[index]; }
 
                 /** @brief Returns a mutable reference to the underlying data. */
-                DataType& data() {
-                        return d;
-                }
+                DataType &data() { return d; }
 
                 /** @brief Returns a const reference to the underlying data. */
-                const DataType& data() const {
-                        return d;
-                }
+                const DataType &data() const { return d; }
 
                 /** @brief Returns the number of columns. */
-                size_t width() const {
-                        return W;
-                }
+                size_t width() const { return W; }
 
                 /** @brief Returns the number of rows. */
-                size_t height() const {
-                        return H;
-                }
+                size_t height() const { return H; }
 
                 /** @brief Returns true if the matrix is square (W == H). */
-                bool isSquare() const {
-                        return W == H;
-                }
+                bool isSquare() const { return W == H; }
 
                 /**
                  * @brief Returns the transpose of this matrix.
@@ -155,7 +140,7 @@ class Matrix {
                  * @param other The matrix to add.
                  * @return A new matrix containing the element-wise sum.
                  */
-                Matrix<T, W, H> operator+(const Matrix<T, W, H>& other) const {
+                Matrix<T, W, H> operator+(const Matrix<T, W, H> &other) const {
                         Matrix<T, W, H> result;
                         for (size_t i = 0; i < H; ++i) {
                                 for (size_t j = 0; j < W; ++j) {
@@ -170,7 +155,7 @@ class Matrix {
                  * @param other The matrix to subtract.
                  * @return A new matrix containing the element-wise difference.
                  */
-                Matrix<T, W, H> operator-(const Matrix<T, W, H>& other) const {
+                Matrix<T, W, H> operator-(const Matrix<T, W, H> &other) const {
                         Matrix<T, W, H> result;
                         for (size_t i = 0; i < H; ++i) {
                                 for (size_t j = 0; j < W; ++j) {
@@ -185,7 +170,7 @@ class Matrix {
                  * @param scalar The scalar to multiply each element by.
                  * @return A new matrix with each element multiplied by scalar.
                  */
-                Matrix<T, W, H> operator*(const T& scalar) const {
+                Matrix<T, W, H> operator*(const T &scalar) const {
                         Matrix<T, W, H> result;
                         for (size_t i = 0; i < H; ++i) {
                                 for (size_t j = 0; j < W; ++j) {
@@ -201,7 +186,7 @@ class Matrix {
                  * @param other The right-hand-side matrix.
                  * @return The product matrix of dimensions W x K.
                  */
-                template<size_t K> Matrix<T, W, K> operator*(const Matrix<T, H, K>& other) const {
+                template <size_t K> Matrix<T, W, K> operator*(const Matrix<T, H, K> &other) const {
                         Matrix<T, W, K> result;
                         for (size_t i = 0; i < W; ++i) {
                                 for (size_t j = 0; j < K; ++j) {
@@ -220,7 +205,7 @@ class Matrix {
                  * @param scalar The scalar to divide each element by.
                  * @return A new matrix with each element divided by scalar.
                  */
-                Matrix<T, W, H> operator/(const T& scalar) const {
+                Matrix<T, W, H> operator/(const T &scalar) const {
                         Matrix<T, W, H> result;
                         for (size_t i = 0; i < H; ++i) {
                                 for (size_t j = 0; j < W; ++j) {
@@ -235,7 +220,7 @@ class Matrix {
                  * @param L Output lower triangular matrix.
                  * @param U Output upper triangular matrix.
                  */
-                void LUdecomposition(Matrix<T, W, H>& L, Matrix<T, W, H>& U) const {
+                void LUdecomposition(Matrix<T, W, H> &L, Matrix<T, W, H> &U) const {
                         for (size_t i = 0; i < H; ++i) {
                                 for (size_t j = 0; j < W; ++j) {
                                         if (j < i) {
@@ -276,8 +261,8 @@ class Matrix {
                                 return d[0][0] * d[1][1] - d[0][1] * d[1][0];
                         } else if constexpr (W == 3) {
                                 return d[0][0] * (d[1][1] * d[2][2] - d[1][2] * d[2][1]) -
-                                        d[0][1] * (d[1][0] * d[2][2] - d[1][2] * d[2][0]) +
-                                        d[0][2] * (d[1][0] * d[2][1] - d[1][1] * d[2][0]);
+                                       d[0][1] * (d[1][0] * d[2][2] - d[1][2] * d[2][0]) +
+                                       d[0][2] * (d[1][0] * d[2][1] - d[1][1] * d[2][0]);
                         }
                         Matrix<T, W, H> L = Matrix<T, W, H>::identity();
                         Matrix<T, W, H> U = Matrix<T, W, H>::identity();
@@ -305,8 +290,8 @@ class Matrix {
                         static_assert(W == H, "Inverse can only be calculated for square matrices");
 
                         T det = determinant();
-                        if(det == 0) {
-                                if(err != nullptr) *err = Error::SingularMatrix;
+                        if (det == 0) {
+                                if (err != nullptr) *err = Error::SingularMatrix;
                                 return Matrix<T, W, H>();
                         }
 
@@ -348,8 +333,8 @@ class Matrix {
 
                                         // Divide the pivot row by the pivot element
                                         T pivotValue = temp[i][i];
-                                        if(pivotValue == 0) {
-                                                if(err != nullptr) *err = Error::SingularMatrix;
+                                        if (pivotValue == 0) {
+                                                if (err != nullptr) *err = Error::SingularMatrix;
                                                 return Matrix<T, W, H>();
                                         }
 
@@ -382,12 +367,12 @@ class Matrix {
                  * @param other The other vector matrix.
                  * @return The scalar dot product.
                  */
-                template<size_t L> T dot(const Matrix<T, L, 1>& other) const {
+                template <size_t L> T dot(const Matrix<T, L, 1> &other) const {
                         static_assert(W == 1 || H == 1, "Both matrices must have a single row or a single column");
                         static_assert(L == H || L == W, "The matrices must have the same number of elements");
 
                         size_t size = (W == 1) ? H : W;
-                        T result = 0;
+                        T      result = 0;
 
                         if constexpr (W == 1 && other.width() == 1) { // Both are column vectors
                                 for (size_t i = 0; i < size; ++i) {
@@ -407,7 +392,7 @@ class Matrix {
                  * @param func The function to apply.
                  * @return A new matrix with the function applied to each element.
                  */
-                template<typename Func> Matrix<T, W, H> apply(Func&& func) const {
+                template <typename Func> Matrix<T, W, H> apply(Func &&func) const {
                         Matrix<T, W, H> result;
                         for (size_t i = 0; i < H; ++i) {
                                 for (size_t j = 0; j < W; ++j) {
@@ -463,7 +448,7 @@ class Matrix {
                  * @param other The matrix to multiply element-wise.
                  * @return A new matrix containing the element-wise products.
                  */
-                Matrix<T, W, H> hadamardProduct(const Matrix<T, W, H>& other) const {
+                Matrix<T, W, H> hadamardProduct(const Matrix<T, W, H> &other) const {
                         Matrix<T, W, H> result;
                         for (size_t i = 0; i < H; ++i) {
                                 for (size_t j = 0; j < W; ++j) {
@@ -482,7 +467,7 @@ class Matrix {
                  * @param other The other column vector.
                  * @return The outer product matrix of dimensions H x L.
                  */
-                template<size_t L> Matrix<T, H, L> outer_product(const Matrix<T, L, 1>& other) const {
+                template <size_t L> Matrix<T, H, L> outer_product(const Matrix<T, L, 1> &other) const {
                         static_assert(W == 1, "The first matrix must have a single column");
                         Matrix<T, H, L> result;
                         for (size_t i = 0; i < H; ++i) {
@@ -492,7 +477,7 @@ class Matrix {
                         }
                         return result;
                 }
-                
+
                 /**
                  * @brief Computes the sum of each row.
                  * @return A column vector containing the sum of each row.
@@ -538,7 +523,7 @@ class Matrix {
                         }
                         return result;
                 }
-                
+
                 /**
                  * @brief Computes the mean of each row.
                  * @return A column vector containing the mean of each row.
@@ -604,4 +589,3 @@ class Matrix {
 };
 
 PROMEKI_NAMESPACE_END
-

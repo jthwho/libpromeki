@@ -18,15 +18,15 @@ TEST_CASE("HttpMethod") {
         }
 
         SUBCASE("named constants") {
-                CHECK(HttpMethod::Get.wireName()    == "GET");
-                CHECK(HttpMethod::Head.wireName()   == "HEAD");
-                CHECK(HttpMethod::Post.wireName()   == "POST");
-                CHECK(HttpMethod::Put.wireName()    == "PUT");
+                CHECK(HttpMethod::Get.wireName() == "GET");
+                CHECK(HttpMethod::Head.wireName() == "HEAD");
+                CHECK(HttpMethod::Post.wireName() == "POST");
+                CHECK(HttpMethod::Put.wireName() == "PUT");
                 CHECK(HttpMethod::Delete.wireName() == "DELETE");
-                CHECK(HttpMethod::Patch.wireName()  == "PATCH");
-                CHECK(HttpMethod::Options.wireName()== "OPTIONS");
-                CHECK(HttpMethod::Connect.wireName()== "CONNECT");
-                CHECK(HttpMethod::Trace.wireName()  == "TRACE");
+                CHECK(HttpMethod::Patch.wireName() == "PATCH");
+                CHECK(HttpMethod::Options.wireName() == "OPTIONS");
+                CHECK(HttpMethod::Connect.wireName() == "CONNECT");
+                CHECK(HttpMethod::Trace.wireName() == "TRACE");
         }
 
         SUBCASE("string round-trip") {

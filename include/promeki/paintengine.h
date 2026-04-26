@@ -37,7 +37,7 @@ class UncompressedVideoPayload;
  * synchronized.
  */
 class PaintEngine {
-	public:
+        public:
                 /** @brief Shared pointer type for PaintEngine. */
                 using Ptr = SharedPtr<PaintEngine>;
 
@@ -53,27 +53,27 @@ class PaintEngine {
                  * pixel data has been written (e.g. invalid createPixel call).
                  */
                 struct Pixel {
-                        uint8_t         _data[MaxPixelBytes] = {};
-                        uint8_t         _size = 0;
+                                uint8_t _data[MaxPixelBytes] = {};
+                                uint8_t _size = 0;
 
-                        /** @brief Returns true if the pixel has no data. */
-                        bool isEmpty() const { return _size == 0; }
+                                /** @brief Returns true if the pixel has no data. */
+                                bool isEmpty() const { return _size == 0; }
 
-                        /** @brief Returns the number of meaningful bytes. */
-                        size_t size() const { return _size; }
+                                /** @brief Returns the number of meaningful bytes. */
+                                size_t size() const { return _size; }
 
-                        /** @brief Returns a pointer to the pixel data. */
-                        const uint8_t *data() const { return _data; }
+                                /** @brief Returns a pointer to the pixel data. */
+                                const uint8_t *data() const { return _data; }
 
-                        /** @brief Returns a mutable pointer to the pixel data. */
-                        uint8_t *data() { return _data; }
+                                /** @brief Returns a mutable pointer to the pixel data. */
+                                uint8_t *data() { return _data; }
 
-                        /** @brief Element access. */
-                        uint8_t &operator[](size_t i) { return _data[i]; }
-                        uint8_t operator[](size_t i) const { return _data[i]; }
+                                /** @brief Element access. */
+                                uint8_t &operator[](size_t i) { return _data[i]; }
+                                uint8_t  operator[](size_t i) const { return _data[i]; }
 
-                        /** @brief Sets the active byte count. */
-                        void resize(size_t n) { _size = static_cast<uint8_t>(n); }
+                                /** @brief Sets the active byte count. */
+                                void resize(size_t n) { _size = static_cast<uint8_t>(n); }
                 };
 
                 /** @brief List of 2D points used for batch drawing operations. */
@@ -90,7 +90,7 @@ class PaintEngine {
                  * to the active Impl instance.
                  */
                 class Impl {
-                        PROMEKI_SHARED(Impl)
+                                PROMEKI_SHARED(Impl)
                         public:
                                 /** @brief Virtual destructor. */
                                 virtual ~Impl();
@@ -104,7 +104,7 @@ class PaintEngine {
                                  * @return true on success, false on failure.
                                  */
                                 virtual bool blit(const Point2Di32 &destTopLeft, const UncompressedVideoPayload &src,
-                                                const Point2Di32 &srcTopLeft, const Size2Du32 &srcSize) const;
+                                                  const Point2Di32 &srcTopLeft, const Size2Du32 &srcSize) const;
 
                                 /**
                                  * @brief Creates a Pixel value from component values.
@@ -121,7 +121,8 @@ class PaintEngine {
                                  * @param pointCount Number of points in the array.
                                  * @return The number of points actually drawn.
                                  */
-                                virtual size_t drawPoints(const Pixel &pixel, const Point2Di32 *points, size_t pointCount) const;
+                                virtual size_t drawPoints(const Pixel &pixel, const Point2Di32 *points,
+                                                          size_t pointCount) const;
 
                                 /**
                                  * @brief Composites a set of points onto the surface with per-point alpha.
@@ -132,7 +133,7 @@ class PaintEngine {
                                  * @return The number of points actually composited.
                                  */
                                 virtual size_t compositePoints(const Pixel &pixel, const Point2Di32 *points,
-                                                const float *alphas, size_t pointCount) const;
+                                                               const float *alphas, size_t pointCount) const;
 
                                 /**
                                  * @brief Fills the entire surface with a single pixel value.
@@ -148,7 +149,8 @@ class PaintEngine {
                                  * @param count Number of line segments in the array.
                                  * @return The number of points drawn.
                                  */
-                                virtual size_t drawLines(const Pixel &pixel, const Line2Di32 *lines, size_t count) const;
+                                virtual size_t drawLines(const Pixel &pixel, const Line2Di32 *lines,
+                                                         size_t count) const;
 
                                 /**
                                  * @brief Draws a rectangle outline.
@@ -173,7 +175,8 @@ class PaintEngine {
                                  * @param radius Radius in pixels.
                                  * @return The number of points drawn.
                                  */
-                                virtual size_t drawCircle(const Pixel &pixel, const Point2Di32 &center, int radius) const;
+                                virtual size_t drawCircle(const Pixel &pixel, const Point2Di32 &center,
+                                                          int radius) const;
 
                                 /**
                                  * @brief Fills a circle with a solid color.
@@ -182,7 +185,8 @@ class PaintEngine {
                                  * @param radius Radius in pixels.
                                  * @return The number of points drawn.
                                  */
-                                virtual size_t fillCircle(const Pixel &pixel, const Point2Di32 &center, int radius) const;
+                                virtual size_t fillCircle(const Pixel &pixel, const Point2Di32 &center,
+                                                          int radius) const;
 
                                 /**
                                  * @brief Draws an ellipse outline.
@@ -191,7 +195,8 @@ class PaintEngine {
                                  * @param size   Half-widths (rx, ry) of the ellipse.
                                  * @return The number of points drawn.
                                  */
-                                virtual size_t drawEllipse(const Pixel &pixel, const Point2Di32 &center, const Size2Du32 &size) const;
+                                virtual size_t drawEllipse(const Pixel &pixel, const Point2Di32 &center,
+                                                           const Size2Du32 &size) const;
 
                                 /**
                                  * @brief Fills an ellipse with a solid color.
@@ -200,7 +205,8 @@ class PaintEngine {
                                  * @param size   Half-widths (rx, ry) of the ellipse.
                                  * @return The number of points drawn.
                                  */
-                                virtual size_t fillEllipse(const Pixel &pixel, const Point2Di32 &center, const Size2Du32 &size) const;
+                                virtual size_t fillEllipse(const Pixel &pixel, const Point2Di32 &center,
+                                                           const Size2Du32 &size) const;
 
                                 /**
                                  * @brief Returns the pixel description associated with this implementation.
@@ -234,9 +240,7 @@ class PaintEngine {
                  * @brief Returns the pixel description of the underlying implementation.
                  * @return A const reference to the PixelFormat.
                  */
-                const PixelFormat &pixelFormat() const {
-                        return d->pixelFormat();
-                }
+                const PixelFormat &pixelFormat() const { return d->pixelFormat(); }
 
                 /**
                  * @brief Creates a Pixel from an array of component values.
@@ -253,9 +257,7 @@ class PaintEngine {
                  * @param c1 The component value.
                  * @return A Pixel suitable for drawing on this engine.
                  */
-                Pixel createPixel(uint16_t c1) const {
-                        return d->createPixel(&c1, 1);
-                }
+                Pixel createPixel(uint16_t c1) const { return d->createPixel(&c1, 1); }
 
                 /**
                  * @brief Creates a Pixel from two component values.
@@ -264,7 +266,7 @@ class PaintEngine {
                  * @return A Pixel suitable for drawing on this engine.
                  */
                 Pixel createPixel(uint16_t c1, uint16_t c2) const {
-                        uint16_t data[] = { c1, c2 };
+                        uint16_t data[] = {c1, c2};
                         return d->createPixel(data, 2);
                 }
 
@@ -276,7 +278,7 @@ class PaintEngine {
                  * @return A Pixel suitable for drawing on this engine.
                  */
                 Pixel createPixel(uint16_t c1, uint16_t c2, uint16_t c3) const {
-                        uint16_t data[] = { c1, c2, c3 };
+                        uint16_t data[] = {c1, c2, c3};
                         return d->createPixel(data, 3);
                 }
 
@@ -289,7 +291,7 @@ class PaintEngine {
                  * @return A Pixel suitable for drawing on this engine.
                  */
                 Pixel createPixel(uint16_t c1, uint16_t c2, uint16_t c3, uint16_t c4) const {
-                        uint16_t data[] = { c1, c2, c3, c4 };
+                        uint16_t data[] = {c1, c2, c3, c4};
                         return d->createPixel(data, 4);
                 }
 
@@ -305,22 +307,20 @@ class PaintEngine {
                  */
                 Pixel createPixel(const Color &color) const {
                         const PixelFormat &pd = d->pixelFormat();
-                        const ColorModel &targetModel = pd.isValid()
-                                ? pd.colorModel() : ColorModel(ColorModel::sRGB);
-                        Color c = (color.model() == targetModel)
-                                ? color : color.convert(targetModel);
-                        size_t count = pd.isValid() ? pd.compCount() : 4;
-                        uint16_t data[PixelMemLayout::MaxComps] = {};
-                        for(size_t i = 0; i < count && i < 3; i++) {
+                        const ColorModel  &targetModel = pd.isValid() ? pd.colorModel() : ColorModel(ColorModel::sRGB);
+                        Color              c = (color.model() == targetModel) ? color : color.convert(targetModel);
+                        size_t             count = pd.isValid() ? pd.compCount() : 4;
+                        uint16_t           data[PixelMemLayout::MaxComps] = {};
+                        for (size_t i = 0; i < count && i < 3; i++) {
                                 float v = c.comp(i) * 65535.0f;
-                                if(v < 0.0f) v = 0.0f;
-                                if(v > 65535.0f) v = 65535.0f;
+                                if (v < 0.0f) v = 0.0f;
+                                if (v > 65535.0f) v = 65535.0f;
                                 data[i] = static_cast<uint16_t>(v);
                         }
-                        if(count >= 4) {
+                        if (count >= 4) {
                                 float a = c.alpha() * 65535.0f;
-                                if(a < 0.0f) a = 0.0f;
-                                if(a > 65535.0f) a = 65535.0f;
+                                if (a < 0.0f) a = 0.0f;
+                                if (a > 65535.0f) a = 65535.0f;
                                 data[3] = static_cast<uint16_t>(a);
                         }
                         return d->createPixel(data, count);
@@ -355,7 +355,8 @@ class PaintEngine {
                  * @param pointCount Number of points in the arrays.
                  * @return The number of points actually composited.
                  */
-                size_t compositePoints(const Pixel &pixel, const Point2Di32 *points, const float *alphas, size_t pointCount) const {
+                size_t compositePoints(const Pixel &pixel, const Point2Di32 *points, const float *alphas,
+                                       size_t pointCount) const {
                         return d->compositePoints(pixel, points, alphas, pointCount);
                 }
 
@@ -410,9 +411,7 @@ class PaintEngine {
                  * @param pixel The pixel value to fill with.
                  * @return true on success, false on failure.
                  */
-                bool fill(const Pixel &pixel) {
-                        return d->fill(pixel);
-                }
+                bool fill(const Pixel &pixel) { return d->fill(pixel); }
 
                 /**
                  * @brief Draws a rectangle outline.
@@ -487,7 +486,8 @@ class PaintEngine {
                  * @return true on success, false on failure.
                  */
                 bool blit(const Point2Di32 &destTopLeft, const UncompressedVideoPayload &src,
-                          const Point2Di32 &srcTopLeft = Point2Di32(0, 0), const Size2Du32 &srcSize = Size2Du32()) const {
+                          const Point2Di32 &srcTopLeft = Point2Di32(0, 0),
+                          const Size2Du32  &srcSize = Size2Du32()) const {
                         return d->blit(destTopLeft, src, srcTopLeft, srcSize);
                 }
 

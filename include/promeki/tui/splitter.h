@@ -20,12 +20,14 @@ PROMEKI_NAMESPACE_BEGIN
  * Thread-affine — see @ref TuiWidget.
  */
 class TuiSplitter : public TuiWidget {
-        PROMEKI_OBJECT(TuiSplitter, TuiWidget)
+                PROMEKI_OBJECT(TuiSplitter, TuiWidget)
         public:
-                enum Orientation { Horizontal, Vertical };
+                enum Orientation {
+                        Horizontal,
+                        Vertical
+                };
 
-                TuiSplitter(Orientation orientation = Horizontal,
-                            ObjectBase *parent = nullptr);
+                TuiSplitter(Orientation orientation = Horizontal, ObjectBase *parent = nullptr);
                 ~TuiSplitter() override;
 
                 void setFirstWidget(TuiWidget *widget);
@@ -35,7 +37,7 @@ class TuiSplitter : public TuiWidget {
                 TuiWidget *secondWidget() const { return _second; }
 
                 /** @brief Sets the split position (0.0 to 1.0). */
-                void setSplitRatio(double ratio);
+                void   setSplitRatio(double ratio);
                 double splitRatio() const { return _splitRatio; }
 
                 Orientation orientation() const { return _orientation; }
@@ -49,11 +51,11 @@ class TuiSplitter : public TuiWidget {
                 void mouseEvent(MouseEvent *e) override;
 
         private:
-                Orientation     _orientation;
-                TuiWidget       *_first = nullptr;
-                TuiWidget       *_second = nullptr;
-                double          _splitRatio = 0.5;
-                bool            _dragging = false;
+                Orientation _orientation;
+                TuiWidget  *_first = nullptr;
+                TuiWidget  *_second = nullptr;
+                double      _splitRatio = 0.5;
+                bool        _dragging = false;
 
                 void updateChildGeometry();
 };

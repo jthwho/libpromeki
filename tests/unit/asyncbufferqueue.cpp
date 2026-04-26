@@ -16,15 +16,15 @@ using namespace promeki;
 
 namespace {
 
-// Helper: build a Buffer::Ptr containing the given byte sequence.
-Buffer::Ptr makeSegment(const char *bytes, size_t n) {
-        Buffer::Ptr ptr = Buffer::Ptr::create(n);
-        if(n > 0) std::memcpy(ptr.modify()->data(), bytes, n);
-        ptr.modify()->setSize(n);
-        return ptr;
-}
+        // Helper: build a Buffer::Ptr containing the given byte sequence.
+        Buffer::Ptr makeSegment(const char *bytes, size_t n) {
+                Buffer::Ptr ptr = Buffer::Ptr::create(n);
+                if (n > 0) std::memcpy(ptr.modify()->data(), bytes, n);
+                ptr.modify()->setSize(n);
+                return ptr;
+        }
 
-}  // namespace
+} // namespace
 
 TEST_CASE("AsyncBufferQueue_OpensReadOnlyAndRejectsWriteOnly") {
         AsyncBufferQueue q;
@@ -33,7 +33,7 @@ TEST_CASE("AsyncBufferQueue_OpensReadOnlyAndRejectsWriteOnly") {
         CHECK(q.open(IODevice::ReadOnly).isOk());
         CHECK(q.isOpen());
         CHECK(q.isSequential());
-        CHECK_FALSE(q.atEnd());        // writer side still open
+        CHECK_FALSE(q.atEnd()); // writer side still open
         CHECK(q.bytesAvailable() == 0);
 }
 
@@ -49,12 +49,12 @@ TEST_CASE("AsyncBufferQueue_EnqueueWakesReaderAndReadDrainsBytes") {
         CHECK(readyCount.load() == 1);
         CHECK(q.bytesAvailable() == 5);
 
-        char tmp[8] = {0};
+        char          tmp[8] = {0};
         const int64_t got = q.read(tmp, sizeof(tmp));
         CHECK(got == 5);
         CHECK(std::memcmp(tmp, "hello", 5) == 0);
         CHECK(q.bytesAvailable() == 0);
-        CHECK_FALSE(q.atEnd());        // writer side still open
+        CHECK_FALSE(q.atEnd()); // writer side still open
 }
 
 TEST_CASE("AsyncBufferQueue_MultiSegmentDrainsInOrder") {
@@ -69,7 +69,7 @@ TEST_CASE("AsyncBufferQueue_MultiSegmentDrainsInOrder") {
 
         // Read with a too-small buffer first to verify partial-segment
         // accounting (offset advance) actually works.
-        char chunk[4] = {0};
+        char    chunk[4] = {0};
         int64_t got = q.read(chunk, 4);
         CHECK(got == 4);
         CHECK(std::memcmp(chunk, "foob", 4) == 0);
@@ -133,16 +133,16 @@ TEST_CASE("AsyncBufferQueue_DrainAfterCloseWritingFlipsAtEndOnceQueueEmpty") {
         REQUIRE(q.enqueue(makeSegment("abc", 3)).isOk());
         REQUIRE(q.enqueue(makeSegment("def", 3)).isOk());
         q.closeWriting();
-        CHECK_FALSE(q.atEnd());        // bytes still queued
+        CHECK_FALSE(q.atEnd()); // bytes still queued
 
         char tmp[2] = {0};
         CHECK(q.read(tmp, sizeof(tmp)) == 2);
         CHECK_FALSE(q.atEnd());
 
-        char rest[8] = {0};
+        char          rest[8] = {0};
         const int64_t got = q.read(rest, sizeof(rest));
         CHECK(got == 4);
-        CHECK(q.atEnd());        // queue empty + writer closed → done
+        CHECK(q.atEnd()); // queue empty + writer closed → done
         CHECK(q.read(rest, sizeof(rest)) == 0);
 }
 

@@ -24,7 +24,7 @@ TEST_CASE("Array: variadic construction") {
 
 TEST_CASE("Array: std::array construction") {
         std::array<int, 3> sa = {10, 20, 30};
-        Array<int, 3> a(sa);
+        Array<int, 3>      a(sa);
         CHECK(a[0] == 10);
         CHECK(a[1] == 20);
         CHECK(a[2] == 30);
@@ -96,7 +96,7 @@ TEST_CASE("Array: scalar operator*=") {
 TEST_CASE("Array: operator+ (array)") {
         Array<int, 3> a(1, 2, 3);
         Array<int, 3> b(10, 20, 30);
-        auto c = a + b;
+        auto          c = a + b;
         CHECK(c[0] == 11);
         CHECK(c[1] == 22);
         CHECK(c[2] == 33);
@@ -104,7 +104,7 @@ TEST_CASE("Array: operator+ (array)") {
 
 TEST_CASE("Array: operator* (scalar)") {
         Array<int, 3> a(1, 2, 3);
-        auto b = a * 5;
+        auto          b = a * 5;
         CHECK(b[0] == 5);
         CHECK(b[1] == 10);
         CHECK(b[2] == 15);
@@ -130,7 +130,7 @@ TEST_CASE("Array: mean") {
 
 TEST_CASE("Array: data pointer") {
         Array<int, 3> a(10, 20, 30);
-        int *p = a.data();
+        int          *p = a.data();
         CHECK(p[0] == 10);
         CHECK(p[1] == 20);
         CHECK(p[2] == 30);
@@ -146,7 +146,7 @@ TEST_CASE("Array: isZero") {
 TEST_CASE("Array: lerp") {
         Array<double, 2> a(0.0, 0.0);
         Array<double, 2> b(10.0, 20.0);
-        auto mid = a.lerp(b, 0.5);
+        auto             mid = a.lerp(b, 0.5);
         CHECK(mid[0] == doctest::Approx(5.0));
         CHECK(mid[1] == doctest::Approx(10.0));
 }
@@ -164,7 +164,7 @@ TEST_CASE("Array: clamp") {
         Array<int, 4> val(-5, 5, 50, 100);
         Array<int, 4> min(0, 0, 0, 0);
         Array<int, 4> max(10, 10, 10, 10);
-        auto out = val.clamp(min, max);
+        auto          out = val.clamp(min, max);
         CHECK(out[0] == 0);
         CHECK(out[1] == 5);
         CHECK(out[2] == 10);
@@ -175,7 +175,7 @@ TEST_CASE("Array: clamp with per-element ranges") {
         Array<int, 3> val(50, 50, 50);
         Array<int, 3> min(0, 60, 40);
         Array<int, 3> max(40, 100, 100);
-        auto out = val.clamp(min, max);
+        auto          out = val.clamp(min, max);
         CHECK(out[0] == 40);
         CHECK(out[1] == 60);
         CHECK(out[2] == 50);
@@ -183,7 +183,7 @@ TEST_CASE("Array: clamp with per-element ranges") {
 
 TEST_CASE("Array: std::array rvalue construction") {
         std::array<int, 3> sa = {1, 2, 3};
-        Array<int, 3> a(std::move(sa));
+        Array<int, 3>      a(std::move(sa));
         CHECK(a[0] == 1);
         CHECK(a[1] == 2);
         CHECK(a[2] == 3);

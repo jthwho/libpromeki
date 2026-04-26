@@ -138,202 +138,204 @@ class PixelFormat {
                  * descriptions obtain IDs from registerType().
                  */
                 enum ID {
-                        Invalid                            = 0,    ///< Invalid or uninitialized pixel description.
+                        Invalid = 0, ///< Invalid or uninitialized pixel description.
 
                         // -- RGB/RGBA uncompressed (8-bit, byte-aligned) --
-                        RGBA8_sRGB                         = 1,    ///< 8-bit RGBA, sRGB, full range.
-                        RGB8_sRGB                          = 2,    ///< 8-bit RGB, sRGB, full range.
+                        RGBA8_sRGB = 1, ///< 8-bit RGBA, sRGB, full range.
+                        RGB8_sRGB = 2,  ///< 8-bit RGB, sRGB, full range.
 
                         // -- RGB DPX packed --
-                        RGB10_DPX_sRGB                     = 3,    ///< 10-bit RGB, DPX packed (30 bits in 4 bytes), sRGB.
+                        RGB10_DPX_sRGB = 3, ///< 10-bit RGB, DPX packed (30 bits in 4 bytes), sRGB.
 
                         // -- YCbCr 4:2:2 interleaved YUYV --
-                        YUV8_422_Rec709                    = 4,    ///< 8-bit YCbCr 4:2:2, Rec.709, limited range.
-                        YUV10_422_Rec709                   = 5,    ///< 10-bit YCbCr 4:2:2, Rec.709, limited range.
+                        YUV8_422_Rec709 = 4,  ///< 8-bit YCbCr 4:2:2, Rec.709, limited range.
+                        YUV10_422_Rec709 = 5, ///< 10-bit YCbCr 4:2:2, Rec.709, limited range.
 
                         // -- JPEG compressed --
-                        JPEG_RGBA8_sRGB                    = 6,    ///< JPEG-compressed 8-bit RGBA, sRGB, full range.
-                        JPEG_RGB8_sRGB                     = 7,    ///< JPEG-compressed 8-bit RGB, sRGB, full range.
-                        JPEG_YUV8_422_Rec709               = 8,    ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.709 matrix, limited range (broadcast).
-                        JPEG_YUV8_420_Rec709               = 9,    ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.709 matrix, limited range (broadcast).
+                        JPEG_RGBA8_sRGB = 6, ///< JPEG-compressed 8-bit RGBA, sRGB, full range.
+                        JPEG_RGB8_sRGB = 7,  ///< JPEG-compressed 8-bit RGB, sRGB, full range.
+                        JPEG_YUV8_422_Rec709 =
+                                8, ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.709 matrix, limited range (broadcast).
+                        JPEG_YUV8_420_Rec709 =
+                                9, ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.709 matrix, limited range (broadcast).
 
                         // -- YCbCr 4:2:2 UYVY --
-                        YUV8_422_UYVY_Rec709               = 10,   ///< 8-bit YCbCr 4:2:2 UYVY, Rec.709, limited range.
-                        YUV10_422_UYVY_LE_Rec709           = 11,   ///< 10-bit YCbCr 4:2:2 UYVY LE, Rec.709, limited range.
-                        YUV10_422_UYVY_BE_Rec709           = 12,   ///< 10-bit YCbCr 4:2:2 UYVY BE, Rec.709, limited range.
-                        YUV12_422_UYVY_LE_Rec709           = 13,   ///< 12-bit YCbCr 4:2:2 UYVY LE, Rec.709, limited range.
-                        YUV12_422_UYVY_BE_Rec709           = 14,   ///< 12-bit YCbCr 4:2:2 UYVY BE, Rec.709, limited range.
+                        YUV8_422_UYVY_Rec709 = 10,     ///< 8-bit YCbCr 4:2:2 UYVY, Rec.709, limited range.
+                        YUV10_422_UYVY_LE_Rec709 = 11, ///< 10-bit YCbCr 4:2:2 UYVY LE, Rec.709, limited range.
+                        YUV10_422_UYVY_BE_Rec709 = 12, ///< 10-bit YCbCr 4:2:2 UYVY BE, Rec.709, limited range.
+                        YUV12_422_UYVY_LE_Rec709 = 13, ///< 12-bit YCbCr 4:2:2 UYVY LE, Rec.709, limited range.
+                        YUV12_422_UYVY_BE_Rec709 = 14, ///< 12-bit YCbCr 4:2:2 UYVY BE, Rec.709, limited range.
 
                         // -- YCbCr 4:2:2 v210 --
-                        YUV10_422_v210_Rec709              = 15,   ///< 10-bit YCbCr 4:2:2 v210 packed, Rec.709.
+                        YUV10_422_v210_Rec709 = 15, ///< 10-bit YCbCr 4:2:2 v210 packed, Rec.709.
 
                         // -- YCbCr 4:2:2 planar --
-                        YUV8_422_Planar_Rec709             = 16,   ///< 8-bit YCbCr 4:2:2 planar, Rec.709, limited range.
-                        YUV10_422_Planar_LE_Rec709         = 17,   ///< 10-bit YCbCr 4:2:2 planar LE, Rec.709.
-                        YUV10_422_Planar_BE_Rec709         = 18,   ///< 10-bit YCbCr 4:2:2 planar BE, Rec.709.
-                        YUV12_422_Planar_LE_Rec709         = 19,   ///< 12-bit YCbCr 4:2:2 planar LE, Rec.709.
-                        YUV12_422_Planar_BE_Rec709         = 20,   ///< 12-bit YCbCr 4:2:2 planar BE, Rec.709.
+                        YUV8_422_Planar_Rec709 = 16,     ///< 8-bit YCbCr 4:2:2 planar, Rec.709, limited range.
+                        YUV10_422_Planar_LE_Rec709 = 17, ///< 10-bit YCbCr 4:2:2 planar LE, Rec.709.
+                        YUV10_422_Planar_BE_Rec709 = 18, ///< 10-bit YCbCr 4:2:2 planar BE, Rec.709.
+                        YUV12_422_Planar_LE_Rec709 = 19, ///< 12-bit YCbCr 4:2:2 planar LE, Rec.709.
+                        YUV12_422_Planar_BE_Rec709 = 20, ///< 12-bit YCbCr 4:2:2 planar BE, Rec.709.
 
                         // -- YCbCr 4:2:0 planar --
-                        YUV8_420_Planar_Rec709             = 21,   ///< 8-bit YCbCr 4:2:0 planar, Rec.709, limited range.
-                        YUV10_420_Planar_LE_Rec709         = 22,   ///< 10-bit YCbCr 4:2:0 planar LE, Rec.709.
-                        YUV10_420_Planar_BE_Rec709         = 23,   ///< 10-bit YCbCr 4:2:0 planar BE, Rec.709.
-                        YUV12_420_Planar_LE_Rec709         = 24,   ///< 12-bit YCbCr 4:2:0 planar LE, Rec.709.
-                        YUV12_420_Planar_BE_Rec709         = 25,   ///< 12-bit YCbCr 4:2:0 planar BE, Rec.709.
+                        YUV8_420_Planar_Rec709 = 21,     ///< 8-bit YCbCr 4:2:0 planar, Rec.709, limited range.
+                        YUV10_420_Planar_LE_Rec709 = 22, ///< 10-bit YCbCr 4:2:0 planar LE, Rec.709.
+                        YUV10_420_Planar_BE_Rec709 = 23, ///< 10-bit YCbCr 4:2:0 planar BE, Rec.709.
+                        YUV12_420_Planar_LE_Rec709 = 24, ///< 12-bit YCbCr 4:2:0 planar LE, Rec.709.
+                        YUV12_420_Planar_BE_Rec709 = 25, ///< 12-bit YCbCr 4:2:0 planar BE, Rec.709.
 
                         // -- YCbCr 4:2:0 semi-planar (NV12) --
-                        YUV8_420_SemiPlanar_Rec709         = 26,   ///< 8-bit YCbCr 4:2:0 NV12, Rec.709, limited range.
-                        YUV10_420_SemiPlanar_LE_Rec709     = 27,   ///< 10-bit YCbCr 4:2:0 NV12 LE, Rec.709.
-                        YUV10_420_SemiPlanar_BE_Rec709     = 28,   ///< 10-bit YCbCr 4:2:0 NV12 BE, Rec.709.
-                        YUV12_420_SemiPlanar_LE_Rec709     = 29,   ///< 12-bit YCbCr 4:2:0 NV12 LE, Rec.709.
-                        YUV12_420_SemiPlanar_BE_Rec709     = 30,   ///< 12-bit YCbCr 4:2:0 NV12 BE, Rec.709.
+                        YUV8_420_SemiPlanar_Rec709 = 26,     ///< 8-bit YCbCr 4:2:0 NV12, Rec.709, limited range.
+                        YUV10_420_SemiPlanar_LE_Rec709 = 27, ///< 10-bit YCbCr 4:2:0 NV12 LE, Rec.709.
+                        YUV10_420_SemiPlanar_BE_Rec709 = 28, ///< 10-bit YCbCr 4:2:0 NV12 BE, Rec.709.
+                        YUV12_420_SemiPlanar_LE_Rec709 = 29, ///< 12-bit YCbCr 4:2:0 NV12 LE, Rec.709.
+                        YUV12_420_SemiPlanar_BE_Rec709 = 30, ///< 12-bit YCbCr 4:2:0 NV12 BE, Rec.709.
 
                         // -- RGB/RGBA 10/12/16-bit in 16-bit words --
-                        RGBA10_LE_sRGB                     = 31,   ///< 10-bit RGBA in 16-bit LE words, sRGB, full range.
-                        RGBA10_BE_sRGB                     = 32,   ///< 10-bit RGBA in 16-bit BE words, sRGB, full range.
-                        RGB10_LE_sRGB                      = 33,   ///< 10-bit RGB in 16-bit LE words, sRGB, full range.
-                        RGB10_BE_sRGB                      = 34,   ///< 10-bit RGB in 16-bit BE words, sRGB, full range.
-                        RGBA12_LE_sRGB                     = 35,   ///< 12-bit RGBA in 16-bit LE words, sRGB, full range.
-                        RGBA12_BE_sRGB                     = 36,   ///< 12-bit RGBA in 16-bit BE words, sRGB, full range.
-                        RGB12_LE_sRGB                      = 37,   ///< 12-bit RGB in 16-bit LE words, sRGB, full range.
-                        RGB12_BE_sRGB                      = 38,   ///< 12-bit RGB in 16-bit BE words, sRGB, full range.
-                        RGBA16_LE_sRGB                     = 39,   ///< 16-bit RGBA LE, sRGB, full range.
-                        RGBA16_BE_sRGB                     = 40,   ///< 16-bit RGBA BE, sRGB, full range.
-                        RGB16_LE_sRGB                      = 41,   ///< 16-bit RGB LE, sRGB, full range.
-                        RGB16_BE_sRGB                      = 42,   ///< 16-bit RGB BE, sRGB, full range.
+                        RGBA10_LE_sRGB = 31, ///< 10-bit RGBA in 16-bit LE words, sRGB, full range.
+                        RGBA10_BE_sRGB = 32, ///< 10-bit RGBA in 16-bit BE words, sRGB, full range.
+                        RGB10_LE_sRGB = 33,  ///< 10-bit RGB in 16-bit LE words, sRGB, full range.
+                        RGB10_BE_sRGB = 34,  ///< 10-bit RGB in 16-bit BE words, sRGB, full range.
+                        RGBA12_LE_sRGB = 35, ///< 12-bit RGBA in 16-bit LE words, sRGB, full range.
+                        RGBA12_BE_sRGB = 36, ///< 12-bit RGBA in 16-bit BE words, sRGB, full range.
+                        RGB12_LE_sRGB = 37,  ///< 12-bit RGB in 16-bit LE words, sRGB, full range.
+                        RGB12_BE_sRGB = 38,  ///< 12-bit RGB in 16-bit BE words, sRGB, full range.
+                        RGBA16_LE_sRGB = 39, ///< 16-bit RGBA LE, sRGB, full range.
+                        RGBA16_BE_sRGB = 40, ///< 16-bit RGBA BE, sRGB, full range.
+                        RGB16_LE_sRGB = 41,  ///< 16-bit RGB LE, sRGB, full range.
+                        RGB16_BE_sRGB = 42,  ///< 16-bit RGB BE, sRGB, full range.
 
                         // -- YCbCr 4:4:4 DPX packed --
-                        YUV10_DPX_Rec709                   = 43,   ///< 10-bit YCbCr 4:4:4 DPX packed, Rec.709.
+                        YUV10_DPX_Rec709 = 43, ///< 10-bit YCbCr 4:4:4 DPX packed, Rec.709.
 
                         // -- BGRA/BGR (reversed component order) --
-                        BGRA8_sRGB                         = 44,   ///< 8-bit BGRA, sRGB, full range.
-                        BGR8_sRGB                          = 45,   ///< 8-bit BGR, sRGB, full range.
-                        BGRA10_LE_sRGB                     = 46,   ///< 10-bit BGRA in 16-bit LE words, sRGB.
-                        BGRA10_BE_sRGB                     = 47,   ///< 10-bit BGRA in 16-bit BE words, sRGB.
-                        BGR10_LE_sRGB                      = 48,   ///< 10-bit BGR in 16-bit LE words, sRGB.
-                        BGR10_BE_sRGB                      = 49,   ///< 10-bit BGR in 16-bit BE words, sRGB.
-                        BGRA12_LE_sRGB                     = 50,   ///< 12-bit BGRA in 16-bit LE words, sRGB.
-                        BGRA12_BE_sRGB                     = 51,   ///< 12-bit BGRA in 16-bit BE words, sRGB.
-                        BGR12_LE_sRGB                      = 52,   ///< 12-bit BGR in 16-bit LE words, sRGB.
-                        BGR12_BE_sRGB                      = 53,   ///< 12-bit BGR in 16-bit BE words, sRGB.
-                        BGRA16_LE_sRGB                     = 54,   ///< 16-bit BGRA LE, sRGB.
-                        BGRA16_BE_sRGB                     = 55,   ///< 16-bit BGRA BE, sRGB.
-                        BGR16_LE_sRGB                      = 56,   ///< 16-bit BGR LE, sRGB.
-                        BGR16_BE_sRGB                      = 57,   ///< 16-bit BGR BE, sRGB.
+                        BGRA8_sRGB = 44,     ///< 8-bit BGRA, sRGB, full range.
+                        BGR8_sRGB = 45,      ///< 8-bit BGR, sRGB, full range.
+                        BGRA10_LE_sRGB = 46, ///< 10-bit BGRA in 16-bit LE words, sRGB.
+                        BGRA10_BE_sRGB = 47, ///< 10-bit BGRA in 16-bit BE words, sRGB.
+                        BGR10_LE_sRGB = 48,  ///< 10-bit BGR in 16-bit LE words, sRGB.
+                        BGR10_BE_sRGB = 49,  ///< 10-bit BGR in 16-bit BE words, sRGB.
+                        BGRA12_LE_sRGB = 50, ///< 12-bit BGRA in 16-bit LE words, sRGB.
+                        BGRA12_BE_sRGB = 51, ///< 12-bit BGRA in 16-bit BE words, sRGB.
+                        BGR12_LE_sRGB = 52,  ///< 12-bit BGR in 16-bit LE words, sRGB.
+                        BGR12_BE_sRGB = 53,  ///< 12-bit BGR in 16-bit BE words, sRGB.
+                        BGRA16_LE_sRGB = 54, ///< 16-bit BGRA LE, sRGB.
+                        BGRA16_BE_sRGB = 55, ///< 16-bit BGRA BE, sRGB.
+                        BGR16_LE_sRGB = 56,  ///< 16-bit BGR LE, sRGB.
+                        BGR16_BE_sRGB = 57,  ///< 16-bit BGR BE, sRGB.
 
                         // -- ARGB (alpha-first) --
-                        ARGB8_sRGB                         = 58,   ///< 8-bit ARGB, sRGB, full range.
-                        ARGB10_LE_sRGB                     = 59,   ///< 10-bit ARGB in 16-bit LE words, sRGB.
-                        ARGB10_BE_sRGB                     = 60,   ///< 10-bit ARGB in 16-bit BE words, sRGB.
-                        ARGB12_LE_sRGB                     = 61,   ///< 12-bit ARGB in 16-bit LE words, sRGB.
-                        ARGB12_BE_sRGB                     = 62,   ///< 12-bit ARGB in 16-bit BE words, sRGB.
-                        ARGB16_LE_sRGB                     = 63,   ///< 16-bit ARGB LE, sRGB.
-                        ARGB16_BE_sRGB                     = 64,   ///< 16-bit ARGB BE, sRGB.
+                        ARGB8_sRGB = 58,     ///< 8-bit ARGB, sRGB, full range.
+                        ARGB10_LE_sRGB = 59, ///< 10-bit ARGB in 16-bit LE words, sRGB.
+                        ARGB10_BE_sRGB = 60, ///< 10-bit ARGB in 16-bit BE words, sRGB.
+                        ARGB12_LE_sRGB = 61, ///< 12-bit ARGB in 16-bit LE words, sRGB.
+                        ARGB12_BE_sRGB = 62, ///< 12-bit ARGB in 16-bit BE words, sRGB.
+                        ARGB16_LE_sRGB = 63, ///< 16-bit ARGB LE, sRGB.
+                        ARGB16_BE_sRGB = 64, ///< 16-bit ARGB BE, sRGB.
 
                         // -- ABGR (alpha-first, blue-first) --
-                        ABGR8_sRGB                         = 65,   ///< 8-bit ABGR, sRGB, full range.
-                        ABGR10_LE_sRGB                     = 66,   ///< 10-bit ABGR in 16-bit LE words, sRGB.
-                        ABGR10_BE_sRGB                     = 67,   ///< 10-bit ABGR in 16-bit BE words, sRGB.
-                        ABGR12_LE_sRGB                     = 68,   ///< 12-bit ABGR in 16-bit LE words, sRGB.
-                        ABGR12_BE_sRGB                     = 69,   ///< 12-bit ABGR in 16-bit BE words, sRGB.
-                        ABGR16_LE_sRGB                     = 70,   ///< 16-bit ABGR LE, sRGB.
-                        ABGR16_BE_sRGB                     = 71,   ///< 16-bit ABGR BE, sRGB.
+                        ABGR8_sRGB = 65,     ///< 8-bit ABGR, sRGB, full range.
+                        ABGR10_LE_sRGB = 66, ///< 10-bit ABGR in 16-bit LE words, sRGB.
+                        ABGR10_BE_sRGB = 67, ///< 10-bit ABGR in 16-bit BE words, sRGB.
+                        ABGR12_LE_sRGB = 68, ///< 12-bit ABGR in 16-bit LE words, sRGB.
+                        ABGR12_BE_sRGB = 69, ///< 12-bit ABGR in 16-bit BE words, sRGB.
+                        ABGR16_LE_sRGB = 70, ///< 16-bit ABGR LE, sRGB.
+                        ABGR16_BE_sRGB = 71, ///< 16-bit ABGR BE, sRGB.
 
                         // -- Monochrome (sRGB luminance) --
-                        Mono8_sRGB                         = 72,   ///< 8-bit grayscale, sRGB.
-                        Mono10_LE_sRGB                     = 73,   ///< 10-bit grayscale in 16-bit LE word, sRGB.
-                        Mono10_BE_sRGB                     = 74,   ///< 10-bit grayscale in 16-bit BE word, sRGB.
-                        Mono12_LE_sRGB                     = 75,   ///< 12-bit grayscale in 16-bit LE word, sRGB.
-                        Mono12_BE_sRGB                     = 76,   ///< 12-bit grayscale in 16-bit BE word, sRGB.
-                        Mono16_LE_sRGB                     = 77,   ///< 16-bit grayscale LE, sRGB.
-                        Mono16_BE_sRGB                     = 78,   ///< 16-bit grayscale BE, sRGB.
+                        Mono8_sRGB = 72,     ///< 8-bit grayscale, sRGB.
+                        Mono10_LE_sRGB = 73, ///< 10-bit grayscale in 16-bit LE word, sRGB.
+                        Mono10_BE_sRGB = 74, ///< 10-bit grayscale in 16-bit BE word, sRGB.
+                        Mono12_LE_sRGB = 75, ///< 12-bit grayscale in 16-bit LE word, sRGB.
+                        Mono12_BE_sRGB = 76, ///< 12-bit grayscale in 16-bit BE word, sRGB.
+                        Mono16_LE_sRGB = 77, ///< 16-bit grayscale LE, sRGB.
+                        Mono16_BE_sRGB = 78, ///< 16-bit grayscale BE, sRGB.
 
                         // -- Float RGBA/RGB/Mono (linear Rec.709 primaries) --
-                        RGBAF16_LE_LinearRec709            = 79,   ///< Half-float RGBA LE, linear Rec.709.
-                        RGBAF16_BE_LinearRec709            = 80,   ///< Half-float RGBA BE, linear Rec.709.
-                        RGBF16_LE_LinearRec709             = 81,   ///< Half-float RGB LE, linear Rec.709.
-                        RGBF16_BE_LinearRec709             = 82,   ///< Half-float RGB BE, linear Rec.709.
-                        MonoF16_LE_LinearRec709            = 83,   ///< Half-float mono LE, linear Rec.709.
-                        MonoF16_BE_LinearRec709            = 84,   ///< Half-float mono BE, linear Rec.709.
-                        RGBAF32_LE_LinearRec709            = 85,   ///< Float RGBA LE, linear Rec.709.
-                        RGBAF32_BE_LinearRec709            = 86,   ///< Float RGBA BE, linear Rec.709.
-                        RGBF32_LE_LinearRec709             = 87,   ///< Float RGB LE, linear Rec.709.
-                        RGBF32_BE_LinearRec709             = 88,   ///< Float RGB BE, linear Rec.709.
-                        MonoF32_LE_LinearRec709            = 89,   ///< Float mono LE, linear Rec.709.
-                        MonoF32_BE_LinearRec709            = 90,   ///< Float mono BE, linear Rec.709.
+                        RGBAF16_LE_LinearRec709 = 79, ///< Half-float RGBA LE, linear Rec.709.
+                        RGBAF16_BE_LinearRec709 = 80, ///< Half-float RGBA BE, linear Rec.709.
+                        RGBF16_LE_LinearRec709 = 81,  ///< Half-float RGB LE, linear Rec.709.
+                        RGBF16_BE_LinearRec709 = 82,  ///< Half-float RGB BE, linear Rec.709.
+                        MonoF16_LE_LinearRec709 = 83, ///< Half-float mono LE, linear Rec.709.
+                        MonoF16_BE_LinearRec709 = 84, ///< Half-float mono BE, linear Rec.709.
+                        RGBAF32_LE_LinearRec709 = 85, ///< Float RGBA LE, linear Rec.709.
+                        RGBAF32_BE_LinearRec709 = 86, ///< Float RGBA BE, linear Rec.709.
+                        RGBF32_LE_LinearRec709 = 87,  ///< Float RGB LE, linear Rec.709.
+                        RGBF32_BE_LinearRec709 = 88,  ///< Float RGB BE, linear Rec.709.
+                        MonoF32_LE_LinearRec709 = 89, ///< Float mono LE, linear Rec.709.
+                        MonoF32_BE_LinearRec709 = 90, ///< Float mono BE, linear Rec.709.
 
                         // -- 10:10:10:2 packed (3x10 + 1x2 in 32 bits) --
-                        RGB10A2_LE_sRGB                    = 91,   ///< RGB 10-bit + Alpha 2-bit in 32-bit LE, sRGB.
-                        RGB10A2_BE_sRGB                    = 92,   ///< RGB 10-bit + Alpha 2-bit in 32-bit BE, sRGB.
-                        BGR10A2_LE_sRGB                    = 93,   ///< BGR 10-bit + Alpha 2-bit in 32-bit LE, sRGB.
-                        BGR10A2_BE_sRGB                    = 94,   ///< BGR 10-bit + Alpha 2-bit in 32-bit BE, sRGB.
+                        RGB10A2_LE_sRGB = 91, ///< RGB 10-bit + Alpha 2-bit in 32-bit LE, sRGB.
+                        RGB10A2_BE_sRGB = 92, ///< RGB 10-bit + Alpha 2-bit in 32-bit BE, sRGB.
+                        BGR10A2_LE_sRGB = 93, ///< BGR 10-bit + Alpha 2-bit in 32-bit LE, sRGB.
+                        BGR10A2_BE_sRGB = 94, ///< BGR 10-bit + Alpha 2-bit in 32-bit BE, sRGB.
 
                         // -- YCbCr 4:4:4 (non-DPX, Rec.709) --
-                        YUV8_Rec709                        = 95,   ///< 8-bit YCbCr 4:4:4, Rec.709, limited range.
-                        YUV10_LE_Rec709                    = 96,   ///< 10-bit YCbCr 4:4:4 LE, Rec.709.
-                        YUV10_BE_Rec709                    = 97,   ///< 10-bit YCbCr 4:4:4 BE, Rec.709.
-                        YUV12_LE_Rec709                    = 98,   ///< 12-bit YCbCr 4:4:4 LE, Rec.709.
-                        YUV12_BE_Rec709                    = 99,   ///< 12-bit YCbCr 4:4:4 BE, Rec.709.
-                        YUV16_LE_Rec709                    = 100,  ///< 16-bit YCbCr 4:4:4 LE, Rec.709.
-                        YUV16_BE_Rec709                    = 101,  ///< 16-bit YCbCr 4:4:4 BE, Rec.709.
+                        YUV8_Rec709 = 95,      ///< 8-bit YCbCr 4:4:4, Rec.709, limited range.
+                        YUV10_LE_Rec709 = 96,  ///< 10-bit YCbCr 4:4:4 LE, Rec.709.
+                        YUV10_BE_Rec709 = 97,  ///< 10-bit YCbCr 4:4:4 BE, Rec.709.
+                        YUV12_LE_Rec709 = 98,  ///< 12-bit YCbCr 4:4:4 LE, Rec.709.
+                        YUV12_BE_Rec709 = 99,  ///< 12-bit YCbCr 4:4:4 BE, Rec.709.
+                        YUV16_LE_Rec709 = 100, ///< 16-bit YCbCr 4:4:4 LE, Rec.709.
+                        YUV16_BE_Rec709 = 101, ///< 16-bit YCbCr 4:4:4 BE, Rec.709.
 
                         // -- Rec.2020 YCbCr --
-                        YUV10_422_UYVY_LE_Rec2020          = 102,  ///< 10-bit YCbCr 4:2:2 UYVY LE, Rec.2020.
-                        YUV10_422_UYVY_BE_Rec2020          = 103,  ///< 10-bit YCbCr 4:2:2 UYVY BE, Rec.2020.
-                        YUV12_422_UYVY_LE_Rec2020          = 104,  ///< 12-bit YCbCr 4:2:2 UYVY LE, Rec.2020.
-                        YUV12_422_UYVY_BE_Rec2020          = 105,  ///< 12-bit YCbCr 4:2:2 UYVY BE, Rec.2020.
-                        YUV10_420_Planar_LE_Rec2020        = 106,  ///< 10-bit YCbCr 4:2:0 planar LE, Rec.2020.
-                        YUV10_420_Planar_BE_Rec2020        = 107,  ///< 10-bit YCbCr 4:2:0 planar BE, Rec.2020.
-                        YUV12_420_Planar_LE_Rec2020        = 108,  ///< 12-bit YCbCr 4:2:0 planar LE, Rec.2020.
-                        YUV12_420_Planar_BE_Rec2020        = 109,  ///< 12-bit YCbCr 4:2:0 planar BE, Rec.2020.
+                        YUV10_422_UYVY_LE_Rec2020 = 102,   ///< 10-bit YCbCr 4:2:2 UYVY LE, Rec.2020.
+                        YUV10_422_UYVY_BE_Rec2020 = 103,   ///< 10-bit YCbCr 4:2:2 UYVY BE, Rec.2020.
+                        YUV12_422_UYVY_LE_Rec2020 = 104,   ///< 12-bit YCbCr 4:2:2 UYVY LE, Rec.2020.
+                        YUV12_422_UYVY_BE_Rec2020 = 105,   ///< 12-bit YCbCr 4:2:2 UYVY BE, Rec.2020.
+                        YUV10_420_Planar_LE_Rec2020 = 106, ///< 10-bit YCbCr 4:2:0 planar LE, Rec.2020.
+                        YUV10_420_Planar_BE_Rec2020 = 107, ///< 10-bit YCbCr 4:2:0 planar BE, Rec.2020.
+                        YUV12_420_Planar_LE_Rec2020 = 108, ///< 12-bit YCbCr 4:2:0 planar LE, Rec.2020.
+                        YUV12_420_Planar_BE_Rec2020 = 109, ///< 12-bit YCbCr 4:2:0 planar BE, Rec.2020.
 
                         // -- Rec.601 YCbCr --
-                        YUV8_422_Rec601                    = 110,  ///< 8-bit YCbCr 4:2:2, Rec.601, limited range.
-                        YUV8_422_UYVY_Rec601               = 111,  ///< 8-bit YCbCr 4:2:2 UYVY, Rec.601, limited range.
-                        YUV8_420_Planar_Rec601             = 112,  ///< 8-bit YCbCr 4:2:0 planar, Rec.601, limited range.
-                        YUV8_420_SemiPlanar_Rec601         = 113,  ///< 8-bit YCbCr 4:2:0 NV12, Rec.601, limited range.
+                        YUV8_422_Rec601 = 110,            ///< 8-bit YCbCr 4:2:2, Rec.601, limited range.
+                        YUV8_422_UYVY_Rec601 = 111,       ///< 8-bit YCbCr 4:2:2 UYVY, Rec.601, limited range.
+                        YUV8_420_Planar_Rec601 = 112,     ///< 8-bit YCbCr 4:2:0 planar, Rec.601, limited range.
+                        YUV8_420_SemiPlanar_Rec601 = 113, ///< 8-bit YCbCr 4:2:0 NV12, Rec.601, limited range.
 
                         // -- NV21 (semi-planar 4:2:0, CrCb order, Rec.709) --
-                        YUV8_420_NV21_Rec709               = 114,  ///< 8-bit YCbCr 4:2:0 NV21, Rec.709.
-                        YUV10_420_NV21_LE_Rec709           = 115,  ///< 10-bit YCbCr 4:2:0 NV21 LE, Rec.709.
-                        YUV10_420_NV21_BE_Rec709           = 116,  ///< 10-bit YCbCr 4:2:0 NV21 BE, Rec.709.
-                        YUV12_420_NV21_LE_Rec709           = 117,  ///< 12-bit YCbCr 4:2:0 NV21 LE, Rec.709.
-                        YUV12_420_NV21_BE_Rec709           = 118,  ///< 12-bit YCbCr 4:2:0 NV21 BE, Rec.709.
+                        YUV8_420_NV21_Rec709 = 114,     ///< 8-bit YCbCr 4:2:0 NV21, Rec.709.
+                        YUV10_420_NV21_LE_Rec709 = 115, ///< 10-bit YCbCr 4:2:0 NV21 LE, Rec.709.
+                        YUV10_420_NV21_BE_Rec709 = 116, ///< 10-bit YCbCr 4:2:0 NV21 BE, Rec.709.
+                        YUV12_420_NV21_LE_Rec709 = 117, ///< 12-bit YCbCr 4:2:0 NV21 LE, Rec.709.
+                        YUV12_420_NV21_BE_Rec709 = 118, ///< 12-bit YCbCr 4:2:0 NV21 BE, Rec.709.
 
                         // -- Semi-planar 4:2:2 (NV16, Rec.709) --
-                        YUV8_422_SemiPlanar_Rec709         = 119,  ///< 8-bit YCbCr 4:2:2 NV16, Rec.709.
-                        YUV10_422_SemiPlanar_LE_Rec709     = 120,  ///< 10-bit YCbCr 4:2:2 NV16 LE, Rec.709.
-                        YUV10_422_SemiPlanar_BE_Rec709     = 121,  ///< 10-bit YCbCr 4:2:2 NV16 BE, Rec.709.
-                        YUV12_422_SemiPlanar_LE_Rec709     = 122,  ///< 12-bit YCbCr 4:2:2 NV16 LE, Rec.709.
-                        YUV12_422_SemiPlanar_BE_Rec709     = 123,  ///< 12-bit YCbCr 4:2:2 NV16 BE, Rec.709.
+                        YUV8_422_SemiPlanar_Rec709 = 119,     ///< 8-bit YCbCr 4:2:2 NV16, Rec.709.
+                        YUV10_422_SemiPlanar_LE_Rec709 = 120, ///< 10-bit YCbCr 4:2:2 NV16 LE, Rec.709.
+                        YUV10_422_SemiPlanar_BE_Rec709 = 121, ///< 10-bit YCbCr 4:2:2 NV16 BE, Rec.709.
+                        YUV12_422_SemiPlanar_LE_Rec709 = 122, ///< 12-bit YCbCr 4:2:2 NV16 LE, Rec.709.
+                        YUV12_422_SemiPlanar_BE_Rec709 = 123, ///< 12-bit YCbCr 4:2:2 NV16 BE, Rec.709.
 
                         // -- Planar 4:1:1 (Rec.709) --
-                        YUV8_411_Planar_Rec709             = 124,  ///< 8-bit YCbCr 4:1:1 planar, Rec.709.
+                        YUV8_411_Planar_Rec709 = 124, ///< 8-bit YCbCr 4:1:1 planar, Rec.709.
 
                         // -- 16-bit YCbCr (Rec.709) --
-                        YUV16_422_UYVY_LE_Rec709           = 125,  ///< 16-bit YCbCr 4:2:2 UYVY LE, Rec.709.
-                        YUV16_422_UYVY_BE_Rec709           = 126,  ///< 16-bit YCbCr 4:2:2 UYVY BE, Rec.709.
-                        YUV16_422_Planar_LE_Rec709         = 127,  ///< 16-bit YCbCr 4:2:2 planar LE, Rec.709.
-                        YUV16_422_Planar_BE_Rec709         = 128,  ///< 16-bit YCbCr 4:2:2 planar BE, Rec.709.
-                        YUV16_420_Planar_LE_Rec709         = 129,  ///< 16-bit YCbCr 4:2:0 planar LE, Rec.709.
-                        YUV16_420_Planar_BE_Rec709         = 130,  ///< 16-bit YCbCr 4:2:0 planar BE, Rec.709.
-                        YUV16_420_SemiPlanar_LE_Rec709     = 131,  ///< 16-bit YCbCr 4:2:0 NV12 LE, Rec.709.
-                        YUV16_420_SemiPlanar_BE_Rec709     = 132,  ///< 16-bit YCbCr 4:2:0 NV12 BE, Rec.709.
+                        YUV16_422_UYVY_LE_Rec709 = 125,       ///< 16-bit YCbCr 4:2:2 UYVY LE, Rec.709.
+                        YUV16_422_UYVY_BE_Rec709 = 126,       ///< 16-bit YCbCr 4:2:2 UYVY BE, Rec.709.
+                        YUV16_422_Planar_LE_Rec709 = 127,     ///< 16-bit YCbCr 4:2:2 planar LE, Rec.709.
+                        YUV16_422_Planar_BE_Rec709 = 128,     ///< 16-bit YCbCr 4:2:2 planar BE, Rec.709.
+                        YUV16_420_Planar_LE_Rec709 = 129,     ///< 16-bit YCbCr 4:2:0 planar LE, Rec.709.
+                        YUV16_420_Planar_BE_Rec709 = 130,     ///< 16-bit YCbCr 4:2:0 planar BE, Rec.709.
+                        YUV16_420_SemiPlanar_LE_Rec709 = 131, ///< 16-bit YCbCr 4:2:0 NV12 LE, Rec.709.
+                        YUV16_420_SemiPlanar_BE_Rec709 = 132, ///< 16-bit YCbCr 4:2:0 NV12 BE, Rec.709.
 
                         // -- DPX additional packed formats --
-                        RGB10_DPX_LE_sRGB                  = 133,  ///< 10-bit RGB, DPX packed LE, sRGB, full range.
-                        YUV10_DPX_B_Rec709                 = 134,  ///< 10-bit YCbCr 4:4:4 DPX packed method B, Rec.709.
+                        RGB10_DPX_LE_sRGB = 133,  ///< 10-bit RGB, DPX packed LE, sRGB, full range.
+                        YUV10_DPX_B_Rec709 = 134, ///< 10-bit YCbCr 4:4:4 DPX packed method B, Rec.709.
 
                         // ----- Video codec compressed formats (QuickTime/MP4 family) ------------
-                        H264                               = 135,  ///< H.264 / AVC compressed video (avc1/avc3).
-                        HEVC                               = 136,  ///< H.265 / HEVC compressed video (hvc1/hev1).
-                        AV1                                = 161,  ///< AV1 (AOMedia Video 1) compressed video (av01).
-                        ProRes_422_Proxy                   = 137,  ///< Apple ProRes 422 Proxy (apco).
-                        ProRes_422_LT                      = 138,  ///< Apple ProRes 422 LT (apcs).
-                        ProRes_422                         = 139,  ///< Apple ProRes 422 (apcn).
-                        ProRes_422_HQ                      = 140,  ///< Apple ProRes 422 HQ (apch).
-                        ProRes_4444                        = 141,  ///< Apple ProRes 4444 (ap4h).
-                        ProRes_4444_XQ                     = 142,  ///< Apple ProRes 4444 XQ (ap4x).
+                        H264 = 135,             ///< H.264 / AVC compressed video (avc1/avc3).
+                        HEVC = 136,             ///< H.265 / HEVC compressed video (hvc1/hev1).
+                        AV1 = 161,              ///< AV1 (AOMedia Video 1) compressed video (av01).
+                        ProRes_422_Proxy = 137, ///< Apple ProRes 422 Proxy (apco).
+                        ProRes_422_LT = 138,    ///< Apple ProRes 422 LT (apcs).
+                        ProRes_422 = 139,       ///< Apple ProRes 422 (apcn).
+                        ProRes_422_HQ = 140,    ///< Apple ProRes 422 HQ (apch).
+                        ProRes_4444 = 141,      ///< Apple ProRes 4444 (ap4h).
+                        ProRes_4444_XQ = 142,   ///< Apple ProRes 4444 XQ (ap4x).
 
                         // -- Full-range uncompressed YCbCr --
                         //
@@ -349,10 +351,10 @@ class PixelFormat {
                         // full-range YCbCr storage and as encode-source
                         // intermediates for the full-range JPEG variants
                         // below.
-                        YUV8_422_Rec709_Full               = 143,  ///< 8-bit YCbCr 4:2:2 YUYV, Rec.709 matrix, full range.
-                        YUV8_422_Rec601_Full               = 144,  ///< 8-bit YCbCr 4:2:2 YUYV, Rec.601 matrix, full range.
-                        YUV8_420_Planar_Rec709_Full        = 145,  ///< 8-bit YCbCr 4:2:0 planar, Rec.709 matrix, full range.
-                        YUV8_420_Planar_Rec601_Full        = 146,  ///< 8-bit YCbCr 4:2:0 planar, Rec.601 matrix, full range.
+                        YUV8_422_Rec709_Full = 143,        ///< 8-bit YCbCr 4:2:2 YUYV, Rec.709 matrix, full range.
+                        YUV8_422_Rec601_Full = 144,        ///< 8-bit YCbCr 4:2:2 YUYV, Rec.601 matrix, full range.
+                        YUV8_420_Planar_Rec709_Full = 145, ///< 8-bit YCbCr 4:2:0 planar, Rec.709 matrix, full range.
+                        YUV8_420_Planar_Rec601_Full = 146, ///< 8-bit YCbCr 4:2:0 planar, Rec.601 matrix, full range.
 
                         // -- Full complement of JPEG YCbCr variants (matrix × range) --
                         //
@@ -375,12 +377,18 @@ class PixelFormat {
                         //     broadcast / SDI JPEG pipelines (ST 2110 JPEG XS
                         //     style)
                         //   - Rec.601 + limited range → legacy broadcast
-                        JPEG_YUV8_422_Rec601               = 147,  ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.601 matrix, limited range.
-                        JPEG_YUV8_420_Rec601               = 148,  ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.601 matrix, limited range.
-                        JPEG_YUV8_422_Rec709_Full          = 149,  ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.709 matrix, full range.
-                        JPEG_YUV8_420_Rec709_Full          = 150,  ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.709 matrix, full range.
-                        JPEG_YUV8_422_Rec601_Full          = 151,  ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.601 matrix, full range (strict JFIF).
-                        JPEG_YUV8_420_Rec601_Full          = 152,  ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.601 matrix, full range (strict JFIF).
+                        JPEG_YUV8_422_Rec601 =
+                                147, ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.601 matrix, limited range.
+                        JPEG_YUV8_420_Rec601 =
+                                148, ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.601 matrix, limited range.
+                        JPEG_YUV8_422_Rec709_Full =
+                                149, ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.709 matrix, full range.
+                        JPEG_YUV8_420_Rec709_Full =
+                                150, ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.709 matrix, full range.
+                        JPEG_YUV8_422_Rec601_Full =
+                                151, ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.601 matrix, full range (strict JFIF).
+                        JPEG_YUV8_420_Rec601_Full =
+                                152, ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.601 matrix, full range (strict JFIF).
 
                         // -- JPEG XS (ISO/IEC 21122) compressed variants --
                         //
@@ -393,22 +401,28 @@ class PixelFormat {
                         // here.  10- and 12-bit variants are first-class
                         // citizens since JPEG XS targets high-bit-depth
                         // contribution workflows.
-                        JPEG_XS_YUV8_422_Rec709            = 153,  ///< JPEG XS-compressed 8-bit YCbCr 4:2:2, Rec.709, limited range.
-                        JPEG_XS_YUV10_422_Rec709           = 154,  ///< JPEG XS-compressed 10-bit YCbCr 4:2:2, Rec.709, limited range.
-                        JPEG_XS_YUV12_422_Rec709           = 155,  ///< JPEG XS-compressed 12-bit YCbCr 4:2:2, Rec.709, limited range.
-                        JPEG_XS_YUV8_420_Rec709            = 156,  ///< JPEG XS-compressed 8-bit YCbCr 4:2:0, Rec.709, limited range.
-                        JPEG_XS_YUV10_420_Rec709           = 157,  ///< JPEG XS-compressed 10-bit YCbCr 4:2:0, Rec.709, limited range.
-                        JPEG_XS_YUV12_420_Rec709           = 158,  ///< JPEG XS-compressed 12-bit YCbCr 4:2:0, Rec.709, limited range.
-                        JPEG_XS_RGB8_sRGB                  = 159,  ///< JPEG XS-compressed 8-bit RGB, sRGB, full range.
+                        JPEG_XS_YUV8_422_Rec709 =
+                                153, ///< JPEG XS-compressed 8-bit YCbCr 4:2:2, Rec.709, limited range.
+                        JPEG_XS_YUV10_422_Rec709 =
+                                154, ///< JPEG XS-compressed 10-bit YCbCr 4:2:2, Rec.709, limited range.
+                        JPEG_XS_YUV12_422_Rec709 =
+                                155, ///< JPEG XS-compressed 12-bit YCbCr 4:2:2, Rec.709, limited range.
+                        JPEG_XS_YUV8_420_Rec709 =
+                                156, ///< JPEG XS-compressed 8-bit YCbCr 4:2:0, Rec.709, limited range.
+                        JPEG_XS_YUV10_420_Rec709 =
+                                157, ///< JPEG XS-compressed 10-bit YCbCr 4:2:0, Rec.709, limited range.
+                        JPEG_XS_YUV12_420_Rec709 =
+                                158,             ///< JPEG XS-compressed 12-bit YCbCr 4:2:0, Rec.709, limited range.
+                        JPEG_XS_RGB8_sRGB = 159, ///< JPEG XS-compressed 8-bit RGB, sRGB, full range.
 
                         // -- Planar RGB --
-                        RGB8_Planar_sRGB                   = 160,  ///< 8-bit planar RGB (3 equal-sized planes: R, G, B), sRGB, full range.
+                        RGB8_Planar_sRGB = 160, ///< 8-bit planar RGB (3 equal-sized planes: R, G, B), sRGB, full range.
 
                         // -- Planar 4:4:4 YCbCr --
-                        YUV8_444_Planar_Rec709             = 162,  ///< 8-bit YCbCr 4:4:4 planar, Rec.709, limited range.
-                        YUV10_444_Planar_LE_Rec709         = 163,  ///< 10-bit YCbCr 4:4:4 planar LE, Rec.709.
+                        YUV8_444_Planar_Rec709 = 162,     ///< 8-bit YCbCr 4:4:4 planar, Rec.709, limited range.
+                        YUV10_444_Planar_LE_Rec709 = 163, ///< 10-bit YCbCr 4:4:4 planar LE, Rec.709.
 
-                        UserDefined                        = 1024  ///< First ID available for user-registered types.
+                        UserDefined = 1024 ///< First ID available for user-registered types.
                 };
 
                 /** @brief List of PixelFormat IDs. */
@@ -416,36 +430,39 @@ class PixelFormat {
 
                 /** @brief Describes the semantic meaning and value range of a single component. */
                 struct CompSemantic {
-                        String  name;           ///< Human-readable name (e.g. "Red", "Luma").
-                        String  abbrev;         ///< Abbreviation (e.g. "R", "Y").
-                        float   rangeMin = 0;   ///< Minimum valid value (e.g. 0, 16).
-                        float   rangeMax = 0;   ///< Maximum valid value (e.g. 255, 235).
+                                String name;         ///< Human-readable name (e.g. "Red", "Luma").
+                                String abbrev;       ///< Abbreviation (e.g. "R", "Y").
+                                float  rangeMin = 0; ///< Minimum valid value (e.g. 0, 16).
+                                float  rangeMax = 0; ///< Maximum valid value (e.g. 255, 235).
                 };
 
                 /** @brief Immutable data record for a pixel description. */
                 struct Data {
-                        ID              id = Invalid;                     ///< Unique description identifier.
-                        String          name;                             ///< Short name (e.g. "RGBA8").
-                        String          desc;                             ///< Human-readable description.
-                        PixelMemLayout     memLayout;                      ///< Memory layout (by value).
-                        ColorModel      colorModel;                      ///< Color semantics (by value).
-                        bool            hasAlpha = false;                 ///< Whether this description includes alpha.
-                        int             alphaCompIndex = -1;              ///< Component index for alpha (-1 = none).
-                        bool            compressed = false;               ///< Whether this is a compressed format.
-                        VideoCodec      videoCodec;                       ///< Codec identity for compressed formats (e.g. @c VideoCodec::H264).
-                        List<ID>        encodeSources;                    ///< Uncompressed PixelFormats the codec can encode from.
-                        List<ID>        decodeTargets;                    ///< Uncompressed PixelFormats the codec can decode to.
-                        FourCC::List      fourccList;                       ///< Associated FourCC codes.
-                        CompSemantic    compSemantics[MaxComps] = {};     ///< Per-component semantics.
-                        VideoRange      videoRange;                       ///< Y'CbCr / RGB quantization range.  Left at VideoRange::Unknown by default; @ref registerData auto-derives from @c compSemantics[0] when possible.
+                                ID             id = Invalid;        ///< Unique description identifier.
+                                String         name;                ///< Short name (e.g. "RGBA8").
+                                String         desc;                ///< Human-readable description.
+                                PixelMemLayout memLayout;           ///< Memory layout (by value).
+                                ColorModel     colorModel;          ///< Color semantics (by value).
+                                bool           hasAlpha = false;    ///< Whether this description includes alpha.
+                                int            alphaCompIndex = -1; ///< Component index for alpha (-1 = none).
+                                bool           compressed = false;  ///< Whether this is a compressed format.
+                                VideoCodec
+                                        videoCodec; ///< Codec identity for compressed formats (e.g. @c VideoCodec::H264).
+                                List<ID>     encodeSources; ///< Uncompressed PixelFormats the codec can encode from.
+                                List<ID>     decodeTargets; ///< Uncompressed PixelFormats the codec can decode to.
+                                FourCC::List fourccList;    ///< Associated FourCC codes.
+                                CompSemantic compSemantics[MaxComps] = {}; ///< Per-component semantics.
+                                VideoRange
+                                        videoRange; ///< Y'CbCr / RGB quantization range.  Left at VideoRange::Unknown by default; @ref registerData auto-derives from @c compSemantics[0] when possible.
 
-                        /**
+                                /**
                          * @brief Creates a PaintEngine for drawing on the given image.
                          * @param d   Pointer to this Data record.
                          * @param img The image to create a paint engine for.
                          * @return A PaintEngine, or an invalid PaintEngine if not supported.
                          */
-                        PaintEngine (*createPaintEngineFunc)(const Data *d, const UncompressedVideoPayload &payload) = nullptr;
+                                PaintEngine (*createPaintEngineFunc)(const Data                     *d,
+                                                                     const UncompressedVideoPayload &payload) = nullptr;
                 };
 
                 /**
@@ -652,9 +669,7 @@ class PixelFormat {
                  * @return @c true if @c createPaintEngine would return a
                  *         working engine, @c false otherwise.
                  */
-                bool hasPaintEngine() const {
-                        return d != nullptr && d->createPaintEngineFunc != nullptr;
-                }
+                bool hasPaintEngine() const { return d != nullptr && d->createPaintEngineFunc != nullptr; }
 
                 /** @brief Equality comparison (identity-based). */
                 bool operator==(const PixelFormat &o) const { return d == o.d; }
@@ -666,7 +681,7 @@ class PixelFormat {
                 const Data *data() const { return d; }
 
         private:
-                const Data *d = nullptr;
+                const Data        *d = nullptr;
                 static const Data *lookupData(ID id);
 };
 

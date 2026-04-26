@@ -23,9 +23,9 @@ using namespace promeki;
 TEST_CASE("Logger_levelToChar") {
         CHECK(Logger::levelToChar(Logger::Force) == ' ');
         CHECK(Logger::levelToChar(Logger::Debug) == 'D');
-        CHECK(Logger::levelToChar(Logger::Info)  == 'I');
-        CHECK(Logger::levelToChar(Logger::Warn)  == 'W');
-        CHECK(Logger::levelToChar(Logger::Err)   == 'E');
+        CHECK(Logger::levelToChar(Logger::Info) == 'I');
+        CHECK(Logger::levelToChar(Logger::Warn) == 'W');
+        CHECK(Logger::levelToChar(Logger::Err) == 'E');
 }
 
 // ============================================================================
@@ -34,7 +34,7 @@ TEST_CASE("Logger_levelToChar") {
 
 TEST_CASE("Logger_LogLevelFiltering") {
         Logger &logger = Logger::defaultLogger();
-        int savedLevel = logger.level();
+        int     savedLevel = logger.level();
 
         SUBCASE("setLogLevel changes threshold") {
                 logger.setLogLevel(Logger::Warn);
@@ -54,7 +54,7 @@ TEST_CASE("Logger_Sync") {
         Logger &logger = Logger::defaultLogger();
 
         // Log several messages and verify sync returns without hanging
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
                 logger.log(Logger::Info, PROMEKI_SOURCE_FILE, __LINE__, String::sprintf("Sync test message %d", i));
         }
         logger.sync();
@@ -69,7 +69,7 @@ TEST_CASE("Logger_Sync") {
 
 TEST_CASE("Logger_ConsoleLoggingToggle") {
         Logger &logger = Logger::defaultLogger();
-        bool savedConsole = logger.consoleLoggingEnabled();
+        bool    savedConsole = logger.consoleLoggingEnabled();
 
         logger.setConsoleLoggingEnabled(false);
         CHECK_FALSE(logger.consoleLoggingEnabled());
@@ -89,7 +89,7 @@ TEST_CASE("Logger_ConsoleLoggingToggle") {
 
 TEST_CASE("Logger_ForceLevel") {
         Logger &logger = Logger::defaultLogger();
-        int savedLevel = logger.level();
+        int     savedLevel = logger.level();
 
         logger.setLogLevel(Logger::Err);
         logger.sync();
@@ -142,12 +142,12 @@ TEST_CASE("Logger_LogFileOutput") {
         logger.sync();
 
         // Read the file and verify it contains our message
-        File infile(tmpPath);
+        File  infile(tmpPath);
         Error err = infile.open(IODevice::ReadOnly);
         REQUIRE(err.isOk());
 
         TextStream ts(&infile);
-        String contents = ts.readAll();
+        String     contents = ts.readAll();
         infile.close();
 
         CHECK(contents.find("Logger file output test message") != String::npos);
@@ -177,11 +177,11 @@ TEST_CASE("Logger_CustomFileFormatter") {
         logger.log(Logger::Warn, PROMEKI_SOURCE_FILE, __LINE__, "custom formatter test");
         logger.sync();
 
-        File infile(tmpPath);
+        File  infile(tmpPath);
         Error err = infile.open(IODevice::ReadOnly);
         REQUIRE(err.isOk());
         TextStream ts(&infile);
-        String contents = ts.readAll();
+        String     contents = ts.readAll();
         infile.close();
 
         CHECK(contents.find("CUSTOM|W|custom formatter test") != String::npos);
@@ -219,10 +219,10 @@ TEST_CASE("Logger_DefaultFormatters") {
         auto fileFmt = Logger::defaultFileFormatter();
         auto consoleFmt = Logger::defaultConsoleFormatter();
 
-        Logger::LogEntry entry{DateTime::now(), Logger::Info, "test.cpp", 42, 12345, "hello"};
+        Logger::LogEntry  entry{DateTime::now(), Logger::Info, "test.cpp", 42, 12345, "hello"};
         Logger::LogFormat fmt{&entry, nullptr};
-        String fileResult = fileFmt(fmt);
-        String consoleResult = consoleFmt(fmt);
+        String            fileResult = fileFmt(fmt);
+        String            consoleResult = consoleFmt(fmt);
 
         CHECK(fileResult.contains(" I ["));
         CHECK(fileResult.contains("hello"));
@@ -242,44 +242,42 @@ TEST_CASE("Logger_DefaultFormatters") {
 
 namespace {
 
-struct CapturedEntry {
-        Logger::LogLevel        level;
-        String                  msg;
-        String                  threadName;
-};
+        struct CapturedEntry {
+                        Logger::LogLevel level;
+                        String           msg;
+                        String           threadName;
+        };
 
-class ListenerSink {
-        public:
-                void capture(const Logger::LogEntry &entry, const String &threadName) {
-                        Mutex::Locker lock(_mutex);
-                        _entries.pushToBack(CapturedEntry{entry.level, entry.msg, threadName});
-                }
+        class ListenerSink {
+                public:
+                        void capture(const Logger::LogEntry &entry, const String &threadName) {
+                                Mutex::Locker lock(_mutex);
+                                _entries.pushToBack(CapturedEntry{entry.level, entry.msg, threadName});
+                        }
 
-                List<CapturedEntry> snapshot() const {
-                        Mutex::Locker lock(_mutex);
-                        return _entries;
-                }
+                        List<CapturedEntry> snapshot() const {
+                                Mutex::Locker lock(_mutex);
+                                return _entries;
+                        }
 
-                size_t size() const {
-                        Mutex::Locker lock(_mutex);
-                        return _entries.size();
-                }
+                        size_t size() const {
+                                Mutex::Locker lock(_mutex);
+                                return _entries.size();
+                        }
 
-        private:
-                mutable Mutex           _mutex;
-                List<CapturedEntry>     _entries;
-};
+                private:
+                        mutable Mutex       _mutex;
+                        List<CapturedEntry> _entries;
+        };
 
-}  // namespace
+} // namespace
 
 TEST_CASE("Logger_ListenerReceivesLiveEntries") {
-        Logger &logger = Logger::defaultLogger();
+        Logger      &logger = Logger::defaultLogger();
         ListenerSink sink;
 
         Logger::ListenerHandle handle = logger.installListener(
-                [&sink](const Logger::LogEntry &entry, const String &threadName) {
-                        sink.capture(entry, threadName);
-                });
+                [&sink](const Logger::LogEntry &entry, const String &threadName) { sink.capture(entry, threadName); });
         REQUIRE(handle != 0);
 
         logger.log(Logger::Info, "listener_test.cpp", 100, "first");
@@ -297,13 +295,11 @@ TEST_CASE("Logger_ListenerReceivesLiveEntries") {
 }
 
 TEST_CASE("Logger_RemovedListenerStopsReceivingEntries") {
-        Logger &logger = Logger::defaultLogger();
+        Logger      &logger = Logger::defaultLogger();
         ListenerSink sink;
 
         Logger::ListenerHandle handle = logger.installListener(
-                [&sink](const Logger::LogEntry &entry, const String &threadName) {
-                        sink.capture(entry, threadName);
-                });
+                [&sink](const Logger::LogEntry &entry, const String &threadName) { sink.capture(entry, threadName); });
         REQUIRE(handle != 0);
 
         logger.log(Logger::Info, "listener_test.cpp", 200, "kept");
@@ -314,7 +310,7 @@ TEST_CASE("Logger_RemovedListenerStopsReceivingEntries") {
 
         logger.log(Logger::Info, "listener_test.cpp", 201, "dropped");
         logger.sync();
-        CHECK(sink.size() == 1);  // No new entries delivered.
+        CHECK(sink.size() == 1); // No new entries delivered.
 }
 
 TEST_CASE("Logger_InstallListenerRejectsEmptyAndZeroHandles") {
@@ -330,23 +326,21 @@ TEST_CASE("Logger_InstallListenerRejectsEmptyAndZeroHandles") {
 
 TEST_CASE("Logger_HistoryReplayOnInstall") {
         Logger &logger = Logger::defaultLogger();
-        size_t savedSize = logger.historySize();
+        size_t  savedSize = logger.historySize();
         logger.setHistorySize(64);
 
         // Drain anything still in flight, then prime history with known entries.
         logger.sync();
 
-        for(int i = 0; i < 5; i++) {
-                logger.log(Logger::Info, "history_test.cpp", 300 + i,
-                        String::sprintf("history-%d", i));
+        for (int i = 0; i < 5; i++) {
+                logger.log(Logger::Info, "history_test.cpp", 300 + i, String::sprintf("history-%d", i));
         }
         logger.sync();
 
-        ListenerSink sink;
+        ListenerSink           sink;
         Logger::ListenerHandle handle = logger.installListener(
-                [&sink](const Logger::LogEntry &entry, const String &threadName) {
-                        sink.capture(entry, threadName);
-                }, /*replayCount=*/3);
+                [&sink](const Logger::LogEntry &entry, const String &threadName) { sink.capture(entry, threadName); },
+                /*replayCount=*/3);
         REQUIRE(handle != 0);
 
         // Replay is delivered synchronously inside installListener, so by the
@@ -363,7 +357,7 @@ TEST_CASE("Logger_HistoryReplayOnInstall") {
 
 TEST_CASE("Logger_HistoryReplayCountClamped") {
         Logger &logger = Logger::defaultLogger();
-        size_t savedSize = logger.historySize();
+        size_t  savedSize = logger.historySize();
         logger.setHistorySize(64);
         logger.sync();
 
@@ -374,17 +368,15 @@ TEST_CASE("Logger_HistoryReplayCountClamped") {
         logger.sync();
         logger.setHistorySize(64);
 
-        for(int i = 0; i < 2; i++) {
-                logger.log(Logger::Info, "clamp_test.cpp", 401 + i,
-                        String::sprintf("clamp-%d", i));
+        for (int i = 0; i < 2; i++) {
+                logger.log(Logger::Info, "clamp_test.cpp", 401 + i, String::sprintf("clamp-%d", i));
         }
         logger.sync();
 
-        ListenerSink sink;
+        ListenerSink           sink;
         Logger::ListenerHandle handle = logger.installListener(
-                [&sink](const Logger::LogEntry &entry, const String &threadName) {
-                        sink.capture(entry, threadName);
-                }, /*replayCount=*/100);  // Way more than what's stored.
+                [&sink](const Logger::LogEntry &entry, const String &threadName) { sink.capture(entry, threadName); },
+                /*replayCount=*/100); // Way more than what's stored.
         REQUIRE(handle != 0);
 
         auto entries = sink.snapshot();
@@ -401,21 +393,19 @@ TEST_CASE("Logger_HistoryReplayCountClamped") {
 
 TEST_CASE("Logger_HistoryRingTrimsToConfiguredSize") {
         Logger &logger = Logger::defaultLogger();
-        size_t savedSize = logger.historySize();
+        size_t  savedSize = logger.historySize();
         logger.setHistorySize(3);
         logger.sync();
 
-        for(int i = 0; i < 10; i++) {
-                logger.log(Logger::Info, "trim_test.cpp", 500 + i,
-                        String::sprintf("trim-%d", i));
+        for (int i = 0; i < 10; i++) {
+                logger.log(Logger::Info, "trim_test.cpp", 500 + i, String::sprintf("trim-%d", i));
         }
         logger.sync();
 
-        ListenerSink sink;
+        ListenerSink           sink;
         Logger::ListenerHandle handle = logger.installListener(
-                [&sink](const Logger::LogEntry &entry, const String &threadName) {
-                        sink.capture(entry, threadName);
-                }, /*replayCount=*/100);
+                [&sink](const Logger::LogEntry &entry, const String &threadName) { sink.capture(entry, threadName); },
+                /*replayCount=*/100);
         REQUIRE(handle != 0);
 
         auto entries = sink.snapshot();
@@ -430,20 +420,19 @@ TEST_CASE("Logger_HistoryRingTrimsToConfiguredSize") {
 
 TEST_CASE("Logger_HistorySizeZeroDisablesReplay") {
         Logger &logger = Logger::defaultLogger();
-        size_t savedSize = logger.historySize();
+        size_t  savedSize = logger.historySize();
         logger.setHistorySize(0);
         logger.sync();
 
-        for(int i = 0; i < 5; i++) {
+        for (int i = 0; i < 5; i++) {
                 logger.log(Logger::Info, "zero_test.cpp", 600 + i, "should-not-replay");
         }
         logger.sync();
 
-        ListenerSink sink;
+        ListenerSink           sink;
         Logger::ListenerHandle handle = logger.installListener(
-                [&sink](const Logger::LogEntry &entry, const String &threadName) {
-                        sink.capture(entry, threadName);
-                }, /*replayCount=*/100);
+                [&sink](const Logger::LogEntry &entry, const String &threadName) { sink.capture(entry, threadName); },
+                /*replayCount=*/100);
         REQUIRE(handle != 0);
 
         // Nothing replayed, but live delivery still works.
@@ -465,13 +454,9 @@ TEST_CASE("Logger_MultipleListenersAllReceiveEntries") {
         ListenerSink b;
 
         Logger::ListenerHandle ha = logger.installListener(
-                [&a](const Logger::LogEntry &entry, const String &threadName) {
-                        a.capture(entry, threadName);
-                });
+                [&a](const Logger::LogEntry &entry, const String &threadName) { a.capture(entry, threadName); });
         Logger::ListenerHandle hb = logger.installListener(
-                [&b](const Logger::LogEntry &entry, const String &threadName) {
-                        b.capture(entry, threadName);
-                });
+                [&b](const Logger::LogEntry &entry, const String &threadName) { b.capture(entry, threadName); });
         REQUIRE(ha != 0);
         REQUIRE(hb != 0);
         CHECK(ha != hb);

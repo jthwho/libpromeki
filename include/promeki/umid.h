@@ -61,9 +61,9 @@ class UMID {
         public:
                 /** @brief UMID form — Basic (32 bytes) or Extended (64 bytes). */
                 enum Length {
-                        Invalid = 0,    ///< @brief Not a valid UMID.
-                        Basic = 32,     ///< @brief SMPTE 330M Basic UMID.
-                        Extended = 64   ///< @brief SMPTE 330M Extended UMID with source pack.
+                        Invalid = 0,  ///< @brief Not a valid UMID.
+                        Basic = 32,   ///< @brief SMPTE 330M Basic UMID.
+                        Extended = 64 ///< @brief SMPTE 330M Extended UMID with source pack.
                 };
 
                 /** @brief Size of the Basic UMID in bytes. */
@@ -126,10 +126,10 @@ class UMID {
                 static UMID fromBytes(const uint8_t *bytes, size_t byteLen);
 
                 /** @brief Constructs an invalid (zero-length) UMID. */
-                UMID() : d{}, _length(Invalid) { }
+                UMID() : d{}, _length(Invalid) {}
 
                 /** @brief Copy constructor. */
-                UMID(const UMID &other) : d(other.d), _length(other._length) { }
+                UMID(const UMID &other) : d(other.d), _length(other._length) {}
 
                 /** @brief Copy assignment operator. */
                 UMID &operator=(const UMID &other) {
@@ -193,9 +193,8 @@ class UMID {
 
                 /** @brief Returns true if both UMIDs have the same length and bytes. */
                 bool operator==(const UMID &other) const {
-                        if(_length != other._length) return false;
-                        return std::memcmp(d.data(), other.d.data(),
-                                        static_cast<size_t>(_length)) == 0;
+                        if (_length != other._length) return false;
+                        return std::memcmp(d.data(), other.d.data(), static_cast<size_t>(_length)) == 0;
                 }
 
                 /** @brief Returns true if the UMIDs differ. */
@@ -203,9 +202,8 @@ class UMID {
 
                 /** @brief Less-than comparison for ordering (length first, then bytes). */
                 bool operator<(const UMID &other) const {
-                        if(_length != other._length) return _length < other._length;
-                        return std::memcmp(d.data(), other.d.data(),
-                                        static_cast<size_t>(_length)) < 0;
+                        if (_length != other._length) return _length < other._length;
+                        return std::memcmp(d.data(), other.d.data(), static_cast<size_t>(_length)) < 0;
                 }
 
                 /** @brief Greater-than comparison for ordering. */

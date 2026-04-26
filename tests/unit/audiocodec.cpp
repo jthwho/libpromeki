@@ -24,11 +24,11 @@ TEST_CASE("AudioCodec: well-known codecs resolve by ID") {
 }
 
 TEST_CASE("AudioCodec: lookup by name returns the registered entry") {
-        CHECK(value(AudioCodec::lookup("AAC"))  == AudioCodec(AudioCodec::AAC));
+        CHECK(value(AudioCodec::lookup("AAC")) == AudioCodec(AudioCodec::AAC));
         CHECK(value(AudioCodec::lookup("Opus")) == AudioCodec(AudioCodec::Opus));
         CHECK(value(AudioCodec::lookup("FLAC")) == AudioCodec(AudioCodec::FLAC));
-        CHECK(value(AudioCodec::lookup("MP3"))  == AudioCodec(AudioCodec::MP3));
-        CHECK(value(AudioCodec::lookup("AC3"))  == AudioCodec(AudioCodec::AC3));
+        CHECK(value(AudioCodec::lookup("MP3")) == AudioCodec(AudioCodec::MP3));
+        CHECK(value(AudioCodec::lookup("AC3")) == AudioCodec(AudioCodec::AC3));
         CHECK(error(AudioCodec::lookup("not-a-real-codec")).isError());
 }
 
@@ -39,7 +39,7 @@ TEST_CASE("AudioCodec: registeredIDs() enumerates every well-known codec") {
         CHECK(ids.contains(AudioCodec::FLAC));
         CHECK(ids.contains(AudioCodec::MP3));
         CHECK(ids.contains(AudioCodec::AC3));
-        for(auto id : ids) CHECK(id != AudioCodec::Invalid);
+        for (auto id : ids) CHECK(id != AudioCodec::Invalid);
 }
 
 TEST_CASE("AudioCodec: does not claim any PCM sample formats") {
@@ -48,7 +48,7 @@ TEST_CASE("AudioCodec: does not claim any PCM sample formats") {
         // This test catches regressions where someone tries to add PCM
         // entries back into the codec registry.
         auto ids = AudioCodec::registeredIDs();
-        for(auto id : ids) {
+        for (auto id : ids) {
                 AudioCodec c(id);
                 CAPTURE(c.name());
                 CHECK_FALSE(c.name().startsWith("PCMI_"));
@@ -92,14 +92,14 @@ TEST_CASE("AudioCodec: empty supported-formats lists mean 'no constraint'") {
 }
 
 TEST_CASE("AudioCodec: user-registered codecs flow through register/lookup") {
-        AudioCodec::ID myId = AudioCodec::registerType();
+        AudioCodec::ID   myId = AudioCodec::registerType();
         AudioCodec::Data d;
-        d.id   = myId;
+        d.id = myId;
         d.name = "TestCustomAudioCodec";
         d.desc = "Custom audio codec registered from a unit test";
-        d.supportedSampleFormats = { static_cast<int>(AudioFormat::PCMI_S24LE) };
-        d.supportedSampleRates   = { 96000.0f };
-        d.supportedChannelCounts = { 6 };
+        d.supportedSampleFormats = {static_cast<int>(AudioFormat::PCMI_S24LE)};
+        d.supportedSampleRates = {96000.0f};
+        d.supportedChannelCounts = {6};
         AudioCodec::registerData(std::move(d));
 
         AudioCodec by_id(myId);
@@ -261,10 +261,10 @@ TEST_CASE("AudioCodec::toString: pinned codec returns Name:Backend") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("AudioCodec::registerData drops malformed names") {
-        AudioCodec::ID myId = AudioCodec::registerType();
+        AudioCodec::ID   myId = AudioCodec::registerType();
         AudioCodec::Data d;
-        d.id   = myId;
-        d.name = "name-with-hyphens";  // not a C identifier
+        d.id = myId;
+        d.name = "name-with-hyphens"; // not a C identifier
         d.desc = "Should be rejected";
         AudioCodec::registerData(std::move(d));
 

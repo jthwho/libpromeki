@@ -24,10 +24,10 @@ TEST_CASE("Application: static accessors work without an instance") {
 }
 
 TEST_CASE("Application: arguments captured from argc/argv") {
-        char arg0[] = "myapp";
-        char arg1[] = "--verbose";
-        char arg2[] = "input.wav";
-        char *argv[] = { arg0, arg1, arg2 };
+        char        arg0[] = "myapp";
+        char        arg1[] = "--verbose";
+        char        arg2[] = "input.wav";
+        char       *argv[] = {arg0, arg1, arg2};
         Application app(3, argv);
         REQUIRE(Application::arguments().size() == 3);
         CHECK(Application::arguments()[0] == "myapp");
@@ -37,8 +37,8 @@ TEST_CASE("Application: arguments captured from argc/argv") {
 
 TEST_CASE("Application: arguments empty after destruction") {
         {
-                char arg0[] = "test";
-                char *argv[] = { arg0 };
+                char        arg0[] = "test";
+                char       *argv[] = {arg0};
                 Application app(1, argv);
                 CHECK_FALSE(Application::arguments().isEmpty());
         }
@@ -88,8 +88,8 @@ TEST_CASE("Application: not copyable or movable") {
 }
 
 TEST_CASE("Application: quit and shouldQuit") {
-        char arg0[] = "test";
-        char *argv[] = { arg0 };
+        char        arg0[] = "test";
+        char       *argv[] = {arg0};
         Application app(1, argv);
 
         CHECK_FALSE(Application::shouldQuit());
@@ -101,8 +101,8 @@ TEST_CASE("Application: quit and shouldQuit") {
 }
 
 TEST_CASE("Application: quit with non-zero exit code") {
-        char arg0[] = "test";
-        char *argv[] = { arg0 };
+        char        arg0[] = "test";
+        char       *argv[] = {arg0};
         Application app(1, argv);
 
         CHECK_FALSE(Application::shouldQuit());
@@ -112,8 +112,8 @@ TEST_CASE("Application: quit with non-zero exit code") {
 }
 
 TEST_CASE("Application: exitCode default is zero") {
-        char arg0[] = "test";
-        char *argv[] = { arg0 };
+        char        arg0[] = "test";
+        char       *argv[] = {arg0};
         Application app(1, argv);
 
         CHECK(Application::exitCode() == 0);
@@ -121,8 +121,8 @@ TEST_CASE("Application: exitCode default is zero") {
 }
 
 TEST_CASE("Application: quit-request handler intercepts and suppresses") {
-        char arg0[] = "test";
-        char *argv[] = { arg0 };
+        char        arg0[] = "test";
+        char       *argv[] = {arg0};
         Application app(1, argv);
 
         int observedCode = -1;
@@ -142,8 +142,8 @@ TEST_CASE("Application: quit-request handler intercepts and suppresses") {
 }
 
 TEST_CASE("Application: quit-request handler falls through on false") {
-        char arg0[] = "test";
-        char *argv[] = { arg0 };
+        char        arg0[] = "test";
+        char       *argv[] = {arg0};
         Application app(1, argv);
 
         int observedCode = -1;
@@ -166,14 +166,12 @@ TEST_CASE("Application: mainEventLoop is reachable from a non-main thread before
         // there before any same-thread caller has primed the cache,
         // the adopted Thread must still surface the main EventLoop
         // so that `Application::quit` can wake the loop.
-        char arg0[] = "test";
-        char *argv[] = { arg0 };
+        char        arg0[] = "test";
+        char       *argv[] = {arg0};
         Application app(1, argv);
 
         std::atomic<EventLoop *> seenLoop{nullptr};
-        std::thread other([&]() {
-                seenLoop.store(Application::mainEventLoop());
-        });
+        std::thread              other([&]() { seenLoop.store(Application::mainEventLoop()); });
         other.join();
         CHECK(seenLoop.load() != nullptr);
         CHECK(seenLoop.load() == Application::mainEventLoop());
@@ -184,8 +182,8 @@ TEST_CASE("Application: quit from another thread wakes the main EventLoop") {
         // invoked on a non-main thread must unblock
         // mainEventLoop()->exec() in time for `Application::exec` to
         // return.
-        char arg0[] = "test";
-        char *argv[] = { arg0 };
+        char        arg0[] = "test";
+        char       *argv[] = {arg0};
         Application app(1, argv);
 
         std::thread quitter([]() {
@@ -201,8 +199,8 @@ TEST_CASE("Application: quit from another thread wakes the main EventLoop") {
 }
 
 TEST_CASE("Application: quit-request handler cleared with nullptr") {
-        char arg0[] = "test";
-        char *argv[] = { arg0 };
+        char        arg0[] = "test";
+        char       *argv[] = {arg0};
         Application app(1, argv);
 
         int callCount = 0;

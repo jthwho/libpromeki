@@ -28,7 +28,7 @@ TEST_CASE("StreamString_DefaultConstructor") {
 // ============================================================================
 
 TEST_CASE("StreamString_CallbackClears") {
-        StringList captured;
+        StringList   captured;
         StreamString ss([&captured](String &line) {
                 captured.pushToBack(line);
                 return true;
@@ -46,7 +46,7 @@ TEST_CASE("StreamString_CallbackClears") {
 // ============================================================================
 
 TEST_CASE("StreamString_CallbackKeeps") {
-        int callCount = 0;
+        int          callCount = 0;
         StreamString ss([&callCount](String &line) {
                 callCount++;
                 return false;
@@ -76,7 +76,7 @@ TEST_CASE("StreamString_CallbackModifies") {
 // ============================================================================
 
 TEST_CASE("StreamString_PartialLineSync") {
-        StringList captured;
+        StringList   captured;
         StreamString ss([&captured](String &line) {
                 captured.pushToBack(line);
                 return true;
@@ -97,7 +97,7 @@ TEST_CASE("StreamString_PartialLineSync") {
 // ============================================================================
 
 TEST_CASE("StreamString_EmptyLinesSkipped") {
-        int callCount = 0;
+        int          callCount = 0;
         StreamString ss([&callCount](String &) {
                 callCount++;
                 return true;
@@ -112,7 +112,7 @@ TEST_CASE("StreamString_EmptyLinesSkipped") {
 // ============================================================================
 
 TEST_CASE("StreamString_MixedOutput") {
-        StringList captured;
+        StringList   captured;
         StreamString ss([&captured](String &line) {
                 captured.pushToBack(line);
                 return true;

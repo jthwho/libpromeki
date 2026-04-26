@@ -31,23 +31,20 @@ LtcDecoder::DecodedList LtcDecoder::decode(const int8_t *samples, size_t count) 
         return _results;
 }
 
-LtcDecoder::DecodedList LtcDecoder::decodeInterleaved(
-        const AudioDesc &desc, const uint8_t *data, size_t samples,
-        int channelIndex)
-{
+LtcDecoder::DecodedList LtcDecoder::decodeInterleaved(const AudioDesc &desc, const uint8_t *data, size_t samples,
+                                                      int channelIndex) {
         const int channels = static_cast<int>(desc.channels());
-        if(channels <= 0 || channelIndex < 0 || channelIndex >= channels) return DecodedList();
-        if(static_cast<int>(desc.sampleRate()) != _decoder.sample_rate) return DecodedList();
+        if (channels <= 0 || channelIndex < 0 || channelIndex >= channels) return DecodedList();
+        if (static_cast<int>(desc.sampleRate()) != _decoder.sample_rate) return DecodedList();
 
-        if(samples == 0) {
+        if (samples == 0) {
                 _results.clear();
                 return _results;
         }
 
         // Fast path: native int8 mono on channel 0 — feed straight
         // through to libvtc with no conversion.
-        if(channels == 1 && channelIndex == 0 &&
-           desc.format().id() == AudioFormat::PCMI_S8) {
+        if (channels == 1 && channelIndex == 0 && desc.format().id() == AudioFormat::PCMI_S8) {
                 return decode(reinterpret_cast<const int8_t *>(data), samples);
         }
 
@@ -59,35 +56,31 @@ LtcDecoder::DecodedList LtcDecoder::decodeInterleaved(
         // are members of LtcDecoder so this stays allocation-free in
         // steady state across many calls.
         const size_t totalScalars = samples * static_cast<size_t>(channels);
-        if(_floatScratch.size() < totalScalars) _floatScratch.resize(totalScalars);
-        if(_int8Scratch.size() < samples)       _int8Scratch.resize(samples);
+        if (_floatScratch.size() < totalScalars) _floatScratch.resize(totalScalars);
+        if (_int8Scratch.size() < samples) _int8Scratch.resize(samples);
 
         desc.samplesToFloat(_floatScratch.data(), data, samples);
 
-        for(size_t s = 0; s < samples; s++) {
-                float v = _floatScratch[s * static_cast<size_t>(channels) +
-                                        static_cast<size_t>(channelIndex)];
-                if(v >  1.0f) v =  1.0f;
-                if(v < -1.0f) v = -1.0f;
+        for (size_t s = 0; s < samples; s++) {
+                float v = _floatScratch[s * static_cast<size_t>(channels) + static_cast<size_t>(channelIndex)];
+                if (v > 1.0f) v = 1.0f;
+                if (v < -1.0f) v = -1.0f;
                 _int8Scratch[s] = static_cast<int8_t>(std::lround(v * 127.0f));
         }
 
         return decode(_int8Scratch.data(), samples);
 }
 
-LtcDecoder::DecodedList LtcDecoder::decode(
-        const PcmAudioPayload &audio, int channelIndex)
-{
-        if(!audio.isValid()) return DecodedList();
-        if(audio.planeCount() == 0) return DecodedList();
+LtcDecoder::DecodedList LtcDecoder::decode(const PcmAudioPayload &audio, int channelIndex) {
+        if (!audio.isValid()) return DecodedList();
+        if (audio.planeCount() == 0) return DecodedList();
         // Only interleaved layouts are supported — the first (and only)
         // plane must cover every channel.  Planar payloads fall out
         // here rather than silently decoding channel 0 only.
-        if(audio.desc().format().isPlanar()) return DecodedList();
+        if (audio.desc().format().isPlanar()) return DecodedList();
         auto view = audio.plane(0);
-        if(!view.isValid()) return DecodedList();
-        return decodeInterleaved(audio.desc(), view.data(),
-                                 audio.sampleCount(), channelIndex);
+        if (!view.isValid()) return DecodedList();
+        return decodeInterleaved(audio.desc(), view.data(), audio.sampleCount(), channelIndex);
 }
 
 void LtcDecoder::reset() {
@@ -95,14 +88,10 @@ void LtcDecoder::reset() {
         return;
 }
 
-void LtcDecoder::decoderCallback(const VtcTimecode *tc,
-        int64_t sampleStart, int64_t sampleLength, void *userData) {
-        LtcDecoder *self = static_cast<LtcDecoder *>(userData);
+void LtcDecoder::decoderCallback(const VtcTimecode *tc, int64_t sampleStart, int64_t sampleLength, void *userData) {
+        LtcDecoder     *self = static_cast<LtcDecoder *>(userData);
         DecodedTimecode result;
-        result.timecode = Timecode(
-                Timecode::Mode(tc->format),
-                tc->hour, tc->min, tc->sec, tc->frame
-        );
+        result.timecode = Timecode(Timecode::Mode(tc->format), tc->hour, tc->min, tc->sec, tc->frame);
         result.sampleStart = sampleStart;
         result.sampleLength = sampleLength;
         self->_results.pushToBack(result);

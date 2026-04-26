@@ -153,7 +153,7 @@ TEST_CASE("Ipv4Address") {
 
         SUBCASE("uint32 round-trip") {
                 Ipv4Address addr(10, 20, 30, 40);
-                uint32_t val = addr.toUint32();
+                uint32_t    val = addr.toUint32();
                 Ipv4Address restored = Ipv4Address::fromUint32(val);
                 CHECK(restored == addr);
         }
@@ -161,7 +161,7 @@ TEST_CASE("Ipv4Address") {
         SUBCASE("multicastMac") {
                 // Valid multicast address
                 Ipv4Address mcast(224, 0, 0, 1);
-                MacAddress mac = mcast.multicastMac();
+                MacAddress  mac = mcast.multicastMac();
                 CHECK_FALSE(mac.isNull());
                 CHECK(mac == MacAddress(0x01, 0x00, 0x5E, 0x00, 0x00, 0x01));
 
@@ -172,7 +172,7 @@ TEST_CASE("Ipv4Address") {
 
         SUBCASE("TextStream operator<<") {
                 Ipv4Address addr(10, 20, 30, 40);
-                String str;
+                String      str;
                 {
                         TextStream ts(&str);
                         ts << addr;
@@ -182,9 +182,9 @@ TEST_CASE("Ipv4Address") {
 
 #if !defined(PROMEKI_PLATFORM_EMSCRIPTEN)
         SUBCASE("toSockAddr") {
-                Ipv4Address addr(192, 168, 1, 1);
+                Ipv4Address        addr(192, 168, 1, 1);
                 struct sockaddr_in sa;
-                Error err = addr.toSockAddr(&sa);
+                Error              err = addr.toSockAddr(&sa);
                 CHECK(err.isOk());
                 CHECK(sa.sin_family == AF_INET);
                 CHECK(sa.sin_port == 0);
@@ -196,7 +196,7 @@ TEST_CASE("Ipv4Address") {
         }
 
         SUBCASE("fromSockAddr round-trip") {
-                Ipv4Address orig(172, 16, 0, 1);
+                Ipv4Address        orig(172, 16, 0, 1);
                 struct sockaddr_in sa;
                 REQUIRE(orig.toSockAddr(&sa).isOk());
                 auto [restored, err] = Ipv4Address::fromSockAddr(&sa);

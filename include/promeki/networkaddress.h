@@ -16,11 +16,11 @@
 #include <promeki/ipv6address.h>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
-#       include <winsock2.h>
-#       include <ws2tcpip.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #elif !defined(PROMEKI_PLATFORM_EMSCRIPTEN)
-#       include <sys/socket.h>
-#       include <netinet/in.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #endif
 
 PROMEKI_NAMESPACE_BEGIN
@@ -67,10 +67,10 @@ class NetworkAddress {
         public:
                 /** @brief The kind of address stored. */
                 enum Type {
-                        None = 0,       ///< No address set.
-                        IPv4,           ///< Resolved IPv4 address.
-                        IPv6,           ///< Resolved IPv6 address.
-                        Hostname        ///< Unresolved hostname string.
+                        None = 0, ///< No address set.
+                        IPv4,     ///< Resolved IPv4 address.
+                        IPv6,     ///< Resolved IPv6 address.
+                        Hostname  ///< Unresolved hostname string.
                 };
 
                 /**
@@ -108,19 +108,19 @@ class NetworkAddress {
                  * @brief Constructs from an IPv4 address.
                  * @param addr The IPv4 address.
                  */
-                NetworkAddress(const Ipv4Address &addr) : _data(addr) { }
+                NetworkAddress(const Ipv4Address &addr) : _data(addr) {}
 
                 /**
                  * @brief Constructs from an IPv6 address.
                  * @param addr The IPv6 address.
                  */
-                NetworkAddress(const Ipv6Address &addr) : _data(addr) { }
+                NetworkAddress(const Ipv6Address &addr) : _data(addr) {}
 
                 /**
                  * @brief Constructs from a hostname string (unresolved).
                  * @param hostname The hostname to store.
                  */
-                explicit NetworkAddress(const String &hostname) : _data(hostname) { }
+                explicit NetworkAddress(const String &hostname) : _data(hostname) {}
 
                 /** @brief Returns the type of address stored. */
                 Type type() const;

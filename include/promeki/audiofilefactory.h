@@ -29,7 +29,6 @@ using AudioFileFactory = FileFormatFactory<AudioFile>;
  *
  * @param name The AudioFileFactory subclass to instantiate and register.
  */
-#define PROMEKI_REGISTER_AUDIOFILE_FACTORY(name) \
-        PROMEKI_REGISTER_FILE_FORMAT_FACTORY(AudioFile, name)
+#define PROMEKI_REGISTER_AUDIOFILE_FACTORY(name) PROMEKI_REGISTER_FILE_FORMAT_FACTORY(AudioFile, name)
 
 PROMEKI_NAMESPACE_END

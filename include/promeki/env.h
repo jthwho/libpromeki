@@ -69,9 +69,7 @@ class Env {
                  * @param name The variable name.
                  * @return true if the variable exists in the environment.
                  */
-                static bool isSet(const char *name) {
-                        return std::getenv(name) != nullptr;
-                }
+                static bool isSet(const char *name) { return std::getenv(name) != nullptr; }
 
                 /**
                  * @brief Sets an environment variable.

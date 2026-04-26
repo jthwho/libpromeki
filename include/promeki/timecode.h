@@ -48,21 +48,21 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class Timecode {
         public:
-                using DigitType = uint8_t;    ///< Type used for individual timecode digit fields.
-                using FlagsType = uint32_t;   ///< Type used for timecode flag bitmasks.
+                using DigitType = uint8_t;  ///< Type used for individual timecode digit fields.
+                using FlagsType = uint32_t; ///< Type used for timecode flag bitmasks.
 
                 /** @brief Standard timecode types. */
                 enum TimecodeType {
-                        NDF24,  ///< 24 fps non-drop-frame (maps to VTC_FORMAT_24)
-                        NDF25,  ///< 25 fps non-drop-frame (maps to VTC_FORMAT_25)
-                        NDF30,  ///< 30 fps non-drop-frame (maps to VTC_FORMAT_30_NDF)
-                        DF30    ///< 29.97 fps drop-frame (maps to VTC_FORMAT_29_97_DF)
+                        NDF24, ///< 24 fps non-drop-frame (maps to VTC_FORMAT_24)
+                        NDF25, ///< 25 fps non-drop-frame (maps to VTC_FORMAT_25)
+                        NDF30, ///< 30 fps non-drop-frame (maps to VTC_FORMAT_30_NDF)
+                        DF30   ///< 29.97 fps drop-frame (maps to VTC_FORMAT_29_97_DF)
                 };
 
                 /** @brief Timecode flag bits. */
                 enum Flags {
-                        DropFrame       = 0x00000001,  ///< Indicates drop-frame timecode
-                        FirstField      = 0x00000002   ///< Indicates the first field of an interlaced frame
+                        DropFrame = 0x00000001, ///< Indicates drop-frame timecode
+                        FirstField = 0x00000002 ///< Indicates the first field of an interlaced frame
                 };
 
                 /**
@@ -85,9 +85,9 @@ class Timecode {
                                  * @param flags Bitmask of Flags values (e.g. DropFrame).
                                  */
                                 Mode(uint32_t fps, uint32_t flags) : _valid(true) {
-                                        if(fps > 0) {
+                                        if (fps > 0) {
                                                 uint32_t vtcFlags = 0;
-                                                if(flags & DropFrame) vtcFlags |= VTC_FORMAT_FLAG_DROP_FRAME;
+                                                if (flags & DropFrame) vtcFlags |= VTC_FORMAT_FLAG_DROP_FRAME;
                                                 _format = vtc_format_find_or_create(fps, 1, fps, vtcFlags);
                                         }
                                 }
@@ -95,27 +95,26 @@ class Timecode {
                                 /** @brief Constructs a mode from a standard TimecodeType.
                                  *  @param type One of the TimecodeType enum values. */
                                 Mode(TimecodeType type) : _valid(true) {
-                                        switch(type) {
-                                                case NDF24: _format = &VTC_FORMAT_24;       break;
-                                                case NDF25: _format = &VTC_FORMAT_25;       break;
-                                                case NDF30: _format = &VTC_FORMAT_30_NDF;   break;
-                                                case DF30:  _format = &VTC_FORMAT_29_97_DF; break;
+                                        switch (type) {
+                                                case NDF24: _format = &VTC_FORMAT_24; break;
+                                                case NDF25: _format = &VTC_FORMAT_25; break;
+                                                case NDF30: _format = &VTC_FORMAT_30_NDF; break;
+                                                case DF30: _format = &VTC_FORMAT_29_97_DF; break;
                                         }
                                 }
 
                                 bool operator==(const Mode &other) const {
-                                        if(_format == other._format) return _valid == other._valid;
-                                        if(_format == nullptr || other._format == nullptr) {
+                                        if (_format == other._format) return _valid == other._valid;
+                                        if (_format == nullptr || other._format == nullptr) {
                                                 // Both valid with no format = equal
                                                 return _valid == other._valid && _format == other._format;
                                         }
                                         return _format->tc_fps == other._format->tc_fps &&
-                                               vtc_format_is_drop_frame(_format) == vtc_format_is_drop_frame(other._format);
+                                               vtc_format_is_drop_frame(_format) ==
+                                                       vtc_format_is_drop_frame(other._format);
                                 }
 
-                                bool operator!=(const Mode &other) const {
-                                        return !(*this == other);
-                                }
+                                bool operator!=(const Mode &other) const { return !(*this == other); }
 
                                 /** @brief Returns the frames-per-second rate, or 0 if no format is set. */
                                 uint32_t fps() const { return _format ? vtc_format_fps(_format) : 0; }
@@ -131,7 +130,7 @@ class Timecode {
 
                         private:
                                 const VtcFormat *_format = nullptr;
-                                bool _valid = false;
+                                bool             _valid = false;
                 };
 
                 /**
@@ -180,34 +179,29 @@ class Timecode {
                  *  @param m Minute digit.
                  *  @param s Second digit.
                  *  @param f Frame digit. */
-                Timecode(DigitType h, DigitType m, DigitType s, DigitType f) :
-                        _mode(Mode(0u, 0u)), _hour(h), _min(m), _sec(s), _frame(f) {}
+                Timecode(DigitType h, DigitType m, DigitType s, DigitType f)
+                    : _mode(Mode(0u, 0u)), _hour(h), _min(m), _sec(s), _frame(f) {}
                 /** @brief Constructs a timecode with a mode and explicit digit values.
                  *  @param md The timecode mode.
                  *  @param h Hour digit.
                  *  @param m Minute digit.
                  *  @param s Second digit.
                  *  @param f Frame digit. */
-                Timecode(const Mode &md, DigitType h, DigitType m, DigitType s, DigitType f) :
-                        _mode(md), _hour(h), _min(m), _sec(s), _frame(f) {}
+                Timecode(const Mode &md, DigitType h, DigitType m, DigitType s, DigitType f)
+                    : _mode(md), _hour(h), _min(m), _sec(s), _frame(f) {}
                 /** @brief Constructs a timecode by parsing a string representation.
                  *  @param str The string to parse. */
                 Timecode(const String &str) {
                         auto [tc, err] = fromString(str);
-                        if(err.isOk()) *this = tc;
+                        if (err.isOk()) *this = tc;
                 }
 
                 bool operator==(const Timecode &other) const {
-                        return _mode == other._mode &&
-                               _hour == other._hour &&
-                               _min == other._min &&
-                               _sec == other._sec &&
-                               _frame == other._frame;
+                        return _mode == other._mode && _hour == other._hour && _min == other._min &&
+                               _sec == other._sec && _frame == other._frame;
                 }
 
-                bool operator!=(const Timecode &other) const {
-                        return !(*this == other);
-                }
+                bool operator!=(const Timecode &other) const { return !(*this == other); }
 
                 /**
                  * @brief Ordering operators.
@@ -227,22 +221,22 @@ class Timecode {
                  *    number using its own rate and compare those.
                  */
                 bool operator>(const Timecode &other) const {
-                        if(compareByDigits(other)) return digitTuple() > other.digitTuple();
+                        if (compareByDigits(other)) return digitTuple() > other.digitTuple();
                         return toFrameNumber() > other.toFrameNumber();
                 }
 
                 bool operator<(const Timecode &other) const {
-                        if(compareByDigits(other)) return digitTuple() < other.digitTuple();
+                        if (compareByDigits(other)) return digitTuple() < other.digitTuple();
                         return toFrameNumber() < other.toFrameNumber();
                 }
 
                 bool operator>=(const Timecode &other) const {
-                        if(compareByDigits(other)) return digitTuple() >= other.digitTuple();
+                        if (compareByDigits(other)) return digitTuple() >= other.digitTuple();
                         return toFrameNumber() >= other.toFrameNumber();
                 }
 
                 bool operator<=(const Timecode &other) const {
-                        if(compareByDigits(other)) return digitTuple() <= other.digitTuple();
+                        if (compareByDigits(other)) return digitTuple() <= other.digitTuple();
                         return toFrameNumber() <= other.toFrameNumber();
                 }
 
@@ -260,7 +254,10 @@ class Timecode {
                  * @brief Sets the timecode mode, preserving the digit values.
                  * @param md The new mode.
                  */
-                void setMode(const Mode &md) { _mode = md; return; }
+                void setMode(const Mode &md) {
+                        _mode = md;
+                        return;
+                }
 
                 /** @brief Pre-increment: advances the timecode by one frame. */
                 Timecode &operator++();
@@ -425,9 +422,7 @@ class Timecode {
                  *         success, or an Error on inconsistency.
                  * @see toBcd64, TimecodePackFormat
                  */
-                static Result<Timecode> fromBcd64(uint64_t bcd,
-                                                  TimecodePackFormat fmt,
-                                                  const Mode &mode);
+                static Result<Timecode> fromBcd64(uint64_t bcd, TimecodePackFormat fmt, const Mode &mode);
 
                 /** @brief Convenience overload — defaults to @ref TimecodePackFormat::Vitc and unknown @ref Mode. */
                 static Result<Timecode> fromBcd64(uint64_t bcd) {
@@ -441,7 +436,7 @@ class Timecode {
 
         private:
                 VtcTimecode toVtc() const;
-                void fromVtc(const VtcTimecode &vtc);
+                void        fromVtc(const VtcTimecode &vtc);
 
                 // Tuple of the four digit fields for lexicographic
                 // ordering.  Used by the comparison operators whenever a
@@ -455,16 +450,16 @@ class Timecode {
                 // absolute frame numbers.  See the operator block above
                 // for the full rules.
                 bool compareByDigits(const Timecode &other) const {
-                        if(_mode == other._mode) return true;
+                        if (_mode == other._mode) return true;
                         return !_mode.hasFormat() || !other._mode.hasFormat();
                 }
 
-                Mode            _mode;
-                FlagsType       _flags  = 0;
-                DigitType       _hour   = 0;
-                DigitType       _min    = 0;
-                DigitType       _sec    = 0;
-                DigitType       _frame  = 0;
+                Mode      _mode;
+                FlagsType _flags = 0;
+                DigitType _hour = 0;
+                DigitType _min = 0;
+                DigitType _sec = 0;
+                DigitType _frame = 0;
 };
 
 
@@ -497,67 +492,67 @@ PROMEKI_NAMESPACE_END
  * Unrecognized hints fall through to the standard string format parser,
  * so a stray spec like @c {:>16} still works.
  */
-template <>
-struct std::formatter<promeki::Timecode> {
-        enum class Style {
-                Smpte,         ///< @c VTC_STR_FMT_SMPTE (default).
-                SmpteWithFps,  ///< @c VTC_STR_FMT_SMPTE_WITH_FPS.
-                SmpteSpaceFps, ///< @c VTC_STR_FMT_SMPTE_SPACE_FPS.
-                Field          ///< @c VTC_STR_FMT_FIELD.
-        };
-
-        Style _style = Style::Smpte;
-        std::formatter<std::string_view> _base;
-
-        constexpr auto parse(std::format_parse_context &ctx) {
-                auto it = ctx.begin();
-                auto end = ctx.end();
-
-                // Try to match a recognised style keyword at the start of
-                // the spec.  Each candidate is checked in longest-first
-                // order so prefixes do not collide ("smpte-fps" must beat
-                // "smpte").  On match, advance past the keyword.
-                auto tryKeyword = [&](const char *kw, Style s) {
-                        auto p = it;
-                        while(*kw && p != end && *p == *kw) { ++p; ++kw; }
-                        if(*kw == 0 && (p == end || *p == '}' || *p == ':')) {
-                                it = p;
-                                _style = s;
-                                return true;
-                        }
-                        return false;
+template <> struct std::formatter<promeki::Timecode> {
+                enum class Style {
+                        Smpte,         ///< @c VTC_STR_FMT_SMPTE (default).
+                        SmpteWithFps,  ///< @c VTC_STR_FMT_SMPTE_WITH_FPS.
+                        SmpteSpaceFps, ///< @c VTC_STR_FMT_SMPTE_SPACE_FPS.
+                        Field          ///< @c VTC_STR_FMT_FIELD.
                 };
 
-                if(!tryKeyword("smpte-fps",   Style::SmpteWithFps)
-                   && !tryKeyword("smpte-space", Style::SmpteSpaceFps)
-                   && !tryKeyword("smpte",       Style::Smpte)
-                   && !tryKeyword("field",       Style::Field)) {
-                        // No keyword — leave _style at its default and let
-                        // the base parser consume the entire remaining spec.
+                Style                            _style = Style::Smpte;
+                std::formatter<std::string_view> _base;
+
+                constexpr auto parse(std::format_parse_context &ctx) {
+                        auto it = ctx.begin();
+                        auto end = ctx.end();
+
+                        // Try to match a recognised style keyword at the start of
+                        // the spec.  Each candidate is checked in longest-first
+                        // order so prefixes do not collide ("smpte-fps" must beat
+                        // "smpte").  On match, advance past the keyword.
+                        auto tryKeyword = [&](const char *kw, Style s) {
+                                auto p = it;
+                                while (*kw && p != end && *p == *kw) {
+                                        ++p;
+                                        ++kw;
+                                }
+                                if (*kw == 0 && (p == end || *p == '}' || *p == ':')) {
+                                        it = p;
+                                        _style = s;
+                                        return true;
+                                }
+                                return false;
+                        };
+
+                        if (!tryKeyword("smpte-fps", Style::SmpteWithFps) &&
+                            !tryKeyword("smpte-space", Style::SmpteSpaceFps) && !tryKeyword("smpte", Style::Smpte) &&
+                            !tryKeyword("field", Style::Field)) {
+                                // No keyword — leave _style at its default and let
+                                // the base parser consume the entire remaining spec.
+                        }
+
+                        // A separating ':' between the hint and a standard string
+                        // format spec is consumed here so the base parser sees a
+                        // bare ">16" rather than ":>16".
+                        if (it != end && *it == ':') ++it;
+
+                        // Forward whatever remains to the standard string format
+                        // parser so width / fill / alignment / precision still work.
+                        ctx.advance_to(it);
+                        return _base.parse(ctx);
                 }
 
-                // A separating ':' between the hint and a standard string
-                // format spec is consumed here so the base parser sees a
-                // bare ">16" rather than ":>16".
-                if(it != end && *it == ':') ++it;
-
-                // Forward whatever remains to the standard string format
-                // parser so width / fill / alignment / precision still work.
-                ctx.advance_to(it);
-                return _base.parse(ctx);
-        }
-
-        template <typename FormatContext>
-        auto format(const promeki::Timecode &tc, FormatContext &ctx) const {
-                const VtcStringFormat *fmt = &VTC_STR_FMT_SMPTE;
-                switch(_style) {
-                        case Style::Smpte:         fmt = &VTC_STR_FMT_SMPTE; break;
-                        case Style::SmpteWithFps:  fmt = &VTC_STR_FMT_SMPTE_WITH_FPS; break;
-                        case Style::SmpteSpaceFps: fmt = &VTC_STR_FMT_SMPTE_SPACE_FPS; break;
-                        case Style::Field:         fmt = &VTC_STR_FMT_FIELD; break;
+                template <typename FormatContext> auto format(const promeki::Timecode &tc, FormatContext &ctx) const {
+                        const VtcStringFormat *fmt = &VTC_STR_FMT_SMPTE;
+                        switch (_style) {
+                                case Style::Smpte: fmt = &VTC_STR_FMT_SMPTE; break;
+                                case Style::SmpteWithFps: fmt = &VTC_STR_FMT_SMPTE_WITH_FPS; break;
+                                case Style::SmpteSpaceFps: fmt = &VTC_STR_FMT_SMPTE_SPACE_FPS; break;
+                                case Style::Field: fmt = &VTC_STR_FMT_FIELD; break;
+                        }
+                        auto [s, err] = tc.toString(fmt);
+                        (void)err; // Formatter consumers do not get the error path.
+                        return _base.format(std::string_view(s.cstr(), s.byteCount()), ctx);
                 }
-                auto [s, err] = tc.toString(fmt);
-                (void)err;  // Formatter consumers do not get the error path.
-                return _base.format(std::string_view(s.cstr(), s.byteCount()), ctx);
-        }
 };

@@ -31,7 +31,7 @@ class TuiSubsystem;
  * supported only through @ref ObjectBase signal/slot dispatch.
  */
 class TuiWidget : public Widget {
-        PROMEKI_OBJECT(TuiWidget, Widget)
+                PROMEKI_OBJECT(TuiWidget, Widget)
         public:
                 /**
                  * @brief Constructs a TuiWidget.

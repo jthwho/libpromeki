@@ -55,9 +55,9 @@ class LtcDecoder {
                  * @brief Result of decoding a single LTC frame.
                  */
                 struct DecodedTimecode {
-                        Timecode timecode;      ///< @brief The decoded timecode value.
-                        int64_t sampleStart;    ///< @brief Sample position where this frame began.
-                        int64_t sampleLength;   ///< @brief Number of samples in this frame.
+                                Timecode timecode;     ///< @brief The decoded timecode value.
+                                int64_t  sampleStart;  ///< @brief Sample position where this frame began.
+                                int64_t  sampleLength; ///< @brief Number of samples in this frame.
                 };
 
                 /** @brief List of decoded timecode results. */
@@ -127,8 +127,7 @@ class LtcDecoder {
                  *                     Defaults to channel 0.
                  * @return List of decoded timecodes found in this chunk.
                  */
-                DecodedList decode(const PcmAudioPayload &audio,
-                                   int channelIndex = 0);
+                DecodedList decode(const PcmAudioPayload &audio, int channelIndex = 0);
 
                 /**
                  * @brief Clears the decoder state.
@@ -139,7 +138,7 @@ class LtcDecoder {
 
         private:
                 VtcLTCDecoder _decoder;
-                DecodedList _results;
+                DecodedList   _results;
 
                 /// Reusable scratch buffers for the format-agnostic decode
                 /// path; held as members so per-call allocation is amortised
@@ -152,13 +151,11 @@ class LtcDecoder {
                 /// that describes it; returns an empty list on any guard
                 /// rejection (wrong sample rate, out-of-range channel
                 /// index, zero-channel descriptor).
-                DecodedList decodeInterleaved(const AudioDesc &desc,
-                                              const uint8_t *data,
-                                              size_t samples,
+                DecodedList decodeInterleaved(const AudioDesc &desc, const uint8_t *data, size_t samples,
                                               int channelIndex);
 
-                static void decoderCallback(const VtcTimecode *tc,
-                        int64_t sampleStart, int64_t sampleLength, void *userData);
+                static void decoderCallback(const VtcTimecode *tc, int64_t sampleStart, int64_t sampleLength,
+                                            void *userData);
 };
 
 PROMEKI_NAMESPACE_END

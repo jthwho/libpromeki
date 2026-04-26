@@ -13,7 +13,7 @@
 using namespace promeki;
 
 TEST_CASE("AnsiStream: construction from IODevice") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -22,7 +22,7 @@ TEST_CASE("AnsiStream: construction from IODevice") {
 }
 
 TEST_CASE("AnsiStream: setAnsiEnabled controls output") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -33,7 +33,7 @@ TEST_CASE("AnsiStream: setAnsiEnabled controls output") {
 }
 
 TEST_CASE("AnsiStream: setForeground(AnsiColor) emits escape code") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -44,7 +44,7 @@ TEST_CASE("AnsiStream: setForeground(AnsiColor) emits escape code") {
 }
 
 TEST_CASE("AnsiStream: setBackground(AnsiColor) emits escape code") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -55,7 +55,7 @@ TEST_CASE("AnsiStream: setBackground(AnsiColor) emits escape code") {
 }
 
 TEST_CASE("AnsiStream: setForeground dark colors use 30-37 codes") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -64,7 +64,7 @@ TEST_CASE("AnsiStream: setForeground dark colors use 30-37 codes") {
 }
 
 TEST_CASE("AnsiStream: setBackground dark colors use 40-47 codes") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -73,7 +73,7 @@ TEST_CASE("AnsiStream: setBackground dark colors use 40-47 codes") {
 }
 
 TEST_CASE("AnsiStream: setForeground extended colors use 38;5 codes") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -82,7 +82,7 @@ TEST_CASE("AnsiStream: setForeground extended colors use 38;5 codes") {
 }
 
 TEST_CASE("AnsiStream: setBackground extended colors use 48;5 codes") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -91,7 +91,7 @@ TEST_CASE("AnsiStream: setBackground extended colors use 48;5 codes") {
 }
 
 TEST_CASE("AnsiStream: reset emits escape code") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -100,7 +100,7 @@ TEST_CASE("AnsiStream: reset emits escape code") {
 }
 
 TEST_CASE("AnsiStream: resetForeground emits 39m") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -109,7 +109,7 @@ TEST_CASE("AnsiStream: resetForeground emits 39m") {
 }
 
 TEST_CASE("AnsiStream: resetBackground emits 49m") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -118,7 +118,7 @@ TEST_CASE("AnsiStream: resetBackground emits 49m") {
 }
 
 TEST_CASE("AnsiStream: cursor movement") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -127,7 +127,7 @@ TEST_CASE("AnsiStream: cursor movement") {
 }
 
 TEST_CASE("AnsiStream: clearScreen") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -136,7 +136,7 @@ TEST_CASE("AnsiStream: clearScreen") {
 }
 
 TEST_CASE("AnsiStream: chaining works") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -145,7 +145,7 @@ TEST_CASE("AnsiStream: chaining works") {
 }
 
 TEST_CASE("AnsiStream: device accessor") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -153,7 +153,7 @@ TEST_CASE("AnsiStream: device accessor") {
 }
 
 TEST_CASE("AnsiStream: write char") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -163,7 +163,7 @@ TEST_CASE("AnsiStream: write char") {
 }
 
 TEST_CASE("AnsiStream: write int") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -172,7 +172,7 @@ TEST_CASE("AnsiStream: write int") {
 }
 
 TEST_CASE("AnsiStream: write C string") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -181,7 +181,7 @@ TEST_CASE("AnsiStream: write C string") {
 }
 
 TEST_CASE("AnsiStream: write String") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -190,7 +190,7 @@ TEST_CASE("AnsiStream: write String") {
 }
 
 TEST_CASE("AnsiStream: flush does not crash") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -200,7 +200,7 @@ TEST_CASE("AnsiStream: flush does not crash") {
 }
 
 TEST_CASE("AnsiStream: operator<< char") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -209,7 +209,7 @@ TEST_CASE("AnsiStream: operator<< char") {
 }
 
 TEST_CASE("AnsiStream: operator<< int") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -224,7 +224,7 @@ TEST_CASE("AnsiStream: stdoutSupportsANSI returns bool") {
 }
 
 TEST_CASE("AnsiStream: setForeground256 emits 38;5 sequence") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -233,7 +233,7 @@ TEST_CASE("AnsiStream: setForeground256 emits 38;5 sequence") {
 }
 
 TEST_CASE("AnsiStream: setBackground256 emits 48;5 sequence") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -242,7 +242,7 @@ TEST_CASE("AnsiStream: setBackground256 emits 48;5 sequence") {
 }
 
 TEST_CASE("AnsiStream: setForegroundRGB emits 38;2 sequence") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -251,7 +251,7 @@ TEST_CASE("AnsiStream: setForegroundRGB emits 38;2 sequence") {
 }
 
 TEST_CASE("AnsiStream: setBackgroundRGB emits 48;2 sequence") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -268,7 +268,7 @@ TEST_CASE("AnsiStream: Terminal::colorSupport returns valid enum") {
 // ── AnsiStream palette tests ────────────────────────────────────────
 
 TEST_CASE("AnsiStream: ansiColor returns valid colors for indices 0-255") {
-        for(int i = 0; i < 256; ++i) {
+        for (int i = 0; i < 256; ++i) {
                 Color c = AnsiStream::ansiColor(i);
                 CHECK(c.isValid());
         }
@@ -319,12 +319,12 @@ TEST_CASE("AnsiStream: findClosestAnsiColor with maxIndex 15 restricts to system
 TEST_CASE("AnsiStream: findClosestAnsiColor exact cube vertex round-trips") {
         // Index 42 = (0, 215, 135)
         Color c = AnsiStream::ansiColor(42);
-        auto idx = AnsiStream::findClosestAnsiColor(c);
+        auto  idx = AnsiStream::findClosestAnsiColor(c);
         CHECK(static_cast<uint8_t>(idx) == 42);
 }
 
 TEST_CASE("AnsiStream: setForeground(Color) emits correct sequence") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -334,7 +334,7 @@ TEST_CASE("AnsiStream: setForeground(Color) emits correct sequence") {
 }
 
 TEST_CASE("AnsiStream: setBackground(Color) emits correct sequence") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -344,7 +344,7 @@ TEST_CASE("AnsiStream: setBackground(Color) emits correct sequence") {
 }
 
 TEST_CASE("AnsiStream: setForeground(Color, 15) restricts to 16-color codes") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -355,13 +355,13 @@ TEST_CASE("AnsiStream: setForeground(Color, 15) restricts to 16-color codes") {
 }
 
 TEST_CASE("AnsiStream: all 16 AnsiColor foreground codes are correct") {
-        for(int i = 0; i < 16; ++i) {
-                String str;
+        for (int i = 0; i < 16; ++i) {
+                String         str;
                 StringIODevice dev(&str);
                 dev.open(IODevice::WriteOnly);
                 AnsiStream as(&dev);
                 as.setForeground(static_cast<AnsiStream::AnsiColor>(i));
-                int expected = (i < 8) ? (30 + i) : (90 + i - 8);
+                int    expected = (i < 8) ? (30 + i) : (90 + i - 8);
                 String expectedSeq = String("\033[") + String::number(expected) + "m";
                 INFO("index=", i, " expected code=", expected);
                 CHECK(str.find(expectedSeq) != String::npos);
@@ -369,13 +369,13 @@ TEST_CASE("AnsiStream: all 16 AnsiColor foreground codes are correct") {
 }
 
 TEST_CASE("AnsiStream: all 16 AnsiColor background codes are correct") {
-        for(int i = 0; i < 16; ++i) {
-                String str;
+        for (int i = 0; i < 16; ++i) {
+                String         str;
                 StringIODevice dev(&str);
                 dev.open(IODevice::WriteOnly);
                 AnsiStream as(&dev);
                 as.setBackground(static_cast<AnsiStream::AnsiColor>(i));
-                int expected = (i < 8) ? (40 + i) : (100 + i - 8);
+                int    expected = (i < 8) ? (40 + i) : (100 + i - 8);
                 String expectedSeq = String("\033[") + String::number(expected) + "m";
                 INFO("index=", i, " expected code=", expected);
                 CHECK(str.find(expectedSeq) != String::npos);
@@ -385,7 +385,7 @@ TEST_CASE("AnsiStream: all 16 AnsiColor background codes are correct") {
 // ── Cursor movement tests ───────────────────────────────────────────
 
 TEST_CASE("AnsiStream: cursorDown emits B sequence") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -394,7 +394,7 @@ TEST_CASE("AnsiStream: cursorDown emits B sequence") {
 }
 
 TEST_CASE("AnsiStream: cursorRight emits C sequence") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -403,7 +403,7 @@ TEST_CASE("AnsiStream: cursorRight emits C sequence") {
 }
 
 TEST_CASE("AnsiStream: cursorLeft emits D sequence") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -412,7 +412,7 @@ TEST_CASE("AnsiStream: cursorLeft emits D sequence") {
 }
 
 TEST_CASE("AnsiStream: setCursorPosition emits H sequence") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -423,7 +423,7 @@ TEST_CASE("AnsiStream: setCursorPosition emits H sequence") {
 // ── Line clearing tests ─────────────────────────────────────────────
 
 TEST_CASE("AnsiStream: moveToStartOfLine emits 0G") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -432,7 +432,7 @@ TEST_CASE("AnsiStream: moveToStartOfLine emits 0G") {
 }
 
 TEST_CASE("AnsiStream: moveToEndOfLine emits 999G") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -441,7 +441,7 @@ TEST_CASE("AnsiStream: moveToEndOfLine emits 999G") {
 }
 
 TEST_CASE("AnsiStream: clearLine emits 2K") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -450,7 +450,7 @@ TEST_CASE("AnsiStream: clearLine emits 2K") {
 }
 
 TEST_CASE("AnsiStream: clearLineBeforeCursor emits 1K") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -459,7 +459,7 @@ TEST_CASE("AnsiStream: clearLineBeforeCursor emits 1K") {
 }
 
 TEST_CASE("AnsiStream: clearLineAfterCursor emits 0K") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -470,7 +470,7 @@ TEST_CASE("AnsiStream: clearLineAfterCursor emits 0K") {
 // ── Cursor visibility tests ─────────────────────────────────────────
 
 TEST_CASE("AnsiStream: showCursor emits ?25h") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -479,7 +479,7 @@ TEST_CASE("AnsiStream: showCursor emits ?25h") {
 }
 
 TEST_CASE("AnsiStream: hideCursor emits ?25l") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -490,7 +490,7 @@ TEST_CASE("AnsiStream: hideCursor emits ?25l") {
 // ── Cursor save/restore tests ───────────────────────────────────────
 
 TEST_CASE("AnsiStream: saveCursorPosition emits s") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -499,7 +499,7 @@ TEST_CASE("AnsiStream: saveCursorPosition emits s") {
 }
 
 TEST_CASE("AnsiStream: restoreCursorPosition emits u") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -510,7 +510,7 @@ TEST_CASE("AnsiStream: restoreCursorPosition emits u") {
 // ── Scrolling tests ─────────────────────────────────────────────────
 
 TEST_CASE("AnsiStream: enableScrollingRegion emits r sequence") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -519,7 +519,7 @@ TEST_CASE("AnsiStream: enableScrollingRegion emits r sequence") {
 }
 
 TEST_CASE("AnsiStream: scrollUp emits S sequence") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -528,7 +528,7 @@ TEST_CASE("AnsiStream: scrollUp emits S sequence") {
 }
 
 TEST_CASE("AnsiStream: scrollDown emits T sequence") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -537,7 +537,7 @@ TEST_CASE("AnsiStream: scrollDown emits T sequence") {
 }
 
 TEST_CASE("AnsiStream: eraseCharacters emits X sequence") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -548,7 +548,7 @@ TEST_CASE("AnsiStream: eraseCharacters emits X sequence") {
 // ── Strikethrough test ──────────────────────────────────────────────
 
 TEST_CASE("AnsiStream: setStrikethrough enable emits 9m") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -557,7 +557,7 @@ TEST_CASE("AnsiStream: setStrikethrough enable emits 9m") {
 }
 
 TEST_CASE("AnsiStream: setStrikethrough disable emits 29m") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -568,7 +568,7 @@ TEST_CASE("AnsiStream: setStrikethrough disable emits 29m") {
 // ── Alternate screen buffer tests ───────────────────────────────────
 
 TEST_CASE("AnsiStream: useAlternateScreenBuffer emits ?1049h") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -577,7 +577,7 @@ TEST_CASE("AnsiStream: useAlternateScreenBuffer emits ?1049h") {
 }
 
 TEST_CASE("AnsiStream: useMainScreenBuffer emits ?1049l") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -588,7 +588,7 @@ TEST_CASE("AnsiStream: useMainScreenBuffer emits ?1049l") {
 // ── ANSI-disabled passthrough for all commands ──────────────────────
 
 TEST_CASE("AnsiStream: cursor commands suppressed when disabled") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);
@@ -628,7 +628,7 @@ TEST_CASE("AnsiStream: cursor commands suppressed when disabled") {
 // ── getCursorPosition disabled test ─────────────────────────────────
 
 TEST_CASE("AnsiStream: getCursorPosition returns false when disabled") {
-        String str;
+        String         str;
         StringIODevice dev(&str);
         dev.open(IODevice::WriteOnly);
         AnsiStream as(&dev);

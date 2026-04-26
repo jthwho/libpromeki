@@ -178,37 +178,37 @@ class MediaIOTask_V4L2 : public MediaIOTask {
                 void  closeAudio();
 
                 // -- Capture threads --
-                void  stopThreads();
-                void  videoCaptureLoop();
-                void  audioCaptureLoop();
+                void stopThreads();
+                void videoCaptureLoop();
+                void audioCaptureLoop();
 
                 // -- V4L2 state --
                 struct MmapBuffer {
-                        void   *start  = nullptr;
-                        size_t  length = 0;
+                                void  *start = nullptr;
+                                size_t length = 0;
                 };
-                int                     _fd = -1;
-                List<MmapBuffer>        _buffers;
-                bool                    _streaming = false;
-                ImageDesc               _imageDesc;
+                int              _fd = -1;
+                List<MmapBuffer> _buffers;
+                bool             _streaming = false;
+                ImageDesc        _imageDesc;
 
                 // -- ALSA state --
-                snd_pcm_t              *_pcm = nullptr;
-                AudioDesc               _audioDesc;
-                bool                    _audioEnabled = false;
+                snd_pcm_t *_pcm = nullptr;
+                AudioDesc  _audioDesc;
+                bool       _audioEnabled = false;
 
                 // -- Capture threads --
-                std::atomic<bool>       _stopFlag{false};
-                std::atomic<int>        _deviceError{0};  // errno from device failure (ENODEV etc.)
-                std::thread             _videoThread;
-                std::thread             _audioThread;
+                std::atomic<bool> _stopFlag{false};
+                std::atomic<int>  _deviceError{0}; // errno from device failure (ENODEV etc.)
+                std::thread       _videoThread;
+                std::thread       _audioThread;
 
                 // -- Video frame queue (video thread → read command) --
-                static constexpr int    VideoQueueDepth = 2;
+                static constexpr int     VideoQueueDepth = 2;
                 Queue<VideoPayload::Ptr> _videoQueue;
 
                 // -- Audio ring buffer (audio thread → read command) --
-                AudioBuffer             _audioRing;
+                AudioBuffer _audioRing;
 
                 // -- Push-time tracking for audio MediaTimeStamps --
                 //
@@ -224,35 +224,35 @@ class MediaIOTask_V4L2 : public MediaIOTask {
                 // removed; when a pop consumes only part of a record
                 // its wallNs is advanced by (consumed / sampleRate).
                 struct AudioPushRecord {
-                        int64_t wallNs;
-                        size_t  samplesRemaining;
+                                int64_t wallNs;
+                                size_t  samplesRemaining;
                 };
-                mutable Mutex           _audioPushMutex;
-                List<AudioPushRecord>   _audioPushRecords;
+                mutable Mutex         _audioPushMutex;
+                List<AudioPushRecord> _audioPushRecords;
 
                 // -- Telemetry (updated atomically by capture threads) --
-                std::atomic<int64_t>    _framesCaptured{0};
-                std::atomic<int64_t>    _alsaOverruns{0};
+                std::atomic<int64_t> _framesCaptured{0};
+                std::atomic<int64_t> _alsaOverruns{0};
 
                 // -- Debug reporting --
-                PeriodicCallback        _debugReport;
-                int64_t                 _ringAccum = 0;         // sum of ring levels sampled each frame
-                int64_t                 _ringAccumFrames = 0;   // frames sampled since last report
-                double                  _ringAvgBaseline = 0.0; // first report's average
-                TimeStamp               _ringBaselineTime;      // V4L2 timestamp at first report
-                bool                    _ringBaselineSet = false;
+                PeriodicCallback _debugReport;
+                int64_t          _ringAccum = 0;         // sum of ring levels sampled each frame
+                int64_t          _ringAccumFrames = 0;   // frames sampled since last report
+                double           _ringAvgBaseline = 0.0; // first report's average
+                TimeStamp        _ringBaselineTime;      // V4L2 timestamp at first report
+                bool             _ringBaselineSet = false;
 
                 // -- Capture timestamp tracking (from V4L2 DQBUF) --
-                TimeStamp               _lastCaptureTime;       // most recent frame's V4L2 timestamp
-                TimeStamp               _firstCaptureTime;      // first frame's V4L2 timestamp
-                int64_t                 _firstCaptureFrame = -1;// frame index of first timestamp
-                double                  _frameDeltaSum = 0.0;   // sum of inter-frame intervals (sec) this period
-                double                  _frameDeltaSqSum = 0.0; // sum of squared deltas for jitter
-                int64_t                 _frameDeltaCount = 0;   // deltas accumulated this period
-                double                  _prevPeriodFps = 0.0;   // previous period's measured fps
+                TimeStamp _lastCaptureTime;        // most recent frame's V4L2 timestamp
+                TimeStamp _firstCaptureTime;       // first frame's V4L2 timestamp
+                int64_t   _firstCaptureFrame = -1; // frame index of first timestamp
+                double    _frameDeltaSum = 0.0;    // sum of inter-frame intervals (sec) this period
+                double    _frameDeltaSqSum = 0.0;  // sum of squared deltas for jitter
+                int64_t   _frameDeltaCount = 0;    // deltas accumulated this period
+                double    _prevPeriodFps = 0.0;    // previous period's measured fps
 
                 // -- Stall-overflow protection --
-                bool                    _ringOverflowWarned = false;
+                bool _ringOverflowWarned = false;
 
                 // -- Capture-thread instrumentation --
                 //
@@ -271,28 +271,28 @@ class MediaIOTask_V4L2 : public MediaIOTask {
                 // thread is the bottleneck.  DQBUF lag compares
                 // @c vbuf.timestamp to wall-clock @c now() so we can
                 // tell how stale the frame is by the time we see it.
-                std::atomic<uint32_t>   _lastVbufSequence{0};
-                std::atomic<int64_t>    _kernelDroppedPeriod{0};
-                std::atomic<int64_t>    _loopIterationsPeriod{0};
-                std::atomic<int64_t>    _loopTimeSumUsPeriod{0};
-                std::atomic<int64_t>    _loopTimeMaxUsPeriod{0};
-                std::atomic<int64_t>    _dqbufLagSumUsPeriod{0};
-                std::atomic<int64_t>    _dqbufLagMaxUsPeriod{0};
-                std::atomic<int64_t>    _dqbufLagCountPeriod{0};
+                std::atomic<uint32_t> _lastVbufSequence{0};
+                std::atomic<int64_t>  _kernelDroppedPeriod{0};
+                std::atomic<int64_t>  _loopIterationsPeriod{0};
+                std::atomic<int64_t>  _loopTimeSumUsPeriod{0};
+                std::atomic<int64_t>  _loopTimeMaxUsPeriod{0};
+                std::atomic<int64_t>  _dqbufLagSumUsPeriod{0};
+                std::atomic<int64_t>  _dqbufLagMaxUsPeriod{0};
+                std::atomic<int64_t>  _dqbufLagCountPeriod{0};
                 // Count of frames whose hardware SOE timestamp was so
                 // far off the wall clock that we substituted the
                 // dequeue time instead.  Should be ~1 at stream
                 // startup; any steady-state non-zero value indicates
                 // the UVC PTS regression isn't locking (driver bug or
                 // camera glitch) and deserves investigation.
-                std::atomic<int64_t>    _timestampSubstitutedPeriod{0};
+                std::atomic<int64_t> _timestampSubstitutedPeriod{0};
                 // Capture-thread-only state (no atomic needed):
-                bool                    _seqInitialized = false;
-                int64_t                 _prevIterUs = 0;
+                bool    _seqInitialized = false;
+                int64_t _prevIterUs = 0;
 
                 // -- General state --
-                FrameRate               _frameRate;
-                FrameCount              _frameCount{0};
+                FrameRate  _frameRate;
+                FrameCount _frameCount{0};
 };
 
 PROMEKI_NAMESPACE_END

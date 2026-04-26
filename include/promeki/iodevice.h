@@ -34,7 +34,7 @@ PROMEKI_NAMESPACE_BEGIN
  * to call cross-thread by intent).
  */
 class IODevice : public ObjectBase {
-        PROMEKI_OBJECT(IODevice, ObjectBase)
+                PROMEKI_OBJECT(IODevice, ObjectBase)
         public:
                 /** @brief Unique-ownership pointer to an IODevice. */
                 using UPtr = UniquePtr<IODevice>;
@@ -53,18 +53,18 @@ class IODevice : public ObjectBase {
 
                 /** @brief Mode flags controlling how a device is opened. */
                 enum OpenMode {
-                        NotOpen   = 0x00, ///< @brief Device is not open.
-                        ReadOnly  = 0x01, ///< @brief Open for reading only.
-                        WriteOnly = 0x02, ///< @brief Open for writing only.
+                        NotOpen = 0x00,                   ///< @brief Device is not open.
+                        ReadOnly = 0x01,                  ///< @brief Open for reading only.
+                        WriteOnly = 0x02,                 ///< @brief Open for writing only.
                         ReadWrite = ReadOnly | WriteOnly, ///< @brief Open for reading and writing.
-                        Append    = 0x04 | WriteOnly ///< @brief Open for appending (implies WriteOnly).
+                        Append = 0x04 | WriteOnly         ///< @brief Open for appending (implies WriteOnly).
                 };
 
                 /**
                  * @brief Constructs an IODevice.
                  * @param parent The parent object, or nullptr.
                  */
-                IODevice(ObjectBase *parent = nullptr) : ObjectBase(parent) { }
+                IODevice(ObjectBase *parent = nullptr) : ObjectBase(parent) {}
 
                 /** @brief Destructor. */
                 virtual ~IODevice();
@@ -179,33 +179,25 @@ class IODevice : public ObjectBase {
                  * @brief Returns the current open mode.
                  * @return The OpenMode the device was opened with.
                  */
-                OpenMode openMode() const {
-                        return _openMode;
-                }
+                OpenMode openMode() const { return _openMode; }
 
                 /**
                  * @brief Returns true if the device is readable.
                  * @return true if the ReadOnly bit is set in the open mode.
                  */
-                bool isReadable() const {
-                        return _openMode & ReadOnly;
-                }
+                bool isReadable() const { return _openMode & ReadOnly; }
 
                 /**
                  * @brief Returns true if the device is writable.
                  * @return true if the WriteOnly bit is set in the open mode.
                  */
-                bool isWritable() const {
-                        return _openMode & WriteOnly;
-                }
+                bool isWritable() const { return _openMode & WriteOnly; }
 
                 /**
                  * @brief Returns the current error state.
                  * @return The last error set on this device.
                  */
-                Error error() const {
-                        return _error;
-                }
+                Error error() const { return _error; }
 
                 /**
                  * @brief Clears the error state to Ok.
@@ -245,13 +237,13 @@ class IODevice : public ObjectBase {
                  */
                 void setError(const Error &err) {
                         _error = err;
-                        if(err.isError()) errorOccurredSignal.emit(err);
+                        if (err.isError()) errorOccurredSignal.emit(err);
                         return;
                 }
 
         private:
-                OpenMode                        _openMode = NotOpen;
-                Error                           _error;
+                OpenMode _openMode = NotOpen;
+                Error    _error;
 };
 
 PROMEKI_NAMESPACE_END

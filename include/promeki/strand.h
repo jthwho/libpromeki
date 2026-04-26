@@ -71,9 +71,7 @@ class Strand {
                  * It is the caller's responsibility to ensure no new tasks
                  * are submitted after the destructor begins.
                  */
-                ~Strand() {
-                        waitForIdle();
-                }
+                ~Strand() { waitForIdle(); }
 
                 Strand(const Strand &) = delete;
                 Strand &operator=(const Strand &) = delete;
@@ -99,10 +97,8 @@ class Strand {
                  * @return A Future for the callable's result.
                  */
                 template <typename F>
-                auto submit(F &&callable,
-                            TaskFunc onCancel = {}) -> Future<std::invoke_result_t<F>> {
-                        return submitImpl(std::forward<F>(callable),
-                                          std::move(onCancel), false);
+                auto submit(F &&callable, TaskFunc onCancel = {}) -> Future<std::invoke_result_t<F>> {
+                        return submitImpl(std::forward<F>(callable), std::move(onCancel), false);
                 }
 
                 /**
@@ -137,10 +133,8 @@ class Strand {
                  * @return A Future for the callable's result.
                  */
                 template <typename F>
-                auto submitUrgent(F &&callable,
-                                  TaskFunc onCancel = {}) -> Future<std::invoke_result_t<F>> {
-                        return submitImpl(std::forward<F>(callable),
-                                          std::move(onCancel), true);
+                auto submitUrgent(F &&callable, TaskFunc onCancel = {}) -> Future<std::invoke_result_t<F>> {
+                        return submitImpl(std::forward<F>(callable), std::move(onCancel), true);
                 }
 
                 /**
@@ -161,7 +155,7 @@ class Strand {
                                 _queue.clear();
                         }
                         size_t count = toCancel.size();
-                        for(auto &entry : toCancel) {
+                        for (auto &entry : toCancel) {
                                 entry.cancel();
                         }
                         return count;
@@ -214,8 +208,8 @@ class Strand {
                  * Error::Cancelled so any future waiter unblocks cleanly.
                  */
                 struct Entry {
-                        TaskFunc run;
-                        TaskFunc cancel;
+                                TaskFunc run;
+                                TaskFunc cancel;
                 };
 
                 /**
@@ -227,10 +221,9 @@ class Strand {
                  * currently idle.
                  */
                 template <typename F>
-                auto submitImpl(F &&callable, TaskFunc onCancel,
-                                bool urgent) -> Future<std::invoke_result_t<F>> {
+                auto submitImpl(F &&callable, TaskFunc onCancel, bool urgent) -> Future<std::invoke_result_t<F>> {
                         using R = std::invoke_result_t<F>;
-                        auto promise = std::make_shared<Promise<R>>();
+                        auto      promise = std::make_shared<Promise<R>>();
                         Future<R> future = promise->future();
 
                         Entry entry;
@@ -243,24 +236,24 @@ class Strand {
                                 }
                         };
                         entry.cancel = [promise, onCancel = std::move(onCancel)]() mutable {
-                                if(onCancel) onCancel();
+                                if (onCancel) onCancel();
                                 promise->setError(Error::Cancelled);
                         };
 
                         bool needSpawn = false;
                         {
                                 Mutex::Locker lock(_mutex);
-                                if(urgent) {
+                                if (urgent) {
                                         _queue.emplace_front(std::move(entry));
                                 } else {
                                         _queue.emplace_back(std::move(entry));
                                 }
-                                if(!_running) {
+                                if (!_running) {
                                         _running = true;
                                         needSpawn = true;
                                 }
                         }
-                        if(needSpawn) {
+                        if (needSpawn) {
                                 _pool.submit([this] { runNext(); });
                         }
                         return future;
@@ -273,10 +266,10 @@ class Strand {
                  */
                 void runNext() {
                         Entry entry;
-                        bool haveTask = false;
+                        bool  haveTask = false;
                         {
                                 Mutex::Locker lock(_mutex);
-                                if(!_queue.empty()) {
+                                if (!_queue.empty()) {
                                         entry = std::move(_queue.front());
                                         _queue.pop_front();
                                         haveTask = true;
@@ -285,13 +278,13 @@ class Strand {
 
                         // Possible if cancelPending() emptied the queue
                         // between spawn and execution.
-                        if(haveTask) entry.run();
+                        if (haveTask) entry.run();
 
                         // Either re-submit (more work pending) or mark idle.
                         bool reSpawn = false;
                         {
                                 Mutex::Locker lock(_mutex);
-                                if(_queue.empty()) {
+                                if (_queue.empty()) {
                                         _running = false;
                                         _idleCv.wakeAll();
                                 } else {
@@ -299,16 +292,16 @@ class Strand {
                                 }
                         }
 
-                        if(reSpawn) {
+                        if (reSpawn) {
                                 _pool.submit([this] { runNext(); });
                         }
                 }
 
-                ThreadPool                              &_pool;
-                mutable Mutex                            _mutex;
-                WaitCondition                            _idleCv;
-                std::deque<Entry>                        _queue;
-                bool                                     _running = false;
+                ThreadPool       &_pool;
+                mutable Mutex     _mutex;
+                WaitCondition     _idleCv;
+                std::deque<Entry> _queue;
+                bool              _running = false;
 };
 
 PROMEKI_NAMESPACE_END

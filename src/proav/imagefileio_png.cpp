@@ -47,23 +47,23 @@ static constexpr size_t PNG_DIO_FALLBACK_ALIGN = 4096;
 // supported descs.
 
 struct PngFormat {
-        uint8_t colorType;     ///< spng_color_type value
-        uint8_t bitDepth;      ///< 8 or 16
-        uint8_t channels;      ///< Channel count (used to compute packed stride)
-        bool    swap16;        ///< true → input is little-endian 16-bit, swap to big-endian before encoding
+                uint8_t colorType; ///< spng_color_type value
+                uint8_t bitDepth;  ///< 8 or 16
+                uint8_t channels;  ///< Channel count (used to compute packed stride)
+                bool    swap16;    ///< true → input is little-endian 16-bit, swap to big-endian before encoding
 };
 
 static bool pngFormatFromPixelFormat(PixelFormat::ID id, PngFormat &out) {
-        switch(id) {
-                case PixelFormat::Mono8_sRGB:     out = { SPNG_COLOR_TYPE_GRAYSCALE,       8,  1, false }; return true;
-                case PixelFormat::Mono16_BE_sRGB: out = { SPNG_COLOR_TYPE_GRAYSCALE,       16, 1, false }; return true;
-                case PixelFormat::Mono16_LE_sRGB: out = { SPNG_COLOR_TYPE_GRAYSCALE,       16, 1, true  }; return true;
-                case PixelFormat::RGB8_sRGB:      out = { SPNG_COLOR_TYPE_TRUECOLOR,       8,  3, false }; return true;
-                case PixelFormat::RGB16_BE_sRGB:  out = { SPNG_COLOR_TYPE_TRUECOLOR,       16, 3, false }; return true;
-                case PixelFormat::RGB16_LE_sRGB:  out = { SPNG_COLOR_TYPE_TRUECOLOR,       16, 3, true  }; return true;
-                case PixelFormat::RGBA8_sRGB:     out = { SPNG_COLOR_TYPE_TRUECOLOR_ALPHA, 8,  4, false }; return true;
-                case PixelFormat::RGBA16_BE_sRGB: out = { SPNG_COLOR_TYPE_TRUECOLOR_ALPHA, 16, 4, false }; return true;
-                case PixelFormat::RGBA16_LE_sRGB: out = { SPNG_COLOR_TYPE_TRUECOLOR_ALPHA, 16, 4, true  }; return true;
+        switch (id) {
+                case PixelFormat::Mono8_sRGB: out = {SPNG_COLOR_TYPE_GRAYSCALE, 8, 1, false}; return true;
+                case PixelFormat::Mono16_BE_sRGB: out = {SPNG_COLOR_TYPE_GRAYSCALE, 16, 1, false}; return true;
+                case PixelFormat::Mono16_LE_sRGB: out = {SPNG_COLOR_TYPE_GRAYSCALE, 16, 1, true}; return true;
+                case PixelFormat::RGB8_sRGB: out = {SPNG_COLOR_TYPE_TRUECOLOR, 8, 3, false}; return true;
+                case PixelFormat::RGB16_BE_sRGB: out = {SPNG_COLOR_TYPE_TRUECOLOR, 16, 3, false}; return true;
+                case PixelFormat::RGB16_LE_sRGB: out = {SPNG_COLOR_TYPE_TRUECOLOR, 16, 3, true}; return true;
+                case PixelFormat::RGBA8_sRGB: out = {SPNG_COLOR_TYPE_TRUECOLOR_ALPHA, 8, 4, false}; return true;
+                case PixelFormat::RGBA16_BE_sRGB: out = {SPNG_COLOR_TYPE_TRUECOLOR_ALPHA, 16, 4, false}; return true;
+                case PixelFormat::RGBA16_LE_sRGB: out = {SPNG_COLOR_TYPE_TRUECOLOR_ALPHA, 16, 4, true}; return true;
                 default: return false;
         }
 }
@@ -78,47 +78,45 @@ static bool pngFormatFromPixelFormat(PixelFormat::ID id, PngFormat &out) {
 // 16-bit gray+alpha is intentionally refused — there's no native PixelFormat
 // and the demand is essentially zero.
 static PixelFormat::ID pixelFormatFromIhdr(const spng_ihdr &ihdr, int &spngFmtOut) {
-        switch(ihdr.color_type) {
+        switch (ihdr.color_type) {
                 case SPNG_COLOR_TYPE_GRAYSCALE:
-                        if(ihdr.bit_depth <= 8) {
+                        if (ihdr.bit_depth <= 8) {
                                 spngFmtOut = SPNG_FMT_G8;
                                 return PixelFormat::Mono8_sRGB;
                         }
-                        if(ihdr.bit_depth == 16) {
+                        if (ihdr.bit_depth == 16) {
                                 spngFmtOut = SPNG_FMT_RAW;
                                 return PixelFormat::Mono16_BE_sRGB;
                         }
                         break;
                 case SPNG_COLOR_TYPE_TRUECOLOR:
-                        if(ihdr.bit_depth == 8) {
+                        if (ihdr.bit_depth == 8) {
                                 spngFmtOut = SPNG_FMT_RAW;
                                 return PixelFormat::RGB8_sRGB;
                         }
-                        if(ihdr.bit_depth == 16) {
+                        if (ihdr.bit_depth == 16) {
                                 spngFmtOut = SPNG_FMT_RAW;
                                 return PixelFormat::RGB16_BE_sRGB;
                         }
                         break;
                 case SPNG_COLOR_TYPE_TRUECOLOR_ALPHA:
-                        if(ihdr.bit_depth == 8) {
+                        if (ihdr.bit_depth == 8) {
                                 spngFmtOut = SPNG_FMT_RAW;
                                 return PixelFormat::RGBA8_sRGB;
                         }
-                        if(ihdr.bit_depth == 16) {
+                        if (ihdr.bit_depth == 16) {
                                 spngFmtOut = SPNG_FMT_RAW;
                                 return PixelFormat::RGBA16_BE_sRGB;
                         }
                         break;
                 case SPNG_COLOR_TYPE_GRAYSCALE_ALPHA:
-                        if(ihdr.bit_depth <= 8) {
+                        if (ihdr.bit_depth <= 8) {
                                 spngFmtOut = SPNG_FMT_RGBA8;
                                 return PixelFormat::RGBA8_sRGB;
                         }
                         // 16-bit gray+alpha falls through to refusal.
                         break;
-                case SPNG_COLOR_TYPE_INDEXED:
-                        spngFmtOut = SPNG_FMT_RGBA8;
-                        return PixelFormat::RGBA8_sRGB;
+                case SPNG_COLOR_TYPE_INDEXED: spngFmtOut = SPNG_FMT_RGBA8; return PixelFormat::RGBA8_sRGB;
         }
         return PixelFormat::Invalid;
 }
@@ -126,7 +124,7 @@ static PixelFormat::ID pixelFormatFromIhdr(const spng_ihdr &ihdr, int &spngFmtOu
 // In-place 16-bit byte swap. Used for the LE → BE conversion on save.
 static void swap16InPlace(void *data, size_t pixelCount) {
         uint16_t *p = static_cast<uint16_t *>(data);
-        for(size_t i = 0; i < pixelCount; ++i) {
+        for (size_t i = 0; i < pixelCount; ++i) {
                 uint16_t v = p[i];
                 p[i] = static_cast<uint16_t>((v >> 8) | (v << 8));
         }
@@ -144,7 +142,7 @@ class ImageFileIO_PNG : public ImageFileIO {
                         _canSave = true;
                         _name = "PNG";
                         _description = "PNG image sequence";
-                        _extensions = { "png" };
+                        _extensions = {"png"};
                 }
 
                 Error load(ImageFile &imageFile, const MediaConfig &config) const override;
@@ -160,77 +158,74 @@ Error ImageFileIO_PNG::save(ImageFile &imageFile, const MediaConfig &config) con
         (void)config;
         const String &filename = imageFile.filename();
 
-        VideoPayload::PtrList vps = imageFile.frame().videoPayloads();
+        VideoPayload::PtrList           vps = imageFile.frame().videoPayloads();
         const UncompressedVideoPayload *uvp = nullptr;
-        if(!vps.isEmpty() && vps[0].isValid()) uvp = vps[0]->as<UncompressedVideoPayload>();
-        if(uvp == nullptr || !uvp->desc().isValid() || uvp->planeCount() == 0) {
+        if (!vps.isEmpty() && vps[0].isValid()) uvp = vps[0]->as<UncompressedVideoPayload>();
+        if (uvp == nullptr || !uvp->desc().isValid() || uvp->planeCount() == 0) {
                 promekiErr("PNG save '%s': no uncompressed video payload", filename.cstr());
                 return Error::Invalid;
         }
         const ImageDesc &desc = uvp->desc();
 
         PngFormat pf;
-        if(!pngFormatFromPixelFormat(desc.pixelFormat().id(), pf)) {
-                promekiErr("PNG save '%s': pixel format '%s' not supported",
-                           filename.cstr(), desc.pixelFormat().name().cstr());
+        if (!pngFormatFromPixelFormat(desc.pixelFormat().id(), pf)) {
+                promekiErr("PNG save '%s': pixel format '%s' not supported", filename.cstr(),
+                           desc.pixelFormat().name().cstr());
                 return Error::PixelFormatNotSupported;
         }
 
-        const size_t width        = desc.size().width();
-        const size_t height       = desc.size().height();
-        const size_t bytesPerPx   = static_cast<size_t>(pf.bitDepth / 8) * pf.channels;
+        const size_t width = desc.size().width();
+        const size_t height = desc.size().height();
+        const size_t bytesPerPx = static_cast<size_t>(pf.bitDepth / 8) * pf.channels;
         const size_t packedStride = width * bytesPerPx;
-        const size_t packedSize   = packedStride * height;
-        auto view = uvp->plane(0);
-        const size_t lineStride   = (height > 0) ? view.size() / height : packedStride;
+        const size_t packedSize = packedStride * height;
+        auto         view = uvp->plane(0);
+        const size_t lineStride = (height > 0) ? view.size() / height : packedStride;
 
         // libspng's encoder reads its input as one tightly-packed buffer.
         // If the source payload has row padding (lineStride != packedStride)
         // or we need a 16-bit byte swap, repack into a scratch buffer.
         // Otherwise, encode directly from the plane view.
-        Buffer packedBuf;
+        Buffer      packedBuf;
         const void *pixelData = view.data();
-        if(pf.swap16 || lineStride != packedStride) {
+        if (pf.swap16 || lineStride != packedStride) {
                 packedBuf = Buffer(packedSize);
                 const uint8_t *src = view.data();
-                uint8_t *dst       = static_cast<uint8_t *>(packedBuf.data());
-                for(size_t y = 0; y < height; ++y) {
-                        std::memcpy(dst + y * packedStride,
-                                    src + y * lineStride,
-                                    packedStride);
+                uint8_t       *dst = static_cast<uint8_t *>(packedBuf.data());
+                for (size_t y = 0; y < height; ++y) {
+                        std::memcpy(dst + y * packedStride, src + y * lineStride, packedStride);
                 }
-                if(pf.swap16) {
+                if (pf.swap16) {
                         swap16InPlace(packedBuf.data(), packedSize / 2);
                 }
                 pixelData = packedBuf.data();
         }
 
         spng_ctx *ctx = spng_ctx_new(SPNG_CTX_ENCODER);
-        if(!ctx) {
+        if (!ctx) {
                 promekiErr("PNG save '%s': spng_ctx_new failed", filename.cstr());
                 return Error::NoMem;
         }
 
         int sret = spng_set_option(ctx, SPNG_ENCODE_TO_BUFFER, 1);
-        if(sret) {
-                promekiErr("PNG save '%s': spng_set_option(ENCODE_TO_BUFFER) failed: %s",
-                           filename.cstr(), spng_strerror(sret));
+        if (sret) {
+                promekiErr("PNG save '%s': spng_set_option(ENCODE_TO_BUFFER) failed: %s", filename.cstr(),
+                           spng_strerror(sret));
                 spng_ctx_free(ctx);
                 return Error::EncodeFailed;
         }
 
         spng_ihdr ihdr = {};
-        ihdr.width              = static_cast<uint32_t>(width);
-        ihdr.height             = static_cast<uint32_t>(height);
-        ihdr.bit_depth          = pf.bitDepth;
-        ihdr.color_type         = pf.colorType;
+        ihdr.width = static_cast<uint32_t>(width);
+        ihdr.height = static_cast<uint32_t>(height);
+        ihdr.bit_depth = pf.bitDepth;
+        ihdr.color_type = pf.colorType;
         ihdr.compression_method = 0;
-        ihdr.filter_method      = 0;
-        ihdr.interlace_method   = SPNG_INTERLACE_NONE;
+        ihdr.filter_method = 0;
+        ihdr.interlace_method = SPNG_INTERLACE_NONE;
         sret = spng_set_ihdr(ctx, &ihdr);
-        if(sret) {
-                promekiErr("PNG save '%s': spng_set_ihdr failed: %s",
-                           filename.cstr(), spng_strerror(sret));
+        if (sret) {
+                promekiErr("PNG save '%s': spng_set_ihdr failed: %s", filename.cstr(), spng_strerror(sret));
                 spng_ctx_free(ctx);
                 return Error::EncodeFailed;
         }
@@ -238,9 +233,9 @@ Error ImageFileIO_PNG::save(ImageFile &imageFile, const MediaConfig &config) con
         // Color management: prefer an explicit gAMA chunk if metadata
         // carries one, otherwise tag as sRGB (perceptual intent). Every
         // PNG-supported PixelFormat in the table above is sRGB-tagged.
-        if(desc.metadata().contains(Metadata::Gamma)) {
+        if (desc.metadata().contains(Metadata::Gamma)) {
                 double gamma = desc.metadata().get(Metadata::Gamma).get<double>();
-                if(gamma > 0.0) spng_set_gama(ctx, gamma);
+                if (gamma > 0.0) spng_set_gama(ctx, gamma);
         } else {
                 spng_set_srgb(ctx, 0); // 0 = perceptual rendering intent
         }
@@ -251,9 +246,8 @@ Error ImageFileIO_PNG::save(ImageFile &imageFile, const MediaConfig &config) con
         // into BE on its way out, which would corrupt our BE PixelFormats and
         // unwind the explicit LE→BE swap we just did for the LE variants.
         sret = spng_encode_image(ctx, pixelData, packedSize, SPNG_FMT_RAW, SPNG_ENCODE_FINALIZE);
-        if(sret) {
-                promekiErr("PNG save '%s': spng_encode_image failed: %s",
-                           filename.cstr(), spng_strerror(sret));
+        if (sret) {
+                promekiErr("PNG save '%s': spng_encode_image failed: %s", filename.cstr(), spng_strerror(sret));
                 spng_ctx_free(ctx);
                 return Error::EncodeFailed;
         }
@@ -262,10 +256,9 @@ Error ImageFileIO_PNG::save(ImageFile &imageFile, const MediaConfig &config) con
         size_t pngLen = 0;
         int    getErr = 0;
         void  *pngBuf = spng_get_png_buffer(ctx, &pngLen, &getErr);
-        if(!pngBuf || getErr) {
-                promekiErr("PNG save '%s': spng_get_png_buffer failed: %s",
-                           filename.cstr(), spng_strerror(getErr));
-                if(pngBuf) std::free(pngBuf);
+        if (!pngBuf || getErr) {
+                promekiErr("PNG save '%s': spng_get_png_buffer failed: %s", filename.cstr(), spng_strerror(getErr));
+                if (pngBuf) std::free(pngBuf);
                 spng_ctx_free(ctx);
                 return Error::EncodeFailed;
         }
@@ -280,11 +273,11 @@ Error ImageFileIO_PNG::save(ImageFile &imageFile, const MediaConfig &config) con
         File file(filename);
         file.setDirectIO(true);
         Error err = file.open(File::WriteOnly, File::Create | File::Truncate);
-        if(err.isError()) {
+        if (err.isError()) {
                 promekiDebug("PNG save '%s': DIO open failed, falling back to normal I/O", filename.cstr());
                 file.setDirectIO(false);
                 err = file.open(File::WriteOnly, File::Create | File::Truncate);
-                if(err.isError()) {
+                if (err.isError()) {
                         promekiErr("PNG save '%s': %s", filename.cstr(), err.name().cstr());
                         std::free(pngBuf);
                         return err;
@@ -292,31 +285,30 @@ Error ImageFileIO_PNG::save(ImageFile &imageFile, const MediaConfig &config) con
         }
 
         size_t bufAlign = PNG_DIO_FALLBACK_ALIGN;
-        if(file.isDirectIO()) {
+        if (file.isDirectIO()) {
                 auto alignResult = file.directIOAlignment();
-                if(isOk(alignResult)) bufAlign = value(alignResult);
+                if (isOk(alignResult)) bufAlign = value(alignResult);
         }
         const size_t paddedLen = (pngLen + bufAlign - 1) & ~(bufAlign - 1);
-        Buffer alignedBuf(paddedLen, bufAlign);
-        if(paddedLen > pngLen) {
+        Buffer       alignedBuf(paddedLen, bufAlign);
+        if (paddedLen > pngLen) {
                 std::memset(static_cast<uint8_t *>(alignedBuf.data()) + pngLen, 0, paddedLen - pngLen);
         }
         std::memcpy(alignedBuf.data(), pngBuf, pngLen);
         std::free(pngBuf);
 
         int64_t written = file.write(alignedBuf.data(), static_cast<int64_t>(paddedLen));
-        if(written != static_cast<int64_t>(paddedLen)) {
-                promekiErr("PNG save '%s': short write (%lld of %zu)",
-                           filename.cstr(), (long long)written, paddedLen);
+        if (written != static_cast<int64_t>(paddedLen)) {
+                promekiErr("PNG save '%s': short write (%lld of %zu)", filename.cstr(), (long long)written, paddedLen);
                 file.close();
                 return Error::IOError;
         }
 
-        if(paddedLen > pngLen) {
+        if (paddedLen > pngLen) {
                 err = file.truncate(static_cast<int64_t>(pngLen));
-                if(err.isError()) {
-                        promekiErr("PNG save '%s': truncate to %zu failed: %s",
-                                   filename.cstr(), pngLen, err.name().cstr());
+                if (err.isError()) {
+                        promekiErr("PNG save '%s': truncate to %zu failed: %s", filename.cstr(), pngLen,
+                                   err.name().cstr());
                         file.close();
                         return err;
                 }
@@ -337,40 +329,38 @@ Error ImageFileIO_PNG::load(ImageFile &imageFile, const MediaConfig &config) con
         // Read the entire file in one shot via the bulk-direct-I/O pattern.
         // PNGs are small relative to bulk media payloads, so the cost is
         // negligible and the codec gets to operate on a contiguous buffer.
-        File file(filename);
+        File  file(filename);
         Error err = file.open(File::ReadOnly);
-        if(err.isError()) {
+        if (err.isError()) {
                 promekiErr("PNG load '%s': %s", filename.cstr(), err.name().cstr());
                 return err;
         }
 
         auto sizeResult = file.size();
-        if(!isOk(sizeResult)) {
+        if (!isOk(sizeResult)) {
                 file.close();
                 return error(sizeResult);
         }
         int64_t fileSize = value(sizeResult);
-        if(fileSize <= 8) { // PNG signature alone is 8 bytes
+        if (fileSize <= 8) { // PNG signature alone is 8 bytes
                 file.close();
-                promekiErr("PNG load '%s': file too small (%lld bytes)",
-                           filename.cstr(), (long long)fileSize);
+                promekiErr("PNG load '%s': file too small (%lld bytes)", filename.cstr(), (long long)fileSize);
                 return Error::CorruptData;
         }
 
-        auto alignResult = file.directIOAlignment();
+        auto   alignResult = file.directIOAlignment();
         size_t bufAlign = isOk(alignResult) ? value(alignResult) : PNG_DIO_FALLBACK_ALIGN;
         Buffer fileBuf(static_cast<size_t>(fileSize) + bufAlign, bufAlign);
 
         err = file.readBulk(fileBuf, fileSize);
         file.close();
-        if(err.isError()) {
-                promekiErr("PNG load '%s': read failed: %s",
-                           filename.cstr(), err.name().cstr());
+        if (err.isError()) {
+                promekiErr("PNG load '%s': read failed: %s", filename.cstr(), err.name().cstr());
                 return err;
         }
 
         spng_ctx *ctx = spng_ctx_new(0);
-        if(!ctx) {
+        if (!ctx) {
                 promekiErr("PNG load '%s': spng_ctx_new failed", filename.cstr());
                 return Error::NoMem;
         }
@@ -381,46 +371,42 @@ Error ImageFileIO_PNG::load(ImageFile &imageFile, const MediaConfig &config) con
         spng_set_crc_action(ctx, SPNG_CRC_ERROR, SPNG_CRC_USE);
 
         int sret = spng_set_png_buffer(ctx, fileBuf.data(), fileBuf.size());
-        if(sret) {
-                promekiErr("PNG load '%s': spng_set_png_buffer failed: %s",
-                           filename.cstr(), spng_strerror(sret));
+        if (sret) {
+                promekiErr("PNG load '%s': spng_set_png_buffer failed: %s", filename.cstr(), spng_strerror(sret));
                 spng_ctx_free(ctx);
                 return Error::CorruptData;
         }
 
         spng_ihdr ihdr;
         sret = spng_get_ihdr(ctx, &ihdr);
-        if(sret) {
-                promekiErr("PNG load '%s': spng_get_ihdr failed: %s",
-                           filename.cstr(), spng_strerror(sret));
+        if (sret) {
+                promekiErr("PNG load '%s': spng_get_ihdr failed: %s", filename.cstr(), spng_strerror(sret));
                 spng_ctx_free(ctx);
                 return Error::CorruptData;
         }
 
-        int spngFmt = 0;
+        int             spngFmt = 0;
         PixelFormat::ID pdId = pixelFormatFromIhdr(ihdr, spngFmt);
-        if(pdId == PixelFormat::Invalid) {
-                promekiErr("PNG load '%s': unsupported PNG format (color_type=%d, bit_depth=%d)",
-                           filename.cstr(), ihdr.color_type, ihdr.bit_depth);
+        if (pdId == PixelFormat::Invalid) {
+                promekiErr("PNG load '%s': unsupported PNG format (color_type=%d, bit_depth=%d)", filename.cstr(),
+                           ihdr.color_type, ihdr.bit_depth);
                 spng_ctx_free(ctx);
                 return Error::PixelFormatNotSupported;
         }
 
         size_t decodedSize = 0;
         sret = spng_decoded_image_size(ctx, spngFmt, &decodedSize);
-        if(sret) {
-                promekiErr("PNG load '%s': spng_decoded_image_size failed: %s",
-                           filename.cstr(), spng_strerror(sret));
+        if (sret) {
+                promekiErr("PNG load '%s': spng_decoded_image_size failed: %s", filename.cstr(), spng_strerror(sret));
                 spng_ctx_free(ctx);
                 return Error::DecodeFailed;
         }
 
         ImageDesc idesc(ihdr.width, ihdr.height, pdId);
-        auto payload = UncompressedVideoPayload::allocate(idesc);
-        if(!payload.isValid()) {
+        auto      payload = UncompressedVideoPayload::allocate(idesc);
+        if (!payload.isValid()) {
                 spng_ctx_free(ctx);
-                promekiErr("PNG load '%s': failed to allocate %ux%u payload",
-                           filename.cstr(), ihdr.width, ihdr.height);
+                promekiErr("PNG load '%s': failed to allocate %ux%u payload", filename.cstr(), ihdr.width, ihdr.height);
                 return Error::NoMem;
         }
 
@@ -428,19 +414,18 @@ Error ImageFileIO_PNG::load(ImageFile &imageFile, const MediaConfig &config) con
         // payload's plane-0 BufferView is tightly packed (no row
         // padding) for every PixelFormat we map here, so the sizes
         // must match exactly.
-        auto view = payload.modify()->data()[0];
+        auto         view = payload.modify()->data()[0];
         const size_t planeBytes = view.size();
-        if(decodedSize != planeBytes) {
+        if (decodedSize != planeBytes) {
                 spng_ctx_free(ctx);
-                promekiErr("PNG load '%s': decoded size %zu != plane size %zu (stride mismatch)",
-                           filename.cstr(), decodedSize, planeBytes);
+                promekiErr("PNG load '%s': decoded size %zu != plane size %zu (stride mismatch)", filename.cstr(),
+                           decodedSize, planeBytes);
                 return Error::BufferTooSmall;
         }
 
         sret = spng_decode_image(ctx, view.data(), decodedSize, spngFmt, 0);
-        if(sret) {
-                promekiErr("PNG load '%s': spng_decode_image failed: %s",
-                           filename.cstr(), spng_strerror(sret));
+        if (sret) {
+                promekiErr("PNG load '%s': spng_decode_image failed: %s", filename.cstr(), spng_strerror(sret));
                 spng_ctx_free(ctx);
                 return Error::DecodeFailed;
         }
@@ -451,11 +436,10 @@ Error ImageFileIO_PNG::load(ImageFile &imageFile, const MediaConfig &config) con
         // chunk present we assume sRGB per the PNG spec recommendation,
         // which matches the PixelFormat default — nothing to do.
         uint8_t srgbIntent = 0;
-        if(spng_get_srgb(ctx, &srgbIntent) != SPNG_OK) {
+        if (spng_get_srgb(ctx, &srgbIntent) != SPNG_OK) {
                 double gamma = 0.0;
-                if(spng_get_gama(ctx, &gamma) == SPNG_OK && gamma > 0.0) {
-                        payload.modify()->desc().metadata().set(
-                                Metadata::Gamma, gamma);
+                if (spng_get_gama(ctx, &gamma) == SPNG_OK && gamma > 0.0) {
+                        payload.modify()->desc().metadata().set(Metadata::Gamma, gamma);
                 }
         }
 

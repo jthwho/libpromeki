@@ -112,7 +112,7 @@ class FrameNumber {
 
                 /** @brief Pre-increment.  Advances by one frame; @c Unknown stays @c Unknown. */
                 FrameNumber &operator++() {
-                        if(isValid()) ++_value;
+                        if (isValid()) ++_value;
                         return *this;
                 }
 
@@ -125,9 +125,11 @@ class FrameNumber {
 
                 /** @brief Pre-decrement.  Moves back one frame; @c Unknown stays @c Unknown; stepping below zero becomes @c Unknown. */
                 FrameNumber &operator--() {
-                        if(isValid()) {
-                                if(_value == 0) _value = UnknownValue;
-                                else --_value;
+                        if (isValid()) {
+                                if (_value == 0)
+                                        _value = UnknownValue;
+                                else
+                                        --_value;
                         }
                         return *this;
                 }
@@ -141,7 +143,7 @@ class FrameNumber {
 
                 /** @brief In-place addition of an integer offset.  @c Unknown is preserved; negative results become @c Unknown. */
                 FrameNumber &operator+=(int64_t n) {
-                        if(isValid()) {
+                        if (isValid()) {
                                 int64_t nv = _value + n;
                                 _value = nv < 0 ? UnknownValue : nv;
                         }
@@ -150,7 +152,7 @@ class FrameNumber {
 
                 /** @brief In-place subtraction of an integer offset. */
                 FrameNumber &operator-=(int64_t n) {
-                        if(isValid()) {
+                        if (isValid()) {
                                 int64_t nv = _value - n;
                                 _value = nv < 0 ? UnknownValue : nv;
                         }
@@ -190,11 +192,20 @@ class FrameNumber {
 };
 
 /** @brief Returns @p a advanced by @p n frames. */
-inline FrameNumber operator+(FrameNumber a, int64_t n) { a += n; return a; }
+inline FrameNumber operator+(FrameNumber a, int64_t n) {
+        a += n;
+        return a;
+}
 /** @brief Returns @p a moved back by @p n frames. */
-inline FrameNumber operator-(FrameNumber a, int64_t n) { a -= n; return a; }
+inline FrameNumber operator-(FrameNumber a, int64_t n) {
+        a -= n;
+        return a;
+}
 /** @brief Commutative int-FrameNumber addition. */
-inline FrameNumber operator+(int64_t n, FrameNumber a) { a += n; return a; }
+inline FrameNumber operator+(int64_t n, FrameNumber a) {
+        a += n;
+        return a;
+}
 
 PROMEKI_NAMESPACE_END
 
@@ -208,10 +219,8 @@ PROMEKI_FORMAT_VIA_TOSTRING(promeki::FrameNumber);
  * sentinel @c (-1) and any valid frame index uniformly through
  * @c std::hash<int64_t>.
  */
-template <>
-struct std::hash<promeki::FrameNumber> {
-        size_t operator()(const promeki::FrameNumber &v) const noexcept {
-                return std::hash<int64_t>()(v.value());
-        }
+template <> struct std::hash<promeki::FrameNumber> {
+                size_t operator()(const promeki::FrameNumber &v) const noexcept {
+                        return std::hash<int64_t>()(v.value());
+                }
 };
-

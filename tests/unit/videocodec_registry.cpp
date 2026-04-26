@@ -106,15 +106,15 @@ TEST_CASE("VideoCodec: registeredIDs() enumerates every well-known codec") {
         CHECK(ids.contains(VideoCodec::JPEG_XS));
         CHECK(ids.contains(VideoCodec::ProRes_422));
         // registerType is always reserved above every well-known ID.
-        for(auto id : ids) CHECK(id != VideoCodec::Invalid);
+        for (auto id : ids) CHECK(id != VideoCodec::Invalid);
 }
 
 TEST_CASE("VideoCodec: user-registered codecs flow through register/lookup") {
-        VideoCodec::ID myId = VideoCodec::registerType();
+        VideoCodec::ID   myId = VideoCodec::registerType();
         VideoCodec::Data d;
         // Names must be valid C identifiers — registerData rejects
         // hyphens and other non-identifier characters.
-        d.id   = myId;
+        d.id = myId;
         d.name = "TestCustomCodec";
         d.desc = "Custom codec registered from a unit test";
         VideoCodec::registerData(std::move(d));
@@ -314,10 +314,10 @@ TEST_CASE("VideoCodec::fromPixelFormat: uncompressed PixelFormat -> invalid code
 // ---------------------------------------------------------------------------
 
 TEST_CASE("VideoCodec::registerData drops malformed names") {
-        VideoCodec::ID myId = VideoCodec::registerType();
+        VideoCodec::ID   myId = VideoCodec::registerType();
         VideoCodec::Data d;
-        d.id   = myId;
-        d.name = "bad-name-with-hyphen";  // not a C identifier
+        d.id = myId;
+        d.name = "bad-name-with-hyphen"; // not a C identifier
         d.desc = "Should be rejected";
         VideoCodec::registerData(std::move(d));
 
@@ -338,9 +338,9 @@ TEST_CASE("VideoCodec::registeredBackends: includes every backend with a wired s
 
         bool sawTurbo = false;
         bool sawPassthrough = false;
-        for(const auto &b : backends) {
-                if(b.name() == "Turbo")        sawTurbo = true;
-                if(b.name() == "Passthrough")  sawPassthrough = true;
+        for (const auto &b : backends) {
+                if (b.name() == "Turbo") sawTurbo = true;
+                if (b.name() == "Passthrough") sawPassthrough = true;
         }
         CHECK(sawTurbo);
         CHECK(sawPassthrough);

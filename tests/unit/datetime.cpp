@@ -22,19 +22,19 @@ TEST_CASE("DateTime: now returns non-zero") {
 }
 
 TEST_CASE("DateTime: construction from time_t") {
-        time_t t = 1000000;
+        time_t   t = 1000000;
         DateTime dt(t);
         CHECK(dt.toTimeT() == t);
 }
 
 TEST_CASE("DateTime: toDouble") {
-        time_t t = 1000000;
+        time_t   t = 1000000;
         DateTime dt(t);
         CHECK(dt.toDouble() == doctest::Approx(1000000.0).epsilon(1.0));
 }
 
 TEST_CASE("DateTime: equality") {
-        time_t t = 500000;
+        time_t   t = 500000;
         DateTime a(t);
         DateTime b(t);
         CHECK(a == b);
@@ -112,18 +112,18 @@ TEST_CASE("DateTime: operator-= Duration") {
 
 TEST_CASE("DateTime: toString") {
         DateTime dt((time_t)0);
-        String s = dt.toString();
+        String   s = dt.toString();
         CHECK_FALSE(s.isEmpty());
 }
 
 TEST_CASE("DateTime: String conversion operator") {
         DateTime dt((time_t)0);
-        String s = dt;
+        String   s = dt;
         CHECK_FALSE(s.isEmpty());
 }
 
 TEST_CASE("DateTime: fromString with known format") {
-        Error err;
+        Error    err;
         DateTime parsed = DateTime::fromString("2023-11-14 22:13:20", "%Y-%m-%d %H:%M:%S", &err);
         CHECK(err.isOk());
         // Should parse successfully to a valid time
@@ -131,7 +131,7 @@ TEST_CASE("DateTime: fromString with known format") {
 }
 
 TEST_CASE("DateTime: fromString with bad input") {
-        Error err;
+        Error    err;
         DateTime dt = DateTime::fromString("not-a-date", DateTime::DefaultFormat, &err);
         CHECK(err.isError());
 }
@@ -139,8 +139,8 @@ TEST_CASE("DateTime: fromString with bad input") {
 TEST_CASE("DateTime: toString is thread-safe with known time_t") {
         // Exercises the localtime_r path (previously used non-thread-safe std::localtime)
         DateTime dt((time_t)0);
-        String s1 = dt.toString();
-        String s2 = dt.toString();
+        String   s1 = dt.toString();
+        String   s2 = dt.toString();
         CHECK(s1 == s2);
         CHECK_FALSE(s1.isEmpty());
 }
@@ -148,7 +148,7 @@ TEST_CASE("DateTime: toString is thread-safe with known time_t") {
 TEST_CASE("DateTime: toString roundtrip with subsecond format") {
         // Exercises addSubsecondToFormat + localtime_r path
         DateTime dt = DateTime::now();
-        String s = dt.toString("%T.3");
+        String   s = dt.toString("%T.3");
         CHECK_FALSE(s.isEmpty());
         // Should contain a dot for subsecond digits
         CHECK(s.contains("."));

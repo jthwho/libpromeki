@@ -30,10 +30,7 @@ class Matrix3x3 {
         public:
                 /** @brief The 3x3 identity matrix constant. */
                 static constexpr float IdentityMatrix[3][3] = {
-                        {1.0f, 0.0f, 0.0f},
-                        {0.0f, 1.0f, 0.0f},
-                        {0.0f, 0.0f, 1.0f}
-                };
+                        {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
 
                 /**
                  * @brief Creates a diagonal scaling matrix.
@@ -58,8 +55,8 @@ class Matrix3x3 {
                  */
                 static Matrix3x3 rotationMatrix(float angle, char axis) {
                         Matrix3x3 result;
-                        float cos_angle = std::cos(angle);
-                        float sin_angle = std::sin(angle);
+                        float     cos_angle = std::cos(angle);
+                        float     sin_angle = std::sin(angle);
                         switch (axis) {
                                 case 'x':
                                         result.data[0][0] = 1.0f;
@@ -93,24 +90,20 @@ class Matrix3x3 {
                 }
 
                 /** @brief Constructs a zero-initialized matrix. */
-                Matrix3x3() {
-                        zero();
-                }
+                Matrix3x3() { zero(); }
 
                 /**
                  * @brief Constructs a matrix from a 3x3 float array.
                  * @param val The source array to copy values from.
                  */
-                Matrix3x3(float val[3][3]) {
-                        set(val);
-                }
+                Matrix3x3(float val[3][3]) { set(val); }
 
                 /**
                  * @brief Returns the element-wise sum of two matrices.
                  * @param other The matrix to add.
                  * @return The resulting sum matrix.
                  */
-                Matrix3x3 operator+(const Matrix3x3& other) const {
+                Matrix3x3 operator+(const Matrix3x3 &other) const {
                         Matrix3x3 result;
                         for (int i = 0; i < 3; ++i) {
                                 __m128 row = _mm_loadu_ps(data[i]);
@@ -126,7 +119,7 @@ class Matrix3x3 {
                  * @param other The matrix to subtract.
                  * @return The resulting difference matrix.
                  */
-                Matrix3x3 operator-(const Matrix3x3& other) const {
+                Matrix3x3 operator-(const Matrix3x3 &other) const {
                         Matrix3x3 result;
                         for (int i = 0; i < 3; ++i) {
                                 __m128 row = _mm_loadu_ps(data[i]);
@@ -142,7 +135,7 @@ class Matrix3x3 {
                  * @param other The right-hand matrix.
                  * @return The resulting product matrix.
                  */
-                Matrix3x3 operator*(const Matrix3x3& other) const {
+                Matrix3x3 operator*(const Matrix3x3 &other) const {
                         Matrix3x3 result;
                         for (int i = 0; i < 3; ++i) {
                                 for (int j = 0; j < 3; ++j) {
@@ -155,7 +148,7 @@ class Matrix3x3 {
                         }
                         return result;
                 }
-                
+
                 /**
                  * @brief Computes the dot product of two rows in this matrix.
                  * @param row1 Index of the first row (0-2).
@@ -173,7 +166,7 @@ class Matrix3x3 {
 
                 /** @brief Sets all matrix elements to zero. */
                 void zero() {
-                        for(int i = 0; i < 3; ++i) {
+                        for (int i = 0; i < 3; ++i) {
                                 for (int j = 0; j < 3; ++j) {
                                         data[i][j] = 0.0f;
                                 }
@@ -214,8 +207,8 @@ class Matrix3x3 {
                  */
                 float determinant() const {
                         return data[0][0] * (data[1][1] * data[2][2] - data[1][2] * data[2][1]) -
-                                data[0][1] * (data[1][0] * data[2][2] - data[1][2] * data[2][0]) +
-                                data[0][2] * (data[1][0] * data[2][1] - data[1][1] * data[2][0]);
+                               data[0][1] * (data[1][0] * data[2][2] - data[1][2] * data[2][0]) +
+                               data[0][2] * (data[1][0] * data[2][1] - data[1][1] * data[2][0]);
                 }
 
                 /**
@@ -224,7 +217,7 @@ class Matrix3x3 {
                  */
                 Matrix3x3 inverse() const {
                         Matrix3x3 result;
-                        float det = determinant();
+                        float     det = determinant();
                         if (det == 0.0f) {
                                 // Singular matrix, inverse does not exist
                                 return result; // Return zero matrix
@@ -246,9 +239,7 @@ class Matrix3x3 {
                  * @brief Computes the trace (sum of diagonal elements) of this matrix.
                  * @return The trace value.
                  */
-                float trace() const {
-                        return data[0][0] + data[1][1] + data[2][2];
-                }
+                float trace() const { return data[0][0] + data[1][1] + data[2][2]; }
 
                 /**
                  * @brief Multiplies every element by a scalar.
@@ -263,7 +254,6 @@ class Matrix3x3 {
                                 }
                         }
                         return result;
-
                 }
 
                 /**
@@ -285,7 +275,7 @@ class Matrix3x3 {
                 }
 
                 /** @brief Returns true if all elements are equal to the other matrix. */
-                bool operator==(const Matrix3x3& other) const {
+                bool operator==(const Matrix3x3 &other) const {
                         for (int i = 0; i < 3; ++i) {
                                 for (int j = 0; j < 3; ++j) {
                                         if (data[i][j] != other.data[i][j]) {
@@ -297,9 +287,7 @@ class Matrix3x3 {
                 }
 
                 /** @brief Returns true if any element differs from the other matrix. */
-                bool operator!=(const Matrix3x3& other) const {
-                        return !(*this == other);
-                }
+                bool operator!=(const Matrix3x3 &other) const { return !(*this == other); }
 
 
                 /**
@@ -332,11 +320,12 @@ class Matrix3x3 {
                  * @param other The matrix to multiply element-wise.
                  * @return The element-wise product matrix.
                  */
-                Matrix3x3 elementMultiply(const Matrix3x3& other) const {
+                Matrix3x3 elementMultiply(const Matrix3x3 &other) const {
                         Matrix3x3 result;
                         for (int i = 0; i < 3; ++i) {
                                 __m128 row = _mm_set_ps(0.0f, data[i][2], data[i][1], data[i][0]);
-                                __m128 other_row = _mm_set_ps(0.0f, other.data[i][2], other.data[i][1], other.data[i][0]);
+                                __m128 other_row =
+                                        _mm_set_ps(0.0f, other.data[i][2], other.data[i][1], other.data[i][0]);
                                 __m128 mul = _mm_mul_ps(row, other_row);
                                 _mm_storeu_ps(result.data[i], mul);
                         }
@@ -351,11 +340,12 @@ class Matrix3x3 {
                  * @param other The divisor matrix.
                  * @return The element-wise quotient matrix.
                  */
-                Matrix3x3 elementDivide(const Matrix3x3& other) const {
+                Matrix3x3 elementDivide(const Matrix3x3 &other) const {
                         Matrix3x3 result;
                         for (int i = 0; i < 3; ++i) {
                                 __m128 row = _mm_set_ps(0.0f, data[i][2], data[i][1], data[i][0]);
-                                __m128 other_row = _mm_set_ps(0.0f, other.data[i][2], other.data[i][1], other.data[i][0]);
+                                __m128 other_row =
+                                        _mm_set_ps(0.0f, other.data[i][2], other.data[i][1], other.data[i][0]);
                                 // Create a mask to handle division by zero
                                 __m128 mask = _mm_cmpneq_ps(other_row, _mm_set1_ps(0.0f));
                                 __m128 div = _mm_div_ps(row, other_row);
@@ -386,4 +376,3 @@ class Matrix3x3 {
 
 
 PROMEKI_NAMESPACE_END
-

@@ -22,7 +22,7 @@ TEST_CASE("VariantDatabase: default is empty") {
 }
 
 TEST_CASE("VariantDatabase: set and get") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID width("vdb.width");
         db.set(width, 1920);
         Variant v = db.get(width);
@@ -31,21 +31,21 @@ TEST_CASE("VariantDatabase: set and get") {
 }
 
 TEST_CASE("VariantDatabase: get returns default for missing ID") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID missing("vdb.missing");
-        Variant v = db.get(missing);
+        Variant    v = db.get(missing);
         CHECK_FALSE(v.isValid());
 }
 
 TEST_CASE("VariantDatabase: get with custom default") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID missing("vdb.missing2");
-        Variant v = db.get(missing, Variant(42));
+        Variant    v = db.get(missing, Variant(42));
         CHECK(v.get<int32_t>() == 42);
 }
 
 TEST_CASE("VariantDatabase: contains") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID key("vdb.contains");
         CHECK_FALSE(db.contains(key));
         db.set(key, String("hello"));
@@ -53,16 +53,16 @@ TEST_CASE("VariantDatabase: contains") {
 }
 
 TEST_CASE("VariantDatabase: setIfMissing stores when absent") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID key("vdb.setIfMissing.absent");
-        bool stored = db.setIfMissing(key, String("hello"));
+        bool       stored = db.setIfMissing(key, String("hello"));
         CHECK(stored);
         CHECK(db.contains(key));
         CHECK(db.get(key).get<String>() == "hello");
 }
 
 TEST_CASE("VariantDatabase: setIfMissing preserves existing value") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID key("vdb.setIfMissing.present");
         db.set(key, String("first"));
         bool stored = db.setIfMissing(key, String("second"));
@@ -71,7 +71,7 @@ TEST_CASE("VariantDatabase: setIfMissing preserves existing value") {
 }
 
 TEST_CASE("VariantDatabase: set overwrites existing value") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID key("vdb.overwrite");
         db.set(key, 100);
         db.set(key, 200);
@@ -80,7 +80,7 @@ TEST_CASE("VariantDatabase: set overwrites existing value") {
 }
 
 TEST_CASE("VariantDatabase: remove") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID key("vdb.remove");
         db.set(key, 42);
         CHECK(db.contains(key));
@@ -109,7 +109,7 @@ TEST_CASE("VariantDatabase: size tracks entries") {
 }
 
 TEST_CASE("VariantDatabase: stores different variant types") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID intKey("vdb.type.int");
         TestDB::ID strKey("vdb.type.str");
         TestDB::ID dblKey("vdb.type.dbl");
@@ -127,7 +127,7 @@ TEST_CASE("VariantDatabase: stores different variant types") {
 }
 
 TEST_CASE("VariantDatabase: ids returns stored IDs") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID a("vdb.ids.a");
         TestDB::ID b("vdb.ids.b");
         db.set(a, 1);
@@ -136,9 +136,9 @@ TEST_CASE("VariantDatabase: ids returns stored IDs") {
         CHECK(idList.size() == 2);
         bool foundA = false;
         bool foundB = false;
-        for(size_t i = 0; i < idList.size(); ++i) {
-                if(idList[i] == a) foundA = true;
-                if(idList[i] == b) foundB = true;
+        for (size_t i = 0; i < idList.size(); ++i) {
+                if (idList[i] == a) foundA = true;
+                if (idList[i] == b) foundB = true;
         }
         CHECK(foundA);
         CHECK(foundB);
@@ -162,20 +162,20 @@ TEST_CASE("VariantDatabase: separate tag types have independent ID spaces") {
 // ============================================================================
 
 TEST_CASE("VariantDatabase: getAs returns typed value") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID key("vdb.getas.int");
         db.set(key, 42);
         CHECK(db.getAs<int32_t>(key) == 42);
 }
 
 TEST_CASE("VariantDatabase: getAs returns default for missing ID") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID key("vdb.getas.missing");
         CHECK(db.getAs<int32_t>(key, 99) == 99);
 }
 
 TEST_CASE("VariantDatabase: getAs returns default on conversion failure") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID key("vdb.getas.baconv");
         db.set(key, String("not-a-uuid"));
         UUID result = db.getAs<UUID>(key, UUID());
@@ -183,39 +183,39 @@ TEST_CASE("VariantDatabase: getAs returns default on conversion failure") {
 }
 
 TEST_CASE("VariantDatabase: getAs with error output") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID key("vdb.getas.err");
         db.set(key, 42);
 
-        Error err;
+        Error   err;
         int32_t val = db.getAs<int32_t>(key, 0, &err);
         CHECK(val == 42);
         CHECK_FALSE(err.isError());
 }
 
 TEST_CASE("VariantDatabase: getAs error on missing") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID key("vdb.getas.errmiss");
 
-        Error err;
+        Error   err;
         int32_t val = db.getAs<int32_t>(key, -1, &err);
         CHECK(val == -1);
         CHECK(err == Error::IdNotFound);
 }
 
 TEST_CASE("VariantDatabase: getAs error on conversion failure") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID key("vdb.getas.errconv");
         db.set(key, String("not-a-uuid"));
 
         Error err;
-        UUID val = db.getAs<UUID>(key, UUID(), &err);
+        UUID  val = db.getAs<UUID>(key, UUID(), &err);
         CHECK_FALSE(val.isValid());
         CHECK(err == Error::ConversionFailed);
 }
 
 TEST_CASE("VariantDatabase: getAs converts between types") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID key("vdb.getas.conv");
         db.set(key, 42);
         String s = db.getAs<String>(key);
@@ -227,7 +227,7 @@ TEST_CASE("VariantDatabase: getAs converts between types") {
 // ============================================================================
 
 TEST_CASE("VariantDatabase: forEach iterates all entries") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID a("vdb.foreach.a");
         TestDB::ID b("vdb.foreach.b");
         TestDB::ID c("vdb.foreach.c");
@@ -247,7 +247,7 @@ TEST_CASE("VariantDatabase: forEach iterates all entries") {
 
 TEST_CASE("VariantDatabase: forEach on empty database") {
         TestDB db;
-        int count = 0;
+        int    count = 0;
         db.forEach([&](TestDB::ID, const Variant &) { count++; });
         CHECK(count == 0);
 }
@@ -269,8 +269,8 @@ TEST_CASE("VariantDatabase: merge adds entries from other") {
 }
 
 TEST_CASE("VariantDatabase: merge overwrites on conflict") {
-        TestDB db1;
-        TestDB db2;
+        TestDB     db1;
+        TestDB     db2;
         TestDB::ID key("vdb.merge.conflict");
         db1.set(key, 1);
         db2.set(key, 2);
@@ -324,7 +324,7 @@ TEST_CASE("VariantDatabase: config layering with merge") {
 // ============================================================================
 
 TEST_CASE("VariantDatabase: extract subset") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID a("vdb.extract.a");
         TestDB::ID b("vdb.extract.b");
         TestDB::ID c("vdb.extract.c");
@@ -344,7 +344,7 @@ TEST_CASE("VariantDatabase: extract subset") {
 }
 
 TEST_CASE("VariantDatabase: extract skips missing IDs") {
-        TestDB db;
+        TestDB     db;
         TestDB::ID a("vdb.extract.skip.a");
         TestDB::ID b("vdb.extract.skip.b");
         db.set(a, 1);
@@ -364,12 +364,12 @@ TEST_CASE("VariantDatabase: extract empty list") {
         db.set(TestDB::ID("vdb.extract.empty"), 1);
 
         List<TestDB::ID> wanted;
-        TestDB subset = db.extract(wanted);
+        TestDB           subset = db.extract(wanted);
         CHECK(subset.isEmpty());
 }
 
 TEST_CASE("VariantDatabase: extract from empty database") {
-        TestDB db;
+        TestDB           db;
         List<TestDB::ID> wanted;
         wanted.pushToBack(TestDB::ID("vdb.extract.fromempty"));
 
@@ -382,7 +382,7 @@ TEST_CASE("VariantDatabase: extract from empty database") {
 // ============================================================================
 
 TEST_CASE("VariantDatabase: toJson roundtrip") {
-                using DB = VariantDatabase<"JsonTag">;
+        using DB = VariantDatabase<"JsonTag">;
 
         DB db;
         db.set(DB::ID("json.int"), 42);
@@ -405,9 +405,9 @@ TEST_CASE("VariantDatabase: toJson roundtrip") {
 }
 
 TEST_CASE("VariantDatabase: toJson empty database") {
-                using DB = VariantDatabase<"JsonEmptyTag">;
+        using DB = VariantDatabase<"JsonEmptyTag">;
 
-        DB db;
+        DB         db;
         JsonObject json = db.toJson();
         CHECK(json.size() == 0);
 }
@@ -416,19 +416,19 @@ TEST_CASE("VariantDatabase: fromJson empty object") {
         using DB = VariantDatabase<"JsonEmptyTag2">;
 
         JsonObject json;
-        DB db = DB::fromJson(json);
+        DB         db = DB::fromJson(json);
         CHECK(db.isEmpty());
 }
 
 TEST_CASE("VariantDatabase: toJson string roundtrip") {
-                using DB = VariantDatabase<"JsonStrTag">;
+        using DB = VariantDatabase<"JsonStrTag">;
 
         DB db;
         db.set(DB::ID("jstr.key"), String("value"));
 
-        String jsonStr = db.toJson().toString();
+        String     jsonStr = db.toJson().toString();
         JsonObject parsed = JsonObject::parse(jsonStr);
-        DB db2 = DB::fromJson(parsed);
+        DB         db2 = DB::fromJson(parsed);
         CHECK(db2.get(DB::ID("jstr.key")).get<String>() == "value");
 }
 
@@ -442,10 +442,9 @@ TEST_CASE("VariantDatabase: setFromJson coerces JSON strings via registered spec
         // must route the round-trip through the spec so the stored
         // Variant ends up as TypeSize2D, not TypeString.
         using DB = VariantDatabase<"SpecCoerceTag">;
-        const DB::ID sizeId = DB::declareID("size",
-                VariantSpec().setType(Variant::TypeSize2D)
-                        .setDefault(Size2Du32())
-                        .setDescription("Image size."));
+        const DB::ID sizeId = DB::declareID(
+                "size",
+                VariantSpec().setType(Variant::TypeSize2D).setDefault(Size2Du32()).setDescription("Image size."));
 
         DB db;
         CHECK(db.set(sizeId, Size2Du32(1920, 1080)));
@@ -453,7 +452,7 @@ TEST_CASE("VariantDatabase: setFromJson coerces JSON strings via registered spec
         JsonObject json = db.toJson();
         // Round-trip via an explicit serialization so we're testing the
         // realistic "write-then-read" path.
-        String text = json.toString();
+        String     text = json.toString();
         JsonObject reparsed = JsonObject::parse(text);
 
         DB db2 = DB::fromJson(reparsed);
@@ -465,10 +464,8 @@ TEST_CASE("VariantDatabase: setFromJson leaves legitimate strings alone") {
         // When the spec says TypeString, a string in JSON is a string
         // in memory — no reparsing should kick in.
         using DB = VariantDatabase<"SpecStringPassthruTag">;
-        const DB::ID nameId = DB::declareID("name",
-                VariantSpec().setType(Variant::TypeString)
-                        .setDefault(String())
-                        .setDescription("Any string."));
+        const DB::ID nameId = DB::declareID(
+                "name", VariantSpec().setType(Variant::TypeString).setDefault(String()).setDescription("Any string."));
 
         DB db;
         db.set(nameId, String("hello world"));
@@ -506,11 +503,11 @@ TEST_CASE("VariantDatabase: set surfaces validator error in Strict mode") {
         // values and report Error::OutOfRange via the new err
         // out-param.
         using DB = VariantDatabase<"StrictRangeTag">;
-        const DB::ID rangedId = DB::declareID("ranged",
-                VariantSpec().setType(Variant::TypeS32)
-                        .setDefault(int32_t(50))
-                        .setRange(int32_t(1), int32_t(100))
-                        .setDescription("Ranged int."));
+        const DB::ID rangedId = DB::declareID("ranged", VariantSpec()
+                                                                .setType(Variant::TypeS32)
+                                                                .setDefault(int32_t(50))
+                                                                .setRange(int32_t(1), int32_t(100))
+                                                                .setDescription("Ranged int."));
 
         DB db;
         REQUIRE(db.validation() == SpecValidation::Strict);
@@ -534,12 +531,11 @@ TEST_CASE("VariantDatabase: setFromJson surfaces parseString failure for unparse
         // itself fail spec validation under Strict mode and leave
         // the failure invisible to callers).
         using DB = VariantDatabase<"ParseFailTag">;
-        const DB::ID sizeId = DB::declareID("size",
-                VariantSpec().setType(Variant::TypeSize2D)
-                        .setDefault(Size2Du32())
-                        .setDescription("Image size."));
+        const DB::ID sizeId = DB::declareID(
+                "size",
+                VariantSpec().setType(Variant::TypeSize2D).setDefault(Size2Du32()).setDescription("Image size."));
 
-        DB db;
+        DB    db;
         Error err = db.setFromJson(sizeId, Variant(String("not-a-size")));
         CHECK(err.isError());
         CHECK(err == Error::ConversionFailed);
@@ -552,13 +548,13 @@ TEST_CASE("VariantDatabase: setFromJson returns Error::Invalid on Strict spec re
         // validator's specific Error code (OutOfRange) all the way
         // back out through setFromJson.
         using DB = VariantDatabase<"StrictRejectTag">;
-        const DB::ID id = DB::declareID("port",
-                VariantSpec().setType(Variant::TypeS32)
-                        .setDefault(int32_t(8080))
-                        .setRange(int32_t(1), int32_t(65535))
-                        .setDescription("TCP port."));
+        const DB::ID id = DB::declareID("port", VariantSpec()
+                                                        .setType(Variant::TypeS32)
+                                                        .setDefault(int32_t(8080))
+                                                        .setRange(int32_t(1), int32_t(65535))
+                                                        .setDescription("TCP port."));
 
-        DB db;
+        DB    db;
         Error err = db.setFromJson(id, Variant(int32_t(99999)));
         CHECK(err == Error::OutOfRange);
         CHECK_FALSE(db.contains(id));
@@ -570,11 +566,11 @@ TEST_CASE("VariantDatabase: setFromJson returns Ok in Warn mode even when valida
         // else would be a contract violation against existing Warn
         // semantics.
         using DB = VariantDatabase<"WarnModeTag">;
-        const DB::ID id = DB::declareID("warn.port",
-                VariantSpec().setType(Variant::TypeS32)
-                        .setDefault(int32_t(8080))
-                        .setRange(int32_t(1), int32_t(65535))
-                        .setDescription("TCP port."));
+        const DB::ID id = DB::declareID("warn.port", VariantSpec()
+                                                             .setType(Variant::TypeS32)
+                                                             .setDefault(int32_t(8080))
+                                                             .setRange(int32_t(1), int32_t(65535))
+                                                             .setDescription("TCP port."));
 
         DB db;
         db.setValidation(SpecValidation::Warn);
@@ -588,7 +584,7 @@ TEST_CASE("VariantDatabase: setFromJson returns Ok in Warn mode even when valida
 // ============================================================================
 
 TEST_CASE("VariantDatabase: DataStream roundtrip") {
-                using DB = VariantDatabase<"DSTag">;
+        using DB = VariantDatabase<"DSTag">;
 
         DB db;
         db.set(DB::ID("ds.int"), 100);
@@ -597,7 +593,7 @@ TEST_CASE("VariantDatabase: DataStream roundtrip") {
         db.set(DB::ID("ds.bool"), false);
 
         // Write
-        Buffer buf(4096);
+        Buffer         buf(4096);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
         DataStream writer = DataStream::createWriter(&dev);
@@ -607,7 +603,7 @@ TEST_CASE("VariantDatabase: DataStream roundtrip") {
         // Read
         dev.seek(0);
         DataStream reader = DataStream::createReader(&dev);
-        DB db2;
+        DB         db2;
         reader >> db2;
         CHECK(reader.status() == DataStream::Ok);
 
@@ -619,11 +615,11 @@ TEST_CASE("VariantDatabase: DataStream roundtrip") {
 }
 
 TEST_CASE("VariantDatabase: DataStream empty roundtrip") {
-                using DB = VariantDatabase<"DSEmptyTag">;
+        using DB = VariantDatabase<"DSEmptyTag">;
 
         DB db;
 
-        Buffer buf(4096);
+        Buffer         buf(4096);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
         DataStream writer = DataStream::createWriter(&dev);
@@ -632,7 +628,7 @@ TEST_CASE("VariantDatabase: DataStream empty roundtrip") {
 
         dev.seek(0);
         DataStream reader = DataStream::createReader(&dev);
-        DB db2;
+        DB         db2;
         db2.set(DB::ID("ds.empty.pre"), 1); // should be cleared
         reader >> db2;
         CHECK(reader.status() == DataStream::Ok);
@@ -644,13 +640,13 @@ TEST_CASE("VariantDatabase: DataStream empty roundtrip") {
 // ============================================================================
 
 TEST_CASE("VariantDatabase: TextStream output") {
-                using DB = VariantDatabase<"TSTag">;
+        using DB = VariantDatabase<"TSTag">;
 
         DB db;
         db.set(DB::ID("ts.name"), String("test"));
         db.set(DB::ID("ts.value"), 42);
 
-        String output;
+        String     output;
         TextStream stream(&output);
         stream << db;
         stream.flush();
@@ -662,10 +658,10 @@ TEST_CASE("VariantDatabase: TextStream output") {
 }
 
 TEST_CASE("VariantDatabase: TextStream empty output") {
-                using DB = VariantDatabase<"TSEmptyTag">;
+        using DB = VariantDatabase<"TSEmptyTag">;
 
-        DB db;
-        String output;
+        DB         db;
+        String     output;
         TextStream stream(&output);
         stream << db;
         stream.flush();
@@ -678,7 +674,7 @@ TEST_CASE("VariantDatabase: TextStream empty output") {
 // ============================================================
 
 TEST_CASE("VariantDatabase: equality empty") {
-                using DB = VariantDatabase<"EqEmptyTag">;
+        using DB = VariantDatabase<"EqEmptyTag">;
 
         DB a;
         DB b;
@@ -687,7 +683,7 @@ TEST_CASE("VariantDatabase: equality empty") {
 }
 
 TEST_CASE("VariantDatabase: equality matching") {
-                using DB = VariantDatabase<"EqMatchTag">;
+        using DB = VariantDatabase<"EqMatchTag">;
         DB::ID name("name");
         DB::ID count("count");
 
@@ -703,7 +699,7 @@ TEST_CASE("VariantDatabase: equality matching") {
 }
 
 TEST_CASE("VariantDatabase: inequality different values") {
-                using DB = VariantDatabase<"EqDiffValTag">;
+        using DB = VariantDatabase<"EqDiffValTag">;
         DB::ID name("name");
 
         DB a;
@@ -715,7 +711,7 @@ TEST_CASE("VariantDatabase: inequality different values") {
 }
 
 TEST_CASE("VariantDatabase: inequality different keys") {
-                using DB = VariantDatabase<"EqDiffKeyTag">;
+        using DB = VariantDatabase<"EqDiffKeyTag">;
         DB::ID k1("k1");
         DB::ID k2("k2");
 
@@ -728,7 +724,7 @@ TEST_CASE("VariantDatabase: inequality different keys") {
 }
 
 TEST_CASE("VariantDatabase: inequality different size") {
-                using DB = VariantDatabase<"EqDiffSzTag">;
+        using DB = VariantDatabase<"EqDiffSzTag">;
         DB::ID k1("k1");
         DB::ID k2("k2");
 
@@ -748,7 +744,7 @@ TEST_CASE("VariantDatabase: inequality different size") {
 TEST_CASE("VariantDatabase: format substitutes a single key with default spec") {
         using DB = VariantDatabase<"FmtTagBasic">;
         DB::ID name("Name");
-        DB db;
+        DB     db;
         db.set(name, String("Alice"));
         CHECK(db.format("Hello {Name}!") == String("Hello Alice!"));
 }
@@ -756,18 +752,16 @@ TEST_CASE("VariantDatabase: format substitutes a single key with default spec") 
 TEST_CASE("VariantDatabase: format dispatches per-type spec to VideoFormat") {
         using DB = VariantDatabase<"FmtTagVF">;
         DB::ID vf("VideoFormat");
-        DB db;
+        DB     db;
         db.set(vf, VideoFormat(VideoFormat::Smpte1080p29_97));
-        CHECK(db.format("The video format is {VideoFormat:smpte}")
-              == String("The video format is 1080p29.97"));
-        CHECK(db.format("Named: {VideoFormat:named}")
-              == String("Named: HDp29.97"));
+        CHECK(db.format("The video format is {VideoFormat:smpte}") == String("The video format is 1080p29.97"));
+        CHECK(db.format("Named: {VideoFormat:named}") == String("Named: HDp29.97"));
 }
 
 TEST_CASE("VariantDatabase: format dispatches per-type spec to Timecode") {
         using DB = VariantDatabase<"FmtTagTc">;
         DB::ID tc("Timecode");
-        DB db;
+        DB     db;
         db.set(tc, Timecode(Timecode::NDF24, 1, 0, 0, 0));
         CHECK(db.format("TC={Timecode:smpte}") == String("TC=01:00:00:00"));
 }
@@ -775,7 +769,7 @@ TEST_CASE("VariantDatabase: format dispatches per-type spec to Timecode") {
 TEST_CASE("VariantDatabase: format applies std::format spec to primitives") {
         using DB = VariantDatabase<"FmtTagNum">;
         DB::ID n("Count");
-        DB db;
+        DB     db;
         db.set(n, int32_t(42));
         CHECK(db.format("{Count:05d}") == String("00042"));
         CHECK(db.format("hex={Count:x}") == String("hex=2a"));
@@ -784,25 +778,23 @@ TEST_CASE("VariantDatabase: format applies std::format spec to primitives") {
 TEST_CASE("VariantDatabase: format replaces missing key with sentinel") {
         using DB = VariantDatabase<"FmtTagMiss">;
         DB db;
-        CHECK(db.format("Value: {NotThere}")
-              == String("Value: [UNKNOWN KEY: NotThere]"));
-        CHECK(db.format("Value: {NotThere:smpte}")
-              == String("Value: [UNKNOWN KEY: NotThere]"));
+        CHECK(db.format("Value: {NotThere}") == String("Value: [UNKNOWN KEY: NotThere]"));
+        CHECK(db.format("Value: {NotThere:smpte}") == String("Value: [UNKNOWN KEY: NotThere]"));
 }
 
 TEST_CASE("VariantDatabase: format reports IdNotFound when a key is missing") {
         using DB = VariantDatabase<"FmtTagErr">;
         DB::ID present("Present");
-        DB db;
+        DB     db;
         db.set(present, int32_t(1));
 
-        Error err;
+        Error  err;
         String s = db.format("{Present} and {Absent}", &err);
         CHECK(err == Error::IdNotFound);
         CHECK(s == String("1 and [UNKNOWN KEY: Absent]"));
 
         // All keys resolved -> Error::Ok.
-        Error ok;
+        Error  ok;
         String s2 = db.format("{Present}", &ok);
         CHECK(ok.isOk());
         CHECK(s2 == String("1"));
@@ -811,18 +803,18 @@ TEST_CASE("VariantDatabase: format reports IdNotFound when a key is missing") {
 TEST_CASE("VariantDatabase: format consults resolver for missing keys") {
         using DB = VariantDatabase<"FmtTagResolver">;
         DB::ID a("A");
-        DB db;
+        DB     db;
         db.set(a, int32_t(7));
 
         auto resolver = [](const String &key, const String &spec) -> std::optional<String> {
-                if(key == String("B")) {
+                if (key == String("B")) {
                         // Echo the spec back so we can verify it was forwarded.
                         return String("B-resolved(") + spec + String(")");
                 }
                 return std::nullopt;
         };
 
-        Error err;
+        Error  err;
         String s = db.format("{A}/{B:custom}/{C}", resolver, &err);
         // C is still unresolved, so err must report IdNotFound, but the
         // resolver-supplied B value is interpolated cleanly.
@@ -841,24 +833,25 @@ TEST_CASE("VariantDatabase: format resolver enables database nesting") {
         DB child;
         child.set(local, String("hello"));
 
-        Error err;
-        String s = child.format("{Local} on {Shared:smpte}",
+        Error  err;
+        String s = child.format(
+                "{Local} on {Shared:smpte}",
                 [&parent](const String &key, const String &spec) -> std::optional<String> {
                         DB::ID id = DB::ID::find(key);
-                        if(!id.isValid() || !parent.contains(id)) return std::nullopt;
+                        if (!id.isValid() || !parent.contains(id)) return std::nullopt;
                         return parent.get(id).format(spec);
-                }, &err);
+                },
+                &err);
         CHECK(err.isOk());
         CHECK(s == String("hello on 1080p29.97"));
 }
 
 TEST_CASE("VariantDatabase: format resolver returning nullopt falls back to sentinel") {
         using DB = VariantDatabase<"FmtTagResolverMiss">;
-        DB db;
-        Error err;
-        String s = db.format("{X}",
-                [](const String &, const String &) -> std::optional<String> { return std::nullopt; },
-                &err);
+        DB     db;
+        Error  err;
+        String s = db.format(
+                "{X}", [](const String &, const String &) -> std::optional<String> { return std::nullopt; }, &err);
         CHECK(err == Error::IdNotFound);
         CHECK(s == String("[UNKNOWN KEY: X]"));
 }
@@ -866,10 +859,9 @@ TEST_CASE("VariantDatabase: format resolver returning nullopt falls back to sent
 TEST_CASE("VariantDatabase: format honors {{ and }} escapes") {
         using DB = VariantDatabase<"FmtTagEsc">;
         DB::ID v("V");
-        DB db;
+        DB     db;
         db.set(v, int32_t(7));
-        CHECK(db.format("literal {{ and }} braces, value={V}")
-              == String("literal { and } braces, value=7"));
+        CHECK(db.format("literal {{ and }} braces, value={V}") == String("literal { and } braces, value=7"));
 }
 
 TEST_CASE("VariantDatabase: format renders multiple tokens in one pass") {
@@ -877,7 +869,7 @@ TEST_CASE("VariantDatabase: format renders multiple tokens in one pass") {
         DB::ID vf("VideoFormat");
         DB::ID tc("Timecode");
         DB::ID who("Who");
-        DB db;
+        DB     db;
         db.set(vf, VideoFormat(VideoFormat::Smpte1080p29_97));
         db.set(tc, Timecode(Timecode::NDF24, 1, 2, 3, 4));
         db.set(who, String("rec1"));

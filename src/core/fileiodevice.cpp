@@ -35,21 +35,17 @@ FileIODevice *FileIODevice::stderrDevice() {
 // Constructors / Destructor
 // ============================================================================
 
-FileIODevice::FileIODevice(FILE *file, OpenMode mode, int flags,
-                           ObjectBase *parent) :
-        IODevice(parent), _file(file), _ownsFile(flags & OwnsFile)
-{
+FileIODevice::FileIODevice(FILE *file, OpenMode mode, int flags, ObjectBase *parent)
+    : IODevice(parent), _file(file), _ownsFile(flags & OwnsFile) {
         setOpenMode(mode);
 }
 
-FileIODevice::FileIODevice(const String &filename, ObjectBase *parent) :
-        IODevice(parent), _filename(filename) { }
+FileIODevice::FileIODevice(const String &filename, ObjectBase *parent) : IODevice(parent), _filename(filename) {}
 
-FileIODevice::FileIODevice(ObjectBase *parent) :
-        IODevice(parent) { }
+FileIODevice::FileIODevice(ObjectBase *parent) : IODevice(parent) {}
 
 FileIODevice::~FileIODevice() {
-        if(isOpen()) close();
+        if (isOpen()) close();
 }
 
 // ============================================================================
@@ -67,7 +63,7 @@ void FileIODevice::setFilename(const String &filename) {
 
 FILE *FileIODevice::takeFile() {
         FILE *f = _file;
-        if(isOpen()) {
+        if (isOpen()) {
                 aboutToCloseSignal.emit();
                 setOpenMode(NotOpen);
         }
@@ -81,45 +77,45 @@ FILE *FileIODevice::takeFile() {
 // ============================================================================
 
 Error FileIODevice::open(OpenMode mode) {
-        if(isOpen()) return Error(Error::AlreadyOpen);
-        if(_filename.isEmpty()) return Error(Error::Invalid);
+        if (isOpen()) return Error(Error::AlreadyOpen);
+        if (_filename.isEmpty()) return Error(Error::Invalid);
 
         // Resource paths (":/...") are served from compiled-in cirf
         // data via cirf_fopen() which wraps the bytes in a memory
         // FILE* (POSIX fmemopen). Only ReadOnly is supported.
-        if(Resource::isResourcePath(_filename)) {
-                if(mode != ReadOnly) return Error(Error::ReadOnly);
+        if (Resource::isResourcePath(_filename)) {
+                if (mode != ReadOnly) return Error(Error::ReadOnly);
                 String virt = Resource::stripPrefix(_filename);
                 _file = cirf_resolve_fopen(virt.cstr());
-                if(_file == nullptr) return Error(Error::NotExist);
+                if (_file == nullptr) return Error(Error::NotExist);
                 _ownsFile = true;
                 setOpenMode(mode);
                 return Error();
         }
 
         const char *fmode = nullptr;
-        switch(mode) {
-                case ReadOnly:  fmode = "rb";  break;
-                case WriteOnly: fmode = "wb";  break;
+        switch (mode) {
+                case ReadOnly: fmode = "rb"; break;
+                case WriteOnly: fmode = "wb"; break;
                 case ReadWrite: fmode = "w+b"; break;
-                case Append:    fmode = "ab";  break;
+                case Append: fmode = "ab"; break;
                 default: return Error(Error::Invalid);
         }
 
         _file = std::fopen(_filename.cstr(), fmode);
-        if(_file == nullptr) return Error(Error::IOError);
+        if (_file == nullptr) return Error(Error::IOError);
         _ownsFile = true;
         setOpenMode(mode);
         return Error();
 }
 
 Error FileIODevice::close() {
-        if(!isOpen()) return Error(Error::NotOpen);
+        if (!isOpen()) return Error(Error::NotOpen);
         aboutToCloseSignal.emit();
         setOpenMode(NotOpen);
         Error ret;
-        if(_ownsFile && _file != nullptr) {
-                if(std::fclose(_file) != 0) ret = Error(Error::IOError);
+        if (_ownsFile && _file != nullptr) {
+                if (std::fclose(_file) != 0) ret = Error(Error::IOError);
         }
         _file = nullptr;
         _ownsFile = false;
@@ -131,7 +127,7 @@ Error FileIODevice::close() {
 // ============================================================================
 
 void FileIODevice::flush() {
-        if(_file != nullptr) std::fflush(_file);
+        if (_file != nullptr) std::fflush(_file);
 }
 
 // ============================================================================
@@ -147,7 +143,7 @@ bool FileIODevice::isSequential() const {
 }
 
 bool FileIODevice::atEnd() const {
-        if(!isOpen() || _file == nullptr) return true;
+        if (!isOpen() || _file == nullptr) return true;
         return std::feof(_file) != 0;
 }
 
@@ -156,15 +152,15 @@ bool FileIODevice::atEnd() const {
 // ============================================================================
 
 Error FileIODevice::seek(int64_t pos) {
-        if(!isOpen() || _file == nullptr) return Error(Error::NotOpen);
-        if(std::fseek(_file, static_cast<long>(pos), SEEK_SET) != 0) {
+        if (!isOpen() || _file == nullptr) return Error(Error::NotOpen);
+        if (std::fseek(_file, static_cast<long>(pos), SEEK_SET) != 0) {
                 return Error(Error::IOError);
         }
         return Error();
 }
 
 int64_t FileIODevice::pos() const {
-        if(!isOpen() || _file == nullptr) return 0;
+        if (!isOpen() || _file == nullptr) return 0;
         long p = std::ftell(_file);
         return p < 0 ? 0 : static_cast<int64_t>(p);
 }
@@ -174,16 +170,16 @@ int64_t FileIODevice::pos() const {
 // ============================================================================
 
 int64_t FileIODevice::read(void *data, int64_t maxSize) {
-        if(!isOpen() || !isReadable() || _file == nullptr) return -1;
+        if (!isOpen() || !isReadable() || _file == nullptr) return -1;
         size_t n = std::fread(data, 1, static_cast<size_t>(maxSize), _file);
-        if(n == 0 && std::ferror(_file)) return -1;
+        if (n == 0 && std::ferror(_file)) return -1;
         return static_cast<int64_t>(n);
 }
 
 int64_t FileIODevice::write(const void *data, int64_t maxSize) {
-        if(!isOpen() || !isWritable() || _file == nullptr) return -1;
+        if (!isOpen() || !isWritable() || _file == nullptr) return -1;
         size_t n = std::fwrite(data, 1, static_cast<size_t>(maxSize), _file);
-        if(n == 0 && std::ferror(_file)) return -1;
+        if (n == 0 && std::ferror(_file)) return -1;
         bytesWrittenSignal.emit(static_cast<int64_t>(n));
         return static_cast<int64_t>(n);
 }

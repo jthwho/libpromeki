@@ -15,10 +15,10 @@
 #include <promeki/platform.h>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
-#       include <winsock2.h>
-#       include <ws2tcpip.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #elif !defined(PROMEKI_PLATFORM_EMSCRIPTEN)
-#       include <netinet/in.h>
+#include <netinet/in.h>
 #endif
 
 PROMEKI_NAMESPACE_BEGIN
@@ -65,9 +65,7 @@ class Ipv4Address {
                  * @param networkOrder The address in network byte order.
                  * @return The corresponding Ipv4Address.
                  */
-                static Ipv4Address fromUint32(uint32_t networkOrder) {
-                        return Ipv4Address(networkOrder);
-                }
+                static Ipv4Address fromUint32(uint32_t networkOrder) { return Ipv4Address(networkOrder); }
 
                 /** @brief Returns the INADDR_ANY address (0.0.0.0). */
                 static Ipv4Address any() { return Ipv4Address(); }
@@ -79,13 +77,13 @@ class Ipv4Address {
                 static Ipv4Address broadcast() { return Ipv4Address(255, 255, 255, 255); }
 
                 /** @brief Default constructor. Creates a null (0.0.0.0) address. */
-                Ipv4Address() : _addr(0) { }
+                Ipv4Address() : _addr(0) {}
 
                 /**
                  * @brief Constructs from a 32-bit integer in network byte order.
                  * @param networkOrder The address in network byte order (big-endian).
                  */
-                explicit Ipv4Address(uint32_t networkOrder) : _addr(networkOrder) { }
+                explicit Ipv4Address(uint32_t networkOrder) : _addr(networkOrder) {}
 
                 /**
                  * @brief Constructs from four octets.
@@ -94,13 +92,9 @@ class Ipv4Address {
                  * @param c Third octet.
                  * @param d Fourth octet (least significant).
                  */
-                Ipv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d) :
-                        _addr(static_cast<uint32_t>(a) << 24 |
-                              static_cast<uint32_t>(b) << 16 |
-                              static_cast<uint32_t>(c) << 8  |
-                              static_cast<uint32_t>(d))
-                {
-                }
+                Ipv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d)
+                    : _addr(static_cast<uint32_t>(a) << 24 | static_cast<uint32_t>(b) << 16 |
+                            static_cast<uint32_t>(c) << 8 | static_cast<uint32_t>(d)) {}
 
                 /** @brief Returns true if the address is 0.0.0.0. */
                 bool isNull() const { return _addr == 0; }
@@ -122,9 +116,9 @@ class Ipv4Address {
                 bool isPrivate() const {
                         uint8_t a = octet(0);
                         uint8_t b = octet(1);
-                        if(a == 10) return true;
-                        if(a == 172 && (b & 0xF0) == 16) return true;
-                        if(a == 192 && b == 168) return true;
+                        if (a == 10) return true;
+                        if (a == 172 && (b & 0xF0) == 16) return true;
+                        if (a == 192 && b == 168) return true;
                         return false;
                 }
 
@@ -161,7 +155,7 @@ class Ipv4Address {
                  * @return The octet value, or 0 if index is out of range.
                  */
                 uint8_t octet(int index) const {
-                        if(index < 0 || index > 3) return 0;
+                        if (index < 0 || index > 3) return 0;
                         return static_cast<uint8_t>((_addr >> (24 - index * 8)) & 0xFF);
                 }
 
@@ -222,7 +216,7 @@ class Ipv4Address {
                 bool operator<(const Ipv4Address &other) const { return _addr < other._addr; }
 
         private:
-                uint32_t _addr;         ///< Address stored in big-endian (network) byte order.
+                uint32_t _addr; ///< Address stored in big-endian (network) byte order.
 };
 
 /** @brief Writes a dotted-quad IPv4 address to the stream. */

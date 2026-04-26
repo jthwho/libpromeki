@@ -50,7 +50,7 @@ TEST_CASE("NumName_ParsePadded") {
 }
 
 TEST_CASE("NumName_ParsePaddedWithValue") {
-        int val = -1;
+        int     val = -1;
         NumName n = NumName::parse("frame.0042.exr", &val);
         CHECK(n.isValid());
         CHECK(val == 42);
@@ -84,7 +84,7 @@ TEST_CASE("NumName_ParseNonPaddedFilemask") {
 }
 
 TEST_CASE("NumName_ParseNonPaddedWithValue") {
-        int val = -1;
+        int     val = -1;
         NumName n = NumName::parse("image1234.png", &val);
         CHECK(n.isValid());
         CHECK(val == 1234);
@@ -114,7 +114,7 @@ TEST_CASE("NumName_ParseNumberAtEnd") {
 }
 
 TEST_CASE("NumName_ParseJustNumber") {
-        int val = -1;
+        int     val = -1;
         NumName n = NumName::parse("42", &val);
         CHECK(n.isValid());
         CHECK(n.prefix() == "");
@@ -124,7 +124,7 @@ TEST_CASE("NumName_ParseJustNumber") {
 }
 
 TEST_CASE("NumName_ParseJustPaddedNumber") {
-        int val = -1;
+        int     val = -1;
         NumName n = NumName::parse("0042", &val);
         CHECK(n.isValid());
         CHECK(val == 42);
@@ -153,7 +153,7 @@ TEST_CASE("NumName_ParseSingleDigit") {
 
 TEST_CASE("NumName_ParseMultipleNumberRuns") {
         // parse() finds the last digit run when scanning from the right
-        int val = -1;
+        int     val = -1;
         NumName n = NumName::parse("v2_shot_0045.exr", &val);
         CHECK(n.isValid());
         CHECK(val == 45);
@@ -450,7 +450,7 @@ TEST_CASE("NumNameSeq_DefaultConstruction") {
 }
 
 TEST_CASE("NumNameSeq_Construction") {
-        NumName n("test.", ".dpx", 5, true);
+        NumName    n("test.", ".dpx", 5, true);
         NumNameSeq seq(n, 1, 100);
         CHECK(seq.isValid());
         CHECK(seq.head() == 1);
@@ -460,15 +460,8 @@ TEST_CASE("NumNameSeq_Construction") {
 }
 
 TEST_CASE("NumNameSeq_ParseList") {
-        StringList list = {
-                "image1234.png",
-                "image0001.png",
-                "image.png",
-                "image2.png",
-                "image3.png",
-                "image34.png",
-                "anotherfile.txt"
-        };
+        StringList       list = {"image1234.png", "image0001.png", "image.png",      "image2.png",
+                                 "image3.png",    "image34.png",   "anotherfile.txt"};
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.size() == 2);
         // Strings that couldn't be parsed as NumNames remain
@@ -480,21 +473,21 @@ TEST_CASE("NumNameSeq_ParseList") {
 }
 
 TEST_CASE("NumNameSeq_ParseListEmpty") {
-        StringList list;
+        StringList       list;
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.isEmpty());
         CHECK(list.isEmpty());
 }
 
 TEST_CASE("NumNameSeq_ParseListNoNumNames") {
-        StringList list = {"hello.txt", "world.txt"};
+        StringList       list = {"hello.txt", "world.txt"};
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.isEmpty());
         CHECK(list.size() == 2);
 }
 
 TEST_CASE("NumNameSeq_ParseListAllNumNames") {
-        StringList list = {"img001.exr", "img002.exr", "img003.exr"};
+        StringList       list = {"img001.exr", "img002.exr", "img003.exr"};
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.size() == 1);
         CHECK(list.isEmpty());
@@ -504,13 +497,7 @@ TEST_CASE("NumNameSeq_ParseListAllNumNames") {
 }
 
 TEST_CASE("NumNameSeq_ParseListMultipleSequences") {
-        StringList list = {
-                "shotA.001.exr",
-                "shotA.002.exr",
-                "shotB.010.exr",
-                "shotB.020.exr",
-                "readme.txt"
-        };
+        StringList       list = {"shotA.001.exr", "shotA.002.exr", "shotB.010.exr", "shotB.020.exr", "readme.txt"};
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.size() == 2);
         CHECK(list.size() == 1);
@@ -528,7 +515,7 @@ TEST_CASE("NumNameSeq_ParseListMultipleSequences") {
 }
 
 TEST_CASE("NumNameSeq_ParseListSingleItem") {
-        StringList list = {"frame.0100.exr"};
+        StringList       list = {"frame.0100.exr"};
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.size() == 1);
         CHECK(list.isEmpty());
@@ -539,12 +526,7 @@ TEST_CASE("NumNameSeq_ParseListSingleItem") {
 
 TEST_CASE("NumNameSeq_ParseListOutOfOrder") {
         // Items arrive in non-sequential order; head/tail should reflect min/max
-        StringList list = {
-                "render.0050.exr",
-                "render.0010.exr",
-                "render.0099.exr",
-                "render.0001.exr"
-        };
+        StringList       list = {"render.0050.exr", "render.0010.exr", "render.0099.exr", "render.0001.exr"};
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.size() == 1);
         CHECK(list.isEmpty());
@@ -557,10 +539,7 @@ TEST_CASE("NumNameSeq_ParseListNameUpgradePaddedOverNonPadded") {
         // A padded name with MORE digits than a non-padded name is treated as
         // a separate sequence (e.g. "image2.png" vs "image0003.png" are different
         // naming conventions).
-        StringList list = {
-                "image2.png",
-                "image0003.png"
-        };
+        StringList       list = {"image2.png", "image0003.png"};
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.size() == 2);
         CHECK(list.isEmpty());
@@ -577,10 +556,7 @@ TEST_CASE("NumNameSeq_ParseListNameUpgradeSameDigitCount") {
         // IS in the same sequence and upgrades the stored name.
         // "image12.png" -> non-padded, 2 digits
         // "image03.png" -> padded, 2 digits  (same digit count, padded wins)
-        StringList list = {
-                "image12.png",
-                "image03.png"
-        };
+        StringList       list = {"image12.png", "image03.png"};
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.size() == 1);
         CHECK(list.isEmpty());
@@ -593,10 +569,7 @@ TEST_CASE("NumNameSeq_ParseListNameUpgradeSameDigitCount") {
 TEST_CASE("NumNameSeq_ParseListNameUpgradeMoreDigits") {
         // When a name with more digits arrives, it should replace the stored name
         // Both non-padded: "file1.txt" (1 digit) then "file123.txt" (3 digits)
-        StringList list = {
-                "file1.txt",
-                "file123.txt"
-        };
+        StringList       list = {"file1.txt", "file123.txt"};
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.size() == 1);
         CHECK(list.isEmpty());
@@ -608,10 +581,7 @@ TEST_CASE("NumNameSeq_ParseListNameUpgradeMoreDigits") {
 TEST_CASE("NumNameSeq_ParseListDifferentPaddingsSeparateSequences") {
         // Padded names with different digit counts should be separate sequences
         // because isInSequence returns false for padded+padded with different digit counts
-        StringList list = {
-                "img.001.exr",
-                "img.00002.exr"
-        };
+        StringList       list = {"img.001.exr", "img.00002.exr"};
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.size() == 2);
         CHECK(list.isEmpty());
@@ -621,11 +591,7 @@ TEST_CASE("NumNameSeq_ParseListDifferentPaddingsSeparateSequences") {
 
 TEST_CASE("NumNameSeq_ParseListSameSequenceDifferentNonPaddedDigitCounts") {
         // Non-padded names with different digit counts ARE in the same sequence
-        StringList list = {
-                "shot5.mov",
-                "shot12.mov",
-                "shot100.mov"
-        };
+        StringList       list = {"shot5.mov", "shot12.mov", "shot100.mov"};
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.size() == 1);
         CHECK(list.isEmpty());
@@ -636,20 +602,14 @@ TEST_CASE("NumNameSeq_ParseListSameSequenceDifferentNonPaddedDigitCounts") {
 }
 
 TEST_CASE("NumNameSeq_LengthSingleFrame") {
-        NumName n("test.", ".dpx", 5, true);
+        NumName    n("test.", ".dpx", 5, true);
         NumNameSeq seq(n, 42, 42);
         CHECK(seq.length() == 1);
 }
 
 TEST_CASE("NumNameSeq_ParseListPreservesNonNumNameOrder") {
         // Non-numname items should remain in their original relative order
-        StringList list = {
-                "readme.txt",
-                "frame001.exr",
-                "notes.md",
-                "frame002.exr",
-                "changelog.txt"
-        };
+        StringList       list = {"readme.txt", "frame001.exr", "notes.md", "frame002.exr", "changelog.txt"};
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.size() == 1);
         CHECK(list.size() == 3);
@@ -660,12 +620,7 @@ TEST_CASE("NumNameSeq_ParseListPreservesNonNumNameOrder") {
 
 TEST_CASE("NumNameSeq_ParseListDifferentPrefixes") {
         // Same suffix but different prefixes are separate sequences
-        StringList list = {
-                "alpha001.exr",
-                "beta001.exr",
-                "alpha002.exr",
-                "beta002.exr"
-        };
+        StringList       list = {"alpha001.exr", "beta001.exr", "alpha002.exr", "beta002.exr"};
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.size() == 2);
         CHECK(list.isEmpty());
@@ -679,12 +634,7 @@ TEST_CASE("NumNameSeq_ParseListDifferentPrefixes") {
 
 TEST_CASE("NumNameSeq_ParseListDifferentSuffixes") {
         // Same prefix but different suffixes are separate sequences
-        StringList list = {
-                "render001.exr",
-                "render001.png",
-                "render002.exr",
-                "render002.png"
-        };
+        StringList       list = {"render001.exr", "render001.png", "render002.exr", "render002.png"};
         NumNameSeq::List nnl = NumNameSeq::parseList(list);
         CHECK(nnl.size() == 2);
         CHECK(list.isEmpty());

@@ -22,7 +22,7 @@ bool Env::set(const char *name, const String &value, bool overwrite) {
 #if defined(PROMEKI_PLATFORM_POSIX)
         return setenv(name, value.cstr(), overwrite ? 1 : 0) == 0;
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
-        if(!overwrite && std::getenv(name) != nullptr) return true;
+        if (!overwrite && std::getenv(name) != nullptr) return true;
         return SetEnvironmentVariableA(name, value.cstr()) != 0;
 #else
         return false;
@@ -42,27 +42,25 @@ bool Env::unset(const char *name) {
 Map<String, String> Env::list() {
         Map<String, String> result;
 #if defined(PROMEKI_PLATFORM_POSIX)
-        for(char **ep = environ; ep != nullptr && *ep != nullptr; ++ep) {
+        for (char **ep = environ; ep != nullptr && *ep != nullptr; ++ep) {
                 const char *entry = *ep;
                 const char *eq = entry;
-                while(*eq != '\0' && *eq != '=') ++eq;
-                if(*eq == '=') {
-                        result.insert(String(entry, static_cast<size_t>(eq - entry)),
-                                      String(eq + 1));
+                while (*eq != '\0' && *eq != '=') ++eq;
+                if (*eq == '=') {
+                        result.insert(String(entry, static_cast<size_t>(eq - entry)), String(eq + 1));
                 }
         }
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         char *block = GetEnvironmentStringsA();
-        if(block != nullptr) {
-                for(const char *p = block; *p != '\0'; ) {
+        if (block != nullptr) {
+                for (const char *p = block; *p != '\0';) {
                         const char *entry = p;
                         const char *eq = entry;
-                        while(*eq != '\0' && *eq != '=') ++eq;
-                        if(*eq == '=') {
-                                result.insert(String(entry, static_cast<size_t>(eq - entry)),
-                                              String(eq + 1));
+                        while (*eq != '\0' && *eq != '=') ++eq;
+                        if (*eq == '=') {
+                                result.insert(String(entry, static_cast<size_t>(eq - entry)), String(eq + 1));
                         }
-                        while(*p != '\0') ++p;
+                        while (*p != '\0') ++p;
                         ++p;
                 }
                 FreeEnvironmentStringsA(block);
@@ -75,7 +73,7 @@ Map<String, String> Env::list(const RegEx &filter) {
         Map<String, String> all = list();
         Map<String, String> result;
         all.forEach([&](const String &key, const String &value) {
-                if(filter.search(key)) result.insert(key, value);
+                if (filter.search(key)) result.insert(key, value);
         });
         return result;
 }

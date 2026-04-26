@@ -15,15 +15,14 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-SDLAudioOutput::SDLAudioOutput(ObjectBase *parent) : ObjectBase(parent) {
-}
+SDLAudioOutput::SDLAudioOutput(ObjectBase *parent) : ObjectBase(parent) {}
 
 SDLAudioOutput::~SDLAudioOutput() {
         close();
 }
 
 bool SDLAudioOutput::configure(const AudioDesc &desc) {
-        if(_open) {
+        if (_open) {
                 promekiErr("SDLAudioOutput: cannot configure while open");
                 return false;
         }
@@ -33,11 +32,11 @@ bool SDLAudioOutput::configure(const AudioDesc &desc) {
 }
 
 bool SDLAudioOutput::open() {
-        if(!_configured) {
+        if (!_configured) {
                 promekiErr("SDLAudioOutput: not configured");
                 return false;
         }
-        if(_open) return true;
+        if (_open) return true;
 
         // We always push float32 to SDL — the
         // PcmAudioPayload::convert() path handles conversion
@@ -47,14 +46,10 @@ bool SDLAudioOutput::open() {
         spec.channels = static_cast<int>(_desc.channels());
         spec.freq = static_cast<int>(_desc.sampleRate());
 
-        _stream = SDL_OpenAudioDeviceStream(
-                SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
-                &spec, nullptr, nullptr
-        );
+        _stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, nullptr, nullptr);
 
-        if(_stream == nullptr) {
-                promekiErr("SDLAudioOutput: SDL_OpenAudioDeviceStream failed: %s",
-                           SDL_GetError());
+        if (_stream == nullptr) {
+                promekiErr("SDLAudioOutput: SDL_OpenAudioDeviceStream failed: %s", SDL_GetError());
                 return false;
         }
 
@@ -65,16 +60,14 @@ bool SDLAudioOutput::open() {
         // device share this domain by construction, since
         // ClockDomain::registerDomain dedupes by name.
         SDL_AudioDeviceID devid = SDL_GetAudioStreamDevice(_stream);
-        const char *sdlName = (devid != 0) ? SDL_GetAudioDeviceName(devid) : nullptr;
-        String domainName = "sdl.audio";
-        if(sdlName != nullptr && sdlName[0] != '\0') {
+        const char       *sdlName = (devid != 0) ? SDL_GetAudioDeviceName(devid) : nullptr;
+        String            domainName = "sdl.audio";
+        if (sdlName != nullptr && sdlName[0] != '\0') {
                 domainName += ":";
                 domainName += sdlName;
         }
-        _clockDomain = ClockDomain(ClockDomain::registerDomain(
-                domainName,
-                "SDL audio device consumption-rate clock",
-                ClockEpoch::PerStream));
+        _clockDomain = ClockDomain(ClockDomain::registerDomain(domainName, "SDL audio device consumption-rate clock",
+                                                               ClockEpoch::PerStream));
 
         // Start playback
         SDL_ResumeAudioStreamDevice(_stream);
@@ -84,7 +77,7 @@ bool SDLAudioOutput::open() {
 }
 
 void SDLAudioOutput::close() {
-        if(_stream != nullptr) {
+        if (_stream != nullptr) {
                 SDL_DestroyAudioStream(_stream);
                 _stream = nullptr;
         }
@@ -93,17 +86,17 @@ void SDLAudioOutput::close() {
 }
 
 bool SDLAudioOutput::pushAudio(const PcmAudioPayload &payload) {
-        if(!_open || _stream == nullptr) return false;
-        if(!payload.isValid()) return false;
+        if (!_open || _stream == nullptr) return false;
+        if (!payload.isValid()) return false;
 
         // Convert to native float if needed.  The conversion uses the
         // payload's own convert entry; on the fast path (already
         // native float) we just keep a view of the original.
-        PcmAudioPayload::Ptr converted;
+        PcmAudioPayload::Ptr   converted;
         const PcmAudioPayload *src = &payload;
-        if(payload.desc().format().id() != AudioFormat::NativeFloat) {
+        if (payload.desc().format().id() != AudioFormat::NativeFloat) {
                 converted = payload.convert(AudioFormat(AudioFormat::NativeFloat));
-                if(!converted.isValid()) {
+                if (!converted.isValid()) {
                         promekiErr("SDLAudioOutput: audio format conversion failed");
                         return false;
                 }
@@ -111,17 +104,15 @@ bool SDLAudioOutput::pushAudio(const PcmAudioPayload &payload) {
         }
 
         // Native-float PCM lands in a single interleaved plane.
-        if(src->planeCount() == 0) return false;
-        auto view = src->plane(0);
+        if (src->planeCount() == 0) return false;
+        auto         view = src->plane(0);
         const size_t bytes = src->sampleCount() * src->desc().channels() * sizeof(float);
-        if(view.size() < bytes) {
-                promekiErr("SDLAudioOutput: payload plane smaller than expected (%zu < %zu)",
-                           view.size(), bytes);
+        if (view.size() < bytes) {
+                promekiErr("SDLAudioOutput: payload plane smaller than expected (%zu < %zu)", view.size(), bytes);
                 return false;
         }
-        if(!SDL_PutAudioStreamData(_stream, view.data(), static_cast<int>(bytes))) {
-                promekiErr("SDLAudioOutput: SDL_PutAudioStreamData failed: %s",
-                           SDL_GetError());
+        if (!SDL_PutAudioStreamData(_stream, view.data(), static_cast<int>(bytes))) {
+                promekiErr("SDLAudioOutput: SDL_PutAudioStreamData failed: %s", SDL_GetError());
                 return false;
         }
 
@@ -130,30 +121,28 @@ bool SDLAudioOutput::pushAudio(const PcmAudioPayload &payload) {
 }
 
 int SDLAudioOutput::queuedBytes() const {
-        if(!_open || _stream == nullptr) return 0;
+        if (!_open || _stream == nullptr) return 0;
         return SDL_GetAudioStreamQueued(_stream);
 }
 
 Error SDLAudioOutput::setPaused(bool paused) {
-        if(!_open || _stream == nullptr) return Error::NotOpen;
-        bool ok = paused
-                ? SDL_PauseAudioStreamDevice(_stream)
-                : SDL_ResumeAudioStreamDevice(_stream);
-        if(!ok) {
-                promekiErr("SDLAudioOutput: SDL_%sAudioStreamDevice failed: %s",
-                           paused ? "Pause" : "Resume", SDL_GetError());
+        if (!_open || _stream == nullptr) return Error::NotOpen;
+        bool ok = paused ? SDL_PauseAudioStreamDevice(_stream) : SDL_ResumeAudioStreamDevice(_stream);
+        if (!ok) {
+                promekiErr("SDLAudioOutput: SDL_%sAudioStreamDevice failed: %s", paused ? "Pause" : "Resume",
+                           SDL_GetError());
                 return Error::DeviceError;
         }
         return {};
 }
 
 bool SDLAudioOutput::isPaused() const {
-        if(!_open || _stream == nullptr) return false;
+        if (!_open || _stream == nullptr) return false;
         return SDL_AudioStreamDevicePaused(_stream);
 }
 
 Clock *SDLAudioOutput::createClock() {
-        if(!_open) {
+        if (!_open) {
                 promekiErr("SDLAudioOutput::createClock called before open");
                 return nullptr;
         }

@@ -86,7 +86,7 @@ class UncompressedVideoPayload;
  * @see CSCContext, CSCRegistry, @ref csc "CSC Framework"
  */
 class CSCPipeline {
-        PROMEKI_SHARED_FINAL(CSCPipeline)
+                PROMEKI_SHARED_FINAL(CSCPipeline)
         public:
                 /** @brief Shared pointer type for CSCPipeline. */
                 using Ptr = SharedPtr<CSCPipeline>;
@@ -98,17 +98,17 @@ class CSCPipeline {
                  * @brief Identifies a single processing stage in the pipeline.
                  */
                 enum StageType {
-                        StageUnpack,            ///< Unpack source pixels to float SoA.
-                        StageChromaUpsample,    ///< Upsample chroma to full resolution.
-                        StageRangeIn,           ///< Map input range to 0.0-1.0.
-                        StageMonoExpand,        ///< Broadcast buffer[0] to buffers[1] and [2] (mono -> RGB).
-                        StageEOTF,              ///< Remove source transfer function.
-                        StageMatrix,            ///< 3x3 color matrix multiply.
-                        StageOETF,              ///< Apply target transfer function.
-                        StageRangeOut,          ///< Map 0.0-1.0 to output range.
-                        StageChromaDownsample,  ///< Downsample chroma for target.
-                        StagePack,              ///< Pack float SoA to target pixels.
-                        StageAlphaFill          ///< Fill alpha channel with constant.
+                        StageUnpack,           ///< Unpack source pixels to float SoA.
+                        StageChromaUpsample,   ///< Upsample chroma to full resolution.
+                        StageRangeIn,          ///< Map input range to 0.0-1.0.
+                        StageMonoExpand,       ///< Broadcast buffer[0] to buffers[1] and [2] (mono -> RGB).
+                        StageEOTF,             ///< Remove source transfer function.
+                        StageMatrix,           ///< 3x3 color matrix multiply.
+                        StageOETF,             ///< Apply target transfer function.
+                        StageRangeOut,         ///< Map 0.0-1.0 to output range.
+                        StageChromaDownsample, ///< Downsample chroma for target.
+                        StagePack,             ///< Pack float SoA to target pixels.
+                        StageAlphaFill         ///< Fill alpha channel with constant.
                 };
 
                 /**
@@ -119,51 +119,47 @@ class CSCPipeline {
                  * invoked sequentially for each scanline.
                  */
                 struct Stage {
-                        StageType type;
+                                StageType type;
 
-                        /** @brief The kernel function for this stage. */
-                        void (*func)(const Stage *stage,
-                                     const void *const *srcPlanes,
-                                     const size_t *srcStrides,
-                                     void *const *dstPlanes,
-                                     const size_t *dstStrides,
-                                     size_t width, size_t y,
-                                     CSCContext &ctx) = nullptr;
+                                /** @brief The kernel function for this stage. */
+                                void (*func)(const Stage *stage, const void *const *srcPlanes, const size_t *srcStrides,
+                                             void *const *dstPlanes, const size_t *dstStrides, size_t width, size_t y,
+                                             CSCContext &ctx) = nullptr;
 
-                        /** @brief 3x3 matrix for StageMatrix. */
-                        float matrix[3][3] = {};
+                                /** @brief 3x3 matrix for StageMatrix. */
+                                float matrix[3][3] = {};
 
-                        /** @brief Offset applied before or after matrix multiply. */
-                        float matrixOffset[3] = {};
+                                /** @brief Offset applied before or after matrix multiply. */
+                                float matrixOffset[3] = {};
 
-                        /** @brief Pre-offset applied before matrix multiply (for YCbCr source). */
-                        float matrixPreOffset[3] = {};
+                                /** @brief Pre-offset applied before matrix multiply (for YCbCr source). */
+                                float matrixPreOffset[3] = {};
 
-                        /** @brief Per-component scale for range mapping. */
-                        float rangeScale[4] = {};
+                                /** @brief Per-component scale for range mapping. */
+                                float rangeScale[4] = {};
 
-                        /** @brief Per-component bias for range mapping. */
-                        float rangeBias[4] = {};
+                                /** @brief Per-component bias for range mapping. */
+                                float rangeBias[4] = {};
 
-                        /** @brief Transfer function LUT (indexed by integer sample value). */
-                        float *lut = nullptr;
+                                /** @brief Transfer function LUT (indexed by integer sample value). */
+                                float *lut = nullptr;
 
-                        /** @brief LUT entry count. */
-                        size_t lutSize = 0;
+                                /** @brief LUT entry count. */
+                                size_t lutSize = 0;
 
-                        /** @brief Number of components to process. */
-                        int compCount = 3;
+                                /** @brief Number of components to process. */
+                                int compCount = 3;
 
-                        /** @brief Alpha fill value (for StageAlphaFill). */
-                        float alphaValue = 1.0f;
+                                /** @brief Alpha fill value (for StageAlphaFill). */
+                                float alphaValue = 1.0f;
 
-                        /** @brief Horizontal chroma subsampling ratio. */
-                        int chromaHRatio = 1;
+                                /** @brief Horizontal chroma subsampling ratio. */
+                                int chromaHRatio = 1;
 
-                        /** @brief Vertical chroma subsampling ratio. */
-                        int chromaVRatio = 1;
+                                /** @brief Vertical chroma subsampling ratio. */
+                                int chromaVRatio = 1;
 
-                        /**
+                                /**
                          * @brief Semantic buffer map for unpack/pack.
                          *
                          * Maps component index to SoA buffer index based on
@@ -171,56 +167,56 @@ class CSCPipeline {
                          * Handles formats with non-standard component ordering
                          * such as BGRA, ARGB, etc.
                          */
-                        int semBufMap[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+                                int semBufMap[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 
-                        /** @brief Source/target component count for unpack/pack. */
-                        int pixelCompCount = 0;
+                                /** @brief Source/target component count for unpack/pack. */
+                                int pixelCompCount = 0;
 
-                        /** @brief Bits per component for unpack/pack. */
-                        int bitsPerComp = 0;
+                                /** @brief Bits per component for unpack/pack. */
+                                int bitsPerComp = 0;
 
-                        /** @brief Bytes per pixel block for unpack/pack. */
-                        int bytesPerBlock = 0;
+                                /** @brief Bytes per pixel block for unpack/pack. */
+                                int bytesPerBlock = 0;
 
-                        /** @brief Pixels per block for unpack/pack. */
-                        int pixelsPerBlock = 1;
+                                /** @brief Pixels per block for unpack/pack. */
+                                int pixelsPerBlock = 1;
 
-                        /** @brief Whether source/target has alpha. */
-                        bool hasAlpha = false;
+                                /** @brief Whether source/target has alpha. */
+                                bool hasAlpha = false;
 
-                        /** @brief Component index of alpha in source/target. */
-                        int alphaCompIndex = -1;
+                                /** @brief Component index of alpha in source/target. */
+                                int alphaCompIndex = -1;
 
-                        /** @brief Whether to use SIMD-optimized code paths. */
-                        bool useSimd = true;
+                                /** @brief Whether to use SIMD-optimized code paths. */
+                                bool useSimd = true;
 
-                        /** @brief Number of planes in source/target format. */
-                        int planeCount = 1;
+                                /** @brief Number of planes in source/target format. */
+                                int planeCount = 1;
 
-                        /** @brief Per-plane bytes per sample. */
-                        int planeBytesPerSample[4] = {};
+                                /** @brief Per-plane bytes per sample. */
+                                int planeBytesPerSample[4] = {};
 
-                        /** @brief Per-plane horizontal subsampling. */
-                        int planeHSub[4] = {};
+                                /** @brief Per-plane horizontal subsampling. */
+                                int planeHSub[4] = {};
 
-                        /** @brief Per-plane vertical subsampling. */
-                        int planeVSub[4] = {};
+                                /** @brief Per-plane vertical subsampling. */
+                                int planeVSub[4] = {};
 
-                        /** @brief Per-component plane index. */
-                        int compPlane[8] = {};
+                                /** @brief Per-component plane index. */
+                                int compPlane[8] = {};
 
-                        /** @brief Per-component byte offset within pixel/block. */
-                        int compByteOffset[8] = {};
+                                /** @brief Per-component byte offset within pixel/block. */
+                                int compByteOffset[8] = {};
 
-                        /** @brief Per-component bit depth. */
-                        int compBits[8] = {};
+                                /** @brief Per-component bit depth. */
+                                int compBits[8] = {};
 
-                        ~Stage() { delete[] lut; }
-                        Stage() = default;
-                        Stage(const Stage &other);
-                        Stage &operator=(const Stage &other);
-                        Stage(Stage &&other) noexcept;
-                        Stage &operator=(Stage &&other) noexcept;
+                                ~Stage() { delete[] lut; }
+                                Stage() = default;
+                                Stage(const Stage &other);
+                                Stage &operator=(const Stage &other);
+                                Stage(Stage &&other) noexcept;
+                                Stage &operator=(Stage &&other) noexcept;
                 };
 
                 /** @brief Constructs an invalid pipeline. */
@@ -233,8 +229,7 @@ class CSCPipeline {
                  * @param config Optional configuration hints
                  *               (e.g. @ref MediaConfig::CscPath).
                  */
-                CSCPipeline(const PixelFormat &src, const PixelFormat &dst,
-                            const MediaConfig &config = MediaConfig());
+                CSCPipeline(const PixelFormat &src, const PixelFormat &dst, const MediaConfig &config = MediaConfig());
 
                 /**
                  * @brief Returns a shared, compiled pipeline from a global cache.
@@ -326,8 +321,7 @@ class CSCPipeline {
                  * allocated plane buffers (see
                  * @ref UncompressedVideoPayload::allocate).
                  */
-                Error execute(const UncompressedVideoPayload &src,
-                              UncompressedVideoPayload &dst) const;
+                Error execute(const UncompressedVideoPayload &src, UncompressedVideoPayload &dst) const;
 
                 /**
                  * @brief Processes a single scanline.
@@ -342,22 +336,18 @@ class CSCPipeline {
                  * @param y          Current line number.
                  * @param ctx        Scratch context.
                  */
-                void processLine(const void *const *srcPlanes,
-                                 const size_t *srcStrides,
-                                 void *const *dstPlanes,
-                                 const size_t *dstStrides,
-                                 size_t width, size_t y,
-                                 CSCContext &ctx) const;
+                void processLine(const void *const *srcPlanes, const size_t *srcStrides, void *const *dstPlanes,
+                                 const size_t *dstStrides, size_t width, size_t y, CSCContext &ctx) const;
 
         private:
-                PixelFormat               _srcDesc;
-                PixelFormat               _dstDesc;
-                MediaConfig             _config;
-                bool                    _valid = false;
-                bool                    _identity = false;
-                bool                    _useSimd = true;
+                PixelFormat              _srcDesc;
+                PixelFormat              _dstDesc;
+                MediaConfig              _config;
+                bool                     _valid = false;
+                bool                     _identity = false;
+                bool                     _useSimd = true;
                 CSCRegistry::LineFuncPtr _fastPathFunc = nullptr;
-                List<Stage>             _stages;
+                List<Stage>              _stages;
 
                 void compile();
                 void buildUnpackStage(const PixelFormat &pd, Stage &stage);

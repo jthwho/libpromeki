@@ -33,7 +33,7 @@ TEST_CASE("RateTracker: rate after a burst is non-zero") {
         RateTracker rt(200);
 
         // Record 100 frames of 1 KiB each in a tight burst.
-        for(int i = 0; i < 100; ++i) rt.record(1024);
+        for (int i = 0; i < 100; ++i) rt.record(1024);
 
         // With zero elapsed time the current-window reading is
         // essentially instantaneous, so we instead wait for the window
@@ -54,9 +54,9 @@ TEST_CASE("RateTracker: rate after a burst is non-zero") {
 
 TEST_CASE("RateTracker: reset zeroes the counters") {
         RateTracker rt(200);
-        for(int i = 0; i < 50; ++i) rt.record(2048);
+        for (int i = 0; i < 50; ++i) rt.record(2048);
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
-        rt.record(2048);  // force a rotation on query
+        rt.record(2048); // force a rotation on query
         // Confirm something was observed before resetting.
         CHECK(rt.bytesPerSecond() > 0.0);
 
@@ -68,10 +68,10 @@ TEST_CASE("RateTracker: reset zeroes the counters") {
 }
 
 TEST_CASE("RateTracker: window rotation preserves last-window data") {
-        RateTracker rt(100);  // 100ms window for fast rollover
+        RateTracker rt(100); // 100ms window for fast rollover
 
         // First window: 10 frames of 512 bytes.
-        for(int i = 0; i < 10; ++i) rt.record(512);
+        for (int i = 0; i < 10; ++i) rt.record(512);
 
         // Let the window age past its nominal length.
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
@@ -90,25 +90,25 @@ TEST_CASE("RateTracker: concurrent record is safe") {
         // match the sum of per-thread contributions after a rotation.
         RateTracker rt(100);
 
-        constexpr int kThreads = 4;
-        constexpr int kPerThread = 1000;
-        std::atomic<int> ready{0};
+        constexpr int            kThreads = 4;
+        constexpr int            kPerThread = 1000;
+        std::atomic<int>         ready{0};
         std::vector<std::thread> workers;
         workers.reserve(kThreads);
 
-        for(int t = 0; t < kThreads; ++t) {
+        for (int t = 0; t < kThreads; ++t) {
                 workers.emplace_back([&]() {
                         ready.fetch_add(1);
-                        while(ready.load() < kThreads) { }
-                        for(int i = 0; i < kPerThread; ++i) {
+                        while (ready.load() < kThreads) {}
+                        for (int i = 0; i < kPerThread; ++i) {
                                 rt.record(100);
                         }
                 });
         }
-        for(auto &w : workers) w.join();
+        for (auto &w : workers) w.join();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
-        rt.record(100);  // force rotation
+        rt.record(100); // force rotation
 
         // We recorded 4 * 1000 = 4000 frames totalling 400 000 bytes
         // in the first window, plus one more for the rotation trigger.

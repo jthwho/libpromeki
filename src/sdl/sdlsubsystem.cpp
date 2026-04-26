@@ -17,19 +17,18 @@ PROMEKI_NAMESPACE_BEGIN
 
 SdlSubsystem *SdlSubsystem::_instance = nullptr;
 
-SdlSubsystem::SdlSubsystem()
-        : _eventLoop(Application::mainEventLoop()) {
+SdlSubsystem::SdlSubsystem() : _eventLoop(Application::mainEventLoop()) {
         // Singletons by design — constructing a second SdlSubsystem
         // while one is still live would silently clobber the instance
         // pointer and leak SDL state.  Catch it as a programming
         // error at construction.
         PROMEKI_ASSERT(_instance == nullptr);
-        if(_eventLoop == nullptr) {
+        if (_eventLoop == nullptr) {
                 promekiErr("SdlSubsystem: no Application / main EventLoop — "
                            "construct an Application before an SdlSubsystem");
         }
         _instance = this;
-        if(!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO)) {
+        if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO)) {
                 promekiErr("SdlSubsystem: SDL_Init failed: %s", SDL_GetError());
         }
 
@@ -40,15 +39,13 @@ SdlSubsystem::SdlSubsystem()
         // whenever SDL has events to drain.  Install the watcher
         // before registering the IoSource so we don't miss the very
         // first event slipping between the two calls.
-        if(_sdlPipe.isValid() && _eventLoop != nullptr) {
+        if (_sdlPipe.isValid() && _eventLoop != nullptr) {
                 SDL_AddEventWatch(&SdlSubsystem::sdlEventWatch, this);
 
-                _sdlSourceHandle = _eventLoop->addIoSource(
-                        _sdlPipe.readFd(), EventLoop::IoRead,
-                        [this](int, uint32_t) {
-                                _sdlPipe.drain();
-                                _eventPump.pumpEvents();
-                        });
+                _sdlSourceHandle = _eventLoop->addIoSource(_sdlPipe.readFd(), EventLoop::IoRead, [this](int, uint32_t) {
+                        _sdlPipe.drain();
+                        _eventPump.pumpEvents();
+                });
 
                 // OS events (keyboard, window, mouse) only enter
                 // SDL's queue when somebody calls SDL_PumpEvents —
@@ -67,33 +64,30 @@ SdlSubsystem::SdlSubsystem()
                 // equivalent) and forwards into the main event loop
                 // only when OS events actually arrive, so the idle
                 // case costs nothing.
-                _pumpTimerId = _eventLoop->startTimer(16,
-                        [this]() {
-                                _eventPump.pumpEvents();
-                        });
+                _pumpTimerId = _eventLoop->startTimer(16, [this]() { _eventPump.pumpEvents(); });
         }
         return;
 }
 
 SdlSubsystem::~SdlSubsystem() {
-        if(_pumpTimerId >= 0 && _eventLoop != nullptr) {
+        if (_pumpTimerId >= 0 && _eventLoop != nullptr) {
                 _eventLoop->stopTimer(_pumpTimerId);
                 _pumpTimerId = -1;
         }
-        if(_sdlSourceHandle >= 0 && _eventLoop != nullptr) {
+        if (_sdlSourceHandle >= 0 && _eventLoop != nullptr) {
                 _eventLoop->removeIoSource(_sdlSourceHandle);
                 _sdlSourceHandle = -1;
         }
         SDL_RemoveEventWatch(&SdlSubsystem::sdlEventWatch, this);
         SDL_Quit();
-        if(_instance == this) _instance = nullptr;
+        if (_instance == this) _instance = nullptr;
         return;
 }
 
 bool SdlSubsystem::sdlEventWatch(void *userdata, SDL_Event *event) {
         (void)event;
         auto *self = static_cast<SdlSubsystem *>(userdata);
-        if(self == nullptr) return true;
+        if (self == nullptr) return true;
         self->_sdlPipe.wake();
         return true;
 }

@@ -73,37 +73,37 @@ class FastFont : public Font {
                 ~FastFont() override;
 
                 bool drawText(const String &text, int x, int y) override;
-                int measureText(const String &text) override;
-                int lineHeight() override;
-                int ascender() override;
-                int descender() override;
+                int  measureText(const String &text) override;
+                int  lineHeight() override;
+                int  ascender() override;
+                int  descender() override;
 
         protected:
                 void onStateChanged() override;
 
         private:
                 struct CachedGlyph {
-                        UncompressedVideoPayload::Ptr payload; ///< Pre-rendered glyph payload.
-                        int                           advanceX = 0; ///< Horizontal advance to next glyph in pixels.
+                                UncompressedVideoPayload::Ptr payload; ///< Pre-rendered glyph payload.
+                                int advanceX = 0;                      ///< Horizontal advance to next glyph in pixels.
                 };
 
-                bool ensureFontLoaded();
-                void ensurePixels();
+                bool               ensureFontLoaded();
+                void               ensurePixels();
                 const CachedGlyph *getGlyph(uint32_t codepoint);
-                void invalidateGlyphs();
-                void invalidateFont();
-                void invalidateAll();
+                void               invalidateGlyphs();
+                void               invalidateFont();
+                void               invalidateAll();
 
-                void                            *_ftLibrary = nullptr;
-                void                            *_ftFace = nullptr;
-                Buffer                          _fontData;          ///< Owns the font bytes for the lifetime of _ftFace.
-                int                             _ascender = 0;
-                int                             _descender = 0;
-                int                             _lineHeight = 0;
-                PaintEngine::Pixel              _fgPixel;
-                PaintEngine::Pixel              _bgPixel;
-                bool                            _pixelsDirty = true;
-                Map<uint32_t, CachedGlyph>      _glyphCache;
+                void                      *_ftLibrary = nullptr;
+                void                      *_ftFace = nullptr;
+                Buffer                     _fontData; ///< Owns the font bytes for the lifetime of _ftFace.
+                int                        _ascender = 0;
+                int                        _descender = 0;
+                int                        _lineHeight = 0;
+                PaintEngine::Pixel         _fgPixel;
+                PaintEngine::Pixel         _bgPixel;
+                bool                       _pixelsDirty = true;
+                Map<uint32_t, CachedGlyph> _glyphCache;
 };
 
 PROMEKI_NAMESPACE_END

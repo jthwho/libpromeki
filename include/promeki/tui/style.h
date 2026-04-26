@@ -38,13 +38,13 @@ class TuiStyle {
                  * @brief Text attribute flags.
                  */
                 enum Attr : uint8_t {
-                        None          = 0x00,
-                        Bold          = 0x01,
-                        Dim           = 0x02,
-                        Italic        = 0x04,
-                        Underline     = 0x08,
-                        Blink         = 0x10,
-                        Inverse       = 0x20,
+                        None = 0x00,
+                        Bold = 0x01,
+                        Dim = 0x02,
+                        Italic = 0x04,
+                        Underline = 0x08,
+                        Blink = 0x10,
+                        Inverse = 0x20,
                         Strikethrough = 0x40
                 };
 
@@ -53,7 +53,7 @@ class TuiStyle {
 
                 /** @brief Constructs with foreground, background, and attributes (all defined). */
                 TuiStyle(const Color &fg, const Color &bg, uint8_t attrs = None)
-                        : _fg(fg), _bg(bg), _attrs(attrs), _attrMask(0xFF) {}
+                    : _fg(fg), _bg(bg), _attrs(attrs), _attrMask(0xFF) {}
 
                 /** @brief Returns the foreground color. */
                 Color foreground() const { return _fg; }
@@ -74,10 +74,16 @@ class TuiStyle {
                 void setBackground(const Color &color) { _bg = color; }
 
                 /** @brief Sets all attribute flags (marks all bits as defined). */
-                void setAttrs(uint8_t attrs) { _attrs = attrs; _attrMask = 0xFF; }
+                void setAttrs(uint8_t attrs) {
+                        _attrs = attrs;
+                        _attrMask = 0xFF;
+                }
 
                 /** @brief Sets attribute flags with an explicit mask. */
-                void setAttrs(uint8_t attrs, uint8_t mask) { _attrs = attrs; _attrMask = mask; }
+                void setAttrs(uint8_t attrs, uint8_t mask) {
+                        _attrs = attrs;
+                        _attrMask = mask;
+                }
 
                 /** @brief Returns true if the foreground color is defined (not ignored). */
                 bool hasForeground() const { return _fg.isValid(); }
@@ -109,16 +115,15 @@ class TuiStyle {
                 }
 
                 bool operator==(const TuiStyle &o) const {
-                        return _fg == o._fg && _bg == o._bg &&
-                               _attrs == o._attrs && _attrMask == o._attrMask;
+                        return _fg == o._fg && _bg == o._bg && _attrs == o._attrs && _attrMask == o._attrMask;
                 }
                 bool operator!=(const TuiStyle &o) const { return !(*this == o); }
 
         private:
-                Color   _fg;                    ///< Invalid = ignored.
-                Color   _bg;                    ///< Invalid = ignored.
-                uint8_t _attrs = None;          ///< Attribute flag values.
-                uint8_t _attrMask = 0x00;       ///< Which attr bits are defined.
+                Color   _fg;              ///< Invalid = ignored.
+                Color   _bg;              ///< Invalid = ignored.
+                uint8_t _attrs = None;    ///< Attribute flag values.
+                uint8_t _attrMask = 0x00; ///< Which attr bits are defined.
 };
 
 /**
@@ -145,9 +150,9 @@ class TuiStyleState {
                 void setSelected(bool v) { _selected = v; }
 
         private:
-                bool _focused  = false;
-                bool _enabled  = true;
-                bool _pressed  = false;
+                bool _focused = false;
+                bool _enabled = true;
+                bool _pressed = false;
                 bool _selected = false;
 };
 

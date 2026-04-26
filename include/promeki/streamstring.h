@@ -24,7 +24,7 @@ PROMEKI_NAMESPACE_BEGIN
  * used directly.
  */
 class StreamStringIODevice : public IODevice {
-        PROMEKI_OBJECT(StreamStringIODevice, IODevice)
+                PROMEKI_OBJECT(StreamStringIODevice, IODevice)
         public:
                 /** @brief Callback type invoked for each completed line. */
                 using OnNewLineFunc = std::function<bool(String &)>;
@@ -33,15 +33,13 @@ class StreamStringIODevice : public IODevice {
                  * @brief Constructs a StreamStringIODevice.
                  * @param parent The parent object, or nullptr.
                  */
-                StreamStringIODevice(ObjectBase *parent = nullptr) : IODevice(parent) { }
+                StreamStringIODevice(ObjectBase *parent = nullptr) : IODevice(parent) {}
 
                 /**
                  * @brief Sets the callback invoked when a line is complete.
                  * @param func Callback to invoke on each complete line.
                  */
-                void setOnNewLine(OnNewLineFunc func) {
-                        _onNewLine = std::move(func);
-                }
+                void setOnNewLine(OnNewLineFunc func) { _onNewLine = std::move(func); }
 
                 /**
                  * @brief Returns the current (possibly incomplete) line buffer.
@@ -50,13 +48,11 @@ class StreamStringIODevice : public IODevice {
                 const String &line() const { return _line; }
 
                 /** @brief Clears the accumulated line buffer. */
-                void clearLine() {
-                        _line.clear();
-                }
+                void clearLine() { _line.clear(); }
 
                 /** @brief Opens the device in the specified mode. */
                 Error open(OpenMode mode) override {
-                        if(isOpen()) return Error(Error::AlreadyOpen);
+                        if (isOpen()) return Error(Error::AlreadyOpen);
                         setOpenMode(mode);
                         return Error();
                 }
@@ -68,14 +64,10 @@ class StreamStringIODevice : public IODevice {
                 }
 
                 /** @brief Returns true if the device is open. */
-                bool isOpen() const override {
-                        return openMode() != NotOpen;
-                }
+                bool isOpen() const override { return openMode() != NotOpen; }
 
                 /** @brief Always returns -1 (write-only device). */
-                int64_t read(void *, int64_t) override {
-                        return -1;
-                }
+                int64_t read(void *, int64_t) override { return -1; }
 
                 /**
                  * @brief Writes data, splitting on newlines and invoking the callback.
@@ -84,10 +76,10 @@ class StreamStringIODevice : public IODevice {
                  * @return The number of bytes written, or -1 on error.
                  */
                 int64_t write(const void *data, int64_t maxSize) override {
-                        if(!isOpen() || !isWritable()) return -1;
+                        if (!isOpen() || !isWritable()) return -1;
                         const char *p = static_cast<const char *>(data);
-                        for(int64_t i = 0; i < maxSize; i++) {
-                                if(p[i] == '\n') {
+                        for (int64_t i = 0; i < maxSize; i++) {
+                                if (p[i] == '\n') {
                                         flushLine();
                                 } else {
                                         _line += p[i];
@@ -97,20 +89,18 @@ class StreamStringIODevice : public IODevice {
                 }
 
                 /** @brief Flushes the current line buffer via the callback. */
-                void flush() override {
-                        flushLine();
-                }
+                void flush() override { flushLine(); }
 
                 /** @brief Returns true (this device is sequential). */
                 bool isSequential() const override { return true; }
 
         private:
-                OnNewLineFunc   _onNewLine;
-                String          _line;
+                OnNewLineFunc _onNewLine;
+                String        _line;
 
                 void flushLine() {
-                        if(!_line.isEmpty() && _onNewLine) {
-                                if(_onNewLine(_line)) _line.clear();
+                        if (!_line.isEmpty() && _onNewLine) {
+                                if (_onNewLine(_line)) _line.clear();
                         }
                 }
 };
@@ -145,9 +135,7 @@ class StreamString {
                 using OnNewLineFunc = std::function<bool(String &)>;
 
                 /** @brief Constructs a StreamString with no callback. */
-                StreamString() : _stream(&_device) {
-                        _device.open(IODevice::WriteOnly);
-                }
+                StreamString() : _stream(&_device) { _device.open(IODevice::WriteOnly); }
 
                 /**
                  * @brief Constructs a StreamString with a newline callback.
@@ -195,8 +183,8 @@ class StreamString {
                 }
 
         private:
-                StreamStringIODevice    _device;
-                TextStream              _stream;
+                StreamStringIODevice _device;
+                TextStream           _stream;
 };
 
 PROMEKI_NAMESPACE_END

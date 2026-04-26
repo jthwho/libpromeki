@@ -88,9 +88,7 @@ class HttpRouter {
                  * the @c Allow header reporting all registered methods
                  * for that pattern.
                  */
-                void route(const String &pattern,
-                           const HttpMethod &method,
-                           HttpHandlerFunc handler);
+                void route(const String &pattern, const HttpMethod &method, HttpHandlerFunc handler);
 
                 /**
                  * @brief Registers a typed handler for @p pattern + @p method.
@@ -98,9 +96,7 @@ class HttpRouter {
                  * Shareable: the same @ref HttpHandler::Ptr can be
                  * mounted on multiple patterns.
                  */
-                void route(const String &pattern,
-                           const HttpMethod &method,
-                           HttpHandler::Ptr handler);
+                void route(const String &pattern, const HttpMethod &method, HttpHandler::Ptr handler);
 
                 /**
                  * @brief Registers a handler for any HTTP method.
@@ -159,45 +155,45 @@ class HttpRouter {
 
         private:
                 struct PatternSegment {
-                        using List = promeki::List<PatternSegment>;
-                        enum Kind { Literal, Param, Greedy };
-                        Kind    kind = Literal;
-                        String  text;          ///< Literal text or param name.
+                                using List = promeki::List<PatternSegment>;
+                                enum Kind {
+                                        Literal,
+                                        Param,
+                                        Greedy
+                                };
+                                Kind   kind = Literal;
+                                String text; ///< Literal text or param name.
                 };
 
                 struct Pattern {
-                        using List = promeki::List<Pattern>;
-                        String                  source;
-                        PatternSegment::List    segments;
-                        bool                    trailingSlash = false;
-                        bool                    isExact = true;  ///< true when only Literal segments
+                                using List = promeki::List<Pattern>;
+                                String               source;
+                                PatternSegment::List segments;
+                                bool                 trailingSlash = false;
+                                bool                 isExact = true; ///< true when only Literal segments
                 };
 
                 struct Route {
-                        using List = promeki::List<Route>;
-                        Pattern                 pattern;
-                        int                     methodValue = -1;  ///< -1 == any
-                        HttpHandler::Ptr        handler;
+                                using List = promeki::List<Route>;
+                                Pattern          pattern;
+                                int              methodValue = -1; ///< -1 == any
+                                HttpHandler::Ptr handler;
                 };
 
                 static Pattern compilePattern(const String &source);
-                static bool matchPattern(const Pattern &pattern,
-                                         const String &path,
-                                         HashMap<String, String> &paramsOut);
-                static int patternScore(const Pattern &pattern);
+                static bool    matchPattern(const Pattern &pattern, const String &path,
+                                            HashMap<String, String> &paramsOut);
+                static int     patternScore(const Pattern &pattern);
 
-                void runChain(HttpRequest &request, HttpResponse &response,
-                              HttpHandlerFunc terminal) const;
+                void runChain(HttpRequest &request, HttpResponse &response, HttpHandlerFunc terminal) const;
 
-                static void defaultNotFound(const HttpRequest &request,
-                                            HttpResponse &response);
-                static void defaultMethodNotAllowed(const HttpRequest &request,
-                                                    HttpResponse &response);
+                static void defaultNotFound(const HttpRequest &request, HttpResponse &response);
+                static void defaultMethodNotAllowed(const HttpRequest &request, HttpResponse &response);
 
-                Route::List             _routes;
-                HttpMiddlewareList      _middleware;
-                HttpHandlerFunc         _notFound;
-                HttpHandlerFunc         _methodNotAllowed;
+                Route::List        _routes;
+                HttpMiddlewareList _middleware;
+                HttpHandlerFunc    _notFound;
+                HttpHandlerFunc    _methodNotAllowed;
 };
 
 PROMEKI_NAMESPACE_END

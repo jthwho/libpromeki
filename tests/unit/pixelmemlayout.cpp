@@ -62,7 +62,7 @@ TEST_CASE("PixelMemLayout: I_4x8 sampling is 444") {
 
 TEST_CASE("PixelMemLayout: I_4x8 component bits are 8") {
         PixelMemLayout pf(PixelMemLayout::I_4x8);
-        for(size_t i = 0; i < pf.compCount(); i++) {
+        for (size_t i = 0; i < pf.compCount(); i++) {
                 CHECK(pf.compDesc(i).bits == 8);
                 CHECK(pf.compDesc(i).plane == 0);
         }
@@ -133,9 +133,9 @@ TEST_CASE("PixelMemLayout: UYVY 8-bit is valid") {
 
 TEST_CASE("PixelMemLayout: UYVY 8-bit component offsets") {
         PixelMemLayout pf(PixelMemLayout::I_422_UYVY_3x8);
-        CHECK(pf.compDesc(0).byteOffset == 1);  // Y
-        CHECK(pf.compDesc(1).byteOffset == 0);  // Cb
-        CHECK(pf.compDesc(2).byteOffset == 2);  // Cr
+        CHECK(pf.compDesc(0).byteOffset == 1); // Y
+        CHECK(pf.compDesc(1).byteOffset == 0); // Cb
+        CHECK(pf.compDesc(2).byteOffset == 2); // Cr
 }
 
 TEST_CASE("PixelMemLayout: UYVY 8-bit lineStride 1920") {
@@ -151,7 +151,7 @@ TEST_CASE("PixelMemLayout: UYVY 10-bit LE is valid") {
 
 TEST_CASE("PixelMemLayout: UYVY 12-bit component bits are 12") {
         PixelMemLayout pf(PixelMemLayout::I_422_UYVY_3x12_LE);
-        for(size_t i = 0; i < pf.compCount(); i++) {
+        for (size_t i = 0; i < pf.compCount(); i++) {
                 CHECK(pf.compDesc(i).bits == 12);
         }
 }
@@ -173,14 +173,14 @@ TEST_CASE("PixelMemLayout: v210 lineStride 1920") {
 
 TEST_CASE("PixelMemLayout: v210 lineStride 1280 (not divisible by 6)") {
         PixelMemLayout pf(PixelMemLayout::I_422_v210);
-        size_t stride = pf.lineStride(0, 1280);
+        size_t         stride = pf.lineStride(0, 1280);
         CHECK(stride == 3456);
         CHECK(stride % 128 == 0);
 }
 
 TEST_CASE("PixelMemLayout: v210 lineStride 4096 (DCI 4K)") {
         PixelMemLayout pf(PixelMemLayout::I_422_v210);
-        size_t stride = pf.lineStride(0, 4096);
+        size_t         stride = pf.lineStride(0, 4096);
         CHECK(stride % 128 == 0);
         CHECK(stride >= (4096 * 16 + 5) / 6);
 }
@@ -211,7 +211,7 @@ TEST_CASE("PixelMemLayout: I_3x8 lineStride with linePad") {
 
 TEST_CASE("PixelMemLayout: I_4x8 lineStride with alignment") {
         PixelMemLayout pf(PixelMemLayout::I_4x8);
-        size_t stride = pf.lineStride(0, 1920, 0, 16);
+        size_t         stride = pf.lineStride(0, 1920, 0, 16);
         CHECK(stride % 16 == 0);
         CHECK(stride >= 1920 * 4);
 }
@@ -255,13 +255,10 @@ TEST_CASE("PixelMemLayout: lookup unknown name returns invalid") {
 
 TEST_CASE("PixelMemLayout: 4:2:2 formats have Left/Top chroma siting") {
         PixelMemLayout::ID ids422[] = {
-                PixelMemLayout::I_422_3x8,
-                PixelMemLayout::I_422_3x10,
-                PixelMemLayout::I_422_UYVY_3x8,
-                PixelMemLayout::I_422_UYVY_3x10_LE,
-                PixelMemLayout::I_422_v210,
+                PixelMemLayout::I_422_3x8,          PixelMemLayout::I_422_3x10, PixelMemLayout::I_422_UYVY_3x8,
+                PixelMemLayout::I_422_UYVY_3x10_LE, PixelMemLayout::I_422_v210,
         };
-        for(auto id : ids422) {
+        for (auto id : ids422) {
                 PixelMemLayout pf(id);
                 CHECK(pf.chromaSitingH() == PixelMemLayout::ChromaHLeft);
                 CHECK(pf.chromaSitingV() == PixelMemLayout::ChromaVTop);
@@ -281,7 +278,7 @@ TEST_CASE("PixelMemLayout: 4:2:0 formats have Left/Center chroma siting") {
                 PixelMemLayout::SP_420_8,
                 PixelMemLayout::SP_420_10_LE,
         };
-        for(auto id : ids420) {
+        for (auto id : ids420) {
                 PixelMemLayout pf(id);
                 CHECK(pf.chromaSitingH() == PixelMemLayout::ChromaHLeft);
                 CHECK(pf.chromaSitingV() == PixelMemLayout::ChromaVCenter);
@@ -341,9 +338,7 @@ TEST_CASE("PixelMemLayout: P_420_3x8 stride 1920x1080") {
 
 TEST_CASE("PixelMemLayout: P_420_3x8 total is 1.5x luma") {
         PixelMemLayout pf(PixelMemLayout::P_420_3x8);
-        size_t total = pf.planeSize(0, 1920, 1080) +
-                       pf.planeSize(1, 1920, 1080) +
-                       pf.planeSize(2, 1920, 1080);
+        size_t         total = pf.planeSize(0, 1920, 1080) + pf.planeSize(1, 1920, 1080) + pf.planeSize(2, 1920, 1080);
         CHECK(total == 1920 * 1080 * 3 / 2);
 }
 
@@ -368,8 +363,8 @@ TEST_CASE("PixelMemLayout: SP_420_8 properties") {
 
 TEST_CASE("PixelMemLayout: SP_420_8 stride 1920x1080") {
         PixelMemLayout pf(PixelMemLayout::SP_420_8);
-        CHECK(pf.lineStride(0, 1920) == 1920);       // Y: width * 1
-        CHECK(pf.lineStride(1, 1920) == 1920);       // CbCr: (width/2) * 2 = width
+        CHECK(pf.lineStride(0, 1920) == 1920); // Y: width * 1
+        CHECK(pf.lineStride(1, 1920) == 1920); // CbCr: (width/2) * 2 = width
         CHECK(pf.planeSize(0, 1920, 1080) == 1920 * 1080);
         CHECK(pf.planeSize(1, 1920, 1080) == 1920 * 540);
 }
@@ -377,8 +372,9 @@ TEST_CASE("PixelMemLayout: SP_420_8 stride 1920x1080") {
 TEST_CASE("PixelMemLayout: SP_420_8 total equals I420 total") {
         PixelMemLayout nv12(PixelMemLayout::SP_420_8);
         PixelMemLayout i420(PixelMemLayout::P_420_3x8);
-        size_t nv12Total = nv12.planeSize(0, 1920, 1080) + nv12.planeSize(1, 1920, 1080);
-        size_t i420Total = i420.planeSize(0, 1920, 1080) + i420.planeSize(1, 1920, 1080) + i420.planeSize(2, 1920, 1080);
+        size_t         nv12Total = nv12.planeSize(0, 1920, 1080) + nv12.planeSize(1, 1920, 1080);
+        size_t         i420Total =
+                i420.planeSize(0, 1920, 1080) + i420.planeSize(1, 1920, 1080) + i420.planeSize(2, 1920, 1080);
         CHECK(nv12Total == i420Total);
 }
 
@@ -388,29 +384,29 @@ TEST_CASE("PixelMemLayout: P_420_3x8 chroma plane non-zero for height=1") {
         // write past the end of the empty chroma buffer.  Ceiling division
         // must yield 1 chroma row for both the Cb and Cr planes.
         PixelMemLayout pf(PixelMemLayout::P_420_3x8);
-        CHECK(pf.planeSize(0, 1920, 1) == 1920);  // Y: 1 row
-        CHECK(pf.planeSize(1, 1920, 1) == 960);   // Cb: ceil(1/2)=1 row, 960 bytes
-        CHECK(pf.planeSize(2, 1920, 1) == 960);   // Cr: same
+        CHECK(pf.planeSize(0, 1920, 1) == 1920); // Y: 1 row
+        CHECK(pf.planeSize(1, 1920, 1) == 960);  // Cb: ceil(1/2)=1 row, 960 bytes
+        CHECK(pf.planeSize(2, 1920, 1) == 960);  // Cr: same
 }
 
 TEST_CASE("PixelMemLayout: SP_420_8 chroma plane non-zero for height=1") {
         // Same regression but for the semi-planar NV12 variant.
         PixelMemLayout pf(PixelMemLayout::SP_420_8);
-        CHECK(pf.planeSize(0, 1920, 1) == 1920);   // Y: 1 row
-        CHECK(pf.planeSize(1, 1920, 1) == 1920);   // CbCr: ceil(1/2)=1 row, 1920 bytes
+        CHECK(pf.planeSize(0, 1920, 1) == 1920); // Y: 1 row
+        CHECK(pf.planeSize(1, 1920, 1) == 1920); // CbCr: ceil(1/2)=1 row, 1920 bytes
 }
 
 TEST_CASE("PixelMemLayout: P_420_3x8 odd-luma-height ceiling") {
         // Odd luma heights must give ceil(height/2) chroma rows, not floor.
         PixelMemLayout pf(PixelMemLayout::P_420_3x8);
-        CHECK(pf.planeSize(1, 1920, 3) == 960 * 2);   // ceil(3/2)=2 chroma rows
-        CHECK(pf.planeSize(1, 1920, 5) == 960 * 3);   // ceil(5/2)=3 chroma rows
+        CHECK(pf.planeSize(1, 1920, 3) == 960 * 2); // ceil(3/2)=2 chroma rows
+        CHECK(pf.planeSize(1, 1920, 5) == 960 * 3); // ceil(5/2)=3 chroma rows
 }
 
 TEST_CASE("PixelMemLayout: SP_420_10_LE stride 1920") {
         PixelMemLayout pf(PixelMemLayout::SP_420_10_LE);
-        CHECK(pf.lineStride(0, 1920) == 3840);       // Y: 1920 * 2
-        CHECK(pf.lineStride(1, 1920) == 3840);       // CbCr: (1920/2) * 4 = 3840
+        CHECK(pf.lineStride(0, 1920) == 3840); // Y: 1920 * 2
+        CHECK(pf.lineStride(1, 1920) == 3840); // CbCr: (1920/2) * 4 = 3840
 }
 
 // ============================================================================
@@ -436,7 +432,7 @@ TEST_CASE("PixelMemLayout: registeredIDs includes all formats") {
 
 TEST_CASE("PixelMemLayout: all registered formats have valid properties") {
         auto ids = PixelMemLayout::registeredIDs();
-        for(auto id : ids) {
+        for (auto id : ids) {
                 PixelMemLayout pf(id);
                 CHECK(pf.isValid());
                 CHECK_FALSE(pf.name().isEmpty());
@@ -613,7 +609,7 @@ TEST_CASE("PixelMemLayout: I_3x10_DPX_B basic properties") {
         CHECK(pf.pixelsPerBlock() == 1);
         CHECK(pf.sampling() == PixelMemLayout::Sampling444);
         // 10 bits per component.
-        for(size_t i = 0; i < pf.compCount(); i++) {
+        for (size_t i = 0; i < pf.compCount(); i++) {
                 CHECK(pf.compDesc(i).bits == 10);
                 CHECK(pf.compDesc(i).plane == 0);
         }
@@ -770,7 +766,7 @@ TEST_CASE("PixelMemLayout: isValidPlane for semi-planar (two planes)") {
 
 TEST_CASE("PixelMemLayout: planeSize for invalid plane returns 0") {
         PixelMemLayout pf(PixelMemLayout::I_4x8);
-        CHECK(pf.planeSize(1, 1920, 1080) == 0);  // only plane 0 exists
+        CHECK(pf.planeSize(1, 1920, 1080) == 0); // only plane 0 exists
         CHECK(pf.planeSize(99, 1920, 1080) == 0);
 }
 
@@ -804,19 +800,19 @@ TEST_CASE("PixelMemLayout: registerType returns unique increasing IDs >= UserDef
 TEST_CASE("PixelMemLayout: registerData allows user-defined layouts to be looked up") {
         // Register a simple user-defined layout: 2 components, 8 bits each,
         // interleaved, 2 bytes per pixel, like a minimal "LA8" (luma+alpha).
-        PixelMemLayout::ID id = PixelMemLayout::registerType();
+        PixelMemLayout::ID   id = PixelMemLayout::registerType();
         PixelMemLayout::Data d;
-        d.id             = id;
-        d.name           = "TestUserLA8";
-        d.desc           = "User-registered LA8 layout for unit testing";
-        d.sampling       = PixelMemLayout::Sampling444;
+        d.id = id;
+        d.name = "TestUserLA8";
+        d.desc = "User-registered LA8 layout for unit testing";
+        d.sampling = PixelMemLayout::Sampling444;
         d.pixelsPerBlock = 1;
-        d.bytesPerBlock  = 2;
-        d.compCount      = 2;
-        d.comps[0]       = { 0, 8, 0 };
-        d.comps[1]       = { 0, 8, 1 };
-        d.planeCount     = 1;
-        d.planes[0]      = { "" };
+        d.bytesPerBlock = 2;
+        d.compCount = 2;
+        d.comps[0] = {0, 8, 0};
+        d.comps[1] = {0, 8, 1};
+        d.planeCount = 1;
+        d.planes[0] = {""};
         PixelMemLayout::registerData(std::move(d));
 
         PixelMemLayout pf(id);
@@ -837,21 +833,21 @@ TEST_CASE("PixelMemLayout: registerData allows user-defined layouts to be looked
 
 TEST_CASE("PixelMemLayout: registerData with null function pointers → lineStride/planeSize return 0") {
         // Exercise the null-function-pointer guards in lineStride / planeSize.
-        PixelMemLayout::ID id = PixelMemLayout::registerType();
+        PixelMemLayout::ID   id = PixelMemLayout::registerType();
         PixelMemLayout::Data d;
-        d.id             = id;
-        d.name           = "TestUserNullFuncs";
-        d.desc           = "User layout with no stride/size functions";
-        d.sampling       = PixelMemLayout::Sampling444;
+        d.id = id;
+        d.name = "TestUserNullFuncs";
+        d.desc = "User layout with no stride/size functions";
+        d.sampling = PixelMemLayout::Sampling444;
         d.pixelsPerBlock = 1;
-        d.bytesPerBlock  = 4;
-        d.compCount      = 4;
-        d.comps[0]       = { 0, 8, 0 };
-        d.comps[1]       = { 0, 8, 1 };
-        d.comps[2]       = { 0, 8, 2 };
-        d.comps[3]       = { 0, 8, 3 };
-        d.planeCount     = 1;
-        d.planes[0]      = { "" };
+        d.bytesPerBlock = 4;
+        d.compCount = 4;
+        d.comps[0] = {0, 8, 0};
+        d.comps[1] = {0, 8, 1};
+        d.comps[2] = {0, 8, 2};
+        d.comps[3] = {0, 8, 3};
+        d.planeCount = 1;
+        d.planes[0] = {""};
         // lineStrideFunc and planeSizeFunc deliberately left null.
         PixelMemLayout::registerData(std::move(d));
 
@@ -922,7 +918,7 @@ TEST_CASE("PixelMemLayout: v210 lineStride respects larger alignment") {
         // v210 minimum alignment is 128 bytes; a larger lineAlign should
         // take precedence.
         PixelMemLayout pf(PixelMemLayout::I_422_v210);
-        size_t stride = pf.lineStride(0, 1920, 0, 256);
+        size_t         stride = pf.lineStride(0, 1920, 0, 256);
         CHECK(stride % 256 == 0);
 }
 
@@ -954,7 +950,7 @@ TEST_CASE("PixelMemLayout: Invalid != valid") {
 
 TEST_CASE("PixelMemLayout: every registered ID round-trips through lookup by name") {
         Error err;
-        for(auto id : PixelMemLayout::registeredIDs()) {
+        for (auto id : PixelMemLayout::registeredIDs()) {
                 PixelMemLayout pf(id);
                 CAPTURE(pf.name());
                 PixelMemLayout found = PixelMemLayout::lookup(pf.name(), &err);
@@ -968,14 +964,13 @@ TEST_CASE("PixelMemLayout: Invalid sentinel name round-trips through lookup") {
         REQUIRE(inv.id() == PixelMemLayout::Invalid);
         REQUIRE(inv.name() == "Invalid");
 
-        Error err;
+        Error          err;
         PixelMemLayout ok = PixelMemLayout::lookup("Invalid", &err);
         CHECK(err.isOk());
         CHECK(ok.id() == PixelMemLayout::Invalid);
 
-        Error miss;
-        PixelMemLayout notFound = PixelMemLayout::lookup(
-                "DefinitelyNotARealMemLayout", &miss);
+        Error          miss;
+        PixelMemLayout notFound = PixelMemLayout::lookup("DefinitelyNotARealMemLayout", &miss);
         CHECK(miss == Error::IdNotFound);
         CHECK(notFound.id() == PixelMemLayout::Invalid);
 }

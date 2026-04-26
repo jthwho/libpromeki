@@ -17,13 +17,13 @@ Error Random::trueRandom(uint8_t *buf, size_t bytes) {
         // std::random_device produces unsigned int values.
         // We extract bytes from each call to minimize calls.
         constexpr size_t bytesPerWord = sizeof(unsigned int);
-        size_t i = 0;
-        while(i + bytesPerWord <= bytes) {
+        size_t           i = 0;
+        while (i + bytesPerWord <= bytes) {
                 unsigned int word = rd();
                 std::memcpy(buf + i, &word, bytesPerWord);
                 i += bytesPerWord;
         }
-        if(i < bytes) {
+        if (i < bytes) {
                 unsigned int word = rd();
                 std::memcpy(buf + i, &word, bytes - i);
         }
@@ -40,8 +40,7 @@ Random::Random() {
         _engine.seed(rd());
 }
 
-Random::Random(uint64_t seed) : _engine(seed) {
-}
+Random::Random(uint64_t seed) : _engine(seed) {}
 
 void Random::seed(uint64_t seed) {
         _engine.seed(seed);
@@ -69,10 +68,10 @@ float Random::randomFloat(float min, float max) {
 
 Buffer Random::randomBytes(size_t count) {
         Buffer buf(count);
-        if(!buf.isValid()) return buf;
-        uint8_t *p = static_cast<uint8_t *>(buf.data());
+        if (!buf.isValid()) return buf;
+        uint8_t                           *p = static_cast<uint8_t *>(buf.data());
         std::uniform_int_distribution<int> dist(0, 255);
-        for(size_t i = 0; i < count; i++) {
+        for (size_t i = 0; i < count; i++) {
                 p[i] = static_cast<uint8_t>(dist(_engine));
         }
         buf.setSize(count);

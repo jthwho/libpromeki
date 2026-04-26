@@ -21,14 +21,14 @@ TEST_CASE("MidiNoteNames") {
 
         SUBCASE("Custom name overrides default") {
                 MidiNoteNames names;
-                MidiNote c4(MidiNote::C4);
+                MidiNote      c4(MidiNote::C4);
                 names.setName(c4, "Middle C");
                 CHECK(names.name(c4) == "Middle C");
         }
 
         SUBCASE("hasName") {
                 MidiNoteNames names;
-                MidiNote c4(MidiNote::C4);
+                MidiNote      c4(MidiNote::C4);
                 CHECK_FALSE(names.hasName(c4));
                 names.setName(c4, "Middle C");
                 CHECK(names.hasName(c4));
@@ -36,7 +36,7 @@ TEST_CASE("MidiNoteNames") {
 
         SUBCASE("clearName reverts to default") {
                 MidiNoteNames names;
-                MidiNote c4(MidiNote::C4);
+                MidiNote      c4(MidiNote::C4);
                 names.setName(c4, "Middle C");
                 CHECK(names.name(c4) == "Middle C");
                 names.clearName(c4);
@@ -46,7 +46,7 @@ TEST_CASE("MidiNoteNames") {
 
         SUBCASE("Invalid note returns empty string") {
                 MidiNoteNames names;
-                MidiNote invalid;
+                MidiNote      invalid;
                 CHECK(names.name(invalid).isEmpty());
         }
 
@@ -77,7 +77,7 @@ TEST_CASE("MidiNoteNames") {
         SUBCASE("Multiple name sets are independent") {
                 MidiNoteNames a;
                 MidiNoteNames b;
-                MidiNote c4(MidiNote::C4);
+                MidiNote      c4(MidiNote::C4);
 
                 a.setName(c4, "Do");
                 b.setName(c4, "Ut");

@@ -37,8 +37,8 @@ TEST_CASE("Stack: pop") {
 
 TEST_CASE("Stack: LIFO order") {
         Stack<int> s;
-        for(int i = 0; i < 5; ++i) s.push(i);
-        for(int i = 4; i >= 0; --i) {
+        for (int i = 0; i < 5; ++i) s.push(i);
+        for (int i = 4; i >= 0; --i) {
                 CHECK(s.pop() == i);
         }
 }

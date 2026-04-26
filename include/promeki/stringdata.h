@@ -41,23 +41,23 @@ class StringData {
                 ///@{
 
                 /** @brief Returns the number of characters in the string. */
-                virtual size_t  length() const = 0;
+                virtual size_t length() const = 0;
 
                 /** @brief Returns the character at the given index. */
-                virtual Char    charAt(size_t idx) const = 0;
+                virtual Char charAt(size_t idx) const = 0;
 
                 /**
                  * @brief Sets the character at the given index.
                  * @param idx Zero-based character index.
                  * @param ch  The replacement character.
                  */
-                virtual void    setCharAt(size_t idx, Char ch) = 0;
+                virtual void setCharAt(size_t idx, Char ch) = 0;
 
                 /** @brief Returns true if the storage uses Latin1 encoding (one byte per character). */
-                virtual bool    isLatin1() const = 0;
+                virtual bool isLatin1() const = 0;
 
                 /** @brief Returns true if the storage wraps an immutable literal. */
-                virtual bool    isLiteral() const { return false; }
+                virtual bool isLiteral() const { return false; }
 
                 ///@}
 
@@ -70,7 +70,7 @@ class StringData {
                  * @param from Starting character index.
                  * @return Character index of the match, or npos if not found.
                  */
-                virtual size_t  find(Char ch, size_t from = 0) const = 0;
+                virtual size_t find(Char ch, size_t from = 0) const = 0;
 
                 /**
                  * @brief Finds the first occurrence of a substring starting from @p from.
@@ -78,7 +78,7 @@ class StringData {
                  * @param from Starting character index.
                  * @return Character index of the match, or npos if not found.
                  */
-                virtual size_t  find(const StringData &s, size_t from = 0) const = 0;
+                virtual size_t find(const StringData &s, size_t from = 0) const = 0;
 
                 /**
                  * @brief Finds the last occurrence of a character at or before @p from.
@@ -86,7 +86,7 @@ class StringData {
                  * @param from Maximum character index to consider (npos = end).
                  * @return Character index of the match, or npos if not found.
                  */
-                virtual size_t  rfind(Char ch, size_t from = npos) const = 0;
+                virtual size_t rfind(Char ch, size_t from = npos) const = 0;
 
                 /**
                  * @brief Finds the last occurrence of a substring at or before @p from.
@@ -94,7 +94,7 @@ class StringData {
                  * @param from Maximum character index to consider (npos = end).
                  * @return Character index of the match, or npos if not found.
                  */
-                virtual size_t  rfind(const StringData &s, size_t from = npos) const = 0;
+                virtual size_t rfind(const StringData &s, size_t from = npos) const = 0;
 
                 /**
                  * @brief Creates a new StringData containing a substring.
@@ -105,14 +105,14 @@ class StringData {
                 virtual StringData *createSubstr(size_t pos, size_t len) const = 0;
 
                 /** @brief Reverses the characters in place. */
-                virtual void    reverseInPlace() = 0;
+                virtual void reverseInPlace() = 0;
 
                 /**
                  * @brief Counts non-overlapping occurrences of a substring.
                  * @param substr The substring to count.
                  * @return Number of occurrences.
                  */
-                virtual size_t  count(const StringData &substr) const = 0;
+                virtual size_t count(const StringData &substr) const = 0;
 
                 ///@}
 
@@ -123,37 +123,37 @@ class StringData {
                  * @brief Appends another string's data to this storage.
                  * @param other The data to append.
                  */
-                virtual void    append(const StringData &other) = 0;
+                virtual void append(const StringData &other) = 0;
 
                 /**
                  * @brief Appends a single character.
                  * @param ch The character to append.
                  */
-                virtual void    append(Char ch) = 0;
+                virtual void append(Char ch) = 0;
 
                 /**
                  * @brief Inserts a string at the given position.
                  * @param pos Character index at which to insert.
                  * @param s   The data to insert.
                  */
-                virtual void    insert(size_t pos, const StringData &s) = 0;
+                virtual void insert(size_t pos, const StringData &s) = 0;
 
                 /**
                  * @brief Erases characters from the string.
                  * @param pos   Starting character index.
                  * @param count Number of characters to erase.
                  */
-                virtual void    erase(size_t pos, size_t count) = 0;
+                virtual void erase(size_t pos, size_t count) = 0;
 
                 /** @brief Removes all characters from the string. */
-                virtual void    clear() = 0;
+                virtual void clear() = 0;
 
                 /**
                  * @brief Resizes the string to @p len characters.
                  * @param len  New character count.
                  * @param fill Character used to pad if growing.
                  */
-                virtual void    resize(size_t len, Char fill = Char()) = 0;
+                virtual void resize(size_t len, Char fill = Char()) = 0;
 
                 ///@}
 
@@ -161,17 +161,17 @@ class StringData {
                 ///@{
 
                 /** @brief Returns the byte count of the encoded string data. */
-                virtual size_t          byteCount() const = 0;
+                virtual size_t byteCount() const = 0;
 
                 /**
                  * @brief Returns the byte at the given index.
                  * @param idx Zero-based byte index.
                  * @return The byte value.
                  */
-                virtual uint8_t         byteAt(size_t idx) const = 0;
+                virtual uint8_t byteAt(size_t idx) const = 0;
 
                 /** @brief Returns a null-terminated C string pointer. */
-                virtual const char     *cstr() const = 0;
+                virtual const char *cstr() const = 0;
 
                 /** @brief Returns a const reference to the internal std::string representation. */
                 virtual const std::string &str() const = 0;
@@ -195,7 +195,7 @@ class StringData {
  * This is the fast path for ASCII / Latin1 strings.
  */
 class StringLatin1Data : public StringData {
-        PROMEKI_SHARED_DERIVED(StringData, StringLatin1Data)
+                PROMEKI_SHARED_DERIVED(StringData, StringLatin1Data)
         public:
                 /** @brief Default constructor. Creates empty Latin1 storage. */
                 StringLatin1Data() = default;
@@ -232,29 +232,29 @@ class StringLatin1Data : public StringData {
                  */
                 StringLatin1Data(size_t ct, char c) : _s(ct, c) {}
 
-                size_t  length() const override { return _s.size(); }
-                Char    charAt(size_t idx) const override;
-                void    setCharAt(size_t idx, Char ch) override;
-                bool    isLatin1() const override { return true; }
+                size_t length() const override { return _s.size(); }
+                Char   charAt(size_t idx) const override;
+                void   setCharAt(size_t idx, Char ch) override;
+                bool   isLatin1() const override { return true; }
 
-                size_t  find(Char ch, size_t from = 0) const override;
-                size_t  find(const StringData &s, size_t from = 0) const override;
-                size_t  rfind(Char ch, size_t from = npos) const override;
-                size_t  rfind(const StringData &s, size_t from = npos) const override;
+                size_t      find(Char ch, size_t from = 0) const override;
+                size_t      find(const StringData &s, size_t from = 0) const override;
+                size_t      rfind(Char ch, size_t from = npos) const override;
+                size_t      rfind(const StringData &s, size_t from = npos) const override;
                 StringData *createSubstr(size_t pos, size_t len) const override;
-                void    reverseInPlace() override;
-                size_t  count(const StringData &substr) const override;
+                void        reverseInPlace() override;
+                size_t      count(const StringData &substr) const override;
 
-                void    append(const StringData &other) override;
-                void    append(Char ch) override;
-                void    insert(size_t pos, const StringData &s) override;
-                void    erase(size_t pos, size_t count) override;
-                void    clear() override { _s.clear(); }
-                void    resize(size_t len, Char fill = Char()) override;
+                void append(const StringData &other) override;
+                void append(Char ch) override;
+                void insert(size_t pos, const StringData &s) override;
+                void erase(size_t pos, size_t count) override;
+                void clear() override { _s.clear(); }
+                void resize(size_t len, Char fill = Char()) override;
 
-                size_t          byteCount() const override { return _s.size(); }
-                uint8_t         byteAt(size_t idx) const override { return static_cast<uint8_t>(_s[idx]); }
-                const char     *cstr() const override { return _s.c_str(); }
+                size_t             byteCount() const override { return _s.size(); }
+                uint8_t            byteAt(size_t idx) const override { return static_cast<uint8_t>(_s[idx]); }
+                const char        *cstr() const override { return _s.c_str(); }
                 const std::string &str() const override { return _s; }
 
                 uint64_t hash() const override {
@@ -279,7 +279,7 @@ class StringLatin1Data : public StringData {
  * is lazily cached for byte-level output.
  */
 class StringUnicodeData : public StringData {
-        PROMEKI_SHARED_DERIVED(StringData, StringUnicodeData)
+                PROMEKI_SHARED_DERIVED(StringData, StringUnicodeData)
         public:
                 /** @brief Default constructor. Creates empty Unicode storage. */
                 StringUnicodeData() : _strDirty(true) {}
@@ -311,29 +311,29 @@ class StringUnicodeData : public StringData {
                  */
                 static StringUnicodeData *fromLatin1(const std::string &s);
 
-                size_t  length() const override { return _chars.size(); }
-                Char    charAt(size_t idx) const override { return _chars[idx]; }
-                void    setCharAt(size_t idx, Char ch) override;
-                bool    isLatin1() const override { return false; }
+                size_t length() const override { return _chars.size(); }
+                Char   charAt(size_t idx) const override { return _chars[idx]; }
+                void   setCharAt(size_t idx, Char ch) override;
+                bool   isLatin1() const override { return false; }
 
-                size_t  find(Char ch, size_t from = 0) const override;
-                size_t  find(const StringData &s, size_t from = 0) const override;
-                size_t  rfind(Char ch, size_t from = npos) const override;
-                size_t  rfind(const StringData &s, size_t from = npos) const override;
+                size_t      find(Char ch, size_t from = 0) const override;
+                size_t      find(const StringData &s, size_t from = 0) const override;
+                size_t      rfind(Char ch, size_t from = npos) const override;
+                size_t      rfind(const StringData &s, size_t from = npos) const override;
                 StringData *createSubstr(size_t pos, size_t len) const override;
-                void    reverseInPlace() override;
-                size_t  count(const StringData &substr) const override;
+                void        reverseInPlace() override;
+                size_t      count(const StringData &substr) const override;
 
-                void    append(const StringData &other) override;
-                void    append(Char ch) override;
-                void    insert(size_t pos, const StringData &s) override;
-                void    erase(size_t pos, size_t count) override;
-                void    clear() override;
-                void    resize(size_t len, Char fill = Char()) override;
+                void append(const StringData &other) override;
+                void append(Char ch) override;
+                void insert(size_t pos, const StringData &s) override;
+                void erase(size_t pos, size_t count) override;
+                void clear() override;
+                void resize(size_t len, Char fill = Char()) override;
 
-                size_t          byteCount() const override;
-                uint8_t         byteAt(size_t idx) const override;
-                const char     *cstr() const override;
+                size_t             byteCount() const override;
+                uint8_t            byteAt(size_t idx) const override;
+                const char        *cstr() const override;
                 const std::string &str() const override;
 
                 uint64_t hash() const override;
@@ -341,9 +341,9 @@ class StringUnicodeData : public StringData {
         private:
                 void ensureEncoded() const;
 
-                List<Char>              _chars;
-                mutable std::string     _strCache;
-                mutable bool            _strDirty;
+                List<Char>          _chars;
+                mutable std::string _strCache;
+                mutable bool        _strDirty;
 };
 
 /**
@@ -363,61 +363,54 @@ class StringLiteralData : public StringData {
                  * @param precomputedHash Optional pre-computed FNV-1a hash (0 = compute on construction).
                  */
                 StringLiteralData(const char *s, size_t len, uint64_t precomputedHash = 0)
-                        : _s(s), _len(len), _hash(precomputedHash) {
+                    : _s(s), _len(len), _hash(precomputedHash) {
                         // Hash each Latin1 byte as a 4-byte little-endian
                         // codepoint so the result matches StringUnicodeData
                         // for the same logical characters.
-                        if(_hash == 0 && _len > 0)
-                                _hash = fnv1aLatin1AsCodepoints(_s, _len);
+                        if (_hash == 0 && _len > 0) _hash = fnv1aLatin1AsCodepoints(_s, _len);
                         _promeki_refct.setImmortal();
                 }
 
-                StringData *_promeki_clone() const override {
-                        return new StringLatin1Data(_s, _len);
-                }
+                StringData *_promeki_clone() const override { return new StringLatin1Data(_s, _len); }
 
                 // Character access
-                size_t  length() const override { return _len; }
-                Char    charAt(size_t idx) const override {
-                        return Char(static_cast<char>(_s[idx]));
-                }
-                void    setCharAt(size_t, Char) override { assert(false); }
-                bool    isLatin1() const override { return true; }
-                bool    isLiteral() const override { return true; }
+                size_t length() const override { return _len; }
+                Char   charAt(size_t idx) const override { return Char(static_cast<char>(_s[idx])); }
+                void   setCharAt(size_t, Char) override { assert(false); }
+                bool   isLatin1() const override { return true; }
+                bool   isLiteral() const override { return true; }
 
                 // Search
-                size_t  find(Char ch, size_t from = 0) const override;
-                size_t  find(const StringData &s, size_t from = 0) const override;
-                size_t  rfind(Char ch, size_t from = npos) const override;
-                size_t  rfind(const StringData &s, size_t from = npos) const override;
+                size_t      find(Char ch, size_t from = 0) const override;
+                size_t      find(const StringData &s, size_t from = 0) const override;
+                size_t      rfind(Char ch, size_t from = npos) const override;
+                size_t      rfind(const StringData &s, size_t from = npos) const override;
                 StringData *createSubstr(size_t pos, size_t len) const override;
-                void    reverseInPlace() override { assert(false); }
-                size_t  count(const StringData &substr) const override;
+                void        reverseInPlace() override { assert(false); }
+                size_t      count(const StringData &substr) const override;
 
                 // Mutation (unreachable — COW always clones first)
-                void    append(const StringData &) override { assert(false); }
-                void    append(Char) override { assert(false); }
-                void    insert(size_t, const StringData &) override { assert(false); }
-                void    erase(size_t, size_t) override { assert(false); }
-                void    clear() override { assert(false); }
-                void    resize(size_t, Char) override { assert(false); }
+                void append(const StringData &) override { assert(false); }
+                void append(Char) override { assert(false); }
+                void insert(size_t, const StringData &) override { assert(false); }
+                void erase(size_t, size_t) override { assert(false); }
+                void clear() override { assert(false); }
+                void resize(size_t, Char) override { assert(false); }
 
                 // Byte-level
-                size_t          byteCount() const override { return _len; }
-                uint8_t         byteAt(size_t idx) const override {
-                        return static_cast<uint8_t>(_s[idx]);
-                }
-                const char     *cstr() const override { return _s; }
+                size_t             byteCount() const override { return _len; }
+                uint8_t            byteAt(size_t idx) const override { return static_cast<uint8_t>(_s[idx]); }
+                const char        *cstr() const override { return _s; }
                 const std::string &str() const override;
 
                 uint64_t hash() const override { return _hash; }
 
         private:
-                const char             *_s;
-                size_t                  _len;
-                uint64_t                _hash;
-                mutable std::once_flag  _strOnce;
-                mutable std::string     _strCache;
+                const char            *_s;
+                size_t                 _len;
+                uint64_t               _hash;
+                mutable std::once_flag _strOnce;
+                mutable std::string    _strCache;
 };
 
 /**
@@ -438,66 +431,59 @@ class StringUnicodeLiteralData : public StringData {
                  * @param byteLen         Length of the UTF-8 data in bytes.
                  * @param precomputedHash Optional pre-computed FNV-1a hash (0 = compute on construction).
                  */
-                StringUnicodeLiteralData(const char32_t *codepoints, size_t charCount,
-                                         const char *bytes, size_t byteLen,
-                                         uint64_t precomputedHash = 0)
-                        : _codepoints(codepoints), _charCount(charCount),
-                          _bytes(bytes), _byteLen(byteLen),
-                          _hash(precomputedHash) {
+                StringUnicodeLiteralData(const char32_t *codepoints, size_t charCount, const char *bytes,
+                                         size_t byteLen, uint64_t precomputedHash = 0)
+                    : _codepoints(codepoints), _charCount(charCount), _bytes(bytes), _byteLen(byteLen),
+                      _hash(precomputedHash) {
                         // Endian-independent codepoint mixing so the result
                         // matches StringLatin1Data and StringUnicodeData for
                         // the same logical characters.
-                        if(_hash == 0 && _charCount > 0)
-                                _hash = fnv1aCodepoints(_codepoints, _charCount);
+                        if (_hash == 0 && _charCount > 0) _hash = fnv1aCodepoints(_codepoints, _charCount);
                         _promeki_refct.setImmortal();
                 }
 
                 StringData *_promeki_clone() const override;
 
                 // Character access
-                size_t  length() const override { return _charCount; }
-                Char    charAt(size_t idx) const override {
-                        return Char(_codepoints[idx]);
-                }
-                void    setCharAt(size_t, Char) override { assert(false); }
-                bool    isLatin1() const override { return false; }
-                bool    isLiteral() const override { return true; }
+                size_t length() const override { return _charCount; }
+                Char   charAt(size_t idx) const override { return Char(_codepoints[idx]); }
+                void   setCharAt(size_t, Char) override { assert(false); }
+                bool   isLatin1() const override { return false; }
+                bool   isLiteral() const override { return true; }
 
                 // Search
-                size_t  find(Char ch, size_t from = 0) const override;
-                size_t  find(const StringData &s, size_t from = 0) const override;
-                size_t  rfind(Char ch, size_t from = npos) const override;
-                size_t  rfind(const StringData &s, size_t from = npos) const override;
+                size_t      find(Char ch, size_t from = 0) const override;
+                size_t      find(const StringData &s, size_t from = 0) const override;
+                size_t      rfind(Char ch, size_t from = npos) const override;
+                size_t      rfind(const StringData &s, size_t from = npos) const override;
                 StringData *createSubstr(size_t pos, size_t len) const override;
-                void    reverseInPlace() override { assert(false); }
-                size_t  count(const StringData &substr) const override;
+                void        reverseInPlace() override { assert(false); }
+                size_t      count(const StringData &substr) const override;
 
                 // Mutation (unreachable — COW always clones first)
-                void    append(const StringData &) override { assert(false); }
-                void    append(Char) override { assert(false); }
-                void    insert(size_t, const StringData &) override { assert(false); }
-                void    erase(size_t, size_t) override { assert(false); }
-                void    clear() override { assert(false); }
-                void    resize(size_t, Char) override { assert(false); }
+                void append(const StringData &) override { assert(false); }
+                void append(Char) override { assert(false); }
+                void insert(size_t, const StringData &) override { assert(false); }
+                void erase(size_t, size_t) override { assert(false); }
+                void clear() override { assert(false); }
+                void resize(size_t, Char) override { assert(false); }
 
                 // Byte-level — uses the original UTF-8 bytes directly
-                size_t          byteCount() const override { return _byteLen; }
-                uint8_t         byteAt(size_t idx) const override {
-                        return static_cast<uint8_t>(_bytes[idx]);
-                }
-                const char     *cstr() const override { return _bytes; }
+                size_t             byteCount() const override { return _byteLen; }
+                uint8_t            byteAt(size_t idx) const override { return static_cast<uint8_t>(_bytes[idx]); }
+                const char        *cstr() const override { return _bytes; }
                 const std::string &str() const override;
 
                 uint64_t hash() const override { return _hash; }
 
         private:
-                const char32_t         *_codepoints;
-                size_t                  _charCount;
-                const char             *_bytes;
-                size_t                  _byteLen;
-                uint64_t                _hash;
-                mutable std::once_flag  _strOnce;
-                mutable std::string     _strCache;
+                const char32_t        *_codepoints;
+                size_t                 _charCount;
+                const char            *_bytes;
+                size_t                 _byteLen;
+                uint64_t               _hash;
+                mutable std::once_flag _strOnce;
+                mutable std::string    _strCache;
 };
 
 PROMEKI_NAMESPACE_END

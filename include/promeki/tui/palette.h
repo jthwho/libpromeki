@@ -44,9 +44,9 @@ class TuiPalette {
                  * @brief Color group based on widget state.
                  */
                 enum ColorGroup {
-                        Active,         ///< Widget has focus.
-                        Inactive,       ///< Widget does not have focus.
-                        Disabled,       ///< Widget is disabled.
+                        Active,   ///< Widget has focus.
+                        Inactive, ///< Widget does not have focus.
+                        Disabled, ///< Widget is disabled.
                         GroupCount
                 };
 
@@ -54,26 +54,26 @@ class TuiPalette {
                  * @brief Semantic style role.
                  */
                 enum ColorRole {
-                        Window,           ///< Container/frame background.
-                        WindowText,       ///< Text on Window background.
-                        Base,             ///< Input/editable widget background.
-                        Text,             ///< Text on Base background.
-                        Button,           ///< Button background (legacy).
-                        ButtonText,       ///< Text on button backgrounds.
-                        ButtonBorder,     ///< Single-character border around buttons.
-                        ButtonLight,      ///< Button background in unpressed / active-tab state.
-                        ButtonDark,       ///< Button background in pressed / inactive-tab state.
-                        FocusText,        ///< Bright foreground for focused widgets.
-                        Highlight,        ///< Selected item / accent background.
-                        HighlightedText,  ///< Text on Highlight background.
-                        PlaceholderText,  ///< Placeholder/hint text.
-                        Mid,              ///< Borders, separators, frames.
-                        StatusBar,        ///< Status bar background.
-                        StatusBarText,    ///< Status bar text.
-                        ProgressFilled,       ///< Filled portion of progress bar.
-                        ProgressFilledText,   ///< Text on filled portion of progress bar.
-                        ProgressEmpty,        ///< Empty portion of progress bar.
-                        ProgressEmptyText,    ///< Text on empty portion of progress bar.
+                        Window,             ///< Container/frame background.
+                        WindowText,         ///< Text on Window background.
+                        Base,               ///< Input/editable widget background.
+                        Text,               ///< Text on Base background.
+                        Button,             ///< Button background (legacy).
+                        ButtonText,         ///< Text on button backgrounds.
+                        ButtonBorder,       ///< Single-character border around buttons.
+                        ButtonLight,        ///< Button background in unpressed / active-tab state.
+                        ButtonDark,         ///< Button background in pressed / inactive-tab state.
+                        FocusText,          ///< Bright foreground for focused widgets.
+                        Highlight,          ///< Selected item / accent background.
+                        HighlightedText,    ///< Text on Highlight background.
+                        PlaceholderText,    ///< Placeholder/hint text.
+                        Mid,                ///< Borders, separators, frames.
+                        StatusBar,          ///< Status bar background.
+                        StatusBarText,      ///< Status bar text.
+                        ProgressFilled,     ///< Filled portion of progress bar.
+                        ProgressFilledText, ///< Text on filled portion of progress bar.
+                        ProgressEmpty,      ///< Empty portion of progress bar.
+                        ProgressEmptyText,  ///< Text on empty portion of progress bar.
                         RoleCount
                 };
 

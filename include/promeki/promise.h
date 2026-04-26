@@ -30,8 +30,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @tparam T The result type.
  */
-template <typename T>
-class Promise {
+template <typename T> class Promise {
         public:
                 /** @brief Constructs a Promise. */
                 Promise() = default;
@@ -52,9 +51,7 @@ class Promise {
                  * @brief Sets the result value.
                  * @param value The value to make available to the Future.
                  */
-                void setValue(T value) {
-                        _promise.set_value(std::move(value));
-                }
+                void setValue(T value) { _promise.set_value(std::move(value)); }
 
                 /**
                  * @brief Sets an error on the promise.
@@ -65,18 +62,13 @@ class Promise {
                  *
                  * @param error The error to set.
                  */
-                void setError(Error error) {
-                        _promise.set_exception(
-                                std::make_exception_ptr(PromiseError(error)));
-                }
+                void setError(Error error) { _promise.set_exception(std::make_exception_ptr(PromiseError(error))); }
 
                 /**
                  * @brief Returns the Future associated with this Promise.
                  * @return A Future\<T\> that will receive the result.
                  */
-                Future<T> future() {
-                        return Future<T>(_promise.get_future());
-                }
+                Future<T> future() { return Future<T>(_promise.get_future()); }
 
         private:
                 std::promise<T> _promise;
@@ -85,8 +77,7 @@ class Promise {
 /**
  * @brief Specialization of Promise for void results.
  */
-template <>
-class Promise<void> {
+template <> class Promise<void> {
         public:
                 /** @brief Constructs a Promise. */
                 Promise() = default;
@@ -102,9 +93,7 @@ class Promise<void> {
                 /**
                  * @brief Signals completion (no value).
                  */
-                void setValue() {
-                        _promise.set_value();
-                }
+                void setValue() { _promise.set_value(); }
 
                 /**
                  * @brief Sets an error on the promise.
@@ -114,18 +103,13 @@ class Promise<void> {
                  *
                  * @param error The error to set.
                  */
-                void setError(Error error) {
-                        _promise.set_exception(
-                                std::make_exception_ptr(PromiseError(error)));
-                }
+                void setError(Error error) { _promise.set_exception(std::make_exception_ptr(PromiseError(error))); }
 
                 /**
                  * @brief Returns the Future associated with this Promise.
                  * @return A Future\<void\> that will receive the completion signal.
                  */
-                Future<void> future() {
-                        return Future<void>(_promise.get_future());
-                }
+                Future<void> future() { return Future<void>(_promise.get_future()); }
 
         private:
                 std::promise<void> _promise;

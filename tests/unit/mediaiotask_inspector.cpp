@@ -27,72 +27,75 @@ using namespace promeki;
 
 namespace {
 
-// Helper: build a TPG MediaIO + Inspector pair, run @p frameCount
-// frames through the pair, and return ownership of both.  The caller
-// gets a snapshot at the end (via inspector->snapshot()) plus access
-// to any per-frame events captured by the supplied callback.
-struct InspectorRig {
-        MediaIO              *tpg = nullptr;
-        MediaIO              *inspectorIo = nullptr;
-        MediaIOTask_Inspector *inspector = nullptr;
-        ~InspectorRig() {
-                if(tpg) { tpg->close(); delete tpg; }
-                if(inspectorIo) { inspectorIo->close(); delete inspectorIo; }
-                // inspector deleted by inspectorIo
+        // Helper: build a TPG MediaIO + Inspector pair, run @p frameCount
+        // frames through the pair, and return ownership of both.  The caller
+        // gets a snapshot at the end (via inspector->snapshot()) plus access
+        // to any per-frame events captured by the supplied callback.
+        struct InspectorRig {
+                        MediaIO               *tpg = nullptr;
+                        MediaIO               *inspectorIo = nullptr;
+                        MediaIOTask_Inspector *inspector = nullptr;
+                        ~InspectorRig() {
+                                if (tpg) {
+                                        tpg->close();
+                                        delete tpg;
+                                }
+                                if (inspectorIo) {
+                                        inspectorIo->close();
+                                        delete inspectorIo;
+                                }
+                                // inspector deleted by inspectorIo
+                        }
+        };
+
+        void buildRig(InspectorRig &rig, uint32_t streamId, MediaIOTask_Inspector::EventCallback cb = {},
+                      bool audioEnabled = true, const EnumList &audioChannelModes = EnumList(), int audioChannels = 0) {
+                // Source: a default-config TPG with the StreamID overridden
+                // and a fixed frame rate so the test math is reproducible.
+                // The default channel-mode list puts LTC on ch0 and an AvSync
+                // click on ch1 — that's how the inspector gets both the click
+                // marker and the LTC stream to verify.
+                MediaIO::Config tpgCfg = MediaIO::defaultConfig("TPG");
+                tpgCfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
+                tpgCfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
+                tpgCfg.set(MediaConfig::TimecodeStart, String("01:00:00:00"));
+                tpgCfg.set(MediaConfig::StreamID, streamId);
+                tpgCfg.set(MediaConfig::AudioEnabled, audioEnabled);
+                if (audioChannels > 0) {
+                        tpgCfg.set(MediaConfig::AudioChannels, int32_t(audioChannels));
+                }
+                if (audioChannelModes.isValid()) {
+                        tpgCfg.set(MediaConfig::AudioChannelModes, audioChannelModes);
+                }
+                rig.tpg = MediaIO::create(tpgCfg);
+                REQUIRE(rig.tpg != nullptr);
+                REQUIRE(rig.tpg->open(MediaIO::Source).isOk());
+
+                // Sink: Inspector with the default ("full checks") config.
+                // We construct the task directly + adoptTask so we can
+                // register the callback before open() (the standard create()
+                // factory hides the task).
+                rig.inspector = new MediaIOTask_Inspector();
+                if (cb) rig.inspector->setEventCallback(cb);
+
+                rig.inspectorIo = new MediaIO();
+                MediaIO::Config insCfg = MediaIO::defaultConfig("Inspector");
+                insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.0); // disable periodic log in tests
+                rig.inspectorIo->setConfig(insCfg);
+                REQUIRE(rig.inspectorIo->adoptTask(rig.inspector).isOk());
+                REQUIRE(rig.inspectorIo->open(MediaIO::Sink).isOk());
         }
-};
 
-void buildRig(InspectorRig &rig, uint32_t streamId,
-              MediaIOTask_Inspector::EventCallback cb = {},
-              bool audioEnabled = true,
-              const EnumList &audioChannelModes = EnumList(),
-              int audioChannels = 0) {
-        // Source: a default-config TPG with the StreamID overridden
-        // and a fixed frame rate so the test math is reproducible.
-        // The default channel-mode list puts LTC on ch0 and an AvSync
-        // click on ch1 — that's how the inspector gets both the click
-        // marker and the LTC stream to verify.
-        MediaIO::Config tpgCfg = MediaIO::defaultConfig("TPG");
-        tpgCfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
-        tpgCfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
-        tpgCfg.set(MediaConfig::TimecodeStart, String("01:00:00:00"));
-        tpgCfg.set(MediaConfig::StreamID, streamId);
-        tpgCfg.set(MediaConfig::AudioEnabled, audioEnabled);
-        if(audioChannels > 0) {
-                tpgCfg.set(MediaConfig::AudioChannels, int32_t(audioChannels));
+        void pumpFrames(InspectorRig &rig, int frameCount) {
+                for (int i = 0; i < frameCount; i++) {
+                        Frame::Ptr frame;
+                        REQUIRE(rig.tpg->readFrame(frame).isOk());
+                        REQUIRE(frame.isValid());
+                        REQUIRE(rig.inspectorIo->writeFrame(frame).isOk());
+                }
         }
-        if(audioChannelModes.isValid()) {
-                tpgCfg.set(MediaConfig::AudioChannelModes, audioChannelModes);
-        }
-        rig.tpg = MediaIO::create(tpgCfg);
-        REQUIRE(rig.tpg != nullptr);
-        REQUIRE(rig.tpg->open(MediaIO::Source).isOk());
 
-        // Sink: Inspector with the default ("full checks") config.
-        // We construct the task directly + adoptTask so we can
-        // register the callback before open() (the standard create()
-        // factory hides the task).
-        rig.inspector = new MediaIOTask_Inspector();
-        if(cb) rig.inspector->setEventCallback(cb);
-
-        rig.inspectorIo = new MediaIO();
-        MediaIO::Config insCfg = MediaIO::defaultConfig("Inspector");
-        insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.0);  // disable periodic log in tests
-        rig.inspectorIo->setConfig(insCfg);
-        REQUIRE(rig.inspectorIo->adoptTask(rig.inspector).isOk());
-        REQUIRE(rig.inspectorIo->open(MediaIO::Sink).isOk());
-}
-
-void pumpFrames(InspectorRig &rig, int frameCount) {
-        for(int i = 0; i < frameCount; i++) {
-                Frame::Ptr frame;
-                REQUIRE(rig.tpg->readFrame(frame).isOk());
-                REQUIRE(frame.isValid());
-                REQUIRE(rig.inspectorIo->writeFrame(frame).isOk());
-        }
-}
-
-}  // namespace
+} // namespace
 
 // ============================================================================
 // Basic plumbing: open, write a few frames, snapshot
@@ -109,12 +112,12 @@ TEST_CASE("Inspector basic snapshot after a few frames") {
         InspectorSnapshot snap = rig.inspector->snapshot();
         CHECK(snap.framesProcessed == 5);
         CHECK(snap.framesWithPictureData == 5);
-        CHECK(snap.framesWithLtc == 0);   // no LTC audio at all
+        CHECK(snap.framesWithLtc == 0); // no LTC audio at all
         CHECK(snap.totalDiscontinuities == 0);
         CHECK(snap.hasLastEvent);
         CHECK(snap.lastEvent.pictureDecoded);
         CHECK(snap.lastEvent.pictureStreamId == 0xABCDEF01u);
-        CHECK(snap.lastEvent.pictureFrameNumber == 4u);  // 5 frames, last is index 4
+        CHECK(snap.lastEvent.pictureFrameNumber == 4u); // 5 frames, last is index 4
 }
 
 // ============================================================================
@@ -122,22 +125,21 @@ TEST_CASE("Inspector basic snapshot after a few frames") {
 // ============================================================================
 
 TEST_CASE("Inspector callback fires once per frame") {
-        std::atomic<int> callCount{0};
+        std::atomic<int>      callCount{0};
         std::vector<uint32_t> seenFrameNumbers;
-        Mutex listMutex;
-        InspectorRig rig;
-        buildRig(rig, 0xDEADBEEFu,
-                 [&](const InspectorEvent &e) {
-                         callCount++;
-                         Mutex::Locker lk(listMutex);
-                         seenFrameNumbers.push_back(e.pictureFrameNumber);
-                 });
+        Mutex                 listMutex;
+        InspectorRig          rig;
+        buildRig(rig, 0xDEADBEEFu, [&](const InspectorEvent &e) {
+                callCount++;
+                Mutex::Locker lk(listMutex);
+                seenFrameNumbers.push_back(e.pictureFrameNumber);
+        });
         pumpFrames(rig, 10);
 
         CHECK(callCount.load() == 10);
         Mutex::Locker lk(listMutex);
         REQUIRE(seenFrameNumbers.size() == 10u);
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
                 CHECK(seenFrameNumbers[i] == static_cast<uint32_t>(i));
         }
 }
@@ -168,22 +170,23 @@ TEST_CASE("Inspector flags a frame-number jump as a discontinuity") {
         // it to the inspector — the inspector should then see frames
         // 0..3 followed by 5 and report a frame-number jump.
         std::vector<InspectorEvent> events;
-        Mutex eventsMutex;
-        InspectorRig rig;
+        Mutex                       eventsMutex;
+        InspectorRig                rig;
         // Audio off — keeps the test focused on the picture-side
         // discontinuity and avoids LTC chunks getting out of step
         // when we drop a frame from the inspector's input.
-        buildRig(rig, 0xFEEDFACEu,
-                 [&](const InspectorEvent &e) {
-                         Mutex::Locker lk(eventsMutex);
-                         events.push_back(e);
-                 },
-                 /*audioEnabled=*/false);
+        buildRig(
+                rig, 0xFEEDFACEu,
+                [&](const InspectorEvent &e) {
+                        Mutex::Locker lk(eventsMutex);
+                        events.push_back(e);
+                },
+                /*audioEnabled=*/false);
 
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
                 Frame::Ptr frame;
                 REQUIRE(rig.tpg->readFrame(frame).isOk());
-                if(i == 4) continue;        // skip frame 4 — TPG advances anyway
+                if (i == 4) continue; // skip frame 4 — TPG advances anyway
                 REQUIRE(rig.inspectorIo->writeFrame(frame).isOk());
         }
 
@@ -198,9 +201,9 @@ TEST_CASE("Inspector flags a frame-number jump as a discontinuity") {
         bool foundJump = false;
         {
                 Mutex::Locker lk(eventsMutex);
-                for(const auto &e : events) {
-                        for(const auto &d : e.discontinuities) {
-                                if(d.kind == InspectorDiscontinuity::FrameNumberJump) {
+                for (const auto &e : events) {
+                        for (const auto &d : e.discontinuities) {
+                                if (d.kind == InspectorDiscontinuity::FrameNumberJump) {
                                         foundJump = true;
                                         CHECK(d.previousValue == String("3"));
                                         CHECK(d.currentValue == String("5"));
@@ -222,13 +225,12 @@ TEST_CASE("Inspector flags a frame-number jump as a discontinuity") {
 
 TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         std::vector<InspectorEvent> events;
-        Mutex eventsMutex;
-        InspectorRig rig;
-        buildRig(rig, 0xC0FFEEBBu,
-                 [&](const InspectorEvent &e) {
-                         Mutex::Locker lk(eventsMutex);
-                         events.push_back(e);
-                 });
+        Mutex                       eventsMutex;
+        InspectorRig                rig;
+        buildRig(rig, 0xC0FFEEBBu, [&](const InspectorEvent &e) {
+                Mutex::Locker lk(eventsMutex);
+                events.push_back(e);
+        });
 
         // Pump 10 clean frames first so the sync offset settles to its
         // natural constant value (no discontinuities expected).  Then
@@ -237,7 +239,7 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         // with a zero), which moves the LTC sync word's detected
         // position by 1 sample relative to the audio chunk start.
         // The inspector should flag this as a SyncOffsetChange.
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
                 Frame::Ptr frame;
                 REQUIRE(rig.tpg->readFrame(frame).isOk());
                 REQUIRE(rig.inspectorIo->writeFrame(frame).isOk());
@@ -258,14 +260,14 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         REQUIRE(uap.isValid());
         PcmAudioPayload *apRaw = uap.modify();
         REQUIRE(apRaw->desc().format().id() == AudioFormat::PCMI_Float32LE);
-        const int channels = apRaw->desc().channels();
+        const int    channels = apRaw->desc().channels();
         const size_t samples = apRaw->sampleCount();
         REQUIRE(samples >= 4);
         REQUIRE(apRaw->planeCount() > 0);
         float *data = reinterpret_cast<float *>(apRaw->data()[0].data());
         // Shift channel 0 (the LTC channel) left by one sample frame.
         // Other channels are left alone.
-        for(size_t s = 0; s < samples - 1; s++) {
+        for (size_t s = 0; s < samples - 1; s++) {
                 data[s * channels + 0] = data[(s + 1) * channels + 0];
         }
         data[(samples - 1) * channels + 0] = 0.0f;
@@ -273,8 +275,8 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         // modified one so the writer sees our edits (the uap clone we
         // built via CoW-modify() isn't the one still in the frame's
         // payload list).
-        for(MediaPayload::Ptr &p : shifted.modify()->payloadList()) {
-                if(p.isValid() && p->kind() == MediaPayloadKind::Audio) {
+        for (MediaPayload::Ptr &p : shifted.modify()->payloadList()) {
+                if (p.isValid() && p->kind() == MediaPayloadKind::Audio) {
                         p = uap;
                         break;
                 }
@@ -285,13 +287,13 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         // Inspect the captured events: at least one SyncOffsetChange
         // should be present, with previous and current values that
         // describe a real shift.
-        int syncOffsetChangeCount = 0;
+        int                    syncOffsetChangeCount = 0;
         InspectorDiscontinuity sample;
         {
                 Mutex::Locker lk(eventsMutex);
-                for(const auto &e : events) {
-                        for(const auto &d : e.discontinuities) {
-                                if(d.kind == InspectorDiscontinuity::SyncOffsetChange) {
+                for (const auto &e : events) {
+                        for (const auto &d : e.discontinuities) {
+                                if (d.kind == InspectorDiscontinuity::SyncOffsetChange) {
                                         syncOffsetChangeCount++;
                                         sample = d;
                                 }
@@ -330,11 +332,11 @@ TEST_CASE("Inspector periodic log fires when interval elapses") {
         // re-set + re-open.
         rig.inspectorIo->close();
         MediaIO::Config insCfg = MediaIO::defaultConfig("Inspector");
-        insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.01);  // 10 ms
+        insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.01); // 10 ms
         rig.inspectorIo->setConfig(insCfg);
         REQUIRE(rig.inspectorIo->open(MediaIO::Sink).isOk());
 
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
                 Frame::Ptr frame;
                 REQUIRE(rig.tpg->readFrame(frame).isOk());
                 REQUIRE(rig.inspectorIo->writeFrame(frame).isOk());
@@ -345,13 +347,12 @@ TEST_CASE("Inspector periodic log fires when interval elapses") {
 
 TEST_CASE("Inspector decodes LTC and reports A/V sync offset") {
         std::vector<InspectorEvent> events;
-        Mutex eventsMutex;
-        InspectorRig rig;
-        buildRig(rig, 0x55667788u,
-                 [&](const InspectorEvent &e) {
-                         Mutex::Locker lk(eventsMutex);
-                         events.push_back(e);
-                 });
+        Mutex                       eventsMutex;
+        InspectorRig                rig;
+        buildRig(rig, 0x55667788u, [&](const InspectorEvent &e) {
+                Mutex::Locker lk(eventsMutex);
+                events.push_back(e);
+        });
         pumpFrames(rig, 40);
 
         InspectorSnapshot snap = rig.inspector->snapshot();
@@ -370,24 +371,23 @@ TEST_CASE("Inspector decodes LTC and reports A/V sync offset") {
         // edge-detection latency — typically 1-3 samples at 48 kHz).
         // We assert it stays well under one frame's worth and is
         // *constant* across frames once both decoders have locked.
-        bool foundOffset = false;
+        bool    foundOffset = false;
         int64_t maxAbsOffset = 0;
         int64_t firstOffset = 0;
-        bool firstOffsetSet = false;
-        bool offsetIsConstant = true;
+        bool    firstOffsetSet = false;
+        bool    offsetIsConstant = true;
         {
                 Mutex::Locker lk(eventsMutex);
-                for(const auto &e : events) {
-                        if(e.avSyncValid) {
+                for (const auto &e : events) {
+                        if (e.avSyncValid) {
                                 foundOffset = true;
-                                const int64_t a = e.avSyncOffsetSamples < 0
-                                        ? -e.avSyncOffsetSamples
-                                        :  e.avSyncOffsetSamples;
-                                if(a > maxAbsOffset) maxAbsOffset = a;
-                                if(!firstOffsetSet) {
+                                const int64_t a =
+                                        e.avSyncOffsetSamples < 0 ? -e.avSyncOffsetSamples : e.avSyncOffsetSamples;
+                                if (a > maxAbsOffset) maxAbsOffset = a;
+                                if (!firstOffsetSet) {
                                         firstOffset = e.avSyncOffsetSamples;
                                         firstOffsetSet = true;
-                                } else if(e.avSyncOffsetSamples != firstOffset) {
+                                } else if (e.avSyncOffsetSamples != firstOffset) {
                                         offsetIsConstant = false;
                                 }
                         }
@@ -410,9 +410,9 @@ TEST_CASE("Inspector decodes LTC and reports A/V sync offset") {
         int syncOffsetChangeCount = 0;
         {
                 Mutex::Locker lk(eventsMutex);
-                for(const auto &e : events) {
-                        for(const auto &d : e.discontinuities) {
-                                if(d.kind == InspectorDiscontinuity::SyncOffsetChange) {
+                for (const auto &e : events) {
+                        for (const auto &d : e.discontinuities) {
+                                if (d.kind == InspectorDiscontinuity::SyncOffsetChange) {
                                         syncOffsetChangeCount++;
                                 }
                         }
@@ -433,31 +433,30 @@ TEST_CASE("Inspector decodes LTC and reports A/V sync offset") {
 
 namespace {
 
-// Zero-crossing frequency estimator.  Accurate enough for ~30 cycles
-// of a multi-hundred-Hz tone in one frame at 48 kHz.
-double estimateFreqHz(const PcmAudioPayload &audio, size_t channel,
-                      double sampleRate) {
-        const float *data = reinterpret_cast<const float *>(audio.plane(0).data());
-        if(data == nullptr) return 0.0;
-        const size_t nch = audio.desc().channels();
-        const size_t n   = audio.sampleCount();
-        if(n < 2) return 0.0;
+        // Zero-crossing frequency estimator.  Accurate enough for ~30 cycles
+        // of a multi-hundred-Hz tone in one frame at 48 kHz.
+        double estimateFreqHz(const PcmAudioPayload &audio, size_t channel, double sampleRate) {
+                const float *data = reinterpret_cast<const float *>(audio.plane(0).data());
+                if (data == nullptr) return 0.0;
+                const size_t nch = audio.desc().channels();
+                const size_t n = audio.sampleCount();
+                if (n < 2) return 0.0;
 
-        size_t crossings = 0;
-        float prev = data[channel];
-        for(size_t s = 1; s < n; ++s) {
-                float cur = data[s * nch + channel];
-                if((prev < 0 && cur >= 0) || (prev >= 0 && cur < 0)) {
-                        crossings++;
+                size_t crossings = 0;
+                float  prev = data[channel];
+                for (size_t s = 1; s < n; ++s) {
+                        float cur = data[s * nch + channel];
+                        if ((prev < 0 && cur >= 0) || (prev >= 0 && cur < 0)) {
+                                crossings++;
+                        }
+                        prev = cur;
                 }
-                prev = cur;
+                const double cycles = static_cast<double>(crossings) / 2.0;
+                const double seconds = static_cast<double>(n - 1) / sampleRate;
+                return (seconds > 0.0) ? (cycles / seconds) : 0.0;
         }
-        const double cycles  = static_cast<double>(crossings) / 2.0;
-        const double seconds = static_cast<double>(n - 1) / sampleRate;
-        return (seconds > 0.0) ? (cycles / seconds) : 0.0;
-}
 
-}  // namespace
+} // namespace
 
 TEST_CASE("Inspector pipeline carries a SrcProbe channel unharmed") {
         // TPG emits LTC on ch0 (so the LTC decoder still locks and the
@@ -471,16 +470,16 @@ TEST_CASE("Inspector pipeline carries a SrcProbe channel unharmed") {
         modes.append(AudioPattern::SrcProbe);
 
         std::vector<InspectorEvent> events;
-        Mutex eventsMutex;
-        InspectorRig rig;
-        buildRig(rig, 0x5A5AA5A5u,
-                 [&](const InspectorEvent &e) {
-                         Mutex::Locker lk(eventsMutex);
-                         events.push_back(e);
-                 },
-                 /*audioEnabled=*/true,
-                 modes,
-                 /*audioChannels=*/2);
+        Mutex                       eventsMutex;
+        InspectorRig                rig;
+        buildRig(
+                rig, 0x5A5AA5A5u,
+                [&](const InspectorEvent &e) {
+                        Mutex::Locker lk(eventsMutex);
+                        events.push_back(e);
+                },
+                /*audioEnabled=*/true, modes,
+                /*audioChannels=*/2);
 
         // Pump via the shared helper so the frames flow through
         // Inspector's write path; we don't need a separate TPG copy
@@ -497,8 +496,8 @@ TEST_CASE("Inspector pipeline carries a SrcProbe channel unharmed") {
         // Independently synthesise one frame-length of the expected
         // audio and verify ch1 really emits the 997 Hz reference tone.
         // Uses the same configuration the TPG was driven with.
-        const double sampleRate = 48000.0;
-        AudioDesc desc(static_cast<float>(sampleRate), 2);
+        const double     sampleRate = 48000.0;
+        AudioDesc        desc(static_cast<float>(sampleRate), 2);
         AudioTestPattern gen(desc);
         gen.setChannelModes(modes);
         gen.setLtcLevel(AudioLevel::fromDbfs(-20.0));
@@ -508,8 +507,7 @@ TEST_CASE("Inspector pipeline carries a SrcProbe channel unharmed") {
         REQUIRE(audio.isValid());
 
         double freq = estimateFreqHz(*audio, 1, sampleRate);
-        CHECK(freq == doctest::Approx(AudioTestPattern::kSrcProbeFrequencyHz)
-                         .epsilon(0.005));
+        CHECK(freq == doctest::Approx(AudioTestPattern::kSrcProbeFrequencyHz).epsilon(0.005));
 }
 
 TEST_CASE("Inspector pipeline carries a ChannelId channel map unharmed") {
@@ -526,8 +524,7 @@ TEST_CASE("Inspector pipeline carries a ChannelId channel map unharmed") {
 
         InspectorRig rig;
         buildRig(rig, 0xCAFEBABEu, {},
-                 /*audioEnabled=*/true,
-                 modes,
+                 /*audioEnabled=*/true, modes,
                  /*audioChannels=*/4);
         pumpFrames(rig, 20);
 
@@ -540,8 +537,8 @@ TEST_CASE("Inspector pipeline carries a ChannelId channel map unharmed") {
         // Replay the same config through a standalone AudioTestPattern
         // and verify the ChannelId frequencies match what we told the
         // TPG to emit.
-        const double sampleRate = 48000.0;
-        AudioDesc desc(static_cast<float>(sampleRate), 4);
+        const double     sampleRate = 48000.0;
+        AudioDesc        desc(static_cast<float>(sampleRate), 4);
         AudioTestPattern gen(desc);
         gen.setChannelModes(modes);
         gen.setLtcLevel(AudioLevel::fromDbfs(-20.0));
@@ -555,7 +552,7 @@ TEST_CASE("Inspector pipeline carries a ChannelId channel map unharmed") {
         // Every ChannelId channel must carry the frequency its index
         // maps to (1100, 1200, 1300).  LTC on ch0 isn't a sine so we
         // don't run the estimator on it.
-        for(int ch = 1; ch <= 3; ++ch) {
+        for (int ch = 1; ch <= 3; ++ch) {
                 double expected = AudioTestPattern::channelIdFrequency(ch, 1000.0, 100.0);
                 double observed = estimateFreqHz(*audio, ch, sampleRate);
                 CHECK(observed == doctest::Approx(expected).epsilon(0.005));

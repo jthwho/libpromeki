@@ -17,58 +17,52 @@ using namespace promeki;
 
 namespace {
 
-MediaIOStats makeStageStats(int64_t dropped,
-                            int64_t repeated,
-                            double  bytesPerSec,
-                            double  framesPerSec,
-                            double  avgLatency,
-                            double  peakLatency,
-                            const String &err = String()) {
-        MediaIOStats s;
-        s.set(MediaIOStats::FramesDropped,    FrameCount(dropped));
-        s.set(MediaIOStats::FramesRepeated,   FrameCount(repeated));
-        s.set(MediaIOStats::BytesPerSecond,   bytesPerSec);
-        s.set(MediaIOStats::FramesPerSecond,  framesPerSec);
-        s.set(MediaIOStats::AverageLatencyMs, avgLatency);
-        s.set(MediaIOStats::PeakLatencyMs,    peakLatency);
-        if(!err.isEmpty()) s.set(MediaIOStats::LastErrorMessage, err);
-        return s;
-}
+        MediaIOStats makeStageStats(int64_t dropped, int64_t repeated, double bytesPerSec, double framesPerSec,
+                                    double avgLatency, double peakLatency, const String &err = String()) {
+                MediaIOStats s;
+                s.set(MediaIOStats::FramesDropped, FrameCount(dropped));
+                s.set(MediaIOStats::FramesRepeated, FrameCount(repeated));
+                s.set(MediaIOStats::BytesPerSecond, bytesPerSec);
+                s.set(MediaIOStats::FramesPerSecond, framesPerSec);
+                s.set(MediaIOStats::AverageLatencyMs, avgLatency);
+                s.set(MediaIOStats::PeakLatencyMs, peakLatency);
+                if (!err.isEmpty()) s.set(MediaIOStats::LastErrorMessage, err);
+                return s;
+        }
 
-MediaPipelineStats makeSample() {
-        MediaPipelineStats ps;
-        ps.setStageStats("src", makeStageStats(1, 0, 1000.0, 30.0, 2.0, 4.0));
-        ps.setStageStats("csc", makeStageStats(0, 2, 2000.0, 30.0, 3.5, 5.0));
-        ps.setStageStats("sink", makeStageStats(0, 0, 2000.0, 30.0, 1.0, 2.5, "disk full"));
-        ps.recomputeAggregate();
-        return ps;
-}
+        MediaPipelineStats makeSample() {
+                MediaPipelineStats ps;
+                ps.setStageStats("src", makeStageStats(1, 0, 1000.0, 30.0, 2.0, 4.0));
+                ps.setStageStats("csc", makeStageStats(0, 2, 2000.0, 30.0, 3.5, 5.0));
+                ps.setStageStats("sink", makeStageStats(0, 0, 2000.0, 30.0, 1.0, 2.5, "disk full"));
+                ps.recomputeAggregate();
+                return ps;
+        }
 
 } // namespace
 
 TEST_CASE("MediaPipelineStats_SetAndGet") {
         MediaPipelineStats ps;
-        MediaIOStats s;
+        MediaIOStats       s;
         s.set(MediaIOStats::FramesDropped, FrameCount(5));
         ps.setStageStats("src", s);
 
         CHECK(ps.containsStage("src"));
         CHECK_FALSE(ps.containsStage("sink"));
-        CHECK(ps.stageStats("src").get(MediaIOStats::FramesDropped).get<FrameCount>()
-                        == FrameCount(5));
+        CHECK(ps.stageStats("src").get(MediaIOStats::FramesDropped).get<FrameCount>() == FrameCount(5));
         // Missing stage returns empty.
         CHECK(ps.stageStats("ghost").size() == 0);
 }
 
 TEST_CASE("MediaPipelineStats_RecomputeAggregate") {
-        MediaPipelineStats ps = makeSample();
+        MediaPipelineStats  ps = makeSample();
         const MediaIOStats &agg = ps.aggregate();
 
         // Sums of counters.
-        CHECK(agg.get(MediaIOStats::FramesDropped).get<FrameCount>()  == FrameCount(1));
+        CHECK(agg.get(MediaIOStats::FramesDropped).get<FrameCount>() == FrameCount(1));
         CHECK(agg.get(MediaIOStats::FramesRepeated).get<FrameCount>() == FrameCount(2));
         // Sum of throughput.
-        CHECK(agg.get(MediaIOStats::BytesPerSecond).get<double>()  == doctest::Approx(5000.0));
+        CHECK(agg.get(MediaIOStats::BytesPerSecond).get<double>() == doctest::Approx(5000.0));
         CHECK(agg.get(MediaIOStats::FramesPerSecond).get<double>() == doctest::Approx(90.0));
         // Average of non-zero latencies.
         CHECK(agg.get(MediaIOStats::AverageLatencyMs).get<double>() == doctest::Approx((2.0 + 3.5 + 1.0) / 3.0));
@@ -89,11 +83,11 @@ TEST_CASE("MediaPipelineStats_Clear") {
 
 TEST_CASE("MediaPipelineStats_JsonRoundTrip") {
         MediaPipelineStats orig = makeSample();
-        JsonObject j = orig.toJson();
+        JsonObject         j = orig.toJson();
         CHECK(j.valueIsObject("perStage"));
         CHECK(j.valueIsObject("aggregate"));
 
-        Error err;
+        Error              err;
         MediaPipelineStats round = MediaPipelineStats::fromJson(j, &err);
         CHECK(err.isOk());
         CHECK(round == orig);
@@ -101,8 +95,8 @@ TEST_CASE("MediaPipelineStats_JsonRoundTrip") {
 
 TEST_CASE("MediaPipelineStats_DataStreamRoundTrip") {
         MediaPipelineStats orig = makeSample();
-        Buffer buf(16384);
-        BufferIODevice dev(&buf);
+        Buffer             buf(16384);
+        BufferIODevice     dev(&buf);
         dev.open(IODevice::ReadWrite);
 
         {
@@ -123,11 +117,11 @@ TEST_CASE("MediaPipelineStats_DataStreamRoundTrip") {
 
 TEST_CASE("MediaPipelineStats_Describe_NotEmpty") {
         MediaPipelineStats ps = makeSample();
-        StringList lines = ps.describe();
+        StringList         lines = ps.describe();
         CHECK(!lines.isEmpty());
         bool mentionsAggregate = false;
-        for(size_t i = 0; i < lines.size(); ++i) {
-                if(lines[i].contains("aggregate")) mentionsAggregate = true;
+        for (size_t i = 0; i < lines.size(); ++i) {
+                if (lines[i].contains("aggregate")) mentionsAggregate = true;
         }
         CHECK(mentionsAggregate);
 }
@@ -135,26 +129,22 @@ TEST_CASE("MediaPipelineStats_Describe_NotEmpty") {
 TEST_CASE("MediaPipelineStats_PipelineBlockRoundTrip") {
         MediaPipelineStats ps = makeSample();
         ps.pipeline().set(PipelineStats::FramesProduced, FrameCount(100));
-        ps.pipeline().set(PipelineStats::WriteRetries,   int64_t(7));
+        ps.pipeline().set(PipelineStats::WriteRetries, int64_t(7));
         ps.pipeline().set(PipelineStats::PipelineErrors, int64_t(1));
-        ps.pipeline().set(PipelineStats::State,          String("Running"));
+        ps.pipeline().set(PipelineStats::State, String("Running"));
 
         SUBCASE("JSON round-trip preserves pipeline bucket") {
-                Error err;
-                MediaPipelineStats round =
-                        MediaPipelineStats::fromJson(ps.toJson(), &err);
+                Error              err;
+                MediaPipelineStats round = MediaPipelineStats::fromJson(ps.toJson(), &err);
                 CHECK(err.isOk());
-                CHECK(round.pipeline().get(PipelineStats::FramesProduced)
-                                .get<FrameCount>() == FrameCount(100));
-                CHECK(round.pipeline().get(PipelineStats::WriteRetries)
-                                .get<int64_t>() == 7);
-                CHECK(round.pipeline().get(PipelineStats::State)
-                                .get<String>() == "Running");
+                CHECK(round.pipeline().get(PipelineStats::FramesProduced).get<FrameCount>() == FrameCount(100));
+                CHECK(round.pipeline().get(PipelineStats::WriteRetries).get<int64_t>() == 7);
+                CHECK(round.pipeline().get(PipelineStats::State).get<String>() == "Running");
                 CHECK(round == ps);
         }
 
         SUBCASE("DataStream round-trip preserves pipeline bucket") {
-                Buffer buf(16384);
+                Buffer         buf(16384);
                 BufferIODevice dev(&buf);
                 dev.open(IODevice::ReadWrite);
                 {
@@ -174,9 +164,9 @@ TEST_CASE("MediaPipelineStats_PipelineBlockRoundTrip") {
 
         SUBCASE("describe() includes the pipeline bucket") {
                 StringList lines = ps.describe();
-                bool mentionsPipeline = false;
-                for(size_t i = 0; i < lines.size(); ++i) {
-                        if(lines[i].contains("pipeline:")) mentionsPipeline = true;
+                bool       mentionsPipeline = false;
+                for (size_t i = 0; i < lines.size(); ++i) {
+                        if (lines[i].contains("pipeline:")) mentionsPipeline = true;
                 }
                 CHECK(mentionsPipeline);
         }

@@ -11,11 +11,9 @@
 /** @def PROMEKI_NAMESPACE_BEGIN
  *  @brief Starts a promeki namespace block.
  */
-#define PROMEKI_NAMESPACE_BEGIN         namespace promeki {
+#define PROMEKI_NAMESPACE_BEGIN namespace promeki {
 
 /** @def PROMEKI_NAMESPACE_END
  *  @brief Ends a promeki namespace block.
  */
-#define PROMEKI_NAMESPACE_END           }
-
-
+#define PROMEKI_NAMESPACE_END }

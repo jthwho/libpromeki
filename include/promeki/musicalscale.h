@@ -142,7 +142,7 @@ class MusicalScale {
 
         private:
                 int       _rootPitchClass = 0;
-                Mode      _mode           = Chromatic;
+                Mode      _mode = Chromatic;
                 List<int> _intervals;
 };
 

@@ -13,13 +13,17 @@ using namespace promeki;
 // Mock product type for testing.
 class MockProduct {
         public:
-                enum Operation { InvalidOp = 0, Read = 1, Write = 2 };
+                enum Operation {
+                        InvalidOp = 0,
+                        Read = 1,
+                        Write = 2
+                };
 
                 MockProduct() = default;
                 explicit MockProduct(int val) : _value(val) {}
 
                 bool isValid() const { return _value != 0; }
-                int value() const { return _value; }
+                int  value() const { return _value; }
 
         private:
                 int _value = 0;
@@ -32,12 +36,12 @@ class MockFactory_Alpha : public MockFactory {
         public:
                 MockFactory_Alpha() {
                         _name = "alpha";
-                        _exts = { "mock", "mck" };
+                        _exts = {"mock", "mck"};
                 }
 
                 bool canDoOperation(const Context &ctx) const override {
-                        if(!ctx.filename.isEmpty() && isExtensionSupported(ctx.filename)) return true;
-                        if(!ctx.formatHint.isEmpty() && isHintSupported(ctx.formatHint)) return true;
+                        if (!ctx.filename.isEmpty() && isExtensionSupported(ctx.filename)) return true;
+                        if (!ctx.formatHint.isEmpty() && isHintSupported(ctx.formatHint)) return true;
                         return false;
                 }
 
@@ -51,12 +55,12 @@ class MockFactory_Beta : public MockFactory {
         public:
                 MockFactory_Beta() {
                         _name = "beta";
-                        _exts = { "other" };
+                        _exts = {"other"};
                 }
 
                 bool canDoOperation(const Context &ctx) const override {
-                        if(!ctx.filename.isEmpty() && isExtensionSupported(ctx.filename)) return true;
-                        if(!ctx.formatHint.isEmpty() && isHintSupported(ctx.formatHint)) return true;
+                        if (!ctx.filename.isEmpty() && isExtensionSupported(ctx.filename)) return true;
+                        if (!ctx.formatHint.isEmpty() && isHintSupported(ctx.formatHint)) return true;
                         return false;
                 }
 
@@ -101,7 +105,7 @@ TEST_CASE("FileFormatFactory: lookup returns nullptr for unknown extension") {
 
 TEST_CASE("FileFormatFactory: lookup returns nullptr for empty context") {
         MockFactory::Context ctx;
-        const MockFactory *f = MockFactory::lookup(ctx);
+        const MockFactory   *f = MockFactory::lookup(ctx);
         CHECK(f == nullptr);
 }
 
@@ -128,7 +132,7 @@ TEST_CASE("FileFormatFactory: createForOperation from second factory") {
 }
 
 TEST_CASE("FileFormatFactory: default createForOperation returns error") {
-        MockFactory f;
+        MockFactory          f;
         MockFactory::Context ctx;
         ctx.filename = "test.mock";
         auto [product, err] = f.createForOperation(ctx);
@@ -137,7 +141,7 @@ TEST_CASE("FileFormatFactory: default createForOperation returns error") {
 }
 
 TEST_CASE("FileFormatFactory: default canDoOperation returns false") {
-        MockFactory f;
+        MockFactory          f;
         MockFactory::Context ctx;
         ctx.filename = "test.mock";
         CHECK_FALSE(f.canDoOperation(ctx));

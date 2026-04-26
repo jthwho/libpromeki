@@ -114,22 +114,22 @@ class FrameSync {
                  * repeated or dropped to produce it.
                  */
                 struct PullResult {
-                        /** @brief Synthesised output frame. */
-                        Frame::Ptr frame;
+                                /** @brief Synthesised output frame. */
+                                Frame::Ptr frame;
 
-                        /** @brief Zero-based output frame index since reset. */
-                        FrameNumber frameIndex{0};
+                                /** @brief Zero-based output frame index since reset. */
+                                FrameNumber frameIndex{0};
 
-                        /** @brief Number of times the held source frame was
+                                /** @brief Number of times the held source frame was
                          *         repeated to produce this output. */
-                        FrameCount  framesRepeated{0};
+                                FrameCount framesRepeated{0};
 
-                        /** @brief Number of source frames discarded to produce
+                                /** @brief Number of source frames discarded to produce
                          *         this output (advanced past without use). */
-                        FrameCount  framesDropped{0};
+                                FrameCount framesDropped{0};
 
-                        /** @brief Wake-up error relative to the deadline. */
-                        Duration   error;
+                                /** @brief Wake-up error relative to the deadline. */
+                                Duration error;
                 };
 
                 /** @brief Constructs an unconfigured FrameSync. */
@@ -204,7 +204,7 @@ class FrameSync {
                 void setInputQueueCapacity(int capacity);
 
                 /** @brief Returns the configured queue capacity. */
-                int  inputQueueCapacity() const { return _queueCapacity; }
+                int inputQueueCapacity() const { return _queueCapacity; }
 
                 /**
                  * @brief Selects the overflow behaviour used when
@@ -215,9 +215,7 @@ class FrameSync {
                 void setInputOverflowPolicy(InputOverflowPolicy policy);
 
                 /** @brief Returns the configured overflow policy. */
-                InputOverflowPolicy inputOverflowPolicy() const {
-                        return _overflowPolicy;
-                }
+                InputOverflowPolicy inputOverflowPolicy() const { return _overflowPolicy; }
 
                 /**
                  * @brief Resets counters and timeline.
@@ -340,28 +338,26 @@ class FrameSync {
                 FrameCount overflowDrops() const { return FrameCount(_overflowDrops.value()); }
 
                 /** @brief Last-measured wake-up error. */
-                Duration accumulatedError() const {
-                        return Duration::fromNanoseconds(_accumulatedErrorNs);
-                }
+                Duration accumulatedError() const { return Duration::fromNanoseconds(_accumulatedErrorNs); }
 
                 /** @brief Current resampler ratio (source rate / dest rate). */
-                double   currentResampleRatio() const { return _currentResampleRatio; }
+                double currentResampleRatio() const { return _currentResampleRatio; }
 
                 /** @brief Current source-rate estimate (Hz, from audio timestamps). */
-                double   currentSourceAudioRate() const { return _sourceAudioRateHz; }
+                double currentSourceAudioRate() const { return _sourceAudioRateHz; }
 
                 /** @brief Current source video-rate estimate (Hz, from video
                  *         timestamps).  Zero until at least two pushes have
                  *         been seen with video timestamps. */
-                double   currentSourceVideoRate() const { return _sourceVideoRateHz; }
+                double currentSourceVideoRate() const { return _sourceVideoRateHz; }
 
         private:
                 struct QueuedFrame {
-                        Frame::Ptr frame;
-                        int64_t    videoTsNs = 0;       // source video timestamp
-                        bool       hasVideoTs = false;
-                        int64_t    audioTsNs = 0;       // first audio timestamp
-                        bool       hasAudioTs = false;
+                                Frame::Ptr frame;
+                                int64_t    videoTsNs = 0; // source video timestamp
+                                bool       hasVideoTs = false;
+                                int64_t    audioTsNs = 0; // first audio timestamp
+                                bool       hasAudioTs = false;
                 };
 
                 // Initial setup done under the mutex on demand.
@@ -369,55 +365,51 @@ class FrameSync {
                 void resetLocked(bool setExplicitOrigin, int64_t originNs);
 
                 // Pull-path helpers (all assume _mutex is NOT held).
-                void selectVideo(int64_t sourceTimeNs,
-                                 int64_t nextSourceTimeNs,
-                                 VideoPayload::Ptr &outVideo,
-                                 int64_t &outRepeated,
-                                 int64_t &outDropped);
+                void selectVideo(int64_t sourceTimeNs, int64_t nextSourceTimeNs, VideoPayload::Ptr &outVideo,
+                                 int64_t &outRepeated, int64_t &outDropped);
                 PcmAudioPayload::Ptr produceAudio(int64_t targetSamples);
-                void       updateSourceAudioRate(const PcmAudioPayload &audio,
-                                                 int64_t audioTsNs);
-                void       updateSourceVideoRate(int64_t videoTsNs);
+                void                 updateSourceAudioRate(const PcmAudioPayload &audio, int64_t audioTsNs);
+                void                 updateSourceVideoRate(int64_t videoTsNs);
 
                 // Periodic debug log.
                 void periodicDebugLog(int64_t nowNs);
 
                 // Configuration.
-                String      _name;
-                FrameRate   _targetFrameRate;
-                AudioDesc   _targetAudioDesc;
-                Clock::Ptr  _clock;
-                SyntheticClock *_syntheticClock = nullptr;  // cached downcast
+                String              _name;
+                FrameRate           _targetFrameRate;
+                AudioDesc           _targetAudioDesc;
+                Clock::Ptr          _clock;
+                SyntheticClock     *_syntheticClock = nullptr; // cached downcast
                 int                 _queueCapacity = 8;
                 InputOverflowPolicy _overflowPolicy = InputOverflowPolicy::DropOldest;
 
                 // Shared state (all guarded by _mutex unless noted).
-                mutable Mutex      _mutex;
-                WaitCondition      _cv;
+                mutable Mutex _mutex;
+                WaitCondition _cv;
 
                 // Input queue.
-                List<QueuedFrame>  _queue;
-                bool               _eos = false;
-                bool               _interrupted = false;
+                List<QueuedFrame> _queue;
+                bool              _eos = false;
+                bool              _interrupted = false;
 
                 // Timeline state.
-                bool               _started = false;
-                bool               _explicitOrigin = false;
-                int64_t            _originNs = 0;
-                int64_t            _framePeriodNs = 0;
-                FrameCount         _frameCount{0};
+                bool       _started = false;
+                bool       _explicitOrigin = false;
+                int64_t    _originNs = 0;
+                int64_t    _framePeriodNs = 0;
+                FrameCount _frameCount{0};
 
                 // Source-origin anchoring — captured on first pushed frame.
-                bool               _sourceOriginValid = false;
-                int64_t            _sourceVideoOriginNs = 0;
-                int64_t            _sourceAudioOriginNs = 0;
+                bool    _sourceOriginValid = false;
+                int64_t _sourceVideoOriginNs = 0;
+                int64_t _sourceAudioOriginNs = 0;
 
                 // Held "current" video payload (used for repeats when
                 // no new input qualifies for this pull).  Carries the
                 // source payload with its original metadata.
-                VideoPayload::Ptr  _heldVideo;
-                int64_t            _heldVideoSourceTsNs = 0;
-                bool               _hasHeldVideo = false;
+                VideoPayload::Ptr _heldVideo;
+                int64_t           _heldVideoSourceTsNs = 0;
+                bool              _hasHeldVideo = false;
 
                 // FrameSyncDrop/FrameSyncRepeat metadata state.
                 // _pendingFrameSyncDrops accumulates input drops across
@@ -428,41 +420,41 @@ class FrameSync {
                 // _frameSyncRepeatIndex is the position of the current
                 // output within a repeat sequence (0 on fresh emit;
                 // 1, 2, ... on successive repeats).
-                int64_t            _pendingFrameSyncDrops = 0;
-                int64_t            _frameSyncRepeatIndex  = 0;
+                int64_t _pendingFrameSyncDrops = 0;
+                int64_t _frameSyncRepeatIndex = 0;
 
                 // Audio resampler pipeline.
-                AudioResampler::UPtr _resampler;
-                List<PcmAudioPayload::Ptr> _audioInput; // pending input audio, FIFO
-                int64_t            _audioSamplesConsumed = 0;   // of current front audio
+                AudioResampler::UPtr       _resampler;
+                List<PcmAudioPayload::Ptr> _audioInput;               // pending input audio, FIFO
+                int64_t                    _audioSamplesConsumed = 0; // of current front audio
 
                 // Rate tracking.
-                double             _sourceAudioRateHz   = 0.0;  // LPF'd source rate
-                double             _sourceVideoRateHz   = 0.0;  // LPF'd source video rate
-                double             _currentResampleRatio = 1.0;
-                int64_t            _lastAudioTsForRateNs = 0;
-                int64_t            _lastAudioTsSamples   = 0;   // samples covered by last push
-                int64_t            _lastVideoTsForRateNs = 0;
+                double  _sourceAudioRateHz = 0.0; // LPF'd source rate
+                double  _sourceVideoRateHz = 0.0; // LPF'd source video rate
+                double  _currentResampleRatio = 1.0;
+                int64_t _lastAudioTsForRateNs = 0;
+                int64_t _lastAudioTsSamples = 0; // samples covered by last push
+                int64_t _lastVideoTsForRateNs = 0;
 
                 // Error / logging.
-                int64_t            _accumulatedErrorNs = 0;
-                int64_t            _lastPeriodicLogNs  = 0;
-                FrameCount         _frameCountAtLastLog{0};
-                FrameCount         _lastEmitFrameCount = FrameCount::unknown();  // debug only
+                int64_t    _accumulatedErrorNs = 0;
+                int64_t    _lastPeriodicLogNs = 0;
+                FrameCount _frameCountAtLastLog{0};
+                FrameCount _lastEmitFrameCount = FrameCount::unknown(); // debug only
 
                 // PLL-style deadline bias.  The per-pull measured
                 // wake-error feeds this LPF; the next deadline is
                 // shifted earlier by this amount so any systematic
                 // bias (sleep latency, clock interpolation rate
                 // mismatch, per-pull work time) self-corrects.
-                int64_t            _deadlineBiasNs = 0;
+                int64_t _deadlineBiasNs = 0;
 
                 // Atomic stats (readable from any thread without lock).
-                Atomic<int64_t>    _framesIn;
-                Atomic<int64_t>    _framesOut;
-                Atomic<int64_t>    _framesRepeated;
-                Atomic<int64_t>    _framesDropped;
-                Atomic<int64_t>    _overflowDrops;
+                Atomic<int64_t> _framesIn;
+                Atomic<int64_t> _framesOut;
+                Atomic<int64_t> _framesRepeated;
+                Atomic<int64_t> _framesDropped;
+                Atomic<int64_t> _overflowDrops;
 };
 
 PROMEKI_NAMESPACE_END

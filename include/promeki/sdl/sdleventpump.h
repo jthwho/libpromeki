@@ -82,7 +82,7 @@ class SDLEventPump {
                 void handleMouseWheelEvent(const SDL_Event &e);
 
                 static KeyEvent::Key translateKey(int sdlKeycode);
-                static uint8_t translateModifiers(uint16_t sdlMod);
+                static uint8_t       translateModifiers(uint16_t sdlMod);
 };
 
 PROMEKI_NAMESPACE_END

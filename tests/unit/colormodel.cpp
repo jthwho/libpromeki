@@ -44,46 +44,46 @@ TEST_CASE("ColorModel: LinearSRGB model properties") {
 
 TEST_CASE("ColorModel: toH273() maps well-known models") {
         // SDR RGB family.
-        CHECK(ColorModel::toH273(ColorModel::sRGB).primaries       == 1);
-        CHECK(ColorModel::toH273(ColorModel::sRGB).transfer        == 13);
-        CHECK(ColorModel::toH273(ColorModel::sRGB).matrix          == 0);
+        CHECK(ColorModel::toH273(ColorModel::sRGB).primaries == 1);
+        CHECK(ColorModel::toH273(ColorModel::sRGB).transfer == 13);
+        CHECK(ColorModel::toH273(ColorModel::sRGB).matrix == 0);
 
-        CHECK(ColorModel::toH273(ColorModel::Rec709).primaries     == 1);
-        CHECK(ColorModel::toH273(ColorModel::Rec709).transfer      == 1);
+        CHECK(ColorModel::toH273(ColorModel::Rec709).primaries == 1);
+        CHECK(ColorModel::toH273(ColorModel::Rec709).transfer == 1);
 
-        CHECK(ColorModel::toH273(ColorModel::Rec2020).primaries    == 9);
-        CHECK(ColorModel::toH273(ColorModel::Rec2020).transfer     == 14);
+        CHECK(ColorModel::toH273(ColorModel::Rec2020).primaries == 9);
+        CHECK(ColorModel::toH273(ColorModel::Rec2020).transfer == 14);
 
         CHECK(ColorModel::toH273(ColorModel::Rec601_PAL).primaries == 5);
         CHECK(ColorModel::toH273(ColorModel::Rec601_NTSC).primaries == 6);
-        CHECK(ColorModel::toH273(ColorModel::DCI_P3).primaries      == 12);
+        CHECK(ColorModel::toH273(ColorModel::DCI_P3).primaries == 12);
 
         // Linear variants substitute transfer=8.
         CHECK(ColorModel::toH273(ColorModel::LinearRec709).transfer == 8);
         CHECK(ColorModel::toH273(ColorModel::LinearRec2020).transfer == 8);
 
         // YCbCr derivations stamp the matching matrix coefficients.
-        CHECK(ColorModel::toH273(ColorModel::YCbCr_Rec709).matrix   == 1);
-        CHECK(ColorModel::toH273(ColorModel::YCbCr_Rec2020).matrix  == 9);
-        CHECK(ColorModel::toH273(ColorModel::YCbCr_Rec601).matrix   == 6);
+        CHECK(ColorModel::toH273(ColorModel::YCbCr_Rec709).matrix == 1);
+        CHECK(ColorModel::toH273(ColorModel::YCbCr_Rec2020).matrix == 9);
+        CHECK(ColorModel::toH273(ColorModel::YCbCr_Rec601).matrix == 6);
 
         // Non-addressable models fall back to all-zero.
-        CHECK(ColorModel::toH273(ColorModel::CIEXYZ).primaries      == 0);
-        CHECK(ColorModel::toH273(ColorModel::Invalid).primaries     == 0);
+        CHECK(ColorModel::toH273(ColorModel::CIEXYZ).primaries == 0);
+        CHECK(ColorModel::toH273(ColorModel::Invalid).primaries == 0);
 }
 
 TEST_CASE("ColorModel: sRGB and Rec709 share primaries") {
         auto &sp = ColorModel(ColorModel::sRGB).primaries();
         auto &rp = ColorModel(ColorModel::Rec709).primaries();
-        for(int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 4; ++i) {
                 CHECK(sp[i].data()[0] == doctest::Approx(rp[i].data()[0]));
                 CHECK(sp[i].data()[1] == doctest::Approx(rp[i].data()[1]));
         }
 }
 
 TEST_CASE("ColorModel: sRGB transfer function roundtrip") {
-        double values[] = { 0.0, 0.01, 0.1, 0.5, 0.9, 1.0 };
-        for(double v : values) {
+        double values[] = {0.0, 0.01, 0.1, 0.5, 0.9, 1.0};
+        for (double v : values) {
                 double encoded = ColorModel(ColorModel::sRGB).applyTransfer(v);
                 double decoded = ColorModel(ColorModel::sRGB).removeTransfer(encoded);
                 CHECK(decoded == doctest::Approx(v).epsilon(1e-6));
@@ -91,8 +91,8 @@ TEST_CASE("ColorModel: sRGB transfer function roundtrip") {
 }
 
 TEST_CASE("ColorModel: Rec709 transfer function roundtrip") {
-        double values[] = { 0.0, 0.01, 0.1, 0.5, 0.9, 1.0 };
-        for(double v : values) {
+        double values[] = {0.0, 0.01, 0.1, 0.5, 0.9, 1.0};
+        for (double v : values) {
                 double encoded = ColorModel(ColorModel::Rec709).applyTransfer(v);
                 double decoded = ColorModel(ColorModel::Rec709).removeTransfer(encoded);
                 CHECK(decoded == doctest::Approx(v).epsilon(1e-6));
@@ -100,7 +100,7 @@ TEST_CASE("ColorModel: Rec709 transfer function roundtrip") {
 }
 
 TEST_CASE("ColorModel: sRGB toXYZ/fromXYZ roundtrip") {
-        float src[3] = { 0.5f, 0.3f, 0.8f };
+        float src[3] = {0.5f, 0.3f, 0.8f};
         float xyz[3], dst[3];
         ColorModel(ColorModel::sRGB).toXYZ(src, xyz);
         ColorModel(ColorModel::sRGB).fromXYZ(xyz, dst);
@@ -110,7 +110,7 @@ TEST_CASE("ColorModel: sRGB toXYZ/fromXYZ roundtrip") {
 }
 
 TEST_CASE("ColorModel: LinearSRGB toXYZ/fromXYZ roundtrip") {
-        float src[3] = { 0.2f, 0.7f, 0.4f };
+        float src[3] = {0.2f, 0.7f, 0.4f};
         float xyz[3], dst[3];
         ColorModel(ColorModel::LinearSRGB).toXYZ(src, xyz);
         ColorModel(ColorModel::LinearSRGB).fromXYZ(xyz, dst);
@@ -120,7 +120,7 @@ TEST_CASE("ColorModel: LinearSRGB toXYZ/fromXYZ roundtrip") {
 }
 
 TEST_CASE("ColorModel: sRGB white maps to D65 XYZ") {
-        float white[3] = { 1.0f, 1.0f, 1.0f };
+        float white[3] = {1.0f, 1.0f, 1.0f};
         float xyz[3];
         ColorModel(ColorModel::LinearSRGB).toXYZ(white, xyz);
         // D65 white point: X=0.95047, Y=1.0, Z=1.08883
@@ -130,7 +130,7 @@ TEST_CASE("ColorModel: sRGB white maps to D65 XYZ") {
 }
 
 TEST_CASE("ColorModel: sRGB red produces expected XYZ") {
-        float red[3] = { 1.0f, 0.0f, 0.0f };
+        float red[3] = {1.0f, 0.0f, 0.0f};
         float xyz[3];
         ColorModel(ColorModel::LinearSRGB).toXYZ(red, xyz);
         // sRGB red primary: X~0.4124, Y~0.2126, Z~0.0193
@@ -140,7 +140,7 @@ TEST_CASE("ColorModel: sRGB red produces expected XYZ") {
 }
 
 TEST_CASE("ColorModel: Cross-space conversion sRGB -> Rec601_PAL -> sRGB") {
-        float src[3] = { 0.8f, 0.2f, 0.5f };
+        float src[3] = {0.8f, 0.2f, 0.5f};
         float xyz[3], dst601[3], xyz2[3], dst[3];
         ColorModel(ColorModel::sRGB).toXYZ(src, xyz);
         ColorModel(ColorModel::Rec601_PAL).fromXYZ(xyz, dst601);
@@ -153,7 +153,7 @@ TEST_CASE("ColorModel: Cross-space conversion sRGB -> Rec601_PAL -> sRGB") {
 
 TEST_CASE("ColorModel: HSV sRGB roundtrip through XYZ") {
         // Pure red in HSV: H=0, S=1, V=1 (normalized: 0, 1, 1)
-        float hsv[3] = { 0.0f, 1.0f, 1.0f };
+        float hsv[3] = {0.0f, 1.0f, 1.0f};
         float xyz[3], hsv2[3];
         ColorModel(ColorModel::HSV_sRGB).toXYZ(hsv, xyz);
         ColorModel(ColorModel::HSV_sRGB).fromXYZ(xyz, hsv2);
@@ -164,7 +164,7 @@ TEST_CASE("ColorModel: HSV sRGB roundtrip through XYZ") {
 
 TEST_CASE("ColorModel: HSV pure green") {
         // Green in HSV: H=120/360 = 0.333..., S=1, V=1
-        float hsv[3] = { 120.0f / 360.0f, 1.0f, 1.0f };
+        float hsv[3] = {120.0f / 360.0f, 1.0f, 1.0f};
         float xyz[3];
         ColorModel(ColorModel::HSV_sRGB).toXYZ(hsv, xyz);
         // Then convert back via sRGB to check
@@ -176,7 +176,7 @@ TEST_CASE("ColorModel: HSV pure green") {
 }
 
 TEST_CASE("ColorModel: HSL roundtrip through XYZ") {
-        float hsl[3] = { 0.6f, 0.8f, 0.5f };
+        float hsl[3] = {0.6f, 0.8f, 0.5f};
         float xyz[3], hsl2[3];
         ColorModel(ColorModel::HSL_sRGB).toXYZ(hsl, xyz);
         ColorModel(ColorModel::HSL_sRGB).fromXYZ(xyz, hsl2);
@@ -187,7 +187,7 @@ TEST_CASE("ColorModel: HSL roundtrip through XYZ") {
 
 TEST_CASE("ColorModel: CIE Lab roundtrip through XYZ") {
         // Mid-gray in Lab: L=50 -> normalized 0.5, a=0 -> normalized ~0.502, b=0 -> normalized ~0.502
-        float lab[3] = { 0.5f, 128.0f / 255.0f, 128.0f / 255.0f };
+        float lab[3] = {0.5f, 128.0f / 255.0f, 128.0f / 255.0f};
         float xyz[3], lab2[3];
         ColorModel(ColorModel::CIELab).toXYZ(lab, xyz);
         ColorModel(ColorModel::CIELab).fromXYZ(xyz, lab2);
@@ -198,7 +198,7 @@ TEST_CASE("ColorModel: CIE Lab roundtrip through XYZ") {
 
 TEST_CASE("ColorModel: YCbCr Rec709 roundtrip through XYZ") {
         // Y=0.5, Cb=0.5 (centered), Cr=0.5 (centered) = gray
-        float ycbcr[3] = { 0.5f, 0.5f, 0.5f };
+        float ycbcr[3] = {0.5f, 0.5f, 0.5f};
         float xyz[3], ycbcr2[3];
         ColorModel(ColorModel::YCbCr_Rec709).toXYZ(ycbcr, xyz);
         ColorModel(ColorModel::YCbCr_Rec709).fromXYZ(xyz, ycbcr2);
@@ -260,8 +260,8 @@ TEST_CASE("ColorModel: DCI_P3 properties") {
 }
 
 TEST_CASE("ColorModel: DCI_P3 transfer function roundtrip") {
-        double values[] = { 0.0, 0.01, 0.1, 0.5, 0.9, 1.0 };
-        for(double v : values) {
+        double values[] = {0.0, 0.01, 0.1, 0.5, 0.9, 1.0};
+        for (double v : values) {
                 double encoded = ColorModel(ColorModel::DCI_P3).applyTransfer(v);
                 double decoded = ColorModel(ColorModel::DCI_P3).removeTransfer(encoded);
                 CHECK(decoded == doctest::Approx(v).epsilon(1e-6));
@@ -269,7 +269,7 @@ TEST_CASE("ColorModel: DCI_P3 transfer function roundtrip") {
 }
 
 TEST_CASE("ColorModel: DCI_P3 toXYZ/fromXYZ roundtrip") {
-        float src[3] = { 0.5f, 0.3f, 0.8f };
+        float src[3] = {0.5f, 0.3f, 0.8f};
         float xyz[3], dst[3];
         ColorModel(ColorModel::DCI_P3).toXYZ(src, xyz);
         ColorModel(ColorModel::DCI_P3).fromXYZ(xyz, dst);
@@ -279,7 +279,7 @@ TEST_CASE("ColorModel: DCI_P3 toXYZ/fromXYZ roundtrip") {
 }
 
 TEST_CASE("ColorModel: sRGB -> DCI_P3 -> sRGB roundtrip") {
-        float src[3] = { 0.8f, 0.2f, 0.5f };
+        float src[3] = {0.8f, 0.2f, 0.5f};
         float xyz[3], p3[3], xyz2[3], dst[3];
         ColorModel(ColorModel::sRGB).toXYZ(src, xyz);
         ColorModel(ColorModel::DCI_P3).fromXYZ(xyz, p3);
@@ -314,8 +314,8 @@ TEST_CASE("ColorModel: AdobeRGB properties") {
 }
 
 TEST_CASE("ColorModel: AdobeRGB transfer function roundtrip") {
-        double values[] = { 0.0, 0.01, 0.1, 0.5, 0.9, 1.0 };
-        for(double v : values) {
+        double values[] = {0.0, 0.01, 0.1, 0.5, 0.9, 1.0};
+        for (double v : values) {
                 double encoded = ColorModel(ColorModel::AdobeRGB).applyTransfer(v);
                 double decoded = ColorModel(ColorModel::AdobeRGB).removeTransfer(encoded);
                 CHECK(decoded == doctest::Approx(v).epsilon(1e-6));
@@ -323,7 +323,7 @@ TEST_CASE("ColorModel: AdobeRGB transfer function roundtrip") {
 }
 
 TEST_CASE("ColorModel: AdobeRGB toXYZ/fromXYZ roundtrip") {
-        float src[3] = { 0.5f, 0.3f, 0.8f };
+        float src[3] = {0.5f, 0.3f, 0.8f};
         float xyz[3], dst[3];
         ColorModel(ColorModel::AdobeRGB).toXYZ(src, xyz);
         ColorModel(ColorModel::AdobeRGB).fromXYZ(xyz, dst);
@@ -333,7 +333,7 @@ TEST_CASE("ColorModel: AdobeRGB toXYZ/fromXYZ roundtrip") {
 }
 
 TEST_CASE("ColorModel: sRGB -> AdobeRGB -> sRGB roundtrip") {
-        float src[3] = { 0.8f, 0.2f, 0.5f };
+        float src[3] = {0.8f, 0.2f, 0.5f};
         float xyz[3], argb[3], xyz2[3], dst[3];
         ColorModel(ColorModel::sRGB).toXYZ(src, xyz);
         ColorModel(ColorModel::AdobeRGB).fromXYZ(xyz, argb);
@@ -376,7 +376,7 @@ TEST_CASE("ColorModel: ACES uses D60 white point") {
 }
 
 TEST_CASE("ColorModel: ACES AP0 toXYZ/fromXYZ roundtrip") {
-        float src[3] = { 0.5f, 0.3f, 0.2f };
+        float src[3] = {0.5f, 0.3f, 0.2f};
         float xyz[3], dst[3];
         ColorModel(ColorModel::ACES_AP0).toXYZ(src, xyz);
         ColorModel(ColorModel::ACES_AP0).fromXYZ(xyz, dst);
@@ -386,7 +386,7 @@ TEST_CASE("ColorModel: ACES AP0 toXYZ/fromXYZ roundtrip") {
 }
 
 TEST_CASE("ColorModel: ACES AP1 toXYZ/fromXYZ roundtrip") {
-        float src[3] = { 0.5f, 0.3f, 0.2f };
+        float src[3] = {0.5f, 0.3f, 0.2f};
         float xyz[3], dst[3];
         ColorModel(ColorModel::ACES_AP1).toXYZ(src, xyz);
         ColorModel(ColorModel::ACES_AP1).fromXYZ(xyz, dst);
@@ -396,7 +396,7 @@ TEST_CASE("ColorModel: ACES AP1 toXYZ/fromXYZ roundtrip") {
 }
 
 TEST_CASE("ColorModel: sRGB -> ACES AP0 -> sRGB roundtrip") {
-        float src[3] = { 0.6f, 0.3f, 0.9f };
+        float src[3] = {0.6f, 0.3f, 0.9f};
         float xyz[3], aces[3], xyz2[3], dst[3];
         ColorModel(ColorModel::sRGB).toXYZ(src, xyz);
         ColorModel(ColorModel::ACES_AP0).fromXYZ(xyz, aces);
@@ -422,7 +422,7 @@ TEST_CASE("ColorModel: YCbCr_Rec2020 properties") {
 }
 
 TEST_CASE("ColorModel: YCbCr_Rec2020 toXYZ/fromXYZ roundtrip") {
-        float src[3] = { 0.5f, 0.55f, 0.45f };
+        float src[3] = {0.5f, 0.55f, 0.45f};
         float xyz[3], dst[3];
         ColorModel(ColorModel::YCbCr_Rec2020).toXYZ(src, xyz);
         ColorModel(ColorModel::YCbCr_Rec2020).fromXYZ(xyz, dst);
@@ -432,7 +432,7 @@ TEST_CASE("ColorModel: YCbCr_Rec2020 toXYZ/fromXYZ roundtrip") {
 }
 
 TEST_CASE("ColorModel: sRGB -> YCbCr_Rec2020 -> sRGB roundtrip") {
-        float src[3] = { 0.5f, 0.3f, 0.8f };
+        float src[3] = {0.5f, 0.3f, 0.8f};
         float xyz[3], ycbcr[3], xyz2[3], dst[3];
         ColorModel(ColorModel::sRGB).toXYZ(src, xyz);
         ColorModel(ColorModel::YCbCr_Rec2020).fromXYZ(xyz, ycbcr);
@@ -445,7 +445,7 @@ TEST_CASE("ColorModel: sRGB -> YCbCr_Rec2020 -> sRGB roundtrip") {
 
 TEST_CASE("ColorModel: YCbCr_Rec2020 gray has centered chroma") {
         // Gray in Rec2020 -> YCbCr should give Cb=0.5, Cr=0.5
-        float gray[3] = { 0.5f, 0.5f, 0.5f };
+        float gray[3] = {0.5f, 0.5f, 0.5f};
         float xyz[3], ycbcr[3];
         ColorModel(ColorModel::Rec2020).toXYZ(gray, xyz);
         ColorModel(ColorModel::YCbCr_Rec2020).fromXYZ(xyz, ycbcr);
@@ -458,8 +458,8 @@ TEST_CASE("ColorModel: YCbCr_Rec2020 lookup") {
 }
 
 TEST_CASE("ColorModel: Rec2020 transfer function roundtrip") {
-        double values[] = { 0.0, 0.01, 0.1, 0.5, 0.9, 1.0 };
-        for(double v : values) {
+        double values[] = {0.0, 0.01, 0.1, 0.5, 0.9, 1.0};
+        for (double v : values) {
                 double encoded = ColorModel(ColorModel::Rec2020).applyTransfer(v);
                 double decoded = ColorModel(ColorModel::Rec2020).removeTransfer(encoded);
                 CHECK(decoded == doctest::Approx(v).epsilon(1e-6));
@@ -612,12 +612,9 @@ TEST_CASE("ColorModel: compInfo out-of-range index falls back to index 0") {
 // ── Transfer functions ────────────────────────────────────────────
 
 TEST_CASE("ColorModel: linear models have identity transfer") {
-        ColorModel linears[] = {
-                ColorModel::LinearSRGB, ColorModel::LinearRec709,
-                ColorModel::LinearRec601_PAL, ColorModel::LinearRec601_NTSC,
-                ColorModel::LinearRec2020
-        };
-        for(auto &m : linears) {
+        ColorModel linears[] = {ColorModel::LinearSRGB, ColorModel::LinearRec709, ColorModel::LinearRec601_PAL,
+                                ColorModel::LinearRec601_NTSC, ColorModel::LinearRec2020};
+        for (auto &m : linears) {
                 CHECK(m.isLinear());
                 CHECK(m.applyTransfer(0.5) == doctest::Approx(0.5));
                 CHECK(m.removeTransfer(0.5) == doctest::Approx(0.5));
@@ -625,8 +622,8 @@ TEST_CASE("ColorModel: linear models have identity transfer") {
 }
 
 TEST_CASE("ColorModel: Rec601_PAL transfer roundtrip") {
-        double values[] = { 0.0, 0.01, 0.5, 1.0 };
-        for(double v : values) {
+        double values[] = {0.0, 0.01, 0.5, 1.0};
+        for (double v : values) {
                 double encoded = ColorModel(ColorModel::Rec601_PAL).applyTransfer(v);
                 double decoded = ColorModel(ColorModel::Rec601_PAL).removeTransfer(encoded);
                 CHECK(decoded == doctest::Approx(v).epsilon(1e-6));
@@ -634,8 +631,8 @@ TEST_CASE("ColorModel: Rec601_PAL transfer roundtrip") {
 }
 
 TEST_CASE("ColorModel: Rec601_NTSC transfer roundtrip") {
-        double values[] = { 0.0, 0.01, 0.5, 1.0 };
-        for(double v : values) {
+        double values[] = {0.0, 0.01, 0.5, 1.0};
+        for (double v : values) {
                 double encoded = ColorModel(ColorModel::Rec601_NTSC).applyTransfer(v);
                 double decoded = ColorModel(ColorModel::Rec601_NTSC).removeTransfer(encoded);
                 CHECK(decoded == doctest::Approx(v).epsilon(1e-6));
@@ -645,7 +642,7 @@ TEST_CASE("ColorModel: Rec601_NTSC transfer roundtrip") {
 // ── toXYZ/fromXYZ roundtrips for all models ──────────────────────
 
 TEST_CASE("ColorModel: Rec709 toXYZ/fromXYZ roundtrip") {
-        float src[3] = { 0.5f, 0.3f, 0.8f };
+        float src[3] = {0.5f, 0.3f, 0.8f};
         float xyz[3], dst[3];
         ColorModel(ColorModel::Rec709).toXYZ(src, xyz);
         ColorModel(ColorModel::Rec709).fromXYZ(xyz, dst);
@@ -655,7 +652,7 @@ TEST_CASE("ColorModel: Rec709 toXYZ/fromXYZ roundtrip") {
 }
 
 TEST_CASE("ColorModel: Rec601_PAL toXYZ/fromXYZ roundtrip") {
-        float src[3] = { 0.4f, 0.6f, 0.2f };
+        float src[3] = {0.4f, 0.6f, 0.2f};
         float xyz[3], dst[3];
         ColorModel(ColorModel::Rec601_PAL).toXYZ(src, xyz);
         ColorModel(ColorModel::Rec601_PAL).fromXYZ(xyz, dst);
@@ -665,7 +662,7 @@ TEST_CASE("ColorModel: Rec601_PAL toXYZ/fromXYZ roundtrip") {
 }
 
 TEST_CASE("ColorModel: Rec601_NTSC toXYZ/fromXYZ roundtrip") {
-        float src[3] = { 0.7f, 0.1f, 0.9f };
+        float src[3] = {0.7f, 0.1f, 0.9f};
         float xyz[3], dst[3];
         ColorModel(ColorModel::Rec601_NTSC).toXYZ(src, xyz);
         ColorModel(ColorModel::Rec601_NTSC).fromXYZ(xyz, dst);
@@ -675,7 +672,7 @@ TEST_CASE("ColorModel: Rec601_NTSC toXYZ/fromXYZ roundtrip") {
 }
 
 TEST_CASE("ColorModel: Rec2020 toXYZ/fromXYZ roundtrip") {
-        float src[3] = { 0.3f, 0.5f, 0.7f };
+        float src[3] = {0.3f, 0.5f, 0.7f};
         float xyz[3], dst[3];
         ColorModel(ColorModel::Rec2020).toXYZ(src, xyz);
         ColorModel(ColorModel::Rec2020).fromXYZ(xyz, dst);
@@ -685,7 +682,7 @@ TEST_CASE("ColorModel: Rec2020 toXYZ/fromXYZ roundtrip") {
 }
 
 TEST_CASE("ColorModel: LinearRec2020 toXYZ/fromXYZ roundtrip") {
-        float src[3] = { 0.3f, 0.5f, 0.7f };
+        float src[3] = {0.3f, 0.5f, 0.7f};
         float xyz[3], dst[3];
         ColorModel(ColorModel::LinearRec2020).toXYZ(src, xyz);
         ColorModel(ColorModel::LinearRec2020).fromXYZ(xyz, dst);
@@ -695,7 +692,7 @@ TEST_CASE("ColorModel: LinearRec2020 toXYZ/fromXYZ roundtrip") {
 }
 
 TEST_CASE("ColorModel: YCbCr_Rec601 toXYZ/fromXYZ roundtrip") {
-        float src[3] = { 0.4f, 0.55f, 0.45f };
+        float src[3] = {0.4f, 0.55f, 0.45f};
         float xyz[3], dst[3];
         ColorModel(ColorModel::YCbCr_Rec601).toXYZ(src, xyz);
         ColorModel(ColorModel::YCbCr_Rec601).fromXYZ(xyz, dst);
@@ -705,7 +702,7 @@ TEST_CASE("ColorModel: YCbCr_Rec601 toXYZ/fromXYZ roundtrip") {
 }
 
 TEST_CASE("ColorModel: HSV non-primary roundtrip") {
-        float src[3] = { 0.75f, 0.5f, 0.8f };
+        float src[3] = {0.75f, 0.5f, 0.8f};
         float xyz[3], dst[3];
         ColorModel(ColorModel::HSV_sRGB).toXYZ(src, xyz);
         ColorModel(ColorModel::HSV_sRGB).fromXYZ(xyz, dst);
@@ -717,7 +714,7 @@ TEST_CASE("ColorModel: HSV non-primary roundtrip") {
 // ── Cross-space conversions ──────────────────────────────────────
 
 TEST_CASE("ColorModel: sRGB -> Rec2020 -> sRGB roundtrip") {
-        float src[3] = { 0.6f, 0.3f, 0.9f };
+        float src[3] = {0.6f, 0.3f, 0.9f};
         float xyz[3], r2020[3], xyz2[3], dst[3];
         ColorModel(ColorModel::sRGB).toXYZ(src, xyz);
         ColorModel(ColorModel::Rec2020).fromXYZ(xyz, r2020);
@@ -729,7 +726,7 @@ TEST_CASE("ColorModel: sRGB -> Rec2020 -> sRGB roundtrip") {
 }
 
 TEST_CASE("ColorModel: sRGB -> YCbCr_Rec709 -> sRGB roundtrip") {
-        float src[3] = { 0.5f, 0.3f, 0.8f };
+        float src[3] = {0.5f, 0.3f, 0.8f};
         float xyz[3], ycbcr[3], xyz2[3], dst[3];
         ColorModel(ColorModel::sRGB).toXYZ(src, xyz);
         ColorModel(ColorModel::YCbCr_Rec709).fromXYZ(xyz, ycbcr);
@@ -741,7 +738,7 @@ TEST_CASE("ColorModel: sRGB -> YCbCr_Rec709 -> sRGB roundtrip") {
 }
 
 TEST_CASE("ColorModel: sRGB -> HSV -> sRGB roundtrip") {
-        float src[3] = { 0.5f, 0.3f, 0.8f };
+        float src[3] = {0.5f, 0.3f, 0.8f};
         float xyz[3], hsv[3], xyz2[3], dst[3];
         ColorModel(ColorModel::sRGB).toXYZ(src, xyz);
         ColorModel(ColorModel::HSV_sRGB).fromXYZ(xyz, hsv);
@@ -753,7 +750,7 @@ TEST_CASE("ColorModel: sRGB -> HSV -> sRGB roundtrip") {
 }
 
 TEST_CASE("ColorModel: sRGB -> Lab -> sRGB roundtrip") {
-        float src[3] = { 0.5f, 0.3f, 0.8f };
+        float src[3] = {0.5f, 0.3f, 0.8f};
         float xyz[3], lab[3], xyz2[3], dst[3];
         ColorModel(ColorModel::sRGB).toXYZ(src, xyz);
         ColorModel(ColorModel::CIELab).fromXYZ(xyz, lab);
@@ -767,7 +764,7 @@ TEST_CASE("ColorModel: sRGB -> Lab -> sRGB roundtrip") {
 // ── Known XYZ reference values ───────────────────────────────────
 
 TEST_CASE("ColorModel: linear sRGB green XYZ") {
-        float green[3] = { 0.0f, 1.0f, 0.0f };
+        float green[3] = {0.0f, 1.0f, 0.0f};
         float xyz[3];
         ColorModel(ColorModel::LinearSRGB).toXYZ(green, xyz);
         CHECK(xyz[0] == doctest::Approx(0.3576f).epsilon(1e-3));
@@ -776,7 +773,7 @@ TEST_CASE("ColorModel: linear sRGB green XYZ") {
 }
 
 TEST_CASE("ColorModel: linear sRGB blue XYZ") {
-        float blue[3] = { 0.0f, 0.0f, 1.0f };
+        float blue[3] = {0.0f, 0.0f, 1.0f};
         float xyz[3];
         ColorModel(ColorModel::LinearSRGB).toXYZ(blue, xyz);
         CHECK(xyz[0] == doctest::Approx(0.1805f).epsilon(1e-3));
@@ -785,7 +782,7 @@ TEST_CASE("ColorModel: linear sRGB blue XYZ") {
 }
 
 TEST_CASE("ColorModel: linear sRGB black XYZ is zero") {
-        float black[3] = { 0.0f, 0.0f, 0.0f };
+        float black[3] = {0.0f, 0.0f, 0.0f};
         float xyz[3];
         ColorModel(ColorModel::LinearSRGB).toXYZ(black, xyz);
         CHECK(xyz[0] == doctest::Approx(0.0f));
@@ -879,7 +876,7 @@ TEST_CASE("ColorModel: RGB toNative is identity") {
 // ── Edge-case colors through model spaces ────────────────────────
 
 TEST_CASE("ColorModel: black through HSV") {
-        float black[3] = { 0.0f, 0.0f, 0.0f };
+        float black[3] = {0.0f, 0.0f, 0.0f};
         float xyz[3], hsv[3];
         ColorModel(ColorModel::sRGB).toXYZ(black, xyz);
         ColorModel(ColorModel::HSV_sRGB).fromXYZ(xyz, hsv);
@@ -887,7 +884,7 @@ TEST_CASE("ColorModel: black through HSV") {
 }
 
 TEST_CASE("ColorModel: white through HSV") {
-        float white[3] = { 1.0f, 1.0f, 1.0f };
+        float white[3] = {1.0f, 1.0f, 1.0f};
         float xyz[3], hsv[3];
         ColorModel(ColorModel::sRGB).toXYZ(white, xyz);
         ColorModel(ColorModel::HSV_sRGB).fromXYZ(xyz, hsv);
@@ -896,7 +893,7 @@ TEST_CASE("ColorModel: white through HSV") {
 }
 
 TEST_CASE("ColorModel: gray through YCbCr") {
-        float gray[3] = { 0.5f, 0.5f, 0.5f };
+        float gray[3] = {0.5f, 0.5f, 0.5f};
         float xyz[3], ycbcr[3];
         ColorModel(ColorModel::sRGB).toXYZ(gray, xyz);
         ColorModel(ColorModel::YCbCr_Rec709).fromXYZ(xyz, ycbcr);
@@ -906,7 +903,7 @@ TEST_CASE("ColorModel: gray through YCbCr") {
 }
 
 TEST_CASE("ColorModel: HSV pure blue") {
-        float blue_hsv[3] = { 240.0f / 360.0f, 1.0f, 1.0f };
+        float blue_hsv[3] = {240.0f / 360.0f, 1.0f, 1.0f};
         float xyz[3], rgb[3];
         ColorModel(ColorModel::HSV_sRGB).toXYZ(blue_hsv, xyz);
         ColorModel(ColorModel::sRGB).fromXYZ(xyz, rgb);
@@ -916,7 +913,7 @@ TEST_CASE("ColorModel: HSV pure blue") {
 }
 
 TEST_CASE("ColorModel: CIEXYZ identity") {
-        float src[3] = { 0.4f, 0.3f, 0.2f };
+        float src[3] = {0.4f, 0.3f, 0.2f};
         float dst[3];
         ColorModel(ColorModel::CIEXYZ).toXYZ(src, dst);
         CHECK(dst[0] == doctest::Approx(src[0]));
@@ -942,26 +939,34 @@ TEST_CASE("ColorModel: registerData and construction from custom ID") {
         ColorModel::ID id = ColorModel::registerType();
 
         ColorModel::Data d;
-        d.id   = id;
+        d.id = id;
         d.type = ColorModel::TypeRGB;
         d.name = "TestModel";
         d.desc = "A synthetic color model for unit testing.";
-        d.comps[0] = { "Red",   "R", 0.0f, 1.0f };
-        d.comps[1] = { "Green", "G", 0.0f, 1.0f };
-        d.comps[2] = { "Blue",  "B", 0.0f, 1.0f };
-        d.linear   = true;
-        d.linearCounterpart    = id;
+        d.comps[0] = {"Red", "R", 0.0f, 1.0f};
+        d.comps[1] = {"Green", "G", 0.0f, 1.0f};
+        d.comps[2] = {"Blue", "B", 0.0f, 1.0f};
+        d.linear = true;
+        d.linearCounterpart = id;
         d.nonlinearCounterpart = id;
-        d.parentModel          = ColorModel::Invalid;
+        d.parentModel = ColorModel::Invalid;
         // Identity transfer functions
-        d.oetf = [](double v) { return v; };
-        d.eotf = [](double v) { return v; };
+        d.oetf = [](double v) {
+                return v;
+        };
+        d.eotf = [](double v) {
+                return v;
+        };
         // Identity XYZ conversion (treat our model as CIE XYZ for simplicity)
-        d.toXYZFunc   = [](const ColorModel::Data *, const float *src, float *dst) {
-                dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2];
+        d.toXYZFunc = [](const ColorModel::Data *, const float *src, float *dst) {
+                dst[0] = src[0];
+                dst[1] = src[1];
+                dst[2] = src[2];
         };
         d.fromXYZFunc = [](const ColorModel::Data *, const float *src, float *dst) {
-                dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2];
+                dst[0] = src[0];
+                dst[1] = src[1];
+                dst[2] = src[2];
         };
 
         ColorModel::registerData(std::move(d));
@@ -981,30 +986,38 @@ TEST_CASE("ColorModel: custom model toXYZ/fromXYZ roundtrip") {
         ColorModel::ID id = ColorModel::registerType();
 
         ColorModel::Data d;
-        d.id   = id;
+        d.id = id;
         d.type = ColorModel::TypeRGB;
         d.name = "TestModelRT";
-        d.comps[0] = { "X", "X", 0.0f, 1.0f };
-        d.comps[1] = { "Y", "Y", 0.0f, 1.0f };
-        d.comps[2] = { "Z", "Z", 0.0f, 1.0f };
-        d.linear   = true;
-        d.linearCounterpart    = id;
+        d.comps[0] = {"X", "X", 0.0f, 1.0f};
+        d.comps[1] = {"Y", "Y", 0.0f, 1.0f};
+        d.comps[2] = {"Z", "Z", 0.0f, 1.0f};
+        d.linear = true;
+        d.linearCounterpart = id;
         d.nonlinearCounterpart = id;
-        d.parentModel          = ColorModel::Invalid;
-        d.oetf = [](double v) { return v; };
-        d.eotf = [](double v) { return v; };
-        d.toXYZFunc   = [](const ColorModel::Data *, const float *src, float *dst) {
-                dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2];
+        d.parentModel = ColorModel::Invalid;
+        d.oetf = [](double v) {
+                return v;
+        };
+        d.eotf = [](double v) {
+                return v;
+        };
+        d.toXYZFunc = [](const ColorModel::Data *, const float *src, float *dst) {
+                dst[0] = src[0];
+                dst[1] = src[1];
+                dst[2] = src[2];
         };
         d.fromXYZFunc = [](const ColorModel::Data *, const float *src, float *dst) {
-                dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2];
+                dst[0] = src[0];
+                dst[1] = src[1];
+                dst[2] = src[2];
         };
 
         ColorModel::registerData(std::move(d));
 
         ColorModel cm(id);
-        float src[3] = { 0.3f, 0.6f, 0.9f };
-        float xyz[3], dst[3];
+        float      src[3] = {0.3f, 0.6f, 0.9f};
+        float      xyz[3], dst[3];
         cm.toXYZ(src, xyz);
         cm.fromXYZ(xyz, dst);
         CHECK(dst[0] == doctest::Approx(src[0]).epsilon(1e-6f));

@@ -30,7 +30,7 @@ class TuiPalette;
  * Thread-affine — see @ref TuiWidget.
  */
 class TuiListView : public TuiWidget {
-        PROMEKI_OBJECT(TuiListView, TuiWidget)
+                PROMEKI_OBJECT(TuiListView, TuiWidget)
         public:
                 TuiListView(ObjectBase *parent = nullptr);
                 ~TuiListView() override;
@@ -40,11 +40,11 @@ class TuiListView : public TuiWidget {
                 void setItems(const StringList &items);
                 void clear();
 
-                int currentIndex() const { return _currentIndex; }
+                int  currentIndex() const { return _currentIndex; }
                 void setCurrentIndex(int index);
 
                 String currentItem() const;
-                int count() const { return static_cast<int>(_items.size()); }
+                int    count() const { return static_cast<int>(_items.size()); }
 
                 /** @brief Returns the current scroll offset. */
                 int scrollOffset() const { return _scrollOffset; }
@@ -78,17 +78,17 @@ class TuiListView : public TuiWidget {
                 void mouseEvent(MouseEvent *e) override;
 
         private:
-                StringList      _items;
-                int             _currentIndex = -1;
-                int             _scrollOffset = 0;
-                bool            _dragging = false;
-                int             _dragOffset = 0;        ///< Offset within thumb when drag started.
+                StringList _items;
+                int        _currentIndex = -1;
+                int        _scrollOffset = 0;
+                bool       _dragging = false;
+                int        _dragOffset = 0; ///< Offset within thumb when drag started.
 
-                int contentWidth() const;
+                int  contentWidth() const;
                 void paintScrollbar(TuiPainter &painter, const TuiPalette &pal);
-                int thumbPos() const;
-                int thumbSize() const;
-                int trackHeight() const;
+                int  thumbPos() const;
+                int  thumbSize() const;
+                int  trackHeight() const;
 };
 
 PROMEKI_NAMESPACE_END

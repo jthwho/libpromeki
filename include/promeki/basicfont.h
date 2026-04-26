@@ -62,10 +62,10 @@ class BasicFont : public Font {
                 ~BasicFont() override;
 
                 bool drawText(const String &text, int x, int y) override;
-                int measureText(const String &text) override;
-                int lineHeight() override;
-                int ascender() override;
-                int descender() override;
+                int  measureText(const String &text) override;
+                int  lineHeight() override;
+                int  ascender() override;
+                int  descender() override;
 
         protected:
                 void onStateChanged() override;
@@ -74,13 +74,13 @@ class BasicFont : public Font {
                 bool ensureFontLoaded();
                 void releaseFont();
 
-                void    *_ftLibrary = nullptr;
-                void    *_ftFace = nullptr;
-                Buffer  _fontData;        ///< Owns the font bytes for the lifetime of _ftFace.
-                int     _ascender = 0;
-                int     _descender = 0;
-                int     _lineHeight = 0;
-                bool    _fontDirty = true;
+                void  *_ftLibrary = nullptr;
+                void  *_ftFace = nullptr;
+                Buffer _fontData; ///< Owns the font bytes for the lifetime of _ftFace.
+                int    _ascender = 0;
+                int    _descender = 0;
+                int    _lineHeight = 0;
+                bool   _fontDirty = true;
 };
 
 PROMEKI_NAMESPACE_END

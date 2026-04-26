@@ -26,7 +26,7 @@ TEST_CASE("FileIODevice: default state") {
 
 TEST_CASE("FileIODevice: open without file or filename fails") {
         FileIODevice dev;
-        Error err = dev.open(IODevice::ReadWrite);
+        Error        err = dev.open(IODevice::ReadWrite);
         CHECK(err.isError());
         CHECK(err.code() == Error::Invalid);
 }
@@ -74,7 +74,7 @@ TEST_CASE("FileIODevice: FILE* constructor double open returns AlreadyOpen") {
         FILE *f = std::tmpfile();
         REQUIRE(f != nullptr);
         FileIODevice dev(f, IODevice::ReadWrite);
-        Error err = dev.open(IODevice::ReadOnly);
+        Error        err = dev.open(IODevice::ReadOnly);
         CHECK(err.code() == Error::AlreadyOpen);
         dev.close();
         std::fclose(f);
@@ -89,7 +89,7 @@ TEST_CASE("FileIODevice: FILE* constructor non-owned does not fclose") {
         } // destructor runs — should NOT fclose f
         // Verify the FILE is still usable
         std::rewind(f);
-        char buf[2] = {};
+        char   buf[2] = {};
         size_t n = std::fread(buf, 1, 2, f);
         CHECK(n == 2);
         CHECK(std::memcmp(buf, "hi", 2) == 0);
@@ -116,8 +116,8 @@ TEST_CASE("FileIODevice: write and read back via FILE*") {
         FILE *f = std::tmpfile();
         REQUIRE(f != nullptr);
         FileIODevice dev(f, IODevice::ReadWrite);
-        const char *data = "Hello FILE";
-        int64_t n = dev.write(data, 10);
+        const char  *data = "Hello FILE";
+        int64_t      n = dev.write(data, 10);
         CHECK(n == 10);
         std::rewind(f);
         char buf[10] = {};
@@ -132,8 +132,8 @@ TEST_CASE("FileIODevice: read on WriteOnly fails") {
         FILE *f = std::tmpfile();
         REQUIRE(f != nullptr);
         FileIODevice dev(f, IODevice::WriteOnly);
-        char buf[4];
-        int64_t n = dev.read(buf, 4);
+        char         buf[4];
+        int64_t      n = dev.read(buf, 4);
         CHECK(n == -1);
         dev.close();
         std::fclose(f);
@@ -143,7 +143,7 @@ TEST_CASE("FileIODevice: write on ReadOnly fails") {
         FILE *f = std::tmpfile();
         REQUIRE(f != nullptr);
         FileIODevice dev(f, IODevice::ReadOnly);
-        int64_t n = dev.write("hi", 2);
+        int64_t      n = dev.write("hi", 2);
         CHECK(n == -1);
         dev.close();
         std::fclose(f);
@@ -169,9 +169,9 @@ TEST_CASE("FileIODevice: setFilename") {
 TEST_CASE("FileIODevice: open with filename creates FILE") {
         const char *path = "/tmp/promeki_test_fileiodevice_open.txt";
         {
-                String fn(path);
+                String       fn(path);
                 FileIODevice dev(fn);
-                Error err = dev.open(IODevice::WriteOnly);
+                Error        err = dev.open(IODevice::WriteOnly);
                 CHECK(err.isOk());
                 CHECK(dev.isOpen());
                 CHECK(dev.file() != nullptr);
@@ -181,11 +181,11 @@ TEST_CASE("FileIODevice: open with filename creates FILE") {
         }
         // Verify content was written
         {
-                String fn(path);
+                String       fn(path);
                 FileIODevice dev(fn);
-                Error err = dev.open(IODevice::ReadOnly);
+                Error        err = dev.open(IODevice::ReadOnly);
                 CHECK(err.isOk());
-                char buf[9] = {};
+                char    buf[9] = {};
                 int64_t n = dev.read(buf, 9);
                 CHECK(n == 9);
                 CHECK(std::memcmp(buf, "test data", 9) == 0);
@@ -195,10 +195,10 @@ TEST_CASE("FileIODevice: open with filename creates FILE") {
 }
 
 TEST_CASE("FileIODevice: open ReadWrite with filename") {
-        const char *path = "/tmp/promeki_test_fileiodevice_rw.txt";
-        String fn(path);
+        const char  *path = "/tmp/promeki_test_fileiodevice_rw.txt";
+        String       fn(path);
         FileIODevice dev(fn);
-        Error err = dev.open(IODevice::ReadWrite);
+        Error        err = dev.open(IODevice::ReadWrite);
         CHECK(err.isOk());
         CHECK(dev.isReadable());
         CHECK(dev.isWritable());
@@ -212,9 +212,9 @@ TEST_CASE("FileIODevice: open ReadWrite with filename") {
 }
 
 TEST_CASE("FileIODevice: open with bad filename fails") {
-        String badPath("/nonexistent/path/to/file.txt");
+        String       badPath("/nonexistent/path/to/file.txt");
         FileIODevice dev(badPath);
-        Error err = dev.open(IODevice::ReadOnly);
+        Error        err = dev.open(IODevice::ReadOnly);
         CHECK(err.isError());
         CHECK(err.code() == Error::IOError);
         CHECK_FALSE(dev.isOpen());
@@ -223,7 +223,7 @@ TEST_CASE("FileIODevice: open with bad filename fails") {
 TEST_CASE("FileIODevice: destructor closes owned FILE") {
         const char *path = "/tmp/promeki_test_fileiodevice_dtor.txt";
         {
-                String fn(path);
+                String       fn(path);
                 FileIODevice dev(fn);
                 dev.open(IODevice::WriteOnly);
                 dev.write("data", 4);
@@ -232,7 +232,7 @@ TEST_CASE("FileIODevice: destructor closes owned FILE") {
         // Verify file exists and has content
         FILE *f = std::fopen(path, "rb");
         REQUIRE(f != nullptr);
-        char buf[4] = {};
+        char   buf[4] = {};
         size_t n = std::fread(buf, 1, 4, f);
         CHECK(n == 4);
         CHECK(std::memcmp(buf, "data", 4) == 0);
@@ -259,7 +259,7 @@ TEST_CASE("FileIODevice: takeFile transfers ownership") {
         // The FILE is still valid — caller owns it now
         std::fwrite("ok", 1, 2, taken);
         std::rewind(taken);
-        char buf[2] = {};
+        char   buf[2] = {};
         size_t rn = std::fread(buf, 1, 2, taken);
         CHECK(rn == 2);
         CHECK(std::memcmp(buf, "ok", 2) == 0);
@@ -267,8 +267,8 @@ TEST_CASE("FileIODevice: takeFile transfers ownership") {
 }
 
 TEST_CASE("FileIODevice: takeFile on filename-opened device") {
-        const char *path = "/tmp/promeki_test_fileiodevice_take.txt";
-        String fn(path);
+        const char  *path = "/tmp/promeki_test_fileiodevice_take.txt";
+        String       fn(path);
         FileIODevice dev(fn);
         dev.open(IODevice::WriteOnly);
         dev.write("taken", 5);
@@ -282,7 +282,7 @@ TEST_CASE("FileIODevice: takeFile on filename-opened device") {
         std::fclose(taken);
         FILE *verify = std::fopen(path, "rb");
         REQUIRE(verify != nullptr);
-        char buf[5] = {};
+        char   buf[5] = {};
         size_t rn = std::fread(buf, 1, 5, verify);
         CHECK(rn == 5);
         CHECK(std::memcmp(buf, "taken", 5) == 0);
@@ -292,7 +292,7 @@ TEST_CASE("FileIODevice: takeFile on filename-opened device") {
 
 TEST_CASE("FileIODevice: takeFile on default-constructed returns nullptr") {
         FileIODevice dev;
-        FILE *taken = dev.takeFile();
+        FILE        *taken = dev.takeFile();
         CHECK(taken == nullptr);
 }
 
@@ -327,7 +327,7 @@ TEST_CASE("FileIODevice: atEnd on empty file") {
         FILE *f = std::tmpfile();
         REQUIRE(f != nullptr);
         FileIODevice dev(f, IODevice::ReadOnly);
-        char buf[1];
+        char         buf[1];
         dev.read(buf, 1);
         CHECK(dev.atEnd());
         dev.close();
@@ -336,7 +336,7 @@ TEST_CASE("FileIODevice: atEnd on empty file") {
 
 TEST_CASE("FileIODevice: close when not open returns NotOpen") {
         FileIODevice dev;
-        Error err = dev.close();
+        Error        err = dev.close();
         CHECK(err.code() == Error::NotOpen);
 }
 
@@ -347,7 +347,7 @@ TEST_CASE("FileIODevice: pos when not open returns 0") {
 
 TEST_CASE("FileIODevice: seek when not open returns NotOpen") {
         FileIODevice dev;
-        Error err = dev.seek(0);
+        Error        err = dev.seek(0);
         CHECK(err.code() == Error::NotOpen);
 }
 
@@ -362,11 +362,11 @@ TEST_CASE("FileIODevice: atEnd when not open returns true") {
 
 TEST_CASE("FileIODevice: flush makes data visible to other readers") {
         const char *path = "/tmp/promeki_test_fileiodevice_flush.txt";
-        String fn(path);
+        String      fn(path);
         std::remove(path);
 
         FileIODevice writer(fn);
-        Error err = writer.open(IODevice::WriteOnly);
+        Error        err = writer.open(IODevice::WriteOnly);
         REQUIRE(err.isOk());
 
         const char *msg = "flush test data";
@@ -376,7 +376,7 @@ TEST_CASE("FileIODevice: flush makes data visible to other readers") {
         // stdio buffers haven't been flushed so the file may be empty.
         FILE *reader = std::fopen(path, "rb");
         REQUIRE(reader != nullptr);
-        char buf[15] = {};
+        char   buf[15] = {};
         size_t n = std::fread(buf, 1, 15, reader);
         std::fclose(reader);
         // The kernel page cache might or might not have the data yet,
@@ -414,7 +414,7 @@ TEST_CASE("FileIODevice: flush on FILE* constructor") {
         dev.flush();
         // Verify the data was flushed by reading via the raw FILE*
         std::rewind(f);
-        char buf[4] = {};
+        char   buf[4] = {};
         size_t n = std::fread(buf, 1, 4, f);
         CHECK(n == 4);
         CHECK(std::memcmp(buf, "data", 4) == 0);
@@ -432,9 +432,9 @@ TEST_CASE("FileIODevice: open with Append mode") {
 
         // Write initial data
         {
-                String fn(path);
+                String       fn(path);
                 FileIODevice dev(fn);
-                Error err = dev.open(IODevice::WriteOnly);
+                Error        err = dev.open(IODevice::WriteOnly);
                 REQUIRE(err.isOk());
                 dev.write("hello", 5);
                 dev.close();
@@ -442,9 +442,9 @@ TEST_CASE("FileIODevice: open with Append mode") {
 
         // Append more data
         {
-                String fn(path);
+                String       fn(path);
                 FileIODevice dev(fn);
-                Error err = dev.open(IODevice::Append);
+                Error        err = dev.open(IODevice::Append);
                 REQUIRE(err.isOk());
                 CHECK(dev.isWritable());
                 dev.write(" world", 6);
@@ -453,11 +453,11 @@ TEST_CASE("FileIODevice: open with Append mode") {
 
         // Read back and verify concatenation
         {
-                String fn(path);
+                String       fn(path);
                 FileIODevice dev(fn);
-                Error err = dev.open(IODevice::ReadOnly);
+                Error        err = dev.open(IODevice::ReadOnly);
                 REQUIRE(err.isOk());
-                char buf[11] = {};
+                char    buf[11] = {};
                 int64_t n = dev.read(buf, 11);
                 CHECK(n == 11);
                 CHECK(std::memcmp(buf, "hello world", 11) == 0);
@@ -502,23 +502,23 @@ TEST_CASE("FileIODevice: stdio singletons are stable") {
 }
 
 TEST_CASE("FileIODevice: open with NotOpen mode returns Invalid") {
-        const char *path = "/tmp/promeki_test_fileiodevice_notopen.txt";
-        String fn(path);
+        const char  *path = "/tmp/promeki_test_fileiodevice_notopen.txt";
+        String       fn(path);
         FileIODevice dev(fn);
-        Error err = dev.open(IODevice::NotOpen);
+        Error        err = dev.open(IODevice::NotOpen);
         CHECK(err.isError());
         CHECK(err.code() == Error::Invalid);
 }
 
 TEST_CASE("FileIODevice: read when not open returns -1") {
         FileIODevice dev;
-        char buf[4];
-        int64_t n = dev.read(buf, 4);
+        char         buf[4];
+        int64_t      n = dev.read(buf, 4);
         CHECK(n == -1);
 }
 
 TEST_CASE("FileIODevice: write when not open returns -1") {
         FileIODevice dev;
-        int64_t n = dev.write("hi", 2);
+        int64_t      n = dev.write("hi", 2);
         CHECK(n == -1);
 }

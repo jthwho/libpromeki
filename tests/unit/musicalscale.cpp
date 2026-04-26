@@ -79,10 +79,10 @@ TEST_CASE("MusicalScale") {
 
         SUBCASE("containsNote") {
                 MusicalScale cMajor(0, MusicalScale::Major);
-                CHECK(cMajor.containsNote(60));  // C
-                CHECK(cMajor.containsNote(62));  // D
-                CHECK_FALSE(cMajor.containsNote(61));  // C#
-                CHECK_FALSE(cMajor.containsNote(63));  // Eb
+                CHECK(cMajor.containsNote(60));       // C
+                CHECK(cMajor.containsNote(62));       // D
+                CHECK_FALSE(cMajor.containsNote(61)); // C#
+                CHECK_FALSE(cMajor.containsNote(63)); // Eb
         }
 
         SUBCASE("constrainNote") {

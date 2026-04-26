@@ -78,7 +78,7 @@ TEST_CASE("EUI64: fromString case-insensitive") {
 }
 
 TEST_CASE("EUI64: fromString octet round-trip") {
-        EUI64 original(0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF);
+        EUI64  original(0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF);
         String s = original.toString();
         auto [parsed, err] = EUI64::fromString(s);
         CHECK(err.isOk());
@@ -86,7 +86,7 @@ TEST_CASE("EUI64: fromString octet round-trip") {
 }
 
 TEST_CASE("EUI64: fromString IPv6 round-trip") {
-        EUI64 original(0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF);
+        EUI64  original(0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF);
         String s = original.toString(EUI64Format::IPv6);
         auto [parsed, err] = EUI64::fromString(s);
         CHECK(err.isOk());
@@ -102,7 +102,7 @@ TEST_CASE("EUI64: fromString invalid") {
 TEST_CASE("EUI64: fromMacAddress flips U/L bit and inserts FF:FE") {
         // MAC 00:1A:2B:3C:4D:5E (universal, U/L bit clear)
         MacAddress mac(0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E);
-        EUI64 eui = EUI64::fromMacAddress(mac);
+        EUI64      eui = EUI64::fromMacAddress(mac);
         // Byte 0: 0x00 XOR 0x02 = 0x02 (U/L bit flipped)
         CHECK(eui.octet(0) == 0x02);
         CHECK(eui.octet(1) == 0x1A);
@@ -126,7 +126,7 @@ TEST_CASE("EUI64: hasMacAddress false otherwise") {
 
 TEST_CASE("EUI64: toMacAddress flips U/L bit back") {
         // EUI-64 02:1A:2B:FF:FE:3C:4D:5E (U/L bit set by modified EUI-64)
-        EUI64 eui(0x02, 0x1A, 0x2B, 0xFF, 0xFE, 0x3C, 0x4D, 0x5E);
+        EUI64      eui(0x02, 0x1A, 0x2B, 0xFF, 0xFE, 0x3C, 0x4D, 0x5E);
         MacAddress mac = eui.toMacAddress();
         // Byte 0: 0x02 XOR 0x02 = 0x00 (U/L bit flipped back)
         CHECK(mac.octet(0) == 0x00);
@@ -139,7 +139,7 @@ TEST_CASE("EUI64: toMacAddress flips U/L bit back") {
 
 TEST_CASE("EUI64: MAC round-trip preserves address") {
         MacAddress original(0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E);
-        EUI64 eui = EUI64::fromMacAddress(original);
+        EUI64      eui = EUI64::fromMacAddress(original);
         CHECK(eui.hasMacAddress());
         MacAddress back = eui.toMacAddress();
         CHECK(back == original);
@@ -148,7 +148,7 @@ TEST_CASE("EUI64: MAC round-trip preserves address") {
 TEST_CASE("EUI64: MAC round-trip with locally-administered") {
         // Locally-administered MAC (U/L bit already set)
         MacAddress original(0x02, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE);
-        EUI64 eui = EUI64::fromMacAddress(original);
+        EUI64      eui = EUI64::fromMacAddress(original);
         // 0x02 XOR 0x02 = 0x00 in EUI-64
         CHECK(eui.octet(0) == 0x00);
         MacAddress back = eui.toMacAddress();
@@ -156,7 +156,7 @@ TEST_CASE("EUI64: MAC round-trip with locally-administered") {
 }
 
 TEST_CASE("EUI64: toMacAddress returns null when no FF:FE") {
-        EUI64 eui(0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00, 0x11);
+        EUI64      eui(0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00, 0x11);
         MacAddress mac = eui.toMacAddress();
         CHECK(mac.isNull());
 }
@@ -171,7 +171,7 @@ TEST_CASE("EUI64: comparison") {
 }
 
 TEST_CASE("EUI64: Variant round-trip") {
-        EUI64 original(0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00, 0x11);
+        EUI64   original(0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00, 0x11);
         Variant v = original;
         CHECK(v.type() == Variant::TypeEUI64);
 
@@ -185,7 +185,7 @@ TEST_CASE("EUI64: Variant round-trip") {
 TEST_CASE("EUI64: DataStream round-trip") {
         EUI64 original(0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF);
 
-        Buffer buf(4096);
+        Buffer         buf(4096);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
@@ -197,7 +197,7 @@ TEST_CASE("EUI64: DataStream round-trip") {
         dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&dev);
-                EUI64 loaded;
+                EUI64      loaded;
                 rs >> loaded;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(loaded == original);

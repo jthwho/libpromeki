@@ -13,10 +13,10 @@
 #include <promeki/error.h>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
-#       include <Windows.h>
-#       include <memoryapi.h>
+#include <Windows.h>
+#include <memoryapi.h>
 #elif defined(PROMEKI_PLATFORM_POSIX)
-#       include <sys/mman.h>
+#include <sys/mman.h>
 #endif
 
 PROMEKI_NAMESPACE_BEGIN
@@ -36,18 +36,18 @@ PROMEKI_NAMESPACE_BEGIN
  * @param size Number of bytes to zero.
  */
 inline void secureZero(void *ptr, size_t size) {
-        if(ptr == nullptr || size == 0) return;
+        if (ptr == nullptr || size == 0) return;
 #if defined(PROMEKI_PLATFORM_WINDOWS)
         SecureZeroMemory(ptr, size);
-#elif defined(PROMEKI_LIBC_GLIBC) && \
-      (PROMEKI_LIBC_GLIBC_VERSION_MAJOR > 2 || \
-       (PROMEKI_LIBC_GLIBC_VERSION_MAJOR == 2 && PROMEKI_LIBC_GLIBC_VERSION_MINOR >= 25))
+#elif defined(PROMEKI_LIBC_GLIBC) &&                                                                                   \
+        (PROMEKI_LIBC_GLIBC_VERSION_MAJOR > 2 ||                                                                       \
+         (PROMEKI_LIBC_GLIBC_VERSION_MAJOR == 2 && PROMEKI_LIBC_GLIBC_VERSION_MINOR >= 25))
         explicit_bzero(ptr, size);
 #elif defined(PROMEKI_PLATFORM_BSD)
         explicit_bzero(ptr, size);
 #else
         volatile unsigned char *p = static_cast<volatile unsigned char *>(ptr);
-        while(size--) *p++ = 0;
+        while (size--) *p++ = 0;
 #endif
 }
 

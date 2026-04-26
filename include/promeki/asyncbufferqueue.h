@@ -64,7 +64,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  */
 class AsyncBufferQueue : public IODevice {
-        PROMEKI_OBJECT(AsyncBufferQueue, IODevice)
+                PROMEKI_OBJECT(AsyncBufferQueue, IODevice)
         public:
                 /** @brief Constructs an empty queue, not yet open. */
                 explicit AsyncBufferQueue(ObjectBase *parent = nullptr);
@@ -186,15 +186,15 @@ class AsyncBufferQueue : public IODevice {
 
         private:
                 struct Segment {
-                        Buffer::Ptr     buffer;
-                        size_t          offset = 0;     ///< Bytes already drained from this segment.
+                                Buffer::Ptr buffer;
+                                size_t      offset = 0; ///< Bytes already drained from this segment.
                 };
 
-                mutable Mutex   _mutex;
-                List<Segment>   _segments;
-                int64_t         _queuedBytes    = 0;
-                int64_t         _readPos        = 0;
-                bool            _writingClosed  = false;
+                mutable Mutex _mutex;
+                List<Segment> _segments;
+                int64_t       _queuedBytes = 0;
+                int64_t       _readPos = 0;
+                bool          _writingClosed = false;
 };
 
 PROMEKI_NAMESPACE_END

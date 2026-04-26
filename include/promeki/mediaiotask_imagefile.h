@@ -169,8 +169,7 @@ class MediaIOTask_ImageFile : public MediaIOTask {
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandSeek &cmd) override;
 
-                Error proposeInput(const MediaDesc &offered,
-                                   MediaDesc *preferred) const override;
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
 
                 // Maps the extension in @p filename to the preferred
                 // writer PixelFormat for that format, taking the
@@ -180,13 +179,10 @@ class MediaIOTask_ImageFile : public MediaIOTask {
                 // PixelFormat when no extension-specific preference
                 // applies; the proposeInput override then accepts
                 // whatever was offered.
-                PixelFormat preferredWriterPixelFormat(const String &filename,
-                                                   const PixelFormat &source) const;
+                PixelFormat preferredWriterPixelFormat(const String &filename, const PixelFormat &source) const;
 
-                Error openSingle(MediaIOCommandOpen &cmd, MediaDesc &mediaDesc,
-                                 const String &frSource);
-                Error openSequence(MediaIOCommandOpen &cmd, MediaDesc &mediaDesc,
-                                   const String &frSource);
+                Error openSingle(MediaIOCommandOpen &cmd, MediaDesc &mediaDesc, const String &frSource);
+                Error openSequence(MediaIOCommandOpen &cmd, MediaDesc &mediaDesc, const String &frSource);
                 Error readSingle(MediaIOCommandRead &cmd);
                 Error readSequence(MediaIOCommandRead &cmd);
                 Error writeSingle(MediaIOCommandWrite &cmd);
@@ -195,43 +191,44 @@ class MediaIOTask_ImageFile : public MediaIOTask {
                 Error writeImgSeqSidecar();
 
                 // Common state
-                String          _filename;          ///< @brief Raw config filename (single file, mask, or .imgseq).
-                int             _imageFileID = ImageFile::Invalid;
-                MediaIOMode     _mode = MediaIO_NotOpen;
-                bool            _sequenceMode = false;
-                Metadata        _writeContainerMetadata; ///< @brief Container metadata merged into each written frame (writer only).
-                MediaConfig     _ioConfig;          ///< @brief Open-time MediaConfig forwarded to ImageFileIO load/save calls.
-                bool            _saveImgSeqEnabled = true; ///< @brief Config-level switch for .imgseq sidecar.
-                String          _saveImgSeqPath;    ///< @brief Path for .imgseq sidecar written on close (writer only).
-                Enum            _saveImgSeqPathMode; ///< @brief Relative or Absolute path mode for the sidecar.
-                FrameRate       _writerFrameRate;   ///< @brief Resolved frame rate stashed for the sidecar.
+                String      _filename; ///< @brief Raw config filename (single file, mask, or .imgseq).
+                int         _imageFileID = ImageFile::Invalid;
+                MediaIOMode _mode = MediaIO_NotOpen;
+                bool        _sequenceMode = false;
+                Metadata
+                        _writeContainerMetadata; ///< @brief Container metadata merged into each written frame (writer only).
+                MediaConfig _ioConfig; ///< @brief Open-time MediaConfig forwarded to ImageFileIO load/save calls.
+                bool        _saveImgSeqEnabled = true; ///< @brief Config-level switch for .imgseq sidecar.
+                String      _saveImgSeqPath;     ///< @brief Path for .imgseq sidecar written on close (writer only).
+                Enum        _saveImgSeqPathMode; ///< @brief Relative or Absolute path mode for the sidecar.
+                FrameRate   _writerFrameRate;    ///< @brief Resolved frame rate stashed for the sidecar.
 
                 // Single-file state
-                Frame::Ptr      _frame;
-                FrameCount      _readCount{0};
-                FrameCount      _writeCount{0};
-                bool            _loaded = false;
+                Frame::Ptr _frame;
+                FrameCount _readCount{0};
+                FrameCount _writeCount{0};
+                bool       _loaded = false;
 
                 // Sequence state
-                NumName         _seqName;            ///< @brief Filename pattern for the sequence.
-                FilePath        _seqDir;             ///< @brief Directory containing the sequence files.
-                FrameNumber     _seqHead{0};        ///< @brief First frame number (inclusive).
-                FrameNumber     _seqTail{0};        ///< @brief Last frame number (inclusive).
-                FrameNumber     _seqIndex{0};       ///< @brief Current zero-based offset from head.
-                bool            _seqAtEnd = false;   ///< @brief True after the step-direction end was reached.
-                Metadata        _seqMetadata;        ///< @brief Sidecar-supplied metadata merged onto frames.
-                Size2Du32       _seqSize;            ///< @brief Size hint for headerless formats.
-                PixelFormat       _seqPixelFormat;       ///< @brief Pixel desc hint for headerless formats.
+                NumName     _seqName;          ///< @brief Filename pattern for the sequence.
+                FilePath    _seqDir;           ///< @brief Directory containing the sequence files.
+                FrameNumber _seqHead{0};       ///< @brief First frame number (inclusive).
+                FrameNumber _seqTail{0};       ///< @brief Last frame number (inclusive).
+                FrameNumber _seqIndex{0};      ///< @brief Current zero-based offset from head.
+                bool        _seqAtEnd = false; ///< @brief True after the step-direction end was reached.
+                Metadata    _seqMetadata;      ///< @brief Sidecar-supplied metadata merged onto frames.
+                Size2Du32   _seqSize;          ///< @brief Size hint for headerless formats.
+                PixelFormat _seqPixelFormat;   ///< @brief Pixel desc hint for headerless formats.
 
                 // Sidecar audio state (sequence mode only)
-                AudioFile       _sidecarAudio;       ///< @brief Reader/writer handle for the sidecar audio file.
-                AudioDesc       _sidecarAudioDesc;   ///< @brief Audio format descriptor for the sidecar.
-                String          _sidecarAudioPath;   ///< @brief Resolved path to the sidecar audio file.
-                FrameRate       _sidecarFrameRate;   ///< @brief Frame rate for per-frame sample accounting.
-                int64_t         _sidecarSampleRate = 0; ///< @brief Audio sample rate (int64_t for FrameRate API).
-                bool            _sidecarAudioOpen = false;   ///< @brief True when the sidecar file is open.
-                bool            _sidecarAudioEnabled = true; ///< @brief Config-level master switch.
-                String          _sidecarAudioName;   ///< @brief Bare filename of the sidecar (for .imgseq output).
+                AudioFile _sidecarAudio;               ///< @brief Reader/writer handle for the sidecar audio file.
+                AudioDesc _sidecarAudioDesc;           ///< @brief Audio format descriptor for the sidecar.
+                String    _sidecarAudioPath;           ///< @brief Resolved path to the sidecar audio file.
+                FrameRate _sidecarFrameRate;           ///< @brief Frame rate for per-frame sample accounting.
+                int64_t   _sidecarSampleRate = 0;      ///< @brief Audio sample rate (int64_t for FrameRate API).
+                bool      _sidecarAudioOpen = false;   ///< @brief True when the sidecar file is open.
+                bool      _sidecarAudioEnabled = true; ///< @brief Config-level master switch.
+                String    _sidecarAudioName;           ///< @brief Bare filename of the sidecar (for .imgseq output).
 };
 
 PROMEKI_NAMESPACE_END

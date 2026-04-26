@@ -50,9 +50,8 @@ TEST_CASE("ClockDomain: same ID compares equal") {
 }
 
 TEST_CASE("ClockDomain: registerDomain") {
-        ClockDomain::ID id = ClockDomain::registerDomain(
-                "test.dynamic", "Dynamically registered test domain",
-                ClockEpoch::Absolute);
+        ClockDomain::ID id =
+                ClockDomain::registerDomain("test.dynamic", "Dynamically registered test domain", ClockEpoch::Absolute);
         CHECK(id.isValid());
 
         ClockDomain cd(id);
@@ -65,10 +64,8 @@ TEST_CASE("ClockDomain: registerDomain") {
 }
 
 TEST_CASE("ClockDomain: registerDomain returns existing for duplicate name") {
-        ClockDomain::ID id1 = ClockDomain::registerDomain(
-                "test.dedup", "First", ClockEpoch::PerStream);
-        ClockDomain::ID id2 = ClockDomain::registerDomain(
-                "test.dedup", "Second", ClockEpoch::Absolute);
+        ClockDomain::ID id1 = ClockDomain::registerDomain("test.dedup", "First", ClockEpoch::PerStream);
+        ClockDomain::ID id2 = ClockDomain::registerDomain("test.dedup", "Second", ClockEpoch::Absolute);
         CHECK(id1 == id2);
         // First registration wins
         ClockDomain cd(id2);
@@ -86,11 +83,11 @@ TEST_CASE("ClockDomain: lookup by name") {
 
 TEST_CASE("ClockDomain: registeredIDs") {
         ClockDomain::IDList ids = ClockDomain::registeredIDs();
-        bool hasSynthetic = false;
-        bool hasMono = false;
-        for(size_t i = 0; i < ids.size(); ++i) {
-                if(ids[i] == ClockDomain::Synthetic) hasSynthetic = true;
-                if(ids[i] == ClockDomain::SystemMonotonic) hasMono = true;
+        bool                hasSynthetic = false;
+        bool                hasMono = false;
+        for (size_t i = 0; i < ids.size(); ++i) {
+                if (ids[i] == ClockDomain::Synthetic) hasSynthetic = true;
+                if (ids[i] == ClockDomain::SystemMonotonic) hasMono = true;
         }
         CHECK(hasSynthetic);
         CHECK(hasMono);
@@ -110,9 +107,8 @@ TEST_CASE("ClockDomain: implicit construction from ID") {
 }
 
 TEST_CASE("ClockDomain: setDomainMetadata") {
-        ClockDomain::ID id = ClockDomain::registerDomain(
-                "test.with.meta", "Domain with metadata",
-                ClockEpoch::Absolute);
+        ClockDomain::ID id =
+                ClockDomain::registerDomain("test.with.meta", "Domain with metadata", ClockEpoch::Absolute);
         Metadata meta;
         meta.set(Metadata::FrameRate, 30.0);
         ClockDomain::setDomainMetadata(id, meta);

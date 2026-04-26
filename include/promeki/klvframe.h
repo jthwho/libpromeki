@@ -147,8 +147,7 @@ class KlvReader {
                  * @return @c Error::Ok, @c Error::EndOfFile, @c Error::TooLarge,
                  *         or an IO error.
                  */
-                Error readFrame(KlvFrame &out,
-                                uint32_t maxValueBytes = KlvFrame::DefaultMaxValueBytes);
+                Error readFrame(KlvFrame &out, uint32_t maxValueBytes = KlvFrame::DefaultMaxValueBytes);
 
         private:
                 IODevice *_device = nullptr;
@@ -212,9 +211,7 @@ class KlvWriter {
                 Error writeFrame(FourCC key, const Buffer &value);
 
                 /** @brief Emits the given frame. */
-                Error writeFrame(const KlvFrame &frame) {
-                        return writeFrame(frame.key, frame.value);
-                }
+                Error writeFrame(const KlvFrame &frame) { return writeFrame(frame.key, frame.value); }
 
         private:
                 IODevice *_device = nullptr;

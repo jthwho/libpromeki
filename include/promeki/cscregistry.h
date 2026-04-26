@@ -44,11 +44,8 @@ class CSCRegistry {
                  * @param width      Pixel width of the line.
                  * @param ctx        Scratch context for temporary buffers.
                  */
-                using LineFuncPtr = void (*)(const void *const *srcPlanes,
-                                             const size_t *srcStrides,
-                                             void *const *dstPlanes,
-                                             const size_t *dstStrides,
-                                             size_t width,
+                using LineFuncPtr = void (*)(const void *const *srcPlanes, const size_t *srcStrides,
+                                             void *const *dstPlanes, const size_t *dstStrides, size_t width,
                                              CSCContext &ctx);
 
                 /**

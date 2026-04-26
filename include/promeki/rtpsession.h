@@ -71,7 +71,7 @@ class Thread;
  * @endcode
  */
 class RtpSession : public ObjectBase {
-        PROMEKI_OBJECT(RtpSession, ObjectBase)
+                PROMEKI_OBJECT(RtpSession, ObjectBase)
         public:
                 /**
                  * @brief Constructs an RtpSession.
@@ -138,8 +138,7 @@ class RtpSession : public ObjectBase {
                  * @param marker If true, the marker bit is set.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error sendPacket(const Buffer &payload, uint32_t timestamp,
-                                 uint8_t payloadType, bool marker = false);
+                Error sendPacket(const Buffer &payload, uint32_t timestamp, uint8_t payloadType, bool marker = false);
 
                 /**
                  * @brief Sends pre-packed RTP packets from a payload handler.
@@ -158,8 +157,7 @@ class RtpSession : public ObjectBase {
                  *                     last packet.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error sendPackets(RtpPacket::List &packets, uint32_t timestamp,
-                                  bool markerOnLast = true);
+                Error sendPackets(RtpPacket::List &packets, uint32_t timestamp, bool markerOnLast = true);
 
                 /**
                  * @brief Sends a list of packets with per-packet timestamps.
@@ -187,9 +185,7 @@ class RtpSession : public ObjectBase {
                  * @param marker Marker bit applied to every packet.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error sendPackets(RtpPacket::List &packets,
-                                  uint32_t startTimestamp,
-                                  uint32_t timestampStride,
+                Error sendPackets(RtpPacket::List &packets, uint32_t startTimestamp, uint32_t timestampStride,
                                   bool marker = false);
 
                 /**
@@ -210,8 +206,7 @@ class RtpSession : public ObjectBase {
                  *                     last packet.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error sendPacketsPaced(RtpPacket::List &packets, uint32_t timestamp,
-                                       const Duration &spreadInterval,
+                Error sendPacketsPaced(RtpPacket::List &packets, uint32_t timestamp, const Duration &spreadInterval,
                                        bool markerOnLast = true);
 
                 /**
@@ -228,8 +223,7 @@ class RtpSession : public ObjectBase {
                  * @param packet The parsed RTP packet.
                  * @param sender The datagram sender's address.
                  */
-                using PacketCallback = std::function<
-                        void(const RtpPacket &packet, const SocketAddress &sender)>;
+                using PacketCallback = std::function<void(const RtpPacket &packet, const SocketAddress &sender)>;
 
                 /**
                  * @brief Starts the per-session RTP receive loop.
@@ -265,8 +259,7 @@ class RtpSession : public ObjectBase {
                  *         session has not been started, or
                  *         Error::InvalidArgument on a null callback.
                  */
-                Error startReceiving(PacketCallback callback,
-                                     const String &threadName = "rtp-rx");
+                Error startReceiving(PacketCallback callback, const String &threadName = "rtp-rx");
 
                 /**
                  * @brief Stops the receive loop and joins the receive thread.
@@ -296,9 +289,7 @@ class RtpSession : public ObjectBase {
                 }
 
                 /** @brief Returns the receive-loop poll interval. */
-                unsigned int receivePollIntervalMs() const {
-                        return _receivePollMs;
-                }
+                unsigned int receivePollIntervalMs() const { return _receivePollMs; }
 
                 /**
                  * @brief Applies a transmit-rate cap to the transport.
@@ -366,25 +357,24 @@ class RtpSession : public ObjectBase {
                 class ReceiveThread;
                 friend class ReceiveThread;
 
-                void fillHeader(RtpPacket &pkt, uint8_t pt, bool marker,
-                                uint32_t timestamp);
+                void fillHeader(RtpPacket &pkt, uint8_t pt, bool marker, uint32_t timestamp);
                 void generateSsrc();
 
-                PacketTransport        *_transport = nullptr;
-                PacketTransport::UPtr   _ownedTransport;
-                bool                    _running = false;
-                SocketAddress           _remote;
-                uint32_t                _ssrc = 0;
-                uint16_t                _sequenceNumber = 0;
-                uint8_t                 _payloadType = 96;
-                uint32_t                _clockRate = 90000;
+                PacketTransport      *_transport = nullptr;
+                PacketTransport::UPtr _ownedTransport;
+                bool                  _running = false;
+                SocketAddress         _remote;
+                uint32_t              _ssrc = 0;
+                uint16_t              _sequenceNumber = 0;
+                uint8_t               _payloadType = 96;
+                uint32_t              _clockRate = 90000;
 
                 // Receive path
                 using ReceiveThreadUPtr = UniquePtr<ReceiveThread>;
-                ReceiveThreadUPtr       _receiveThread;
-                PacketCallback   _receiveCallback;
-                Atomic<bool>     _receiving;
-                unsigned int     _receivePollMs = 200;
+                ReceiveThreadUPtr _receiveThread;
+                PacketCallback    _receiveCallback;
+                Atomic<bool>      _receiving;
+                unsigned int      _receivePollMs = 200;
 };
 
 PROMEKI_NAMESPACE_END

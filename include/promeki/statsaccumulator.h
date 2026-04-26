@@ -53,12 +53,12 @@ class StatsAccumulator {
                  * @param value The sample value.
                  */
                 void add(double value) {
-                        if(_count == 0) {
+                        if (_count == 0) {
                                 _min = value;
                                 _max = value;
                         } else {
-                                if(value < _min) _min = value;
-                                if(value > _max) _max = value;
+                                if (value < _min) _min = value;
+                                if (value > _max) _max = value;
                         }
                         _count++;
                         _sum += value;
@@ -71,16 +71,16 @@ class StatsAccumulator {
                  * @param other The accumulator to merge.
                  */
                 void merge(const StatsAccumulator &other) {
-                        if(other._count == 0) return;
-                        if(_count == 0) {
+                        if (other._count == 0) return;
+                        if (_count == 0) {
                                 _min = other._min;
                                 _max = other._max;
                         } else {
-                                if(other._min < _min) _min = other._min;
-                                if(other._max > _max) _max = other._max;
+                                if (other._min < _min) _min = other._min;
+                                if (other._max > _max) _max = other._max;
                         }
                         _count += other._count;
-                        _sum   += other._sum;
+                        _sum += other._sum;
                         _sumSq += other._sumSq;
                         return;
                 }
@@ -88,10 +88,10 @@ class StatsAccumulator {
                 /** @brief Resets the accumulator to its empty state. */
                 void reset() {
                         _count = 0;
-                        _sum   = 0.0;
+                        _sum = 0.0;
                         _sumSq = 0.0;
-                        _min   = 0.0;
-                        _max   = 0.0;
+                        _min = 0.0;
+                        _max = 0.0;
                         return;
                 }
 
@@ -118,7 +118,7 @@ class StatsAccumulator {
                  * @return The mean, or 0.0 if no samples have been added.
                  */
                 double mean() const {
-                        if(_count == 0) return 0.0;
+                        if (_count == 0) return 0.0;
                         return _sum / static_cast<double>(_count);
                 }
 
@@ -127,7 +127,7 @@ class StatsAccumulator {
                  * @return The variance, or 0.0 if fewer than two samples have been added.
                  */
                 double variance() const {
-                        if(_count < 2) return 0.0;
+                        if (_count < 2) return 0.0;
                         double n = static_cast<double>(_count);
                         double v = (_sumSq - _sum * _sum / n) / (n - 1.0);
                         return v > 0.0 ? v : 0.0;
@@ -144,10 +144,10 @@ class StatsAccumulator {
 
         private:
                 uint64_t _count = 0;
-                double   _sum   = 0.0;
+                double   _sum = 0.0;
                 double   _sumSq = 0.0;
-                double   _min   = 0.0;
-                double   _max   = 0.0;
+                double   _min = 0.0;
+                double   _max = 0.0;
 };
 
 PROMEKI_NAMESPACE_END

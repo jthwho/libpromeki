@@ -40,8 +40,7 @@ class Duration {
                  * @return The Duration.
                  */
                 static Duration fromHours(int64_t h) {
-                        return Duration(std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                std::chrono::hours(h)));
+                        return Duration(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::hours(h)));
                 }
 
                 /**
@@ -50,8 +49,7 @@ class Duration {
                  * @return The Duration.
                  */
                 static Duration fromMinutes(int64_t m) {
-                        return Duration(std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                std::chrono::minutes(m)));
+                        return Duration(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::minutes(m)));
                 }
 
                 /**
@@ -60,8 +58,7 @@ class Duration {
                  * @return The Duration.
                  */
                 static Duration fromSeconds(int64_t s) {
-                        return Duration(std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                std::chrono::seconds(s)));
+                        return Duration(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::seconds(s)));
                 }
 
                 /**
@@ -70,8 +67,8 @@ class Duration {
                  * @return The Duration.
                  */
                 static Duration fromMilliseconds(int64_t ms) {
-                        return Duration(std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                std::chrono::milliseconds(ms)));
+                        return Duration(
+                                std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(ms)));
                 }
 
                 /**
@@ -80,8 +77,8 @@ class Duration {
                  * @return The Duration.
                  */
                 static Duration fromMicroseconds(int64_t us) {
-                        return Duration(std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                std::chrono::microseconds(us)));
+                        return Duration(
+                                std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::microseconds(us)));
                 }
 
                 /**
@@ -89,9 +86,7 @@ class Duration {
                  * @param ns Number of nanoseconds.
                  * @return The Duration.
                  */
-                static Duration fromNanoseconds(int64_t ns) {
-                        return Duration(std::chrono::nanoseconds(ns));
-                }
+                static Duration fromNanoseconds(int64_t ns) { return Duration(std::chrono::nanoseconds(ns)); }
 
                 /**
                  * @brief Computes the wall-clock duration spanned by
@@ -100,12 +95,10 @@ class Duration {
                  * Integer overload.  Rate is interpreted as samples
                  * per second.  A zero rate yields a zero Duration.
                  */
-                template<typename Int,
-                         std::enable_if_t<std::is_integral_v<Int>, int> = 0>
+                template <typename Int, std::enable_if_t<std::is_integral_v<Int>, int> = 0>
                 static Duration fromSamples(int64_t count, Int rate) {
-                        if(rate == 0) return Duration();
-                        return fromNanoseconds(count * 1'000'000'000LL /
-                                               static_cast<int64_t>(rate));
+                        if (rate == 0) return Duration();
+                        return fromNanoseconds(count * 1'000'000'000LL / static_cast<int64_t>(rate));
                 }
 
                 /**
@@ -115,13 +108,10 @@ class Duration {
                  * Rate is interpreted as samples per second.  A zero or
                  * non-finite rate yields a zero Duration.
                  */
-                template<typename Float,
-                         std::enable_if_t<std::is_floating_point_v<Float>, int> = 0>
+                template <typename Float, std::enable_if_t<std::is_floating_point_v<Float>, int> = 0>
                 static Duration fromSamples(int64_t count, Float rate) {
-                        if(!(rate > Float(0))) return Duration();
-                        const double ns = static_cast<double>(count) *
-                                          1'000'000'000.0 /
-                                          static_cast<double>(rate);
+                        if (!(rate > Float(0))) return Duration();
+                        const double ns = static_cast<double>(count) * 1'000'000'000.0 / static_cast<double>(rate);
                         return fromNanoseconds(static_cast<int64_t>(ns));
                 }
 
@@ -135,9 +125,8 @@ class Duration {
                  * An invalid or zero-numerator rate yields a zero
                  * Duration.
                  */
-                template<typename T>
-                static Duration fromSamples(int64_t count, const Rational<T> &rate) {
-                        if(!rate.isValid() || rate.numerator() == 0) {
+                template <typename T> static Duration fromSamples(int64_t count, const Rational<T> &rate) {
+                        if (!rate.isValid() || rate.numerator() == 0) {
                                 return Duration();
                         }
                         const int64_t num = static_cast<int64_t>(rate.numerator());
@@ -152,25 +141,19 @@ class Duration {
                  * @brief Returns the total number of whole hours.
                  * @return Hours as int64_t.
                  */
-                int64_t hours() const {
-                        return std::chrono::duration_cast<std::chrono::hours>(_ns).count();
-                }
+                int64_t hours() const { return std::chrono::duration_cast<std::chrono::hours>(_ns).count(); }
 
                 /**
                  * @brief Returns the total number of whole minutes.
                  * @return Minutes as int64_t.
                  */
-                int64_t minutes() const {
-                        return std::chrono::duration_cast<std::chrono::minutes>(_ns).count();
-                }
+                int64_t minutes() const { return std::chrono::duration_cast<std::chrono::minutes>(_ns).count(); }
 
                 /**
                  * @brief Returns the total number of whole seconds.
                  * @return Seconds as int64_t.
                  */
-                int64_t seconds() const {
-                        return std::chrono::duration_cast<std::chrono::seconds>(_ns).count();
-                }
+                int64_t seconds() const { return std::chrono::duration_cast<std::chrono::seconds>(_ns).count(); }
 
                 /**
                  * @brief Returns the total number of whole milliseconds.
@@ -192,17 +175,13 @@ class Duration {
                  * @brief Returns the total number of nanoseconds.
                  * @return Nanoseconds as int64_t.
                  */
-                int64_t nanoseconds() const {
-                        return _ns.count();
-                }
+                int64_t nanoseconds() const { return _ns.count(); }
 
                 /**
                  * @brief Returns the duration as a fractional number of seconds.
                  * @return Seconds as a double.
                  */
-                double toSecondsDouble() const {
-                        return std::chrono::duration<double>(_ns).count();
-                }
+                double toSecondsDouble() const { return std::chrono::duration<double>(_ns).count(); }
 
                 /**
                  * @brief Returns true if the duration is exactly zero.
@@ -277,43 +256,45 @@ PROMEKI_NAMESPACE_END
  *   {:scaled:>16}  // auto-scaled, right-justified, width 16
  * @endcode
  */
-template <>
-struct std::formatter<promeki::Duration> {
-        enum class Style { Hms, Scaled };
-
-        Style _style = Style::Hms;
-        std::formatter<std::string_view> _base;
-
-        constexpr auto parse(std::format_parse_context &ctx) {
-                auto it = ctx.begin();
-                auto end = ctx.end();
-
-                auto tryKeyword = [&](const char *kw, Style s) {
-                        auto p = it;
-                        while(*kw && p != end && *p == *kw) { ++p; ++kw; }
-                        if(*kw == 0 && (p == end || *p == '}' || *p == ':')) {
-                                it = p;
-                                _style = s;
-                                return true;
-                        }
-                        return false;
+template <> struct std::formatter<promeki::Duration> {
+                enum class Style {
+                        Hms,
+                        Scaled
                 };
 
-                if(!tryKeyword("scaled", Style::Scaled)) {
-                        tryKeyword("hms", Style::Hms);
+                Style                            _style = Style::Hms;
+                std::formatter<std::string_view> _base;
+
+                constexpr auto parse(std::format_parse_context &ctx) {
+                        auto it = ctx.begin();
+                        auto end = ctx.end();
+
+                        auto tryKeyword = [&](const char *kw, Style s) {
+                                auto p = it;
+                                while (*kw && p != end && *p == *kw) {
+                                        ++p;
+                                        ++kw;
+                                }
+                                if (*kw == 0 && (p == end || *p == '}' || *p == ':')) {
+                                        it = p;
+                                        _style = s;
+                                        return true;
+                                }
+                                return false;
+                        };
+
+                        if (!tryKeyword("scaled", Style::Scaled)) {
+                                tryKeyword("hms", Style::Hms);
+                        }
+
+                        if (it != end && *it == ':') ++it;
+
+                        ctx.advance_to(it);
+                        return _base.parse(ctx);
                 }
 
-                if(it != end && *it == ':') ++it;
-
-                ctx.advance_to(it);
-                return _base.parse(ctx);
-        }
-
-        template <typename FormatContext>
-        auto format(const promeki::Duration &d, FormatContext &ctx) const {
-                promeki::String s = (_style == Style::Scaled)
-                        ? d.toScaledString()
-                        : d.toString();
-                return _base.format(std::string_view(s.cstr(), s.byteCount()), ctx);
-        }
+                template <typename FormatContext> auto format(const promeki::Duration &d, FormatContext &ctx) const {
+                        promeki::String s = (_style == Style::Scaled) ? d.toScaledString() : d.toString();
+                        return _base.format(std::string_view(s.cstr(), s.byteCount()), ctx);
+                }
 };

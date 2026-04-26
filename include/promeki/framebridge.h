@@ -91,7 +91,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @ref ObjectBase signal/slot dispatch.
  */
 class FrameBridge : public ObjectBase {
-        PROMEKI_OBJECT(FrameBridge, ObjectBase)
+                PROMEKI_OBJECT(FrameBridge, ObjectBase)
         public:
                 /** @brief Unique-ownership pointer to a FrameBridge. */
                 using UPtr = UniquePtr<FrameBridge>;
@@ -122,28 +122,28 @@ class FrameBridge : public ObjectBase {
                  * and the @c ACPT handshake.
                  */
                 struct Config {
-                        /** @brief Video description: frame rate, images, metadata. */
-                        MediaDesc mediaDesc;
+                                /** @brief Video description: frame rate, images, metadata. */
+                                MediaDesc mediaDesc;
 
-                        /** @brief Audio track description. */
-                        AudioDesc audioDesc;
+                                /** @brief Audio track description. */
+                                AudioDesc audioDesc;
 
-                        /** @brief Ring depth — number of slots in the shm buffer. */
-                        int ringDepth = DefaultRingDepth;
+                                /** @brief Ring depth — number of slots in the shm buffer. */
+                                int ringDepth = DefaultRingDepth;
 
-                        /** @brief Reserved metadata bytes per slot. */
-                        size_t metadataReserveBytes = DefaultMetadataReserveBytes;
+                                /** @brief Reserved metadata bytes per slot. */
+                                size_t metadataReserveBytes = DefaultMetadataReserveBytes;
 
-                        /** @brief Extra audio capacity fraction above worst-case per-frame. */
-                        double audioHeadroomFraction = DefaultAudioHeadroomFraction;
+                                /** @brief Extra audio capacity fraction above worst-case per-frame. */
+                                double audioHeadroomFraction = DefaultAudioHeadroomFraction;
 
-                        /** @brief POSIX file mode for the shm and socket objects. */
-                        uint32_t accessMode = DefaultAccessMode;
+                                /** @brief POSIX file mode for the shm and socket objects. */
+                                uint32_t accessMode = DefaultAccessMode;
 
-                        /** @brief Optional group to @c chown both objects to (empty = skip). */
-                        String groupName;
+                                /** @brief Optional group to @c chown both objects to (empty = skip). */
+                                String groupName;
 
-                        /**
+                                /**
                          * @brief Block @ref writeFrame until a consumer is connected.
                          *
                          * When @c true (the default) the first
@@ -165,7 +165,7 @@ class FrameBridge : public ObjectBase {
                          * returns immediately and becomes a silent
                          * no-op when no consumers are attached.
                          */
-                        bool waitForConsumer = true;
+                                bool waitForConsumer = true;
                 };
 
                 /**

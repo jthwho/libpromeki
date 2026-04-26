@@ -92,7 +92,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  */
 class Buffer {
-        PROMEKI_SHARED_FINAL(Buffer)
+                PROMEKI_SHARED_FINAL(Buffer)
         public:
                 /** @brief Shared pointer type for Buffer. */
                 using Ptr = SharedPtr<Buffer>;
@@ -124,9 +124,8 @@ class Buffer {
                  * @note This allocates the buffer of a given size, but does not
                  * set the logical size (it is initialized to 0).
                  */
-                Buffer(size_t sz, size_t an = DefaultAlign, const MemSpace &ms = MemSpace::Default) :
-                        _alloc(ms.alloc(sz, an))
-                {
+                Buffer(size_t sz, size_t an = DefaultAlign, const MemSpace &ms = MemSpace::Default)
+                    : _alloc(ms.alloc(sz, an)) {
                         _data = _alloc.ptr;
                 }
 
@@ -168,9 +167,12 @@ class Buffer {
                  * offset and the logical size.
                  */
                 Buffer(const Buffer &o) : _owned(true), _size(o._size) {
-                        if(o._data != nullptr) {
+                        if (o._data != nullptr) {
                                 _alloc = o._alloc.ms.alloc(o._alloc.size, o._alloc.align);
-                                if(_alloc.ptr == nullptr) { _size = 0; return; }
+                                if (_alloc.ptr == nullptr) {
+                                        _size = 0;
+                                        return;
+                                }
                                 o._alloc.ms.copy(o._alloc, _alloc, _alloc.size);
                                 size_t shift = static_cast<uint8_t *>(o._data) - static_cast<uint8_t *>(o._alloc.ptr);
                                 _data = static_cast<uint8_t *>(_alloc.ptr) + shift;
@@ -179,17 +181,18 @@ class Buffer {
 
                 /** @brief Copy assignment operator. Performs a deep copy. */
                 Buffer &operator=(const Buffer &o) {
-                        if(this == &o) return *this;
-                        if(_owned) _alloc.ms.release(_alloc);
+                        if (this == &o) return *this;
+                        if (_owned) _alloc.ms.release(_alloc);
                         _data = nullptr;
                         _owned = true;
                         _size = 0;
                         _alloc = {};
-                        if(o._data != nullptr) {
+                        if (o._data != nullptr) {
                                 _alloc = o._alloc.ms.alloc(o._alloc.size, o._alloc.align);
-                                if(_alloc.ptr != nullptr) {
+                                if (_alloc.ptr != nullptr) {
                                         o._alloc.ms.copy(o._alloc, _alloc, _alloc.size);
-                                        size_t shift = static_cast<uint8_t *>(o._data) - static_cast<uint8_t *>(o._alloc.ptr);
+                                        size_t shift =
+                                                static_cast<uint8_t *>(o._data) - static_cast<uint8_t *>(o._alloc.ptr);
                                         _data = static_cast<uint8_t *>(_alloc.ptr) + shift;
                                         _size = o._size;
                                 }
@@ -198,9 +201,7 @@ class Buffer {
                 }
 
                 /** @brief Move constructor. Transfers ownership from the source buffer. */
-                Buffer(Buffer &&o) noexcept :
-                        _alloc(o._alloc), _data(o._data), _owned(o._owned), _size(o._size)
-                {
+                Buffer(Buffer &&o) noexcept : _alloc(o._alloc), _data(o._data), _owned(o._owned), _size(o._size) {
                         o._alloc = {};
                         o._data = nullptr;
                         o._owned = false;
@@ -209,8 +210,8 @@ class Buffer {
 
                 /** @brief Move assignment operator. Transfers ownership from the source buffer. */
                 Buffer &operator=(Buffer &&o) noexcept {
-                        if(this == &o) return *this;
-                        if(_owned) _alloc.ms.release(_alloc);
+                        if (this == &o) return *this;
+                        if (_owned) _alloc.ms.release(_alloc);
                         _alloc = o._alloc;
                         _data = o._data;
                         _owned = o._owned;
@@ -224,7 +225,7 @@ class Buffer {
 
                 /** @brief Destructor. Releases owned memory. */
                 ~Buffer() {
-                        if(_owned) _alloc.ms.release(_alloc);
+                        if (_owned) _alloc.ms.release(_alloc);
                 }
 
                 /**
@@ -285,11 +286,9 @@ class Buffer {
                  * @return The available buffer space in bytes.
                  */
                 size_t availSize() const {
-                        if(_data == nullptr) return 0;
-                        return _alloc.size - static_cast<size_t>(
-                                static_cast<uint8_t *>(_data) -
-                                static_cast<uint8_t *>(_alloc.ptr)
-                        );
+                        if (_data == nullptr) return 0;
+                        return _alloc.size -
+                               static_cast<size_t>(static_cast<uint8_t *>(_data) - static_cast<uint8_t *>(_alloc.ptr));
                 }
 
                 /**
@@ -345,9 +344,7 @@ class Buffer {
                  * @param value The byte value to fill with.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error fill(char value) const {
-                        return _alloc.ms.fill(_data, availSize(), value);
-                }
+                Error fill(char value) const { return _alloc.ms.fill(_data, availSize(), value); }
 
                 /**
                  * @brief Copies data from an external source into the buffer.
@@ -365,10 +362,10 @@ class Buffer {
                 Error copyFrom(const void *src, size_t bytes, size_t offset = 0) const;
 
         private:
-                MemAllocation   _alloc;
-                void            *_data          = nullptr;
-                bool            _owned          = true;
-                mutable size_t  _size           = 0;
+                MemAllocation  _alloc;
+                void          *_data = nullptr;
+                bool           _owned = true;
+                mutable size_t _size = 0;
 };
 
 PROMEKI_NAMESPACE_END

@@ -59,9 +59,7 @@ class MediaIOTask_Rtp::SendThread : public Thread {
                         Thread::setName(name);
                 }
 
-                ~SendThread() override {
-                        requestStop();
-                }
+                ~SendThread() override { requestStop(); }
 
                 void requestStop() {
                         _stopRequested.setValue(true);
@@ -74,13 +72,13 @@ class MediaIOTask_Rtp::SendThread : public Thread {
 
         protected:
                 void run() override {
-                        while(!_stopRequested.value()) {
+                        while (!_stopRequested.value()) {
                                 auto r = _workQueue.pop();
-                                if(r.second().isError()) continue;
+                                if (r.second().isError()) continue;
                                 TxWorkItem item = std::move(r.first());
-                                if(!item.work) continue;
+                                if (!item.work) continue;
                                 Error err = item.work();
-                                if(item.resultQueue) {
+                                if (item.resultQueue) {
                                         item.resultQueue->push(err);
                                 }
                         }
@@ -104,23 +102,20 @@ PROMEKI_REGISTER_MEDIAIO(MediaIOTask_Rtp)
 static bool probeSdpDevice(IODevice *device) {
         uint8_t buf[16] = {};
         int64_t n = device->read(buf, sizeof(buf));
-        if(n < 3) return false;
+        if (n < 3) return false;
         // Skip leading whitespace / BOM.
         int i = 0;
-        if(n >= 3 && buf[0] == 0xEF && buf[1] == 0xBB && buf[2] == 0xBF) {
+        if (n >= 3 && buf[0] == 0xEF && buf[1] == 0xBB && buf[2] == 0xBF) {
                 i = 3; // UTF-8 BOM
         }
-        while(i < n && (buf[i] == ' ' || buf[i] == '\t' ||
-                         buf[i] == '\r' || buf[i] == '\n')) {
+        while (i < n && (buf[i] == ' ' || buf[i] == '\t' || buf[i] == '\r' || buf[i] == '\n')) {
                 i++;
         }
-        return (i + 2 < n && buf[i] == 'v' && buf[i + 1] == '='
-                && buf[i + 2] == '0');
+        return (i + 2 < n && buf[i] == 'v' && buf[i + 1] == '=' && buf[i + 2] == '0');
 }
 
 MediaIO::FormatDesc MediaIOTask_Rtp::formatDesc() {
-        return {
-                "Rtp",
+        return {"Rtp",
                 "RTP Stream",
                 "RTP video + audio + metadata reader / writer (MJPEG / JPEG XS / raw / L16 / JSON)",
                 {"sdp"}, // Extension match for readers: an SDP file
@@ -129,15 +124,13 @@ MediaIO::FormatDesc MediaIOTask_Rtp::formatDesc() {
                          // extension-based factory still uses this
                          // list so `-i foo.sdp` in mediaplay picks
                          // the Rtp backend automatically.
-                true,   // canBeSource
-                true,   // canBeSink
-                false,  // canBeTransform
-                []() -> MediaIOTask * {
-                        return new MediaIOTask_Rtp();
-                },
+                true,    // canBeSource
+                true,    // canBeSink
+                false,   // canBeTransform
+                []() -> MediaIOTask * { return new MediaIOTask_Rtp(); },
                 []() -> MediaIO::Config::SpecMap {
                         MediaIO::Config::SpecMap specs;
-                        auto s = [&specs](MediaConfig::ID id, const Variant &def) {
+                        auto                     s = [&specs](MediaConfig::ID id, const Variant &def) {
                                 const VariantSpec *gs = MediaConfig::spec(id);
                                 specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
                         };
@@ -187,8 +180,7 @@ MediaIO::FormatDesc MediaIOTask_Rtp::formatDesc() {
                         // data stream.  Return an empty schema.
                         return Metadata();
                 },
-                probeSdpDevice
-        };
+                probeSdpDevice};
 }
 
 // ----- Ctor / dtor -----
@@ -196,7 +188,7 @@ MediaIO::FormatDesc MediaIOTask_Rtp::formatDesc() {
 MediaIOTask_Rtp::MediaIOTask_Rtp() {
         _video.mediaType = "video";
         _audio.mediaType = "audio";
-        _data.mediaType  = "application";
+        _data.mediaType = "application";
 }
 
 MediaIOTask_Rtp::~MediaIOTask_Rtp() {
@@ -211,13 +203,13 @@ void MediaIOTask_Rtp::resetStream(Stream &s) {
         // flight when we close the stream finishes against the
         // still-valid session/transport.  requestStop() pushes a
         // sentinel to unblock the pop loop; wait() joins.
-        if(s.txThread != nullptr) {
+        if (s.txThread != nullptr) {
                 s.txThread->requestStop();
                 s.txThread->wait();
                 delete s.txThread;
                 s.txThread = nullptr;
         }
-        if(s.session != nullptr) {
+        if (s.session != nullptr) {
                 // stopReceiving() first so the receive thread is
                 // guaranteed idle before we tear down the transport
                 // it is pumping.
@@ -226,7 +218,7 @@ void MediaIOTask_Rtp::resetStream(Stream &s) {
                 delete s.session;
                 s.session = nullptr;
         }
-        if(s.transport != nullptr) {
+        if (s.transport != nullptr) {
                 s.transport->close();
                 delete s.transport;
                 s.transport = nullptr;
@@ -235,11 +227,11 @@ void MediaIOTask_Rtp::resetStream(Stream &s) {
         s.payload = nullptr;
         s.destination = SocketAddress();
         s.packetsSent = 0;
-        s.bytesSent   = 0;
+        s.bytesSent = 0;
         s.packetsReceived = 0;
-        s.bytesReceived   = 0;
-        s.framesReceived  = 0;
-        s.packetsLost     = 0;
+        s.bytesReceived = 0;
+        s.framesReceived = 0;
+        s.packetsLost = 0;
         s.rtpmap.clear();
         s.fmtp.clear();
         s.active = false;
@@ -270,10 +262,10 @@ void MediaIOTask_Rtp::resetAll() {
         resetStream(_video);
         resetStream(_audio);
         resetStream(_data);
-        _frameCount    = 0;
-        _framesSent    = 0;
+        _frameCount = 0;
+        _framesSent = 0;
         _readerFramesReceived = 0;
-        _readerMode    = false;
+        _readerMode = false;
         _videoWirePixelFormat = PixelFormat();
         _readerQueue.clear();
         _sdpSession = SdpSession();
@@ -290,17 +282,15 @@ static bool isJpegPixelFormat(const PixelFormat &pd) {
         // enumerating every (subsampling × matrix × range) variant
         // by hand.  Non-compressed formats and non-JPEG compressed
         // formats (H.264, HEVC, ProRes, ...) all fall through.
-        return pd.isValid() && pd.isCompressed()
-                && pd.videoCodec().id() == VideoCodec::JPEG;
+        return pd.isValid() && pd.isCompressed() && pd.videoCodec().id() == VideoCodec::JPEG;
 }
 
 static bool isJpegXsPixelFormat(const PixelFormat &pd) {
-        return pd.isValid() && pd.isCompressed()
-                && pd.videoCodec().id() == VideoCodec::JPEG_XS;
+        return pd.isValid() && pd.isCompressed() && pd.videoCodec().id() == VideoCodec::JPEG_XS;
 }
 
 Error MediaIOTask_Rtp::openStream(Stream &s, bool enableMulticastLoopback) {
-        if(s.destination.isNull() || !s.destination.isIPv4()) {
+        if (s.destination.isNull() || !s.destination.isIPv4()) {
                 resetStream(s);
                 return Error::Ok; // Nothing to open — stream disabled.
         }
@@ -308,16 +298,15 @@ Error MediaIOTask_Rtp::openStream(Stream &s, bool enableMulticastLoopback) {
         s.transport = new UdpSocketTransport();
         s.transport->setLocalAddress(_localAddress);
         s.transport->setDscp(static_cast<uint8_t>(s.dscp & 0x3F));
-        if(_multicastTTL > 0) s.transport->setMulticastTTL(_multicastTTL);
-        if(!_multicastInterface.isEmpty()) {
+        if (_multicastTTL > 0) s.transport->setMulticastTTL(_multicastTTL);
+        if (!_multicastInterface.isEmpty()) {
                 s.transport->setMulticastInterface(_multicastInterface);
         }
-        if(enableMulticastLoopback) s.transport->setMulticastLoopback(true);
+        if (enableMulticastLoopback) s.transport->setMulticastLoopback(true);
 
         Error err = s.transport->open();
-        if(err.isError()) {
-                promekiErr("MediaIOTask_Rtp: failed to open %s transport: %s",
-                           s.mediaType.cstr(), err.desc().cstr());
+        if (err.isError()) {
+                promekiErr("MediaIOTask_Rtp: failed to open %s transport: %s", s.mediaType.cstr(), err.desc().cstr());
                 resetStream(s);
                 return err;
         }
@@ -325,13 +314,12 @@ Error MediaIOTask_Rtp::openStream(Stream &s, bool enableMulticastLoopback) {
         s.session = new RtpSession();
         s.session->setClockRate(s.clockRate);
         s.session->setPayloadType(s.payloadType);
-        if(s.ssrc != 0) s.session->setSsrc(s.ssrc);
+        if (s.ssrc != 0) s.session->setSsrc(s.ssrc);
         s.session->setRemote(s.destination);
 
         err = s.session->start(s.transport);
-        if(err.isError()) {
-                promekiErr("MediaIOTask_Rtp: failed to start %s session: %s",
-                           s.mediaType.cstr(), err.desc().cstr());
+        if (err.isError()) {
+                promekiErr("MediaIOTask_Rtp: failed to start %s session: %s", s.mediaType.cstr(), err.desc().cstr());
                 resetStream(s);
                 return err;
         }
@@ -364,7 +352,7 @@ Error MediaIOTask_Rtp::openStream(Stream &s, bool enableMulticastLoopback) {
 }
 
 Error MediaIOTask_Rtp::openReaderStream(Stream &s, bool /*enableMulticastLoopback*/) {
-        if(s.destination.isNull() || !s.destination.isIPv4()) {
+        if (s.destination.isNull() || !s.destination.isIPv4()) {
                 resetStream(s);
                 return Error::Ok; // Nothing to open — stream disabled.
         }
@@ -375,14 +363,14 @@ Error MediaIOTask_Rtp::openReaderStream(Stream &s, bool /*enableMulticastLoopbac
         // (0.0.0.0) and join the group below.  For a unicast stream
         // we bind to the specific interface if the user asked for
         // one via RtpLocalAddress, otherwise 0.0.0.0.
-        const bool isMulticast = s.destination.isMulticast();
+        const bool    isMulticast = s.destination.isMulticast();
         SocketAddress bindAddr;
-        if(isMulticast) {
+        if (isMulticast) {
                 bindAddr = SocketAddress::any(s.destination.port());
         } else {
                 // Honour RtpLocalAddress if set; otherwise bind to
                 // any interface on the requested stream port.
-                if(!_localAddress.isNull() && _localAddress.port() != 0) {
+                if (!_localAddress.isNull() && _localAddress.port() != 0) {
                         bindAddr = _localAddress;
                 } else {
                         bindAddr = SocketAddress::any(s.destination.port());
@@ -392,7 +380,7 @@ Error MediaIOTask_Rtp::openReaderStream(Stream &s, bool /*enableMulticastLoopbac
         s.transport = new UdpSocketTransport();
         s.transport->setLocalAddress(bindAddr);
         s.transport->setReuseAddress(true);
-        if(!_multicastInterface.isEmpty()) {
+        if (!_multicastInterface.isEmpty()) {
                 s.transport->setMulticastInterface(_multicastInterface);
         }
         // Loopback is a sender-side concept for multicast; receivers
@@ -400,28 +388,25 @@ Error MediaIOTask_Rtp::openReaderStream(Stream &s, bool /*enableMulticastLoopbac
         // sender enabled loopback, so nothing to configure here.
 
         Error err = s.transport->open();
-        if(err.isError()) {
-                promekiErr("MediaIOTask_Rtp: failed to open %s reader transport: %s",
-                           s.mediaType.cstr(), err.desc().cstr());
+        if (err.isError()) {
+                promekiErr("MediaIOTask_Rtp: failed to open %s reader transport: %s", s.mediaType.cstr(),
+                           err.desc().cstr());
                 resetStream(s);
                 return err;
         }
 
-        if(isMulticast) {
+        if (isMulticast) {
                 UdpSocket *sock = s.transport->socket();
-                if(sock == nullptr) {
-                        promekiErr("MediaIOTask_Rtp: %s transport has no socket",
-                                   s.mediaType.cstr());
+                if (sock == nullptr) {
+                        promekiErr("MediaIOTask_Rtp: %s transport has no socket", s.mediaType.cstr());
                         resetStream(s);
                         return Error::Invalid;
                 }
                 Error jerr = _multicastInterface.isEmpty()
-                        ? sock->joinMulticastGroup(s.destination)
-                        : sock->joinMulticastGroup(s.destination,
-                                                    _multicastInterface);
-                if(jerr.isError()) {
-                        promekiErr("MediaIOTask_Rtp: join %s on %s failed: %s",
-                                   s.destination.toString().cstr(),
+                                     ? sock->joinMulticastGroup(s.destination)
+                                     : sock->joinMulticastGroup(s.destination, _multicastInterface);
+                if (jerr.isError()) {
+                        promekiErr("MediaIOTask_Rtp: join %s on %s failed: %s", s.destination.toString().cstr(),
                                    s.mediaType.cstr(), jerr.desc().cstr());
                         resetStream(s);
                         return jerr;
@@ -431,15 +416,15 @@ Error MediaIOTask_Rtp::openReaderStream(Stream &s, bool /*enableMulticastLoopbac
         s.session = new RtpSession();
         s.session->setClockRate(s.clockRate);
         s.session->setPayloadType(s.payloadType);
-        if(s.ssrc != 0) s.session->setSsrc(s.ssrc);
+        if (s.ssrc != 0) s.session->setSsrc(s.ssrc);
         // remote is meaningless for reader sessions but we set it
         // anyway so the session object is self-consistent.
         s.session->setRemote(s.destination);
 
         err = s.session->start(s.transport);
-        if(err.isError()) {
-                promekiErr("MediaIOTask_Rtp: failed to start %s reader session: %s",
-                           s.mediaType.cstr(), err.desc().cstr());
+        if (err.isError()) {
+                promekiErr("MediaIOTask_Rtp: failed to start %s reader session: %s", s.mediaType.cstr(),
+                           err.desc().cstr());
                 resetStream(s);
                 return err;
         }
@@ -451,26 +436,20 @@ Error MediaIOTask_Rtp::openReaderStream(Stream &s, bool /*enableMulticastLoopbac
         // "rtp-rx-audio" / "rtp-rx-data" so that per-stream CPU
         // usage shows up distinctly in `top -H`.
         String threadName = String("rtp-rx-") + s.mediaType;
-        Error recvErr;
-        if(&s == &_video) {
+        Error  recvErr;
+        if (&s == &_video) {
                 recvErr = s.session->startReceiving(
-                        [this](const RtpPacket &pkt, const SocketAddress &) {
-                                onVideoPacket(pkt);
-                        }, threadName);
-        } else if(&s == &_audio) {
+                        [this](const RtpPacket &pkt, const SocketAddress &) { onVideoPacket(pkt); }, threadName);
+        } else if (&s == &_audio) {
                 recvErr = s.session->startReceiving(
-                        [this](const RtpPacket &pkt, const SocketAddress &) {
-                                onAudioPacket(pkt);
-                        }, threadName);
+                        [this](const RtpPacket &pkt, const SocketAddress &) { onAudioPacket(pkt); }, threadName);
         } else {
                 recvErr = s.session->startReceiving(
-                        [this](const RtpPacket &pkt, const SocketAddress &) {
-                                onDataPacket(pkt);
-                        }, threadName);
+                        [this](const RtpPacket &pkt, const SocketAddress &) { onDataPacket(pkt); }, threadName);
         }
-        if(recvErr.isError()) {
-                promekiErr("MediaIOTask_Rtp: startReceiving on %s failed: %s",
-                           s.mediaType.cstr(), recvErr.desc().cstr());
+        if (recvErr.isError()) {
+                promekiErr("MediaIOTask_Rtp: startReceiving on %s failed: %s", s.mediaType.cstr(),
+                           recvErr.desc().cstr());
                 resetStream(s);
                 return recvErr;
         }
@@ -491,10 +470,9 @@ Error MediaIOTask_Rtp::openReaderStream(Stream &s, bool /*enableMulticastLoopbac
 
 // ----- Per-stream configuration -----
 
-Error MediaIOTask_Rtp::configureVideoStream(const MediaIO::Config &cfg,
-                                             const MediaDesc &mediaDesc) {
+Error MediaIOTask_Rtp::configureVideoStream(const MediaIO::Config &cfg, const MediaDesc &mediaDesc) {
         SocketAddress dest = cfg.getAs<SocketAddress>(MediaConfig::VideoRtpDestination, SocketAddress());
-        if(dest.isNull()) return Error::Ok; // Disabled.
+        if (dest.isNull()) return Error::Ok; // Disabled.
 
         // Try to pull a video descriptor from three sources in
         // priority order:
@@ -508,21 +486,21 @@ Error MediaIOTask_Rtp::configureVideoStream(const MediaIO::Config &cfg,
         //      backends let callers describe the format via plain
         //      --ic flags rather than a full MediaDesc object.
         ImageDesc img;
-        if(!mediaDesc.imageList().isEmpty()) {
+        if (!mediaDesc.imageList().isEmpty()) {
                 img = mediaDesc.imageList()[0];
         }
-        if(!img.isValid()) {
-                Size2Du32 size = cfg.getAs<Size2Du32>(MediaConfig::VideoSize, Size2Du32());
-                PixelFormat pd   = cfg.getAs<PixelFormat>(MediaConfig::VideoPixelFormat, PixelFormat());
-                if(size.isValid() && pd.isValid()) {
+        if (!img.isValid()) {
+                Size2Du32   size = cfg.getAs<Size2Du32>(MediaConfig::VideoSize, Size2Du32());
+                PixelFormat pd = cfg.getAs<PixelFormat>(MediaConfig::VideoPixelFormat, PixelFormat());
+                if (size.isValid() && pd.isValid()) {
                         img = ImageDesc(size, pd);
                 }
         }
         _video.destination = dest;
         _video.payloadType = static_cast<uint8_t>(cfg.getAs<int>(MediaConfig::VideoRtpPayloadType, 96) & 0x7F);
-        _video.clockRate   = static_cast<uint32_t>(cfg.getAs<int>(MediaConfig::VideoRtpClockRate, 90000));
-        _video.ssrc        = static_cast<uint32_t>(cfg.getAs<uint32_t>(MediaConfig::VideoRtpSsrc, 0));
-        _video.dscp        = cfg.getAs<int>(MediaConfig::VideoRtpDscp, 46);
+        _video.clockRate = static_cast<uint32_t>(cfg.getAs<int>(MediaConfig::VideoRtpClockRate, 90000));
+        _video.ssrc = static_cast<uint32_t>(cfg.getAs<uint32_t>(MediaConfig::VideoRtpSsrc, 0));
+        _video.dscp = cfg.getAs<int>(MediaConfig::VideoRtpDscp, 46);
 
         // Reader-mode JPEG: the SDP carries no geometry — RFC 2435
         // puts width/height in each packet header.  Detect JPEG from
@@ -531,14 +509,14 @@ Error MediaIOTask_Rtp::configureVideoStream(const MediaIO::Config &cfg,
         // be populated lazily by emitVideoFrame() from the first
         // reassembled frame.  Stash the fmtp string so the deferred
         // geometry code can read colorimetry and RANGE from it.
-        if(!img.isValid() && _readerMode && _video.payloadType == 26) {
+        if (!img.isValid() && _readerMode && _video.payloadType == 26) {
                 _video.payload = new RtpPayloadJpeg(0, 0);
                 _video.rtpmap = String("JPEG/") + String::number(_video.clockRate);
                 _video.fmtp = cfg.getAs<String>(MediaConfig::VideoRtpFmtp, String());
                 return Error::Ok;
         }
 
-        if(!img.isValid()) {
+        if (!img.isValid()) {
                 promekiErr("MediaIOTask_Rtp: VideoRtpDestination set but no "
                            "video track in media descriptor (set VideoSize + "
                            "VideoPixelFormat, or supply a MediaDesc)");
@@ -552,55 +530,50 @@ Error MediaIOTask_Rtp::configureVideoStream(const MediaIO::Config &cfg,
         // (including colorimetry + RANGE), and encoding name.
         // This keeps all PixelFormat → SDP mapping in one place.
         SdpMediaDescription sdpMd = img.toSdp(_video.payloadType);
-        if(sdpMd.mediaType().isEmpty()) {
-                promekiErr("MediaIOTask_Rtp: unsupported video pixel format '%s'",
-                           pd.name().cstr());
+        if (sdpMd.mediaType().isEmpty()) {
+                promekiErr("MediaIOTask_Rtp: unsupported video pixel format '%s'", pd.name().cstr());
                 return Error::NotSupported;
         }
 
         // Extract rtpmap and fmtp from the SdpMediaDescription.
-        for(size_t i = 0; i < sdpMd.attributes().size(); i++) {
+        for (size_t i = 0; i < sdpMd.attributes().size(); i++) {
                 const String &key = sdpMd.attributes()[i].first();
                 const String &val = sdpMd.attributes()[i].second();
-                if(key == "rtpmap") {
+                if (key == "rtpmap") {
                         // Strip the "<pt> " prefix — _video.rtpmap
                         // stores just the encoding/clock part.
                         size_t sp = val.find(' ');
-                        _video.rtpmap = (sp != String::npos)
-                                ? val.mid(sp + 1) : val;
-                } else if(key == "fmtp") {
+                        _video.rtpmap = (sp != String::npos) ? val.mid(sp + 1) : val;
+                } else if (key == "fmtp") {
                         size_t sp = val.find(' ');
-                        _video.fmtp = (sp != String::npos)
-                                ? val.mid(sp + 1) : val;
+                        _video.fmtp = (sp != String::npos) ? val.mid(sp + 1) : val;
                 }
         }
 
         // toSdp may remap the payload type (e.g. 96 → 26 for JPEG).
-        if(!sdpMd.payloadTypes().isEmpty()) {
+        if (!sdpMd.payloadTypes().isEmpty()) {
                 _video.payloadType = sdpMd.payloadTypes()[0];
         }
 
         // Pick payload class from the pixel descriptor family.
-        if(isJpegPixelFormat(pd)) {
-                _video.payload = new RtpPayloadJpeg(static_cast<int>(img.width()),
-                                                    static_cast<int>(img.height()));
-        } else if(isJpegXsPixelFormat(pd)) {
-                auto *jxs = new RtpPayloadJpegXs(static_cast<int>(img.width()),
-                                                 static_cast<int>(img.height()),
+        if (isJpegPixelFormat(pd)) {
+                _video.payload = new RtpPayloadJpeg(static_cast<int>(img.width()), static_cast<int>(img.height()));
+        } else if (isJpegXsPixelFormat(pd)) {
+                auto *jxs = new RtpPayloadJpegXs(static_cast<int>(img.width()), static_cast<int>(img.height()),
                                                  _video.payloadType);
                 _video.payload = jxs;
                 _video.clockRate = RtpPayloadJpegXs::ClockRate;
-        } else if(!pd.isCompressed()) {
+        } else if (!pd.isCompressed()) {
                 const PixelMemLayout &pf = pd.memLayout();
-                if(pf.planeCount() > 1) {
+                if (pf.planeCount() > 1) {
                         promekiErr("MediaIOTask_Rtp: planar pixel formats are not supported "
                                    "for RFC 4175 raw video (use an interleaved format)");
                         return Error::NotSupported;
                 }
                 size_t ppb = pf.pixelsPerBlock();
                 size_t bpb = pf.bytesPerBlock();
-                int bpp = (ppb > 0) ? static_cast<int>((8 * bpb) / ppb) : 0;
-                if(bpp == 0) {
+                int    bpp = (ppb > 0) ? static_cast<int>((8 * bpb) / ppb) : 0;
+                if (bpp == 0) {
                         promekiErr("MediaIOTask_Rtp: video pixel desc has zero bits-per-pixel");
                         return Error::InvalidArgument;
                 }
@@ -609,55 +582,49 @@ Error MediaIOTask_Rtp::configureVideoStream(const MediaIO::Config &cfg,
                 // a different component order (e.g. YUYV), store the
                 // corresponding UYVY PixelFormat so sendVideo() can call
                 // UncompressedVideoPayload::convert() before packing.
-                if(pf.id() == PixelMemLayout::I_422_3x8) {
-                        if(pd.id() == PixelFormat::YUV8_422_Rec709)
+                if (pf.id() == PixelMemLayout::I_422_3x8) {
+                        if (pd.id() == PixelFormat::YUV8_422_Rec709)
                                 _videoWirePixelFormat = PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709);
-                        else if(pd.id() == PixelFormat::YUV8_422_Rec601)
+                        else if (pd.id() == PixelFormat::YUV8_422_Rec601)
                                 _videoWirePixelFormat = PixelFormat(PixelFormat::YUV8_422_UYVY_Rec601);
                         else
                                 _videoWirePixelFormat = PixelFormat();
                 } else {
                         _videoWirePixelFormat = PixelFormat();
                 }
-                _video.payload = new RtpPayloadRawVideo(static_cast<int>(img.width()),
-                                                         static_cast<int>(img.height()),
-                                                         bpp,
-                                                         static_cast<int>(bpb));
+                _video.payload = new RtpPayloadRawVideo(static_cast<int>(img.width()), static_cast<int>(img.height()),
+                                                        bpp, static_cast<int>(bpb));
         }
 
         return Error::Ok;
 }
 
-Error MediaIOTask_Rtp::configureAudioStream(const MediaIO::Config &cfg,
-                                             const MediaDesc &mediaDesc) {
+Error MediaIOTask_Rtp::configureAudioStream(const MediaIO::Config &cfg, const MediaDesc &mediaDesc) {
         SocketAddress dest = cfg.getAs<SocketAddress>(MediaConfig::AudioRtpDestination, SocketAddress());
-        if(dest.isNull()) return Error::Ok; // Disabled.
+        if (dest.isNull()) return Error::Ok; // Disabled.
 
         // Same three-source fallback as configureVideoStream:
         // caller-supplied MediaDesc first, then loadSdp()-populated
         // entries (already merged into mediaDesc), then
         // AudioRate + AudioChannels config keys as a last resort.
         AudioDesc ad;
-        if(!mediaDesc.audioList().isEmpty()) {
+        if (!mediaDesc.audioList().isEmpty()) {
                 ad = mediaDesc.audioList()[0];
         }
-        if(!ad.isValid()) {
-                float rate = cfg.getAs<float>(MediaConfig::AudioRate, 0.0f);
-                unsigned int channels =
-                        cfg.getAs<unsigned int>(MediaConfig::AudioChannels, 0u);
-                if(rate > 0.0f && channels > 0) {
+        if (!ad.isValid()) {
+                float        rate = cfg.getAs<float>(MediaConfig::AudioRate, 0.0f);
+                unsigned int channels = cfg.getAs<unsigned int>(MediaConfig::AudioChannels, 0u);
+                if (rate > 0.0f && channels > 0) {
                         // Reader-mode default storage format is
                         // PCMI_S16BE (the L16 wire format).  The
                         // writer path overrides this explicitly so
                         // that AudioBuffer can convert whatever the
                         // producer supplies into the wire format.
-                        AudioFormat::ID dt = _readerMode
-                                ? AudioFormat::PCMI_S16BE
-                                : AudioFormat::PCMI_S16LE;
+                        AudioFormat::ID dt = _readerMode ? AudioFormat::PCMI_S16BE : AudioFormat::PCMI_S16LE;
                         ad = AudioDesc(dt, rate, channels);
                 }
         }
-        if(!ad.isValid()) {
+        if (!ad.isValid()) {
                 promekiErr("MediaIOTask_Rtp: AudioRtpDestination set but no "
                            "audio track in media descriptor (set AudioRate + "
                            "AudioChannels, or supply a MediaDesc)");
@@ -667,17 +634,16 @@ Error MediaIOTask_Rtp::configureAudioStream(const MediaIO::Config &cfg,
         _audio.readerAudioDesc = ad;
         _audio.destination = dest;
         _audio.payloadType = static_cast<uint8_t>(cfg.getAs<int>(MediaConfig::AudioRtpPayloadType, 96) & 0x7F);
-        _audio.ssrc        = cfg.getAs<uint32_t>(MediaConfig::AudioRtpSsrc, 0);
-        _audio.dscp        = cfg.getAs<int>(MediaConfig::AudioRtpDscp, 34);
+        _audio.ssrc = cfg.getAs<uint32_t>(MediaConfig::AudioRtpSsrc, 0);
+        _audio.dscp = cfg.getAs<int>(MediaConfig::AudioRtpDscp, 34);
 
         int cfgClockRate = cfg.getAs<int>(MediaConfig::AudioRtpClockRate, 0);
-        _audio.clockRate = cfgClockRate > 0
-                ? static_cast<uint32_t>(cfgClockRate)
-                : static_cast<uint32_t>(ad.sampleRate());
+        _audio.clockRate =
+                cfgClockRate > 0 ? static_cast<uint32_t>(cfgClockRate) : static_cast<uint32_t>(ad.sampleRate());
 
-        const uint32_t sr = static_cast<uint32_t>(ad.sampleRate());
+        const uint32_t     sr = static_cast<uint32_t>(ad.sampleRate());
         const unsigned int ch = ad.channels();
-        if(sr == 0 || ch == 0) {
+        if (sr == 0 || ch == 0) {
                 promekiErr("MediaIOTask_Rtp: audio sample rate or channel count is zero");
                 return Error::InvalidArgument;
         }
@@ -696,48 +662,46 @@ Error MediaIOTask_Rtp::configureAudioStream(const MediaIO::Config &cfg,
         // be anything up to 64 (AES67 allows 1-8 typically).
         static constexpr size_t kMaxBytesPerPacket = 1200;
         static constexpr size_t kStorageBytesPerSample = 2; // L16
-        const size_t maxSamplesPerPacket =
-                kMaxBytesPerPacket / (static_cast<size_t>(ch) * kStorageBytesPerSample);
-        if(maxSamplesPerPacket == 0) {
-                promekiErr("MediaIOTask_Rtp: %u audio channels at L16 will not fit in %zu-byte MTU",
-                           ch, kMaxBytesPerPacket);
+        const size_t maxSamplesPerPacket = kMaxBytesPerPacket / (static_cast<size_t>(ch) * kStorageBytesPerSample);
+        if (maxSamplesPerPacket == 0) {
+                promekiErr("MediaIOTask_Rtp: %u audio channels at L16 will not fit in %zu-byte MTU", ch,
+                           kMaxBytesPerPacket);
                 return Error::InvalidArgument;
         }
 
         const int requestedUs = cfg.getAs<int>(MediaConfig::AudioRtpPacketTimeUs, 1000);
-        auto samplesForUs = [sr](int us) -> size_t {
+        auto      samplesForUs = [sr](int us) -> size_t {
                 return (static_cast<uint64_t>(sr) * static_cast<uint64_t>(us)) / 1'000'000ull;
         };
 
         size_t resolvedSamples = samplesForUs(requestedUs);
-        int    resolvedUs      = requestedUs;
-        if(resolvedSamples == 0 || resolvedSamples > maxSamplesPerPacket) {
+        int    resolvedUs = requestedUs;
+        if (resolvedSamples == 0 || resolvedSamples > maxSamplesPerPacket) {
                 // Fall back through the AES67 standard set, largest
                 // first so we keep packet counts low when possible.
-                static constexpr int kAes67Intervals[] = { 4000, 1000, 333, 250, 125 };
+                static constexpr int kAes67Intervals[] = {4000, 1000, 333, 250, 125};
                 resolvedSamples = 0;
-                for(int us : kAes67Intervals) {
+                for (int us : kAes67Intervals) {
                         size_t s = samplesForUs(us);
-                        if(s > 0 && s <= maxSamplesPerPacket) {
+                        if (s > 0 && s <= maxSamplesPerPacket) {
                                 resolvedSamples = s;
-                                resolvedUs      = us;
+                                resolvedUs = us;
                                 break;
                         }
                 }
-                if(resolvedSamples == 0) {
+                if (resolvedSamples == 0) {
                         // Last resort: one sample per packet.
                         resolvedSamples = 1;
-                        resolvedUs      = static_cast<int>((1'000'000ull + sr - 1) / sr);
+                        resolvedUs = static_cast<int>((1'000'000ull + sr - 1) / sr);
                 }
-                promekiWarn("MediaIOTask_Rtp: audio packet time %dus exceeds MTU for %u channels; clamped to %dus (%zu samples/packet)",
+                promekiWarn("MediaIOTask_Rtp: audio packet time %dus exceeds MTU for %u channels; clamped to %dus (%zu "
+                            "samples/packet)",
                             requestedUs, ch, resolvedUs, resolvedSamples);
         }
 
         _audioState.packetSamples = resolvedSamples;
-        _audioState.packetBytes   = resolvedSamples *
-                                    static_cast<size_t>(ch) *
-                                    kStorageBytesPerSample;
-        _audioState.packetTimeUs  = resolvedUs;
+        _audioState.packetBytes = resolvedSamples * static_cast<size_t>(ch) * kStorageBytesPerSample;
+        _audioState.packetTimeUs = resolvedUs;
         _audioState.nextTimestamp = 0;
 
         // -- Payload handler --
@@ -750,8 +714,7 @@ Error MediaIOTask_Rtp::configureAudioStream(const MediaIO::Config &cfg,
         pl16->setPayloadType(_audio.payloadType);
         pl16->setMaxPayloadSize(_audioState.packetBytes);
         _audio.payload = pl16;
-        _audio.rtpmap = String("L16/") + String::number(_audio.clockRate) +
-                        String("/") + String::number(ch);
+        _audio.rtpmap = String("L16/") + String::number(_audio.clockRate) + String("/") + String::number(ch);
 
         // -- FIFO --
         //
@@ -763,9 +726,9 @@ Error MediaIOTask_Rtp::configureAudioStream(const MediaIO::Config &cfg,
         // count already match.  Rate / channel conversion still
         // belongs to an upstream CSC stage.
         AudioDesc storageDesc(AudioFormat::PCMI_S16BE, ad.sampleRate(), ad.channels());
-        if(!storageDesc.isValid()) {
-                promekiErr("MediaIOTask_Rtp: could not build L16 storage descriptor (%.1f Hz, %u ch)",
-                           ad.sampleRate(), ad.channels());
+        if (!storageDesc.isValid()) {
+                promekiErr("MediaIOTask_Rtp: could not build L16 storage descriptor (%.1f Hz, %u ch)", ad.sampleRate(),
+                           ad.channels());
                 return Error::InvalidArgument;
         }
         _audioState.fifo = AudioBuffer(storageDesc);
@@ -773,9 +736,8 @@ Error MediaIOTask_Rtp::configureAudioStream(const MediaIO::Config &cfg,
         // any reasonable writeFrame burstiness without the producer
         // ever hitting NoSpace.
         Error rsvErr = _audioState.fifo.reserve(static_cast<size_t>(ad.sampleRate()));
-        if(rsvErr.isError()) {
-                promekiErr("MediaIOTask_Rtp: failed to reserve audio FIFO: %s",
-                           rsvErr.desc().cstr());
+        if (rsvErr.isError()) {
+                promekiErr("MediaIOTask_Rtp: failed to reserve audio FIFO: %s", rsvErr.desc().cstr());
                 return rsvErr;
         }
 
@@ -783,31 +745,30 @@ Error MediaIOTask_Rtp::configureAudioStream(const MediaIO::Config &cfg,
 }
 
 Error MediaIOTask_Rtp::configureDataStream(const MediaIO::Config &cfg) {
-        bool enabled = cfg.getAs<bool>(MediaConfig::DataEnabled, false);
+        bool          enabled = cfg.getAs<bool>(MediaConfig::DataEnabled, false);
         SocketAddress dest = cfg.getAs<SocketAddress>(MediaConfig::DataRtpDestination, SocketAddress());
-        if(!enabled || dest.isNull()) return Error::Ok; // Disabled.
+        if (!enabled || dest.isNull()) return Error::Ok; // Disabled.
 
         _data.destination = dest;
         _data.payloadType = static_cast<uint8_t>(cfg.getAs<int>(MediaConfig::DataRtpPayloadType, 98) & 0x7F);
-        _data.clockRate   = static_cast<uint32_t>(cfg.getAs<int>(MediaConfig::DataRtpClockRate, 90000));
-        _data.ssrc        = static_cast<uint32_t>(cfg.getAs<uint32_t>(MediaConfig::DataRtpSsrc, 0));
-        _data.dscp        = cfg.getAs<int>(MediaConfig::DataRtpDscp, 34);
+        _data.clockRate = static_cast<uint32_t>(cfg.getAs<int>(MediaConfig::DataRtpClockRate, 90000));
+        _data.ssrc = static_cast<uint32_t>(cfg.getAs<uint32_t>(MediaConfig::DataRtpSsrc, 0));
+        _data.dscp = cfg.getAs<int>(MediaConfig::DataRtpDscp, 34);
 
         Error fmtErr;
-        Enum fmt = cfg.get(MediaConfig::DataRtpFormat).asEnum(MetadataRtpFormat::Type, &fmtErr);
-        if(fmtErr.isError() || !fmt.hasListedValue()) {
+        Enum  fmt = cfg.get(MediaConfig::DataRtpFormat).asEnum(MetadataRtpFormat::Type, &fmtErr);
+        if (fmtErr.isError() || !fmt.hasListedValue()) {
                 promekiErr("MediaIOTask_Rtp: unknown metadata RTP format");
                 return Error::InvalidArgument;
         }
         _dataFormat = fmt;
 
-        if(fmt.value() == MetadataRtpFormat::JsonMetadata.value()) {
+        if (fmt.value() == MetadataRtpFormat::JsonMetadata.value()) {
                 auto *p = new RtpPayloadJson(_data.payloadType, _data.clockRate);
                 _data.payload = p;
                 _data.rtpmap = String("x-promeki-metadata-json/") + String::number(_data.clockRate);
         } else {
-                promekiErr("MediaIOTask_Rtp: metadata format %s is not yet implemented",
-                           fmt.toString().cstr());
+                promekiErr("MediaIOTask_Rtp: metadata format %s is not yet implemented", fmt.toString().cstr());
                 return Error::NotSupported;
         }
         return Error::Ok;
@@ -821,21 +782,17 @@ void MediaIOTask_Rtp::buildSdp() {
         _sdpSession.setOrigin(_sessionOrigin, 0, 0, "IN", "IP4", "0.0.0.0");
 
         auto addStream = [&](const Stream &s) {
-                if(!s.active) return;
+                if (!s.active) return;
                 SdpMediaDescription md;
                 md.setMediaType(s.mediaType);
                 md.setPort(s.destination.port());
                 md.setProtocol("RTP/AVP");
                 md.addPayloadType(s.payloadType);
-                if(!s.rtpmap.isEmpty()) {
-                        md.setAttribute("rtpmap",
-                                String::number(s.payloadType) +
-                                String(" ") + s.rtpmap);
+                if (!s.rtpmap.isEmpty()) {
+                        md.setAttribute("rtpmap", String::number(s.payloadType) + String(" ") + s.rtpmap);
                 }
-                if(!s.fmtp.isEmpty()) {
-                        md.setAttribute("fmtp",
-                                String::number(s.payloadType) +
-                                String(" ") + s.fmtp);
+                if (!s.fmtp.isEmpty()) {
+                        md.setAttribute("fmtp", String::number(s.payloadType) + String(" ") + s.fmtp);
                 }
                 // RFC 5761 rtcp-mux: tells receivers that RTP and
                 // RTCP share a single port for this stream, so the
@@ -852,21 +809,19 @@ void MediaIOTask_Rtp::buildSdp() {
                 md.setAttribute("rtcp-mux", String());
                 // Write clock reference attributes when the stream has
                 // an absolute (PTP/GPS) clock domain.
-                if(s.clockDomain.isValid() &&
-                   s.clockDomain.isCrossMachineComparable()) {
+                if (s.clockDomain.isValid() && s.clockDomain.isCrossMachineComparable()) {
                         // Extract profile from domain name
                         // (e.g. "ptp.IEEE1588-2008" -> "IEEE1588-2008")
                         String domainName = s.clockDomain.name();
                         String tsRefClk;
-                        if(domainName.startsWith("ptp.")) {
+                        if (domainName.startsWith("ptp.")) {
                                 String profile = domainName.mid(4);
                                 tsRefClk = String("ptp=") + profile;
-                                if(!s.ptpGrandmaster.isNull()) {
-                                        tsRefClk += String(":") +
-                                                s.ptpGrandmaster.toString();
+                                if (!s.ptpGrandmaster.isNull()) {
+                                        tsRefClk += String(":") + s.ptpGrandmaster.toString();
                                 }
                         }
-                        if(!tsRefClk.isEmpty()) {
+                        if (!tsRefClk.isEmpty()) {
                                 md.setAttribute("ts-refclk", tsRefClk);
                                 md.setAttribute("mediaclk", "direct=0");
                         }
@@ -880,7 +835,7 @@ void MediaIOTask_Rtp::buildSdp() {
 }
 
 Error MediaIOTask_Rtp::writeSdpFile(const String &path) {
-        if(path.isEmpty()) return Error::Ok;
+        if (path.isEmpty()) return Error::Ok;
         return _sdpSession.toFile(path);
 }
 
@@ -897,9 +852,7 @@ Error MediaIOTask_Rtp::writeSdpFile(const String &path) {
 // per-stream descriptors.  That keeps the RTP-payload-encoding
 // interpretation (L16 → PCMI_S16BE, jxsv fmtp → JPEG_XS_*, etc.)
 // in one place instead of scattering it across the task.
-Error MediaIOTask_Rtp::applySdp(const SdpSession &sdp,
-                                 MediaIO::Config &cfg,
-                                 MediaDesc &mediaDesc) {
+Error MediaIOTask_Rtp::applySdp(const SdpSession &sdp, MediaIO::Config &cfg, MediaDesc &mediaDesc) {
         // SDP connection addresses may appear at the session (c=)
         // level or inside each media description; the media-level
         // override wins per RFC 4566.
@@ -912,15 +865,13 @@ Error MediaIOTask_Rtp::applySdp(const SdpSession &sdp,
         // per-type fromSdp() factories; we then append only the
         // entries the caller did not already provide.
         MediaDesc sdpMd = MediaDesc::fromSdp(sdp);
-        if(mediaDesc.imageList().isEmpty() &&
-           !sdpMd.imageList().isEmpty()) {
-                for(size_t i = 0; i < sdpMd.imageList().size(); i++) {
+        if (mediaDesc.imageList().isEmpty() && !sdpMd.imageList().isEmpty()) {
+                for (size_t i = 0; i < sdpMd.imageList().size(); i++) {
                         mediaDesc.imageList().pushToBack(sdpMd.imageList()[i]);
                 }
         }
-        if(mediaDesc.audioList().isEmpty() &&
-           !sdpMd.audioList().isEmpty()) {
-                for(size_t i = 0; i < sdpMd.audioList().size(); i++) {
+        if (mediaDesc.audioList().isEmpty() && !sdpMd.audioList().isEmpty()) {
+                for (size_t i = 0; i < sdpMd.audioList().size(); i++) {
                         mediaDesc.audioList().pushToBack(sdpMd.audioList()[i]);
                 }
         }
@@ -931,36 +882,32 @@ Error MediaIOTask_Rtp::applySdp(const SdpSession &sdp,
         // specific, so they cannot live on SdpMediaDescription
         // — that would require dragging the MediaConfig catalog
         // into the network layer.
-        for(size_t i = 0; i < sdp.mediaDescriptions().size(); i++) {
+        for (size_t i = 0; i < sdp.mediaDescriptions().size(); i++) {
                 const SdpMediaDescription &md = sdp.mediaDescriptions()[i];
-                MediaConfig::ID destKey = MediaConfig::VideoRtpDestination;
-                MediaConfig::ID ptKey   = MediaConfig::VideoRtpPayloadType;
-                MediaConfig::ID rateKey = MediaConfig::VideoRtpClockRate;
-                if(md.mediaType() == "audio") {
+                MediaConfig::ID            destKey = MediaConfig::VideoRtpDestination;
+                MediaConfig::ID            ptKey = MediaConfig::VideoRtpPayloadType;
+                MediaConfig::ID            rateKey = MediaConfig::VideoRtpClockRate;
+                if (md.mediaType() == "audio") {
                         destKey = MediaConfig::AudioRtpDestination;
-                        ptKey   = MediaConfig::AudioRtpPayloadType;
+                        ptKey = MediaConfig::AudioRtpPayloadType;
                         rateKey = MediaConfig::AudioRtpClockRate;
-                } else if(md.mediaType() != "video") {
+                } else if (md.mediaType() != "video") {
                         destKey = MediaConfig::DataRtpDestination;
-                        ptKey   = MediaConfig::DataRtpPayloadType;
+                        ptKey = MediaConfig::DataRtpPayloadType;
                         rateKey = MediaConfig::DataRtpClockRate;
                         cfg.set(MediaConfig::DataEnabled, true);
                 }
 
                 // Destination: only fill in if the caller did not
                 // already set one explicitly.
-                SocketAddress existingDest =
-                        cfg.getAs<SocketAddress>(destKey, SocketAddress());
-                if(existingDest.isNull()) {
-                        String connection = md.connectionAddress().isEmpty()
-                                ? sessionConnection
-                                : md.connectionAddress();
-                        if(!connection.isEmpty()) {
-                                Result<NetworkAddress> nr =
-                                        NetworkAddress::fromString(connection);
-                                if(nr.second().isOk()) {
-                                        SocketAddress derived(nr.first(),
-                                                md.port());
+                SocketAddress existingDest = cfg.getAs<SocketAddress>(destKey, SocketAddress());
+                if (existingDest.isNull()) {
+                        String connection =
+                                md.connectionAddress().isEmpty() ? sessionConnection : md.connectionAddress();
+                        if (!connection.isEmpty()) {
+                                Result<NetworkAddress> nr = NetworkAddress::fromString(connection);
+                                if (nr.second().isOk()) {
+                                        SocketAddress derived(nr.first(), md.port());
                                         cfg.set(destKey, derived);
                                 }
                         }
@@ -968,17 +915,15 @@ Error MediaIOTask_Rtp::applySdp(const SdpSession &sdp,
 
                 // Payload type, clock rate, audio channel count.
                 SdpMediaDescription::RtpMap rm = md.rtpMap();
-                if(rm.valid) {
-                        cfg.set(ptKey,   static_cast<int>(rm.payloadType));
+                if (rm.valid) {
+                        cfg.set(ptKey, static_cast<int>(rm.payloadType));
                         cfg.set(rateKey, static_cast<int>(rm.clockRate));
-                        if(md.mediaType() == "audio") {
-                                if(cfg.getAs<float>(MediaConfig::AudioRate, 0.0f) <= 0.0f) {
-                                        cfg.set(MediaConfig::AudioRate,
-                                                static_cast<float>(rm.clockRate));
+                        if (md.mediaType() == "audio") {
+                                if (cfg.getAs<float>(MediaConfig::AudioRate, 0.0f) <= 0.0f) {
+                                        cfg.set(MediaConfig::AudioRate, static_cast<float>(rm.clockRate));
                                 }
-                                if(cfg.getAs<int>(MediaConfig::AudioChannels, 0) <= 0) {
-                                        cfg.set(MediaConfig::AudioChannels,
-                                                static_cast<int>(rm.channels));
+                                if (cfg.getAs<int>(MediaConfig::AudioChannels, 0) <= 0) {
+                                        cfg.set(MediaConfig::AudioChannels, static_cast<int>(rm.channels));
                                 }
                         }
                 }
@@ -989,36 +934,36 @@ Error MediaIOTask_Rtp::applySdp(const SdpSession &sdp,
                 // fall back to SystemMonotonic (library wall clock).
                 {
                         Stream *stream = nullptr;
-                        if(md.mediaType() == "video")       stream = &_video;
-                        else if(md.mediaType() == "audio")  stream = &_audio;
-                        else                                 stream = &_data;
+                        if (md.mediaType() == "video")
+                                stream = &_video;
+                        else if (md.mediaType() == "audio")
+                                stream = &_audio;
+                        else
+                                stream = &_data;
                         String tsRefClk = md.attribute("ts-refclk");
-                        if(!tsRefClk.isEmpty() && tsRefClk.startsWith("ptp=")) {
+                        if (!tsRefClk.isEmpty() && tsRefClk.startsWith("ptp=")) {
                                 // "ptp=IEEE1588-2008:AA-BB-CC-DD-EE-FF-00-11"
                                 // or "ptp=IEEE1588-2008" (no grandmaster ID)
                                 // Domain identity is the PTP profile; the
                                 // grandmaster is per-essence metadata that can
                                 // change due to BMCA failover.
-                                String ptpValue = tsRefClk.split("=")[1];
-                                String profile = ptpValue;
+                                String     ptpValue = tsRefClk.split("=")[1];
+                                String     profile = ptpValue;
                                 StringList parts = ptpValue.split(":");
-                                if(parts.size() == 2) {
+                                if (parts.size() == 2) {
                                         profile = parts[0];
                                         auto [gm, gmErr] = EUI64::fromString(parts[1]);
-                                        if(gmErr.isOk()) {
+                                        if (gmErr.isOk()) {
                                                 stream->ptpGrandmaster = gm;
                                         }
                                 }
                                 ClockDomain::ID cdId = ClockDomain::registerDomain(
-                                        String("ptp.") + profile,
-                                        String("PTP reference clock (") + tsRefClk + ")",
+                                        String("ptp.") + profile, String("PTP reference clock (") + tsRefClk + ")",
                                         ClockEpoch::Absolute);
                                 stream->clockDomain = ClockDomain(cdId);
-                        } else if(!tsRefClk.isEmpty() && tsRefClk.startsWith("local")) {
-                                stream->clockDomain = ClockDomain(
-                                        ClockDomain::registerDomain("local",
-                                                "SDP ts-refclk:local",
-                                                ClockEpoch::Correlated));
+                        } else if (!tsRefClk.isEmpty() && tsRefClk.startsWith("local")) {
+                                stream->clockDomain = ClockDomain(ClockDomain::registerDomain(
+                                        "local", "SDP ts-refclk:local", ClockEpoch::Correlated));
                         } else {
                                 stream->clockDomain = ClockDomain::SystemMonotonic;
                         }
@@ -1027,21 +972,21 @@ Error MediaIOTask_Rtp::applySdp(const SdpSession &sdp,
                 // Stash the raw fmtp for the video stream so the
                 // deferred JPEG geometry path can read colorimetry
                 // and RANGE from it.
-                if(md.mediaType() == "video") {
+                if (md.mediaType() == "video") {
                         auto fmtp = md.fmtpParameters();
                         // Rebuild a semicolon-separated string from
                         // the parsed key=value pairs so the
                         // downstream code can re-parse it without
                         // needing the original SdpMediaDescription.
                         String fmtpStr;
-                        for(auto it = fmtp.begin(); it != fmtp.end(); ++it) {
-                                if(!fmtpStr.isEmpty()) fmtpStr += String(";");
+                        for (auto it = fmtp.begin(); it != fmtp.end(); ++it) {
+                                if (!fmtpStr.isEmpty()) fmtpStr += String(";");
                                 fmtpStr += it->first;
-                                if(!it->second.isEmpty()) {
+                                if (!it->second.isEmpty()) {
                                         fmtpStr += String("=") + it->second;
                                 }
                         }
-                        if(!fmtpStr.isEmpty()) {
+                        if (!fmtpStr.isEmpty()) {
                                 cfg.set(MediaConfig::VideoRtpFmtp, fmtpStr);
                         }
                 }
@@ -1052,7 +997,7 @@ Error MediaIOTask_Rtp::applySdp(const SdpSession &sdp,
 // ----- Reader packet callbacks (called on per-stream RX thread) -----
 
 void MediaIOTask_Rtp::onVideoPacket(const RtpPacket &pkt) {
-        if(!_video.active) return;
+        if (!_video.active) return;
 
         _video.packetsReceived++;
         _video.bytesReceived += static_cast<int64_t>(pkt.size());
@@ -1086,8 +1031,8 @@ void MediaIOTask_Rtp::onVideoPacket(const RtpPacket &pkt) {
         // partial and emitVideoFrame's existing size / validity
         // checks drop it silently.  Either way, the NEXT frame
         // after the marker is guaranteed clean.
-        if(!_video.reasmSynced) {
-                if(pkt.marker()) {
+        if (!_video.reasmSynced) {
+                if (pkt.marker()) {
                         _video.reasmSynced = true;
                         // Fall through — let the normal path below
                         // accumulate this marker packet and call
@@ -1112,16 +1057,14 @@ void MediaIOTask_Rtp::onVideoPacket(const RtpPacket &pkt) {
         // the first packet of the current reassembly window so
         // emitVideoFrame can compute the per-frame assemble time.
         const TimeStamp now = TimeStamp::now();
-        if(_video.rxHasLastPacket) {
+        if (_video.rxHasLastPacket) {
                 const Duration delta = now - _video.rxLastPacketTime;
                 _video.rxPacketInterval.addSample(delta.microseconds());
         }
         _video.rxLastPacketTime = now;
         _video.rxHasLastPacket = true;
 
-        if(_video.reasmHasTimestamp &&
-           _video.reasmTimestamp != pkt.timestamp() &&
-           !_video.reasmPackets.isEmpty()) {
+        if (_video.reasmHasTimestamp && _video.reasmTimestamp != pkt.timestamp() && !_video.reasmPackets.isEmpty()) {
                 // Timestamp changed without a prior marker bit —
                 // emit whatever we have and start fresh.
                 emitVideoFrame();
@@ -1129,7 +1072,7 @@ void MediaIOTask_Rtp::onVideoPacket(const RtpPacket &pkt) {
 
         // Mark the start of a new reassembly window if this packet
         // is the first one for its timestamp.
-        if(_video.reasmPackets.isEmpty()) {
+        if (_video.reasmPackets.isEmpty()) {
                 _video.rxFrameStartTime = now;
                 _video.rxHasFrameStart = true;
         }
@@ -1145,14 +1088,14 @@ void MediaIOTask_Rtp::onVideoPacket(const RtpPacket &pkt) {
         _video.reasmLastSeq = pkt.sequenceNumber();
         _video.reasmHaveLastSeq = true;
 
-        if(pkt.marker()) {
+        if (pkt.marker()) {
                 emitVideoFrame();
         }
 }
 
 void MediaIOTask_Rtp::emitVideoFrame() {
-        if(_video.reasmPackets.isEmpty()) return;
-        if(_video.payload == nullptr) {
+        if (_video.reasmPackets.isEmpty()) return;
+        if (_video.payload == nullptr) {
                 _video.reasmPackets.clear();
                 _video.reasmHasTimestamp = false;
                 return;
@@ -1165,25 +1108,23 @@ void MediaIOTask_Rtp::emitVideoFrame() {
         //   Type 0 → YCbCr 4:2:2  (FFmpeg convention)
         //   Type 1 → YCbCr 4:2:0
         uint8_t rfc2435Type = 0;
-        if(!_video.readerImageDesc.isValid() &&
-           !_video.reasmPackets.isEmpty()) {
+        if (!_video.readerImageDesc.isValid() && !_video.reasmPackets.isEmpty()) {
                 const RtpPacket &first = _video.reasmPackets[0];
-                if(!first.isNull() && first.payloadSize() >= 8) {
+                if (!first.isNull() && first.payloadSize() >= 8) {
                         rfc2435Type = first.payload()[4];
                 }
         }
 
         // Capture per-frame RTP metadata before unpack clears the list.
         const uint32_t frameRtpTimestamp = _video.reasmTimestamp;
-        const int32_t  framePacketCount  = static_cast<int32_t>(
-                _video.reasmPackets.size());
+        const int32_t  framePacketCount = static_cast<int32_t>(_video.reasmPackets.size());
 
         // Ask the payload class to reassemble the bitstream.
         Buffer reassembled = _video.payload->unpack(_video.reasmPackets);
         _video.reasmPackets.clear();
         _video.reasmHasTimestamp = false;
 
-        if(reassembled.size() == 0) return;
+        if (reassembled.size() == 0) return;
 
         // Deferred geometry for JPEG reader mode: the SDP carries
         // no image dimensions for RFC 2435, so we discover them
@@ -1197,37 +1138,37 @@ void MediaIOTask_Rtp::emitVideoFrame() {
         // spec, but can be overridden by ST 2110-20 colorimetry
         // and RANGE parameters in the SDP fmtp line (stashed on
         // _video.fmtp by configureVideoStream).
-        if(!_video.readerImageDesc.isValid()) {
+        if (!_video.readerImageDesc.isValid()) {
                 const uint8_t *p = static_cast<const uint8_t *>(reassembled.data());
                 const size_t   n = reassembled.size();
-                uint32_t w = 0, h = 0;
-                int nf = 0;      // component count from SOF0
-                uint8_t ySf = 0; // Y sampling factor byte (Hi<<4|Vi)
-                for(size_t i = 0; i + 1 < n; i++) {
-                        if(p[i] != 0xFF) continue;
+                uint32_t       w = 0, h = 0;
+                int            nf = 0;  // component count from SOF0
+                uint8_t        ySf = 0; // Y sampling factor byte (Hi<<4|Vi)
+                for (size_t i = 0; i + 1 < n; i++) {
+                        if (p[i] != 0xFF) continue;
                         // SOF0 (0xC0) or SOF2 (0xC2, progressive)
-                        if(p[i + 1] != 0xC0 && p[i + 1] != 0xC2) continue;
-                        if(i + 9 >= n) break;
-                        h  = (static_cast<uint32_t>(p[i + 5]) << 8) | p[i + 6];
-                        w  = (static_cast<uint32_t>(p[i + 7]) << 8) | p[i + 8];
+                        if (p[i + 1] != 0xC0 && p[i + 1] != 0xC2) continue;
+                        if (i + 9 >= n) break;
+                        h = (static_cast<uint32_t>(p[i + 5]) << 8) | p[i + 6];
+                        w = (static_cast<uint32_t>(p[i + 7]) << 8) | p[i + 8];
                         nf = p[i + 9];
-                        if(nf >= 1 && i + 11 < n) {
+                        if (nf >= 1 && i + 11 < n) {
                                 ySf = p[i + 11]; // Hi/Vi of first component
                         }
                         break;
                 }
-                if(w == 0 || h == 0) return;
+                if (w == 0 || h == 0) return;
 
                 // Determine subsampling and RGB from SOF0 / RFC 2435.
                 bool is420 = false;
                 bool isRgb = false;
-                if(nf == 1) {
+                if (nf == 1) {
                         is420 = true; // grayscale
-                } else if(nf == 3 && ySf == 0x11 && rfc2435Type >= 2) {
+                } else if (nf == 3 && ySf == 0x11 && rfc2435Type >= 2) {
                         isRgb = true;
-                } else if(ySf == 0x22) {
+                } else if (ySf == 0x22) {
                         is420 = true;
-                } else if(ySf == 0x21) {
+                } else if (ySf == 0x21) {
                         is420 = false;
                 } else {
                         is420 = (rfc2435Type == 1);
@@ -1238,23 +1179,23 @@ void MediaIOTask_Rtp::emitVideoFrame() {
                 // helper defaults to Rec.601 full range.
                 String colorimetry;
                 String range;
-                if(!_video.fmtp.isEmpty()) {
+                if (!_video.fmtp.isEmpty()) {
                         // Quick parse of "key=val;key=val;..." form.
                         StringList parts = _video.fmtp.split(";");
-                        for(size_t i = 0; i < parts.size(); i++) {
+                        for (size_t i = 0; i < parts.size(); i++) {
                                 StringList kv = parts[i].split("=");
-                                if(kv.size() < 2) continue;
+                                if (kv.size() < 2) continue;
                                 String key = kv[0].trim();
                                 String val = kv[1].trim();
-                                if(key == "colorimetry") colorimetry = val;
-                                else if(key == "RANGE")  range = val;
+                                if (key == "colorimetry")
+                                        colorimetry = val;
+                                else if (key == "RANGE")
+                                        range = val;
                         }
                 }
 
-                PixelFormat::ID pdId = ImageDesc::jpegPixelFormatFromSdp(
-                        colorimetry, range, is420, isRgb);
-                _video.readerImageDesc = ImageDesc(
-                        Size2Du32(w, h), PixelFormat(pdId));
+                PixelFormat::ID pdId = ImageDesc::jpegPixelFormatFromSdp(colorimetry, range, is420, isRgb);
+                _video.readerImageDesc = ImageDesc(Size2Du32(w, h), PixelFormat(pdId));
                 promekiInfo("MediaIOTask_Rtp: JPEG reader discovered "
                             "%ux%u %s from first frame",
                             w, h, PixelFormat(pdId).name().cstr());
@@ -1274,12 +1215,12 @@ void MediaIOTask_Rtp::emitVideoFrame() {
         // Record assemble time (first packet -> here) and the
         // wall-clock interval between successive complete frames.
         const TimeStamp emitTime = TimeStamp::now();
-        if(_video.rxHasFrameStart) {
+        if (_video.rxHasFrameStart) {
                 const Duration assemble = emitTime - _video.rxFrameStartTime;
                 _video.rxFrameAssembleTime.addSample(assemble.microseconds());
                 _video.rxHasFrameStart = false;
         }
-        if(_video.rxHasLastFrame) {
+        if (_video.rxHasLastFrame) {
                 const Duration delta = emitTime - _video.rxLastFrameTime;
                 _video.rxFrameInterval.addSample(delta.microseconds());
         }
@@ -1291,20 +1232,19 @@ void MediaIOTask_Rtp::emitVideoFrame() {
         // saw the first packet of this frame (rxFrameStartTime); the
         // payload's native pts/dts are set from the same value below.
         MediaTimeStamp capMts(_video.rxFrameStartTime, _video.clockDomain);
-        ImageDesc idesc = _video.readerImageDesc;
+        ImageDesc      idesc = _video.readerImageDesc;
         {
                 Metadata &m = idesc.metadata();
                 m.set(Metadata::CaptureTime, capMts);
                 m.set(Metadata::RtpTimestamp, frameRtpTimestamp);
                 m.set(Metadata::RtpPacketCount, framePacketCount);
-                if(!_video.ptpGrandmaster.isNull()) {
-                        m.set(Metadata::PtpGrandmasterId,
-                              _video.ptpGrandmaster);
+                if (!_video.ptpGrandmaster.isNull()) {
+                        m.set(Metadata::PtpGrandmasterId, _video.ptpGrandmaster);
                 }
         }
 
         VideoPayload::Ptr videoPayload;
-        if(pd.isCompressed()) {
+        if (pd.isCompressed()) {
                 // Compressed streams: every intraframe RTP payload is
                 // a keyframe (no inter-frame prediction at this layer).
                 auto cvp = CompressedVideoPayload::Ptr::create(idesc, plane);
@@ -1320,8 +1260,8 @@ void MediaIOTask_Rtp::emitVideoFrame() {
                 videoPayload = uvp;
         }
 
-        if(!videoPayload.isValid()) {
-                if(_video.framesReceived <= 1) {
+        if (!videoPayload.isValid()) {
+                if (_video.framesReceived <= 1) {
                         promekiDebug("MediaIOTask_Rtp: discarding "
                                      "first partial video frame "
                                      "(joined stream mid-flight)");
@@ -1333,7 +1273,7 @@ void MediaIOTask_Rtp::emitVideoFrame() {
         }
 
         Frame::Ptr frame = Frame::Ptr::create();
-        Frame *f = frame.modify();
+        Frame     *f = frame.modify();
         f->addPayload(std::move(videoPayload));
 
         // Aggregate audio: drain one frame's worth of samples from
@@ -1343,30 +1283,23 @@ void MediaIOTask_Rtp::emitVideoFrame() {
         // to push them.  If they still aren't there after the wait,
         // emit the frame with whatever audio is available (possibly
         // none) rather than stalling the video clock.
-        if(_audio.active && _audio.readerAudioDesc.isValid()) {
+        if (_audio.active && _audio.readerAudioDesc.isValid()) {
                 const size_t needed = _frameRate.samplesPerFrame(
-                        static_cast<int64_t>(_audio.readerAudioDesc.sampleRate()),
-                        _readerAgg.videoFrameIndex.value());
-                if(needed > 0) {
-                        size_t bufBytes = _audio.readerAudioDesc.bufferSize(needed);
+                        static_cast<int64_t>(_audio.readerAudioDesc.sampleRate()), _readerAgg.videoFrameIndex.value());
+                if (needed > 0) {
+                        size_t      bufBytes = _audio.readerAudioDesc.bufferSize(needed);
                         Buffer::Ptr pcm = Buffer::Ptr::create(bufBytes);
                         auto [got, err] = _readerAgg.audioFifo.popWait(
-                                pcm.modify()->data(), needed,
-                                static_cast<unsigned int>(_readerAgg.audioTimeoutMs));
-                        if(got > 0) {
+                                pcm.modify()->data(), needed, static_cast<unsigned int>(_readerAgg.audioTimeoutMs));
+                        if (got > 0) {
                                 size_t usedBytes = _audio.readerAudioDesc.bufferSize(got);
                                 pcm.modify()->setSize(usedBytes);
                                 BufferView view(pcm, 0, usedBytes);
-                                auto audioPayload = PcmAudioPayload::Ptr::create(
-                                        _audio.readerAudioDesc, got,
-                                        view);
-                                ClockDomain audioCd = _audio.clockDomain.isValid()
-                                        ? _audio.clockDomain
-                                        : _video.clockDomain;
-                                MediaTimeStamp audMts(_video.rxFrameStartTime,
-                                                audioCd);
-                                audioPayload.modify()->desc().metadata().set(
-                                        Metadata::CaptureTime, audMts);
+                                auto audioPayload = PcmAudioPayload::Ptr::create(_audio.readerAudioDesc, got, view);
+                                ClockDomain audioCd =
+                                        _audio.clockDomain.isValid() ? _audio.clockDomain : _video.clockDomain;
+                                MediaTimeStamp audMts(_video.rxFrameStartTime, audioCd);
+                                audioPayload.modify()->desc().metadata().set(Metadata::CaptureTime, audMts);
                                 audioPayload.modify()->setPts(audMts);
                                 f->addPayload(audioPayload);
                         }
@@ -1376,9 +1309,9 @@ void MediaIOTask_Rtp::emitVideoFrame() {
 
         // Aggregate metadata: grab the latest snapshot from the
         // data RX thread and merge it into this frame.
-        if(_data.active) {
+        if (_data.active) {
                 Mutex::Locker lock(_readerAgg.dataMutex);
-                if(_readerAgg.hasMetadata) {
+                if (_readerAgg.hasMetadata) {
                         f->metadata() = _readerAgg.pendingMetadata;
                         _readerAgg.hasMetadata = false;
                 }
@@ -1388,7 +1321,7 @@ void MediaIOTask_Rtp::emitVideoFrame() {
 }
 
 void MediaIOTask_Rtp::onAudioPacket(const RtpPacket &pkt) {
-        if(!_audio.active) return;
+        if (!_audio.active) return;
         _audio.packetsReceived++;
         _audio.bytesReceived += static_cast<int64_t>(pkt.size());
 
@@ -1398,31 +1331,27 @@ void MediaIOTask_Rtp::onAudioPacket(const RtpPacket &pkt) {
         // frame completes.  The FIFO is protected by a Mutex and
         // a WaitCondition because this runs on the audio RX thread
         // while emitVideoFrame runs on the video RX thread.
-        if(_audio.payload == nullptr || !_audio.readerAudioDesc.isValid()) return;
-        if(pkt.payloadSize() == 0) return;
+        if (_audio.payload == nullptr || !_audio.readerAudioDesc.isValid()) return;
+        if (pkt.payloadSize() == 0) return;
 
         const unsigned int ch = _audio.readerAudioDesc.channels();
-        constexpr size_t bytesPerSample = 2;
-        const size_t frameBytes = ch * bytesPerSample;
-        if(frameBytes == 0) return;
+        constexpr size_t   bytesPerSample = 2;
+        const size_t       frameBytes = ch * bytesPerSample;
+        if (frameBytes == 0) return;
         const size_t samples = pkt.payloadSize() / frameBytes;
-        if(samples == 0) return;
+        if (samples == 0) return;
 
-        AudioDesc wireDesc(AudioFormat::PCMI_S16BE,
-                           _audio.readerAudioDesc.sampleRate(),
-                           ch);
+        AudioDesc wireDesc(AudioFormat::PCMI_S16BE, _audio.readerAudioDesc.sampleRate(), ch);
 
         // When video is active, push samples into the aggregation
         // FIFO so emitVideoFrame can merge them into combined
         // frames.  When video is NOT active (audio-only stream),
         // fall back to the original per-chunk emission so the
         // reader queue still produces output.
-        if(_video.active) {
-                Error perr = _readerAgg.audioFifo.push(
-                        pkt.payload(), samples, wireDesc);
-                if(perr.isError()) {
-                        promekiWarn("MediaIOTask_Rtp: audio FIFO push failed: %s",
-                                    perr.desc().cstr());
+        if (_video.active) {
+                Error perr = _readerAgg.audioFifo.push(pkt.payload(), samples, wireDesc);
+                if (perr.isError()) {
+                        promekiWarn("MediaIOTask_Rtp: audio FIFO push failed: %s", perr.desc().cstr());
                         return;
                 }
                 _audio.framesReceived++;
@@ -1430,34 +1359,26 @@ void MediaIOTask_Rtp::onAudioPacket(const RtpPacket &pkt) {
                 // Audio-only stream — push directly.  Chunk into
                 // samplesPerFrame-sized Audio objects to match the
                 // frame-rate cadence downstream consumers expect.
-                Error perr = _audioState.fifo.push(
-                        pkt.payload(), samples, wireDesc);
-                if(perr.isError()) {
-                        promekiWarn("MediaIOTask_Rtp: audio FIFO push failed: %s",
-                                    perr.desc().cstr());
+                Error perr = _audioState.fifo.push(pkt.payload(), samples, wireDesc);
+                if (perr.isError()) {
+                        promekiWarn("MediaIOTask_Rtp: audio FIFO push failed: %s", perr.desc().cstr());
                         return;
                 }
-                const double fps = _frameRate.isValid()
-                        ? _frameRate.toDouble() : 30.0;
-                if(fps <= 0.0) return;
-                const size_t spf = static_cast<size_t>(
-                        _audio.readerAudioDesc.sampleRate() / fps);
-                if(spf == 0) return;
-                while(_audioState.fifo.available() >= spf) {
-                        size_t bufBytes = _audio.readerAudioDesc.bufferSize(spf);
+                const double fps = _frameRate.isValid() ? _frameRate.toDouble() : 30.0;
+                if (fps <= 0.0) return;
+                const size_t spf = static_cast<size_t>(_audio.readerAudioDesc.sampleRate() / fps);
+                if (spf == 0) return;
+                while (_audioState.fifo.available() >= spf) {
+                        size_t      bufBytes = _audio.readerAudioDesc.bufferSize(spf);
                         Buffer::Ptr pcm = Buffer::Ptr::create(bufBytes);
                         auto [got, popErr] = _audioState.fifo.pop(pcm.modify()->data(), spf);
-                        if(popErr.isError() || got == 0) break;
+                        if (popErr.isError() || got == 0) break;
                         size_t usedBytes = _audio.readerAudioDesc.bufferSize(got);
                         pcm.modify()->setSize(usedBytes);
-                        BufferView view(pcm, 0, usedBytes);
-                        auto audioPayload = PcmAudioPayload::Ptr::create(
-                                _audio.readerAudioDesc, got,
-                                view);
-                        MediaTimeStamp capMts(TimeStamp::now(),
-                                _audio.clockDomain);
-                        audioPayload.modify()->desc().metadata().set(
-                                Metadata::CaptureTime, capMts);
+                        BufferView     view(pcm, 0, usedBytes);
+                        auto           audioPayload = PcmAudioPayload::Ptr::create(_audio.readerAudioDesc, got, view);
+                        MediaTimeStamp capMts(TimeStamp::now(), _audio.clockDomain);
+                        audioPayload.modify()->desc().metadata().set(Metadata::CaptureTime, capMts);
                         audioPayload.modify()->setPts(capMts);
                         _audio.framesReceived++;
                         Frame::Ptr frame = Frame::Ptr::create();
@@ -1468,13 +1389,11 @@ void MediaIOTask_Rtp::onAudioPacket(const RtpPacket &pkt) {
 }
 
 void MediaIOTask_Rtp::onDataPacket(const RtpPacket &pkt) {
-        if(!_data.active) return;
+        if (!_data.active) return;
         _data.packetsReceived++;
         _data.bytesReceived += static_cast<int64_t>(pkt.size());
 
-        if(_data.reasmHasTimestamp &&
-           _data.reasmTimestamp != pkt.timestamp() &&
-           !_data.reasmPackets.isEmpty()) {
+        if (_data.reasmHasTimestamp && _data.reasmTimestamp != pkt.timestamp() && !_data.reasmPackets.isEmpty()) {
                 emitDataMessage();
         }
 
@@ -1482,42 +1401,39 @@ void MediaIOTask_Rtp::onDataPacket(const RtpPacket &pkt) {
         _data.reasmTimestamp = pkt.timestamp();
         _data.reasmHasTimestamp = true;
 
-        if(pkt.marker()) {
+        if (pkt.marker()) {
                 emitDataMessage();
         }
 }
 
 void MediaIOTask_Rtp::emitDataMessage() {
-        if(_data.reasmPackets.isEmpty()) return;
-        if(_data.payload == nullptr) {
+        if (_data.reasmPackets.isEmpty()) return;
+        if (_data.payload == nullptr) {
                 _data.reasmPackets.clear();
                 _data.reasmHasTimestamp = false;
                 return;
         }
         // Capture per-message RTP metadata before unpack clears the list.
         const uint32_t dataRtpTimestamp = _data.reasmTimestamp;
-        const int32_t  dataPacketCount  = static_cast<int32_t>(
-                _data.reasmPackets.size());
+        const int32_t  dataPacketCount = static_cast<int32_t>(_data.reasmPackets.size());
 
         Buffer bytes = _data.payload->unpack(_data.reasmPackets);
         _data.reasmPackets.clear();
         _data.reasmHasTimestamp = false;
-        if(bytes.size() == 0) return;
+        if (bytes.size() == 0) return;
 
-        String jsonText(static_cast<const char *>(bytes.data()), bytes.size());
-        Error jerr;
+        String     jsonText(static_cast<const char *>(bytes.data()), bytes.size());
+        Error      jerr;
         JsonObject obj = JsonObject::parse(jsonText, &jerr);
-        if(jerr.isError()) {
-                promekiWarn("MediaIOTask_Rtp: dropping malformed metadata JSON: %s",
-                            jerr.desc().cstr());
+        if (jerr.isError()) {
+                promekiWarn("MediaIOTask_Rtp: dropping malformed metadata JSON: %s", jerr.desc().cstr());
                 return;
         }
         Metadata m = Metadata::fromJson(obj);
         _data.framesReceived++;
 
         // Stamp the metadata with capture and RTP timing.
-        MediaTimeStamp capMts(TimeStamp::now(),
-                _data.clockDomain);
+        MediaTimeStamp capMts(TimeStamp::now(), _data.clockDomain);
         m.set(Metadata::CaptureTime, capMts);
         m.set(Metadata::RtpTimestamp, dataRtpTimestamp);
         m.set(Metadata::RtpPacketCount, dataPacketCount);
@@ -1525,7 +1441,7 @@ void MediaIOTask_Rtp::emitDataMessage() {
         // When video is active, stash metadata so emitVideoFrame
         // can merge it into combined frames.  When video is NOT
         // active (data-only or audio+data stream), push directly.
-        if(_video.active) {
+        if (_video.active) {
                 Mutex::Locker lock(_readerAgg.dataMutex);
                 _readerAgg.pendingMetadata = m;
                 _readerAgg.hasMetadata = true;
@@ -1537,14 +1453,13 @@ void MediaIOTask_Rtp::emitDataMessage() {
 }
 
 void MediaIOTask_Rtp::pushReaderFrame(Frame::Ptr frame) {
-        if(!frame) return;
+        if (!frame) return;
         // Enforce the configured reader queue depth by dropping the
         // oldest frame when the queue is full.  The producer side
         // is our own RX thread, and stalling it would mean dropped
         // wire packets — dropping at the Frame::Ptr boundary is the
         // safer failure mode for live streams.
-        if(_readerMaxDepth > 0 &&
-           static_cast<int>(_readerQueue.size()) >= _readerMaxDepth) {
+        if (_readerMaxDepth > 0 && static_cast<int>(_readerQueue.size()) >= _readerMaxDepth) {
                 (void)_readerQueue.tryPop();
                 noteFrameDropped();
         }
@@ -1555,7 +1470,7 @@ void MediaIOTask_Rtp::pushReaderFrame(Frame::Ptr frame) {
 // ----- Command dispatch -----
 
 Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::Sink && cmd.mode != MediaIO::Source) {
+        if (cmd.mode != MediaIO::Sink && cmd.mode != MediaIO::Source) {
                 promekiErr("MediaIOTask_Rtp: only Reader and Writer modes are supported");
                 return Error::NotSupported;
         }
@@ -1565,15 +1480,15 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
 
         // Transport-global parameters.
         _localAddress = cfg.getAs<SocketAddress>(MediaConfig::RtpLocalAddress, SocketAddress::any(0));
-        _sessionName  = cfg.getAs<String>(MediaConfig::RtpSessionName, String("promeki RTP stream"));
+        _sessionName = cfg.getAs<String>(MediaConfig::RtpSessionName, String("promeki RTP stream"));
         _sessionOrigin = cfg.getAs<String>(MediaConfig::RtpSessionOrigin, String("-"));
-        _multicastTTL  = cfg.getAs<int>(MediaConfig::RtpMulticastTTL, 64);
+        _multicastTTL = cfg.getAs<int>(MediaConfig::RtpMulticastTTL, 64);
         _multicastInterface = cfg.getAs<String>(MediaConfig::RtpMulticastInterface, String());
         _sdpPath = cfg.getAs<String>(MediaConfig::RtpSaveSdpPath, String());
 
         Error pmErr;
         _pacingMode = cfg.get(MediaConfig::RtpPacingMode).asEnum(RtpPacingMode::Type, &pmErr);
-        if(pmErr.isError() || !_pacingMode.hasListedValue()) {
+        if (pmErr.isError() || !_pacingMode.hasListedValue()) {
                 promekiErr("MediaIOTask_Rtp: unknown RTP pacing mode");
                 return Error::InvalidArgument;
         }
@@ -1585,7 +1500,7 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
         // who want a specific behaviour (None for loopback tests,
         // TxTime for ST 2110-21 deployments) still set the key
         // explicitly.
-        if(_pacingMode.value() == RtpPacingMode::Auto.value()) {
+        if (_pacingMode.value() == RtpPacingMode::Auto.value()) {
 #if defined(PROMEKI_PLATFORM_LINUX)
                 _pacingMode = RtpPacingMode::KernelFq;
 #else
@@ -1594,12 +1509,11 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
         }
 
         _frameRate = cmd.pendingMediaDesc.frameRate();
-        if(!_frameRate.isValid()) {
+        if (!_frameRate.isValid()) {
                 // Fall back to config; if still absent, the timestamp
                 // math still works but downstream receivers may not
                 // know the frame rate via SDP.
-                _frameRate = cfg.getAs<FrameRate>(MediaConfig::FrameRate,
-                                                   FrameRate(FrameRate::FPS_29_97));
+                _frameRate = cfg.getAs<FrameRate>(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_29_97));
         }
 
         // Reader-side SDP ingest.  The RtpSdp config key is
@@ -1614,18 +1528,18 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
         // for the RtpSdp key so `MediaIO::createForFileRead("foo.sdp")`
         // (which sets Filename to the .sdp path) keeps working via
         // the same code path.
-        if(_readerMode) {
-                Variant sdpVar = cfg.get(MediaConfig::RtpSdp);
+        if (_readerMode) {
+                Variant    sdpVar = cfg.get(MediaConfig::RtpSdp);
                 SdpSession sdp;
-                bool haveSdp = false;
-                if(sdpVar.type() == Variant::TypeSdpSession) {
+                bool       haveSdp = false;
+                if (sdpVar.type() == Variant::TypeSdpSession) {
                         sdp = sdpVar.get<SdpSession>();
                         haveSdp = true;
-                } else if(sdpVar.type() == Variant::TypeString) {
+                } else if (sdpVar.type() == Variant::TypeString) {
                         String path = sdpVar.get<String>();
-                        if(!path.isEmpty()) {
+                        if (!path.isEmpty()) {
                                 Result<SdpSession> r = SdpSession::fromFile(path);
-                                if(r.second().isError()) {
+                                if (r.second().isError()) {
                                         resetAll();
                                         return r.second();
                                 }
@@ -1634,12 +1548,11 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
                         }
                 }
                 // Filename fallback (createForFileRead path).
-                if(!haveSdp) {
-                        String filename = cfg.getAs<String>(
-                                MediaConfig::Filename, String());
-                        if(!filename.isEmpty()) {
+                if (!haveSdp) {
+                        String filename = cfg.getAs<String>(MediaConfig::Filename, String());
+                        if (!filename.isEmpty()) {
                                 Result<SdpSession> r = SdpSession::fromFile(filename);
-                                if(r.second().isError()) {
+                                if (r.second().isError()) {
                                         resetAll();
                                         return r.second();
                                 }
@@ -1652,44 +1565,54 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
                                 cfg.set(MediaConfig::Filename, String());
                         }
                 }
-                if(haveSdp) {
+                if (haveSdp) {
                         MediaDesc sdpMd = cmd.pendingMediaDesc;
-                        Error err = applySdp(sdp, cfg, sdpMd);
-                        if(err.isError()) { resetAll(); return err; }
+                        Error     err = applySdp(sdp, cfg, sdpMd);
+                        if (err.isError()) {
+                                resetAll();
+                                return err;
+                        }
                         cmd.pendingMediaDesc = sdpMd;
-                        if(sdpMd.frameRate().isValid()) {
+                        if (sdpMd.frameRate().isValid()) {
                                 _frameRate = sdpMd.frameRate();
                         }
                 }
         }
 
         _readerJitterMs = cfg.getAs<int>(MediaConfig::RtpJitterMs, 50);
-        if(_readerJitterMs <= 0) _readerJitterMs = 50;
+        if (_readerJitterMs <= 0) _readerJitterMs = 50;
         _readerMaxDepth = cfg.getAs<int>(MediaConfig::RtpMaxReadQueueDepth, 4);
-        if(_readerMaxDepth <= 0) _readerMaxDepth = 4;
+        if (_readerMaxDepth <= 0) _readerMaxDepth = 4;
         _readerAgg.audioTimeoutMs = _readerJitterMs;
 
         // Configure each stream from the media descriptor + per-stream config.
         Error err = configureVideoStream(cfg, cmd.pendingMediaDesc);
-        if(err.isError()) { resetAll(); return err; }
+        if (err.isError()) {
+                resetAll();
+                return err;
+        }
         err = configureAudioStream(cfg, cmd.pendingMediaDesc);
-        if(err.isError()) { resetAll(); return err; }
+        if (err.isError()) {
+                resetAll();
+                return err;
+        }
         err = configureDataStream(cfg);
-        if(err.isError()) { resetAll(); return err; }
+        if (err.isError()) {
+                resetAll();
+                return err;
+        }
 
         // Set up the reader-side frame aggregator if this is a reader
         // with an audio stream.  The FIFO stores samples in the
         // network wire format (PCMI_S16BE) and is sized for 2 seconds
         // of headroom — enough to absorb a transient burst of audio
         // arriving ahead of the video stream without losing data.
-        if(_readerMode && _audio.readerAudioDesc.isValid()) {
-                AudioDesc wireFormat(AudioFormat::PCMI_S16BE,
-                                     _audio.readerAudioDesc.sampleRate(),
+        if (_readerMode && _audio.readerAudioDesc.isValid()) {
+                AudioDesc wireFormat(AudioFormat::PCMI_S16BE, _audio.readerAudioDesc.sampleRate(),
                                      _audio.readerAudioDesc.channels());
                 _readerAgg.audioFifo.setFormat(wireFormat);
                 _readerAgg.audioFifo.setInputFormat(wireFormat);
-                const size_t headroom = static_cast<size_t>(
-                        _audio.readerAudioDesc.sampleRate() * 2);
+                const size_t headroom = static_cast<size_t>(_audio.readerAudioDesc.sampleRate() * 2);
                 _readerAgg.audioFifo.reserve(headroom);
                 _readerAgg.videoFrameIndex = 0;
                 _readerAgg.hasMetadata = false;
@@ -1701,28 +1624,45 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
         auto isLocalMulticast = [](const SocketAddress &a) {
                 return a.isMulticast() || a.isLoopback();
         };
-        bool loopback = isLocalMulticast(_video.destination) ||
-                        isLocalMulticast(_audio.destination) ||
+        bool loopback = isLocalMulticast(_video.destination) || isLocalMulticast(_audio.destination) ||
                         isLocalMulticast(_data.destination);
 
-        if(_readerMode) {
+        if (_readerMode) {
                 err = openReaderStream(_video, loopback);
-                if(err.isError()) { resetAll(); return err; }
+                if (err.isError()) {
+                        resetAll();
+                        return err;
+                }
                 err = openReaderStream(_audio, loopback);
-                if(err.isError()) { resetAll(); return err; }
+                if (err.isError()) {
+                        resetAll();
+                        return err;
+                }
                 err = openReaderStream(_data, loopback);
-                if(err.isError()) { resetAll(); return err; }
+                if (err.isError()) {
+                        resetAll();
+                        return err;
+                }
         } else {
                 err = openStream(_video, loopback);
-                if(err.isError()) { resetAll(); return err; }
+                if (err.isError()) {
+                        resetAll();
+                        return err;
+                }
                 err = openStream(_audio, loopback);
-                if(err.isError()) { resetAll(); return err; }
+                if (err.isError()) {
+                        resetAll();
+                        return err;
+                }
                 err = openStream(_data, loopback);
-                if(err.isError()) { resetAll(); return err; }
+                if (err.isError()) {
+                        resetAll();
+                        return err;
+                }
         }
 
         // At least one stream must be active.
-        if(!_video.active && !_audio.active && !_data.active) {
+        if (!_video.active && !_audio.active && !_data.active) {
                 promekiErr("MediaIOTask_Rtp: no RTP streams configured "
                            "(set VideoRtpDestination / AudioRtpDestination / DataRtpDestination)");
                 resetAll();
@@ -1762,9 +1702,9 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
         // timing.  That's the deferred @c RtpPacingMode::TxTime
         // path; until it lands, the rate-cap approach below is the
         // best we can do with @c SO_MAX_PACING_RATE alone.
-        if(!_readerMode && _pacingMode.value() == RtpPacingMode::KernelFq.value()) {
+        if (!_readerMode && _pacingMode.value() == RtpPacingMode::KernelFq.value()) {
                 auto applyRate = [](Stream &s, uint64_t bitsPerSec) {
-                        if(!s.active || bitsPerSec == 0) return;
+                        if (!s.active || bitsPerSec == 0) return;
                         uint64_t bytesPerSec = bitsPerSec / 8;
                         (void)s.session->setPacingRate(bytesPerSec);
                 };
@@ -1774,28 +1714,21 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
                 // explicit-config path is preserved so callers that
                 // already know their compressed bitrate can opt out
                 // of per-frame updates if they want.
-                uint64_t videoBitrate = static_cast<uint64_t>(
-                        cfg.getAs<int>(MediaConfig::VideoRtpTargetBitrate, 0));
-                if(videoBitrate == 0 && _video.active &&
-                   !cmd.pendingMediaDesc.imageList().isEmpty()) {
+                uint64_t videoBitrate = static_cast<uint64_t>(cfg.getAs<int>(MediaConfig::VideoRtpTargetBitrate, 0));
+                if (videoBitrate == 0 && _video.active && !cmd.pendingMediaDesc.imageList().isEmpty()) {
                         const ImageDesc &img = cmd.pendingMediaDesc.imageList()[0];
-                        if(!img.pixelFormat().isCompressed()) {
+                        if (!img.pixelFormat().isCompressed()) {
                                 // Uncompressed: width * height * bpp * fps.
                                 // bpp is approximated from
                                 // bytesPerBlock / pixelsPerBlock.
                                 const PixelMemLayout &pf = img.pixelFormat().memLayout();
-                                size_t ppb = pf.pixelsPerBlock();
-                                size_t bpb = pf.bytesPerBlock();
-                                double bpp = ppb > 0
-                                        ? (8.0 * static_cast<double>(bpb) /
-                                                 static_cast<double>(ppb))
-                                        : 0.0;
-                                double fps = _frameRate.isValid()
-                                        ? _frameRate.toDouble() : 30.0;
-                                videoBitrate = static_cast<uint64_t>(
-                                        static_cast<double>(img.width()) *
-                                        static_cast<double>(img.height()) *
-                                        bpp * fps);
+                                size_t                ppb = pf.pixelsPerBlock();
+                                size_t                bpb = pf.bytesPerBlock();
+                                double                bpp =
+                                        ppb > 0 ? (8.0 * static_cast<double>(bpb) / static_cast<double>(ppb)) : 0.0;
+                                double fps = _frameRate.isValid() ? _frameRate.toDouble() : 30.0;
+                                videoBitrate = static_cast<uint64_t>(static_cast<double>(img.width()) *
+                                                                     static_cast<double>(img.height()) * bpp * fps);
                         }
                         // Compressed with no explicit bitrate: leave
                         // the rate cap unset here.  sendVideo updates
@@ -1805,11 +1738,10 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
                 applyRate(_video, videoBitrate);
 
                 // Audio: sample_rate * channels * bytes_per_sample * 8.
-                if(_audio.active && !cmd.pendingMediaDesc.audioList().isEmpty()) {
+                if (_audio.active && !cmd.pendingMediaDesc.audioList().isEmpty()) {
                         const AudioDesc &ad = cmd.pendingMediaDesc.audioList()[0];
-                        uint64_t audioBitrate = static_cast<uint64_t>(
-                                ad.sampleRate() * ad.channels() *
-                                ad.bytesPerSample() * 8);
+                        uint64_t         audioBitrate =
+                                static_cast<uint64_t>(ad.sampleRate() * ad.channels() * ad.bytesPerSample() * 8);
                         applyRate(_audio, audioBitrate);
                 }
 
@@ -1817,9 +1749,12 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
         }
 
         buildSdp();
-        if(!_readerMode && !_sdpPath.isEmpty()) {
+        if (!_readerMode && !_sdpPath.isEmpty()) {
                 Error sdpErr = writeSdpFile(_sdpPath);
-                if(sdpErr.isError()) { resetAll(); return sdpErr; }
+                if (sdpErr.isError()) {
+                        resetAll();
+                        return sdpErr;
+                }
         }
 
         // For the reader, synthesise the outbound MediaDesc from
@@ -1829,19 +1764,17 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
         // actually emitting — not the empty one the caller passed
         // in before SDP / config-key fallback ran.
         MediaDesc resolved = cmd.pendingMediaDesc;
-        if(_readerMode) {
-                if(_video.active && _video.readerImageDesc.isValid() &&
-                   resolved.imageList().isEmpty()) {
+        if (_readerMode) {
+                if (_video.active && _video.readerImageDesc.isValid() && resolved.imageList().isEmpty()) {
                         resolved.imageList().pushToBack(_video.readerImageDesc);
                 }
-                if(_audio.active && _audio.readerAudioDesc.isValid() &&
-                   resolved.audioList().isEmpty()) {
+                if (_audio.active && _audio.readerAudioDesc.isValid() && resolved.audioList().isEmpty()) {
                         resolved.audioList().pushToBack(_audio.readerAudioDesc);
                 }
-                if(_frameRate.isValid()) resolved.setFrameRate(_frameRate);
+                if (_frameRate.isValid()) resolved.setFrameRate(_frameRate);
         }
 
-        cmd.mediaDesc  = resolved;
+        cmd.mediaDesc = resolved;
         // Propagate the audio descriptor that the reader discovered
         // from the SDP / config.  If the caller pre-set one via
         // setAudioDesc it takes priority; otherwise fall back to
@@ -1850,13 +1783,13 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
         // MediaIO::audioDesc() (e.g. mediaplay's SDL audio output
         // gating) see an invalid descriptor and skip audio entirely
         // even though the media descriptor's audioList is populated.
-        cmd.audioDesc  = cmd.pendingAudioDesc;
-        if(!cmd.audioDesc.isValid() && !resolved.audioList().isEmpty()) {
+        cmd.audioDesc = cmd.pendingAudioDesc;
+        if (!cmd.audioDesc.isValid() && !resolved.audioList().isEmpty()) {
                 cmd.audioDesc = resolved.audioList()[0];
         }
-        cmd.metadata   = cmd.pendingMetadata;
-        cmd.frameRate  = _frameRate;
-        cmd.canSeek    = false;
+        cmd.metadata = cmd.pendingMetadata;
+        cmd.frameRate = _frameRate;
+        cmd.canSeek = false;
         cmd.frameCount = MediaIO::FrameCountInfinite;
         return Error::Ok;
 }
@@ -1872,11 +1805,11 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandClose &cmd) {
         // dump that captures the entire run's pacing distribution
         // without needing a stats query.
         auto dumpIfPopulated = [](const Histogram &h) {
-                if(h.count() > 0) {
+                if (h.count() > 0) {
                         promekiInfo("MediaIOTask_Rtp: %s", h.toString().cstr());
                 }
         };
-        if(_readerMode) {
+        if (_readerMode) {
                 dumpIfPopulated(_video.rxPacketInterval);
                 dumpIfPopulated(_video.rxFrameInterval);
                 dumpIfPopulated(_video.rxFrameAssembleTime);
@@ -1890,7 +1823,7 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandClose &cmd) {
 }
 
 Error MediaIOTask_Rtp::executeCmd(MediaIOCommandRead &cmd) {
-        if(!_readerMode) return Error::NotSupported;
+        if (!_readerMode) return Error::NotSupported;
 
         // Pop a frame from the reader output queue with a bounded
         // wait.  Timeout translates to TryAgain so the MediaIO
@@ -1898,11 +1831,11 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandRead &cmd) {
         // waiting — a live RTP stream has no "end-of-file", so the
         // only terminal state is Close.
         constexpr unsigned int kReadTimeoutMs = 500;
-        Result<Frame::Ptr> result = _readerQueue.pop(kReadTimeoutMs);
-        if(result.second() == Error::Timeout) {
+        Result<Frame::Ptr>     result = _readerQueue.pop(kReadTimeoutMs);
+        if (result.second() == Error::Timeout) {
                 return Error::TryAgain;
         }
-        if(result.second().isError()) {
+        if (result.second().isError()) {
                 return result.second();
         }
         stampWorkBegin();
@@ -1916,8 +1849,8 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandRead &cmd) {
 // ----- Per-stream send helpers -----
 
 Error MediaIOTask_Rtp::sendVideo(const VideoPayload &payload, const FrameNumber &frameIndex) {
-        if(!_video.active || !payload.isValid()) return Error::Ok;
-        if(_video.session == nullptr || _video.payload == nullptr) return Error::Invalid;
+        if (!_video.active || !payload.isValid()) return Error::Ok;
+        if (_video.session == nullptr || _video.payload == nullptr) return Error::Invalid;
 
         // Diagnostic timing capture.  Updated only on this stream's
         // dedicated TX worker thread, so the histograms need no
@@ -1927,7 +1860,7 @@ Error MediaIOTask_Rtp::sendVideo(const VideoPayload &payload, const FrameNumber 
         // spends in here, which is dominated by the per-packet
         // pacing sleep.
         const TimeStamp callStart = TimeStamp::now();
-        if(_video.txHasLastSend) {
+        if (_video.txHasLastSend) {
                 const Duration delta = callStart - _video.txLastSendStart;
                 _video.txFrameInterval.addSample(delta.microseconds());
         }
@@ -1947,8 +1880,7 @@ Error MediaIOTask_Rtp::sendVideo(const VideoPayload &payload, const FrameNumber 
         // The frame index is passed in by the caller (the strand
         // thread) so this worker thread can run in parallel with the
         // strand without racing on @c _frameCount.
-        uint32_t ts = static_cast<uint32_t>(
-                _frameRate.cumulativeTicks(_video.clockRate, frameIndex.value()));
+        uint32_t ts = static_cast<uint32_t>(_frameRate.cumulativeTicks(_video.clockRate, frameIndex.value()));
 
         // Grab plane 0 bytes — for compressed payloads this is the
         // bitstream; for RFC 4175 raw video it's the interleaved
@@ -1956,24 +1888,23 @@ Error MediaIOTask_Rtp::sendVideo(const VideoPayload &payload, const FrameNumber 
         // the RFC 4175 wire format (e.g. YUYV instead of UYVY),
         // convert first.  CSC only applies to uncompressed payloads
         // — compressed bitstreams are always transmitted verbatim.
-        const VideoPayload *src = &payload;
+        const VideoPayload           *src = &payload;
         UncompressedVideoPayload::Ptr converted;
-        if(_videoWirePixelFormat.isValid() &&
-           !payload.isCompressed() &&
-           payload.desc().pixelFormat().id() != _videoWirePixelFormat.id()) {
+        if (_videoWirePixelFormat.isValid() && !payload.isCompressed() &&
+            payload.desc().pixelFormat().id() != _videoWirePixelFormat.id()) {
                 const auto *uvp = payload.as<UncompressedVideoPayload>();
-                if(uvp == nullptr) return Error::Invalid;
+                if (uvp == nullptr) return Error::Invalid;
                 converted = uvp->convert(_videoWirePixelFormat, Metadata());
-                if(!converted.isValid()) return Error::Invalid;
+                if (!converted.isValid()) return Error::Invalid;
                 src = converted.ptr();
         }
 
-        if(src->planeCount() == 0) return Error::Invalid;
+        if (src->planeCount() == 0) return Error::Invalid;
         auto plane0 = src->plane(0);
-        if(!plane0.isValid() || plane0.size() == 0) return Error::Invalid;
+        if (!plane0.isValid() || plane0.size() == 0) return Error::Invalid;
 
         auto packets = _video.payload->pack(plane0.data(), plane0.size());
-        if(packets.isEmpty()) return Error::Invalid;
+        if (packets.isEmpty()) return Error::Invalid;
 
         // VBR compressed video: per-frame kernel pacing rate update.
         //
@@ -2001,16 +1932,14 @@ Error MediaIOTask_Rtp::sendVideo(const VideoPayload &payload, const FrameNumber 
         // Skipped if @c VideoRtpTargetBitrate is non-zero — that
         // means the caller has explicitly chosen the rate, and
         // open-time @c applyRate already programmed it.
-        if(_pacingMode.value() == RtpPacingMode::KernelFq.value() &&
-           _frameRate.isValid() && payload.isCompressed()) {
+        if (_pacingMode.value() == RtpPacingMode::KernelFq.value() && _frameRate.isValid() && payload.isCompressed()) {
                 size_t frameBytes = 0;
-                for(size_t i = 0; i < packets.size(); i++) {
+                for (size_t i = 0; i < packets.size(); i++) {
                         frameBytes += packets[i].size();
                 }
-                if(frameBytes > 0) {
-                        const double fps = _frameRate.toDouble();
-                        const uint64_t bytesPerSec = static_cast<uint64_t>(
-                                static_cast<double>(frameBytes) * fps);
+                if (frameBytes > 0) {
+                        const double   fps = _frameRate.toDouble();
+                        const uint64_t bytesPerSec = static_cast<uint64_t>(static_cast<double>(frameBytes) * fps);
                         (void)_video.session->setPacingRate(bytesPerSec);
                 }
         }
@@ -2037,20 +1966,18 @@ Error MediaIOTask_Rtp::sendVideo(const VideoPayload &payload, const FrameNumber 
         // RtpPacingMode::None bypasses all pacing and bursts
         // directly to the socket — useful for loopback tests
         // and maximum-throughput scenarios.
-        Error err;
-        const bool wantSpread =
-                _frameRate.isValid() &&
-                _pacingMode.value() != RtpPacingMode::None.value();
-        if(wantSpread) {
+        Error      err;
+        const bool wantSpread = _frameRate.isValid() && _pacingMode.value() != RtpPacingMode::None.value();
+        if (wantSpread) {
                 Duration interval = _frameRate.frameDuration();
                 err = _video.session->sendPacketsPaced(packets, ts, interval, true);
         } else {
                 err = _video.session->sendPackets(packets, ts, true);
         }
-        if(err.isError()) return err;
+        if (err.isError()) return err;
 
         _video.packetsSent += static_cast<int64_t>(packets.size());
-        for(size_t i = 0; i < packets.size(); i++) _video.bytesSent += static_cast<int64_t>(packets[i].size());
+        for (size_t i = 0; i < packets.size(); i++) _video.bytesSent += static_cast<int64_t>(packets[i].size());
 
         // Record total wall-clock time spent inside this call —
         // dominated by the per-packet pacing sleeps when wantSpread
@@ -2063,11 +1990,11 @@ Error MediaIOTask_Rtp::sendVideo(const VideoPayload &payload, const FrameNumber 
 }
 
 Error MediaIOTask_Rtp::sendAudio(const PcmAudioPayload &payload) {
-        if(!_audio.active) return Error::Ok;
-        if(_audio.session == nullptr || _audio.payload == nullptr) return Error::Invalid;
-        if(payload.sampleCount() == 0) return Error::Ok;
-        if(payload.planeCount() == 0) return Error::Invalid;
-        if(_audioState.packetBytes == 0 || _audioState.packetSamples == 0) {
+        if (!_audio.active) return Error::Ok;
+        if (_audio.session == nullptr || _audio.payload == nullptr) return Error::Invalid;
+        if (payload.sampleCount() == 0) return Error::Ok;
+        if (payload.planeCount() == 0) return Error::Invalid;
+        if (_audioState.packetBytes == 0 || _audioState.packetSamples == 0) {
                 return Error::Invalid;
         }
 
@@ -2079,13 +2006,10 @@ Error MediaIOTask_Rtp::sendAudio(const PcmAudioPayload &payload) {
         // in plane(0); planar PCM isn't supported on the TX path
         // yet.
         auto planeView = payload.plane(0);
-        if(planeView.size() == 0) return Error::Invalid;
-        Error pushErr = _audioState.fifo.push(planeView.data(),
-                                              payload.sampleCount(),
-                                              payload.desc());
-        if(pushErr.isError()) {
-                promekiErr("MediaIOTask_Rtp: audio FIFO push failed: %s",
-                           pushErr.desc().cstr());
+        if (planeView.size() == 0) return Error::Invalid;
+        Error pushErr = _audioState.fifo.push(planeView.data(), payload.sampleCount(), payload.desc());
+        if (pushErr.isError()) {
+                promekiErr("MediaIOTask_Rtp: audio FIFO push failed: %s", pushErr.desc().cstr());
                 return pushErr;
         }
 
@@ -2093,23 +2017,22 @@ Error MediaIOTask_Rtp::sendAudio(const PcmAudioPayload &payload) {
         // samples (when the incoming audio is not a whole multiple
         // of packetSamples) stay in the FIFO for the next frame.
         const size_t packetSamples = _audioState.packetSamples;
-        const size_t packetBytes   = _audioState.packetBytes;
-        const size_t available     = _audioState.fifo.available();
-        if(available < packetSamples) return Error::Ok;
+        const size_t packetBytes = _audioState.packetBytes;
+        const size_t available = _audioState.fifo.available();
+        if (available < packetSamples) return Error::Ok;
 
-        const size_t count       = available / packetSamples;
+        const size_t count = available / packetSamples;
         const size_t totalSamples = count * packetSamples;
-        const size_t totalBytes   = count * packetBytes;
+        const size_t totalBytes = count * packetBytes;
 
         // Drain the aligned block in one pop — one contiguous byte
         // buffer ready to hand to the payload handler.
         List<uint8_t> drained;
         drained.resize(totalBytes);
         auto [popped, popErr] = _audioState.fifo.pop(drained.data(), totalSamples);
-        if(popErr.isError()) return popErr;
-        if(popped != totalSamples) {
-                promekiErr("MediaIOTask_Rtp: audio FIFO pop short (%zu / %zu)",
-                           popped, totalSamples);
+        if (popErr.isError()) return popErr;
+        if (popped != totalSamples) {
+                promekiErr("MediaIOTask_Rtp: audio FIFO pop short (%zu / %zu)", popped, totalSamples);
                 return Error::IOError;
         }
 
@@ -2118,10 +2041,9 @@ Error MediaIOTask_Rtp::sendAudio(const PcmAudioPayload &payload) {
         // of samples produces exactly `count` RTP packets all sharing
         // one backing buffer.
         RtpPacket::List packets = _audio.payload->pack(drained.data(), totalBytes);
-        if(packets.isEmpty()) return Error::Ok;
-        if(packets.size() != count) {
-                promekiErr("MediaIOTask_Rtp: payload produced %zu packets, expected %zu",
-                           packets.size(), count);
+        if (packets.isEmpty()) return Error::Ok;
+        if (packets.size() != count) {
+                promekiErr("MediaIOTask_Rtp: payload produced %zu packets, expected %zu", packets.size(), count);
                 return Error::IOError;
         }
 
@@ -2131,48 +2053,45 @@ Error MediaIOTask_Rtp::sendAudio(const PcmAudioPayload &payload) {
         // (RFC 3551 reserves it for talkspurt boundaries which we
         // don't track).
         const uint32_t startTs = _audioState.nextTimestamp;
-        Error err = _audio.session->sendPackets(packets, startTs,
-                                                 static_cast<uint32_t>(packetSamples),
-                                                 false /* no marker */);
-        if(err.isError()) return err;
+        Error          err = _audio.session->sendPackets(packets, startTs, static_cast<uint32_t>(packetSamples),
+                                                         false /* no marker */);
+        if (err.isError()) return err;
 
-        _audioState.nextTimestamp =
-                startTs + static_cast<uint32_t>(totalSamples);
+        _audioState.nextTimestamp = startTs + static_cast<uint32_t>(totalSamples);
         _audio.packetsSent += static_cast<int64_t>(packets.size());
-        for(size_t i = 0; i < packets.size(); i++) {
+        for (size_t i = 0; i < packets.size(); i++) {
                 _audio.bytesSent += static_cast<int64_t>(packets[i].size());
         }
         return Error::Ok;
 }
 
 Error MediaIOTask_Rtp::sendData(const Metadata &metadata, const FrameNumber &frameIndex) {
-        if(!_data.active) return Error::Ok;
-        if(_data.session == nullptr || _data.payload == nullptr) return Error::Invalid;
+        if (!_data.active) return Error::Ok;
+        if (_data.session == nullptr || _data.payload == nullptr) return Error::Invalid;
 
         // Only the JsonMetadata format is wired up today; the
         // ST 2110-40 branch is rejected at configure time.
         JsonObject obj = metadata.toJson();
-        String json = obj.toString(0); // compact
-        if(json.isEmpty()) return Error::Ok;
+        String     json = obj.toString(0); // compact
+        if (json.isEmpty()) return Error::Ok;
 
-        double fps = _frameRate.isValid() ? _frameRate.toDouble() : 30.0;
-        uint32_t ts = static_cast<uint32_t>(
-                static_cast<double>(frameIndex.value()) *
-                static_cast<double>(_data.clockRate) / fps);
+        double   fps = _frameRate.isValid() ? _frameRate.toDouble() : 30.0;
+        uint32_t ts = static_cast<uint32_t>(static_cast<double>(frameIndex.value()) *
+                                            static_cast<double>(_data.clockRate) / fps);
 
         auto packets = _data.payload->pack(json.cstr(), json.size());
-        if(packets.isEmpty()) return Error::Ok;
+        if (packets.isEmpty()) return Error::Ok;
 
         Error err = _data.session->sendPackets(packets, ts, true);
-        if(err.isError()) return err;
+        if (err.isError()) return err;
 
         _data.packetsSent += static_cast<int64_t>(packets.size());
-        for(size_t i = 0; i < packets.size(); i++) _data.bytesSent += static_cast<int64_t>(packets[i].size());
+        for (size_t i = 0; i < packets.size(); i++) _data.bytesSent += static_cast<int64_t>(packets[i].size());
         return Error::Ok;
 }
 
 Error MediaIOTask_Rtp::executeCmd(MediaIOCommandWrite &cmd) {
-        if(cmd.frame.isNull()) return Error::InvalidArgument;
+        if (cmd.frame.isNull()) return Error::InvalidArgument;
         stampWorkBegin();
         const Frame &frame = *cmd.frame;
 
@@ -2193,13 +2112,12 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandWrite &cmd) {
         // stack-local — zero heap allocation, and pop() blocks
         // until the worker pushes the result.
         Queue<Error> videoResult, audioResult, dataResult;
-        bool videoDispatched = false;
-        bool audioDispatched = false;
-        bool dataDispatched  = false;
+        bool         videoDispatched = false;
+        bool         audioDispatched = false;
+        bool         dataDispatched = false;
 
         auto vids = frame.videoPayloads();
-        if(_video.active && _video.txThread != nullptr &&
-           !vids.isEmpty() && vids[0].isValid()) {
+        if (_video.active && _video.txThread != nullptr && !vids.isEmpty() && vids[0].isValid()) {
                 // Hand the payload directly to the TX worker — the
                 // @ref VideoPayload::Ptr keeps the payload (and its
                 // plane buffers) alive for the duration of the
@@ -2207,38 +2125,25 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandWrite &cmd) {
                 // both uncompressed raster and compressed access
                 // units in the same lambda.
                 VideoPayload::Ptr vp = vids[0];
-                _video.txThread->_workQueue.push(TxWorkItem{
-                        [this, vp, frameIndex]() {
-                                return sendVideo(*vp, frameIndex);
-                        },
-                        &videoResult
-                });
+                _video.txThread->_workQueue.push(
+                        TxWorkItem{[this, vp, frameIndex]() { return sendVideo(*vp, frameIndex); }, &videoResult});
                 videoDispatched = true;
         }
 
         auto auds = frame.audioPayloads();
-        if(_audio.active && _audio.txThread != nullptr &&
-           !auds.isEmpty() && auds[0].isValid()) {
+        if (_audio.active && _audio.txThread != nullptr && !auds.isEmpty() && auds[0].isValid()) {
                 auto uap = sharedPointerCast<PcmAudioPayload>(auds[0]);
-                if(uap.isValid()) {
-                        _audio.txThread->_workQueue.push(TxWorkItem{
-                                [this, uap]() {
-                                        return sendAudio(*uap);
-                                },
-                                &audioResult
-                        });
+                if (uap.isValid()) {
+                        _audio.txThread->_workQueue.push(
+                                TxWorkItem{[this, uap]() { return sendAudio(*uap); }, &audioResult});
                         audioDispatched = true;
                 }
         }
 
-        if(_data.active && _data.txThread != nullptr) {
+        if (_data.active && _data.txThread != nullptr) {
                 Metadata md = frame.metadata();
-                _data.txThread->_workQueue.push(TxWorkItem{
-                        [this, md, frameIndex]() {
-                                return sendData(md, frameIndex);
-                        },
-                        &dataResult
-                });
+                _data.txThread->_workQueue.push(
+                        TxWorkItem{[this, md, frameIndex]() { return sendData(md, frameIndex); }, &dataResult});
                 dataDispatched = true;
         }
 
@@ -2248,19 +2153,18 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandWrite &cmd) {
         // out early would leave in-flight workers running against
         // state we're about to tear down on Close.
         Error firstErr = Error::Ok;
-        auto join = [&firstErr](Queue<Error> &q, bool dispatched) {
-                if(!dispatched) return;
+        auto  join = [&firstErr](Queue<Error> &q, bool dispatched) {
+                if (!dispatched) return;
                 auto r = q.pop();
-                if(r.second().isOk() && r.first().isError() &&
-                   firstErr.isOk()) {
+                if (r.second().isOk() && r.first().isError() && firstErr.isOk()) {
                         firstErr = r.first();
                 }
         };
         join(videoResult, videoDispatched);
         join(audioResult, audioDispatched);
-        join(dataResult,  dataDispatched);
+        join(dataResult, dataDispatched);
 
-        if(firstErr.isError()) {
+        if (firstErr.isError()) {
                 noteFrameDropped();
                 stampWorkEnd();
                 return firstErr;
@@ -2269,13 +2173,13 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandWrite &cmd) {
         ++_frameCount;
         _framesSent++;
         cmd.currentFrame = toFrameNumber(_frameCount);
-        cmd.frameCount   = MediaIO::FrameCountInfinite;
+        cmd.frameCount = MediaIO::FrameCountInfinite;
         stampWorkEnd();
         return Error::Ok;
 }
 
 Error MediaIOTask_Rtp::executeCmd(MediaIOCommandParams &cmd) {
-        if(cmd.name == ParamGetSdp.name()) {
+        if (cmd.name == ParamGetSdp.name()) {
                 // The GetSdp command returns the live session
                 // description as text.  Callers that want the
                 // structured form should set up their own
@@ -2288,39 +2192,29 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandParams &cmd) {
 }
 
 Error MediaIOTask_Rtp::executeCmd(MediaIOCommandStats &cmd) {
-        if(_readerMode) {
+        if (_readerMode) {
                 cmd.stats.set(StatsFramesReceived, _readerFramesReceived);
                 // FramesDropped is populated by the MediaIO base
                 // class from noteFrameDropped() — see
                 // MediaIO::populateStandardStats.
                 cmd.stats.set(StatsPacketsReceived,
-                        _video.packetsReceived + _audio.packetsReceived +
-                        _data.packetsReceived);
-                cmd.stats.set(StatsBytesReceived,
-                        _video.bytesReceived + _audio.bytesReceived +
-                        _data.bytesReceived);
+                              _video.packetsReceived + _audio.packetsReceived + _data.packetsReceived);
+                cmd.stats.set(StatsBytesReceived, _video.bytesReceived + _audio.bytesReceived + _data.bytesReceived);
                 // Diagnostic histograms (RX side).  Stored as
                 // pretty-printed Strings so callers can dump them
                 // straight to a log without re-parsing.
-                cmd.stats.set(StatsRxVideoPacketIntervalUs,
-                              _video.rxPacketInterval.toString());
-                cmd.stats.set(StatsRxVideoFrameIntervalUs,
-                              _video.rxFrameInterval.toString());
-                cmd.stats.set(StatsRxVideoFrameAssembleUs,
-                              _video.rxFrameAssembleTime.toString());
+                cmd.stats.set(StatsRxVideoPacketIntervalUs, _video.rxPacketInterval.toString());
+                cmd.stats.set(StatsRxVideoFrameIntervalUs, _video.rxFrameInterval.toString());
+                cmd.stats.set(StatsRxVideoFrameAssembleUs, _video.rxFrameAssembleTime.toString());
         } else {
                 cmd.stats.set(StatsFramesSent, _framesSent);
                 // FramesDropped is populated by the MediaIO base
                 // class from noteFrameDropped().
-                cmd.stats.set(StatsPacketsSent,
-                        _video.packetsSent + _audio.packetsSent + _data.packetsSent);
-                cmd.stats.set(StatsBytesSent,
-                        _video.bytesSent + _audio.bytesSent + _data.bytesSent);
+                cmd.stats.set(StatsPacketsSent, _video.packetsSent + _audio.packetsSent + _data.packetsSent);
+                cmd.stats.set(StatsBytesSent, _video.bytesSent + _audio.bytesSent + _data.bytesSent);
                 // Diagnostic histograms (TX side).
-                cmd.stats.set(StatsTxVideoFrameIntervalUs,
-                              _video.txFrameInterval.toString());
-                cmd.stats.set(StatsTxVideoSendDurationUs,
-                              _video.txSendDuration.toString());
+                cmd.stats.set(StatsTxVideoFrameIntervalUs, _video.txFrameInterval.toString());
+                cmd.stats.set(StatsTxVideoSendDurationUs, _video.txSendDuration.toString());
         }
         return Error::Ok;
 }

@@ -67,7 +67,7 @@ PROMEKI_NAMESPACE_BEGIN
  * coordinates them via signal-driven notifications.
  */
 class MediaPipeline : public ObjectBase {
-        PROMEKI_OBJECT(MediaPipeline, ObjectBase)
+                PROMEKI_OBJECT(MediaPipeline, ObjectBase)
         public:
                 /**
                  * @brief Lifecycle state of the pipeline.
@@ -119,8 +119,7 @@ class MediaPipeline : public ObjectBase {
                  * @return @c Error::Ok, or the first error encountered
                  *         (validation, planning, or instantiation).
                  */
-                Error build(const MediaPipelineConfig &config,
-                            bool autoplan = false);
+                Error build(const MediaPipelineConfig &config, bool autoplan = false);
 
                 /**
                  * @brief Registers an externally-constructed MediaIO for a
@@ -306,7 +305,7 @@ class MediaPipeline : public ObjectBase {
                 PROMEKI_SIGNAL(pipelineError, String, Error);
 
                 /** @brief Emitted after each stage's @c open() completes. @signal */
-                PROMEKI_SIGNAL(stageOpened,  String);
+                PROMEKI_SIGNAL(stageOpened, String);
 
                 /** @brief Emitted after each stage is wired into the drain. @signal */
                 PROMEKI_SIGNAL(stageStarted, String);
@@ -315,7 +314,7 @@ class MediaPipeline : public ObjectBase {
                 PROMEKI_SIGNAL(stageStopped, String);
 
                 /** @brief Emitted after each stage's @c close() completes. @signal */
-                PROMEKI_SIGNAL(stageClosed,  String);
+                PROMEKI_SIGNAL(stageClosed, String);
 
                 /**
                  * @brief Emitted once the pipeline has finished draining
@@ -453,11 +452,11 @@ class MediaPipeline : public ObjectBase {
                 // then skips it so no further writes (or NotOpen errors)
                 // reach the freshly-closed sink.
                 struct EdgeState {
-                        String   toName;
-                        MediaIO *to = nullptr;
-                        int64_t  framesWritten = 0;
-                        bool     isSinkEdge = false;
-                        bool     doneByLimit = false;
+                                String   toName;
+                                MediaIO *to = nullptr;
+                                int64_t  framesWritten = 0;
+                                bool     isSinkEdge = false;
+                                bool     doneByLimit = false;
                 };
 
                 // Each source-or-transit stage owns one SourceState entry.
@@ -465,19 +464,19 @@ class MediaPipeline : public ObjectBase {
                 // here; they participate only as write-error / frameWanted
                 // observers.
                 struct SourceState {
-                        MediaIO                 *from     = nullptr;
-                        promeki::List<EdgeState> edges;
-                        bool                     upstreamDone = false;
+                                MediaIO                 *from = nullptr;
+                                promeki::List<EdgeState> edges;
+                                bool                     upstreamDone = false;
                 };
 
                 struct Subscriber {
-                        int             id;
-                        EventCallback   fn;
-                        EventLoop       *loop;
+                                int           id;
+                                EventCallback fn;
+                                EventLoop    *loop;
                 };
 
-                Error destroyStages();
-                Error topologicallySort(promeki::List<String> &order) const;
+                Error    destroyStages();
+                Error    topologicallySort(promeki::List<String> &order) const;
                 MediaIO *instantiateStage(const MediaPipelineConfig::Stage &s);
 
                 /**
@@ -501,8 +500,7 @@ class MediaPipeline : public ObjectBase {
                  * @brief Builds and publishes a stage-state event with the
                  *        canonical stage transition name.
                  */
-                void publishStageState(const String &stageName,
-                                       const String &transition);
+                void publishStageState(const String &stageName, const String &transition);
 
                 /** @brief Lazy install of the @ref Logger listener tap. */
                 void installLoggerTap();
@@ -585,12 +583,12 @@ class MediaPipeline : public ObjectBase {
                  */
                 void finalizeClose();
 
-                MediaPipelineConfig                   _config;
-                State                                 _state    = State::Empty;
-                promeki::Map<String, MediaIO *>       _stages;
-                promeki::Map<String, MediaIO *>       _injected;
-                promeki::Map<String, SourceState>     _sources;
-                promeki::List<String>                 _topoOrder;
+                MediaPipelineConfig               _config;
+                State                             _state = State::Empty;
+                promeki::Map<String, MediaIO *>   _stages;
+                promeki::Map<String, MediaIO *>   _injected;
+                promeki::Map<String, SourceState> _sources;
+                promeki::List<String>             _topoOrder;
 
                 // Close-cascade bookkeeping.  Latched by
                 // @ref initiateClose and unwound in
@@ -598,29 +596,28 @@ class MediaPipeline : public ObjectBase {
                 // "no errors observed" bit that eventually feeds
                 // @ref finishedSignal; drops to false on any
                 // operational or close-time error.
-                bool                                  _closing = false;
-                bool                                  _cleanFinish = false;
-                promeki::Set<String>                  _stagesAwaitingClosed;
-                Error                                 _closeError = Error::Ok;
+                bool                 _closing = false;
+                bool                 _cleanFinish = false;
+                promeki::Set<String> _stagesAwaitingClosed;
+                Error                _closeError = Error::Ok;
 
                 // Close-watchdog timer.  Armed by @ref initiateClose,
                 // stopped by @ref finalizeClose, and escalates to
                 // @ref forceCloseRemaining when it fires.  Zero means
                 // "no watchdog armed".
-                unsigned int                          _closeTimeoutMs =
-                        DefaultCloseTimeoutMs;
-                int                                   _closeWatchdogTimerId = -1;
+                unsigned int _closeTimeoutMs = DefaultCloseTimeoutMs;
+                int          _closeWatchdogTimerId = -1;
 
                 // Pipeline-layer telemetry counters surfaced via
                 // PipelineStats on every @ref stats() call.  Atomic
                 // so stats() called from the stats-thread context
                 // (see mediaplay's --stats worker) doesn't race the
                 // drain that runs on the owner's EventLoop.
-                Atomic<int64_t>                       _framesProduced{0};
-                Atomic<int64_t>                       _writeRetries{0};
-                Atomic<int64_t>                       _pipelineErrors{0};
-                ElapsedTimer                          _uptime;
-                bool                                  _uptimeStarted = false;
+                Atomic<int64_t> _framesProduced{0};
+                Atomic<int64_t> _writeRetries{0};
+                Atomic<int64_t> _pipelineErrors{0};
+                ElapsedTimer    _uptime;
+                bool            _uptimeStarted = false;
 
                 // Pipeline-wide frame-count cap, cached at build time
                 // from @ref MediaPipelineConfig::frameCount.  Zero means
@@ -628,7 +625,7 @@ class MediaPipeline : public ObjectBase {
                 // Non-zero values cause drainSource to count frames per
                 // outgoing sink edge and close each sink once its count
                 // crosses the cap at the next safe cut point.
-                int64_t                               _frameCountLimit = 0;
+                int64_t _frameCountLimit = 0;
 
                 // Event subscription bookkeeping.  _subsMutex guards
                 // _subscribers and the logger-listener handle so
@@ -637,16 +634,16 @@ class MediaPipeline : public ObjectBase {
                 // publish() snapshots the list under the lock and
                 // releases before invoking callbacks so a callback may
                 // (un)subscribe re-entrantly without deadlocking.
-                mutable Mutex                         _subsMutex;
-                promeki::Map<int, Subscriber>         _subscribers;
-                int                                   _nextSubId = 0;
-                Logger::ListenerHandle                _loggerTap = 0;
+                mutable Mutex                 _subsMutex;
+                promeki::Map<int, Subscriber> _subscribers;
+                int                           _nextSubId = 0;
+                Logger::ListenerHandle        _loggerTap = 0;
 
                 // Stats tick.  _statsInterval is the user-configured
                 // wall-clock cadence; _statsTimerId is the active timer
                 // id (negative when no timer is armed).
-                Duration                              _statsInterval;
-                int                                   _statsTimerId = -1;
+                Duration _statsInterval;
+                int      _statsTimerId = -1;
 };
 
 PROMEKI_NAMESPACE_END

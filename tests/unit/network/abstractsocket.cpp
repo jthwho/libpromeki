@@ -27,7 +27,7 @@ TEST_CASE("AbstractSocket") {
 
         SUBCASE("open and close") {
                 UdpSocket sock;
-                Error err = sock.open(IODevice::ReadWrite);
+                Error     err = sock.open(IODevice::ReadWrite);
                 CHECK(err.isOk());
                 CHECK(sock.isOpen());
                 CHECK(sock.socketDescriptor() >= 0);
@@ -49,7 +49,7 @@ TEST_CASE("AbstractSocket") {
 
         SUBCASE("bind before open fails") {
                 UdpSocket sock;
-                Error err = sock.bind(SocketAddress::any(5004));
+                Error     err = sock.bind(SocketAddress::any(5004));
                 CHECK(err.isError());
         }
 
@@ -114,7 +114,7 @@ TEST_CASE("AbstractSocket") {
 
         SUBCASE("setSocketOption on closed socket fails") {
                 UdpSocket sock;
-                Error err = sock.setSocketOption(SOL_SOCKET, SO_RCVBUF, 65536);
+                Error     err = sock.setSocketOption(SOL_SOCKET, SO_RCVBUF, 65536);
                 CHECK(err.isError());
         }
 
@@ -126,19 +126,19 @@ TEST_CASE("AbstractSocket") {
 
         SUBCASE("connectToHost on closed socket fails") {
                 UdpSocket sock;
-                Error err = sock.connectToHost(SocketAddress::localhost(5004));
+                Error     err = sock.connectToHost(SocketAddress::localhost(5004));
                 CHECK(err.isError());
         }
 
         SUBCASE("setReceiveTimeout on closed socket fails") {
                 UdpSocket sock;
-                Error err = sock.setReceiveTimeout(1000);
+                Error     err = sock.setReceiveTimeout(1000);
                 CHECK(err.isError());
         }
 
         SUBCASE("setSendTimeout on closed socket fails") {
                 UdpSocket sock;
-                Error err = sock.setSendTimeout(1000);
+                Error     err = sock.setSendTimeout(1000);
                 CHECK(err.isError());
         }
 
@@ -164,10 +164,10 @@ TEST_CASE("AbstractSocket") {
                 // Read with no data — should time out at the default (5 s),
                 // not block forever.  We verify it returns within a generous
                 // window rather than testing the exact 5 s value.
-                char buf[64];
+                char         buf[64];
                 ElapsedTimer timer;
-                int64_t ret = sock.read(buf, sizeof(buf));
-                int64_t elapsed = timer.elapsed();
+                int64_t      ret = sock.read(buf, sizeof(buf));
+                int64_t      elapsed = timer.elapsed();
 
                 CHECK(ret == -1);
                 CHECK(elapsed >= 4500);
@@ -181,14 +181,14 @@ TEST_CASE("AbstractSocket") {
                 Error err = sock.setReceiveTimeout(200);
                 REQUIRE(err.isOk());
 
-                char buf[64];
+                char         buf[64];
                 ElapsedTimer timer;
-                int64_t ret = sock.read(buf, sizeof(buf));
-                int64_t elapsed = timer.elapsed();
+                int64_t      ret = sock.read(buf, sizeof(buf));
+                int64_t      elapsed = timer.elapsed();
 
                 CHECK(ret == -1);
-                CHECK(elapsed >= 180);   // Allow 20 ms early jitter
-                CHECK(elapsed < 1000);   // Must not hang
+                CHECK(elapsed >= 180); // Allow 20 ms early jitter
+                CHECK(elapsed < 1000); // Must not hang
         }
 
         SUBCASE("receive timeout causes readDatagram to fail after correct duration") {
@@ -198,10 +198,10 @@ TEST_CASE("AbstractSocket") {
                 Error err = sock.setReceiveTimeout(200);
                 REQUIRE(err.isOk());
 
-                char buf[64];
+                char         buf[64];
                 ElapsedTimer timer;
-                int64_t ret = sock.readDatagram(buf, sizeof(buf));
-                int64_t elapsed = timer.elapsed();
+                int64_t      ret = sock.readDatagram(buf, sizeof(buf));
+                int64_t      elapsed = timer.elapsed();
 
                 CHECK(ret == -1);
                 CHECK(elapsed >= 180);
@@ -210,7 +210,7 @@ TEST_CASE("AbstractSocket") {
 
         SUBCASE("receive timeout on TCP socket") {
                 TcpServer server;
-                Error err = server.listen(SocketAddress::localhost(0));
+                Error     err = server.listen(SocketAddress::localhost(0));
                 REQUIRE(err.isOk());
                 uint16_t port = server.serverAddress().port();
 
@@ -228,10 +228,10 @@ TEST_CASE("AbstractSocket") {
                 err = accepted->setReceiveTimeout(200);
                 REQUIRE(err.isOk());
 
-                char buf[64];
+                char         buf[64];
                 ElapsedTimer timer;
-                int64_t ret = accepted->read(buf, sizeof(buf));
-                int64_t elapsed = timer.elapsed();
+                int64_t      ret = accepted->read(buf, sizeof(buf));
+                int64_t      elapsed = timer.elapsed();
 
                 CHECK(ret == -1);
                 CHECK(elapsed >= 180);
@@ -244,9 +244,7 @@ TEST_CASE("AbstractSocket") {
                 UdpSocket sock;
                 sock.open(IODevice::ReadWrite);
                 AbstractSocket::SocketState lastState = AbstractSocket::Unconnected;
-                sock.stateChangedSignal.connect([&](AbstractSocket::SocketState s) {
-                        lastState = s;
-                });
+                sock.stateChangedSignal.connect([&](AbstractSocket::SocketState s) { lastState = s; });
                 sock.bind(SocketAddress::any(0));
                 CHECK(lastState == AbstractSocket::Bound);
         }

@@ -97,7 +97,7 @@ TEST_CASE("Duration: comparison") {
 
 TEST_CASE("Duration: toString basic") {
         Duration d = Duration::fromSeconds(3661);
-        String s = d.toString();
+        String   s = d.toString();
         CHECK(s.contains("1h"));
         CHECK(s.contains("1m"));
         CHECK(s.contains("1s"));
@@ -105,19 +105,19 @@ TEST_CASE("Duration: toString basic") {
 
 TEST_CASE("Duration: toString zero") {
         Duration d;
-        String s = d.toString();
+        String   s = d.toString();
         CHECK(s.contains("0s"));
 }
 
 TEST_CASE("Duration: toString with milliseconds") {
         Duration d = Duration::fromMilliseconds(1500);
-        String s = d.toString();
+        String   s = d.toString();
         CHECK(s.contains("500"));
 }
 
 TEST_CASE("Duration: toString negative") {
         Duration d = Duration::fromSeconds(-5);
-        String s = d.toString();
+        String   s = d.toString();
         CHECK(s.contains("-"));
 }
 
@@ -184,7 +184,7 @@ TEST_CASE("Duration: toScaledString") {
 
 TEST_CASE("Duration: format default is HMS") {
         Duration d = Duration::fromSeconds(3661);
-        String s = String::format("{}", d);
+        String   s = String::format("{}", d);
         CHECK(s.contains("1h"));
         CHECK(s.contains("1m"));
         CHECK(s.contains("1s"));
@@ -192,20 +192,20 @@ TEST_CASE("Duration: format default is HMS") {
 
 TEST_CASE("Duration: format hms spec") {
         Duration d = Duration::fromSeconds(90);
-        String s = String::format("{:hms}", d);
+        String   s = String::format("{:hms}", d);
         CHECK(s.contains("1m"));
         CHECK(s.contains("30s"));
 }
 
 TEST_CASE("Duration: format scaled spec") {
         Duration d = Duration::fromMilliseconds(1500);
-        String s = String::format("{:scaled}", d);
+        String   s = String::format("{:scaled}", d);
         CHECK(s == "1.5 s");
 }
 
 TEST_CASE("Duration: format scaled with width") {
         Duration d = Duration::fromMicroseconds(42);
-        String s = String::format("{:scaled:>12}", d);
+        String   s = String::format("{:scaled:>12}", d);
         CHECK(s.size() == 12);
         CHECK(s.contains("42 us"));
 }

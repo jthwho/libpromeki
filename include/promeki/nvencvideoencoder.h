@@ -75,9 +75,9 @@ class NvencVideoEncoder : public VideoEncoder {
         public:
                 /** @brief Which codec this instance emits. */
                 enum Codec {
-                        Codec_H264,   ///< H.264 / AVC (@c NV_ENC_CODEC_H264_GUID).
-                        Codec_HEVC,   ///< H.265 / HEVC (@c NV_ENC_CODEC_HEVC_GUID).
-                        Codec_AV1     ///< AV1 (@c NV_ENC_CODEC_AV1_GUID).
+                        Codec_H264, ///< H.264 / AVC (@c NV_ENC_CODEC_H264_GUID).
+                        Codec_HEVC, ///< H.265 / HEVC (@c NV_ENC_CODEC_HEVC_GUID).
+                        Codec_AV1   ///< AV1 (@c NV_ENC_CODEC_AV1_GUID).
                 };
 
                 /**
@@ -98,19 +98,19 @@ class NvencVideoEncoder : public VideoEncoder {
                  */
                 static List<int> supportedInputList();
 
-                void configure(const MediaConfig &config) override;
-                Error submitPayload(const UncompressedVideoPayload::Ptr &payload) override;
+                void                        configure(const MediaConfig &config) override;
+                Error                       submitPayload(const UncompressedVideoPayload::Ptr &payload) override;
                 CompressedVideoPayload::Ptr receiveCompressedPayload() override;
-                Error flush() override;
-                Error reset() override;
-                void requestKeyframe() override;
+                Error                       flush() override;
+                Error                       reset() override;
+                void                        requestKeyframe() override;
 
         private:
                 class Impl;
                 using ImplPtr = UniquePtr<Impl>;
                 ImplPtr _impl;
-                Codec _codec;
-                bool  _requestKey = false;
+                Codec   _codec;
+                bool    _requestKey = false;
 };
 
 PROMEKI_NAMESPACE_END

@@ -220,8 +220,7 @@ class VideoTestPattern {
                  * @return A new payload containing the rendered pattern.
                  */
                 SharedPtr<UncompressedVideoPayload, true, UncompressedVideoPayload>
-                createPayload(const ImageDesc &desc,
-                              double motionOffset = 0.0,
+                createPayload(const ImageDesc &desc, double motionOffset = 0.0,
                               const Timecode &currentTimecode = Timecode()) const;
 
                 /**
@@ -234,8 +233,7 @@ class VideoTestPattern {
                  * or @p burnText is empty this is a no-op and returns
                  * @c Error::Ok.
                  */
-                Error applyBurn(UncompressedVideoPayload &inout,
-                                const String &burnText) const;
+                Error applyBurn(UncompressedVideoPayload &inout, const String &burnText) const;
 
                 /**
                  * @brief Renders the pattern into an existing payload.
@@ -246,24 +244,24 @@ class VideoTestPattern {
 
         private:
                 // Background pattern state
-                VideoPattern    _pattern = VideoPattern::ColorBars;
-                Color           _solidColor;
+                VideoPattern _pattern = VideoPattern::ColorBars;
+                Color        _solidColor;
 
                 // Burn-in config
-                bool            _burnEnabled = false;
-                String          _burnFontFilename;
-                int             _burnFontSize = 36;
+                bool   _burnEnabled = false;
+                String _burnFontFilename;
+                int    _burnFontSize = 36;
                 // Effective font size actually passed to FastFont.
                 // Equals _burnFontSize when that is > 0; when
                 // _burnFontSize is 0 (auto) it is computed from the
                 // rendered image height at renderBurn() time.  Tracked
                 // separately so image-size changes can trigger a font
                 // reconfigure via _burnFontConfigDirty.
-                mutable int     _burnEffectiveFontSize = 36;
-                Color           _burnTextColor = Color::White;
-                Color           _burnBackgroundColor = Color::Black;
-                bool            _burnDrawBackground = true;
-                BurnPosition    _burnPosition = BurnPosition::BottomCenter;
+                mutable int  _burnEffectiveFontSize = 36;
+                Color        _burnTextColor = Color::White;
+                Color        _burnBackgroundColor = Color::Black;
+                bool         _burnDrawBackground = true;
+                BurnPosition _burnPosition = BurnPosition::BottomCenter;
 
                 // Generic image cache: a small fixed array of slots
                 // shared by all patterns.  Slot meanings are local to
@@ -283,16 +281,16 @@ class VideoTestPattern {
                 // tradeoff over per-key invalidation.
                 static constexpr int CacheSlotCount = 2;
                 mutable SharedPtr<UncompressedVideoPayload, true, UncompressedVideoPayload>
-                                _cachedPayloads[CacheSlotCount];
-                mutable size_t  _cacheW = 0;
-                mutable size_t  _cacheH = 0;
-                mutable int     _cachePixelFormatId = 0;
+                               _cachedPayloads[CacheSlotCount];
+                mutable size_t _cacheW = 0;
+                mutable size_t _cacheH = 0;
+                mutable int    _cachePixelFormatId = 0;
 
                 // Burn font — lazily constructed the first time burn
                 // actually runs, because FastFont needs a PaintEngine
                 // (and thus a pixel format) at construction time.
                 mutable FastFont::UPtr _burnFont;
-                mutable bool      _burnFontConfigDirty = true;
+                mutable bool           _burnFontConfigDirty = true;
 
                 bool isStaticPattern() const;
 
@@ -314,22 +312,18 @@ class VideoTestPattern {
                  */
                 template <typename Builder>
                 SharedPtr<UncompressedVideoPayload, true, UncompressedVideoPayload>
-                cachedPayload(int slotIndex,
-                              const ImageDesc &desc,
-                              Builder &&build) const {
-                        if(_cacheW != desc.width()
-                           || _cacheH != desc.height()
-                           || _cachePixelFormatId != static_cast<int>(desc.pixelFormat().id())) {
+                cachedPayload(int slotIndex, const ImageDesc &desc, Builder &&build) const {
+                        if (_cacheW != desc.width() || _cacheH != desc.height() ||
+                            _cachePixelFormatId != static_cast<int>(desc.pixelFormat().id())) {
                                 invalidatePayloadCache();
                                 _cacheW = desc.width();
                                 _cacheH = desc.height();
-                                _cachePixelFormatId =
-                                        static_cast<int>(desc.pixelFormat().id());
+                                _cachePixelFormatId = static_cast<int>(desc.pixelFormat().id());
                         }
                         auto &slot = _cachedPayloads[slotIndex];
-                        if(!slot.isValid()) {
+                        if (!slot.isValid()) {
                                 slot = UncompressedVideoPayload::allocate(desc);
-                                if(slot.isValid()) build(slot);
+                                if (slot.isValid()) build(slot);
                         }
                         return slot;
                 }
@@ -338,9 +332,8 @@ class VideoTestPattern {
                 void invalidatePayloadCache() const;
 
                 void applyBurnFontConfig() const;
-                void computeBurnPosition(int frameW, int frameH,
-                                         int textW, int totalH, int ascender,
-                                         int &x, int &y) const;
+                void computeBurnPosition(int frameW, int frameH, int textW, int totalH, int ascender, int &x,
+                                         int &y) const;
 
                 /**
                  * @brief Returns an @c ImageDesc at @p target's size in

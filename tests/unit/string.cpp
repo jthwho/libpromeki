@@ -69,13 +69,13 @@ TEST_CASE("Char_CaseConversion") {
 
 TEST_CASE("Char_Utf8RoundTrip") {
         // ASCII
-        Char a('H');
-        char buf[4];
+        Char   a('H');
+        char   buf[4];
         size_t n = a.toUtf8(buf);
         CHECK(n == 1);
         CHECK(buf[0] == 'H');
         size_t br;
-        Char decoded = Char::fromUtf8(buf, &br);
+        Char   decoded = Char::fromUtf8(buf, &br);
         CHECK(decoded == a);
         CHECK(br == 1);
 
@@ -158,7 +158,7 @@ TEST_CASE("String_Construction") {
 
         // From std::string
         std::string stdstr = "StdString";
-        String s5(stdstr);
+        String      s5(stdstr);
         CHECK(s5 == "StdString");
 
         // From std::string rvalue
@@ -270,7 +270,9 @@ TEST_CASE("String_Operations") {
         // Space-padded negatives right-align like printf("%5d", -42).
         CHECK(String::number(static_cast<int32_t>(-42), 10, 5) == "  -42");
         CHECK(String("%3 %2 %1").arg(3).arg(2).arg(1) == "1 2 3");
-        CHECK(String("Two hundred and twenty-six billion, four hundred eighty-three million, One Hundred And Thirty-Four Thousand Two Hundred and Ninety-Six").parseNumberWords() == 226483134296);
+        CHECK(String("Two hundred and twenty-six billion, four hundred eighty-three million, One Hundred And "
+                     "Thirty-Four Thousand Two Hundred and Ninety-Six")
+                      .parseNumberWords() == 226483134296);
 }
 
 // ============================================================================
@@ -488,8 +490,8 @@ TEST_CASE("String_CharIterators") {
 
         // Basic iteration
         std::string result;
-        for(auto it = s.begin(); it != s.end(); ++it) {
-                char buf[4];
+        for (auto it = s.begin(); it != s.end(); ++it) {
+                char   buf[4];
                 size_t n = (*it).toUtf8(buf);
                 result.append(buf, n);
         }
@@ -497,7 +499,7 @@ TEST_CASE("String_CharIterators") {
 
         // Range-for
         size_t count = 0;
-        for(Char c : s) {
+        for (Char c : s) {
                 CHECK(c == s.charAt(count));
                 ++count;
         }
@@ -511,9 +513,9 @@ TEST_CASE("String_CharIterators") {
         CHECK(*(it + 1) == Char('e'));
 
         // Unicode iteration
-        String unicode = String::fromUtf8("caf\xc3\xa9", 5);
+        String                unicode = String::fromUtf8("caf\xc3\xa9", 5);
         std::vector<char32_t> cps;
-        for(Char c : unicode) {
+        for (Char c : unicode) {
                 cps.push_back(c.codepoint());
         }
         CHECK(cps.size() == 4);
@@ -621,14 +623,14 @@ TEST_CASE("String_CaseConversionLatin1HighBytes") {
         // correctly fold it to 'É' (0xC9).  The fix routes both Latin1 and
         // Unicode storage through Char::toUpper/Char::toLower for consistent,
         // locale-independent results.
-        String latin1Lower(1, '\xe9');  // 'é' as a single Latin1 byte
+        String latin1Lower(1, '\xe9'); // 'é' as a single Latin1 byte
         REQUIRE(latin1Lower.encoding() == String::Latin1);
         REQUIRE(latin1Lower.length() == 1);
         REQUIRE(latin1Lower.charAt(0).codepoint() == 0xE9);
 
         String latin1Upper = latin1Lower.toUpper();
         CHECK(latin1Upper.length() == 1);
-        CHECK(latin1Upper.charAt(0).codepoint() == 0xC9);  // 'É'
+        CHECK(latin1Upper.charAt(0).codepoint() == 0xC9); // 'É'
 
         String latin1RoundTrip = latin1Upper.toLower();
         CHECK(latin1RoundTrip.charAt(0).codepoint() == 0xE9);
@@ -708,7 +710,7 @@ TEST_CASE("String_Format_PromekiTypes") {
 
         // Multiple promeki::String arguments.
         String greet = "hello";
-        String who   = "world";
+        String who = "world";
         CHECK(String::format("{}, {}!", greet, who) == "hello, world!");
 
         // promeki::Char formats as its UTF-8 byte sequence.
@@ -716,7 +718,7 @@ TEST_CASE("String_Format_PromekiTypes") {
         CHECK(String::format("char = {}", a) == "char = A");
 
         // Multi-byte Char (U+00E9 'é') round-trips correctly.
-        Char eAcute(static_cast<char32_t>(0xE9));
+        Char   eAcute(static_cast<char32_t>(0xE9));
         String formatted = String::format("char = {}", eAcute);
         // The result contains the UTF-8 bytes of 'é'.
         CHECK(formatted == String::fromUtf8("char = \xc3\xa9", 9));
@@ -726,7 +728,7 @@ TEST_CASE("String_Format_UnicodeContent") {
         // A format result containing multi-byte UTF-8 sequences should land
         // in Unicode storage (via fromUtf8), and round-trip cleanly through
         // operator==.
-        String name = String::fromUtf8("caf\xc3\xa9", 5);  // "café"
+        String name = String::fromUtf8("caf\xc3\xa9", 5); // "café"
         String s = String::format("name = {}", name);
         CHECK(s.encoding() == String::Unicode);
         CHECK(s == String::fromUtf8("name = caf\xc3\xa9", 12));
@@ -735,16 +737,14 @@ TEST_CASE("String_Format_UnicodeContent") {
 TEST_CASE("String_Format_LibraryTypes") {
         // Library types with no-arg toString() returning a String can be
         // passed to format() directly via PROMEKI_FORMAT_VIA_TOSTRING.
-        UUID id = UUID::fromString("00112233-4455-6677-8899-aabbccddeeff");
+        UUID   id = UUID::fromString("00112233-4455-6677-8899-aabbccddeeff");
         String s = String::format("id = {}", id);
         CHECK(s == "id = 00112233-4455-6677-8899-aabbccddeeff");
 
         // Standard string format specs (width, fill, alignment) are
         // inherited from the std::formatter<string_view> base.
-        CHECK(String::format("[{:>40}]", id)
-              == "[    00112233-4455-6677-8899-aabbccddeeff]");
-        CHECK(String::format("[{:.<40}]", id)
-              == "[00112233-4455-6677-8899-aabbccddeeff....]");
+        CHECK(String::format("[{:>40}]", id) == "[    00112233-4455-6677-8899-aabbccddeeff]");
+        CHECK(String::format("[{:.<40}]", id) == "[00112233-4455-6677-8899-aabbccddeeff....]");
 
         // Class templates work via partial specialization (rational.h).
         Rational<int> r(24000, 1001);
@@ -753,7 +753,7 @@ TEST_CASE("String_Format_LibraryTypes") {
 
 TEST_CASE("String_Format_Timecode") {
         // Bespoke std::formatter<Timecode> with custom format hint syntax.
-        Timecode tc(Timecode::NDF24, 1, 0, 0, 0);  // 01:00:00:00 @ 24fps
+        Timecode tc(Timecode::NDF24, 1, 0, 0, 0); // 01:00:00:00 @ 24fps
 
         // Default — equivalent to {:smpte}.
         CHECK(String::format("{}", tc) == "01:00:00:00");
@@ -785,42 +785,40 @@ TEST_CASE("String_Format_TemplateTypes") {
         // specialisation rather than the macro.
 
         Size2Du32 sz(1920, 1080);
-        String s = String::format("size = {}", sz);
+        String    s = String::format("size = {}", sz);
         // Don't pin the exact stringification — just verify it round-trips
         // through the same toString() the formatter calls.
         CHECK(s == String("size = ") + sz.toString());
 
         Point2Di32 p(10, 20);
-        String s2 = String::format("at {}", p);
+        String     s2 = String::format("at {}", p);
         CHECK(s2 == String("at ") + p.toString());
 
         // Width / fill / alignment specifiers still work via the inherited
         // string_view formatter.
-        CHECK(String::format("[{:>20}]", sz)
-              == String("[") + String(20 - sz.toString().length(), ' ')
-                 + sz.toString() + String("]"));
+        CHECK(String::format("[{:>20}]", sz) ==
+              String("[") + String(20 - sz.toString().length(), ' ') + sz.toString() + String("]"));
 }
 
 TEST_CASE("String_Format_PrimitiveLibraryTypes") {
         // Sanity check that PROMEKI_FORMAT_VIA_TOSTRING reaches the simple
         // value types in their respective headers.
-        Duration  d  = Duration::fromSeconds(2.5);
-        AudioLevel al = AudioLevel::fromDbfs(-12.0);
-        FrameRate  fr(FrameRate::RationalType(24000, 1001));
+        Duration    d = Duration::fromSeconds(2.5);
+        AudioLevel  al = AudioLevel::fromDbfs(-12.0);
+        FrameRate   fr(FrameRate::RationalType(24000, 1001));
         Ipv4Address ip(192, 168, 1, 100);
 
         // Each test verifies the format result equals the type's own
         // toString() output (with optional surrounding text), so we don't
         // need to know the exact stringification syntax.
-        CHECK(String::format("{}", d)  == d.toString());
+        CHECK(String::format("{}", d) == d.toString());
         CHECK(String::format("{}", al) == al.toString());
         CHECK(String::format("{}", fr) == fr.toString());
         CHECK(String::format("{}", ip) == ip.toString());
 
         // Combined with surrounding text and standard specs.
-        CHECK(String::format("rate = {:>12}", fr)
-              == String("rate = ") + String(12 - fr.toString().length(), ' ')
-                 + fr.toString());
+        CHECK(String::format("rate = {:>12}", fr) ==
+              String("rate = ") + String(12 - fr.toString().length(), ' ') + fr.toString());
 }
 
 TEST_CASE("String_Format_Variant") {
@@ -848,8 +846,7 @@ TEST_CASE("String_Format_Variant") {
         // UUID.
         UUID id = UUID::fromString("00112233-4455-6677-8899-aabbccddeeff");
         v.set(id);
-        CHECK(String::format("v = {}", v)
-              == "v = 00112233-4455-6677-8899-aabbccddeeff");
+        CHECK(String::format("v = {}", v) == "v = 00112233-4455-6677-8899-aabbccddeeff");
 
         // Standard string format specifiers still apply on the rendered
         // string regardless of which alternative is held.
@@ -861,8 +858,8 @@ TEST_CASE("String_VFormat") {
         // Runtime format string path: format string is not a constexpr,
         // so we use std::make_format_args at the call site.
         std::string fmt = "value = {} ({:#x})";
-        int v = 255;
-        String s = String::vformat(fmt, std::make_format_args(v, v));
+        int         v = 255;
+        String      s = String::vformat(fmt, std::make_format_args(v, v));
         CHECK(s == "value = 255 (0xff)");
 
         // Empty runtime format string.
@@ -873,10 +870,8 @@ TEST_CASE("String_VFormat") {
         // (this is the documented behavior of std::vformat — we don't
         // catch or transform).
         std::string badFmt = "{:Q}";
-        int dummy = 0;
-        CHECK_THROWS_AS(
-                String::vformat(badFmt, std::make_format_args(dummy)),
-                std::format_error);
+        int         dummy = 0;
+        CHECK_THROWS_AS(String::vformat(badFmt, std::make_format_args(dummy)), std::format_error);
 }
 
 // ============================================================================
@@ -911,18 +906,18 @@ TEST_CASE("String_NumericConversions_EdgeCases") {
 
         // Bad input returns error
         Error err2;
-        int v = String("abc").to<int>(&err2);
+        int   v = String("abc").to<int>(&err2);
         CHECK(err2.isError());
         CHECK(v == 0);
 
         // Trailing garbage returns error
         Error err3;
-        int v2 = String("42abc").to<int>(&err3);
+        int   v2 = String("42abc").to<int>(&err3);
         CHECK(err3.isError());
         CHECK(v2 == 0);
 
         // Empty string returns error
-        Error err4;
+        Error  err4;
         double d = String("").to<double>(&err4);
         CHECK(err4.isError());
         CHECK(d == 0.0);
@@ -930,34 +925,34 @@ TEST_CASE("String_NumericConversions_EdgeCases") {
 
 TEST_CASE("String_To_NarrowingOverflowReportsOutOfRange") {
         // Signed narrowing overflow.
-        Error err;
+        Error  err;
         int8_t v8 = String("300").to<int8_t>(&err);
         CHECK(err == Error::OutOfRange);
         CHECK(v8 == 0);
 
-        Error err2;
+        Error  err2;
         int8_t vneg = String("-200").to<int8_t>(&err2);
         CHECK(err2 == Error::OutOfRange);
         CHECK(vneg == 0);
 
         // Boundary values still parse OK.
-        Error err3;
+        Error  err3;
         int8_t vmax = String("127").to<int8_t>(&err3);
         CHECK(err3.isOk());
         CHECK(vmax == 127);
 
-        Error err4;
+        Error  err4;
         int8_t vmin = String("-128").to<int8_t>(&err4);
         CHECK(err4.isOk());
         CHECK(vmin == -128);
 
         // Unsigned narrowing overflow.
-        Error err5;
+        Error   err5;
         uint8_t u8 = String("300").to<uint8_t>(&err5);
         CHECK(err5 == Error::OutOfRange);
         CHECK(u8 == 0);
 
-        Error err6;
+        Error   err6;
         uint8_t u8max = String("255").to<uint8_t>(&err6);
         CHECK(err6.isOk());
         CHECK(u8max == 255);
@@ -1026,7 +1021,7 @@ TEST_CASE("String_NumericConversions_Separators") {
         CHECK(String("1_000,000'000").to<int64_t>() == 1000000000LL);
 
         // Float with separators
-        Error err;
+        Error  err;
         double d = String("1_000.5").to<double>(&err);
         CHECK(err.isOk());
         CHECK(d == doctest::Approx(1000.5));
@@ -1042,49 +1037,49 @@ TEST_CASE("String_NumericConversions_Separators") {
 TEST_CASE("String_NumericConversions_BasePrefixErrors") {
         // Invalid digits for the base
         Error err;
-        int v = String("0b2").to<int>(&err);
+        int   v = String("0b2").to<int>(&err);
         CHECK(err.isError());
         CHECK(v == 0);
 
         Error err2;
-        int v2 = String("0o8").to<int>(&err2);
+        int   v2 = String("0o8").to<int>(&err2);
         CHECK(err2.isError());
         CHECK(v2 == 0);
 
         // Just a prefix with no digits
         Error err3;
-        int v3 = String("0x").to<int>(&err3);
+        int   v3 = String("0x").to<int>(&err3);
         CHECK(err3.isError());
         CHECK(v3 == 0);
 }
 
 TEST_CASE("String_NumericConversions_Overflow") {
         // Overflow for signed 64-bit
-        Error err;
+        Error   err;
         int64_t v = String("99999999999999999999").to<int64_t>(&err);
         CHECK(err == Error::OutOfRange);
         CHECK(v == 0);
 
         // Overflow for unsigned 64-bit
-        Error err2;
+        Error    err2;
         uint64_t v2 = String("99999999999999999999").to<uint64_t>(&err2);
         CHECK(err2 == Error::OutOfRange);
         CHECK(v2 == 0);
 
         // toInt overflow (value exceeds int range but fits long long)
         Error err3;
-        int v3 = String("9999999999").toInt(&err3);
+        int   v3 = String("9999999999").toInt(&err3);
         CHECK(err3 == Error::OutOfRange);
         CHECK(v3 == 0);
 
         // toUInt overflow
-        Error err4;
+        Error        err4;
         unsigned int v4 = String("9999999999").toUInt(&err4);
         CHECK(err4 == Error::OutOfRange);
         CHECK(v4 == 0);
 
         // Double overflow
-        Error err5;
+        Error  err5;
         double v5 = String("1e9999").to<double>(&err5);
         CHECK(err5 == Error::OutOfRange);
         CHECK(v5 == 0.0);
@@ -1105,7 +1100,7 @@ TEST_CASE("String_NumericConversions_Bool") {
 
         // Invalid bool string
         Error err2;
-        bool b = String("maybe").to<bool>(&err2);
+        bool  b = String("maybe").to<bool>(&err2);
         CHECK(err2.isError());
         CHECK(b == false);
 }
@@ -1115,7 +1110,7 @@ TEST_CASE("String_NumericConversions_Bool") {
 // ============================================================================
 
 static void stringThreadFunc(String str, int iterations) {
-        for(int i = 0; i < iterations; i++) {
+        for (int i = 0; i < iterations; i++) {
                 String local = str;
                 (void)local.size();
                 (void)local.cstr();
@@ -1125,13 +1120,13 @@ static void stringThreadFunc(String str, int iterations) {
 TEST_CASE("String_ThreadSafeCopy") {
         const int ThreadCount = 8;
         const int Iterations = 10000;
-        String shared = "Thread safe string data";
+        String    shared = "Thread safe string data";
 
         std::vector<std::thread> threads;
-        for(int i = 0; i < ThreadCount; i++) {
+        for (int i = 0; i < ThreadCount; i++) {
                 threads.emplace_back(stringThreadFunc, shared, Iterations);
         }
-        for(auto &t : threads) {
+        for (auto &t : threads) {
                 t.join();
         }
 
@@ -1197,10 +1192,10 @@ TEST_CASE("String_Encoding") {
 
         // fromUtf8 with non-ASCII input creates Unicode string
         const char *utf8 = "caf\xc3\xa9";
-        String unicode = String::fromUtf8(utf8, 5);
+        String      unicode = String::fromUtf8(utf8, 5);
         CHECK(unicode.encoding() == String::Unicode);
-        CHECK(unicode.length() == 4);  // 4 characters
-        CHECK(unicode.byteCount() == 5);  // 5 bytes
+        CHECK(unicode.length() == 4);    // 4 characters
+        CHECK(unicode.byteCount() == 5); // 5 bytes
         CHECK(unicode.charAt(3).codepoint() == 0xE9);
 
         // Comparison across encodings
@@ -1208,7 +1203,7 @@ TEST_CASE("String_Encoding") {
 
         // 3-byte codepoints
         const char *jp = "\xe6\x97\xa5\xe6\x9c\xac";
-        String jpStr = String::fromUtf8(jp, 6);
+        String      jpStr = String::fromUtf8(jp, 6);
         CHECK(jpStr.length() == 2);
         CHECK(jpStr.byteCount() == 6);
 
@@ -1228,14 +1223,14 @@ TEST_CASE("String_Encoding") {
 }
 
 TEST_CASE("String_EncodingPromotion") {
-        String latin1 = "Hello ";
-        const char *utf8World = "\xe4\xb8\x96\xe7\x95\x8c";  // 世界
-        String unicode = String::fromUtf8(utf8World, 6);
+        String      latin1 = "Hello ";
+        const char *utf8World = "\xe4\xb8\x96\xe7\x95\x8c"; // 世界
+        String      unicode = String::fromUtf8(utf8World, 6);
 
         // Latin1 + Unicode = Unicode
         String combined = latin1 + unicode;
         CHECK(combined.encoding() == String::Unicode);
-        CHECK(combined.length() == 8);  // 6 + 2
+        CHECK(combined.length() == 8); // 6 + 2
 }
 
 TEST_CASE("String_toLatin1") {
@@ -1244,19 +1239,19 @@ TEST_CASE("String_toLatin1") {
         String converted = latin1.toLatin1();
         CHECK(converted.encoding() == String::Latin1);
         CHECK(converted == "Hello");
-        CHECK(converted.referenceCount() == 2);  // shared with latin1
+        CHECK(converted.referenceCount() == 2); // shared with latin1
 
         // Unicode → toLatin1 converts, clamping non-Latin1 codepoints to '?'
-        String unicode = String::fromUtf8("caf\xc3\xa9", 5);  // café
+        String unicode = String::fromUtf8("caf\xc3\xa9", 5); // café
         String l = unicode.toLatin1();
         CHECK(l.encoding() == String::Latin1);
         CHECK(l.length() == 4);
-        CHECK(l.charAt(3).codepoint() == 0xE9);  // é fits in Latin1
+        CHECK(l.charAt(3).codepoint() == 0xE9); // é fits in Latin1
 
         // Codepoints above 0xFF get replaced with '?'
-        const char *jp = "\xe6\x97\xa5\xe6\x9c\xac";  // 日本
-        String jpStr = String::fromUtf8(jp, 6);
-        String jpLatin1 = jpStr.toLatin1();
+        const char *jp = "\xe6\x97\xa5\xe6\x9c\xac"; // 日本
+        String      jpStr = String::fromUtf8(jp, 6);
+        String      jpLatin1 = jpStr.toLatin1();
         CHECK(jpLatin1.encoding() == String::Latin1);
         CHECK(jpLatin1.length() == 2);
         CHECK(jpLatin1.charAt(0) == Char('?'));
@@ -1269,7 +1264,7 @@ TEST_CASE("String_toUnicode") {
         String converted = unicode.toUnicode();
         CHECK(converted.encoding() == String::Unicode);
         CHECK(converted == "caf\xc3\xa9");
-        CHECK(converted.referenceCount() == 2);  // shared with unicode
+        CHECK(converted.referenceCount() == 2); // shared with unicode
 
         // Latin1 → toUnicode promotes
         String latin1 = "Hello";
@@ -1505,7 +1500,10 @@ TEST_CASE("String_Literal_Latin1_Operations") {
 
         // Iteration over literal
         size_t count = 0;
-        for(Char c : s) { (void)c; ++count; }
+        for (Char c : s) {
+                (void)c;
+                ++count;
+        }
         CHECK(count == 11);
 
         // Comparison: literal vs regular
@@ -1528,7 +1526,7 @@ TEST_CASE("String_Literal_Latin1_Operations") {
 
 TEST_CASE("String_Literal_Latin1_StrCache") {
         // str() returns a valid std::string reference (lazy cache)
-        String s = PROMEKI_STRING("Hello");
+        String             s = PROMEKI_STRING("Hello");
         const std::string &ref = s.str();
         CHECK(ref == "Hello");
         CHECK(ref.size() == 5);
@@ -1624,7 +1622,7 @@ TEST_CASE("String_Literal_Latin1_Conversions") {
 TEST_CASE("String_Literal_Latin1_SplitArg") {
         // split on literal
         String s = PROMEKI_STRING("a,b,c");
-        auto parts = s.split(",");
+        auto   parts = s.split(",");
         CHECK(parts.size() == 3);
         CHECK(parts.at(0) == "a");
         CHECK(parts.at(1) == "b");
@@ -1770,7 +1768,7 @@ TEST_CASE("String_Literal_Unicode_Operations") {
 
         CHECK(s.isLiteral());
         CHECK(s.encoding() == String::Unicode);
-        CHECK(s.length() == 9);  // c a f é   l a i t
+        CHECK(s.length() == 9); // c a f é   l a i t
 
         // find by Char
         CHECK(s.find(Char('c')) == 0);
@@ -1802,7 +1800,10 @@ TEST_CASE("String_Literal_Unicode_Operations") {
 
         // Iteration
         size_t count = 0;
-        for(Char c : s) { (void)c; ++count; }
+        for (Char c : s) {
+                (void)c;
+                ++count;
+        }
         CHECK(count == 9);
 
         // Comparison: literal vs regular
@@ -1828,7 +1829,7 @@ TEST_CASE("String_Literal_Unicode_Operations") {
 
 TEST_CASE("String_Literal_Unicode_StrCache") {
         // str() returns valid UTF-8 string reference (lazy cache)
-        String s = PROMEKI_STRING("caf\xc3\xa9");
+        String             s = PROMEKI_STRING("caf\xc3\xa9");
         const std::string &ref = s.str();
         CHECK(ref == "caf\xc3\xa9");
         CHECK(ref.size() == 5);
@@ -1892,7 +1893,7 @@ TEST_CASE("String_Literal_Unicode_DerivedOps") {
         CHECK(upper.encoding() == String::Unicode);
         CHECK(upper.charAt(0) == Char('C'));
 
-        String lower = PROMEKI_STRING("CAF\xc3\x89");  // CAFÉ (É = U+00C9)
+        String lower = PROMEKI_STRING("CAF\xc3\x89"); // CAFÉ (É = U+00C9)
         String lowered = lower.toLower();
         CHECK_FALSE(lowered.isLiteral());
         CHECK(lowered.encoding() == String::Unicode);
@@ -1905,7 +1906,7 @@ TEST_CASE("String_Literal_Unicode_DerivedOps") {
         CHECK_FALSE(l.isLiteral());
         CHECK(l.encoding() == String::Latin1);
         CHECK(l.length() == 4);
-        CHECK(l.charAt(3).codepoint() == 0xE9);  // é fits in Latin1
+        CHECK(l.charAt(3).codepoint() == 0xE9); // é fits in Latin1
 
         String latin1Lit = PROMEKI_STRING("Hello");
         String u = latin1Lit.toUnicode();
@@ -1967,11 +1968,11 @@ TEST_CASE("String_Literal_CrossEncoding") {
 
         // setCharAt with Unicode char on Latin1 literal → Unicode (non-literal)
         String s3 = PROMEKI_STRING("Hello");
-        s3.setCharAt(0, Char(static_cast<char32_t>(0x00C9)));  // É (fits Latin1)
+        s3.setCharAt(0, Char(static_cast<char32_t>(0x00C9))); // É (fits Latin1)
         CHECK_FALSE(s3.isLiteral());
         // Codepoint > 0xFF forces Unicode promotion
         String s4 = PROMEKI_STRING("Hello");
-        s4.setCharAt(0, Char(static_cast<char32_t>(0x20AC)));  // € (requires Unicode)
+        s4.setCharAt(0, Char(static_cast<char32_t>(0x20AC))); // € (requires Unicode)
         CHECK_FALSE(s4.isLiteral());
         CHECK(s4.encoding() == String::Unicode);
         CHECK(s4.charAt(0).codepoint() == 0x20AC);
@@ -2051,12 +2052,12 @@ TEST_CASE("String_Unicode_Erase") {
 
         // Erase from string with multi-byte codepoints (3-byte: 日本語)
         const char *jp = "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e";
-        String jpStr = String::fromUtf8(jp, 9);
+        String      jpStr = String::fromUtf8(jp, 9);
         CHECK(jpStr.length() == 3);
-        jpStr.erase(1, 1);  // remove 本
+        jpStr.erase(1, 1); // remove 本
         CHECK(jpStr.length() == 2);
-        CHECK(jpStr.charAt(0).codepoint() == 0x65E5);  // 日
-        CHECK(jpStr.charAt(1).codepoint() == 0x8A9E);  // 語
+        CHECK(jpStr.charAt(0).codepoint() == 0x65E5); // 日
+        CHECK(jpStr.charAt(1).codepoint() == 0x8A9E); // 語
 }
 
 // ============================================================================
@@ -2086,8 +2087,8 @@ TEST_CASE("String_Unicode_Insert") {
         CHECK(s3.charAt(3).codepoint() == 0xE9);
 
         // Insert Unicode into Unicode
-        String s4 = String::fromUtf8("\xe6\x97\xa5\xe8\xaa\x9e", 6);  // 日語
-        String mid = String::fromUtf8("\xe6\x9c\xac", 3);  // 本
+        String s4 = String::fromUtf8("\xe6\x97\xa5\xe8\xaa\x9e", 6); // 日語
+        String mid = String::fromUtf8("\xe6\x9c\xac", 3);            // 本
         s4.insert(1, mid);
         CHECK(s4.length() == 3);
         CHECK(s4.charAt(0).codepoint() == 0x65E5);
@@ -2384,7 +2385,7 @@ TEST_CASE("String_SubstrShrinksToLatin1") {
         CHECK(head.charAt(3).codepoint() == 0xE9);
 
         // A slice containing a non-Latin1 codepoint must stay Unicode.
-        String jp = String::fromUtf8("a\xe6\x97\xa5", 4);  // "a日"
+        String jp = String::fromUtf8("a\xe6\x97\xa5", 4); // "a日"
         REQUIRE(jp.encoding() == String::Unicode);
         REQUIRE(jp.length() == 2);
         String jpSlice = jp.substr(0, 2);
@@ -2560,8 +2561,8 @@ TEST_CASE("String_LessThanCrossEncoding") {
         CHECK_FALSE(unicodeCafe < latin1Cafe);
 
         // operator< must agree with codepoint order across encodings.
-        String latin1A(reinterpret_cast<const char *>("\xe0"), 1);  // U+00E0 'à'
-        String unicodeB = String::fromUtf8("\xc3\xa9", 2);          // U+00E9 'é'
+        String latin1A(reinterpret_cast<const char *>("\xe0"), 1); // U+00E0 'à'
+        String unicodeB = String::fromUtf8("\xc3\xa9", 2);         // U+00E9 'é'
         REQUIRE(latin1A.charAt(0).codepoint() < unicodeB.charAt(0).codepoint());
         CHECK(latin1A < unicodeB);
         CHECK_FALSE(unicodeB < latin1A);
@@ -2654,7 +2655,7 @@ TEST_CASE("String_FindCstr") {
 TEST_CASE("String_LargeString") {
         // Build a large Latin1 string
         String large;
-        for(int i = 0; i < 1000; ++i) {
+        for (int i = 0; i < 1000; ++i) {
                 large += "abcdefghij";
         }
         CHECK(large.length() == 10000);

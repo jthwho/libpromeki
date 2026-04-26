@@ -19,7 +19,7 @@ PROMEKI_NAMESPACE_BEGIN
 // ---------------------------------------------------------------------------
 
 QuickTime::Impl::~Impl() {
-        if(_ownsDevice && _device != nullptr) {
+        if (_ownsDevice && _device != nullptr) {
                 delete _device;
                 _device = nullptr;
         }
@@ -37,39 +37,41 @@ bool QuickTime::Impl::isOpen() const {
         return false;
 }
 
-Error QuickTime::Impl::readSample(size_t /*trackIndex*/, uint64_t /*sampleIndex*/,
-                                  QuickTime::Sample & /*out*/) {
+Error QuickTime::Impl::readSample(size_t /*trackIndex*/, uint64_t /*sampleIndex*/, QuickTime::Sample & /*out*/) {
         return Error::NotImplemented;
 }
 
-Error QuickTime::Impl::readSampleRange(size_t trackIndex, uint64_t startSampleIndex,
-                                       uint64_t count, QuickTime::Sample &out) {
+Error QuickTime::Impl::readSampleRange(size_t trackIndex, uint64_t startSampleIndex, uint64_t count,
+                                       QuickTime::Sample &out) {
         // Default: loop over readSample() and concatenate. Backends can
         // override this for efficient contiguous reads. This path is slow
         // for large counts — QuickTimeReader overrides it.
-        if(count == 0) return Error::InvalidArgument;
+        if (count == 0) return Error::InvalidArgument;
         QuickTime::Sample first;
-        Error err = readSample(trackIndex, startSampleIndex, first);
-        if(err.isError()) return err;
-        if(count == 1) { out = first; return Error::Ok; }
+        Error             err = readSample(trackIndex, startSampleIndex, first);
+        if (err.isError()) return err;
+        if (count == 1) {
+                out = first;
+                return Error::Ok;
+        }
 
         // Compute total size by reading each sample up-front (slow path).
-        size_t totalBytes = first.data.isValid() ? first.data->size() : 0;
+        size_t                  totalBytes = first.data.isValid() ? first.data->size() : 0;
         List<QuickTime::Sample> samples;
         samples.pushToBack(first);
-        for(uint64_t i = 1; i < count; ++i) {
+        for (uint64_t i = 1; i < count; ++i) {
                 QuickTime::Sample s;
                 err = readSample(trackIndex, startSampleIndex + i, s);
-                if(err.isError()) return err;
+                if (err.isError()) return err;
                 totalBytes += s.data.isValid() ? s.data->size() : 0;
                 samples.pushToBack(s);
         }
 
-        Buffer cat(totalBytes);
+        Buffer   cat(totalBytes);
         uint8_t *dst = static_cast<uint8_t *>(cat.data());
-        size_t pos = 0;
-        for(const auto &s : samples) {
-                if(!s.data.isValid()) continue;
+        size_t   pos = 0;
+        for (const auto &s : samples) {
+                if (!s.data.isValid()) continue;
                 std::memcpy(dst + pos, s.data->data(), s.data->size());
                 pos += s.data->size();
         }
@@ -89,8 +91,8 @@ Error QuickTime::Impl::addAudioTrack(const AudioDesc & /*desc*/, uint32_t * /*ou
         return Error::NotImplemented;
 }
 
-Error QuickTime::Impl::addTimecodeTrack(const Timecode & /*startTimecode*/,
-                                        const FrameRate & /*frameRate*/, uint32_t * /*outTrackId*/) {
+Error QuickTime::Impl::addTimecodeTrack(const Timecode & /*startTimecode*/, const FrameRate & /*frameRate*/,
+                                        uint32_t * /*outTrackId*/) {
         return Error::NotImplemented;
 }
 
@@ -134,13 +136,13 @@ QuickTime QuickTime::createWriter(const String &filename) {
 }
 
 Result<QuickTime> QuickTime::createForOperation(Operation op, IODevice *device) {
-        if(device == nullptr) {
+        if (device == nullptr) {
                 return makeError<QuickTime>(Error::InvalidArgument);
         }
-        if(device->isSequential()) {
+        if (device->isSequential()) {
                 return makeError<QuickTime>(Error::NotSupported);
         }
-        switch(op) {
+        switch (op) {
                 case Reader: {
                         QuickTime qt(new QuickTimeReader());
                         qt.d.modify()->setDevice(device, /*takeOwnership*/ false);
@@ -151,8 +153,7 @@ Result<QuickTime> QuickTime::createForOperation(Operation op, IODevice *device) 
                         qt.d.modify()->setDevice(device, /*takeOwnership*/ false);
                         return makeResult(qt);
                 }
-                default:
-                        break;
+                default: break;
         }
         return makeError<QuickTime>(Error::InvalidArgument);
 }

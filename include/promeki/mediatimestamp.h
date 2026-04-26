@@ -57,8 +57,7 @@ class MediaTimeStamp {
                  * @param domain The clock domain that produced @p ts.
                  * @param offset Fixed offset from the domain's epoch (default zero).
                  */
-                MediaTimeStamp(const TimeStamp &ts, const ClockDomain &domain,
-                               const Duration &offset = Duration());
+                MediaTimeStamp(const TimeStamp &ts, const ClockDomain &domain, const Duration &offset = Duration());
 
                 /**
                  * @brief Returns true if the domain is valid.
@@ -110,9 +109,9 @@ class MediaTimeStamp {
                 bool operator!=(const MediaTimeStamp &other) const;
 
         private:
-                TimeStamp    _timeStamp;
-                ClockDomain  _domain;
-                Duration     _offset;
+                TimeStamp   _timeStamp;
+                ClockDomain _domain;
+                Duration    _offset;
 };
 
 PROMEKI_NAMESPACE_END

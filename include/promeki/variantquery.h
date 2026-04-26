@@ -24,7 +24,7 @@ class Frame;
 
 namespace detail {
 
-/**
+        /**
  * @brief Opaque AST root for a parsed @ref VariantQuery.
  *
  * The lexer, parser and concrete node subclasses live entirely in
@@ -34,12 +34,12 @@ namespace detail {
  * defines @ref VariantQueryNode, so the implicit destructor never
  * needs to see a complete type at a call site.
  */
-class VariantQueryNode;
+        class VariantQueryNode;
 
-/** @brief Unique-ownership pointer to a @ref VariantQueryNode. */
-using VariantQueryNodeUPtr = UniquePtr<VariantQueryNode>;
+        /** @brief Unique-ownership pointer to a @ref VariantQueryNode. */
+        using VariantQueryNodeUPtr = UniquePtr<VariantQueryNode>;
 
-/**
+        /**
  * @brief Evaluation inputs injected into the AST by @ref VariantQuery::match.
  *
  * The AST itself is type-erased — every concrete node leans on
@@ -48,16 +48,16 @@ using VariantQueryNodeUPtr = UniquePtr<VariantQueryNode>;
  * reused against any @c T for which a @c VariantLookup<T> has been
  * registered.
  */
-struct VariantQueryContext {
-        /**
+        struct VariantQueryContext {
+                        /**
          * @brief Resolves a full dotted key against the target instance.
          *
          * Must never be null.  @ref VariantQuery::match wires this to
          * @c VariantLookup<T>::resolve(instance, key).
          */
-        std::function<std::optional<Variant>(const String &)> resolve;
+                        std::function<std::optional<Variant>(const String &)> resolve;
 
-        /**
+                        /**
          * @brief Returns the declared @ref VariantSpec for a key, or nullptr.
          *
          * Used by the AST to coerce string literals on one side of a
@@ -66,10 +66,10 @@ struct VariantQueryContext {
          * @c VariantLookup<T>::specFor(key).  May be null when the
          * caller wants to skip spec-based coercion entirely.
          */
-        std::function<const VariantSpec *(const String &)> specFor;
-};
+                        std::function<const VariantSpec *(const String &)> specFor;
+        };
 
-/**
+        /**
  * @brief Parses @p expr into an AST shared by every @ref VariantQuery instantiation.
  *
  * Defined in @c variantquery.cpp.  The parser is generic over the
@@ -82,16 +82,15 @@ struct VariantQueryContext {
  *                    (column, token, reason) when parsing fails.
  * @return A UniquePtr to the parsed AST, or null on parse failure.
  */
-VariantQueryNodeUPtr parseVariantQueryExpr(const String &expr,
-                                           String &errorDetail);
+        VariantQueryNodeUPtr parseVariantQueryExpr(const String &expr, String &errorDetail);
 
-/**
+        /**
  * @brief Evaluates a parsed AST against @p ctx.
  *
  * Defined in @c variantquery.cpp alongside the concrete node
  * subclasses so the header does not need to expose them.
  */
-bool evalVariantQuery(const VariantQueryNode *root, const VariantQueryContext &ctx);
+        bool evalVariantQuery(const VariantQueryNode *root, const VariantQueryContext &ctx);
 
 } // namespace detail
 
@@ -183,8 +182,7 @@ bool evalVariantQuery(const VariantQueryNode *root, const VariantQueryContext &c
  *           @c template class VariantQuery<MyType>; line in the
  *           translation unit that owns @c MyType 's registrations.
  */
-template <typename T>
-class VariantQuery {
+template <typename T> class VariantQuery {
         public:
                 /**
                  * @brief Parses an expression into a compiled query.
@@ -233,9 +231,9 @@ class VariantQuery {
         private:
                 VariantQuery(String source, detail::VariantQueryNodeUPtr root);
 
-                String                                         _source;
-                String                                         _errorDetail;
-                detail::VariantQueryNodeUPtr                   _root;
+                String                       _source;
+                String                       _errorDetail;
+                detail::VariantQueryNodeUPtr _root;
 };
 
 extern template class VariantQuery<Frame>;

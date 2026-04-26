@@ -30,8 +30,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @tparam T Element type.
  */
-template <typename T>
-class Stack {
+template <typename T> class Stack {
         public:
                 /** @brief Default constructor. Creates an empty stack. */
                 Stack() = default;
@@ -102,7 +101,7 @@ class Stack {
                  * @return The removed element.
                  */
                 T pop() {
-                        if(d.empty()) throw std::logic_error("Stack::pop on empty stack");
+                        if (d.empty()) throw std::logic_error("Stack::pop on empty stack");
                         T val = std::move(d.top());
                         d.pop();
                         return val;
@@ -110,7 +109,7 @@ class Stack {
 
                 /** @brief Removes all elements. */
                 void clear() {
-                        while(!d.empty()) d.pop();
+                        while (!d.empty()) d.pop();
                         return;
                 }
 

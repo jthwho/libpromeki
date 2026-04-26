@@ -50,7 +50,7 @@ TEST_CASE("CudaBootstrap: ensureRegistered behaves correctly regardless of build
         // rather than the System fallback).  We check via the human
         // readable name, which both backends populate.
         CHECK(MemSpace(MemSpace::CudaDevice).name() == String("CudaDevice"));
-        CHECK(MemSpace(MemSpace::CudaHost).name()   == String("CudaHost"));
+        CHECK(MemSpace(MemSpace::CudaHost).name() == String("CudaHost"));
 #else
         CHECK(err == Error::NotImplemented);
         CHECK_FALSE(CudaBootstrap::isRegistered());
@@ -58,14 +58,14 @@ TEST_CASE("CudaBootstrap: ensureRegistered behaves correctly regardless of build
         // to System so the name reports as "System".  The fallback is
         // deliberately silent — we just want to document it.
         CHECK(MemSpace(MemSpace::CudaDevice).name() == String("System"));
-        CHECK(MemSpace(MemSpace::CudaHost).name()   == String("System"));
+        CHECK(MemSpace(MemSpace::CudaHost).name() == String("System"));
 #endif
 }
 
 #if PROMEKI_ENABLE_CUDA
 
 TEST_CASE("CudaDevice: current() reports a valid device when one is present") {
-        if(!CudaDevice::isAvailable()) return;
+        if (!CudaDevice::isAvailable()) return;
 
         REQUIRE(CudaBootstrap::ensureRegistered() == Error::Ok);
         // cudaSetDevice(0) anchors subsequent allocations; without this
@@ -84,7 +84,7 @@ TEST_CASE("CudaDevice: current() reports a valid device when one is present") {
 }
 
 TEST_CASE("CudaHost + CudaDevice: round-trip at the MemSpace level") {
-        if(!CudaDevice::isAvailable()) return;
+        if (!CudaDevice::isAvailable()) return;
 
         REQUIRE(CudaBootstrap::ensureRegistered() == Error::Ok);
         REQUIRE(CudaDevice::setCurrent(0) == Error::Ok);
@@ -93,14 +93,14 @@ TEST_CASE("CudaHost + CudaDevice: round-trip at the MemSpace level") {
         constexpr size_t kAlign = 64;
 
         MemSpace hostSpace(MemSpace::CudaHost);
-        MemSpace devSpace (MemSpace::CudaDevice);
+        MemSpace devSpace(MemSpace::CudaDevice);
 
         // Allocate pinned host staging and device memory directly
         // through MemSpace so we have MemAllocation records to pass
         // into MemSpace::copy().  Buffer would also work but keeps
         // internal state we don't want to reach into for the test.
         MemAllocation hostAlloc = hostSpace.alloc(kBytes, kAlign);
-        MemAllocation devAlloc  = devSpace.alloc(kBytes, kAlign);
+        MemAllocation devAlloc = devSpace.alloc(kBytes, kAlign);
         REQUIRE(hostAlloc.isValid());
         REQUIRE(devAlloc.isValid());
 
@@ -118,7 +118,7 @@ TEST_CASE("CudaHost + CudaDevice: round-trip at the MemSpace level") {
         CHECK(devSpace.copy(devAlloc, hostAlloc, kBytes).isOk());
 
         const auto *bytes = static_cast<const uint8_t *>(hostAlloc.ptr);
-        for(size_t i = 0; i < kBytes; ++i) {
+        for (size_t i = 0; i < kBytes; ++i) {
                 CHECK(bytes[i] == 0x7F);
         }
 
@@ -127,7 +127,7 @@ TEST_CASE("CudaHost + CudaDevice: round-trip at the MemSpace level") {
 }
 
 TEST_CASE("CudaDevice fill: cudaMemset honours the value byte") {
-        if(!CudaDevice::isAvailable()) return;
+        if (!CudaDevice::isAvailable()) return;
 
         REQUIRE(CudaBootstrap::ensureRegistered() == Error::Ok);
         REQUIRE(CudaDevice::setCurrent(0) == Error::Ok);
@@ -135,10 +135,10 @@ TEST_CASE("CudaDevice fill: cudaMemset honours the value byte") {
         constexpr size_t kBytes = 1024;
         constexpr size_t kAlign = 64;
 
-        MemSpace devSpace (MemSpace::CudaDevice);
+        MemSpace devSpace(MemSpace::CudaDevice);
         MemSpace hostSpace(MemSpace::CudaHost);
 
-        MemAllocation devAlloc  = devSpace.alloc(kBytes, kAlign);
+        MemAllocation devAlloc = devSpace.alloc(kBytes, kAlign);
         MemAllocation hostAlloc = hostSpace.alloc(kBytes, kAlign);
         REQUIRE(devAlloc.isValid());
         REQUIRE(hostAlloc.isValid());
@@ -148,7 +148,7 @@ TEST_CASE("CudaDevice fill: cudaMemset honours the value byte") {
         CHECK(devSpace.copy(devAlloc, hostAlloc, kBytes).isOk());
 
         const auto *bytes = static_cast<const uint8_t *>(hostAlloc.ptr);
-        for(size_t i = 0; i < kBytes; ++i) {
+        for (size_t i = 0; i < kBytes; ++i) {
                 CHECK(bytes[i] == 0x55);
         }
 
@@ -156,4 +156,4 @@ TEST_CASE("CudaDevice fill: cudaMemset honours the value byte") {
         hostSpace.release(hostAlloc);
 }
 
-#endif  // PROMEKI_ENABLE_CUDA
+#endif // PROMEKI_ENABLE_CUDA

@@ -76,13 +76,13 @@ class PacketTransport {
                  * mbuf / ring-buffer entries from these fields.
                  */
                 struct Datagram {
-                        /** @brief Pointer to the packet bytes (caller-owned, contiguous). */
-                        const void     *data = nullptr;
-                        /** @brief Number of bytes to send. */
-                        size_t          size = 0;
-                        /** @brief Destination address and port. */
-                        SocketAddress   dest;
-                        /**
+                                /** @brief Pointer to the packet bytes (caller-owned, contiguous). */
+                                const void *data = nullptr;
+                                /** @brief Number of bytes to send. */
+                                size_t size = 0;
+                                /** @brief Destination address and port. */
+                                SocketAddress dest;
+                                /**
                          * @brief Optional SCM_TXTIME nanoseconds-since-epoch deadline.
                          *
                          * When zero the datagram is sent immediately.
@@ -90,7 +90,7 @@ class PacketTransport {
                          * (see @ref setTxTime()), the kernel / NIC
                          * holds the packet until the target time.
                          */
-                        uint64_t        txTimeNs = 0;
+                                uint64_t txTimeNs = 0;
                 };
 
                 /** @brief List of datagrams for batch send. */
@@ -118,8 +118,7 @@ class PacketTransport {
                  * @param dest The destination address and port.
                  * @return The number of bytes sent, or -1 on failure.
                  */
-                virtual ssize_t sendPacket(const void *data, size_t size,
-                                           const SocketAddress &dest) = 0;
+                virtual ssize_t sendPacket(const void *data, size_t size, const SocketAddress &dest) = 0;
 
                 /**
                  * @brief Sends a batch of packets.
@@ -146,8 +145,7 @@ class PacketTransport {
                  * @return The number of bytes received, or -1 on
                  *         failure.
                  */
-                virtual ssize_t receivePacket(void *data, size_t maxSize,
-                                              SocketAddress *sender = nullptr) = 0;
+                virtual ssize_t receivePacket(void *data, size_t maxSize, SocketAddress *sender = nullptr) = 0;
 
                 /**
                  * @brief Sets a transmit-rate limit on this transport.

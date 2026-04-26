@@ -23,10 +23,10 @@ using namespace promeki;
 // ============================================================================
 
 static String uniqueSocketPath(const char *tag) {
-        return Dir::temp().path()
-                .join(String("promeki-test-localsock-") +
-                      String(tag) + String("-") +
-                      UUID::generateV4().toString() + String(".sock"))
+        return Dir::temp()
+                .path()
+                .join(String("promeki-test-localsock-") + String(tag) + String("-") + UUID::generateV4().toString() +
+                      String(".sock"))
                 .toString();
 }
 
@@ -41,11 +41,11 @@ TEST_CASE("LocalSocket: isSupported is true on POSIX") {
 }
 
 TEST_CASE("LocalServer: listen binds and creates a socket file") {
-        if(!LocalServer::isSupported()) return;
+        if (!LocalServer::isSupported()) return;
         String path = uniqueSocketPath("listen");
 
         LocalServer server;
-        Error err = server.listen(path);
+        Error       err = server.listen(path);
         REQUIRE(err.isOk());
         CHECK(server.isListening());
         CHECK(server.serverPath() == path);
@@ -60,15 +60,15 @@ TEST_CASE("LocalServer: listen binds and creates a socket file") {
 }
 
 TEST_CASE("LocalServer: listen on empty path is rejected") {
-        if(!LocalServer::isSupported()) return;
+        if (!LocalServer::isSupported()) return;
         LocalServer server;
-        Error err = server.listen(String());
+        Error       err = server.listen(String());
         CHECK(err == Error::Invalid);
         CHECK_FALSE(server.isListening());
 }
 
 TEST_CASE("LocalSocket: connect/accept/read/write roundtrip") {
-        if(!LocalSocket::isSupported()) return;
+        if (!LocalSocket::isSupported()) return;
         String path = uniqueSocketPath("roundtrip");
 
         LocalServer server;
@@ -88,7 +88,7 @@ TEST_CASE("LocalSocket: connect/accept/read/write roundtrip") {
         const char *msg = "hello";
         CHECK(client.write(msg, 5) == 5);
 
-        char rxbuf[16] = {};
+        char    rxbuf[16] = {};
         int64_t n = server_side->read(rxbuf, sizeof(rxbuf));
         CHECK(n == 5);
         CHECK(std::memcmp(rxbuf, "hello", 5) == 0);
@@ -104,16 +104,16 @@ TEST_CASE("LocalSocket: connect/accept/read/write roundtrip") {
 }
 
 TEST_CASE("LocalSocket: connect to nonexistent path fails") {
-        if(!LocalSocket::isSupported()) return;
+        if (!LocalSocket::isSupported()) return;
         LocalSocket client;
-        Error err = client.connectTo(uniqueSocketPath("nobody-home"));
+        Error       err = client.connectTo(uniqueSocketPath("nobody-home"));
         CHECK(err.isError());
         CHECK_FALSE(client.isConnected());
 }
 
 TEST_CASE("LocalSocket: peer disconnect reports EOF via read == 0") {
-        if(!LocalSocket::isSupported()) return;
-        String path = uniqueSocketPath("eof");
+        if (!LocalSocket::isSupported()) return;
+        String      path = uniqueSocketPath("eof");
         LocalServer server;
         REQUIRE(server.listen(path).isOk());
 
@@ -126,7 +126,7 @@ TEST_CASE("LocalSocket: peer disconnect reports EOF via read == 0") {
         // Client closes.
         client.close();
 
-        char buf[4];
+        char    buf[4];
         int64_t n = server_side->read(buf, sizeof(buf));
         CHECK(n == 0);
         CHECK_FALSE(server_side->isConnected());
@@ -134,8 +134,8 @@ TEST_CASE("LocalSocket: peer disconnect reports EOF via read == 0") {
 }
 
 TEST_CASE("LocalServer: accept multiple clients") {
-        if(!LocalServer::isSupported()) return;
-        String path = uniqueSocketPath("multi");
+        if (!LocalServer::isSupported()) return;
+        String      path = uniqueSocketPath("multi");
         LocalServer server;
         REQUIRE(server.listen(path).isOk());
 
@@ -145,30 +145,33 @@ TEST_CASE("LocalServer: accept multiple clients") {
         REQUIRE(c3.connectTo(path).isOk());
 
         int accepted = 0;
-        for(int i = 0; i < 3; ++i) {
-                if(server.waitForNewConnection(2000).isOk()) {
+        for (int i = 0; i < 3; ++i) {
+                if (server.waitForNewConnection(2000).isOk()) {
                         LocalSocket *s = server.nextPendingConnection();
-                        if(s != nullptr) { delete s; ++accepted; }
+                        if (s != nullptr) {
+                                delete s;
+                                ++accepted;
+                        }
                 }
         }
         CHECK(accepted == 3);
 }
 
 TEST_CASE("LocalServer: waitForNewConnection times out when idle") {
-        if(!LocalServer::isSupported()) return;
+        if (!LocalServer::isSupported()) return;
         LocalServer server;
         REQUIRE(server.listen(uniqueSocketPath("idle")).isOk());
-        auto start = std::chrono::steady_clock::now();
+        auto  start = std::chrono::steady_clock::now();
         Error err = server.waitForNewConnection(100);
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - start).count();
+        auto  elapsed =
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
         CHECK(err == Error::Timeout);
-        CHECK(elapsed >= 80);   // allow some scheduler slack
+        CHECK(elapsed >= 80); // allow some scheduler slack
 }
 
 TEST_CASE("LocalServer: hasPendingConnections reflects state") {
-        if(!LocalServer::isSupported()) return;
-        String path = uniqueSocketPath("pending");
+        if (!LocalServer::isSupported()) return;
+        String      path = uniqueSocketPath("pending");
         LocalServer server;
         REQUIRE(server.listen(path).isOk());
         CHECK_FALSE(server.hasPendingConnections());
@@ -176,7 +179,7 @@ TEST_CASE("LocalServer: hasPendingConnections reflects state") {
         LocalSocket client;
         REQUIRE(client.connectTo(path).isOk());
         // Give the kernel a moment to materialize the pending connection.
-        for(int i = 0; i < 100 && !server.hasPendingConnections(); ++i) {
+        for (int i = 0; i < 100 && !server.hasPendingConnections(); ++i) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
         CHECK(server.hasPendingConnections());
@@ -188,12 +191,10 @@ TEST_CASE("LocalServer: hasPendingConnections reflects state") {
 }
 
 TEST_CASE("LocalServer: refuses to stomp a non-socket file") {
-        if(!LocalServer::isSupported()) return;
+        if (!LocalServer::isSupported()) return;
         // Create a regular file at the requested path.
-        String path = Dir::temp().path()
-                .join(String("promeki-test-notsocket-") +
-                      UUID::generateV4().toString())
-                .toString();
+        String path =
+                Dir::temp().path().join(String("promeki-test-notsocket-") + UUID::generateV4().toString()).toString();
         {
                 FILE *f = std::fopen(path.cstr(), "w");
                 REQUIRE(f != nullptr);
@@ -201,7 +202,7 @@ TEST_CASE("LocalServer: refuses to stomp a non-socket file") {
                 std::fclose(f);
         }
         LocalServer server;
-        Error err = server.listen(path);
+        Error       err = server.listen(path);
         CHECK(err == Error::Exists);
         CHECK_FALSE(server.isListening());
         // Cleanup.
@@ -209,7 +210,7 @@ TEST_CASE("LocalServer: refuses to stomp a non-socket file") {
 }
 
 TEST_CASE("LocalServer: listen over a stale socket file succeeds") {
-        if(!LocalServer::isSupported()) return;
+        if (!LocalServer::isSupported()) return;
         String path = uniqueSocketPath("stale");
 
         // First server creates + leaves a socket file.
@@ -232,8 +233,8 @@ TEST_CASE("LocalServer: listen over a stale socket file succeeds") {
 }
 
 TEST_CASE("LocalSocket: destructor closes a connected socket") {
-        if(!LocalSocket::isSupported()) return;
-        String path = uniqueSocketPath("dtor");
+        if (!LocalSocket::isSupported()) return;
+        String      path = uniqueSocketPath("dtor");
         LocalServer server;
         REQUIRE(server.listen(path).isOk());
         {
@@ -244,14 +245,14 @@ TEST_CASE("LocalSocket: destructor closes a connected socket") {
         REQUIRE(server.waitForNewConnection(2000).isOk());
         LocalSocket *server_side = server.nextPendingConnection();
         REQUIRE(server_side != nullptr);
-        char buf[4];
+        char    buf[4];
         int64_t n = server_side->read(buf, sizeof(buf));
         CHECK(n == 0);
         delete server_side;
 }
 
 TEST_CASE("LocalSocket: open twice without connect is rejected") {
-        if(!LocalSocket::isSupported()) return;
+        if (!LocalSocket::isSupported()) return;
         LocalSocket sock;
         REQUIRE(sock.open(IODevice::ReadWrite).isOk());
         CHECK(sock.open(IODevice::ReadWrite) == Error::AlreadyOpen);

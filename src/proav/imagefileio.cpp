@@ -34,13 +34,13 @@ static ImageFileIO &imageFileIOInvalid() {
 }
 
 int ImageFileIO::registerImageFileIO(ImageFileIO *p) {
-        if(p == nullptr) {
+        if (p == nullptr) {
                 promekiWarn("ImageFileIO::registerImageFileIO() called with null pointer");
                 return -1;
         }
         ImageFileIOMap &map = imageFileIOMap();
-        int ret = map.size();
-        int id = p->id();
+        int             ret = map.size();
+        int             id = p->id();
         map[id] = UniquePtr<ImageFileIO>::takeOwnership(p);
         promekiDebug("Registered ImageFileIO %d '%s'", p->id(), p->name().cstr());
 
@@ -52,23 +52,22 @@ int ImageFileIO::registerImageFileIO(ImageFileIO *p) {
         // not set any extensions keeps us from emitting empty
         // FormatDescs for future ImageFileIO subclasses that are
         // driven by explicit ID only.
-        if(!p->extensions().isEmpty()) {
-                MediaIO::registerFormat(
-                        MediaIOTask_ImageFile::buildFormatDescFor(p));
+        if (!p->extensions().isEmpty()) {
+                MediaIO::registerFormat(MediaIOTask_ImageFile::buildFormatDescFor(p));
         }
         return ret;
 }
 
 const ImageFileIO *ImageFileIO::lookup(int id) {
         ImageFileIOMap &map = imageFileIOMap();
-        auto it = map.find(id);
+        auto            it = map.find(id);
         return it == map.end() ? &imageFileIOInvalid() : it->second.get();
 }
 
 ImageFileIO::IDList ImageFileIO::registeredIDs() {
         ImageFileIOMap &map = imageFileIOMap();
-        IDList out;
-        for(auto it = map.cbegin(); it != map.cend(); ++it) {
+        IDList          out;
+        for (auto it = map.cbegin(); it != map.cend(); ++it) {
                 out.pushToBack(it->first);
         }
         return out;
@@ -87,4 +86,3 @@ Error ImageFileIO::save(ImageFile &imageFile, const MediaConfig &config) const {
 }
 
 PROMEKI_NAMESPACE_END
-

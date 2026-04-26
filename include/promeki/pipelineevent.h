@@ -82,7 +82,7 @@ PROMEKI_NAMESPACE_BEGIN
  * to subscribers on different threads via shared pointer.
  */
 class PipelineEvent {
-        PROMEKI_SHARED_FINAL(PipelineEvent)
+                PROMEKI_SHARED_FINAL(PipelineEvent)
         public:
                 /** @brief Shared pointer alias. */
                 using Ptr = SharedPtr<PipelineEvent>;
@@ -98,12 +98,12 @@ class PipelineEvent {
                  *        notification this event represents.
                  */
                 enum class Kind {
-                        StateChanged,   ///< Pipeline-level state transition.
-                        StageState,     ///< Per-stage open/start/stop/close transition.
-                        StageError,     ///< Error reported by a stage (or pipeline).
-                        StatsUpdated,   ///< Periodic stats snapshot.
-                        PlanResolved,   ///< Resolved config after planner ran.
-                        Log             ///< Log message captured via Logger listener.
+                        StateChanged, ///< Pipeline-level state transition.
+                        StageState,   ///< Per-stage open/start/stop/close transition.
+                        StageError,   ///< Error reported by a stage (or pipeline).
+                        StatsUpdated, ///< Periodic stats snapshot.
+                        PlanResolved, ///< Resolved config after planner ran.
+                        Log           ///< Log message captured via Logger listener.
                 };
 
                 /** @brief Default-constructs an empty event with @ref Kind::StateChanged. */
@@ -222,12 +222,12 @@ class PipelineEvent {
                 static Kind kindFromString(const String &s, bool *ok = nullptr);
 
         private:
-                Kind            _kind = Kind::StateChanged;
-                String          _stageName;
-                Variant         _payload;
-                JsonObject      _jsonPayload;
-                Metadata        _metadata;
-                TimeStamp       _ts;
+                Kind       _kind = Kind::StateChanged;
+                String     _stageName;
+                Variant    _payload;
+                JsonObject _jsonPayload;
+                Metadata   _metadata;
+                TimeStamp  _ts;
 };
 
 PROMEKI_NAMESPACE_END

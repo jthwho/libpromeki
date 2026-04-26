@@ -17,47 +17,47 @@ PROMEKI_NAMESPACE_BEGIN
 
 namespace {
 
-// Renders one MediaDesc into a single human-readable line.  Used by
-// summary() for CLI / UI display and by toJson() to emit format lists
-// as readable strings.  The JSON form is intentionally one-way (lossy
-// for round-trip) — round-trip lives on the DataStream operators.
-String shortMediaDescLine(const MediaDesc &desc) {
-        String line;
-        if(desc.frameRate().isValid()) {
-                line += desc.frameRate().toString();
-                line += "  ";
-        }
-        if(!desc.imageList().isEmpty()) {
-                for(size_t i = 0; i < desc.imageList().size(); ++i) {
-                        if(i) line += " | ";
-                        line += desc.imageList()[i].toString();
+        // Renders one MediaDesc into a single human-readable line.  Used by
+        // summary() for CLI / UI display and by toJson() to emit format lists
+        // as readable strings.  The JSON form is intentionally one-way (lossy
+        // for round-trip) — round-trip lives on the DataStream operators.
+        String shortMediaDescLine(const MediaDesc &desc) {
+                String line;
+                if (desc.frameRate().isValid()) {
+                        line += desc.frameRate().toString();
+                        line += "  ";
                 }
-        }
-        if(!desc.audioList().isEmpty()) {
-                if(!line.isEmpty()) line += "  +  ";
-                for(size_t i = 0; i < desc.audioList().size(); ++i) {
-                        if(i) line += " | ";
-                        line += desc.audioList()[i].toString();
+                if (!desc.imageList().isEmpty()) {
+                        for (size_t i = 0; i < desc.imageList().size(); ++i) {
+                                if (i) line += " | ";
+                                line += desc.imageList()[i].toString();
+                        }
                 }
+                if (!desc.audioList().isEmpty()) {
+                        if (!line.isEmpty()) line += "  +  ";
+                        for (size_t i = 0; i < desc.audioList().size(); ++i) {
+                                if (i) line += " | ";
+                                line += desc.audioList()[i].toString();
+                        }
+                }
+                if (line.isEmpty()) line = "<empty>";
+                return line;
         }
-        if(line.isEmpty()) line = "<empty>";
-        return line;
-}
 
-void appendRoles(StringList &out, const MediaIODescription &d) {
-        String roles;
-        bool first = true;
-        auto add = [&](const char *label) {
-                if(!first) roles += ", ";
-                roles += label;
-                first = false;
-        };
-        if(d.canBeSource())    add("source");
-        if(d.canBeSink())      add("sink");
-        if(d.canBeTransform()) add("transform");
-        if(roles.isEmpty()) roles = "(none)";
-        out.pushToBack(String("  Roles:        ") + roles);
-}
+        void appendRoles(StringList &out, const MediaIODescription &d) {
+                String roles;
+                bool   first = true;
+                auto   add = [&](const char *label) {
+                        if (!first) roles += ", ";
+                        roles += label;
+                        first = false;
+                };
+                if (d.canBeSource()) add("source");
+                if (d.canBeSink()) add("sink");
+                if (d.canBeTransform()) add("transform");
+                if (roles.isEmpty()) roles = "(none)";
+                out.pushToBack(String("  Roles:        ") + roles);
+        }
 
 } // namespace
 
@@ -70,18 +70,20 @@ StringList MediaIODescription::summary() const {
 
         // Identity line: "TPG  [name=tpg-1, id=3]"
         String hdr;
-        if(!_backendName.isEmpty()) hdr += _backendName;
-        else                        hdr += "<unknown backend>";
-        if(!_name.isEmpty() || _localId >= 0) {
+        if (!_backendName.isEmpty())
+                hdr += _backendName;
+        else
+                hdr += "<unknown backend>";
+        if (!_name.isEmpty() || _localId >= 0) {
                 hdr += "  [";
                 bool first = true;
-                if(!_name.isEmpty()) {
+                if (!_name.isEmpty()) {
                         hdr += "name=";
                         hdr += _name;
                         first = false;
                 }
-                if(_localId >= 0) {
-                        if(!first) hdr += ", ";
+                if (_localId >= 0) {
+                        if (!first) hdr += ", ";
                         hdr += "id=";
                         hdr += String::number(_localId);
                 }
@@ -89,68 +91,63 @@ StringList MediaIODescription::summary() const {
         }
         out.pushToBack(hdr);
 
-        if(!_backendDescription.isEmpty()) {
+        if (!_backendDescription.isEmpty()) {
                 out.pushToBack(String("  Description:  ") + _backendDescription);
         }
 
         appendRoles(out, *this);
 
-        if(_uuid.isValid()) {
+        if (_uuid.isValid()) {
                 out.pushToBack(String("  UUID:         ") + _uuid.toString());
         }
 
         // Capabilities
         String caps;
         caps += _canSeek ? "seekable" : "non-seekable";
-        if(_frameCount.isInfinite()) {
+        if (_frameCount.isInfinite()) {
                 caps += ", infinite";
-        } else if(_frameCount.isUnknown()) {
+        } else if (_frameCount.isUnknown()) {
                 caps += ", frame-count=unknown";
-        } else if(_frameCount.isFinite()) {
+        } else if (_frameCount.isFinite()) {
                 caps += ", frames=";
                 caps += String::number(_frameCount.value());
         }
-        if(_frameRate.isValid()) {
+        if (_frameRate.isValid()) {
                 caps += ", rate=";
                 caps += _frameRate.toString();
         }
         out.pushToBack(String("  Capabilities: ") + caps);
 
-        if(_preferredFormat.isValid()) {
-                out.pushToBack(String("  Preferred:    ")
-                               + shortMediaDescLine(_preferredFormat));
+        if (_preferredFormat.isValid()) {
+                out.pushToBack(String("  Preferred:    ") + shortMediaDescLine(_preferredFormat));
         }
 
-        if(!_producibleFormats.isEmpty()) {
-                out.pushToBack(String("  Producible (") +
-                               String::number(_producibleFormats.size()) + "):");
-                for(size_t i = 0; i < _producibleFormats.size(); ++i) {
-                        out.pushToBack(String("    - ") +
-                                       shortMediaDescLine(_producibleFormats[i]));
+        if (!_producibleFormats.isEmpty()) {
+                out.pushToBack(String("  Producible (") + String::number(_producibleFormats.size()) + "):");
+                for (size_t i = 0; i < _producibleFormats.size(); ++i) {
+                        out.pushToBack(String("    - ") + shortMediaDescLine(_producibleFormats[i]));
                 }
         }
 
-        if(!_acceptableFormats.isEmpty()) {
-                out.pushToBack(String("  Acceptable (") +
-                               String::number(_acceptableFormats.size()) + "):");
-                for(size_t i = 0; i < _acceptableFormats.size(); ++i) {
-                        out.pushToBack(String("    - ") +
-                                       shortMediaDescLine(_acceptableFormats[i]));
+        if (!_acceptableFormats.isEmpty()) {
+                out.pushToBack(String("  Acceptable (") + String::number(_acceptableFormats.size()) + "):");
+                for (size_t i = 0; i < _acceptableFormats.size(); ++i) {
+                        out.pushToBack(String("    - ") + shortMediaDescLine(_acceptableFormats[i]));
                 }
         }
 
-        if(!_containerMetadata.isEmpty()) {
+        if (!_containerMetadata.isEmpty()) {
                 out.pushToBack("  Metadata:");
                 const StringList md = _containerMetadata.dump();
-                for(size_t i = 0; i < md.size(); ++i) {
+                for (size_t i = 0; i < md.size(); ++i) {
                         out.pushToBack(String("    ") + md[i]);
                 }
         }
 
-        if(_probeStatus.isError() || !_probeMessage.isEmpty()) {
+        if (_probeStatus.isError() || !_probeMessage.isEmpty()) {
                 String line = "  Probe:        ";
                 line += _probeStatus.name();
-                if(!_probeMessage.isEmpty()) {
+                if (!_probeMessage.isEmpty()) {
                         line += " - ";
                         line += _probeMessage;
                 }
@@ -172,80 +169,82 @@ StringList MediaIODescription::summary() const {
 
 JsonObject MediaIODescription::toJson() const {
         JsonObject j;
-        if(!_backendName.isEmpty())        j.set("backendName",        _backendName);
-        if(!_backendDescription.isEmpty()) j.set("backendDescription", _backendDescription);
-        if(!_name.isEmpty())               j.set("name",               _name);
-        if(_uuid.isValid())                j.set("uuid",               _uuid.toString());
-        if(_localId >= 0)                  j.set("localId",            int64_t(_localId));
+        if (!_backendName.isEmpty()) j.set("backendName", _backendName);
+        if (!_backendDescription.isEmpty()) j.set("backendDescription", _backendDescription);
+        if (!_name.isEmpty()) j.set("name", _name);
+        if (_uuid.isValid()) j.set("uuid", _uuid.toString());
+        if (_localId >= 0) j.set("localId", int64_t(_localId));
 
         // Role flags emitted as an array of role strings; absence
         // = false, presence = true.  Compact and self-describing.
         JsonArray roles;
-        if(_canBeSource)    roles.add(String("source"));
-        if(_canBeSink)      roles.add(String("sink"));
-        if(_canBeTransform) roles.add(String("transform"));
-        if(roles.size() > 0) j.set("roles", roles);
+        if (_canBeSource) roles.add(String("source"));
+        if (_canBeSink) roles.add(String("sink"));
+        if (_canBeTransform) roles.add(String("transform"));
+        if (roles.size() > 0) j.set("roles", roles);
 
-        if(!_producibleFormats.isEmpty()) {
+        if (!_producibleFormats.isEmpty()) {
                 JsonArray arr;
-                for(size_t i = 0; i < _producibleFormats.size(); ++i) {
+                for (size_t i = 0; i < _producibleFormats.size(); ++i) {
                         arr.add(shortMediaDescLine(_producibleFormats[i]));
                 }
                 j.set("producibleFormats", arr);
         }
-        if(!_acceptableFormats.isEmpty()) {
+        if (!_acceptableFormats.isEmpty()) {
                 JsonArray arr;
-                for(size_t i = 0; i < _acceptableFormats.size(); ++i) {
+                for (size_t i = 0; i < _acceptableFormats.size(); ++i) {
                         arr.add(shortMediaDescLine(_acceptableFormats[i]));
                 }
                 j.set("acceptableFormats", arr);
         }
-        if(_preferredFormat.isValid()) {
+        if (_preferredFormat.isValid()) {
                 j.set("preferredFormat", shortMediaDescLine(_preferredFormat));
         }
 
-        if(_canSeek)                                j.set("canSeek", true);
-        if(!_frameCount.isUnknown())                j.set("frameCount", _frameCount.toString());
-        if(_frameRate.isValid())                    j.set("frameRate", _frameRate.toString());
-        if(!_containerMetadata.isEmpty())           j.set("containerMetadata", _containerMetadata.toJson());
+        if (_canSeek) j.set("canSeek", true);
+        if (!_frameCount.isUnknown()) j.set("frameCount", _frameCount.toString());
+        if (_frameRate.isValid()) j.set("frameRate", _frameRate.toString());
+        if (!_containerMetadata.isEmpty()) j.set("containerMetadata", _containerMetadata.toJson());
 
         // Error code persisted as the underlying integer for a
         // round-trip-safe path (Error::name() has no inverse today).
-        if(_probeStatus.isError()) {
+        if (_probeStatus.isError()) {
                 j.set("probeStatusCode", int64_t(_probeStatus.code()));
                 j.set("probeStatusName", _probeStatus.name());
         }
-        if(!_probeMessage.isEmpty()) j.set("probeMessage", _probeMessage);
+        if (!_probeMessage.isEmpty()) j.set("probeMessage", _probeMessage);
         return j;
 }
 
 MediaIODescription MediaIODescription::fromJson(const JsonObject &obj, Error *err) {
         MediaIODescription d;
-        bool good = true;
+        bool               good = true;
 
-        if(obj.contains("backendName"))        d._backendName        = obj.getString("backendName");
-        if(obj.contains("backendDescription")) d._backendDescription = obj.getString("backendDescription");
-        if(obj.contains("name"))               d._name               = obj.getString("name");
-        if(obj.contains("uuid")) {
+        if (obj.contains("backendName")) d._backendName = obj.getString("backendName");
+        if (obj.contains("backendDescription")) d._backendDescription = obj.getString("backendDescription");
+        if (obj.contains("name")) d._name = obj.getString("name");
+        if (obj.contains("uuid")) {
                 Error uerr;
                 d._uuid = UUID::fromString(obj.getString("uuid").cstr(), &uerr);
-                if(uerr.isError()) {
+                if (uerr.isError()) {
                         promekiWarn("MediaIODescription::fromJson: invalid UUID.");
                         good = false;
                 }
         }
-        if(obj.contains("localId")) d._localId = static_cast<int>(obj.getInt("localId"));
+        if (obj.contains("localId")) d._localId = static_cast<int>(obj.getInt("localId"));
 
-        if(obj.valueIsArray("roles")) {
+        if (obj.valueIsArray("roles")) {
                 JsonArray roles = obj.getArray("roles");
-                for(int i = 0; i < roles.size(); ++i) {
+                for (int i = 0; i < roles.size(); ++i) {
                         const String r = roles.getString(i);
-                        if(r == "source")         d._canBeSource    = true;
-                        else if(r == "sink")      d._canBeSink      = true;
-                        else if(r == "transform") d._canBeTransform = true;
+                        if (r == "source")
+                                d._canBeSource = true;
+                        else if (r == "sink")
+                                d._canBeSink = true;
+                        else if (r == "transform")
+                                d._canBeTransform = true;
                         else {
-                                promekiWarn("MediaIODescription::fromJson: unknown role '%s'.",
-                                            r.cstr());
+                                promekiWarn("MediaIODescription::fromJson: unknown role '%s'.", r.cstr());
                                 good = false;
                         }
                 }
@@ -256,31 +255,31 @@ MediaIODescription MediaIODescription::fromJson(const JsonObject &obj, Error *er
         // leave the parsed lists empty so callers know not to trust
         // them after a JSON round-trip.
 
-        if(obj.contains("canSeek"))    d._canSeek    = obj.getBool("canSeek");
-        if(obj.contains("frameCount")) {
+        if (obj.contains("canSeek")) d._canSeek = obj.getBool("canSeek");
+        if (obj.contains("frameCount")) {
                 d._frameCount = FrameCount::fromString(obj.getString("frameCount"));
         }
-        if(obj.contains("frameRate")) {
+        if (obj.contains("frameRate")) {
                 Result<FrameRate> r = FrameRate::fromString(obj.getString("frameRate"));
-                if(r.second().isOk()) {
+                if (r.second().isOk()) {
                         d._frameRate = r.first();
                 } else {
                         promekiWarn("MediaIODescription::fromJson: invalid frameRate.");
                         good = false;
                 }
         }
-        if(obj.valueIsObject("containerMetadata")) {
+        if (obj.valueIsObject("containerMetadata")) {
                 Error merr;
                 d._containerMetadata = Metadata::fromJson(obj.getObject("containerMetadata"), &merr);
-                if(merr.isError()) good = false;
+                if (merr.isError()) good = false;
         }
 
-        if(obj.contains("probeStatusCode")) {
+        if (obj.contains("probeStatusCode")) {
                 d._probeStatus = Error(static_cast<Error::Code>(obj.getInt("probeStatusCode")));
         }
-        if(obj.contains("probeMessage")) d._probeMessage = obj.getString("probeMessage");
+        if (obj.contains("probeMessage")) d._probeMessage = obj.getString("probeMessage");
 
-        if(err) *err = good ? Error::Ok : Error::Invalid;
+        if (err) *err = good ? Error::Ok : Error::Invalid;
         return d;
 }
 
@@ -289,23 +288,14 @@ MediaIODescription MediaIODescription::fromJson(const JsonObject &obj, Error *er
 // ============================================================================
 
 bool MediaIODescription::operator==(const MediaIODescription &other) const {
-        return _backendName        == other._backendName
-            && _backendDescription == other._backendDescription
-            && _name               == other._name
-            && _uuid               == other._uuid
-            && _localId            == other._localId
-            && _canBeSource        == other._canBeSource
-            && _canBeSink          == other._canBeSink
-            && _canBeTransform     == other._canBeTransform
-            && _producibleFormats  == other._producibleFormats
-            && _acceptableFormats  == other._acceptableFormats
-            && _preferredFormat    == other._preferredFormat
-            && _canSeek            == other._canSeek
-            && _frameCount         == other._frameCount
-            && _frameRate          == other._frameRate
-            && _containerMetadata  == other._containerMetadata
-            && _probeStatus        == other._probeStatus
-            && _probeMessage       == other._probeMessage;
+        return _backendName == other._backendName && _backendDescription == other._backendDescription &&
+               _name == other._name && _uuid == other._uuid && _localId == other._localId &&
+               _canBeSource == other._canBeSource && _canBeSink == other._canBeSink &&
+               _canBeTransform == other._canBeTransform && _producibleFormats == other._producibleFormats &&
+               _acceptableFormats == other._acceptableFormats && _preferredFormat == other._preferredFormat &&
+               _canSeek == other._canSeek && _frameCount == other._frameCount && _frameRate == other._frameRate &&
+               _containerMetadata == other._containerMetadata && _probeStatus == other._probeStatus &&
+               _probeMessage == other._probeMessage;
 }
 
 // ============================================================================
@@ -336,19 +326,19 @@ DataStream &operator<<(DataStream &stream, const MediaIODescription &d) {
 
 DataStream &operator>>(DataStream &stream, MediaIODescription &d) {
         d = MediaIODescription();
-        if(!stream.readTag(DataStream::TypeMediaIODescription)) return stream;
+        if (!stream.readTag(DataStream::TypeMediaIODescription)) return stream;
 
-        String backendName, backendDescription, name, probeMessage;
-        UUID uuid;
-        int32_t localId = -1;
-        bool canBeSource = false, canBeSink = false, canBeTransform = false;
+        String          backendName, backendDescription, name, probeMessage;
+        UUID            uuid;
+        int32_t         localId = -1;
+        bool            canBeSource = false, canBeSink = false, canBeTransform = false;
         MediaDesc::List producibleFormats, acceptableFormats;
-        MediaDesc preferredFormat;
-        bool canSeek = false;
-        FrameCount frameCount;
-        FrameRate frameRate;
-        Metadata containerMetadata;
-        uint32_t probeStatusValue = 0;
+        MediaDesc       preferredFormat;
+        bool            canSeek = false;
+        FrameCount      frameCount;
+        FrameRate       frameRate;
+        Metadata        containerMetadata;
+        uint32_t        probeStatusValue = 0;
 
         stream >> backendName;
         stream >> backendDescription;
@@ -368,7 +358,7 @@ DataStream &operator>>(DataStream &stream, MediaIODescription &d) {
         stream >> probeStatusValue;
         stream >> probeMessage;
 
-        if(stream.status() != DataStream::Ok) return stream;
+        if (stream.status() != DataStream::Ok) return stream;
 
         d.setBackendName(backendName);
         d.setBackendDescription(backendDescription);

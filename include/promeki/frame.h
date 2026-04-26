@@ -51,7 +51,7 @@ class MediaDesc;
  * external synchronization.
  */
 class Frame {
-        PROMEKI_SHARED_FINAL(Frame)
+                PROMEKI_SHARED_FINAL(Frame)
         public:
                 /** @brief Shared pointer type for Frame. */
                 using Ptr = SharedPtr<Frame>;
@@ -78,9 +78,7 @@ class Frame {
                 /**
                  * @brief Appends a payload to @ref payloadList.
                  */
-                void addPayload(MediaPayload::Ptr p) {
-                        _payloads.pushToBack(std::move(p));
-                }
+                void addPayload(MediaPayload::Ptr p) { _payloads.pushToBack(std::move(p)); }
 
                 /**
                  * @brief Returns the @ref Video-kind entries from
@@ -176,7 +174,10 @@ class Frame {
                  * @brief Sets the frame benchmark.
                  * @param bm The benchmark to attach.
                  */
-                void setBenchmark(Benchmark::Ptr bm) { _benchmark = std::move(bm); return; }
+                void setBenchmark(Benchmark::Ptr bm) {
+                        _benchmark = std::move(bm);
+                        return;
+                }
 
                 /**
                  * @brief Returns a const reference to the config update delta.
@@ -207,9 +208,9 @@ class Frame {
                  * on a mid-GOP video frame that will never be written.
                  */
                 enum CutPointScope {
-                        CutPointVideoOnly = 0,  ///< @brief Consider only video payloads.
-                        CutPointAudioOnly = 1,  ///< @brief Consider only audio payloads.
-                        CutPointAudioVideo = 2  ///< @brief Consider every essence stream in the frame (default).
+                        CutPointVideoOnly = 0, ///< @brief Consider only video payloads.
+                        CutPointAudioOnly = 1, ///< @brief Consider only audio payloads.
+                        CutPointAudioVideo = 2 ///< @brief Consider every essence stream in the frame (default).
                 };
 
                 /**
@@ -264,10 +265,10 @@ class Frame {
                 StringList dump(const String &indent = String()) const;
 
         private:
-                MediaPayload::PtrList  _payloads;
-                Metadata               _metadata;
-                Benchmark::Ptr         _benchmark;
-                MediaConfig            _configUpdate;
+                MediaPayload::PtrList _payloads;
+                Metadata              _metadata;
+                Benchmark::Ptr        _benchmark;
+                MediaConfig           _configUpdate;
 };
 
 PROMEKI_NAMESPACE_END

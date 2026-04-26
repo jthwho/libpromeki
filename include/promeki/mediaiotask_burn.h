@@ -109,26 +109,24 @@ class MediaIOTask_Burn : public MediaIOTask {
                 Error executeCmd(MediaIOCommandRead &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
-                int pendingOutput() const override;
+                int   pendingOutput() const override;
 
-                Error proposeInput(const MediaDesc &offered,
-                                   MediaDesc *preferred) const override;
-                Error proposeOutput(const MediaDesc &requested,
-                                    MediaDesc *achievable) const override;
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
+                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const override;
 
                 Error burnFrame(const Frame::Ptr &input, Frame::Ptr &output);
 
-                VideoTestPattern                _pattern;
-                String                          _burnTextTemplate;
-                bool                            _burnEnabled = false;
-                int                             _capacity = 4;
+                VideoTestPattern _pattern;
+                String           _burnTextTemplate;
+                bool             _burnEnabled = false;
+                int              _capacity = 4;
 
-                List<Frame::Ptr>                _outputQueue;
-                FrameCount                      _frameCount{0};
-                int64_t                         _readCount = 0;
-                FrameCount                      _framesBurned{0};
-                bool                            _capacityWarned = false;
-                bool                            _notPaintableWarned = false;
+                List<Frame::Ptr> _outputQueue;
+                FrameCount       _frameCount{0};
+                int64_t          _readCount = 0;
+                FrameCount       _framesBurned{0};
+                bool             _capacityWarned = false;
+                bool             _notPaintableWarned = false;
 };
 
 PROMEKI_NAMESPACE_END

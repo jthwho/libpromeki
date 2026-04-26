@@ -100,8 +100,8 @@ class Event {
                 void ignore() { _accepted = false; }
 
         private:
-                Type    _type;
-                bool    _accepted = false;
+                Type _type;
+                bool _accepted = false;
 };
 
 PROMEKI_NAMESPACE_END

@@ -38,7 +38,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  */
 class AbstractSocket : public IODevice {
-        PROMEKI_OBJECT(AbstractSocket, IODevice)
+                PROMEKI_OBJECT(AbstractSocket, IODevice)
         public:
                 /** @brief Default receive timeout in milliseconds applied to
                  *  newly created sockets.  Prevents blocking reads from
@@ -52,19 +52,19 @@ class AbstractSocket : public IODevice {
 
                 /** @brief The type of socket. */
                 enum SocketType {
-                        TcpSocketType,  ///< Stream-oriented TCP socket.
-                        UdpSocketType,  ///< Datagram-oriented UDP socket.
-                        RawSocketType   ///< Raw Ethernet frame socket.
+                        TcpSocketType, ///< Stream-oriented TCP socket.
+                        UdpSocketType, ///< Datagram-oriented UDP socket.
+                        RawSocketType  ///< Raw Ethernet frame socket.
                 };
 
                 /** @brief The current state of the socket. */
                 enum SocketState {
-                        Unconnected,    ///< Socket is not connected or bound.
-                        Connecting,     ///< A non-blocking connect is in progress.
-                        Connected,      ///< Socket is connected to a peer.
-                        Bound,          ///< Socket is bound to a local address.
-                        Closing,        ///< Socket is being closed.
-                        Listening       ///< Socket is listening for incoming connections (TCP server).
+                        Unconnected, ///< Socket is not connected or bound.
+                        Connecting,  ///< A non-blocking connect is in progress.
+                        Connected,   ///< Socket is connected to a peer.
+                        Bound,       ///< Socket is bound to a local address.
+                        Closing,     ///< Socket is being closed.
+                        Listening    ///< Socket is listening for incoming connections (TCP server).
                 };
 
                 /**
@@ -257,11 +257,11 @@ class AbstractSocket : public IODevice {
                  */
                 void setState(SocketState state);
 
-                int             _fd = -1;               ///< Socket file descriptor.
-                SocketState     _state = Unconnected;    ///< Current socket state.
-                SocketType      _type;                   ///< Socket type.
-                SocketAddress   _localAddress;           ///< Local bound address.
-                SocketAddress   _peerAddress;            ///< Connected peer address.
+                int           _fd = -1;             ///< Socket file descriptor.
+                SocketState   _state = Unconnected; ///< Current socket state.
+                SocketType    _type;                ///< Socket type.
+                SocketAddress _localAddress;        ///< Local bound address.
+                SocketAddress _peerAddress;         ///< Connected peer address.
 };
 
 PROMEKI_NAMESPACE_END

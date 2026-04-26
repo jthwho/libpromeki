@@ -49,12 +49,12 @@ PROMEKI_NAMESPACE_BEGIN
  * only be used from the thread that created it.
  */
 class FileIODevice : public IODevice {
-        PROMEKI_OBJECT(FileIODevice, IODevice)
+                PROMEKI_OBJECT(FileIODevice, IODevice)
         public:
                 /** @brief Flags for the FILE* constructor. */
                 enum Flag {
-                        NoFlags  = 0x00, ///< @brief Default: device does not own the FILE.
-                        OwnsFile = 0x01  ///< @brief Device will fclose the FILE on close/destruct.
+                        NoFlags = 0x00, ///< @brief Default: device does not own the FILE.
+                        OwnsFile = 0x01 ///< @brief Device will fclose the FILE on close/destruct.
                 };
 
                 /**
@@ -102,8 +102,7 @@ class FileIODevice : public IODevice {
                  * @param flags Ownership flags.
                  * @param parent The parent object, or nullptr.
                  */
-                FileIODevice(FILE *file, OpenMode mode, int flags = NoFlags,
-                             ObjectBase *parent = nullptr);
+                FileIODevice(FILE *file, OpenMode mode, int flags = NoFlags, ObjectBase *parent = nullptr);
 
                 /**
                  * @brief Constructs a FileIODevice with a filename.
@@ -184,20 +183,20 @@ class FileIODevice : public IODevice {
                  */
                 Error open(OpenMode mode) override;
 
-                Error close() override;
-                void flush() override;
-                bool isOpen() const override;
+                Error   close() override;
+                void    flush() override;
+                bool    isOpen() const override;
                 int64_t read(void *data, int64_t maxSize) override;
                 int64_t write(const void *data, int64_t maxSize) override;
-                bool isSequential() const override;
-                Error seek(int64_t pos) override;
+                bool    isSequential() const override;
+                Error   seek(int64_t pos) override;
                 int64_t pos() const override;
-                bool atEnd() const override;
+                bool    atEnd() const override;
 
         private:
-                FILE    *_file     = nullptr;
-                String  _filename;
-                bool    _ownsFile  = false;
+                FILE  *_file = nullptr;
+                String _filename;
+                bool   _ownsFile = false;
 };
 
 PROMEKI_NAMESPACE_END

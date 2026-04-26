@@ -26,31 +26,30 @@ using namespace promeki;
 
 namespace {
 
-/**
+        /**
  * @brief Helper: build a configured TPG reader for identifier tests.
  *
  * Returns a MediaIO that is ready to open — the caller decides whether
  * to actually open it, since some tests inspect identifiers pre-open
  * while others need resolved-at-open values.
  */
-MediaIO *makeTpgReader(bool enableBenchmark = false,
-                      const String &nameOverride = String(),
-                      const UUID &uuidOverride = UUID()) {
-        MediaIO::Config cfg;
-        cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
-        cfg.set(MediaConfig::VideoEnabled, true);
-        if(!nameOverride.isEmpty()) {
-                cfg.set(MediaConfig::Name, nameOverride);
+        MediaIO *makeTpgReader(bool enableBenchmark = false, const String &nameOverride = String(),
+                               const UUID &uuidOverride = UUID()) {
+                MediaIO::Config cfg;
+                cfg.set(MediaConfig::Type, "TPG");
+                cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
+                cfg.set(MediaConfig::VideoEnabled, true);
+                if (!nameOverride.isEmpty()) {
+                        cfg.set(MediaConfig::Name, nameOverride);
+                }
+                if (uuidOverride.isValid()) {
+                        cfg.set(MediaConfig::Uuid, uuidOverride);
+                }
+                if (enableBenchmark) {
+                        cfg.set(MediaConfig::EnableBenchmark, true);
+                }
+                return MediaIO::create(cfg);
         }
-        if(uuidOverride.isValid()) {
-                cfg.set(MediaConfig::Uuid, uuidOverride);
-        }
-        if(enableBenchmark) {
-                cfg.set(MediaConfig::EnableBenchmark, true);
-        }
-        return MediaIO::create(cfg);
-}
 
 } // namespace
 
@@ -95,7 +94,7 @@ TEST_CASE("MediaIO::name default survives open when config::Name is empty") {
         MediaIO *io = makeTpgReader();
         REQUIRE(io != nullptr);
         String expected = String("media") + String::number(io->localId());
-        Error err = io->open(MediaIO::Source);
+        Error  err = io->open(MediaIO::Source);
         REQUIRE(err.isOk());
         CHECK(io->name() == expected);
         CHECK(io->config().getAs<String>(MediaConfig::Name) == expected);
@@ -168,15 +167,15 @@ TEST_CASE("MediaIO: reader stamps frames when EnableBenchmark is set") {
         REQUIRE(io->open(MediaIO::Source).isOk());
 
         // Read a handful of frames.
-        for(int i = 0; i < 5; i++) {
+        for (int i = 0; i < 5; i++) {
                 Frame::Ptr frame;
-                Error err = io->readFrame(frame);
+                Error      err = io->readFrame(frame);
                 REQUIRE(err.isOk());
                 REQUIRE(frame.isValid());
                 // Each returned frame should carry an attached Benchmark
                 // with stamps scoped to this stage's name.
                 CHECK(frame->benchmark().isValid());
-                if(frame->benchmark().isValid()) {
+                if (frame->benchmark().isValid()) {
                         CHECK(frame->benchmark()->size() >= 3);
                 }
         }
@@ -199,9 +198,9 @@ TEST_CASE("MediaIO: reader does not stamp when EnableBenchmark is false") {
         // Read a bunch of frames; with benchmarking off they should
         // arrive without an attached benchmark and nothing should
         // reach the reporter.
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
                 Frame::Ptr frame;
-                Error err = io->readFrame(frame);
+                Error      err = io->readFrame(frame);
                 REQUIRE(err.isOk());
                 REQUIRE(frame.isValid());
                 CHECK_FALSE(frame->benchmark().isValid());
@@ -221,9 +220,9 @@ TEST_CASE("MediaIO: non-sink reader stamps but does not submit") {
         io->setBenchmarkIsSink(false);
         REQUIRE(io->open(MediaIO::Source).isOk());
 
-        for(int i = 0; i < 5; i++) {
+        for (int i = 0; i < 5; i++) {
                 Frame::Ptr frame;
-                Error err = io->readFrame(frame);
+                Error      err = io->readFrame(frame);
                 REQUIRE(err.isOk());
                 REQUIRE(frame.isValid());
                 CHECK(frame->benchmark().isValid());
@@ -248,13 +247,13 @@ TEST_CASE("MediaIO::sendParams BenchmarkReport returns the reporter summary") {
         REQUIRE(io->open(MediaIO::Source).isOk());
 
         // Generate some stamped frames so the report is non-empty.
-        for(int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
                 Frame::Ptr frame;
                 REQUIRE(io->readFrame(frame).isOk());
         }
 
         MediaIOParams result;
-        Error err = io->sendParams(String("BenchmarkReport"), MediaIOParams(), &result);
+        Error         err = io->sendParams(String("BenchmarkReport"), MediaIOParams(), &result);
         CHECK(err.isOk());
         String report = result.getAs<String>(MediaIO::ParamBenchmarkReport, String());
         CHECK_FALSE(report.isEmpty());
@@ -268,7 +267,7 @@ TEST_CASE("MediaIO::sendParams BenchmarkReport returns NotSupported without a re
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Source).isOk());
         MediaIOParams result;
-        Error err = io->sendParams(String("BenchmarkReport"), MediaIOParams(), &result);
+        Error         err = io->sendParams(String("BenchmarkReport"), MediaIOParams(), &result);
         CHECK(err == Error::NotSupported);
         io->close();
         delete io;
@@ -281,7 +280,7 @@ TEST_CASE("MediaIO::sendParams BenchmarkReset clears accumulated statistics") {
         io->setBenchmarkReporter(&reporter);
         REQUIRE(io->open(MediaIO::Source).isOk());
 
-        for(int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++) {
                 Frame::Ptr frame;
                 REQUIRE(io->readFrame(frame).isOk());
         }

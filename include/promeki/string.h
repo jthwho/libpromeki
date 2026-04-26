@@ -75,10 +75,10 @@ class String {
                 class CharIterator {
                         public:
                                 using iterator_category = std::random_access_iterator_tag;
-                                using value_type        = Char;
-                                using difference_type   = std::ptrdiff_t;
-                                using pointer           = void;
-                                using reference         = Char;
+                                using value_type = Char;
+                                using difference_type = std::ptrdiff_t;
+                                using pointer = void;
+                                using reference = Char;
 
                                 CharIterator() : _data(nullptr), _idx(0) {}
                                 CharIterator(const StringData *data, size_t idx) : _data(data), _idx(idx) {}
@@ -86,16 +86,37 @@ class String {
                                 Char operator*() const { return _data->charAt(_idx); }
                                 Char operator[](difference_type n) const { return _data->charAt(_idx + n); }
 
-                                CharIterator &operator++() { ++_idx; return *this; }
-                                CharIterator operator++(int) { auto tmp = *this; ++_idx; return tmp; }
-                                CharIterator &operator--() { --_idx; return *this; }
-                                CharIterator operator--(int) { auto tmp = *this; --_idx; return tmp; }
-                                CharIterator &operator+=(difference_type n) { _idx += n; return *this; }
-                                CharIterator &operator-=(difference_type n) { _idx -= n; return *this; }
-                                CharIterator operator+(difference_type n) const { return {_data, _idx + n}; }
-                                CharIterator operator-(difference_type n) const { return {_data, _idx - n}; }
+                                CharIterator &operator++() {
+                                        ++_idx;
+                                        return *this;
+                                }
+                                CharIterator operator++(int) {
+                                        auto tmp = *this;
+                                        ++_idx;
+                                        return tmp;
+                                }
+                                CharIterator &operator--() {
+                                        --_idx;
+                                        return *this;
+                                }
+                                CharIterator operator--(int) {
+                                        auto tmp = *this;
+                                        --_idx;
+                                        return tmp;
+                                }
+                                CharIterator &operator+=(difference_type n) {
+                                        _idx += n;
+                                        return *this;
+                                }
+                                CharIterator &operator-=(difference_type n) {
+                                        _idx -= n;
+                                        return *this;
+                                }
+                                CharIterator    operator+(difference_type n) const { return {_data, _idx + n}; }
+                                CharIterator    operator-(difference_type n) const { return {_data, _idx - n}; }
                                 difference_type operator-(const CharIterator &o) const {
-                                        return static_cast<difference_type>(_idx) - static_cast<difference_type>(o._idx);
+                                        return static_cast<difference_type>(_idx) -
+                                               static_cast<difference_type>(o._idx);
                                 }
                                 friend CharIterator operator+(difference_type n, const CharIterator &it) {
                                         return it + n;
@@ -110,7 +131,7 @@ class String {
 
                         private:
                                 const StringData *_data;
-                                size_t _idx;
+                                size_t            _idx;
                 };
 
                 /** @brief Const character iterator. */
@@ -124,8 +145,8 @@ class String {
 
                 /** @brief String encoding. */
                 enum Encoding {
-                        Latin1,  ///< One byte per character, ISO-8859-1.
-                        Unicode  ///< Decoded codepoints, O(1) indexed access.
+                        Latin1, ///< One byte per character, ISO-8859-1.
+                        Unicode ///< Decoded codepoints, O(1) indexed access.
                 };
 
                 // ============================================================
@@ -141,38 +162,36 @@ class String {
                  * @param addPrefix If true, adds a base prefix (e.g. "0x" for hex).
                  * @return The formatted number string.
                  */
-                static String number(int8_t value, int base = 10, int padding = 0,
-                                char padchar = ' ', bool addPrefix = false);
+                static String number(int8_t value, int base = 10, int padding = 0, char padchar = ' ',
+                                     bool addPrefix = false);
                 /// @copydoc number(int8_t,int,int,char,bool)
-                static String number(uint8_t value, int base = 10, int padding = 0,
-                                char padchar = ' ', bool addPrefix = false);
+                static String number(uint8_t value, int base = 10, int padding = 0, char padchar = ' ',
+                                     bool addPrefix = false);
                 /// @copydoc number(int8_t,int,int,char,bool)
-                static String number(int16_t value, int base = 10, int padding = 0,
-                                char padchar = ' ', bool addPrefix = false);
+                static String number(int16_t value, int base = 10, int padding = 0, char padchar = ' ',
+                                     bool addPrefix = false);
                 /// @copydoc number(int8_t,int,int,char,bool)
-                static String number(uint16_t value, int base = 10, int padding = 0,
-                                char padchar = ' ', bool addPrefix = false);
+                static String number(uint16_t value, int base = 10, int padding = 0, char padchar = ' ',
+                                     bool addPrefix = false);
                 /// @copydoc number(int8_t,int,int,char,bool)
-                static String number(int32_t value, int base = 10, int padding = 0,
-                                char padchar = ' ', bool addPrefix = false);
+                static String number(int32_t value, int base = 10, int padding = 0, char padchar = ' ',
+                                     bool addPrefix = false);
                 /// @copydoc number(int8_t,int,int,char,bool)
-                static String number(uint32_t value, int base = 10, int padding = 0,
-                                char padchar = ' ', bool addPrefix = false);
+                static String number(uint32_t value, int base = 10, int padding = 0, char padchar = ' ',
+                                     bool addPrefix = false);
                 /// @copydoc number(int8_t,int,int,char,bool)
-                static String number(int64_t value, int base = 10, int padding = 0,
-                                char padchar = ' ', bool addPrefix = false);
+                static String number(int64_t value, int base = 10, int padding = 0, char padchar = ' ',
+                                     bool addPrefix = false);
                 /// @copydoc number(int8_t,int,int,char,bool)
-                static String number(uint64_t value, int base = 10, int padding = 0,
-                                char padchar = ' ', bool addPrefix = false);
+                static String number(uint64_t value, int base = 10, int padding = 0, char padchar = ' ',
+                                     bool addPrefix = false);
 
                 /**
                  * @brief Returns "true" or "false" for a boolean value.
                  * @param value The boolean to convert.
                  * @return "true" or "false".
                  */
-                static String number(bool value) {
-                        return value ? "true" : "false";
-                }
+                static String number(bool value) { return value ? "true" : "false"; }
 
                 /**
                  * @brief Converts a float to its string representation.
@@ -192,8 +211,7 @@ class String {
                  * @param padchar  Padding character (default: space).
                  * @return The formatted string.
                  */
-                template <typename T>
-                static String dec(const T &val, int padding = 0, char padchar = ' ') {
+                template <typename T> static String dec(const T &val, int padding = 0, char padchar = ' ') {
                         return number(static_cast<int64_t>(val), 10, padding, padchar);
                 }
 
@@ -205,8 +223,7 @@ class String {
                  * @param addPrefix If true, prepends "0x".
                  * @return The formatted hex string.
                  */
-                template <typename T>
-                static String hex(const T &val, int padding = 0, bool addPrefix = true) {
+                template <typename T> static String hex(const T &val, int padding = 0, bool addPrefix = true) {
                         int totalWidth = (addPrefix && padding > 0) ? padding + 2 : padding;
                         return number(static_cast<uint64_t>(val), 16, totalWidth, '0', addPrefix);
                 }
@@ -219,12 +236,11 @@ class String {
                  * @param addPrefix If true, prepends "0b".
                  * @return The formatted binary string.
                  */
-                template <typename T>
-                static String bin(const T &val, int digits = 32, bool addPrefix = true) {
+                template <typename T> static String bin(const T &val, int digits = 32, bool addPrefix = true) {
                         std::string ret;
-                        if(addPrefix) ret += "0b";
+                        if (addPrefix) ret += "0b";
                         T mask = static_cast<T>(1) << (digits - 1);
-                        for(int i = 0; i < digits; i++) {
+                        for (int i = 0; i < digits; i++) {
                                 ret.push_back(val & mask ? '1' : '0');
                                 mask >>= 1;
                         }
@@ -270,8 +286,7 @@ class String {
                  *
                  * @sa vformat for runtime format strings.
                  */
-                template <typename... Args>
-                static String format(std::format_string<Args...> fmt, Args &&... args) {
+                template <typename... Args> static String format(std::format_string<Args...> fmt, Args &&...args) {
                         std::string s = std::format(fmt, std::forward<Args>(args)...);
                         return fromUtf8(s.data(), s.size());
                 }
@@ -312,8 +327,8 @@ class String {
                 static String fromUtf8(const char *data, size_t len) {
                         // Pure ASCII fast path: every byte is its own codepoint and
                         // fits trivially in the cheaper Latin1 storage.
-                        for(size_t i = 0; i < len; ++i) {
-                                if(static_cast<unsigned char>(data[i]) > 0x7F)
+                        for (size_t i = 0; i < len; ++i) {
+                                if (static_cast<unsigned char>(data[i]) > 0x7F)
                                         return String(StringUnicodeData::fromUtf8(data, len));
                         }
                         return String(data, len);
@@ -326,17 +341,14 @@ class String {
                  * refcount so it is never freed. Works with both
                  * StringLiteralData (Latin1) and StringUnicodeLiteralData.
                  */
-                static String fromLiteralData(StringData *data) {
-                        return String(data);
-                }
+                static String fromLiteralData(StringData *data) { return String(data); }
 
                 // ============================================================
                 // Constructors
                 // ============================================================
 
                 /** @brief Default constructor. Creates an empty Latin1 string. */
-                String()
-                        : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data())) {}
+                String() : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data())) {}
 
                 /** @brief Constructs an empty string (null pointer overload). */
                 String(std::nullptr_t) : String() {}
@@ -346,7 +358,7 @@ class String {
                  * @param str The C string (null treated as empty).
                  */
                 String(const char *str)
-                        : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(str ? str : ""))) {}
+                    : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(str ? str : ""))) {}
 
                 /**
                  * @brief Constructs from a character buffer with explicit length.
@@ -354,29 +366,27 @@ class String {
                  * @param len Number of bytes.
                  */
                 String(const char *str, size_t len)
-                        : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(str, len))) {}
+                    : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(str, len))) {}
 
                 /**
                  * @brief Constructs a string of repeated characters.
                  * @param ct Number of characters.
                  * @param c  Character to repeat.
                  */
-                String(size_t ct, char c)
-                        : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(ct, c))) {}
+                String(size_t ct, char c) : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(ct, c))) {}
 
                 /**
                  * @brief Constructs from a std::string (copy).
                  * @param str The source string.
                  */
-                String(const std::string &str)
-                        : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(str))) {}
+                String(const std::string &str) : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(str))) {}
 
                 /**
                  * @brief Constructs from a std::string (move).
                  * @param str The source string to move from.
                  */
                 String(std::string &&str)
-                        : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(std::move(str)))) {}
+                    : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(std::move(str)))) {}
 
                 // ============================================================
                 // Const access (pure delegation)
@@ -421,9 +431,7 @@ class String {
                 bool isLiteral() const { return d->isLiteral(); }
 
                 /** @brief Returns the encoding of this string (Latin1 or Unicode). */
-                Encoding encoding() const {
-                        return d->isLatin1() ? Latin1 : Unicode;
-                }
+                Encoding encoding() const { return d->isLatin1() ? Latin1 : Unicode; }
 
                 // ============================================================
                 // Character iterators
@@ -469,9 +477,9 @@ class String {
                  * not as a Latin1 byte sequence.
                  */
                 size_t find(const char *val, size_t from = 0) const {
-                        if(val == nullptr) return npos;
+                        if (val == nullptr) return npos;
                         size_t len = 0;
-                        while(val[len]) ++len;
+                        while (val[len]) ++len;
                         return d->find(*String::fromUtf8(val, len).d, from);
                 }
                 /// @copydoc find(char,size_t) const
@@ -492,9 +500,9 @@ class String {
                  * The C-string argument is decoded as UTF-8.
                  */
                 size_t rfind(const char *val, size_t from = npos) const {
-                        if(val == nullptr) return npos;
+                        if (val == nullptr) return npos;
                         size_t len = 0;
-                        while(val[len]) ++len;
+                        while (val[len]) ++len;
                         return d->rfind(*String::fromUtf8(val, len).d, from);
                 }
                 /// @copydoc rfind(char,size_t) const
@@ -535,8 +543,8 @@ class String {
                  * @return The substring.
                  */
                 String substr(size_t pos = 0, size_t len = npos) const {
-                        if(pos >= d->length()) return String();
-                        if(len == npos) len = d->length() - pos;
+                        if (pos >= d->length()) return String();
+                        if (len == npos) len = d->length() - pos;
                         return String(d->createSubstr(pos, len));
                 }
 
@@ -561,7 +569,7 @@ class String {
                  * @return The right substring.
                  */
                 String right(std::size_t count) const {
-                        if(count >= length()) return *this;
+                        if (count >= length()) return *this;
                         return substr(length() - count, count);
                 }
 
@@ -588,8 +596,8 @@ class String {
                  * @return The (possibly truncated) string.
                  */
                 String truncated(size_t maxChars) const {
-                        if(length() <= maxChars) return *this;
-                        if(maxChars < 3) return left(maxChars);
+                        if (length() <= maxChars) return *this;
+                        if (maxChars < 3) return left(maxChars);
                         return left(maxChars - 3) + "...";
                 }
 
@@ -619,7 +627,7 @@ class String {
                  * @param ch  The replacement character.
                  */
                 void setCharAt(size_t idx, Char ch) {
-                        if(d->isLatin1() && ch.codepoint() > 0xFF) {
+                        if (d->isLatin1() && ch.codepoint() > 0xFF) {
                                 auto *ud = StringUnicodeData::fromLatin1(d->str());
                                 d = SharedPtr<StringData>::takeOwnership(ud);
                         }
@@ -632,7 +640,7 @@ class String {
                  * @param s   The string to insert.
                  */
                 void insert(size_t pos, const String &s) {
-                        if(d->isLatin1() && !s.d->isLatin1()) {
+                        if (d->isLatin1() && !s.d->isLatin1()) {
                                 auto *ud = StringUnicodeData::fromLatin1(d->str());
                                 d = SharedPtr<StringData>::takeOwnership(ud);
                         }
@@ -671,8 +679,8 @@ class String {
                  * @return Reference to this string.
                  */
                 String &operator+=(const String &val) {
-                        if(val.isEmpty()) return *this;
-                        if(d->isLatin1() && !val.d->isLatin1()) {
+                        if (val.isEmpty()) return *this;
+                        if (d->isLatin1() && !val.d->isLatin1()) {
                                 auto *ud = StringUnicodeData::fromLatin1(d->str());
                                 d = SharedPtr<StringData>::takeOwnership(ud);
                         }
@@ -715,10 +723,10 @@ class String {
                  * @return True if both strings have identical characters.
                  */
                 bool operator==(const String &val) const {
-                        if(d->length() != val.d->length()) return false;
-                        if(d->isLatin1() && val.d->isLatin1()) return d->str() == val.d->str();
-                        for(size_t i = 0; i < d->length(); ++i) {
-                                if(d->charAt(i) != val.d->charAt(i)) return false;
+                        if (d->length() != val.d->length()) return false;
+                        if (d->isLatin1() && val.d->isLatin1()) return d->str() == val.d->str();
+                        for (size_t i = 0; i < d->length(); ++i) {
+                                if (d->charAt(i) != val.d->charAt(i)) return false;
                         }
                         return true;
                 }
@@ -735,14 +743,14 @@ class String {
                  * codepoints they encode.
                  */
                 bool operator==(const char *val) const {
-                        if(val == nullptr) return d->length() == 0;
+                        if (val == nullptr) return d->length() == 0;
                         const size_t len = d->length();
-                        size_t i = 0;
-                        while(*val) {
-                                if(i >= len) return false;
+                        size_t       i = 0;
+                        while (*val) {
+                                if (i >= len) return false;
                                 size_t bytesRead = 0;
-                                Char vc = Char::fromUtf8(val, &bytesRead);
-                                if(d->charAt(i) != vc) return false;
+                                Char   vc = Char::fromUtf8(val, &bytesRead);
+                                if (d->charAt(i) != vc) return false;
                                 val += bytesRead;
                                 ++i;
                         }
@@ -769,7 +777,7 @@ class String {
                  * encodings fall back to a codepoint-by-codepoint walk.
                  */
                 friend bool operator<(const String &lhs, const String &rhs) {
-                        if(lhs.d->isLatin1() == rhs.d->isLatin1()) {
+                        if (lhs.d->isLatin1() == rhs.d->isLatin1()) {
                                 // Same encoding: byte-level comparison is correct.
                                 // - Latin1 vs Latin1: byte order == codepoint order.
                                 // - Unicode vs Unicode: UTF-8 byte order == codepoint order.
@@ -781,28 +789,22 @@ class String {
                         const size_t llen = lhs.d->length();
                         const size_t rlen = rhs.d->length();
                         const size_t n = std::min(llen, rlen);
-                        for(size_t i = 0; i < n; ++i) {
+                        for (size_t i = 0; i < n; ++i) {
                                 char32_t a = lhs.d->charAt(i).codepoint();
                                 char32_t b = rhs.d->charAt(i).codepoint();
-                                if(a != b) return a < b;
+                                if (a != b) return a < b;
                         }
                         return llen < rlen;
                 }
 
                 /** @brief Less-than-or-equal comparison. */
-                friend bool operator<=(const String &lhs, const String &rhs) {
-                        return !(rhs < lhs);
-                }
+                friend bool operator<=(const String &lhs, const String &rhs) { return !(rhs < lhs); }
 
                 /** @brief Greater-than comparison. */
-                friend bool operator>(const String &lhs, const String &rhs) {
-                        return rhs < lhs;
-                }
+                friend bool operator>(const String &lhs, const String &rhs) { return rhs < lhs; }
 
                 /** @brief Greater-than-or-equal comparison. */
-                friend bool operator>=(const String &lhs, const String &rhs) {
-                        return !(lhs < rhs);
-                }
+                friend bool operator>=(const String &lhs, const String &rhs) { return !(lhs < rhs); }
 
                 // ============================================================
                 // Case / whitespace
@@ -816,11 +818,11 @@ class String {
                  * locale-independent and consistent across encodings.
                  */
                 String toUpper() const {
-                        if(d->isLatin1()) {
+                        if (d->isLatin1()) {
                                 const std::string &src = d->str();
-                                std::string s;
+                                std::string        s;
                                 s.resize(src.size());
-                                for(size_t i = 0; i < src.size(); ++i) {
+                                for (size_t i = 0; i < src.size(); ++i) {
                                         char32_t cp = Char(src[i]).toUpper().codepoint();
                                         // Latin1 toUpper stays within the
                                         // 0x00–0xFF range, so this is lossless.
@@ -830,8 +832,7 @@ class String {
                         }
                         promeki::List<Char> chars;
                         chars.reserve(d->length());
-                        for(size_t i = 0; i < d->length(); ++i)
-                                chars.pushToBack(d->charAt(i).toUpper());
+                        for (size_t i = 0; i < d->length(); ++i) chars.pushToBack(d->charAt(i).toUpper());
                         return String(new StringUnicodeData(std::move(chars)));
                 }
 
@@ -843,11 +844,11 @@ class String {
                  * locale-independent and consistent across encodings.
                  */
                 String toLower() const {
-                        if(d->isLatin1()) {
+                        if (d->isLatin1()) {
                                 const std::string &src = d->str();
-                                std::string s;
+                                std::string        s;
                                 s.resize(src.size());
-                                for(size_t i = 0; i < src.size(); ++i) {
+                                for (size_t i = 0; i < src.size(); ++i) {
                                         char32_t cp = Char(src[i]).toLower().codepoint();
                                         s[i] = static_cast<char>(cp);
                                 }
@@ -855,20 +856,19 @@ class String {
                         }
                         promeki::List<Char> chars;
                         chars.reserve(d->length());
-                        for(size_t i = 0; i < d->length(); ++i)
-                                chars.pushToBack(d->charAt(i).toLower());
+                        for (size_t i = 0; i < d->length(); ++i) chars.pushToBack(d->charAt(i).toLower());
                         return String(new StringUnicodeData(std::move(chars)));
                 }
 
                 /** @brief Returns a copy with leading and trailing whitespace removed. */
                 String trim() const {
                         size_t len = length();
-                        if(len == 0) return String();
+                        if (len == 0) return String();
                         size_t first = 0;
-                        while(first < len && d->charAt(first).isSpace()) ++first;
-                        if(first == len) return String();
+                        while (first < len && d->charAt(first).isSpace()) ++first;
+                        if (first == len) return String();
                         size_t last = len - 1;
-                        while(last > first && d->charAt(last).isSpace()) --last;
+                        while (last > first && d->charAt(last).isSpace()) --last;
                         return substr(first, last - first + 1);
                 }
 
@@ -882,9 +882,9 @@ class String {
                  * @return True if this string begins with @p prefix.
                  */
                 bool startsWith(const String &prefix) const {
-                        if(prefix.length() > length()) return false;
-                        for(size_t i = 0; i < prefix.length(); ++i) {
-                                if(d->charAt(i) != prefix.d->charAt(i)) return false;
+                        if (prefix.length() > length()) return false;
+                        for (size_t i = 0; i < prefix.length(); ++i) {
+                                if (d->charAt(i) != prefix.d->charAt(i)) return false;
                         }
                         return true;
                 }
@@ -893,9 +893,7 @@ class String {
                  * @brief Returns true if the string starts with the given character.
                  * @param c The character to test.
                  */
-                bool startsWith(char c) const {
-                        return !isEmpty() && d->charAt(0) == c;
-                }
+                bool startsWith(char c) const { return !isEmpty() && d->charAt(0) == c; }
 
                 /**
                  * @brief Returns true if the string ends with the given suffix.
@@ -903,10 +901,10 @@ class String {
                  * @return True if this string ends with @p suffix.
                  */
                 bool endsWith(const String &suffix) const {
-                        if(suffix.length() > length()) return false;
+                        if (suffix.length() > length()) return false;
                         size_t offset = length() - suffix.length();
-                        for(size_t i = 0; i < suffix.length(); ++i) {
-                                if(d->charAt(offset + i) != suffix.d->charAt(i)) return false;
+                        for (size_t i = 0; i < suffix.length(); ++i) {
+                                if (d->charAt(offset + i) != suffix.d->charAt(i)) return false;
                         }
                         return true;
                 }
@@ -920,9 +918,9 @@ class String {
 
                 /** @brief Returns true if every character is a decimal digit. */
                 bool isNumeric() const {
-                        if(isEmpty()) return false;
-                        for(size_t i = 0; i < d->length(); ++i) {
-                                if(!d->charAt(i).isDigit()) return false;
+                        if (isEmpty()) return false;
+                        for (size_t i = 0; i < d->length(); ++i) {
+                                if (!d->charAt(i).isDigit()) return false;
                         }
                         return true;
                 }
@@ -940,12 +938,12 @@ class String {
                  * quoting.
                  */
                 bool isIdentifier() const {
-                        if(isEmpty()) return false;
+                        if (isEmpty()) return false;
                         auto c0 = d->charAt(0);
-                        if(!c0.isAlpha() && c0.codepoint() != '_') return false;
-                        for(size_t i = 1; i < d->length(); ++i) {
+                        if (!c0.isAlpha() && c0.codepoint() != '_') return false;
+                        for (size_t i = 1; i < d->length(); ++i) {
                                 auto c = d->charAt(i);
-                                if(!c.isAlphaNumeric() && c.codepoint() != '_') return false;
+                                if (!c.isAlphaNumeric() && c.codepoint() != '_') return false;
                         }
                         return true;
                 }
@@ -962,13 +960,13 @@ class String {
                  */
                 int compareIgnoreCase(const String &other) const {
                         size_t len = std::min(length(), other.length());
-                        for(size_t i = 0; i < len; ++i) {
+                        for (size_t i = 0; i < len; ++i) {
                                 char32_t a = d->charAt(i).toLower().codepoint();
                                 char32_t b = other.d->charAt(i).toLower().codepoint();
-                                if(a != b) return a < b ? -1 : 1;
+                                if (a != b) return a < b ? -1 : 1;
                         }
-                        if(length() < other.length()) return -1;
-                        if(length() > other.length()) return 1;
+                        if (length() < other.length()) return -1;
+                        if (length() > other.length()) return 1;
                         return 0;
                 }
 
@@ -978,9 +976,7 @@ class String {
                  * Each StringData backend hashes its native storage directly,
                  * avoiding unnecessary encoding conversions.
                  */
-                uint64_t hash() const {
-                        return d->hash();
-                }
+                uint64_t hash() const { return d->hash(); }
 
                 // ============================================================
                 // Encoding conversion
@@ -993,10 +989,10 @@ class String {
                  * Otherwise converts, clamping codepoints above 0xFF to '?'.
                  */
                 String toLatin1() const {
-                        if(d->isLatin1()) return *this;
+                        if (d->isLatin1()) return *this;
                         std::string s;
                         s.reserve(d->length());
-                        for(size_t i = 0; i < d->length(); ++i) {
+                        for (size_t i = 0; i < d->length(); ++i) {
                                 char32_t cp = d->charAt(i).codepoint();
                                 s += static_cast<char>(cp <= 0xFF ? cp : '?');
                         }
@@ -1010,7 +1006,7 @@ class String {
                  * Otherwise promotes Latin1 data to decoded codepoints.
                  */
                 String toUnicode() const {
-                        if(!d->isLatin1()) return *this;
+                        if (!d->isLatin1()) return *this;
                         return String(StringUnicodeData::fromLatin1(d->str()));
                 }
 
@@ -1026,50 +1022,45 @@ class String {
                 String &arg(const String &str);
 
                 /// @brief Replaces the lowest `{N}` token with the formatted numeric value.
-                String &arg(int8_t value, int base = 10, int padding = 0,
-                            char padchar = ' ', bool addPrefix = false) {
+                String &arg(int8_t value, int base = 10, int padding = 0, char padchar = ' ', bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
                 /// @brief Replaces the lowest `{N}` token with the formatted numeric value.
-                String &arg(uint8_t value, int base = 10, int padding = 0,
-                            char padchar = ' ', bool addPrefix = false) {
+                String &arg(uint8_t value, int base = 10, int padding = 0, char padchar = ' ', bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
                 /// @brief Replaces the lowest `{N}` token with the formatted numeric value.
-                String &arg(int16_t value, int base = 10, int padding = 0,
-                            char padchar = ' ', bool addPrefix = false) {
+                String &arg(int16_t value, int base = 10, int padding = 0, char padchar = ' ', bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
                 /// @brief Replaces the lowest `{N}` token with the formatted numeric value.
-                String &arg(uint16_t value, int base = 10, int padding = 0,
-                            char padchar = ' ', bool addPrefix = false) {
+                String &arg(uint16_t value, int base = 10, int padding = 0, char padchar = ' ',
+                            bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
                 /// @brief Replaces the lowest `{N}` token with the formatted numeric value.
-                String &arg(int32_t value, int base = 10, int padding = 0,
-                            char padchar = ' ', bool addPrefix = false) {
+                String &arg(int32_t value, int base = 10, int padding = 0, char padchar = ' ', bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
                 /// @brief Replaces the lowest `{N}` token with the formatted numeric value.
-                String &arg(uint32_t value, int base = 10, int padding = 0,
-                            char padchar = ' ', bool addPrefix = false) {
+                String &arg(uint32_t value, int base = 10, int padding = 0, char padchar = ' ',
+                            bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
                 /// @brief Replaces the lowest `{N}` token with the formatted numeric value.
-                String &arg(int64_t value, int base = 10, int padding = 0,
-                            char padchar = ' ', bool addPrefix = false) {
+                String &arg(int64_t value, int base = 10, int padding = 0, char padchar = ' ', bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
                 /// @brief Replaces the lowest `{N}` token with the formatted numeric value.
-                String &arg(uint64_t value, int base = 10, int padding = 0,
-                            char padchar = ' ', bool addPrefix = false) {
+                String &arg(uint64_t value, int base = 10, int padding = 0, char padchar = ' ',
+                            bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
@@ -1087,76 +1078,77 @@ class String {
                         if constexpr (std::is_same_v<OutputType, bool>) {
                                 return toBool(err);
                         } else if constexpr (std::is_integral_v<OutputType> && std::is_signed_v<OutputType>) {
-                                int base = 10;
-                                String cleaned = prepareIntParse(cstr(), &base);
+                                int         base = 10;
+                                String      cleaned = prepareIntParse(cstr(), &base);
                                 const char *s = cleaned.cstr();
-                                char *end = nullptr;
+                                char       *end = nullptr;
                                 errno = 0;
                                 long long v = std::strtoll(s, &end, base);
-                                if(end == s || *end != '\0') {
-                                        if(err != nullptr) *err = Error::Invalid;
+                                if (end == s || *end != '\0') {
+                                        if (err != nullptr) *err = Error::Invalid;
                                         return OutputType{};
                                 }
-                                if(errno == ERANGE) {
-                                        if(err != nullptr) *err = Error::OutOfRange;
+                                if (errno == ERANGE) {
+                                        if (err != nullptr) *err = Error::OutOfRange;
                                         return OutputType{};
                                 }
-                                if(v < static_cast<long long>(std::numeric_limits<OutputType>::min()) ||
-                                   v > static_cast<long long>(std::numeric_limits<OutputType>::max())) {
-                                        if(err != nullptr) *err = Error::OutOfRange;
+                                if (v < static_cast<long long>(std::numeric_limits<OutputType>::min()) ||
+                                    v > static_cast<long long>(std::numeric_limits<OutputType>::max())) {
+                                        if (err != nullptr) *err = Error::OutOfRange;
                                         return OutputType{};
                                 }
-                                if(err != nullptr) *err = Error::Ok;
+                                if (err != nullptr) *err = Error::Ok;
                                 return static_cast<OutputType>(v);
                         } else if constexpr (std::is_integral_v<OutputType> && std::is_unsigned_v<OutputType>) {
-                                int base = 10;
-                                String cleaned = prepareIntParse(cstr(), &base);
+                                int         base = 10;
+                                String      cleaned = prepareIntParse(cstr(), &base);
                                 const char *s = cleaned.cstr();
-                                char *end = nullptr;
+                                char       *end = nullptr;
                                 errno = 0;
                                 unsigned long long v = std::strtoull(s, &end, base);
-                                if(end == s || *end != '\0') {
-                                        if(err != nullptr) *err = Error::Invalid;
+                                if (end == s || *end != '\0') {
+                                        if (err != nullptr) *err = Error::Invalid;
                                         return OutputType{};
                                 }
-                                if(errno == ERANGE) {
-                                        if(err != nullptr) *err = Error::OutOfRange;
+                                if (errno == ERANGE) {
+                                        if (err != nullptr) *err = Error::OutOfRange;
                                         return OutputType{};
                                 }
-                                if(v > static_cast<unsigned long long>(std::numeric_limits<OutputType>::max())) {
-                                        if(err != nullptr) *err = Error::OutOfRange;
+                                if (v > static_cast<unsigned long long>(std::numeric_limits<OutputType>::max())) {
+                                        if (err != nullptr) *err = Error::OutOfRange;
                                         return OutputType{};
                                 }
-                                if(err != nullptr) *err = Error::Ok;
+                                if (err != nullptr) *err = Error::Ok;
                                 return static_cast<OutputType>(v);
                         } else if constexpr (std::is_floating_point_v<OutputType>) {
-                                String cleaned = stripNumericSeparators(cstr());
+                                String      cleaned = stripNumericSeparators(cstr());
                                 const char *s = cleaned.cstr();
-                                char *end = nullptr;
+                                char       *end = nullptr;
                                 errno = 0;
                                 double v = std::strtod(s, &end);
-                                if(end == s || *end != '\0') {
-                                        if(err != nullptr) *err = Error::Invalid;
+                                if (end == s || *end != '\0') {
+                                        if (err != nullptr) *err = Error::Invalid;
                                         return OutputType{};
                                 }
-                                if(errno == ERANGE) {
-                                        if(err != nullptr) *err = Error::OutOfRange;
+                                if (errno == ERANGE) {
+                                        if (err != nullptr) *err = Error::OutOfRange;
                                         return OutputType{};
                                 }
                                 // Range-check narrowing conversions (e.g. double -> float):
                                 // strtod accepts values that exceed the OutputType's range and
                                 // a static_cast would silently produce ±inf.
-                                if constexpr (!std::is_same_v<OutputType, double> && !std::is_same_v<OutputType, long double>) {
+                                if constexpr (!std::is_same_v<OutputType, double> &&
+                                              !std::is_same_v<OutputType, long double>) {
                                         const double absv = v < 0 ? -v : v;
-                                        if(absv > static_cast<double>(std::numeric_limits<OutputType>::max())) {
-                                                if(err != nullptr) *err = Error::OutOfRange;
+                                        if (absv > static_cast<double>(std::numeric_limits<OutputType>::max())) {
+                                                if (err != nullptr) *err = Error::OutOfRange;
                                                 return OutputType{};
                                         }
                                 }
-                                if(err != nullptr) *err = Error::Ok;
+                                if (err != nullptr) *err = Error::Ok;
                                 return static_cast<OutputType>(v);
                         } else {
-                                if(err != nullptr) *err = Error::Invalid;
+                                if (err != nullptr) *err = Error::Invalid;
                                 return OutputType{};
                         }
                 }
@@ -1201,13 +1193,12 @@ class String {
                  * @param delimiter The delimiter string to split on.
                  * @return A StringList containing the split parts.
                  */
-                StringList split(const std::string& delimiter) const;
+                StringList split(const std::string &delimiter) const;
 
         private:
                 SharedPtr<StringData> d;
 
-                explicit String(StringData *data)
-                        : d(SharedPtr<StringData>::takeOwnership(data)) {}
+                explicit String(StringData *data) : d(SharedPtr<StringData>::takeOwnership(data)) {}
 
                 /**
                  * @brief Strips digit-group separators from a numeric string.
@@ -1244,11 +1235,8 @@ inline String operator+(const char *lhs, const String &rhs) {
 PROMEKI_NAMESPACE_END
 
 /// @cond INTERNAL
-template<>
-struct std::hash<promeki::String> {
-        size_t operator()(const promeki::String &s) const noexcept {
-                return static_cast<size_t>(s.hash());
-        }
+template <> struct std::hash<promeki::String> {
+                size_t operator()(const promeki::String &s) const noexcept { return static_cast<size_t>(s.hash()); }
 };
 /// @endcond
 
@@ -1262,13 +1250,11 @@ struct std::hash<promeki::String> {
  * Strings this is the cached UTF-8 byte sequence, which is the right
  * thing to feed into @c std::format.
  */
-template<>
-struct std::formatter<promeki::String> : std::formatter<std::string_view> {
-        using Base = std::formatter<std::string_view>;
-        template <typename FormatContext>
-        auto format(const promeki::String &s, FormatContext &ctx) const {
-                return Base::format(std::string_view(s.cstr(), s.byteCount()), ctx);
-        }
+template <> struct std::formatter<promeki::String> : std::formatter<std::string_view> {
+                using Base = std::formatter<std::string_view>;
+                template <typename FormatContext> auto format(const promeki::String &s, FormatContext &ctx) const {
+                        return Base::format(std::string_view(s.cstr(), s.byteCount()), ctx);
+                }
 };
 
 /**
@@ -1280,15 +1266,13 @@ struct std::formatter<promeki::String> : std::formatter<std::string_view> {
  * To format the integer codepoint instead, pass @c c.codepoint() as
  * an unsigned integer.
  */
-template<>
-struct std::formatter<promeki::Char> : std::formatter<std::string_view> {
-        using Base = std::formatter<std::string_view>;
-        template <typename FormatContext>
-        auto format(const promeki::Char &c, FormatContext &ctx) const {
-                char buf[4];
-                size_t n = c.toUtf8(buf);
-                return Base::format(std::string_view(buf, n), ctx);
-        }
+template <> struct std::formatter<promeki::Char> : std::formatter<std::string_view> {
+                using Base = std::formatter<std::string_view>;
+                template <typename FormatContext> auto format(const promeki::Char &c, FormatContext &ctx) const {
+                        char   buf[4];
+                        size_t n = c.toUtf8(buf);
+                        return Base::format(std::string_view(buf, n), ctx);
+                }
 };
 
 PROMEKI_NAMESPACE_BEGIN
@@ -1322,14 +1306,12 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @tparam T The promeki type to render via its @c toString() method.
  */
-template <typename T>
-struct ToStringFormatter : std::formatter<std::string_view> {
-        using Base = std::formatter<std::string_view>;
-        template <typename FormatContext>
-        auto format(const T &v, FormatContext &ctx) const {
-                String s = v.toString();
-                return Base::format(std::string_view(s.cstr(), s.byteCount()), ctx);
-        }
+template <typename T> struct ToStringFormatter : std::formatter<std::string_view> {
+                using Base = std::formatter<std::string_view>;
+                template <typename FormatContext> auto format(const T &v, FormatContext &ctx) const {
+                        String s = v.toString();
+                        return Base::format(std::string_view(s.cstr(), s.byteCount()), ctx);
+                }
 };
 
 PROMEKI_NAMESPACE_END
@@ -1351,10 +1333,8 @@ PROMEKI_NAMESPACE_END
  *
  * Variadic so qualified template names containing commas can be passed.
  */
-#define PROMEKI_FORMAT_VIA_TOSTRING(...)                                        \
-        template <>                                                             \
-        struct std::formatter<__VA_ARGS__>                                      \
-            : ::promeki::ToStringFormatter<__VA_ARGS__> {}
+#define PROMEKI_FORMAT_VIA_TOSTRING(...)                                                                               \
+        template <> struct std::formatter<__VA_ARGS__> : ::promeki::ToStringFormatter<__VA_ARGS__> {}
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -1368,33 +1348,41 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @tparam N Size of the string literal including the null terminator.
  */
-template<size_t N>
-class CompiledString {
+template <size_t N> class CompiledString {
         public:
                 consteval CompiledString(const char (&str)[N])
-                        : _bytes{}, _codepoints{}, _charCount(0), _isAscii(true) {
-                        for(size_t i = 0; i < N; ++i) _bytes[i] = str[i];
+                    : _bytes{}, _codepoints{}, _charCount(0), _isAscii(true) {
+                        for (size_t i = 0; i < N; ++i) _bytes[i] = str[i];
                         size_t pos = 0;
-                        while(pos < N - 1) {
+                        while (pos < N - 1) {
                                 unsigned char b = static_cast<unsigned char>(str[pos]);
-                                if(b > 0x7F) _isAscii = false;
+                                if (b > 0x7F) _isAscii = false;
                                 char32_t cp;
-                                size_t seqLen;
-                                if(b < 0x80)      { cp = b; seqLen = 1; }
-                                else if(b < 0xE0) { cp = b & 0x1F; seqLen = 2; }
-                                else if(b < 0xF0) { cp = b & 0x0F; seqLen = 3; }
-                                else              { cp = b & 0x07; seqLen = 4; }
-                                for(size_t j = 1; j < seqLen && pos + j < N - 1; ++j)
+                                size_t   seqLen;
+                                if (b < 0x80) {
+                                        cp = b;
+                                        seqLen = 1;
+                                } else if (b < 0xE0) {
+                                        cp = b & 0x1F;
+                                        seqLen = 2;
+                                } else if (b < 0xF0) {
+                                        cp = b & 0x0F;
+                                        seqLen = 3;
+                                } else {
+                                        cp = b & 0x07;
+                                        seqLen = 4;
+                                }
+                                for (size_t j = 1; j < seqLen && pos + j < N - 1; ++j)
                                         cp = (cp << 6) | (static_cast<unsigned char>(str[pos + j]) & 0x3F);
                                 _codepoints[_charCount++] = cp;
                                 pos += seqLen;
                         }
                 }
 
-                constexpr bool isAscii() const { return _isAscii; }
-                constexpr size_t charCount() const { return _charCount; }
-                constexpr size_t byteCount() const { return N - 1; }
-                constexpr const char *bytes() const { return _bytes; }
+                constexpr bool            isAscii() const { return _isAscii; }
+                constexpr size_t          charCount() const { return _charCount; }
+                constexpr size_t          byteCount() const { return N - 1; }
+                constexpr const char     *bytes() const { return _bytes; }
                 constexpr const char32_t *codepoints() const { return _codepoints; }
 
                 /**
@@ -1406,7 +1394,7 @@ class CompiledString {
                  * String storage with the same logical content.
                  */
                 constexpr uint64_t hash() const {
-                        if(_isAscii) return fnv1aLatin1AsCodepoints(_bytes, N - 1);
+                        if (_isAscii) return fnv1aLatin1AsCodepoints(_bytes, N - 1);
                         return fnv1aCodepoints(_codepoints, _charCount);
                 }
 
@@ -1416,7 +1404,7 @@ class CompiledString {
                 // e.g. `template <CompiledString Name>` in StringRegistry
                 // and VariantDatabase.  Treat them as private.
                 char     _bytes[N];
-                char32_t _codepoints[N];  // worst case: N-1 codepoints
+                char32_t _codepoints[N]; // worst case: N-1 codepoints
                 size_t   _charCount;
                 bool     _isAscii;
 };
@@ -1431,15 +1419,14 @@ class CompiledString {
  *
  * @tparam Count The exact number of decoded codepoints.
  */
-template<size_t Count>
-class CompiledCodepoints {
+template <size_t Count> class CompiledCodepoints {
         public:
-                template<size_t N>
-                consteval CompiledCodepoints(const CompiledString<N> &cs) : _data{} {
-                        for(size_t i = 0; i < Count; ++i) _data[i] = cs.codepoints()[i];
+                template <size_t N> consteval CompiledCodepoints(const CompiledString<N> &cs) : _data{} {
+                        for (size_t i = 0; i < Count; ++i) _data[i] = cs.codepoints()[i];
                 }
                 constexpr const char32_t *data() const { return _data; }
-                constexpr size_t size() const { return Count; }
+                constexpr size_t          size() const { return Count; }
+
         private:
                 char32_t _data[Count];
 };
@@ -1484,20 +1471,16 @@ PROMEKI_NAMESPACE_END
  *   String b = PROMEKI_STRING("café");      // compile-time UTF-8 decode
  * @endcode
  */
-#define PROMEKI_STRING(str)                                                     \
-    ([]() -> ::promeki::String {                                                \
-        constexpr auto _cs =                                                    \
-            ::promeki::CompiledString<sizeof(str)>(str);                        \
-        if constexpr (_cs.isAscii()) {                                          \
-            static ::promeki::StringLiteralData _lit(                           \
-                str, _cs.byteCount(), _cs.hash());                              \
-            return ::promeki::String::fromLiteralData(&_lit);                   \
-        } else {                                                                \
-            static constexpr auto _cp =                                         \
-                ::promeki::CompiledCodepoints<_cs.charCount()>(_cs);            \
-            static ::promeki::StringUnicodeLiteralData _lit(                    \
-                _cp.data(), _cp.size(),                                          \
-                str, _cs.byteCount(), _cs.hash());                              \
-            return ::promeki::String::fromLiteralData(&_lit);                   \
-        }                                                                       \
-    }())
+#define PROMEKI_STRING(str)                                                                                            \
+        ([]() -> ::promeki::String {                                                                                   \
+                constexpr auto _cs = ::promeki::CompiledString<sizeof(str)>(str);                                      \
+                if constexpr (_cs.isAscii()) {                                                                         \
+                        static ::promeki::StringLiteralData _lit(str, _cs.byteCount(), _cs.hash());                    \
+                        return ::promeki::String::fromLiteralData(&_lit);                                              \
+                } else {                                                                                               \
+                        static constexpr auto _cp = ::promeki::CompiledCodepoints<_cs.charCount()>(_cs);               \
+                        static ::promeki::StringUnicodeLiteralData _lit(_cp.data(), _cp.size(), str, _cs.byteCount(),  \
+                                                                        _cs.hash());                                   \
+                        return ::promeki::String::fromLiteralData(&_lit);                                              \
+                }                                                                                                      \
+        }())

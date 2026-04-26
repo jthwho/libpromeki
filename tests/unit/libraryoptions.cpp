@@ -37,7 +37,7 @@ TEST_CASE("LibraryOptions: spec defaults are correct") {
 
 TEST_CASE("LibraryOptions: programmatic set overrides default") {
         LibraryOptions &opts = LibraryOptions::instance();
-        bool prev = opts.getAs<bool>(LibraryOptions::CoreDumps);
+        bool            prev = opts.getAs<bool>(LibraryOptions::CoreDumps);
         opts.set(LibraryOptions::CoreDumps, true);
         CHECK(opts.getAs<bool>(LibraryOptions::CoreDumps) == true);
         opts.set(LibraryOptions::CoreDumps, prev);
@@ -45,7 +45,7 @@ TEST_CASE("LibraryOptions: programmatic set overrides default") {
 
 TEST_CASE("LibraryOptions: loadFromEnvironment parses bool") {
         LibraryOptions &opts = LibraryOptions::instance();
-        bool prev = opts.getAs<bool>(LibraryOptions::CoreDumps);
+        bool            prev = opts.getAs<bool>(LibraryOptions::CoreDumps);
         // Force the opposite of the current value so loadFromEnvironment
         // has something to do.
         opts.set(LibraryOptions::CoreDumps, !prev);

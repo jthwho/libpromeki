@@ -90,7 +90,7 @@ TEST_CASE("MusicalNote: default tremolo rate") {
 
 TEST_CASE("MusicalNote: List type") {
         MusicalNote::List notes;
-        MusicalNote n;
+        MusicalNote       n;
         n.setMidiNote(60.0f);
         notes.pushToBack(n);
         CHECK(notes.size() == 1);

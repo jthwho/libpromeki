@@ -78,46 +78,39 @@ static double invTransferAdobeRGB(double val) {
 // registry may be initialized before file-scope statics in this TU.
 
 static ColorModel::Primaries primariesSRGB() {
-        return { CIEPoint(0.64, 0.33), CIEPoint(0.30, 0.60),
-                 CIEPoint(0.15, 0.06), CIEPoint(0.3127, 0.3290) };
+        return {CIEPoint(0.64, 0.33), CIEPoint(0.30, 0.60), CIEPoint(0.15, 0.06), CIEPoint(0.3127, 0.3290)};
 }
 
 static ColorModel::Primaries primariesRec601_PAL() {
-        return { CIEPoint(0.64, 0.33), CIEPoint(0.29, 0.60),
-                 CIEPoint(0.15, 0.06), CIEPoint(0.3127, 0.3290) };
+        return {CIEPoint(0.64, 0.33), CIEPoint(0.29, 0.60), CIEPoint(0.15, 0.06), CIEPoint(0.3127, 0.3290)};
 }
 
 static ColorModel::Primaries primariesRec601_NTSC() {
-        return { CIEPoint(0.63, 0.34), CIEPoint(0.31, 0.595),
-                 CIEPoint(0.155, 0.07), CIEPoint(0.3127, 0.3290) };
+        return {CIEPoint(0.63, 0.34), CIEPoint(0.31, 0.595), CIEPoint(0.155, 0.07), CIEPoint(0.3127, 0.3290)};
 }
 
 static ColorModel::Primaries primariesRec2020() {
-        return { CIEPoint(0.708, 0.292), CIEPoint(0.170, 0.797),
-                 CIEPoint(0.131, 0.046), CIEPoint(0.3127, 0.3290) };
+        return {CIEPoint(0.708, 0.292), CIEPoint(0.170, 0.797), CIEPoint(0.131, 0.046), CIEPoint(0.3127, 0.3290)};
 }
 
 static ColorModel::Primaries primariesDCI_P3() {
-        return { CIEPoint(0.680, 0.320), CIEPoint(0.265, 0.690),
-                 CIEPoint(0.150, 0.060), CIEPoint(0.3127, 0.3290) };
+        return {CIEPoint(0.680, 0.320), CIEPoint(0.265, 0.690), CIEPoint(0.150, 0.060), CIEPoint(0.3127, 0.3290)};
 }
 
 // Adobe RGB (1998): D65 white point, wider gamut than sRGB
 static ColorModel::Primaries primariesAdobeRGB() {
-        return { CIEPoint(0.6400, 0.3300), CIEPoint(0.2100, 0.7100),
-                 CIEPoint(0.1500, 0.0600), CIEPoint(0.3127, 0.3290) };
+        return {CIEPoint(0.6400, 0.3300), CIEPoint(0.2100, 0.7100), CIEPoint(0.1500, 0.0600), CIEPoint(0.3127, 0.3290)};
 }
 
 // ACES AP0 (ACES 2065-1): encompasses all visible colors, D60 white
 static ColorModel::Primaries primariesACES_AP0() {
-        return { CIEPoint(0.7347, 0.2653), CIEPoint(0.0000, 1.0000),
-                 CIEPoint(0.0001, -0.0770), CIEPoint(0.32168, 0.33767) };
+        return {CIEPoint(0.7347, 0.2653), CIEPoint(0.0000, 1.0000), CIEPoint(0.0001, -0.0770),
+                CIEPoint(0.32168, 0.33767)};
 }
 
 // ACES AP1 (ACEScg): practical working space, D60 white
 static ColorModel::Primaries primariesACES_AP1() {
-        return { CIEPoint(0.713, 0.293), CIEPoint(0.165, 0.830),
-                 CIEPoint(0.128, 0.044), CIEPoint(0.32168, 0.33767) };
+        return {CIEPoint(0.713, 0.293), CIEPoint(0.165, 0.830), CIEPoint(0.128, 0.044), CIEPoint(0.32168, 0.33767)};
 }
 
 // ---------------------------------------------------------------------------
@@ -142,18 +135,30 @@ static Matrix3x3 computeRGBtoXYZ(const ColorModel::Primaries &p) {
         double Zw = (1.0 - xw - yw) / yw;
 
         Matrix3x3 M;
-        M.set(0, 0, (float)Xr); M.set(0, 1, (float)Xg); M.set(0, 2, (float)Xb);
-        M.set(1, 0, 1.0f);      M.set(1, 1, 1.0f);      M.set(1, 2, 1.0f);
-        M.set(2, 0, (float)Zr); M.set(2, 1, (float)Zg); M.set(2, 2, (float)Zb);
+        M.set(0, 0, (float)Xr);
+        M.set(0, 1, (float)Xg);
+        M.set(0, 2, (float)Xb);
+        M.set(1, 0, 1.0f);
+        M.set(1, 1, 1.0f);
+        M.set(1, 2, 1.0f);
+        M.set(2, 0, (float)Zr);
+        M.set(2, 1, (float)Zg);
+        M.set(2, 2, (float)Zb);
 
         Matrix3x3 Minv = M.inverse();
-        float W[3] = { (float)Xw, (float)Yw, (float)Zw };
+        float     W[3] = {(float)Xw, (float)Yw, (float)Zw};
         Minv.vectorTransform(W);
 
         Matrix3x3 npm;
-        npm.set(0, 0, M.get(0, 0) * W[0]); npm.set(0, 1, M.get(0, 1) * W[1]); npm.set(0, 2, M.get(0, 2) * W[2]);
-        npm.set(1, 0, M.get(1, 0) * W[0]); npm.set(1, 1, M.get(1, 1) * W[1]); npm.set(1, 2, M.get(1, 2) * W[2]);
-        npm.set(2, 0, M.get(2, 0) * W[0]); npm.set(2, 1, M.get(2, 1) * W[1]); npm.set(2, 2, M.get(2, 2) * W[2]);
+        npm.set(0, 0, M.get(0, 0) * W[0]);
+        npm.set(0, 1, M.get(0, 1) * W[1]);
+        npm.set(0, 2, M.get(0, 2) * W[2]);
+        npm.set(1, 0, M.get(1, 0) * W[0]);
+        npm.set(1, 1, M.get(1, 1) * W[1]);
+        npm.set(1, 2, M.get(1, 2) * W[2]);
+        npm.set(2, 0, M.get(2, 0) * W[0]);
+        npm.set(2, 1, M.get(2, 1) * W[1]);
+        npm.set(2, 2, M.get(2, 2) * W[2]);
         return npm;
 }
 
@@ -162,17 +167,15 @@ static Matrix3x3 computeRGBtoXYZ(const ColorModel::Primaries &p) {
 // ---------------------------------------------------------------------------
 
 static void rgbGammaToXYZ(const ColorModel::Data *d, const float *src, float *dst) {
-        float linear[3] = {
-                (float)d->eotf(src[0]),
-                (float)d->eotf(src[1]),
-                (float)d->eotf(src[2])
-        };
+        float linear[3] = {(float)d->eotf(src[0]), (float)d->eotf(src[1]), (float)d->eotf(src[2])};
         d->rgbToXyz.vectorTransform(linear);
-        dst[0] = linear[0]; dst[1] = linear[1]; dst[2] = linear[2];
+        dst[0] = linear[0];
+        dst[1] = linear[1];
+        dst[2] = linear[2];
 }
 
 static void rgbGammaFromXYZ(const ColorModel::Data *d, const float *src, float *dst) {
-        float rgb[3] = { src[0], src[1], src[2] };
+        float rgb[3] = {src[0], src[1], src[2]};
         d->xyzToRgb.vectorTransform(rgb);
         dst[0] = (float)d->oetf(rgb[0]);
         dst[1] = (float)d->oetf(rgb[1]);
@@ -180,23 +183,31 @@ static void rgbGammaFromXYZ(const ColorModel::Data *d, const float *src, float *
 }
 
 static void rgbLinearToXYZ(const ColorModel::Data *d, const float *src, float *dst) {
-        float linear[3] = { src[0], src[1], src[2] };
+        float linear[3] = {src[0], src[1], src[2]};
         d->rgbToXyz.vectorTransform(linear);
-        dst[0] = linear[0]; dst[1] = linear[1]; dst[2] = linear[2];
+        dst[0] = linear[0];
+        dst[1] = linear[1];
+        dst[2] = linear[2];
 }
 
 static void rgbLinearFromXYZ(const ColorModel::Data *d, const float *src, float *dst) {
-        float rgb[3] = { src[0], src[1], src[2] };
+        float rgb[3] = {src[0], src[1], src[2]};
         d->xyzToRgb.vectorTransform(rgb);
-        dst[0] = rgb[0]; dst[1] = rgb[1]; dst[2] = rgb[2];
+        dst[0] = rgb[0];
+        dst[1] = rgb[1];
+        dst[2] = rgb[2];
 }
 
 static void xyzToXYZ(const ColorModel::Data *, const float *src, float *dst) {
-        dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2];
+        dst[0] = src[0];
+        dst[1] = src[1];
+        dst[2] = src[2];
 }
 
 static void xyzFromXYZ(const ColorModel::Data *, const float *src, float *dst) {
-        dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2];
+        dst[0] = src[0];
+        dst[1] = src[1];
+        dst[2] = src[2];
 }
 
 // --- CIE L*a*b* ---
@@ -207,13 +218,13 @@ static constexpr float LabWhiteZ = 1.08883f;
 static float labF(float t) {
         constexpr float delta = 6.0f / 29.0f;
         constexpr float delta3 = delta * delta * delta;
-        if(t > delta3) return std::cbrt(t);
+        if (t > delta3) return std::cbrt(t);
         return t / (3.0f * delta * delta) + 4.0f / 29.0f;
 }
 
 static float labFInv(float t) {
         constexpr float delta = 6.0f / 29.0f;
-        if(t > delta) return t * t * t;
+        if (t > delta) return t * t * t;
         return 3.0f * delta * delta * (t - 4.0f / 29.0f);
 }
 
@@ -251,21 +262,40 @@ static void hsvToXYZ(const ColorModel::Data *d, const float *src, float *dst) {
         float hp = h / 60.0f;
         float x = c * (1.0f - std::fabs(std::fmod(hp, 2.0f) - 1.0f));
         float r1, g1, b1;
-        if(hp < 1.0f)      { r1 = c; g1 = x; b1 = 0; }
-        else if(hp < 2.0f) { r1 = x; g1 = c; b1 = 0; }
-        else if(hp < 3.0f) { r1 = 0; g1 = c; b1 = x; }
-        else if(hp < 4.0f) { r1 = 0; g1 = x; b1 = c; }
-        else if(hp < 5.0f) { r1 = x; g1 = 0; b1 = c; }
-        else               { r1 = c; g1 = 0; b1 = x; }
+        if (hp < 1.0f) {
+                r1 = c;
+                g1 = x;
+                b1 = 0;
+        } else if (hp < 2.0f) {
+                r1 = x;
+                g1 = c;
+                b1 = 0;
+        } else if (hp < 3.0f) {
+                r1 = 0;
+                g1 = c;
+                b1 = x;
+        } else if (hp < 4.0f) {
+                r1 = 0;
+                g1 = x;
+                b1 = c;
+        } else if (hp < 5.0f) {
+                r1 = x;
+                g1 = 0;
+                b1 = c;
+        } else {
+                r1 = c;
+                g1 = 0;
+                b1 = x;
+        }
         float m = v - c;
-        float rgb[3] = { r1 + m, g1 + m, b1 + m };
+        float rgb[3] = {r1 + m, g1 + m, b1 + m};
 
         const auto &parent = registryLookup(d->parentModel);
         parent.toXYZFunc(&parent, rgb, dst);
 }
 
 static void hsvFromXYZ(const ColorModel::Data *d, const float *src, float *dst) {
-        float rgb[3];
+        float       rgb[3];
         const auto &parent = registryLookup(d->parentModel);
         parent.fromXYZFunc(&parent, src, rgb);
 
@@ -275,10 +305,13 @@ static void hsvFromXYZ(const ColorModel::Data *d, const float *src, float *dst) 
         float delta = cmax - cmin;
 
         float h = 0.0f;
-        if(delta > 0.0f) {
-                if(cmax == r)      h = std::fmod((g - b) / delta + 6.0f, 6.0f);
-                else if(cmax == g) h = (b - r) / delta + 2.0f;
-                else               h = (r - g) / delta + 4.0f;
+        if (delta > 0.0f) {
+                if (cmax == r)
+                        h = std::fmod((g - b) / delta + 6.0f, 6.0f);
+                else if (cmax == g)
+                        h = (b - r) / delta + 2.0f;
+                else
+                        h = (r - g) / delta + 4.0f;
                 h *= 60.0f;
         }
 
@@ -298,21 +331,40 @@ static void hslToXYZ(const ColorModel::Data *d, const float *src, float *dst) {
         float hp = h / 60.0f;
         float x = c * (1.0f - std::fabs(std::fmod(hp, 2.0f) - 1.0f));
         float r1, g1, b1;
-        if(hp < 1.0f)      { r1 = c; g1 = x; b1 = 0; }
-        else if(hp < 2.0f) { r1 = x; g1 = c; b1 = 0; }
-        else if(hp < 3.0f) { r1 = 0; g1 = c; b1 = x; }
-        else if(hp < 4.0f) { r1 = 0; g1 = x; b1 = c; }
-        else if(hp < 5.0f) { r1 = x; g1 = 0; b1 = c; }
-        else               { r1 = c; g1 = 0; b1 = x; }
+        if (hp < 1.0f) {
+                r1 = c;
+                g1 = x;
+                b1 = 0;
+        } else if (hp < 2.0f) {
+                r1 = x;
+                g1 = c;
+                b1 = 0;
+        } else if (hp < 3.0f) {
+                r1 = 0;
+                g1 = c;
+                b1 = x;
+        } else if (hp < 4.0f) {
+                r1 = 0;
+                g1 = x;
+                b1 = c;
+        } else if (hp < 5.0f) {
+                r1 = x;
+                g1 = 0;
+                b1 = c;
+        } else {
+                r1 = c;
+                g1 = 0;
+                b1 = x;
+        }
         float m = l - c * 0.5f;
-        float rgb[3] = { r1 + m, g1 + m, b1 + m };
+        float rgb[3] = {r1 + m, g1 + m, b1 + m};
 
         const auto &parent = registryLookup(d->parentModel);
         parent.toXYZFunc(&parent, rgb, dst);
 }
 
 static void hslFromXYZ(const ColorModel::Data *d, const float *src, float *dst) {
-        float rgb[3];
+        float       rgb[3];
         const auto &parent = registryLookup(d->parentModel);
         parent.fromXYZFunc(&parent, src, rgb);
 
@@ -323,10 +375,13 @@ static void hslFromXYZ(const ColorModel::Data *d, const float *src, float *dst) 
         float l = (cmax + cmin) * 0.5f;
 
         float h = 0.0f;
-        if(delta > 0.0f) {
-                if(cmax == r)      h = std::fmod((g - b) / delta + 6.0f, 6.0f);
-                else if(cmax == g) h = (b - r) / delta + 2.0f;
-                else               h = (r - g) / delta + 4.0f;
+        if (delta > 0.0f) {
+                if (cmax == r)
+                        h = std::fmod((g - b) / delta + 6.0f, 6.0f);
+                else if (cmax == g)
+                        h = (b - r) / delta + 2.0f;
+                else
+                        h = (r - g) / delta + 4.0f;
                 h *= 60.0f;
         }
 
@@ -339,18 +394,14 @@ static void hslFromXYZ(const ColorModel::Data *d, const float *src, float *dst) 
 
 // --- YCbCr (matrix-derived from parent RGB) ---
 static void ycbcrToXYZ(const ColorModel::Data *d, const float *src, float *dst) {
-        float tmp[3] = {
-                src[0] + d->toParentOffset[0],
-                src[1] + d->toParentOffset[1],
-                src[2] + d->toParentOffset[2]
-        };
+        float tmp[3] = {src[0] + d->toParentOffset[0], src[1] + d->toParentOffset[1], src[2] + d->toParentOffset[2]};
         d->toParentMatrix.vectorTransform(tmp);
         const auto &parent = registryLookup(d->parentModel);
         parent.toXYZFunc(&parent, tmp, dst);
 }
 
 static void ycbcrFromXYZ(const ColorModel::Data *d, const float *src, float *dst) {
-        float rgb[3];
+        float       rgb[3];
         const auto &parent = registryLookup(d->parentModel);
         parent.fromXYZFunc(&parent, src, rgb);
         d->fromParentMatrix.vectorTransform(rgb);
@@ -367,39 +418,39 @@ static void ycbcrFromXYZ(const ColorModel::Data *d, const float *src, float *dst
 // ---------------------------------------------------------------------------
 
 static void setRGBComps(ColorModel::Data &d) {
-        d.comps[0] = { "Red",   "R", 0.0f, 1.0f };
-        d.comps[1] = { "Green", "G", 0.0f, 1.0f };
-        d.comps[2] = { "Blue",  "B", 0.0f, 1.0f };
+        d.comps[0] = {"Red", "R", 0.0f, 1.0f};
+        d.comps[1] = {"Green", "G", 0.0f, 1.0f};
+        d.comps[2] = {"Blue", "B", 0.0f, 1.0f};
 }
 static void setXYZComps(ColorModel::Data &d) {
-        d.comps[0] = { "X", "X", 0.0f, 1.0f };
-        d.comps[1] = { "Y", "Y", 0.0f, 1.0f };
-        d.comps[2] = { "Z", "Z", 0.0f, 1.0f };
+        d.comps[0] = {"X", "X", 0.0f, 1.0f};
+        d.comps[1] = {"Y", "Y", 0.0f, 1.0f};
+        d.comps[2] = {"Z", "Z", 0.0f, 1.0f};
 }
 static void setLabComps(ColorModel::Data &d) {
-        d.comps[0] = { "Lightness", "L", 0.0f, 100.0f };
-        d.comps[1] = { "a",         "a", -128.0f, 127.0f };
-        d.comps[2] = { "b",         "b", -128.0f, 127.0f };
+        d.comps[0] = {"Lightness", "L", 0.0f, 100.0f};
+        d.comps[1] = {"a", "a", -128.0f, 127.0f};
+        d.comps[2] = {"b", "b", -128.0f, 127.0f};
 }
 static void setHSVComps(ColorModel::Data &d) {
-        d.comps[0] = { "Hue",        "H", 0.0f, 360.0f };
-        d.comps[1] = { "Saturation", "S", 0.0f, 1.0f };
-        d.comps[2] = { "Value",      "V", 0.0f, 1.0f };
+        d.comps[0] = {"Hue", "H", 0.0f, 360.0f};
+        d.comps[1] = {"Saturation", "S", 0.0f, 1.0f};
+        d.comps[2] = {"Value", "V", 0.0f, 1.0f};
 }
 static void setHSLComps(ColorModel::Data &d) {
-        d.comps[0] = { "Hue",        "H", 0.0f, 360.0f };
-        d.comps[1] = { "Saturation", "S", 0.0f, 1.0f };
-        d.comps[2] = { "Lightness",  "L", 0.0f, 1.0f };
+        d.comps[0] = {"Hue", "H", 0.0f, 360.0f};
+        d.comps[1] = {"Saturation", "S", 0.0f, 1.0f};
+        d.comps[2] = {"Lightness", "L", 0.0f, 1.0f};
 }
 static void setYCbCrComps(ColorModel::Data &d) {
-        d.comps[0] = { "Luma",        "Y",  0.0f, 1.0f };
-        d.comps[1] = { "Chroma Blue", "Cb", -0.5f, 0.5f };
-        d.comps[2] = { "Chroma Red",  "Cr", -0.5f, 0.5f };
+        d.comps[0] = {"Luma", "Y", 0.0f, 1.0f};
+        d.comps[1] = {"Chroma Blue", "Cb", -0.5f, 0.5f};
+        d.comps[2] = {"Chroma Red", "Cr", -0.5f, 0.5f};
 }
 static void setInvalidComps(ColorModel::Data &d) {
-        d.comps[0] = { "Invalid", "", 0.0f, 0.0f };
-        d.comps[1] = { "Invalid", "", 0.0f, 0.0f };
-        d.comps[2] = { "Invalid", "", 0.0f, 0.0f };
+        d.comps[0] = {"Invalid", "", 0.0f, 0.0f};
+        d.comps[1] = {"Invalid", "", 0.0f, 0.0f};
+        d.comps[2] = {"Invalid", "", 0.0f, 0.0f};
 }
 
 static void initRGBMatrices(ColorModel::Data &d) {
@@ -771,21 +822,13 @@ static ColorModel::Data makeYCbCr_Rec709() {
         d.linear = false;
         d.parentModel = ColorModel::Rec709;
 
-        float rgbToYcbcr[3][3] = {
-                { 0.2126f,  0.7152f,  0.0722f},
-                {-0.1146f, -0.3854f,  0.5f},
-                { 0.5f,    -0.4542f, -0.0458f}
-        };
+        float rgbToYcbcr[3][3] = {{0.2126f, 0.7152f, 0.0722f}, {-0.1146f, -0.3854f, 0.5f}, {0.5f, -0.4542f, -0.0458f}};
         d.fromParentMatrix.set(rgbToYcbcr);
         d.fromParentOffset[0] = 0.0f;
         d.fromParentOffset[1] = 0.5f;
         d.fromParentOffset[2] = 0.5f;
 
-        float ycbcrToRgb[3][3] = {
-                {1.0f,  0.0f,     1.5748f},
-                {1.0f, -0.1873f, -0.4681f},
-                {1.0f,  1.8556f,  0.0f}
-        };
+        float ycbcrToRgb[3][3] = {{1.0f, 0.0f, 1.5748f}, {1.0f, -0.1873f, -0.4681f}, {1.0f, 1.8556f, 0.0f}};
         d.toParentMatrix.set(ycbcrToRgb);
         d.toParentOffset[0] = 0.0f;
         d.toParentOffset[1] = -0.5f;
@@ -809,20 +852,13 @@ static ColorModel::Data makeYCbCr_Rec601() {
         d.parentModel = ColorModel::Rec601_PAL;
 
         float rgbToYcbcr[3][3] = {
-                { 0.299f,    0.587f,   0.114f},
-                {-0.168736f,-0.331264f,0.5f},
-                { 0.5f,     -0.418688f,-0.081312f}
-        };
+                {0.299f, 0.587f, 0.114f}, {-0.168736f, -0.331264f, 0.5f}, {0.5f, -0.418688f, -0.081312f}};
         d.fromParentMatrix.set(rgbToYcbcr);
         d.fromParentOffset[0] = 0.0f;
         d.fromParentOffset[1] = 0.5f;
         d.fromParentOffset[2] = 0.5f;
 
-        float ycbcrToRgb[3][3] = {
-                {1.0f,  0.0f,      1.402f},
-                {1.0f, -0.344136f,-0.714136f},
-                {1.0f,  1.772f,    0.0f}
-        };
+        float ycbcrToRgb[3][3] = {{1.0f, 0.0f, 1.402f}, {1.0f, -0.344136f, -0.714136f}, {1.0f, 1.772f, 0.0f}};
         d.toParentMatrix.set(ycbcrToRgb);
         d.toParentOffset[0] = 0.0f;
         d.toParentOffset[1] = -0.5f;
@@ -847,20 +883,13 @@ static ColorModel::Data makeYCbCr_Rec2020() {
 
         // BT.2020 luma coefficients (non-constant luminance)
         float rgbToYcbcr[3][3] = {
-                { 0.2627f,   0.6780f,   0.0593f},
-                {-0.13963f, -0.36037f,  0.5f},
-                { 0.5f,     -0.45979f, -0.04021f}
-        };
+                {0.2627f, 0.6780f, 0.0593f}, {-0.13963f, -0.36037f, 0.5f}, {0.5f, -0.45979f, -0.04021f}};
         d.fromParentMatrix.set(rgbToYcbcr);
         d.fromParentOffset[0] = 0.0f;
         d.fromParentOffset[1] = 0.5f;
         d.fromParentOffset[2] = 0.5f;
 
-        float ycbcrToRgb[3][3] = {
-                {1.0f,  0.0f,       1.4746f},
-                {1.0f, -0.16455f,  -0.57135f},
-                {1.0f,  1.8814f,    0.0f}
-        };
+        float ycbcrToRgb[3][3] = {{1.0f, 0.0f, 1.4746f}, {1.0f, -0.16455f, -0.57135f}, {1.0f, 1.8814f, 0.0f}};
         d.toParentMatrix.set(ycbcrToRgb);
         d.toParentOffset[0] = 0.0f;
         d.toParentOffset[1] = -0.5f;
@@ -906,43 +935,43 @@ static ColorModel::Data makeCIELab() {
 // ---------------------------------------------------------------------------
 
 struct ColorModelRegistry {
-        Map<ColorModel::ID, ColorModel::Data> entries;
-        Map<String, ColorModel::ID> nameMap;
+                Map<ColorModel::ID, ColorModel::Data> entries;
+                Map<String, ColorModel::ID>           nameMap;
 
-        ColorModelRegistry() {
-                add(makeInvalid());
-                add(makeSRGB());
-                add(makeLinearSRGB());
-                add(makeRec709());
-                add(makeLinearRec709());
-                add(makeRec601PAL());
-                add(makeLinearRec601PAL());
-                add(makeRec601NTSC());
-                add(makeLinearRec601NTSC());
-                add(makeRec2020());
-                add(makeLinearRec2020());
-                add(makeDCI_P3());
-                add(makeLinearDCI_P3());
-                add(makeAdobeRGB());
-                add(makeLinearAdobeRGB());
-                add(makeACES_AP0());
-                add(makeACES_AP1());
-                add(makeCIEXYZ());
-                add(makeCIELab());
-                add(makeHSV_sRGB());
-                add(makeHSL_sRGB());
-                add(makeYCbCr_Rec709());
-                add(makeYCbCr_Rec601());
-                add(makeYCbCr_Rec2020());
-        }
-
-        void add(ColorModel::Data d) {
-                ColorModel::ID id = d.id;
-                if(d.type != ColorModel::TypeInvalid) {
-                        nameMap[d.name] = id;
+                ColorModelRegistry() {
+                        add(makeInvalid());
+                        add(makeSRGB());
+                        add(makeLinearSRGB());
+                        add(makeRec709());
+                        add(makeLinearRec709());
+                        add(makeRec601PAL());
+                        add(makeLinearRec601PAL());
+                        add(makeRec601NTSC());
+                        add(makeLinearRec601NTSC());
+                        add(makeRec2020());
+                        add(makeLinearRec2020());
+                        add(makeDCI_P3());
+                        add(makeLinearDCI_P3());
+                        add(makeAdobeRGB());
+                        add(makeLinearAdobeRGB());
+                        add(makeACES_AP0());
+                        add(makeACES_AP1());
+                        add(makeCIEXYZ());
+                        add(makeCIELab());
+                        add(makeHSV_sRGB());
+                        add(makeHSL_sRGB());
+                        add(makeYCbCr_Rec709());
+                        add(makeYCbCr_Rec601());
+                        add(makeYCbCr_Rec2020());
                 }
-                entries[id] = std::move(d);
-        }
+
+                void add(ColorModel::Data d) {
+                        ColorModel::ID id = d.id;
+                        if (d.type != ColorModel::TypeInvalid) {
+                                nameMap[d.name] = id;
+                        }
+                        entries[id] = std::move(d);
+                }
 };
 
 static ColorModelRegistry &registry() {
@@ -952,8 +981,8 @@ static ColorModelRegistry &registry() {
 
 static const ColorModel::Data &registryLookup(ColorModel::ID id) {
         auto &reg = registry();
-        auto it = reg.entries.find(id);
-        if(it != reg.entries.end()) return it->second;
+        auto  it = reg.entries.find(id);
+        if (it != reg.entries.end()) return it->second;
         return reg.entries[ColorModel::Invalid];
 }
 
@@ -967,7 +996,7 @@ const ColorModel::Data *ColorModel::lookupData(ID id) {
 
 void ColorModel::registerData(Data &&data) {
         auto &reg = registry();
-        if(data.type != TypeInvalid) {
+        if (data.type != TypeInvalid) {
                 reg.nameMap[data.name] = data.id;
         }
         reg.entries[data.id] = std::move(data);
@@ -975,15 +1004,15 @@ void ColorModel::registerData(Data &&data) {
 
 ColorModel ColorModel::lookup(const String &name) {
         auto &reg = registry();
-        auto it = reg.nameMap.find(name);
+        auto  it = reg.nameMap.find(name);
         return (it != reg.nameMap.end()) ? ColorModel(it->second) : ColorModel(Invalid);
 }
 
 ColorModel::IDList ColorModel::registeredIDs() {
-        auto &reg = registry();
+        auto  &reg = registry();
         IDList ret;
-        for(const auto &[id, data] : reg.entries) {
-                if(id != Invalid) ret.pushToBack(id);
+        for (const auto &[id, data] : reg.entries) {
+                if (id != Invalid) ret.pushToBack(id);
         }
         return ret;
 }
@@ -999,31 +1028,34 @@ ColorModel::H273 ColorModel::toH273(ID id) {
         // / user-defined) return an all-zero triplet — callers
         // substitute @c 2 (Unspecified) or fall through to an explicit
         // override.
-        switch(id) {
+        switch (id) {
                 // ---- RGB (gamma-encoded) ----
-                case sRGB:             return { 1, 13, 0 };    // BT.709 primaries, IEC 61966-2-1 transfer, RGB matrix.
-                case Rec709:           return { 1,  1, 0 };    // BT.709 everywhere, RGB storage.
-                case Rec601_PAL:       return { 5,  5, 0 };    // BT.470BG primaries, BT.470BG transfer, RGB matrix.
-                case Rec601_NTSC:      return { 6,  6, 0 };    // SMPTE-170M primaries + transfer, RGB matrix.
-                case Rec2020:          return { 9, 14, 0 };    // BT.2020 primaries, BT.2020-10 transfer, RGB matrix.
-                case DCI_P3:           return {12, 13, 0 };    // SMPTE-432 (P3-D65) primaries, sRGB-style transfer, RGB matrix.
-                case AdobeRGB:         return { 1,  4, 0 };    // Adobe RGB has no spec H.273 primary; approximate as BT.709 + gamma 2.2.
+                case sRGB: return {1, 13, 0};       // BT.709 primaries, IEC 61966-2-1 transfer, RGB matrix.
+                case Rec709: return {1, 1, 0};      // BT.709 everywhere, RGB storage.
+                case Rec601_PAL: return {5, 5, 0};  // BT.470BG primaries, BT.470BG transfer, RGB matrix.
+                case Rec601_NTSC: return {6, 6, 0}; // SMPTE-170M primaries + transfer, RGB matrix.
+                case Rec2020: return {9, 14, 0};    // BT.2020 primaries, BT.2020-10 transfer, RGB matrix.
+                case DCI_P3: return {12, 13, 0};    // SMPTE-432 (P3-D65) primaries, sRGB-style transfer, RGB matrix.
+                case AdobeRGB:
+                        return {1, 4, 0}; // Adobe RGB has no spec H.273 primary; approximate as BT.709 + gamma 2.2.
 
                 // ---- RGB (linear) ----
-                case LinearSRGB:       return { 1,  8, 0 };
-                case LinearRec709:     return { 1,  8, 0 };
-                case LinearRec601_PAL: return { 5,  8, 0 };
-                case LinearRec601_NTSC:return { 6,  8, 0 };
-                case LinearRec2020:    return { 9,  8, 0 };
-                case LinearDCI_P3:     return {12,  8, 0 };
-                case LinearAdobeRGB:   return { 1,  8, 0 };
-                case ACES_AP0:         return { 0,  8, 0 };    // AP0 primaries aren't in H.273 — leave primaries at 0.
-                case ACES_AP1:         return { 0,  8, 0 };    // AP1 primaries (ACEScg) aren't in H.273 either.
+                case LinearSRGB: return {1, 8, 0};
+                case LinearRec709: return {1, 8, 0};
+                case LinearRec601_PAL: return {5, 8, 0};
+                case LinearRec601_NTSC: return {6, 8, 0};
+                case LinearRec2020: return {9, 8, 0};
+                case LinearDCI_P3: return {12, 8, 0};
+                case LinearAdobeRGB: return {1, 8, 0};
+                case ACES_AP0: return {0, 8, 0}; // AP0 primaries aren't in H.273 — leave primaries at 0.
+                case ACES_AP1:
+                        return {0, 8, 0}; // AP1 primaries (ACEScg) aren't in H.273 either.
 
                 // ---- YCbCr derivations ----
-                case YCbCr_Rec709:     return { 1,  1, 1 };    // BT.709 primaries/transfer, BT.709 matrix.
-                case YCbCr_Rec601:     return { 6,  6, 6 };    // SMPTE-170M primaries/transfer/matrix — NTSC convention.
-                case YCbCr_Rec2020:    return { 9, 14, 9 };    // BT.2020 primaries/transfer, BT.2020-NCL matrix.
+                case YCbCr_Rec709: return {1, 1, 1}; // BT.709 primaries/transfer, BT.709 matrix.
+                case YCbCr_Rec601: return {6, 6, 6}; // SMPTE-170M primaries/transfer/matrix — NTSC convention.
+                case YCbCr_Rec2020:
+                        return {9, 14, 9}; // BT.2020 primaries/transfer, BT.2020-NCL matrix.
 
                 // ---- Non-H.273-addressable ----
                 case Invalid:
@@ -1031,8 +1063,7 @@ ColorModel::H273 ColorModel::toH273(ID id) {
                 case CIELab:
                 case HSV_sRGB:
                 case HSL_sRGB:
-                default:
-                        return {};
+                default: return {};
         }
 }
 

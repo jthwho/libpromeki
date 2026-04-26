@@ -64,8 +64,8 @@ class MediaIOTask_FrameBridge : public MediaIOTask {
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 void  cancelBlockingWork() override;
 
-                FrameBridge::UPtr            _bridge;
-                bool                         _isOutput = false;
+                FrameBridge::UPtr _bridge;
+                bool              _isOutput = false;
 };
 
 PROMEKI_NAMESPACE_END

@@ -17,13 +17,11 @@
 PROMEKI_NAMESPACE_BEGIN
 
 #define X(name, type) type,
-template class VariantImpl< PROMEKI_VARIANT_TYPES detail::VariantEnd >;
+template class VariantImpl<PROMEKI_VARIANT_TYPES detail::VariantEnd>;
 #undef X
 
-#define X(name, type) \
-        template type Variant::Base::get<type>(Error *err) const;
+#define X(name, type) template type Variant::Base::get<type>(Error * err) const;
 PROMEKI_VARIANT_TYPES
 #undef X
 
 PROMEKI_NAMESPACE_END
-

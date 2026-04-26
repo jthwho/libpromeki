@@ -44,7 +44,7 @@ TEST_CASE("RtpSession") {
 
         SUBCASE("start with internal transport") {
                 RtpSession session;
-                Error err = session.start(SocketAddress::any(0));
+                Error      err = session.start(SocketAddress::any(0));
                 CHECK(err.isOk());
                 CHECK(session.isRunning());
                 CHECK(session.transport() != nullptr);
@@ -54,7 +54,7 @@ TEST_CASE("RtpSession") {
         }
 
         SUBCASE("start with external transport") {
-                RtpSession session;
+                RtpSession        session;
                 LoopbackTransport tx, rx;
                 LoopbackTransport::pair(&tx, &rx);
                 tx.open();
@@ -73,7 +73,7 @@ TEST_CASE("RtpSession") {
         }
 
         SUBCASE("start with unopened external transport fails") {
-                RtpSession session;
+                RtpSession        session;
                 LoopbackTransport tx;
                 // Not opened.
                 Error err = session.start(&tx);
@@ -82,7 +82,7 @@ TEST_CASE("RtpSession") {
 
         SUBCASE("start with null external transport fails") {
                 RtpSession session;
-                Error err = session.start(static_cast<PacketTransport *>(nullptr));
+                Error      err = session.start(static_cast<PacketTransport *>(nullptr));
                 CHECK(err == Error::InvalidArgument);
         }
 
@@ -102,7 +102,7 @@ TEST_CASE("RtpSession") {
 
         SUBCASE("sendPacket not started fails") {
                 RtpSession session;
-                Buffer payload(10);
+                Buffer     payload(10);
                 payload.setSize(10);
                 session.setRemote(SocketAddress::localhost(5004));
                 Error err = session.sendPacket(payload, 0, 96);
@@ -125,7 +125,7 @@ TEST_CASE("RtpSession") {
                 receiver.open(IODevice::ReadWrite);
                 receiver.setReceiveTimeout(2000);
                 receiver.bind(SocketAddress::any(0));
-                uint16_t recvPort = receiver.localAddress().port();
+                uint16_t      recvPort = receiver.localAddress().port();
                 SocketAddress dest(Ipv4Address::loopback(), recvPort);
 
                 // Set up sender session
@@ -138,7 +138,7 @@ TEST_CASE("RtpSession") {
 
                 // Send a packet
                 const char *msg = "test payload";
-                Buffer payload(std::strlen(msg));
+                Buffer      payload(std::strlen(msg));
                 payload.setSize(std::strlen(msg));
                 std::memcpy(payload.data(), msg, std::strlen(msg));
 
@@ -163,8 +163,8 @@ TEST_CASE("RtpSession") {
                 CHECK(buf[6] == 0x03);
                 CHECK(buf[7] == 0xE8);
                 // SSRC = 0xDEADBEEF
-                CHECK(buf[8]  == 0xDE);
-                CHECK(buf[9]  == 0xAD);
+                CHECK(buf[8] == 0xDE);
+                CHECK(buf[9] == 0xAD);
                 CHECK(buf[10] == 0xBE);
                 CHECK(buf[11] == 0xEF);
                 // Payload
@@ -178,7 +178,7 @@ TEST_CASE("RtpSession") {
                 receiver.open(IODevice::ReadWrite);
                 receiver.setReceiveTimeout(2000);
                 receiver.bind(SocketAddress::any(0));
-                uint16_t recvPort = receiver.localAddress().port();
+                uint16_t      recvPort = receiver.localAddress().port();
                 SocketAddress dest(Ipv4Address::loopback(), recvPort);
 
                 RtpSession session;
@@ -190,13 +190,13 @@ TEST_CASE("RtpSession") {
                 std::memset(payload.data(), 0, 4);
 
                 // Send 3 packets
-                for(int i = 0; i < 3; i++) {
+                for (int i = 0; i < 3; i++) {
                         session.sendPacket(payload, i * 100, 96);
                 }
                 CHECK(session.sequenceNumber() == 3);
 
                 // Verify sequence numbers in received packets
-                for(int i = 0; i < 3; i++) {
+                for (int i = 0; i < 3; i++) {
                         uint8_t buf[256];
                         int64_t n = receiver.readDatagram(buf, sizeof(buf));
                         REQUIRE(n > 12);
@@ -211,7 +211,7 @@ TEST_CASE("RtpSession") {
                 receiver.open(IODevice::ReadWrite);
                 receiver.setReceiveTimeout(2000);
                 receiver.bind(SocketAddress::any(0));
-                uint16_t recvPort = receiver.localAddress().port();
+                uint16_t      recvPort = receiver.localAddress().port();
                 SocketAddress dest(Ipv4Address::loopback(), recvPort);
 
                 RtpSession session;
@@ -222,9 +222,9 @@ TEST_CASE("RtpSession") {
 
                 // Create pre-packed packets (simulating payload handler output)
                 RtpPayloadL24 payload(48000, 2);
-                const size_t dataSize = 288;
-                uint8_t data[288];
-                for(size_t i = 0; i < dataSize; i++) data[i] = static_cast<uint8_t>(i & 0xFF);
+                const size_t  dataSize = 288;
+                uint8_t       data[288];
+                for (size_t i = 0; i < dataSize; i++) data[i] = static_cast<uint8_t>(i & 0xFF);
 
                 auto packets = payload.pack(data, dataSize);
                 REQUIRE(packets.size() > 0);
@@ -239,11 +239,11 @@ TEST_CASE("RtpSession") {
 
                 // Check RTP header was filled in
                 CHECK((buf[0] & 0xC0) == 0x80);
-                CHECK((buf[1] & 0x7F) == 97); // PT
+                CHECK((buf[1] & 0x7F) == 97);   // PT
                 CHECK((buf[1] & 0x80) == 0x80); // Marker (last packet)
                 // SSRC
-                CHECK(buf[8]  == 0x11);
-                CHECK(buf[9]  == 0x22);
+                CHECK(buf[8] == 0x11);
+                CHECK(buf[9] == 0x22);
                 CHECK(buf[10] == 0x33);
                 CHECK(buf[11] == 0x44);
 
@@ -255,7 +255,7 @@ TEST_CASE("RtpSession") {
                 receiver.open(IODevice::ReadWrite);
                 receiver.setReceiveTimeout(2000);
                 receiver.bind(SocketAddress::any(0));
-                uint16_t recvPort = receiver.localAddress().port();
+                uint16_t      recvPort = receiver.localAddress().port();
                 SocketAddress dest(Ipv4Address::loopback(), recvPort);
 
                 RtpSession session;
@@ -264,10 +264,10 @@ TEST_CASE("RtpSession") {
 
                 // Create multiple pre-packed packets
                 RtpPayloadL24 payload(48000, 2);
-                const size_t dataSize = 3000;
+                const size_t  dataSize = 3000;
                 List<uint8_t> data;
                 data.resize(dataSize);
-                for(size_t i = 0; i < dataSize; i++) data[i] = static_cast<uint8_t>(i);
+                for (size_t i = 0; i < dataSize; i++) data[i] = static_cast<uint8_t>(i);
 
                 auto packets = payload.pack(data.data(), dataSize);
                 REQUIRE(packets.size() > 1);
@@ -276,12 +276,12 @@ TEST_CASE("RtpSession") {
                 CHECK(err.isOk());
 
                 // Receive all packets and check marker bits
-                for(size_t i = 0; i < packets.size(); i++) {
+                for (size_t i = 0; i < packets.size(); i++) {
                         uint8_t buf[2048];
                         int64_t n = receiver.readDatagram(buf, sizeof(buf));
                         REQUIRE(n > 12);
                         bool marker = (buf[1] & 0x80) != 0;
-                        if(i == packets.size() - 1) {
+                        if (i == packets.size() - 1) {
                                 CHECK(marker); // Last packet has marker
                         } else {
                                 CHECK_FALSE(marker); // Others don't
@@ -293,7 +293,7 @@ TEST_CASE("RtpSession") {
         SUBCASE("sendPackets not started fails") {
                 RtpSession session;
                 session.setRemote(SocketAddress::localhost(5004));
-                auto pkts = RtpPacket::createList(3, 100);
+                auto  pkts = RtpPacket::createList(3, 100);
                 Error err = session.sendPackets(pkts, 0);
                 CHECK(err == Error::NotOpen);
         }
@@ -317,7 +317,7 @@ TEST_CASE("RtpSession") {
                 CHECK(rxPort.pendingPackets() == 4);
 
                 // Each packet arrives with the expected SSRC and incrementing seqno.
-                for(size_t i = 0; i < 4; i++) {
+                for (size_t i = 0; i < 4; i++) {
                         uint8_t buf[300];
                         ssize_t n = rxPort.receivePacket(buf, sizeof(buf));
                         REQUIRE(n > 12);
@@ -325,8 +325,8 @@ TEST_CASE("RtpSession") {
                         CHECK((buf[1] & 0x7F) == 97);
                         uint16_t seq = (static_cast<uint16_t>(buf[2]) << 8) | buf[3];
                         CHECK(seq == static_cast<uint16_t>(i));
-                        CHECK(buf[8]  == 0xAA);
-                        CHECK(buf[9]  == 0xBB);
+                        CHECK(buf[8] == 0xAA);
+                        CHECK(buf[9] == 0xBB);
                         CHECK(buf[10] == 0xCC);
                         CHECK(buf[11] == 0xDD);
                         // Marker only on last
@@ -352,12 +352,12 @@ TEST_CASE("RtpSession") {
                 session.setRemote(SocketAddress(Ipv4Address::loopback(), 5004));
                 REQUIRE(session.start(&txPort).isOk());
 
-                auto pkts = RtpPacket::createList(8, 200);
+                auto           pkts = RtpPacket::createList(8, 200);
                 const Duration interval = Duration::fromMilliseconds(50);
 
                 TimeStamp start = TimeStamp::now();
-                Error err = session.sendPacketsPaced(pkts, 0, interval, true);
-                int64_t elapsedMs = start.elapsedMilliseconds();
+                Error     err = session.sendPacketsPaced(pkts, 0, interval, true);
+                int64_t   elapsedMs = start.elapsedMilliseconds();
 
                 CHECK(err.isOk());
                 CHECK(rxPort.pendingPackets() == 8);
@@ -388,12 +388,12 @@ TEST_CASE("RtpSession") {
                 session.setRemote(SocketAddress(Ipv4Address::loopback(), 5004));
                 REQUIRE(session.start(&txPort).isOk());
 
-                auto pkts = RtpPacket::createList(1, 200);
+                auto           pkts = RtpPacket::createList(1, 200);
                 const Duration interval = Duration::fromMilliseconds(40);
 
                 TimeStamp start = TimeStamp::now();
-                Error err = session.sendPacketsPaced(pkts, 0, interval, true);
-                int64_t elapsedMs = start.elapsedMilliseconds();
+                Error     err = session.sendPacketsPaced(pkts, 0, interval, true);
+                int64_t   elapsedMs = start.elapsedMilliseconds();
 
                 CHECK(err.isOk());
                 CHECK(rxPort.pendingPackets() == 1);
@@ -427,7 +427,7 @@ TEST_CASE("RtpSession") {
                 receiver.bind(SocketAddress::any(0));
                 {
                         RtpSession session;
-                        Error err = session.start(SocketAddress::any(0));
+                        Error      err = session.start(SocketAddress::any(0));
                         CHECK(err.isOk());
                         CHECK(session.isRunning());
                         // session destructor should call stop()
@@ -438,8 +438,7 @@ TEST_CASE("RtpSession") {
 
         SUBCASE("startReceiving before start fails") {
                 RtpSession session;
-                Error err = session.startReceiving(
-                        [](const RtpPacket &, const SocketAddress &) {});
+                Error      err = session.startReceiving([](const RtpPacket &, const SocketAddress &) {});
                 CHECK(err == Error::NotOpen);
                 CHECK_FALSE(session.isReceiving());
         }
@@ -474,17 +473,16 @@ TEST_CASE("RtpSession") {
                 Error err = rxSession.start(SocketAddress::any(port));
                 REQUIRE(err.isOk());
 
-                std::atomic<int> count{0};
+                std::atomic<int>      count{0};
                 std::atomic<uint32_t> lastTimestamp{0};
-                std::atomic<uint8_t> lastPayloadType{0};
+                std::atomic<uint8_t>  lastPayloadType{0};
                 std::atomic<uint32_t> lastSsrc{0};
-                err = rxSession.startReceiving(
-                        [&](const RtpPacket &pkt, const SocketAddress &) {
-                                lastTimestamp.store(pkt.timestamp());
-                                lastPayloadType.store(pkt.payloadType());
-                                lastSsrc.store(pkt.ssrc());
-                                count.fetch_add(1);
-                        });
+                err = rxSession.startReceiving([&](const RtpPacket &pkt, const SocketAddress &) {
+                        lastTimestamp.store(pkt.timestamp());
+                        lastPayloadType.store(pkt.payloadType());
+                        lastSsrc.store(pkt.ssrc());
+                        count.fetch_add(1);
+                });
                 REQUIRE(err.isOk());
                 CHECK(rxSession.isReceiving());
 
@@ -497,19 +495,18 @@ TEST_CASE("RtpSession") {
                 txSession.setPayloadType(97);
                 txSession.setClockRate(48000);
                 txSession.setSsrc(0xCAFEBABE);
-                txSession.setRemote(SocketAddress(
-                        Ipv4Address::loopback(), port));
+                txSession.setRemote(SocketAddress(Ipv4Address::loopback(), port));
                 REQUIRE(txSession.start(SocketAddress::any(0)).isOk());
 
-                RtpPayloadL16 payload(48000, 2);
+                RtpPayloadL16        payload(48000, 2);
                 std::vector<uint8_t> audio(64, 0);
-                auto packets = payload.pack(audio.data(), audio.size());
+                auto                 packets = payload.pack(audio.data(), audio.size());
                 REQUIRE(!packets.isEmpty());
                 err = txSession.sendPackets(packets, 12345, false);
                 CHECK(err.isOk());
 
                 // Wait up to 500 ms for delivery.
-                for(int i = 0; i < 50 && count.load() == 0; i++) {
+                for (int i = 0; i < 50 && count.load() == 0; i++) {
                         std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
 
@@ -528,8 +525,7 @@ TEST_CASE("RtpSession") {
         SUBCASE("stopReceiving is idempotent") {
                 RtpSession session;
                 REQUIRE(session.start(SocketAddress::any(0)).isOk());
-                REQUIRE(session.startReceiving(
-                        [](const RtpPacket &, const SocketAddress &) {}).isOk());
+                REQUIRE(session.startReceiving([](const RtpPacket &, const SocketAddress &) {}).isOk());
                 session.stopReceiving();
                 CHECK_FALSE(session.isReceiving());
                 session.stopReceiving(); // second call is a no-op
@@ -553,10 +549,8 @@ TEST_CASE("RtpSession") {
         SUBCASE("startReceiving twice returns Busy") {
                 RtpSession session;
                 REQUIRE(session.start(SocketAddress::any(0)).isOk());
-                REQUIRE(session.startReceiving(
-                        [](const RtpPacket &, const SocketAddress &) {}).isOk());
-                Error err = session.startReceiving(
-                        [](const RtpPacket &, const SocketAddress &) {});
+                REQUIRE(session.startReceiving([](const RtpPacket &, const SocketAddress &) {}).isOk());
+                Error err = session.startReceiving([](const RtpPacket &, const SocketAddress &) {});
                 CHECK(err == Error::Busy);
                 session.stopReceiving();
                 session.stop();

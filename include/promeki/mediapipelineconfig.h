@@ -50,7 +50,7 @@ PROMEKI_NAMESPACE_BEGIN
  * across threads.
  */
 class MediaPipelineConfig {
-        PROMEKI_SHARED_FINAL(MediaPipelineConfig)
+                PROMEKI_SHARED_FINAL(MediaPipelineConfig)
         public:
                 /** @brief Shared pointer alias. */
                 using Ptr = SharedPtr<MediaPipelineConfig>;
@@ -74,22 +74,22 @@ class MediaPipelineConfig {
                  * backend as @ref MediaConfig::Filename.
                  */
                 struct Stage {
-                        /** @brief Unique stage identifier used by routes and error messages. */
-                        String          name;
-                        /** @brief Registered @ref MediaIO backend name, or empty for a file stage. */
-                        String          type;
-                        /** @brief Filesystem path for file-based stages. */
-                        String          path;
-                        /** @brief Direction: @ref MediaIO::Source, @c Sink, or @c Transform. */
-                        MediaIO::Mode   mode = MediaIO::NotOpen;
-                        /** @brief Per-stage configuration. */
-                        MediaConfig     config;
-                        /** @brief Per-stage metadata overrides (empty == accept backend defaults). */
-                        Metadata        metadata;
+                                /** @brief Unique stage identifier used by routes and error messages. */
+                                String name;
+                                /** @brief Registered @ref MediaIO backend name, or empty for a file stage. */
+                                String type;
+                                /** @brief Filesystem path for file-based stages. */
+                                String path;
+                                /** @brief Direction: @ref MediaIO::Source, @c Sink, or @c Transform. */
+                                MediaIO::Mode mode = MediaIO::NotOpen;
+                                /** @brief Per-stage configuration. */
+                                MediaConfig config;
+                                /** @brief Per-stage metadata overrides (empty == accept backend defaults). */
+                                Metadata metadata;
 
-                        /** @brief True if the two Stage records have identical contents. */
-                        bool operator==(const Stage &other) const;
-                        bool operator!=(const Stage &other) const { return !(*this == other); }
+                                /** @brief True if the two Stage records have identical contents. */
+                                bool operator==(const Stage &other) const;
+                                bool operator!=(const Stage &other) const { return !(*this == other); }
                 };
 
                 /**
@@ -106,22 +106,20 @@ class MediaPipelineConfig {
                  * multi-track stages and ignored today.
                  */
                 struct Route {
-                        /** @brief Source stage name. */
-                        String from;
-                        /** @brief Sink stage name. */
-                        String to;
-                        /** @brief Reserved — future sub-stream selector on the source side. */
-                        String fromTrack;
-                        /** @brief Reserved — future sub-stream selector on the sink side. */
-                        String toTrack;
+                                /** @brief Source stage name. */
+                                String from;
+                                /** @brief Sink stage name. */
+                                String to;
+                                /** @brief Reserved — future sub-stream selector on the source side. */
+                                String fromTrack;
+                                /** @brief Reserved — future sub-stream selector on the sink side. */
+                                String toTrack;
 
-                        bool operator==(const Route &other) const {
-                                return from == other.from
-                                    && to == other.to
-                                    && fromTrack == other.fromTrack
-                                    && toTrack == other.toTrack;
-                        }
-                        bool operator!=(const Route &other) const { return !(*this == other); }
+                                bool operator==(const Route &other) const {
+                                        return from == other.from && to == other.to && fromTrack == other.fromTrack &&
+                                               toTrack == other.toTrack;
+                                }
+                                bool operator!=(const Route &other) const { return !(*this == other); }
                 };
 
                 /** @brief Ordered list of stages. */
@@ -255,8 +253,7 @@ class MediaPipelineConfig {
                  * @return The resolved config on success, or an empty
                  *         config when planning failed.
                  */
-                MediaPipelineConfig resolved(Error *err = nullptr,
-                                             String *diagnostic = nullptr) const;
+                MediaPipelineConfig resolved(Error *err = nullptr, String *diagnostic = nullptr) const;
 
                 /**
                  * @brief Validates the config for use by @ref MediaPipeline::build.
@@ -359,10 +356,10 @@ class MediaPipelineConfig {
                 static MediaIO::Mode modeFromName(const String &name, Error *err = nullptr);
 
         private:
-                StageList       _stages;
-                RouteList       _routes;
-                Metadata        _pipelineMetadata;
-                FrameCount      _frameCount;
+                StageList  _stages;
+                RouteList  _routes;
+                Metadata   _pipelineMetadata;
+                FrameCount _frameCount;
 };
 
 // ============================================================================

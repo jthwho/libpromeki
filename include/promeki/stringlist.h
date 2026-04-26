@@ -53,7 +53,7 @@ class StringList : public List<String> {
                  */
                 StringList(size_t ct, const char **list) {
                         reserve(ct);
-                        for(size_t i = 0; i < ct; ++i) pushToBack(list[i]);
+                        for (size_t i = 0; i < ct; ++i) pushToBack(list[i]);
                 }
 
                 /**
@@ -61,11 +61,11 @@ class StringList : public List<String> {
                  * @param delimiter The separator to place between each string.
                  * @return A single String with all elements joined.
                  */
-                String join(const String& delimiter) const {
+                String join(const String &delimiter) const {
                         String result;
-                        for(auto it = constBegin(); it != constEnd(); ++it) {
+                        for (auto it = constBegin(); it != constEnd(); ++it) {
                                 result += *it;
-                                if(it + 1 != constEnd()) result += delimiter;
+                                if (it + 1 != constEnd()) result += delimiter;
                         }
                         return result;
                 }
@@ -77,13 +77,11 @@ class StringList : public List<String> {
                  */
                 StringList filter(TestFunc func) const {
                         StringList result;
-                        for(const auto &item : *this) {
-                                if(func(item)) result.pushToBack(item);
+                        for (const auto &item : *this) {
+                                if (func(item)) result.pushToBack(item);
                         }
                         return result;
                 }
-
 };
 
 PROMEKI_NAMESPACE_END
-

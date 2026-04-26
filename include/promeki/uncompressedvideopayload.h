@@ -78,15 +78,12 @@ class UncompressedVideoPayload : public VideoPayload {
                  *
                  * Plane list left empty — attach via @ref setData.
                  */
-                explicit UncompressedVideoPayload(const ImageDesc &desc) :
-                        VideoPayload(desc) { }
+                explicit UncompressedVideoPayload(const ImageDesc &desc) : VideoPayload(desc) {}
 
                 /**
                  * @brief Constructs an uncompressed payload with a descriptor and planes.
                  */
-                UncompressedVideoPayload(const ImageDesc &desc,
-                                         const BufferView &data) :
-                        VideoPayload(desc, data) { }
+                UncompressedVideoPayload(const ImageDesc &desc, const BufferView &data) : VideoPayload(desc, data) {}
 
                 /**
                  * @brief Always returns @c false — this class only models
@@ -129,13 +126,10 @@ class UncompressedVideoPayload : public VideoPayload {
                  * @return A fresh uncompressed payload in @p dstPd, or
                  *         a null Ptr on failure.
                  */
-                Ptr convert(const PixelFormat &dstPd,
-                            const Metadata &metadata,
-                            const MediaConfig &config) const;
+                Ptr convert(const PixelFormat &dstPd, const Metadata &metadata, const MediaConfig &config) const;
 
                 /** @copybrief convert(const PixelFormat &, const Metadata &, const MediaConfig &) const */
-                Ptr convert(const PixelFormat &dstPd,
-                            const Metadata &metadata) const;
+                Ptr convert(const PixelFormat &dstPd, const Metadata &metadata) const;
 
                 /**
                  * @brief Allocates a fresh payload with backing buffers
@@ -156,11 +150,9 @@ class UncompressedVideoPayload : public VideoPayload {
                 static Ptr allocate(const ImageDesc &desc);
 
                 /** @brief Stable FourCC for DataStream serialisation. */
-                static constexpr FourCC kSubclassFourCC{'U','V','d','p'};
+                static constexpr FourCC kSubclassFourCC{'U', 'V', 'd', 'p'};
 
-                uint32_t subclassFourCC() const override {
-                        return kSubclassFourCC.value();
-                }
+                uint32_t subclassFourCC() const override { return kSubclassFourCC.value(); }
 
                 /** @copydoc MediaPayload::serialisePayload */
                 void serialisePayload(DataStream &s) const override;

@@ -26,29 +26,29 @@ PROMEKI_NAMESPACE_BEGIN
 namespace {
 
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
-int schedulePolicyToNative(SchedulePolicy policy) {
-        switch(policy) {
-                case SchedulePolicy::RoundRobin: return SCHED_RR;
-                case SchedulePolicy::Fifo:       return SCHED_FIFO;
+        int schedulePolicyToNative(SchedulePolicy policy) {
+                switch (policy) {
+                        case SchedulePolicy::RoundRobin: return SCHED_RR;
+                        case SchedulePolicy::Fifo: return SCHED_FIFO;
 #if defined(PROMEKI_PLATFORM_LINUX)
-                case SchedulePolicy::Batch:      return SCHED_BATCH;
-                case SchedulePolicy::Idle:       return SCHED_IDLE;
+                        case SchedulePolicy::Batch: return SCHED_BATCH;
+                        case SchedulePolicy::Idle: return SCHED_IDLE;
 #endif
-                default:                         return SCHED_OTHER;
+                        default: return SCHED_OTHER;
+                }
         }
-}
 
-SchedulePolicy nativeToSchedulePolicy(int policy) {
-        switch(policy) {
-                case SCHED_RR:    return SchedulePolicy::RoundRobin;
-                case SCHED_FIFO:  return SchedulePolicy::Fifo;
+        SchedulePolicy nativeToSchedulePolicy(int policy) {
+                switch (policy) {
+                        case SCHED_RR: return SchedulePolicy::RoundRobin;
+                        case SCHED_FIFO: return SchedulePolicy::Fifo;
 #if defined(PROMEKI_PLATFORM_LINUX)
-                case SCHED_BATCH: return SchedulePolicy::Batch;
-                case SCHED_IDLE:  return SchedulePolicy::Idle;
+                        case SCHED_BATCH: return SchedulePolicy::Batch;
+                        case SCHED_IDLE: return SchedulePolicy::Idle;
 #endif
-                default:          return SchedulePolicy::Default;
+                        default: return SchedulePolicy::Default;
+                }
         }
-}
 #endif
 
 } // anonymous namespace
@@ -70,14 +70,14 @@ uint64_t Thread::currentNativeId() {
 }
 
 void Thread::setCurrentThreadName(const String &name) {
-        if(name.isEmpty()) return;
+        if (name.isEmpty()) return;
 #if defined(PROMEKI_PLATFORM_LINUX)
         pthread_setname_np(pthread_self(), name.cstr());
 #elif defined(PROMEKI_PLATFORM_APPLE)
         pthread_setname_np(name.cstr());
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         int len = MultiByteToWideChar(CP_UTF8, 0, name.cstr(), -1, nullptr, 0);
-        if(len > 0) {
+        if (len > 0) {
                 std::wstring wide(len, L'\0');
                 MultiByteToWideChar(CP_UTF8, 0, name.cstr(), -1, wide.data(), len);
                 SetThreadDescription(GetCurrentThread(), wide.c_str());
@@ -136,30 +136,32 @@ Thread::Thread(ObjectBase *parent) : ObjectBase(parent) {
 }
 
 Thread::~Thread() {
-        if(!_adopted && isJoinable()) {
+        if (!_adopted && isJoinable()) {
                 quit();
                 joinThread();
         }
-        if(_currentThread == this) _currentThread = nullptr;
+        if (_currentThread == this) _currentThread = nullptr;
         return;
 }
 
 void Thread::start(size_t stackSize) {
-        if(_adopted) return;
-        if(_running.value()) return;
+        if (_adopted) return;
+        if (_running.value()) return;
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
-        if(stackSize > 0) {
+        if (stackSize > 0) {
                 pthread_attr_t attr;
                 pthread_attr_init(&attr);
                 pthread_attr_setstacksize(&attr, stackSize);
                 pthread_t handle;
-                int ret = pthread_create(&handle, &attr,
-                        [](void *arg) -> void * {
+                int       ret = pthread_create(
+                        &handle, &attr,
+                        [](void *arg) -> void       *{
                                 static_cast<Thread *>(arg)->threadEntry();
                                 return nullptr;
-                        }, this);
+                        },
+                        this);
                 pthread_attr_destroy(&attr);
-                if(ret != 0) return;
+                if (ret != 0) return;
                 _pthreadHandle = handle;
                 _usesPthread = true;
         } else {
@@ -177,16 +179,15 @@ void Thread::start(size_t stackSize) {
 }
 
 Error Thread::wait(unsigned int timeoutMs) {
-        if(_adopted) return Error::Invalid;
-        if(!isJoinable()) return Error::Ok;
-        if(timeoutMs == 0) {
+        if (_adopted) return Error::Invalid;
+        if (!isJoinable()) return Error::Ok;
+        if (timeoutMs == 0) {
                 joinThread();
         } else {
                 _mutex.lock();
-                Error err = _finishedCv.wait(_mutex,
-                        [this] { return _finished; }, timeoutMs);
+                Error err = _finishedCv.wait(_mutex, [this] { return _finished; }, timeoutMs);
                 _mutex.unlock();
-                if(err != Error::Ok) return Error::Timeout;
+                if (err != Error::Ok) return Error::Timeout;
                 joinThread();
         }
         // Reset state so the Thread object could be started again
@@ -197,12 +198,12 @@ Error Thread::wait(unsigned int timeoutMs) {
 }
 
 EventLoop *Thread::threadEventLoop() const {
-        if(_adopted) {
+        if (_adopted) {
                 // Cache the EventLoop when called from the adopted thread
                 // so that cross-thread callers see the correct pointer.
-                if(_currentThread == this) {
+                if (_currentThread == this) {
                         EventLoop *loop = EventLoop::current();
-                        if(loop != nullptr) {
+                        if (loop != nullptr) {
                                 const_cast<Thread *>(this)->_threadLoop = loop;
                         }
                 }
@@ -213,14 +214,14 @@ EventLoop *Thread::threadEventLoop() const {
 
 void Thread::quit(int returnCode) {
         EventLoop *loop = threadEventLoop();
-        if(loop != nullptr) {
+        if (loop != nullptr) {
                 loop->quit(returnCode);
         }
         return;
 }
 
 void Thread::run() {
-        if(_threadLoop != nullptr) {
+        if (_threadLoop != nullptr) {
                 _threadLoop->exec();
         }
         return;
@@ -231,13 +232,13 @@ unsigned int Thread::idealThreadCount() {
 }
 
 bool Thread::isJoinable() const {
-        if(_usesPthread) return _running.value() || _finished;
+        if (_usesPthread) return _running.value() || _finished;
         return _thread.joinable();
 }
 
 void Thread::joinThread() {
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
-        if(_usesPthread) {
+        if (_usesPthread) {
                 pthread_join(_pthreadHandle, nullptr);
                 return;
         }
@@ -247,11 +248,11 @@ void Thread::joinThread() {
 
 Thread::NativeHandle Thread::nativeHandle() const {
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
-        if(_adopted) return pthread_self();
-        if(_usesPthread) return _pthreadHandle;
+        if (_adopted) return pthread_self();
+        if (_usesPthread) return _pthreadHandle;
         return const_cast<std::thread &>(_thread).native_handle();
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
-        if(_adopted) return GetCurrentThread();
+        if (_adopted) return GetCurrentThread();
         return const_cast<std::thread &>(_thread).native_handle();
 #else
         return {};
@@ -259,11 +260,11 @@ Thread::NativeHandle Thread::nativeHandle() const {
 }
 
 SchedulePolicy Thread::schedulePolicy() const {
-        if(!_running.value()) return SchedulePolicy::Default;
+        if (!_running.value()) return SchedulePolicy::Default;
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
-        int policy = 0;
+        int                policy = 0;
         struct sched_param param;
-        if(pthread_getschedparam(nativeHandle(), &policy, &param) != 0) {
+        if (pthread_getschedparam(nativeHandle(), &policy, &param) != 0) {
                 return SchedulePolicy::Default;
         }
         return nativeToSchedulePolicy(policy);
@@ -273,11 +274,11 @@ SchedulePolicy Thread::schedulePolicy() const {
 }
 
 int Thread::priority() const {
-        if(!_running.value()) return 0;
+        if (!_running.value()) return 0;
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
-        int policy = 0;
+        int                policy = 0;
         struct sched_param param;
-        if(pthread_getschedparam(nativeHandle(), &policy, &param) != 0) {
+        if (pthread_getschedparam(nativeHandle(), &policy, &param) != 0) {
                 return 0;
         }
         return param.sched_priority;
@@ -298,7 +299,7 @@ void Thread::setName(const String &n) {
                 Mutex::Locker locker(_mutex);
                 _name = n;
         }
-        if(_running.value()) {
+        if (_running.value()) {
                 applyOsName();
         }
         return;
@@ -306,13 +307,13 @@ void Thread::setName(const String &n) {
 
 void Thread::applyOsName() {
         Mutex::Locker locker(_mutex);
-        if(_name.isEmpty()) return;
+        if (_name.isEmpty()) return;
         // When called from the thread itself (always the case during
         // threadEntry() startup), delegate to setCurrentThreadName()
         // which uses pthread_self() — safe even before the parent has
         // finished storing _thread / _pthreadHandle.
         const bool fromSelf = (_currentThread == this);
-        if(fromSelf) {
+        if (fromSelf) {
                 setCurrentThreadName(_name);
                 return;
         }
@@ -324,8 +325,8 @@ void Thread::applyOsName() {
         // Cross-thread naming is not supported.
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         HANDLE target = nativeHandle();
-        int len = MultiByteToWideChar(CP_UTF8, 0, _name.cstr(), -1, nullptr, 0);
-        if(len > 0) {
+        int    len = MultiByteToWideChar(CP_UTF8, 0, _name.cstr(), -1, nullptr, 0);
+        if (len > 0) {
                 std::wstring wide(len, L'\0');
                 MultiByteToWideChar(CP_UTF8, 0, _name.cstr(), -1, wide.data(), len);
                 SetThreadDescription(target, wide.c_str());
@@ -336,14 +337,14 @@ void Thread::applyOsName() {
 
 Set<int> Thread::affinity() const {
         Set<int> result;
-        if(!_running.value()) return result;
+        if (!_running.value()) return result;
 #if defined(PROMEKI_PLATFORM_LINUX)
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
-        if(pthread_getaffinity_np(nativeHandle(), sizeof(cpuset), &cpuset) == 0) {
+        if (pthread_getaffinity_np(nativeHandle(), sizeof(cpuset), &cpuset) == 0) {
                 int ncpus = static_cast<int>(CPU_SETSIZE);
-                for(int i = 0; i < ncpus; i++) {
-                        if(CPU_ISSET(i, &cpuset)) result.insert(i);
+                for (int i = 0; i < ncpus; i++) {
+                        if (CPU_ISSET(i, &cpuset)) result.insert(i);
                 }
         }
 #elif defined(PROMEKI_PLATFORM_APPLE)
@@ -354,16 +355,16 @@ Set<int> Thread::affinity() const {
 }
 
 Error Thread::setAffinity(const Set<int> &cpus) {
-        if(!_running.value()) return Error::Invalid;
+        if (!_running.value()) return Error::Invalid;
 #if defined(PROMEKI_PLATFORM_LINUX)
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
-        if(cpus.isEmpty()) {
+        if (cpus.isEmpty()) {
                 // Empty set: allow all CPUs
                 int ncpus = static_cast<int>(std::thread::hardware_concurrency());
-                for(int i = 0; i < ncpus; i++) CPU_SET(i, &cpuset);
+                for (int i = 0; i < ncpus; i++) CPU_SET(i, &cpuset);
         } else {
-                for(int cpu : cpus) CPU_SET(cpu, &cpuset);
+                for (int cpu : cpus) CPU_SET(cpu, &cpuset);
         }
         int ret = pthread_setaffinity_np(nativeHandle(), sizeof(cpuset), &cpuset);
         return ret == 0 ? Error::Ok : Error::LibraryFailure;
@@ -383,20 +384,15 @@ Error Thread::setAffinity(const Set<int> &cpus) {
 }
 
 Error Thread::setPriority(int prio, SchedulePolicy policy) {
-        if(!_running.value()) return Error::Invalid;
+        if (!_running.value()) return Error::Invalid;
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
         struct sched_param param;
         param.sched_priority = prio;
-        int ret = pthread_setschedparam(
-                nativeHandle(),
-                schedulePolicyToNative(policy),
-                &param
-        );
+        int ret = pthread_setschedparam(nativeHandle(), schedulePolicyToNative(policy), &param);
         return ret == 0 ? Error::Ok : Error::LibraryFailure;
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         (void)policy;
-        return SetThreadPriority(nativeHandle(), prio)
-                ? Error::Ok : Error::LibraryFailure;
+        return SetThreadPriority(nativeHandle(), prio) ? Error::Ok : Error::LibraryFailure;
 #else
         (void)prio;
         (void)policy;

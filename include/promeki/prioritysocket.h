@@ -45,15 +45,15 @@ PROMEKI_NAMESPACE_BEGIN
  * must only be used from the thread that created it.
  */
 class PrioritySocket : public UdpSocket {
-        PROMEKI_OBJECT(PrioritySocket, UdpSocket)
+                PROMEKI_OBJECT(PrioritySocket, UdpSocket)
         public:
                 /** @brief QoS priority levels for network traffic. */
                 enum Priority {
-                        BestEffort     = 0,     ///< Default, no priority (DSCP 0, CS0).
-                        Background     = 8,     ///< Low-priority background traffic (DSCP 8, CS1).
-                        Video          = 34,    ///< Broadcast video (DSCP 34, AF41).
-                        Voice          = 46,    ///< Real-time audio (DSCP 46, EF).
-                        NetworkControl = 48     ///< Network control / PTP (DSCP 48, CS6).
+                        BestEffort = 0,     ///< Default, no priority (DSCP 0, CS0).
+                        Background = 8,     ///< Low-priority background traffic (DSCP 8, CS1).
+                        Video = 34,         ///< Broadcast video (DSCP 34, AF41).
+                        Voice = 46,         ///< Real-time audio (DSCP 46, EF).
+                        NetworkControl = 48 ///< Network control / PTP (DSCP 48, CS6).
                 };
 
                 /**

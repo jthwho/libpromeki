@@ -78,7 +78,7 @@ class WebSocket;
  * @endcode
  */
 class HttpServer : public ObjectBase {
-        PROMEKI_OBJECT(HttpServer, ObjectBase)
+                PROMEKI_OBJECT(HttpServer, ObjectBase)
         public:
                 /**
                  * @brief Constructs an HTTP server bound to the current EventLoop.
@@ -132,14 +132,10 @@ class HttpServer : public ObjectBase {
                 const HttpRouter &router() const { return _router; }
 
                 /** @brief Convenience forwarding to @ref HttpRouter::route. */
-                void route(const String &pattern,
-                           const HttpMethod &method,
-                           HttpHandlerFunc handler);
+                void route(const String &pattern, const HttpMethod &method, HttpHandlerFunc handler);
 
                 /** @copydoc route */
-                void route(const String &pattern,
-                           const HttpMethod &method,
-                           HttpHandler::Ptr handler);
+                void route(const String &pattern, const HttpMethod &method, HttpHandler::Ptr handler);
 
                 /** @brief Convenience forwarding to @ref HttpRouter::any. */
                 void any(const String &pattern, HttpHandlerFunc handler);
@@ -164,8 +160,7 @@ class HttpServer : public ObjectBase {
                  * re-parenting or storing it somewhere that outlives
                  * the connection.
                  */
-                using WebSocketHandler =
-                        std::function<void(WebSocket *socket, const HttpRequest &request)>;
+                using WebSocketHandler = std::function<void(WebSocket *socket, const HttpRequest &request)>;
 
                 /**
                  * @brief Registers a route that upgrades to WebSocket on @p pattern.
@@ -214,9 +209,7 @@ class HttpServer : public ObjectBase {
                  * @param readOnly  Skip mutating routes when true.
                  */
                 template <CompiledString N>
-                void exposeDatabase(const String &mountPath,
-                                    VariantDatabase<N> &db,
-                                    bool readOnly = false);
+                void exposeDatabase(const String &mountPath, VariantDatabase<N> &db, bool readOnly = false);
 
                 /**
                  * @brief Mounts a read-only HTTP view over a @ref VariantLookup target.
@@ -234,8 +227,7 @@ class HttpServer : public ObjectBase {
                  * @param mountPath Route prefix (no trailing slash).
                  * @param target   The instance to resolve against.
                  */
-                template <typename T>
-                void exposeLookup(const String &mountPath, T &target);
+                template <typename T> void exposeLookup(const String &mountPath, T &target);
 
                 // ----------------------------------------------------
                 // Per-connection tuning (applied to every new connection)
@@ -289,16 +281,16 @@ class HttpServer : public ObjectBase {
                 void dispatchRequest(HttpRequest &request, HttpResponse &response);
                 void reapClosedConnection(HttpConnection *conn);
 
-                EventLoop                       *_loop = nullptr;
-                UniquePtr<TcpServer>            _tcpServer;
-                int                             _acceptHandle = -1;
-                HttpRouter                      _router;
-                HttpConnection::List            _connections;
+                EventLoop           *_loop = nullptr;
+                UniquePtr<TcpServer> _tcpServer;
+                int                  _acceptHandle = -1;
+                HttpRouter           _router;
+                HttpConnection::List _connections;
 
-                unsigned int                    _idleTimeoutMs = HttpConnection::DefaultIdleTimeoutMs;
-                int64_t                         _maxBodyBytes  = HttpConnection::DefaultMaxBodyBytes;
+                unsigned int _idleTimeoutMs = HttpConnection::DefaultIdleTimeoutMs;
+                int64_t      _maxBodyBytes = HttpConnection::DefaultMaxBodyBytes;
 #if PROMEKI_ENABLE_TLS
-                SslContext::Ptr                 _sslContext;
+                SslContext::Ptr _sslContext;
 #endif
 
                 // Helpers for the reflection adapters; non-template
@@ -313,125 +305,108 @@ class HttpServer : public ObjectBase {
 // ============================================================
 
 template <CompiledString N>
-void HttpServer::exposeDatabase(const String &mountPath,
-                                VariantDatabase<N> &db,
-                                bool readOnly) {
+void HttpServer::exposeDatabase(const String &mountPath, VariantDatabase<N> &db, bool readOnly) {
         using DB = VariantDatabase<N>;
         using ID = typename DB::ID;
 
         // Full snapshot.
-        route(mountPath, HttpMethod::Get,
-                [&db](const HttpRequest &, HttpResponse &res) {
-                        res.setJson(db.toJson());
-                });
+        route(mountPath, HttpMethod::Get, [&db](const HttpRequest &, HttpResponse &res) { res.setJson(db.toJson()); });
 
         // Schema introspection.  Keys not yet present in the
         // database still appear here when a spec was declared at
         // static-init time.
         const String schemaPath = mountPath + "/_schema";
-        route(schemaPath, HttpMethod::Get,
-                [](const HttpRequest &, HttpResponse &res) {
-                        JsonObject out;
-                        const auto specs = DB::registeredSpecs();
-                        for(auto it = specs.cbegin(); it != specs.cend(); ++it) {
-                                const String name = ID::fromId(it->first).name();
-                                out.set(name, HttpServer::specToJson(it->second));
-                        }
-                        res.setJson(out);
-                });
+        route(schemaPath, HttpMethod::Get, [](const HttpRequest &, HttpResponse &res) {
+                JsonObject out;
+                const auto specs = DB::registeredSpecs();
+                for (auto it = specs.cbegin(); it != specs.cend(); ++it) {
+                        const String name = ID::fromId(it->first).name();
+                        out.set(name, HttpServer::specToJson(it->second));
+                }
+                res.setJson(out);
+        });
 
         // Per-key get.
         const String keyPath = mountPath + "/{key}";
-        route(keyPath, HttpMethod::Get,
-                [&db](const HttpRequest &req, HttpResponse &res) {
-                        const String name = req.pathParam("key");
-                        ID id = ID::find(name);
-                        if(!id.isValid() || !db.contains(id)) {
-                                res = HttpResponse::notFound(
-                                        String("Unknown key: ") + name);
-                                return;
-                        }
-                        JsonObject out;
-                        out.setFromVariant(name, db.get(id));
-                        const VariantSpec *sp = DB::spec(id);
-                        if(sp != nullptr) {
-                                out.set("_spec", HttpServer::specToJson(*sp));
-                        }
-                        res.setJson(out);
-                });
+        route(keyPath, HttpMethod::Get, [&db](const HttpRequest &req, HttpResponse &res) {
+                const String name = req.pathParam("key");
+                ID           id = ID::find(name);
+                if (!id.isValid() || !db.contains(id)) {
+                        res = HttpResponse::notFound(String("Unknown key: ") + name);
+                        return;
+                }
+                JsonObject out;
+                out.setFromVariant(name, db.get(id));
+                const VariantSpec *sp = DB::spec(id);
+                if (sp != nullptr) {
+                        out.set("_spec", HttpServer::specToJson(*sp));
+                }
+                res.setJson(out);
+        });
 
-        if(readOnly) return;
+        if (readOnly) return;
 
         // Per-key set.
-        route(keyPath, HttpMethod::Put,
-                [&db](const HttpRequest &req, HttpResponse &res) {
-                        const String name = req.pathParam("key");
-                        Error perr;
-                        JsonObject body = req.bodyAsJson(&perr);
-                        if(perr.isError() || !body.contains("value")) {
-                                res = HttpResponse::badRequest(
-                                        "Body must be JSON object with a \"value\" field");
-                                return;
-                        }
-                        // Snapshot the value via JsonObject::forEach,
-                        // which converts the underlying nlohmann json
-                        // into a typed @ref Variant — that's the path
-                        // that setFromJson knows how to coerce
-                        // against the registered spec.
-                        ID id(name);
-                        Variant captured;
-                        body.forEach([&](const String &k, const Variant &val) {
-                                if(k == "value") captured = val;
-                        });
-                        Error serr = db.setFromJson(id, captured);
-                        if(serr.isError()) {
-                                res = HttpResponse::badRequest(
-                                        String("Validation failed for key '") +
-                                        name + "': " + serr.desc());
-                                return;
-                        }
-                        JsonObject out;
-                        out.setFromVariant(name, db.get(id));
-                        res.setJson(out);
+        route(keyPath, HttpMethod::Put, [&db](const HttpRequest &req, HttpResponse &res) {
+                const String name = req.pathParam("key");
+                Error        perr;
+                JsonObject   body = req.bodyAsJson(&perr);
+                if (perr.isError() || !body.contains("value")) {
+                        res = HttpResponse::badRequest("Body must be JSON object with a \"value\" field");
+                        return;
+                }
+                // Snapshot the value via JsonObject::forEach,
+                // which converts the underlying nlohmann json
+                // into a typed @ref Variant — that's the path
+                // that setFromJson knows how to coerce
+                // against the registered spec.
+                ID      id(name);
+                Variant captured;
+                body.forEach([&](const String &k, const Variant &val) {
+                        if (k == "value") captured = val;
                 });
+                Error serr = db.setFromJson(id, captured);
+                if (serr.isError()) {
+                        res = HttpResponse::badRequest(String("Validation failed for key '") + name +
+                                                       "': " + serr.desc());
+                        return;
+                }
+                JsonObject out;
+                out.setFromVariant(name, db.get(id));
+                res.setJson(out);
+        });
 
         // Per-key delete.
-        route(keyPath, HttpMethod::Delete,
-                [&db](const HttpRequest &req, HttpResponse &res) {
-                        const String name = req.pathParam("key");
-                        ID id = ID::find(name);
-                        if(!id.isValid() || !db.contains(id)) {
-                                res = HttpResponse::notFound(
-                                        String("Unknown key: ") + name);
-                                return;
-                        }
-                        db.remove(id);
-                        res = HttpResponse::noContent();
-                });
+        route(keyPath, HttpMethod::Delete, [&db](const HttpRequest &req, HttpResponse &res) {
+                const String name = req.pathParam("key");
+                ID           id = ID::find(name);
+                if (!id.isValid() || !db.contains(id)) {
+                        res = HttpResponse::notFound(String("Unknown key: ") + name);
+                        return;
+                }
+                db.remove(id);
+                res = HttpResponse::noContent();
+        });
 }
 
-template <typename T>
-void HttpServer::exposeLookup(const String &mountPath, T &target) {
+template <typename T> void HttpServer::exposeLookup(const String &mountPath, T &target) {
         const String greedy = mountPath + "/{path:*}";
-        route(greedy, HttpMethod::Get,
-                [&target](const HttpRequest &req, HttpResponse &res) {
-                        const String key =
-                                HttpServer::lookupPathToKey(req.pathParam("path"));
-                        if(key.isEmpty()) {
-                                res = HttpResponse::badRequest("Empty lookup key");
-                                return;
-                        }
-                        Error err;
-                        auto v = VariantLookup<T>::resolve(target, key, &err);
-                        if(!v.has_value() || err.isError()) {
-                                res = HttpResponse::notFound(
-                                        String("Unknown lookup: ") + key);
-                                return;
-                        }
-                        JsonObject out;
-                        out.setFromVariant("value", *v);
-                        res.setJson(out);
-                });
+        route(greedy, HttpMethod::Get, [&target](const HttpRequest &req, HttpResponse &res) {
+                const String key = HttpServer::lookupPathToKey(req.pathParam("path"));
+                if (key.isEmpty()) {
+                        res = HttpResponse::badRequest("Empty lookup key");
+                        return;
+                }
+                Error err;
+                auto  v = VariantLookup<T>::resolve(target, key, &err);
+                if (!v.has_value() || err.isError()) {
+                        res = HttpResponse::notFound(String("Unknown lookup: ") + key);
+                        return;
+                }
+                JsonObject out;
+                out.setFromVariant("value", *v);
+                res.setJson(out);
+        });
 }
 
 PROMEKI_NAMESPACE_END

@@ -44,7 +44,7 @@ TEST_CASE("Set: contains") {
 
 TEST_CASE("Set: find") {
         Set<int> s = {5, 10, 15};
-        auto it = s.find(10);
+        auto     it = s.find(10);
         CHECK(it != s.end());
         CHECK(*it == 10);
         CHECK(s.find(99) == s.end());
@@ -60,7 +60,7 @@ TEST_CASE("Set: remove by value") {
 
 TEST_CASE("Set: remove by iterator") {
         Set<int> s = {10, 20, 30};
-        auto it = s.find(20);
+        auto     it = s.find(20);
         s.remove(it);
         CHECK_FALSE(s.contains(20));
         CHECK(s.size() == 2);
@@ -75,7 +75,7 @@ TEST_CASE("Set: clear") {
 
 TEST_CASE("Set: toList") {
         Set<int> s = {3, 1, 2};
-        auto l = s.toList();
+        auto     l = s.toList();
         CHECK(l.size() == 3);
         // std::set is ordered, so elements come out sorted
         CHECK(l[0] == 1);
@@ -85,7 +85,7 @@ TEST_CASE("Set: toList") {
 
 TEST_CASE("Set: forEach") {
         Set<int> s = {1, 2, 3};
-        int sum = 0;
+        int      sum = 0;
         s.forEach([&](int v) { sum += v; });
         CHECK(sum == 6);
 }
@@ -116,7 +116,7 @@ TEST_CASE("Set: equality") {
 
 TEST_CASE("Set: lowerBound and upperBound") {
         Set<int> s = {10, 20, 30, 40, 50};
-        auto lb = s.lowerBound(25);
+        auto     lb = s.lowerBound(25);
         CHECK(*lb == 30);
         auto ub = s.upperBound(30);
         CHECK(*ub == 40);
@@ -131,9 +131,9 @@ TEST_CASE("Set: duplicate insert ignored") {
 }
 
 TEST_CASE("Set: range-based for") {
-        Set<int> s = {3, 1, 2};
+        Set<int>  s = {3, 1, 2};
         List<int> collected;
-        for(const auto &v : s) {
+        for (const auto &v : s) {
                 collected.pushToBack(v);
         }
         CHECK(collected.size() == 3);
@@ -143,9 +143,9 @@ TEST_CASE("Set: range-based for") {
 }
 
 TEST_CASE("Set: reverse iterators") {
-        Set<int> s = {1, 2, 3};
+        Set<int>  s = {1, 2, 3};
         List<int> rev;
-        for(auto it = s.rbegin(); it != s.rend(); ++it) {
+        for (auto it = s.rbegin(); it != s.rend(); ++it) {
                 rev.pushToBack(*it);
         }
         CHECK(rev[0] == 3);
@@ -154,9 +154,9 @@ TEST_CASE("Set: reverse iterators") {
 }
 
 TEST_CASE("Set: revBegin/revEnd aliases") {
-        Set<int> s = {1, 2, 3};
+        Set<int>  s = {1, 2, 3};
         List<int> rev;
-        for(auto it = s.revBegin(); it != s.revEnd(); ++it) {
+        for (auto it = s.revBegin(); it != s.revEnd(); ++it) {
                 rev.pushToBack(*it);
         }
         CHECK(rev[0] == 3);
@@ -165,8 +165,8 @@ TEST_CASE("Set: revBegin/revEnd aliases") {
 
 TEST_CASE("Set: constRevBegin/constRevEnd") {
         const Set<int> s = {1, 2, 3};
-        List<int> rev;
-        for(auto it = s.constRevBegin(); it != s.constRevEnd(); ++it) {
+        List<int>      rev;
+        for (auto it = s.constRevBegin(); it != s.constRevEnd(); ++it) {
                 rev.pushToBack(*it);
         }
         CHECK(rev[0] == 3);
@@ -186,7 +186,7 @@ TEST_CASE("Set: swap") {
 TEST_CASE("Set: unite") {
         Set<int> a = {1, 2, 3};
         Set<int> b = {3, 4, 5};
-        auto u = a.unite(b);
+        auto     u = a.unite(b);
         CHECK(u.size() == 5);
         CHECK(u.contains(1));
         CHECK(u.contains(5));
@@ -195,7 +195,7 @@ TEST_CASE("Set: unite") {
 TEST_CASE("Set: intersect") {
         Set<int> a = {1, 2, 3};
         Set<int> b = {2, 3, 4};
-        auto i = a.intersect(b);
+        auto     i = a.intersect(b);
         CHECK(i.size() == 2);
         CHECK(i.contains(2));
         CHECK(i.contains(3));
@@ -205,7 +205,7 @@ TEST_CASE("Set: intersect") {
 TEST_CASE("Set: subtract") {
         Set<int> a = {1, 2, 3};
         Set<int> b = {2, 3, 4};
-        auto s = a.subtract(b);
+        auto     s = a.subtract(b);
         CHECK(s.size() == 1);
         CHECK(s.contains(1));
 }

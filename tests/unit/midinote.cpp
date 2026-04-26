@@ -78,7 +78,7 @@ TEST_CASE("MidiNote") {
 
         SUBCASE("Implicit conversion to uint8_t") {
                 MidiNote note(MidiNote::C4);
-                uint8_t raw = note;
+                uint8_t  raw = note;
                 CHECK(raw == 60);
         }
 
@@ -188,17 +188,17 @@ TEST_CASE("MidiNote") {
         }
 
         SUBCASE("Roundtrip name conversion") {
-                for(int note = 0; note < 128; ++note) {
+                for (int note = 0; note < 128; ++note) {
                         MidiNote mn(static_cast<uint8_t>(note));
-                        String n = mn.name();
+                        String   n = mn.name();
                         MidiNote result = MidiNote::fromName(n);
                         CHECK(result.rawValue() == note);
                 }
         }
 
         SUBCASE("Roundtrip static name conversion") {
-                for(int note = 0; note < 128; ++note) {
-                        String n = MidiNote::nameFromMidiNote(note);
+                for (int note = 0; note < 128; ++note) {
+                        String   n = MidiNote::nameFromMidiNote(note);
                         MidiNote result = MidiNote::fromName(n);
                         CHECK(result.rawValue() == note);
                 }

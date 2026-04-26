@@ -80,8 +80,7 @@ class MediaIOTask_QuickTime : public MediaIOTask {
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandSeek &cmd) override;
 
-                Error proposeInput(const MediaDesc &offered,
-                                   MediaDesc *preferred) const override;
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
 
                 // True when @p pd is a PixelFormat this writer knows
                 // how to serialise into a valid QuickTime sample
@@ -100,8 +99,7 @@ class MediaIOTask_QuickTime : public MediaIOTask {
                 Error readVideoFrame(const FrameNumber &frameIndex, Frame::Ptr &outFrame);
 
                 /** @brief Pulls @p samples samples for the current audio track into @p out. */
-                Error readAudioSlice(uint64_t startSample, size_t samples,
-                                     MediaPayload::Ptr &out);
+                Error readAudioSlice(uint64_t startSample, size_t samples, MediaPayload::Ptr &out);
 
                 /** @brief Lazily registers writer tracks from the supplied frame. */
                 Error setupWriterFromFrame(const Frame &frame);
@@ -109,27 +107,27 @@ class MediaIOTask_QuickTime : public MediaIOTask {
                 /** @brief Drains pending audio from the FIFO into the engine writer. */
                 Error drainWriterAudio(bool flush);
 
-                QuickTime    _qt;
-                MediaIOMode  _mode = MediaIO_NotOpen;
-                String       _filename;
-                int          _videoTrackIndex = -1;   ///< Selected video track in the engine.
-                int          _audioTrackIndex = -1;   ///< Selected audio track in the engine.
-                FrameNumber  _currentFrame{0};
-                FrameCount   _frameCount{0};
-                FrameRate    _frameRate;
-                Timecode     _anchorTimecode;
-                uint64_t     _audioSampleCursor = 0;  ///< Next audio sample index to read.
-                AudioDesc    _audioDesc;              ///< Selected audio track descriptor.
+                QuickTime   _qt;
+                MediaIOMode _mode = MediaIO_NotOpen;
+                String      _filename;
+                int         _videoTrackIndex = -1; ///< Selected video track in the engine.
+                int         _audioTrackIndex = -1; ///< Selected audio track in the engine.
+                FrameNumber _currentFrame{0};
+                FrameCount  _frameCount{0};
+                FrameRate   _frameRate;
+                Timecode    _anchorTimecode;
+                uint64_t    _audioSampleCursor = 0; ///< Next audio sample index to read.
+                AudioDesc   _audioDesc;             ///< Selected audio track descriptor.
 
-                bool         _writerTracksRegistered = false;
-                uint32_t     _writerVideoTrackId = 0;
-                uint32_t     _writerAudioTrackId = 0;
-                uint32_t     _writerTimecodeTrackId = 0;
-                FrameCount   _writerFrameCount{0};
-                int          _writerFragmentFrames = DefaultFragmentFrames;
-                FrameCount   _writerFramesSinceFlush{0};
-                AudioBuffer  _writerAudioFifo;        ///< Bridges Frame audio to per-video-frame audio chunks.
-                AudioDesc    _writerAudioStorage;     ///< Storage format for the audio track.
+                bool        _writerTracksRegistered = false;
+                uint32_t    _writerVideoTrackId = 0;
+                uint32_t    _writerAudioTrackId = 0;
+                uint32_t    _writerTimecodeTrackId = 0;
+                FrameCount  _writerFrameCount{0};
+                int         _writerFragmentFrames = DefaultFragmentFrames;
+                FrameCount  _writerFramesSinceFlush{0};
+                AudioBuffer _writerAudioFifo;    ///< Bridges Frame audio to per-video-frame audio chunks.
+                AudioDesc   _writerAudioStorage; ///< Storage format for the audio track.
 };
 
 PROMEKI_NAMESPACE_END

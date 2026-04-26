@@ -29,31 +29,31 @@ TEST_CASE("MD5: 'abc'") {
 
 TEST_CASE("MD5: 'message digest'") {
         const char *msg = "message digest";
-        MD5Digest d = md5(msg, std::strlen(msg));
+        MD5Digest   d = md5(msg, std::strlen(msg));
         CHECK(d.toHexString() == "f96b697d7cb7938d525a2f31aaf161d0");
 }
 
 TEST_CASE("MD5: 'abcdefghijklmnopqrstuvwxyz'") {
         const char *msg = "abcdefghijklmnopqrstuvwxyz";
-        MD5Digest d = md5(msg, std::strlen(msg));
+        MD5Digest   d = md5(msg, std::strlen(msg));
         CHECK(d.toHexString() == "c3fcd3d76192e4007dfb496cca67e13b");
 }
 
 TEST_CASE("MD5: mixed case alphabet + digits") {
         const char *msg = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        MD5Digest d = md5(msg, std::strlen(msg));
+        MD5Digest   d = md5(msg, std::strlen(msg));
         CHECK(d.toHexString() == "d174ab98d277d9f5a5611c2c9f419d9f");
 }
 
 TEST_CASE("MD5: numeric string") {
         const char *msg = "12345678901234567890123456789012345678901234567890123456789012345678901234567890";
-        MD5Digest d = md5(msg, std::strlen(msg));
+        MD5Digest   d = md5(msg, std::strlen(msg));
         CHECK(d.toHexString() == "57edf4a22be3c955ac49da2e2107b67a");
 }
 
 TEST_CASE("MD5: deterministic") {
         const char *msg = "hello world";
-        MD5Digest d1 = md5(msg, std::strlen(msg));
-        MD5Digest d2 = md5(msg, std::strlen(msg));
+        MD5Digest   d1 = md5(msg, std::strlen(msg));
+        MD5Digest   d2 = md5(msg, std::strlen(msg));
         CHECK(d1 == d2);
 }

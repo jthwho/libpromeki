@@ -26,7 +26,7 @@
 
 namespace promekipipeline {
 
-/**
+        /**
  * @brief Owns the demo's collection of @c MediaPipeline instances.
  *
  * Each tracked entry pairs a @c MediaPipeline with the user-authored
@@ -56,13 +56,13 @@ namespace promekipipeline {
  * — @ref PipelineManager simply re-publishes through the same
  * mechanism.
  */
-class PipelineManager : public promeki::ObjectBase {
-        PROMEKI_OBJECT(PipelineManager, ObjectBase)
-        public:
-                /** @brief Length in hex characters of the auto-generated pipeline id. */
-                static constexpr int IdLength = 8;
+        class PipelineManager : public promeki::ObjectBase {
+                        PROMEKI_OBJECT(PipelineManager, ObjectBase)
+                public:
+                        /** @brief Length in hex characters of the auto-generated pipeline id. */
+                        static constexpr int IdLength = 8;
 
-                /**
+                        /**
                  * @brief Snapshot of one tracked pipeline.
                  *
                  * Held inside the manager's id → entry map.  The
@@ -70,37 +70,37 @@ class PipelineManager : public promeki::ObjectBase {
                  * its mutex; callers must not stash the pointer past
                  * the next mutating call.
                  */
-                struct Entry {
-                        /** @brief Stable short id; assigned at @ref create time. */
-                        promeki::String              id;
+                        struct Entry {
+                                        /** @brief Stable short id; assigned at @ref create time. */
+                                        promeki::String id;
 
-                        /** @brief Display name + planner policy + stats cadence. */
-                        PipelineSettings             settings;
+                                        /** @brief Display name + planner policy + stats cadence. */
+                                        PipelineSettings settings;
 
-                        /** @brief Graph as authored / edited by the user. */
-                        promeki::MediaPipelineConfig userConfig;
+                                        /** @brief Graph as authored / edited by the user. */
+                                        promeki::MediaPipelineConfig userConfig;
 
-                        /**
+                                        /**
                          * @brief Graph after the planner has resolved bridges.
                          *
                          * Equal to @ref userConfig when the entry's
                          * @ref PipelineSettings::autoplan is @c false.
                          * Populated at @ref build time.
                          */
-                        promeki::MediaPipelineConfig resolvedConfig;
+                                        promeki::MediaPipelineConfig resolvedConfig;
 
-                        /** @brief Owning pointer to the live @c MediaPipeline. */
-                        promeki::UniquePtr<promeki::MediaPipeline> pipeline;
+                                        /** @brief Owning pointer to the live @c MediaPipeline. */
+                                        promeki::UniquePtr<promeki::MediaPipeline> pipeline;
 
-                        /**
+                                        /**
                          * @brief Sub id returned by @c MediaPipeline::subscribe.
                          *
                          * Held so @ref remove can deregister cleanly.
                          */
-                        int                          pipelineSubId = -1;
-                };
+                                        int pipelineSubId = -1;
+                        };
 
-                /**
+                        /**
                  * @brief Callback signature for @ref subscribe.
                  *
                  * Invoked once per @c PipelineEvent from any tracked
@@ -108,23 +108,23 @@ class PipelineManager : public promeki::ObjectBase {
                  * @p ev carries the unmodified payload from
                  * @c MediaPipeline::publish.
                  */
-                using EventCallback = std::function<void(const promeki::String &id,
-                                                         const promeki::PipelineEvent &ev)>;
+                        using EventCallback =
+                                std::function<void(const promeki::String &id, const promeki::PipelineEvent &ev)>;
 
-                /**
+                        /**
                  * @brief Constructs a manager bound to the calling EventLoop.
                  * @param parent Optional ObjectBase parent.
                  */
-                explicit PipelineManager(promeki::ObjectBase *parent = nullptr);
+                        explicit PipelineManager(promeki::ObjectBase *parent = nullptr);
 
-                /** @brief Destructor — closes and releases every tracked pipeline. */
-                ~PipelineManager() override;
+                        /** @brief Destructor — closes and releases every tracked pipeline. */
+                        ~PipelineManager() override;
 
-                // ------------------------------------------------------------
-                // Pipeline lifecycle
-                // ------------------------------------------------------------
+                        // ------------------------------------------------------------
+                        // Pipeline lifecycle
+                        // ------------------------------------------------------------
 
-                /**
+                        /**
                  * @brief Allocates a new pipeline and returns its short id.
                  *
                  * The new entry holds an empty @c MediaPipelineConfig,
@@ -138,9 +138,9 @@ class PipelineManager : public promeki::ObjectBase {
                  *             @ref PipelineSettings::name.
                  * @return The new pipeline's id.
                  */
-                promeki::String create(const promeki::String &name);
+                        promeki::String create(const promeki::String &name);
 
-                /**
+                        /**
                  * @brief Closes and removes the pipeline identified by @p id.
                  *
                  * If the pipeline is still running it is closed
@@ -151,9 +151,9 @@ class PipelineManager : public promeki::ObjectBase {
                  * @return @c Error::Ok, or @c Error::NotExist when no
                  *         entry matches @p id.
                  */
-                promeki::Error remove(const promeki::String &id);
+                        promeki::Error remove(const promeki::String &id);
 
-                /**
+                        /**
                  * @brief Replaces the user-authored graph for @p id.
                  *
                  * Allowed only when the underlying pipeline state is in
@@ -169,10 +169,10 @@ class PipelineManager : public promeki::ObjectBase {
                  *         the pipeline is currently open / running /
                  *         stopped.
                  */
-                promeki::Error replaceConfig(const promeki::String &id,
-                                             const promeki::MediaPipelineConfig &userConfig);
+                        promeki::Error replaceConfig(const promeki::String              &id,
+                                                     const promeki::MediaPipelineConfig &userConfig);
 
-                /**
+                        /**
                  * @brief Replaces the @ref PipelineSettings for @p id.
                  *
                  * If the new @ref PipelineSettings::statsInterval differs
@@ -185,10 +185,9 @@ class PipelineManager : public promeki::ObjectBase {
                  * @param settings The new settings block.
                  * @return @c Error::Ok or @c Error::NotExist.
                  */
-                promeki::Error replaceSettings(const promeki::String &id,
-                                               const PipelineSettings &settings);
+                        promeki::Error replaceSettings(const promeki::String &id, const PipelineSettings &settings);
 
-                /**
+                        /**
                  * @brief Validates and instantiates the pipeline for @p id.
                  *
                  * When the entry's @ref PipelineSettings::autoplan is
@@ -204,33 +203,33 @@ class PipelineManager : public promeki::ObjectBase {
                  *         when @p id is unknown; the planner / build
                  *         error otherwise.
                  */
-                promeki::Error build(const promeki::String &id);
+                        promeki::Error build(const promeki::String &id);
 
-                /**
+                        /**
                  * @brief Opens every stage of the pipeline for @p id.
                  * @param id The pipeline id.
                  * @return @c Error::Ok, @c Error::NotExist, or the
                  *         error reported by @c MediaPipeline::open.
                  */
-                promeki::Error open(const promeki::String &id);
+                        promeki::Error open(const promeki::String &id);
 
-                /**
+                        /**
                  * @brief Starts the drain for the pipeline for @p id.
                  * @param id The pipeline id.
                  * @return @c Error::Ok, @c Error::NotExist, or the
                  *         error reported by @c MediaPipeline::start.
                  */
-                promeki::Error start(const promeki::String &id);
+                        promeki::Error start(const promeki::String &id);
 
-                /**
+                        /**
                  * @brief Stops the drain for the pipeline for @p id.
                  * @param id The pipeline id.
                  * @return @c Error::Ok, @c Error::NotExist, or the
                  *         error reported by @c MediaPipeline::stop.
                  */
-                promeki::Error stop(const promeki::String &id);
+                        promeki::Error stop(const promeki::String &id);
 
-                /**
+                        /**
                  * @brief Closes every stage of the pipeline for @p id.
                  *
                  * @param id    The pipeline id.
@@ -241,9 +240,9 @@ class PipelineManager : public promeki::ObjectBase {
                  * @return @c Error::Ok, @c Error::NotExist, or the
                  *         error reported by @c MediaPipeline::close.
                  */
-                promeki::Error close(const promeki::String &id, bool block = true);
+                        promeki::Error close(const promeki::String &id, bool block = true);
 
-                /**
+                        /**
                  * @brief UX-helper macro: drives @p id to @c State::Running.
                  *
                  * Inspects the entry's current @c MediaPipeline::State and
@@ -273,16 +272,16 @@ class PipelineManager : public promeki::ObjectBase {
                  *         step that failed (the pipeline is left in
                  *         whatever state that step produced).
                  */
-                promeki::Error run(const promeki::String &id);
+                        promeki::Error run(const promeki::String &id);
 
-                // ------------------------------------------------------------
-                // Introspection
-                // ------------------------------------------------------------
+                        // ------------------------------------------------------------
+                        // Introspection
+                        // ------------------------------------------------------------
 
-                /** @brief Returns every tracked pipeline id, in insertion order. */
-                promeki::List<promeki::String> ids() const;
+                        /** @brief Returns every tracked pipeline id, in insertion order. */
+                        promeki::List<promeki::String> ids() const;
 
-                /**
+                        /**
                  * @brief Looks up an entry by id (read-only).
                  *
                  * The returned pointer is stable until the next
@@ -291,12 +290,12 @@ class PipelineManager : public promeki::ObjectBase {
                  *
                  * @return Non-owning entry pointer, or @c nullptr.
                  */
-                const Entry *find(const promeki::String &id) const;
+                        const Entry *find(const promeki::String &id) const;
 
-                /** @brief Mutable variant of @ref find. */
-                Entry *find(const promeki::String &id);
+                        /** @brief Mutable variant of @ref find. */
+                        Entry *find(const promeki::String &id);
 
-                /**
+                        /**
                  * @brief Produces a JSON snapshot of the entry for @p id.
                  *
                  * Shape (Phase D feeds this directly to HTTP):
@@ -313,9 +312,9 @@ class PipelineManager : public promeki::ObjectBase {
                  *
                  * Returns an empty @c JsonObject when @p id is unknown.
                  */
-                promeki::JsonObject describe(const promeki::String &id) const;
+                        promeki::JsonObject describe(const promeki::String &id) const;
 
-                /**
+                        /**
                  * @brief Produces a JSON snapshot of every tracked pipeline.
                  *
                  * The returned object has shape
@@ -326,13 +325,13 @@ class PipelineManager : public promeki::ObjectBase {
                  * raw array; the wrapper here keeps the snapshot
                  * self-describing.
                  */
-                promeki::JsonObject describeAll() const;
+                        promeki::JsonObject describeAll() const;
 
-                // ------------------------------------------------------------
-                // Event fan-out
-                // ------------------------------------------------------------
+                        // ------------------------------------------------------------
+                        // Event fan-out
+                        // ------------------------------------------------------------
 
-                /**
+                        /**
                  * @brief Registers @p cb to receive every pipeline's events,
                  *        tagged with the originating pipeline id.
                  *
@@ -349,47 +348,47 @@ class PipelineManager : public promeki::ObjectBase {
                  *         @ref unsubscribe, or @c -1 when @p cb was
                  *         empty.
                  */
-                int subscribe(EventCallback cb);
+                        int subscribe(EventCallback cb);
 
-                /**
+                        /**
                  * @brief Removes a subscription previously installed via @ref subscribe.
                  *
                  * Unknown ids are silently ignored.
                  *
                  * @param id The subscription id returned by @ref subscribe.
                  */
-                void unsubscribe(int id);
+                        void unsubscribe(int id);
 
-                /**
+                        /**
                  * @brief Translates a @c MediaPipeline::State to a stable string.
                  *
                  * Round-trips with the names used in the JSON snapshot.
                  */
-                static promeki::String stateToString(promeki::MediaPipeline::State s);
+                        static promeki::String stateToString(promeki::MediaPipeline::State s);
 
-        private:
-                struct Subscriber {
-                        int           id;
-                        EventCallback fn;
-                };
+                private:
+                        struct Subscriber {
+                                        int           id;
+                                        EventCallback fn;
+                        };
 
-                /** @brief Generates a fresh short id (@c IdLength hex characters). */
-                static promeki::String generateId();
+                        /** @brief Generates a fresh short id (@c IdLength hex characters). */
+                        static promeki::String generateId();
 
-                /** @brief Returns true when @p s permits a config rewrite. */
-                static bool stateAllowsConfigRewrite(promeki::MediaPipeline::State s);
+                        /** @brief Returns true when @p s permits a config rewrite. */
+                        static bool stateAllowsConfigRewrite(promeki::MediaPipeline::State s);
 
-                /** @brief Snapshot the subscriber list under the lock and call them outside it. */
-                void publish(const promeki::String &id, const promeki::PipelineEvent &ev);
+                        /** @brief Snapshot the subscriber list under the lock and call them outside it. */
+                        void publish(const promeki::String &id, const promeki::PipelineEvent &ev);
 
-                /** @brief Build the per-id describe() payload for an entry already located. */
-                promeki::JsonObject describeEntry(const Entry &entry) const;
+                        /** @brief Build the per-id describe() payload for an entry already located. */
+                        promeki::JsonObject describeEntry(const Entry &entry) const;
 
-                mutable promeki::Mutex                            _mutex;
-                promeki::Map<promeki::String, Entry>              _entries;
-                promeki::List<promeki::String>                    _order;
-                promeki::Map<int, Subscriber>                     _subscribers;
-                int                                               _nextSubId = 0;
-};
+                        mutable promeki::Mutex               _mutex;
+                        promeki::Map<promeki::String, Entry> _entries;
+                        promeki::List<promeki::String>       _order;
+                        promeki::Map<int, Subscriber>        _subscribers;
+                        int                                  _nextSubId = 0;
+        };
 
 } // namespace promekipipeline

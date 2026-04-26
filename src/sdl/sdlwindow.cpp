@@ -20,8 +20,7 @@ SDLWindow::SDLWindow(ObjectBase *parent) : Widget(parent) {
         return;
 }
 
-SDLWindow::SDLWindow(const String &title, int width, int height, ObjectBase *parent)
-        : Widget(parent), _title(title) {
+SDLWindow::SDLWindow(const String &title, int width, int height, ObjectBase *parent) : Widget(parent), _title(title) {
         setGeometry(Rect2Di32(0, 0, width, height));
         Widget::setVisible(false);
         return;
@@ -34,14 +33,14 @@ SDLWindow::~SDLWindow() {
 
 void SDLWindow::setTitle(const String &title) {
         _title = title;
-        if(_sdlWindow != nullptr) {
+        if (_sdlWindow != nullptr) {
                 SDL_SetWindowTitle(_sdlWindow, _title.cstr());
         }
         return;
 }
 
 void SDLWindow::resize(int w, int h) {
-        if(_sdlWindow != nullptr) {
+        if (_sdlWindow != nullptr) {
                 SDL_SetWindowSize(_sdlWindow, w, h);
                 syncSizeFromSDL();
         } else {
@@ -52,15 +51,15 @@ void SDLWindow::resize(int w, int h) {
 
 void SDLWindow::move(int x, int y) {
         _position = Point2Di32(x, y);
-        if(_sdlWindow != nullptr) {
+        if (_sdlWindow != nullptr) {
                 SDL_SetWindowPosition(_sdlWindow, x, y);
         }
         return;
 }
 
 void SDLWindow::show() {
-        if(_sdlWindow == nullptr) createWindow();
-        if(_sdlWindow != nullptr) {
+        if (_sdlWindow == nullptr) createWindow();
+        if (_sdlWindow != nullptr) {
                 SDL_ShowWindow(_sdlWindow);
                 Widget::setVisible(true);
         }
@@ -68,7 +67,7 @@ void SDLWindow::show() {
 }
 
 void SDLWindow::hide() {
-        if(_sdlWindow != nullptr) {
+        if (_sdlWindow != nullptr) {
                 SDL_HideWindow(_sdlWindow);
                 Widget::setVisible(false);
         }
@@ -77,7 +76,7 @@ void SDLWindow::hide() {
 
 void SDLWindow::setFullScreen(bool fullScreen) {
         _fullScreen = fullScreen;
-        if(_sdlWindow != nullptr) {
+        if (_sdlWindow != nullptr) {
                 SDL_SetWindowFullscreen(_sdlWindow, fullScreen);
                 syncSizeFromSDL();
         }
@@ -85,7 +84,7 @@ void SDLWindow::setFullScreen(bool fullScreen) {
 }
 
 uint32_t SDLWindow::sdlWindowID() const {
-        if(_sdlWindow == nullptr) return 0;
+        if (_sdlWindow == nullptr) return 0;
         return SDL_GetWindowID(_sdlWindow);
 }
 
@@ -100,15 +99,15 @@ void SDLWindow::update() {
 }
 
 void SDLWindow::paintAll() {
-        if(_sdlRenderer == nullptr) return;
+        if (_sdlRenderer == nullptr) return;
 
         SDL_SetRenderDrawColor(_sdlRenderer, 0, 0, 0, 255);
         SDL_RenderClear(_sdlRenderer);
 
         // Paint all visible children
-        for(auto *child : childList()) {
+        for (auto *child : childList()) {
                 Widget *w = dynamic_cast<Widget *>(child);
-                if(w && w->isVisible()) paintWidget(w);
+                if (w && w->isVisible()) paintWidget(w);
         }
 
         SDL_RenderPresent(_sdlRenderer);
@@ -122,30 +121,26 @@ void SDLWindow::paintWidget(Widget *widget) {
         widget->clearDirty();
 
         // Recurse into children
-        for(auto *child : widget->childList()) {
+        for (auto *child : widget->childList()) {
                 Widget *w = dynamic_cast<Widget *>(child);
-                if(w && w->isVisible()) paintWidget(w);
+                if (w && w->isVisible()) paintWidget(w);
         }
         return;
 }
 
 void SDLWindow::createWindow() {
         SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;
-        if(_fullScreen) flags |= SDL_WINDOW_FULLSCREEN;
+        if (_fullScreen) flags |= SDL_WINDOW_FULLSCREEN;
 
-        _sdlWindow = SDL_CreateWindow(
-                _title.cstr(),
-                width(), height(),
-                flags
-        );
+        _sdlWindow = SDL_CreateWindow(_title.cstr(), width(), height(), flags);
 
-        if(_sdlWindow == nullptr) {
+        if (_sdlWindow == nullptr) {
                 promekiErr("SDLWindow: SDL_CreateWindow failed: %s", SDL_GetError());
                 return;
         }
 
         _sdlRenderer = SDL_CreateRenderer(_sdlWindow, nullptr);
-        if(_sdlRenderer == nullptr) {
+        if (_sdlRenderer == nullptr) {
                 promekiErr("SDLWindow: SDL_CreateRenderer failed: %s", SDL_GetError());
                 SDL_DestroyWindow(_sdlWindow);
                 _sdlWindow = nullptr;
@@ -154,7 +149,7 @@ void SDLWindow::createWindow() {
 
         // Register with the event pump
         SdlSubsystem *app = SdlSubsystem::instance();
-        if(app != nullptr) {
+        if (app != nullptr) {
                 app->eventPump().registerWindow(this);
         }
 
@@ -163,15 +158,15 @@ void SDLWindow::createWindow() {
 }
 
 void SDLWindow::destroyWindow() {
-        if(_sdlWindow == nullptr) return;
+        if (_sdlWindow == nullptr) return;
 
         // Unregister from the event pump
         SdlSubsystem *app = SdlSubsystem::instance();
-        if(app != nullptr) {
+        if (app != nullptr) {
                 app->eventPump().unregisterWindow(this);
         }
 
-        if(_sdlRenderer != nullptr) {
+        if (_sdlRenderer != nullptr) {
                 SDL_DestroyRenderer(_sdlRenderer);
                 _sdlRenderer = nullptr;
         }
@@ -183,7 +178,7 @@ void SDLWindow::destroyWindow() {
 }
 
 void SDLWindow::syncSizeFromSDL() {
-        if(_sdlWindow == nullptr) return;
+        if (_sdlWindow == nullptr) return;
         int w, h;
         SDL_GetWindowSize(_sdlWindow, &w, &h);
         setGeometry(Rect2Di32(0, 0, w, h));
@@ -191,7 +186,7 @@ void SDLWindow::syncSizeFromSDL() {
 }
 
 void SDLWindow::syncPositionFromSDL() {
-        if(_sdlWindow == nullptr) return;
+        if (_sdlWindow == nullptr) return;
         int x, y;
         SDL_GetWindowPosition(_sdlWindow, &x, &y);
         _position = Point2Di32(x, y);

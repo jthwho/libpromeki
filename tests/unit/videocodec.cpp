@@ -32,218 +32,212 @@ using namespace promeki;
 
 namespace {
 
-// Slot for the Passthrough codec's typed VideoCodec::ID — populated at
-// static-init time by PassthroughRegistrar and read by every test that
-// needs to refer to the codec after registration.
-static VideoCodec::ID gPassthroughCodecId = VideoCodec::Invalid;
+        // Slot for the Passthrough codec's typed VideoCodec::ID — populated at
+        // static-init time by PassthroughRegistrar and read by every test that
+        // needs to refer to the codec after registration.
+        static VideoCodec::ID gPassthroughCodecId = VideoCodec::Invalid;
 
-class PassthroughVideoEncoder : public VideoEncoder {
-        public:
-                void configure(const MediaConfig &config) override {
-                        _cfgBitrate = config.getAs<int32_t>(MediaConfig::BitrateKbps);
-                        _cfgGop     = config.getAs<int32_t>(MediaConfig::GopLength);
-                }
-
-                Error submitPayload(const UncompressedVideoPayload::Ptr &payload) override {
-                        clearError();
-                        if(!payload.isValid() || !payload->isValid() || payload->planeCount() == 0) {
-                                setError(Error::Invalid, "invalid payload");
-                                return _lastError;
+        class PassthroughVideoEncoder : public VideoEncoder {
+                public:
+                        void configure(const MediaConfig &config) override {
+                                _cfgBitrate = config.getAs<int32_t>(MediaConfig::BitrateKbps);
+                                _cfgGop = config.getAs<int32_t>(MediaConfig::GopLength);
                         }
-                        // Build a CompressedVideoPayload that shares
-                        // plane 0's buffer with the input — passthrough
-                        // does no compression, it just restamps the
-                        // bytes with an H.264 compressed PixelFormat so
-                        // downstream code treats the output as a real
-                        // compressed access unit.
-                        ImageDesc desc(payload->desc().size(),
-                                       PixelFormat(PixelFormat::H264));
-                        auto pv = payload->plane(0);
-                        auto cvp = CompressedVideoPayload::Ptr::create(
-                                desc, BufferView(pv.buffer(), pv.offset(), pv.size()));
-                        cvp.modify()->setPts(payload->pts());
-                        cvp.modify()->setDts(payload->pts());
-                        if(_forceKey || _frameIdx == 0) {
-                                cvp.modify()->addFlag(MediaPayload::Keyframe);
-                                _forceKey = false;
-                        }
-                        _queue.push_back(cvp);
-                        ++_frameIdx;
-                        return Error::Ok;
-                }
 
-                CompressedVideoPayload::Ptr receiveCompressedPayload() override {
-                        if(_queue.empty()) {
-                                if(_flushed && !_eosEmitted) {
-                                        _eosEmitted = true;
-                                        ImageDesc desc(Size2Du32(0, 0),
-                                                       PixelFormat(PixelFormat::H264));
-                                        auto eos = CompressedVideoPayload::Ptr::create(desc);
-                                        eos.modify()->markEndOfStream();
-                                        return eos;
+                        Error submitPayload(const UncompressedVideoPayload::Ptr &payload) override {
+                                clearError();
+                                if (!payload.isValid() || !payload->isValid() || payload->planeCount() == 0) {
+                                        setError(Error::Invalid, "invalid payload");
+                                        return _lastError;
                                 }
-                                return CompressedVideoPayload::Ptr();
+                                // Build a CompressedVideoPayload that shares
+                                // plane 0's buffer with the input — passthrough
+                                // does no compression, it just restamps the
+                                // bytes with an H.264 compressed PixelFormat so
+                                // downstream code treats the output as a real
+                                // compressed access unit.
+                                ImageDesc desc(payload->desc().size(), PixelFormat(PixelFormat::H264));
+                                auto      pv = payload->plane(0);
+                                auto      cvp = CompressedVideoPayload::Ptr::create(
+                                        desc, BufferView(pv.buffer(), pv.offset(), pv.size()));
+                                cvp.modify()->setPts(payload->pts());
+                                cvp.modify()->setDts(payload->pts());
+                                if (_forceKey || _frameIdx == 0) {
+                                        cvp.modify()->addFlag(MediaPayload::Keyframe);
+                                        _forceKey = false;
+                                }
+                                _queue.push_back(cvp);
+                                ++_frameIdx;
+                                return Error::Ok;
                         }
-                        auto pkt = _queue.front();
-                        _queue.pop_front();
-                        return pkt;
-                }
 
-                Error flush() override {
-                        _flushed = true;
-                        return Error::Ok;
-                }
-
-                Error reset() override {
-                        _queue.clear();
-                        _frameIdx   = 0;
-                        _forceKey   = false;
-                        _flushed    = false;
-                        _eosEmitted = false;
-                        return Error::Ok;
-                }
-
-                void requestKeyframe() override { _forceKey = true; }
-
-                int32_t configuredBitrate() const { return _cfgBitrate; }
-                int32_t configuredGop()     const { return _cfgGop; }
-
-        private:
-                std::deque<CompressedVideoPayload::Ptr> _queue;
-                int32_t   _cfgBitrate  = 0;
-                int32_t   _cfgGop      = 0;
-                uint64_t  _frameIdx    = 0;
-                bool      _forceKey    = false;
-                bool      _flushed     = false;
-                bool      _eosEmitted  = false;
-};
-
-class PassthroughVideoDecoder : public VideoDecoder {
-        public:
-                // Reads the output geometry + format from MediaConfig —
-                // the MediaIOTask_VideoDecoder pathway forwards the
-                // whole MediaIO config to configure(), so the generic
-                // backend tests can drive this decoder without having
-                // to reach in and call setOutput() themselves.
-                void configure(const MediaConfig &cfg) override {
-                        Size2Du32 sz = cfg.getAs<Size2Du32>(MediaConfig::VideoSize);
-                        if(sz.isValid()) _outSize = sz;
-                        PixelFormat pd = cfg.getAs<PixelFormat>(MediaConfig::OutputPixelFormat);
-                        if(pd.isValid()) _outDesc = pd;
-                }
-
-                Error submitPayload(const CompressedVideoPayload::Ptr &payload) override {
-                        clearError();
-                        if(!payload.isValid() || !payload->isValid()) {
-                                setError(Error::Invalid, "invalid payload");
-                                return _lastError;
+                        CompressedVideoPayload::Ptr receiveCompressedPayload() override {
+                                if (_queue.empty()) {
+                                        if (_flushed && !_eosEmitted) {
+                                                _eosEmitted = true;
+                                                ImageDesc desc(Size2Du32(0, 0), PixelFormat(PixelFormat::H264));
+                                                auto      eos = CompressedVideoPayload::Ptr::create(desc);
+                                                eos.modify()->markEndOfStream();
+                                                return eos;
+                                        }
+                                        return CompressedVideoPayload::Ptr();
+                                }
+                                auto pkt = _queue.front();
+                                _queue.pop_front();
+                                return pkt;
                         }
-                        _pending.push_back(payload);
-                        return Error::Ok;
-                }
 
-                UncompressedVideoPayload::Ptr receiveVideoPayload() override {
-                        if(_pending.empty()) return UncompressedVideoPayload::Ptr();
-                        CompressedVideoPayload::Ptr in = std::move(_pending.front());
-                        _pending.pop_front();
-                        if(in->planeCount() == 0) return UncompressedVideoPayload::Ptr();
-                        ImageDesc outDesc(_outSize, _outDesc);
-                        auto out = UncompressedVideoPayload::Ptr::create(outDesc);
-                        auto entry = in->plane(0);
-                        out.modify()->data().pushToBack(entry.buffer(), entry.offset(), entry.size());
-                        out.modify()->setPts(in->pts());
-                        return out;
-                }
+                        Error flush() override {
+                                _flushed = true;
+                                return Error::Ok;
+                        }
 
-                Error flush() override { return Error::Ok; }
+                        Error reset() override {
+                                _queue.clear();
+                                _frameIdx = 0;
+                                _forceKey = false;
+                                _flushed = false;
+                                _eosEmitted = false;
+                                return Error::Ok;
+                        }
 
-                Error reset() override {
-                        _pending.clear();
-                        return Error::Ok;
-                }
+                        void requestKeyframe() override { _forceKey = true; }
 
-                void setOutput(const Size2Du32 &size, const PixelFormat &pd) {
-                        _outSize = size;
-                        _outDesc = pd;
-                }
+                        int32_t configuredBitrate() const { return _cfgBitrate; }
+                        int32_t configuredGop() const { return _cfgGop; }
 
-        private:
-                std::deque<CompressedVideoPayload::Ptr> _pending;
-                Size2Du32                _outSize;
-                PixelFormat                _outDesc;
-};
+                private:
+                        std::deque<CompressedVideoPayload::Ptr> _queue;
+                        int32_t                                 _cfgBitrate = 0;
+                        int32_t                                 _cfgGop = 0;
+                        uint64_t                                _frameIdx = 0;
+                        bool                                    _forceKey = false;
+                        bool                                    _flushed = false;
+                        bool                                    _eosEmitted = false;
+        };
 
-// Registers the passthrough codec exactly once per process so the
-// registry lookup tests see it without the production library
-// carrying test-only code.  Uses the full typed registration path:
-// a fresh VideoCodec::ID allocated via registerType(), a registered
-// "Passthrough" backend, and encoder/decoder BackendRecords against
-// the (codec, backend) pair.
-struct PassthroughRegistrar {
-        PassthroughRegistrar() {
-                gPassthroughCodecId = VideoCodec::registerType();
-                VideoCodec::Data d;
-                d.id                     = gPassthroughCodecId;
-                d.name                   = "Passthrough";
-                d.desc                   = "Passthrough (test) codec";
-                // The Passthrough encoder stamps every CompressedVideoPayload
-                // with PixelFormat::H264 so tests can round-trip through
-                // the generic MediaIOTask_VideoEncoder output-desc path.
-                d.compressedPixelFormats = {
-                        static_cast<int>(PixelFormat::H264),
-                };
-                VideoCodec::registerData(std::move(d));
+        class PassthroughVideoDecoder : public VideoDecoder {
+                public:
+                        // Reads the output geometry + format from MediaConfig —
+                        // the MediaIOTask_VideoDecoder pathway forwards the
+                        // whole MediaIO config to configure(), so the generic
+                        // backend tests can drive this decoder without having
+                        // to reach in and call setOutput() themselves.
+                        void configure(const MediaConfig &cfg) override {
+                                Size2Du32 sz = cfg.getAs<Size2Du32>(MediaConfig::VideoSize);
+                                if (sz.isValid()) _outSize = sz;
+                                PixelFormat pd = cfg.getAs<PixelFormat>(MediaConfig::OutputPixelFormat);
+                                if (pd.isValid()) _outDesc = pd;
+                        }
 
-                auto bk = VideoCodec::registerBackend("Passthrough");
-                if(error(bk).isError()) return;
-                const VideoCodec::Backend backend = value(bk);
+                        Error submitPayload(const CompressedVideoPayload::Ptr &payload) override {
+                                clearError();
+                                if (!payload.isValid() || !payload->isValid()) {
+                                        setError(Error::Invalid, "invalid payload");
+                                        return _lastError;
+                                }
+                                _pending.push_back(payload);
+                                return Error::Ok;
+                        }
 
-                VideoEncoder::registerBackend({
-                        .codecId         = gPassthroughCodecId,
-                        .backend         = backend,
-                        .weight          = BackendWeight::User,
-                        .supportedInputs = {},
-                        .factory         = []() -> VideoEncoder * {
-                                return new PassthroughVideoEncoder();
-                        },
-                });
-                VideoDecoder::registerBackend({
-                        .codecId          = gPassthroughCodecId,
-                        .backend          = backend,
-                        .weight           = BackendWeight::User,
-                        .supportedOutputs = {},
-                        .factory          = []() -> VideoDecoder * {
-                                return new PassthroughVideoDecoder();
-                        },
-                });
+                        UncompressedVideoPayload::Ptr receiveVideoPayload() override {
+                                if (_pending.empty()) return UncompressedVideoPayload::Ptr();
+                                CompressedVideoPayload::Ptr in = std::move(_pending.front());
+                                _pending.pop_front();
+                                if (in->planeCount() == 0) return UncompressedVideoPayload::Ptr();
+                                ImageDesc outDesc(_outSize, _outDesc);
+                                auto      out = UncompressedVideoPayload::Ptr::create(outDesc);
+                                auto      entry = in->plane(0);
+                                out.modify()->data().pushToBack(entry.buffer(), entry.offset(), entry.size());
+                                out.modify()->setPts(in->pts());
+                                return out;
+                        }
+
+                        Error flush() override { return Error::Ok; }
+
+                        Error reset() override {
+                                _pending.clear();
+                                return Error::Ok;
+                        }
+
+                        void setOutput(const Size2Du32 &size, const PixelFormat &pd) {
+                                _outSize = size;
+                                _outDesc = pd;
+                        }
+
+                private:
+                        std::deque<CompressedVideoPayload::Ptr> _pending;
+                        Size2Du32                               _outSize;
+                        PixelFormat                             _outDesc;
+        };
+
+        // Registers the passthrough codec exactly once per process so the
+        // registry lookup tests see it without the production library
+        // carrying test-only code.  Uses the full typed registration path:
+        // a fresh VideoCodec::ID allocated via registerType(), a registered
+        // "Passthrough" backend, and encoder/decoder BackendRecords against
+        // the (codec, backend) pair.
+        struct PassthroughRegistrar {
+                        PassthroughRegistrar() {
+                                gPassthroughCodecId = VideoCodec::registerType();
+                                VideoCodec::Data d;
+                                d.id = gPassthroughCodecId;
+                                d.name = "Passthrough";
+                                d.desc = "Passthrough (test) codec";
+                                // The Passthrough encoder stamps every CompressedVideoPayload
+                                // with PixelFormat::H264 so tests can round-trip through
+                                // the generic MediaIOTask_VideoEncoder output-desc path.
+                                d.compressedPixelFormats = {
+                                        static_cast<int>(PixelFormat::H264),
+                                };
+                                VideoCodec::registerData(std::move(d));
+
+                                auto bk = VideoCodec::registerBackend("Passthrough");
+                                if (error(bk).isError()) return;
+                                const VideoCodec::Backend backend = value(bk);
+
+                                VideoEncoder::registerBackend({
+                                        .codecId = gPassthroughCodecId,
+                                        .backend = backend,
+                                        .weight = BackendWeight::User,
+                                        .supportedInputs = {},
+                                        .factory = []() -> VideoEncoder * { return new PassthroughVideoEncoder(); },
+                                });
+                                VideoDecoder::registerBackend({
+                                        .codecId = gPassthroughCodecId,
+                                        .backend = backend,
+                                        .weight = BackendWeight::User,
+                                        .supportedOutputs = {},
+                                        .factory = []() -> VideoDecoder * { return new PassthroughVideoDecoder(); },
+                                });
+                        }
+        };
+        static PassthroughRegistrar _passthroughRegistrar;
+
+        // Helper: build a solid-grey RGB8 payload for round-trip checks.
+        UncompressedVideoPayload::Ptr makeTestPayload(int width, int height, uint8_t fill) {
+                PixelFormat  pd(PixelFormat::RGB8_sRGB);
+                const size_t bytes = pd.memLayout().planeSize(0, width, height);
+                auto         buf = Buffer::Ptr::create(bytes);
+                buf.modify()->fill(static_cast<char>(fill));
+                buf.modify()->setSize(bytes);
+                ImageDesc desc(Size2Du32(width, height), pd);
+                auto      payload = UncompressedVideoPayload::Ptr::create(desc);
+                payload.modify()->data().pushToBack(buf, 0, bytes);
+                return payload;
         }
-};
-static PassthroughRegistrar _passthroughRegistrar;
 
-// Helper: build a solid-grey RGB8 payload for round-trip checks.
-UncompressedVideoPayload::Ptr makeTestPayload(int width, int height, uint8_t fill) {
-        PixelFormat pd(PixelFormat::RGB8_sRGB);
-        const size_t bytes = pd.memLayout().planeSize(0, width, height);
-        auto buf = Buffer::Ptr::create(bytes);
-        buf.modify()->fill(static_cast<char>(fill));
-        buf.modify()->setSize(bytes);
-        ImageDesc desc(Size2Du32(width, height), pd);
-        auto payload = UncompressedVideoPayload::Ptr::create(desc);
-        payload.modify()->data().pushToBack(buf, 0, bytes);
-        return payload;
-}
+        VideoEncoder *makePassthroughEncoder() {
+                VideoCodec vc(gPassthroughCodecId);
+                auto       res = vc.createEncoder();
+                return isOk(res) ? value(res) : nullptr;
+        }
 
-VideoEncoder *makePassthroughEncoder() {
-        VideoCodec vc(gPassthroughCodecId);
-        auto res = vc.createEncoder();
-        return isOk(res) ? value(res) : nullptr;
-}
-
-VideoDecoder *makePassthroughDecoder() {
-        VideoCodec vc(gPassthroughCodecId);
-        auto res = vc.createDecoder();
-        return isOk(res) ? value(res) : nullptr;
-}
+        VideoDecoder *makePassthroughDecoder() {
+                VideoCodec vc(gPassthroughCodecId);
+                auto       res = vc.createDecoder();
+                return isOk(res) ? value(res) : nullptr;
+        }
 
 } // namespace
 
@@ -263,7 +257,7 @@ TEST_CASE("VideoEncoder: registry round-trip") {
         // Unknown codec ID → invalid VideoCodec → createEncoder returns
         // Error::Invalid.
         VideoCodec bogus(static_cast<VideoCodec::ID>(0xDEADBEEF));
-        auto r = bogus.createEncoder();
+        auto       r = bogus.createEncoder();
         CHECK(error(r).isError());
 }
 
@@ -284,7 +278,7 @@ TEST_CASE("VideoEncoder: configure forwards well-known keys") {
 
         MediaConfig cfg;
         cfg.set(MediaConfig::BitrateKbps, int32_t(8000));
-        cfg.set(MediaConfig::GopLength,   int32_t(48));
+        cfg.set(MediaConfig::GopLength, int32_t(48));
         enc->configure(cfg);
 
         CHECK(enc->configuredBitrate() == 8000);
@@ -341,7 +335,7 @@ TEST_CASE("VideoEncoder: submitPayload rejects invalid input") {
         REQUIRE(enc != nullptr);
 
         UncompressedVideoPayload::Ptr empty;
-        Error err = enc->submitPayload(empty);
+        Error                         err = enc->submitPayload(empty);
         CHECK(err == Error::Invalid);
         CHECK(enc->lastError() == Error::Invalid);
         CHECK_FALSE(enc->lastErrorMessage().isEmpty());
@@ -372,7 +366,7 @@ TEST_CASE("Video codec: encoder -> packet -> decoder round-trip") {
         CHECK(srcPlane.size() == outPlane.size());
         const uint8_t *srcBytes = srcPlane.data();
         const uint8_t *outBytes = outPlane.data();
-        for(size_t i = 0; i < srcPlane.size(); ++i) {
+        for (size_t i = 0; i < srcPlane.size(); ++i) {
                 CHECK(srcBytes[i] == outBytes[i]);
         }
 
@@ -387,7 +381,7 @@ TEST_CASE("Video codec: encoder -> packet -> decoder round-trip") {
 TEST_CASE("VideoEncoder::registerBackend rejects malformed records") {
         // Fetch a known-good backend handle from the passthrough wiring.
         VideoCodec passthrough(gPassthroughCodecId);
-        auto backends = passthrough.availableEncoderBackends();
+        auto       backends = passthrough.availableEncoderBackends();
         REQUIRE_FALSE(backends.isEmpty());
         const auto goodBackend = backends.front();
 
@@ -398,7 +392,9 @@ TEST_CASE("VideoEncoder::registerBackend rejects malformed records") {
         CHECK(VideoEncoder::registerBackend(r) == Error::Invalid);
 
         // Invalid backend handle.
-        r.factory = []() -> VideoEncoder * { return nullptr; };
+        r.factory = []() -> VideoEncoder * {
+                return nullptr;
+        };
         r.backend = VideoCodec::Backend();
         CHECK(VideoEncoder::registerBackend(r) == Error::Invalid);
 
@@ -410,7 +406,7 @@ TEST_CASE("VideoEncoder::registerBackend rejects malformed records") {
 
 TEST_CASE("VideoDecoder::registerBackend rejects malformed records") {
         VideoCodec passthrough(gPassthroughCodecId);
-        auto backends = passthrough.availableDecoderBackends();
+        auto       backends = passthrough.availableDecoderBackends();
         REQUIRE_FALSE(backends.isEmpty());
         const auto goodBackend = backends.front();
 
@@ -419,7 +415,9 @@ TEST_CASE("VideoDecoder::registerBackend rejects malformed records") {
         r.backend = goodBackend;
         CHECK(VideoDecoder::registerBackend(r) == Error::Invalid);
 
-        r.factory = []() -> VideoDecoder * { return nullptr; };
+        r.factory = []() -> VideoDecoder * {
+                return nullptr;
+        };
         r.backend = VideoCodec::Backend();
         CHECK(VideoDecoder::registerBackend(r) == Error::Invalid);
 
@@ -433,14 +431,12 @@ TEST_CASE("VideoDecoder::registerBackend rejects malformed records") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("VideoEncoder::supportedInputsFor: empty list for unknown codec") {
-        auto out = VideoEncoder::supportedInputsFor(
-                static_cast<VideoCodec::ID>(0xBAADBEEF), VideoCodec::Backend());
+        auto out = VideoEncoder::supportedInputsFor(static_cast<VideoCodec::ID>(0xBAADBEEF), VideoCodec::Backend());
         CHECK(out.isEmpty());
 }
 
 TEST_CASE("VideoDecoder::supportedOutputsFor: empty list for unknown codec") {
-        auto out = VideoDecoder::supportedOutputsFor(
-                static_cast<VideoCodec::ID>(0xBAADBEEF), VideoCodec::Backend());
+        auto out = VideoDecoder::supportedOutputsFor(static_cast<VideoCodec::ID>(0xBAADBEEF), VideoCodec::Backend());
         CHECK(out.isEmpty());
 }
 
@@ -485,14 +481,12 @@ TEST_CASE("VideoDecoder::availableBackends for unknown codec returns empty list"
 // ---------------------------------------------------------------------------
 
 TEST_CASE("VideoEncoder::create returns IdNotFound for unknown codec") {
-        auto res = VideoEncoder::create(static_cast<VideoCodec::ID>(0xDEAD),
-                                         VideoCodec::Backend(), nullptr);
+        auto res = VideoEncoder::create(static_cast<VideoCodec::ID>(0xDEAD), VideoCodec::Backend(), nullptr);
         CHECK(error(res) == Error::IdNotFound);
 }
 
 TEST_CASE("VideoDecoder::create returns IdNotFound for unknown codec") {
-        auto res = VideoDecoder::create(static_cast<VideoCodec::ID>(0xDEAD),
-                                         VideoCodec::Backend(), nullptr);
+        auto res = VideoDecoder::create(static_cast<VideoCodec::ID>(0xDEAD), VideoCodec::Backend(), nullptr);
         CHECK(error(res) == Error::IdNotFound);
 }
 
@@ -524,8 +518,10 @@ TEST_CASE("VideoCodec::createEncoder: CodecBackend override pins the requested b
         VideoEncoder::BackendRecord rec;
         rec.codecId = gPassthroughCodecId;
         rec.backend = overrideBackend;
-        rec.weight  = BackendWeight::Vendored;  // lower than the default User
-        rec.factory = []() -> VideoEncoder * { return new PassthroughVideoEncoder(); };
+        rec.weight = BackendWeight::Vendored; // lower than the default User
+        rec.factory = []() -> VideoEncoder * {
+                return new PassthroughVideoEncoder();
+        };
         REQUIRE(VideoEncoder::registerBackend(rec) == Error::Ok);
 
         VideoCodec codec(gPassthroughCodecId);
@@ -552,7 +548,7 @@ TEST_CASE("VideoCodec::createEncoder: CodecBackend override naming an unattached
         MediaConfig cfg;
         cfg.set(MediaConfig::CodecBackend, String("VideoCodecTest_OverrideUnattached"));
         VideoCodec codec(gPassthroughCodecId);
-        auto res = codec.createEncoder(&cfg);
+        auto       res = codec.createEncoder(&cfg);
         CHECK(error(res).isError());
 }
 
@@ -562,7 +558,7 @@ TEST_CASE("VideoCodec::createDecoder: CodecBackend override naming an unattached
         MediaConfig cfg;
         cfg.set(MediaConfig::CodecBackend, String("VideoCodecTest_DecOverrideUnattached"));
         VideoCodec codec(gPassthroughCodecId);
-        auto res = codec.createDecoder(&cfg);
+        auto       res = codec.createDecoder(&cfg);
         CHECK(error(res).isError());
 }
 
@@ -604,9 +600,9 @@ TEST_CASE("VideoDecoder: reset clears pending packets") {
         auto f = makeTestPayload(2, 2, 0x66);
         // Wrap the source plane as a compressed payload and submit.
         ImageDesc cdesc(Size2Du32(2, 2), PixelFormat(PixelFormat::H264));
-        auto fPlane = f->plane(0);
-        auto pkt = CompressedVideoPayload::Ptr::create(
-                cdesc, BufferView(fPlane.buffer(), fPlane.offset(), fPlane.size()));
+        auto      fPlane = f->plane(0);
+        auto      pkt =
+                CompressedVideoPayload::Ptr::create(cdesc, BufferView(fPlane.buffer(), fPlane.offset(), fPlane.size()));
         REQUIRE(dec->submitPayload(pkt) == Error::Ok);
         REQUIRE(dec->reset() == Error::Ok);
         CHECK_FALSE(dec->receiveVideoPayload().isValid());
@@ -619,7 +615,7 @@ TEST_CASE("VideoDecoder: reset clears pending packets") {
 
 TEST_CASE("VideoEncoder::registerBackend replaces the prior record for the same (codec,backend)") {
         VideoCodec passthrough(gPassthroughCodecId);
-        auto backends = passthrough.availableEncoderBackends();
+        auto       backends = passthrough.availableEncoderBackends();
         REQUIRE_FALSE(backends.isEmpty());
         const auto target = backends.front();
 
@@ -630,8 +626,10 @@ TEST_CASE("VideoEncoder::registerBackend replaces the prior record for the same 
         VideoEncoder::BackendRecord r;
         r.codecId = gPassthroughCodecId;
         r.backend = target;
-        r.weight  = BackendWeight::User + 200;
-        r.factory = []() -> VideoEncoder * { return new PassthroughVideoEncoder(); };
+        r.weight = BackendWeight::User + 200;
+        r.factory = []() -> VideoEncoder * {
+                return new PassthroughVideoEncoder();
+        };
         REQUIRE(VideoEncoder::registerBackend(r) == Error::Ok);
 
         auto after = passthrough.availableEncoderBackends();
@@ -644,8 +642,7 @@ TEST_CASE("VideoEncoder::registerBackend replaces the prior record for the same 
 // ---------------------------------------------------------------------------
 
 TEST_CASE("VideoEncoder::create with null config succeeds and skips configure") {
-        auto res = VideoEncoder::create(gPassthroughCodecId,
-                                         VideoCodec::Backend(), nullptr);
+        auto res = VideoEncoder::create(gPassthroughCodecId, VideoCodec::Backend(), nullptr);
         REQUIRE(isOk(res));
         VideoEncoder *enc = value(res);
         REQUIRE(enc != nullptr);
@@ -682,7 +679,7 @@ TEST_CASE("VideoCodec: Invalid sentinel name round-trips through lookup") {
 }
 
 TEST_CASE("VideoCodec: every registered ID round-trips through lookup by name") {
-        for(auto id : VideoCodec::registeredIDs()) {
+        for (auto id : VideoCodec::registeredIDs()) {
                 VideoCodec vc(id);
                 CAPTURE(vc.name());
                 auto r = VideoCodec::lookup(vc.name());
@@ -691,7 +688,7 @@ TEST_CASE("VideoCodec: every registered ID round-trips through lookup by name") 
         }
         // Plus the Invalid sentinel.
         VideoCodec inv;
-        auto r = VideoCodec::lookup(inv.name());
+        auto       r = VideoCodec::lookup(inv.name());
         CHECK(error(r).isOk());
         CHECK(value(r).id() == VideoCodec::Invalid);
 }

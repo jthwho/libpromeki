@@ -15,8 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 // TuiMenu
 
-TuiMenu::TuiMenu(const String &title, ObjectBase *parent)
-        : TuiWidget(parent), _title(title) {
+TuiMenu::TuiMenu(const String &title, ObjectBase *parent) : TuiWidget(parent), _title(title) {
         setFocusPolicy(StrongFocus);
         setVisible(false);
 }
@@ -36,12 +35,11 @@ void TuiMenu::addSeparator() {
 }
 
 void TuiMenu::setCurrentIndex(int index) {
-        if(index < 0) index = 0;
-        if(index >= static_cast<int>(_actions.size())) index = static_cast<int>(_actions.size()) - 1;
+        if (index < 0) index = 0;
+        if (index >= static_cast<int>(_actions.size())) index = static_cast<int>(_actions.size()) - 1;
         _currentIndex = index;
         // Skip separators
-        while(static_cast<size_t>(_currentIndex) < _separators.size() &&
-              _separators[_currentIndex]) {
+        while (static_cast<size_t>(_currentIndex) < _separators.size() && _separators[_currentIndex]) {
                 _currentIndex++;
         }
         update();
@@ -61,49 +59,49 @@ void TuiMenu::close() {
 
 Size2Di32 TuiMenu::sizeHint() const {
         int maxWidth = 0;
-        for(size_t i = 0; i < _actions.size(); ++i) {
-                if(_actions[i]) {
+        for (size_t i = 0; i < _actions.size(); ++i) {
+                if (_actions[i]) {
                         int len = static_cast<int>(_actions[i]->text().length());
-                        if(len > maxWidth) maxWidth = len;
+                        if (len > maxWidth) maxWidth = len;
                 }
         }
         return Size2Di32(maxWidth + 4, static_cast<int>(_actions.size()) + 2);
 }
 
 void TuiMenu::paintEvent(PaintEvent *) {
-        if(!_open) return;
+        if (!_open) return;
 
         TuiSubsystem *app = TuiSubsystem::instance();
-        if(!app) return;
+        if (!app) return;
 
         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
-        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
+        Rect2Di32  clipRect(screenPos.x(), screenPos.y(), width(), height());
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        bool enabled = isEnabled();
+        bool              enabled = isEnabled();
 
-        TuiStyle bgStyle = pal.style(TuiPalette::Mid, true, enabled)
-                                .merged(pal.style(TuiPalette::Window, true, enabled));
+        TuiStyle bgStyle =
+                pal.style(TuiPalette::Mid, true, enabled).merged(pal.style(TuiPalette::Window, true, enabled));
         painter.setStyle(bgStyle);
         painter.fillRect(Rect2Di32(0, 0, width(), height()));
         painter.drawRect(Rect2Di32(0, 0, width(), height()));
 
-        TuiStyle normalStyle = pal.style(TuiPalette::WindowText, true, enabled)
-                                .merged(pal.style(TuiPalette::Window, true, enabled));
+        TuiStyle normalStyle =
+                pal.style(TuiPalette::WindowText, true, enabled).merged(pal.style(TuiPalette::Window, true, enabled));
         TuiStyle hlStyle = pal.style(TuiPalette::HighlightedText, true, enabled)
-                                .merged(pal.style(TuiPalette::Highlight, true, enabled));
+                                   .merged(pal.style(TuiPalette::Highlight, true, enabled));
 
-        for(size_t i = 0; i < _actions.size(); ++i) {
+        for (size_t i = 0; i < _actions.size(); ++i) {
                 int row = static_cast<int>(i) + 1;
-                if(_separators[i]) {
+                if (_separators[i]) {
                         painter.setStyle(bgStyle);
                         painter.drawHLine(1, row, width() - 2, U'\u2500');
                         continue;
                 }
-                if(!_actions[i]) continue;
+                if (!_actions[i]) continue;
 
-                if(static_cast<int>(i) == _currentIndex) {
+                if (static_cast<int>(i) == _currentIndex) {
                         painter.setStyle(hlStyle);
                         painter.fillRect(Rect2Di32(1, row, width() - 2, 1));
                 } else {
@@ -115,28 +113,29 @@ void TuiMenu::paintEvent(PaintEvent *) {
 
 void TuiMenu::keyPressEvent(KeyEvent *e) {
         // Let Ctrl-modified keys propagate (e.g. Ctrl+Left/Right for tab switching)
-        if(e->isCtrl()) return;
-        switch(e->key()) {
+        if (e->isCtrl()) return;
+        switch (e->key()) {
                 case KeyEvent::Key_Up:
-                        if(_currentIndex > 0) {
+                        if (_currentIndex > 0) {
                                 _currentIndex--;
-                                while(_currentIndex > 0 && _separators[_currentIndex]) _currentIndex--;
+                                while (_currentIndex > 0 && _separators[_currentIndex]) _currentIndex--;
                         }
                         update();
                         e->accept();
                         break;
                 case KeyEvent::Key_Down:
-                        if(_currentIndex < static_cast<int>(_actions.size()) - 1) {
+                        if (_currentIndex < static_cast<int>(_actions.size()) - 1) {
                                 _currentIndex++;
-                                while(static_cast<size_t>(_currentIndex) < _separators.size() &&
-                                      _separators[_currentIndex]) _currentIndex++;
+                                while (static_cast<size_t>(_currentIndex) < _separators.size() &&
+                                       _separators[_currentIndex])
+                                        _currentIndex++;
                         }
                         update();
                         e->accept();
                         break;
                 case KeyEvent::Key_Enter:
-                        if(_currentIndex >= 0 && static_cast<size_t>(_currentIndex) < _actions.size() &&
-                           _actions[_currentIndex] && _actions[_currentIndex]->isEnabled()) {
+                        if (_currentIndex >= 0 && static_cast<size_t>(_currentIndex) < _actions.size() &&
+                            _actions[_currentIndex] && _actions[_currentIndex]->isEnabled()) {
                                 _actions[_currentIndex]->triggeredSignal.emit();
                         }
                         close();
@@ -146,8 +145,7 @@ void TuiMenu::keyPressEvent(KeyEvent *e) {
                         close();
                         e->accept();
                         break;
-                default:
-                        break;
+                default: break;
         }
 }
 
@@ -171,27 +169,27 @@ Size2Di32 TuiMenuBar::sizeHint() const {
 
 void TuiMenuBar::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
-        if(!app) return;
+        if (!app) return;
 
         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
-        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
+        Rect2Di32  clipRect(screenPos.x(), screenPos.y(), width(), height());
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        bool enabled = isEnabled();
+        bool              enabled = isEnabled();
 
         TuiStyle barStyle = pal.style(TuiPalette::StatusBarText, false, enabled)
-                                .merged(pal.style(TuiPalette::StatusBar, false, enabled));
+                                    .merged(pal.style(TuiPalette::StatusBar, false, enabled));
         painter.setStyle(barStyle);
         painter.fillRect(Rect2Di32(0, 0, width(), height()));
 
         TuiStyle hlStyle = pal.style(TuiPalette::HighlightedText, true, enabled)
-                                .merged(pal.style(TuiPalette::Highlight, true, enabled));
+                                   .merged(pal.style(TuiPalette::Highlight, true, enabled));
 
         int xpos = 0;
-        for(size_t i = 0; i < _menus.size(); ++i) {
+        for (size_t i = 0; i < _menus.size(); ++i) {
                 String label = String(" ") + _menus[i]->title() + " ";
-                if(static_cast<int>(i) == _currentIndex && _active) {
+                if (static_cast<int>(i) == _currentIndex && _active) {
                         painter.setStyle(hlStyle);
                 } else {
                         painter.setStyle(barStyle);
@@ -202,38 +200,37 @@ void TuiMenuBar::paintEvent(PaintEvent *) {
 }
 
 void TuiMenuBar::keyPressEvent(KeyEvent *e) {
-        if(e->isAlt() && !_active) {
+        if (e->isAlt() && !_active) {
                 _active = true;
                 update();
                 e->accept();
                 return;
         }
 
-        if(!_active) return;
+        if (!_active) return;
 
-        switch(e->key()) {
+        switch (e->key()) {
                 case KeyEvent::Key_Left:
-                        if(_currentIndex > 0) _currentIndex--;
+                        if (_currentIndex > 0) _currentIndex--;
                         update();
                         e->accept();
                         break;
                 case KeyEvent::Key_Right:
-                        if(_currentIndex < static_cast<int>(_menus.size()) - 1) _currentIndex++;
+                        if (_currentIndex < static_cast<int>(_menus.size()) - 1) _currentIndex++;
                         update();
                         e->accept();
                         break;
                 case KeyEvent::Key_Enter:
                 case KeyEvent::Key_Down:
-                        if(_currentIndex >= 0 && static_cast<size_t>(_currentIndex) < _menus.size()) {
+                        if (_currentIndex >= 0 && static_cast<size_t>(_currentIndex) < _menus.size()) {
                                 TuiMenu *menu = _menus[_currentIndex];
                                 // Position menu below the bar
                                 Point2Di32 pos = mapToGlobal(Point2Di32(0, 1));
-                                Size2Di32 hint = menu->sizeHint();
-                                menu->setGeometry(Rect2Di32(pos.x(), pos.y(),
-                                        hint.width(), hint.height()));
+                                Size2Di32  hint = menu->sizeHint();
+                                menu->setGeometry(Rect2Di32(pos.x(), pos.y(), hint.width(), hint.height()));
                                 menu->open();
                                 TuiSubsystem *app = TuiSubsystem::instance();
-                                if(app) app->setFocusWidget(menu);
+                                if (app) app->setFocusWidget(menu);
                         }
                         e->accept();
                         break;
@@ -242,8 +239,7 @@ void TuiMenuBar::keyPressEvent(KeyEvent *e) {
                         update();
                         e->accept();
                         break;
-                default:
-                        break;
+                default: break;
         }
 }
 

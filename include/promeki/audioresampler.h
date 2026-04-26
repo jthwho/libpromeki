@@ -144,10 +144,8 @@ class AudioResampler {
                  * @return Error::Ok on success, Error::LibraryFailure on
                  *         libsamplerate error.
                  */
-                Error process(const float *dataIn, long inputFrames,
-                              float *dataOut, long outputFrames,
-                              long &inputUsed, long &outputGen,
-                              bool endOfInput = false);
+                Error process(const float *dataIn, long inputFrames, float *dataOut, long outputFrames, long &inputUsed,
+                              long &outputGen, bool endOfInput = false);
 
                 /**
                  * @brief Resets the resampler to its initial state.

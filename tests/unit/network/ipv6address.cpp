@@ -26,7 +26,7 @@ TEST_CASE("Ipv6Address") {
                 CHECK_FALSE(lo.isNull());
                 CHECK(lo.isLoopback());
                 CHECK(lo.raw()[15] == 1);
-                for(int i = 0; i < 15; ++i) CHECK(lo.raw()[i] == 0);
+                for (int i = 0; i < 15; ++i) CHECK(lo.raw()[i] == 0);
         }
 
         SUBCASE("any") {
@@ -118,7 +118,7 @@ TEST_CASE("Ipv6Address") {
 
         SUBCASE("fromString round-trip") {
                 String inputs[] = {"::1", "::", "fe80::1", "ff02::1"};
-                for(const auto &input : inputs) {
+                for (const auto &input : inputs) {
                         auto [addr, err] = Ipv6Address::fromString(input);
                         CHECK(err.isOk());
                         auto [addr2, err2] = Ipv6Address::fromString(addr.toString());
@@ -194,11 +194,11 @@ TEST_CASE("Ipv6Address") {
         }
 
         SUBCASE("data accessor") {
-                Ipv6Address lo = Ipv6Address::loopback();
+                Ipv6Address                    lo = Ipv6Address::loopback();
                 const Ipv6Address::DataFormat &d = lo.data();
                 CHECK(d.size() == 16);
                 CHECK(d[15] == 1);
-                for(int i = 0; i < 15; ++i) CHECK(d[i] == 0);
+                for (int i = 0; i < 15; ++i) CHECK(d[i] == 0);
         }
 
         SUBCASE("multicastMac") {
@@ -215,7 +215,7 @@ TEST_CASE("Ipv6Address") {
 
         SUBCASE("TextStream operator<<") {
                 Ipv6Address lo = Ipv6Address::loopback();
-                String str;
+                String      str;
                 {
                         TextStream ts(&str);
                         ts << lo;
@@ -228,7 +228,7 @@ TEST_CASE("Ipv6Address") {
                 Ipv6Address addr = Ipv6Address::loopback();
                 addr.setScopeId(5);
                 struct sockaddr_in6 sa;
-                Error err = addr.toSockAddr(&sa);
+                Error               err = addr.toSockAddr(&sa);
                 CHECK(err.isOk());
                 CHECK(sa.sin6_family == AF_INET6);
                 CHECK(sa.sin6_port == 0);

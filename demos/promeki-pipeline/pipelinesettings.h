@@ -17,12 +17,12 @@
 
 namespace promekipipeline {
 
-// Pull RefCount into our namespace so the PROMEKI_SHARED_FINAL macro
-// (which references the unqualified type name) compiles when used on
-// classes that live outside the promeki namespace.
-using promeki::RefCount;
+        // Pull RefCount into our namespace so the PROMEKI_SHARED_FINAL macro
+        // (which references the unqualified type name) compiles when used on
+        // classes that live outside the promeki namespace.
+        using promeki::RefCount;
 
-/**
+        /**
  * @brief Per-pipeline demo settings (display name, planner policy,
  *        stats cadence) distinct from the @c MediaPipelineConfig graph.
  *
@@ -39,89 +39,88 @@ using promeki::RefCount;
  * @c PUT @c /api/pipelines/{id}/settings endpoint can replace the
  * full block in a single request.
  */
-class PipelineSettings {
-        PROMEKI_SHARED_FINAL(PipelineSettings)
-        public:
-                /** @brief Default display name for new pipelines. */
-                static const promeki::String DefaultName;
+        class PipelineSettings {
+                        PROMEKI_SHARED_FINAL(PipelineSettings)
+                public:
+                        /** @brief Default display name for new pipelines. */
+                        static const promeki::String DefaultName;
 
-                /** @brief Default stats tick interval (1 second). */
-                static const promeki::Duration DefaultStatsInterval;
+                        /** @brief Default stats tick interval (1 second). */
+                        static const promeki::Duration DefaultStatsInterval;
 
-                /** @brief Default planner quality bias. */
-                static constexpr promeki::MediaPipelinePlanner::Quality
-                        DefaultQuality =
+                        /** @brief Default planner quality bias. */
+                        static constexpr promeki::MediaPipelinePlanner::Quality DefaultQuality =
                                 promeki::MediaPipelinePlanner::Quality::Highest;
 
-                /** @brief Default planner bridge-depth ceiling. */
-                static constexpr int DefaultMaxBridgeDepth = 4;
+                        /** @brief Default planner bridge-depth ceiling. */
+                        static constexpr int DefaultMaxBridgeDepth = 4;
 
-                /** @brief Default autoplan setting (planner runs at build()). */
-                static constexpr bool DefaultAutoplan = true;
+                        /** @brief Default autoplan setting (planner runs at build()). */
+                        static constexpr bool DefaultAutoplan = true;
 
-                /** @brief Shared pointer alias. */
-                using Ptr = promeki::SharedPtr<PipelineSettings>;
+                        /** @brief Shared pointer alias. */
+                        using Ptr = promeki::SharedPtr<PipelineSettings>;
 
-                /** @brief List alias for plain-value lists. */
-                using List = promeki::List<PipelineSettings>;
+                        /** @brief List alias for plain-value lists. */
+                        using List = promeki::List<PipelineSettings>;
 
-                /** @brief List alias for shared-pointer lists. */
-                using PtrList = promeki::List<Ptr>;
+                        /** @brief List alias for shared-pointer lists. */
+                        using PtrList = promeki::List<Ptr>;
 
-                /** @brief Default-constructs settings with the documented defaults. */
-                PipelineSettings();
+                        /** @brief Default-constructs settings with the documented defaults. */
+                        PipelineSettings();
 
-                /** @brief Returns the user-visible display name. */
-                const promeki::String &name() const { return _name; }
+                        /** @brief Returns the user-visible display name. */
+                        const promeki::String &name() const { return _name; }
 
-                /** @brief Replaces the user-visible display name. */
-                void setName(const promeki::String &n) { _name = n; }
+                        /** @brief Replaces the user-visible display name. */
+                        void setName(const promeki::String &n) { _name = n; }
 
-                /**
+                        /**
                  * @brief Returns the periodic stats tick interval.
                  *
                  * A zero @c Duration disables the stats tick (and the
                  * matching @c PipelineEvent::Kind::StatsUpdated stream).
                  */
-                const promeki::Duration &statsInterval() const { return _statsInterval; }
+                        const promeki::Duration &statsInterval() const { return _statsInterval; }
 
-                /** @brief Replaces the stats tick interval. */
-                void setStatsInterval(const promeki::Duration &d) { _statsInterval = d; }
+                        /** @brief Replaces the stats tick interval. */
+                        void setStatsInterval(const promeki::Duration &d) { _statsInterval = d; }
 
-                /** @brief Returns the planner quality bias. */
-                promeki::MediaPipelinePlanner::Quality quality() const { return _quality; }
+                        /** @brief Returns the planner quality bias. */
+                        promeki::MediaPipelinePlanner::Quality quality() const { return _quality; }
 
-                /** @brief Replaces the planner quality bias. */
-                void setQuality(promeki::MediaPipelinePlanner::Quality q) { _quality = q; }
+                        /** @brief Replaces the planner quality bias. */
+                        void setQuality(promeki::MediaPipelinePlanner::Quality q) { _quality = q; }
 
-                /** @brief Returns the planner bridge-depth ceiling. */
-                int maxBridgeDepth() const { return _maxBridgeDepth; }
+                        /** @brief Returns the planner bridge-depth ceiling. */
+                        int maxBridgeDepth() const { return _maxBridgeDepth; }
 
-                /** @brief Replaces the planner bridge-depth ceiling. */
-                void setMaxBridgeDepth(int d) { _maxBridgeDepth = d; }
+                        /** @brief Replaces the planner bridge-depth ceiling. */
+                        void setMaxBridgeDepth(int d) { _maxBridgeDepth = d; }
 
-                /** @brief Returns backend type names the planner must not use as bridges. */
-                const promeki::StringList &excludedBridges() const { return _excludedBridges; }
+                        /** @brief Returns backend type names the planner must not use as bridges. */
+                        const promeki::StringList &excludedBridges() const { return _excludedBridges; }
 
-                /** @brief Replaces the planner's excluded-bridge list. */
-                void setExcludedBridges(const promeki::StringList &list) { _excludedBridges = list; }
+                        /** @brief Replaces the planner's excluded-bridge list. */
+                        void setExcludedBridges(const promeki::StringList &list) { _excludedBridges = list; }
 
-                /** @brief Returns whether @c PipelineManager::build runs the planner. */
-                bool autoplan() const { return _autoplan; }
+                        /** @brief Returns whether @c PipelineManager::build runs the planner. */
+                        bool autoplan() const { return _autoplan; }
 
-                /** @brief Replaces the autoplan flag. */
-                void setAutoplan(bool yes) { _autoplan = yes; }
+                        /** @brief Replaces the autoplan flag. */
+                        void setAutoplan(bool yes) { _autoplan = yes; }
 
-                /**
+                        /**
                  * @brief Materializes the planner @c Policy described by this
                  *        settings block.
                  *
                  * Convenience for @c PipelineManager::build so callers do not
                  * have to copy fields one at a time.
                  */
-                promeki::MediaPipelinePlanner::Policy plannerPolicy() const;
+                        promeki::MediaPipelinePlanner::Policy plannerPolicy() const;
 
-                /**
+                        /**
                  * @brief Serializes the settings to a stable JSON shape.
                  *
                  * The shape is @code
@@ -135,9 +134,9 @@ class PipelineSettings {
                  * }
                  * @endcode
                  */
-                promeki::JsonObject toJson() const;
+                        promeki::JsonObject toJson() const;
 
-                /**
+                        /**
                  * @brief Reconstructs a settings block from a JSON object.
                  *
                  * Missing keys take their default values; unknown keys are
@@ -148,19 +147,17 @@ class PipelineSettings {
                  * @param err Optional error output.
                  * @return The decoded settings.
                  */
-                static PipelineSettings fromJson(const promeki::JsonObject &obj,
-                                                 promeki::Error *err = nullptr);
+                        static PipelineSettings fromJson(const promeki::JsonObject &obj, promeki::Error *err = nullptr);
 
-                /**
+                        /**
                  * @brief Returns the canonical name of @p q.
                  *
                  * Round-trips through @ref qualityFromString.  Unknown
                  * inputs yield @c "Highest".
                  */
-                static promeki::String qualityToString(
-                        promeki::MediaPipelinePlanner::Quality q);
+                        static promeki::String qualityToString(promeki::MediaPipelinePlanner::Quality q);
 
-                /**
+                        /**
                  * @brief Parses a string previously produced by @ref qualityToString.
                  * @param s  The string to parse.
                  * @param ok Optional flag set to @c true when @p s named a
@@ -168,16 +165,16 @@ class PipelineSettings {
                  * @return The decoded quality, or @c Quality::Highest on
                  *         unknown input.
                  */
-                static promeki::MediaPipelinePlanner::Quality qualityFromString(
-                        const promeki::String &s, bool *ok = nullptr);
+                        static promeki::MediaPipelinePlanner::Quality qualityFromString(const promeki::String &s,
+                                                                                        bool *ok = nullptr);
 
-        private:
-                promeki::String                          _name;
-                promeki::Duration                        _statsInterval;
-                promeki::MediaPipelinePlanner::Quality   _quality;
-                int                                      _maxBridgeDepth;
-                promeki::StringList                      _excludedBridges;
-                bool                                     _autoplan;
-};
+                private:
+                        promeki::String                        _name;
+                        promeki::Duration                      _statsInterval;
+                        promeki::MediaPipelinePlanner::Quality _quality;
+                        int                                    _maxBridgeDepth;
+                        promeki::StringList                    _excludedBridges;
+                        bool                                   _autoplan;
+        };
 
 } // namespace promekipipeline

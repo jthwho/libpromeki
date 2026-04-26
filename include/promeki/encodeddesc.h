@@ -32,7 +32,7 @@ PROMEKI_NAMESPACE_BEGIN
  * threads.
  */
 class EncodedDesc {
-        PROMEKI_SHARED_FINAL(EncodedDesc)
+                PROMEKI_SHARED_FINAL(EncodedDesc)
         public:
                 /** @brief Shared pointer type for EncodedDesc. */
                 using Ptr = SharedPtr<EncodedDesc>;
@@ -50,31 +50,27 @@ class EncodedDesc {
                  * @brief Constructs an encoded description with the given codec.
                  * @param codec The codec identifier (e.g. "JPEG", "H264").
                  */
-                EncodedDesc(const FourCC &codec) : _codec(codec) { }
+                EncodedDesc(const FourCC &codec) : _codec(codec) {}
 
                 /**
                  * @brief Constructs an encoded description with codec and source image format.
                  * @param codec The codec identifier.
                  * @param sourceImageDesc The uncompressed image format this was encoded from.
                  */
-                EncodedDesc(const FourCC &codec, const ImageDesc &sourceImageDesc) :
-                        _codec(codec), _sourceImageDesc(sourceImageDesc) { }
+                EncodedDesc(const FourCC &codec, const ImageDesc &sourceImageDesc)
+                    : _codec(codec), _sourceImageDesc(sourceImageDesc) {}
 
                 /**
                  * @brief Returns true if this encoded description has a valid (non-zero) codec.
                  * @return true if valid.
                  */
-                bool isValid() const {
-                        return _codec.value() != 0;
-                }
+                bool isValid() const { return _codec.value() != 0; }
 
                 /**
                  * @brief Returns the codec identifier.
                  * @return The FourCC codec value.
                  */
-                FourCC codec() const {
-                        return _codec;
-                }
+                FourCC codec() const { return _codec; }
 
                 /**
                  * @brief Sets the codec identifier.
@@ -89,9 +85,7 @@ class EncodedDesc {
                  * @brief Returns the source image description this was encoded from.
                  * @return The source ImageDesc.
                  */
-                const ImageDesc &sourceImageDesc() const {
-                        return _sourceImageDesc;
-                }
+                const ImageDesc &sourceImageDesc() const { return _sourceImageDesc; }
 
                 /**
                  * @brief Sets the source image description.
@@ -109,9 +103,7 @@ class EncodedDesc {
                  *
                  * @return The quality value.
                  */
-                int quality() const {
-                        return _quality;
-                }
+                int quality() const { return _quality; }
 
                 /**
                  * @brief Sets the codec-specific quality parameter.
@@ -123,14 +115,10 @@ class EncodedDesc {
                 }
 
                 /** @brief Returns a const reference to the metadata. */
-                const Metadata &metadata() const {
-                        return _metadata;
-                }
+                const Metadata &metadata() const { return _metadata; }
 
                 /** @brief Returns a mutable reference to the metadata. */
-                Metadata &metadata() {
-                        return _metadata;
-                }
+                Metadata &metadata() { return _metadata; }
 
                 /**
                  * @brief Returns true if the format fields match (codec, quality).
@@ -138,8 +126,7 @@ class EncodedDesc {
                  * @return true if the format matches, ignoring metadata.
                  */
                 bool formatEquals(const EncodedDesc &other) const {
-                        return _codec == other._codec &&
-                               _quality == other._quality;
+                        return _codec == other._codec && _quality == other._quality;
                 }
 
                 /**
@@ -148,8 +135,7 @@ class EncodedDesc {
                  * @return true if equal.
                  */
                 bool operator==(const EncodedDesc &other) const {
-                        return formatEquals(other) &&
-                               _metadata == other._metadata;
+                        return formatEquals(other) && _metadata == other._metadata;
                 }
 
                 /**
@@ -157,9 +143,7 @@ class EncodedDesc {
                  * @param other The EncodedDesc to compare against.
                  * @return true if not equal.
                  */
-                bool operator!=(const EncodedDesc &other) const {
-                        return !(*this == other);
-                }
+                bool operator!=(const EncodedDesc &other) const { return !(*this == other); }
 
                 /**
                  * @brief Returns a human-readable string representation.
@@ -168,15 +152,13 @@ class EncodedDesc {
                 String toString() const;
 
                 /** @brief Implicit conversion to String via toString(). */
-                operator String() const {
-                        return toString();
-                }
+                operator String() const { return toString(); }
 
         private:
-                FourCC          _codec = FourCC('\0', '\0', '\0', '\0');
-                ImageDesc       _sourceImageDesc;
-                int             _quality = -1;
-                Metadata        _metadata;
+                FourCC    _codec = FourCC('\0', '\0', '\0', '\0');
+                ImageDesc _sourceImageDesc;
+                int       _quality = -1;
+                Metadata  _metadata;
 };
 
 PROMEKI_NAMESPACE_END

@@ -33,49 +33,48 @@ PROMEKI_REGISTER_MEDIAIO(MediaIOTask_VideoEncoder)
 
 namespace {
 
-// Bridge: VideoEncoder bridges uncompressed → compressed.  The
-// planner inserts it whenever a downstream sink demands a compressed
-// PixelFormat that an upstream uncompressed source can supply.
-bool videoEncoderBridge(const MediaDesc &from,
-                        const MediaDesc &to,
-                        MediaIO::Config *outConfig,
-                        int *outCost) {
-        if(from.imageList().isEmpty() || to.imageList().isEmpty()) return false;
-        const PixelFormat &fromPd = from.imageList()[0].pixelFormat();
-        const PixelFormat &toPd   = to.imageList()[0].pixelFormat();
-        if(!fromPd.isValid() || !toPd.isValid()) return false;
-        if(fromPd.isCompressed())                return false;
-        if(!toPd.isCompressed())                 return false;
+        // Bridge: VideoEncoder bridges uncompressed → compressed.  The
+        // planner inserts it whenever a downstream sink demands a compressed
+        // PixelFormat that an upstream uncompressed source can supply.
+        bool videoEncoderBridge(const MediaDesc &from, const MediaDesc &to, MediaIO::Config *outConfig, int *outCost) {
+                if (from.imageList().isEmpty() || to.imageList().isEmpty()) return false;
+                const PixelFormat &fromPd = from.imageList()[0].pixelFormat();
+                const PixelFormat &toPd = to.imageList()[0].pixelFormat();
+                if (!fromPd.isValid() || !toPd.isValid()) return false;
+                if (fromPd.isCompressed()) return false;
+                if (!toPd.isCompressed()) return false;
 
-        const VideoCodec codec = VideoCodec::fromPixelFormat(toPd);
-        if(!codec.isValid())   return false;
-        if(!codec.canEncode()) return false;
+                const VideoCodec codec = VideoCodec::fromPixelFormat(toPd);
+                if (!codec.isValid()) return false;
+                if (!codec.canEncode()) return false;
 
-        if(outConfig != nullptr) {
-                *outConfig = MediaIO::defaultConfig("VideoEncoder");
-                outConfig->set(MediaConfig::VideoCodec, codec);
+                if (outConfig != nullptr) {
+                        *outConfig = MediaIO::defaultConfig("VideoEncoder");
+                        outConfig->set(MediaConfig::VideoCodec, codec);
+                }
+                if (outCost != nullptr) {
+                        // Encoding is lossy by construction.  Sit in the
+                        // "heavily lossy" band so the planner avoids it
+                        // unless the sink really needs the compressed form.
+                        *outCost = 5000;
+                }
+                return true;
         }
-        if(outCost != nullptr) {
-                // Encoding is lossy by construction.  Sit in the
-                // "heavily lossy" band so the planner avoids it
-                // unless the sink really needs the compressed form.
-                *outCost = 5000;
-        }
-        return true;
-}
 
 } // namespace
 
 MediaIO::FormatDesc MediaIOTask_VideoEncoder::formatDesc() {
         MediaIO::FormatDesc d;
-        d.name              = "VideoEncoder";
-        d.displayName       = "Video Encoder";
-        d.description       = "Generic video encoder stage (picks a VideoEncoder via VideoCodec)";
-        d.canBeSource       = false;
-        d.canBeSink         = false;
-        d.canBeTransform    = true;
-        d.create            = []() -> MediaIOTask * { return new MediaIOTask_VideoEncoder(); };
-        d.configSpecs       = []() -> MediaIO::Config::SpecMap {
+        d.name = "VideoEncoder";
+        d.displayName = "Video Encoder";
+        d.description = "Generic video encoder stage (picks a VideoEncoder via VideoCodec)";
+        d.canBeSource = false;
+        d.canBeSink = false;
+        d.canBeTransform = true;
+        d.create = []() -> MediaIOTask * {
+                return new MediaIOTask_VideoEncoder();
+        };
+        d.configSpecs = []() -> MediaIO::Config::SpecMap {
                 MediaIO::Config::SpecMap specs;
                 // Inherit the library-wide spec for each key so
                 // descriptions, types, ranges, and enum types
@@ -86,14 +85,11 @@ MediaIO::FormatDesc MediaIOTask_VideoEncoder::formatDesc() {
                 // default.
                 auto s = [&specs](MediaConfig::ID id) {
                         const VariantSpec *gs = MediaConfig::spec(id);
-                        if(gs) specs.insert(id, *gs);
+                        if (gs) specs.insert(id, *gs);
                 };
-                auto sWithDefault =
-                        [&specs](MediaConfig::ID id, const Variant &def) {
+                auto sWithDefault = [&specs](MediaConfig::ID id, const Variant &def) {
                         const VariantSpec *gs = MediaConfig::spec(id);
-                        specs.insert(id, gs
-                                ? VariantSpec(*gs).setDefault(def)
-                                : VariantSpec().setDefault(def));
+                        specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
                 };
                 s(MediaConfig::VideoCodec);
                 s(MediaConfig::FrameRate);
@@ -125,14 +121,14 @@ MediaIO::FormatDesc MediaIOTask_VideoEncoder::formatDesc() {
                 sWithDefault(MediaConfig::Capacity, int32_t(8));
                 return specs;
         };
-        d.bridge            = videoEncoderBridge;
+        d.bridge = videoEncoderBridge;
         return d;
 }
 
 MediaIOTask_VideoEncoder::~MediaIOTask_VideoEncoder() = default;
 
 Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::Transform) {
+        if (cmd.mode != MediaIO::Transform) {
                 promekiErr("MediaIOTask_VideoEncoder: only InputAndOutput mode is supported");
                 return Error::NotSupported;
         }
@@ -141,12 +137,12 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandOpen &cmd) {
         _config = cfg;
 
         _codec = cfg.getAs<VideoCodec>(MediaConfig::VideoCodec);
-        if(!_codec.isValid()) {
+        if (!_codec.isValid()) {
                 promekiErr("MediaIOTask_VideoEncoder: VideoCodec is required "
                            "(e.g. \"H264\", \"HEVC\", \"JPEG\")");
                 return Error::InvalidArgument;
         }
-        if(!_codec.canEncode()) {
+        if (!_codec.canEncode()) {
                 promekiErr("MediaIOTask_VideoEncoder: codec '%s' has no "
                            "registered encoder factory",
                            _codec.name().cstr());
@@ -160,19 +156,19 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandOpen &cmd) {
         // MediaConfig::CodecBackend) and forward the full config to the
         // returned instance's configure() in one shot.
         MediaIO::Config encCfg = cfg;
-        if(cmd.pendingMediaDesc.frameRate().isValid()) {
+        if (cmd.pendingMediaDesc.frameRate().isValid()) {
                 encCfg.set(MediaConfig::FrameRate, cmd.pendingMediaDesc.frameRate());
         }
         auto encResult = _codec.createEncoder(&encCfg);
-        if(error(encResult).isError()) {
-                promekiErr("MediaIOTask_VideoEncoder: createEncoder('%s') failed: %s",
-                           _codec.name().cstr(), error(encResult).name().cstr());
+        if (error(encResult).isError()) {
+                promekiErr("MediaIOTask_VideoEncoder: createEncoder('%s') failed: %s", _codec.name().cstr(),
+                           error(encResult).name().cstr());
                 return Error::NotSupported;
         }
         VideoEncoder::UPtr enc = VideoEncoder::UPtr::takeOwnership(value(encResult));
 
         _capacity = cfg.getAs<int>(MediaConfig::Capacity, 8);
-        if(_capacity < 1) _capacity = 1;
+        if (_capacity < 1) _capacity = 1;
 
         // Build the downstream-visible MediaDesc: each source image is
         // replaced by one at the encoder's compressed PixelFormat so the
@@ -187,43 +183,43 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandOpen &cmd) {
         // per-frame variation (JPEG's per-image subsampling choice,
         // for example) is reflected on the emitted CompressedVideoPayload itself.
         PixelFormat encOutPd;
-        const auto compressedList = _codec.compressedPixelFormats();
-        if(!compressedList.isEmpty()) {
+        const auto  compressedList = _codec.compressedPixelFormats();
+        if (!compressedList.isEmpty()) {
                 encOutPd = compressedList[0];
         }
-        for(const auto &srcImg : cmd.pendingMediaDesc.imageList()) {
+        for (const auto &srcImg : cmd.pendingMediaDesc.imageList()) {
                 outDesc.imageList().pushToBack(ImageDesc(srcImg.size(), encOutPd));
         }
-        for(const auto &srcAudio : cmd.pendingMediaDesc.audioList()) {
+        for (const auto &srcAudio : cmd.pendingMediaDesc.audioList()) {
                 outDesc.audioList().pushToBack(srcAudio);
         }
 
-        _encoder          = std::move(enc);
-        _frameCount       = 0;
-        _readCount        = 0;
-        _framesEncoded    = 0;
-        _packetsOut       = 0;
-        _capacityWarned   = false;
+        _encoder = std::move(enc);
+        _frameCount = 0;
+        _readCount = 0;
+        _framesEncoded = 0;
+        _packetsOut = 0;
+        _capacityWarned = false;
         _multiImageWarned = false;
-        _closed           = false;
+        _closed = false;
         _outputQueue.clear();
         _pendingSrcFrames.clear();
 
-        cmd.mediaDesc     = outDesc;
-        if(!outDesc.audioList().isEmpty()) cmd.audioDesc = outDesc.audioList()[0];
-        cmd.metadata      = cmd.pendingMetadata;
-        cmd.frameRate     = outDesc.frameRate();
-        cmd.canSeek       = false;
-        cmd.frameCount    = MediaIO::FrameCountInfinite;
-        cmd.defaultStep   = 1;
+        cmd.mediaDesc = outDesc;
+        if (!outDesc.audioList().isEmpty()) cmd.audioDesc = outDesc.audioList()[0];
+        cmd.metadata = cmd.pendingMetadata;
+        cmd.frameRate = outDesc.frameRate();
+        cmd.canSeek = false;
+        cmd.frameCount = MediaIO::FrameCountInfinite;
+        cmd.defaultStep = 1;
         cmd.defaultPrefetchDepth = 1;
-        cmd.defaultWriteDepth    = _capacity;
+        cmd.defaultWriteDepth = _capacity;
         return Error::Ok;
 }
 
 Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandClose &cmd) {
         (void)cmd;
-        if(_encoder.isValid()) {
+        if (_encoder.isValid()) {
                 // Best-effort flush so anything the encoder has buffered
                 // makes it out before we tear the session down.  Because
                 // pipelines close us only after all reads have been
@@ -251,20 +247,20 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandClose &cmd) {
 
 void MediaIOTask_VideoEncoder::configChanged(const MediaConfig &delta) {
         _config.merge(delta);
-        if(_encoder.isValid()) _encoder->configure(_config);
+        if (_encoder.isValid()) _encoder->configure(_config);
 }
 
 Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
-        if(!cmd.frame.isValid()) {
+        if (!cmd.frame.isValid()) {
                 promekiErr("MediaIOTask_VideoEncoder: write with null frame");
                 return Error::InvalidArgument;
         }
-        if(_encoder.isNull()) {
+        if (_encoder.isNull()) {
                 return Error::NotSupported;
         }
         stampWorkBegin();
 
-        if(static_cast<int>(_outputQueue.size()) >= _capacity && !_capacityWarned) {
+        if (static_cast<int>(_outputQueue.size()) >= _capacity && !_capacityWarned) {
                 promekiWarn("MediaIOTask_VideoEncoder: output queue exceeded capacity "
                             "(%d >= %d) — downstream is not draining packets fast enough",
                             static_cast<int>(_outputQueue.size()), _capacity);
@@ -280,20 +276,20 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
         // and the codec falls back to its internal frame indexing.
         auto vids = frame.videoPayloads();
 
-        if(vids.isEmpty()) {
+        if (vids.isEmpty()) {
                 // No image to encode — let the frame pass through so
                 // audio / metadata-only inputs aren't lost.
                 Frame::Ptr outFrame = Frame::Ptr::create();
                 outFrame.modify()->metadata() = frame.metadata();
-                for(const AudioPayload::Ptr &ap : frame.audioPayloads()) {
-                        if(ap.isValid()) outFrame.modify()->addPayload(ap);
+                for (const AudioPayload::Ptr &ap : frame.audioPayloads()) {
+                        if (ap.isValid()) outFrame.modify()->addPayload(ap);
                 }
                 _outputQueue.pushToBack(std::move(outFrame));
                 stampWorkEnd();
                 return Error::Ok;
         }
 
-        if(vids.size() > 1 && !_multiImageWarned) {
+        if (vids.size() > 1 && !_multiImageWarned) {
                 promekiWarn("MediaIOTask_VideoEncoder: Frame carries %zu video "
                             "payloads; only payload[0] will be encoded in this cut",
                             (size_t)vids.size());
@@ -303,21 +299,19 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
         // Cast the VideoPayload::Ptr down to an UncompressedVideoPayload::Ptr
         // while preserving shared ownership — gives us a mutable
         // payload handle the submitPayload entry can consume.
-        UncompressedVideoPayload::Ptr srcPayload =
-                sharedPointerCast<UncompressedVideoPayload>(vids[0]);
-        if(srcPayload.isNull()) {
+        UncompressedVideoPayload::Ptr srcPayload = sharedPointerCast<UncompressedVideoPayload>(vids[0]);
+        if (srcPayload.isNull()) {
                 promekiErr("MediaIOTask_VideoEncoder: input payload is not "
                            "uncompressed video — nothing to encode");
                 stampWorkEnd();
                 return Error::InvalidArgument;
         }
-        if(srcPayload->desc().metadata().getAs<bool>(Metadata::ForceKeyframe)) {
+        if (srcPayload->desc().metadata().getAs<bool>(Metadata::ForceKeyframe)) {
                 _encoder->requestKeyframe();
         }
         Error err = _encoder->submitPayload(srcPayload);
-        if(err.isError()) {
-                promekiErr("MediaIOTask_VideoEncoder: submitFrame failed: %s",
-                           _encoder->lastErrorMessage().cstr());
+        if (err.isError()) {
+                promekiErr("MediaIOTask_VideoEncoder: submitFrame failed: %s", _encoder->lastErrorMessage().cstr());
                 stampWorkEnd();
                 return err;
         }
@@ -331,18 +325,17 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
         drainEncoderInto();
 
         cmd.currentFrame = toFrameNumber(_frameCount);
-        cmd.frameCount   = _frameCount;
+        cmd.frameCount = _frameCount;
         stampWorkEnd();
         return Error::Ok;
 }
 
 void MediaIOTask_VideoEncoder::drainEncoderInto() {
-        if(_encoder.isNull()) return;
-        while(true) {
-                CompressedVideoPayload::Ptr outPayload =
-                        _encoder->receiveCompressedPayload();
-                if(!outPayload.isValid()) break;
-                if(outPayload->isEndOfStream()) {
+        if (_encoder.isNull()) return;
+        while (true) {
+                CompressedVideoPayload::Ptr outPayload = _encoder->receiveCompressedPayload();
+                if (!outPayload.isValid()) break;
+                if (outPayload->isEndOfStream()) {
                         // EOS is an encoder-internal signal that the
                         // session is drained; no need to propagate it
                         // as its own Frame (the pipeline uses the
@@ -359,17 +352,17 @@ void MediaIOTask_VideoEncoder::drainEncoderInto() {
                 // still carries the payload but with no audio /
                 // frame metadata.
                 Frame::Ptr origin;
-                if(!_pendingSrcFrames.isEmpty()) {
+                if (!_pendingSrcFrames.isEmpty()) {
                         origin = _pendingSrcFrames.front();
                         _pendingSrcFrames.remove(0);
                 }
 
                 Frame::Ptr outFrame = Frame::Ptr::create();
                 Frame     *out = outFrame.modify();
-                if(origin.isValid()) {
+                if (origin.isValid()) {
                         out->metadata() = origin->metadata();
-                        for(const AudioPayload::Ptr &ap : origin->audioPayloads()) {
-                                if(ap.isValid()) out->addPayload(ap);
+                        for (const AudioPayload::Ptr &ap : origin->audioPayloads()) {
+                                if (ap.isValid()) out->addPayload(ap);
                         }
                 }
 
@@ -381,12 +374,11 @@ void MediaIOTask_VideoEncoder::drainEncoderInto() {
                 // descriptor so downstream muxers can size their
                 // track entries correctly.
                 Size2Du32 imgSize;
-                auto originVids = origin.isValid() ? origin->videoPayloads()
-                                                  : VideoPayload::PtrList();
-                if(!originVids.isEmpty() && originVids[0].isValid()) {
+                auto      originVids = origin.isValid() ? origin->videoPayloads() : VideoPayload::PtrList();
+                if (!originVids.isEmpty() && originVids[0].isValid()) {
                         imgSize = originVids[0]->desc().size();
                 }
-                if(imgSize.isValid()) {
+                if (imgSize.isValid()) {
                         outPayload.modify()->desc().setSize(imgSize);
                 }
                 out->addPayload(outPayload);
@@ -396,7 +388,7 @@ void MediaIOTask_VideoEncoder::drainEncoderInto() {
 }
 
 Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandRead &cmd) {
-        if(_outputQueue.isEmpty()) {
+        if (_outputQueue.isEmpty()) {
                 return _closed ? Error::EndOfFile : Error::TryAgain;
         }
         Frame::Ptr frame = std::move(_outputQueue.front());
@@ -410,10 +402,8 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandRead &cmd) {
 Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandStats &cmd) {
         cmd.stats.set(StatsFramesEncoded, _framesEncoded);
         cmd.stats.set(StatsPacketsOut, _packetsOut);
-        cmd.stats.set(MediaIOStats::QueueDepth,
-                      static_cast<int64_t>(_outputQueue.size()));
-        cmd.stats.set(MediaIOStats::QueueCapacity,
-                      static_cast<int64_t>(_capacity));
+        cmd.stats.set(MediaIOStats::QueueDepth, static_cast<int64_t>(_outputQueue.size()));
+        cmd.stats.set(MediaIOStats::QueueCapacity, static_cast<int64_t>(_capacity));
         return Error::Ok;
 }
 
@@ -424,41 +414,39 @@ int MediaIOTask_VideoEncoder::pendingOutput() const {
 // ---- Phase 1 introspection / negotiation overrides ----
 
 Error MediaIOTask_VideoEncoder::describe(MediaIODescription *out) const {
-        if(out == nullptr) return Error::Invalid;
+        if (out == nullptr) return Error::Invalid;
 
         // When a codec has been pinned via config, advertise it as
         // the producible compressed shape.  The acceptable side
         // stays empty as a "any uncompressed video" signal.
-        if(_codec.isValid()) {
-                for(const PixelFormat &pf : _codec.compressedPixelFormats()) {
+        if (_codec.isValid()) {
+                for (const PixelFormat &pf : _codec.compressedPixelFormats()) {
                         MediaDesc produced;
-                        produced.imageList().pushToBack(
-                                ImageDesc(Size2Du32(0, 0), pf));
+                        produced.imageList().pushToBack(ImageDesc(Size2Du32(0, 0), pf));
                         out->producibleFormats().pushToBack(produced);
                 }
-                if(!out->producibleFormats().isEmpty()) {
+                if (!out->producibleFormats().isEmpty()) {
                         out->setPreferredFormat(out->producibleFormats()[0]);
                 }
         }
         return Error::Ok;
 }
 
-Error MediaIOTask_VideoEncoder::proposeInput(const MediaDesc &offered,
-                                             MediaDesc *preferred) const {
-        if(preferred == nullptr) return Error::Invalid;
-        if(offered.imageList().isEmpty()) return Error::NotSupported;
+Error MediaIOTask_VideoEncoder::proposeInput(const MediaDesc &offered, MediaDesc *preferred) const {
+        if (preferred == nullptr) return Error::Invalid;
+        if (offered.imageList().isEmpty()) return Error::NotSupported;
 
         // VideoEncoder consumes uncompressed video only.
         const PixelFormat &pd = offered.imageList()[0].pixelFormat();
-        if(!pd.isValid())     return Error::NotSupported;
-        if(pd.isCompressed()) return Error::NotSupported;
+        if (!pd.isValid()) return Error::NotSupported;
+        if (pd.isCompressed()) return Error::NotSupported;
 
         // Resolve the codec — either pinned by an earlier open(), or
         // read straight off the stage config during planning (the
         // planner constructs the stage via MediaIO::create but does
         // not open it, so _codec is still invalid at this point).
         VideoCodec codec = _codec;
-        if(!codec.isValid() && mediaIo() != nullptr) {
+        if (!codec.isValid() && mediaIo() != nullptr) {
                 codec = mediaIo()->config().getAs<VideoCodec>(MediaConfig::VideoCodec);
         }
 
@@ -466,7 +454,7 @@ Error MediaIOTask_VideoEncoder::proposeInput(const MediaDesc &offered,
         // encoder will accept.  Fall back to passthrough; the planner
         // will fail later at open time rather than insert a bogus
         // bridge now.
-        if(!codec.isValid() || !codec.canEncode()) {
+        if (!codec.isValid() || !codec.canEncode()) {
                 *preferred = offered;
                 return Error::Ok;
         }
@@ -478,7 +466,7 @@ Error MediaIOTask_VideoEncoder::proposeInput(const MediaDesc &offered,
         // encoder (and touch its GPU / libjpeg / SVT-JPEG-XS setup)
         // just to introspect supported inputs.
         List<PixelFormat> supported;
-        if(_encoder.isValid()) {
+        if (_encoder.isValid()) {
                 supported = _encoder->codec().encoderSupportedInputs();
         } else {
                 supported = codec.encoderSupportedInputs();
@@ -486,7 +474,7 @@ Error MediaIOTask_VideoEncoder::proposeInput(const MediaDesc &offered,
 
         // Empty list means "accepts any uncompressed input" per the
         // VideoEncoder::supportedInputs contract.
-        if(supported.isEmpty()) {
+        if (supported.isEmpty()) {
                 *preferred = offered;
                 return Error::Ok;
         }
@@ -496,29 +484,27 @@ Error MediaIOTask_VideoEncoder::proposeInput(const MediaDesc &offered,
         // an encoder picks the universally-decodable format unless the
         // user opts in to higher-quality chroma with VideoChromaSubsampling.
         ChromaSubsampling wantChroma = ChromaSubsampling::YUV420;
-        if(mediaIo() != nullptr) {
-                const Enum raw = mediaIo()->config().getAs<Enum>(
-                        MediaConfig::VideoChromaSubsampling);
-                if(raw.type() == ChromaSubsampling::Type) {
+        if (mediaIo() != nullptr) {
+                const Enum raw = mediaIo()->config().getAs<Enum>(MediaConfig::VideoChromaSubsampling);
+                if (raw.type() == ChromaSubsampling::Type) {
                         wantChroma = ChromaSubsampling(raw.value());
                 }
         }
 
         auto chromaToSampling = [](ChromaSubsampling c) {
-                if(c == ChromaSubsampling::YUV444) return PixelMemLayout::Sampling444;
-                if(c == ChromaSubsampling::YUV422) return PixelMemLayout::Sampling422;
+                if (c == ChromaSubsampling::YUV444) return PixelMemLayout::Sampling444;
+                if (c == ChromaSubsampling::YUV422) return PixelMemLayout::Sampling422;
                 return PixelMemLayout::Sampling420;
         };
         const PixelMemLayout::Sampling wantSampling = chromaToSampling(wantChroma);
 
-        const int offeredBits = pd.memLayout().compCount() > 0
-                ? static_cast<int>(pd.memLayout().compDesc(0).bits) : 0;
+        const int offeredBits = pd.memLayout().compCount() > 0 ? static_cast<int>(pd.memLayout().compDesc(0).bits) : 0;
 
         // Offered format already satisfies the requested chroma and is
         // on the supported list — no negotiation needed.
-        if(pd.memLayout().sampling() == wantSampling) {
-                for(const PixelFormat &cand : supported) {
-                        if(cand == pd) {
+        if (pd.memLayout().sampling() == wantSampling) {
+                for (const PixelFormat &cand : supported) {
+                        if (cand == pd) {
                                 *preferred = offered;
                                 return Error::Ok;
                         }
@@ -532,54 +518,53 @@ Error MediaIOTask_VideoEncoder::proposeInput(const MediaDesc &offered,
         //   3. Same bit-depth as source (any chroma).
         //   4. First entry (final fallback — every encoder lists at
         //      least one format).
-        PixelFormat bestPick   = supported[0];
-        int         bestTier      = 4;
+        PixelFormat bestPick = supported[0];
+        int         bestTier = 4;
         int         bestBitsDelta = INT_MAX;
-        for(const PixelFormat &cand : supported) {
-                if(!cand.isValid()) continue;
-                const int candBits = cand.memLayout().compCount() > 0
-                        ? static_cast<int>(cand.memLayout().compDesc(0).bits) : 0;
+        for (const PixelFormat &cand : supported) {
+                if (!cand.isValid()) continue;
+                const int candBits =
+                        cand.memLayout().compCount() > 0 ? static_cast<int>(cand.memLayout().compDesc(0).bits) : 0;
                 const bool sameChroma = (cand.memLayout().sampling() == wantSampling);
-                const bool sameBits   = (offeredBits > 0 && candBits == offeredBits);
+                const bool sameBits = (offeredBits > 0 && candBits == offeredBits);
 
                 int tier = 4;
-                if(sameChroma && sameBits) tier = 1;
-                else if(sameChroma)        tier = 2;
-                else if(sameBits)          tier = 3;
+                if (sameChroma && sameBits)
+                        tier = 1;
+                else if (sameChroma)
+                        tier = 2;
+                else if (sameBits)
+                        tier = 3;
 
-                const int bitsDelta = (offeredBits > 0 && candBits > 0)
-                        ? std::abs(candBits - offeredBits)
-                        : INT_MAX;
+                const int bitsDelta = (offeredBits > 0 && candBits > 0) ? std::abs(candBits - offeredBits) : INT_MAX;
 
-                if(tier < bestTier ||
-                   (tier == bestTier && bitsDelta < bestBitsDelta)) {
-                        bestTier      = tier;
-                        bestPick      = cand;
+                if (tier < bestTier || (tier == bestTier && bitsDelta < bestBitsDelta)) {
+                        bestTier = tier;
+                        bestPick = cand;
                         bestBitsDelta = bitsDelta;
                 }
         }
 
-        MediaDesc out = offered;
+        MediaDesc        out = offered;
         ImageDesc::List &imgs = out.imageList();
-        for(size_t i = 0; i < imgs.size(); ++i) {
+        for (size_t i = 0; i < imgs.size(); ++i) {
                 imgs[i].setPixelFormat(bestPick);
         }
         *preferred = out;
         return Error::Ok;
 }
 
-Error MediaIOTask_VideoEncoder::proposeOutput(const MediaDesc &requested,
-                                              MediaDesc *achievable) const {
-        if(achievable == nullptr) return Error::Invalid;
+Error MediaIOTask_VideoEncoder::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+        if (achievable == nullptr) return Error::Invalid;
 
         // Resolve the codec from a live session when open, or from
         // the stage config during planning (the same fallback used
         // by proposeInput above).
         VideoCodec codec = _codec;
-        if(!codec.isValid() && mediaIo() != nullptr) {
+        if (!codec.isValid() && mediaIo() != nullptr) {
                 codec = mediaIo()->config().getAs<VideoCodec>(MediaConfig::VideoCodec);
         }
-        if(!codec.isValid() || codec.compressedPixelFormats().isEmpty()) {
+        if (!codec.isValid() || codec.compressedPixelFormats().isEmpty()) {
                 // Codec not yet known — defer; the planner has to
                 // pin it before the encoder can answer.
                 return Error::NotSupported;
@@ -590,10 +575,10 @@ Error MediaIOTask_VideoEncoder::proposeOutput(const MediaDesc &requested,
         // requested input shape (raster + frame rate flow through),
         // then replace the pixel desc with the codec's compressed
         // form.
-        MediaDesc out = requested;
+        MediaDesc         out = requested;
         const PixelFormat compressed = codec.compressedPixelFormats()[0];
-        ImageDesc::List &imgs = out.imageList();
-        for(size_t i = 0; i < imgs.size(); ++i) {
+        ImageDesc::List  &imgs = out.imageList();
+        for (size_t i = 0; i < imgs.size(); ++i) {
                 imgs[i].setPixelFormat(compressed);
         }
         *achievable = out;

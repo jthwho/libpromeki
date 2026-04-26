@@ -33,8 +33,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @tparam Args The argument types that the slot's callable accepts.
  */
-template <typename... Args>
-class Slot {
+template <typename... Args> class Slot {
         public:
                 /** @brief Callable type that the slot wraps. */
                 using Function = std::function<void(Args...)>;
@@ -46,8 +45,8 @@ class Slot {
                  * @param prototype Optional human-readable prototype string for introspection.
                  * @param id        Optional numeric identifier for the slot, defaults to -1 (unset).
                  */
-                Slot(const Function &func, void *owner = nullptr, const char *prototype = nullptr, int id = -1) :
-                        _owner(owner), _prototype(prototype), _id(id), _function(func) {}
+                Slot(const Function &func, void *owner = nullptr, const char *prototype = nullptr, int id = -1)
+                    : _owner(owner), _prototype(prototype), _id(id), _function(func) {}
 
                 /** @brief Returns the owner pointer associated with this slot. */
                 void *owner() const { return _owner; }
@@ -66,7 +65,7 @@ class Slot {
                  * @tparam T The type to transform.
                  */
                 template <typename T> struct removeConstAndRef {
-                        using type = std::remove_const_t<std::remove_reference_t<T>>;
+                                using type = std::remove_const_t<std::remove_reference_t<T>>;
                 };
 
                 /** @brief Convenience alias for removeConstAndRef. */
@@ -112,10 +111,10 @@ class Slot {
                 void exec(const VariantList &variantList);
 
         private:
-                void            *_owner = nullptr;
-                const char      *_prototype = nullptr;
-                int             _id = -1;
-                Function        _function;
+                void       *_owner = nullptr;
+                const char *_prototype = nullptr;
+                int         _id = -1;
+                Function    _function;
 
                 template <std::size_t... Idx>
                 void execFromVariantList(std::index_sequence<Idx...>, const VariantList &variantList);
@@ -124,4 +123,3 @@ class Slot {
 };
 
 PROMEKI_NAMESPACE_END
-

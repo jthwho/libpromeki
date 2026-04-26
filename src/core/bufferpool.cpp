@@ -9,21 +9,19 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-BufferPool::BufferPool(size_t bufferSize, size_t alignment, const MemSpace &ms) :
-        _bufferSize(bufferSize),
-        _alignment(alignment == 0 ? Buffer::DefaultAlign : alignment),
-        _memSpace(ms) {}
+BufferPool::BufferPool(size_t bufferSize, size_t alignment, const MemSpace &ms)
+    : _bufferSize(bufferSize), _alignment(alignment == 0 ? Buffer::DefaultAlign : alignment), _memSpace(ms) {}
 
 void BufferPool::reserve(size_t count) {
-        while(_free.size() < count) {
+        while (_free.size() < count) {
                 Buffer buf(_bufferSize, _alignment, _memSpace);
-                if(!buf.isValid()) return;
+                if (!buf.isValid()) return;
                 _free.pushToBack(std::move(buf));
         }
 }
 
 Buffer BufferPool::acquire() {
-        if(!_free.isEmpty()) {
+        if (!_free.isEmpty()) {
                 Buffer buf = std::move(_free[_free.size() - 1]);
                 _free.popFromBack();
                 // Reset user-visible state: size() back to 0 and shiftData
@@ -36,10 +34,10 @@ Buffer BufferPool::acquire() {
 }
 
 void BufferPool::release(Buffer &&buf) {
-        if(!buf.isValid()) return;
+        if (!buf.isValid()) return;
         // Reject shape mismatches — it's almost certainly a bug to pass
         // a different-geometry buffer into a fixed-geometry pool.
-        if(buf.allocSize() != _bufferSize || buf.align() != _alignment) return;
+        if (buf.allocSize() != _bufferSize || buf.align() != _alignment) return;
         // Reset user-visible state so next acquire gets a fresh view.
         buf.shiftData(0);
         buf.setSize(0);

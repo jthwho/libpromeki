@@ -46,7 +46,7 @@ TEST_CASE("TuiWidget: visibility") {
 }
 
 TEST_CASE("TuiWidget: parent-child") {
-        TuiWidget parent;
+        TuiWidget  parent;
         TuiWidget *child = new TuiWidget(&parent);
 
         CHECK(child->parent() == &parent);

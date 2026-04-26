@@ -111,11 +111,11 @@ class CudaDevice {
                 int computeMinor() const { return _ccMinor; }
 
         private:
-                int     _ordinal   = -1;
-                String  _name;
-                size_t  _totalMem  = 0;
-                int     _ccMajor   = 0;
-                int     _ccMinor   = 0;
+                int    _ordinal = -1;
+                String _name;
+                size_t _totalMem = 0;
+                int    _ccMajor = 0;
+                int    _ccMinor = 0;
 };
 
 /**

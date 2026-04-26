@@ -13,11 +13,11 @@ using namespace promeki;
 
 namespace {
 
-// Standard "check" string from the Rocksoft / reveng CRC catalogue.
-constexpr const char *kCheckString = "123456789";
-constexpr size_t      kCheckLen    = 9;
+        // Standard "check" string from the Rocksoft / reveng CRC catalogue.
+        constexpr const char *kCheckString = "123456789";
+        constexpr size_t      kCheckLen = 9;
 
-}  // namespace
+} // namespace
 
 // ============================================================================
 // 8-bit
@@ -143,10 +143,10 @@ TEST_CASE("CRC8 reflected and unreflected differ for the same poly") {
         // Construct two CRCs with the same poly + init/xor but opposite
         // reflection — they must produce different outputs over a
         // non-symmetric input.
-        constexpr Crc8::Params unrefl{ 0x07, 0x00, 0x00, false, "test-unrefl" };
-        constexpr Crc8::Params refl  { 0x07, 0x00, 0x00, true,  "test-refl"   };
-        Crc8 a(unrefl);
-        Crc8 b(refl);
+        constexpr Crc8::Params unrefl{0x07, 0x00, 0x00, false, "test-unrefl"};
+        constexpr Crc8::Params refl{0x07, 0x00, 0x00, true, "test-refl"};
+        Crc8                   a(unrefl);
+        Crc8                   b(refl);
         a.update(kCheckString, kCheckLen);
         b.update(kCheckString, kCheckLen);
         CHECK(a.value() != b.value());

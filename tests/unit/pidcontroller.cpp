@@ -11,24 +11,18 @@
 using namespace promeki;
 
 TEST_CASE("PIDController: construction") {
-        double time = 0.0;
-        double value = 0.0;
-        PIDController<double, double> pid(
-                [&]() { return value; },
-                [&]() { return time; }
-        );
+        double                        time = 0.0;
+        double                        value = 0.0;
+        PIDController<double, double> pid([&]() { return value; }, [&]() { return time; });
         CHECK(pid.getGainP() == 1.0);
         CHECK(pid.getGainI() == 0.0);
         CHECK(pid.getGainD() == 0.0);
 }
 
 TEST_CASE("PIDController: set and get gains") {
-        double time = 0.0;
-        double value = 0.0;
-        PIDController<double, double> pid(
-                [&]() { return value; },
-                [&]() { return time; }
-        );
+        double                        time = 0.0;
+        double                        value = 0.0;
+        PIDController<double, double> pid([&]() { return value; }, [&]() { return time; });
         pid.setGainP(2.0);
         pid.setGainI(0.5);
         pid.setGainD(0.1);
@@ -38,12 +32,9 @@ TEST_CASE("PIDController: set and get gains") {
 }
 
 TEST_CASE("PIDController: proportional-only step") {
-        double time = 0.0;
-        double value = 0.0;
-        PIDController<double, double> pid(
-                [&]() { return value; },
-                [&]() { return time; }
-        );
+        double                        time = 0.0;
+        double                        value = 0.0;
+        PIDController<double, double> pid([&]() { return value; }, [&]() { return time; });
         pid.setGainP(1.0);
         pid.setGainI(0.0);
         pid.setGainD(0.0);
@@ -56,19 +47,16 @@ TEST_CASE("PIDController: proportional-only step") {
 }
 
 TEST_CASE("PIDController: convergence with P control") {
-        double time = 0.0;
-        double value = 0.0;
-        PIDController<double, double> pid(
-                [&]() { return value; },
-                [&]() { return time; }
-        );
+        double                        time = 0.0;
+        double                        value = 0.0;
+        PIDController<double, double> pid([&]() { return value; }, [&]() { return time; });
         pid.setGainP(0.5);
         pid.setGainI(0.0);
         pid.setGainD(0.0);
         pid.updateSetPoint(100.0);
 
         // Simulate several steps
-        for(int i = 0; i < 20; ++i) {
+        for (int i = 0; i < 20; ++i) {
                 time = (i + 1) * 0.1;
                 double output = pid.step();
                 value += output * 0.1; // Simple integration
@@ -78,12 +66,9 @@ TEST_CASE("PIDController: convergence with P control") {
 }
 
 TEST_CASE("PIDController: reset") {
-        double time = 0.0;
-        double value = 0.0;
-        PIDController<double, double> pid(
-                [&]() { return value; },
-                [&]() { return time; }
-        );
+        double                        time = 0.0;
+        double                        value = 0.0;
+        PIDController<double, double> pid([&]() { return value; }, [&]() { return time; });
         pid.updateSetPoint(10.0);
         time = 1.0;
         pid.step();
@@ -95,12 +80,9 @@ TEST_CASE("PIDController: reset") {
 }
 
 TEST_CASE("PIDController: zero error produces zero output with P-only") {
-        double time = 0.0;
-        double value = 50.0;
-        PIDController<double, double> pid(
-                [&]() { return value; },
-                [&]() { return time; }
-        );
+        double                        time = 0.0;
+        double                        value = 50.0;
+        PIDController<double, double> pid([&]() { return value; }, [&]() { return time; });
         pid.setGainP(1.0);
         pid.setGainI(0.0);
         pid.setGainD(0.0);

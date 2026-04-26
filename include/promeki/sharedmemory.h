@@ -81,8 +81,8 @@ class SharedMemory {
 
                 /** @brief Access mode for @ref open. */
                 enum Access {
-                        ReadOnly,       ///< @brief Map the region read-only.
-                        ReadWrite       ///< @brief Map the region read-write.
+                        ReadOnly, ///< @brief Map the region read-only.
+                        ReadWrite ///< @brief Map the region read-write.
                 };
 
                 /**
@@ -143,8 +143,7 @@ class SharedMemory {
                  * @param groupName  Optional group to @c chown the object to (empty = skip).
                  * @return @c Error::Ok on success, or an error.
                  */
-                Error create(const String &name, size_t size,
-                             uint32_t mode = DefaultPermissions,
+                Error create(const String &name, size_t size, uint32_t mode = DefaultPermissions,
                              const String &groupName = String());
 
                 /**
@@ -189,12 +188,12 @@ class SharedMemory {
                 Access access() const { return _access; }
 
         private:
-                String          _name;
-                void            *_data   = nullptr;
-                size_t          _size    = 0;
-                intptr_t        _handle  = -1;  // fd (POSIX) or HANDLE (Windows)
-                bool            _owner   = false;
-                Access          _access  = ReadOnly;
+                String   _name;
+                void    *_data = nullptr;
+                size_t   _size = 0;
+                intptr_t _handle = -1; // fd (POSIX) or HANDLE (Windows)
+                bool     _owner = false;
+                Access   _access = ReadOnly;
 };
 
 PROMEKI_NAMESPACE_END

@@ -65,7 +65,7 @@ TEST_CASE("PrioritySocket") {
 
         SUBCASE("setPriority on closed socket fails") {
                 PrioritySocket sock;
-                Error err = sock.setPriority(PrioritySocket::Video);
+                Error          err = sock.setPriority(PrioritySocket::Video);
                 CHECK(err.isError());
                 CHECK(sock.priority() == PrioritySocket::BestEffort);
         }
@@ -84,12 +84,12 @@ TEST_CASE("PrioritySocket") {
                 REQUIRE(err.isOk());
                 uint16_t port = receiver.localAddress().port();
 
-                const char *msg = "priority test";
+                const char   *msg = "priority test";
                 SocketAddress dest(Ipv4Address::loopback(), port);
-                int64_t sent = sender.writeDatagram(msg, std::strlen(msg), dest);
+                int64_t       sent = sender.writeDatagram(msg, std::strlen(msg), dest);
                 CHECK(sent == static_cast<int64_t>(std::strlen(msg)));
 
-                char buf[256];
+                char    buf[256];
                 int64_t received = receiver.readDatagram(buf, sizeof(buf));
                 REQUIRE(received > 0);
                 CHECK(std::memcmp(buf, msg, received) == 0);

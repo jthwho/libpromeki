@@ -22,8 +22,8 @@ TEST_CASE("PeriodicCallback: default is invalid") {
 }
 
 TEST_CASE("PeriodicCallback: constructed with interval and function is valid") {
-        int count = 0;
-        PeriodicCallback pc(1.0, [&]{ count++; });
+        int              count = 0;
+        PeriodicCallback pc(1.0, [&] { count++; });
         CHECK(pc.isValid());
         CHECK(pc.interval() == 1.0);
 }
@@ -33,34 +33,34 @@ TEST_CASE("PeriodicCallback: constructed with interval and function is valid") {
 // ============================================================================
 
 TEST_CASE("PeriodicCallback: first service starts the clock, does not fire") {
-        int count = 0;
-        PeriodicCallback pc(0.01, [&]{ count++; });
+        int              count = 0;
+        PeriodicCallback pc(0.01, [&] { count++; });
         CHECK_FALSE(pc.service());
         CHECK(count == 0);
 }
 
 TEST_CASE("PeriodicCallback: fires after interval elapses") {
-        int count = 0;
-        PeriodicCallback pc(0.05, [&]{ count++; });
-        pc.service();  // starts clock
+        int              count = 0;
+        PeriodicCallback pc(0.05, [&] { count++; });
+        pc.service(); // starts clock
         std::this_thread::sleep_for(std::chrono::milliseconds(60));
         CHECK(pc.service());
         CHECK(count == 1);
 }
 
 TEST_CASE("PeriodicCallback: does not fire before interval") {
-        int count = 0;
-        PeriodicCallback pc(1.0, [&]{ count++; });
-        pc.service();  // starts clock
+        int              count = 0;
+        PeriodicCallback pc(1.0, [&] { count++; });
+        pc.service(); // starts clock
         CHECK_FALSE(pc.service());
         CHECK(count == 0);
 }
 
 TEST_CASE("PeriodicCallback: fires repeatedly") {
-        int count = 0;
-        PeriodicCallback pc(0.05, [&]{ count++; });
-        pc.service();  // starts clock
-        for(int i = 0; i < 3; i++) {
+        int              count = 0;
+        PeriodicCallback pc(0.05, [&] { count++; });
+        pc.service(); // starts clock
+        for (int i = 0; i < 3; i++) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(60));
                 pc.service();
         }
@@ -72,8 +72,8 @@ TEST_CASE("PeriodicCallback: fires repeatedly") {
 // ============================================================================
 
 TEST_CASE("PeriodicCallback: reset restarts the clock") {
-        int count = 0;
-        PeriodicCallback pc(0.05, [&]{ count++; });
+        int              count = 0;
+        PeriodicCallback pc(0.05, [&] { count++; });
         pc.service();
         std::this_thread::sleep_for(std::chrono::milliseconds(60));
         pc.reset();
@@ -87,8 +87,8 @@ TEST_CASE("PeriodicCallback: reset restarts the clock") {
 // ============================================================================
 
 TEST_CASE("PeriodicCallback: setInterval changes the interval") {
-        int count = 0;
-        PeriodicCallback pc(10.0, [&]{ count++; });
+        int              count = 0;
+        PeriodicCallback pc(10.0, [&] { count++; });
         pc.service();
         pc.setInterval(0.05);
         std::this_thread::sleep_for(std::chrono::milliseconds(60));
@@ -97,11 +97,11 @@ TEST_CASE("PeriodicCallback: setInterval changes the interval") {
 }
 
 TEST_CASE("PeriodicCallback: setCallback changes the function") {
-        int countA = 0;
-        int countB = 0;
-        PeriodicCallback pc(0.05, [&]{ countA++; });
+        int              countA = 0;
+        int              countB = 0;
+        PeriodicCallback pc(0.05, [&] { countA++; });
         pc.service();
-        pc.setCallback([&]{ countB++; });
+        pc.setCallback([&] { countB++; });
         std::this_thread::sleep_for(std::chrono::milliseconds(60));
         pc.service();
         CHECK(countA == 0);
@@ -113,13 +113,13 @@ TEST_CASE("PeriodicCallback: setCallback changes the function") {
 // ============================================================================
 
 TEST_CASE("PeriodicCallback: zero interval is invalid") {
-        PeriodicCallback pc(0.0, []{ });
+        PeriodicCallback pc(0.0, [] {});
         CHECK_FALSE(pc.isValid());
         CHECK_FALSE(pc.service());
 }
 
 TEST_CASE("PeriodicCallback: negative interval is invalid") {
-        PeriodicCallback pc(-1.0, []{ });
+        PeriodicCallback pc(-1.0, [] {});
         CHECK_FALSE(pc.isValid());
         CHECK_FALSE(pc.service());
 }

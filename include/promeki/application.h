@@ -425,14 +425,14 @@ class Application {
 
         private:
                 struct Data {
-                        StringList              arguments;
-                        UUID                    appUUID;
-                        String                  appName;
-                        Thread                  *mainThread = nullptr;
-                        int                     exitCode = 0;
-                        bool                    shouldQuit = false;
-                        QuitRequestHandler      quitHandler;
-                        UniquePtr<DebugServer>  debugServer;
+                                StringList             arguments;
+                                UUID                   appUUID;
+                                String                 appName;
+                                Thread                *mainThread = nullptr;
+                                int                    exitCode = 0;
+                                bool                   shouldQuit = false;
+                                QuitRequestHandler     quitHandler;
+                                UniquePtr<DebugServer> debugServer;
                 };
                 static Data &data();
 
@@ -444,7 +444,7 @@ class Application {
                 // have a ready-made loop to register their I/O
                 // sources on.  Declared after the static data accessor
                 // so it participates in member init order.
-                EventLoop               _eventLoop;
+                EventLoop _eventLoop;
 };
 
 PROMEKI_NAMESPACE_END

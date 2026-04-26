@@ -170,9 +170,9 @@ class Histogram {
                 String  _name;
                 String  _unit;
                 int64_t _count = 0;
-                int64_t _sum   = 0;
-                int64_t _min   = 0;
-                int64_t _max   = 0;
+                int64_t _sum = 0;
+                int64_t _min = 0;
+                int64_t _max = 0;
                 int64_t _buckets[BucketCount] = {};
 };
 

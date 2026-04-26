@@ -32,141 +32,133 @@ using namespace promeki;
 
 namespace {
 
-// Reusing the same minimal HTTP/1.1 client style as
-// tests/unit/network/httpserver.cpp — no llhttp, no chunking, just
-// enough to drive the routes the debug server mounts.
-struct DbgResponse {
-        int     status = 0;
-        String  location;
-        String  contentType;
-        String  body;
-};
+        // Reusing the same minimal HTTP/1.1 client style as
+        // tests/unit/network/httpserver.cpp — no llhttp, no chunking, just
+        // enough to drive the routes the debug server mounts.
+        struct DbgResponse {
+                        int    status = 0;
+                        String location;
+                        String contentType;
+                        String body;
+        };
 
-static DbgResponse hitWithBody(uint16_t port, const String &method,
-                               const String &path, const String &body) {
-        TcpSocket sock;
-        sock.open(IODevice::ReadWrite);
-        REQUIRE(sock.connectToHost(SocketAddress::localhost(port)).isOk());
+        static DbgResponse hitWithBody(uint16_t port, const String &method, const String &path, const String &body) {
+                TcpSocket sock;
+                sock.open(IODevice::ReadWrite);
+                REQUIRE(sock.connectToHost(SocketAddress::localhost(port)).isOk());
 
-        String req = method + " " + path + " HTTP/1.1\r\n";
-        req += "Host: localhost\r\nConnection: close\r\n";
-        if(!body.isEmpty()) {
-                req += "Content-Type: application/json\r\n";
-                req += String::sprintf("Content-Length: %zu\r\n", body.byteCount());
+                String req = method + " " + path + " HTTP/1.1\r\n";
+                req += "Host: localhost\r\nConnection: close\r\n";
+                if (!body.isEmpty()) {
+                        req += "Content-Type: application/json\r\n";
+                        req += String::sprintf("Content-Length: %zu\r\n", body.byteCount());
+                }
+                req += "\r\n";
+                req += body;
+                const int64_t n = sock.write(req.cstr(), req.byteCount());
+                REQUIRE(n == static_cast<int64_t>(req.byteCount()));
+
+                String raw;
+                char   buf[4096];
+                for (;;) {
+                        int64_t got = sock.read(buf, sizeof(buf));
+                        if (got <= 0) break;
+                        raw += String(buf, static_cast<size_t>(got));
+                }
+                sock.close();
+
+                DbgResponse  out;
+                const size_t sep = raw.find("\r\n\r\n");
+                REQUIRE(sep != String::npos);
+                const String head = raw.left(sep);
+                out.body = raw.mid(sep + 4);
+
+                // Status line.
+                const size_t eol = head.find("\r\n");
+                const String statusLine = (eol == String::npos) ? head : head.left(eol);
+                const size_t sp1 = statusLine.find(' ');
+                REQUIRE(sp1 != String::npos);
+                const size_t sp2 = statusLine.find(' ', sp1 + 1);
+                const String code =
+                        (sp2 == String::npos) ? statusLine.mid(sp1 + 1) : statusLine.mid(sp1 + 1, sp2 - sp1 - 1);
+                Error e;
+                out.status = code.toInt(&e);
+
+                // Headers — only Location and Content-Type are interesting here.
+                const String headers = (eol == String::npos) ? String() : head.mid(eol + 2);
+                StringList   lines = headers.split("\r\n");
+                for (const auto &line : lines) {
+                        size_t colon = line.find(':');
+                        if (colon == String::npos) continue;
+                        String name = line.left(colon).trim();
+                        String val = line.mid(colon + 1).trim();
+                        if (name.compareIgnoreCase("Location") == 0) out.location = val;
+                        if (name.compareIgnoreCase("Content-Type") == 0) out.contentType = val;
+                }
+                return out;
         }
-        req += "\r\n";
-        req += body;
-        const int64_t n = sock.write(req.cstr(), req.byteCount());
-        REQUIRE(n == static_cast<int64_t>(req.byteCount()));
 
-        String raw;
-        char buf[4096];
-        for(;;) {
-                int64_t got = sock.read(buf, sizeof(buf));
-                if(got <= 0) break;
-                raw += String(buf, static_cast<size_t>(got));
+        static DbgResponse hit(uint16_t port, const String &method, const String &path) {
+                return hitWithBody(port, method, path, String());
         }
-        sock.close();
 
-        DbgResponse out;
-        const size_t sep = raw.find("\r\n\r\n");
-        REQUIRE(sep != String::npos);
-        const String head = raw.left(sep);
-        out.body = raw.mid(sep + 4);
-
-        // Status line.
-        const size_t eol = head.find("\r\n");
-        const String statusLine = (eol == String::npos) ? head : head.left(eol);
-        const size_t sp1 = statusLine.find(' ');
-        REQUIRE(sp1 != String::npos);
-        const size_t sp2 = statusLine.find(' ', sp1 + 1);
-        const String code = (sp2 == String::npos)
-                ? statusLine.mid(sp1 + 1)
-                : statusLine.mid(sp1 + 1, sp2 - sp1 - 1);
-        Error e;
-        out.status = code.toInt(&e);
-
-        // Headers — only Location and Content-Type are interesting here.
-        const String headers = (eol == String::npos) ? String() : head.mid(eol + 2);
-        StringList lines = headers.split("\r\n");
-        for(const auto &line : lines) {
-                size_t colon = line.find(':');
-                if(colon == String::npos) continue;
-                String name = line.left(colon).trim();
-                String val  = line.mid(colon + 1).trim();
-                if(name.compareIgnoreCase("Location") == 0)     out.location = val;
-                if(name.compareIgnoreCase("Content-Type") == 0) out.contentType = val;
-        }
-        return out;
-}
-
-static DbgResponse hit(uint16_t port, const String &method, const String &path) {
-        return hitWithBody(port, method, path, String());
-}
-
-// Posts @p fn onto the worker @p thread's EventLoop and busy-waits up
-// to a half-second for it to complete.  Mirrors the polling approach
-// used in tests/unit/network/httpserver.cpp.
-template <typename Fn>
-static void runOnThread(Thread &thread, Fn fn) {
-        std::atomic<bool> done{false};
-        thread.threadEventLoop()->postCallable([&]() {
-                fn();
-                done = true;
-        });
-        for(int i = 0; i < 500 && !done.load(); ++i) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-        REQUIRE(done.load());
-}
-
-// Worker-thread fixture for the pure DebugServer tests.  The
-// HttpServer that DebugServer wraps captures EventLoop::current() at
-// construction time, so the construction must happen on the worker
-// thread that will subsequently drive its events.
-struct DbgFixture {
-        Thread          thread;
-        DebugServer     *server = nullptr;
-        uint16_t        port    = 0;
-
-        DbgFixture() {
-                thread.start();
-                runOnThread(thread, [this]() {
-                        server = new DebugServer();
+        // Posts @p fn onto the worker @p thread's EventLoop and busy-waits up
+        // to a half-second for it to complete.  Mirrors the polling approach
+        // used in tests/unit/network/httpserver.cpp.
+        template <typename Fn> static void runOnThread(Thread &thread, Fn fn) {
+                std::atomic<bool> done{false};
+                thread.threadEventLoop()->postCallable([&]() {
+                        fn();
+                        done = true;
                 });
-                REQUIRE(server != nullptr);
+                for (int i = 0; i < 500 && !done.load(); ++i) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+                REQUIRE(done.load());
         }
 
-        ~DbgFixture() {
-                runOnThread(thread, [this]() {
-                        delete server;
-                        server = nullptr;
-                });
-                thread.quit();
-                thread.wait(2000);
-        }
+        // Worker-thread fixture for the pure DebugServer tests.  The
+        // HttpServer that DebugServer wraps captures EventLoop::current() at
+        // construction time, so the construction must happen on the worker
+        // thread that will subsequently drive its events.
+        struct DbgFixture {
+                        Thread       thread;
+                        DebugServer *server = nullptr;
+                        uint16_t     port = 0;
 
-        void installDefaults() {
-                runOnThread(thread, [this]() {
-                        server->installDefaultModules();
-                });
-        }
+                        DbgFixture() {
+                                thread.start();
+                                runOnThread(thread, [this]() { server = new DebugServer(); });
+                                REQUIRE(server != nullptr);
+                        }
 
-        template <typename Fn>
-        void configure(Fn fn) {
-                runOnThread(thread, [&]() { fn(*server); });
-        }
+                        ~DbgFixture() {
+                                runOnThread(thread, [this]() {
+                                        delete server;
+                                        server = nullptr;
+                                });
+                                thread.quit();
+                                thread.wait(2000);
+                        }
 
-        void listenOnAnyPort() {
-                runOnThread(thread, [this]() {
-                        REQUIRE(server->listen(0).isOk());
-                        port = server->serverAddress().port();
-                });
-                REQUIRE(port != 0);
-        }
-};
+                        void installDefaults() {
+                                runOnThread(thread, [this]() { server->installDefaultModules(); });
+                        }
 
-}  // namespace
+                        template <typename Fn> void configure(Fn fn) {
+                                runOnThread(thread, [&]() { fn(*server); });
+                        }
+
+                        void listenOnAnyPort() {
+                                runOnThread(thread, [this]() {
+                                        REQUIRE(server->listen(0).isOk());
+                                        port = server->serverAddress().port();
+                                });
+                                REQUIRE(port != 0);
+                        }
+        };
+
+} // namespace
 
 // ============================================================================
 // parseSpec
@@ -283,10 +275,9 @@ TEST_CASE("DebugServer_DefaultModulesMountUnderApiPrefix") {
         }
 
         SUBCASE("logger level can be changed via PUT") {
-                Logger &logger = Logger::defaultLogger();
-                int saved = logger.level();
-                DbgResponse r = hitWithBody(f.port, "PUT",
-                        "/api/promeki/log/level", "{\"level\":3}");
+                Logger     &logger = Logger::defaultLogger();
+                int         saved = logger.level();
+                DbgResponse r = hitWithBody(f.port, "PUT", "/api/promeki/log/level", "{\"level\":3}");
                 CHECK(r.status == 200);
                 logger.sync();
                 CHECK(logger.level() == Logger::Warn);
@@ -295,15 +286,13 @@ TEST_CASE("DebugServer_DefaultModulesMountUnderApiPrefix") {
         }
 
         SUBCASE("logger level rejects out-of-range values") {
-                DbgResponse r = hitWithBody(f.port, "PUT",
-                        "/api/promeki/log/level", "{\"level\":99}");
+                DbgResponse r = hitWithBody(f.port, "PUT", "/api/promeki/log/level", "{\"level\":99}");
                 CHECK(r.status == 400);
         }
 
         SUBCASE("unknown debug channel returns 404") {
-                DbgResponse r = hitWithBody(f.port, "PUT",
-                        "/api/promeki/log/debug/no-such-channel-xyz",
-                        "{\"enabled\":true}");
+                DbgResponse r =
+                        hitWithBody(f.port, "PUT", "/api/promeki/log/debug/no-such-channel-xyz", "{\"enabled\":true}");
                 CHECK(r.status == 404);
         }
 
@@ -342,9 +331,7 @@ TEST_CASE("DebugServer_HttpServerAccessorAllowsCustomRoutes") {
         DbgFixture f;
         f.configure([](DebugServer &s) {
                 s.httpServer().route("/custom", HttpMethod::Get,
-                        [](const HttpRequest &, HttpResponse &res) {
-                                res.setText("hello-from-custom");
-                        });
+                                     [](const HttpRequest &, HttpResponse &res) { res.setText("hello-from-custom"); });
         });
         f.listenOnAnyPort();
 
@@ -357,9 +344,7 @@ TEST_CASE("DebugServer_HttpServerAccessorAllowsCustomRoutes") {
 // Application integration
 // ============================================================================
 
-namespace {
-
-}  // namespace
+namespace {} // namespace
 
 TEST_CASE("Application_DebugServerStartStopWiring") {
         // Verifies that Application::startDebugServer constructs the
@@ -368,8 +353,8 @@ TEST_CASE("Application_DebugServerStartStopWiring") {
         // DebugServer_DefaultModulesMountUnderApiPrefix on a worker-
         // thread fixture; here we only confirm the static lifecycle
         // through Application without driving the main loop.
-        char arg0[] = "test";
-        char *argv[] = { arg0 };
+        char        arg0[] = "test";
+        char       *argv[] = {arg0};
         Application app(1, argv);
 
         REQUIRE(Application::debugServer() == nullptr);
@@ -379,16 +364,15 @@ TEST_CASE("Application_DebugServerStartStopWiring") {
         REQUIRE(srv != nullptr);
         CHECK(srv->isListening());
         CHECK(srv->serverAddress().port() != 0);
-        CHECK(srv->serverAddress().address().toString() ==
-              DebugServer::DefaultBindHost);
+        CHECK(srv->serverAddress().address().toString() == DebugServer::DefaultBindHost);
 
         Application::stopDebugServer();
         CHECK(Application::debugServer() == nullptr);
 }
 
 TEST_CASE("Application_DebugServerStartTwiceFails") {
-        char arg0[] = "test";
-        char *argv[] = { arg0 };
+        char        arg0[] = "test";
+        char       *argv[] = {arg0};
         Application app(1, argv);
 
         REQUIRE(Application::startDebugServer(0).isOk());
@@ -404,14 +388,13 @@ TEST_CASE("Application_DebugServerEnvVarStartsServer") {
         Env::set(envName, ":0");
 
         {
-                char arg0[] = "test";
-                char *argv[] = { arg0 };
-                Application app(1, argv);
+                char         arg0[] = "test";
+                char        *argv[] = {arg0};
+                Application  app(1, argv);
                 DebugServer *srv = Application::debugServer();
                 REQUIRE(srv != nullptr);
                 CHECK(srv->isListening());
-                CHECK(srv->serverAddress().address().toString() ==
-                      DebugServer::DefaultBindHost);
+                CHECK(srv->serverAddress().address().toString() == DebugServer::DefaultBindHost);
         }
 
         Env::unset(envName);
@@ -421,8 +404,8 @@ TEST_CASE("Application_DebugServerEnvVarUnsetSkipsServer") {
         const char *envName = Application::DebugServerEnv;
         Env::unset(envName);
 
-        char arg0[] = "test";
-        char *argv[] = { arg0 };
+        char        arg0[] = "test";
+        char       *argv[] = {arg0};
         Application app(1, argv);
         CHECK(Application::debugServer() == nullptr);
 }
@@ -433,100 +416,98 @@ TEST_CASE("Application_DebugServerEnvVarUnsetSkipsServer") {
 
 namespace {
 
-// Holds messages a WebSocket client receives, with a mutex for the
-// cross-thread access pattern (signals fire on the WS thread; the
-// test thread reads).
-struct WsCapture {
-        mutable Mutex   mu;
-        StringList      messages;
-        std::atomic<bool> connected{false};
-        std::atomic<bool> closed{false};
+        // Holds messages a WebSocket client receives, with a mutex for the
+        // cross-thread access pattern (signals fire on the WS thread; the
+        // test thread reads).
+        struct WsCapture {
+                        mutable Mutex     mu;
+                        StringList        messages;
+                        std::atomic<bool> connected{false};
+                        std::atomic<bool> closed{false};
 
-        void onMessage(String m) {
-                Mutex::Locker lock(mu);
-                messages.pushToBack(m);
-        }
-
-        size_t size() const {
-                Mutex::Locker lock(mu);
-                return messages.size();
-        }
-
-        StringList snapshot() const {
-                Mutex::Locker lock(mu);
-                return messages;
-        }
-};
-
-// Self-contained WebSocket client running on its own EventLoop thread
-// (the standard pattern in tests/unit/network/websocket.cpp).
-struct WsClient {
-        Thread          thread;
-        WebSocket       *ws = nullptr;
-
-        WsClient() {
-                thread.start();
-                bool ready = false;
-                thread.threadEventLoop()->postCallable([this, &ready]() {
-                        ws = new WebSocket();
-                        ready = true;
-                });
-                for(int i = 0; i < 200 && !ready; ++i) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
-                }
-                REQUIRE(ws != nullptr);
-        }
-
-        ~WsClient() {
-                thread.threadEventLoop()->postCallable([this]() {
-                        if(ws != nullptr) {
-                                ws->abort();
-                                delete ws;
-                                ws = nullptr;
+                        void onMessage(String m) {
+                                Mutex::Locker lock(mu);
+                                messages.pushToBack(m);
                         }
-                });
-                thread.quit();
-                thread.wait(2000);
-        }
 
-        Error connect(const String &url) {
-                Error result = Error::Invalid;
-                bool done = false;
-                thread.threadEventLoop()->postCallable([&]() {
-                        result = ws->connectToUrl(url);
-                        done = true;
-                });
-                for(int i = 0; i < 500 && !done; ++i) {
+                        size_t size() const {
+                                Mutex::Locker lock(mu);
+                                return messages.size();
+                        }
+
+                        StringList snapshot() const {
+                                Mutex::Locker lock(mu);
+                                return messages;
+                        }
+        };
+
+        // Self-contained WebSocket client running on its own EventLoop thread
+        // (the standard pattern in tests/unit/network/websocket.cpp).
+        struct WsClient {
+                        Thread     thread;
+                        WebSocket *ws = nullptr;
+
+                        WsClient() {
+                                thread.start();
+                                bool ready = false;
+                                thread.threadEventLoop()->postCallable([this, &ready]() {
+                                        ws = new WebSocket();
+                                        ready = true;
+                                });
+                                for (int i = 0; i < 200 && !ready; ++i) {
+                                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                                }
+                                REQUIRE(ws != nullptr);
+                        }
+
+                        ~WsClient() {
+                                thread.threadEventLoop()->postCallable([this]() {
+                                        if (ws != nullptr) {
+                                                ws->abort();
+                                                delete ws;
+                                                ws = nullptr;
+                                        }
+                                });
+                                thread.quit();
+                                thread.wait(2000);
+                        }
+
+                        Error connect(const String &url) {
+                                Error result = Error::Invalid;
+                                bool  done = false;
+                                thread.threadEventLoop()->postCallable([&]() {
+                                        result = ws->connectToUrl(url);
+                                        done = true;
+                                });
+                                for (int i = 0; i < 500 && !done; ++i) {
+                                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                }
+                                REQUIRE(done);
+                                return result;
+                        }
+
+                        template <typename Fn> void run(Fn fn) {
+                                bool done = false;
+                                thread.threadEventLoop()->postCallable([&]() {
+                                        fn();
+                                        done = true;
+                                });
+                                for (int i = 0; i < 500 && !done; ++i) {
+                                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                }
+                                REQUIRE(done);
+                        }
+        };
+
+        template <typename Pred> static bool waitForFor(int ms, Pred pred) {
+                for (int i = 0; i < ms; ++i) {
+                        if (pred()) return true;
                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 }
-                REQUIRE(done);
-                return result;
+                return pred();
         }
 
-        template <typename Fn>
-        void run(Fn fn) {
-                bool done = false;
-                thread.threadEventLoop()->postCallable([&]() {
-                        fn();
-                        done = true;
-                });
-                for(int i = 0; i < 500 && !done; ++i) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                }
-                REQUIRE(done);
-        }
-};
-
-template <typename Pred>
-static bool waitForFor(int ms, Pred pred) {
-        for(int i = 0; i < ms; ++i) {
-                if(pred()) return true;
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-        return pred();
-}
-
-}  // namespace
+} // namespace
 
 TEST_CASE("DebugServer_WebSocket_LogStream_DeliversReplayAndLive") {
         DbgFixture f;
@@ -534,7 +515,7 @@ TEST_CASE("DebugServer_WebSocket_LogStream_DeliversReplayAndLive") {
         f.listenOnAnyPort();
 
         Logger &logger = Logger::defaultLogger();
-        size_t savedHistory = logger.historySize();
+        size_t  savedHistory = logger.historySize();
         logger.setHistorySize(64);
 
         // Drain prior history so the replay assertion below is
@@ -545,28 +526,20 @@ TEST_CASE("DebugServer_WebSocket_LogStream_DeliversReplayAndLive") {
         logger.sync();
         logger.setHistorySize(64);
 
-        for(int i = 0; i < 4; ++i) {
-                logger.log(Logger::Info, "ws_replay.cpp", 100 + i,
-                        String::sprintf("ws-replay-%d", i));
+        for (int i = 0; i < 4; ++i) {
+                logger.log(Logger::Info, "ws_replay.cpp", 100 + i, String::sprintf("ws-replay-%d", i));
         }
         logger.sync();
 
         WsCapture cap;
-        WsClient client;
+        WsClient  client;
         client.run([&]() {
-                client.ws->connectedSignal.connect([&]() {
-                        cap.connected.store(true);
-                });
-                client.ws->disconnectedSignal.connect([&]() {
-                        cap.closed.store(true);
-                });
-                client.ws->textMessageReceivedSignal.connect([&](String msg) {
-                        cap.onMessage(msg);
-                });
+                client.ws->connectedSignal.connect([&]() { cap.connected.store(true); });
+                client.ws->disconnectedSignal.connect([&]() { cap.closed.store(true); });
+                client.ws->textMessageReceivedSignal.connect([&](String msg) { cap.onMessage(msg); });
         });
 
-        const String url = String::sprintf(
-                "ws://127.0.0.1:%u/api/promeki/log/stream?replay=4", f.port);
+        const String url = String::sprintf("ws://127.0.0.1:%u/api/promeki/log/stream?replay=4", f.port);
         REQUIRE(client.connect(url).isOk());
         REQUIRE(waitForFor(2000, [&]() { return cap.connected.load(); }));
 
@@ -588,9 +561,12 @@ TEST_CASE("DebugServer_WebSocket_LogStream_DeliversReplayAndLive") {
         REQUIRE(waitForFor(2000, [&]() { return cap.size() > baseline; }));
 
         StringList all = cap.snapshot();
-        bool foundLive = false;
-        for(const auto &m : all) {
-                if(m.contains("ws-live-entry")) { foundLive = true; break; }
+        bool       foundLive = false;
+        for (const auto &m : all) {
+                if (m.contains("ws-live-entry")) {
+                        foundLive = true;
+                        break;
+                }
         }
         CHECK(foundLive);
 
@@ -605,15 +581,10 @@ TEST_CASE("DebugServer_WebSocket_LogStream_DefaultReplayWhenAbsent") {
         f.listenOnAnyPort();
 
         WsCapture cap;
-        WsClient client;
-        client.run([&]() {
-                client.ws->connectedSignal.connect([&]() {
-                        cap.connected.store(true);
-                });
-        });
+        WsClient  client;
+        client.run([&]() { client.ws->connectedSignal.connect([&]() { cap.connected.store(true); }); });
 
-        const String url = String::sprintf(
-                "ws://127.0.0.1:%u/api/promeki/log/stream", f.port);
+        const String url = String::sprintf("ws://127.0.0.1:%u/api/promeki/log/stream", f.port);
         REQUIRE(client.connect(url).isOk());
         REQUIRE(waitForFor(2000, [&]() { return cap.connected.load(); }));
         // Don't assert on message count — the test thread doesn't log
@@ -624,8 +595,8 @@ TEST_CASE("Application_DebugServerEnvVarBadSpecLogsAndSkips") {
         const char *envName = Application::DebugServerEnv;
         Env::set(envName, "this-is-not-a-valid-spec");
 
-        char arg0[] = "test";
-        char *argv[] = { arg0 };
+        char        arg0[] = "test";
+        char       *argv[] = {arg0};
         Application app(1, argv);
         // Bad spec → no server, no crash.  The Application logs a
         // warning, but it shouldn't abort startup.

@@ -49,7 +49,7 @@ Result<int64_t> IODevice::size() const {
 
 bool IODevice::atEnd() const {
         auto [s, err] = size();
-        if(err.isError()) return true;
+        if (err.isError()) return true;
         return pos() >= s;
 }
 

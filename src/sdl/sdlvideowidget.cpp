@@ -23,11 +23,12 @@ SDLVideoWidget::SDLVideoWidget(ObjectBase *parent) : Widget(parent) {
 }
 
 SDLVideoWidget::~SDLVideoWidget() {
-        if(_texture != nullptr) {
+        if (_texture != nullptr) {
                 SDL_DestroyTexture(_texture);
                 _texture = nullptr;
         }
-        promekiDebug("%p destroyed: %lu frms, %lu fast", this, (long unsigned)_frameCount, (long unsigned)_framesFastPath);
+        promekiDebug("%p destroyed: %lu frms, %lu fast", this, (long unsigned)_frameCount,
+                     (long unsigned)_framesFastPath);
         return;
 }
 
@@ -38,47 +39,46 @@ void SDLVideoWidget::setPayload(const UncompressedVideoPayload::Ptr &payload) {
 }
 
 void SDLVideoWidget::paintEvent(PaintEvent *) {
-        if(!_currentPayload.isValid() || !_currentPayload->isValid()) return;
+        if (!_currentPayload.isValid() || !_currentPayload->isValid()) return;
 
         SDL_Renderer *renderer = findRenderer();
-        if(renderer == nullptr) return;
+        if (renderer == nullptr) return;
 
-        if(!uploadCurrentPayload()) return;
-        if(_texture == nullptr) return;
+        if (!uploadCurrentPayload()) return;
+        if (_texture == nullptr) return;
 
         // Calculate destination rect within our widget geometry
         // using the parent's coordinate system
         Point2Di32 origin = mapToGlobal(Point2Di32(0, 0));
-        float ox = static_cast<float>(origin.x());
-        float oy = static_cast<float>(origin.y());
-        float ww = static_cast<float>(width());
-        float wh = static_cast<float>(height());
+        float      ox = static_cast<float>(origin.x());
+        float      oy = static_cast<float>(origin.y());
+        float      ww = static_cast<float>(width());
+        float      wh = static_cast<float>(height());
 
-        if(_scaleMode == ScaleNone) {
-                float tw = static_cast<float>(_textureSize.width());
-                float th = static_cast<float>(_textureSize.height());
-                float dx = ox + (ww - tw) / 2.0f;
-                float dy = oy + (wh - th) / 2.0f;
-                SDL_FRect dst = { dx, dy, tw, th };
+        if (_scaleMode == ScaleNone) {
+                float     tw = static_cast<float>(_textureSize.width());
+                float     th = static_cast<float>(_textureSize.height());
+                float     dx = ox + (ww - tw) / 2.0f;
+                float     dy = oy + (wh - th) / 2.0f;
+                SDL_FRect dst = {dx, dy, tw, th};
                 SDL_RenderTexture(renderer, _texture, nullptr, &dst);
-        } else if(_scaleMode == ScaleFit) {
-                float imgAspect = static_cast<float>(_textureSize.width()) /
-                                  static_cast<float>(_textureSize.height());
+        } else if (_scaleMode == ScaleFit) {
+                float imgAspect = static_cast<float>(_textureSize.width()) / static_cast<float>(_textureSize.height());
                 float widgetAspect = ww / wh;
                 float dstW, dstH;
-                if(imgAspect > widgetAspect) {
+                if (imgAspect > widgetAspect) {
                         dstW = ww;
                         dstH = dstW / imgAspect;
                 } else {
                         dstH = wh;
                         dstW = dstH * imgAspect;
                 }
-                float dx = ox + (ww - dstW) / 2.0f;
-                float dy = oy + (wh - dstH) / 2.0f;
-                SDL_FRect dst = { dx, dy, dstW, dstH };
+                float     dx = ox + (ww - dstW) / 2.0f;
+                float     dy = oy + (wh - dstH) / 2.0f;
+                SDL_FRect dst = {dx, dy, dstW, dstH};
                 SDL_RenderTexture(renderer, _texture, nullptr, &dst);
         } else {
-                SDL_FRect dst = { ox, oy, ww, wh };
+                SDL_FRect dst = {ox, oy, ww, wh};
                 SDL_RenderTexture(renderer, _texture, nullptr, &dst);
         }
         return;
@@ -106,57 +106,52 @@ uint32_t SDLVideoWidget::mapPixelFormat(const PixelFormat &pd) {
         constexpr bool LE = System::isLittleEndian();
         constexpr bool BE = System::isBigEndian();
 
-        switch(pd.id()) {
+        switch (pd.id()) {
                 // 8-bit, array-ordered, sRGB
-                case PixelFormat::RGB8_sRGB:      return SDL_PIXELFORMAT_RGB24;
-                case PixelFormat::BGR8_sRGB:      return SDL_PIXELFORMAT_BGR24;
-                case PixelFormat::RGBA8_sRGB:     return SDL_PIXELFORMAT_RGBA32;
-                case PixelFormat::BGRA8_sRGB:     return SDL_PIXELFORMAT_BGRA32;
-                case PixelFormat::ARGB8_sRGB:     return SDL_PIXELFORMAT_ARGB32;
-                case PixelFormat::ABGR8_sRGB:     return SDL_PIXELFORMAT_ABGR32;
+                case PixelFormat::RGB8_sRGB: return SDL_PIXELFORMAT_RGB24;
+                case PixelFormat::BGR8_sRGB: return SDL_PIXELFORMAT_BGR24;
+                case PixelFormat::RGBA8_sRGB: return SDL_PIXELFORMAT_RGBA32;
+                case PixelFormat::BGRA8_sRGB: return SDL_PIXELFORMAT_BGRA32;
+                case PixelFormat::ARGB8_sRGB: return SDL_PIXELFORMAT_ARGB32;
+                case PixelFormat::ABGR8_sRGB: return SDL_PIXELFORMAT_ABGR32;
 
                 // 16-bit per channel, sRGB — LE variants map directly
                 // on a little-endian host.
-                case PixelFormat::RGB16_LE_sRGB:   return LE ? SDL_PIXELFORMAT_RGB48 : 0;
-                case PixelFormat::BGR16_LE_sRGB:   return LE ? SDL_PIXELFORMAT_BGR48 : 0;
-                case PixelFormat::RGBA16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_RGBA64 : 0;
-                case PixelFormat::BGRA16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_BGRA64 : 0;
-                case PixelFormat::ARGB16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_ARGB64 : 0;
-                case PixelFormat::ABGR16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_ABGR64 : 0;
+                case PixelFormat::RGB16_LE_sRGB: return LE ? SDL_PIXELFORMAT_RGB48 : 0;
+                case PixelFormat::BGR16_LE_sRGB: return LE ? SDL_PIXELFORMAT_BGR48 : 0;
+                case PixelFormat::RGBA16_LE_sRGB: return LE ? SDL_PIXELFORMAT_RGBA64 : 0;
+                case PixelFormat::BGRA16_LE_sRGB: return LE ? SDL_PIXELFORMAT_BGRA64 : 0;
+                case PixelFormat::ARGB16_LE_sRGB: return LE ? SDL_PIXELFORMAT_ARGB64 : 0;
+                case PixelFormat::ABGR16_LE_sRGB: return LE ? SDL_PIXELFORMAT_ABGR64 : 0;
 
                 // ... and BE variants map directly on a big-endian host.
-                case PixelFormat::RGB16_BE_sRGB:   return BE ? SDL_PIXELFORMAT_RGB48 : 0;
-                case PixelFormat::BGR16_BE_sRGB:   return BE ? SDL_PIXELFORMAT_BGR48 : 0;
-                case PixelFormat::RGBA16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_RGBA64 : 0;
-                case PixelFormat::BGRA16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_BGRA64 : 0;
-                case PixelFormat::ARGB16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_ARGB64 : 0;
-                case PixelFormat::ABGR16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_ABGR64 : 0;
+                case PixelFormat::RGB16_BE_sRGB: return BE ? SDL_PIXELFORMAT_RGB48 : 0;
+                case PixelFormat::BGR16_BE_sRGB: return BE ? SDL_PIXELFORMAT_BGR48 : 0;
+                case PixelFormat::RGBA16_BE_sRGB: return BE ? SDL_PIXELFORMAT_RGBA64 : 0;
+                case PixelFormat::BGRA16_BE_sRGB: return BE ? SDL_PIXELFORMAT_BGRA64 : 0;
+                case PixelFormat::ARGB16_BE_sRGB: return BE ? SDL_PIXELFORMAT_ARGB64 : 0;
+                case PixelFormat::ABGR16_BE_sRGB: return BE ? SDL_PIXELFORMAT_ABGR64 : 0;
 
                 // 8-bit 4:2:2 packed YUV — Rec.709 and Rec.601, limited
                 // range.  SDL performs the YCbCr -> RGB conversion on
                 // the GPU at render time using the colorspace property
                 // set by mapColorspace().
                 case PixelFormat::YUV8_422_Rec709:
-                case PixelFormat::YUV8_422_Rec601:
-                        return SDL_PIXELFORMAT_YUY2;
+                case PixelFormat::YUV8_422_Rec601: return SDL_PIXELFORMAT_YUY2;
                 case PixelFormat::YUV8_422_UYVY_Rec709:
-                case PixelFormat::YUV8_422_UYVY_Rec601:
-                        return SDL_PIXELFORMAT_UYVY;
+                case PixelFormat::YUV8_422_UYVY_Rec601: return SDL_PIXELFORMAT_UYVY;
 
                 // 8-bit 4:2:0 semi-planar YUV (NV12 / NV21).
                 case PixelFormat::YUV8_420_SemiPlanar_Rec709:
-                case PixelFormat::YUV8_420_SemiPlanar_Rec601:
-                        return SDL_PIXELFORMAT_NV12;
-                case PixelFormat::YUV8_420_NV21_Rec709:
-                        return SDL_PIXELFORMAT_NV21;
+                case PixelFormat::YUV8_420_SemiPlanar_Rec601: return SDL_PIXELFORMAT_NV12;
+                case PixelFormat::YUV8_420_NV21_Rec709: return SDL_PIXELFORMAT_NV21;
 
                 // 8-bit 4:2:0 fully planar (I420 — SDL's IYUV).  Promeki
                 // stores planes as Y,Cb,Cr which matches SDL's IYUV.
                 case PixelFormat::YUV8_420_Planar_Rec709:
-                case PixelFormat::YUV8_420_Planar_Rec601:
-                        return SDL_PIXELFORMAT_IYUV;
+                case PixelFormat::YUV8_420_Planar_Rec601: return SDL_PIXELFORMAT_IYUV;
 
-                default:                        return 0;
+                default: return 0;
         }
 }
 
@@ -167,22 +162,19 @@ uint32_t SDLVideoWidget::mapColorspace(const PixelFormat &pd) {
         // which range to use, otherwise SDL will fall back to its
         // default (SDL_COLORSPACE_JPEG = BT.601 full-range) and the
         // colors will be subtly wrong.
-        switch(pd.id()) {
+        switch (pd.id()) {
                 case PixelFormat::YUV8_422_Rec709:
                 case PixelFormat::YUV8_422_UYVY_Rec709:
                 case PixelFormat::YUV8_420_SemiPlanar_Rec709:
                 case PixelFormat::YUV8_420_NV21_Rec709:
-                case PixelFormat::YUV8_420_Planar_Rec709:
-                        return SDL_COLORSPACE_BT709_LIMITED;
+                case PixelFormat::YUV8_420_Planar_Rec709: return SDL_COLORSPACE_BT709_LIMITED;
 
                 case PixelFormat::YUV8_422_Rec601:
                 case PixelFormat::YUV8_422_UYVY_Rec601:
                 case PixelFormat::YUV8_420_SemiPlanar_Rec601:
-                case PixelFormat::YUV8_420_Planar_Rec601:
-                        return SDL_COLORSPACE_BT601_LIMITED;
+                case PixelFormat::YUV8_420_Planar_Rec601: return SDL_COLORSPACE_BT601_LIMITED;
 
-                default:
-                        return 0;
+                default: return 0;
         }
 }
 
@@ -191,10 +183,10 @@ bool SDLVideoWidget::isDirectlyMappable(const PixelFormat &pd) {
 }
 
 bool SDLVideoWidget::uploadCurrentPayload() {
-        if(!_currentPayload.isValid() || !_currentPayload->isValid()) return false;
+        if (!_currentPayload.isValid() || !_currentPayload->isValid()) return false;
         _frameCount++;
 
-        const ImageDesc &idesc = _currentPayload->desc();
+        const ImageDesc   &idesc = _currentPayload->desc();
         const PixelFormat &srcPd = idesc.pixelFormat();
 
         // The widget now relies on the planner-inserted CSC stage
@@ -204,7 +196,7 @@ bool SDLVideoWidget::uploadCurrentPayload() {
         // and matches what @ref SDLPlayerTask::proposeInput
         // advertises to the planner.
         const uint32_t sdlFmt = mapPixelFormat(srcPd);
-        if(sdlFmt == 0) {
+        if (sdlFmt == 0) {
                 promekiErr("SDLVideoWidget: PixelFormat '%s' is not SDL-native; "
                            "the upstream pipeline is supposed to bridge it via "
                            "a planner-inserted CSC stage.  Frame dropped.",
@@ -213,28 +205,22 @@ bool SDLVideoWidget::uploadCurrentPayload() {
         }
 
         _framesFastPath++;
-        ensureTexture(idesc.size().width(),
-                      idesc.size().height(), sdlFmt,
-                      mapColorspace(srcPd));
-        if(_texture == nullptr) return false;
+        ensureTexture(idesc.size().width(), idesc.size().height(), sdlFmt, mapColorspace(srcPd));
+        if (_texture == nullptr) return false;
         uploadPayload(*_currentPayload, sdlFmt);
         return true;
 }
 
-void SDLVideoWidget::ensureTexture(int w, int h, uint32_t sdlPixFmt,
-                                   uint32_t sdlColorspace) {
-        if(_texture != nullptr &&
-           _textureSize.width() == w &&
-           _textureSize.height() == h &&
-           _texturePixFmt == sdlPixFmt &&
-           _textureColorspace == sdlColorspace) {
+void SDLVideoWidget::ensureTexture(int w, int h, uint32_t sdlPixFmt, uint32_t sdlColorspace) {
+        if (_texture != nullptr && _textureSize.width() == w && _textureSize.height() == h &&
+            _texturePixFmt == sdlPixFmt && _textureColorspace == sdlColorspace) {
                 return;
         }
 
         SDL_Renderer *renderer = findRenderer();
-        if(renderer == nullptr) return;
+        if (renderer == nullptr) return;
 
-        if(_texture != nullptr) {
+        if (_texture != nullptr) {
                 SDL_DestroyTexture(_texture);
                 _texture = nullptr;
         }
@@ -243,41 +229,30 @@ void SDLVideoWidget::ensureTexture(int w, int h, uint32_t sdlPixFmt,
         // SDL_CreateTextureWithProperties so we can set
         // SDL_PROP_TEXTURE_CREATE_COLORSPACE_NUMBER.  For RGB we let
         // SDL pick its default (sRGB).
-        if(sdlColorspace != 0) {
+        if (sdlColorspace != 0) {
                 SDL_PropertiesID props = SDL_CreateProperties();
-                if(props == 0) {
-                        promekiErr("SDLVideoWidget: SDL_CreateProperties failed: %s",
-                                   SDL_GetError());
+                if (props == 0) {
+                        promekiErr("SDLVideoWidget: SDL_CreateProperties failed: %s", SDL_GetError());
                         _textureSize = Size2Di32(0, 0);
                         _texturePixFmt = 0;
                         _textureColorspace = 0;
                         return;
                 }
-                SDL_SetNumberProperty(props,
-                        SDL_PROP_TEXTURE_CREATE_COLORSPACE_NUMBER,
-                        static_cast<int64_t>(sdlColorspace));
-                SDL_SetNumberProperty(props,
-                        SDL_PROP_TEXTURE_CREATE_FORMAT_NUMBER,
-                        static_cast<int64_t>(sdlPixFmt));
-                SDL_SetNumberProperty(props,
-                        SDL_PROP_TEXTURE_CREATE_ACCESS_NUMBER,
-                        static_cast<int64_t>(SDL_TEXTUREACCESS_STREAMING));
-                SDL_SetNumberProperty(props,
-                        SDL_PROP_TEXTURE_CREATE_WIDTH_NUMBER, w);
-                SDL_SetNumberProperty(props,
-                        SDL_PROP_TEXTURE_CREATE_HEIGHT_NUMBER, h);
+                SDL_SetNumberProperty(props, SDL_PROP_TEXTURE_CREATE_COLORSPACE_NUMBER,
+                                      static_cast<int64_t>(sdlColorspace));
+                SDL_SetNumberProperty(props, SDL_PROP_TEXTURE_CREATE_FORMAT_NUMBER, static_cast<int64_t>(sdlPixFmt));
+                SDL_SetNumberProperty(props, SDL_PROP_TEXTURE_CREATE_ACCESS_NUMBER,
+                                      static_cast<int64_t>(SDL_TEXTUREACCESS_STREAMING));
+                SDL_SetNumberProperty(props, SDL_PROP_TEXTURE_CREATE_WIDTH_NUMBER, w);
+                SDL_SetNumberProperty(props, SDL_PROP_TEXTURE_CREATE_HEIGHT_NUMBER, h);
                 _texture = SDL_CreateTextureWithProperties(renderer, props);
                 SDL_DestroyProperties(props);
         } else {
-                _texture = SDL_CreateTexture(
-                        renderer,
-                        static_cast<SDL_PixelFormat>(sdlPixFmt),
-                        SDL_TEXTUREACCESS_STREAMING,
-                        w, h
-                );
+                _texture = SDL_CreateTexture(renderer, static_cast<SDL_PixelFormat>(sdlPixFmt),
+                                             SDL_TEXTUREACCESS_STREAMING, w, h);
         }
 
-        if(_texture == nullptr) {
+        if (_texture == nullptr) {
                 promekiErr("SDLVideoWidget: SDL_CreateTexture failed: %s", SDL_GetError());
                 _textureSize = Size2Di32(0, 0);
                 _texturePixFmt = 0;
@@ -291,30 +266,26 @@ void SDLVideoWidget::ensureTexture(int w, int h, uint32_t sdlPixFmt,
         return;
 }
 
-void SDLVideoWidget::uploadPayload(const UncompressedVideoPayload &payload,
-                                   uint32_t sdlPixFmt) {
-        if(_texture == nullptr) return;
+void SDLVideoWidget::uploadPayload(const UncompressedVideoPayload &payload, uint32_t sdlPixFmt) {
+        if (_texture == nullptr) return;
 
         const PixelMemLayout &ml = payload.desc().pixelFormat().memLayout();
-        const size_t imgWidth = payload.desc().size().width();
+        const size_t          imgWidth = payload.desc().size().width();
 
         // Multi-plane YUV formats need SDL's dedicated update calls —
         // SDL_UpdateTexture assumes a single contiguous plane at the
         // given stride, but promeki's Buffer layout per plane is its
         // own allocation so the planes aren't necessarily contiguous
         // in memory.
-        switch(sdlPixFmt) {
+        switch (sdlPixFmt) {
                 case SDL_PIXELFORMAT_NV12:
                 case SDL_PIXELFORMAT_NV21: {
-                        const uint8_t *yPlane  = payload.plane(0).data();
+                        const uint8_t *yPlane = payload.plane(0).data();
                         const uint8_t *uvPlane = payload.plane(1).data();
-                        int yPitch = static_cast<int>(ml.lineStride(0, imgWidth));
-                        int uvPitch = static_cast<int>(ml.lineStride(1, imgWidth));
-                        if(!SDL_UpdateNVTexture(_texture, nullptr,
-                                                yPlane, yPitch,
-                                                uvPlane, uvPitch)) {
-                                promekiErr("SDLVideoWidget: SDL_UpdateNVTexture failed: %s",
-                                           SDL_GetError());
+                        int            yPitch = static_cast<int>(ml.lineStride(0, imgWidth));
+                        int            uvPitch = static_cast<int>(ml.lineStride(1, imgWidth));
+                        if (!SDL_UpdateNVTexture(_texture, nullptr, yPlane, yPitch, uvPlane, uvPitch)) {
+                                promekiErr("SDLVideoWidget: SDL_UpdateNVTexture failed: %s", SDL_GetError());
                         }
                         return;
                 }
@@ -325,27 +296,22 @@ void SDLVideoWidget::uploadPayload(const UncompressedVideoPayload &payload,
                         const uint8_t *yPlane = payload.plane(0).data();
                         const uint8_t *uPlane = payload.plane(1).data();
                         const uint8_t *vPlane = payload.plane(2).data();
-                        int yPitch = static_cast<int>(ml.lineStride(0, imgWidth));
-                        int uPitch = static_cast<int>(ml.lineStride(1, imgWidth));
-                        int vPitch = static_cast<int>(ml.lineStride(2, imgWidth));
-                        if(!SDL_UpdateYUVTexture(_texture, nullptr,
-                                                 yPlane, yPitch,
-                                                 uPlane, uPitch,
-                                                 vPlane, vPitch)) {
-                                promekiErr("SDLVideoWidget: SDL_UpdateYUVTexture failed: %s",
-                                           SDL_GetError());
+                        int            yPitch = static_cast<int>(ml.lineStride(0, imgWidth));
+                        int            uPitch = static_cast<int>(ml.lineStride(1, imgWidth));
+                        int            vPitch = static_cast<int>(ml.lineStride(2, imgWidth));
+                        if (!SDL_UpdateYUVTexture(_texture, nullptr, yPlane, yPitch, uPlane, uPitch, vPlane, vPitch)) {
+                                promekiErr("SDLVideoWidget: SDL_UpdateYUVTexture failed: %s", SDL_GetError());
                         }
                         return;
                 }
-                default:
-                        break;
+                default: break;
         }
 
         // Single-plane formats (RGB family + YUY2 / UYVY).
-        size_t stride = ml.lineStride(0, imgWidth);
+        size_t      stride = ml.lineStride(0, imgWidth);
         const void *pixels = payload.plane(0).data();
 
-        if(!SDL_UpdateTexture(_texture, nullptr, pixels, static_cast<int>(stride))) {
+        if (!SDL_UpdateTexture(_texture, nullptr, pixels, static_cast<int>(stride))) {
                 promekiErr("SDLVideoWidget: SDL_UpdateTexture failed: %s", SDL_GetError());
         }
         return;
@@ -354,9 +320,9 @@ void SDLVideoWidget::uploadPayload(const UncompressedVideoPayload &payload,
 SDL_Renderer *SDLVideoWidget::findRenderer() const {
         // Walk up the parent chain to find the SDLWindow
         ObjectBase *p = parent();
-        while(p != nullptr) {
+        while (p != nullptr) {
                 SDLWindow *win = dynamic_cast<SDLWindow *>(p);
-                if(win != nullptr) return win->sdlRenderer();
+                if (win != nullptr) return win->sdlRenderer();
                 p = p->parent();
         }
         return nullptr;

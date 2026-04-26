@@ -168,19 +168,19 @@ class TuiSubsystem {
                 void releaseMouse() { _mouseGrab = nullptr; }
 
         private:
-                static TuiSubsystem    *_instance;
+                static TuiSubsystem *_instance;
 
-                EventLoop              *_eventLoop = nullptr;
-                Terminal                _terminal;
-                TuiScreen               _screen;
-                TuiPalette              _palette;
-                TuiInputParser          _inputParser;
-                AnsiStream              _ansiStream;
-                TuiWidget               *_rootWidget = nullptr;
-                TuiWidget               *_focusWidget = nullptr;
-                TuiWidget               *_mouseGrab = nullptr;
-                int                     _lastCols = 0;
-                int                     _lastRows = 0;
+                EventLoop     *_eventLoop = nullptr;
+                Terminal       _terminal;
+                TuiScreen      _screen;
+                TuiPalette     _palette;
+                TuiInputParser _inputParser;
+                AnsiStream     _ansiStream;
+                TuiWidget     *_rootWidget = nullptr;
+                TuiWidget     *_focusWidget = nullptr;
+                TuiWidget     *_mouseGrab = nullptr;
+                int            _lastCols = 0;
+                int            _lastRows = 0;
 
                 // Event-loop-driven input / resize / repaint state.
                 // - _stdinSourceHandle: IoSource handle for STDIN_FILENO.
@@ -191,28 +191,28 @@ class TuiSubsystem {
                 // - _repaintQueued: coalesces markNeedsRepaint() calls
                 //   into a single pending postCallable — if a repaint
                 //   is already queued we skip reposting.
-                int                     _stdinSourceHandle = -1;
-                int                     _winchSubscription = -1;
-                Atomic<bool>            _repaintQueued;
+                int          _stdinSourceHandle = -1;
+                int          _winchSubscription = -1;
+                Atomic<bool> _repaintQueued;
 
                 // Double-click detection state
                 using Clock = std::chrono::steady_clock;
                 using TimePoint = Clock::time_point;
-                static constexpr int    DoubleClickIntervalMs = 400;
-                TimePoint               _lastClickTime{};
-                Point2Di32              _lastClickPos{-1, -1};
-                MouseEvent::Button      _lastClickButton = MouseEvent::NoButton;
+                static constexpr int DoubleClickIntervalMs = 400;
+                TimePoint            _lastClickTime{};
+                Point2Di32           _lastClickPos{-1, -1};
+                MouseEvent::Button   _lastClickButton = MouseEvent::NoButton;
 
-                void setupEventSources();
-                void teardownEventSources();
-                void doPaint();
-                void processInput();
-                void paintWidgets();
-                void paintWidget(TuiWidget *widget);
-                void handleResize();
-                void dispatchKeyEvent(const TuiInputParser::ParsedEvent &ev);
-                void dispatchMouseEvent(const TuiInputParser::ParsedEvent &ev);
-                void collectFocusable(TuiWidget *widget, List<TuiWidget *> &list);
+                void       setupEventSources();
+                void       teardownEventSources();
+                void       doPaint();
+                void       processInput();
+                void       paintWidgets();
+                void       paintWidget(TuiWidget *widget);
+                void       handleResize();
+                void       dispatchKeyEvent(const TuiInputParser::ParsedEvent &ev);
+                void       dispatchMouseEvent(const TuiInputParser::ParsedEvent &ev);
+                void       collectFocusable(TuiWidget *widget, List<TuiWidget *> &list);
                 TuiWidget *widgetAt(TuiWidget *widget, const Point2Di32 &globalPos);
 };
 

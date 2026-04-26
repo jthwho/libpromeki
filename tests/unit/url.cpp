@@ -102,7 +102,7 @@ TEST_CASE("Url: fragment") {
 
 TEST_CASE("Url: round-trip pmfb authority-only") {
         String orig("pmfb://studio-a");
-        Url u = Url::fromString(orig).first();
+        Url    u = Url::fromString(orig).first();
         CHECK(u.toString() == orig);
 }
 
@@ -164,7 +164,7 @@ TEST_CASE("Url: percentDecode basics") {
         CHECK(Url::percentDecode("hello%20world") == "hello world");
         CHECK(Url::percentDecode("a%2Fb") == "a/b");
 
-        Error err = Error::Ok;
+        Error  err = Error::Ok;
         String out = Url::percentDecode("bad%", &err);
         CHECK(err.isError());
 

@@ -57,8 +57,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @tparam N    Size of the string literal (including the null terminator).
  * @tparam Seed Unique per-site seed derived from file, line, and build time.
  */
-template <size_t N, uint64_t Seed>
-class ObfuscatedString {
+template <size_t N, uint64_t Seed> class ObfuscatedString {
         public:
                 /**
                  * @brief Encodes a string literal at compile time.
@@ -72,7 +71,7 @@ class ObfuscatedString {
                 consteval ObfuscatedString(const char (&str)[N]) : _data{} {
                         uint64_t state = initState();
                         for (size_t i = 0; i < N - 1; ++i) {
-                                uint64_t key = keyAt(i);
+                                uint64_t      key = keyAt(i);
                                 unsigned char k0 = static_cast<unsigned char>(key);
                                 unsigned char k1 = static_cast<unsigned char>(key >> 8);
                                 unsigned char c = static_cast<unsigned char>(str[i]);
@@ -97,10 +96,10 @@ class ObfuscatedString {
                  * @return The decoded plaintext as a String.
                  */
                 String decode() const {
-                        String out(N - 1, '\0');
+                        String   out(N - 1, '\0');
                         uint64_t state = initState();
                         for (size_t i = 0; i < N - 1; ++i) {
-                                uint64_t key = keyAt(i);
+                                uint64_t      key = keyAt(i);
                                 unsigned char k0 = static_cast<unsigned char>(key);
                                 unsigned char k1 = static_cast<unsigned char>(key >> 8);
                                 unsigned char c = static_cast<unsigned char>(_data[i]);
@@ -139,8 +138,8 @@ class ObfuscatedString {
 
                 // Per-byte 64-bit key derived from Seed and position (splitmix64 finalizer).
                 static constexpr uint64_t keyAt(size_t i) {
-                        uint64_t h = (Seed ^ (static_cast<uint64_t>(i) * 0x9e3779b97f4a7c15ULL)) *
-                                     0xbf58476d1ce4e5b9ULL;
+                        uint64_t h =
+                                (Seed ^ (static_cast<uint64_t>(i) * 0x9e3779b97f4a7c15ULL)) * 0xbf58476d1ce4e5b9ULL;
                         h ^= h >> 31;
                         h *= 0x94d049bb133111ebULL;
                         h ^= h >> 31;
@@ -166,9 +165,9 @@ PROMEKI_NAMESPACE_END
  * @def PROMEKI_OBFUSCATE_SEED
  * @brief Combines __FILE__, __LINE__, __DATE__, and __TIME__ into a unique per-site seed.
  */
-#define PROMEKI_OBFUSCATE_SEED                                                                     \
-    (::promeki::fnv1a(__FILE__) ^ (static_cast<uint64_t>(__LINE__) * 0x9e3779b97f4a7c15ULL) ^      \
-     ::promeki::fnv1a(__DATE__ __TIME__))
+#define PROMEKI_OBFUSCATE_SEED                                                                                         \
+        (::promeki::fnv1a(__FILE__) ^ (static_cast<uint64_t>(__LINE__) * 0x9e3779b97f4a7c15ULL) ^                      \
+         ::promeki::fnv1a(__DATE__ __TIME__))
 
 /**
  * @def PROMEKI_OBFUSCATE(str)
@@ -180,9 +179,8 @@ PROMEKI_NAMESPACE_END
  * @param str The string literal to obfuscate.
  */
 // NOLINTNEXTLINE(bugprone-macro-parentheses)
-#define PROMEKI_OBFUSCATE(str)                                                                     \
-    ([]() {                                                                                        \
-        static constexpr auto _obf =                                                               \
-            ::promeki::ObfuscatedString<sizeof(str), PROMEKI_OBFUSCATE_SEED>(str);                 \
-        return _obf.decode();                                                                      \
-    }())
+#define PROMEKI_OBFUSCATE(str)                                                                                         \
+        ([]() {                                                                                                        \
+                static constexpr auto _obf = ::promeki::ObfuscatedString<sizeof(str), PROMEKI_OBFUSCATE_SEED>(str);    \
+                return _obf.decode();                                                                                  \
+        }())

@@ -30,7 +30,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 namespace detail {
 
-/**
+        /**
  * @brief Trait that detects an opt-in polymorphic-dispatch hook on @c T.
  * @ingroup util
  *
@@ -45,23 +45,19 @@ namespace detail {
  * the caller only holds a reference-to-base.  The concept is opt-in —
  * types without the hook stay on the direct-lookup fast path.
  */
-template <typename T, typename = void>
-struct HasVariantLookupDispatch : std::false_type {};
+        template <typename T, typename = void> struct HasVariantLookupDispatch : std::false_type {};
 
-template <typename T>
-struct HasVariantLookupDispatch<T, std::void_t<
-        decltype(std::declval<const T &>().variantLookupResolve(
-                std::declval<const String &>(),
-                std::declval<Error *>()))>>
-        : std::true_type {};
+        template <typename T>
+        struct HasVariantLookupDispatch<T, std::void_t<decltype(std::declval<const T &>().variantLookupResolve(
+                                                   std::declval<const String &>(), std::declval<Error *>()))>>
+            : std::true_type {};
 
-/**
+        /**
  * @brief Convenience variable template for @ref HasVariantLookupDispatch.
  */
-template <typename T>
-inline constexpr bool hasVariantLookupDispatchV = HasVariantLookupDispatch<T>::value;
+        template <typename T> inline constexpr bool hasVariantLookupDispatchV = HasVariantLookupDispatch<T>::value;
 
-/**
+        /**
  * @brief Parsed leading segment of a VariantLookup key.
  * @ingroup util
  *
@@ -75,20 +71,20 @@ inline constexpr bool hasVariantLookupDispatchV = HasVariantLookupDispatch<T>::v
  * present, the trailing @c '.' so @ref rest holds just the remainder
  * (without any leading dot).
  */
-struct VariantLookupSegment {
-        /** @brief Name of this segment (no brackets, no dot). */
-        String  name;
-        /** @brief Everything after the first @c '.', empty if there was none. */
-        String  rest;
-        /** @brief Integer index if the segment carried a @c '[N]' suffix. */
-        size_t  index    = 0;
-        /** @brief True when the segment had a @c '[N]' suffix. */
-        bool    hasIndex = false;
-        /** @brief True when the segment was followed by a @c '.' and a non-empty remainder. */
-        bool    hasRest  = false;
-};
+        struct VariantLookupSegment {
+                        /** @brief Name of this segment (no brackets, no dot). */
+                        String name;
+                        /** @brief Everything after the first @c '.', empty if there was none. */
+                        String rest;
+                        /** @brief Integer index if the segment carried a @c '[N]' suffix. */
+                        size_t index = 0;
+                        /** @brief True when the segment had a @c '[N]' suffix. */
+                        bool hasIndex = false;
+                        /** @brief True when the segment was followed by a @c '.' and a non-empty remainder. */
+                        bool hasRest = false;
+        };
 
-/**
+        /**
  * @brief Parses the leading @c segment of a VariantLookup key.
  *
  * Accepts names drawn from @c [A-Za-z0-9_@], an optional
@@ -104,68 +100,63 @@ struct VariantLookupSegment {
  * @param err  Optional error output.
  * @return     True on success, false on parse failure.
  */
-inline bool parseLeadingSegment(const String &key,
-                                VariantLookupSegment &out,
-                                Error *err = nullptr) {
-        if(err != nullptr) *err = Error::Ok;
-        const size_t len = key.byteCount();
-        if(len == 0) {
-                if(err != nullptr) *err = Error::ParseFailed;
-                return false;
-        }
-        const char *s = key.cstr();
-        size_t i = 0;
-        auto isNameChar = [](char c) -> bool {
-                return (c >= 'A' && c <= 'Z')
-                    || (c >= 'a' && c <= 'z')
-                    || (c >= '0' && c <= '9')
-                    || c == '_' || c == '@';
-        };
-        while(i < len && isNameChar(s[i])) ++i;
-        if(i == 0) {
-                if(err != nullptr) *err = Error::ParseFailed;
-                return false;
-        }
-        out.name = String(s, i);
-        out.hasIndex = false;
-        out.hasRest = false;
-        out.rest = String();
-        out.index = 0;
-
-        if(i < len && s[i] == '[') {
-                ++i;
-                const size_t numStart = i;
-                while(i < len && s[i] >= '0' && s[i] <= '9') ++i;
-                if(i == numStart) {
-                        if(err != nullptr) *err = Error::ParseFailed;
+        inline bool parseLeadingSegment(const String &key, VariantLookupSegment &out, Error *err = nullptr) {
+                if (err != nullptr) *err = Error::Ok;
+                const size_t len = key.byteCount();
+                if (len == 0) {
+                        if (err != nullptr) *err = Error::ParseFailed;
                         return false;
                 }
-                if(i >= len || s[i] != ']') {
-                        if(err != nullptr) *err = Error::ParseFailed;
+                const char *s = key.cstr();
+                size_t      i = 0;
+                auto        isNameChar = [](char c) -> bool {
+                        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' ||
+                               c == '@';
+                };
+                while (i < len && isNameChar(s[i])) ++i;
+                if (i == 0) {
+                        if (err != nullptr) *err = Error::ParseFailed;
                         return false;
                 }
-                char *endp = nullptr;
-                out.index = static_cast<size_t>(
-                        std::strtoull(s + numStart, &endp, 10));
-                out.hasIndex = true;
+                out.name = String(s, i);
+                out.hasIndex = false;
+                out.hasRest = false;
+                out.rest = String();
+                out.index = 0;
+
+                if (i < len && s[i] == '[') {
+                        ++i;
+                        const size_t numStart = i;
+                        while (i < len && s[i] >= '0' && s[i] <= '9') ++i;
+                        if (i == numStart) {
+                                if (err != nullptr) *err = Error::ParseFailed;
+                                return false;
+                        }
+                        if (i >= len || s[i] != ']') {
+                                if (err != nullptr) *err = Error::ParseFailed;
+                                return false;
+                        }
+                        char *endp = nullptr;
+                        out.index = static_cast<size_t>(std::strtoull(s + numStart, &endp, 10));
+                        out.hasIndex = true;
+                        ++i;
+                }
+
+                if (i == len) return true;
+
+                if (s[i] != '.') {
+                        if (err != nullptr) *err = Error::ParseFailed;
+                        return false;
+                }
                 ++i;
+                if (i >= len) {
+                        if (err != nullptr) *err = Error::ParseFailed;
+                        return false;
+                }
+                out.rest = String(s + i, len - i);
+                out.hasRest = true;
+                return true;
         }
-
-        if(i == len) return true;
-
-        if(s[i] != '.') {
-                if(err != nullptr) *err = Error::ParseFailed;
-                return false;
-        }
-        ++i;
-        if(i >= len) {
-                if(err != nullptr) *err = Error::ParseFailed;
-                return false;
-        }
-        out.rest = String(s + i, len - i);
-        out.hasRest = true;
-        return true;
-}
 
 } // namespace detail
 
@@ -292,8 +283,7 @@ inline bool parseLeadingSegment(const String &key,
  *       transitions (indexedChild → database, …) and each hop's
  *       target type, so this is a non-trivial follow-up.
  */
-template <typename T>
-class VariantLookup {
+template <typename T> class VariantLookup {
         public:
                 // ============================================================
                 // Key
@@ -333,9 +323,7 @@ class VariantLookup {
                                  * @c static_assert, non-type template
                                  * parameters).
                                  */
-                                static constexpr Key literal(const char *name) {
-                                        return Key(fnv1a(name));
-                                }
+                                static constexpr Key literal(const char *name) { return Key(fnv1a(name)); }
 
                                 /**
                                  * @brief Looks up a Key by name without registering it.
@@ -345,9 +333,9 @@ class VariantLookup {
                                  * @c T.
                                  */
                                 static Key find(const String &name) {
-                                        const Registry &r = registry();
+                                        const Registry           &r = registry();
                                         ReadWriteLock::ReadLocker lock(r.lock);
-                                        uint64_t id = r.findId(name);
+                                        uint64_t                  id = r.findId(name);
                                         return id == Invalid ? Key() : Key(id);
                                 }
 
@@ -374,10 +362,10 @@ class VariantLookup {
                                  * @ref Registrar first.
                                  */
                                 String name() const {
-                                        const Registry &r = registry();
+                                        const Registry           &r = registry();
                                         ReadWriteLock::ReadLocker lock(r.lock);
-                                        auto it = r.names.find(_id);
-                                        if(it == r.names.end()) return String();
+                                        auto                      it = r.names.find(_id);
+                                        if (it == r.names.end()) return String();
                                         return it->second;
                                 }
 
@@ -390,7 +378,7 @@ class VariantLookup {
 
                         private:
                                 static constexpr uint64_t Invalid = UINT64_MAX;
-                                uint64_t _id = Invalid;
+                                uint64_t                  _id = Invalid;
 
                                 constexpr explicit Key(uint64_t id) : _id(id) {}
 
@@ -402,7 +390,7 @@ class VariantLookup {
                 // ============================================================
 
                 /** @brief Terminal scalar getter. */
-                using ScalarGet        = std::function<std::optional<Variant>(const T &)>;
+                using ScalarGet = std::function<std::optional<Variant>(const T &)>;
                 /**
                  * @brief Terminal scalar setter.
                  *
@@ -412,21 +400,22 @@ class VariantLookup {
                  * a numeric bounds violation).  @ref assign propagates
                  * the returned code to the caller unchanged.
                  */
-                using ScalarSet        = std::function<Error(T &, const Variant &)>;
+                using ScalarSet = std::function<Error(T &, const Variant &)>;
                 /** @brief Terminal indexed scalar getter. */
                 using IndexedScalarGet = std::function<std::optional<Variant>(const T &, size_t)>;
                 /** @brief Terminal indexed scalar setter; see @ref ScalarSet for error semantics. */
                 using IndexedScalarSet = std::function<Error(T &, size_t, const Variant &)>;
 
                 /** @brief Erased composition getter (child or database). */
-                using ComposeResolve   = std::function<std::optional<Variant>(const T &, const String &, Error *)>;
+                using ComposeResolve = std::function<std::optional<Variant>(const T &, const String &, Error *)>;
                 /** @brief Erased composition setter (child or database). */
-                using ComposeAssign    = std::function<bool(T &, const String &, const Variant &, Error *)>;
+                using ComposeAssign = std::function<bool(T &, const String &, const Variant &, Error *)>;
 
                 /** @brief Erased indexed composition getter. */
-                using IndexedCompResolve = std::function<std::optional<Variant>(const T &, size_t, const String &, Error *)>;
+                using IndexedCompResolve =
+                        std::function<std::optional<Variant>(const T &, size_t, const String &, Error *)>;
                 /** @brief Erased indexed composition setter. */
-                using IndexedCompAssign  = std::function<bool(T &, size_t, const String &, const Variant &, Error *)>;
+                using IndexedCompAssign = std::function<bool(T &, size_t, const String &, const Variant &, Error *)>;
 
                 /**
                  * @brief Erased spec resolver for a composed handler.
@@ -439,7 +428,7 @@ class VariantLookup {
                  * @ref Registrar::database "database<DbName>" handler it
                  * forwards to @c VariantDatabase<DbName>::specFor(rest).
                  */
-                using ComposeSpecFor   = std::function<const VariantSpec *(const String &, Error *)>;
+                using ComposeSpecFor = std::function<const VariantSpec *(const String &, Error *)>;
 
                 // ============================================================
                 // Registrar (fluent builder)
@@ -466,42 +455,42 @@ class VariantLookup {
                                 /** @brief Registers a read-only scalar. */
                                 Registrar scalar(const String &name, ScalarGet get,
                                                  const VariantSpec *spec = nullptr) const {
-                                        Registry &r = registry();
+                                        Registry                  &r = registry();
                                         ReadWriteLock::WriteLocker lock(r.lock);
-                                        uint64_t id = r.declareName(name);
-                                        r.scalars.insert(id, ScalarEntry{ std::move(get), ScalarSet(), spec });
+                                        uint64_t                   id = r.declareName(name);
+                                        r.scalars.insert(id, ScalarEntry{std::move(get), ScalarSet(), spec});
                                         return *this;
                                 }
 
                                 /** @brief Registers a read-write scalar. */
                                 Registrar scalar(const String &name, ScalarGet get, ScalarSet set,
                                                  const VariantSpec *spec = nullptr) const {
-                                        Registry &r = registry();
+                                        Registry                  &r = registry();
                                         ReadWriteLock::WriteLocker lock(r.lock);
-                                        uint64_t id = r.declareName(name);
-                                        r.scalars.insert(id, ScalarEntry{ std::move(get), std::move(set), spec });
+                                        uint64_t                   id = r.declareName(name);
+                                        r.scalars.insert(id, ScalarEntry{std::move(get), std::move(set), spec});
                                         return *this;
                                 }
 
                                 /** @brief Registers a read-only indexed scalar. */
                                 Registrar indexedScalar(const String &name, IndexedScalarGet get,
                                                         const VariantSpec *spec = nullptr) const {
-                                        Registry &r = registry();
+                                        Registry                  &r = registry();
                                         ReadWriteLock::WriteLocker lock(r.lock);
-                                        uint64_t id = r.declareName(name);
-                                        r.indexedScalars.insert(id,
-                                                IndexedScalarEntry{ std::move(get), IndexedScalarSet(), spec });
+                                        uint64_t                   id = r.declareName(name);
+                                        r.indexedScalars.insert(
+                                                id, IndexedScalarEntry{std::move(get), IndexedScalarSet(), spec});
                                         return *this;
                                 }
 
                                 /** @brief Registers a read-write indexed scalar. */
                                 Registrar indexedScalar(const String &name, IndexedScalarGet get, IndexedScalarSet set,
                                                         const VariantSpec *spec = nullptr) const {
-                                        Registry &r = registry();
+                                        Registry                  &r = registry();
                                         ReadWriteLock::WriteLocker lock(r.lock);
-                                        uint64_t id = r.declareName(name);
-                                        r.indexedScalars.insert(id,
-                                                IndexedScalarEntry{ std::move(get), std::move(set), spec });
+                                        uint64_t                   id = r.declareName(name);
+                                        r.indexedScalars.insert(
+                                                id, IndexedScalarEntry{std::move(get), std::move(set), spec});
                                         return *this;
                                 }
 
@@ -524,45 +513,44 @@ class VariantLookup {
                                  *                When null the path is read-only.
                                  */
                                 template <typename U>
-                                Registrar child(const String &name,
-                                                std::function<const U *(const T &)> get,
+                                Registrar child(const String &name, std::function<const U *(const T &)> get,
                                                 std::function<U *(T &)> getMut = nullptr) const {
-                                        ComposeResolve resolveFn =
-                                                [get](const T &t, const String &rest, Error *err) -> std::optional<Variant> {
-                                                        const U *u = get(t);
-                                                        if(u == nullptr) {
-                                                                if(err != nullptr) *err = Error::IdNotFound;
-                                                                return std::nullopt;
-                                                        }
-                                                        return VariantLookup<U>::resolve(*u, rest, err);
-                                                };
+                                        ComposeResolve resolveFn = [get](const T &t, const String &rest,
+                                                                         Error *err) -> std::optional<Variant> {
+                                                const U *u = get(t);
+                                                if (u == nullptr) {
+                                                        if (err != nullptr) *err = Error::IdNotFound;
+                                                        return std::nullopt;
+                                                }
+                                                return VariantLookup<U>::resolve(*u, rest, err);
+                                        };
                                         ComposeAssign assignFn;
-                                        if(getMut) {
-                                                assignFn = [getMut](T &t, const String &rest, const Variant &v, Error *err) -> bool {
+                                        if (getMut) {
+                                                assignFn = [getMut](T &t, const String &rest, const Variant &v,
+                                                                    Error *err) -> bool {
                                                         U *u = getMut(t);
-                                                        if(u == nullptr) {
-                                                                if(err != nullptr) *err = Error::IdNotFound;
+                                                        if (u == nullptr) {
+                                                                if (err != nullptr) *err = Error::IdNotFound;
                                                                 return false;
                                                         }
                                                         return VariantLookup<U>::assign(*u, rest, v, err);
                                                 };
                                         }
-                                        ComposeSpecFor specFn =
-                                                [](const String &rest, Error *err) -> const VariantSpec * {
-                                                        return VariantLookup<U>::specFor(rest, err);
-                                                };
+                                        ComposeSpecFor specFn = [](const String &rest,
+                                                                   Error        *err) -> const VariantSpec * {
+                                                return VariantLookup<U>::specFor(rest, err);
+                                        };
                                         std::function<StringList(const T &, const String &)> dumpFn =
                                                 [get](const T &t, const String &indent) -> StringList {
-                                                        const U *u = get(t);
-                                                        if(u == nullptr) return StringList();
-                                                        return VariantLookup<U>::dump(*u, indent);
-                                                };
-                                        Registry &r = registry();
+                                                const U *u = get(t);
+                                                if (u == nullptr) return StringList();
+                                                return VariantLookup<U>::dump(*u, indent);
+                                        };
+                                        Registry                  &r = registry();
                                         ReadWriteLock::WriteLocker lock(r.lock);
-                                        uint64_t id = r.declareName(name);
-                                        r.children.insert(id,
-                                                ComposeEntry{ std::move(resolveFn), std::move(assignFn),
-                                                              std::move(specFn), std::move(dumpFn) });
+                                        uint64_t                   id = r.declareName(name);
+                                        r.children.insert(id, ComposeEntry{std::move(resolveFn), std::move(assignFn),
+                                                                           std::move(specFn), std::move(dumpFn)});
                                         return *this;
                                 }
 
@@ -577,58 +565,59 @@ class VariantLookup {
                                  * and delegates to @c VariantLookup<U>::specFor.
                                  */
                                 template <typename U>
-                                Registrar indexedChild(const String &name,
+                                Registrar indexedChild(const String                               &name,
                                                        std::function<const U *(const T &, size_t)> get,
                                                        std::function<U *(T &, size_t)> getMut = nullptr) const {
-                                        IndexedCompResolve resolveFn =
-                                                [get](const T &t, size_t idx, const String &rest, Error *err) -> std::optional<Variant> {
-                                                        const U *u = get(t, idx);
-                                                        if(u == nullptr) {
-                                                                if(err != nullptr) *err = Error::OutOfRange;
-                                                                return std::nullopt;
-                                                        }
-                                                        return VariantLookup<U>::resolve(*u, rest, err);
-                                                };
+                                        IndexedCompResolve resolveFn = [get](const T &t, size_t idx, const String &rest,
+                                                                             Error *err) -> std::optional<Variant> {
+                                                const U *u = get(t, idx);
+                                                if (u == nullptr) {
+                                                        if (err != nullptr) *err = Error::OutOfRange;
+                                                        return std::nullopt;
+                                                }
+                                                return VariantLookup<U>::resolve(*u, rest, err);
+                                        };
                                         IndexedCompAssign assignFn;
-                                        if(getMut) {
-                                                assignFn = [getMut](T &t, size_t idx, const String &rest, const Variant &v, Error *err) -> bool {
+                                        if (getMut) {
+                                                assignFn = [getMut](T &t, size_t idx, const String &rest,
+                                                                    const Variant &v, Error *err) -> bool {
                                                         U *u = getMut(t, idx);
-                                                        if(u == nullptr) {
-                                                                if(err != nullptr) *err = Error::OutOfRange;
+                                                        if (u == nullptr) {
+                                                                if (err != nullptr) *err = Error::OutOfRange;
                                                                 return false;
                                                         }
                                                         return VariantLookup<U>::assign(*u, rest, v, err);
                                                 };
                                         }
-                                        ComposeSpecFor specFn =
-                                                [](const String &rest, Error *err) -> const VariantSpec * {
-                                                        return VariantLookup<U>::specFor(rest, err);
-                                                };
+                                        ComposeSpecFor specFn = [](const String &rest,
+                                                                   Error        *err) -> const VariantSpec * {
+                                                return VariantLookup<U>::specFor(rest, err);
+                                        };
                                         std::function<StringList(const T &, const String &)> dumpFn =
                                                 [get](const T &t, const String &indent) -> StringList {
-                                                        // Probe 0..N, stopping at the first
-                                                        // null returned from @c get.  Each
-                                                        // slice gets its own @c "[i]:"
-                                                        // header so multi-slice sections
-                                                        // don't smoosh into one flat block
-                                                        // in @ref dump output.
-                                                        StringList out;
-                                                        const String childIndent = indent + "  ";
-                                                        for(size_t i = 0; ; ++i) {
-                                                                const U *u = get(t, i);
-                                                                if(u == nullptr) break;
-                                                                StringList sub = VariantLookup<U>::dump(*u, childIndent);
-                                                                out.pushToBack(indent + String::sprintf("[%zu]:", i));
-                                                                for(const String &l : sub) out.pushToBack(l);
-                                                        }
-                                                        return out;
-                                                };
-                                        Registry &r = registry();
+                                                // Probe 0..N, stopping at the first
+                                                // null returned from @c get.  Each
+                                                // slice gets its own @c "[i]:"
+                                                // header so multi-slice sections
+                                                // don't smoosh into one flat block
+                                                // in @ref dump output.
+                                                StringList   out;
+                                                const String childIndent = indent + "  ";
+                                                for (size_t i = 0;; ++i) {
+                                                        const U *u = get(t, i);
+                                                        if (u == nullptr) break;
+                                                        StringList sub = VariantLookup<U>::dump(*u, childIndent);
+                                                        out.pushToBack(indent + String::sprintf("[%zu]:", i));
+                                                        for (const String &l : sub) out.pushToBack(l);
+                                                }
+                                                return out;
+                                        };
+                                        Registry                  &r = registry();
                                         ReadWriteLock::WriteLocker lock(r.lock);
-                                        uint64_t id = r.declareName(name);
-                                        r.indexedChildren.insert(id,
-                                                IndexedCompEntry{ std::move(resolveFn), std::move(assignFn),
-                                                                  std::move(specFn), std::move(dumpFn) });
+                                        uint64_t                   id = r.declareName(name);
+                                        r.indexedChildren.insert(
+                                                id, IndexedCompEntry{std::move(resolveFn), std::move(assignFn),
+                                                                     std::move(specFn), std::move(dumpFn)});
                                         return *this;
                                 }
 
@@ -666,46 +655,47 @@ class VariantLookup {
                                  *              the first @c nullopt.
                                  */
                                 template <typename U>
-                                Registrar indexedChildByValue(const String &name,
-                                                              std::function<std::optional<U>(const T &, size_t)> get) const {
-                                        IndexedCompResolve resolveFn =
-                                                [get](const T &t, size_t idx, const String &rest, Error *err) -> std::optional<Variant> {
-                                                        auto u = get(t, idx);
-                                                        if(!u.has_value()) {
-                                                                if(err != nullptr) *err = Error::OutOfRange;
-                                                                return std::nullopt;
-                                                        }
-                                                        return VariantLookup<U>::resolve(*u, rest, err);
-                                                };
+                                Registrar
+                                indexedChildByValue(const String                                      &name,
+                                                    std::function<std::optional<U>(const T &, size_t)> get) const {
+                                        IndexedCompResolve resolveFn = [get](const T &t, size_t idx, const String &rest,
+                                                                             Error *err) -> std::optional<Variant> {
+                                                auto u = get(t, idx);
+                                                if (!u.has_value()) {
+                                                        if (err != nullptr) *err = Error::OutOfRange;
+                                                        return std::nullopt;
+                                                }
+                                                return VariantLookup<U>::resolve(*u, rest, err);
+                                        };
                                         // No assign — by-value temporaries have no backing store.
                                         IndexedCompAssign assignFn;
-                                        ComposeSpecFor specFn =
-                                                [](const String &rest, Error *err) -> const VariantSpec * {
-                                                        return VariantLookup<U>::specFor(rest, err);
-                                                };
+                                        ComposeSpecFor    specFn = [](const String &rest,
+                                                                   Error        *err) -> const VariantSpec    *{
+                                                return VariantLookup<U>::specFor(rest, err);
+                                        };
                                         std::function<StringList(const T &, const String &)> dumpFn =
                                                 [get](const T &t, const String &indent) -> StringList {
-                                                        // Matches the pointer-variant
-                                                        // @ref indexedChild dump format —
-                                                        // one @c "[i]:" header per slice,
-                                                        // scalars indented underneath.
-                                                        StringList out;
-                                                        const String childIndent = indent + "  ";
-                                                        for(size_t i = 0; ; ++i) {
-                                                                auto u = get(t, i);
-                                                                if(!u.has_value()) break;
-                                                                StringList sub = VariantLookup<U>::dump(*u, childIndent);
-                                                                out.pushToBack(indent + String::sprintf("[%zu]:", i));
-                                                                for(const String &l : sub) out.pushToBack(l);
-                                                        }
-                                                        return out;
-                                                };
-                                        Registry &r = registry();
+                                                // Matches the pointer-variant
+                                                // @ref indexedChild dump format —
+                                                // one @c "[i]:" header per slice,
+                                                // scalars indented underneath.
+                                                StringList   out;
+                                                const String childIndent = indent + "  ";
+                                                for (size_t i = 0;; ++i) {
+                                                        auto u = get(t, i);
+                                                        if (!u.has_value()) break;
+                                                        StringList sub = VariantLookup<U>::dump(*u, childIndent);
+                                                        out.pushToBack(indent + String::sprintf("[%zu]:", i));
+                                                        for (const String &l : sub) out.pushToBack(l);
+                                                }
+                                                return out;
+                                        };
+                                        Registry                  &r = registry();
                                         ReadWriteLock::WriteLocker lock(r.lock);
-                                        uint64_t id = r.declareName(name);
-                                        r.indexedChildren.insert(id,
-                                                IndexedCompEntry{ std::move(resolveFn), std::move(assignFn),
-                                                                  std::move(specFn), std::move(dumpFn) });
+                                        uint64_t                   id = r.declareName(name);
+                                        r.indexedChildren.insert(
+                                                id, IndexedCompEntry{std::move(resolveFn), std::move(assignFn),
+                                                                     std::move(specFn), std::move(dumpFn)});
                                         return *this;
                                 }
 
@@ -732,78 +722,78 @@ class VariantLookup {
                                  *                is consulted.
                                  */
                                 template <CompiledString DbName>
-                                Registrar database(const String &prefix,
-                                                   std::function<const VariantDatabase<DbName> *(const T &)> get,
-                                                   std::function<VariantDatabase<DbName> *(T &)> getMut = nullptr) const {
-                                        ComposeResolve resolveFn =
-                                                [get](const T &t, const String &rest, Error *err) -> std::optional<Variant> {
-                                                        const VariantDatabase<DbName> *db = get(t);
-                                                        if(db == nullptr) {
-                                                                if(err != nullptr) *err = Error::IdNotFound;
-                                                                return std::nullopt;
-                                                        }
-                                                        auto id = VariantDatabase<DbName>::ID::find(rest);
-                                                        if(!id.isValid() || !db->contains(id)) {
-                                                                if(err != nullptr) *err = Error::IdNotFound;
-                                                                return std::nullopt;
-                                                        }
-                                                        if(err != nullptr) *err = Error::Ok;
-                                                        return db->get(id);
-                                                };
+                                Registrar
+                                database(const String                                             &prefix,
+                                         std::function<const VariantDatabase<DbName> *(const T &)> get,
+                                         std::function<VariantDatabase<DbName> *(T &)> getMut = nullptr) const {
+                                        ComposeResolve resolveFn = [get](const T &t, const String &rest,
+                                                                         Error *err) -> std::optional<Variant> {
+                                                const VariantDatabase<DbName> *db = get(t);
+                                                if (db == nullptr) {
+                                                        if (err != nullptr) *err = Error::IdNotFound;
+                                                        return std::nullopt;
+                                                }
+                                                auto id = VariantDatabase<DbName>::ID::find(rest);
+                                                if (!id.isValid() || !db->contains(id)) {
+                                                        if (err != nullptr) *err = Error::IdNotFound;
+                                                        return std::nullopt;
+                                                }
+                                                if (err != nullptr) *err = Error::Ok;
+                                                return db->get(id);
+                                        };
                                         ComposeAssign assignFn;
-                                        if(getMut) {
-                                                assignFn = [getMut](T &t, const String &rest, const Variant &v, Error *err) -> bool {
+                                        if (getMut) {
+                                                assignFn = [getMut](T &t, const String &rest, const Variant &v,
+                                                                    Error *err) -> bool {
                                                         VariantDatabase<DbName> *db = getMut(t);
-                                                        if(db == nullptr) {
-                                                                if(err != nullptr) *err = Error::IdNotFound;
+                                                        if (db == nullptr) {
+                                                                if (err != nullptr) *err = Error::IdNotFound;
                                                                 return false;
                                                         }
                                                         typename VariantDatabase<DbName>::ID id(rest);
-                                                        if(!db->set(id, v)) {
-                                                                if(err != nullptr) *err = Error::ConversionFailed;
+                                                        if (!db->set(id, v)) {
+                                                                if (err != nullptr) *err = Error::ConversionFailed;
                                                                 return false;
                                                         }
-                                                        if(err != nullptr) *err = Error::Ok;
+                                                        if (err != nullptr) *err = Error::Ok;
                                                         return true;
                                                 };
                                         }
-                                        ComposeSpecFor specFn =
-                                                [](const String &rest, Error *err) -> const VariantSpec * {
-                                                        const VariantSpec *sp = VariantDatabase<DbName>::specFor(rest);
-                                                        if(sp == nullptr && err != nullptr) *err = Error::IdNotFound;
-                                                        return sp;
-                                                };
+                                        ComposeSpecFor specFn = [](const String &rest,
+                                                                   Error        *err) -> const VariantSpec * {
+                                                const VariantSpec *sp = VariantDatabase<DbName>::specFor(rest);
+                                                if (sp == nullptr && err != nullptr) *err = Error::IdNotFound;
+                                                return sp;
+                                        };
                                         std::function<StringList(const T &, const String &)> dumpFn =
                                                 [get](const T &t, const String &indent) -> StringList {
-                                                        const VariantDatabase<DbName> *db = get(t);
-                                                        StringList out;
-                                                        if(db == nullptr) return out;
-                                                        // Match Metadata::dump formatting
-                                                        // so db-like bindings render the
-                                                        // same shape regardless of which
-                                                        // concrete VariantDatabase is
-                                                        // bound — consumers reading the
-                                                        // output don't have to
-                                                        // special-case the Meta prefix.
-                                                        db->forEach([&out, &indent](
-                                                                        typename VariantDatabase<DbName>::ID id,
-                                                                        const Variant &value) {
-                                                                String s = indent;
-                                                                s += id.name();
-                                                                s += " [";
-                                                                s += value.typeName();
-                                                                s += "]: ";
-                                                                s += value.format(String());
-                                                                out.pushToBack(s);
-                                                        });
-                                                        return out;
-                                                };
-                                        Registry &r = registry();
+                                                const VariantDatabase<DbName> *db = get(t);
+                                                StringList                     out;
+                                                if (db == nullptr) return out;
+                                                // Match Metadata::dump formatting
+                                                // so db-like bindings render the
+                                                // same shape regardless of which
+                                                // concrete VariantDatabase is
+                                                // bound — consumers reading the
+                                                // output don't have to
+                                                // special-case the Meta prefix.
+                                                db->forEach([&out, &indent](typename VariantDatabase<DbName>::ID id,
+                                                                            const Variant &value) {
+                                                        String s = indent;
+                                                        s += id.name();
+                                                        s += " [";
+                                                        s += value.typeName();
+                                                        s += "]: ";
+                                                        s += value.format(String());
+                                                        out.pushToBack(s);
+                                                });
+                                                return out;
+                                        };
+                                        Registry                  &r = registry();
                                         ReadWriteLock::WriteLocker lock(r.lock);
-                                        uint64_t id = r.declareName(prefix);
-                                        r.databases.insert(id,
-                                                ComposeEntry{ std::move(resolveFn), std::move(assignFn),
-                                                              std::move(specFn), std::move(dumpFn) });
+                                        uint64_t                   id = r.declareName(prefix);
+                                        r.databases.insert(id, ComposeEntry{std::move(resolveFn), std::move(assignFn),
+                                                                            std::move(specFn), std::move(dumpFn)});
                                         return *this;
                                 }
 
@@ -826,81 +816,72 @@ class VariantLookup {
                                  *              so misuse is caught at
                                  *              static-init time.
                                  */
-                                template <typename Base>
-                                Registrar inheritsFrom() const {
+                                template <typename Base> Registrar inheritsFrom() const {
                                         static_assert(std::is_base_of_v<Base, T>,
-                                                "VariantLookup::inheritsFrom<Base>(): "
-                                                "Base must be a public base of T");
-                                        static_assert(!std::is_same_v<Base, T>,
-                                                "VariantLookup::inheritsFrom<Base>(): "
-                                                "Base must differ from T");
-                                        Registry &r = registry();
+                                                      "VariantLookup::inheritsFrom<Base>(): "
+                                                      "Base must be a public base of T");
+                                        static_assert(!std::is_same_v<Base, T>, "VariantLookup::inheritsFrom<Base>(): "
+                                                                                "Base must differ from T");
+                                        Registry                  &r = registry();
                                         ReadWriteLock::WriteLocker lock(r.lock);
-                                        r.inherit.resolve =
-                                                [](const T &t, const String &key, Error *err)
-                                                        -> std::optional<Variant> {
-                                                        return VariantLookup<Base>::resolveDirect(
-                                                                static_cast<const Base &>(t), key, err);
-                                                };
-                                        r.inherit.assign =
-                                                [](T &t, const String &key, const Variant &v, Error *err)
-                                                        -> bool {
-                                                        return VariantLookup<Base>::assignDirect(
-                                                                static_cast<Base &>(t), key, v, err);
-                                                };
-                                        r.inherit.specFor =
-                                                [](const String &key, Error *err)
-                                                        -> const VariantSpec * {
-                                                        return VariantLookup<Base>::specForDirect(key, err);
-                                                };
-                                        r.inherit.resolveByKey =
-                                                [](const T &t, uint64_t id, Error *err)
-                                                        -> std::optional<Variant> {
-                                                        return VariantLookup<Base>::resolveKeyIdDirect(
-                                                                static_cast<const Base &>(t), id, err);
-                                                };
-                                        r.inherit.assignByKey =
-                                                [](T &t, uint64_t id, const Variant &v, Error *err)
-                                                        -> bool {
-                                                        return VariantLookup<Base>::assignKeyIdDirect(
-                                                                static_cast<Base &>(t), id, v, err);
-                                                };
-                                        r.inherit.specForByKey =
-                                                [](uint64_t id, Error *err)
-                                                        -> const VariantSpec * {
-                                                        return VariantLookup<Base>::specForKeyIdDirect(id, err);
-                                                };
-                                        r.inherit.resolveIndexedByKey =
-                                                [](const T &t, uint64_t id, size_t index, Error *err)
-                                                        -> std::optional<Variant> {
-                                                        return VariantLookup<Base>::resolveIndexedKeyIdDirect(
-                                                                static_cast<const Base &>(t), id, index, err);
-                                                };
-                                        r.inherit.assignIndexedByKey =
-                                                [](T &t, uint64_t id, size_t index, const Variant &v, Error *err)
-                                                        -> bool {
-                                                        return VariantLookup<Base>::assignIndexedKeyIdDirect(
-                                                                static_cast<Base &>(t), id, index, v, err);
-                                                };
-                                        r.inherit.forEachScalar =
-                                                [](const std::function<void(const String &)> &fn) {
-                                                        VariantLookup<Base>::forEachScalar(fn);
-                                                };
-                                        r.inherit.registeredScalars =
-                                                []() { return VariantLookup<Base>::registeredScalars(); };
-                                        r.inherit.registeredIndexedScalars =
-                                                []() { return VariantLookup<Base>::registeredIndexedScalars(); };
-                                        r.inherit.registeredChildren =
-                                                []() { return VariantLookup<Base>::registeredChildren(); };
-                                        r.inherit.registeredIndexedChildren =
-                                                []() { return VariantLookup<Base>::registeredIndexedChildren(); };
-                                        r.inherit.registeredDatabases =
-                                                []() { return VariantLookup<Base>::registeredDatabases(); };
-                                        r.inherit.dumpComposites =
-                                                [](const T &t, const String &indent) -> StringList {
-                                                        return VariantLookup<Base>::dumpComposites(
-                                                                static_cast<const Base &>(t), indent);
-                                                };
+                                        r.inherit.resolve = [](const T &t, const String &key,
+                                                               Error *err) -> std::optional<Variant> {
+                                                return VariantLookup<Base>::resolveDirect(static_cast<const Base &>(t),
+                                                                                          key, err);
+                                        };
+                                        r.inherit.assign = [](T &t, const String &key, const Variant &v,
+                                                              Error *err) -> bool {
+                                                return VariantLookup<Base>::assignDirect(static_cast<Base &>(t), key, v,
+                                                                                         err);
+                                        };
+                                        r.inherit.specFor = [](const String &key, Error *err) -> const VariantSpec * {
+                                                return VariantLookup<Base>::specForDirect(key, err);
+                                        };
+                                        r.inherit.resolveByKey = [](const T &t, uint64_t id,
+                                                                    Error *err) -> std::optional<Variant> {
+                                                return VariantLookup<Base>::resolveKeyIdDirect(
+                                                        static_cast<const Base &>(t), id, err);
+                                        };
+                                        r.inherit.assignByKey = [](T &t, uint64_t id, const Variant &v,
+                                                                   Error *err) -> bool {
+                                                return VariantLookup<Base>::assignKeyIdDirect(static_cast<Base &>(t),
+                                                                                              id, v, err);
+                                        };
+                                        r.inherit.specForByKey = [](uint64_t id, Error *err) -> const VariantSpec * {
+                                                return VariantLookup<Base>::specForKeyIdDirect(id, err);
+                                        };
+                                        r.inherit.resolveIndexedByKey = [](const T &t, uint64_t id, size_t index,
+                                                                           Error *err) -> std::optional<Variant> {
+                                                return VariantLookup<Base>::resolveIndexedKeyIdDirect(
+                                                        static_cast<const Base &>(t), id, index, err);
+                                        };
+                                        r.inherit.assignIndexedByKey = [](T &t, uint64_t id, size_t index,
+                                                                          const Variant &v, Error *err) -> bool {
+                                                return VariantLookup<Base>::assignIndexedKeyIdDirect(
+                                                        static_cast<Base &>(t), id, index, v, err);
+                                        };
+                                        r.inherit.forEachScalar = [](const std::function<void(const String &)> &fn) {
+                                                VariantLookup<Base>::forEachScalar(fn);
+                                        };
+                                        r.inherit.registeredScalars = []() {
+                                                return VariantLookup<Base>::registeredScalars();
+                                        };
+                                        r.inherit.registeredIndexedScalars = []() {
+                                                return VariantLookup<Base>::registeredIndexedScalars();
+                                        };
+                                        r.inherit.registeredChildren = []() {
+                                                return VariantLookup<Base>::registeredChildren();
+                                        };
+                                        r.inherit.registeredIndexedChildren = []() {
+                                                return VariantLookup<Base>::registeredIndexedChildren();
+                                        };
+                                        r.inherit.registeredDatabases = []() {
+                                                return VariantLookup<Base>::registeredDatabases();
+                                        };
+                                        r.inherit.dumpComposites = [](const T &t, const String &indent) -> StringList {
+                                                return VariantLookup<Base>::dumpComposites(static_cast<const Base &>(t),
+                                                                                           indent);
+                                        };
                                         return *this;
                                 }
                 };
@@ -950,83 +931,84 @@ class VariantLookup {
                  * @c variantLookupResolve can safely delegate here
                  * without risking infinite recursion.
                  */
-                static std::optional<Variant> resolveDirect(const T &instance, const String &key, Error *err = nullptr) {
-                        if(err != nullptr) *err = Error::Ok;
+                static std::optional<Variant> resolveDirect(const T &instance, const String &key,
+                                                            Error *err = nullptr) {
+                        if (err != nullptr) *err = Error::Ok;
                         detail::VariantLookupSegment seg;
-                        if(!detail::parseLeadingSegment(key, seg, err)) return std::nullopt;
+                        if (!detail::parseLeadingSegment(key, seg, err)) return std::nullopt;
 
-                        const Registry &r = registry();
+                        const Registry           &r = registry();
                         ReadWriteLock::ReadLocker lock(r.lock);
-                        const uint64_t id = r.findId(seg.name);
-                        if(id == Registry::Invalid) {
+                        const uint64_t            id = r.findId(seg.name);
+                        if (id == Registry::Invalid) {
                                 // Cascade to inherited registry before
                                 // reporting IdNotFound.  The lock is
                                 // held but the inherit fallback touches
                                 // VariantLookup<Base>'s registry, which
                                 // has its own lock — no deadlock since
                                 // each Registry's lock is independent.
-                                if(r.inherit.resolve) {
+                                if (r.inherit.resolve) {
                                         return r.inherit.resolve(instance, key, err);
                                 }
-                                if(err != nullptr) *err = Error::IdNotFound;
+                                if (err != nullptr) *err = Error::IdNotFound;
                                 return std::nullopt;
                         }
 
-                        if(!seg.hasRest) {
-                                if(seg.hasIndex) {
+                        if (!seg.hasRest) {
+                                if (seg.hasIndex) {
                                         auto it = r.indexedScalars.find(id);
-                                        if(it == r.indexedScalars.end()) {
-                                                if(r.inherit.resolve) {
+                                        if (it == r.indexedScalars.end()) {
+                                                if (r.inherit.resolve) {
                                                         return r.inherit.resolve(instance, key, err);
                                                 }
-                                                if(err != nullptr) *err = Error::IdNotFound;
+                                                if (err != nullptr) *err = Error::IdNotFound;
                                                 return std::nullopt;
                                         }
                                         auto v = it->second.get(instance, seg.index);
-                                        if(!v.has_value()) {
-                                                if(err != nullptr) *err = Error::OutOfRange;
+                                        if (!v.has_value()) {
+                                                if (err != nullptr) *err = Error::OutOfRange;
                                         }
                                         return v;
                                 }
                                 auto it = r.scalars.find(id);
-                                if(it == r.scalars.end()) {
-                                        if(r.inherit.resolve) {
+                                if (it == r.scalars.end()) {
+                                        if (r.inherit.resolve) {
                                                 return r.inherit.resolve(instance, key, err);
                                         }
-                                        if(err != nullptr) *err = Error::IdNotFound;
+                                        if (err != nullptr) *err = Error::IdNotFound;
                                         return std::nullopt;
                                 }
                                 auto v = it->second.get(instance);
-                                if(!v.has_value()) {
-                                        if(err != nullptr) *err = Error::IdNotFound;
+                                if (!v.has_value()) {
+                                        if (err != nullptr) *err = Error::IdNotFound;
                                 }
                                 return v;
                         }
 
-                        if(seg.hasIndex) {
+                        if (seg.hasIndex) {
                                 auto it = r.indexedChildren.find(id);
-                                if(it == r.indexedChildren.end()) {
-                                        if(r.inherit.resolve) {
+                                if (it == r.indexedChildren.end()) {
+                                        if (r.inherit.resolve) {
                                                 return r.inherit.resolve(instance, key, err);
                                         }
-                                        if(err != nullptr) *err = Error::IdNotFound;
+                                        if (err != nullptr) *err = Error::IdNotFound;
                                         return std::nullopt;
                                 }
                                 return it->second.resolve(instance, seg.index, seg.rest, err);
                         }
 
                         auto itChild = r.children.find(id);
-                        if(itChild != r.children.end()) {
+                        if (itChild != r.children.end()) {
                                 return itChild->second.resolve(instance, seg.rest, err);
                         }
                         auto itDb = r.databases.find(id);
-                        if(itDb != r.databases.end()) {
+                        if (itDb != r.databases.end()) {
                                 return itDb->second.resolve(instance, seg.rest, err);
                         }
-                        if(r.inherit.resolve) {
+                        if (r.inherit.resolve) {
                                 return r.inherit.resolve(instance, key, err);
                         }
-                        if(err != nullptr) *err = Error::IdNotFound;
+                        if (err != nullptr) *err = Error::IdNotFound;
                         return std::nullopt;
                 }
 
@@ -1048,7 +1030,7 @@ class VariantLookup {
                                 // will have the name the Key wraps) so
                                 // the virtual hook applies uniformly.
                                 String name = key.name();
-                                if(!name.isEmpty()) {
+                                if (!name.isEmpty()) {
                                         return instance.variantLookupResolve(name, err);
                                 }
                                 return resolveKeyIdDirect(instance, key.id(), err);
@@ -1077,19 +1059,19 @@ class VariantLookup {
                  * instance.
                  */
                 static std::optional<Variant> resolveKeyIdDirect(const T &instance, uint64_t id, Error *err = nullptr) {
-                        if(err != nullptr) *err = Error::Ok;
-                        const Registry &r = registry();
+                        if (err != nullptr) *err = Error::Ok;
+                        const Registry           &r = registry();
                         ReadWriteLock::ReadLocker lock(r.lock);
-                        auto it = r.scalars.find(id);
-                        if(it == r.scalars.end()) {
-                                if(r.inherit.resolveByKey) {
+                        auto                      it = r.scalars.find(id);
+                        if (it == r.scalars.end()) {
+                                if (r.inherit.resolveByKey) {
                                         return r.inherit.resolveByKey(instance, id, err);
                                 }
-                                if(err != nullptr) *err = Error::IdNotFound;
+                                if (err != nullptr) *err = Error::IdNotFound;
                                 return std::nullopt;
                         }
                         auto v = it->second.get(instance);
-                        if(!v.has_value() && err != nullptr) *err = Error::IdNotFound;
+                        if (!v.has_value() && err != nullptr) *err = Error::IdNotFound;
                         return v;
                 }
 
@@ -1098,20 +1080,21 @@ class VariantLookup {
                  *        indexed @ref Key overload and the inherit
                  *        cascade.
                  */
-                static std::optional<Variant> resolveIndexedKeyIdDirect(const T &instance, uint64_t id, size_t index, Error *err = nullptr) {
-                        if(err != nullptr) *err = Error::Ok;
-                        const Registry &r = registry();
+                static std::optional<Variant> resolveIndexedKeyIdDirect(const T &instance, uint64_t id, size_t index,
+                                                                        Error *err = nullptr) {
+                        if (err != nullptr) *err = Error::Ok;
+                        const Registry           &r = registry();
                         ReadWriteLock::ReadLocker lock(r.lock);
-                        auto it = r.indexedScalars.find(id);
-                        if(it == r.indexedScalars.end()) {
-                                if(r.inherit.resolveIndexedByKey) {
+                        auto                      it = r.indexedScalars.find(id);
+                        if (it == r.indexedScalars.end()) {
+                                if (r.inherit.resolveIndexedByKey) {
                                         return r.inherit.resolveIndexedByKey(instance, id, index, err);
                                 }
-                                if(err != nullptr) *err = Error::IdNotFound;
+                                if (err != nullptr) *err = Error::IdNotFound;
                                 return std::nullopt;
                         }
                         auto v = it->second.get(instance, index);
-                        if(!v.has_value() && err != nullptr) *err = Error::OutOfRange;
+                        if (!v.has_value() && err != nullptr) *err = Error::OutOfRange;
                         return v;
                 }
 
@@ -1148,98 +1131,98 @@ class VariantLookup {
                  * risking recursion.
                  */
                 static bool assignDirect(T &instance, const String &key, const Variant &value, Error *err = nullptr) {
-                        if(err != nullptr) *err = Error::Ok;
+                        if (err != nullptr) *err = Error::Ok;
                         detail::VariantLookupSegment seg;
-                        if(!detail::parseLeadingSegment(key, seg, err)) return false;
+                        if (!detail::parseLeadingSegment(key, seg, err)) return false;
 
-                        const Registry &r = registry();
+                        const Registry           &r = registry();
                         ReadWriteLock::ReadLocker lock(r.lock);
-                        const uint64_t id = r.findId(seg.name);
-                        if(id == Registry::Invalid) {
-                                if(r.inherit.assign) {
+                        const uint64_t            id = r.findId(seg.name);
+                        if (id == Registry::Invalid) {
+                                if (r.inherit.assign) {
                                         return r.inherit.assign(instance, key, value, err);
                                 }
-                                if(err != nullptr) *err = Error::IdNotFound;
+                                if (err != nullptr) *err = Error::IdNotFound;
                                 return false;
                         }
 
-                        if(!seg.hasRest) {
-                                if(seg.hasIndex) {
+                        if (!seg.hasRest) {
+                                if (seg.hasIndex) {
                                         auto it = r.indexedScalars.find(id);
-                                        if(it == r.indexedScalars.end()) {
-                                                if(r.inherit.assign) {
+                                        if (it == r.indexedScalars.end()) {
+                                                if (r.inherit.assign) {
                                                         return r.inherit.assign(instance, key, value, err);
                                                 }
-                                                if(err != nullptr) *err = Error::IdNotFound;
+                                                if (err != nullptr) *err = Error::IdNotFound;
                                                 return false;
                                         }
-                                        if(!it->second.set) {
-                                                if(err != nullptr) *err = Error::ReadOnly;
+                                        if (!it->second.set) {
+                                                if (err != nullptr) *err = Error::ReadOnly;
                                                 return false;
                                         }
                                         Error setErr = it->second.set(instance, seg.index, value);
-                                        if(setErr.isError()) {
-                                                if(err != nullptr) *err = setErr;
+                                        if (setErr.isError()) {
+                                                if (err != nullptr) *err = setErr;
                                                 return false;
                                         }
                                         return true;
                                 }
                                 auto it = r.scalars.find(id);
-                                if(it == r.scalars.end()) {
-                                        if(r.inherit.assign) {
+                                if (it == r.scalars.end()) {
+                                        if (r.inherit.assign) {
                                                 return r.inherit.assign(instance, key, value, err);
                                         }
-                                        if(err != nullptr) *err = Error::IdNotFound;
+                                        if (err != nullptr) *err = Error::IdNotFound;
                                         return false;
                                 }
-                                if(!it->second.set) {
-                                        if(err != nullptr) *err = Error::ReadOnly;
+                                if (!it->second.set) {
+                                        if (err != nullptr) *err = Error::ReadOnly;
                                         return false;
                                 }
                                 Error setErr = it->second.set(instance, value);
-                                if(setErr.isError()) {
-                                        if(err != nullptr) *err = setErr;
+                                if (setErr.isError()) {
+                                        if (err != nullptr) *err = setErr;
                                         return false;
                                 }
                                 return true;
                         }
 
-                        if(seg.hasIndex) {
+                        if (seg.hasIndex) {
                                 auto it = r.indexedChildren.find(id);
-                                if(it == r.indexedChildren.end()) {
-                                        if(r.inherit.assign) {
+                                if (it == r.indexedChildren.end()) {
+                                        if (r.inherit.assign) {
                                                 return r.inherit.assign(instance, key, value, err);
                                         }
-                                        if(err != nullptr) *err = Error::IdNotFound;
+                                        if (err != nullptr) *err = Error::IdNotFound;
                                         return false;
                                 }
-                                if(!it->second.assign) {
-                                        if(err != nullptr) *err = Error::ReadOnly;
+                                if (!it->second.assign) {
+                                        if (err != nullptr) *err = Error::ReadOnly;
                                         return false;
                                 }
                                 return it->second.assign(instance, seg.index, seg.rest, value, err);
                         }
 
                         auto itChild = r.children.find(id);
-                        if(itChild != r.children.end()) {
-                                if(!itChild->second.assign) {
-                                        if(err != nullptr) *err = Error::ReadOnly;
+                        if (itChild != r.children.end()) {
+                                if (!itChild->second.assign) {
+                                        if (err != nullptr) *err = Error::ReadOnly;
                                         return false;
                                 }
                                 return itChild->second.assign(instance, seg.rest, value, err);
                         }
                         auto itDb = r.databases.find(id);
-                        if(itDb != r.databases.end()) {
-                                if(!itDb->second.assign) {
-                                        if(err != nullptr) *err = Error::ReadOnly;
+                        if (itDb != r.databases.end()) {
+                                if (!itDb->second.assign) {
+                                        if (err != nullptr) *err = Error::ReadOnly;
                                         return false;
                                 }
                                 return itDb->second.assign(instance, seg.rest, value, err);
                         }
-                        if(r.inherit.assign) {
+                        if (r.inherit.assign) {
                                 return r.inherit.assign(instance, key, value, err);
                         }
-                        if(err != nullptr) *err = Error::IdNotFound;
+                        if (err != nullptr) *err = Error::IdNotFound;
                         return false;
                 }
 
@@ -1249,7 +1232,7 @@ class VariantLookup {
                 static bool assign(T &instance, Key key, const Variant &value, Error *err = nullptr) {
                         if constexpr (detail::hasVariantLookupDispatchV<T>) {
                                 String name = key.name();
-                                if(!name.isEmpty()) {
+                                if (!name.isEmpty()) {
                                         return instance.variantLookupAssign(name, value, err);
                                 }
                                 return assignKeyIdDirect(instance, key.id(), value, err);
@@ -1270,24 +1253,24 @@ class VariantLookup {
                  *        overload and the inherit cascade.
                  */
                 static bool assignKeyIdDirect(T &instance, uint64_t id, const Variant &value, Error *err = nullptr) {
-                        if(err != nullptr) *err = Error::Ok;
-                        const Registry &r = registry();
+                        if (err != nullptr) *err = Error::Ok;
+                        const Registry           &r = registry();
                         ReadWriteLock::ReadLocker lock(r.lock);
-                        auto it = r.scalars.find(id);
-                        if(it == r.scalars.end()) {
-                                if(r.inherit.assignByKey) {
+                        auto                      it = r.scalars.find(id);
+                        if (it == r.scalars.end()) {
+                                if (r.inherit.assignByKey) {
                                         return r.inherit.assignByKey(instance, id, value, err);
                                 }
-                                if(err != nullptr) *err = Error::IdNotFound;
+                                if (err != nullptr) *err = Error::IdNotFound;
                                 return false;
                         }
-                        if(!it->second.set) {
-                                if(err != nullptr) *err = Error::ReadOnly;
+                        if (!it->second.set) {
+                                if (err != nullptr) *err = Error::ReadOnly;
                                 return false;
                         }
                         Error setErr = it->second.set(instance, value);
-                        if(setErr.isError()) {
-                                if(err != nullptr) *err = setErr;
+                        if (setErr.isError()) {
+                                if (err != nullptr) *err = setErr;
                                 return false;
                         }
                         return true;
@@ -1298,25 +1281,26 @@ class VariantLookup {
                  *        indexed @ref Key overload and the inherit
                  *        cascade.
                  */
-                static bool assignIndexedKeyIdDirect(T &instance, uint64_t id, size_t index, const Variant &value, Error *err = nullptr) {
-                        if(err != nullptr) *err = Error::Ok;
-                        const Registry &r = registry();
+                static bool assignIndexedKeyIdDirect(T &instance, uint64_t id, size_t index, const Variant &value,
+                                                     Error *err = nullptr) {
+                        if (err != nullptr) *err = Error::Ok;
+                        const Registry           &r = registry();
                         ReadWriteLock::ReadLocker lock(r.lock);
-                        auto it = r.indexedScalars.find(id);
-                        if(it == r.indexedScalars.end()) {
-                                if(r.inherit.assignIndexedByKey) {
+                        auto                      it = r.indexedScalars.find(id);
+                        if (it == r.indexedScalars.end()) {
+                                if (r.inherit.assignIndexedByKey) {
                                         return r.inherit.assignIndexedByKey(instance, id, index, value, err);
                                 }
-                                if(err != nullptr) *err = Error::IdNotFound;
+                                if (err != nullptr) *err = Error::IdNotFound;
                                 return false;
                         }
-                        if(!it->second.set) {
-                                if(err != nullptr) *err = Error::ReadOnly;
+                        if (!it->second.set) {
+                                if (err != nullptr) *err = Error::ReadOnly;
                                 return false;
                         }
                         Error setErr = it->second.set(instance, index, value);
-                        if(setErr.isError()) {
-                                if(err != nullptr) *err = setErr;
+                        if (setErr.isError()) {
+                                if (err != nullptr) *err = setErr;
                                 return false;
                         }
                         return true;
@@ -1373,68 +1357,68 @@ class VariantLookup {
                  * @brief Non-dispatching sibling of @ref specFor.
                  */
                 static const VariantSpec *specForDirect(const String &key, Error *err = nullptr) {
-                        if(err != nullptr) *err = Error::Ok;
+                        if (err != nullptr) *err = Error::Ok;
                         detail::VariantLookupSegment seg;
-                        if(!detail::parseLeadingSegment(key, seg, err)) return nullptr;
+                        if (!detail::parseLeadingSegment(key, seg, err)) return nullptr;
 
-                        const Registry &r = registry();
+                        const Registry           &r = registry();
                         ReadWriteLock::ReadLocker lock(r.lock);
-                        const uint64_t id = r.findId(seg.name);
-                        if(id == Registry::Invalid) {
-                                if(r.inherit.specFor) {
+                        const uint64_t            id = r.findId(seg.name);
+                        if (id == Registry::Invalid) {
+                                if (r.inherit.specFor) {
                                         return r.inherit.specFor(key, err);
                                 }
-                                if(err != nullptr) *err = Error::IdNotFound;
+                                if (err != nullptr) *err = Error::IdNotFound;
                                 return nullptr;
                         }
 
-                        if(!seg.hasRest) {
-                                if(seg.hasIndex) {
+                        if (!seg.hasRest) {
+                                if (seg.hasIndex) {
                                         auto it = r.indexedScalars.find(id);
-                                        if(it == r.indexedScalars.end()) {
-                                                if(r.inherit.specFor) {
+                                        if (it == r.indexedScalars.end()) {
+                                                if (r.inherit.specFor) {
                                                         return r.inherit.specFor(key, err);
                                                 }
-                                                if(err != nullptr) *err = Error::IdNotFound;
+                                                if (err != nullptr) *err = Error::IdNotFound;
                                                 return nullptr;
                                         }
                                         return it->second.spec;
                                 }
                                 auto it = r.scalars.find(id);
-                                if(it == r.scalars.end()) {
-                                        if(r.inherit.specFor) {
+                                if (it == r.scalars.end()) {
+                                        if (r.inherit.specFor) {
                                                 return r.inherit.specFor(key, err);
                                         }
-                                        if(err != nullptr) *err = Error::IdNotFound;
+                                        if (err != nullptr) *err = Error::IdNotFound;
                                         return nullptr;
                                 }
                                 return it->second.spec;
                         }
 
-                        if(seg.hasIndex) {
+                        if (seg.hasIndex) {
                                 auto it = r.indexedChildren.find(id);
-                                if(it == r.indexedChildren.end()) {
-                                        if(r.inherit.specFor) {
+                                if (it == r.indexedChildren.end()) {
+                                        if (r.inherit.specFor) {
                                                 return r.inherit.specFor(key, err);
                                         }
-                                        if(err != nullptr) *err = Error::IdNotFound;
+                                        if (err != nullptr) *err = Error::IdNotFound;
                                         return nullptr;
                                 }
                                 return it->second.specFor(seg.rest, err);
                         }
 
                         auto itChild = r.children.find(id);
-                        if(itChild != r.children.end()) {
+                        if (itChild != r.children.end()) {
                                 return itChild->second.specFor(seg.rest, err);
                         }
                         auto itDb = r.databases.find(id);
-                        if(itDb != r.databases.end()) {
+                        if (itDb != r.databases.end()) {
                                 return itDb->second.specFor(seg.rest, err);
                         }
-                        if(r.inherit.specFor) {
+                        if (r.inherit.specFor) {
                                 return r.inherit.specFor(key, err);
                         }
-                        if(err != nullptr) *err = Error::IdNotFound;
+                        if (err != nullptr) *err = Error::IdNotFound;
                         return nullptr;
                 }
 
@@ -1456,17 +1440,17 @@ class VariantLookup {
                  *        @ref Key overload and the inherit cascade.
                  */
                 static const VariantSpec *specForKeyIdDirect(uint64_t id, Error *err = nullptr) {
-                        if(err != nullptr) *err = Error::Ok;
-                        const Registry &r = registry();
+                        if (err != nullptr) *err = Error::Ok;
+                        const Registry           &r = registry();
                         ReadWriteLock::ReadLocker lock(r.lock);
-                        auto it = r.scalars.find(id);
-                        if(it != r.scalars.end()) return it->second.spec;
+                        auto                      it = r.scalars.find(id);
+                        if (it != r.scalars.end()) return it->second.spec;
                         auto itIdx = r.indexedScalars.find(id);
-                        if(itIdx != r.indexedScalars.end()) return itIdx->second.spec;
-                        if(r.inherit.specForByKey) {
+                        if (itIdx != r.indexedScalars.end()) return itIdx->second.spec;
+                        if (r.inherit.specForByKey) {
                                 return r.inherit.specForByKey(id, err);
                         }
-                        if(err != nullptr) *err = Error::IdNotFound;
+                        if (err != nullptr) *err = Error::IdNotFound;
                         return nullptr;
                 }
 
@@ -1483,31 +1467,31 @@ class VariantLookup {
                  */
                 static StringList registeredScalars() {
                         return mergeWithInherited(collectNames(registry().scalars),
-                                registry().inherit.registeredScalars);
+                                                  registry().inherit.registeredScalars);
                 }
 
                 /** @brief Returns the names of all registered indexed scalars, inherit-aware. */
                 static StringList registeredIndexedScalars() {
                         return mergeWithInherited(collectNames(registry().indexedScalars),
-                                registry().inherit.registeredIndexedScalars);
+                                                  registry().inherit.registeredIndexedScalars);
                 }
 
                 /** @brief Returns the names of all registered child compositions, inherit-aware. */
                 static StringList registeredChildren() {
                         return mergeWithInherited(collectNames(registry().children),
-                                registry().inherit.registeredChildren);
+                                                  registry().inherit.registeredChildren);
                 }
 
                 /** @brief Returns the names of all registered indexed child compositions, inherit-aware. */
                 static StringList registeredIndexedChildren() {
                         return mergeWithInherited(collectNames(registry().indexedChildren),
-                                registry().inherit.registeredIndexedChildren);
+                                                  registry().inherit.registeredIndexedChildren);
                 }
 
                 /** @brief Returns the prefixes of all registered database bindings, inherit-aware. */
                 static StringList registeredDatabases() {
                         return mergeWithInherited(collectNames(registry().databases),
-                                registry().inherit.registeredDatabases);
+                                                  registry().inherit.registeredDatabases);
                 }
 
                 /**
@@ -1527,16 +1511,15 @@ class VariantLookup {
                  *       concurrent registration during iteration is
                  *       undefined.
                  */
-                template <typename Fn>
-                static void forEachScalar(Fn &&fn) {
-                        const Registry &r = registry();
-                        StringList names;
+                template <typename Fn> static void forEachScalar(Fn &&fn) {
+                        const Registry                                                  &r = registry();
+                        StringList                                                       names;
                         std::function<void(const std::function<void(const String &)> &)> inheritForEach;
                         {
                                 ReadWriteLock::ReadLocker lock(r.lock);
-                                for(auto it = r.scalars.cbegin(); it != r.scalars.cend(); ++it) {
+                                for (auto it = r.scalars.cbegin(); it != r.scalars.cend(); ++it) {
                                         auto n = r.names.find(it->first);
-                                        if(n != r.names.end()) names.pushToBack(n->second);
+                                        if (n != r.names.end()) names.pushToBack(n->second);
                                 }
                                 inheritForEach = r.inherit.forEachScalar;
                         }
@@ -1544,18 +1527,16 @@ class VariantLookup {
                         // this recurses transparently because
                         // @c VariantLookup<Base>::forEachScalar also
                         // consults its own inherit chain.
-                        if(inheritForEach) {
-                                inheritForEach([&names](const String &n) {
-                                        names.pushToBack(n);
-                                });
+                        if (inheritForEach) {
+                                inheritForEach([&names](const String &n) { names.pushToBack(n); });
                         }
                         names = names.sort();
                         // De-duplicate — a derived class may shadow a
                         // base's scalar with the same name; emit only
                         // once so dumps don't print the key twice.
                         String prev;
-                        for(const String &name : names) {
-                                if(!prev.isEmpty() && name == prev) continue;
+                        for (const String &name : names) {
+                                if (!prev.isEmpty() && name == prev) continue;
                                 fn(name);
                                 prev = name;
                         }
@@ -1604,8 +1585,9 @@ class VariantLookup {
                         // scalar-vs-db-entry.
                         forEachScalar([&out, &instance, &indent](const String &name) {
                                 auto v = VariantLookup<T>::resolve(instance, name);
-                                if(v.has_value()) {
-                                        out.pushToBack(indent + name + " [" + v->typeName() + "]: " + v->format(String()));
+                                if (v.has_value()) {
+                                        out.pushToBack(indent + name + " [" + v->typeName() +
+                                                       "]: " + v->format(String()));
                                 }
                         });
                         // Composites — children, indexed children, and
@@ -1613,7 +1595,7 @@ class VariantLookup {
                         // base class's Desc / Meta bindings land in
                         // the derived dump too.
                         StringList composites = dumpComposites(instance, indent);
-                        for(const String &l : composites) out.pushToBack(l);
+                        for (const String &l : composites) out.pushToBack(l);
                         return out;
                 }
 
@@ -1636,61 +1618,60 @@ class VariantLookup {
                         // holding two locks invites hidden deadlocks as
                         // the hierarchy grows).
                         struct Item {
-                                String name;
-                                std::function<StringList(const T &, const String &)> dump;
+                                        String                                               name;
+                                        std::function<StringList(const T &, const String &)> dump;
                         };
-                        List<Item> children;
-                        List<Item> indexedChildren;
-                        List<Item> databases;
+                        List<Item>                                           children;
+                        List<Item>                                           indexedChildren;
+                        List<Item>                                           databases;
                         std::function<StringList(const T &, const String &)> inheritFn;
                         {
-                                const Registry &r = registry();
+                                const Registry           &r = registry();
                                 ReadWriteLock::ReadLocker lock(r.lock);
-                                for(auto it = r.children.cbegin(); it != r.children.cend(); ++it) {
-                                        if(!it->second.dump) continue;
+                                for (auto it = r.children.cbegin(); it != r.children.cend(); ++it) {
+                                        if (!it->second.dump) continue;
                                         auto n = r.names.find(it->first);
-                                        if(n == r.names.end()) continue;
-                                        children.pushToBack(Item{ n->second, it->second.dump });
+                                        if (n == r.names.end()) continue;
+                                        children.pushToBack(Item{n->second, it->second.dump});
                                 }
-                                for(auto it = r.indexedChildren.cbegin(); it != r.indexedChildren.cend(); ++it) {
-                                        if(!it->second.dump) continue;
+                                for (auto it = r.indexedChildren.cbegin(); it != r.indexedChildren.cend(); ++it) {
+                                        if (!it->second.dump) continue;
                                         auto n = r.names.find(it->first);
-                                        if(n == r.names.end()) continue;
-                                        indexedChildren.pushToBack(Item{ n->second, it->second.dump });
+                                        if (n == r.names.end()) continue;
+                                        indexedChildren.pushToBack(Item{n->second, it->second.dump});
                                 }
-                                for(auto it = r.databases.cbegin(); it != r.databases.cend(); ++it) {
-                                        if(!it->second.dump) continue;
+                                for (auto it = r.databases.cbegin(); it != r.databases.cend(); ++it) {
+                                        if (!it->second.dump) continue;
                                         auto n = r.names.find(it->first);
-                                        if(n == r.names.end()) continue;
-                                        databases.pushToBack(Item{ n->second, it->second.dump });
+                                        if (n == r.names.end()) continue;
+                                        databases.pushToBack(Item{n->second, it->second.dump});
                                 }
                                 inheritFn = r.inherit.dumpComposites;
                         }
 
                         const String sub = indent + "  ";
 
-                        auto emit = [&out, &indent, &sub](
-                                        const String &name, const StringList &lines) {
-                                if(lines.isEmpty()) return;
+                        auto emit = [&out, &indent, &sub](const String &name, const StringList &lines) {
+                                if (lines.isEmpty()) return;
                                 out.pushToBack(indent + name + ":");
-                                for(const String &l : lines) out.pushToBack(l);
+                                for (const String &l : lines) out.pushToBack(l);
                         };
 
-                        for(const Item &c : children) {
+                        for (const Item &c : children) {
                                 emit(c.name, c.dump(instance, sub));
                         }
-                        for(const Item &c : indexedChildren) {
+                        for (const Item &c : indexedChildren) {
                                 emit(c.name, c.dump(instance, sub));
                         }
-                        for(const Item &d : databases) {
+                        for (const Item &d : databases) {
                                 emit(d.name, d.dump(instance, sub));
                         }
 
                         // Pick up composites declared on the inherited
                         // base so a derived dump is truly transitive.
-                        if(inheritFn) {
+                        if (inheritFn) {
                                 StringList inherited = inheritFn(instance, indent);
-                                for(const String &l : inherited) out.pushToBack(l);
+                                for (const String &l : inherited) out.pushToBack(l);
                         }
                         return out;
                 }
@@ -1730,39 +1711,39 @@ class VariantLookup {
                  *                 through unresolved.
                  */
                 template <typename Resolver>
-                static String format(const T &instance, const String &tmpl,
-                                     Resolver &&resolver, Error *err = nullptr) {
-                        if(err != nullptr) *err = Error::Ok;
+                static String format(const T &instance, const String &tmpl, Resolver &&resolver, Error *err = nullptr) {
+                        if (err != nullptr) *err = Error::Ok;
                         std::string out;
                         out.reserve(tmpl.byteCount());
-                        const char *src = tmpl.cstr();
+                        const char  *src = tmpl.cstr();
                         const size_t len = tmpl.byteCount();
-                        bool sawUnresolved = false;
-                        size_t i = 0;
-                        while(i < len) {
+                        bool         sawUnresolved = false;
+                        size_t       i = 0;
+                        while (i < len) {
                                 char c = src[i];
-                                if(c == '{') {
-                                        if(i + 1 < len && src[i + 1] == '{') {
+                                if (c == '{') {
+                                        if (i + 1 < len && src[i + 1] == '{') {
                                                 out.push_back('{');
                                                 i += 2;
                                                 continue;
                                         }
                                         size_t end = i + 1;
-                                        while(end < len && src[end] != '}') ++end;
-                                        if(end >= len) {
+                                        while (end < len && src[end] != '}') ++end;
+                                        if (end >= len) {
                                                 out.append(src + i, len - i);
                                                 break;
                                         }
                                         std::string_view body(src + i + 1, end - (i + 1));
-                                        size_t colon = body.find(':');
-                                        std::string_view keyView = (colon == std::string_view::npos)
-                                                ? body : body.substr(0, colon);
+                                        size_t           colon = body.find(':');
+                                        std::string_view keyView =
+                                                (colon == std::string_view::npos) ? body : body.substr(0, colon);
                                         std::string_view specView = (colon == std::string_view::npos)
-                                                ? std::string_view() : body.substr(colon + 1);
-                                        String keyName(keyView.data(), keyView.size());
-                                        String specStr(specView.data(), specView.size());
-                                        auto v = resolve(instance, keyName);
-                                        if(v.has_value()) {
+                                                                            ? std::string_view()
+                                                                            : body.substr(colon + 1);
+                                        String           keyName(keyView.data(), keyView.size());
+                                        String           specStr(specView.data(), specView.size());
+                                        auto             v = resolve(instance, keyName);
+                                        if (v.has_value()) {
                                                 String rendered = v->format(specStr);
                                                 out.append(rendered.cstr(), rendered.byteCount());
                                         } else {
@@ -1770,7 +1751,7 @@ class VariantLookup {
                                                 if constexpr (!std::is_same_v<std::decay_t<Resolver>, std::nullptr_t>) {
                                                         resolved = resolver(keyName, specStr);
                                                 }
-                                                if(resolved.has_value()) {
+                                                if (resolved.has_value()) {
                                                         const String &r = *resolved;
                                                         out.append(r.cstr(), r.byteCount());
                                                 } else {
@@ -1781,8 +1762,8 @@ class VariantLookup {
                                                 }
                                         }
                                         i = end + 1;
-                                } else if(c == '}') {
-                                        if(i + 1 < len && src[i + 1] == '}') {
+                                } else if (c == '}') {
+                                        if (i + 1 < len && src[i + 1] == '}') {
                                                 out.push_back('}');
                                                 i += 2;
                                         } else {
@@ -1794,7 +1775,7 @@ class VariantLookup {
                                         ++i;
                                 }
                         }
-                        if(sawUnresolved && err != nullptr) *err = Error::IdNotFound;
+                        if (sawUnresolved && err != nullptr) *err = Error::IdNotFound;
                         return String(std::move(out));
                 }
 
@@ -1811,20 +1792,20 @@ class VariantLookup {
 
         private:
                 struct ScalarEntry {
-                        ScalarGet           get;
-                        ScalarSet           set;
-                        const VariantSpec * spec = nullptr;
+                                ScalarGet          get;
+                                ScalarSet          set;
+                                const VariantSpec *spec = nullptr;
                 };
                 struct IndexedScalarEntry {
-                        IndexedScalarGet    get;
-                        IndexedScalarSet    set;
-                        const VariantSpec * spec = nullptr;
+                                IndexedScalarGet   get;
+                                IndexedScalarSet   set;
+                                const VariantSpec *spec = nullptr;
                 };
                 struct ComposeEntry {
-                        ComposeResolve   resolve;
-                        ComposeAssign    assign;
-                        ComposeSpecFor   specFor;
-                        /**
+                                ComposeResolve resolve;
+                                ComposeAssign  assign;
+                                ComposeSpecFor specFor;
+                                /**
                          * @brief Optional "dump this composition" hook.
                          *
                          * Drives @ref dump.  For a @ref Registrar::child
@@ -1837,13 +1818,13 @@ class VariantLookup {
                          * empty when the entry pre-dates the dump
                          * feature; in that case @ref dump skips it.
                          */
-                        std::function<StringList(const T &, const String &)> dump;
+                                std::function<StringList(const T &, const String &)> dump;
                 };
                 struct IndexedCompEntry {
-                        IndexedCompResolve resolve;
-                        IndexedCompAssign  assign;
-                        ComposeSpecFor     specFor;
-                        /**
+                                IndexedCompResolve resolve;
+                                IndexedCompAssign  assign;
+                                ComposeSpecFor     specFor;
+                                /**
                          * @brief Optional "dump all elements" hook.
                          *
                          * Invoked by @ref dump to walk an indexed
@@ -1854,7 +1835,7 @@ class VariantLookup {
                          * present, ignore absent slots" behaviour
                          * without needing a separate size oracle.
                          */
-                        std::function<StringList(const T &, const String &)> dump;
+                                std::function<StringList(const T &, const String &)> dump;
                 };
 
                 /**
@@ -1868,21 +1849,22 @@ class VariantLookup {
                  * re-registering.
                  */
                 struct InheritEntry {
-                        std::function<std::optional<Variant>(const T &, const String &, Error *)> resolve;
-                        std::function<bool(T &, const String &, const Variant &, Error *)>        assign;
-                        std::function<const VariantSpec *(const String &, Error *)>               specFor;
-                        std::function<std::optional<Variant>(const T &, uint64_t, Error *)>       resolveByKey;
-                        std::function<bool(T &, uint64_t, const Variant &, Error *)>              assignByKey;
-                        std::function<const VariantSpec *(uint64_t, Error *)>                     specForByKey;
-                        std::function<std::optional<Variant>(const T &, uint64_t, size_t, Error *)> resolveIndexedByKey;
-                        std::function<bool(T &, uint64_t, size_t, const Variant &, Error *)>      assignIndexedByKey;
-                        std::function<void(const std::function<void(const String &)> &)>         forEachScalar;
-                        std::function<StringList()>                                               registeredScalars;
-                        std::function<StringList()>                                               registeredIndexedScalars;
-                        std::function<StringList()>                                               registeredChildren;
-                        std::function<StringList()>                                               registeredIndexedChildren;
-                        std::function<StringList()>                                               registeredDatabases;
-                        /**
+                                std::function<std::optional<Variant>(const T &, const String &, Error *)> resolve;
+                                std::function<bool(T &, const String &, const Variant &, Error *)>        assign;
+                                std::function<const VariantSpec *(const String &, Error *)>               specFor;
+                                std::function<std::optional<Variant>(const T &, uint64_t, Error *)>       resolveByKey;
+                                std::function<bool(T &, uint64_t, const Variant &, Error *)>              assignByKey;
+                                std::function<const VariantSpec *(uint64_t, Error *)>                     specForByKey;
+                                std::function<std::optional<Variant>(const T &, uint64_t, size_t, Error *)>
+                                        resolveIndexedByKey;
+                                std::function<bool(T &, uint64_t, size_t, const Variant &, Error *)> assignIndexedByKey;
+                                std::function<void(const std::function<void(const String &)> &)>     forEachScalar;
+                                std::function<StringList()>                                          registeredScalars;
+                                std::function<StringList()> registeredIndexedScalars;
+                                std::function<StringList()> registeredChildren;
+                                std::function<StringList()> registeredIndexedChildren;
+                                std::function<StringList()> registeredDatabases;
+                                /**
                          * @brief Inherit-cascade hook for @ref dump.
                          *
                          * Returns every line that @c VariantLookup<Base>::dumpComposites
@@ -1892,7 +1874,7 @@ class VariantLookup {
                          * without re-emitting scalars (those already
                          * cascade via @ref forEachScalar).
                          */
-                        std::function<StringList(const T &, const String &)>                     dumpComposites;
+                                std::function<StringList(const T &, const String &)> dumpComposites;
                 };
 
                 /**
@@ -1908,18 +1890,18 @@ class VariantLookup {
                  * static-init time rather than silently diverging.
                  */
                 struct Registry {
-                        static constexpr uint64_t Invalid = UINT64_MAX;
+                                static constexpr uint64_t Invalid = UINT64_MAX;
 
-                        Map<uint64_t, String>           names;
-                        Map<uint64_t, ScalarEntry>      scalars;
-                        Map<uint64_t, IndexedScalarEntry> indexedScalars;
-                        Map<uint64_t, ComposeEntry>     children;
-                        Map<uint64_t, IndexedCompEntry> indexedChildren;
-                        Map<uint64_t, ComposeEntry>     databases;
-                        InheritEntry                    inherit;
-                        mutable ReadWriteLock           lock;
+                                Map<uint64_t, String>             names;
+                                Map<uint64_t, ScalarEntry>        scalars;
+                                Map<uint64_t, IndexedScalarEntry> indexedScalars;
+                                Map<uint64_t, ComposeEntry>       children;
+                                Map<uint64_t, IndexedCompEntry>   indexedChildren;
+                                Map<uint64_t, ComposeEntry>       databases;
+                                InheritEntry                      inherit;
+                                mutable ReadWriteLock             lock;
 
-                        /**
+                                /**
                          * @brief Registers @p name and returns its integer ID.
                          *
                          * Caller must hold @ref lock for writing.  The
@@ -1930,20 +1912,19 @@ class VariantLookup {
                          * safety guarantee @ref VariantDatabase uses for
                          * well-known IDs.
                          */
-                        uint64_t declareName(const String &name) {
-                                const uint64_t h = fnv1a(name.cstr());
-                                auto it = names.find(h);
-                                if(it != names.end()) {
-                                        if(it->second == name) return h;
-                                        detail::stringRegistryCollisionAbort(
-                                                typeid(T).name(),
-                                                it->second, name, h);
+                                uint64_t declareName(const String &name) {
+                                        const uint64_t h = fnv1a(name.cstr());
+                                        auto           it = names.find(h);
+                                        if (it != names.end()) {
+                                                if (it->second == name) return h;
+                                                detail::stringRegistryCollisionAbort(typeid(T).name(), it->second, name,
+                                                                                     h);
+                                        }
+                                        names.insert(h, name);
+                                        return h;
                                 }
-                                names.insert(h, name);
-                                return h;
-                        }
 
-                        /**
+                                /**
                          * @brief Looks up @p name without registering it.
                          *
                          * Returns @ref Invalid when the name has never
@@ -1951,13 +1932,13 @@ class VariantLookup {
                          * Caller must hold @ref lock (read lock is
                          * sufficient).
                          */
-                        uint64_t findId(const String &name) const {
-                                const uint64_t h = fnv1a(name.cstr());
-                                auto it = names.find(h);
-                                if(it == names.end()) return Invalid;
-                                if(it->second != name) return Invalid;
-                                return h;
-                        }
+                                uint64_t findId(const String &name) const {
+                                        const uint64_t h = fnv1a(name.cstr());
+                                        auto           it = names.find(h);
+                                        if (it == names.end()) return Invalid;
+                                        if (it->second != name) return Invalid;
+                                        return h;
+                                }
                 };
 
                 static Registry &registry() {
@@ -1974,14 +1955,13 @@ class VariantLookup {
                  * sorted so callers get stable output for dumps and
                  * diagnostics.
                  */
-                template <typename MapT>
-                static StringList collectNames(const MapT &m) {
-                        const Registry &r = registry();
+                template <typename MapT> static StringList collectNames(const MapT &m) {
+                        const Registry           &r = registry();
                         ReadWriteLock::ReadLocker lock(r.lock);
-                        StringList out;
-                        for(auto it = m.cbegin(); it != m.cend(); ++it) {
+                        StringList                out;
+                        for (auto it = m.cbegin(); it != m.cend(); ++it) {
                                 auto n = r.names.find(it->first);
-                                if(n != r.names.end()) out.pushToBack(n->second);
+                                if (n != r.names.end()) out.pushToBack(n->second);
                         }
                         out = out.sort();
                         return out;
@@ -1995,16 +1975,16 @@ class VariantLookup {
                  * a name registered on both derived and base appears
                  * once in introspection output.
                  */
-                static StringList mergeWithInherited(StringList ownNames,
+                static StringList mergeWithInherited(StringList                         ownNames,
                                                      const std::function<StringList()> &inheritFn) {
-                        if(!inheritFn) return ownNames;
+                        if (!inheritFn) return ownNames;
                         StringList inherited = inheritFn();
-                        for(const String &n : inherited) ownNames.pushToBack(n);
+                        for (const String &n : inherited) ownNames.pushToBack(n);
                         ownNames = ownNames.sort();
                         StringList out;
-                        String prev;
-                        for(const String &n : ownNames) {
-                                if(!prev.isEmpty() && n == prev) continue;
+                        String     prev;
+                        for (const String &n : ownNames) {
+                                if (!prev.isEmpty() && n == prev) continue;
                                 out.pushToBack(n);
                                 prev = n;
                         }
@@ -2040,8 +2020,6 @@ PROMEKI_NAMESPACE_END
  *                 [](const Image &i){ return &i.desc().metadata(); });
  * @endcode
  */
-#define PROMEKI_LOOKUP_REGISTER(Type)                                   \
-        [[maybe_unused]] static inline const                            \
-        ::promeki::VariantLookup<Type>::Registrar                       \
-        PROMEKI_CONCAT(_promeki_lookup_reg_, __COUNTER__) =             \
-                ::promeki::VariantLookup<Type>::registrar()
+#define PROMEKI_LOOKUP_REGISTER(Type)                                                                                  \
+        [[maybe_unused]] static inline const ::promeki::VariantLookup<Type>::Registrar PROMEKI_CONCAT(                 \
+                _promeki_lookup_reg_, __COUNTER__) = ::promeki::VariantLookup<Type>::registrar()

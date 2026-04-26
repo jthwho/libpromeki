@@ -35,8 +35,7 @@ using namespace promeki;
 TEST_CASE("MediaIO auto-fills missing native pts and video duration on read") {
         MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
         cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
-        cfg.set(MediaConfig::VideoPixelFormat,
-                PixelFormat(PixelFormat::RGBA8_sRGB));
+        cfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
         cfg.set(MediaConfig::AudioEnabled, true);
 
         MediaIO *io = MediaIO::create(cfg);
@@ -81,8 +80,7 @@ TEST_CASE("MediaIO auto-fills missing native pts and video duration on read") {
 TEST_CASE("MediaIO does not overwrite a producer-supplied pts") {
         MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
         cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
-        cfg.set(MediaConfig::VideoPixelFormat,
-                PixelFormat(PixelFormat::RGBA8_sRGB));
+        cfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
         cfg.set(MediaConfig::AudioEnabled, false);
 
         MediaIO *io = MediaIO::create(cfg);
@@ -138,12 +136,12 @@ TEST_CASE("MediaIO does not overwrite a producer-supplied pts") {
 TEST_CASE("MediaIO: defaultConfig round-trips losslessly through JSON for every backend") {
         auto formats = MediaIO::registeredFormats();
         REQUIRE_FALSE(formats.isEmpty());
-        for(const auto &fd : formats) {
+        for (const auto &fd : formats) {
                 CAPTURE(fd.name);
-                if(!fd.configSpecs) continue;
+                if (!fd.configSpecs) continue;
 
-                MediaIO::Config def = MediaIO::defaultConfig(fd.name);
-                JsonObject json = def.toJson();
+                MediaIO::Config          def = MediaIO::defaultConfig(fd.name);
+                JsonObject               json = def.toJson();
                 MediaIO::Config::SpecMap specs = fd.configSpecs();
 
                 // For each spec'd key the default produced, locate
@@ -153,23 +151,22 @@ TEST_CASE("MediaIO: defaultConfig round-trips losslessly through JSON for every 
                 // demo's REST PUT relies on: the JSON serialise +
                 // parse path must return values that satisfy the
                 // backend's own spec.
-                for(auto it = specs.cbegin(); it != specs.cend(); ++it) {
+                for (auto it = specs.cbegin(); it != specs.cend(); ++it) {
                         const MediaConfig::ID &id = it->first;
-                        const VariantSpec    &sp = it->second;
+                        const VariantSpec     &sp = it->second;
                         CAPTURE(id.name());
 
-                        if(!def.contains(id)) continue;
+                        if (!def.contains(id)) continue;
                         Variant origVal = def.get(id);
-                        if(!origVal.isValid()) continue;
+                        if (!origVal.isValid()) continue;
 
                         // Pull the JSON-emitted form by name.  Use
                         // forEach to capture the Variant (already
                         // String-coerced for non-primitive types by
                         // setFromVariant).
                         Variant onWire;
-                        json.forEach([&id, &onWire](const String &key,
-                                                    const Variant &val) {
-                                if(key == id.name()) onWire = val;
+                        json.forEach([&id, &onWire](const String &key, const Variant &val) {
+                                if (key == id.name()) onWire = val;
                         });
                         REQUIRE(onWire.isValid());
 
@@ -182,11 +179,9 @@ TEST_CASE("MediaIO: defaultConfig round-trips losslessly through JSON for every 
                         // VariantDatabase::set's spec-validation
                         // warning on the way back in.
                         Variant parsed;
-                        if(onWire.type() == Variant::TypeString
-                           && !sp.acceptsType(Variant::TypeString)) {
+                        if (onWire.type() == Variant::TypeString && !sp.acceptsType(Variant::TypeString)) {
                                 Error pe;
-                                parsed = sp.parseString(
-                                        onWire.get<String>(), &pe);
+                                parsed = sp.parseString(onWire.get<String>(), &pe);
                                 CHECK(pe.isOk());
                         } else {
                                 parsed = onWire;

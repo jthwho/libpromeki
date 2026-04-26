@@ -71,8 +71,7 @@ class BufferPool {
                  * @param alignment  Alignment in bytes (defaults to @c Buffer::DefaultAlign).
                  * @param ms         Memory space to allocate from.
                  */
-                BufferPool(size_t bufferSize, size_t alignment = 0,
-                           const MemSpace &ms = MemSpace::Default);
+                BufferPool(size_t bufferSize, size_t alignment = 0, const MemSpace &ms = MemSpace::Default);
 
                 /** @brief Destructor — releases all pooled buffers. */
                 ~BufferPool() = default;
@@ -128,7 +127,7 @@ class BufferPool {
 
         private:
                 size_t       _bufferSize = 0;
-                size_t       _alignment  = 0;
+                size_t       _alignment = 0;
                 MemSpace     _memSpace;
                 List<Buffer> _free;
 };

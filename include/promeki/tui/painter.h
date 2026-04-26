@@ -92,9 +92,9 @@ class TuiPainter {
                 const Rect2Di32 &clipRect() const { return _clipRect; }
 
         private:
-                TuiScreen       &_screen;
-                Rect2Di32       _clipRect;
-                TuiStyle        _style = TuiStyle(Color::White, Color::Black);
+                TuiScreen &_screen;
+                Rect2Di32  _clipRect;
+                TuiStyle   _style = TuiStyle(Color::White, Color::Black);
 
                 void putCell(int x, int y, char32_t ch);
 };

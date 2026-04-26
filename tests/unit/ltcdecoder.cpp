@@ -19,8 +19,8 @@ using namespace promeki;
 // ============================================================================
 
 TEST_CASE("LtcDecoder_Construct") {
-    LtcDecoder dec(48000);
-    CHECK(dec.sampleRate() == 48000);
+        LtcDecoder dec(48000);
+        CHECK(dec.sampleRate() == 48000);
 }
 
 // ============================================================================
@@ -28,9 +28,9 @@ TEST_CASE("LtcDecoder_Construct") {
 // ============================================================================
 
 TEST_CASE("LtcDecoder_SetThresholds") {
-    LtcDecoder dec(48000);
-    dec.setThresholds(-5, 5);
-    dec.setFuzz(5);
+        LtcDecoder dec(48000);
+        dec.setThresholds(-5, 5);
+        dec.setFuzz(5);
 }
 
 // ============================================================================
@@ -38,10 +38,10 @@ TEST_CASE("LtcDecoder_SetThresholds") {
 // ============================================================================
 
 TEST_CASE("LtcDecoder_DecodeEmpty") {
-    LtcDecoder dec(48000);
-    int8_t buf[100] = {};
-    auto results = dec.decode(buf, 100);
-    CHECK(results.isEmpty());
+        LtcDecoder dec(48000);
+        int8_t     buf[100] = {};
+        auto       results = dec.decode(buf, 100);
+        CHECK(results.isEmpty());
 }
 
 // ============================================================================
@@ -49,35 +49,35 @@ TEST_CASE("LtcDecoder_DecodeEmpty") {
 // ============================================================================
 
 TEST_CASE("LtcDecoder_RoundTrip") {
-    LtcEncoder enc(48000, 0.5f);
-    LtcDecoder dec(48000);
+        LtcEncoder enc(48000, 0.5f);
+        LtcDecoder dec(48000);
 
-    // Encode several sequential frames and concatenate the samples
-    Timecode tc(Timecode::NDF24, 1, 0, 0, 0);
-    List<int8_t> allSamples;
+        // Encode several sequential frames and concatenate the samples
+        Timecode     tc(Timecode::NDF24, 1, 0, 0, 0);
+        List<int8_t> allSamples;
 
-    for(int i = 0; i < 10; i++) {
-        List<int8_t> samples = enc.encode(tc);
-        REQUIRE(!samples.isEmpty());
-        for(int8_t v : samples) allSamples.pushToBack(v);
-        ++tc;
-    }
+        for (int i = 0; i < 10; i++) {
+                List<int8_t> samples = enc.encode(tc);
+                REQUIRE(!samples.isEmpty());
+                for (int8_t v : samples) allSamples.pushToBack(v);
+                ++tc;
+        }
 
-    // Feed all audio to the decoder
-    auto results = dec.decode(allSamples.data(), allSamples.size());
+        // Feed all audio to the decoder
+        auto results = dec.decode(allSamples.data(), allSamples.size());
 
-    // We should get at least some decoded frames
-    // Note: libvtc CLAUDE.md mentions round-trip may have issues,
-    // so we just check we got something reasonable
-    CHECK(results.size() > 0);
+        // We should get at least some decoded frames
+        // Note: libvtc CLAUDE.md mentions round-trip may have issues,
+        // so we just check we got something reasonable
+        CHECK(results.size() > 0);
 
-    if(results.size() > 0) {
-        // First decoded TC should be 01:00:00:00 or close
-        CHECK(results[0].timecode.hour() == 1);
-        CHECK(results[0].timecode.min() == 0);
-        CHECK(results[0].timecode.sec() == 0);
-        CHECK(results[0].sampleLength > 0);
-    }
+        if (results.size() > 0) {
+                // First decoded TC should be 01:00:00:00 or close
+                CHECK(results[0].timecode.hour() == 1);
+                CHECK(results[0].timecode.min() == 0);
+                CHECK(results[0].timecode.sec() == 0);
+                CHECK(results[0].sampleLength > 0);
+        }
 }
 
 // ============================================================================
@@ -85,12 +85,12 @@ TEST_CASE("LtcDecoder_RoundTrip") {
 // ============================================================================
 
 TEST_CASE("LtcDecoder_Reset") {
-    LtcDecoder dec(48000);
-    dec.reset();
-    // Just verify it doesn't crash
-    int8_t buf[100] = {};
-    auto results = dec.decode(buf, 100);
-    CHECK(results.isEmpty());
+        LtcDecoder dec(48000);
+        dec.reset();
+        // Just verify it doesn't crash
+        int8_t buf[100] = {};
+        auto   results = dec.decode(buf, 100);
+        CHECK(results.isEmpty());
 }
 
 // ============================================================================
@@ -98,17 +98,17 @@ TEST_CASE("LtcDecoder_Reset") {
 // ============================================================================
 
 TEST_CASE("LtcDecoder_DecodeAudio") {
-    LtcEncoder enc(48000, 0.5f);
-    LtcDecoder dec(48000);
+        LtcEncoder enc(48000, 0.5f);
+        LtcDecoder dec(48000);
 
-    Timecode tc(Timecode::NDF24, 1, 0, 0, 0);
-    List<int8_t> samples = enc.encode(tc);
-    REQUIRE(!samples.isEmpty());
+        Timecode     tc(Timecode::NDF24, 1, 0, 0, 0);
+        List<int8_t> samples = enc.encode(tc);
+        REQUIRE(!samples.isEmpty());
 
-    auto results = dec.decode(samples.data(), samples.size());
-    // Single frame may or may not decode depending on decoder startup
-    // Just verify it doesn't crash and returns valid list
-    CHECK(results.size() >= 0);
+        auto results = dec.decode(samples.data(), samples.size());
+        // Single frame may or may not decode depending on decoder startup
+        // Just verify it doesn't crash and returns valid list
+        CHECK(results.size() >= 0);
 }
 
 // ============================================================================
@@ -116,72 +116,69 @@ TEST_CASE("LtcDecoder_DecodeAudio") {
 // ============================================================================
 
 TEST_CASE("LtcDecoder_DecodeAudio_Float32Stereo") {
-    // Encode several frames of LTC at 24fps to give the decoder enough
-    // continuous biphase-mark transitions to lock and emit a frame.
-    LtcEncoder enc(48000, 0.8f);
-    LtcDecoder dec(48000);
+        // Encode several frames of LTC at 24fps to give the decoder enough
+        // continuous biphase-mark transitions to lock and emit a frame.
+        LtcEncoder enc(48000, 0.8f);
+        LtcDecoder dec(48000);
 
-    // Stitch a few frames of mono int8 LTC together so the decoder has
-    // a long enough run to recover at least one timecode.
-    promeki::List<int8_t> mono;
-    for(int i = 0; i < 8; i++) {
-        Timecode tc(Timecode::NDF24, 1, 0, 0, i);
-        List<int8_t> chunk = enc.encode(tc);
-        REQUIRE(!chunk.isEmpty());
-        for(int8_t v : chunk) mono.pushToBack(v);
-    }
+        // Stitch a few frames of mono int8 LTC together so the decoder has
+        // a long enough run to recover at least one timecode.
+        promeki::List<int8_t> mono;
+        for (int i = 0; i < 8; i++) {
+                Timecode     tc(Timecode::NDF24, 1, 0, 0, i);
+                List<int8_t> chunk = enc.encode(tc);
+                REQUIRE(!chunk.isEmpty());
+                for (int8_t v : chunk) mono.pushToBack(v);
+        }
 
-    // Build a float32 stereo payload of the same length, with LTC on
-    // channel 0 and silence on channel 1.  This is the same shape the
-    // TPG produces when AudioMode == LTC.
-    AudioDesc stereoDesc(AudioFormat::PCMI_Float32LE, 48000.0f, 2);
-    size_t stereoBytes = stereoDesc.bufferSize(mono.size());
-    Buffer::Ptr stereoBuf = Buffer::Ptr::create(stereoBytes);
-    stereoBuf.modify()->setSize(stereoBytes);
-    float *out = reinterpret_cast<float *>(stereoBuf.modify()->data());
-    for(size_t s = 0; s < mono.size(); s++) {
-        out[s * 2 + 0] = static_cast<float>(mono[s]) / 127.0f;
-        out[s * 2 + 1] = 0.0f;
-    }
-    BufferView stereoView(stereoBuf, 0, stereoBytes);
-    auto stereo = PcmAudioPayload::Ptr::create(
-            stereoDesc, mono.size(), stereoView);
+        // Build a float32 stereo payload of the same length, with LTC on
+        // channel 0 and silence on channel 1.  This is the same shape the
+        // TPG produces when AudioMode == LTC.
+        AudioDesc   stereoDesc(AudioFormat::PCMI_Float32LE, 48000.0f, 2);
+        size_t      stereoBytes = stereoDesc.bufferSize(mono.size());
+        Buffer::Ptr stereoBuf = Buffer::Ptr::create(stereoBytes);
+        stereoBuf.modify()->setSize(stereoBytes);
+        float *out = reinterpret_cast<float *>(stereoBuf.modify()->data());
+        for (size_t s = 0; s < mono.size(); s++) {
+                out[s * 2 + 0] = static_cast<float>(mono[s]) / 127.0f;
+                out[s * 2 + 1] = 0.0f;
+        }
+        BufferView stereoView(stereoBuf, 0, stereoBytes);
+        auto       stereo = PcmAudioPayload::Ptr::create(stereoDesc, mono.size(), stereoView);
 
-    // Format-agnostic decode pulls channel 0 out, converts to int8,
-    // and feeds the underlying decoder — exactly the path the inspector
-    // takes for TPG audio.
-    auto results = dec.decode(*stereo, 0);
-    REQUIRE(results.size() > 0);
-    // The first recovered timecode should be one of the frames we
-    // encoded — match the hour/minute/second; the frame digit may
-    // depend on which frame the decoder locked onto first.
-    CHECK(results[0].timecode.hour() == 1);
-    CHECK(results[0].timecode.min() == 0);
-    CHECK(results[0].timecode.sec() == 0);
+        // Format-agnostic decode pulls channel 0 out, converts to int8,
+        // and feeds the underlying decoder — exactly the path the inspector
+        // takes for TPG audio.
+        auto results = dec.decode(*stereo, 0);
+        REQUIRE(results.size() > 0);
+        // The first recovered timecode should be one of the frames we
+        // encoded — match the hour/minute/second; the frame digit may
+        // depend on which frame the decoder locked onto first.
+        CHECK(results[0].timecode.hour() == 1);
+        CHECK(results[0].timecode.min() == 0);
+        CHECK(results[0].timecode.sec() == 0);
 }
 
 TEST_CASE("LtcDecoder_DecodeAudio_RejectsMismatchedSampleRate") {
-    LtcDecoder dec(48000);
-    AudioDesc desc(AudioFormat::PCMI_Float32LE, 44100.0f, 2);
-    size_t sz = desc.bufferSize(1024);
-    Buffer::Ptr buf = Buffer::Ptr::create(sz);
-    buf.modify()->setSize(sz);
-    BufferView view(buf, 0, sz);
-    auto audio = PcmAudioPayload::Ptr::create(desc, 1024,
-            view);
-    auto results = dec.decode(*audio, 0);
-    CHECK(results.isEmpty());
+        LtcDecoder  dec(48000);
+        AudioDesc   desc(AudioFormat::PCMI_Float32LE, 44100.0f, 2);
+        size_t      sz = desc.bufferSize(1024);
+        Buffer::Ptr buf = Buffer::Ptr::create(sz);
+        buf.modify()->setSize(sz);
+        BufferView view(buf, 0, sz);
+        auto       audio = PcmAudioPayload::Ptr::create(desc, 1024, view);
+        auto       results = dec.decode(*audio, 0);
+        CHECK(results.isEmpty());
 }
 
 TEST_CASE("LtcDecoder_DecodeAudio_RejectsBadChannelIndex") {
-    LtcDecoder dec(48000);
-    AudioDesc desc(AudioFormat::PCMI_Float32LE, 48000.0f, 2);
-    size_t sz = desc.bufferSize(1024);
-    Buffer::Ptr buf = Buffer::Ptr::create(sz);
-    buf.modify()->setSize(sz);
-    BufferView view(buf, 0, sz);
-    auto audio = PcmAudioPayload::Ptr::create(desc, 1024,
-            view);
-    auto results = dec.decode(*audio, 5);   // out-of-range
-    CHECK(results.isEmpty());
+        LtcDecoder  dec(48000);
+        AudioDesc   desc(AudioFormat::PCMI_Float32LE, 48000.0f, 2);
+        size_t      sz = desc.bufferSize(1024);
+        Buffer::Ptr buf = Buffer::Ptr::create(sz);
+        buf.modify()->setSize(sz);
+        BufferView view(buf, 0, sz);
+        auto       audio = PcmAudioPayload::Ptr::create(desc, 1024, view);
+        auto       results = dec.decode(*audio, 5); // out-of-range
+        CHECK(results.isEmpty());
 }

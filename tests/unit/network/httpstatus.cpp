@@ -24,12 +24,12 @@ TEST_CASE("HttpStatus") {
         }
 
         SUBCASE("reasonPhrase covers canonical codes") {
-                CHECK(HttpStatus::Ok.reasonPhrase()                  == "OK");
-                CHECK(HttpStatus::Created.reasonPhrase()             == "Created");
-                CHECK(HttpStatus::NoContent.reasonPhrase()           == "No Content");
-                CHECK(HttpStatus::BadRequest.reasonPhrase()          == "Bad Request");
-                CHECK(HttpStatus::NotFound.reasonPhrase()            == "Not Found");
-                CHECK(HttpStatus::MethodNotAllowed.reasonPhrase()    == "Method Not Allowed");
+                CHECK(HttpStatus::Ok.reasonPhrase() == "OK");
+                CHECK(HttpStatus::Created.reasonPhrase() == "Created");
+                CHECK(HttpStatus::NoContent.reasonPhrase() == "No Content");
+                CHECK(HttpStatus::BadRequest.reasonPhrase() == "Bad Request");
+                CHECK(HttpStatus::NotFound.reasonPhrase() == "Not Found");
+                CHECK(HttpStatus::MethodNotAllowed.reasonPhrase() == "Method Not Allowed");
                 CHECK(HttpStatus::InternalServerError.reasonPhrase() == "Internal Server Error");
         }
 

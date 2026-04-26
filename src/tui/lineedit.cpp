@@ -14,14 +14,14 @@
 PROMEKI_NAMESPACE_BEGIN
 
 TuiLineEdit::TuiLineEdit(const String &text, ObjectBase *parent)
-        : TuiWidget(parent), _text(text), _cursorPos(static_cast<int>(text.length())) {
+    : TuiWidget(parent), _text(text), _cursorPos(static_cast<int>(text.length())) {
         setFocusPolicy(StrongFocus);
 }
 
 TuiLineEdit::~TuiLineEdit() = default;
 
 void TuiLineEdit::setText(const String &text) {
-        if(_text == text) return;
+        if (_text == text) return;
         _text = text;
         _cursorPos = static_cast<int>(_text.length());
         textChangedSignal.emit(_text);
@@ -34,32 +34,32 @@ Size2Di32 TuiLineEdit::sizeHint() const {
 
 void TuiLineEdit::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
-        if(!app) return;
+        if (!app) return;
 
         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
-        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
+        Rect2Di32  clipRect(screenPos.x(), screenPos.y(), width(), height());
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        TuiStyle s = pal.style(TuiPalette::Text, hasFocus(), isEnabled())
-                        .merged(pal.style(TuiPalette::Base, hasFocus(), isEnabled()));
+        TuiStyle          s = pal.style(TuiPalette::Text, hasFocus(), isEnabled())
+                             .merged(pal.style(TuiPalette::Base, hasFocus(), isEnabled()));
         painter.setStyle(s);
 
         painter.fillRect(Rect2Di32(0, 0, width(), height()));
 
         // Ensure cursor is visible
-        if(_cursorPos - _scrollOffset >= width()) {
+        if (_cursorPos - _scrollOffset >= width()) {
                 _scrollOffset = _cursorPos - width() + 1;
         }
-        if(_cursorPos < _scrollOffset) {
+        if (_cursorPos < _scrollOffset) {
                 _scrollOffset = _cursorPos;
         }
 
         const String &display = _text.isEmpty() && !hasFocus() ? _placeholder : _text;
-        if(!display.isEmpty()) {
-                String visible = display.substr(_scrollOffset,
-                        std::min(static_cast<size_t>(width()), display.length() - _scrollOffset));
-                if(_text.isEmpty() && !hasFocus()) {
+        if (!display.isEmpty()) {
+                String visible = display.substr(
+                        _scrollOffset, std::min(static_cast<size_t>(width()), display.length() - _scrollOffset));
+                if (_text.isEmpty() && !hasFocus()) {
                         TuiStyle ph = pal.style(TuiPalette::PlaceholderText, false, isEnabled()).merged(s);
                         painter.setStyle(ph);
                 }
@@ -67,11 +67,12 @@ void TuiLineEdit::paintEvent(PaintEvent *) {
         }
 
         // Draw cursor
-        if(hasFocus()) {
+        if (hasFocus()) {
                 int cursorScreenPos = _cursorPos - _scrollOffset;
-                if(cursorScreenPos >= 0 && cursorScreenPos < width()) {
+                if (cursorScreenPos >= 0 && cursorScreenPos < width()) {
                         char32_t ch = (static_cast<size_t>(_cursorPos) < _text.length())
-                                      ? _text.charAt(_cursorPos).codepoint() : U' ';
+                                              ? _text.charAt(_cursorPos).codepoint()
+                                              : U' ';
                         painter.setAttrs(TuiStyle::Inverse);
                         painter.drawChar(cursorScreenPos, 0, ch);
                         painter.setAttrs(TuiStyle::None);
@@ -81,15 +82,15 @@ void TuiLineEdit::paintEvent(PaintEvent *) {
 
 void TuiLineEdit::keyPressEvent(KeyEvent *e) {
         // Let Ctrl-modified keys propagate (e.g. Ctrl+Left/Right for tab switching)
-        if(e->isCtrl()) return;
-        switch(e->key()) {
+        if (e->isCtrl()) return;
+        switch (e->key()) {
                 case KeyEvent::Key_Left:
-                        if(_cursorPos > 0) _cursorPos--;
+                        if (_cursorPos > 0) _cursorPos--;
                         update();
                         e->accept();
                         break;
                 case KeyEvent::Key_Right:
-                        if(static_cast<size_t>(_cursorPos) < _text.length()) _cursorPos++;
+                        if (static_cast<size_t>(_cursorPos) < _text.length()) _cursorPos++;
                         update();
                         e->accept();
                         break;
@@ -104,7 +105,7 @@ void TuiLineEdit::keyPressEvent(KeyEvent *e) {
                         e->accept();
                         break;
                 case KeyEvent::Key_Backspace:
-                        if(_cursorPos > 0) {
+                        if (_cursorPos > 0) {
                                 _text.erase(_cursorPos - 1, 1);
                                 _cursorPos--;
                                 textChangedSignal.emit(_text);
@@ -113,7 +114,7 @@ void TuiLineEdit::keyPressEvent(KeyEvent *e) {
                         e->accept();
                         break;
                 case KeyEvent::Key_Delete:
-                        if(static_cast<size_t>(_cursorPos) < _text.length()) {
+                        if (static_cast<size_t>(_cursorPos) < _text.length()) {
                                 _text.erase(_cursorPos, 1);
                                 textChangedSignal.emit(_text);
                                 update();
@@ -125,7 +126,7 @@ void TuiLineEdit::keyPressEvent(KeyEvent *e) {
                         e->accept();
                         break;
                 default:
-                        if(!e->text().isEmpty()) {
+                        if (!e->text().isEmpty()) {
                                 _text.insert(_cursorPos, e->text());
                                 _cursorPos += static_cast<int>(e->text().length());
                                 textChangedSignal.emit(_text);

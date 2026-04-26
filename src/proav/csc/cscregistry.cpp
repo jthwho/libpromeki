@@ -24,9 +24,9 @@ void CSCRegistry::registerFastPath(const PixelFormat &src, const PixelFormat &ds
 }
 
 CSCRegistry::LineFuncPtr CSCRegistry::lookupFastPath(const PixelFormat &src, const PixelFormat &dst) {
-        auto &r = registry();
+        auto       &r = registry();
         FastPathKey key(static_cast<int>(src.id()), static_cast<int>(dst.id()));
-        if(r.contains(key)) return r[key];
+        if (r.contains(key)) return r[key];
         return nullptr;
 }
 

@@ -37,7 +37,7 @@ TEST_CASE("HttpRequest") {
                 r.setBody(obj);
 
                 CHECK(r.header("Content-Type") == "application/json");
-                Error err;
+                Error      err;
                 JsonObject parsed = r.bodyAsJson(&err);
                 CHECK(err.isOk());
                 CHECK(parsed.getInt("a") == 1);
@@ -46,7 +46,7 @@ TEST_CASE("HttpRequest") {
 
         SUBCASE("path / queryValue forward to the URL") {
                 HttpRequest r;
-                Url u = Url::fromString("http://example/foo/bar?id=42&q=cat").first();
+                Url         u = Url::fromString("http://example/foo/bar?id=42&q=cat").first();
                 r.setUrl(u);
                 CHECK(r.path() == "/foo/bar");
                 CHECK(r.queryValue("id") == "42");
@@ -54,7 +54,7 @@ TEST_CASE("HttpRequest") {
         }
 
         SUBCASE("pathParam returns the stored value") {
-                HttpRequest r;
+                HttpRequest             r;
                 HashMap<String, String> p;
                 p.insert("id", "99");
                 r.setPathParams(p);

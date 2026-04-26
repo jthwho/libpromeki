@@ -24,23 +24,23 @@ using namespace quicktime_atom;
 
 namespace {
 
-/**
+        /**
  * @brief Look up a PixelFormat by QuickTime FourCC.
  *
  * Walks the registered PixelFormat list and returns the first entry whose
  * fourccList contains @p code. Returns an invalid PixelFormat if no match.
  */
-PixelFormat pixelFormatForQuickTimeFourCC(FourCC code) {
-        for(PixelFormat::ID id : PixelFormat::registeredIDs()) {
-                PixelFormat pd(id);
-                for(const FourCC &f : pd.fourccList()) {
-                        if(f == code) return pd;
+        PixelFormat pixelFormatForQuickTimeFourCC(FourCC code) {
+                for (PixelFormat::ID id : PixelFormat::registeredIDs()) {
+                        PixelFormat pd(id);
+                        for (const FourCC &f : pd.fourccList()) {
+                                if (f == code) return pd;
+                        }
                 }
+                return PixelFormat();
         }
-        return PixelFormat();
-}
 
-/**
+        /**
  * @brief Translate a QuickTime PCM audio sample-entry FourCC into an
  *        AudioFormat::ID.
  *
@@ -48,50 +48,50 @@ PixelFormat pixelFormatForQuickTimeFourCC(FourCC code) {
  * this via an invalid AudioDesc so the MediaIOTask layer can decide
  * whether to refuse the track.
  */
-AudioFormat::ID pcmDataTypeForFourCC(FourCC code, uint16_t bitsPerSample) {
-        if(code == FourCC("sowt")) return AudioFormat::PCMI_S16LE;
-        if(code == FourCC("twos")) return AudioFormat::PCMI_S16BE;
-        if(code == FourCC("in24")) return AudioFormat::PCMI_S24BE;
-        if(code == FourCC("in32")) return AudioFormat::PCMI_S32BE;
-        if(code == FourCC("fl32")) return AudioFormat::PCMI_Float32BE;
-        if(code == FourCC("raw ")) return AudioFormat::PCMI_U8;
-        if(code == FourCC("lpcm")) {
-                // Best-effort guess based on bit depth; real flag handling
-                // will land with Phase 2's full stsd parser.
-                switch(bitsPerSample) {
-                        case 8:  return AudioFormat::PCMI_S8;
-                        case 16: return AudioFormat::PCMI_S16LE;
-                        case 24: return AudioFormat::PCMI_S24LE;
-                        case 32: return AudioFormat::PCMI_S32LE;
-                        default: break;
+        AudioFormat::ID pcmDataTypeForFourCC(FourCC code, uint16_t bitsPerSample) {
+                if (code == FourCC("sowt")) return AudioFormat::PCMI_S16LE;
+                if (code == FourCC("twos")) return AudioFormat::PCMI_S16BE;
+                if (code == FourCC("in24")) return AudioFormat::PCMI_S24BE;
+                if (code == FourCC("in32")) return AudioFormat::PCMI_S32BE;
+                if (code == FourCC("fl32")) return AudioFormat::PCMI_Float32BE;
+                if (code == FourCC("raw ")) return AudioFormat::PCMI_U8;
+                if (code == FourCC("lpcm")) {
+                        // Best-effort guess based on bit depth; real flag handling
+                        // will land with Phase 2's full stsd parser.
+                        switch (bitsPerSample) {
+                                case 8: return AudioFormat::PCMI_S8;
+                                case 16: return AudioFormat::PCMI_S16LE;
+                                case 24: return AudioFormat::PCMI_S24LE;
+                                case 32: return AudioFormat::PCMI_S32LE;
+                                default: break;
+                        }
                 }
+                return AudioFormat::Invalid;
         }
-        return AudioFormat::Invalid;
-}
 
-/**
+        /**
  * @brief Read a Pascal-style string (length-prefix, fixed buffer total).
  *
  * QuickTime frequently stores fixed-length strings where the first byte
  * is a length and the remaining bytes are content, padded. Returns the
  * decoded string (possibly empty).
  */
-String readPascalString(ReadStream &stream, int totalBytes) {
-        if(totalBytes <= 0) return String();
-        uint8_t lenByte = stream.readU8();
-        int len = lenByte;
-        if(len > totalBytes - 1) len = totalBytes - 1;
-        String out;
-        if(len > 0) {
-                char buf[256] = {};
-                if(stream.readBytes(buf, len).isError()) return String();
-                out = String(buf, static_cast<size_t>(len));
+        String readPascalString(ReadStream &stream, int totalBytes) {
+                if (totalBytes <= 0) return String();
+                uint8_t lenByte = stream.readU8();
+                int     len = lenByte;
+                if (len > totalBytes - 1) len = totalBytes - 1;
+                String out;
+                if (len > 0) {
+                        char buf[256] = {};
+                        if (stream.readBytes(buf, len).isError()) return String();
+                        out = String(buf, static_cast<size_t>(len));
+                }
+                // Skip remaining padding bytes.
+                int remain = (totalBytes - 1) - len;
+                if (remain > 0) stream.skip(remain);
+                return out;
         }
-        // Skip remaining padding bytes.
-        int remain = (totalBytes - 1) - len;
-        if(remain > 0) stream.skip(remain);
-        return out;
-}
 
 } // namespace
 
@@ -102,45 +102,46 @@ String readPascalString(ReadStream &stream, int totalBytes) {
 QuickTimeReader::QuickTimeReader() : QuickTime::Impl(QuickTime::Reader) {}
 
 QuickTimeReader::~QuickTimeReader() {
-        if(_isOpen) close();
+        if (_isOpen) close();
         delete _metaFile;
         _metaFile = nullptr;
 }
 
 IODevice *QuickTimeReader::activeDevice() const {
-        if(_device != nullptr) return _device;
+        if (_device != nullptr) return _device;
         return static_cast<IODevice *>(_metaFile);
 }
 
 Error QuickTimeReader::open() {
-        if(_isOpen) return Error::AlreadyOpen;
-        if(_filename.isEmpty() && _device == nullptr) {
+        if (_isOpen) return Error::AlreadyOpen;
+        if (_filename.isEmpty() && _device == nullptr) {
                 return Error::InvalidArgument;
         }
 
         // Open the metadata file handle. IODevice-based operation is
         // reserved for future use; Phase 1 exercises the file path only.
-        if(_device == nullptr) {
-                if(_metaFile == nullptr) _metaFile = new File(_filename);
-                else                     _metaFile->setFilename(_filename);
+        if (_device == nullptr) {
+                if (_metaFile == nullptr)
+                        _metaFile = new File(_filename);
+                else
+                        _metaFile->setFilename(_filename);
                 Error err = _metaFile->open(IODevice::ReadOnly);
-                if(err.isError()) {
-                        promekiWarn("QuickTime: open '%s': %s",
-                                    _filename.cstr(), err.name().cstr());
+                if (err.isError()) {
+                        promekiWarn("QuickTime: open '%s': %s", _filename.cstr(), err.name().cstr());
                         return err;
                 }
         }
 
         IODevice *dev = activeDevice();
         auto [fileSize, sizeErr] = dev->size();
-        if(sizeErr.isError()) {
-                if(_metaFile != nullptr) _metaFile->close();
+        if (sizeErr.isError()) {
+                if (_metaFile != nullptr) _metaFile->close();
                 return sizeErr;
         }
 
         Error err = parseTopLevel(fileSize);
-        if(err.isError()) {
-                if(_metaFile != nullptr) _metaFile->close();
+        if (err.isError()) {
+                if (_metaFile != nullptr) _metaFile->close();
                 return err;
         }
 
@@ -155,9 +156,9 @@ Error QuickTimeReader::open() {
 }
 
 void QuickTimeReader::close() {
-        if(!_isOpen) return;
+        if (!_isOpen) return;
         _isOpen = false;
-        if(_metaFile != nullptr) {
+        if (_metaFile != nullptr) {
                 _metaFile->close();
         }
         _tracks.clear();
@@ -175,26 +176,23 @@ void QuickTimeReader::close() {
 // ---------------------------------------------------------------------------
 
 Error QuickTimeReader::parseTopLevel(int64_t fileSize) {
-        IODevice *dev = activeDevice();
+        IODevice  *dev = activeDevice();
         ReadStream stream(dev);
 
         // 1. Require 'ftyp' as the first top-level box.
         Error err = stream.seek(0);
-        if(err.isError()) return err;
+        if (err.isError()) return err;
 
         Box ftypBox;
         err = readBoxHeader(stream, ftypBox, fileSize);
-        if(err.isError()) {
+        if (err.isError()) {
                 promekiWarn("QuickTime '%s': failed to read initial box header", _filename.cstr());
                 return Error::CorruptData;
         }
-        if(ftypBox.type != kFtyp) {
-                promekiWarn("QuickTime '%s': first box is not 'ftyp' (got '%c%c%c%c')",
-                            _filename.cstr(),
-                            (ftypBox.type.value() >> 24) & 0xff,
-                            (ftypBox.type.value() >> 16) & 0xff,
-                            (ftypBox.type.value() >>  8) & 0xff,
-                            (ftypBox.type.value() >>  0) & 0xff);
+        if (ftypBox.type != kFtyp) {
+                promekiWarn("QuickTime '%s': first box is not 'ftyp' (got '%c%c%c%c')", _filename.cstr(),
+                            (ftypBox.type.value() >> 24) & 0xff, (ftypBox.type.value() >> 16) & 0xff,
+                            (ftypBox.type.value() >> 8) & 0xff, (ftypBox.type.value() >> 0) & 0xff);
                 return Error::CorruptData;
         }
 
@@ -202,31 +200,29 @@ Error QuickTimeReader::parseTopLevel(int64_t fileSize) {
         FourCC majorBrand = stream.readFourCC();
         (void)stream.readU32(); // minor version, ignored
         int64_t compatBytes = ftypBox.payloadSize - 8;
-        FourCC compatFirst{'\0','\0','\0','\0'};
-        if(compatBytes >= 4) {
+        FourCC  compatFirst{'\0', '\0', '\0', '\0'};
+        if (compatBytes >= 4) {
                 compatFirst = stream.readFourCC();
         }
         (void)compatFirst;
-        if(stream.isError()) return Error::CorruptData;
+        if (stream.isError()) return Error::CorruptData;
 
         // Record the major brand in container metadata (for diagnostics).
         _containerMetadata.set(Metadata::Software,
-                String::sprintf("QuickTime/ISO-BMFF brand '%c%c%c%c'",
-                        (majorBrand.value() >> 24) & 0xff,
-                        (majorBrand.value() >> 16) & 0xff,
-                        (majorBrand.value() >>  8) & 0xff,
-                        (majorBrand.value() >>  0) & 0xff));
+                               String::sprintf("QuickTime/ISO-BMFF brand '%c%c%c%c'", (majorBrand.value() >> 24) & 0xff,
+                                               (majorBrand.value() >> 16) & 0xff, (majorBrand.value() >> 8) & 0xff,
+                                               (majorBrand.value() >> 0) & 0xff));
 
         // 2. Find the 'moov' box.
         Box moovBox;
         err = findTopLevelBox(stream, kMoov, ftypBox.endOffset, fileSize, moovBox);
-        if(err.isError()) {
+        if (err.isError()) {
                 promekiWarn("QuickTime '%s': no 'moov' box found", _filename.cstr());
                 return Error::CorruptData;
         }
 
         err = parseMoov(moovBox.payloadOffset, moovBox.endOffset);
-        if(err.isError()) return err;
+        if (err.isError()) return err;
 
         // 3. Walk for moof boxes (fragmented MP4). Each fragment appends
         //    samples to the matching track's sample index. For purely
@@ -240,24 +236,28 @@ Error QuickTimeReader::parseTopLevel(int64_t fileSize) {
         // been ingested. Uses the first sample's duration as the canonical
         // delta — all video samples in a single fragmented file should have
         // the same duration.
-        for(size_t i = 0; i < _tracks.size(); ++i) {
+        for (size_t i = 0; i < _tracks.size(); ++i) {
                 QuickTime::Track &t = _tracks[i];
-                if(t.frameRate().isValid()) continue;
-                if(t.type() != QuickTime::Video && t.type() != QuickTime::TimecodeTrack) continue;
-                if(t.timescale() == 0) continue;
-                if(_sampleIndices[i].duration.isEmpty()) continue;
+                if (t.frameRate().isValid()) continue;
+                if (t.type() != QuickTime::Video && t.type() != QuickTime::TimecodeTrack) continue;
+                if (t.timescale() == 0) continue;
+                if (_sampleIndices[i].duration.isEmpty()) continue;
                 uint32_t d0 = _sampleIndices[i].duration[0];
-                if(d0 == 0) continue;
+                if (d0 == 0) continue;
                 uint64_t num = t.timescale();
                 uint64_t den = d0;
                 uint64_t a = num, b = den;
-                while(b != 0) { uint64_t tmp = b; b = a % b; a = tmp; }
+                while (b != 0) {
+                        uint64_t tmp = b;
+                        b = a % b;
+                        a = tmp;
+                }
                 uint64_t g = a > 0 ? a : 1;
-                num /= g; den /= g;
-                if(num > 0 && den > 0 && num <= UINT32_MAX && den <= UINT32_MAX) {
-                        t.setFrameRate(FrameRate(FrameRate::RationalType(
-                                static_cast<unsigned int>(num),
-                                static_cast<unsigned int>(den))));
+                num /= g;
+                den /= g;
+                if (num > 0 && den > 0 && num <= UINT32_MAX && den <= UINT32_MAX) {
+                        t.setFrameRate(FrameRate(FrameRate::RationalType(static_cast<unsigned int>(num),
+                                                                         static_cast<unsigned int>(den))));
                 }
         }
 
@@ -266,7 +266,7 @@ Error QuickTimeReader::parseTopLevel(int64_t fileSize) {
         //    level for it as a fallback.
         Box udtaBox;
         err = findTopLevelBox(stream, kUdta, 0, fileSize, udtaBox);
-        if(!err.isError()) {
+        if (!err.isError()) {
                 parseUdta(udtaBox.payloadOffset, udtaBox.endOffset);
         }
 
@@ -278,44 +278,44 @@ Error QuickTimeReader::parseTopLevel(int64_t fileSize) {
 // ---------------------------------------------------------------------------
 
 Error QuickTimeReader::parseMoov(int64_t payloadOffset, int64_t payloadEnd) {
-        IODevice *dev = activeDevice();
+        IODevice  *dev = activeDevice();
         ReadStream stream(dev);
-        Error err = stream.seek(payloadOffset);
-        if(err.isError()) return err;
+        Error      err = stream.seek(payloadOffset);
+        if (err.isError()) return err;
 
-        while(true) {
+        while (true) {
                 Box box;
                 err = readBoxHeader(stream, box, payloadEnd);
-                if(err == Error::EndOfFile) break;
-                if(err.isError()) return err;
+                if (err == Error::EndOfFile) break;
+                if (err.isError()) return err;
 
-                if(box.type == kMvhd) {
+                if (box.type == kMvhd) {
                         // version/flags
                         uint8_t version = stream.readU8();
                         stream.skip(3); // flags
-                        if(version == 1) {
+                        if (version == 1) {
                                 stream.skip(8); // creation_time (u64)
                                 stream.skip(8); // modification_time (u64)
                                 _movieTimescale = stream.readU32();
-                                _movieDuration  = stream.readU64();
+                                _movieDuration = stream.readU64();
                         } else {
                                 stream.skip(4); // creation_time (u32)
                                 stream.skip(4); // modification_time (u32)
                                 _movieTimescale = stream.readU32();
-                                _movieDuration  = stream.readU32();
+                                _movieDuration = stream.readU32();
                         }
-                        if(stream.isError()) return Error::CorruptData;
+                        if (stream.isError()) return Error::CorruptData;
                         // Leave the rest (rate, volume, matrix, next_track_id)
                         // for Phase 2 or later.
-                } else if(box.type == kTrak) {
+                } else if (box.type == kTrak) {
                         Error tErr = parseTrak(box.payloadOffset, box.endOffset);
-                        if(tErr.isError()) return tErr;
-                } else if(box.type == kUdta) {
+                        if (tErr.isError()) return tErr;
+                } else if (box.type == kUdta) {
                         parseUdta(box.payloadOffset, box.endOffset);
                 }
 
                 err = advanceToSibling(stream, box);
-                if(err.isError()) return err;
+                if (err.isError()) return err;
         }
         return Error::Ok;
 }
@@ -325,18 +325,18 @@ Error QuickTimeReader::parseMoov(int64_t payloadOffset, int64_t payloadEnd) {
 // ---------------------------------------------------------------------------
 
 Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
-        IODevice *dev = activeDevice();
+        IODevice  *dev = activeDevice();
         ReadStream stream(dev);
 
         QuickTime::Track track;
 
         // tkhd: get track id, duration, and video display dimensions.
-        Box tkhdBox;
+        Box   tkhdBox;
         Error err = findTopLevelBox(stream, kTkhd, payloadOffset, payloadEnd, tkhdBox);
-        if(!err.isError()) {
+        if (!err.isError()) {
                 uint8_t version = stream.readU8();
                 stream.skip(3); // flags
-                if(version == 1) {
+                if (version == 1) {
                         stream.skip(8); // creation
                         stream.skip(8); // modification
                         track.setId(stream.readU32());
@@ -349,24 +349,23 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
                         stream.skip(4); // reserved
                         stream.skip(4); // duration
                 }
-                stream.skip(8);         // reserved[2]
-                stream.skip(2);         // layer
-                stream.skip(2);         // alternate_group
-                stream.skip(2);         // volume
-                stream.skip(2);         // reserved
-                stream.skip(9 * 4);     // matrix[9]
+                stream.skip(8);     // reserved[2]
+                stream.skip(2);     // layer
+                stream.skip(2);     // alternate_group
+                stream.skip(2);     // volume
+                stream.skip(2);     // reserved
+                stream.skip(9 * 4); // matrix[9]
                 double dispW = stream.readFixed16_16();
                 double dispH = stream.readFixed16_16();
-                if(!stream.isError() && dispW > 0 && dispH > 0) {
-                        track.setSize(Size2Du32(static_cast<uint32_t>(dispW),
-                                                static_cast<uint32_t>(dispH)));
+                if (!stream.isError() && dispW > 0 && dispH > 0) {
+                        track.setSize(Size2Du32(static_cast<uint32_t>(dispW), static_cast<uint32_t>(dispH)));
                 }
         }
 
         // mdia is the container for the handler + stbl.
         Box mdiaBox;
         err = findTopLevelBox(stream, kMdia, payloadOffset, payloadEnd, mdiaBox);
-        if(err.isError()) {
+        if (err.isError()) {
                 promekiWarn("QuickTime: trak missing mdia box");
                 return Error::Ok; // Tolerate — skip this track.
         }
@@ -374,12 +373,12 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
         // mdhd: timescale, duration, language
         Box mdhdBox;
         err = findTopLevelBox(stream, kMdhd, mdiaBox.payloadOffset, mdiaBox.endOffset, mdhdBox);
-        if(!err.isError()) {
+        if (!err.isError()) {
                 uint8_t version = stream.readU8();
                 stream.skip(3);
                 uint32_t ts = 0;
                 uint64_t dur = 0;
-                if(version == 1) {
+                if (version == 1) {
                         stream.skip(8); // creation
                         stream.skip(8); // modification
                         ts = stream.readU32();
@@ -398,29 +397,34 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
         }
 
         // hdlr: handler type tells us whether this is video/audio/tmcd/etc.
-        Box hdlrBox;
-        FourCC handlerType{'\0','\0','\0','\0'};
+        Box    hdlrBox;
+        FourCC handlerType{'\0', '\0', '\0', '\0'};
         err = findTopLevelBox(stream, kHdlr, mdiaBox.payloadOffset, mdiaBox.endOffset, hdlrBox);
-        if(!err.isError()) {
-                stream.skip(4);                 // version+flags
-                stream.skip(4);                 // pre_defined (ISO) / component_type (QT)
+        if (!err.isError()) {
+                stream.skip(4); // version+flags
+                stream.skip(4); // pre_defined (ISO) / component_type (QT)
                 handlerType = stream.readFourCC();
-                stream.skip(12);                // reserved[3] / component_manufacturer+flags+mask
+                stream.skip(12); // reserved[3] / component_manufacturer+flags+mask
                 // Remaining: name (null-terminated for ISO, pascal for QT).
                 // Leave name parsing for Phase 2 — we only need the track
                 // kind at this level.
         }
 
-        if(handlerType == kHdlrVide) track.setType(QuickTime::Video);
-        else if(handlerType == kHdlrSoun) track.setType(QuickTime::Audio);
-        else if(handlerType == kHdlrTmcd) track.setType(QuickTime::TimecodeTrack);
-        else if(handlerType == kHdlrSbtl || handlerType == kHdlrText) track.setType(QuickTime::Subtitle);
-        else track.setType(QuickTime::Data);
+        if (handlerType == kHdlrVide)
+                track.setType(QuickTime::Video);
+        else if (handlerType == kHdlrSoun)
+                track.setType(QuickTime::Audio);
+        else if (handlerType == kHdlrTmcd)
+                track.setType(QuickTime::TimecodeTrack);
+        else if (handlerType == kHdlrSbtl || handlerType == kHdlrText)
+                track.setType(QuickTime::Subtitle);
+        else
+                track.setType(QuickTime::Data);
 
         // minf -> stbl -> stsd / stsz
         Box minfBox;
         err = findTopLevelBox(stream, kMinf, mdiaBox.payloadOffset, mdiaBox.endOffset, minfBox);
-        if(err.isError()) {
+        if (err.isError()) {
                 promekiWarn("QuickTime: mdia missing minf box");
                 _tracks.pushToBack(track);
                 return Error::Ok;
@@ -428,7 +432,7 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
 
         Box stblBox;
         err = findTopLevelBox(stream, kStbl, minfBox.payloadOffset, minfBox.endOffset, stblBox);
-        if(err.isError()) {
+        if (err.isError()) {
                 promekiWarn("QuickTime: minf missing stbl box");
                 _tracks.pushToBack(track);
                 return Error::Ok;
@@ -438,10 +442,10 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
         // and format-specific fields.
         Box stsdBox;
         err = findTopLevelBox(stream, kStsd, stblBox.payloadOffset, stblBox.endOffset, stsdBox);
-        if(!err.isError()) {
+        if (!err.isError()) {
                 stream.skip(4); // version+flags
                 uint32_t entryCount = stream.readU32();
-                if(entryCount > 0) {
+                if (entryCount > 0) {
                         int64_t  entryStart = stream.pos();
                         uint32_t entrySize = stream.readU32();
                         FourCC   entryType = stream.readFourCC();
@@ -451,31 +455,31 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
                         int64_t entryPayloadEnd = entryStart + static_cast<int64_t>(entrySize);
                         int64_t entryRemain = static_cast<int64_t>(entrySize) - entryHeaderBytes;
 
-                        if(track.type() == QuickTime::Video) {
+                        if (track.type() == QuickTime::Video) {
                                 parseVideoSampleEntry(stream, entryType, entryPayloadEnd, track);
-                                entryRemain -= 2+2+4+4+4+2+2+4+4+4+2+32+2+2;
-                        } else if(track.type() == QuickTime::Audio) {
+                                entryRemain -= 2 + 2 + 4 + 4 + 4 + 2 + 2 + 4 + 4 + 4 + 2 + 32 + 2 + 2;
+                        } else if (track.type() == QuickTime::Audio) {
                                 // Audio sample entry (QuickTime v0/v1)
                                 uint16_t sampleEntryVersion = stream.readU16();
-                                stream.skip(2);  // revision
-                                stream.skip(4);  // vendor
+                                stream.skip(2); // revision
+                                stream.skip(4); // vendor
                                 uint16_t channels = stream.readU16();
                                 uint16_t sampleSize = stream.readU16();
-                                stream.skip(2);  // pre-defined / compression ID
-                                stream.skip(2);  // reserved
+                                stream.skip(2);                      // pre-defined / compression ID
+                                stream.skip(2);                      // reserved
                                 uint32_t srFixed = stream.readU32(); // 16.16 fixed
-                                double sr = static_cast<double>(srFixed) / 65536.0;
-                                entryRemain -= 2+2+4+2+2+2+2+4;
-                                if(sampleEntryVersion == 1) {
+                                double   sr = static_cast<double>(srFixed) / 65536.0;
+                                entryRemain -= 2 + 2 + 4 + 2 + 2 + 2 + 2 + 4;
+                                if (sampleEntryVersion == 1) {
                                         stream.skip(4); // samples per packet
                                         stream.skip(4); // bytes per packet
                                         stream.skip(4); // bytes per frame
                                         stream.skip(4); // bytes per sample
                                         entryRemain -= 16;
                                 }
-                                if(!stream.isError() && channels > 0 && sr > 0) {
+                                if (!stream.isError() && channels > 0 && sr > 0) {
                                         AudioFormat::ID dt = pcmDataTypeForFourCC(entryType, sampleSize);
-                                        if(dt != AudioFormat::Invalid) {
+                                        if (dt != AudioFormat::Invalid) {
                                                 // Recognized PCM format.
                                                 track.setAudioDesc(AudioDesc(dt, static_cast<float>(sr), channels));
                                         } else {
@@ -488,9 +492,7 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
                                                 // CompressedAudioPayload so consumers can decode
                                                 // through their own codec subsystem.
                                                 AudioFormat compFmt = AudioFormat::lookupByFourCC(entryType);
-                                                AudioDesc adesc(compFmt,
-                                                                static_cast<float>(sr),
-                                                                channels);
+                                                AudioDesc   adesc(compFmt, static_cast<float>(sr), channels);
                                                 track.setAudioDesc(adesc);
                                         }
                                 }
@@ -501,22 +503,21 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
 
         // For timecode tracks, capture the tmcd sample-entry parameters so
         // we can later read the single sample and build a Timecode.
-        if(track.type() == QuickTime::TimecodeTrack) {
+        if (track.type() == QuickTime::TimecodeTrack) {
                 // Re-walk stsd to access the entry payload after the base header.
-                Box stsdBox2;
-                Error te = findTopLevelBox(stream, kStsd, stblBox.payloadOffset,
-                                           stblBox.endOffset, stsdBox2);
-                if(!te.isError()) {
+                Box   stsdBox2;
+                Error te = findTopLevelBox(stream, kStsd, stblBox.payloadOffset, stblBox.endOffset, stsdBox2);
+                if (!te.isError()) {
                         stream.skip(4); // version+flags
                         uint32_t cnt = stream.readU32();
-                        if(cnt > 0) {
-                                int64_t entryStart = stream.pos();
+                        if (cnt > 0) {
+                                int64_t  entryStart = stream.pos();
                                 uint32_t esize = stream.readU32();
-                                FourCC etype = stream.readFourCC();
-                                stream.skip(6);  // reserved
-                                stream.skip(2);  // data_reference_index
+                                FourCC   etype = stream.readFourCC();
+                                stream.skip(6); // reserved
+                                stream.skip(2); // data_reference_index
                                 int64_t entryPayloadEnd = entryStart + esize;
-                                if(etype == FourCC("tmcd")) {
+                                if (etype == FourCC("tmcd")) {
                                         TimecodeTrackInfo info;
                                         parseTimecodeSampleEntry(stream.pos(), entryPayloadEnd, info);
                                         info.present = true;
@@ -530,9 +531,9 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
         // edts/elst: honor a single-entry edit list as a media-time start offset.
         Box edtsBox;
         err = findTopLevelBox(stream, FourCC("edts"), payloadOffset, payloadEnd, edtsBox);
-        if(!err.isError()) {
+        if (!err.isError()) {
                 int64_t startOffset = 0;
-                if(parseEditList(edtsBox.payloadOffset, edtsBox.endOffset, startOffset) == Error::Ok) {
+                if (parseEditList(edtsBox.payloadOffset, edtsBox.endOffset, startOffset) == Error::Ok) {
                         track.setEditStartOffset(startOffset);
                 }
         }
@@ -541,10 +542,9 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
         // compact chunk-level representation — keeps memory bounded for
         // long captures.
         QuickTimeSampleIndex sampleIndex;
-        bool isAudio = (track.type() == QuickTime::Audio);
-        Error sErr = parseSampleTable(stblBox.payloadOffset, stblBox.endOffset,
-                                      sampleIndex, isAudio);
-        if(sErr.isError()) {
+        bool                 isAudio = (track.type() == QuickTime::Audio);
+        Error                sErr = parseSampleTable(stblBox.payloadOffset, stblBox.endOffset, sampleIndex, isAudio);
+        if (sErr.isError()) {
                 promekiWarn("QuickTime: failed to parse sample table for track id=%u", track.id());
                 _tracks.pushToBack(track);
                 _sampleIndices.pushToBack(QuickTimeSampleIndex{});
@@ -553,25 +553,28 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
         track.setSampleCount(sampleCount(sampleIndex));
 
         // Compute a framerate for video/timecode tracks from duration/sampleCount.
-        if(track.timescale() > 0 && track.sampleCount() > 0 && track.duration() > 0) {
-                if(track.type() == QuickTime::Video || track.type() == QuickTime::TimecodeTrack) {
+        if (track.timescale() > 0 && track.sampleCount() > 0 && track.duration() > 0) {
+                if (track.type() == QuickTime::Video || track.type() == QuickTime::TimecodeTrack) {
                         // avg = sampleCount * timescale / duration
-                        uint64_t num = static_cast<uint64_t>(track.sampleCount()) *
-                                       static_cast<uint64_t>(track.timescale());
-                        if(num > 0) {
+                        uint64_t num =
+                                static_cast<uint64_t>(track.sampleCount()) * static_cast<uint64_t>(track.timescale());
+                        if (num > 0) {
                                 // Express as Rational by dividing by gcd; FrameRate
                                 // expects integer num/den. Use duration as denominator.
                                 uint64_t den = track.duration();
                                 // Reduce.
                                 uint64_t a = num, b = den;
-                                while(b != 0) { uint64_t t = b; b = a % b; a = t; }
+                                while (b != 0) {
+                                        uint64_t t = b;
+                                        b = a % b;
+                                        a = t;
+                                }
                                 uint64_t g = a > 0 ? a : 1;
-                                num /= g; den /= g;
-                                if(num > 0 && den > 0 &&
-                                   num <= UINT32_MAX && den <= UINT32_MAX) {
+                                num /= g;
+                                den /= g;
+                                if (num > 0 && den > 0 && num <= UINT32_MAX && den <= UINT32_MAX) {
                                         track.setFrameRate(FrameRate(FrameRate::RationalType(
-                                                static_cast<unsigned int>(num),
-                                                static_cast<unsigned int>(den))));
+                                                static_cast<unsigned int>(num), static_cast<unsigned int>(den))));
                                 }
                         }
                 }
@@ -592,163 +595,174 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
 // ---------------------------------------------------------------------------
 
 uint64_t QuickTimeReader::sampleCount(const QuickTimeSampleIndex &idx) const {
-        if(idx.audioCompact) return idx.audioTotalSamples;
+        if (idx.audioCompact) return idx.audioTotalSamples;
         return idx.offset.size();
 }
 
-int64_t QuickTimeReader::sampleOffset(const QuickTimeSampleIndex &idx,
-                                      uint64_t sampleIndex) const {
-        if(!idx.audioCompact) return idx.offset[sampleIndex];
+int64_t QuickTimeReader::sampleOffset(const QuickTimeSampleIndex &idx, uint64_t sampleIndex) const {
+        if (!idx.audioCompact) return idx.offset[sampleIndex];
         // Binary search the chunk whose first-sample index is <= sampleIndex
         // and whose first-sample + samples-per-chunk > sampleIndex.
         const List<uint64_t> &starts = idx.audioChunkFirstSample;
-        size_t lo = 0, hi = starts.size();
-        while(lo + 1 < hi) {
+        size_t                lo = 0, hi = starts.size();
+        while (lo + 1 < hi) {
                 size_t mid = lo + (hi - lo) / 2;
-                if(starts[mid] <= sampleIndex) lo = mid;
-                else                           hi = mid;
+                if (starts[mid] <= sampleIndex)
+                        lo = mid;
+                else
+                        hi = mid;
         }
         uint64_t offsetInChunk = sampleIndex - starts[lo];
         return idx.audioChunkOffsets[lo] +
                static_cast<int64_t>(offsetInChunk) * static_cast<int64_t>(idx.audioSampleSize);
 }
 
-uint32_t QuickTimeReader::sampleSize(const QuickTimeSampleIndex &idx,
-                                     uint64_t sampleIndex) const {
-        if(!idx.audioCompact) return idx.size[sampleIndex];
+uint32_t QuickTimeReader::sampleSize(const QuickTimeSampleIndex &idx, uint64_t sampleIndex) const {
+        if (!idx.audioCompact) return idx.size[sampleIndex];
         (void)sampleIndex;
         return idx.audioSampleSize;
 }
 
-int64_t QuickTimeReader::sampleDts(const QuickTimeSampleIndex &idx,
-                                   uint64_t sampleIndex) const {
-        if(!idx.audioCompact) return idx.dts[sampleIndex];
+int64_t QuickTimeReader::sampleDts(const QuickTimeSampleIndex &idx, uint64_t sampleIndex) const {
+        if (!idx.audioCompact) return idx.dts[sampleIndex];
         return static_cast<int64_t>(sampleIndex) * static_cast<int64_t>(idx.audioSampleDelta);
 }
 
-Error QuickTimeReader::parseSampleTable(int64_t stblPayloadOffset, int64_t stblPayloadEnd,
-                                        QuickTimeSampleIndex &out, bool isAudio) {
-        IODevice *dev = activeDevice();
+Error QuickTimeReader::parseSampleTable(int64_t stblPayloadOffset, int64_t stblPayloadEnd, QuickTimeSampleIndex &out,
+                                        bool isAudio) {
+        IODevice  *dev = activeDevice();
         ReadStream stream(dev);
 
         // 1. stsz — per-sample sizes (or constant size + count)
-        uint32_t constSize = 0;
-        uint32_t sampleCount = 0;
+        uint32_t       constSize = 0;
+        uint32_t       sampleCount = 0;
         List<uint32_t> sizes;
         {
-                Box stszBox;
+                Box   stszBox;
                 Error err = findTopLevelBox(stream, kStsz, stblPayloadOffset, stblPayloadEnd, stszBox);
-                if(err.isError()) return err;
-                stream.skip(4);                          // version+flags
-                constSize    = stream.readU32();
-                sampleCount  = stream.readU32();
-                if(stream.isError()) return Error::CorruptData;
-                if(constSize == 0) {
+                if (err.isError()) return err;
+                stream.skip(4); // version+flags
+                constSize = stream.readU32();
+                sampleCount = stream.readU32();
+                if (stream.isError()) return Error::CorruptData;
+                if (constSize == 0) {
                         sizes.reserve(sampleCount);
-                        for(uint32_t i = 0; i < sampleCount; ++i) {
+                        for (uint32_t i = 0; i < sampleCount; ++i) {
                                 sizes.pushToBack(stream.readU32());
                         }
-                        if(stream.isError()) return Error::CorruptData;
+                        if (stream.isError()) return Error::CorruptData;
                 }
         }
 
         // 2. stsc — sample-to-chunk mapping (run-length)
-        struct StscEntry { uint32_t firstChunk; uint32_t samplesPerChunk; uint32_t descIndex; };
+        struct StscEntry {
+                        uint32_t firstChunk;
+                        uint32_t samplesPerChunk;
+                        uint32_t descIndex;
+        };
         List<StscEntry> stsc;
         {
-                Box stscBox;
+                Box   stscBox;
                 Error err = findTopLevelBox(stream, kStsc, stblPayloadOffset, stblPayloadEnd, stscBox);
-                if(err.isError()) return err;
+                if (err.isError()) return err;
                 stream.skip(4); // version+flags
                 uint32_t entryCount = stream.readU32();
                 stsc.reserve(entryCount);
-                for(uint32_t i = 0; i < entryCount; ++i) {
+                for (uint32_t i = 0; i < entryCount; ++i) {
                         StscEntry e;
-                        e.firstChunk      = stream.readU32();
+                        e.firstChunk = stream.readU32();
                         e.samplesPerChunk = stream.readU32();
-                        e.descIndex       = stream.readU32();
+                        e.descIndex = stream.readU32();
                         stsc.pushToBack(e);
                 }
-                if(stream.isError()) return Error::CorruptData;
+                if (stream.isError()) return Error::CorruptData;
         }
 
         // 3. stco / co64 — per-chunk file offsets
         List<int64_t> chunkOffsets;
         {
-                Box stcoBox;
+                Box   stcoBox;
                 Error err = findTopLevelBox(stream, kStco, stblPayloadOffset, stblPayloadEnd, stcoBox);
-                bool is64 = false;
-                if(err.isError()) {
+                bool  is64 = false;
+                if (err.isError()) {
                         err = findTopLevelBox(stream, kCo64, stblPayloadOffset, stblPayloadEnd, stcoBox);
-                        if(err.isError()) return err;
+                        if (err.isError()) return err;
                         is64 = true;
                 }
                 stream.skip(4); // version+flags
                 uint32_t entryCount = stream.readU32();
                 chunkOffsets.reserve(entryCount);
-                for(uint32_t i = 0; i < entryCount; ++i) {
-                        if(is64) chunkOffsets.pushToBack(static_cast<int64_t>(stream.readU64()));
-                        else     chunkOffsets.pushToBack(static_cast<int64_t>(stream.readU32()));
+                for (uint32_t i = 0; i < entryCount; ++i) {
+                        if (is64)
+                                chunkOffsets.pushToBack(static_cast<int64_t>(stream.readU64()));
+                        else
+                                chunkOffsets.pushToBack(static_cast<int64_t>(stream.readU32()));
                 }
-                if(stream.isError()) return Error::CorruptData;
+                if (stream.isError()) return Error::CorruptData;
         }
 
         // 4. stts — time-to-sample (run-length, decode delta per sample)
-        struct SttsEntry { uint32_t count; uint32_t delta; };
+        struct SttsEntry {
+                        uint32_t count;
+                        uint32_t delta;
+        };
         List<SttsEntry> stts;
         {
-                Box sttsBox;
+                Box   sttsBox;
                 Error err = findTopLevelBox(stream, kStts, stblPayloadOffset, stblPayloadEnd, sttsBox);
-                if(!err.isError()) {
+                if (!err.isError()) {
                         stream.skip(4);
                         uint32_t ec = stream.readU32();
                         stts.reserve(ec);
-                        for(uint32_t i = 0; i < ec; ++i) {
+                        for (uint32_t i = 0; i < ec; ++i) {
                                 SttsEntry e;
                                 e.count = stream.readU32();
                                 e.delta = stream.readU32();
                                 stts.pushToBack(e);
                         }
-                        if(stream.isError()) return Error::CorruptData;
+                        if (stream.isError()) return Error::CorruptData;
                 }
         }
 
         // 5. ctts — composition offset (optional, run-length)
-        struct CttsEntry { uint32_t count; int32_t offset; };
+        struct CttsEntry {
+                        uint32_t count;
+                        int32_t  offset;
+        };
         List<CttsEntry> ctts;
-        bool cttsV1 = false;
+        bool            cttsV1 = false;
         {
-                Box cttsBox;
+                Box   cttsBox;
                 Error err = findTopLevelBox(stream, FourCC("ctts"), stblPayloadOffset, stblPayloadEnd, cttsBox);
-                if(!err.isError()) {
+                if (!err.isError()) {
                         uint8_t version = stream.readU8();
                         cttsV1 = (version == 1);
                         stream.skip(3); // flags
                         uint32_t ec = stream.readU32();
                         ctts.reserve(ec);
-                        for(uint32_t i = 0; i < ec; ++i) {
+                        for (uint32_t i = 0; i < ec; ++i) {
                                 CttsEntry e;
-                                e.count  = stream.readU32();
+                                e.count = stream.readU32();
                                 e.offset = static_cast<int32_t>(stream.readU32());
                                 ctts.pushToBack(e);
                         }
-                        if(stream.isError()) return Error::CorruptData;
+                        if (stream.isError()) return Error::CorruptData;
                 }
         }
 
         // 6. stss — sync samples (optional; absent → all sync)
         List<uint32_t> stss;
         {
-                Box stssBox;
+                Box   stssBox;
                 Error err = findTopLevelBox(stream, kStss, stblPayloadOffset, stblPayloadEnd, stssBox);
-                if(!err.isError()) {
+                if (!err.isError()) {
                         stream.skip(4); // version+flags
                         uint32_t ec = stream.readU32();
                         stss.reserve(ec);
-                        for(uint32_t i = 0; i < ec; ++i) {
+                        for (uint32_t i = 0; i < ec; ++i) {
                                 stss.pushToBack(stream.readU32());
                         }
-                        if(stream.isError()) return Error::CorruptData;
+                        if (stream.isError()) return Error::CorruptData;
                 }
         }
 
@@ -765,16 +779,12 @@ Error QuickTimeReader::parseSampleTable(int64_t stblPayloadOffset, int64_t stblP
         // ctts and stss are not meaningful for PCM audio (no
         // composition offsets, every sample is "sync"), so we only
         // take this path when they're empty.
-        bool canCompact = isAudio
-                       && constSize != 0
-                       && stts.size() == 1
-                       && ctts.isEmpty()
-                       && stss.isEmpty();
-        if(canCompact) {
-                out.audioCompact        = true;
-                out.audioSampleSize     = constSize;
-                out.audioSampleDelta    = stts[0].delta;
-                out.audioTotalSamples   = sampleCount;
+        bool canCompact = isAudio && constSize != 0 && stts.size() == 1 && ctts.isEmpty() && stss.isEmpty();
+        if (canCompact) {
+                out.audioCompact = true;
+                out.audioSampleSize = constSize;
+                out.audioSampleDelta = stts[0].delta;
+                out.audioTotalSamples = sampleCount;
                 out.audioChunkOffsets.reserve(chunkOffsets.size());
                 out.audioChunkSamplesPerChunk.reserve(chunkOffsets.size());
                 out.audioChunkFirstSample.reserve(chunkOffsets.size());
@@ -782,21 +792,22 @@ Error QuickTimeReader::parseSampleTable(int64_t stblPayloadOffset, int64_t stblP
                 uint32_t numChunks = static_cast<uint32_t>(chunkOffsets.size());
                 uint32_t sIdx = 0;
                 size_t   stscI = 0;
-                for(uint32_t chunk = 1; chunk <= numChunks && sIdx < sampleCount; ++chunk) {
-                        while(stscI + 1 < stsc.size() && stsc[stscI + 1].firstChunk <= chunk) {
+                for (uint32_t chunk = 1; chunk <= numChunks && sIdx < sampleCount; ++chunk) {
+                        while (stscI + 1 < stsc.size() && stsc[stscI + 1].firstChunk <= chunk) {
                                 stscI++;
                         }
                         uint32_t spc = stsc[stscI].samplesPerChunk;
                         uint32_t take = spc;
-                        if(sIdx + take > sampleCount) take = sampleCount - sIdx;
+                        if (sIdx + take > sampleCount) take = sampleCount - sIdx;
                         out.audioChunkOffsets.pushToBack(chunkOffsets[chunk - 1]);
                         out.audioChunkSamplesPerChunk.pushToBack(take);
                         out.audioChunkFirstSample.pushToBack(sIdx);
                         sIdx += take;
                 }
-                if(sIdx != sampleCount) {
+                if (sIdx != sampleCount) {
                         promekiWarn("QuickTime: compact audio stsc/stco produced %u samples, "
-                                    "stsz says %u", sIdx, sampleCount);
+                                    "stsz says %u",
+                                    sIdx, sampleCount);
                         return Error::CorruptData;
                 }
                 return Error::Ok;
@@ -805,10 +816,10 @@ Error QuickTimeReader::parseSampleTable(int64_t stblPayloadOffset, int64_t stblP
         // ---- Per-sample expansion path (video, timecode, non-canonical audio) ----
         // Per-sample size
         out.size.reserve(sampleCount);
-        if(constSize != 0) {
-                for(uint32_t i = 0; i < sampleCount; ++i) out.size.pushToBack(constSize);
+        if (constSize != 0) {
+                for (uint32_t i = 0; i < sampleCount; ++i) out.size.pushToBack(constSize);
         } else {
-                for(uint32_t i = 0; i < sampleCount; ++i) out.size.pushToBack(sizes[i]);
+                for (uint32_t i = 0; i < sampleCount; ++i) out.size.pushToBack(sizes[i]);
         }
 
         // Per-sample offset (chunk_offset + cumulative size of preceding samples in same chunk)
@@ -817,22 +828,21 @@ Error QuickTimeReader::parseSampleTable(int64_t stblPayloadOffset, int64_t stblP
                 uint32_t numChunks = static_cast<uint32_t>(chunkOffsets.size());
                 uint32_t sIdx = 0;
                 size_t   stscI = 0;
-                for(uint32_t chunk = 1; chunk <= numChunks && sIdx < sampleCount; ++chunk) {
+                for (uint32_t chunk = 1; chunk <= numChunks && sIdx < sampleCount; ++chunk) {
                         // Advance stsc index while next entry's first_chunk applies.
-                        while(stscI + 1 < stsc.size() && stsc[stscI + 1].firstChunk <= chunk) {
+                        while (stscI + 1 < stsc.size() && stsc[stscI + 1].firstChunk <= chunk) {
                                 stscI++;
                         }
                         uint32_t spc = stsc[stscI].samplesPerChunk;
                         int64_t  off = chunkOffsets[chunk - 1];
-                        for(uint32_t k = 0; k < spc && sIdx < sampleCount; ++k) {
+                        for (uint32_t k = 0; k < spc && sIdx < sampleCount; ++k) {
                                 out.offset.pushToBack(off);
                                 off += static_cast<int64_t>(out.size[sIdx]);
                                 sIdx++;
                         }
                 }
-                if(sIdx != sampleCount) {
-                        promekiWarn("QuickTime: stsc/stco produced %u samples, stsz says %u",
-                                    sIdx, sampleCount);
+                if (sIdx != sampleCount) {
+                        promekiWarn("QuickTime: stsc/stco produced %u samples, stsz says %u", sIdx, sampleCount);
                         return Error::CorruptData;
                 }
         }
@@ -843,8 +853,8 @@ Error QuickTimeReader::parseSampleTable(int64_t stblPayloadOffset, int64_t stblP
         {
                 int64_t  dts = 0;
                 uint32_t sIdx = 0;
-                for(const SttsEntry &e : stts) {
-                        for(uint32_t k = 0; k < e.count && sIdx < sampleCount; ++k) {
+                for (const SttsEntry &e : stts) {
+                        for (uint32_t k = 0; k < e.count && sIdx < sampleCount; ++k) {
                                 out.duration.pushToBack(e.delta);
                                 out.dts.pushToBack(dts);
                                 dts += e.delta;
@@ -852,7 +862,7 @@ Error QuickTimeReader::parseSampleTable(int64_t stblPayloadOffset, int64_t stblP
                         }
                 }
                 // If stts under-fills, pad with zeros (defensive).
-                while(sIdx < sampleCount) {
+                while (sIdx < sampleCount) {
                         out.duration.pushToBack(0);
                         out.dts.pushToBack(dts);
                         sIdx++;
@@ -862,19 +872,20 @@ Error QuickTimeReader::parseSampleTable(int64_t stblPayloadOffset, int64_t stblP
         // Per-sample pts = dts + ctts offset (if any)
         out.pts.reserve(sampleCount);
         {
-                if(ctts.isEmpty()) {
-                        for(uint32_t i = 0; i < sampleCount; ++i) out.pts.pushToBack(out.dts[i]);
+                if (ctts.isEmpty()) {
+                        for (uint32_t i = 0; i < sampleCount; ++i) out.pts.pushToBack(out.dts[i]);
                 } else {
                         uint32_t sIdx = 0;
-                        for(const CttsEntry &e : ctts) {
-                                for(uint32_t k = 0; k < e.count && sIdx < sampleCount; ++k) {
-                                        int64_t cttsOff = cttsV1 ? static_cast<int64_t>(e.offset)
-                                                                 : static_cast<int64_t>(static_cast<uint32_t>(e.offset));
+                        for (const CttsEntry &e : ctts) {
+                                for (uint32_t k = 0; k < e.count && sIdx < sampleCount; ++k) {
+                                        int64_t cttsOff =
+                                                cttsV1 ? static_cast<int64_t>(e.offset)
+                                                       : static_cast<int64_t>(static_cast<uint32_t>(e.offset));
                                         out.pts.pushToBack(out.dts[sIdx] + cttsOff);
                                         sIdx++;
                                 }
                         }
-                        while(sIdx < sampleCount) {
+                        while (sIdx < sampleCount) {
                                 out.pts.pushToBack(out.dts[sIdx]);
                                 sIdx++;
                         }
@@ -883,13 +894,13 @@ Error QuickTimeReader::parseSampleTable(int64_t stblPayloadOffset, int64_t stblP
 
         // Per-sample keyframe flag
         out.keyframe.reserve(sampleCount);
-        if(stss.isEmpty()) {
-                for(uint32_t i = 0; i < sampleCount; ++i) out.keyframe.pushToBack(1);
+        if (stss.isEmpty()) {
+                for (uint32_t i = 0; i < sampleCount; ++i) out.keyframe.pushToBack(1);
         } else {
                 size_t kfIdx = 0;
-                for(uint32_t i = 0; i < sampleCount; ++i) {
+                for (uint32_t i = 0; i < sampleCount; ++i) {
                         bool isKey = false;
-                        if(kfIdx < stss.size() && stss[kfIdx] == i + 1) {
+                        if (kfIdx < stss.size() && stss[kfIdx] == i + 1) {
                                 isKey = true;
                                 kfIdx++;
                         }
@@ -904,39 +915,37 @@ Error QuickTimeReader::parseSampleTable(int64_t stblPayloadOffset, int64_t stblP
 // edts/elst — single-entry edit list start offset
 // ---------------------------------------------------------------------------
 
-Error QuickTimeReader::parseEditList(int64_t edtsPayloadOffset, int64_t edtsPayloadEnd,
-                                     int64_t &outStartOffset) {
+Error QuickTimeReader::parseEditList(int64_t edtsPayloadOffset, int64_t edtsPayloadEnd, int64_t &outStartOffset) {
         outStartOffset = 0;
-        IODevice *dev = activeDevice();
+        IODevice  *dev = activeDevice();
         ReadStream stream(dev);
 
-        Box elstBox;
+        Box   elstBox;
         Error err = findTopLevelBox(stream, FourCC("elst"), edtsPayloadOffset, edtsPayloadEnd, elstBox);
-        if(err.isError()) return err;
+        if (err.isError()) return err;
 
         uint8_t version = stream.readU8();
         stream.skip(3); // flags
         uint32_t entryCount = stream.readU32();
-        if(stream.isError()) return Error::CorruptData;
-        if(entryCount == 0) return Error::Ok;
-        if(entryCount > 1) {
-                promekiWarn("QuickTime: multi-entry elst (%u entries) treated as identity",
-                            entryCount);
+        if (stream.isError()) return Error::CorruptData;
+        if (entryCount == 0) return Error::Ok;
+        if (entryCount > 1) {
+                promekiWarn("QuickTime: multi-entry elst (%u entries) treated as identity", entryCount);
                 return Error::Ok;
         }
 
         int64_t mediaTime = 0;
-        if(version == 1) {
-                stream.skip(8);                                 // segment_duration
+        if (version == 1) {
+                stream.skip(8); // segment_duration
                 mediaTime = static_cast<int64_t>(stream.readU64());
-                stream.skip(4);                                 // media_rate
+                stream.skip(4); // media_rate
         } else {
-                stream.skip(4);                                 // segment_duration
+                stream.skip(4); // segment_duration
                 mediaTime = static_cast<int32_t>(stream.readU32());
-                stream.skip(4);                                 // media_rate
+                stream.skip(4); // media_rate
         }
-        if(stream.isError()) return Error::CorruptData;
-        if(mediaTime < 0) {
+        if (stream.isError()) return Error::CorruptData;
+        if (mediaTime < 0) {
                 // Empty edit (used to insert silence). Treat as identity.
                 return Error::Ok;
         }
@@ -948,46 +957,42 @@ Error QuickTimeReader::parseEditList(int64_t edtsPayloadOffset, int64_t edtsPayl
 // tmcd — timecode sample entry capture
 // ---------------------------------------------------------------------------
 
-Error QuickTimeReader::parseVideoSampleEntry(quicktime_atom::ReadStream &stream,
-                                             FourCC entryType,
-                                             int64_t entryPayloadEnd,
-                                             QuickTime::Track &track) {
+Error QuickTimeReader::parseVideoSampleEntry(quicktime_atom::ReadStream &stream, FourCC entryType,
+                                             int64_t entryPayloadEnd, QuickTime::Track &track) {
         // Visual sample entry (QuickTime form). Caller has already
         // consumed the 16-byte common header (size + type + 6 reserved
         // + 2 data_reference_index). We read the fixed-size fields
         // here and leave the stream positioned at the first byte after
         // them — Phase 4 will walk [stream.pos(), entryPayloadEnd) for
         // codec-specific child boxes (avcC / hvcC / colr / pasp).
-        stream.skip(2);  // version
-        stream.skip(2);  // revision
-        stream.skip(4);  // vendor
-        stream.skip(4);  // temporal quality
-        stream.skip(4);  // spatial quality
+        stream.skip(2); // version
+        stream.skip(2); // revision
+        stream.skip(4); // vendor
+        stream.skip(4); // temporal quality
+        stream.skip(4); // spatial quality
         uint16_t w = stream.readU16();
         uint16_t h = stream.readU16();
-        stream.skip(4);  // horiz res
-        stream.skip(4);  // vert res
-        stream.skip(4);  // data size
-        stream.skip(2);  // frame count
+        stream.skip(4); // horiz res
+        stream.skip(4); // vert res
+        stream.skip(4); // data size
+        stream.skip(2); // frame count
         String compName = readPascalString(stream, 32);
-        stream.skip(2);  // depth
-        stream.skip(2);  // pre-defined
-        if(stream.isError()) return Error::CorruptData;
+        stream.skip(2); // depth
+        stream.skip(2); // pre-defined
+        if (stream.isError()) return Error::CorruptData;
 
-        if(w > 0 && h > 0) {
+        if (w > 0 && h > 0) {
                 track.setSize(Size2Du32(w, h));
         }
         PixelFormat pd = pixelFormatForQuickTimeFourCC(entryType);
-        if(pd.isValid()) {
+        if (pd.isValid()) {
                 track.setPixelFormat(pd);
         } else {
-                promekiWarn("QuickTime: unknown video codec FourCC '%c%c%c%c'",
-                        (entryType.value() >> 24) & 0xff,
-                        (entryType.value() >> 16) & 0xff,
-                        (entryType.value() >>  8) & 0xff,
-                        (entryType.value() >>  0) & 0xff);
+                promekiWarn("QuickTime: unknown video codec FourCC '%c%c%c%c'", (entryType.value() >> 24) & 0xff,
+                            (entryType.value() >> 16) & 0xff, (entryType.value() >> 8) & 0xff,
+                            (entryType.value() >> 0) & 0xff);
         }
-        if(!compName.isEmpty()) {
+        if (!compName.isEmpty()) {
                 track.metadata().set(Metadata::Software, compName);
         }
 
@@ -998,17 +1003,15 @@ Error QuickTimeReader::parseVideoSampleEntry(quicktime_atom::ReadStream &stream,
         // stored in @c mdat — capture it onto the Track so the
         // MediaIOTask layer can hand it to a decoder without
         // re-reading the container.
-        while(stream.pos() < entryPayloadEnd && !stream.isError()) {
-                Box childBox;
+        while (stream.pos() < entryPayloadEnd && !stream.isError()) {
+                Box   childBox;
                 Error cbErr = readBoxHeader(stream, childBox, entryPayloadEnd);
-                if(cbErr.isError()) break;
-                if(childBox.type == FourCC("avcC") || childBox.type == FourCC("hvcC")) {
-                        Buffer::Ptr payload = Buffer::Ptr::create(
-                                static_cast<size_t>(childBox.payloadSize));
-                        if(payload && childBox.payloadSize > 0) {
-                                Error rd = stream.readBytes(payload->data(),
-                                                            childBox.payloadSize);
-                                if(rd.isError()) return rd;
+                if (cbErr.isError()) break;
+                if (childBox.type == FourCC("avcC") || childBox.type == FourCC("hvcC")) {
+                        Buffer::Ptr payload = Buffer::Ptr::create(static_cast<size_t>(childBox.payloadSize));
+                        if (payload && childBox.payloadSize > 0) {
+                                Error rd = stream.readBytes(payload->data(), childBox.payloadSize);
+                                if (rd.isError()) return rd;
                                 payload->setSize(static_cast<size_t>(childBox.payloadSize));
                                 track.setCodecConfig(payload);
                                 track.setCodecConfigType(childBox.type);
@@ -1022,60 +1025,57 @@ Error QuickTimeReader::parseVideoSampleEntry(quicktime_atom::ReadStream &stream,
         return Error::Ok;
 }
 
-Error QuickTimeReader::parseTimecodeSampleEntry(int64_t entryPayloadOffset,
-                                                int64_t entryPayloadEnd,
+Error QuickTimeReader::parseTimecodeSampleEntry(int64_t entryPayloadOffset, int64_t entryPayloadEnd,
                                                 TimecodeTrackInfo &info) {
-        IODevice *dev = activeDevice();
+        IODevice  *dev = activeDevice();
         ReadStream stream(dev);
-        Error err = stream.seek(entryPayloadOffset);
-        if(err.isError()) return err;
+        Error      err = stream.seek(entryPayloadOffset);
+        if (err.isError()) return err;
 
         // tmcd entry payload (after the standard 8-byte sample-entry header that
         // the caller has already consumed): 4 bytes reserved, 4 bytes flags,
         // 4 bytes timescale, 4 bytes frame_duration, 1 byte number_of_frames,
         // 1 byte reserved, then optional name atom.
-        stream.skip(4);                          // reserved
-        info.flags         = stream.readU32();
-        info.timescale     = stream.readU32();
+        stream.skip(4); // reserved
+        info.flags = stream.readU32();
+        info.timescale = stream.readU32();
         info.frameDuration = stream.readU32();
         info.numberOfFrames = stream.readU8();
-        stream.skip(1);                          // reserved
-        if(stream.isError()) return Error::CorruptData;
+        stream.skip(1); // reserved
+        if (stream.isError()) return Error::CorruptData;
         (void)entryPayloadEnd;
         return Error::Ok;
 }
 
 Error QuickTimeReader::resolveStartTimecode() {
-        if(!_tmcdInfo.present) return Error::Ok;
-        if(_tmcdInfo.trackIndex >= _tracks.size()) return Error::Ok;
+        if (!_tmcdInfo.present) return Error::Ok;
+        if (_tmcdInfo.trackIndex >= _tracks.size()) return Error::Ok;
 
         // Read the single 4-byte sample of the timecode track.
         QuickTime::Sample s;
-        Error err = readSample(_tmcdInfo.trackIndex, 0, s);
-        if(err.isError()) return err;
-        if(!s.data.isValid() || s.data->size() < 4) return Error::CorruptData;
+        Error             err = readSample(_tmcdInfo.trackIndex, 0, s);
+        if (err.isError()) return err;
+        if (!s.data.isValid() || s.data->size() < 4) return Error::CorruptData;
 
         const uint8_t *bytes = static_cast<const uint8_t *>(s.data->data());
-        uint32_t startFrame = (static_cast<uint32_t>(bytes[0]) << 24) |
-                              (static_cast<uint32_t>(bytes[1]) << 16) |
-                              (static_cast<uint32_t>(bytes[2]) <<  8) |
-                               static_cast<uint32_t>(bytes[3]);
+        uint32_t       startFrame = (static_cast<uint32_t>(bytes[0]) << 24) | (static_cast<uint32_t>(bytes[1]) << 16) |
+                              (static_cast<uint32_t>(bytes[2]) << 8) | static_cast<uint32_t>(bytes[3]);
 
         // Map (numberOfFrames, drop-frame) to a TimecodeType.
-        bool dropFrame = (_tmcdInfo.flags & 0x01) != 0;
+        bool           dropFrame = (_tmcdInfo.flags & 0x01) != 0;
         Timecode::Mode mode;
-        switch(_tmcdInfo.numberOfFrames) {
+        switch (_tmcdInfo.numberOfFrames) {
                 case 24: mode = Timecode::Mode(Timecode::NDF24); break;
                 case 25: mode = Timecode::Mode(Timecode::NDF25); break;
                 case 30: mode = Timecode::Mode(dropFrame ? Timecode::DF30 : Timecode::NDF30); break;
                 default:
-                        promekiWarn("QuickTime: tmcd unsupported frame count %u (df=%d)",
-                                    _tmcdInfo.numberOfFrames, dropFrame ? 1 : 0);
+                        promekiWarn("QuickTime: tmcd unsupported frame count %u (df=%d)", _tmcdInfo.numberOfFrames,
+                                    dropFrame ? 1 : 0);
                         return Error::Ok;
         }
 
         Timecode tc = Timecode::fromFrameNumber(mode, startFrame);
-        if(tc.isValid()) _startTimecode = tc;
+        if (tc.isValid()) _startTimecode = tc;
         return Error::Ok;
 }
 
@@ -1095,41 +1095,40 @@ Error QuickTimeReader::ensureImageFile() {
 // readSample
 // ---------------------------------------------------------------------------
 
-Error QuickTimeReader::readSample(size_t trackIndex, uint64_t sampleIndex,
-                                  QuickTime::Sample &out) {
-        if(!_isOpen) return Error::NotOpen;
-        if(trackIndex >= _tracks.size()) return Error::OutOfRange;
-        const QuickTime::Track  &track = _tracks[trackIndex];
+Error QuickTimeReader::readSample(size_t trackIndex, uint64_t sampleIndex, QuickTime::Sample &out) {
+        if (!_isOpen) return Error::NotOpen;
+        if (trackIndex >= _tracks.size()) return Error::OutOfRange;
+        const QuickTime::Track     &track = _tracks[trackIndex];
         const QuickTimeSampleIndex &idx = _sampleIndices[trackIndex];
-        if(sampleIndex >= sampleCount(idx)) return Error::OutOfRange;
+        if (sampleIndex >= sampleCount(idx)) return Error::OutOfRange;
 
-        int64_t  off  = sampleOffset(idx, sampleIndex);
-        uint32_t sz   = sampleSize(idx, sampleIndex);
-        int64_t  dts  = sampleDts(idx, sampleIndex);
-        out.trackId   = track.id();
-        out.index     = sampleIndex;
-        out.dts       = dts;
+        int64_t  off = sampleOffset(idx, sampleIndex);
+        uint32_t sz = sampleSize(idx, sampleIndex);
+        int64_t  dts = sampleDts(idx, sampleIndex);
+        out.trackId = track.id();
+        out.index = sampleIndex;
+        out.dts = dts;
         // Audio compact path has no per-sample ctts and every sample is sync.
-        out.pts       = idx.audioCompact ? dts                     : idx.pts[sampleIndex];
-        out.duration  = idx.audioCompact ? idx.audioSampleDelta    : idx.duration[sampleIndex];
-        out.keyframe  = idx.audioCompact ? true                    : (idx.keyframe[sampleIndex] != 0);
+        out.pts = idx.audioCompact ? dts : idx.pts[sampleIndex];
+        out.duration = idx.audioCompact ? idx.audioSampleDelta : idx.duration[sampleIndex];
+        out.keyframe = idx.audioCompact ? true : (idx.keyframe[sampleIndex] != 0);
 
-        if(track.type() == QuickTime::Video && _metaFile != nullptr) {
-                File *f = _metaFile;
+        if (track.type() == QuickTime::Video && _metaFile != nullptr) {
+                File  *f = _metaFile;
                 size_t align = Buffer::DefaultAlign;
                 {
                         auto [a, aerr] = f->directIOAlignment();
-                        if(!aerr.isError() && a > 0) align = a;
+                        if (!aerr.isError() && a > 0) align = a;
                 }
                 // readBulk() shifts the buffer view to land on the requested
                 // payload, so the underlying allocation needs an extra
                 // alignment block of headroom.
                 Buffer buf(static_cast<size_t>(sz) + align, align);
-                Error e = f->seek(off);
-                if(e.isError()) return e;
+                Error  e = f->seek(off);
+                if (e.isError()) return e;
                 e = f->readBulk(buf, static_cast<int64_t>(sz));
-                if(e.isError()) return e;
-                if(buf.size() != sz) {
+                if (e.isError()) return e;
+                if (buf.size() != sz) {
                         promekiWarn("QuickTime: short read %llu of %u for video sample %llu",
                                     static_cast<unsigned long long>(buf.size()), sz,
                                     static_cast<unsigned long long>(sampleIndex));
@@ -1141,13 +1140,12 @@ Error QuickTimeReader::readSample(size_t trackIndex, uint64_t sampleIndex,
 
         // Audio / timecode / other: normal buffered read via the metadata handle.
         IODevice *dev = activeDevice();
-        Error e = dev->seek(off);
-        if(e.isError()) return e;
-        Buffer buf(static_cast<size_t>(sz));
+        Error     e = dev->seek(off);
+        if (e.isError()) return e;
+        Buffer  buf(static_cast<size_t>(sz));
         int64_t got = dev->read(buf.data(), static_cast<int64_t>(sz));
-        if(got != static_cast<int64_t>(sz)) {
-                promekiWarn("QuickTime: short read %lld of %u for sample %llu",
-                            static_cast<long long>(got), sz,
+        if (got != static_cast<int64_t>(sz)) {
+                promekiWarn("QuickTime: short read %lld of %u for sample %llu", static_cast<long long>(got), sz,
                             static_cast<unsigned long long>(sampleIndex));
                 return Error::IOError;
         }
@@ -1165,25 +1163,25 @@ Error QuickTimeReader::readSample(size_t trackIndex, uint64_t sampleIndex,
 // read() calls instead of N.
 // ---------------------------------------------------------------------------
 
-Error QuickTimeReader::readSampleRange(size_t trackIndex, uint64_t startSampleIndex,
-                                       uint64_t count, QuickTime::Sample &out) {
-        if(!_isOpen) return Error::NotOpen;
-        if(trackIndex >= _tracks.size()) return Error::OutOfRange;
-        if(count == 0) return Error::InvalidArgument;
-        const QuickTime::Track        &track = _tracks[trackIndex];
-        const QuickTimeSampleIndex    &idx   = _sampleIndices[trackIndex];
-        if(startSampleIndex + count > sampleCount(idx)) return Error::OutOfRange;
+Error QuickTimeReader::readSampleRange(size_t trackIndex, uint64_t startSampleIndex, uint64_t count,
+                                       QuickTime::Sample &out) {
+        if (!_isOpen) return Error::NotOpen;
+        if (trackIndex >= _tracks.size()) return Error::OutOfRange;
+        if (count == 0) return Error::InvalidArgument;
+        const QuickTime::Track     &track = _tracks[trackIndex];
+        const QuickTimeSampleIndex &idx = _sampleIndices[trackIndex];
+        if (startSampleIndex + count > sampleCount(idx)) return Error::OutOfRange;
 
         // Compute total byte count for the range.
         uint64_t totalBytes = 0;
-        for(uint64_t i = 0; i < count; ++i) {
+        for (uint64_t i = 0; i < count; ++i) {
                 totalBytes += sampleSize(idx, startSampleIndex + i);
         }
-        if(totalBytes == 0) return Error::InvalidArgument;
+        if (totalBytes == 0) return Error::InvalidArgument;
 
-        Buffer out_buf(static_cast<size_t>(totalBytes));
+        Buffer   out_buf(static_cast<size_t>(totalBytes));
         uint8_t *dst = static_cast<uint8_t *>(out_buf.data());
-        size_t dstPos = 0;
+        size_t   dstPos = 0;
 
         IODevice *dev = activeDevice();
 
@@ -1192,22 +1190,21 @@ Error QuickTimeReader::readSampleRange(size_t trackIndex, uint64_t startSampleIn
         // a single read. For the compact audio path this collapses each
         // chunk into one read at the chunk boundary.
         uint64_t i = 0;
-        while(i < count) {
-                int64_t  startOff  = sampleOffset(idx, startSampleIndex + i);
-                uint64_t runBytes  = sampleSize(idx, startSampleIndex + i);
-                uint64_t j         = i + 1;
-                while(j < count) {
+        while (i < count) {
+                int64_t  startOff = sampleOffset(idx, startSampleIndex + i);
+                uint64_t runBytes = sampleSize(idx, startSampleIndex + i);
+                uint64_t j = i + 1;
+                while (j < count) {
                         int64_t expected = startOff + static_cast<int64_t>(runBytes);
-                        if(sampleOffset(idx, startSampleIndex + j) != expected) break;
+                        if (sampleOffset(idx, startSampleIndex + j) != expected) break;
                         runBytes += sampleSize(idx, startSampleIndex + j);
                         j++;
                 }
                 Error e = dev->seek(startOff);
-                if(e.isError()) return e;
+                if (e.isError()) return e;
                 int64_t got = dev->read(dst + dstPos, static_cast<int64_t>(runBytes));
-                if(got != static_cast<int64_t>(runBytes)) {
-                        promekiWarn("QuickTime: readSampleRange short read %lld of %llu",
-                                    static_cast<long long>(got),
+                if (got != static_cast<int64_t>(runBytes)) {
+                        promekiWarn("QuickTime: readSampleRange short read %lld of %llu", static_cast<long long>(got),
                                     static_cast<unsigned long long>(runBytes));
                         return Error::IOError;
                 }
@@ -1218,13 +1215,13 @@ Error QuickTimeReader::readSampleRange(size_t trackIndex, uint64_t startSampleIn
 
         // Populate the Sample with the first sample's metadata.
         int64_t firstDts = sampleDts(idx, startSampleIndex);
-        out.trackId  = track.id();
-        out.index    = startSampleIndex;
-        out.dts      = firstDts;
-        out.pts      = idx.audioCompact ? firstDts                 : idx.pts[startSampleIndex];
-        out.duration = idx.audioCompact ? idx.audioSampleDelta     : idx.duration[startSampleIndex];
-        out.keyframe = idx.audioCompact ? true                     : (idx.keyframe[startSampleIndex] != 0);
-        out.data     = Buffer::Ptr::create(std::move(out_buf));
+        out.trackId = track.id();
+        out.index = startSampleIndex;
+        out.dts = firstDts;
+        out.pts = idx.audioCompact ? firstDts : idx.pts[startSampleIndex];
+        out.duration = idx.audioCompact ? idx.audioSampleDelta : idx.duration[startSampleIndex];
+        out.keyframe = idx.audioCompact ? true : (idx.keyframe[startSampleIndex] != 0);
+        out.data = Buffer::Ptr::create(std::move(out_buf));
         return Error::Ok;
 }
 
@@ -1238,33 +1235,33 @@ Error QuickTimeReader::readSampleRange(size_t trackIndex, uint64_t startSampleIn
 // ---------------------------------------------------------------------------
 
 size_t QuickTimeReader::findTrackIndexById(uint32_t trackId) const {
-        for(size_t i = 0; i < _tracks.size(); ++i) {
-                if(_tracks[i].id() == trackId) return i;
+        for (size_t i = 0; i < _tracks.size(); ++i) {
+                if (_tracks[i].id() == trackId) return i;
         }
         return SIZE_MAX;
 }
 
 Error QuickTimeReader::parseFragments(int64_t startOffset, int64_t fileSize) {
-        IODevice *dev = activeDevice();
+        IODevice  *dev = activeDevice();
         ReadStream stream(dev);
-        Error err = stream.seek(startOffset);
-        if(err.isError()) return err;
+        Error      err = stream.seek(startOffset);
+        if (err.isError()) return err;
 
         int64_t pos = startOffset;
-        while(pos < fileSize) {
-                if(stream.seek(pos).isError()) break;
-                Box box;
+        while (pos < fileSize) {
+                if (stream.seek(pos).isError()) break;
+                Box   box;
                 Error e = readBoxHeader(stream, box, fileSize);
-                if(e == Error::EndOfFile) break;
-                if(e.isError()) {
+                if (e == Error::EndOfFile) break;
+                if (e.isError()) {
                         promekiWarn("QuickTime: bad box header at offset %lld during fragment scan",
                                     static_cast<long long>(pos));
                         break;
                 }
 
-                if(box.type == kMoof) {
+                if (box.type == kMoof) {
                         Error me = parseMoof(box.payloadOffset, box.endOffset, box.headerOffset);
-                        if(me.isError()) {
+                        if (me.isError()) {
                                 promekiWarn("QuickTime: parseMoof failed at offset %lld: %s",
                                             static_cast<long long>(box.headerOffset), me.name().cstr());
                                 // Continue scanning — a corrupt fragment shouldn't kill open().
@@ -1273,78 +1270,77 @@ Error QuickTimeReader::parseFragments(int64_t startOffset, int64_t fileSize) {
                 // Other top-level boxes (mdat, sidx, mfra, free, ...) are skipped
                 // — Phase 3 only consumes the moof index.
 
-                if(box.payloadSize < 0) break;
+                if (box.payloadSize < 0) break;
                 pos = box.endOffset;
         }
         return Error::Ok;
 }
 
 Error QuickTimeReader::parseMoof(int64_t moofPayloadOffset, int64_t moofPayloadEnd, int64_t moofStart) {
-        IODevice *dev = activeDevice();
+        IODevice  *dev = activeDevice();
         ReadStream stream(dev);
-        Error err = stream.seek(moofPayloadOffset);
-        if(err.isError()) return err;
+        Error      err = stream.seek(moofPayloadOffset);
+        if (err.isError()) return err;
 
-        while(true) {
-                Box box;
+        while (true) {
+                Box   box;
                 Error e = readBoxHeader(stream, box, moofPayloadEnd);
-                if(e == Error::EndOfFile) break;
-                if(e.isError()) return e;
+                if (e == Error::EndOfFile) break;
+                if (e.isError()) return e;
 
-                if(box.type == kMfhd) {
+                if (box.type == kMfhd) {
                         // mfhd: version+flags(4) + sequence_number(4)
                         // Sequence number is informational only.
-                } else if(box.type == kTraf) {
+                } else if (box.type == kTraf) {
                         Error te = parseTraf(box.payloadOffset, box.endOffset, moofStart);
-                        if(te.isError()) {
+                        if (te.isError()) {
                                 promekiWarn("QuickTime: parseTraf failed: %s", te.name().cstr());
                         }
                 }
 
                 e = advanceToSibling(stream, box);
-                if(e.isError()) return e;
+                if (e.isError()) return e;
         }
         return Error::Ok;
 }
 
 Error QuickTimeReader::parseTraf(int64_t trafPayloadOffset, int64_t trafPayloadEnd, int64_t moofStart) {
-        IODevice *dev = activeDevice();
+        IODevice  *dev = activeDevice();
         ReadStream stream(dev);
 
         // tfhd is required and supplies the track_ID + per-track defaults.
-        Box tfhdBox;
+        Box   tfhdBox;
         Error err = findTopLevelBox(stream, kTfhd, trafPayloadOffset, trafPayloadEnd, tfhdBox);
-        if(err.isError()) {
+        if (err.isError()) {
                 promekiWarn("QuickTime: traf missing tfhd");
                 return Error::CorruptData;
         }
 
         stream.skip(1); // version
-        uint8_t f0 = stream.readU8();
-        uint8_t f1 = stream.readU8();
-        uint8_t f2 = stream.readU8();
-        uint32_t flags = (static_cast<uint32_t>(f0) << 16) |
-                         (static_cast<uint32_t>(f1) <<  8) |
-                          static_cast<uint32_t>(f2);
+        uint8_t  f0 = stream.readU8();
+        uint8_t  f1 = stream.readU8();
+        uint8_t  f2 = stream.readU8();
+        uint32_t flags =
+                (static_cast<uint32_t>(f0) << 16) | (static_cast<uint32_t>(f1) << 8) | static_cast<uint32_t>(f2);
         uint32_t trackId = stream.readU32();
 
-        bool     baseDataOffsetPresent = (flags & 0x000001) != 0;
-        bool     sampleDescIndexPresent = (flags & 0x000002) != 0;
-        bool     defSampleDurationPresent = (flags & 0x000008) != 0;
-        bool     defSampleSizePresent = (flags & 0x000010) != 0;
-        bool     defSampleFlagsPresent = (flags & 0x000020) != 0;
-        bool     defaultBaseIsMoof = (flags & 0x020000) != 0;
+        bool baseDataOffsetPresent = (flags & 0x000001) != 0;
+        bool sampleDescIndexPresent = (flags & 0x000002) != 0;
+        bool defSampleDurationPresent = (flags & 0x000008) != 0;
+        bool defSampleSizePresent = (flags & 0x000010) != 0;
+        bool defSampleFlagsPresent = (flags & 0x000020) != 0;
+        bool defaultBaseIsMoof = (flags & 0x020000) != 0;
 
         uint64_t baseDataOffset = 0;
-        if(baseDataOffsetPresent)    baseDataOffset = stream.readU64();
-        if(sampleDescIndexPresent)   stream.skip(4);
+        if (baseDataOffsetPresent) baseDataOffset = stream.readU64();
+        if (sampleDescIndexPresent) stream.skip(4);
         uint32_t defSampleDuration = defSampleDurationPresent ? stream.readU32() : 0;
-        uint32_t defSampleSize     = defSampleSizePresent     ? stream.readU32() : 0;
-        uint32_t defSampleFlags    = defSampleFlagsPresent    ? stream.readU32() : 0;
-        if(stream.isError()) return Error::CorruptData;
+        uint32_t defSampleSize = defSampleSizePresent ? stream.readU32() : 0;
+        uint32_t defSampleFlags = defSampleFlagsPresent ? stream.readU32() : 0;
+        if (stream.isError()) return Error::CorruptData;
 
         size_t trackIdx = findTrackIndexById(trackId);
-        if(trackIdx == SIZE_MAX) {
+        if (trackIdx == SIZE_MAX) {
                 // Unknown track — silently skip. The traf will be advanced
                 // past by the caller's box walker.
                 return Error::Ok;
@@ -1352,16 +1348,18 @@ Error QuickTimeReader::parseTraf(int64_t trafPayloadOffset, int64_t trafPayloadE
 
         // Optional tfdt: base media decode time for the first sample of this fragment.
         int64_t cursorDts = 0;
-        Box tfdtBox;
-        if(findTopLevelBox(stream, kTfdt, trafPayloadOffset, trafPayloadEnd, tfdtBox) == Error::Ok) {
+        Box     tfdtBox;
+        if (findTopLevelBox(stream, kTfdt, trafPayloadOffset, trafPayloadEnd, tfdtBox) == Error::Ok) {
                 uint8_t tfdtVersion = stream.readU8();
                 stream.skip(3); // flags
-                if(tfdtVersion == 1) cursorDts = static_cast<int64_t>(stream.readU64());
-                else                 cursorDts = static_cast<int64_t>(stream.readU32());
-                if(stream.isError()) return Error::CorruptData;
+                if (tfdtVersion == 1)
+                        cursorDts = static_cast<int64_t>(stream.readU64());
+                else
+                        cursorDts = static_cast<int64_t>(stream.readU32());
+                if (stream.isError()) return Error::CorruptData;
         } else {
                 // No tfdt: continue from the previous fragment's last dts on this track.
-                if(!_sampleIndices[trackIdx].dts.isEmpty()) {
+                if (!_sampleIndices[trackIdx].dts.isEmpty()) {
                         size_t last = _sampleIndices[trackIdx].dts.size() - 1;
                         cursorDts = _sampleIndices[trackIdx].dts[last] +
                                     static_cast<int64_t>(_sampleIndices[trackIdx].duration[last]);
@@ -1369,26 +1367,25 @@ Error QuickTimeReader::parseTraf(int64_t trafPayloadOffset, int64_t trafPayloadE
         }
 
         // Walk the traf children for trun boxes (there can be more than one).
-        if(stream.seek(trafPayloadOffset).isError()) return Error::IOError;
+        if (stream.seek(trafPayloadOffset).isError()) return Error::IOError;
         int64_t prevDataEnd = -1;
-        while(true) {
-                Box box;
+        while (true) {
+                Box   box;
                 Error e = readBoxHeader(stream, box, trafPayloadEnd);
-                if(e == Error::EndOfFile) break;
-                if(e.isError()) return e;
+                if (e == Error::EndOfFile) break;
+                if (e.isError()) return e;
 
-                if(box.type == kTrun) {
+                if (box.type == kTrun) {
                         Error re = parseTrun(box.payloadOffset, box.endOffset, trackIdx, moofStart,
                                              baseDataOffsetPresent, baseDataOffset, defaultBaseIsMoof,
-                                             defSampleDuration, defSampleSize, defSampleFlags,
-                                             cursorDts, prevDataEnd);
-                        if(re.isError()) {
+                                             defSampleDuration, defSampleSize, defSampleFlags, cursorDts, prevDataEnd);
+                        if (re.isError()) {
                                 promekiWarn("QuickTime: parseTrun failed: %s", re.name().cstr());
                         }
                 }
 
                 e = advanceToSibling(stream, box);
-                if(e.isError()) return e;
+                if (e.isError()) return e;
         }
 
         // Update the track's sample count after appending. For PCM
@@ -1398,47 +1395,47 @@ Error QuickTimeReader::parseTraf(int64_t trafPayloadOffset, int64_t trafPayloadE
         return Error::Ok;
 }
 
-Error QuickTimeReader::parseTrun(int64_t trunPayloadOffset, int64_t trunPayloadEnd,
-                                 size_t trackIdx, int64_t moofStart,
-                                 bool baseDataOffsetPresent, uint64_t baseDataOffset,
-                                 bool defaultBaseIsMoof,
-                                 uint32_t defSampleDuration, uint32_t defSampleSize,
-                                 uint32_t defSampleFlags,
+Error QuickTimeReader::parseTrun(int64_t trunPayloadOffset, int64_t trunPayloadEnd, size_t trackIdx, int64_t moofStart,
+                                 bool baseDataOffsetPresent, uint64_t baseDataOffset, bool defaultBaseIsMoof,
+                                 uint32_t defSampleDuration, uint32_t defSampleSize, uint32_t defSampleFlags,
                                  int64_t &cursorDts, int64_t &prevDataEnd) {
-        IODevice *dev = activeDevice();
+        IODevice  *dev = activeDevice();
         ReadStream stream(dev);
-        Error err = stream.seek(trunPayloadOffset);
-        if(err.isError()) return err;
+        Error      err = stream.seek(trunPayloadOffset);
+        if (err.isError()) return err;
 
-        uint8_t version = stream.readU8();
-        uint8_t f0 = stream.readU8();
-        uint8_t f1 = stream.readU8();
-        uint8_t f2 = stream.readU8();
-        uint32_t flags = (static_cast<uint32_t>(f0) << 16) |
-                         (static_cast<uint32_t>(f1) <<  8) |
-                          static_cast<uint32_t>(f2);
+        uint8_t  version = stream.readU8();
+        uint8_t  f0 = stream.readU8();
+        uint8_t  f1 = stream.readU8();
+        uint8_t  f2 = stream.readU8();
+        uint32_t flags =
+                (static_cast<uint32_t>(f0) << 16) | (static_cast<uint32_t>(f1) << 8) | static_cast<uint32_t>(f2);
         uint32_t sampleCount = stream.readU32();
-        if(stream.isError()) return Error::CorruptData;
+        if (stream.isError()) return Error::CorruptData;
 
-        bool     dataOffsetPresent      = (flags & 0x000001) != 0;
-        bool     firstSampleFlagsPresent = (flags & 0x000004) != 0;
-        bool     perSampleDuration      = (flags & 0x000100) != 0;
-        bool     perSampleSize          = (flags & 0x000200) != 0;
-        bool     perSampleFlags         = (flags & 0x000400) != 0;
-        bool     perSampleCts           = (flags & 0x000800) != 0;
+        bool dataOffsetPresent = (flags & 0x000001) != 0;
+        bool firstSampleFlagsPresent = (flags & 0x000004) != 0;
+        bool perSampleDuration = (flags & 0x000100) != 0;
+        bool perSampleSize = (flags & 0x000200) != 0;
+        bool perSampleFlags = (flags & 0x000400) != 0;
+        bool perSampleCts = (flags & 0x000800) != 0;
 
         int32_t  dataOffset = 0;
         uint32_t firstSampleFlags = 0;
-        if(dataOffsetPresent)       dataOffset       = static_cast<int32_t>(stream.readU32());
-        if(firstSampleFlagsPresent) firstSampleFlags = stream.readU32();
-        if(stream.isError()) return Error::CorruptData;
+        if (dataOffsetPresent) dataOffset = static_cast<int32_t>(stream.readU32());
+        if (firstSampleFlagsPresent) firstSampleFlags = stream.readU32();
+        if (stream.isError()) return Error::CorruptData;
 
         // Compute the byte offset of the first sample in this run.
         int64_t base;
-        if(defaultBaseIsMoof)         base = moofStart;
-        else if(baseDataOffsetPresent) base = static_cast<int64_t>(baseDataOffset);
-        else if(prevDataEnd >= 0)     base = prevDataEnd;
-        else                          base = moofStart; // ISO-BMFF default
+        if (defaultBaseIsMoof)
+                base = moofStart;
+        else if (baseDataOffsetPresent)
+                base = static_cast<int64_t>(baseDataOffset);
+        else if (prevDataEnd >= 0)
+                base = prevDataEnd;
+        else
+                base = moofStart; // ISO-BMFF default
 
         int64_t curOffset = base + (dataOffsetPresent ? dataOffset : 0);
 
@@ -1454,32 +1451,28 @@ Error QuickTimeReader::parseTrun(int64_t trunPayloadOffset, int64_t trunPayloadE
         // appear as 30 "samples" to upstream code that expects PCM-frame
         // semantics, breaking samplesPerFrame()-driven slice reads.
         const QuickTime::Track &trackRef = _tracks[trackIdx];
-        const bool isPcmAudio =
-                (trackRef.type() == QuickTime::Audio) &&
-                trackRef.audioDesc().isValid() &&
-                !trackRef.audioDesc().isCompressed();
-        if(isPcmAudio) {
-                const uint32_t pcmStride =
-                        static_cast<uint32_t>(trackRef.audioDesc().bytesPerSampleStride());
-                if(pcmStride == 0) return Error::CorruptData;
-                if(idx.audioChunkOffsets.isEmpty() &&
-                   idx.audioChunkSamplesPerChunk.isEmpty()) {
-                        idx.audioCompact     = true;
-                        idx.audioSampleSize  = pcmStride;
+        const bool              isPcmAudio = (trackRef.type() == QuickTime::Audio) && trackRef.audioDesc().isValid() &&
+                                !trackRef.audioDesc().isCompressed();
+        if (isPcmAudio) {
+                const uint32_t pcmStride = static_cast<uint32_t>(trackRef.audioDesc().bytesPerSampleStride());
+                if (pcmStride == 0) return Error::CorruptData;
+                if (idx.audioChunkOffsets.isEmpty() && idx.audioChunkSamplesPerChunk.isEmpty()) {
+                        idx.audioCompact = true;
+                        idx.audioSampleSize = pcmStride;
                         idx.audioSampleDelta = 1;
                 }
                 idx.audioChunkOffsets.reserve(idx.audioChunkOffsets.size() + sampleCount);
                 idx.audioChunkSamplesPerChunk.reserve(idx.audioChunkSamplesPerChunk.size() + sampleCount);
                 idx.audioChunkFirstSample.reserve(idx.audioChunkFirstSample.size() + sampleCount);
 
-                for(uint32_t i = 0; i < sampleCount; ++i) {
+                for (uint32_t i = 0; i < sampleCount; ++i) {
                         uint32_t dur = perSampleDuration ? stream.readU32() : defSampleDuration;
-                        uint32_t sz  = perSampleSize     ? stream.readU32() : defSampleSize;
-                        if(perSampleFlags) stream.skip(4);
-                        if(perSampleCts)   stream.skip(4);
-                        if(stream.isError()) return Error::CorruptData;
+                        uint32_t sz = perSampleSize ? stream.readU32() : defSampleSize;
+                        if (perSampleFlags) stream.skip(4);
+                        if (perSampleCts) stream.skip(4);
+                        if (stream.isError()) return Error::CorruptData;
 
-                        if(sz == 0 || dur == 0 || sz != dur * pcmStride) {
+                        if (sz == 0 || dur == 0 || sz != dur * pcmStride) {
                                 promekiWarn("QuickTime: fragmented PCM sample size %u "
                                             "inconsistent with duration %u × stride %u",
                                             sz, dur, pcmStride);
@@ -1503,24 +1496,24 @@ Error QuickTimeReader::parseTrun(int64_t trunPayloadOffset, int64_t trunPayloadE
 
         idx.offset.reserve(idx.offset.size() + sampleCount);
 
-        for(uint32_t i = 0; i < sampleCount; ++i) {
+        for (uint32_t i = 0; i < sampleCount; ++i) {
                 uint32_t dur = perSampleDuration ? stream.readU32() : defSampleDuration;
-                uint32_t sz  = perSampleSize     ? stream.readU32() : defSampleSize;
+                uint32_t sz = perSampleSize ? stream.readU32() : defSampleSize;
                 uint32_t sfl;
-                if(perSampleFlags) {
+                if (perSampleFlags) {
                         sfl = stream.readU32();
-                } else if(i == 0 && firstSampleFlagsPresent) {
+                } else if (i == 0 && firstSampleFlagsPresent) {
                         sfl = firstSampleFlags;
                 } else {
                         sfl = defSampleFlags;
                 }
                 int32_t cts = 0;
-                if(perSampleCts) {
+                if (perSampleCts) {
                         uint32_t raw = stream.readU32();
                         cts = (version == 1) ? static_cast<int32_t>(raw)
                                              : static_cast<int32_t>(raw); // both interpretations
                 }
-                if(stream.isError()) return Error::CorruptData;
+                if (stream.isError()) return Error::CorruptData;
 
                 idx.offset.pushToBack(curOffset);
                 idx.size.pushToBack(sz);
@@ -1548,12 +1541,11 @@ Error QuickTimeReader::parseTrun(int64_t trunPayloadOffset, int64_t trunPayloadE
 // are not expanded; none of the bext fields we care about use them
 // in practice.
 static String unescapeXmlEntities(const String &in) {
-        return in
-                .replace(String("&lt;"),   String("<"))
-                .replace(String("&gt;"),   String(">"))
+        return in.replace(String("&lt;"), String("<"))
+                .replace(String("&gt;"), String(">"))
                 .replace(String("&quot;"), String("\""))
                 .replace(String("&apos;"), String("'"))
-                .replace(String("&amp;"),  String("&"));  // must be last
+                .replace(String("&amp;"), String("&")); // must be last
 }
 
 // Extracts the text content of the first <bext:localName ...> element
@@ -1565,29 +1557,28 @@ static String unescapeXmlEntities(const String &in) {
 static String extractBextElement(const String &xmp, const char *localName) {
         String openPrefix = String("<bext:") + localName;
         size_t start = xmp.find(openPrefix);
-        if(start == String::npos) return String();
+        if (start == String::npos) return String();
 
         // The character immediately after the local name must be one of
         // `>`, `/`, or whitespace — otherwise we matched a prefix of
         // something longer (e.g. <bext:umidX>).
         size_t afterName = start + openPrefix.size();
-        if(afterName >= xmp.size()) return String();
+        if (afterName >= xmp.size()) return String();
         char next = static_cast<char>(xmp.charAt(afterName).codepoint());
-        if(next != '>' && next != '/' && next != ' ' && next != '\t' &&
-           next != '\r' && next != '\n') {
+        if (next != '>' && next != '/' && next != ' ' && next != '\t' && next != '\r' && next != '\n') {
                 return String();
         }
 
         // Walk forward to the end of the opening tag.
         size_t openEnd = xmp.find('>', afterName);
-        if(openEnd == String::npos) return String();
+        if (openEnd == String::npos) return String();
         // Self-closing tag? Content is empty.
-        if(openEnd > 0 && xmp.charAt(openEnd - 1) == '/') return String();
+        if (openEnd > 0 && xmp.charAt(openEnd - 1) == '/') return String();
 
         size_t contentStart = openEnd + 1;
         String closeMarker = String("</bext:") + localName + ">";
         size_t closeStart = xmp.find(closeMarker, contentStart);
-        if(closeStart == String::npos) return String();
+        if (closeStart == String::npos) return String();
 
         String raw = xmp.mid(contentStart, closeStart - contentStart).trim();
         return unescapeXmlEntities(raw);
@@ -1598,92 +1589,92 @@ static String extractBextElement(const String &xmp, const char *localName) {
 // ---------------------------------------------------------------------------
 
 Error QuickTimeReader::parseUdta(int64_t payloadOffset, int64_t payloadEnd) {
-        IODevice *dev = activeDevice();
+        IODevice  *dev = activeDevice();
         ReadStream stream(dev);
-        Error err = stream.seek(payloadOffset);
-        if(err.isError()) return err;
+        Error      err = stream.seek(payloadOffset);
+        if (err.isError()) return err;
 
         // Iterate child atoms. Recognized ©-prefixed atoms map to Metadata IDs.
-        while(true) {
+        while (true) {
                 Box child;
                 err = readBoxHeader(stream, child, payloadEnd);
-                if(err == Error::EndOfFile) break;
-                if(err.isError()) return err;
+                if (err == Error::EndOfFile) break;
+                if (err.isError()) return err;
 
                 uint32_t type = child.type.value();
                 // QuickTime metadata atoms start with 0xA9 ('©') then three ASCII.
-                if((type >> 24) == 0xA9 && child.payloadSize >= 4) {
+                if ((type >> 24) == 0xA9 && child.payloadSize >= 4) {
                         // Legacy ©nnn layout: [u16 size][u16 language][char[size]]
                         uint16_t textLen = stream.readU16();
                         stream.skip(2); // language
-                        if(textLen > 0 && textLen <= child.payloadSize - 4) {
+                        if (textLen > 0 && textLen <= child.payloadSize - 4) {
                                 char buf[512] = {};
-                                int toRead = textLen < sizeof(buf) ? textLen : sizeof(buf) - 1;
-                                if(stream.readBytes(buf, toRead).isError()) {
+                                int  toRead = textLen < sizeof(buf) ? textLen : sizeof(buf) - 1;
+                                if (stream.readBytes(buf, toRead).isError()) {
                                         advanceToSibling(stream, child);
                                         continue;
                                 }
                                 String value(buf, static_cast<size_t>(toRead));
-                                char c1 = static_cast<char>((type >> 16) & 0xff);
-                                char c2 = static_cast<char>((type >>  8) & 0xff);
-                                char c3 = static_cast<char>((type >>  0) & 0xff);
+                                char   c1 = static_cast<char>((type >> 16) & 0xff);
+                                char   c2 = static_cast<char>((type >> 8) & 0xff);
+                                char   c3 = static_cast<char>((type >> 0) & 0xff);
                                 // Map to known Metadata IDs.
-                                if(c1 == 'n' && c2 == 'a' && c3 == 'm') {
+                                if (c1 == 'n' && c2 == 'a' && c3 == 'm') {
                                         _containerMetadata.set(Metadata::Title, value);
-                                } else if(c1 == 'c' && c2 == 'm' && c3 == 't') {
+                                } else if (c1 == 'c' && c2 == 'm' && c3 == 't') {
                                         _containerMetadata.set(Metadata::Comment, value);
-                                } else if(c1 == 'd' && c2 == 'a' && c3 == 'y') {
+                                } else if (c1 == 'd' && c2 == 'a' && c3 == 'y') {
                                         _containerMetadata.set(Metadata::Date, value);
-                                } else if(c1 == 'a' && c2 == 'r' && c3 == 't') {
+                                } else if (c1 == 'a' && c2 == 'r' && c3 == 't') {
                                         _containerMetadata.set(Metadata::Artist, value);
-                                } else if(c1 == 'A' && c2 == 'R' && c3 == 'T') {
+                                } else if (c1 == 'A' && c2 == 'R' && c3 == 'T') {
                                         _containerMetadata.set(Metadata::Artist, value);
-                                } else if(c1 == 'c' && c2 == 'p' && c3 == 'y') {
+                                } else if (c1 == 'c' && c2 == 'p' && c3 == 'y') {
                                         _containerMetadata.set(Metadata::Copyright, value);
-                                } else if(c1 == 't' && c2 == 'o' && c3 == 'o') {
+                                } else if (c1 == 't' && c2 == 'o' && c3 == 'o') {
                                         _containerMetadata.set(Metadata::Software, value);
-                                } else if(c1 == 'a' && c2 == 'l' && c3 == 'b') {
+                                } else if (c1 == 'a' && c2 == 'l' && c3 == 'b') {
                                         _containerMetadata.set(Metadata::Album, value);
-                                } else if(c1 == 'g' && c2 == 'e' && c3 == 'n') {
+                                } else if (c1 == 'g' && c2 == 'e' && c3 == 'n') {
                                         _containerMetadata.set(Metadata::Genre, value);
-                                } else if(c1 == 'd' && c2 == 'e' && c3 == 's') {
+                                } else if (c1 == 'd' && c2 == 'e' && c3 == 's') {
                                         _containerMetadata.set(Metadata::Description, value);
                                 }
                         }
-                } else if(child.type == FourCC('X', 'M', 'P', '_')) {
+                } else if (child.type == FourCC('X', 'M', 'P', '_')) {
                         // Adobe XMP packet — parse for BWF bext: fields.
                         // Refuse absurdly large packets to avoid wild allocations.
-                        constexpr int64_t kMaxXmpSize = 1024 * 1024;  // 1 MiB
-                        if(child.payloadSize > 0 && child.payloadSize <= kMaxXmpSize) {
+                        constexpr int64_t kMaxXmpSize = 1024 * 1024; // 1 MiB
+                        if (child.payloadSize > 0 && child.payloadSize <= kMaxXmpSize) {
                                 List<char> buf(static_cast<size_t>(child.payloadSize));
-                                if(stream.readBytes(buf.data(), static_cast<int>(child.payloadSize)).isOk()) {
+                                if (stream.readBytes(buf.data(), static_cast<int>(child.payloadSize)).isOk()) {
                                         String xmp(buf.data(), static_cast<size_t>(child.payloadSize));
-                                        String originator  = extractBextElement(xmp, "originator");
-                                        String origRef     = extractBextElement(xmp, "originatorReference");
-                                        String origDate    = extractBextElement(xmp, "originationDate");
-                                        String origTime    = extractBextElement(xmp, "originationTime");
-                                        String umidHex     = extractBextElement(xmp, "umid");
+                                        String originator = extractBextElement(xmp, "originator");
+                                        String origRef = extractBextElement(xmp, "originatorReference");
+                                        String origDate = extractBextElement(xmp, "originationDate");
+                                        String origTime = extractBextElement(xmp, "originationTime");
+                                        String umidHex = extractBextElement(xmp, "umid");
 
-                                        if(!originator.isEmpty()) {
+                                        if (!originator.isEmpty()) {
                                                 _containerMetadata.set(Metadata::Originator, originator);
                                         }
-                                        if(!origRef.isEmpty()) {
+                                        if (!origRef.isEmpty()) {
                                                 _containerMetadata.set(Metadata::OriginatorReference, origRef);
                                         }
-                                        if(!origDate.isEmpty() || !origTime.isEmpty()) {
+                                        if (!origDate.isEmpty() || !origTime.isEmpty()) {
                                                 // Recombine date + time into the
                                                 // libpromeki ISO-8601 format.
                                                 String combined = origDate;
-                                                if(!origTime.isEmpty()) {
-                                                        if(!combined.isEmpty()) combined += "T";
+                                                if (!origTime.isEmpty()) {
+                                                        if (!combined.isEmpty()) combined += "T";
                                                         combined += origTime;
                                                 }
                                                 _containerMetadata.set(Metadata::OriginationDateTime, combined);
                                         }
-                                        if(!umidHex.isEmpty()) {
+                                        if (!umidHex.isEmpty()) {
                                                 Error umidErr;
-                                                UMID umid = UMID::fromString(umidHex, &umidErr);
-                                                if(umidErr.isOk() && umid.isValid()) {
+                                                UMID  umid = UMID::fromString(umidHex, &umidErr);
+                                                if (umidErr.isOk() && umid.isValid()) {
                                                         _containerMetadata.set(Metadata::UMID, umid);
                                                 } else {
                                                         // Fall back to the raw hex so callers
@@ -1696,7 +1687,7 @@ Error QuickTimeReader::parseUdta(int64_t payloadOffset, int64_t payloadEnd) {
                 }
 
                 err = advanceToSibling(stream, child);
-                if(err.isError()) return err;
+                if (err.isError()) return err;
         }
         return Error::Ok;
 }
@@ -1707,23 +1698,23 @@ Error QuickTimeReader::parseUdta(int64_t payloadOffset, int64_t payloadEnd) {
 
 void QuickTimeReader::buildMediaDesc() {
         MediaDesc md;
-        bool rateSet = false;
+        bool      rateSet = false;
 
-        for(const QuickTime::Track &tk : _tracks) {
-                if(tk.type() == QuickTime::Video && tk.pixelFormat().isValid()) {
+        for (const QuickTime::Track &tk : _tracks) {
+                if (tk.type() == QuickTime::Video && tk.pixelFormat().isValid()) {
                         ImageDesc idesc(tk.size(), tk.pixelFormat());
                         md.imageList().pushToBack(idesc);
-                        if(!rateSet && tk.frameRate().isValid()) {
+                        if (!rateSet && tk.frameRate().isValid()) {
                                 md.setFrameRate(tk.frameRate());
                                 rateSet = true;
                         }
-                } else if(tk.type() == QuickTime::Audio && tk.audioDesc().isValid()) {
+                } else if (tk.type() == QuickTime::Audio && tk.audioDesc().isValid()) {
                         md.audioList().pushToBack(tk.audioDesc());
                 }
         }
         md.metadata() = _containerMetadata;
 
-        if(!rateSet) {
+        if (!rateSet) {
                 // Audio-only: leave the frame rate defaulted. The
                 // MediaIOTask layer is expected to supply a synthetic
                 // rate for audio-only tracks (Phase 5).

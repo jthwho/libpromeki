@@ -74,7 +74,7 @@ class SelfPipe {
                 void drain();
 
         private:
-                int _readFd  = -1;
+                int _readFd = -1;
                 int _writeFd = -1;
 };
 

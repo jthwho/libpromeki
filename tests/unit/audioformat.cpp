@@ -95,7 +95,7 @@ TEST_CASE("AudioFormat: lookup unknown returns Invalid") {
 TEST_CASE("AudioFormat: every registered format's name round-trips") {
         auto ids = AudioFormat::registeredIDs();
         CHECK_FALSE(ids.isEmpty());
-        for(auto id : ids) {
+        for (auto id : ids) {
                 AudioFormat f(id);
                 CAPTURE(f.name());
                 AudioFormat back = value(AudioFormat::lookup(f.name()));
@@ -128,24 +128,21 @@ TEST_CASE("AudioFormat: lookupByFourCC unknown returns Invalid") {
 
 TEST_CASE("AudioFormat: S16LE round-trip silence") {
         AudioFormat f(AudioFormat::PCMI_S16LE);
-        float in[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-        uint8_t bytes[4 * sizeof(int16_t)] = {};
+        float       in[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+        uint8_t     bytes[4 * sizeof(int16_t)] = {};
         f.floatToSamples(bytes, in, 4);
-        float out[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        float out[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         f.samplesToFloat(out, bytes, 4);
-        for(size_t i = 0; i < 4; ++i) {
+        for (size_t i = 0; i < 4; ++i) {
                 CHECK(out[i] == doctest::Approx(0.0f).epsilon(0.001));
         }
 }
 
 TEST_CASE("AudioFormat: integerToFloat maps endpoints correctly") {
         // int16 full-range endpoints
-        CHECK(AudioFormat::integerToFloat<int16_t>(-32768) ==
-              doctest::Approx(-1.0f).epsilon(0.001));
-        CHECK(AudioFormat::integerToFloat<int16_t>(32767) ==
-              doctest::Approx(1.0f).epsilon(0.001));
-        CHECK(AudioFormat::integerToFloat<int16_t>(0) ==
-              doctest::Approx(0.0f).epsilon(0.001));
+        CHECK(AudioFormat::integerToFloat<int16_t>(-32768) == doctest::Approx(-1.0f).epsilon(0.001));
+        CHECK(AudioFormat::integerToFloat<int16_t>(32767) == doctest::Approx(1.0f).epsilon(0.001));
+        CHECK(AudioFormat::integerToFloat<int16_t>(0) == doctest::Approx(0.0f).epsilon(0.001));
 }
 
 TEST_CASE("AudioFormat: floatToInteger clamps out-of-range") {
@@ -158,16 +155,16 @@ TEST_CASE("AudioFormat: floatToInteger clamps out-of-range") {
 // ============================================================================
 
 TEST_CASE("AudioFormat: DataStream round-trip by name") {
-        Buffer buf(1024);
+        Buffer         buf(1024);
         BufferIODevice dev(&buf);
         REQUIRE(dev.open(IODevice::ReadWrite).isOk());
         {
-                DataStream ws = DataStream::createWriter(&dev);
+                DataStream  ws = DataStream::createWriter(&dev);
                 AudioFormat f(AudioFormat::PCMI_S24BE);
                 ws << f;
         }
         dev.seek(0);
-        DataStream rs = DataStream::createReader(&dev);
+        DataStream  rs = DataStream::createReader(&dev);
         AudioFormat out;
         rs >> out;
         CHECK(out.id() == AudioFormat::PCMI_S24BE);
@@ -186,10 +183,10 @@ TEST_CASE("AudioFormat: Variant holds an AudioFormat") {
 
 TEST_CASE("AudioFormat: Variant<->String round-trip") {
         Variant v(AudioFormat(AudioFormat::PCMI_S16LE));
-        String s = v.get<String>();
+        String  s = v.get<String>();
         CHECK(s == "PCMI_S16LE");
 
-        Variant fromStr(s);
+        Variant     fromStr(s);
         AudioFormat back = fromStr.get<AudioFormat>();
         CHECK(back.id() == AudioFormat::PCMI_S16LE);
 }
@@ -203,12 +200,12 @@ TEST_CASE("AudioFormat: registerType + registerData adds a new format") {
         CHECK(id >= AudioFormat::UserDefined);
 
         AudioFormat::Data d;
-        d.id             = id;
-        d.name           = "TestFmt_UserReg";
-        d.desc           = "User-registered test format";
+        d.id = id;
+        d.name = "TestFmt_UserReg";
+        d.desc = "User-registered test format";
         d.bytesPerSample = 2;
-        d.bitsPerSample  = 16;
-        d.isSigned       = true;
+        d.bitsPerSample = 16;
+        d.isSigned = true;
         AudioFormat::registerData(std::move(d));
 
         AudioFormat back = value(AudioFormat::lookup("TestFmt_UserReg"));
@@ -219,6 +216,10 @@ TEST_CASE("AudioFormat: registerType + registerData adds a new format") {
         // Confirm it shows up in registeredIDs().
         auto ids = AudioFormat::registeredIDs();
         bool found = false;
-        for(auto otherId : ids) if(otherId == id) { found = true; break; }
+        for (auto otherId : ids)
+                if (otherId == id) {
+                        found = true;
+                        break;
+                }
         CHECK(found);
 }

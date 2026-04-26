@@ -42,17 +42,19 @@ using namespace promeki;
 
 static const MediaConfig &scalarConfig() {
         static MediaConfig cfg;
-        static bool init = false;
-        if(!init) { cfg.set(MediaConfig::CscPath, CscPath::Scalar); init = true; }
+        static bool        init = false;
+        if (!init) {
+                cfg.set(MediaConfig::CscPath, CscPath::Scalar);
+                init = true;
+        }
         return cfg;
 }
 
 static UncompressedVideoPayload::Ptr makeUniformRGBA8(uint8_t r, uint8_t g, uint8_t b, size_t w = 2) {
-        auto img = UncompressedVideoPayload::allocate(
-                ImageDesc(w, 1, PixelFormat::RGBA8_sRGB));
-        if(!img.isValid()) return img;
+        auto img = UncompressedVideoPayload::allocate(ImageDesc(w, 1, PixelFormat::RGBA8_sRGB));
+        if (!img.isValid()) return img;
         uint8_t *data = img.modify()->data()[0].data();
-        for(size_t x = 0; x < w; x++) {
+        for (size_t x = 0; x < w; x++) {
                 data[x * 4 + 0] = r;
                 data[x * 4 + 1] = g;
                 data[x * 4 + 2] = b;
@@ -62,11 +64,10 @@ static UncompressedVideoPayload::Ptr makeUniformRGBA8(uint8_t r, uint8_t g, uint
 }
 
 static UncompressedVideoPayload::Ptr makeUniformRGBA10LE(uint16_t r, uint16_t g, uint16_t b, size_t w = 2) {
-        auto img = UncompressedVideoPayload::allocate(
-                ImageDesc(w, 1, PixelFormat::RGBA10_LE_sRGB));
-        if(!img.isValid()) return img;
+        auto img = UncompressedVideoPayload::allocate(ImageDesc(w, 1, PixelFormat::RGBA10_LE_sRGB));
+        if (!img.isValid()) return img;
         uint16_t *data = reinterpret_cast<uint16_t *>(img.modify()->data()[0].data());
-        for(size_t x = 0; x < w; x++) {
+        for (size_t x = 0; x < w; x++) {
                 data[x * 4 + 0] = r;
                 data[x * 4 + 1] = g;
                 data[x * 4 + 2] = b;
@@ -76,11 +77,10 @@ static UncompressedVideoPayload::Ptr makeUniformRGBA10LE(uint16_t r, uint16_t g,
 }
 
 static UncompressedVideoPayload::Ptr makeGradientRGBA8(size_t w, size_t h) {
-        auto img = UncompressedVideoPayload::allocate(
-                ImageDesc(w, h, PixelFormat::RGBA8_sRGB));
-        if(!img.isValid()) return img;
+        auto img = UncompressedVideoPayload::allocate(ImageDesc(w, h, PixelFormat::RGBA8_sRGB));
+        if (!img.isValid()) return img;
         uint8_t *data = img.modify()->data()[0].data();
-        for(size_t i = 0; i < w * h; i++) {
+        for (size_t i = 0; i < w * h; i++) {
                 data[i * 4 + 0] = static_cast<uint8_t>(64 + (i * 7) % 128);
                 data[i * 4 + 1] = static_cast<uint8_t>(64 + (i * 13) % 128);
                 data[i * 4 + 2] = static_cast<uint8_t>(64 + (i * 19) % 128);
@@ -97,10 +97,10 @@ static UncompressedVideoPayload::Ptr makeColorBars8(size_t w = 160, size_t h = 2
 
 // 100% SMPTE color bar definitions
 struct BarDef {
-        const char *name;
-        uint8_t r, g, b;
-        // BT.709 integer reference (fast-path output)
-        int y709, cb709, cr709;
+                const char *name;
+                uint8_t     r, g, b;
+                // BT.709 integer reference (fast-path output)
+                int y709, cb709, cr709;
 };
 
 // Canonical BT.709 limited-range integer fast-path outputs (8-bit).
@@ -112,20 +112,16 @@ struct BarDef {
 // of -0.1146, -0.3854, 0.5).  This is a standard 1-LSB rounding
 // artifact of the BT.709 integer matrix.
 static const BarDef bars100[] = {
-        {"White",   255, 255, 255, 235, 127, 128},
-        {"Yellow",  255, 255,   0, 219,  15, 138},
-        {"Cyan",      0, 255, 255, 188, 153,  16},
-        {"Green",     0, 255,   0, 172,  41,  26},
-        {"Magenta", 255,   0, 255,  79, 214, 230},
-        {"Red",     255,   0,   0,  63, 102, 240},
-        {"Blue",      0,   0, 255,  32, 240, 118},
-        {"Black",     0,   0,   0,  16, 127, 128},
+        {"White", 255, 255, 255, 235, 127, 128}, {"Yellow", 255, 255, 0, 219, 15, 138},
+        {"Cyan", 0, 255, 255, 188, 153, 16},     {"Green", 0, 255, 0, 172, 41, 26},
+        {"Magenta", 255, 0, 255, 79, 214, 230},  {"Red", 255, 0, 0, 63, 102, 240},
+        {"Blue", 0, 0, 255, 32, 240, 118},       {"Black", 0, 0, 0, 16, 127, 128},
 };
 
 // Convert a Color to limited-range 8-bit YCbCr integers
 static void colorToYCbCr8(const Color &ycbcr, int &y, int &cb, int &cr) {
         // Color stores YCbCr normalized to 0-1 via the ColorModel's range
-        y  = static_cast<int>(ycbcr.comp(0) * (235.0f - 16.0f) + 16.0f + 0.5f);
+        y = static_cast<int>(ycbcr.comp(0) * (235.0f - 16.0f) + 16.0f + 0.5f);
         cb = static_cast<int>(ycbcr.comp(1) * (240.0f - 16.0f) + 16.0f + 0.5f);
         cr = static_cast<int>(ycbcr.comp(2) * (240.0f - 16.0f) + 16.0f + 0.5f);
 }
@@ -133,8 +129,8 @@ static void colorToYCbCr8(const Color &ycbcr, int &y, int &cb, int &cr) {
 // Read Y/Cb/Cr from a YUYV 8-bit payload at a given pixel x position
 static void readYUYV8(const UncompressedVideoPayload &img, int x, int &y, int &cb, int &cr) {
         const uint8_t *d = img.plane(0).data();
-        int pair = x / 2;
-        y  = d[pair * 4 + (x % 2 == 0 ? 0 : 2)];
+        int            pair = x / 2;
+        y = d[pair * 4 + (x % 2 == 0 ? 0 : 2)];
         cb = d[pair * 4 + 1];
         cr = d[pair * 4 + 3];
 }
@@ -148,7 +144,7 @@ TEST_CASE("CSC infrastructure") {
                 CSCContext ctx(1920);
                 CHECK(ctx.isValid());
                 CHECK(ctx.maxWidth() == 1920);
-                for(int i = 0; i < CSCContext::BufferCount; i++) {
+                for (int i = 0; i < CSCContext::BufferCount; i++) {
                         CHECK(ctx.buffer(i) != nullptr);
                         CHECK((reinterpret_cast<uintptr_t>(ctx.buffer(i)) % CSCContext::BufferAlign) == 0);
                 }
@@ -172,7 +168,7 @@ TEST_CASE("CSC infrastructure") {
                 auto src = UncompressedVideoPayload::allocate(ImageDesc(16, 8, PixelFormat::RGBA8_sRGB));
                 REQUIRE(src.isValid());
                 uint8_t *d = src.modify()->data()[0].data();
-                for(size_t i = 0; i < 16 * 8 * 4; i++) d[i] = static_cast<uint8_t>(i & 0xFF);
+                for (size_t i = 0; i < 16 * 8 * 4; i++) d[i] = static_cast<uint8_t>(i & 0xFF);
                 auto dst = src->convert(PixelFormat::RGBA8_sRGB, src->desc().metadata());
                 CHECK(std::memcmp(src->plane(0).data(), dst->plane(0).data(), 16 * 8 * 4) == 0);
         }
@@ -184,7 +180,7 @@ TEST_CASE("CSC infrastructure") {
 
 TEST_CASE("CSC L1: Color::convert sRGB -> YCbCr_Rec709") {
         // Validate Color::convert() itself as the ground truth.
-        for(const auto &bar : bars100) {
+        for (const auto &bar : bars100) {
                 Color srgb = Color::srgb(bar.r / 255.0f, bar.g / 255.0f, bar.b / 255.0f, 1.0f);
                 Color ycbcr = srgb.convert(ColorModel(ColorModel::YCbCr_Rec709));
                 REQUIRE(ycbcr.isValid());
@@ -196,19 +192,26 @@ TEST_CASE("CSC L1: Color::convert sRGB -> YCbCr_Rec709") {
                 // function handling), so values differ from BT.709 integer math.
                 // Just validate they're in legal limited range.
                 INFO(bar.name << ": Y=" << y << " Cb=" << cb << " Cr=" << cr);
-                CHECK(y >= 16);  CHECK(y <= 235);
-                CHECK(cb >= 16); CHECK(cb <= 240);
-                CHECK(cr >= 16); CHECK(cr <= 240);
+                CHECK(y >= 16);
+                CHECK(y <= 235);
+                CHECK(cb >= 16);
+                CHECK(cb <= 240);
+                CHECK(cr >= 16);
+                CHECK(cr <= 240);
         }
 
         // Black and white must be exact
         Color black = Color::srgb(0, 0, 0, 1).convert(ColorModel(ColorModel::YCbCr_Rec709));
         Color white = Color::srgb(1, 1, 1, 1).convert(ColorModel(ColorModel::YCbCr_Rec709));
-        int y, cb, cr;
+        int   y, cb, cr;
         colorToYCbCr8(black, y, cb, cr);
-        CHECK(y == 16);  CHECK(cb == 128);  CHECK(cr == 128);
+        CHECK(y == 16);
+        CHECK(cb == 128);
+        CHECK(cr == 128);
         colorToYCbCr8(white, y, cb, cr);
-        CHECK(y == 235);  CHECK(cb == 128);  CHECK(cr == 128);
+        CHECK(y == 235);
+        CHECK(cb == 128);
+        CHECK(cr == 128);
 }
 
 // =========================================================================
@@ -218,10 +221,10 @@ TEST_CASE("CSC L1: Color::convert sRGB -> YCbCr_Rec709") {
 TEST_CASE("CSC L2: scalar pipeline vs Color::convert") {
         // The scalar generic pipeline should closely match Color::convert()
         // since both use float-domain EOTF + matrix + OETF.
-        for(const auto &bar : bars100) {
+        for (const auto &bar : bars100) {
                 Color srgb = Color::srgb(bar.r / 255.0f, bar.g / 255.0f, bar.b / 255.0f, 1.0f);
                 Color refYCbCr = srgb.convert(ColorModel(ColorModel::YCbCr_Rec709));
-                int refY, refCb, refCr;
+                int   refY, refCb, refCr;
                 colorToYCbCr8(refYCbCr, refY, refCb, refCr);
 
                 auto src = makeUniformRGBA8(bar.r, bar.g, bar.b);
@@ -231,10 +234,9 @@ TEST_CASE("CSC L2: scalar pipeline vs Color::convert") {
                 int pipeY, pipeCb, pipeCr;
                 readYUYV8(*dst, 0, pipeY, pipeCb, pipeCr);
 
-                INFO(bar.name << ": ref Y=" << refY << " pipe Y=" << pipeY
-                     << "  ref Cb=" << refCb << " pipe Cb=" << pipeCb
-                     << "  ref Cr=" << refCr << " pipe Cr=" << pipeCr);
-                CHECK(std::abs(pipeY  - refY)  <= 2);
+                INFO(bar.name << ": ref Y=" << refY << " pipe Y=" << pipeY << "  ref Cb=" << refCb
+                              << " pipe Cb=" << pipeCb << "  ref Cr=" << refCr << " pipe Cr=" << pipeCr);
+                CHECK(std::abs(pipeY - refY) <= 2);
                 CHECK(std::abs(pipeCb - refCb) <= 2);
                 CHECK(std::abs(pipeCr - refCr) <= 2);
         }
@@ -251,22 +253,19 @@ TEST_CASE("CSC L3: VideoTestPattern bars through scalar pipeline") {
         REQUIRE(dst.isValid());
 
         int barWidth = 160 / 8;
-        for(int i = 0; i < 8; i++) {
+        for (int i = 0; i < 8; i++) {
                 // Color::convert() reference for this bar
-                Color srgb = Color::srgb(bars100[i].r / 255.0f,
-                                         bars100[i].g / 255.0f,
-                                         bars100[i].b / 255.0f, 1.0f);
+                Color srgb = Color::srgb(bars100[i].r / 255.0f, bars100[i].g / 255.0f, bars100[i].b / 255.0f, 1.0f);
                 Color refYCbCr = srgb.convert(ColorModel(ColorModel::YCbCr_Rec709));
-                int refY, refCb, refCr;
+                int   refY, refCb, refCr;
                 colorToYCbCr8(refYCbCr, refY, refCb, refCr);
 
                 int cx = i * barWidth + barWidth / 2;
                 int pipeY, pipeCb, pipeCr;
                 readYUYV8(*dst, cx, pipeY, pipeCb, pipeCr);
 
-                INFO(bars100[i].name << " (VTP->scalar): ref Y=" << refY
-                     << " pipe Y=" << pipeY);
-                CHECK(std::abs(pipeY  - refY)  <= 2);
+                INFO(bars100[i].name << " (VTP->scalar): ref Y=" << refY << " pipe Y=" << pipeY);
+                CHECK(std::abs(pipeY - refY) <= 2);
                 CHECK(std::abs(pipeCb - refCb) <= 2);
                 CHECK(std::abs(pipeCr - refCr) <= 2);
         }
@@ -287,16 +286,15 @@ TEST_CASE("CSC L4: VideoTestPattern bars through fast path") {
         REQUIRE(p.isFastPath());
 
         int barWidth = 160 / 8;
-        for(int i = 0; i < 8; i++) {
+        for (int i = 0; i < 8; i++) {
                 int cx = i * barWidth + barWidth / 2;
                 int pipeY, pipeCb, pipeCr;
                 readYUYV8(*dst, cx, pipeY, pipeCb, pipeCr);
 
-                INFO(bars100[i].name << " (VTP->fastpath): Y=" << pipeY
-                     << " ref=" << bars100[i].y709
-                     << "  Cb=" << pipeCb << " ref=" << bars100[i].cb709
-                     << "  Cr=" << pipeCr << " ref=" << bars100[i].cr709);
-                CHECK(std::abs(pipeY  - bars100[i].y709)  <= 1);
+                INFO(bars100[i].name << " (VTP->fastpath): Y=" << pipeY << " ref=" << bars100[i].y709
+                                     << "  Cb=" << pipeCb << " ref=" << bars100[i].cb709 << "  Cr=" << pipeCr
+                                     << " ref=" << bars100[i].cr709);
+                CHECK(std::abs(pipeY - bars100[i].y709) <= 1);
                 CHECK(std::abs(pipeCb - bars100[i].cb709) <= 1);
                 CHECK(std::abs(pipeCr - bars100[i].cr709) <= 1);
         }
@@ -316,7 +314,8 @@ TEST_CASE("CSC L4: 75% bars through fast path") {
         // the Cb row coefficients sum to -1 after rounding).
         int whiteY, whiteCb, whiteCr;
         readYUYV8(*dst, barWidth / 2, whiteY, whiteCb, whiteCr);
-        CHECK(whiteY > 170);  CHECK(whiteY < 210);
+        CHECK(whiteY > 170);
+        CHECK(whiteY < 210);
         CHECK(std::abs(whiteCb - 128) <= 1);
         CHECK(std::abs(whiteCr - 128) <= 1);
 
@@ -342,16 +341,15 @@ TEST_CASE("CSC L5: round-trip RGB -> YCbCr -> RGB") {
 
                 // Measure per-bar round-trip error
                 int barWidth = 160 / 8;
-                for(int i = 0; i < 8; i++) {
-                        int cx = i * barWidth + barWidth / 2;
+                for (int i = 0; i < 8; i++) {
+                        int            cx = i * barWidth + barWidth / 2;
                         const uint8_t *orig = static_cast<const uint8_t *>(src->plane(0).data()) + cx * 4;
                         const uint8_t *trip = static_cast<const uint8_t *>(back->plane(0).data()) + cx * 4;
-                        int dR = std::abs((int)orig[0] - (int)trip[0]);
-                        int dG = std::abs((int)orig[1] - (int)trip[1]);
-                        int dB = std::abs((int)orig[2] - (int)trip[2]);
-                        int maxD = std::max({dR, dG, dB});
-                        INFO(bars100[i].name << " round-trip: dR=" << dR
-                             << " dG=" << dG << " dB=" << dB);
+                        int            dR = std::abs((int)orig[0] - (int)trip[0]);
+                        int            dG = std::abs((int)orig[1] - (int)trip[1]);
+                        int            dB = std::abs((int)orig[2] - (int)trip[2]);
+                        int            maxD = std::max({dR, dG, dB});
+                        INFO(bars100[i].name << " round-trip: dR=" << dR << " dG=" << dG << " dB=" << dB);
                         // Fast path round-trip: integer quantization + chroma
                         // subsampling. Achromatic colors (white/black/gray) should
                         // be near-exact; saturated colors may lose ~2 LSB.
@@ -393,9 +391,9 @@ TEST_CASE("CSC L6: cross-format consistency") {
 
         int barWidth = 160 / 8;
 
-        for(auto targetID : targets) {
+        for (auto targetID : targets) {
                 PixelFormat target(targetID);
-                if(target.id() == PixelFormat::YUV8_422_Rec709) continue;
+                if (target.id() == PixelFormat::YUV8_422_Rec709) continue;
 
                 auto dst = src->convert(target, src->desc().metadata());
                 REQUIRE(dst.isValid());
@@ -406,12 +404,12 @@ TEST_CASE("CSC L6: cross-format consistency") {
                 REQUIRE(refBack.isValid());
                 REQUIRE(dstBack.isValid());
 
-                int maxDiff = 0;
+                int            maxDiff = 0;
                 const uint8_t *r = refBack->plane(0).data();
                 const uint8_t *d = dstBack->plane(0).data();
-                for(size_t i = 0; i < 160 * 2 * 4; i++) {
+                for (size_t i = 0; i < 160 * 2 * 4; i++) {
                         int diff = std::abs((int)r[i] - (int)d[i]);
-                        if(diff > maxDiff) maxDiff = diff;
+                        if (diff > maxDiff) maxDiff = diff;
                 }
                 INFO("YUYV vs " << target.name() << ": maxDiff=" << maxDiff);
                 CHECK(maxDiff <= 1);
@@ -440,26 +438,27 @@ TEST_CASE("CSC L7: 10-bit bar values") {
         //   Cr = (( 448*R - 407*G -  41*B + 512) >> 10) + 512
         // Neutral gray has Cb=511 rather than 512 (same 1-LSB rounding
         // artifact as the 8-bit BT.709 matrix).
-        struct Ref10 { int y, cb, cr; };
+        struct Ref10 {
+                        int y, cb, cr;
+        };
         Ref10 refs[] = {
-                {939, 511, 512}, {876,  63, 553}, {753, 614,  64}, {690, 166, 105},
-                {313, 857, 919}, {250, 409, 960}, {127, 960, 471}, { 64, 512, 512},
+                {939, 511, 512}, {876, 63, 553},  {753, 614, 64},  {690, 166, 105},
+                {313, 857, 919}, {250, 409, 960}, {127, 960, 471}, {64, 512, 512},
         };
 
-        int barWidth = 160 / 8;
+        int             barWidth = 160 / 8;
         const uint16_t *yuv = reinterpret_cast<const uint16_t *>(dst->plane(0).data());
-        for(int i = 0; i < 8; i++) {
+        for (int i = 0; i < 8; i++) {
                 int cx = i * barWidth + barWidth / 2;
                 int pair = cx / 2;
-                int pY  = yuv[pair * 4 + (cx % 2 == 0 ? 1 : 3)];
+                int pY = yuv[pair * 4 + (cx % 2 == 0 ? 1 : 3)];
                 int pCb = yuv[pair * 4 + 0];
                 int pCr = yuv[pair * 4 + 2];
 
-                INFO(bars100[i].name << " 10b: Y=" << pY << " ref=" << refs[i].y
-                     << "  Cb=" << pCb << " ref=" << refs[i].cb
-                     << "  Cr=" << pCr << " ref=" << refs[i].cr);
+                INFO(bars100[i].name << " 10b: Y=" << pY << " ref=" << refs[i].y << "  Cb=" << pCb
+                                     << " ref=" << refs[i].cb << "  Cr=" << pCr << " ref=" << refs[i].cr);
                 // Direct 10-bit rendering + fast path should be tight
-                CHECK(std::abs(pY  - refs[i].y)  <= 2);
+                CHECK(std::abs(pY - refs[i].y) <= 2);
                 CHECK(std::abs(pCb - refs[i].cb) <= 2);
                 CHECK(std::abs(pCr - refs[i].cr) <= 2);
         }
@@ -474,7 +473,9 @@ TEST_CASE("CSC L8: range boundaries 8-bit") {
         auto b = makeUniformRGBA8(0, 0, 0)->convert(PixelFormat::YUV8_422_Rec709, Metadata());
         REQUIRE(b.isValid());
         const uint8_t *bd = b->plane(0).data();
-        CHECK(bd[0] == 16);  CHECK(bd[1] == 128);  CHECK(bd[3] == 128);
+        CHECK(bd[0] == 16);
+        CHECK(bd[1] == 128);
+        CHECK(bd[3] == 128);
 
         // White -> Y=235, Cb=Cr≈128 (±1 LSB for Cb due to the BT.709
         // integer matrix's row sum being -1 instead of 0).
@@ -489,15 +490,19 @@ TEST_CASE("CSC L8: range boundaries 8-bit") {
         auto g = makeUniformRGBA8(128, 128, 128)->convert(PixelFormat::YUV8_422_Rec709, Metadata());
         REQUIRE(g.isValid());
         const uint8_t *gd = g->plane(0).data();
-        CHECK(gd[1] == 128);  CHECK(gd[3] == 128);
-        CHECK(gd[0] > 16);   CHECK(gd[0] < 235);
+        CHECK(gd[1] == 128);
+        CHECK(gd[3] == 128);
+        CHECK(gd[0] > 16);
+        CHECK(gd[0] < 235);
 }
 
 TEST_CASE("CSC L8: range boundaries 10-bit") {
         auto b = makeUniformRGBA10LE(0, 0, 0)->convert(PixelFormat::YUV10_422_UYVY_LE_Rec709, Metadata());
         REQUIRE(b.isValid());
         const uint16_t *bd = reinterpret_cast<const uint16_t *>(b->plane(0).data());
-        CHECK(bd[1] == 64);  CHECK(bd[0] == 512);  CHECK(bd[2] == 512);
+        CHECK(bd[1] == 64);
+        CHECK(bd[0] == 512);
+        CHECK(bd[2] == 512);
 
         auto w = makeUniformRGBA10LE(1023, 1023, 1023)->convert(PixelFormat::YUV10_422_UYVY_LE_Rec709, Metadata());
         REQUIRE(w.isValid());
@@ -521,9 +526,9 @@ TEST_CASE("CSC L8: range boundaries 12-bit") {
                 CSCPipeline p(PixelFormat::RGBA12_LE_sRGB, PixelFormat::YUV12_422_UYVY_LE_Rec709);
                 CHECK(p.isFastPath());
                 const uint16_t *yuv = reinterpret_cast<const uint16_t *>(dst->plane(0).data());
-                CHECK(std::abs((int)yuv[1] - 256) <= 2);   // Y ~ 256
-                CHECK(std::abs((int)yuv[0] - 2048) <= 2);  // Cb ~ 2048
-                CHECK(std::abs((int)yuv[2] - 2048) <= 2);  // Cr ~ 2048
+                CHECK(std::abs((int)yuv[1] - 256) <= 2);  // Y ~ 256
+                CHECK(std::abs((int)yuv[0] - 2048) <= 2); // Cb ~ 2048
+                CHECK(std::abs((int)yuv[2] - 2048) <= 2); // Cr ~ 2048
         }
 
         SUBCASE("black 12-bit Planar 420 Rec.709") {
@@ -588,19 +593,16 @@ TEST_CASE("CSC L8: range boundaries 12-bit") {
                 auto src = UncompressedVideoPayload::allocate(ImageDesc(4, 2, PixelFormat::RGBA12_LE_sRGB));
                 REQUIRE(src.isValid());
                 uint16_t *d = reinterpret_cast<uint16_t *>(src.modify()->data()[0].data());
-                for(int i = 0; i < 4 * 2 * 4; i++) d[i] = 2048;
+                for (int i = 0; i < 4 * 2 * 4; i++) d[i] = 2048;
 
                 PixelFormat::ID targets[] = {
-                        PixelFormat::YUV12_422_UYVY_LE_Rec709,
-                        PixelFormat::YUV12_422_Planar_LE_Rec709,
-                        PixelFormat::YUV12_420_Planar_LE_Rec709,
-                        PixelFormat::YUV12_420_SemiPlanar_LE_Rec709,
-                        PixelFormat::YUV12_422_UYVY_LE_Rec2020,
-                        PixelFormat::YUV12_420_Planar_LE_Rec2020,
+                        PixelFormat::YUV12_422_UYVY_LE_Rec709,   PixelFormat::YUV12_422_Planar_LE_Rec709,
+                        PixelFormat::YUV12_420_Planar_LE_Rec709, PixelFormat::YUV12_420_SemiPlanar_LE_Rec709,
+                        PixelFormat::YUV12_422_UYVY_LE_Rec2020,  PixelFormat::YUV12_420_Planar_LE_Rec2020,
                 };
-                for(auto tid : targets) {
+                for (auto tid : targets) {
                         PixelFormat target(tid);
-                        auto yuv = src->convert(target, Metadata());
+                        auto        yuv = src->convert(target, Metadata());
                         REQUIRE(yuv.isValid());
                         auto back = yuv->convert(PixelFormat::RGBA12_LE_sRGB, Metadata());
                         INFO("12-bit round-trip: " << target.name());
@@ -613,13 +615,13 @@ TEST_CASE("CSC L8: range boundaries 12-bit") {
                 auto src = UncompressedVideoPayload::allocate(ImageDesc(2, 1, PixelFormat::RGBA12_LE_sRGB));
                 REQUIRE(src.isValid());
                 uint16_t *d = reinterpret_cast<uint16_t *>(src.modify()->data()[0].data());
-                for(int i = 0; i < 8; i++) d[i] = 4095;
+                for (int i = 0; i < 8; i++) d[i] = 4095;
                 auto dst = src->convert(PixelFormat::YUV12_422_UYVY_LE_Rec709, Metadata());
                 REQUIRE(dst.isValid());
                 const uint16_t *yuv = reinterpret_cast<const uint16_t *>(dst->plane(0).data());
-                CHECK(std::abs((int)yuv[1] - 3760) <= 2);  // Y ~ 3760
-                CHECK(std::abs((int)yuv[0] - 2048) <= 2);  // Cb achromatic
-                CHECK(std::abs((int)yuv[2] - 2048) <= 2);  // Cr achromatic
+                CHECK(std::abs((int)yuv[1] - 3760) <= 2); // Y ~ 3760
+                CHECK(std::abs((int)yuv[0] - 2048) <= 2); // Cb achromatic
+                CHECK(std::abs((int)yuv[2] - 2048) <= 2); // Cr achromatic
         }
 }
 
@@ -651,7 +653,7 @@ TEST_CASE("CSC L8: edge cases") {
                 auto s = UncompressedVideoPayload::allocate(ImageDesc(8, 1, PixelFormat::RGBA10_LE_sRGB));
                 REQUIRE(s.isValid());
                 uint16_t *d = reinterpret_cast<uint16_t *>(s.modify()->data()[0].data());
-                for(int i = 0; i < 8 * 4; i++) d[i] = 512;
+                for (int i = 0; i < 8 * 4; i++) d[i] = 512;
                 CHECK(s->convert(PixelFormat::YUV10_422_v210_Rec709, Metadata()).isValid());
         }
         SUBCASE("HD 1920 round-trip") {
@@ -701,10 +703,18 @@ TEST_CASE("CSC L9: VideoTestPattern bars Rec.601 vs Rec.709") {
 
 TEST_CASE("CSC L9: Rec.601 round-trips") {
         auto src = makeGradientRGBA8(8, 2);
-        SUBCASE("YUYV Rec.601")  { CHECK(src->convert(PixelFormat::YUV8_422_Rec601, src->desc().metadata()).isValid()); }
-        SUBCASE("UYVY Rec.601")  { CHECK(src->convert(PixelFormat::YUV8_422_UYVY_Rec601, src->desc().metadata()).isValid()); }
-        SUBCASE("NV12 Rec.601")  { CHECK(src->convert(PixelFormat::YUV8_420_SemiPlanar_Rec601, src->desc().metadata()).isValid()); }
-        SUBCASE("Planar Rec.601"){ CHECK(src->convert(PixelFormat::YUV8_420_Planar_Rec601, src->desc().metadata()).isValid()); }
+        SUBCASE("YUYV Rec.601") {
+                CHECK(src->convert(PixelFormat::YUV8_422_Rec601, src->desc().metadata()).isValid());
+        }
+        SUBCASE("UYVY Rec.601") {
+                CHECK(src->convert(PixelFormat::YUV8_422_UYVY_Rec601, src->desc().metadata()).isValid());
+        }
+        SUBCASE("NV12 Rec.601") {
+                CHECK(src->convert(PixelFormat::YUV8_420_SemiPlanar_Rec601, src->desc().metadata()).isValid());
+        }
+        SUBCASE("Planar Rec.601") {
+                CHECK(src->convert(PixelFormat::YUV8_420_Planar_Rec601, src->desc().metadata()).isValid());
+        }
 }
 
 TEST_CASE("CSC L9: Rec.2020 10-bit") {
@@ -713,7 +723,9 @@ TEST_CASE("CSC L9: Rec.2020 10-bit") {
                 auto d = b->convert(PixelFormat::YUV10_422_UYVY_LE_Rec2020, Metadata());
                 REQUIRE(d.isValid());
                 const uint16_t *yuv = reinterpret_cast<const uint16_t *>(d->plane(0).data());
-                CHECK(yuv[1] == 64);  CHECK(yuv[0] == 512);  CHECK(yuv[2] == 512);
+                CHECK(yuv[1] == 64);
+                CHECK(yuv[0] == 512);
+                CHECK(yuv[2] == 512);
 
                 auto w = makeUniformRGBA10LE(1023, 1023, 1023);
                 auto dw = w->convert(PixelFormat::YUV10_422_UYVY_LE_Rec2020, Metadata());
@@ -728,7 +740,7 @@ TEST_CASE("CSC L9: Rec.2020 10-bit") {
                 auto y2020 = g->convert(PixelFormat::YUV10_422_UYVY_LE_Rec2020, Metadata());
                 REQUIRE(y709.isValid());
                 REQUIRE(y2020.isValid());
-                int l709  = reinterpret_cast<const uint16_t *>(y709->plane(0).data())[1];
+                int l709 = reinterpret_cast<const uint16_t *>(y709->plane(0).data())[1];
                 int l2020 = reinterpret_cast<const uint16_t *>(y2020->plane(0).data())[1];
                 CHECK(l709 != l2020);
         }
@@ -748,11 +760,21 @@ TEST_CASE("CSC planar format coverage") {
                 CHECK(y->desc().pixelFormat().memLayout().planeCount() == 3);
                 CHECK(y->convert(PixelFormat::RGBA8_sRGB, Metadata()).isValid());
         }
-        SUBCASE("420 planar")     { CHECK(src->convert(PixelFormat::YUV8_420_Planar_Rec709, src->desc().metadata()).isValid()); }
-        SUBCASE("NV12")           { CHECK(src->convert(PixelFormat::YUV8_420_SemiPlanar_Rec709, src->desc().metadata()).isValid()); }
-        SUBCASE("NV21")           { CHECK(src->convert(PixelFormat::YUV8_420_NV21_Rec709, src->desc().metadata()).isValid()); }
-        SUBCASE("NV16")           { CHECK(src->convert(PixelFormat::YUV8_422_SemiPlanar_Rec709, src->desc().metadata()).isValid()); }
-        SUBCASE("411")            { CHECK(src->convert(PixelFormat::YUV8_411_Planar_Rec709, src->desc().metadata()).isValid()); }
+        SUBCASE("420 planar") {
+                CHECK(src->convert(PixelFormat::YUV8_420_Planar_Rec709, src->desc().metadata()).isValid());
+        }
+        SUBCASE("NV12") {
+                CHECK(src->convert(PixelFormat::YUV8_420_SemiPlanar_Rec709, src->desc().metadata()).isValid());
+        }
+        SUBCASE("NV21") {
+                CHECK(src->convert(PixelFormat::YUV8_420_NV21_Rec709, src->desc().metadata()).isValid());
+        }
+        SUBCASE("NV16") {
+                CHECK(src->convert(PixelFormat::YUV8_422_SemiPlanar_Rec709, src->desc().metadata()).isValid());
+        }
+        SUBCASE("411") {
+                CHECK(src->convert(PixelFormat::YUV8_411_Planar_Rec709, src->desc().metadata()).isValid());
+        }
 
         SUBCASE("planar vs interleaved equivalence (scalar)") {
                 auto yP = src->convert(PixelFormat::YUV8_422_Planar_Rec709, src->desc().metadata(), scalarConfig());
@@ -763,10 +785,10 @@ TEST_CASE("CSC planar format coverage") {
                 REQUIRE(bI.isValid());
                 const uint8_t *rp = static_cast<const uint8_t *>(bP->plane(0).data());
                 const uint8_t *ri = static_cast<const uint8_t *>(bI->plane(0).data());
-                int maxDiff = 0;
-                for(size_t i = 0; i < 8 * 4 * 4; i++) {
+                int            maxDiff = 0;
+                for (size_t i = 0; i < 8 * 4 * 4; i++) {
                         int d = std::abs((int)rp[i] - (int)ri[i]);
-                        if(d > maxDiff) maxDiff = d;
+                        if (d > maxDiff) maxDiff = d;
                 }
                 CHECK(maxDiff <= 2);
         }
@@ -781,10 +803,10 @@ TEST_CASE("CSC planar format coverage") {
                 REQUIRE(r21.isValid());
                 const uint8_t *d12 = static_cast<const uint8_t *>(r12->plane(0).data());
                 const uint8_t *d21 = static_cast<const uint8_t *>(r21->plane(0).data());
-                int maxDiff = 0;
-                for(size_t i = 0; i < 8 * 4; i++) {
+                int            maxDiff = 0;
+                for (size_t i = 0; i < 8 * 4; i++) {
                         int d = std::abs((int)d12[i] - (int)d21[i]);
-                        if(d > maxDiff) maxDiff = d;
+                        if (d > maxDiff) maxDiff = d;
                 }
                 CHECK(maxDiff <= 6);
         }
@@ -808,40 +830,44 @@ TEST_CASE("CSC BGRA8 <-> RGBA8 scalar correctness") {
 
         const uint8_t *orig = static_cast<const uint8_t *>(src->plane(0).data());
         const uint8_t *trip = static_cast<const uint8_t *>(back->plane(0).data());
-        CHECK(trip[0] == orig[0]);  // R
-        CHECK(trip[1] == orig[1]);  // G
-        CHECK(trip[2] == orig[2]);  // B
-        CHECK(trip[3] == orig[3]);  // A
+        CHECK(trip[0] == orig[0]); // R
+        CHECK(trip[1] == orig[1]); // G
+        CHECK(trip[2] == orig[2]); // B
+        CHECK(trip[3] == orig[3]); // A
 
         // Also verify the intermediate BGRA has swapped R and B
         const uint8_t *bd = static_cast<const uint8_t *>(bgra->plane(0).data());
-        CHECK(bd[0] == orig[2]);  // BGRA[0] = B = orig R position? No: BGRA[0] = B = orig[2]
-        CHECK(bd[1] == orig[1]);  // G
-        CHECK(bd[2] == orig[0]);  // R
-        CHECK(bd[3] == orig[3]);  // A
+        CHECK(bd[0] == orig[2]); // BGRA[0] = B = orig R position? No: BGRA[0] = B = orig[2]
+        CHECK(bd[1] == orig[1]); // G
+        CHECK(bd[2] == orig[0]); // R
+        CHECK(bd[3] == orig[3]); // A
 }
 
 TEST_CASE("CSC fast-path cross-validation") {
-        struct Pair { PixelFormat::ID src; PixelFormat::ID dst; int tolerance; };
+        struct Pair {
+                        PixelFormat::ID src;
+                        PixelFormat::ID dst;
+                        int             tolerance;
+        };
         Pair pairs[] = {
-                {PixelFormat::RGBA8_sRGB,               PixelFormat::RGB8_sRGB,  0},
-                {PixelFormat::RGB8_sRGB,                PixelFormat::RGBA8_sRGB, 0},
-                {PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_422_Rec709, 35},
-                {PixelFormat::YUV8_422_Rec709,          PixelFormat::RGBA8_sRGB, 35},
-                {PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_422_UYVY_Rec709, 35},
-                {PixelFormat::YUV8_422_UYVY_Rec709,     PixelFormat::RGBA8_sRGB, 35},
-                {PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_420_SemiPlanar_Rec709, 35},
+                {PixelFormat::RGBA8_sRGB, PixelFormat::RGB8_sRGB, 0},
+                {PixelFormat::RGB8_sRGB, PixelFormat::RGBA8_sRGB, 0},
+                {PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_Rec709, 35},
+                {PixelFormat::YUV8_422_Rec709, PixelFormat::RGBA8_sRGB, 35},
+                {PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_UYVY_Rec709, 35},
+                {PixelFormat::YUV8_422_UYVY_Rec709, PixelFormat::RGBA8_sRGB, 35},
+                {PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_420_SemiPlanar_Rec709, 35},
                 {PixelFormat::YUV8_420_SemiPlanar_Rec709, PixelFormat::RGBA8_sRGB, 35},
-                {PixelFormat::RGB8_sRGB,                PixelFormat::YUV8_420_SemiPlanar_Rec709, 35},
-                {PixelFormat::YUV8_420_SemiPlanar_Rec709, PixelFormat::RGB8_sRGB,  35},
-                {PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_420_NV21_Rec709, 35},
-                {PixelFormat::YUV8_420_NV21_Rec709,     PixelFormat::RGBA8_sRGB, 35},
-                {PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_422_SemiPlanar_Rec709, 35},
+                {PixelFormat::RGB8_sRGB, PixelFormat::YUV8_420_SemiPlanar_Rec709, 35},
+                {PixelFormat::YUV8_420_SemiPlanar_Rec709, PixelFormat::RGB8_sRGB, 35},
+                {PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_420_NV21_Rec709, 35},
+                {PixelFormat::YUV8_420_NV21_Rec709, PixelFormat::RGBA8_sRGB, 35},
+                {PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_SemiPlanar_Rec709, 35},
                 {PixelFormat::YUV8_422_SemiPlanar_Rec709, PixelFormat::RGBA8_sRGB, 35},
-                {PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_422_Planar_Rec709, 35},
-                {PixelFormat::YUV8_422_Planar_Rec709,   PixelFormat::RGBA8_sRGB, 35},
-                {PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_420_Planar_Rec709, 35},
-                {PixelFormat::YUV8_420_Planar_Rec709,   PixelFormat::RGBA8_sRGB, 35},
+                {PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_Planar_Rec709, 35},
+                {PixelFormat::YUV8_422_Planar_Rec709, PixelFormat::RGBA8_sRGB, 35},
+                {PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_420_Planar_Rec709, 35},
+                {PixelFormat::YUV8_420_Planar_Rec709, PixelFormat::RGBA8_sRGB, 35},
         };
 
         // Exercise several widths so the SIMD fast-paths get hit at
@@ -856,18 +882,19 @@ TEST_CASE("CSC fast-path cross-validation") {
         //   48, 63:         SIMD iter + scalar-pair tail, odd trailing pixel
         size_t widths[] = {16, 17, 30, 31, 32, 33, 48, 63};
 
-        for(size_t w : widths) {
+        for (size_t w : widths) {
                 auto src = makeGradientRGBA8(w, 2);
                 REQUIRE(src.isValid());
 
-                for(const auto &p : pairs) {
+                for (const auto &p : pairs) {
                         PixelFormat srcPD(p.src);
                         PixelFormat dstPD(p.dst);
                         CSCPipeline fp(srcPD, dstPD);
                         REQUIRE(fp.isFastPath());
 
-                        auto fpSrc = (p.src == PixelFormat::RGBA8_sRGB) ? src :
-                                      src->convert(srcPD, src->desc().metadata(), scalarConfig());
+                        auto fpSrc = (p.src == PixelFormat::RGBA8_sRGB)
+                                             ? src
+                                             : src->convert(srcPD, src->desc().metadata(), scalarConfig());
                         REQUIRE(fpSrc.isValid());
 
                         auto dstOpt = fpSrc->convert(dstPD, fpSrc->desc().metadata());
@@ -876,18 +903,17 @@ TEST_CASE("CSC fast-path cross-validation") {
                         REQUIRE(dstScalar.isValid());
 
                         int maxDiff = 0;
-                        for(int pl = 0; pl < static_cast<int>(dstPD.planeCount()); pl++) {
-                                size_t bytes = dstOpt->plane(pl).size();
+                        for (int pl = 0; pl < static_cast<int>(dstPD.planeCount()); pl++) {
+                                size_t         bytes = dstOpt->plane(pl).size();
                                 const uint8_t *o = static_cast<const uint8_t *>(dstOpt->plane(pl).data());
                                 const uint8_t *s = static_cast<const uint8_t *>(dstScalar->plane(pl).data());
-                                for(size_t i = 0; i < bytes; i++) {
+                                for (size_t i = 0; i < bytes; i++) {
                                         int d = std::abs((int)o[i] - (int)s[i]);
-                                        if(d > maxDiff) maxDiff = d;
+                                        if (d > maxDiff) maxDiff = d;
                                 }
                         }
-                        INFO(srcPD.name() << " -> " << dstPD.name()
-                             << "  width=" << w
-                             << "  maxDiff=" << maxDiff << "  tol=" << p.tolerance);
+                        INFO(srcPD.name() << " -> " << dstPD.name() << "  width=" << w << "  maxDiff=" << maxDiff
+                                          << "  tol=" << p.tolerance);
                         CHECK(maxDiff <= p.tolerance);
                 }
         }
@@ -903,13 +929,12 @@ TEST_CASE("CSC fast-path cross-validation") {
 // G and B and the image displays entirely in the red channel.
 
 static UncompressedVideoPayload::Ptr makeMonoRamp8(size_t w = 32, size_t h = 2) {
-        auto img = UncompressedVideoPayload::allocate(
-                ImageDesc(w, h, PixelFormat::Mono8_sRGB));
-        if(!img.isValid()) return img;
-        uint8_t *data = img.modify()->data()[0].data();
+        auto img = UncompressedVideoPayload::allocate(ImageDesc(w, h, PixelFormat::Mono8_sRGB));
+        if (!img.isValid()) return img;
+        uint8_t     *data = img.modify()->data()[0].data();
         const size_t stride = img->desc().pixelFormat().memLayout().lineStride(0, w);
-        for(size_t y = 0; y < h; y++) {
-                for(size_t x = 0; x < w; x++) {
+        for (size_t y = 0; y < h; y++) {
+                for (size_t x = 0; x < w; x++) {
                         data[y * stride + x] = static_cast<uint8_t>((x * 255) / (w - 1));
                 }
         }
@@ -928,16 +953,14 @@ TEST_CASE("CSC Mono8_sRGB -> RGBA8_sRGB round-trips as gray") {
 
         const uint8_t *srcData = src->plane(0).data();
         const uint8_t *dstData = dst->plane(0).data();
-        const size_t srcStride = src->desc().pixelFormat().memLayout().lineStride(0, src->desc().width());
-        const size_t dstStride = dst->desc().pixelFormat().memLayout().lineStride(0, dst->desc().width());
-        for(size_t y = 0; y < dst->desc().height(); y++) {
-                for(size_t x = 0; x < dst->desc().width(); x++) {
-                        uint8_t luma = srcData[y * srcStride + x];
+        const size_t   srcStride = src->desc().pixelFormat().memLayout().lineStride(0, src->desc().width());
+        const size_t   dstStride = dst->desc().pixelFormat().memLayout().lineStride(0, dst->desc().width());
+        for (size_t y = 0; y < dst->desc().height(); y++) {
+                for (size_t x = 0; x < dst->desc().width(); x++) {
+                        uint8_t        luma = srcData[y * srcStride + x];
                         const uint8_t *px = dstData + y * dstStride + x * 4;
-                        INFO("pixel x=" << x << " y=" << y
-                             << "  luma=" << (int)luma
-                             << "  rgba=(" << (int)px[0] << "," << (int)px[1]
-                             << "," << (int)px[2] << "," << (int)px[3] << ")");
+                        INFO("pixel x=" << x << " y=" << y << "  luma=" << (int)luma << "  rgba=(" << (int)px[0] << ","
+                                        << (int)px[1] << "," << (int)px[2] << "," << (int)px[3] << ")");
                         CHECK(std::abs(int(px[0]) - int(luma)) <= 1);
                         CHECK(std::abs(int(px[1]) - int(luma)) <= 1);
                         CHECK(std::abs(int(px[2]) - int(luma)) <= 1);
@@ -958,11 +981,11 @@ TEST_CASE("CSC Mono8_sRGB -> RGB8_sRGB round-trips as gray") {
 
         const uint8_t *srcData = src->plane(0).data();
         const uint8_t *dstData = dst->plane(0).data();
-        const size_t srcStride = src->desc().pixelFormat().memLayout().lineStride(0, src->desc().width());
-        const size_t dstStride = dst->desc().pixelFormat().memLayout().lineStride(0, dst->desc().width());
-        for(size_t y = 0; y < dst->desc().height(); y++) {
-                for(size_t x = 0; x < dst->desc().width(); x++) {
-                        uint8_t luma = srcData[y * srcStride + x];
+        const size_t   srcStride = src->desc().pixelFormat().memLayout().lineStride(0, src->desc().width());
+        const size_t   dstStride = dst->desc().pixelFormat().memLayout().lineStride(0, dst->desc().width());
+        for (size_t y = 0; y < dst->desc().height(); y++) {
+                for (size_t x = 0; x < dst->desc().width(); x++) {
+                        uint8_t        luma = srcData[y * srcStride + x];
                         const uint8_t *px = dstData + y * dstStride + x * 3;
                         CHECK(std::abs(int(px[0]) - int(luma)) <= 1);
                         CHECK(std::abs(int(px[1]) - int(luma)) <= 1);
@@ -983,14 +1006,13 @@ TEST_CASE("CSC Mono8_sRGB -> YUV8_422_Rec709 produces neutral chroma") {
         auto src = makeMonoRamp8(/*w=*/32, /*h=*/2);
         REQUIRE(src.isValid());
 
-        auto dst = src->convert(PixelFormat(PixelFormat::YUV8_422_Rec709),
-                                src->desc().metadata(), scalarConfig());
+        auto dst = src->convert(PixelFormat(PixelFormat::YUV8_422_Rec709), src->desc().metadata(), scalarConfig());
         REQUIRE(dst.isValid());
         REQUIRE(dst->desc().pixelFormat().id() == PixelFormat::YUV8_422_Rec709);
 
         int prevY = -1;
         int minY = 255, maxY = 0;
-        for(size_t x = 0; x < dst->desc().width(); x++) {
+        for (size_t x = 0; x < dst->desc().width(); x++) {
                 int yv, cb, cr;
                 readYUYV8(*dst, static_cast<int>(x), yv, cb, cr);
                 INFO("x=" << x << " Y=" << yv << " Cb=" << cb << " Cr=" << cr);
@@ -1001,8 +1023,8 @@ TEST_CASE("CSC Mono8_sRGB -> YUV8_422_Rec709 produces neutral chroma") {
                 // Y must be monotonically non-decreasing for a luma ramp.
                 CHECK(yv >= prevY);
                 prevY = yv;
-                if(yv < minY) minY = yv;
-                if(yv > maxY) maxY = yv;
+                if (yv < minY) minY = yv;
+                if (yv > maxY) maxY = yv;
         }
         // Black input should land on the limited-range floor (around 16)
         // and white input should land on the ceiling (around 235), with
@@ -1018,7 +1040,7 @@ TEST_CASE("CSC Mono8_sRGB -> YUV8_422_Rec709 produces neutral chroma") {
 TEST_CASE("CSCPipeline::cached returns a valid compiled pipeline") {
         PixelFormat src = PixelFormat::RGBA8_sRGB;
         PixelFormat dst = PixelFormat::YUV8_422_Rec709;
-        auto p = CSCPipeline::cached(src, dst);
+        auto        p = CSCPipeline::cached(src, dst);
         REQUIRE(p.isValid());
         CHECK(p->isValid());
 }
@@ -1026,8 +1048,8 @@ TEST_CASE("CSCPipeline::cached returns a valid compiled pipeline") {
 TEST_CASE("CSCPipeline::cached returns the same object on repeated calls") {
         PixelFormat src = PixelFormat::RGBA8_sRGB;
         PixelFormat dst = PixelFormat::YUV8_422_Rec709;
-        auto p1 = CSCPipeline::cached(src, dst);
-        auto p2 = CSCPipeline::cached(src, dst);
+        auto        p1 = CSCPipeline::cached(src, dst);
+        auto        p2 = CSCPipeline::cached(src, dst);
         REQUIRE(p1.isValid());
         REQUIRE(p2.isValid());
         // Both callers should share the same compiled pipeline instance.
@@ -1053,11 +1075,11 @@ TEST_CASE("CSCPipeline::cached produces correct output") {
         REQUIRE(src.isValid());
         uint8_t *sp = src.modify()->data()[0].data();
         // Fill with a non-neutral color so chroma is exercised.
-        for(int i = 0; i < 8; i++) {
-                sp[i * 4 + 0] = 200;  // R
-                sp[i * 4 + 1] =  80;  // G
-                sp[i * 4 + 2] =  40;  // B
-                sp[i * 4 + 3] = 255;  // A
+        for (int i = 0; i < 8; i++) {
+                sp[i * 4 + 0] = 200; // R
+                sp[i * 4 + 1] = 80;  // G
+                sp[i * 4 + 2] = 40;  // B
+                sp[i * 4 + 3] = 255; // A
         }
 
         // Reference via fresh pipeline.
@@ -1075,10 +1097,10 @@ TEST_CASE("CSCPipeline::cached produces correct output") {
         cached->execute(*src, *cachedDst.modify());
 
         // Outputs must be byte-identical.
-        size_t nbytes = refDst->plane(0).size();
+        size_t         nbytes = refDst->plane(0).size();
         const uint8_t *rd = refDst->plane(0).data();
         const uint8_t *cd = cachedDst->plane(0).data();
-        bool match = (memcmp(rd, cd, nbytes) == 0);
+        bool           match = (memcmp(rd, cd, nbytes) == 0);
         CHECK(match);
 }
 
@@ -1094,10 +1116,10 @@ TEST_CASE("v210 RGBA8 fast path: RGBA8 -> v210 round-trip via RGBA8") {
         auto src = UncompressedVideoPayload::allocate(ImageDesc(8, 1, PixelFormat::RGBA8_sRGB));
         REQUIRE(src.isValid());
         uint8_t *sp = src.modify()->data()[0].data();
-        for(int i = 0; i < 8; i++) {
+        for (int i = 0; i < 8; i++) {
                 sp[i * 4 + 0] = 180;
                 sp[i * 4 + 1] = 100;
-                sp[i * 4 + 2] =  60;
+                sp[i * 4 + 2] = 60;
                 sp[i * 4 + 3] = 255;
         }
 
@@ -1116,14 +1138,12 @@ TEST_CASE("v210 RGBA8 fast path: RGBA8 -> v210 round-trip via RGBA8") {
         // of a 10-bit intermediate introduces up to 4 LSB of error on
         // reconstruction).
         const uint8_t *bd = static_cast<const uint8_t *>(back->plane(0).data());
-        for(int i = 0; i < 8; i++) {
-                INFO("px " << i
-                        << " R " << (int)bd[i*4+0]
-                        << " G " << (int)bd[i*4+1]
-                        << " B " << (int)bd[i*4+2]);
-                CHECK(std::abs((int)bd[i*4+0] - 180) <= 10);
-                CHECK(std::abs((int)bd[i*4+1] - 100) <= 10);
-                CHECK(std::abs((int)bd[i*4+2] -  60) <= 10);
+        for (int i = 0; i < 8; i++) {
+                INFO("px " << i << " R " << (int)bd[i * 4 + 0] << " G " << (int)bd[i * 4 + 1] << " B "
+                           << (int)bd[i * 4 + 2]);
+                CHECK(std::abs((int)bd[i * 4 + 0] - 180) <= 10);
+                CHECK(std::abs((int)bd[i * 4 + 1] - 100) <= 10);
+                CHECK(std::abs((int)bd[i * 4 + 2] - 60) <= 10);
         }
 }
 
@@ -1150,9 +1170,15 @@ TEST_CASE("CSC YUYV8 -> UYVY8 byte-swap correctness") {
         REQUIRE(src.isValid());
         uint8_t *sp = src.modify()->data()[0].data();
         // Pair 0: Y0=16, Cb=128, Y1=235, Cr=200
-        sp[0] = 16;  sp[1] = 128; sp[2] = 235; sp[3] = 200;
+        sp[0] = 16;
+        sp[1] = 128;
+        sp[2] = 235;
+        sp[3] = 200;
         // Pair 1: Y0=100, Cb=64, Y1=180, Cr=192
-        sp[4] = 100; sp[5] = 64;  sp[6] = 180; sp[7] = 192;
+        sp[4] = 100;
+        sp[5] = 64;
+        sp[6] = 180;
+        sp[7] = 192;
 
         auto dst = src->convert(PixelFormat::YUV8_422_UYVY_Rec709, src->desc().metadata());
         REQUIRE(dst.isValid());
@@ -1177,8 +1203,14 @@ TEST_CASE("CSC UYVY8 -> YUYV8 byte-swap correctness") {
         REQUIRE(src.isValid());
         uint8_t *sp = src.modify()->data()[0].data();
         // UYVY pair: [Cb, Y0, Cr, Y1]
-        sp[0] = 128; sp[1] = 16;  sp[2] = 200; sp[3] = 235;
-        sp[4] = 64;  sp[5] = 100; sp[6] = 192; sp[7] = 180;
+        sp[0] = 128;
+        sp[1] = 16;
+        sp[2] = 200;
+        sp[3] = 235;
+        sp[4] = 64;
+        sp[5] = 100;
+        sp[6] = 192;
+        sp[7] = 180;
 
         auto dst = src->convert(PixelFormat::YUV8_422_Rec709, src->desc().metadata());
         REQUIRE(dst.isValid());
@@ -1200,8 +1232,8 @@ TEST_CASE("CSC YUYV8 <-> UYVY8 round-trip is lossless") {
         auto src = UncompressedVideoPayload::allocate(ImageDesc(320, 4, PixelFormat::YUV8_422_Rec709));
         REQUIRE(src.isValid());
         uint8_t *sp = src.modify()->data()[0].data();
-        size_t nbytes = src->plane(0).size();
-        for(size_t i = 0; i < nbytes; i++) sp[i] = static_cast<uint8_t>(i & 0xFF);
+        size_t   nbytes = src->plane(0).size();
+        for (size_t i = 0; i < nbytes; i++) sp[i] = static_cast<uint8_t>(i & 0xFF);
 
         auto uyvy = src->convert(PixelFormat::YUV8_422_UYVY_Rec709, src->desc().metadata());
         REQUIRE(uyvy.isValid());

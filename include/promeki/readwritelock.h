@@ -36,14 +36,10 @@ class ReadWriteLock {
                                  * @brief Constructs a ReadLocker and acquires a shared lock.
                                  * @param lock The ReadWriteLock to lock for reading.
                                  */
-                                ReadLocker(ReadWriteLock &lock) : _lock(lock) {
-                                        _lock.lockForRead();
-                                }
+                                ReadLocker(ReadWriteLock &lock) : _lock(lock) { _lock.lockForRead(); }
 
                                 /** @brief Destructor.  Releases the shared lock. */
-                                ~ReadLocker() {
-                                        _lock.unlock();
-                                }
+                                ~ReadLocker() { _lock.unlock(); }
 
                                 ReadLocker(const ReadLocker &) = delete;
                                 ReadLocker &operator=(const ReadLocker &) = delete;
@@ -63,14 +59,10 @@ class ReadWriteLock {
                                  * @brief Constructs a WriteLocker and acquires an exclusive lock.
                                  * @param lock The ReadWriteLock to lock for writing.
                                  */
-                                WriteLocker(ReadWriteLock &lock) : _lock(lock) {
-                                        _lock.lockForWrite();
-                                }
+                                WriteLocker(ReadWriteLock &lock) : _lock(lock) { _lock.lockForWrite(); }
 
                                 /** @brief Destructor.  Releases the exclusive lock. */
-                                ~WriteLocker() {
-                                        _lock.unlock();
-                                }
+                                ~WriteLocker() { _lock.unlock(); }
 
                                 WriteLocker(const WriteLocker &) = delete;
                                 WriteLocker &operator=(const WriteLocker &) = delete;
@@ -93,35 +85,25 @@ class ReadWriteLock {
                 ReadWriteLock &operator=(ReadWriteLock &&) = delete;
 
                 /** @brief Acquires a shared (read) lock.  Multiple readers may hold this concurrently. */
-                void lockForRead() {
-                        _mutex.lock_shared();
-                }
+                void lockForRead() { _mutex.lock_shared(); }
 
                 /** @brief Acquires an exclusive (write) lock.  Blocks until all readers and writers release. */
-                void lockForWrite() {
-                        _mutex.lock();
-                }
+                void lockForWrite() { _mutex.lock(); }
 
                 /** @brief Releases the currently held lock (shared or exclusive). */
-                void unlock() {
-                        _mutex.unlock();
-                }
+                void unlock() { _mutex.unlock(); }
 
                 /**
                  * @brief Attempts to acquire a shared (read) lock without blocking.
                  * @return True if the lock was acquired, false otherwise.
                  */
-                bool tryLockForRead() {
-                        return _mutex.try_lock_shared();
-                }
+                bool tryLockForRead() { return _mutex.try_lock_shared(); }
 
                 /**
                  * @brief Attempts to acquire an exclusive (write) lock without blocking.
                  * @return True if the lock was acquired, false otherwise.
                  */
-                bool tryLockForWrite() {
-                        return _mutex.try_lock();
-                }
+                bool tryLockForWrite() { return _mutex.try_lock(); }
 
         private:
                 std::shared_mutex _mutex;

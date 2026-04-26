@@ -89,17 +89,17 @@ class AudioEncoder {
                  * @brief Registration record attaching a concrete encoder to a (codec, backend) pair.
                  */
                 struct BackendRecord {
-                        AudioCodec::ID       codecId;
-                        AudioCodec::Backend  backend;
-                        int                  weight = BackendWeight::Vendored;
-                        /**
+                                AudioCodec::ID      codecId;
+                                AudioCodec::Backend backend;
+                                int                 weight = BackendWeight::Vendored;
+                                /**
                          * @brief Uncompressed @ref AudioFormat IDs this backend ingests.
                          *
                          * Stored as @c int.  Empty means "backend accepts
                          * any sample format it can convert internally."
                          */
-                        List<int>            supportedInputs;
-                        Factory              factory;
+                                List<int> supportedInputs;
+                                Factory   factory;
                 };
 
                 /** @brief Virtual destructor. */
@@ -173,11 +173,9 @@ class AudioEncoder {
                 // ---- Internal bridge from AudioCodec (see VideoEncoder's equivalents) ----
 
                 static AudioCodec::BackendList availableBackends(AudioCodec::ID codecId);
-                static List<int> supportedInputsFor(AudioCodec::ID codecId,
-                                                    AudioCodec::Backend backend);
-                static Result<AudioEncoder *> create(AudioCodec::ID codecId,
-                                                     AudioCodec::Backend pinned,
-                                                     const MediaConfig *config);
+                static List<int>               supportedInputsFor(AudioCodec::ID codecId, AudioCodec::Backend backend);
+                static Result<AudioEncoder *>  create(AudioCodec::ID codecId, AudioCodec::Backend pinned,
+                                                      const MediaConfig *config);
 
         protected:
                 AudioEncoder() = default;
@@ -185,8 +183,8 @@ class AudioEncoder {
                 /** @brief Records the codec + backend this session implements. */
                 void setCodec(AudioCodec codec) { _codec = codec; }
 
-                Error   _lastError;
-                String  _lastErrorMessage;
+                Error  _lastError;
+                String _lastErrorMessage;
 
                 /** @brief Records a new error state. */
                 void setError(Error err, const String &msg = String());

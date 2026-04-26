@@ -45,8 +45,7 @@ class IODevice;
  * PROMEKI_REGISTER_MYFILE_FACTORY(MyFileFactory_Foo);
  * @endcode
  */
-template<typename Product>
-class FileFormatFactory {
+template <typename Product> class FileFormatFactory {
         public:
                 /**
                  * @brief Context passed to factory methods for lookup and creation.
@@ -55,10 +54,10 @@ class FileFormatFactory {
                  * Factories inspect whichever fields are relevant and ignore the rest.
                  */
                 struct Context {
-                        int         operation = 0;    ///< @brief Product-specific operation (e.g. Reader/Writer).
-                        String      filename;         ///< @brief Full path, if available.
-                        String      formatHint;       ///< @brief Extension hint (e.g. "wav"), no dot.
-                        IODevice   *device = nullptr; ///< @brief IODevice to operate on, if available.
+                                int       operation = 0;    ///< @brief Product-specific operation (e.g. Reader/Writer).
+                                String    filename;         ///< @brief Full path, if available.
+                                String    formatHint;       ///< @brief Extension hint (e.g. "wav"), no dot.
+                                IODevice *device = nullptr; ///< @brief IODevice to operate on, if available.
                 };
 
                 /**
@@ -67,11 +66,10 @@ class FileFormatFactory {
                  * @return A non-zero value (used for static initialization).
                  */
                 static int registerFactory(FileFormatFactory *factory) {
-                        if(factory == nullptr) return -1;
+                        if (factory == nullptr) return -1;
                         auto &list = factoryList();
-                        int ret = list.size();
-                        promekiLog(Logger::LogLevel::Debug, "Registered FileFormatFactory %s",
-                                factory->name().cstr());
+                        int   ret = list.size();
+                        promekiLog(Logger::LogLevel::Debug, "Registered FileFormatFactory %s", factory->name().cstr());
                         // Adopt the factory so the list owns it; otherwise
                         // every PROMEKI_REGISTER_FILE_FORMAT_FACTORY(new Foo)
                         // would leak a pointer for the lifetime of the process.
@@ -89,8 +87,8 @@ class FileFormatFactory {
                  */
                 static const FileFormatFactory *lookup(const Context &ctx) {
                         auto &list = factoryList();
-                        for(const auto &f : list) {
-                                if(f->canDoOperation(ctx)) return f.get();
+                        for (const auto &f : list) {
+                                if (f->canDoOperation(ctx)) return f.get();
                         }
                         return nullptr;
                 }
@@ -120,10 +118,10 @@ class FileFormatFactory {
                  */
                 bool isExtensionSupported(const String &filename) const {
                         size_t dot = filename.rfind('.');
-                        if(dot == String::npos || dot + 1 >= filename.size()) return false;
+                        if (dot == String::npos || dot + 1 >= filename.size()) return false;
                         String ext = filename.mid(dot + 1).toLower();
-                        for(const auto &item : _exts) {
-                                if(ext == item) return true;
+                        for (const auto &item : _exts) {
+                                if (ext == item) return true;
                         }
                         return false;
                 }
@@ -135,8 +133,8 @@ class FileFormatFactory {
                  */
                 bool isHintSupported(const String &hint) const {
                         String lower = hint.toLower();
-                        for(const auto &item : _exts) {
-                                if(lower == item) return true;
+                        for (const auto &item : _exts) {
+                                if (lower == item) return true;
                         }
                         return false;
                 }
@@ -149,9 +147,7 @@ class FileFormatFactory {
                  * @param ctx The context describing the requested operation.
                  * @return true if the operation is supported.
                  */
-                virtual bool canDoOperation(const Context &ctx) const {
-                        return false;
-                }
+                virtual bool canDoOperation(const Context &ctx) const { return false; }
 
                 /**
                  * @brief Creates a Product configured for the given context.
@@ -165,8 +161,8 @@ class FileFormatFactory {
                 }
 
         protected:
-                String     _name;  ///< @brief Human-readable factory name.
-                StringList _exts;  ///< @brief List of supported file extensions (no dots).
+                String     _name; ///< @brief Human-readable factory name.
+                StringList _exts; ///< @brief List of supported file extensions (no dots).
 
         private:
                 static List<UniquePtr<FileFormatFactory>> &factoryList() {
@@ -180,9 +176,8 @@ class FileFormatFactory {
  * @param product The product type (e.g. AudioFile).
  * @param name The factory subclass to instantiate and register.
  */
-#define PROMEKI_REGISTER_FILE_FORMAT_FACTORY(product, name) \
-        [[maybe_unused]] static int \
-        PROMEKI_CONCAT(__promeki_fff_, PROMEKI_UNIQUE_ID) = \
-        FileFormatFactory<product>::registerFactory(new name);
+#define PROMEKI_REGISTER_FILE_FORMAT_FACTORY(product, name)                                                            \
+        [[maybe_unused]] static int PROMEKI_CONCAT(__promeki_fff_, PROMEKI_UNIQUE_ID) =                                \
+                FileFormatFactory<product>::registerFactory(new name);
 
 PROMEKI_NAMESPACE_END

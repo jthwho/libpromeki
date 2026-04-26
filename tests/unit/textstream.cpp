@@ -33,10 +33,10 @@ TEST_CASE("TextStream: write to String target") {
 }
 
 TEST_CASE("TextStream: read from String target") {
-        String str("Hello World 42");
+        String     str("Hello World 42");
         TextStream ts(&str);
-        String a, b;
-        int c;
+        String     a, b;
+        int        c;
         ts >> a >> b >> c;
         CHECK(a == "Hello");
         CHECK(b == "World");
@@ -44,7 +44,7 @@ TEST_CASE("TextStream: read from String target") {
 }
 
 TEST_CASE("TextStream: readLine from String target") {
-        String str("line1\nline2\nline3");
+        String     str("line1\nline2\nline3");
         TextStream ts(&str);
         CHECK(ts.readLine() == "line1");
         CHECK(ts.readLine() == "line2");
@@ -52,27 +52,27 @@ TEST_CASE("TextStream: readLine from String target") {
 }
 
 TEST_CASE("TextStream: readLine handles CRLF") {
-        String str("line1\r\nline2\r\n");
+        String     str("line1\r\nline2\r\n");
         TextStream ts(&str);
         CHECK(ts.readLine() == "line1");
         CHECK(ts.readLine() == "line2");
 }
 
 TEST_CASE("TextStream: readAll from String target") {
-        String str("all the text");
+        String     str("all the text");
         TextStream ts(&str);
         CHECK(ts.readAll() == "all the text");
 }
 
 TEST_CASE("TextStream: read with maxLength") {
-        String str("abcdefghij");
+        String     str("abcdefghij");
         TextStream ts(&str);
         CHECK(ts.read(5) == "abcde");
         CHECK(ts.read(5) == "fghij");
 }
 
 TEST_CASE("TextStream: atEnd on String target") {
-        String str("ab");
+        String     str("ab");
         TextStream ts(&str);
         CHECK_FALSE(ts.atEnd());
         ts.read(2);
@@ -94,9 +94,9 @@ TEST_CASE("TextStream: write to Buffer and read back") {
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadOnly);
         TextStream ts(&dev);
-        String word;
-        int num;
-        double dbl;
+        String     word;
+        int        num;
+        double     dbl;
         ts >> word >> num >> dbl;
         CHECK(word == "Hello");
         CHECK(num == 42);
@@ -108,7 +108,7 @@ TEST_CASE("TextStream: write to Buffer and read back") {
 // ============================================================================
 
 TEST_CASE("TextStream: write/read via BufferIODevice") {
-        Buffer buf(TestBufSize);
+        Buffer         buf(TestBufSize);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
         {
@@ -118,9 +118,9 @@ TEST_CASE("TextStream: write/read via BufferIODevice") {
         dev.seek(0);
         {
                 TextStream ts(&dev);
-                String a;
-                int b;
-                String c;
+                String     a;
+                int        b;
+                String     c;
                 ts >> a >> b >> c;
                 CHECK(a == "test");
                 CHECK(b == 123);
@@ -133,63 +133,63 @@ TEST_CASE("TextStream: write/read via BufferIODevice") {
 // ============================================================================
 
 TEST_CASE("TextStream: write int") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << 42;
         CHECK(str == "42");
 }
 
 TEST_CASE("TextStream: write negative int") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << -99;
         CHECK(str == "-99");
 }
 
 TEST_CASE("TextStream: write unsigned int") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << 4294967295u;
         CHECK(str == "4294967295");
 }
 
 TEST_CASE("TextStream: write int64_t") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << static_cast<int64_t>(9876543210LL);
         CHECK(str == "9876543210");
 }
 
 TEST_CASE("TextStream: write uint64_t") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << static_cast<uint64_t>(18446744073709551615ULL);
         CHECK(str == "18446744073709551615");
 }
 
 TEST_CASE("TextStream: write bool true/false") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << true << " " << false;
         CHECK(str == "true false");
 }
 
 TEST_CASE("TextStream: write char") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << 'A' << 'B' << 'C';
         CHECK(str == "ABC");
 }
 
 TEST_CASE("TextStream: write const char *") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << "hello";
         CHECK(str == "hello");
 }
 
 TEST_CASE("TextStream: write nullptr const char *") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << static_cast<const char *>(nullptr);
         CHECK(str.isEmpty());
@@ -200,7 +200,7 @@ TEST_CASE("TextStream: write nullptr const char *") {
 // ============================================================================
 
 TEST_CASE("TextStream: field width right-aligned (default)") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts.setFieldWidth(10);
         ts << "hi";
@@ -208,7 +208,7 @@ TEST_CASE("TextStream: field width right-aligned (default)") {
 }
 
 TEST_CASE("TextStream: field width left-aligned") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts.setFieldWidth(10);
         ts.setFieldAlignment(TextStream::Left);
@@ -217,7 +217,7 @@ TEST_CASE("TextStream: field width left-aligned") {
 }
 
 TEST_CASE("TextStream: field width center-aligned") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts.setFieldWidth(10);
         ts.setFieldAlignment(TextStream::Center);
@@ -226,7 +226,7 @@ TEST_CASE("TextStream: field width center-aligned") {
 }
 
 TEST_CASE("TextStream: custom pad character") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts.setFieldWidth(6);
         ts.setPadChar('0');
@@ -235,7 +235,7 @@ TEST_CASE("TextStream: custom pad character") {
 }
 
 TEST_CASE("TextStream: field width with value longer than width") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts.setFieldWidth(3);
         ts << "hello";
@@ -247,28 +247,28 @@ TEST_CASE("TextStream: field width with value longer than width") {
 // ============================================================================
 
 TEST_CASE("TextStream: hex output") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << hex << 255;
         CHECK(str == "FF");
 }
 
 TEST_CASE("TextStream: oct output") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << oct << 255;
         CHECK(str == "377");
 }
 
 TEST_CASE("TextStream: bin output") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << bin << 10;
         CHECK(str == "1010");
 }
 
 TEST_CASE("TextStream: dec output after hex") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << hex << 255 << " " << dec << 255;
         CHECK(str == "FF 255");
@@ -279,14 +279,14 @@ TEST_CASE("TextStream: dec output after hex") {
 // ============================================================================
 
 TEST_CASE("TextStream: default float precision") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << 3.14159;
         CHECK(str == "3.14159");
 }
 
 TEST_CASE("TextStream: fixed notation with precision") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << fixed;
         ts.setRealNumberPrecision(2);
@@ -295,7 +295,7 @@ TEST_CASE("TextStream: fixed notation with precision") {
 }
 
 TEST_CASE("TextStream: scientific notation") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << scientific;
         ts.setRealNumberPrecision(2);
@@ -312,21 +312,21 @@ TEST_CASE("TextStream: scientific notation") {
 // ============================================================================
 
 TEST_CASE("TextStream: endl manipulator") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << "line1" << endl << "line2";
         CHECK(str == "line1\nline2");
 }
 
 TEST_CASE("TextStream: manipulator chaining") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << hex << 255 << " " << dec << 10;
         CHECK(str == "FF 10");
 }
 
 TEST_CASE("TextStream: left/right/center manipulators") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts.setFieldWidth(5);
         ts << left << "ab";
@@ -338,17 +338,17 @@ TEST_CASE("TextStream: left/right/center manipulators") {
 // ============================================================================
 
 TEST_CASE("TextStream: write Variant") {
-        String str;
+        String     str;
         TextStream ts(&str);
-        Variant v(String("hello"));
+        Variant    v(String("hello"));
         ts << v;
         CHECK(str == "hello");
 }
 
 TEST_CASE("TextStream: write Variant int") {
-        String str;
+        String     str;
         TextStream ts(&str);
-        Variant v(static_cast<int32_t>(42));
+        Variant    v(static_cast<int32_t>(42));
         ts << v;
         CHECK(str == "42");
 }
@@ -358,27 +358,27 @@ TEST_CASE("TextStream: write Variant int") {
 // ============================================================================
 
 TEST_CASE("TextStream: read int from text") {
-        String str("123 -456");
+        String     str("123 -456");
         TextStream ts(&str);
-        int a, b;
+        int        a, b;
         ts >> a >> b;
         CHECK(a == 123);
         CHECK(b == -456);
 }
 
 TEST_CASE("TextStream: read double from text") {
-        String str("3.14 -2.5");
+        String     str("3.14 -2.5");
         TextStream ts(&str);
-        double a, b;
+        double     a, b;
         ts >> a >> b;
         CHECK(a == doctest::Approx(3.14));
         CHECK(b == doctest::Approx(-2.5));
 }
 
 TEST_CASE("TextStream: read char") {
-        String str("ABC");
+        String     str("ABC");
         TextStream ts(&str);
-        char a, b, c;
+        char       a, b, c;
         ts >> a >> b >> c;
         CHECK(a == 'A');
         CHECK(b == 'B');
@@ -386,9 +386,9 @@ TEST_CASE("TextStream: read char") {
 }
 
 TEST_CASE("TextStream: read past end sets status") {
-        String str("");
+        String     str("");
         TextStream ts(&str);
-        String val;
+        String     val;
         ts >> val;
         CHECK(val.isEmpty());
 }
@@ -398,15 +398,15 @@ TEST_CASE("TextStream: read past end sets status") {
 // ============================================================================
 
 TEST_CASE("TextStream: default status is Ok") {
-        String str;
+        String     str;
         TextStream ts(&str);
         CHECK(ts.status() == TextStream::Ok);
 }
 
 TEST_CASE("TextStream: resetStatus") {
-        String str("");
+        String     str("");
         TextStream ts(&str);
-        char ch;
+        char       ch;
         ts >> ch; // Should fail
         CHECK(ts.status() == TextStream::ReadPastEnd);
         ts.resetStatus();
@@ -425,9 +425,9 @@ TEST_CASE("TextStream: round-trip primitives via String") {
         }
         {
                 TextStream ts(&str);
-                int a;
-                double b;
-                String c, d;
+                int        a;
+                double     b;
+                String     c, d;
                 ts >> a >> b >> c >> d;
                 CHECK(a == 42);
                 CHECK(b == doctest::Approx(3.14));
@@ -441,13 +441,13 @@ TEST_CASE("TextStream: round-trip primitives via String") {
 // ============================================================================
 
 TEST_CASE("TextStream: default encoding is UTF-8") {
-        String str;
+        String     str;
         TextStream ts(&str);
         CHECK(ts.encoding() == "UTF-8");
 }
 
 TEST_CASE("TextStream: set encoding") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts.setEncoding("Latin-1");
         CHECK(ts.encoding() == "Latin-1");
@@ -465,7 +465,7 @@ TEST_CASE("TextStream: FILE* constructor write and read back") {
                 ts << "file hello " << 99;
         }
         std::rewind(f);
-        char buf[32] = {};
+        char   buf[32] = {};
         size_t n = std::fread(buf, 1, sizeof(buf) - 1, f);
         buf[n] = '\0';
         CHECK(std::string(buf) == "file hello 99");
@@ -477,7 +477,7 @@ TEST_CASE("TextStream: FILE* constructor write and read back") {
 // ============================================================================
 
 TEST_CASE("TextStream: device accessor returns IODevice") {
-        String str;
+        String     str;
         TextStream ts(&str);
         CHECK(ts.device() != nullptr);
 }
@@ -487,7 +487,7 @@ TEST_CASE("TextStream: device accessor returns IODevice") {
 // ============================================================================
 
 TEST_CASE("TextStream: flush does not crash") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << "hello";
         ts << flush;
@@ -499,14 +499,14 @@ TEST_CASE("TextStream: flush does not crash") {
 // ============================================================================
 
 TEST_CASE("TextStream: write float") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << 2.5f;
         CHECK(str == "2.5");
 }
 
 TEST_CASE("TextStream: write float fixed notation") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << fixed;
         ts.setRealNumberPrecision(3);
@@ -515,7 +515,7 @@ TEST_CASE("TextStream: write float fixed notation") {
 }
 
 TEST_CASE("TextStream: write float scientific notation") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << scientific;
         ts.setRealNumberPrecision(1);
@@ -528,91 +528,91 @@ TEST_CASE("TextStream: write float scientific notation") {
 // ============================================================================
 
 TEST_CASE("TextStream: hex unsigned int") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << hex << 255u;
         CHECK(str == "FF");
 }
 
 TEST_CASE("TextStream: oct unsigned int") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << oct << 255u;
         CHECK(str == "377");
 }
 
 TEST_CASE("TextStream: bin unsigned int") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << bin << 10u;
         CHECK(str == "1010");
 }
 
 TEST_CASE("TextStream: hex int64_t") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << hex << static_cast<int64_t>(255);
         CHECK(str == "FF");
 }
 
 TEST_CASE("TextStream: oct int64_t") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << oct << static_cast<int64_t>(255);
         CHECK(str == "377");
 }
 
 TEST_CASE("TextStream: bin int64_t") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << bin << static_cast<int64_t>(10);
         CHECK(str == "1010");
 }
 
 TEST_CASE("TextStream: hex uint64_t") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << hex << static_cast<uint64_t>(255);
         CHECK(str == "FF");
 }
 
 TEST_CASE("TextStream: oct uint64_t") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << oct << static_cast<uint64_t>(255);
         CHECK(str == "377");
 }
 
 TEST_CASE("TextStream: bin uint64_t") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << bin << static_cast<uint64_t>(10);
         CHECK(str == "1010");
 }
 
 TEST_CASE("TextStream: bin zero") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << bin << 0;
         CHECK(str == "0");
 }
 
 TEST_CASE("TextStream: bin zero unsigned int") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << bin << 0u;
         CHECK(str == "0");
 }
 
 TEST_CASE("TextStream: bin zero int64_t") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << bin << static_cast<int64_t>(0);
         CHECK(str == "0");
 }
 
 TEST_CASE("TextStream: bin zero uint64_t") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts << bin << static_cast<uint64_t>(0);
         CHECK(str == "0");
@@ -623,34 +623,34 @@ TEST_CASE("TextStream: bin zero uint64_t") {
 // ============================================================================
 
 TEST_CASE("TextStream: read int64_t") {
-        String str("123456789 -42");
+        String     str("123456789 -42");
         TextStream ts(&str);
-        int64_t a, b;
+        int64_t    a, b;
         ts >> a >> b;
         CHECK(a == 123456789);
         CHECK(b == -42);
 }
 
 TEST_CASE("TextStream: read int64_t from empty returns 0") {
-        String str("");
+        String     str("");
         TextStream ts(&str);
-        int64_t val;
+        int64_t    val;
         ts >> val;
         CHECK(val == 0);
 }
 
 TEST_CASE("TextStream: read double from empty returns 0") {
-        String str("");
+        String     str("");
         TextStream ts(&str);
-        double val;
+        double     val;
         ts >> val;
         CHECK(val == 0.0);
 }
 
 TEST_CASE("TextStream: read int from empty returns 0") {
-        String str("");
+        String     str("");
         TextStream ts(&str);
-        int val;
+        int        val;
         ts >> val;
         CHECK(val == 0);
 }
@@ -660,21 +660,21 @@ TEST_CASE("TextStream: read int from empty returns 0") {
 // ============================================================================
 
 TEST_CASE("TextStream: readLine with bare CR") {
-        String str("line1\rline2");
+        String     str("line1\rline2");
         TextStream ts(&str);
         CHECK(ts.readLine() == "line1");
         CHECK(ts.readLine() == "line2");
 }
 
 TEST_CASE("TextStream: readLine at end of stream") {
-        String str("");
+        String     str("");
         TextStream ts(&str);
-        String line = ts.readLine();
+        String     line = ts.readLine();
         CHECK(line.isEmpty());
 }
 
 TEST_CASE("TextStream: readLine with CR at end of stream") {
-        String str("hello\r");
+        String     str("hello\r");
         TextStream ts(&str);
         CHECK(ts.readLine() == "hello");
 }
@@ -684,7 +684,7 @@ TEST_CASE("TextStream: readLine with CR at end of stream") {
 // ============================================================================
 
 TEST_CASE("TextStream: formatting defaults") {
-        String str;
+        String     str;
         TextStream ts(&str);
         CHECK(ts.fieldWidth() == 0);
         CHECK(ts.fieldAlignment() == TextStream::Right);
@@ -699,7 +699,7 @@ TEST_CASE("TextStream: formatting defaults") {
 // ============================================================================
 
 TEST_CASE("TextStream: center alignment odd padding") {
-        String str;
+        String     str;
         TextStream ts(&str);
         ts.setFieldWidth(7);
         ts << center << "ab";

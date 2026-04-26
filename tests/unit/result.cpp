@@ -50,7 +50,7 @@ TEST_CASE("Result: structured bindings with error") {
 TEST_CASE("Result: factory pattern usage") {
         // Simulates a from*() factory returning Result<T>
         auto parse = [](const String &input) -> Result<int> {
-                if(input == "42") return makeResult<int>(42);
+                if (input == "42") return makeResult<int>(42);
                 return makeError<int>(Error::Invalid);
         };
 

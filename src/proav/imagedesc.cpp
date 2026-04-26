@@ -15,19 +15,15 @@ PROMEKI_NAMESPACE_BEGIN
 
 // ST 2110-20 colorimetry string from a ColorModel.
 static const char *sdpColorimetry(const ColorModel &cm) {
-        switch(cm.id()) {
+        switch (cm.id()) {
                 case ColorModel::YCbCr_Rec601:
                 case ColorModel::Rec601_PAL:
-                case ColorModel::Rec601_NTSC:
-                        return "BT601-5";
+                case ColorModel::Rec601_NTSC: return "BT601-5";
                 case ColorModel::YCbCr_Rec709:
                 case ColorModel::Rec709:
-                case ColorModel::sRGB:
-                        return "BT709-2";
-                case ColorModel::Rec2020:
-                        return "BT2020";
-                default:
-                        return nullptr;
+                case ColorModel::sRGB: return "BT709-2";
+                case ColorModel::Rec2020: return "BT2020";
+                default: return nullptr;
         }
 }
 
@@ -36,66 +32,56 @@ static const char *sdpColorimetry(const ColorModel &cm) {
 static const char *sdpRange(const PixelFormat &pd) {
         const PixelFormat::CompSemantic &cs = pd.compSemantic(0);
         // RGB is always full range; for YCbCr, check the luma floor.
-        if(pd.colorModel().type() == ColorModel::TypeRGB) return "FULL";
+        if (pd.colorModel().type() == ColorModel::TypeRGB) return "FULL";
         return (cs.rangeMin > 0.0f) ? "NARROW" : "FULL";
 }
 
 // Map ST 2110-20 colorimetry + RANGE + subsampling to a JPEG PixelFormat.
 // @p is420 selects 4:2:0 vs 4:2:2; @p isRgb overrides both to RGB.
 // Returns PixelFormat::Invalid for unrecognised combinations.
-static PixelFormat::ID jpegPixelFormatFromColorimetry(
-                const String &colorimetry,
-                const String &range,
-                bool is420,
-                bool isRgb) {
-        if(isRgb) return PixelFormat::JPEG_RGB8_sRGB;
+static PixelFormat::ID jpegPixelFormatFromColorimetry(const String &colorimetry, const String &range, bool is420,
+                                                      bool isRgb) {
+        if (isRgb) return PixelFormat::JPEG_RGB8_sRGB;
 
         bool full = range.isEmpty() || range == "FULL";
 
-        if(colorimetry.isEmpty() || colorimetry == "BT601-5") {
-                if(is420) return full ? PixelFormat::JPEG_YUV8_420_Rec601_Full
-                                     : PixelFormat::JPEG_YUV8_420_Rec601;
-                return full ? PixelFormat::JPEG_YUV8_422_Rec601_Full
-                            : PixelFormat::JPEG_YUV8_422_Rec601;
+        if (colorimetry.isEmpty() || colorimetry == "BT601-5") {
+                if (is420) return full ? PixelFormat::JPEG_YUV8_420_Rec601_Full : PixelFormat::JPEG_YUV8_420_Rec601;
+                return full ? PixelFormat::JPEG_YUV8_422_Rec601_Full : PixelFormat::JPEG_YUV8_422_Rec601;
         }
-        if(colorimetry == "BT709-2" || colorimetry == "BT709") {
-                if(is420) return full ? PixelFormat::JPEG_YUV8_420_Rec709_Full
-                                     : PixelFormat::JPEG_YUV8_420_Rec709;
-                return full ? PixelFormat::JPEG_YUV8_422_Rec709_Full
-                            : PixelFormat::JPEG_YUV8_422_Rec709;
+        if (colorimetry == "BT709-2" || colorimetry == "BT709") {
+                if (is420) return full ? PixelFormat::JPEG_YUV8_420_Rec709_Full : PixelFormat::JPEG_YUV8_420_Rec709;
+                return full ? PixelFormat::JPEG_YUV8_422_Rec709_Full : PixelFormat::JPEG_YUV8_422_Rec709;
         }
         // Unknown colorimetry — fall back to Rec.601 full (JFIF default).
-        if(is420) return full ? PixelFormat::JPEG_YUV8_420_Rec601_Full
-                             : PixelFormat::JPEG_YUV8_420_Rec601;
-        return full ? PixelFormat::JPEG_YUV8_422_Rec601_Full
-                    : PixelFormat::JPEG_YUV8_422_Rec601;
+        if (is420) return full ? PixelFormat::JPEG_YUV8_420_Rec601_Full : PixelFormat::JPEG_YUV8_420_Rec601;
+        return full ? PixelFormat::JPEG_YUV8_422_Rec601_Full : PixelFormat::JPEG_YUV8_422_Rec601;
 }
 
 // Map an fmtp "sampling=YCbCr-4:2:2" + "depth=N" combo to a JPEG XS
 // PixelFormat.  Returns PixelFormat::Invalid for any unrecognised
 // combination so the caller can fall back to the library default.
-static PixelFormat::ID jpegXsPixelFormatFromFmtp(const String &sampling,
-                                              const String &depth) {
+static PixelFormat::ID jpegXsPixelFormatFromFmtp(const String &sampling, const String &depth) {
         int d = depth.toInt();
-        if(sampling == "YCbCr-4:2:2") {
-                if(d == 8)  return PixelFormat::JPEG_XS_YUV8_422_Rec709;
-                if(d == 10) return PixelFormat::JPEG_XS_YUV10_422_Rec709;
-                if(d == 12) return PixelFormat::JPEG_XS_YUV12_422_Rec709;
-        } else if(sampling == "YCbCr-4:2:0") {
-                if(d == 8)  return PixelFormat::JPEG_XS_YUV8_420_Rec709;
-                if(d == 10) return PixelFormat::JPEG_XS_YUV10_420_Rec709;
-                if(d == 12) return PixelFormat::JPEG_XS_YUV12_420_Rec709;
+        if (sampling == "YCbCr-4:2:2") {
+                if (d == 8) return PixelFormat::JPEG_XS_YUV8_422_Rec709;
+                if (d == 10) return PixelFormat::JPEG_XS_YUV10_422_Rec709;
+                if (d == 12) return PixelFormat::JPEG_XS_YUV12_422_Rec709;
+        } else if (sampling == "YCbCr-4:2:0") {
+                if (d == 8) return PixelFormat::JPEG_XS_YUV8_420_Rec709;
+                if (d == 10) return PixelFormat::JPEG_XS_YUV10_420_Rec709;
+                if (d == 12) return PixelFormat::JPEG_XS_YUV12_420_Rec709;
         }
         return PixelFormat::Invalid;
 }
 
 ImageDesc ImageDesc::fromSdp(const SdpMediaDescription &md) {
-        if(md.mediaType() != "video") return ImageDesc();
+        if (md.mediaType() != "video") return ImageDesc();
 
         SdpMediaDescription::RtpMap rm = md.rtpMap();
-        if(!rm.valid) return ImageDesc();
+        if (!rm.valid) return ImageDesc();
 
-        if(rm.encoding == "jxsv") {
+        if (rm.encoding == "jxsv") {
                 // RFC 9134 JPEG XS.  Geometry + sampling + depth
                 // live in the fmtp line.  Fall back to the library
                 // default PixelFormat (10-bit 4:2:2 Rec.709) when the
@@ -103,56 +89,54 @@ ImageDesc ImageDesc::fromSdp(const SdpMediaDescription &md) {
                 // the most common ST 2110-22 shape and gives a
                 // useful answer even for terse SDPs.
                 auto params = md.fmtpParameters();
-                int w = params.value("width").toInt();
-                int h = params.value("height").toInt();
-                if(w <= 0 || h <= 0) return ImageDesc();
+                int  w = params.value("width").toInt();
+                int  h = params.value("height").toInt();
+                if (w <= 0 || h <= 0) return ImageDesc();
 
-                PixelFormat::ID pdId = jpegXsPixelFormatFromFmtp(
-                        params.value("sampling"),
-                        params.value("depth"));
-                if(pdId == PixelFormat::Invalid) {
+                PixelFormat::ID pdId = jpegXsPixelFormatFromFmtp(params.value("sampling"), params.value("depth"));
+                if (pdId == PixelFormat::Invalid) {
                         pdId = PixelFormat::JPEG_XS_YUV10_422_Rec709;
                 }
-                return ImageDesc(Size2Du32(static_cast<uint32_t>(w),
-                                            static_cast<uint32_t>(h)),
-                                  PixelFormat(pdId));
+                return ImageDesc(Size2Du32(static_cast<uint32_t>(w), static_cast<uint32_t>(h)), PixelFormat(pdId));
         }
 
-        if(rm.encoding == "raw") {
+        if (rm.encoding == "raw") {
                 // RFC 4175 uncompressed video.  Geometry, sampling,
                 // depth, colorimetry, and range all live in the fmtp
                 // line, following the ST 2110-20 parameter set.
                 auto params = md.fmtpParameters();
-                int w = params.value("width").toInt();
-                int h = params.value("height").toInt();
-                if(w <= 0 || h <= 0) return ImageDesc();
+                int  w = params.value("width").toInt();
+                int  h = params.value("height").toInt();
+                if (w <= 0 || h <= 0) return ImageDesc();
 
-                String sampling    = params.value("sampling");
-                String depthStr    = params.value("depth");
+                String sampling = params.value("sampling");
+                String depthStr = params.value("depth");
                 String colorimetry = params.value("colorimetry");
-                String range       = params.value("RANGE");
-                int depth = depthStr.toInt();
-                if(depth <= 0) depth = 8;
+                String range = params.value("RANGE");
+                int    depth = depthStr.toInt();
+                if (depth <= 0) depth = 8;
 
                 bool full = range.isEmpty() || range == "FULL";
                 bool isRec709 = colorimetry == "BT709-2" || colorimetry == "BT709";
 
                 PixelFormat::ID pdId = PixelFormat::Invalid;
-                if(sampling == "RGBA") {
-                        if(depth == 8) pdId = PixelFormat::RGBA8_sRGB;
-                } else if(sampling == "RGB") {
-                        if(depth == 8) pdId = PixelFormat::RGB8_sRGB;
-                } else if(sampling == "YCbCr-4:2:2") {
+                if (sampling == "RGBA") {
+                        if (depth == 8) pdId = PixelFormat::RGBA8_sRGB;
+                } else if (sampling == "RGB") {
+                        if (depth == 8) pdId = PixelFormat::RGB8_sRGB;
+                } else if (sampling == "YCbCr-4:2:2") {
                         // RFC 4175 wire format is Cb-Y-Cr-Y (UYVY)
                         // for all 4:2:2 depths.
-                        if(depth == 8) {
-                                if(isRec709) pdId = PixelFormat::YUV8_422_UYVY_Rec709;
-                                else         pdId = PixelFormat::YUV8_422_UYVY_Rec601;
-                        } else if(depth == 10) {
+                        if (depth == 8) {
+                                if (isRec709)
+                                        pdId = PixelFormat::YUV8_422_UYVY_Rec709;
+                                else
+                                        pdId = PixelFormat::YUV8_422_UYVY_Rec601;
+                        } else if (depth == 10) {
                                 pdId = PixelFormat::YUV10_422_UYVY_LE_Rec709;
                         }
-                } else if(sampling == "YCbCr-4:2:0") {
-                        if(depth == 8) {
+                } else if (sampling == "YCbCr-4:2:0") {
+                        if (depth == 8) {
                                 pdId = PixelFormat::YUV8_420_Planar_Rec709;
                         }
                 }
@@ -162,10 +146,8 @@ ImageDesc ImageDesc::fromSdp(const SdpMediaDescription &md) {
                 // RGB is always full range regardless.
                 (void)full;
 
-                if(pdId == PixelFormat::Invalid) return ImageDesc();
-                return ImageDesc(Size2Du32(static_cast<uint32_t>(w),
-                                            static_cast<uint32_t>(h)),
-                                  PixelFormat(pdId));
+                if (pdId == PixelFormat::Invalid) return ImageDesc();
+                return ImageDesc(Size2Du32(static_cast<uint32_t>(w), static_cast<uint32_t>(h)), PixelFormat(pdId));
         }
 
         // "JPEG" (RFC 2435) carries geometry in the packet header,
@@ -174,20 +156,17 @@ ImageDesc ImageDesc::fromSdp(const SdpMediaDescription &md) {
         return ImageDesc();
 }
 
-PixelFormat::ID ImageDesc::jpegPixelFormatFromSdp(
-                const String &colorimetry,
-                const String &range,
-                bool is420,
-                bool isRgb) {
+PixelFormat::ID ImageDesc::jpegPixelFormatFromSdp(const String &colorimetry, const String &range, bool is420,
+                                                  bool isRgb) {
         return jpegPixelFormatFromColorimetry(colorimetry, range, is420, isRgb);
 }
 
 SdpMediaDescription ImageDesc::toSdp(uint8_t payloadType) const {
-        if(!isValid()) return SdpMediaDescription();
+        if (!isValid()) return SdpMediaDescription();
 
         const PixelFormat &pd = pixelFormat();
-        const char *colorimetry = sdpColorimetry(pd.colorModel());
-        const char *range       = sdpRange(pd);
+        const char        *colorimetry = sdpColorimetry(pd.colorModel());
+        const char        *range = sdpRange(pd);
 
         SdpMediaDescription md;
         md.setMediaType("video");
@@ -196,7 +175,7 @@ SdpMediaDescription ImageDesc::toSdp(uint8_t payloadType) const {
         int w = static_cast<int>(width());
         int h = static_cast<int>(height());
 
-        if(pd.isCompressed() && pd.videoCodec().id() == VideoCodec::JPEG) {
+        if (pd.isCompressed() && pd.videoCodec().id() == VideoCodec::JPEG) {
                 // RFC 2435 MJPEG.  Geometry is in-band (packet
                 // header), so the rtpmap is just JPEG/90000.  We
                 // emit colorimetry and RANGE as fmtp extensions
@@ -204,94 +183,101 @@ SdpMediaDescription ImageDesc::toSdp(uint8_t payloadType) const {
                 // that understand them can apply the correct
                 // matrix and quantization range.
                 uint8_t pt = payloadType;
-                if(pt == 96) pt = 26; // static PT for JPEG
+                if (pt == 96) pt = 26; // static PT for JPEG
                 md.addPayloadType(pt);
-                md.setAttribute("rtpmap", String::number(pt) +
-                                String(" JPEG/90000"));
+                md.setAttribute("rtpmap", String::number(pt) + String(" JPEG/90000"));
                 String fmtp;
-                if(colorimetry != nullptr) {
+                if (colorimetry != nullptr) {
                         fmtp += String("colorimetry=") + String(colorimetry);
                 }
-                if(range != nullptr) {
-                        if(!fmtp.isEmpty()) fmtp += String(";");
+                if (range != nullptr) {
+                        if (!fmtp.isEmpty()) fmtp += String(";");
                         fmtp += String("RANGE=") + String(range);
                 }
-                if(!fmtp.isEmpty()) {
-                        md.setAttribute("fmtp", String::number(pt) +
-                                        String(" ") + fmtp);
+                if (!fmtp.isEmpty()) {
+                        md.setAttribute("fmtp", String::number(pt) + String(" ") + fmtp);
                 }
-        } else if(pd.isCompressed() && pd.videoCodec().id() == VideoCodec::JPEG_XS) {
+        } else if (pd.isCompressed() && pd.videoCodec().id() == VideoCodec::JPEG_XS) {
                 // RFC 9134 JPEG XS.
                 md.addPayloadType(payloadType);
                 String ptStr = String::number(payloadType);
                 md.setAttribute("rtpmap", ptStr + String(" jxsv/90000"));
 
                 const char *sampling = nullptr;
-                int depth = 0;
-                switch(pd.id()) {
+                int         depth = 0;
+                switch (pd.id()) {
                         case PixelFormat::JPEG_XS_YUV8_422_Rec709:
-                                sampling = "YCbCr-4:2:2"; depth = 8;  break;
+                                sampling = "YCbCr-4:2:2";
+                                depth = 8;
+                                break;
                         case PixelFormat::JPEG_XS_YUV10_422_Rec709:
-                                sampling = "YCbCr-4:2:2"; depth = 10; break;
+                                sampling = "YCbCr-4:2:2";
+                                depth = 10;
+                                break;
                         case PixelFormat::JPEG_XS_YUV12_422_Rec709:
-                                sampling = "YCbCr-4:2:2"; depth = 12; break;
+                                sampling = "YCbCr-4:2:2";
+                                depth = 12;
+                                break;
                         case PixelFormat::JPEG_XS_YUV8_420_Rec709:
-                                sampling = "YCbCr-4:2:0"; depth = 8;  break;
+                                sampling = "YCbCr-4:2:0";
+                                depth = 8;
+                                break;
                         case PixelFormat::JPEG_XS_YUV10_420_Rec709:
-                                sampling = "YCbCr-4:2:0"; depth = 10; break;
+                                sampling = "YCbCr-4:2:0";
+                                depth = 10;
+                                break;
                         case PixelFormat::JPEG_XS_YUV12_420_Rec709:
-                                sampling = "YCbCr-4:2:0"; depth = 12; break;
-                        default:
-                                return SdpMediaDescription();
+                                sampling = "YCbCr-4:2:0";
+                                depth = 12;
+                                break;
+                        default: return SdpMediaDescription();
                 }
                 String fmtp = String("packetmode=0;rate=90000");
-                fmtp += String(";sampling=")    + String(sampling);
-                fmtp += String(";depth=")       + String::number(depth);
-                fmtp += String(";width=")       + String::number(w);
-                fmtp += String(";height=")      + String::number(h);
-                if(colorimetry != nullptr) {
+                fmtp += String(";sampling=") + String(sampling);
+                fmtp += String(";depth=") + String::number(depth);
+                fmtp += String(";width=") + String::number(w);
+                fmtp += String(";height=") + String::number(h);
+                if (colorimetry != nullptr) {
                         fmtp += String(";colorimetry=") + String(colorimetry);
                 }
-                if(range != nullptr) {
+                if (range != nullptr) {
                         fmtp += String(";RANGE=") + String(range);
                 }
                 md.setAttribute("fmtp", ptStr + String(" ") + fmtp);
-        } else if(!pd.isCompressed()) {
+        } else if (!pd.isCompressed()) {
                 // RFC 4175 raw uncompressed video.
                 md.addPayloadType(payloadType);
                 String ptStr = String::number(payloadType);
                 md.setAttribute("rtpmap", ptStr + String(" raw/90000"));
 
                 // Derive sampling from the pixel format's subsampling mode.
-                const char *sampling = nullptr;
+                const char           *sampling = nullptr;
                 const PixelMemLayout &pf = pd.memLayout();
-                if(pd.colorModel().type() == ColorModel::TypeRGB) {
+                if (pd.colorModel().type() == ColorModel::TypeRGB) {
                         sampling = pd.hasAlpha() ? "RGBA" : "RGB";
                 } else {
-                        switch(pf.sampling()) {
+                        switch (pf.sampling()) {
                                 case PixelMemLayout::Sampling422: sampling = "YCbCr-4:2:2"; break;
                                 case PixelMemLayout::Sampling420: sampling = "YCbCr-4:2:0"; break;
                                 case PixelMemLayout::Sampling411: sampling = "YCbCr-4:1:1"; break;
-                                default:                       sampling = "YCbCr-4:4:4"; break;
+                                default: sampling = "YCbCr-4:4:4"; break;
                         }
                 }
 
                 // ST 2110-20 depth is bits per component, not bits
                 // per pixel.  Read it from the first component
                 // descriptor.
-                int depth = (pf.compCount() > 0)
-                        ? static_cast<int>(pf.compDesc(0).bits)
-                        : 8;
+                int depth = (pf.compCount() > 0) ? static_cast<int>(pf.compDesc(0).bits) : 8;
 
                 String fmtp;
-                fmtp += String("sampling=")     + String(sampling);
-                fmtp += String(";depth=")       + String::number(depth);
-                fmtp += String(";width=")       + String::number(w);
-                fmtp += String(";height=")      + String::number(h);
-                if(colorimetry != nullptr) {
+                fmtp += String("sampling=") + String(sampling);
+                fmtp += String(";depth=") + String::number(depth);
+                fmtp += String(";width=") + String::number(w);
+                fmtp += String(";height=") + String::number(h);
+                if (colorimetry != nullptr) {
                         fmtp += String(";colorimetry=") + String(colorimetry);
                 }
-                if(range != nullptr) {
+                if (range != nullptr) {
                         fmtp += String(";RANGE=") + String(range);
                 }
                 md.setAttribute("fmtp", ptStr + String(" ") + fmtp);
@@ -316,29 +302,13 @@ SdpMediaDescription ImageDesc::toSdp(uint8_t payloadType) const {
 
 PROMEKI_LOOKUP_REGISTER(ImageDesc)
         .scalar("Width",
-                [](const ImageDesc &d) -> std::optional<Variant> {
-                        return Variant(static_cast<uint32_t>(d.width()));
-                })
+                [](const ImageDesc &d) -> std::optional<Variant> { return Variant(static_cast<uint32_t>(d.width())); })
         .scalar("Height",
-                [](const ImageDesc &d) -> std::optional<Variant> {
-                        return Variant(static_cast<uint32_t>(d.height()));
-                })
-        .scalar("Size",
-                [](const ImageDesc &d) -> std::optional<Variant> {
-                        return Variant(d.size());
-                })
-        .scalar("PixelFormat",
-                [](const ImageDesc &d) -> std::optional<Variant> {
-                        return Variant(d.pixelFormat());
-                })
-        .scalar("PixelMemLayout",
-                [](const ImageDesc &d) -> std::optional<Variant> {
-                        return Variant(d.memLayout());
-                })
-        .scalar("ColorModel",
-                [](const ImageDesc &d) -> std::optional<Variant> {
-                        return Variant(d.colorModel());
-                })
+                [](const ImageDesc &d) -> std::optional<Variant> { return Variant(static_cast<uint32_t>(d.height())); })
+        .scalar("Size", [](const ImageDesc &d) -> std::optional<Variant> { return Variant(d.size()); })
+        .scalar("PixelFormat", [](const ImageDesc &d) -> std::optional<Variant> { return Variant(d.pixelFormat()); })
+        .scalar("PixelMemLayout", [](const ImageDesc &d) -> std::optional<Variant> { return Variant(d.memLayout()); })
+        .scalar("ColorModel", [](const ImageDesc &d) -> std::optional<Variant> { return Variant(d.colorModel()); })
         .scalar("LinePad",
                 [](const ImageDesc &d) -> std::optional<Variant> {
                         return Variant(static_cast<uint64_t>(d.linePad()));
@@ -355,20 +325,11 @@ PROMEKI_LOOKUP_REGISTER(ImageDesc)
                 [](const ImageDesc &d) -> std::optional<Variant> {
                         return Variant(static_cast<uint64_t>(d.planeCount()));
                 })
-        .scalar("IsValid",
-                [](const ImageDesc &d) -> std::optional<Variant> {
-                        return Variant(d.isValid());
-                })
+        .scalar("IsValid", [](const ImageDesc &d) -> std::optional<Variant> { return Variant(d.isValid()); })
         .scalar("IsCompressed",
-                [](const ImageDesc &d) -> std::optional<Variant> {
-                        return Variant(d.pixelFormat().isCompressed());
-                })
-        .database<"Metadata">("Meta",
-                [](const ImageDesc &d) -> const VariantDatabase<"Metadata"> * {
-                        return &d.metadata();
-                },
-                [](ImageDesc &d) -> VariantDatabase<"Metadata"> * {
-                        return &d.metadata();
-                });
+                [](const ImageDesc &d) -> std::optional<Variant> { return Variant(d.pixelFormat().isCompressed()); })
+        .database<"Metadata">(
+                "Meta", [](const ImageDesc &d) -> const VariantDatabase<"Metadata"> * { return &d.metadata(); },
+                [](ImageDesc &d) -> VariantDatabase<"Metadata"> * { return &d.metadata(); });
 
 PROMEKI_NAMESPACE_END

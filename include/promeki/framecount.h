@@ -71,16 +71,28 @@ PROMEKI_NAMESPACE_BEGIN
 class FrameCount {
         public:
                 /** @brief Storage sentinel meaning "unknown". */
-                static constexpr int64_t UnknownValue  = -1;
+                static constexpr int64_t UnknownValue = -1;
                 /** @brief Storage sentinel meaning "infinity". */
                 static constexpr int64_t InfinityValue = -2;
 
                 /** @brief Returns an unknown FrameCount. */
-                static constexpr FrameCount unknown()  { FrameCount c; c._value = UnknownValue;  return c; }
+                static constexpr FrameCount unknown() {
+                        FrameCount c;
+                        c._value = UnknownValue;
+                        return c;
+                }
                 /** @brief Returns an infinite FrameCount. */
-                static constexpr FrameCount infinity() { FrameCount c; c._value = InfinityValue; return c; }
+                static constexpr FrameCount infinity() {
+                        FrameCount c;
+                        c._value = InfinityValue;
+                        return c;
+                }
                 /** @brief Returns an empty (zero-length) FrameCount. */
-                static constexpr FrameCount empty()    { FrameCount c; c._value = 0; return c; }
+                static constexpr FrameCount empty() {
+                        FrameCount c;
+                        c._value = 0;
+                        return c;
+                }
 
                 /**
                  * @brief Parses a FrameCount from a string.
@@ -148,13 +160,27 @@ class FrameCount {
                 FrameCount &operator-=(const FrameCount &other);
 
                 /** @brief Pre-increment.  Unknown/Infinity are preserved. */
-                FrameCount &operator++() { *this += 1; return *this; }
+                FrameCount &operator++() {
+                        *this += 1;
+                        return *this;
+                }
                 /** @brief Post-increment. */
-                FrameCount operator++(int) { FrameCount o = *this; *this += 1; return o; }
+                FrameCount operator++(int) {
+                        FrameCount o = *this;
+                        *this += 1;
+                        return o;
+                }
                 /** @brief Pre-decrement. */
-                FrameCount &operator--() { *this -= 1; return *this; }
+                FrameCount &operator--() {
+                        *this -= 1;
+                        return *this;
+                }
                 /** @brief Post-decrement. */
-                FrameCount operator--(int) { FrameCount o = *this; *this -= 1; return o; }
+                FrameCount operator--(int) {
+                        FrameCount o = *this;
+                        *this -= 1;
+                        return o;
+                }
 
                 /** @brief Equality — compares raw storage, so two @c Unknown or two @c Infinity counts compare equal. */
                 constexpr bool operator==(const FrameCount &other) const { return _value == other._value; }
@@ -181,12 +207,12 @@ class FrameCount {
                  * comparison against @c Unknown ever yields @c true.
                  */
                 bool operator<=(const FrameCount &other) const {
-                        if(isUnknown() || other.isUnknown()) return false;
+                        if (isUnknown() || other.isUnknown()) return false;
                         return !(other < *this);
                 }
                 /** @brief Greater-than-or-equal ordering (NaN-like).  See @ref operator<=. */
                 bool operator>=(const FrameCount &other) const {
-                        if(isUnknown() || other.isUnknown()) return false;
+                        if (isUnknown() || other.isUnknown()) return false;
                         return !(*this < other);
                 }
 
@@ -236,15 +262,30 @@ inline FrameCount toFrameCount(const FrameNumber &n) {
 }
 
 /** @brief Returns @p a + @p b (sentinel-aware, see @ref FrameCount). */
-inline FrameCount operator+(FrameCount a, const FrameCount &b) { a += b; return a; }
+inline FrameCount operator+(FrameCount a, const FrameCount &b) {
+        a += b;
+        return a;
+}
 /** @brief Returns @p a - @p b. */
-inline FrameCount operator-(FrameCount a, const FrameCount &b) { a -= b; return a; }
+inline FrameCount operator-(FrameCount a, const FrameCount &b) {
+        a -= b;
+        return a;
+}
 /** @brief Returns @p a + @p n. */
-inline FrameCount operator+(FrameCount a, int64_t n) { a += n; return a; }
+inline FrameCount operator+(FrameCount a, int64_t n) {
+        a += n;
+        return a;
+}
 /** @brief Returns @p a - @p n. */
-inline FrameCount operator-(FrameCount a, int64_t n) { a -= n; return a; }
+inline FrameCount operator-(FrameCount a, int64_t n) {
+        a -= n;
+        return a;
+}
 /** @brief Commutative int-FrameCount addition. */
-inline FrameCount operator+(int64_t n, FrameCount a) { a += n; return a; }
+inline FrameCount operator+(int64_t n, FrameCount a) {
+        a += n;
+        return a;
+}
 
 // ----------------------------------------------------------------------
 // FrameNumber / FrameCount cross-type arithmetic.
@@ -256,13 +297,13 @@ inline FrameCount operator+(int64_t n, FrameCount a) { a += n; return a; }
 
 /** @brief Returns @p a advanced by @p c frames.  Any @c Unknown poisons; @c Infinity poisons FrameNumber (no unbounded frame index). */
 inline FrameNumber operator+(FrameNumber a, const FrameCount &c) {
-        if(a.isUnknown() || c.isUnknown() || c.isInfinite()) return FrameNumber::unknown();
+        if (a.isUnknown() || c.isUnknown() || c.isInfinite()) return FrameNumber::unknown();
         return FrameNumber(a.value() + c.value());
 }
 
 /** @brief Returns @p a moved back by @p c frames.  Negative results poison to @c Unknown. */
 inline FrameNumber operator-(FrameNumber a, const FrameCount &c) {
-        if(a.isUnknown() || c.isUnknown() || c.isInfinite()) return FrameNumber::unknown();
+        if (a.isUnknown() || c.isUnknown() || c.isInfinite()) return FrameNumber::unknown();
         int64_t nv = a.value() - c.value();
         return nv < 0 ? FrameNumber::unknown() : FrameNumber(nv);
 }
@@ -274,13 +315,19 @@ inline FrameNumber operator-(FrameNumber a, const FrameCount &c) {
  * (@c a precedes @c b), the result is @c FrameCount::unknown().
  */
 inline FrameCount operator-(const FrameNumber &a, const FrameNumber &b) {
-        if(a.isUnknown() || b.isUnknown()) return FrameCount::unknown();
+        if (a.isUnknown() || b.isUnknown()) return FrameCount::unknown();
         int64_t d = a.value() - b.value();
         return d < 0 ? FrameCount::unknown() : FrameCount(d);
 }
 
-inline FrameNumber &FrameNumber::operator+=(const FrameCount &c) { *this = *this + c; return *this; }
-inline FrameNumber &FrameNumber::operator-=(const FrameCount &c) { *this = *this - c; return *this; }
+inline FrameNumber &FrameNumber::operator+=(const FrameCount &c) {
+        *this = *this + c;
+        return *this;
+}
+inline FrameNumber &FrameNumber::operator-=(const FrameCount &c) {
+        *this = *this - c;
+        return *this;
+}
 
 PROMEKI_NAMESPACE_END
 
@@ -294,10 +341,8 @@ PROMEKI_FORMAT_VIA_TOSTRING(promeki::FrameCount);
  * (Unknown @c -1, Infinity @c -2, Empty @c 0, finite @c >0) a
  * distinct hash through @c std::hash<int64_t>.
  */
-template <>
-struct std::hash<promeki::FrameCount> {
-        size_t operator()(const promeki::FrameCount &v) const noexcept {
-                return std::hash<int64_t>()(v.value());
-        }
+template <> struct std::hash<promeki::FrameCount> {
+                size_t operator()(const promeki::FrameCount &v) const noexcept {
+                        return std::hash<int64_t>()(v.value());
+                }
 };
-

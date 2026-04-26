@@ -25,12 +25,12 @@ PROMEKI_NAMESPACE_BEGIN
  * Thread-affine — see @ref TuiWidget.
  */
 class TuiCheckBox : public TuiWidget {
-        PROMEKI_OBJECT(TuiCheckBox, TuiWidget)
+                PROMEKI_OBJECT(TuiCheckBox, TuiWidget)
         public:
                 TuiCheckBox(const String &text = String(), ObjectBase *parent = nullptr);
                 ~TuiCheckBox() override;
 
-                void setText(const String &text);
+                void          setText(const String &text);
                 const String &text() const { return _text; }
 
                 bool isChecked() const { return _checked; }
@@ -50,8 +50,8 @@ class TuiCheckBox : public TuiWidget {
                 void focusOutEvent(Event *e) override;
 
         private:
-                String  _text;
-                bool    _checked = false;
+                String _text;
+                bool   _checked = false;
 };
 
 PROMEKI_NAMESPACE_END

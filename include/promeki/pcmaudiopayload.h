@@ -50,9 +50,7 @@ class PcmAudioPayload : public AudioPayload {
         public:
                 PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH(PcmAudioPayload)
 
-                virtual PcmAudioPayload *_promeki_clone() const override {
-                        return new PcmAudioPayload(*this);
-                }
+                virtual PcmAudioPayload *_promeki_clone() const override { return new PcmAudioPayload(*this); }
 
                 /** @brief Shared-pointer alias for PcmAudioPayload ownership. */
                 using Ptr = SharedPtr<PcmAudioPayload, /*CopyOnWrite=*/true, PcmAudioPayload>;
@@ -70,18 +68,15 @@ class PcmAudioPayload : public AudioPayload {
                  * @brief Constructs a PCM audio payload with the given
                  *        descriptor and (optional) sample count.
                  */
-                explicit PcmAudioPayload(const AudioDesc &desc,
-                                         size_t sampleCount = 0) :
-                        AudioPayload(desc, sampleCount) { }
+                explicit PcmAudioPayload(const AudioDesc &desc, size_t sampleCount = 0)
+                    : AudioPayload(desc, sampleCount) {}
 
                 /**
                  * @brief Constructs a PCM audio payload with a descriptor,
                  *        sample count, and plane list.
                  */
-                PcmAudioPayload(const AudioDesc &desc,
-                                size_t sampleCount,
-                                const BufferView &data) :
-                        AudioPayload(desc, sampleCount, data) { }
+                PcmAudioPayload(const AudioDesc &desc, size_t sampleCount, const BufferView &data)
+                    : AudioPayload(desc, sampleCount, data) {}
 
                 /**
                  * @brief Always returns @c false — this class only models
@@ -119,11 +114,9 @@ class PcmAudioPayload : public AudioPayload {
                 Ptr convert(const AudioFormat &dstFormat) const;
 
                 /** @brief Stable FourCC for DataStream serialisation. */
-                static constexpr FourCC kSubclassFourCC{'P','A','d','p'};
+                static constexpr FourCC kSubclassFourCC{'P', 'A', 'd', 'p'};
 
-                uint32_t subclassFourCC() const override {
-                        return kSubclassFourCC.value();
-                }
+                uint32_t subclassFourCC() const override { return kSubclassFourCC.value(); }
 
                 /** @copydoc MediaPayload::serialisePayload */
                 void serialisePayload(DataStream &s) const override;

@@ -15,27 +15,26 @@ PROMEKI_DEBUG(ThreadPool)
 
 ThreadPool::ThreadPool(int maxThreadCount, bool lazy) {
         int count = maxThreadCount;
-        if(count < 0) {
+        if (count < 0) {
                 count = static_cast<int>(std::thread::hardware_concurrency());
-                if(count <= 0) count = 1;
+                if (count <= 0) count = 1;
         }
         _maxThreadCount = count;
-        if(!lazy && count > 0) spawnThreads(count);
-        promekiDebug("ThreadPool(%p): created, max %d threads, %s",
-                     (void *)this, _maxThreadCount, lazy ? "lazy" : "eager");
+        if (!lazy && count > 0) spawnThreads(count);
+        promekiDebug("ThreadPool(%p): created, max %d threads, %s", (void *)this, _maxThreadCount,
+                     lazy ? "lazy" : "eager");
         return;
 }
 
 ThreadPool::~ThreadPool() {
-        promekiDebug("ThreadPool(%p): destroying, %d threads spawned",
-                     (void *)this, _threadCount);
+        promekiDebug("ThreadPool(%p): destroying, %d threads spawned", (void *)this, _threadCount);
         {
                 Mutex::Locker locker(_mutex);
                 _shutdown = true;
                 _cv.wakeAll();
         }
-        for(auto &t : _threads) {
-                if(t.joinable()) t.join();
+        for (auto &t : _threads) {
+                if (t.joinable()) t.join();
         }
         promekiDebug("ThreadPool(%p): destroyed", (void *)this);
         return;
@@ -44,8 +43,7 @@ ThreadPool::~ThreadPool() {
 void ThreadPool::setNamePrefix(const String &prefix) {
         Mutex::Locker locker(_mutex);
         _namePrefix = prefix;
-        promekiDebug("ThreadPool(%p): name prefix set to '%s'",
-                     (void *)this, prefix.cstr());
+        promekiDebug("ThreadPool(%p): name prefix set to '%s'", (void *)this, prefix.cstr());
         return;
 }
 
@@ -55,18 +53,17 @@ String ThreadPool::namePrefix() const {
 }
 
 void ThreadPool::setThreadCount(int count, bool lazy) {
-        if(count < 0) count = 0;
+        if (count < 0) count = 0;
         {
                 Mutex::Locker locker(_mutex);
-                if(count == _maxThreadCount) return;
-                promekiDebug("ThreadPool(%p): resizing from %d to %d max threads, %s",
-                             (void *)this, _maxThreadCount, count,
-                             lazy ? "lazy" : "eager");
+                if (count == _maxThreadCount) return;
+                promekiDebug("ThreadPool(%p): resizing from %d to %d max threads, %s", (void *)this, _maxThreadCount,
+                             count, lazy ? "lazy" : "eager");
                 _shutdown = true;
                 _cv.wakeAll();
         }
-        for(auto &t : _threads) {
-                if(t.joinable()) t.join();
+        for (auto &t : _threads) {
+                if (t.joinable()) t.join();
         }
         {
                 Mutex::Locker locker(_mutex);
@@ -75,7 +72,7 @@ void ThreadPool::setThreadCount(int count, bool lazy) {
                 _threadCount = 0;
                 _waitingCount = 0;
                 _shutdown = false;
-                if(!lazy && count > 0) spawnThreads(count);
+                if (!lazy && count > 0) spawnThreads(count);
         }
         return;
 }
@@ -97,7 +94,9 @@ int ThreadPool::activeThreadCount() const {
 
 void ThreadPool::waitForDone() {
         _mutex.lock();
-        auto pred = [this] { return _tasks.isEmpty() && _activeCount == 0; };
+        auto pred = [this] {
+                return _tasks.isEmpty() && _activeCount == 0;
+        };
         _doneCv.wait(_mutex, pred);
         _mutex.unlock();
         return;
@@ -105,7 +104,9 @@ void ThreadPool::waitForDone() {
 
 Error ThreadPool::waitForDone(unsigned int timeoutMs) {
         _mutex.lock();
-        auto pred = [this] { return _tasks.isEmpty() && _activeCount == 0; };
+        auto pred = [this] {
+                return _tasks.isEmpty() && _activeCount == 0;
+        };
         Error err = _doneCv.wait(_mutex, pred, timeoutMs);
         _mutex.unlock();
         return err;
@@ -120,27 +121,25 @@ void ThreadPool::clear() {
 void ThreadPool::workerFunc(int index) {
         {
                 Mutex::Locker locker(_mutex);
-                if(!_namePrefix.isEmpty()) {
+                if (!_namePrefix.isEmpty()) {
                         String name = _namePrefix + String::number(index);
                         Thread::setCurrentThreadName(name);
-                        promekiDebug("ThreadPool(%p): thread %d named '%s'",
-                                     (void *)this, index, name.cstr());
+                        promekiDebug("ThreadPool(%p): thread %d named '%s'", (void *)this, index, name.cstr());
                 }
         }
         promekiDebug("ThreadPool(%p): thread %d started", (void *)this, index);
-        for(;;) {
+        for (;;) {
                 Task task;
                 {
                         _mutex.lock();
                         _waitingCount++;
-                        while(_tasks.isEmpty() && !_shutdown) {
+                        while (_tasks.isEmpty() && !_shutdown) {
                                 _cv.wait(_mutex);
                         }
                         _waitingCount--;
-                        if(_shutdown && _tasks.isEmpty()) {
+                        if (_shutdown && _tasks.isEmpty()) {
                                 _mutex.unlock();
-                                promekiDebug("ThreadPool(%p): thread %d exiting",
-                                             (void *)this, index);
+                                promekiDebug("ThreadPool(%p): thread %d exiting", (void *)this, index);
                                 return;
                         }
                         task = std::move(_tasks.front());
@@ -152,7 +151,7 @@ void ThreadPool::workerFunc(int index) {
                 {
                         Mutex::Locker locker(_mutex);
                         _activeCount--;
-                        if(_tasks.isEmpty() && _activeCount == 0) {
+                        if (_tasks.isEmpty() && _activeCount == 0) {
                                 _doneCv.wakeAll();
                         }
                 }
@@ -161,7 +160,7 @@ void ThreadPool::workerFunc(int index) {
 }
 
 void ThreadPool::spawnThreads(int count) {
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
                 int index = _threadCount;
                 _threads.pushToBack(std::thread(&ThreadPool::workerFunc, this, index));
                 _threadCount++;
@@ -170,11 +169,10 @@ void ThreadPool::spawnThreads(int count) {
 }
 
 void ThreadPool::maybeSpawnOne() {
-        if(_threadCount >= _maxThreadCount) return;
-        if(_waitingCount > 0) return;
-        promekiDebug("ThreadPool(%p): spawning thread %d (active %d, waiting %d, max %d)",
-                     (void *)this, _threadCount, _activeCount, _waitingCount,
-                     _maxThreadCount);
+        if (_threadCount >= _maxThreadCount) return;
+        if (_waitingCount > 0) return;
+        promekiDebug("ThreadPool(%p): spawning thread %d (active %d, waiting %d, max %d)", (void *)this, _threadCount,
+                     _activeCount, _waitingCount, _maxThreadCount);
         spawnThreads(1);
         return;
 }

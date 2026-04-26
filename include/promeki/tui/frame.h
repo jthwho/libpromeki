@@ -21,12 +21,12 @@ PROMEKI_NAMESPACE_BEGIN
  * Thread-affine — see @ref TuiWidget.
  */
 class TuiFrame : public TuiWidget {
-        PROMEKI_OBJECT(TuiFrame, TuiWidget)
+                PROMEKI_OBJECT(TuiFrame, TuiWidget)
         public:
                 TuiFrame(const String &title = String(), ObjectBase *parent = nullptr);
                 ~TuiFrame() override;
 
-                void setTitle(const String &title);
+                void          setTitle(const String &title);
                 const String &title() const { return _title; }
 
                 /**

@@ -20,12 +20,12 @@ PROMEKI_NAMESPACE_BEGIN
  * Thread-affine — see @ref TuiWidget.
  */
 class TuiScrollArea : public TuiWidget {
-        PROMEKI_OBJECT(TuiScrollArea, TuiWidget)
+                PROMEKI_OBJECT(TuiScrollArea, TuiWidget)
         public:
                 TuiScrollArea(ObjectBase *parent = nullptr);
                 ~TuiScrollArea() override;
 
-                void setContentWidget(TuiWidget *widget);
+                void       setContentWidget(TuiWidget *widget);
                 TuiWidget *contentWidget() const { return _contentWidget; }
 
                 int scrollX() const { return _scrollX; }
@@ -43,9 +43,9 @@ class TuiScrollArea : public TuiWidget {
                 void resizeEvent(ResizeEvent *e) override;
 
         private:
-                TuiWidget       *_contentWidget = nullptr;
-                int             _scrollX = 0;
-                int             _scrollY = 0;
+                TuiWidget *_contentWidget = nullptr;
+                int        _scrollX = 0;
+                int        _scrollY = 0;
 
                 void clampScroll();
 };

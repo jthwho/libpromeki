@@ -20,17 +20,17 @@ PROMEKI_NAMESPACE_BEGIN
  * Thread-affine — see @ref TuiWidget.
  */
 class TuiProgressBar : public TuiWidget {
-        PROMEKI_OBJECT(TuiProgressBar, TuiWidget)
+                PROMEKI_OBJECT(TuiProgressBar, TuiWidget)
         public:
                 TuiProgressBar(ObjectBase *parent = nullptr);
                 ~TuiProgressBar() override;
 
                 void setValue(int value);
-                int value() const { return _value; }
+                int  value() const { return _value; }
 
                 void setRange(int min, int max);
-                int minimum() const { return _min; }
-                int maximum() const { return _max; }
+                int  minimum() const { return _min; }
+                int  maximum() const { return _max; }
 
                 Size2Di32 sizeHint() const override;
 

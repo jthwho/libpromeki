@@ -46,7 +46,7 @@ TEST_CASE("TuiProgressBar: value clamping") {
 
 TEST_CASE("TuiProgressBar: sizeHint") {
         TuiProgressBar bar;
-        Size2Di32 hint = bar.sizeHint();
+        Size2Di32      hint = bar.sizeHint();
         CHECK(hint.width() > 0);
         CHECK(hint.height() >= 1);
 }

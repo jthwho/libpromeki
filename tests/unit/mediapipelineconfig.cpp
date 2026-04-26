@@ -22,44 +22,43 @@ using namespace promeki;
 
 namespace {
 
-// Builds a small, well-formed config: TPG -> CSC -> file sink.
-MediaPipelineConfig makeSample() {
-        MediaPipelineConfig cfg;
+        // Builds a small, well-formed config: TPG -> CSC -> file sink.
+        MediaPipelineConfig makeSample() {
+                MediaPipelineConfig cfg;
 
-        Metadata pm;
-        pm.set(Metadata::Title, String("MediaPipelineConfig sample"));
-        cfg.setPipelineMetadata(pm);
+                Metadata pm;
+                pm.set(Metadata::Title, String("MediaPipelineConfig sample"));
+                cfg.setPipelineMetadata(pm);
 
-        MediaPipelineConfig::Stage src;
-        src.name = "src";
-        src.type = "TPG";
-        src.mode = MediaIO::Source;
-        src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
-        src.config.set(MediaConfig::VideoEnabled, true);
-        cfg.addStage(src);
+                MediaPipelineConfig::Stage src;
+                src.name = "src";
+                src.type = "TPG";
+                src.mode = MediaIO::Source;
+                src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
+                src.config.set(MediaConfig::VideoEnabled, true);
+                cfg.addStage(src);
 
-        MediaPipelineConfig::Stage csc;
-        csc.name = "csc";
-        csc.type = "CSC";
-        csc.mode = MediaIO::Transform;
-        cfg.addStage(csc);
+                MediaPipelineConfig::Stage csc;
+                csc.name = "csc";
+                csc.type = "CSC";
+                csc.mode = MediaIO::Transform;
+                cfg.addStage(csc);
 
-        MediaPipelineConfig::Stage sink;
-        sink.name = "sink";
-        // Scratch path — the config is never actually opened, we
-        // just need a well-formed filename with a recognised
-        // extension for validate() / round-trip checks.  Use
-        // Dir::temp() rather than hard-coding /tmp to honour the
-        // project-wide scratch-location override.
-        sink.path = (Dir::temp().path()
-                / "mediapipelineconfig_sample.dpx").toString();
-        sink.mode = MediaIO::Sink;
-        cfg.addStage(sink);
+                MediaPipelineConfig::Stage sink;
+                sink.name = "sink";
+                // Scratch path — the config is never actually opened, we
+                // just need a well-formed filename with a recognised
+                // extension for validate() / round-trip checks.  Use
+                // Dir::temp() rather than hard-coding /tmp to honour the
+                // project-wide scratch-location override.
+                sink.path = (Dir::temp().path() / "mediapipelineconfig_sample.dpx").toString();
+                sink.mode = MediaIO::Sink;
+                cfg.addStage(sink);
 
-        cfg.addRoute("src", "csc");
-        cfg.addRoute("csc", "sink");
-        return cfg;
-}
+                cfg.addRoute("src", "csc");
+                cfg.addRoute("csc", "sink");
+                return cfg;
+        }
 
 } // namespace
 
@@ -129,7 +128,7 @@ TEST_CASE("MediaPipelineConfig_FrameCount_RoundTripJson") {
         REQUIRE(j.contains("frameCount"));
         CHECK(j.getInt("frameCount") == 60);
 
-        Error err;
+        Error               err;
         MediaPipelineConfig round = MediaPipelineConfig::fromJson(j, &err);
         CHECK(err.isOk());
         CHECK(round.frameCount() == FrameCount(60));
@@ -149,7 +148,7 @@ TEST_CASE("MediaPipelineConfig_FrameCount_InfiniteNotSerialized") {
         cfg.setFrameCount(FrameCount::infinity());
         JsonObject j = cfg.toJson();
         CHECK_FALSE(j.contains("frameCount"));
-        Error err;
+        Error               err;
         MediaPipelineConfig round = MediaPipelineConfig::fromJson(j, &err);
         CHECK(err.isOk());
         CHECK(round.frameCount().isUnknown());
@@ -171,9 +170,9 @@ TEST_CASE("MediaPipelineConfig_FrameCount_NegativeJsonRejected") {
         // error so the caller can surface it.  Positive and zero
         // values stay in the fast path.
         MediaPipelineConfig cfg = makeSample();
-        JsonObject j = cfg.toJson();
+        JsonObject          j = cfg.toJson();
         j.set("frameCount", int64_t(-1));
-        Error err;
+        Error               err;
         MediaPipelineConfig round = MediaPipelineConfig::fromJson(j, &err);
         // The loader clears the error by default and only sets it
         // when the input is malformed; a negative value should make
@@ -190,9 +189,9 @@ TEST_CASE("MediaPipelineConfig_FrameCount_ZeroJsonAccepted") {
         // same as no cap (zero frames produced) but the config layer
         // must preserve it verbatim.
         MediaPipelineConfig cfg = makeSample();
-        JsonObject j = cfg.toJson();
+        JsonObject          j = cfg.toJson();
         j.set("frameCount", int64_t(0));
-        Error err;
+        Error               err;
         MediaPipelineConfig round = MediaPipelineConfig::fromJson(j, &err);
         CHECK(err.isOk());
         CHECK(round.frameCount() == FrameCount(0));
@@ -206,10 +205,9 @@ TEST_CASE("MediaPipelineConfig_Describe_MentionsFrameCount") {
         MediaPipelineConfig cfg = makeSample();
         cfg.setFrameCount(FrameCount(42));
         StringList lines = cfg.describe();
-        bool mentionsCap = false;
-        for(size_t i = 0; i < lines.size(); ++i) {
-                if(lines[i].contains("Frame count limit")
-                   && lines[i].contains("42")) {
+        bool       mentionsCap = false;
+        for (size_t i = 0; i < lines.size(); ++i) {
+                if (lines[i].contains("Frame count limit") && lines[i].contains("42")) {
                         mentionsCap = true;
                         break;
                 }
@@ -222,8 +220,8 @@ TEST_CASE("MediaPipelineConfig_Describe_OmitsFrameCountWhenUnbounded") {
         // describe() summary with an irrelevant line — the same
         // suppression rule as the JSON serializer.
         MediaPipelineConfig cfg = makeSample();
-        StringList lines = cfg.describe();
-        for(size_t i = 0; i < lines.size(); ++i) {
+        StringList          lines = cfg.describe();
+        for (size_t i = 0; i < lines.size(); ++i) {
                 CHECK_FALSE(lines[i].contains("Frame count limit"));
         }
 }
@@ -231,7 +229,7 @@ TEST_CASE("MediaPipelineConfig_Describe_OmitsFrameCountWhenUnbounded") {
 TEST_CASE("MediaPipelineConfig_FrameCount_RoundTripDataStream") {
         MediaPipelineConfig orig = makeSample();
         orig.setFrameCount(FrameCount(120));
-        Buffer buf(16384);
+        Buffer         buf(16384);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
         {
@@ -256,7 +254,7 @@ TEST_CASE("MediaPipelineConfig_Validate_EmptyStages") {
 }
 
 TEST_CASE("MediaPipelineConfig_Validate_DuplicateName") {
-        MediaPipelineConfig cfg = makeSample();
+        MediaPipelineConfig        cfg = makeSample();
         MediaPipelineConfig::Stage dup;
         dup.name = "src"; // duplicate
         dup.type = "TPG";
@@ -285,7 +283,7 @@ TEST_CASE("MediaPipelineConfig_Validate_Cycle") {
 }
 
 TEST_CASE("MediaPipelineConfig_Validate_OrphanStage") {
-        MediaPipelineConfig cfg = makeSample();
+        MediaPipelineConfig        cfg = makeSample();
         MediaPipelineConfig::Stage orphan;
         orphan.name = "orphan";
         orphan.type = "TPG";
@@ -295,7 +293,7 @@ TEST_CASE("MediaPipelineConfig_Validate_OrphanStage") {
 }
 
 TEST_CASE("MediaPipelineConfig_Validate_MissingTypeAndPath") {
-        MediaPipelineConfig cfg;
+        MediaPipelineConfig        cfg;
         MediaPipelineConfig::Stage bad;
         bad.name = "only";
         bad.mode = MediaIO::Source;
@@ -304,7 +302,7 @@ TEST_CASE("MediaPipelineConfig_Validate_MissingTypeAndPath") {
 }
 
 TEST_CASE("MediaPipelineConfig_Validate_InvalidMode") {
-        MediaPipelineConfig cfg;
+        MediaPipelineConfig        cfg;
         MediaPipelineConfig::Stage bad;
         bad.name = "only";
         bad.type = "TPG";
@@ -315,7 +313,7 @@ TEST_CASE("MediaPipelineConfig_Validate_InvalidMode") {
 
 TEST_CASE("MediaPipelineConfig_JsonRoundTrip") {
         MediaPipelineConfig orig = makeSample();
-        JsonObject j = orig.toJson();
+        JsonObject          j = orig.toJson();
 
         // Basic shape sanity.
         CHECK(j.valueIsObject("metadata"));
@@ -324,7 +322,7 @@ TEST_CASE("MediaPipelineConfig_JsonRoundTrip") {
         CHECK(j.getArray("stages").size() == 3);
         CHECK(j.getArray("routes").size() == 2);
 
-        Error err;
+        Error               err;
         MediaPipelineConfig round = MediaPipelineConfig::fromJson(j, &err);
         CHECK(err.isOk());
         CHECK(round == orig);
@@ -361,37 +359,33 @@ TEST_CASE("MediaPipelineConfig_FrontendCoordsRoundTrip") {
         // Round-trip from String form (what the wire actually carries)
         // so we exercise Variant::parseString through setFromJson.
         const String text = j.toString(0);
-        Error perr;
-        JsonObject reparsed = JsonObject::parse(text, &perr);
+        Error        perr;
+        JsonObject   reparsed = JsonObject::parse(text, &perr);
         REQUIRE(perr.isOk());
 
-        Error ferr;
+        Error               ferr;
         MediaPipelineConfig round = MediaPipelineConfig::fromJson(reparsed, &ferr);
         CHECK(ferr.isOk());
         CHECK(round == cfg);
 
         // Spot-check the recovered values come back as doubles.
-        const auto *srcStage  = round.findStage("src");
+        const auto *srcStage = round.findStage("src");
         const auto *sinkStage = round.findStage("sink");
-        REQUIRE(srcStage  != nullptr);
+        REQUIRE(srcStage != nullptr);
         REQUIRE(sinkStage != nullptr);
-        CHECK(srcStage->metadata.get(Metadata::FrontendX).get<double>()
-                == doctest::Approx(124.5));
-        CHECK(srcStage->metadata.get(Metadata::FrontendY).get<double>()
-                == doctest::Approx(64.0));
-        CHECK(sinkStage->metadata.get(Metadata::FrontendX).get<double>()
-                == doctest::Approx(480.0));
-        CHECK(sinkStage->metadata.get(Metadata::FrontendY).get<double>()
-                == doctest::Approx(96.5));
+        CHECK(srcStage->metadata.get(Metadata::FrontendX).get<double>() == doctest::Approx(124.5));
+        CHECK(srcStage->metadata.get(Metadata::FrontendY).get<double>() == doctest::Approx(64.0));
+        CHECK(sinkStage->metadata.get(Metadata::FrontendX).get<double>() == doctest::Approx(480.0));
+        CHECK(sinkStage->metadata.get(Metadata::FrontendY).get<double>() == doctest::Approx(96.5));
 }
 
 TEST_CASE("MediaPipelineConfig_JsonRoundTrip_FromString") {
         MediaPipelineConfig orig = makeSample();
-        const String text = orig.toJson().toString(2);
-        Error perr;
-        JsonObject reparsed = JsonObject::parse(text, &perr);
+        const String        text = orig.toJson().toString(2);
+        Error               perr;
+        JsonObject          reparsed = JsonObject::parse(text, &perr);
         REQUIRE(perr.isOk());
-        Error ferr;
+        Error               ferr;
         MediaPipelineConfig round = MediaPipelineConfig::fromJson(reparsed, &ferr);
         CHECK(ferr.isOk());
         CHECK(round == orig);
@@ -399,8 +393,8 @@ TEST_CASE("MediaPipelineConfig_JsonRoundTrip_FromString") {
 
 TEST_CASE("MediaPipelineConfig_DataStreamRoundTrip") {
         MediaPipelineConfig orig = makeSample();
-        Buffer buf(16384);
-        BufferIODevice dev(&buf);
+        Buffer              buf(16384);
+        BufferIODevice      dev(&buf);
         dev.open(IODevice::ReadWrite);
 
         {
@@ -423,19 +417,19 @@ TEST_CASE("MediaPipelineConfig_DataStreamRoundTrip") {
 
 TEST_CASE("MediaPipelineConfig_Describe_NotEmpty") {
         MediaPipelineConfig cfg = makeSample();
-        StringList lines = cfg.describe();
+        StringList          lines = cfg.describe();
         CHECK(!lines.isEmpty());
         // Stage and route headers should always show up.
         bool hasStages = false;
         bool hasRoutes = false;
         bool mentionsSrc = false;
         bool mentionsRouteArrow = false;
-        for(size_t i = 0; i < lines.size(); ++i) {
+        for (size_t i = 0; i < lines.size(); ++i) {
                 const String &l = lines[i];
-                if(l.contains("Stages"))  hasStages = true;
-                if(l.contains("Routes"))  hasRoutes = true;
-                if(l.contains("src"))     mentionsSrc = true;
-                if(l.contains("->"))      mentionsRouteArrow = true;
+                if (l.contains("Stages")) hasStages = true;
+                if (l.contains("Routes")) hasRoutes = true;
+                if (l.contains("src")) mentionsSrc = true;
+                if (l.contains("->")) mentionsRouteArrow = true;
         }
         CHECK(hasStages);
         CHECK(hasRoutes);
@@ -445,7 +439,9 @@ TEST_CASE("MediaPipelineConfig_Describe_NotEmpty") {
 
 TEST_CASE("MediaPipelineConfig_StageRouteEquality") {
         MediaPipelineConfig::Stage a;
-        a.name = "n"; a.type = "TPG"; a.mode = MediaIO::Source;
+        a.name = "n";
+        a.type = "TPG";
+        a.mode = MediaIO::Source;
         MediaPipelineConfig::Stage b = a;
         CHECK(a == b);
         b.mode = MediaIO::Sink;
@@ -464,11 +460,10 @@ TEST_CASE("MediaPipelineConfig_SaveLoadFile") {
         // Use Dir::temp() so the file lands wherever the host has
         // configured its temp area (LibraryOptions::TempDir override,
         // TMPDIR env var, or the platform default).
-        FilePath path = Dir::temp().path()
-                / "mediapipelineconfig_save_load_test.json";
+        FilePath path = Dir::temp().path() / "mediapipelineconfig_save_load_test.json";
         CHECK(orig.saveToFile(path).isOk());
 
-        Error err;
+        Error               err;
         MediaPipelineConfig round = MediaPipelineConfig::loadFromFile(path, &err);
         CHECK(err.isOk());
         CHECK(round == orig);

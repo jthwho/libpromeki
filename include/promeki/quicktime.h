@@ -121,34 +121,34 @@ class QuickTime {
                                 Track() = default;
 
                                 /** @brief Returns true if this track has a valid type. */
-                                bool             isValid() const     { return _type != InvalidTrack; }
+                                bool isValid() const { return _type != InvalidTrack; }
 
                                 /** @brief Returns the track kind. */
-                                TrackType        type() const        { return _type; }
+                                TrackType type() const { return _type; }
                                 /** @brief Returns the QuickTime track ID. */
-                                uint32_t         id() const          { return _id; }
+                                uint32_t id() const { return _id; }
                                 /** @brief Returns the media timescale (ticks per second). */
-                                uint32_t         timescale() const   { return _timescale; }
+                                uint32_t timescale() const { return _timescale; }
                                 /** @brief Returns the track duration in media-timescale ticks. */
-                                uint64_t         duration() const    { return _duration; }
+                                uint64_t duration() const { return _duration; }
                                 /** @brief Returns the track frame rate (video / timecode). */
-                                const FrameRate &frameRate() const   { return _frameRate; }
+                                const FrameRate &frameRate() const { return _frameRate; }
                                 /** @brief Returns the number of samples in the track. */
-                                uint64_t         sampleCount() const { return _sampleCount; }
+                                uint64_t sampleCount() const { return _sampleCount; }
                                 /** @brief Returns the ISO 639-2 language tag (e.g. "eng"). */
-                                const String    &language() const    { return _language; }
+                                const String &language() const { return _language; }
                                 /** @brief Returns the human-readable track name (if any). */
-                                const String    &name() const        { return _name; }
+                                const String &name() const { return _name; }
                                 /** @brief Returns the video pixel description (codec). */
-                                const PixelFormat &pixelFormat() const   { return _pixelFormat; }
+                                const PixelFormat &pixelFormat() const { return _pixelFormat; }
                                 /** @brief Returns the video dimensions in pixels. */
-                                const Size2Du32 &size() const        { return _size; }
+                                const Size2Du32 &size() const { return _size; }
                                 /** @brief Returns the audio description (channel layout, rate). */
-                                const AudioDesc &audioDesc() const   { return _audioDesc; }
+                                const AudioDesc &audioDesc() const { return _audioDesc; }
                                 /** @brief Returns the per-track metadata. */
-                                const Metadata  &metadata() const    { return _metadata; }
+                                const Metadata &metadata() const { return _metadata; }
                                 /** @brief Returns the elst start offset (in this track's timescale). */
-                                int64_t          editStartOffset() const { return _editStartOffset; }
+                                int64_t editStartOffset() const { return _editStartOffset; }
                                 /**
                                  * @brief Returns the codec-specific
                                  *        configuration record payload
@@ -164,55 +164,55 @@ class QuickTime {
                                  *        record (@c avcC, @c hvcC,
                                  *        etc.) or zero when absent.
                                  */
-                                FourCC            codecConfigType() const { return _codecConfigType; }
+                                FourCC codecConfigType() const { return _codecConfigType; }
 
                                 /** @brief Sets the track kind. */
-                                void setType(TrackType t)                { _type = t; }
+                                void setType(TrackType t) { _type = t; }
                                 /** @brief Sets the track ID. */
-                                void setId(uint32_t id)                  { _id = id; }
+                                void setId(uint32_t id) { _id = id; }
                                 /** @brief Sets the media timescale. */
-                                void setTimescale(uint32_t ts)           { _timescale = ts; }
+                                void setTimescale(uint32_t ts) { _timescale = ts; }
                                 /** @brief Sets the track duration in timescale ticks. */
-                                void setDuration(uint64_t d)             { _duration = d; }
+                                void setDuration(uint64_t d) { _duration = d; }
                                 /** @brief Sets the frame rate. */
-                                void setFrameRate(const FrameRate &r)    { _frameRate = r; }
+                                void setFrameRate(const FrameRate &r) { _frameRate = r; }
                                 /** @brief Sets the sample count. */
-                                void setSampleCount(uint64_t n)          { _sampleCount = n; }
+                                void setSampleCount(uint64_t n) { _sampleCount = n; }
                                 /** @brief Sets the ISO 639-2 language tag. */
-                                void setLanguage(const String &s)        { _language = s; }
+                                void setLanguage(const String &s) { _language = s; }
                                 /** @brief Sets the human-readable track name. */
-                                void setName(const String &s)            { _name = s; }
+                                void setName(const String &s) { _name = s; }
                                 /** @brief Sets the video pixel description (codec). */
-                                void setPixelFormat(const PixelFormat &pd)   { _pixelFormat = pd; }
+                                void setPixelFormat(const PixelFormat &pd) { _pixelFormat = pd; }
                                 /** @brief Sets the video dimensions. */
-                                void setSize(const Size2Du32 &s)         { _size = s; }
+                                void setSize(const Size2Du32 &s) { _size = s; }
                                 /** @brief Sets the audio description. */
-                                void setAudioDesc(const AudioDesc &ad)   { _audioDesc = ad; }
+                                void setAudioDesc(const AudioDesc &ad) { _audioDesc = ad; }
                                 /** @brief Returns a mutable reference to the metadata. */
-                                Metadata        &metadata()              { return _metadata; }
+                                Metadata &metadata() { return _metadata; }
                                 /** @brief Sets the elst start offset (in this track's timescale). */
-                                void setEditStartOffset(int64_t v)       { _editStartOffset = v; }
+                                void setEditStartOffset(int64_t v) { _editStartOffset = v; }
                                 /** @brief Sets the codec configuration record payload. */
                                 void setCodecConfig(const Buffer::Ptr &b) { _codecConfig = b; }
                                 /** @brief Sets the FourCC type of the codec configuration record. */
-                                void setCodecConfigType(FourCC t)         { _codecConfigType = t; }
+                                void setCodecConfigType(FourCC t) { _codecConfigType = t; }
 
                         private:
-                                TrackType _type = InvalidTrack;
-                                uint32_t  _id = 0;
-                                uint32_t  _timescale = 0;
-                                uint64_t  _duration = 0;
-                                FrameRate _frameRate;
-                                uint64_t  _sampleCount = 0;
-                                String    _language;
-                                String    _name;
+                                TrackType   _type = InvalidTrack;
+                                uint32_t    _id = 0;
+                                uint32_t    _timescale = 0;
+                                uint64_t    _duration = 0;
+                                FrameRate   _frameRate;
+                                uint64_t    _sampleCount = 0;
+                                String      _language;
+                                String      _name;
                                 PixelFormat _pixelFormat;
-                                Size2Du32 _size;
-                                AudioDesc _audioDesc;
-                                Metadata  _metadata;
-                                int64_t   _editStartOffset = 0;
+                                Size2Du32   _size;
+                                AudioDesc   _audioDesc;
+                                Metadata    _metadata;
+                                int64_t     _editStartOffset = 0;
                                 Buffer::Ptr _codecConfig;
-                                FourCC      _codecConfigType{'\0','\0','\0','\0'};
+                                FourCC      _codecConfigType{'\0', '\0', '\0', '\0'};
                 };
 
                 /** @brief Plain-value list of tracks. */
@@ -227,13 +227,13 @@ class QuickTime {
                  * by the engine when read; on writes the caller supplies it.
                  */
                 struct Sample {
-                        uint32_t    trackId = 0;       ///< QuickTime track ID.
-                        uint64_t    index = 0;         ///< 0-based sample index within the track.
-                        int64_t     dts = 0;           ///< Decode timestamp in track timescale.
-                        int64_t     pts = 0;           ///< Presentation timestamp (dts + ctts offset).
-                        uint64_t    duration = 0;      ///< Sample duration in track timescale.
-                        bool        keyframe = false;  ///< True if this is a sync (key) sample.
-                        Buffer::Ptr data;              ///< Raw encoded payload bytes.
+                                uint32_t    trackId = 0;      ///< QuickTime track ID.
+                                uint64_t    index = 0;        ///< 0-based sample index within the track.
+                                int64_t     dts = 0;          ///< Decode timestamp in track timescale.
+                                int64_t     pts = 0;          ///< Presentation timestamp (dts + ctts offset).
+                                uint64_t    duration = 0;     ///< Sample duration in track timescale.
+                                bool        keyframe = false; ///< True if this is a sync (key) sample.
+                                Buffer::Ptr data;             ///< Raw encoded payload bytes.
                 };
 
                 /**
@@ -245,7 +245,7 @@ class QuickTime {
                  * compiles and returns meaningful errors.
                  */
                 class Impl {
-                        PROMEKI_SHARED(Impl)
+                                PROMEKI_SHARED(Impl)
                         public:
                                 /** @brief Constructs an Impl for the given operation. */
                                 explicit Impl(Operation op) : _operation(op) {}
@@ -254,16 +254,16 @@ class QuickTime {
                                 virtual ~Impl();
 
                                 /** @brief Returns the operation this backend performs. */
-                                Operation     operation() const { return _operation; }
+                                Operation operation() const { return _operation; }
 
                                 /** @brief Returns the filename associated with the backend. */
-                                const String &filename() const  { return _filename; }
+                                const String &filename() const { return _filename; }
 
                                 /** @brief Sets the filename. Not valid once open(). */
                                 void setFilename(const String &fn) { _filename = fn; }
 
                                 /** @brief Returns the IODevice (if set), or nullptr. */
-                                IODevice     *device() const    { return _device; }
+                                IODevice *device() const { return _device; }
 
                                 /**
                                  * @brief Sets the IODevice. The caller retains ownership unless
@@ -278,10 +278,10 @@ class QuickTime {
                                 virtual Error open();
 
                                 /** @brief Closes the container. Default: no-op. */
-                                virtual void  close();
+                                virtual void close();
 
                                 /** @brief Returns true if the container is currently open. */
-                                virtual bool  isOpen() const;
+                                virtual bool isOpen() const;
 
                                 /**
                                  * @brief Reads the @p sampleIndex'th sample from track
@@ -293,9 +293,7 @@ class QuickTime {
                                  *            metadata and an allocated payload buffer.
                                  * @return Error::Ok on success.
                                  */
-                                virtual Error readSample(size_t trackIndex,
-                                                         uint64_t sampleIndex,
-                                                         Sample &out);
+                                virtual Error readSample(size_t trackIndex, uint64_t sampleIndex, Sample &out);
 
                                 /**
                                  * @brief Reads @p count consecutive samples starting
@@ -313,10 +311,8 @@ class QuickTime {
                                  *
                                  * @return Error::Ok on success.
                                  */
-                                virtual Error readSampleRange(size_t trackIndex,
-                                                              uint64_t startSampleIndex,
-                                                              uint64_t count,
-                                                              Sample &out);
+                                virtual Error readSampleRange(size_t trackIndex, uint64_t startSampleIndex,
+                                                              uint64_t count, Sample &out);
 
                                 /**
                                  * @brief Adds a video track to a writer.
@@ -327,10 +323,8 @@ class QuickTime {
                                  * @param outTrackId If non-null, receives the assigned track ID.
                                  * @return Error::Ok on success.
                                  */
-                                virtual Error addVideoTrack(const PixelFormat &codec,
-                                                            const Size2Du32 &size,
-                                                            const FrameRate &frameRate,
-                                                            uint32_t *outTrackId);
+                                virtual Error addVideoTrack(const PixelFormat &codec, const Size2Du32 &size,
+                                                            const FrameRate &frameRate, uint32_t *outTrackId);
 
                                 /**
                                  * @brief Adds a PCM audio track to a writer.
@@ -339,8 +333,7 @@ class QuickTime {
                                  * @param outTrackId If non-null, receives the assigned track ID.
                                  * @return Error::Ok on success.
                                  */
-                                virtual Error addAudioTrack(const AudioDesc &desc,
-                                                            uint32_t *outTrackId);
+                                virtual Error addAudioTrack(const AudioDesc &desc, uint32_t *outTrackId);
 
                                 /**
                                  * @brief Adds a single-sample @c tmcd timecode track to a writer.
@@ -351,9 +344,8 @@ class QuickTime {
                                  * @param outTrackId    If non-null, receives the assigned track ID.
                                  * @return Error::Ok on success.
                                  */
-                                virtual Error addTimecodeTrack(const Timecode &startTimecode,
-                                                               const FrameRate &frameRate,
-                                                               uint32_t *outTrackId);
+                                virtual Error addTimecodeTrack(const Timecode  &startTimecode,
+                                                               const FrameRate &frameRate, uint32_t *outTrackId);
 
                                 /**
                                  * @brief Appends an encoded sample to a writer track.
@@ -426,13 +418,13 @@ class QuickTime {
                                 virtual Error finalize();
 
                                 /** @brief Returns the list of tracks discovered by open(). */
-                                const TrackList &tracks() const             { return _tracks; }
+                                const TrackList &tracks() const { return _tracks; }
 
                                 /** @brief Returns the aggregated MediaDesc derived from the tracks. */
-                                const MediaDesc &mediaDesc() const          { return _mediaDesc; }
+                                const MediaDesc &mediaDesc() const { return _mediaDesc; }
 
                                 /** @brief Returns container-level metadata (from udta, etc). */
-                                const Metadata  &containerMetadata() const  { return _containerMetadata; }
+                                const Metadata &containerMetadata() const { return _containerMetadata; }
 
                                 /**
                                  * @brief Returns the anchor timecode resolved from the
@@ -444,7 +436,7 @@ class QuickTime {
                                  * starting timecode (and the @c tmcd flags such as
                                  * drop-frame) is parsed during open().
                                  */
-                                const Timecode  &startTimecode() const      { return _startTimecode; }
+                                const Timecode &startTimecode() const { return _startTimecode; }
 
                         protected:
                                 Operation _operation;
@@ -511,14 +503,13 @@ class QuickTime {
 
                 /** @brief Reads @p count consecutive samples starting at
                  *         @p startSampleIndex as a single concatenated payload. */
-                Error readSampleRange(size_t trackIndex, uint64_t startSampleIndex,
-                                      uint64_t count, Sample &out) {
+                Error readSampleRange(size_t trackIndex, uint64_t startSampleIndex, uint64_t count, Sample &out) {
                         return d.modify()->readSampleRange(trackIndex, startSampleIndex, count, out);
                 }
 
                 /** @brief Adds a video track to the writer. */
-                Error addVideoTrack(const PixelFormat &codec, const Size2Du32 &size,
-                                    const FrameRate &frameRate, uint32_t *outTrackId = nullptr) {
+                Error addVideoTrack(const PixelFormat &codec, const Size2Du32 &size, const FrameRate &frameRate,
+                                    uint32_t *outTrackId = nullptr) {
                         return d.modify()->addVideoTrack(codec, size, frameRate, outTrackId);
                 }
 
@@ -539,9 +530,7 @@ class QuickTime {
                 }
 
                 /** @brief Sets container-level metadata for the writer. */
-                void setContainerMetadata(const Metadata &meta) {
-                        d.modify()->setContainerMetadata(meta);
-                }
+                void setContainerMetadata(const Metadata &meta) { d.modify()->setContainerMetadata(meta); }
 
                 /** @brief Returns the writer's on-disk layout. */
                 Layout layout() const { return d->layout(); }

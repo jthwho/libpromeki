@@ -17,10 +17,10 @@
 using namespace promeki;
 
 class SenderTracker : public ObjectBase {
-        PROMEKI_OBJECT(SenderTracker, ObjectBase)
+                PROMEKI_OBJECT(SenderTracker, ObjectBase)
         public:
                 std::atomic<ObjectBase *> lastSender{nullptr};
-                std::atomic<int> callCount{0};
+                std::atomic<int>          callCount{0};
 
                 PROMEKI_SLOT(handleString, const String &);
 };
@@ -59,9 +59,9 @@ TEST_CASE("Thread: adoptCurrentThread") {
 TEST_CASE("Thread: postCallable runs on thread") {
         Thread t;
         t.start();
-        std::atomic<bool> called{false};
+        std::atomic<bool>            called{false};
         std::atomic<std::thread::id> callerId{};
-        auto mainId = std::this_thread::get_id();
+        auto                         mainId = std::this_thread::get_id();
 
         t.threadEventLoop()->postCallable([&called, &callerId] {
                 called = true;
@@ -74,15 +74,11 @@ TEST_CASE("Thread: postCallable runs on thread") {
 }
 
 TEST_CASE("Thread: started and finished signals") {
-        Thread t;
+        Thread            t;
         std::atomic<bool> startedFired{false};
         std::atomic<bool> finishedFired{false};
-        t.startedSignal.connect([&startedFired] {
-                startedFired = true;
-        });
-        t.finishedSignal.connect([&finishedFired](int) {
-                finishedFired = true;
-        });
+        t.startedSignal.connect([&startedFired] { startedFired = true; });
+        t.finishedSignal.connect([&finishedFired](int) { finishedFired = true; });
         t.start();
         t.quit();
         t.wait();
@@ -92,7 +88,7 @@ TEST_CASE("Thread: started and finished signals") {
 
 TEST_CASE("Thread: eventLoop affinity for objects") {
         EventLoop loop;
-        TestOne obj;
+        TestOne   obj;
         // Object created with an EventLoop should have it set
         CHECK(obj.eventLoop() == &loop);
 }
@@ -114,7 +110,7 @@ TEST_CASE("Thread: cross-thread signal/slot delivery") {
         t.start();
 
         // Create receiver on the worker thread
-        TestTwo *recv = nullptr;
+        TestTwo          *recv = nullptr;
         std::atomic<bool> ready{false};
         t.threadEventLoop()->postCallable([&recv, &ready] {
                 recv = new TestTwo();
@@ -122,7 +118,7 @@ TEST_CASE("Thread: cross-thread signal/slot delivery") {
         });
 
         // Wait for receiver to be created
-        while(!ready.load()) {
+        while (!ready.load()) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
@@ -139,9 +135,7 @@ TEST_CASE("Thread: cross-thread signal/slot delivery") {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         // Clean up
-        t.threadEventLoop()->postCallable([recv] {
-                delete recv;
-        });
+        t.threadEventLoop()->postCallable([recv] { delete recv; });
         t.quit();
         t.wait();
         CHECK(true); // Reaching here without crash means cross-thread worked
@@ -149,7 +143,7 @@ TEST_CASE("Thread: cross-thread signal/slot delivery") {
 
 TEST_CASE("Thread: moveToThread changes affinity") {
         EventLoop mainLoop;
-        Thread t;
+        Thread    t;
         t.start();
 
         TestOne obj;
@@ -167,7 +161,7 @@ TEST_CASE("Thread: moveToThread changes affinity") {
                 moved = true;
         });
         // Wait for the move to complete
-        while(!moved.load()) {
+        while (!moved.load()) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         CHECK(obj.eventLoop() == &mainLoop);
@@ -178,10 +172,10 @@ TEST_CASE("Thread: moveToThread changes affinity") {
 
 TEST_CASE("Thread: moveToThread moves children recursively") {
         EventLoop mainLoop;
-        Thread t;
+        Thread    t;
         t.start();
 
-        TestOne parent;
+        TestOne  parent;
         TestOne *child = new TestOne(&parent);
 
         parent.setParent(nullptr);
@@ -195,7 +189,7 @@ TEST_CASE("Thread: moveToThread moves children recursively") {
 
 TEST_CASE("Thread: wait on adopted thread returns Invalid") {
         Thread *t = Thread::adoptCurrentThread();
-        Error err = t->wait();
+        Error   err = t->wait();
         CHECK(err == Error::Invalid);
         delete t;
 }
@@ -241,31 +235,30 @@ TEST_CASE("Thread: timed wait returns Ok when thread finishes in time") {
 
 TEST_CASE("Thread: cross-thread signal delivers correct signalSender") {
         EventLoop mainLoop;
-        Thread t;
+        Thread    t;
         t.start();
 
         // Create receiver on the worker thread so its EventLoop
         // differs from the sender's.
-        SenderTracker *recv = nullptr;
+        SenderTracker    *recv = nullptr;
         std::atomic<bool> ready{false};
         t.threadEventLoop()->postCallable([&recv, &ready] {
                 recv = new SenderTracker();
                 ready = true;
         });
-        while(!ready.load()) {
+        while (!ready.load()) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
         // Create sender on main thread
         TestOne sender;
-        ObjectBase::connect(&sender.somethingHappenedSignal,
-                            &recv->handleStringSlot);
+        ObjectBase::connect(&sender.somethingHappenedSignal, &recv->handleStringSlot);
 
         // Emit from main thread — cross-thread dispatch
         sender.somethingHappenedSignal.emit("test");
 
         // Wait for the marshalled slot to execute on the worker
-        while(recv->callCount.load(std::memory_order_relaxed) == 0) {
+        while (recv->callCount.load(std::memory_order_relaxed) == 0) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
@@ -274,9 +267,7 @@ TEST_CASE("Thread: cross-thread signal delivers correct signalSender") {
         CHECK(recv->callCount.load(std::memory_order_relaxed) == 1);
 
         // Clean up
-        t.threadEventLoop()->postCallable([recv] {
-                delete recv;
-        });
+        t.threadEventLoop()->postCallable([recv] { delete recv; });
         t.quit();
         t.wait();
 }
@@ -303,9 +294,7 @@ TEST_CASE("Thread: currentThread returns correct pointer from spawned thread") {
         Thread t;
         t.start();
         std::atomic<Thread *> seen{nullptr};
-        t.threadEventLoop()->postCallable([&seen] {
-                seen.store(Thread::currentThread(), std::memory_order_relaxed);
-        });
+        t.threadEventLoop()->postCallable([&seen] { seen.store(Thread::currentThread(), std::memory_order_relaxed); });
         t.quit();
         t.wait();
         CHECK(seen.load(std::memory_order_relaxed) == &t);
@@ -342,7 +331,7 @@ TEST_CASE("Thread: nativeId is set after start") {
 
 TEST_CASE("Thread: nativeId differs from main thread") {
         uint64_t mainId = Thread::currentNativeId();
-        Thread t;
+        Thread   t;
         t.start();
         CHECK(t.nativeId() != mainId);
         t.quit();
@@ -351,7 +340,7 @@ TEST_CASE("Thread: nativeId differs from main thread") {
 
 TEST_CASE("Thread: adopted thread captures nativeId") {
         uint64_t mainId = Thread::currentNativeId();
-        Thread *t = Thread::adoptCurrentThread();
+        Thread  *t = Thread::adoptCurrentThread();
         CHECK(t->nativeId() == mainId);
         delete t;
 }
@@ -360,9 +349,8 @@ TEST_CASE("Thread: nativeId matches currentNativeId on spawned thread") {
         Thread t;
         t.start();
         std::atomic<uint64_t> seen{0};
-        t.threadEventLoop()->postCallable([&seen] {
-                seen.store(Thread::currentNativeId(), std::memory_order_relaxed);
-        });
+        t.threadEventLoop()->postCallable(
+                [&seen] { seen.store(Thread::currentNativeId(), std::memory_order_relaxed); });
         t.quit();
         t.wait();
         CHECK(seen.load(std::memory_order_relaxed) == t.nativeId());
@@ -401,7 +389,7 @@ TEST_CASE("Thread: priority returns value for running thread") {
 
 TEST_CASE("Thread: setPriority returns Invalid when not running") {
         Thread t;
-        Error err = t.setPriority(0);
+        Error  err = t.setPriority(0);
         CHECK(err == Error::Invalid);
 }
 
@@ -489,10 +477,10 @@ TEST_CASE("Thread: setName before start is race-free (stress)") {
         // of them both survive startup and successfully applied their
         // names.  Without the fix this test crashes (SIGSEGV in libc)
         // intermittently on a multi-core machine.
-        constexpr int kCount = 64;
-        List<Thread *> threads;
+        constexpr int             kCount = 64;
+        List<Thread *>            threads;
         List<std::atomic<bool> *> matches;
-        for(int i = 0; i < kCount; i++) {
+        for (int i = 0; i < kCount; i++) {
                 auto *t = new Thread();
                 t->setName(String::number(i));
                 t->start();
@@ -504,11 +492,10 @@ TEST_CASE("Thread: setName before start is race-free (stress)") {
                 t->threadEventLoop()->postCallable([m, expected] {
                         char buf[64] = {};
                         pthread_getname_np(pthread_self(), buf, sizeof(buf));
-                        m->store(String(buf) == expected,
-                                 std::memory_order_relaxed);
+                        m->store(String(buf) == expected, std::memory_order_relaxed);
                 });
         }
-        for(int i = 0; i < kCount; i++) {
+        for (int i = 0; i < kCount; i++) {
                 threads[i]->quit();
                 threads[i]->wait();
                 CHECK(matches[i]->load());
@@ -557,9 +544,8 @@ TEST_CASE("Thread: isCurrentThread on spawned thread from main") {
         CHECK_FALSE(t.isCurrentThread());
         // From the spawned thread, it should be true
         std::atomic<bool> isCurrent{false};
-        t.threadEventLoop()->postCallable([&t, &isCurrent] {
-                isCurrent.store(t.isCurrentThread(), std::memory_order_relaxed);
-        });
+        t.threadEventLoop()->postCallable(
+                [&t, &isCurrent] { isCurrent.store(t.isCurrentThread(), std::memory_order_relaxed); });
         t.quit();
         t.wait();
         CHECK(isCurrent.load());
@@ -573,9 +559,7 @@ TEST_CASE("Thread: start with custom stack size") {
         CHECK(t.threadEventLoop() != nullptr);
         // Verify the thread actually runs with the custom stack
         std::atomic<bool> called{false};
-        t.threadEventLoop()->postCallable([&called] {
-                called = true;
-        });
+        t.threadEventLoop()->postCallable([&called] { called = true; });
         t.quit();
         t.wait();
         CHECK(called.load());
@@ -600,7 +584,7 @@ TEST_CASE("Thread: affinity returns non-empty set for running thread") {
 }
 
 TEST_CASE("Thread: affinity returns empty set when not running") {
-        Thread t;
+        Thread   t;
         Set<int> cpus = t.affinity();
         CHECK(cpus.isEmpty());
 }
@@ -637,7 +621,7 @@ TEST_CASE("Thread: setAffinity with empty set restores all cores") {
 }
 
 TEST_CASE("Thread: setAffinity returns Invalid when not running") {
-        Thread t;
+        Thread   t;
         Set<int> cpus;
         cpus.insert(0);
         Error err = t.setAffinity(cpus);
@@ -646,12 +630,12 @@ TEST_CASE("Thread: setAffinity returns Invalid when not running") {
 
 TEST_CASE("Thread: cross-thread signalSender is nullptr when sender destroyed") {
         EventLoop mainLoop;
-        Thread t;
+        Thread    t;
         t.start();
 
         // Create receiver on the worker thread and block the event
         // loop so that the emit callable cannot run until we release it.
-        SenderTracker *recv = nullptr;
+        SenderTracker    *recv = nullptr;
         std::atomic<bool> ready{false};
         std::atomic<bool> gate{false};
         t.threadEventLoop()->postCallable([&recv, &ready, &gate] {
@@ -660,11 +644,11 @@ TEST_CASE("Thread: cross-thread signalSender is nullptr when sender destroyed") 
                 // Hold the event loop until the gate opens, ensuring
                 // the emit callable queued after this one cannot run
                 // until the sender has been destroyed.
-                while(!gate.load(std::memory_order_acquire)) {
+                while (!gate.load(std::memory_order_acquire)) {
                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 }
         });
-        while(!ready.load(std::memory_order_acquire)) {
+        while (!ready.load(std::memory_order_acquire)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
@@ -673,8 +657,7 @@ TEST_CASE("Thread: cross-thread signalSender is nullptr when sender destroyed") 
                 // The emit queues a callable behind the gate, so it
                 // won't execute until we release the gate below.
                 TestOne sender;
-                ObjectBase::connect(&sender.somethingHappenedSignal,
-                                    &recv->handleStringSlot);
+                ObjectBase::connect(&sender.somethingHappenedSignal, &recv->handleStringSlot);
                 sender.somethingHappenedSignal.emit("test");
                 // Sender is destroyed here.
         }
@@ -684,7 +667,7 @@ TEST_CASE("Thread: cross-thread signalSender is nullptr when sender destroyed") 
         gate.store(true, std::memory_order_release);
 
         // Wait for the marshalled slot to execute
-        while(recv->callCount.load(std::memory_order_relaxed) == 0) {
+        while (recv->callCount.load(std::memory_order_relaxed) == 0) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
@@ -693,9 +676,7 @@ TEST_CASE("Thread: cross-thread signalSender is nullptr when sender destroyed") 
         CHECK(recv->lastSender.load(std::memory_order_relaxed) == nullptr);
 
         // Clean up
-        t.threadEventLoop()->postCallable([recv] {
-                delete recv;
-        });
+        t.threadEventLoop()->postCallable([recv] { delete recv; });
         t.quit();
         t.wait();
 }
@@ -709,19 +690,19 @@ TEST_CASE("Thread: ObjectBasePtr cross-thread invalidation") {
         std::atomic<bool> ready{false};
         std::atomic<bool> gate{false};
         std::atomic<bool> ptrInvalidAfterDestroy{false};
-        TestOne *obj = new TestOne();
+        TestOne          *obj = new TestOne();
 
         t.threadEventLoop()->postCallable([&] {
                 ObjectBasePtr ptr(obj);
                 ready.store(true, std::memory_order_release);
                 // Block until the main thread destroys the object
-                while(!gate.load(std::memory_order_acquire)) {
+                while (!gate.load(std::memory_order_acquire)) {
                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 }
                 ptrInvalidAfterDestroy.store(!ptr.isValid(), std::memory_order_relaxed);
         });
 
-        while(!ready.load(std::memory_order_acquire)) {
+        while (!ready.load(std::memory_order_acquire)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
@@ -738,29 +719,29 @@ TEST_CASE("Thread: ObjectBasePtr cross-thread invalidation") {
 }
 
 TEST_CASE("Thread: ObjectBasePtr multiple cross-thread trackers invalidated") {
-        constexpr int numThreads = 4;
-        Thread threads[numThreads];
-        std::atomic<int> readyCount{0};
+        constexpr int     numThreads = 4;
+        Thread            threads[numThreads];
+        std::atomic<int>  readyCount{0};
         std::atomic<bool> gate{false};
-        std::atomic<int> invalidCount{0};
-        TestOne *obj = new TestOne();
+        std::atomic<int>  invalidCount{0};
+        TestOne          *obj = new TestOne();
 
-        for(int i = 0; i < numThreads; i++) {
+        for (int i = 0; i < numThreads; i++) {
                 threads[i].start();
                 threads[i].threadEventLoop()->postCallable([&] {
                         ObjectBasePtr ptr(obj);
                         readyCount.fetch_add(1, std::memory_order_release);
-                        while(!gate.load(std::memory_order_acquire)) {
+                        while (!gate.load(std::memory_order_acquire)) {
                                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
                         }
-                        if(!ptr.isValid()) {
+                        if (!ptr.isValid()) {
                                 invalidCount.fetch_add(1, std::memory_order_relaxed);
                         }
                 });
         }
 
         // Wait for all threads to hold an ObjectBasePtr
-        while(readyCount.load(std::memory_order_acquire) < numThreads) {
+        while (readyCount.load(std::memory_order_acquire) < numThreads) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
@@ -768,7 +749,7 @@ TEST_CASE("Thread: ObjectBasePtr multiple cross-thread trackers invalidated") {
         delete obj;
         gate.store(true, std::memory_order_release);
 
-        for(int i = 0; i < numThreads; i++) {
+        for (int i = 0; i < numThreads; i++) {
                 threads[i].quit();
                 threads[i].wait();
         }
@@ -783,18 +764,18 @@ TEST_CASE("Thread: ObjectBasePtr data() returns nullptr after cross-thread inval
         std::atomic<bool> ready{false};
         std::atomic<bool> gate{false};
         std::atomic<bool> dataIsNull{false};
-        TestOne *obj = new TestOne();
+        TestOne          *obj = new TestOne();
 
         t.threadEventLoop()->postCallable([&] {
                 ObjectBasePtr ptr(obj);
                 ready.store(true, std::memory_order_release);
-                while(!gate.load(std::memory_order_acquire)) {
+                while (!gate.load(std::memory_order_acquire)) {
                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 }
                 dataIsNull.store(ptr.data() == nullptr, std::memory_order_relaxed);
         });
 
-        while(!ready.load(std::memory_order_acquire)) {
+        while (!ready.load(std::memory_order_acquire)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
@@ -810,19 +791,19 @@ TEST_CASE("Thread: ObjectBasePtr data() returns nullptr after cross-thread inval
 TEST_CASE("Thread: ObjectBasePtr concurrent destroy ptr and object") {
         // Exercises the _pointerMap mutex: ObjectBasePtr::unlink() and
         // ObjectBase::runCleanup() race on _pointerMap concurrently.
-        for(int iter = 0; iter < 100; iter++) {
-                TestOne *obj = new TestOne();
+        for (int iter = 0; iter < 100; iter++) {
+                TestOne          *obj = new TestOne();
                 std::atomic<bool> ready{false};
 
                 // Create an ObjectBasePtr on a worker thread
-                auto *ptr = new ObjectBasePtr(obj);
+                auto       *ptr = new ObjectBasePtr(obj);
                 std::thread worker([&] {
                         ready.store(true, std::memory_order_release);
                         // Destroy the ObjectBasePtr (triggers unlink)
                         delete ptr;
                 });
 
-                while(!ready.load(std::memory_order_acquire)) {
+                while (!ready.load(std::memory_order_acquire)) {
                         std::this_thread::yield();
                 }
                 // Destroy the object concurrently (triggers runCleanup)
@@ -838,7 +819,7 @@ TEST_CASE("Thread: ObjectBasePtr copy assignment across threads") {
         Thread t;
         t.start();
 
-        TestOne *obj = new TestOne();
+        TestOne      *obj = new TestOne();
         ObjectBasePtr mainPtr(obj);
 
         std::atomic<bool> ready{false};
@@ -850,13 +831,13 @@ TEST_CASE("Thread: ObjectBasePtr copy assignment across threads") {
                 ObjectBasePtr<> workerPtr;
                 workerPtr = mainPtr;
                 ready.store(true, std::memory_order_release);
-                while(!gate.load(std::memory_order_acquire)) {
+                while (!gate.load(std::memory_order_acquire)) {
                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 }
                 copyValid.store(workerPtr.isValid(), std::memory_order_relaxed);
         });
 
-        while(!ready.load(std::memory_order_acquire)) {
+        while (!ready.load(std::memory_order_acquire)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
@@ -883,20 +864,19 @@ TEST_CASE("Thread: ObjectBasePtr copy assignment across threads") {
 
 TEST_CASE("Signal::connect(Function, ObjectBase*): same-thread direct dispatch") {
         EventLoop mainLoop;
-        TestOne owner;
+        TestOne   owner;
         CHECK(owner.eventLoop() == &mainLoop);
 
         // Emit on the owner's own loop — the slot must fire inline on
         // the emitting thread without a round trip through
         // postCallable.  We observe that by comparing thread IDs
         // captured inside the slot against the emitting thread ID.
-        const std::thread::id emitterId = std::this_thread::get_id();
+        const std::thread::id        emitterId = std::this_thread::get_id();
         std::atomic<std::thread::id> slotId{};
-        std::atomic<int> callCount{0};
+        std::atomic<int>             callCount{0};
         owner.somethingHappenedSignal.connect(
                 [&slotId, &callCount](const String &) {
-                        slotId.store(std::this_thread::get_id(),
-                                     std::memory_order_relaxed);
+                        slotId.store(std::this_thread::get_id(), std::memory_order_relaxed);
                         callCount.fetch_add(1, std::memory_order_relaxed);
                 },
                 &owner);
@@ -910,7 +890,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): same-thread direct dispatch")
 
 TEST_CASE("Signal::connect(Function, ObjectBase*): cross-thread auto-marshal") {
         EventLoop mainLoop;
-        Thread worker;
+        Thread    worker;
         worker.start();
 
         // The owner lives on the worker thread's loop.  Signals emit
@@ -918,30 +898,29 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): cross-thread auto-marshal") {
         // @c worker.threadEventLoop()->postCallable so the slot runs
         // on the worker thread even though the signal itself has no
         // knowledge of threads.
-        TestOne *ownerOnWorker = nullptr;
+        TestOne          *ownerOnWorker = nullptr;
         std::atomic<bool> created{false};
         worker.threadEventLoop()->postCallable([&ownerOnWorker, &created]() {
                 ownerOnWorker = new TestOne();
                 created.store(true, std::memory_order_release);
         });
-        while(!created.load(std::memory_order_acquire)) {
+        while (!created.load(std::memory_order_acquire)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
-        const std::thread::id mainId   = std::this_thread::get_id();
-        const std::thread::id workerId = worker.id();
+        const std::thread::id        mainId = std::this_thread::get_id();
+        const std::thread::id        workerId = worker.id();
         std::atomic<std::thread::id> slotId{};
-        std::atomic<int> callCount{0};
-        String receivedArg;
-        std::atomic<bool> argReady{false};
+        std::atomic<int>             callCount{0};
+        String                       receivedArg;
+        std::atomic<bool>            argReady{false};
 
         // Connect once, from the main thread.  The new overload
         // captures the owner and uses @c owner->eventLoop() at emit
         // time for the thread check.
         ownerOnWorker->somethingHappenedSignal.connect(
                 [&](const String &s) {
-                        slotId.store(std::this_thread::get_id(),
-                                     std::memory_order_relaxed);
+                        slotId.store(std::this_thread::get_id(), std::memory_order_relaxed);
                         receivedArg = s;
                         callCount.fetch_add(1, std::memory_order_relaxed);
                         argReady.store(true, std::memory_order_release);
@@ -954,7 +933,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): cross-thread auto-marshal") {
         ownerOnWorker->makeSomethingHappen();
 
         // Wait for the marshalled slot to execute on the worker.
-        while(!argReady.load(std::memory_order_acquire)) {
+        while (!argReady.load(std::memory_order_acquire)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
@@ -966,12 +945,11 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): cross-thread auto-marshal") {
         // Clean up the worker-side object on the worker so its
         // destructor runs with the right affinity.
         std::atomic<bool> cleaned{false};
-        worker.threadEventLoop()->postCallable(
-                [ownerOnWorker, &cleaned]() {
-                        delete ownerOnWorker;
-                        cleaned.store(true, std::memory_order_release);
-                });
-        while(!cleaned.load(std::memory_order_acquire)) {
+        worker.threadEventLoop()->postCallable([ownerOnWorker, &cleaned]() {
+                delete ownerOnWorker;
+                cleaned.store(true, std::memory_order_release);
+        });
+        while (!cleaned.load(std::memory_order_acquire)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         worker.quit();
@@ -985,27 +963,26 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): serializes concurrent emitter
         // a single EventLoop, all invocations must run serially on
         // that loop — no interleaving, no missed calls.
         EventLoop mainLoop;
-        Thread coordinator;
+        Thread    coordinator;
         coordinator.start();
 
-        TestOne *owner = nullptr;
+        TestOne          *owner = nullptr;
         std::atomic<bool> ready{false};
         coordinator.threadEventLoop()->postCallable([&owner, &ready]() {
                 owner = new TestOne();
                 ready.store(true, std::memory_order_release);
         });
-        while(!ready.load(std::memory_order_acquire)) {
+        while (!ready.load(std::memory_order_acquire)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
         const std::thread::id coordId = coordinator.id();
-        std::atomic<int> nonCoordDispatches{0};
-        std::atomic<int> calls{0};
+        std::atomic<int>      nonCoordDispatches{0};
+        std::atomic<int>      calls{0};
         owner->somethingHappenedSignal.connect(
                 [&calls, &nonCoordDispatches, coordId](const String &) {
-                        if(std::this_thread::get_id() != coordId) {
-                                nonCoordDispatches.fetch_add(
-                                        1, std::memory_order_relaxed);
+                        if (std::this_thread::get_id() != coordId) {
+                                nonCoordDispatches.fetch_add(1, std::memory_order_relaxed);
                         }
                         calls.fetch_add(1, std::memory_order_relaxed);
                 },
@@ -1015,28 +992,28 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): serializes concurrent emitter
         // to the coordinator's loop; the coordinator drains them one
         // at a time.  None must be lost and none must run on the
         // emitting worker's thread.
-        constexpr int kEmittersPerThread = 64;
-        constexpr int kThreads = 4;
-        std::atomic<int> startGate{0};
+        constexpr int     kEmittersPerThread = 64;
+        constexpr int     kThreads = 4;
+        std::atomic<int>  startGate{0};
         List<std::thread> emitters;
-        for(int t = 0; t < kThreads; ++t) {
+        for (int t = 0; t < kThreads; ++t) {
                 emitters.pushToBack(std::thread([&]() {
                         startGate.fetch_add(1, std::memory_order_relaxed);
-                        while(startGate.load(std::memory_order_relaxed) < kThreads) {
+                        while (startGate.load(std::memory_order_relaxed) < kThreads) {
                                 std::this_thread::yield();
                         }
-                        for(int i = 0; i < kEmittersPerThread; ++i) {
+                        for (int i = 0; i < kEmittersPerThread; ++i) {
                                 owner->makeSomethingHappen();
                         }
                 }));
         }
-        for(auto it = emitters.begin(); it != emitters.end(); ++it) {
+        for (auto it = emitters.begin(); it != emitters.end(); ++it) {
                 it->join();
         }
 
         // Give the coordinator time to drain all posted callables.
         const int expected = kEmittersPerThread * kThreads;
-        while(calls.load(std::memory_order_relaxed) < expected) {
+        while (calls.load(std::memory_order_relaxed) < expected) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         CHECK(calls.load() == expected);
@@ -1047,7 +1024,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): serializes concurrent emitter
                 delete owner;
                 cleaned.store(true, std::memory_order_release);
         });
-        while(!cleaned.load(std::memory_order_acquire)) {
+        while (!cleaned.load(std::memory_order_acquire)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         coordinator.quit();
@@ -1060,10 +1037,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): null owner asserts") {
         // overload asserts rather than silently falling back.
         // Callers that want the raw, same-thread-only behaviour must
         // call the @c void*-owner overload with @c nullptr explicitly.
-        EventLoop mainLoop;
+        EventLoop   mainLoop;
         Signal<int> sig;
-        CHECK_THROWS_AS(
-                sig.connect([](int) {}, static_cast<ObjectBase *>(nullptr)),
-                std::runtime_error);
+        CHECK_THROWS_AS(sig.connect([](int) {}, static_cast<ObjectBase *>(nullptr)), std::runtime_error);
 }
-

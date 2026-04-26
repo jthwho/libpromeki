@@ -40,10 +40,10 @@ Application::Application(int argc, char **argv) {
         data().arguments = StringList(static_cast<size_t>(argc), const_cast<const char **>(argv));
         data().mainThread = Thread::adoptCurrentThread();
         LibraryOptions::instance().loadFromEnvironment();
-        if(LibraryOptions::instance().getAs<bool>(LibraryOptions::CrashHandler)) {
+        if (LibraryOptions::instance().getAs<bool>(LibraryOptions::CrashHandler)) {
                 CrashHandler::install();
         }
-        if(LibraryOptions::instance().getAs<bool>(LibraryOptions::TerminationSignalHandler)) {
+        if (LibraryOptions::instance().getAs<bool>(LibraryOptions::TerminationSignalHandler)) {
                 SignalHandler::install();
         }
         maybeStartDebugServerFromEnv();
@@ -137,7 +137,7 @@ bool Application::isCrashHandlerInstalled() {
 }
 
 void Application::refreshCrashHandler() {
-        if(CrashHandler::isInstalled()) CrashHandler::install();
+        if (CrashHandler::isInstalled()) CrashHandler::install();
         return;
 }
 
@@ -151,8 +151,8 @@ void Application::quit(int exitCode) {
         // it may swallow the request (e.g. to trigger an async
         // shutdown that calls quit() again when it's done).
         QuitRequestHandler handler = data().quitHandler;
-        if(handler) {
-                if(handler(exitCode)) return;
+        if (handler) {
+                if (handler(exitCode)) return;
         }
         data().exitCode = exitCode;
         data().shouldQuit = true;
@@ -160,7 +160,7 @@ void Application::quit(int exitCode) {
         // thread's event loop so it unwinds promptly.  Safe from any
         // thread — EventLoop::quit() is mutex-protected.
         EventLoop *mainLoop = mainEventLoop();
-        if(mainLoop != nullptr) mainLoop->quit(exitCode);
+        if (mainLoop != nullptr) mainLoop->quit(exitCode);
         return;
 }
 
@@ -184,8 +184,8 @@ int Application::exec() {
 #if PROMEKI_ENABLE_HTTP
 
 Error Application::startDebugServer(const SocketAddress &address) {
-        if(data().debugServer) {
-                if(data().debugServer->isListening()) return Error::AlreadyOpen;
+        if (data().debugServer) {
+                if (data().debugServer->isListening()) return Error::AlreadyOpen;
         } else {
                 data().debugServer = UniquePtr<DebugServer>::create();
                 data().debugServer->installDefaultModules();
@@ -195,12 +195,12 @@ Error Application::startDebugServer(const SocketAddress &address) {
 
 Error Application::startDebugServer(uint16_t port) {
         auto [addr, err] = DebugServer::parseSpec(String(":") + String::number(port));
-        if(err.isError()) return err;
+        if (err.isError()) return err;
         return startDebugServer(addr);
 }
 
 void Application::stopDebugServer() {
-        if(!data().debugServer) return;
+        if (!data().debugServer) return;
         data().debugServer->close();
         data().debugServer.clear();
 }
@@ -211,23 +211,22 @@ DebugServer *Application::debugServer() {
 
 void Application::maybeStartDebugServerFromEnv() {
         String spec = Env::get(DebugServerEnv);
-        if(spec.isEmpty()) return;
+        if (spec.isEmpty()) return;
         auto [addr, perr] = DebugServer::parseSpec(spec);
-        if(perr.isError()) {
-                promekiWarn("%s=\"%s\" is not a valid host:port spec — debug server disabled",
-                        DebugServerEnv, spec.cstr());
+        if (perr.isError()) {
+                promekiWarn("%s=\"%s\" is not a valid host:port spec — debug server disabled", DebugServerEnv,
+                            spec.cstr());
                 return;
         }
         Error err = startDebugServer(addr);
-        if(err.isError()) {
-                promekiWarn("Failed to start debug server on %s: %s",
-                        addr.toString().cstr(), err.name().cstr());
+        if (err.isError()) {
+                promekiWarn("Failed to start debug server on %s: %s", addr.toString().cstr(), err.name().cstr());
                 return;
         }
         promekiInfo("Debug server listening on %s", addr.toString().cstr());
 }
 
-#else  // !PROMEKI_ENABLE_HTTP
+#else // !PROMEKI_ENABLE_HTTP
 
 Error Application::startDebugServer(const SocketAddress &) {
         return Error::NotSupported;
@@ -237,16 +236,14 @@ Error Application::startDebugServer(uint16_t) {
         return Error::NotSupported;
 }
 
-void Application::stopDebugServer() {
-}
+void Application::stopDebugServer() {}
 
 DebugServer *Application::debugServer() {
         return nullptr;
 }
 
-void Application::maybeStartDebugServerFromEnv() {
-}
+void Application::maybeStartDebugServerFromEnv() {}
 
-#endif  // PROMEKI_ENABLE_HTTP
+#endif // PROMEKI_ENABLE_HTTP
 
 PROMEKI_NAMESPACE_END

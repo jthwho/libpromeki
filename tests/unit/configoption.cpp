@@ -38,7 +38,7 @@ TEST_CASE("Config::ID: name roundtrip") {
 }
 
 TEST_CASE("Config: set and get values") {
-        Config cfg;
+        Config     cfg;
         Config::ID width("cfg.video.width");
         Config::ID height("cfg.video.height");
 
@@ -50,13 +50,13 @@ TEST_CASE("Config: set and get values") {
 }
 
 TEST_CASE("Config: get returns default for missing ID") {
-        Config cfg;
+        Config     cfg;
         Config::ID missing("cfg.no.such.key");
         CHECK_FALSE(cfg.get(missing).isValid());
 }
 
 TEST_CASE("Config: contains") {
-        Config cfg;
+        Config     cfg;
         Config::ID key("cfg.contains.test");
         CHECK_FALSE(cfg.contains(key));
         cfg.set(key, String("value"));
@@ -64,7 +64,7 @@ TEST_CASE("Config: contains") {
 }
 
 TEST_CASE("Config: remove") {
-        Config cfg;
+        Config     cfg;
         Config::ID key("cfg.remove.test");
         cfg.set(key, 42);
         CHECK(cfg.remove(key));

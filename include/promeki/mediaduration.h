@@ -64,10 +64,10 @@ class MediaDuration {
                  * @c end @c >= @c start.
                  */
                 struct FrameRange {
-                        FrameNumber start;  ///< First frame of the range (inclusive).
-                        FrameNumber end;    ///< Last frame of the range (inclusive).
+                                FrameNumber start; ///< First frame of the range (inclusive).
+                                FrameNumber end;   ///< Last frame of the range (inclusive).
 
-                        /**
+                                /**
                          * @brief Forward iterator over the frames in a FrameRange.
                          *
                          * Yields @ref FrameNumber values from @c start up to and
@@ -76,53 +76,64 @@ class MediaDuration {
                          *   for(FrameNumber n : range) { ... }
                          * @endcode
                          */
-                        class Iterator {
-                                public:
-                                        using iterator_category = std::forward_iterator_tag;
-                                        using value_type        = FrameNumber;
-                                        using difference_type   = std::ptrdiff_t;
-                                        using pointer           = const FrameNumber *;
-                                        using reference         = const FrameNumber &;
+                                class Iterator {
+                                        public:
+                                                using iterator_category = std::forward_iterator_tag;
+                                                using value_type = FrameNumber;
+                                                using difference_type = std::ptrdiff_t;
+                                                using pointer = const FrameNumber *;
+                                                using reference = const FrameNumber &;
 
-                                        Iterator() = default;
-                                        explicit Iterator(const FrameNumber &v) : _cur(v) {}
+                                                Iterator() = default;
+                                                explicit Iterator(const FrameNumber &v) : _cur(v) {}
 
-                                        reference operator*() const { return _cur; }
-                                        pointer   operator->() const { return &_cur; }
-                                        Iterator &operator++() { ++_cur; return *this; }
-                                        Iterator  operator++(int) { Iterator o = *this; ++_cur; return o; }
-                                        bool operator==(const Iterator &other) const { return _cur == other._cur; }
-                                        bool operator!=(const Iterator &other) const { return _cur != other._cur; }
+                                                reference operator*() const { return _cur; }
+                                                pointer   operator->() const { return &_cur; }
+                                                Iterator &operator++() {
+                                                        ++_cur;
+                                                        return *this;
+                                                }
+                                                Iterator operator++(int) {
+                                                        Iterator o = *this;
+                                                        ++_cur;
+                                                        return o;
+                                                }
+                                                bool operator==(const Iterator &other) const {
+                                                        return _cur == other._cur;
+                                                }
+                                                bool operator!=(const Iterator &other) const {
+                                                        return _cur != other._cur;
+                                                }
 
-                                private:
-                                        FrameNumber _cur;
-                        };
+                                        private:
+                                                FrameNumber _cur;
+                                };
 
-                        /** @brief Constructs an invalid range (both endpoints @c Unknown). */
-                        FrameRange() = default;
+                                /** @brief Constructs an invalid range (both endpoints @c Unknown). */
+                                FrameRange() = default;
 
-                        /** @brief Constructs a range from two frame numbers.
+                                /** @brief Constructs a range from two frame numbers.
                          *  @param s First frame (inclusive).
                          *  @param e Last  frame (inclusive). */
-                        FrameRange(const FrameNumber &s, const FrameNumber &e) : start(s), end(e) {}
+                                FrameRange(const FrameNumber &s, const FrameNumber &e) : start(s), end(e) {}
 
-                        /** @brief Returns true if both endpoints are valid and @c end @c >= @c start. */
-                        bool isValid() const {
-                                return start.isValid() && end.isValid() && end.value() >= start.value();
-                        }
+                                /** @brief Returns true if both endpoints are valid and @c end @c >= @c start. */
+                                bool isValid() const {
+                                        return start.isValid() && end.isValid() && end.value() >= start.value();
+                                }
 
-                        /**
+                                /**
                          * @brief Returns the number of frames covered.
                          *
                          * Inclusive:  @c end - @c start + 1.
                          * @return @ref FrameCount, or @c Unknown when the range is invalid.
                          */
-                        FrameCount count() const {
-                                if(!isValid()) return FrameCount::unknown();
-                                return FrameCount(end.value() - start.value() + 1);
-                        }
+                                FrameCount count() const {
+                                        if (!isValid()) return FrameCount::unknown();
+                                        return FrameCount(end.value() - start.value() + 1);
+                                }
 
-                        /**
+                                /**
                          * @brief Returns true if @p frame falls within the inclusive range.
                          *
                          * Returns @c false for any @c Unknown @p frame, and @c false
@@ -131,19 +142,19 @@ class MediaDuration {
                          * @param frame The frame to test.
                          * @return @c true if @c start @c <= @c frame @c <= @c end.
                          */
-                        bool contains(const FrameNumber &frame) const {
-                                if(!isValid() || !frame.isValid()) return false;
-                                return frame.value() >= start.value() && frame.value() <= end.value();
-                        }
+                                bool contains(const FrameNumber &frame) const {
+                                        if (!isValid() || !frame.isValid()) return false;
+                                        return frame.value() >= start.value() && frame.value() <= end.value();
+                                }
 
-                        /** @brief Equality. */
-                        bool operator==(const FrameRange &other) const {
-                                return start == other.start && end == other.end;
-                        }
-                        /** @brief Inequality. */
-                        bool operator!=(const FrameRange &other) const { return !(*this == other); }
+                                /** @brief Equality. */
+                                bool operator==(const FrameRange &other) const {
+                                        return start == other.start && end == other.end;
+                                }
+                                /** @brief Inequality. */
+                                bool operator!=(const FrameRange &other) const { return !(*this == other); }
 
-                        /**
+                                /**
                          * @brief Slides both endpoints by @p n frames.
                          *
                          * Pure translation — start and end move together
@@ -155,23 +166,29 @@ class MediaDuration {
                          *          @c start and @c end.
                          * @return Reference to this range.
                          */
-                        FrameRange &shift(int64_t n) {
-                                start += n;
-                                end   += n;
-                                return *this;
-                        }
+                                FrameRange &shift(int64_t n) {
+                                        start += n;
+                                        end += n;
+                                        return *this;
+                                }
 
-                        /** @brief In-place shift by @p n frames; see @ref shift. */
-                        FrameRange &operator+=(int64_t n) { return shift(n); }
-                        /** @brief In-place shift by @c -n frames; see @ref shift. */
-                        FrameRange &operator-=(int64_t n) { return shift(-n); }
+                                /** @brief In-place shift by @p n frames; see @ref shift. */
+                                FrameRange &operator+=(int64_t n) { return shift(n); }
+                                /** @brief In-place shift by @c -n frames; see @ref shift. */
+                                FrameRange &operator-=(int64_t n) { return shift(-n); }
 
-                        /** @brief Returns @p r shifted by @p n frames. */
-                        friend FrameRange operator+(FrameRange r, int64_t n) { r.shift(n);  return r; }
-                        /** @brief Returns @p r shifted by @c -n frames. */
-                        friend FrameRange operator-(FrameRange r, int64_t n) { r.shift(-n); return r; }
+                                /** @brief Returns @p r shifted by @p n frames. */
+                                friend FrameRange operator+(FrameRange r, int64_t n) {
+                                        r.shift(n);
+                                        return r;
+                                }
+                                /** @brief Returns @p r shifted by @c -n frames. */
+                                friend FrameRange operator-(FrameRange r, int64_t n) {
+                                        r.shift(-n);
+                                        return r;
+                                }
 
-                        /**
+                                /**
                          * @brief Range-for support (ADL @c begin).
                          *
                          * Defined as a friend free function rather than a member
@@ -180,19 +197,19 @@ class MediaDuration {
                          * name would collide with the standard range-for
                          * protocol.  Found via argument-dependent lookup.
                          */
-                        friend Iterator begin(const FrameRange &r) { return Iterator(r.start); }
+                                friend Iterator begin(const FrameRange &r) { return Iterator(r.start); }
 
-                        /**
+                                /**
                          * @brief Range-for support (ADL @c end).
                          *
                          * Returns one past @c r.end (i.e. @c FrameNumber(end.value()+1)).
                          * For an invalid range, returns the same iterator as
                          * @c begin so the loop body never runs.
                          */
-                        friend Iterator end(const FrameRange &r) {
-                                if(!r.isValid()) return Iterator(r.start);
-                                return Iterator(FrameNumber(r.end.value() + 1));
-                        }
+                                friend Iterator end(const FrameRange &r) {
+                                        if (!r.isValid()) return Iterator(r.start);
+                                        return Iterator(FrameNumber(r.end.value() + 1));
+                                }
                 };
 
                 /**
@@ -228,8 +245,7 @@ class MediaDuration {
                 /** @brief Constructs a MediaDuration from explicit start and length.
                  *  @param start  Starting frame index.
                  *  @param length Number of frames. */
-                MediaDuration(const FrameNumber &start, const FrameCount &length)
-                        : _start(start), _length(length) {}
+                MediaDuration(const FrameNumber &start, const FrameCount &length) : _start(start), _length(length) {}
 
                 /**
                  * @brief Returns true if both fields are valid (non-Unknown).
@@ -314,9 +330,15 @@ class MediaDuration {
                 void addToEnd(int64_t n) { _length += n; }
 
                 /** @brief Extends the length by @p c.  Start is unchanged. */
-                MediaDuration &operator+=(const FrameCount &c) { _length += c; return *this; }
+                MediaDuration &operator+=(const FrameCount &c) {
+                        _length += c;
+                        return *this;
+                }
                 /** @brief Shrinks the length by @p c.  Start is unchanged. */
-                MediaDuration &operator-=(const FrameCount &c) { _length -= c; return *this; }
+                MediaDuration &operator-=(const FrameCount &c) {
+                        _length -= c;
+                        return *this;
+                }
 
                 /**
                  * @brief Converts to an inclusive FrameRange.
@@ -355,8 +377,8 @@ class MediaDuration {
                  * length sorts last.
                  */
                 bool operator<(const MediaDuration &other) const {
-                        if(isUnknown() || other.isUnknown()) return false;
-                        if(_start  != other._start)  return _start  < other._start;
+                        if (isUnknown() || other.isUnknown()) return false;
+                        if (_start != other._start) return _start < other._start;
                         return _length < other._length;
                 }
                 /**
@@ -367,14 +389,14 @@ class MediaDuration {
                  * @c == — consistent with NaN semantics.
                  */
                 bool operator<=(const MediaDuration &other) const {
-                        if(isUnknown() || other.isUnknown()) return false;
+                        if (isUnknown() || other.isUnknown()) return false;
                         return *this == other || *this < other;
                 }
                 /** @brief See @ref operator<. */
                 bool operator>(const MediaDuration &other) const { return other < *this; }
                 /** @brief Greater-than-or-equal (NaN-like).  See @ref operator<=. */
                 bool operator>=(const MediaDuration &other) const {
-                        if(isUnknown() || other.isUnknown()) return false;
+                        if (isUnknown() || other.isUnknown()) return false;
                         return *this == other || other < *this;
                 }
 
@@ -492,9 +514,15 @@ class MediaDuration {
 };
 
 /** @brief Returns @p d with its length extended by @p c. */
-inline MediaDuration operator+(MediaDuration d, const FrameCount &c) { d += c; return d; }
+inline MediaDuration operator+(MediaDuration d, const FrameCount &c) {
+        d += c;
+        return d;
+}
 /** @brief Returns @p d with its length shrunk by @p c. */
-inline MediaDuration operator-(MediaDuration d, const FrameCount &c) { d -= c; return d; }
+inline MediaDuration operator-(MediaDuration d, const FrameCount &c) {
+        d -= c;
+        return d;
+}
 
 PROMEKI_NAMESPACE_END
 
@@ -507,25 +535,22 @@ PROMEKI_FORMAT_VIA_TOSTRING(promeki::MediaDuration);
  * Combines the hashes of @c start and @c length using the standard
  * boost-style mix.
  */
-template <>
-struct std::hash<promeki::MediaDuration> {
-        size_t operator()(const promeki::MediaDuration &v) const noexcept {
-                size_t h = std::hash<promeki::FrameNumber>()(v.start());
-                size_t k = std::hash<promeki::FrameCount>()(v.length());
-                // Standard boost::hash_combine mix.
-                return h ^ (k + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2));
-        }
+template <> struct std::hash<promeki::MediaDuration> {
+                size_t operator()(const promeki::MediaDuration &v) const noexcept {
+                        size_t h = std::hash<promeki::FrameNumber>()(v.start());
+                        size_t k = std::hash<promeki::FrameCount>()(v.length());
+                        // Standard boost::hash_combine mix.
+                        return h ^ (k + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2));
+                }
 };
 
 /**
  * @brief Hash specialization for @ref promeki::MediaDuration::FrameRange.
  */
-template <>
-struct std::hash<promeki::MediaDuration::FrameRange> {
-        size_t operator()(const promeki::MediaDuration::FrameRange &v) const noexcept {
-                size_t h = std::hash<promeki::FrameNumber>()(v.start);
-                size_t k = std::hash<promeki::FrameNumber>()(v.end);
-                return h ^ (k + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2));
-        }
+template <> struct std::hash<promeki::MediaDuration::FrameRange> {
+                size_t operator()(const promeki::MediaDuration::FrameRange &v) const noexcept {
+                        size_t h = std::hash<promeki::FrameNumber>()(v.start);
+                        size_t k = std::hash<promeki::FrameNumber>()(v.end);
+                        return h ^ (k + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2));
+                }
 };
-

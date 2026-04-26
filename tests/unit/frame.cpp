@@ -32,29 +32,29 @@ using namespace promeki;
 
 namespace {
 
-// Returns true when @p haystack contains a line that names @p key —
-// either as a structural header (@c "Key:" / @c "Key[idx]:") or as a
-// scalar in the typed dump format (@c "Key [Type]: value").  Covers
-// both shapes in one helper so existing scalar-check call sites
-// don't need to care that scalars now carry their type in brackets.
-bool containsKeyLine(const StringList &haystack, const String &key) {
-        const String headerNeedle = key + String(":");
-        const String scalarNeedle = key + String(" [");
-        for(const String &line : haystack) {
-                if(line.find(headerNeedle) != String::npos) return true;
-                if(line.find(scalarNeedle) != String::npos) return true;
+        // Returns true when @p haystack contains a line that names @p key —
+        // either as a structural header (@c "Key:" / @c "Key[idx]:") or as a
+        // scalar in the typed dump format (@c "Key [Type]: value").  Covers
+        // both shapes in one helper so existing scalar-check call sites
+        // don't need to care that scalars now carry their type in brackets.
+        bool containsKeyLine(const StringList &haystack, const String &key) {
+                const String headerNeedle = key + String(":");
+                const String scalarNeedle = key + String(" [");
+                for (const String &line : haystack) {
+                        if (line.find(headerNeedle) != String::npos) return true;
+                        if (line.find(scalarNeedle) != String::npos) return true;
+                }
+                return false;
         }
-        return false;
-}
 
-// Returns true when @p haystack contains a line with @p needle anywhere.
-// Shared by every dump-content test below.
-bool dumpContains(const StringList &lines, const String &needle) {
-        for(const String &l : lines) {
-                if(l.find(needle) != String::npos) return true;
+        // Returns true when @p haystack contains a line with @p needle anywhere.
+        // Shared by every dump-content test below.
+        bool dumpContains(const StringList &lines, const String &needle) {
+                for (const String &l : lines) {
+                        if (l.find(needle) != String::npos) return true;
+                }
+                return false;
         }
-        return false;
-}
 
 } // namespace
 
@@ -70,18 +70,17 @@ TEST_CASE("Frame::dump: video + audio payload subdumps") {
         Frame::Ptr f = Frame::Ptr::create();
         f.modify()->metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_30));
 
-        UncompressedVideoPayload::Ptr vp = UncompressedVideoPayload::allocate(
-                ImageDesc(Size2Du32(16, 8), PixelFormat(PixelFormat::RGB8_sRGB)));
+        UncompressedVideoPayload::Ptr vp =
+                UncompressedVideoPayload::allocate(ImageDesc(Size2Du32(16, 8), PixelFormat(PixelFormat::RGB8_sRGB)));
         REQUIRE(vp.isValid());
         f.modify()->addPayload(vp);
 
-        AudioDesc adesc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
+        AudioDesc    adesc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
         const size_t samples = 32;
-        Buffer::Ptr abuf = Buffer::Ptr::create(adesc.bufferSize(samples));
+        Buffer::Ptr  abuf = Buffer::Ptr::create(adesc.bufferSize(samples));
         abuf.modify()->setSize(adesc.bufferSize(samples));
-        BufferView aview(abuf, 0, abuf->size());
-        PcmAudioPayload::Ptr ap = PcmAudioPayload::Ptr::create(
-                adesc, samples, aview);
+        BufferView           aview(abuf, 0, abuf->size());
+        PcmAudioPayload::Ptr ap = PcmAudioPayload::Ptr::create(adesc, samples, aview);
         REQUIRE(ap.isValid());
         f.modify()->addPayload(ap);
 
@@ -120,18 +119,18 @@ TEST_CASE("Frame::dump: video + audio payload subdumps") {
 // ---------------------------------------------------------------
 namespace {
 
-UncompressedVideoPayload::Ptr makeVideoPayload(uint32_t w = 16, uint32_t h = 8) {
-        return UncompressedVideoPayload::allocate(
-                ImageDesc(Size2Du32(w, h), PixelFormat(PixelFormat::RGB8_sRGB)));
-}
+        UncompressedVideoPayload::Ptr makeVideoPayload(uint32_t w = 16, uint32_t h = 8) {
+                return UncompressedVideoPayload::allocate(
+                        ImageDesc(Size2Du32(w, h), PixelFormat(PixelFormat::RGB8_sRGB)));
+        }
 
-PcmAudioPayload::Ptr makeAudioPayload(size_t samples = 32) {
-        AudioDesc adesc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
-        Buffer::Ptr buf = Buffer::Ptr::create(adesc.bufferSize(samples));
-        buf.modify()->setSize(adesc.bufferSize(samples));
-        BufferView view(buf, 0, buf->size());
-        return PcmAudioPayload::Ptr::create(adesc, samples, view);
-}
+        PcmAudioPayload::Ptr makeAudioPayload(size_t samples = 32) {
+                AudioDesc   adesc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
+                Buffer::Ptr buf = Buffer::Ptr::create(adesc.bufferSize(samples));
+                buf.modify()->setSize(adesc.bufferSize(samples));
+                BufferView view(buf, 0, buf->size());
+                return PcmAudioPayload::Ptr::create(adesc, samples, view);
+        }
 
 } // namespace
 
@@ -144,8 +143,8 @@ TEST_CASE("Frame: default construction is empty") {
 
 TEST_CASE("Frame::addPayload / payloadList: round-trips payloads") {
         Frame::Ptr f = Frame::Ptr::create();
-        auto vp = makeVideoPayload();
-        auto ap = makeAudioPayload();
+        auto       vp = makeVideoPayload();
+        auto       ap = makeAudioPayload();
         REQUIRE(vp.isValid());
         REQUIRE(ap.isValid());
 
@@ -159,9 +158,9 @@ TEST_CASE("Frame::addPayload / payloadList: round-trips payloads") {
 
 TEST_CASE("Frame::videoPayloads: filters only video-kind entries") {
         Frame::Ptr f = Frame::Ptr::create();
-        auto vp1 = makeVideoPayload(16, 8);
-        auto vp2 = makeVideoPayload(32, 16);
-        auto ap  = makeAudioPayload();
+        auto       vp1 = makeVideoPayload(16, 8);
+        auto       vp2 = makeVideoPayload(32, 16);
+        auto       ap = makeAudioPayload();
         REQUIRE(vp1.isValid());
         REQUIRE(vp2.isValid());
         REQUIRE(ap.isValid());
@@ -222,10 +221,9 @@ TEST_CASE("Frame::videoFormat: returns invalid when no frame-rate in metadata") 
 // ---------------------------------------------------------------
 
 TEST_CASE("Frame VariantLookup: resolves MediaPayload base scalars via video payload") {
-        Frame::Ptr f = Frame::Ptr::create();
-        auto vp = makeVideoPayload(1920, 1080);
-        MediaTimeStamp pts(TimeStamp::now(),
-                           ClockDomain(ClockDomain::SystemMonotonic));
+        Frame::Ptr     f = Frame::Ptr::create();
+        auto           vp = makeVideoPayload(1920, 1080);
+        MediaTimeStamp pts(TimeStamp::now(), ClockDomain(ClockDomain::SystemMonotonic));
         vp.modify()->setPts(pts);
         vp.modify()->setDuration(Duration::fromNanoseconds(40000000));
         vp.modify()->setStreamIndex(7);
@@ -251,7 +249,7 @@ TEST_CASE("Frame VariantLookup: resolves MediaPayload base scalars via video pay
 
 TEST_CASE("Frame VariantLookup: resolves VideoPayload intermediate scalars") {
         Frame::Ptr f = Frame::Ptr::create();
-        auto vp = makeVideoPayload(1920, 1080);
+        auto       vp = makeVideoPayload(1920, 1080);
         f.modify()->addPayload(vp);
 
         auto w = VariantLookup<Frame>::resolve(*f, "Video[0].Width");
@@ -268,7 +266,7 @@ TEST_CASE("Frame VariantLookup: ImageDesc fields are flat on the payload") {
         // rather than hidden behind a Desc.* composition — pipeline
         // queries stay one hop deep.
         Frame::Ptr f = Frame::Ptr::create();
-        auto vp = makeVideoPayload(1280, 720);
+        auto       vp = makeVideoPayload(1280, 720);
         f.modify()->addPayload(vp);
 
         auto w = VariantLookup<Frame>::resolve(*f, "Video[0].Width");
@@ -277,7 +275,7 @@ TEST_CASE("Frame VariantLookup: ImageDesc fields are flat on the payload") {
 
         auto fpc = VariantLookup<Frame>::resolve(*f, "Video[0].FormatPlaneCount");
         REQUIRE(fpc.has_value());
-        CHECK(fpc->get<uint64_t>() == 1u);   // RGB8 packed = one format plane
+        CHECK(fpc->get<uint64_t>() == 1u); // RGB8 packed = one format plane
 }
 
 TEST_CASE("Frame VariantLookup: polymorphic dispatch picks up CompressedVideoPayload keys") {
@@ -287,8 +285,8 @@ TEST_CASE("Frame VariantLookup: polymorphic dispatch picks up CompressedVideoPay
         // because VariantLookup<VideoPayload>::resolve dispatches
         // through variantLookupResolve.
         Frame::Ptr f = Frame::Ptr::create();
-        ImageDesc desc(Size2Du32(1920, 1080), PixelFormat(PixelFormat::H264));
-        auto pkt = CompressedVideoPayload::Ptr::create(desc);
+        ImageDesc  desc(Size2Du32(1920, 1080), PixelFormat(PixelFormat::H264));
+        auto       pkt = CompressedVideoPayload::Ptr::create(desc);
         pkt.modify()->setFrameType(FrameType::IDR);
         pkt.modify()->markParameterSet(true);
         f.modify()->addPayload(pkt);
@@ -304,7 +302,7 @@ TEST_CASE("Frame VariantLookup: polymorphic dispatch picks up CompressedVideoPay
 
 TEST_CASE("Frame VariantLookup: PcmAudioPayload.SampleCount via Audio[0]") {
         Frame::Ptr f = Frame::Ptr::create();
-        auto ap = makeAudioPayload(/*samples=*/128);
+        auto       ap = makeAudioPayload(/*samples=*/128);
         f.modify()->addPayload(ap);
 
         auto sc = VariantLookup<Frame>::resolve(*f, "Audio[0].SampleCount");
@@ -343,7 +341,7 @@ TEST_CASE("Frame VariantLookup: Buffer[N] exposes per-slice details") {
 
         // Out-of-range index cleanly reports OutOfRange.
         Error err;
-        auto miss = VariantLookup<Frame>::resolve(*f, "Video[0].Buffer[5].Size", &err);
+        auto  miss = VariantLookup<Frame>::resolve(*f, "Video[0].Buffer[5].Size", &err);
         CHECK_FALSE(miss.has_value());
         CHECK(err == Error::OutOfRange);
 }
@@ -360,20 +358,19 @@ TEST_CASE("Frame VariantLookup: Buffer[N] sees sliced multi-plane payloads") {
         secondBuf.modify()->setSize(128);
 
         BufferView view;
-        view.pushToBack(sharedBuf, 0,   100);
+        view.pushToBack(sharedBuf, 0, 100);
         view.pushToBack(sharedBuf, 100, 50);
-        view.pushToBack(secondBuf, 0,   128);
+        view.pushToBack(secondBuf, 0, 128);
 
         auto vp = UncompressedVideoPayload::Ptr::create(
-                ImageDesc(Size2Du32(16, 8), PixelFormat(PixelFormat::RGB8_sRGB)),
-                view);
+                ImageDesc(Size2Du32(16, 8), PixelFormat(PixelFormat::RGB8_sRGB)), view);
 
         Frame::Ptr f = Frame::Ptr::create();
         f.modify()->addPayload(vp);
 
-        for(size_t i = 0; i < 3; ++i) {
+        for (size_t i = 0; i < 3; ++i) {
                 String key = String::sprintf("Video[0].Buffer[%zu].Index", i);
-                auto v = VariantLookup<Frame>::resolve(*f, key);
+                auto   v = VariantLookup<Frame>::resolve(*f, key);
                 REQUIRE(v.has_value());
                 CHECK(v->get<uint64_t>() == (i < 2 ? 0u : 1u));
         }
@@ -401,9 +398,8 @@ TEST_CASE("Frame::dump: Buffer[N] sub-sections appear for every plane") {
         view.pushToBack(b, 0, 32);
         view.pushToBack(b, 32, 32);
 
-        auto vp = UncompressedVideoPayload::Ptr::create(
-                ImageDesc(Size2Du32(4, 4), PixelFormat(PixelFormat::RGB8_sRGB)),
-                view);
+        auto vp = UncompressedVideoPayload::Ptr::create(ImageDesc(Size2Du32(4, 4), PixelFormat(PixelFormat::RGB8_sRGB)),
+                                                        view);
         Frame::Ptr f = Frame::Ptr::create();
         f.modify()->addPayload(vp);
 
@@ -412,8 +408,8 @@ TEST_CASE("Frame::dump: Buffer[N] sub-sections appear for every plane") {
         // Both slices' byte sizes should render through the
         // recursive dump of the indexedChildByValue binding.
         int sizeLines = 0;
-        for(const String &l : lines) {
-                if(l.find("Size [uint64_t]: 32") != String::npos) ++sizeLines;
+        for (const String &l : lines) {
+                if (l.find("Size [uint64_t]: 32") != String::npos) ++sizeLines;
         }
         CHECK(sizeLines >= 2);
 }
@@ -426,9 +422,8 @@ TEST_CASE("Frame VariantLookup: Meta on video payload reaches descriptor metadat
         // payload.metadata() (the virtual) and reading via the
         // lookup path must land on the same store.
         Frame::Ptr f = Frame::Ptr::create();
-        auto vp = makeVideoPayload(16, 8);
-        vp.modify()->metadata().set(Metadata::FrameNumber,
-                Variant(FrameNumber(static_cast<int64_t>(42))));
+        auto       vp = makeVideoPayload(16, 8);
+        vp.modify()->metadata().set(Metadata::FrameNumber, Variant(FrameNumber(static_cast<int64_t>(42))));
         f.modify()->addPayload(vp);
 
         auto fn = VariantLookup<Frame>::resolve(*f, "Video[0].Meta.FrameNumber");
@@ -446,13 +441,11 @@ TEST_CASE("Frame VariantLookup: Meta on video payload reaches descriptor metadat
 
 TEST_CASE("Frame::dump: video payload section has single Meta block") {
         Frame::Ptr f = Frame::Ptr::create();
-        auto vp = makeVideoPayload(1920, 1080);
+        auto       vp = makeVideoPayload(1920, 1080);
         // Both keys land on the same store (desc metadata) — virtual
         // metadata() collapses payload + descriptor into one.
-        vp.modify()->metadata().set(Metadata::FrameNumber,
-                Variant(FrameNumber(static_cast<int64_t>(7))));
-        vp.modify()->desc().metadata().set(Metadata::FrameRate,
-                Variant(FrameRate(FrameRate::FPS_30)));
+        vp.modify()->metadata().set(Metadata::FrameNumber, Variant(FrameNumber(static_cast<int64_t>(7))));
+        vp.modify()->desc().metadata().set(Metadata::FrameRate, Variant(FrameRate(FrameRate::FPS_30)));
         f.modify()->addPayload(vp);
 
         StringList lines = f->dump();
@@ -480,8 +473,8 @@ TEST_CASE("Frame::dump: video payload section has single Meta block") {
 
 TEST_CASE("Frame::dump: compressed video payload section includes leaf scalars") {
         Frame::Ptr f = Frame::Ptr::create();
-        ImageDesc desc(Size2Du32(1920, 1080), PixelFormat(PixelFormat::H264));
-        auto pkt = CompressedVideoPayload::Ptr::create(desc);
+        ImageDesc  desc(Size2Du32(1920, 1080), PixelFormat(PixelFormat::H264));
+        auto       pkt = CompressedVideoPayload::Ptr::create(desc);
         pkt.modify()->setFrameType(FrameType::IDR);
         pkt.modify()->markParameterSet(true);
         f.modify()->addPayload(pkt);
@@ -496,9 +489,8 @@ TEST_CASE("Frame::dump: compressed video payload section includes leaf scalars")
 
 TEST_CASE("Frame::dump: audio payload section is flat (SampleCount + AudioDesc fields)") {
         Frame::Ptr f = Frame::Ptr::create();
-        auto ap = makeAudioPayload(/*samples=*/64);
-        ap.modify()->desc().metadata().set(Metadata::FrameRate,
-                Variant(FrameRate(FrameRate::FPS_48)));
+        auto       ap = makeAudioPayload(/*samples=*/64);
+        ap.modify()->desc().metadata().set(Metadata::FrameRate, Variant(FrameRate(FrameRate::FPS_48)));
         f.modify()->addPayload(ap);
 
         StringList lines = f->dump();
@@ -529,54 +521,51 @@ TEST_CASE("Frame::dump: audio payload section is flat (SampleCount + AudioDesc f
 // -----------------------------------------------------------------
 namespace {
 
-class SyntheticPayload : public MediaPayload {
-        public:
-                PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH(SyntheticPayload)
+        class SyntheticPayload : public MediaPayload {
+                public:
+                        PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH(SyntheticPayload)
 
-                virtual SyntheticPayload *_promeki_clone() const override {
-                        return new SyntheticPayload(*this);
-                }
-                using Ptr = SharedPtr<SyntheticPayload, /*CoW=*/true, SyntheticPayload>;
+                        virtual SyntheticPayload *_promeki_clone() const override {
+                                return new SyntheticPayload(*this);
+                        }
+                        using Ptr = SharedPtr<SyntheticPayload, /*CoW=*/true, SyntheticPayload>;
 
-                SyntheticPayload() = default;
+                        SyntheticPayload() = default;
 
-                const MediaPayloadKind &kind() const override {
-                        // Subtitle is the only non-Video / non-Audio
-                        // value in the enum today; picking it avoids
-                        // inventing a new well-known kind.
-                        return MediaPayloadKind::Subtitle;
-                }
-                bool isCompressed() const override { return false; }
-                uint32_t subclassFourCC() const override {
-                        return 0x53796E74u; // 'Synt'
-                }
-                void serialisePayload(DataStream &) const override {}
-                void deserialisePayload(DataStream &) override {}
+                        const MediaPayloadKind &kind() const override {
+                                // Subtitle is the only non-Video / non-Audio
+                                // value in the enum today; picking it avoids
+                                // inventing a new well-known kind.
+                                return MediaPayloadKind::Subtitle;
+                        }
+                        bool     isCompressed() const override { return false; }
+                        uint32_t subclassFourCC() const override {
+                                return 0x53796E74u; // 'Synt'
+                        }
+                        void serialisePayload(DataStream &) const override {}
+                        void deserialisePayload(DataStream &) override {}
 
-                // Non-AV payloads own their own metadata store.
-                const Metadata &metadata() const override { return _meta; }
-                Metadata &metadata() override { return _meta; }
+                        // Non-AV payloads own their own metadata store.
+                        const Metadata &metadata() const override { return _meta; }
+                        Metadata       &metadata() override { return _meta; }
 
-                String tag() const { return _tag; }
-                void setTag(const String &s) { _tag = s; }
+                        String tag() const { return _tag; }
+                        void   setTag(const String &s) { _tag = s; }
 
-        private:
-                String   _tag = "hello";
-                Metadata _meta;
-};
+                private:
+                        String   _tag = "hello";
+                        Metadata _meta;
+        };
 
 } // namespace
 
 PROMEKI_LOOKUP_REGISTER(SyntheticPayload)
         .inheritsFrom<MediaPayload>()
-        .scalar("Tag",
-                [](const SyntheticPayload &p) -> std::optional<Variant> {
-                        return Variant(p.tag());
-                });
+        .scalar("Tag", [](const SyntheticPayload &p) -> std::optional<Variant> { return Variant(p.tag()); });
 
 TEST_CASE("Frame::dump: non-video / non-audio payload section is detailed") {
         Frame::Ptr f = Frame::Ptr::create();
-        auto sp = SyntheticPayload::Ptr::create();
+        auto       sp = SyntheticPayload::Ptr::create();
         sp.modify()->setTag("world");
         f.modify()->addPayload(sp);
 

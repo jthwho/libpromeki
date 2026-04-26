@@ -53,21 +53,17 @@ template <typename T, size_t N> class Line {
                  * @brief Returns a const reference to the start point.
                  * @return The start point of the line segment.
                  */
-                const Pt &start() const {
-                        return _start;
-                }
+                const Pt &start() const { return _start; }
 
                 /**
                  * @brief Returns a const reference to the end point.
                  * @return The end point of the line segment.
                  */
-                const Pt &end() const {
-                        return _end;
-                }
+                const Pt &end() const { return _end; }
 
         private:
-                Pt      _start;
-                Pt      _end;
+                Pt _start;
+                Pt _end;
 };
 
 /** @brief 2D line segment with int32_t components. */
@@ -90,4 +86,3 @@ using Line4Df = Line<float, 4>;
 using Line4Dd = Line<double, 4>;
 
 PROMEKI_NAMESPACE_END
-

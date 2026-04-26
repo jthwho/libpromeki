@@ -26,7 +26,7 @@ TEST_CASE("UdpSocketTransport") {
 
         SUBCASE("open and close") {
                 UdpSocketTransport t;
-                Error err = t.open();
+                Error              err = t.open();
                 CHECK(err.isOk());
                 CHECK(t.isOpen());
                 CHECK(t.socket() != nullptr);
@@ -52,7 +52,7 @@ TEST_CASE("UdpSocketTransport") {
 
         SUBCASE("sendPacket loopback") {
                 UdpSocketTransport sender;
-                UdpSocket receiver;
+                UdpSocket          receiver;
 
                 sender.open();
                 receiver.open(IODevice::ReadWrite);
@@ -61,11 +61,10 @@ TEST_CASE("UdpSocketTransport") {
                 uint16_t port = receiver.localAddress().port();
 
                 const char *msg = "transport test";
-                ssize_t sent = sender.sendPacket(msg, std::strlen(msg),
-                        SocketAddress(Ipv4Address::loopback(), port));
+                ssize_t sent = sender.sendPacket(msg, std::strlen(msg), SocketAddress(Ipv4Address::loopback(), port));
                 CHECK(sent == static_cast<ssize_t>(std::strlen(msg)));
 
-                char buf[64];
+                char    buf[64];
                 int64_t n = receiver.readDatagram(buf, sizeof(buf));
                 REQUIRE(n > 0);
                 CHECK(std::memcmp(buf, msg, n) == 0);
@@ -73,7 +72,7 @@ TEST_CASE("UdpSocketTransport") {
 
         SUBCASE("sendPackets batch loopback") {
                 UdpSocketTransport sender;
-                UdpSocket receiver;
+                UdpSocket          receiver;
 
                 sender.open();
                 receiver.open(IODevice::ReadWrite);
@@ -84,11 +83,11 @@ TEST_CASE("UdpSocketTransport") {
                 SocketAddress dest(Ipv4Address::loopback(), port);
 
                 char msgs[3][32];
-                for(int i = 0; i < 3; i++) {
+                for (int i = 0; i < 3; i++) {
                         std::snprintf(msgs[i], sizeof(msgs[i]), "ptbatch %d", i);
                 }
                 PacketTransport::DatagramList batch;
-                for(int i = 0; i < 3; i++) {
+                for (int i = 0; i < 3; i++) {
                         PacketTransport::Datagram d;
                         d.data = msgs[i];
                         d.size = std::strlen(msgs[i]);
@@ -98,8 +97,8 @@ TEST_CASE("UdpSocketTransport") {
                 int sent = sender.sendPackets(batch);
                 CHECK(sent == 3);
 
-                for(int i = 0; i < 3; i++) {
-                        char buf[64];
+                for (int i = 0; i < 3; i++) {
+                        char    buf[64];
                         int64_t n = receiver.readDatagram(buf, sizeof(buf));
                         REQUIRE(n > 0);
                         char expected[32];
@@ -125,14 +124,13 @@ TEST_CASE("UdpSocketTransport") {
                 uint16_t port = b.socket()->localAddress().port();
 
                 const char *msg = "rx path";
-                ssize_t sent = a.sendPacket(msg, std::strlen(msg),
-                        SocketAddress(Ipv4Address::loopback(), port));
+                ssize_t     sent = a.sendPacket(msg, std::strlen(msg), SocketAddress(Ipv4Address::loopback(), port));
                 CHECK(sent == static_cast<ssize_t>(std::strlen(msg)));
 
                 b.socket()->setReceiveTimeout(2000);
-                char buf[64];
+                char          buf[64];
                 SocketAddress sender;
-                ssize_t n = b.receivePacket(buf, sizeof(buf), &sender);
+                ssize_t       n = b.receivePacket(buf, sizeof(buf), &sender);
                 REQUIRE(n > 0);
                 CHECK(std::memcmp(buf, msg, n) == 0);
                 CHECK(sender.isLoopback());
@@ -178,10 +176,11 @@ TEST_CASE("UdpSocketTransport") {
         }
 
         SUBCASE("sendPackets on closed transport fails") {
-                UdpSocketTransport t;
+                UdpSocketTransport            t;
                 PacketTransport::DatagramList batch;
-                PacketTransport::Datagram d;
-                d.data = "x"; d.size = 1;
+                PacketTransport::Datagram     d;
+                d.data = "x";
+                d.size = 1;
                 d.dest = SocketAddress::localhost(5004);
                 batch.pushToBack(d);
                 CHECK(t.sendPackets(batch) == -1);

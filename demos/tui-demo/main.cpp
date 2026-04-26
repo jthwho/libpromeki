@@ -28,14 +28,14 @@
 using namespace promeki;
 
 static const char *colorSupportName(Terminal::ColorSupport cs) {
-        switch(cs) {
-                case Terminal::NoColor:        return "NoColor";
-                case Terminal::Grayscale16:    return "Grayscale16";
-                case Terminal::Grayscale256:   return "Grayscale256";
-                case Terminal::GrayscaleTrue:  return "GrayscaleTrue";
-                case Terminal::Basic:          return "Basic";
-                case Terminal::Color256:       return "256";
-                case Terminal::TrueColor:      return "TrueColor";
+        switch (cs) {
+                case Terminal::NoColor: return "NoColor";
+                case Terminal::Grayscale16: return "Grayscale16";
+                case Terminal::Grayscale256: return "Grayscale256";
+                case Terminal::GrayscaleTrue: return "GrayscaleTrue";
+                case Terminal::Basic: return "Basic";
+                case Terminal::Color256: return "256";
+                case Terminal::TrueColor: return "TrueColor";
         }
         return "Unknown";
 }
@@ -43,10 +43,10 @@ static const char *colorSupportName(Terminal::ColorSupport cs) {
 // ── Tab 1: Basic Widgets ─────────────────────────────────────────────
 
 class BasicWidgetsTab : public TuiWidget {
-        PROMEKI_OBJECT(BasicWidgetsTab, TuiWidget)
+                PROMEKI_OBJECT(BasicWidgetsTab, TuiWidget)
         public:
                 BasicWidgetsTab(TuiStatusBar *statusBar, ObjectBase *parent = nullptr)
-                        : TuiWidget(parent), _statusBar(statusBar) {
+                    : TuiWidget(parent), _statusBar(statusBar) {
                         _layout = new TuiVBoxLayout(this);
                         _layout->setMargins(1);
                         _layout->setSpacing(1);
@@ -107,30 +107,12 @@ class BasicWidgetsTab : public TuiWidget {
 
                         setLayout(_layout);
 
-                        ObjectBase::connect(
-                                &_helloButton->clickedSignal,
-                                &helloSlot
-                        );
-                        ObjectBase::connect(
-                                &_worldButton->clickedSignal,
-                                &worldSlot
-                        );
-                        ObjectBase::connect(
-                                &_quitButton->clickedSignal,
-                                &quitSlot
-                        );
-                        ObjectBase::connect(
-                                &_optionA->toggledSignal,
-                                &checkboxToggledSlot
-                        );
-                        ObjectBase::connect(
-                                &_optionB->toggledSignal,
-                                &checkboxToggledSlot
-                        );
-                        ObjectBase::connect(
-                                &_optionC->toggledSignal,
-                                &checkboxToggledSlot
-                        );
+                        ObjectBase::connect(&_helloButton->clickedSignal, &helloSlot);
+                        ObjectBase::connect(&_worldButton->clickedSignal, &worldSlot);
+                        ObjectBase::connect(&_quitButton->clickedSignal, &quitSlot);
+                        ObjectBase::connect(&_optionA->toggledSignal, &checkboxToggledSlot);
+                        ObjectBase::connect(&_optionB->toggledSignal, &checkboxToggledSlot);
+                        ObjectBase::connect(&_optionC->toggledSignal, &checkboxToggledSlot);
 
                         // Auto-advance progress bar on a timer
                         _timerId = startTimer(200);
@@ -142,50 +124,47 @@ class BasicWidgetsTab : public TuiWidget {
                 PROMEKI_SLOT(checkboxToggled, bool);
 
         protected:
-                void timerEvent(TimerEvent *) override {
-                        advanceProgress();
-                }
+                void timerEvent(TimerEvent *) override { advanceProgress(); }
 
                 void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
-                        if(!app) return;
-                        Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
-                        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
-                        TuiPainter painter(app->screen(), clipRect);
+                        if (!app) return;
+                        Point2Di32        screenPos = mapToGlobal(Point2Di32(0, 0));
+                        Rect2Di32         clipRect(screenPos.x(), screenPos.y(), width(), height());
+                        TuiPainter        painter(app->screen(), clipRect);
                         const TuiPalette &pal = app->palette();
                         painter.setStyle(pal.style(TuiPalette::WindowText, false, isEnabled())
-                                .merged(pal.style(TuiPalette::Window, false, isEnabled())));
+                                                 .merged(pal.style(TuiPalette::Window, false, isEnabled())));
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
                 void resizeEvent(ResizeEvent *) override {
-                        if(_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
+                        if (_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
                 }
 
         private:
-                TuiStatusBar    *_statusBar;
-                TuiVBoxLayout   *_layout;
-                TuiLabel        *_titleLabel;
-                TuiFrame        *_labelFrame;
-                TuiLabel        *_leftLabel;
-                TuiLabel        *_centerLabel;
-                TuiLabel        *_rightLabel;
-                TuiButton       *_helloButton;
-                TuiButton       *_worldButton;
-                TuiButton       *_quitButton;
-                TuiCheckBox     *_optionA;
-                TuiCheckBox     *_optionB;
-                TuiCheckBox     *_optionC;
-                TuiLabel        *_progressLabel;
-                TuiProgressBar  *_progressBar;
+                TuiStatusBar   *_statusBar;
+                TuiVBoxLayout  *_layout;
+                TuiLabel       *_titleLabel;
+                TuiFrame       *_labelFrame;
+                TuiLabel       *_leftLabel;
+                TuiLabel       *_centerLabel;
+                TuiLabel       *_rightLabel;
+                TuiButton      *_helloButton;
+                TuiButton      *_worldButton;
+                TuiButton      *_quitButton;
+                TuiCheckBox    *_optionA;
+                TuiCheckBox    *_optionB;
+                TuiCheckBox    *_optionC;
+                TuiLabel       *_progressLabel;
+                TuiProgressBar *_progressBar;
                 int             _progressValue = 0;
                 int             _timerId = -1;
 
                 void advanceProgress() {
                         _progressValue = (_progressValue + 1) % 101;
                         _progressBar->setValue(_progressValue);
-                        _progressLabel->setText(
-                                String("Progress: ") + String::number(_progressValue) + "%");
+                        _progressLabel->setText(String("Progress: ") + String::number(_progressValue) + "%");
                 }
 };
 
@@ -209,10 +188,10 @@ void BasicWidgetsTab::checkboxToggled(bool checked) {
 // ── Tab 2: Text Input ────────────────────────────────────────────────
 
 class TextInputTab : public TuiWidget {
-        PROMEKI_OBJECT(TextInputTab, TuiWidget)
+                PROMEKI_OBJECT(TextInputTab, TuiWidget)
         public:
                 TextInputTab(TuiStatusBar *statusBar, ObjectBase *parent = nullptr)
-                        : TuiWidget(parent), _statusBar(statusBar) {
+                    : TuiWidget(parent), _statusBar(statusBar) {
                         _layout = new TuiVBoxLayout(this);
                         _layout->setMargins(1);
                         _layout->setSpacing(1);
@@ -251,10 +230,7 @@ class TextInputTab : public TuiWidget {
 
                         setLayout(_layout);
 
-                        ObjectBase::connect(
-                                &_lineEdit->returnPressedSignal,
-                                &lineEditReturnSlot
-                        );
+                        ObjectBase::connect(&_lineEdit->returnPressedSignal, &lineEditReturnSlot);
                 }
 
                 PROMEKI_SLOT(lineEditReturn);
@@ -262,44 +238,43 @@ class TextInputTab : public TuiWidget {
         protected:
                 void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
-                        if(!app) return;
-                        Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
-                        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
-                        TuiPainter painter(app->screen(), clipRect);
+                        if (!app) return;
+                        Point2Di32        screenPos = mapToGlobal(Point2Di32(0, 0));
+                        Rect2Di32         clipRect(screenPos.x(), screenPos.y(), width(), height());
+                        TuiPainter        painter(app->screen(), clipRect);
                         const TuiPalette &pal = app->palette();
                         painter.setStyle(pal.style(TuiPalette::WindowText, false, isEnabled())
-                                .merged(pal.style(TuiPalette::Window, false, isEnabled())));
+                                                 .merged(pal.style(TuiPalette::Window, false, isEnabled())));
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
                 void resizeEvent(ResizeEvent *) override {
-                        if(_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
+                        if (_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
                 }
 
         private:
-                TuiStatusBar    *_statusBar;
-                TuiVBoxLayout   *_layout;
-                TuiLabel        *_titleLabel;
-                TuiLabel        *_lineEditLabel;
-                TuiLineEdit     *_lineEdit;
-                TuiLabel        *_nameLabel;
-                TuiLineEdit     *_nameEdit;
-                TuiLabel        *_textAreaLabel;
-                TuiTextArea     *_textArea;
+                TuiStatusBar  *_statusBar;
+                TuiVBoxLayout *_layout;
+                TuiLabel      *_titleLabel;
+                TuiLabel      *_lineEditLabel;
+                TuiLineEdit   *_lineEdit;
+                TuiLabel      *_nameLabel;
+                TuiLineEdit   *_nameEdit;
+                TuiLabel      *_textAreaLabel;
+                TuiTextArea   *_textArea;
 };
 
 void TextInputTab::lineEditReturn() {
-        _statusBar->showMessage(
-                String("Input submitted: ") + _lineEdit->text(), 3000);
+        _statusBar->showMessage(String("Input submitted: ") + _lineEdit->text(), 3000);
 }
 
 // ── Tab 3: List View ─────────────────────────────────────────────────
 
 class ListViewTab : public TuiWidget {
-        PROMEKI_OBJECT(ListViewTab, TuiWidget)
+                PROMEKI_OBJECT(ListViewTab, TuiWidget)
         public:
                 ListViewTab(TuiStatusBar *statusBar, ObjectBase *parent = nullptr)
-                        : TuiWidget(parent), _statusBar(statusBar) {
+                    : TuiWidget(parent), _statusBar(statusBar) {
                         _layout = new TuiHBoxLayout(this);
                         _layout->setMargins(1);
                         _layout->setSpacing(2);
@@ -348,14 +323,8 @@ class ListViewTab : public TuiWidget {
 
                         setLayout(_layout);
 
-                        ObjectBase::connect(
-                                &_listView->currentItemChangedSignal,
-                                &itemChangedSlot
-                        );
-                        ObjectBase::connect(
-                                &_listView->itemActivatedSignal,
-                                &itemActivatedSlot
-                        );
+                        ObjectBase::connect(&_listView->currentItemChangedSignal, &itemChangedSlot);
+                        ObjectBase::connect(&_listView->itemActivatedSignal, &itemActivatedSlot);
                 }
 
                 PROMEKI_SLOT(itemChanged, int);
@@ -364,48 +333,48 @@ class ListViewTab : public TuiWidget {
         protected:
                 void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
-                        if(!app) return;
-                        Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
-                        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
-                        TuiPainter painter(app->screen(), clipRect);
+                        if (!app) return;
+                        Point2Di32        screenPos = mapToGlobal(Point2Di32(0, 0));
+                        Rect2Di32         clipRect(screenPos.x(), screenPos.y(), width(), height());
+                        TuiPainter        painter(app->screen(), clipRect);
                         const TuiPalette &pal = app->palette();
                         painter.setStyle(pal.style(TuiPalette::WindowText, false, isEnabled())
-                                .merged(pal.style(TuiPalette::Window, false, isEnabled())));
+                                                 .merged(pal.style(TuiPalette::Window, false, isEnabled())));
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
                 void resizeEvent(ResizeEvent *) override {
-                        if(_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
+                        if (_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
                 }
 
         private:
-                TuiStatusBar    *_statusBar;
-                TuiHBoxLayout   *_layout;
-                TuiLabel        *_listLabel;
-                TuiListView     *_listView;
-                TuiLabel        *_detailLabel;
-                TuiTextArea     *_detailText;
+                TuiStatusBar  *_statusBar;
+                TuiHBoxLayout *_layout;
+                TuiLabel      *_listLabel;
+                TuiListView   *_listView;
+                TuiLabel      *_detailLabel;
+                TuiTextArea   *_detailText;
 };
 
 void ListViewTab::itemChanged(int index) {
         String item = _listView->currentItem();
-        _detailText->setText(
-                String("Selected: ") + item + "\n"
-                "Index: " + String::number(index) + "\n"
-                "\nPress Enter to activate.");
+        _detailText->setText(String("Selected: ") + item +
+                             "\n"
+                             "Index: " +
+                             String::number(index) +
+                             "\n"
+                             "\nPress Enter to activate.");
 }
 
 void ListViewTab::itemActivated(int index) {
         String item = _listView->currentItem();
-        _statusBar->showMessage(
-                String("Activated: ") + item +
-                " (index " + String::number(index) + ")", 3000);
+        _statusBar->showMessage(String("Activated: ") + item + " (index " + String::number(index) + ")", 3000);
 }
 
 // ── Tab 4: Splitter Demo ────────────────────────────────────────────
 
 class SplitterTab : public TuiWidget {
-        PROMEKI_OBJECT(SplitterTab, TuiWidget)
+                PROMEKI_OBJECT(SplitterTab, TuiWidget)
         public:
                 SplitterTab(ObjectBase *parent = nullptr) : TuiWidget(parent) {
                         _splitter = new TuiSplitter(TuiSplitter::Vertical, this);
@@ -430,46 +399,46 @@ class SplitterTab : public TuiWidget {
         protected:
                 void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
-                        if(!app) return;
-                        Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
-                        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
-                        TuiPainter painter(app->screen(), clipRect);
+                        if (!app) return;
+                        Point2Di32        screenPos = mapToGlobal(Point2Di32(0, 0));
+                        Rect2Di32         clipRect(screenPos.x(), screenPos.y(), width(), height());
+                        TuiPainter        painter(app->screen(), clipRect);
                         const TuiPalette &pal = app->palette();
                         painter.setStyle(pal.style(TuiPalette::WindowText, false, isEnabled())
-                                .merged(pal.style(TuiPalette::Window, false, isEnabled())));
+                                                 .merged(pal.style(TuiPalette::Window, false, isEnabled())));
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
                 void resizeEvent(ResizeEvent *) override {
-                        if(_splitter) {
+                        if (_splitter) {
                                 _splitter->setGeometry(Rect2Di32(0, 0, width(), height()));
                         }
                 }
 
         private:
-                TuiSplitter     *_splitter;
-                TuiTextArea     *_topArea;
-                TuiTextArea     *_bottomArea;
+                TuiSplitter *_splitter;
+                TuiTextArea *_topArea;
+                TuiTextArea *_bottomArea;
 };
 
 // ── Tab 5: Colors ───────────────────────────────────────────────────
 
 class ColorsTab : public TuiWidget {
-        PROMEKI_OBJECT(ColorsTab, TuiWidget)
+                PROMEKI_OBJECT(ColorsTab, TuiWidget)
         public:
                 ColorsTab(ObjectBase *parent = nullptr) : TuiWidget(parent) {}
 
         protected:
                 void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
-                        if(!app) return;
+                        if (!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
-                        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
+                        Rect2Di32  clipRect(screenPos.x(), screenPos.y(), width(), height());
                         TuiPainter painter(app->screen(), clipRect);
 
                         const TuiPalette &pal = app->palette();
                         painter.setStyle(pal.style(TuiPalette::WindowText, false, isEnabled())
-                                .merged(pal.style(TuiPalette::Window, false, isEnabled())));
+                                                 .merged(pal.style(TuiPalette::Window, false, isEnabled())));
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
 
                         int y = 0;
@@ -477,8 +446,7 @@ class ColorsTab : public TuiWidget {
                         // Header: current color mode
                         painter.setForeground(Color::White);
                         painter.setBackground(Color::Black);
-                        String modeStr = String("Color mode: ") +
-                                colorSupportName(app->colorMode());
+                        String modeStr = String("Color mode: ") + colorSupportName(app->colorMode());
                         painter.drawText(1, y, modeStr);
                         y += 2;
 
@@ -487,21 +455,21 @@ class ColorsTab : public TuiWidget {
                         painter.setBackground(Color::Black);
                         painter.drawText(1, y, "System colors (0-15):");
                         y++;
-                        for(int i = 0; i < 16; ++i) {
+                        for (int i = 0; i < 16; ++i) {
                                 Color c = AnsiStream::ansiColor(i);
                                 painter.setBackground(c);
                                 painter.setForeground(c);
                                 int x = 1 + i * 3;
-                                if(x + 2 >= width()) break;
+                                if (x + 2 >= width()) break;
                                 painter.fillRect(Rect2Di32(x, y, 2, 1));
                         }
                         y++;
                         // Index labels
                         painter.setBackground(Color::Black);
                         painter.setForeground(Color::White);
-                        for(int i = 0; i < 16; ++i) {
+                        for (int i = 0; i < 16; ++i) {
                                 int x = 1 + i * 3;
-                                if(x + 2 >= width()) break;
+                                if (x + 2 >= width()) break;
                                 String idx = String::number(i);
                                 painter.drawText(x, y, idx);
                         }
@@ -513,15 +481,15 @@ class ColorsTab : public TuiWidget {
                         painter.drawText(1, y, "Color cube (16-231):");
                         y++;
                         // Draw as 6 rows of 36 colors each
-                        for(int row = 0; row < 6; ++row) {
-                                if(y >= height()) break;
-                                for(int col = 0; col < 36; ++col) {
-                                        int idx = 16 + row * 36 + col;
+                        for (int row = 0; row < 6; ++row) {
+                                if (y >= height()) break;
+                                for (int col = 0; col < 36; ++col) {
+                                        int   idx = 16 + row * 36 + col;
                                         Color c = AnsiStream::ansiColor(idx);
                                         painter.setBackground(c);
                                         painter.setForeground(c);
                                         int x = 1 + col * 2;
-                                        if(x + 1 >= width()) break;
+                                        if (x + 1 >= width()) break;
                                         painter.fillRect(Rect2Di32(x, y, 2, 1));
                                 }
                                 y++;
@@ -529,38 +497,38 @@ class ColorsTab : public TuiWidget {
                         y++;
 
                         // ── Grayscale Ramp (indices 232-255) ──
-                        if(y < height()) {
+                        if (y < height()) {
                                 painter.setForeground(Color::White);
                                 painter.setBackground(Color::Black);
                                 painter.drawText(1, y, "Grayscale (232-255):");
                                 y++;
                         }
-                        if(y < height()) {
-                                for(int i = 0; i < 24; ++i) {
+                        if (y < height()) {
+                                for (int i = 0; i < 24; ++i) {
                                         Color c = AnsiStream::ansiColor(232 + i);
                                         painter.setBackground(c);
                                         painter.setForeground(c);
                                         int x = 1 + i * 3;
-                                        if(x + 2 >= width()) break;
+                                        if (x + 2 >= width()) break;
                                         painter.fillRect(Rect2Di32(x, y, 2, 1));
                                 }
                                 y += 2;
                         }
 
                         // ── RGB Gradients (truecolor test) ──
-                        if(y < height()) {
+                        if (y < height()) {
                                 painter.setForeground(Color::White);
                                 painter.setBackground(Color::Black);
                                 painter.drawText(1, y, "RGB gradients:");
                                 y++;
                         }
                         int barWidth = width() - 2;
-                        if(barWidth < 1) barWidth = 1;
+                        if (barWidth < 1) barWidth = 1;
                         // Red gradient
-                        if(y < height()) {
-                                for(int x = 0; x < barWidth; ++x) {
+                        if (y < height()) {
+                                for (int x = 0; x < barWidth; ++x) {
                                         uint8_t v = static_cast<uint8_t>(x * 255 / (barWidth - 1));
-                                        Color c(v, 0, 0);
+                                        Color   c(v, 0, 0);
                                         painter.setBackground(c);
                                         painter.setForeground(c);
                                         painter.drawChar(1 + x, y, U' ');
@@ -568,10 +536,10 @@ class ColorsTab : public TuiWidget {
                                 y++;
                         }
                         // Green gradient
-                        if(y < height()) {
-                                for(int x = 0; x < barWidth; ++x) {
+                        if (y < height()) {
+                                for (int x = 0; x < barWidth; ++x) {
                                         uint8_t v = static_cast<uint8_t>(x * 255 / (barWidth - 1));
-                                        Color c(0, v, 0);
+                                        Color   c(0, v, 0);
                                         painter.setBackground(c);
                                         painter.setForeground(c);
                                         painter.drawChar(1 + x, y, U' ');
@@ -579,10 +547,10 @@ class ColorsTab : public TuiWidget {
                                 y++;
                         }
                         // Blue gradient
-                        if(y < height()) {
-                                for(int x = 0; x < barWidth; ++x) {
+                        if (y < height()) {
+                                for (int x = 0; x < barWidth; ++x) {
                                         uint8_t v = static_cast<uint8_t>(x * 255 / (barWidth - 1));
-                                        Color c(0, 0, v);
+                                        Color   c(0, 0, v);
                                         painter.setBackground(c);
                                         painter.setForeground(c);
                                         painter.drawChar(1 + x, y, U' ');
@@ -590,10 +558,10 @@ class ColorsTab : public TuiWidget {
                                 y++;
                         }
                         // White gradient
-                        if(y < height()) {
-                                for(int x = 0; x < barWidth; ++x) {
+                        if (y < height()) {
+                                for (int x = 0; x < barWidth; ++x) {
                                         uint8_t v = static_cast<uint8_t>(x * 255 / (barWidth - 1));
-                                        Color c(v, v, v);
+                                        Color   c(v, v, v);
                                         painter.setBackground(c);
                                         painter.setForeground(c);
                                         painter.drawChar(1 + x, y, U' ');
@@ -607,7 +575,7 @@ class ColorsTab : public TuiWidget {
 // ── Root Widget ──────────────────────────────────────────────────────
 
 class DemoWidget : public TuiWidget {
-        PROMEKI_OBJECT(DemoWidget, TuiWidget)
+                PROMEKI_OBJECT(DemoWidget, TuiWidget)
         public:
                 DemoWidget(ObjectBase *parent = nullptr) : TuiWidget(parent) {
                         _layout = new TuiVBoxLayout(this);
@@ -643,37 +611,34 @@ class DemoWidget : public TuiWidget {
         protected:
                 void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
-                        if(!app) return;
-                        Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
-                        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
-                        TuiPainter painter(app->screen(), clipRect);
+                        if (!app) return;
+                        Point2Di32        screenPos = mapToGlobal(Point2Di32(0, 0));
+                        Rect2Di32         clipRect(screenPos.x(), screenPos.y(), width(), height());
+                        TuiPainter        painter(app->screen(), clipRect);
                         const TuiPalette &pal = app->palette();
                         painter.setStyle(pal.style(TuiPalette::WindowText, false, isEnabled())
-                                .merged(pal.style(TuiPalette::Window, false, isEnabled())));
+                                                 .merged(pal.style(TuiPalette::Window, false, isEnabled())));
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
                 void resizeEvent(ResizeEvent *) override {
-                        if(_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
+                        if (_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
                         updateStatusInfo();
                 }
 
         private:
-                TuiVBoxLayout           *_layout;
-                TuiTabWidget            *_tabWidget;
-                TuiStatusBar            *_statusBar;
-                BasicWidgetsTab         *_basicTab;
-                TextInputTab            *_textTab;
-                ListViewTab             *_listTab;
-                SplitterTab             *_splitterTab;
-                ColorsTab               *_colorsTab;
+                TuiVBoxLayout   *_layout;
+                TuiTabWidget    *_tabWidget;
+                TuiStatusBar    *_statusBar;
+                BasicWidgetsTab *_basicTab;
+                TextInputTab    *_textTab;
+                ListViewTab     *_listTab;
+                SplitterTab     *_splitterTab;
+                ColorsTab       *_colorsTab;
 
                 void updateStatusInfo() {
-                        String msg = String("Color: ") +
-                                colorSupportName(Terminal::colorSupport()) +
-                                " | " + String::number(width()) + "x" +
-                                String::number(height()) +
-                                " | Ctrl+Q: quit";
+                        String msg = String("Color: ") + colorSupportName(Terminal::colorSupport()) + " | " +
+                                     String::number(width()) + "x" + String::number(height()) + " | Ctrl+Q: quit";
                         _statusBar->setPermanentMessage(msg);
                 }
 };

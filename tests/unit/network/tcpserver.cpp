@@ -20,7 +20,7 @@ TEST_CASE("TcpServer") {
 
         SUBCASE("listen on any port") {
                 TcpServer server;
-                Error err = server.listen(SocketAddress::any(0));
+                Error     err = server.listen(SocketAddress::any(0));
                 CHECK(err.isOk());
                 CHECK(server.isListening());
                 CHECK(server.serverAddress().port() != 0);
@@ -28,7 +28,7 @@ TEST_CASE("TcpServer") {
 
         SUBCASE("listen on localhost") {
                 TcpServer server;
-                Error err = server.listen(SocketAddress::localhost(0));
+                Error     err = server.listen(SocketAddress::localhost(0));
                 CHECK(err.isOk());
                 CHECK(server.isListening());
                 CHECK(server.serverAddress().isLoopback());
@@ -93,7 +93,7 @@ TEST_CASE("TcpServer") {
 
         SUBCASE("waitForNewConnection when not listening") {
                 TcpServer server;
-                Error err = server.waitForNewConnection(10);
+                Error     err = server.waitForNewConnection(10);
                 CHECK(err.isError());
         }
 

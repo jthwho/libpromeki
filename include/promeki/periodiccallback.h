@@ -84,10 +84,10 @@ class PeriodicCallback {
                 bool isValid() const { return _func && _intervalSeconds > 0.0; }
 
         private:
-                Function        _func;
-                double          _intervalSeconds = 0.0;
-                TimeStamp       _stamp;
-                bool            _started = false;
+                Function  _func;
+                double    _intervalSeconds = 0.0;
+                TimeStamp _stamp;
+                bool      _started = false;
 };
 
 PROMEKI_NAMESPACE_END

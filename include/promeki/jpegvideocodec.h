@@ -48,9 +48,9 @@ class JpegVideoEncoder : public VideoEncoder {
         public:
                 /** @brief Chroma subsampling mode for JPEG encoding. */
                 enum Subsampling {
-                        Subsampling444,   ///< @brief 4:4:4 (no chroma subsampling).
-                        Subsampling422,   ///< @brief 4:2:2 (default, RFC 2435 compatible).
-                        Subsampling420    ///< @brief 4:2:0.
+                        Subsampling444, ///< @brief 4:4:4 (no chroma subsampling).
+                        Subsampling422, ///< @brief 4:2:2 (default, RFC 2435 compatible).
+                        Subsampling420  ///< @brief 4:2:0.
                 };
 
                 JpegVideoEncoder();
@@ -65,11 +65,11 @@ class JpegVideoEncoder : public VideoEncoder {
                  */
                 static List<int> supportedInputList();
 
-                void configure(const MediaConfig &config) override;
-                Error submitPayload(const UncompressedVideoPayload::Ptr &payload) override;
+                void                        configure(const MediaConfig &config) override;
+                Error                       submitPayload(const UncompressedVideoPayload::Ptr &payload) override;
                 CompressedVideoPayload::Ptr receiveCompressedPayload() override;
-                Error flush() override;
-                Error reset() override;
+                Error                       flush() override;
+                Error                       reset() override;
 
                 /** @brief Returns the JPEG quality (1-100). */
                 int quality() const { return _quality; }
@@ -78,16 +78,16 @@ class JpegVideoEncoder : public VideoEncoder {
                 Subsampling subsampling() const { return _subsampling; }
 
         private:
-                struct Impl;                          ///< pImpl shielding consumers from @c \<jpeglib.h\>.
+                struct Impl; ///< pImpl shielding consumers from @c \<jpeglib.h\>.
                 using ImplPtr = UniquePtr<Impl>;
-                ImplPtr                      _impl;
+                ImplPtr _impl;
 
-                int                          _quality       = 85;
-                Subsampling                  _subsampling   = Subsampling422;
-                PixelFormat                  _outputPd;
-                int                          _capacity      = 8;
+                int                                _quality = 85;
+                Subsampling                        _subsampling = Subsampling422;
+                PixelFormat                        _outputPd;
+                int                                _capacity = 8;
                 Deque<CompressedVideoPayload::Ptr> _queue;
-                bool                         _capacityWarned = false;
+                bool                               _capacityWarned = false;
 };
 
 /**
@@ -118,21 +118,21 @@ class JpegVideoDecoder : public VideoDecoder {
                  */
                 static List<int> supportedOutputList();
 
-                void configure(const MediaConfig &config) override;
-                Error submitPayload(const CompressedVideoPayload::Ptr &payload) override;
+                void                          configure(const MediaConfig &config) override;
+                Error                         submitPayload(const CompressedVideoPayload::Ptr &payload) override;
                 UncompressedVideoPayload::Ptr receiveVideoPayload() override;
-                Error flush() override;
-                Error reset() override;
+                Error                         flush() override;
+                Error                         reset() override;
 
         private:
-                struct Impl;                          ///< pImpl shielding consumers from @c \<jpeglib.h\>.
+                struct Impl; ///< pImpl shielding consumers from @c \<jpeglib.h\>.
                 using ImplPtr = UniquePtr<Impl>;
-                ImplPtr              _impl;
+                ImplPtr _impl;
 
-                PixelFormat            _outputPd;
-                int                    _capacity = 8;
+                PixelFormat                          _outputPd;
+                int                                  _capacity = 8;
                 Deque<UncompressedVideoPayload::Ptr> _queue;
-                bool                   _capacityWarned = false;
+                bool                                 _capacityWarned = false;
 };
 
 PROMEKI_NAMESPACE_END

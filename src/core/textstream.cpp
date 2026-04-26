@@ -21,7 +21,7 @@ PROMEKI_NAMESPACE_BEGIN
 // Constructors / Destructor
 // ============================================================================
 
-TextStream::TextStream(IODevice *device) : _device(device) { }
+TextStream::TextStream(IODevice *device) : _device(device) {}
 
 TextStream::TextStream(Buffer *buffer) {
         auto dev = UniquePtr<BufferIODevice>::create(buffer);
@@ -51,12 +51,12 @@ TextStream::~TextStream() = default;
 // ============================================================================
 
 bool TextStream::atEnd() const {
-        if(_device != nullptr) return _device->atEnd();
+        if (_device != nullptr) return _device->atEnd();
         return true;
 }
 
 void TextStream::flush() {
-        if(_device) _device->flush();
+        if (_device) _device->flush();
 }
 
 // ============================================================================
@@ -72,19 +72,19 @@ void TextStream::setEncoding(const String &encoding) {
 // ============================================================================
 
 void TextStream::writeString(const String &str) {
-        if(_status != Ok) return;
-        if(str.isEmpty()) return;
-        if(_device == nullptr) {
+        if (_status != Ok) return;
+        if (str.isEmpty()) return;
+        if (_device == nullptr) {
                 _status = WriteFailed;
                 return;
         }
-        const char *data = str.cstr();
-        size_t len = str.byteCount();
-        size_t total = 0;
+        const char    *data = str.cstr();
+        size_t         len = str.byteCount();
+        size_t         total = 0;
         const uint8_t *src = reinterpret_cast<const uint8_t *>(data);
-        while(total < len) {
+        while (total < len) {
                 int64_t n = _device->write(src + total, static_cast<int64_t>(len - total));
-                if(n <= 0) {
+                if (n <= 0) {
                         _status = WriteFailed;
                         return;
                 }
@@ -98,21 +98,18 @@ void TextStream::writeString(const String &str) {
 
 String TextStream::applyPadding(const String &str) {
         int width = _fieldWidth;
-        if(width <= 0) return str;
+        if (width <= 0) return str;
         int strLen = static_cast<int>(str.length());
-        if(strLen >= width) return str;
-        int pad = width - strLen;
+        if (strLen >= width) return str;
+        int    pad = width - strLen;
         String padStr(static_cast<size_t>(pad), _padChar);
-        switch(_fieldAlignment) {
-                case Left:
-                        return str + padStr;
-                case Right:
-                        return padStr + str;
+        switch (_fieldAlignment) {
+                case Left: return str + padStr;
+                case Right: return padStr + str;
                 case Center: {
                         int leftPad = pad / 2;
                         int rightPad = pad - leftPad;
-                        return String(static_cast<size_t>(leftPad), _padChar) +
-                               str +
+                        return String(static_cast<size_t>(leftPad), _padChar) + str +
                                String(static_cast<size_t>(rightPad), _padChar);
                 }
         }
@@ -124,13 +121,13 @@ String TextStream::applyPadding(const String &str) {
 // ============================================================================
 
 bool TextStream::readChar(char &ch) {
-        if(_status != Ok) return false;
-        if(_device == nullptr) {
+        if (_status != Ok) return false;
+        if (_device == nullptr) {
                 _status = ReadPastEnd;
                 return false;
         }
         int64_t n = _device->read(&ch, 1);
-        if(n <= 0) {
+        if (n <= 0) {
                 _status = ReadPastEnd;
                 return false;
         }
@@ -139,17 +136,17 @@ bool TextStream::readChar(char &ch) {
 
 void TextStream::unreadChar(char ch) {
         (void)ch;
-        if(_device != nullptr && !_device->isSequential()) {
+        if (_device != nullptr && !_device->isSequential()) {
                 _device->seek(_device->pos() - 1);
         }
-        if(_status == ReadPastEnd) _status = Ok;
+        if (_status == ReadPastEnd) _status = Ok;
 }
 
 void TextStream::skipWhitespace() {
-        while(!atEnd()) {
+        while (!atEnd()) {
                 char ch;
-                if(!readChar(ch)) return;
-                if(ch != ' ' && ch != '\t' && ch != '\n' && ch != '\r') {
+                if (!readChar(ch)) return;
+                if (ch != ' ' && ch != '\t' && ch != '\n' && ch != '\r') {
                         unreadChar(ch);
                         return;
                 }
@@ -159,16 +156,16 @@ void TextStream::skipWhitespace() {
 String TextStream::readToken() {
         skipWhitespace();
         std::string result;
-        while(!atEnd()) {
+        while (!atEnd()) {
                 char ch;
-                if(!readChar(ch)) break;
-                if(ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r') {
+                if (!readChar(ch)) break;
+                if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r') {
                         unreadChar(ch);
                         break;
                 }
                 result += ch;
         }
-        if(!result.empty() && _status == ReadPastEnd) _status = Ok;
+        if (!result.empty() && _status == ReadPastEnd) _status = Ok;
         return String(result.c_str(), result.size());
 }
 
@@ -182,7 +179,7 @@ TextStream &TextStream::operator<<(const String &val) {
 }
 
 TextStream &TextStream::operator<<(const char *val) {
-        if(val == nullptr) return *this;
+        if (val == nullptr) return *this;
         writeString(applyPadding(String(val)));
         return *this;
 }
@@ -194,15 +191,21 @@ TextStream &TextStream::operator<<(char val) {
 
 TextStream &TextStream::operator<<(int val) {
         char buf[64];
-        switch(_integerBase) {
+        switch (_integerBase) {
                 case 16: std::snprintf(buf, sizeof(buf), "%X", val); break;
-                case 8:  std::snprintf(buf, sizeof(buf), "%o", val); break;
+                case 8: std::snprintf(buf, sizeof(buf), "%o", val); break;
                 case 2: {
                         unsigned int uval = static_cast<unsigned int>(val);
-                        char *p = buf + sizeof(buf) - 1;
+                        char        *p = buf + sizeof(buf) - 1;
                         *p = '\0';
-                        if(uval == 0) { *(--p) = '0'; }
-                        else { while(uval > 0) { *(--p) = '0' + (uval & 1); uval >>= 1; } }
+                        if (uval == 0) {
+                                *(--p) = '0';
+                        } else {
+                                while (uval > 0) {
+                                        *(--p) = '0' + (uval & 1);
+                                        uval >>= 1;
+                                }
+                        }
                         writeString(applyPadding(String(p)));
                         return *this;
                 }
@@ -214,14 +217,20 @@ TextStream &TextStream::operator<<(int val) {
 
 TextStream &TextStream::operator<<(unsigned int val) {
         char buf[64];
-        switch(_integerBase) {
+        switch (_integerBase) {
                 case 16: std::snprintf(buf, sizeof(buf), "%X", val); break;
-                case 8:  std::snprintf(buf, sizeof(buf), "%o", val); break;
+                case 8: std::snprintf(buf, sizeof(buf), "%o", val); break;
                 case 2: {
                         char *p = buf + sizeof(buf) - 1;
                         *p = '\0';
-                        if(val == 0) { *(--p) = '0'; }
-                        else { while(val > 0) { *(--p) = '0' + (val & 1); val >>= 1; } }
+                        if (val == 0) {
+                                *(--p) = '0';
+                        } else {
+                                while (val > 0) {
+                                        *(--p) = '0' + (val & 1);
+                                        val >>= 1;
+                                }
+                        }
                         writeString(applyPadding(String(p)));
                         return *this;
                 }
@@ -233,15 +242,21 @@ TextStream &TextStream::operator<<(unsigned int val) {
 
 TextStream &TextStream::operator<<(int64_t val) {
         char buf[64];
-        switch(_integerBase) {
+        switch (_integerBase) {
                 case 16: std::snprintf(buf, sizeof(buf), "%llX", static_cast<unsigned long long>(val)); break;
-                case 8:  std::snprintf(buf, sizeof(buf), "%llo", static_cast<unsigned long long>(val)); break;
+                case 8: std::snprintf(buf, sizeof(buf), "%llo", static_cast<unsigned long long>(val)); break;
                 case 2: {
                         uint64_t uval = static_cast<uint64_t>(val);
-                        char *p = buf + sizeof(buf) - 1;
+                        char    *p = buf + sizeof(buf) - 1;
                         *p = '\0';
-                        if(uval == 0) { *(--p) = '0'; }
-                        else { while(uval > 0) { *(--p) = '0' + (uval & 1); uval >>= 1; } }
+                        if (uval == 0) {
+                                *(--p) = '0';
+                        } else {
+                                while (uval > 0) {
+                                        *(--p) = '0' + (uval & 1);
+                                        uval >>= 1;
+                                }
+                        }
                         writeString(applyPadding(String(p)));
                         return *this;
                 }
@@ -253,14 +268,20 @@ TextStream &TextStream::operator<<(int64_t val) {
 
 TextStream &TextStream::operator<<(uint64_t val) {
         char buf[64];
-        switch(_integerBase) {
+        switch (_integerBase) {
                 case 16: std::snprintf(buf, sizeof(buf), "%llX", static_cast<unsigned long long>(val)); break;
-                case 8:  std::snprintf(buf, sizeof(buf), "%llo", static_cast<unsigned long long>(val)); break;
+                case 8: std::snprintf(buf, sizeof(buf), "%llo", static_cast<unsigned long long>(val)); break;
                 case 2: {
                         char *p = buf + sizeof(buf) - 1;
                         *p = '\0';
-                        if(val == 0) { *(--p) = '0'; }
-                        else { while(val > 0) { *(--p) = '0' + (val & 1); val >>= 1; } }
+                        if (val == 0) {
+                                *(--p) = '0';
+                        } else {
+                                while (val > 0) {
+                                        *(--p) = '0' + (val & 1);
+                                        val >>= 1;
+                                }
+                        }
                         writeString(applyPadding(String(p)));
                         return *this;
                 }
@@ -272,10 +293,8 @@ TextStream &TextStream::operator<<(uint64_t val) {
 
 TextStream &TextStream::operator<<(float val) {
         String str;
-        switch(_realNumberNotation) {
-                case Fixed:
-                        str = String::number(static_cast<double>(val), _realNumberPrecision);
-                        break;
+        switch (_realNumberNotation) {
+                case Fixed: str = String::number(static_cast<double>(val), _realNumberPrecision); break;
                 case Scientific: {
                         char buf[64];
                         std::snprintf(buf, sizeof(buf), "%.*e", _realNumberPrecision, static_cast<double>(val));
@@ -296,10 +315,8 @@ TextStream &TextStream::operator<<(float val) {
 
 TextStream &TextStream::operator<<(double val) {
         String str;
-        switch(_realNumberNotation) {
-                case Fixed:
-                        str = String::number(val, _realNumberPrecision);
-                        break;
+        switch (_realNumberNotation) {
+                case Fixed: str = String::number(val, _realNumberPrecision); break;
                 case Scientific: {
                         char buf[64];
                         std::snprintf(buf, sizeof(buf), "%.*e", _realNumberPrecision, val);
@@ -348,7 +365,7 @@ TextStream &TextStream::operator>>(char &val) {
 
 TextStream &TextStream::operator>>(int &val) {
         String token = readToken();
-        if(token.isEmpty()) {
+        if (token.isEmpty()) {
                 val = 0;
                 return *this;
         }
@@ -358,7 +375,7 @@ TextStream &TextStream::operator>>(int &val) {
 
 TextStream &TextStream::operator>>(int64_t &val) {
         String token = readToken();
-        if(token.isEmpty()) {
+        if (token.isEmpty()) {
                 val = 0;
                 return *this;
         }
@@ -368,7 +385,7 @@ TextStream &TextStream::operator>>(int64_t &val) {
 
 TextStream &TextStream::operator>>(double &val) {
         String token = readToken();
-        if(token.isEmpty()) {
+        if (token.isEmpty()) {
                 val = 0.0;
                 return *this;
         }
@@ -382,34 +399,34 @@ TextStream &TextStream::operator>>(double &val) {
 
 String TextStream::readLine() {
         std::string result;
-        char ch;
-        while(readChar(ch)) {
-                if(ch == '\n') break;
-                if(ch == '\r') {
+        char        ch;
+        while (readChar(ch)) {
+                if (ch == '\n') break;
+                if (ch == '\r') {
                         // Handle \r\n
                         char next;
-                        if(readChar(next)) {
-                                if(next != '\n') {
+                        if (readChar(next)) {
+                                if (next != '\n') {
                                         unreadChar(next);
                                 }
                         } else {
-                                if(_status == ReadPastEnd) _status = Ok;
+                                if (_status == ReadPastEnd) _status = Ok;
                         }
                         break;
                 }
                 result += ch;
         }
-        if(!result.empty() && _status == ReadPastEnd) _status = Ok;
+        if (!result.empty() && _status == ReadPastEnd) _status = Ok;
         return String(result.c_str(), result.size());
 }
 
 String TextStream::readAll() {
         std::string result;
-        char ch;
-        while(readChar(ch)) {
+        char        ch;
+        while (readChar(ch)) {
                 result += ch;
         }
-        if(_status == ReadPastEnd) _status = Ok;
+        if (_status == ReadPastEnd) _status = Ok;
         return String(result.c_str(), result.size());
 }
 
@@ -417,11 +434,11 @@ String TextStream::read(size_t maxLength) {
         std::string result;
         result.reserve(maxLength);
         char ch;
-        for(size_t i = 0; i < maxLength; ++i) {
-                if(!readChar(ch)) break;
+        for (size_t i = 0; i < maxLength; ++i) {
+                if (!readChar(ch)) break;
                 result += ch;
         }
-        if(!result.empty() && _status == ReadPastEnd) _status = Ok;
+        if (!result.empty() && _status == ReadPastEnd) _status = Ok;
         return String(result.c_str(), result.size());
 }
 

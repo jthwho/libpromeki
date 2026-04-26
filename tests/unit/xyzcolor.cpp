@@ -25,7 +25,7 @@ TEST_CASE("XYZColor: construction with values") {
 
 TEST_CASE("XYZColor: construction from DataType") {
         XYZColor::DataType d(0.1, 0.2, 0.3);
-        XYZColor c(d);
+        XYZColor           c(d);
         CHECK(c.isValid());
 }
 
@@ -49,9 +49,9 @@ TEST_CASE("XYZColor: set all at once") {
 
 TEST_CASE("XYZColor: isValid with negative values") {
         XYZColor a(1.5, 0.5, 0.5);
-        CHECK(a.isValid());  // CIE XYZ components can exceed 1.0
+        CHECK(a.isValid()); // CIE XYZ components can exceed 1.0
         XYZColor b(0.5, -0.1, 0.5);
-        CHECK_FALSE(b.isValid());  // Negative values are invalid
+        CHECK_FALSE(b.isValid()); // Negative values are invalid
 }
 
 TEST_CASE("XYZColor: isValid with boundary values") {
@@ -72,13 +72,13 @@ TEST_CASE("XYZColor: lerp") {
 
 TEST_CASE("XYZColor: toString") {
         XYZColor c(0.5, 0.3, 0.2);
-        String s = c.toString();
+        String   s = c.toString();
         CHECK_FALSE(s.isEmpty());
         CHECK(s.find('X') != String::npos);
 }
 
 TEST_CASE("XYZColor: data accessor") {
-        XYZColor c(0.1, 0.2, 0.3);
+        XYZColor    c(0.1, 0.2, 0.3);
         const auto &d = c.data();
         CHECK(d[0] == doctest::Approx(0.1));
         CHECK(d[1] == doctest::Approx(0.2));

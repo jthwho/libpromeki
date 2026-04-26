@@ -23,7 +23,7 @@ TEST_CASE("MemSpace: construction with System ID") {
 }
 
 TEST_CASE("MemSpace: alloc and release") {
-        MemSpace ms;
+        MemSpace      ms;
         MemAllocation a = ms.alloc(256, 16);
         CHECK(a.isValid());
         CHECK(a.size == 256);
@@ -33,7 +33,7 @@ TEST_CASE("MemSpace: alloc and release") {
 }
 
 TEST_CASE("MemSpace: alloc alignment") {
-        MemSpace ms;
+        MemSpace      ms;
         MemAllocation a = ms.alloc(1024, 64);
         CHECK(a.isValid());
         CHECK((reinterpret_cast<uintptr_t>(a.ptr) % 64) == 0);
@@ -41,14 +41,14 @@ TEST_CASE("MemSpace: alloc alignment") {
 }
 
 TEST_CASE("MemSpace: release nullptr is safe") {
-        MemSpace ms;
+        MemSpace      ms;
         MemAllocation a;
         ms.release(a);
         CHECK(true);
 }
 
 TEST_CASE("MemSpace: fill memory") {
-        MemSpace ms;
+        MemSpace      ms;
         MemAllocation a = ms.alloc(128, 16);
         REQUIRE(a.isValid());
         CHECK(ms.fill(a.ptr, 128, 0xAA).isOk());
@@ -64,7 +64,7 @@ TEST_CASE("MemSpace: fill with nullptr returns error") {
 }
 
 TEST_CASE("MemSpace: copy") {
-        MemSpace ms;
+        MemSpace      ms;
         MemAllocation src = ms.alloc(128, 16);
         MemAllocation dst = ms.alloc(128, 16);
         REQUIRE(src.isValid());
@@ -79,7 +79,7 @@ TEST_CASE("MemSpace: copy") {
 }
 
 TEST_CASE("MemSpace: copy with nullptr returns Error::Invalid") {
-        MemSpace ms;
+        MemSpace      ms;
         MemAllocation a = ms.alloc(64, 16);
         MemAllocation empty;
         REQUIRE(a.isValid());
@@ -89,7 +89,7 @@ TEST_CASE("MemSpace: copy with nullptr returns Error::Invalid") {
 }
 
 TEST_CASE("MemSpace: alloc preserves MemSpace") {
-        MemSpace ms(MemSpace::SystemSecure);
+        MemSpace      ms(MemSpace::SystemSecure);
         MemAllocation a = ms.alloc(256, 16);
         REQUIRE(a.isValid());
         CHECK(a.ms.id() == MemSpace::SystemSecure);
@@ -97,7 +97,7 @@ TEST_CASE("MemSpace: alloc preserves MemSpace") {
 }
 
 TEST_CASE("MemSpace: isHostAccessible") {
-        MemSpace ms;
+        MemSpace      ms;
         MemAllocation a = ms.alloc(64, 16);
         REQUIRE(a.isValid());
         CHECK(ms.isHostAccessible(a));
@@ -119,16 +119,21 @@ TEST_CASE("MemSpace: registerType returns unique IDs above UserDefined") {
 TEST_CASE("MemSpace::Stats: alloc and release update counters") {
         // Use a private custom MemSpace so the test isn't affected
         // by other code allocating in the global System space.
-        MemSpace::ID id = MemSpace::registerType();
+        MemSpace::ID  id = MemSpace::registerType();
         MemSpace::Ops ops;
         ops.id = id;
         ops.name = "StatsTest1";
-        ops.isHostAccessible = [](const MemAllocation &) -> bool { return true; };
+        ops.isHostAccessible = [](const MemAllocation &) -> bool {
+                return true;
+        };
         ops.alloc = [](MemAllocation &a) {
                 size_t allocSize = (a.size + a.align - 1) & ~(a.align - 1);
                 a.ptr = std::aligned_alloc(a.align, allocSize);
         };
-        ops.release = [](MemAllocation &a) { std::free(a.ptr); a.ptr = nullptr; };
+        ops.release = [](MemAllocation &a) {
+                std::free(a.ptr);
+                a.ptr = nullptr;
+        };
         ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
                 std::memcpy(dst.ptr, src.ptr, bytes);
                 return Error::Ok;
@@ -139,7 +144,7 @@ TEST_CASE("MemSpace::Stats: alloc and release update counters") {
         };
         MemSpace::registerData(std::move(ops));
 
-        MemSpace ms(id);
+        MemSpace                  ms(id);
         MemSpace::Stats::Snapshot before = ms.statsSnapshot();
         CHECK(before.allocCount == 0);
         CHECK(before.allocBytes == 0);
@@ -174,16 +179,21 @@ TEST_CASE("MemSpace::Stats: alloc and release update counters") {
 }
 
 TEST_CASE("MemSpace::Stats: peak tracks high-water mark") {
-        MemSpace::ID id = MemSpace::registerType();
+        MemSpace::ID  id = MemSpace::registerType();
         MemSpace::Ops ops;
         ops.id = id;
         ops.name = "StatsTest2";
-        ops.isHostAccessible = [](const MemAllocation &) -> bool { return true; };
+        ops.isHostAccessible = [](const MemAllocation &) -> bool {
+                return true;
+        };
         ops.alloc = [](MemAllocation &a) {
                 size_t allocSize = (a.size + a.align - 1) & ~(a.align - 1);
                 a.ptr = std::aligned_alloc(a.align, allocSize);
         };
-        ops.release = [](MemAllocation &a) { std::free(a.ptr); a.ptr = nullptr; };
+        ops.release = [](MemAllocation &a) {
+                std::free(a.ptr);
+                a.ptr = nullptr;
+        };
         ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
                 std::memcpy(dst.ptr, src.ptr, bytes);
                 return Error::Ok;
@@ -231,16 +241,21 @@ TEST_CASE("MemSpace::Stats: peak tracks high-water mark") {
 }
 
 TEST_CASE("MemSpace::Stats: copy and fill update counters") {
-        MemSpace::ID id = MemSpace::registerType();
+        MemSpace::ID  id = MemSpace::registerType();
         MemSpace::Ops ops;
         ops.id = id;
         ops.name = "StatsTest3";
-        ops.isHostAccessible = [](const MemAllocation &) -> bool { return true; };
+        ops.isHostAccessible = [](const MemAllocation &) -> bool {
+                return true;
+        };
         ops.alloc = [](MemAllocation &a) {
                 size_t allocSize = (a.size + a.align - 1) & ~(a.align - 1);
                 a.ptr = std::aligned_alloc(a.align, allocSize);
         };
-        ops.release = [](MemAllocation &a) { std::free(a.ptr); a.ptr = nullptr; };
+        ops.release = [](MemAllocation &a) {
+                std::free(a.ptr);
+                a.ptr = nullptr;
+        };
         ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
                 std::memcpy(dst.ptr, src.ptr, bytes);
                 return Error::Ok;
@@ -251,7 +266,7 @@ TEST_CASE("MemSpace::Stats: copy and fill update counters") {
         };
         MemSpace::registerData(std::move(ops));
 
-        MemSpace ms(id);
+        MemSpace      ms(id);
         MemAllocation src = ms.alloc(256, 16);
         MemAllocation dst = ms.alloc(256, 16);
         REQUIRE(src.isValid());
@@ -273,16 +288,21 @@ TEST_CASE("MemSpace::Stats: copy and fill update counters") {
 }
 
 TEST_CASE("MemSpace::Stats: reset zeroes every counter") {
-        MemSpace::ID id = MemSpace::registerType();
+        MemSpace::ID  id = MemSpace::registerType();
         MemSpace::Ops ops;
         ops.id = id;
         ops.name = "StatsTest4";
-        ops.isHostAccessible = [](const MemAllocation &) -> bool { return true; };
+        ops.isHostAccessible = [](const MemAllocation &) -> bool {
+                return true;
+        };
         ops.alloc = [](MemAllocation &a) {
                 size_t allocSize = (a.size + a.align - 1) & ~(a.align - 1);
                 a.ptr = std::aligned_alloc(a.align, allocSize);
         };
-        ops.release = [](MemAllocation &a) { std::free(a.ptr); a.ptr = nullptr; };
+        ops.release = [](MemAllocation &a) {
+                std::free(a.ptr);
+                a.ptr = nullptr;
+        };
         ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
                 std::memcpy(dst.ptr, src.ptr, bytes);
                 return Error::Ok;
@@ -293,7 +313,7 @@ TEST_CASE("MemSpace::Stats: reset zeroes every counter") {
         };
         MemSpace::registerData(std::move(ops));
 
-        MemSpace ms(id);
+        MemSpace      ms(id);
         MemAllocation a = ms.alloc(1024, 16);
         REQUIRE(a.isValid());
         CHECK(ms.fill(a.ptr, 1024, 0).isOk());
@@ -324,7 +344,7 @@ TEST_CASE("MemSpace::Stats: reset zeroes every counter") {
 }
 
 TEST_CASE("MemSpace::Stats: fill with nullptr doesn't count") {
-        MemSpace ms(MemSpace::System);
+        MemSpace                  ms(MemSpace::System);
         MemSpace::Stats::Snapshot before = ms.statsSnapshot();
         CHECK(ms.fill(nullptr, 128, 0).isError());
         MemSpace::Stats::Snapshot after = ms.statsSnapshot();
@@ -333,7 +353,7 @@ TEST_CASE("MemSpace::Stats: fill with nullptr doesn't count") {
 }
 
 TEST_CASE("MemSpace::Stats: all built-in MemSpaces expose stats") {
-        for(MemSpace::ID id : MemSpace::registeredIDs()) {
+        for (MemSpace::ID id : MemSpace::registeredIDs()) {
                 MemSpace ms(id);
                 // Must not crash and must return plausible values.
                 MemSpace::Stats::Snapshot s = ms.statsSnapshot();
@@ -349,9 +369,11 @@ TEST_CASE("MemSpace: registerData and construction from custom ID") {
         // A custom memory space that delegates entirely to System memory,
         // but reports a unique ID so we can verify registration.
         MemSpace::Ops ops;
-        ops.id   = id;
+        ops.id = id;
         ops.name = "TestSpace";
-        ops.isHostAccessible = [](const MemAllocation &) -> bool { return true; };
+        ops.isHostAccessible = [](const MemAllocation &) -> bool {
+                return true;
+        };
         ops.alloc = [](MemAllocation &a) {
                 size_t allocSize = (a.size + a.align - 1) & ~(a.align - 1);
                 a.ptr = std::aligned_alloc(a.align, allocSize);

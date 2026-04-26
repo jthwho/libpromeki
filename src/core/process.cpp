@@ -20,11 +20,10 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-Process::Process(ObjectBase *parent) : ObjectBase(parent) {
-}
+Process::Process(ObjectBase *parent) : ObjectBase(parent) {}
 
 Process::~Process() {
-        if(_state == Running) {
+        if (_state == Running) {
                 kill();
                 waitForFinished(5000);
         }
@@ -32,7 +31,7 @@ Process::~Process() {
 }
 
 void Process::closeFd(int &fd) {
-        if(fd != -1) {
+        if (fd != -1) {
                 ::close(fd);
                 fd = -1;
         }
@@ -48,22 +47,22 @@ void Process::closeAllPipes() {
 }
 
 void Process::drainFd(int &fd, List<Buffer> &chunks, size_t &total) {
-        if(fd == -1) return;
+        if (fd == -1) return;
         const size_t chunkSize = 4096;
-        for(;;) {
-                Buffer chunk(chunkSize);
+        for (;;) {
+                Buffer  chunk(chunkSize);
                 ssize_t n = ::read(fd, chunk.data(), chunkSize);
-                if(n > 0) {
+                if (n > 0) {
                         chunk.setSize(static_cast<size_t>(n));
                         total += static_cast<size_t>(n);
                         chunks += std::move(chunk);
-                } else if(n == 0) {
+                } else if (n == 0) {
                         // EOF — child closed the write end. Close our read end
                         // so poll() doesn't spin on POLLHUP.
                         closeFd(fd);
                         break;
                 } else {
-                        if(errno == EINTR) continue;
+                        if (errno == EINTR) continue;
                         break; // EAGAIN or error
                 }
         }
@@ -75,10 +74,10 @@ void Process::drainPipes() {
 }
 
 Buffer Process::assembleChunks(List<Buffer> &chunks, size_t &total) {
-        if(total == 0) return Buffer();
+        if (total == 0) return Buffer();
         Buffer result(total);
         size_t offset = 0;
-        for(size_t i = 0; i < chunks.size(); i++) {
+        for (size_t i = 0; i < chunks.size(); i++) {
                 result.copyFrom(chunks[i].data(), chunks[i].size(), offset);
                 offset += chunks[i].size();
         }
@@ -92,8 +91,8 @@ Error Process::start() {
 #ifdef __EMSCRIPTEN__
         return Error::NotSupported;
 #else
-        if(_state == Running) return Error::AlreadyOpen;
-        if(_program.isEmpty()) return Error::Invalid;
+        if (_state == Running) return Error::AlreadyOpen;
+        if (_program.isEmpty()) return Error::Invalid;
 
         _exitCode = -1;
         _stdoutChunks.clear();
@@ -103,7 +102,7 @@ Error Process::start() {
         _state = Starting;
 
         // Create pipes for stdin, stdout, stderr
-        if(::pipe(_stdinPipe) != 0 || ::pipe(_stdoutPipe) != 0 || ::pipe(_stderrPipe) != 0) {
+        if (::pipe(_stdinPipe) != 0 || ::pipe(_stdoutPipe) != 0 || ::pipe(_stderrPipe) != 0) {
                 Error err = Error::syserr();
                 closeAllPipes();
                 _state = NotRunning;
@@ -115,7 +114,7 @@ Error Process::start() {
         // automatically closed on successful exec, signaling the parent.
         // If exec fails, the child writes the errno before _exit.
         int execPipe[2];
-        if(::pipe2(execPipe, O_CLOEXEC) != 0) {
+        if (::pipe2(execPipe, O_CLOEXEC) != 0) {
                 Error err = Error::syserr();
                 closeAllPipes();
                 _state = NotRunning;
@@ -124,7 +123,7 @@ Error Process::start() {
         }
 
         _pid = ::fork();
-        if(_pid < 0) {
+        if (_pid < 0) {
                 Error err = Error::syserr();
                 closeAllPipes();
                 ::close(execPipe[0]);
@@ -135,14 +134,14 @@ Error Process::start() {
                 return err;
         }
 
-        if(_pid == 0) {
+        if (_pid == 0) {
                 // Child process
                 ::close(execPipe[0]); // Close read end
 
                 // Reset signal state — the parent (or test framework) may have
                 // blocked or ignored signals. SIG_IGN persists across exec(),
                 // so we must explicitly restore default dispositions.
-                for(int sig = 1; sig < NSIG; sig++) {
+                for (int sig = 1; sig < NSIG; sig++) {
                         ::signal(sig, SIG_DFL);
                 }
                 sigset_t allSigs;
@@ -163,9 +162,9 @@ Error Process::start() {
                 ::close(_stderrPipe[1]);
 
                 // Change working directory if set
-                if(!_workingDirectory.isEmpty()) {
-                        if(::chdir(_workingDirectory.toString().cstr()) != 0) {
-                                int e = errno;
+                if (!_workingDirectory.isEmpty()) {
+                        if (::chdir(_workingDirectory.toString().cstr()) != 0) {
+                                int     e = errno;
                                 ssize_t dummy = ::write(execPipe[1], &e, sizeof(e));
                                 (void)dummy;
                                 _exit(127);
@@ -173,9 +172,9 @@ Error Process::start() {
                 }
 
                 // Set environment if provided
-                if(!_environment.isEmpty()) {
+                if (!_environment.isEmpty()) {
                         ::clearenv();
-                        for(auto it = _environment.begin(); it != _environment.end(); ++it) {
+                        for (auto it = _environment.begin(); it != _environment.end(); ++it) {
                                 ::setenv(it->first.cstr(), it->second.cstr(), 1);
                         }
                 }
@@ -189,7 +188,7 @@ Error Process::start() {
                 {
                         List<char *> argv;
                         argv += const_cast<char *>(_program.cstr());
-                        for(size_t i = 0; i < _arguments.size(); i++) {
+                        for (size_t i = 0; i < _arguments.size(); i++) {
                                 argv += const_cast<char *>(_arguments[i].cstr());
                         }
                         argv += nullptr;
@@ -207,19 +206,19 @@ Error Process::start() {
         // Parent process
 
         // Close child-side pipe ends
-        closeFd(_stdinPipe[0]);   // Child reads from stdin
-        closeFd(_stdoutPipe[1]);  // Child writes to stdout
-        closeFd(_stderrPipe[1]);  // Child writes to stderr
+        closeFd(_stdinPipe[0]);  // Child reads from stdin
+        closeFd(_stdoutPipe[1]); // Child writes to stdout
+        closeFd(_stderrPipe[1]); // Child writes to stderr
 
         // Wait for exec to complete (or fail) via the exec-notify pipe.
         // On success, the O_CLOEXEC write end closes and we read EOF (0 bytes).
         // On failure, the child writes errno before _exit(127).
         ::close(execPipe[1]); // Close write end in parent
-        int execErr = 0;
+        int     execErr = 0;
         ssize_t n = ::read(execPipe[0], &execErr, sizeof(execErr));
         ::close(execPipe[0]);
 
-        if(n > 0) {
+        if (n > 0) {
                 // exec failed — child wrote errno. Child will _exit(127).
                 // We still need to reap the child.
                 int status;
@@ -254,7 +253,7 @@ Error Process::waitForStarted(unsigned int timeoutMs) {
         (void)timeoutMs;
         // start() is synchronous via fork()+exec-notify pipe, so if we reach
         // here the process is either Running or failed to start.
-        if(_state == Running || _state == Starting) return Error::Ok;
+        if (_state == Running || _state == Starting) return Error::Ok;
         return Error::NotOpen;
 }
 
@@ -263,26 +262,26 @@ Error Process::waitForFinished(unsigned int timeoutMs) {
         (void)timeoutMs;
         return Error::NotSupported;
 #else
-        if(_state != Running) return Error::NotOpen;
+        if (_state != Running) return Error::NotOpen;
 
         // Use poll() to drain stdout/stderr while waiting for the child.
         // This prevents deadlock when the child writes more than the pipe buffer.
         // ElapsedTimer provides accurate monotonic timeout tracking since
         // poll() may return early (e.g. SIGCHLD interrupting it).
-        int status = 0;
-        const int pollMs = 50;
+        int          status = 0;
+        const int    pollMs = 50;
         ElapsedTimer timer;
 
-        for(;;) {
+        for (;;) {
                 // Drain any available pipe data
                 drainPipes();
 
                 // Check if child has exited
                 pid_t result = ::waitpid(_pid, &status, WNOHANG);
-                if(result < 0) {
+                if (result < 0) {
                         int e = errno;
-                        if(e == EINTR) continue;
-                        if(e == ECHILD) {
+                        if (e == EINTR) continue;
+                        if (e == ECHILD) {
                                 // Child was already reaped.
                                 _exitCode = 0;
                                 _state = NotRunning;
@@ -296,40 +295,39 @@ Error Process::waitForFinished(unsigned int timeoutMs) {
                         errorOccurredSignal.emit(err);
                         return err;
                 }
-                if(result > 0) {
+                if (result > 0) {
                         // Child exited — do a final drain to get any remaining data
                         drainPipes();
                         break;
                 }
 
                 // Child still running — check timeout
-                if(timeoutMs > 0 && timer.hasExpired(timeoutMs)) {
+                if (timeoutMs > 0 && timer.hasExpired(timeoutMs)) {
                         return Error::Timeout;
                 }
 
                 // Wait a bit for pipe activity or child state change
                 struct pollfd fds[2];
-                int nfds = 0;
-                if(_stdoutPipe[0] != -1) {
+                int           nfds = 0;
+                if (_stdoutPipe[0] != -1) {
                         fds[nfds].fd = _stdoutPipe[0];
                         fds[nfds].events = POLLIN;
                         nfds++;
                 }
-                if(_stderrPipe[0] != -1) {
+                if (_stderrPipe[0] != -1) {
                         fds[nfds].fd = _stderrPipe[0];
                         fds[nfds].events = POLLIN;
                         nfds++;
                 }
 
                 int waitMs = pollMs;
-                if(timeoutMs > 0) {
-                        int64_t el = timer.elapsed();
+                if (timeoutMs > 0) {
+                        int64_t      el = timer.elapsed();
                         unsigned int left = (el < timeoutMs) ? static_cast<unsigned int>(timeoutMs - el) : 0;
-                        if(left < static_cast<unsigned int>(pollMs))
-                                waitMs = static_cast<int>(left);
+                        if (left < static_cast<unsigned int>(pollMs)) waitMs = static_cast<int>(left);
                 }
 
-                if(nfds == 0) {
+                if (nfds == 0) {
                         // No pipes to poll — just sleep briefly and retry waitpid
                         ::usleep(static_cast<unsigned>(waitMs) * 1000);
                 } else {
@@ -337,9 +335,9 @@ Error Process::waitForFinished(unsigned int timeoutMs) {
                 }
         }
 
-        if(WIFEXITED(status)) {
+        if (WIFEXITED(status)) {
                 _exitCode = WEXITSTATUS(status);
-        } else if(WIFSIGNALED(status)) {
+        } else if (WIFSIGNALED(status)) {
                 _exitCode = -WTERMSIG(status);
         } else {
                 _exitCode = -1;
@@ -358,14 +356,14 @@ bool Process::collectExitStatus() {
 #ifdef __EMSCRIPTEN__
         return false;
 #else
-        if(_state != Running) return false;
-        int status = 0;
+        if (_state != Running) return false;
+        int   status = 0;
         pid_t result = ::waitpid(_pid, &status, WNOHANG);
-        if(result <= 0) return false;
+        if (result <= 0) return false;
         drainPipes();
-        if(WIFEXITED(status)) {
+        if (WIFEXITED(status)) {
                 _exitCode = WEXITSTATUS(status);
-        } else if(WIFSIGNALED(status)) {
+        } else if (WIFSIGNALED(status)) {
                 _exitCode = -WTERMSIG(status);
         } else {
                 _exitCode = -1;
@@ -379,7 +377,7 @@ bool Process::collectExitStatus() {
 
 void Process::kill() {
 #ifndef __EMSCRIPTEN__
-        if(_state == Running && _pid > 0) {
+        if (_state == Running && _pid > 0) {
                 ::kill(_pid, SIGKILL);
         }
 #endif
@@ -387,7 +385,7 @@ void Process::kill() {
 
 void Process::terminate() {
 #ifndef __EMSCRIPTEN__
-        if(_state == Running && _pid > 0) {
+        if (_state == Running && _pid > 0) {
                 ::kill(_pid, SIGTERM);
         }
 #endif
@@ -395,12 +393,13 @@ void Process::terminate() {
 
 ssize_t Process::writeToStdin(const void *buf, size_t bytes) {
 #ifdef __EMSCRIPTEN__
-        (void)buf; (void)bytes;
+        (void)buf;
+        (void)bytes;
         return -1;
 #else
-        if(_stdinPipe[1] == -1) return -1;
+        if (_stdinPipe[1] == -1) return -1;
         ssize_t written = ::write(_stdinPipe[1], buf, bytes);
-        if(written < 0) {
+        if (written < 0) {
                 errorOccurredSignal.emit(Error::syserr());
         }
         return written;

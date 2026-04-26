@@ -103,52 +103,52 @@ class AudioFormat {
                  * @c UserDefined.
                  */
                 enum ID {
-                        Invalid            = 0,   ///< Invalid or uninitialized.
+                        Invalid = 0, ///< Invalid or uninitialized.
 
                         // -- Interleaved PCM -------------------------------
-                        PCMI_Float32LE     = 1,   ///< Interleaved 32-bit IEEE 754 float, little-endian.
-                        PCMI_Float32BE     = 2,   ///< Interleaved 32-bit IEEE 754 float, big-endian.
-                        PCMI_S8            = 3,   ///< Interleaved signed 8-bit.
-                        PCMI_U8            = 4,   ///< Interleaved unsigned 8-bit.
-                        PCMI_S16LE         = 5,   ///< Interleaved signed 16-bit, little-endian.
-                        PCMI_U16LE         = 6,   ///< Interleaved unsigned 16-bit, little-endian.
-                        PCMI_S16BE         = 7,   ///< Interleaved signed 16-bit, big-endian.
-                        PCMI_U16BE         = 8,   ///< Interleaved unsigned 16-bit, big-endian.
-                        PCMI_S24LE         = 9,   ///< Interleaved signed 24-bit, little-endian (3 bytes per sample).
-                        PCMI_U24LE         = 10,  ///< Interleaved unsigned 24-bit, little-endian.
-                        PCMI_S24BE         = 11,  ///< Interleaved signed 24-bit, big-endian.
-                        PCMI_U24BE         = 12,  ///< Interleaved unsigned 24-bit, big-endian.
-                        PCMI_S32LE         = 13,  ///< Interleaved signed 32-bit, little-endian.
-                        PCMI_U32LE         = 14,  ///< Interleaved unsigned 32-bit, little-endian.
-                        PCMI_S32BE         = 15,  ///< Interleaved signed 32-bit, big-endian.
-                        PCMI_U32BE         = 16,  ///< Interleaved unsigned 32-bit, big-endian.
+                        PCMI_Float32LE = 1, ///< Interleaved 32-bit IEEE 754 float, little-endian.
+                        PCMI_Float32BE = 2, ///< Interleaved 32-bit IEEE 754 float, big-endian.
+                        PCMI_S8 = 3,        ///< Interleaved signed 8-bit.
+                        PCMI_U8 = 4,        ///< Interleaved unsigned 8-bit.
+                        PCMI_S16LE = 5,     ///< Interleaved signed 16-bit, little-endian.
+                        PCMI_U16LE = 6,     ///< Interleaved unsigned 16-bit, little-endian.
+                        PCMI_S16BE = 7,     ///< Interleaved signed 16-bit, big-endian.
+                        PCMI_U16BE = 8,     ///< Interleaved unsigned 16-bit, big-endian.
+                        PCMI_S24LE = 9,     ///< Interleaved signed 24-bit, little-endian (3 bytes per sample).
+                        PCMI_U24LE = 10,    ///< Interleaved unsigned 24-bit, little-endian.
+                        PCMI_S24BE = 11,    ///< Interleaved signed 24-bit, big-endian.
+                        PCMI_U24BE = 12,    ///< Interleaved unsigned 24-bit, big-endian.
+                        PCMI_S32LE = 13,    ///< Interleaved signed 32-bit, little-endian.
+                        PCMI_U32LE = 14,    ///< Interleaved unsigned 32-bit, little-endian.
+                        PCMI_S32BE = 15,    ///< Interleaved signed 32-bit, big-endian.
+                        PCMI_U32BE = 16,    ///< Interleaved unsigned 32-bit, big-endian.
 
                         // -- Planar PCM ------------------------------------
-                        PCMP_Float32LE     = 32,  ///< Planar 32-bit IEEE 754 float, little-endian.
-                        PCMP_Float32BE     = 33,  ///< Planar 32-bit IEEE 754 float, big-endian.
-                        PCMP_S8            = 34,  ///< Planar signed 8-bit.
-                        PCMP_U8            = 35,  ///< Planar unsigned 8-bit.
-                        PCMP_S16LE         = 36,  ///< Planar signed 16-bit, little-endian.
-                        PCMP_U16LE         = 37,  ///< Planar unsigned 16-bit, little-endian.
-                        PCMP_S16BE         = 38,  ///< Planar signed 16-bit, big-endian.
-                        PCMP_U16BE         = 39,  ///< Planar unsigned 16-bit, big-endian.
-                        PCMP_S24LE         = 40,  ///< Planar signed 24-bit, little-endian.
-                        PCMP_U24LE         = 41,  ///< Planar unsigned 24-bit, little-endian.
-                        PCMP_S24BE         = 42,  ///< Planar signed 24-bit, big-endian.
-                        PCMP_U24BE         = 43,  ///< Planar unsigned 24-bit, big-endian.
-                        PCMP_S32LE         = 44,  ///< Planar signed 32-bit, little-endian.
-                        PCMP_U32LE         = 45,  ///< Planar unsigned 32-bit, little-endian.
-                        PCMP_S32BE         = 46,  ///< Planar signed 32-bit, big-endian.
-                        PCMP_U32BE         = 47,  ///< Planar unsigned 32-bit, big-endian.
+                        PCMP_Float32LE = 32, ///< Planar 32-bit IEEE 754 float, little-endian.
+                        PCMP_Float32BE = 33, ///< Planar 32-bit IEEE 754 float, big-endian.
+                        PCMP_S8 = 34,        ///< Planar signed 8-bit.
+                        PCMP_U8 = 35,        ///< Planar unsigned 8-bit.
+                        PCMP_S16LE = 36,     ///< Planar signed 16-bit, little-endian.
+                        PCMP_U16LE = 37,     ///< Planar unsigned 16-bit, little-endian.
+                        PCMP_S16BE = 38,     ///< Planar signed 16-bit, big-endian.
+                        PCMP_U16BE = 39,     ///< Planar unsigned 16-bit, big-endian.
+                        PCMP_S24LE = 40,     ///< Planar signed 24-bit, little-endian.
+                        PCMP_U24LE = 41,     ///< Planar unsigned 24-bit, little-endian.
+                        PCMP_S24BE = 42,     ///< Planar signed 24-bit, big-endian.
+                        PCMP_U24BE = 43,     ///< Planar unsigned 24-bit, big-endian.
+                        PCMP_S32LE = 44,     ///< Planar signed 32-bit, little-endian.
+                        PCMP_U32LE = 45,     ///< Planar unsigned 32-bit, little-endian.
+                        PCMP_S32BE = 46,     ///< Planar signed 32-bit, big-endian.
+                        PCMP_U32BE = 47,     ///< Planar unsigned 32-bit, big-endian.
 
                         // -- Compressed ------------------------------------
-                        Opus               = 64,  ///< Opus compressed bitstream (RFC 6716).
-                        AAC                = 65,  ///< Advanced Audio Coding (ISO/IEC 14496-3).
-                        FLAC               = 66,  ///< Free Lossless Audio Codec.
-                        MP3                = 67,  ///< MPEG-1 Audio Layer III.
-                        AC3                = 68,  ///< Dolby Digital (AC-3).
+                        Opus = 64, ///< Opus compressed bitstream (RFC 6716).
+                        AAC = 65,  ///< Advanced Audio Coding (ISO/IEC 14496-3).
+                        FLAC = 66, ///< Free Lossless Audio Codec.
+                        MP3 = 67,  ///< MPEG-1 Audio Layer III.
+                        AC3 = 68,  ///< Dolby Digital (AC-3).
 
-                        UserDefined        = 1024 ///< First ID available for user-registered formats.
+                        UserDefined = 1024 ///< First ID available for user-registered formats.
                 };
 
                 /** @brief List of AudioFormat IDs. */
@@ -161,8 +161,7 @@ class AudioFormat {
                  * Used as the canonical internal representation for DSP
                  * kernels and conversion pipelines.
                  */
-                static constexpr ID NativeFloat =
-                        System::isLittleEndian() ? PCMI_Float32LE : PCMI_Float32BE;
+                static constexpr ID NativeFloat = System::isLittleEndian() ? PCMI_Float32LE : PCMI_Float32BE;
 
                 /**
                  * @brief Immutable data record for an audio format.
@@ -176,32 +175,32 @@ class AudioFormat {
                  * @c true and leave those fields at defaults.
                  */
                 struct Data {
-                        ID         id = Invalid;               ///< Unique format identifier.
-                        String     name;                       ///< Short name (e.g. @c "PCMI_S16LE").
-                        String     desc;                       ///< Human-readable description.
-                        size_t     bytesPerSample = 0;         ///< Bytes per single sample (PCM only).
-                        size_t     bitsPerSample  = 0;         ///< Bits per single sample (PCM only).
-                        bool       isSigned       = false;     ///< True for signed integer / float samples.
-                        bool       isFloat        = false;     ///< True for IEEE 754 floating-point samples.
-                        bool       isPlanar       = false;     ///< True if channels are stored in separate planes.
-                        bool       isBigEndian    = false;     ///< True for big-endian multi-byte samples.
-                        bool       compressed     = false;     ///< True for compressed bitstream formats.
-                        AudioCodec audioCodec;                 ///< Codec identity for compressed formats.
-                        FourCC::List fourccList;                 ///< Associated FourCC codes (if any).
-                        /**
+                                ID           id = Invalid;        ///< Unique format identifier.
+                                String       name;                ///< Short name (e.g. @c "PCMI_S16LE").
+                                String       desc;                ///< Human-readable description.
+                                size_t       bytesPerSample = 0;  ///< Bytes per single sample (PCM only).
+                                size_t       bitsPerSample = 0;   ///< Bits per single sample (PCM only).
+                                bool         isSigned = false;    ///< True for signed integer / float samples.
+                                bool         isFloat = false;     ///< True for IEEE 754 floating-point samples.
+                                bool         isPlanar = false;    ///< True if channels are stored in separate planes.
+                                bool         isBigEndian = false; ///< True for big-endian multi-byte samples.
+                                bool         compressed = false;  ///< True for compressed bitstream formats.
+                                AudioCodec   audioCodec;          ///< Codec identity for compressed formats.
+                                FourCC::List fourccList;          ///< Associated FourCC codes (if any).
+                                /**
                          * @brief Converts samples from this format to normalized floats in [-1, 1].
                          * @param out     Destination float buffer.
                          * @param in      Source raw sample bytes.
                          * @param samples Number of samples (not sample frames) to convert.
                          */
-                        void (*samplesToFloat)(float *out, const uint8_t *in, size_t samples) = nullptr;
-                        /**
+                                void (*samplesToFloat)(float *out, const uint8_t *in, size_t samples) = nullptr;
+                                /**
                          * @brief Converts normalized floats in [-1, 1] to samples in this format.
                          * @param out     Destination raw sample bytes.
                          * @param in      Source float buffer.
                          * @param samples Number of samples (not sample frames) to convert.
                          */
-                        void (*floatToSamples)(uint8_t *out, const float *in, size_t samples) = nullptr;
+                                void (*floatToSamples)(uint8_t *out, const float *in, size_t samples) = nullptr;
                 };
 
                 /**
@@ -321,7 +320,7 @@ class AudioFormat {
                  *                not sample frames).
                  */
                 void samplesToFloat(float *out, const uint8_t *in, size_t samples) const {
-                        if(d->samplesToFloat != nullptr) d->samplesToFloat(out, in, samples);
+                        if (d->samplesToFloat != nullptr) d->samplesToFloat(out, in, samples);
                 }
 
                 /**
@@ -331,7 +330,7 @@ class AudioFormat {
                  * @param samples Number of samples to convert.
                  */
                 void floatToSamples(uint8_t *out, const float *in, size_t samples) const {
-                        if(d->floatToSamples != nullptr) d->floatToSamples(out, in, samples);
+                        if (d->floatToSamples != nullptr) d->floatToSamples(out, in, samples);
                 }
 
                 /** @brief Equality compares the underlying Data pointer. */
@@ -367,7 +366,7 @@ class AudioFormat {
                         static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
                         constexpr float min = static_cast<float>(Min);
                         constexpr float max = static_cast<float>(Max);
-                        return((static_cast<float>(value) - min) * 2.0f / (max - min)) - 1.0f;
+                        return ((static_cast<float>(value) - min) * 2.0f / (max - min)) - 1.0f;
                 }
 
                 /**
@@ -376,12 +375,10 @@ class AudioFormat {
                  * @param  value       The integer sample to convert.
                  * @return The corresponding normalized float value.
                  */
-                template <typename IntegerType>
-                static float integerToFloat(IntegerType value) {
+                template <typename IntegerType> static float integerToFloat(IntegerType value) {
                         static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
-                        return integerToFloat<IntegerType,
-                               std::numeric_limits<IntegerType>::min(),
-                               std::numeric_limits<IntegerType>::max()>(value);
+                        return integerToFloat<IntegerType, std::numeric_limits<IntegerType>::min(),
+                                              std::numeric_limits<IntegerType>::max()>(value);
                 }
 
                 /**
@@ -401,8 +398,10 @@ class AudioFormat {
                         static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
                         const float min = static_cast<float>(Min);
                         const float max = static_cast<float>(Max);
-                        if(value <= -1.0f) return Min;
-                        else if(value >= 1.0f) return Max;
+                        if (value <= -1.0f)
+                                return Min;
+                        else if (value >= 1.0f)
+                                return Max;
                         return static_cast<IntegerType>((value + 1.0f) * 0.5f * (max - min) + min);
                 }
 
@@ -412,12 +411,10 @@ class AudioFormat {
                  * @param  value       The normalized float sample.
                  * @return The corresponding integer sample value.
                  */
-                template <typename IntegerType>
-                static IntegerType floatToInteger(float value) {
+                template <typename IntegerType> static IntegerType floatToInteger(float value) {
                         static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
-                        return floatToInteger<IntegerType,
-                               std::numeric_limits<IntegerType>::min(),
-                               std::numeric_limits<IntegerType>::max()>(value);
+                        return floatToInteger<IntegerType, std::numeric_limits<IntegerType>::min(),
+                                              std::numeric_limits<IntegerType>::max()>(value);
                 }
 
                 /**
@@ -436,7 +433,7 @@ class AudioFormat {
                 static void samplesToFloatImpl(float *out, const uint8_t *inbuf, size_t samples) {
                         static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
                         const IntegerType *in = reinterpret_cast<const IntegerType *>(inbuf);
-                        for(size_t i = 0; i < samples; ++i) {
+                        for (size_t i = 0; i < samples; ++i) {
                                 IntegerType val = *in++;
                                 if constexpr (InputIsBigEndian != System::isBigEndian()) System::swapEndian(val);
                                 *out++ = integerToFloat<IntegerType>(val);
@@ -459,7 +456,7 @@ class AudioFormat {
                 static void floatToSamplesImpl(uint8_t *outbuf, const float *in, size_t samples) {
                         static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
                         IntegerType *out = reinterpret_cast<IntegerType *>(outbuf);
-                        for(size_t i = 0; i < samples; ++i) {
+                        for (size_t i = 0; i < samples; ++i) {
                                 IntegerType val = floatToInteger<IntegerType>(*in++);
                                 if constexpr (OutputIsBigEndian != System::isBigEndian()) System::swapEndian(val);
                                 *out++ = val;
@@ -467,7 +464,7 @@ class AudioFormat {
                 }
 
         private:
-                const Data *d = nullptr;
+                const Data        *d = nullptr;
                 static const Data *lookupData(ID id);
 };
 

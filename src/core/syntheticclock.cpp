@@ -9,15 +9,10 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-SyntheticClock::SyntheticClock(const ClockDomain &domain)
-        : Clock(domain)
-{
-}
+SyntheticClock::SyntheticClock(const ClockDomain &domain) : Clock(domain) {}
 
 SyntheticClock::SyntheticClock(const FrameRate &frameRate, const ClockDomain &domain)
-        : Clock(domain),
-          _frameRate(frameRate)
-{
+    : Clock(domain), _frameRate(frameRate) {
         recomputePeriod();
 }
 
@@ -61,9 +56,7 @@ Error SyntheticClock::sleepUntilNs(int64_t) const {
 }
 
 void SyntheticClock::recomputePeriod() {
-        int64_t period = _frameRate.isValid()
-                ? _frameRate.frameDuration().nanoseconds()
-                : 0;
+        int64_t period = _frameRate.isValid() ? _frameRate.frameDuration().nanoseconds() : 0;
         _framePeriodNs.store(period, std::memory_order_relaxed);
 }
 

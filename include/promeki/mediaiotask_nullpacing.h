@@ -32,23 +32,23 @@ PROMEKI_NAMESPACE_BEGIN
  * any thread regardless of strand activity.
  */
 struct NullPacingSnapshot {
-        /// @brief Frames the sink has consumed (paced past a tick).
-        int64_t framesConsumed = 0;
-        /// @brief Frames the sink has dropped (arrived inside an
-        /// active wallclock interval and were not paced past a
-        /// tick).  Always zero in @ref NullPacingMode::Free.
-        int64_t framesDropped  = 0;
-        /// @brief Sum of all per-frame in-sink latencies in
-        /// microseconds (arrival → discard).  Both consumed and
-        /// dropped frames contribute.
-        int64_t totalLatencyUs = 0;
-        /// @brief Largest per-frame in-sink latency observed since
-        /// the sink was opened, in microseconds.
-        int64_t peakLatencyUs  = 0;
-        /// @brief Number of latency samples recorded (consumed +
-        /// dropped frames).  Equals the divisor used to compute the
-        /// average latency.
-        int64_t latencySamples = 0;
+                /// @brief Frames the sink has consumed (paced past a tick).
+                int64_t framesConsumed = 0;
+                /// @brief Frames the sink has dropped (arrived inside an
+                /// active wallclock interval and were not paced past a
+                /// tick).  Always zero in @ref NullPacingMode::Free.
+                int64_t framesDropped = 0;
+                /// @brief Sum of all per-frame in-sink latencies in
+                /// microseconds (arrival → discard).  Both consumed and
+                /// dropped frames contribute.
+                int64_t totalLatencyUs = 0;
+                /// @brief Largest per-frame in-sink latency observed since
+                /// the sink was opened, in microseconds.
+                int64_t peakLatencyUs = 0;
+                /// @brief Number of latency samples recorded (consumed +
+                /// dropped frames).  Equals the divisor used to compute the
+                /// average latency.
+                int64_t latencySamples = 0;
 };
 
 /**
@@ -180,11 +180,11 @@ class MediaIOTask_NullPacing : public MediaIOTask {
                 Error executeCmd(MediaIOCommandStats &cmd) override;
 
                 // ---- Resolved configuration (latched at open time) ----
-                promeki::NullPacingMode _mode      = promeki::NullPacingMode::Wallclock;
+                promeki::NullPacingMode _mode = promeki::NullPacingMode::Wallclock;
                 FrameRate               _targetRate;
                 Duration                _period;
                 bool                    _burnTimings = false;
-                bool                    _isOpen      = false;
+                bool                    _isOpen = false;
 
                 // ---- Pacing state ----
                 /// Wallclock anchor for the next tick.  Frames whose

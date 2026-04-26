@@ -48,7 +48,7 @@ PROMEKI_NAMESPACE_BEGIN
  * only be used from the thread that created it.
  */
 class File : public BufferedIODevice {
-        PROMEKI_OBJECT(File, BufferedIODevice)
+                PROMEKI_OBJECT(File, BufferedIODevice)
         public:
                 /** @brief Unique-ownership pointer to a File. */
                 using UPtr = UniquePtr<File>;
@@ -60,11 +60,11 @@ class File : public BufferedIODevice {
                  * open(OpenMode, int).
                  */
                 enum Flags {
-                        NoFlags         = 0x00,  ///< @brief No extra flags.
-                        Create          = 0x01,  ///< @brief Create the file if it does not exist.
-                        Append          = 0x02,  ///< @brief Append writes to the end of the file.
-                        Truncate        = 0x04,  ///< @brief Truncate the file to zero length on open.
-                        Exclusive       = 0x08   ///< @brief Fail if the file already exists (with Create).
+                        NoFlags = 0x00,  ///< @brief No extra flags.
+                        Create = 0x01,   ///< @brief Create the file if it does not exist.
+                        Append = 0x02,   ///< @brief Append writes to the end of the file.
+                        Truncate = 0x04, ///< @brief Truncate the file to zero length on open.
+                        Exclusive = 0x08 ///< @brief Fail if the file already exists (with Create).
                 };
 
                 /**
@@ -75,8 +75,8 @@ class File : public BufferedIODevice {
                  * in a single system call.
                  */
                 struct IOVec {
-                        const void *data;  ///< @brief Pointer to buffer.
-                        size_t      size;  ///< @brief Size of buffer in bytes.
+                                const void *data; ///< @brief Pointer to buffer.
+                                size_t      size; ///< @brief Size of buffer in bytes.
                 };
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
@@ -446,7 +446,6 @@ class File : public BufferedIODevice {
                 bool isResource() const { return _resourceFile != nullptr; }
 
         protected:
-
                 /** @brief Reads raw data from the file descriptor. */
                 int64_t readFromDevice(void *data, int64_t maxSize) override;
 
@@ -454,15 +453,15 @@ class File : public BufferedIODevice {
                 int64_t deviceBytesAvailable() const override;
 
         private:
-                bool                _directIO = false;         ///< Direct I/O mode.
-                bool                _synchronous = false;      ///< Synchronous write mode.
-                bool                _nonBlocking = false;      ///< Non-blocking mode.
-                String              _filename;
-                int                 _fileFlags = NoFlags;
-                FileHandle          _handle = FileHandleClosedValue;
-                bool                _savedUnbuffered = false;  ///< Unbuffered state saved before DirectIO forced it.
-                const cirf_file_t  *_resourceFile = nullptr;   ///< Non-null when serving a ":/..." resource path.
-                int64_t             _resourcePos = 0;          ///< Read cursor for resource-mode files.
+                bool               _directIO = false;    ///< Direct I/O mode.
+                bool               _synchronous = false; ///< Synchronous write mode.
+                bool               _nonBlocking = false; ///< Non-blocking mode.
+                String             _filename;
+                int                _fileFlags = NoFlags;
+                FileHandle         _handle = FileHandleClosedValue;
+                bool               _savedUnbuffered = false; ///< Unbuffered state saved before DirectIO forced it.
+                const cirf_file_t *_resourceFile = nullptr;  ///< Non-null when serving a ":/..." resource path.
+                int64_t            _resourcePos = 0;         ///< Read cursor for resource-mode files.
 };
 
 PROMEKI_NAMESPACE_END

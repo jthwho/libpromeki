@@ -29,9 +29,8 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @tparam T Element type (must be hashable).
  */
-template <typename T>
-class HashSet {
-        PROMEKI_SHARED_FINAL(HashSet)
+template <typename T> class HashSet {
+                PROMEKI_SHARED_FINAL(HashSet)
         public:
                 /** @brief Shared pointer type for HashSet. */
                 using Ptr = SharedPtr<HashSet>;
@@ -124,36 +123,28 @@ class HashSet {
                  * @param value The value to insert.
                  * @return True if the value was inserted, false if it already existed.
                  */
-                bool insert(const T &value) {
-                        return d.insert(value).second;
-                }
+                bool insert(const T &value) { return d.insert(value).second; }
 
                 /**
                  * @brief Inserts a value into the hash set (move overload).
                  * @param value The value to insert (moved).
                  * @return True if the value was inserted, false if it already existed.
                  */
-                bool insert(T &&value) {
-                        return d.insert(std::move(value)).second;
-                }
+                bool insert(T &&value) { return d.insert(std::move(value)).second; }
 
                 /**
                  * @brief Removes @p value from the hash set.
                  * @param value The value to remove.
                  * @return True if the element was removed, false if not found.
                  */
-                bool remove(const T &value) {
-                        return d.erase(value) > 0;
-                }
+                bool remove(const T &value) { return d.erase(value) > 0; }
 
                 /**
                  * @brief Removes the element at @p pos.
                  * @param pos Iterator to the element to remove.
                  * @return Iterator to the next element.
                  */
-                Iterator remove(Iterator pos) {
-                        return d.erase(pos);
-                }
+                Iterator remove(Iterator pos) { return d.erase(pos); }
 
                 /** @brief Removes all elements. */
                 void clear() noexcept {
@@ -179,7 +170,7 @@ class HashSet {
                  */
                 HashSet unite(const HashSet &other) const {
                         HashSet ret = *this;
-                        for(const auto &v : other.d) ret.d.insert(v);
+                        for (const auto &v : other.d) ret.d.insert(v);
                         return ret;
                 }
 
@@ -190,8 +181,8 @@ class HashSet {
                  */
                 HashSet intersect(const HashSet &other) const {
                         HashSet ret;
-                        for(const auto &v : d) {
-                                if(other.contains(v)) ret.d.insert(v);
+                        for (const auto &v : d) {
+                                if (other.contains(v)) ret.d.insert(v);
                         }
                         return ret;
                 }
@@ -203,8 +194,8 @@ class HashSet {
                  */
                 HashSet subtract(const HashSet &other) const {
                         HashSet ret;
-                        for(const auto &v : d) {
-                                if(!other.contains(v)) ret.d.insert(v);
+                        for (const auto &v : d) {
+                                if (!other.contains(v)) ret.d.insert(v);
                         }
                         return ret;
                 }
@@ -218,7 +209,7 @@ class HashSet {
                 List<T> toList() const {
                         List<T> ret;
                         ret.reserve(d.size());
-                        for(const auto &v : d) ret.pushToBack(v);
+                        for (const auto &v : d) ret.pushToBack(v);
                         return ret;
                 }
 
@@ -227,9 +218,8 @@ class HashSet {
                  * @tparam Func Callable with signature void(const T &).
                  * @param func The function to invoke.
                  */
-                template <typename Func>
-                void forEach(Func &&func) const {
-                        for(const auto &v : d) func(v);
+                template <typename Func> void forEach(Func &&func) const {
+                        for (const auto &v : d) func(v);
                         return;
                 }
 

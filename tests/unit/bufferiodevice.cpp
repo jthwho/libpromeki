@@ -21,13 +21,13 @@ TEST_CASE("BufferIODevice: default state") {
 
 TEST_CASE("BufferIODevice: open without buffer fails") {
         BufferIODevice dev;
-        Error err = dev.open(IODevice::ReadWrite);
+        Error          err = dev.open(IODevice::ReadWrite);
         CHECK(err.isError());
         CHECK(err.code() == Error::Invalid);
 }
 
 TEST_CASE("BufferIODevice: open with valid buffer") {
-        Buffer buf(256);
+        Buffer         buf(256);
         BufferIODevice dev(&buf);
         CHECK(dev.buffer() == &buf);
 
@@ -40,7 +40,7 @@ TEST_CASE("BufferIODevice: open with valid buffer") {
 }
 
 TEST_CASE("BufferIODevice: double open returns AlreadyOpen") {
-        Buffer buf(256);
+        Buffer         buf(256);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
         Error err = dev.open(IODevice::ReadOnly);
@@ -49,18 +49,18 @@ TEST_CASE("BufferIODevice: double open returns AlreadyOpen") {
 }
 
 TEST_CASE("BufferIODevice: write and read back") {
-        Buffer buf(256);
+        Buffer         buf(256);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
         const char *msg = "Hello, BufferIODevice!";
-        size_t len = std::strlen(msg);
-        int64_t written = dev.write(msg, static_cast<int64_t>(len));
+        size_t      len = std::strlen(msg);
+        int64_t     written = dev.write(msg, static_cast<int64_t>(len));
         CHECK(written == static_cast<int64_t>(len));
         CHECK(buf.size() == len);
 
         dev.seek(0);
-        char out[64] = {};
+        char    out[64] = {};
         int64_t bytesRead = dev.read(out, static_cast<int64_t>(len));
         CHECK(bytesRead == static_cast<int64_t>(len));
         CHECK(std::strcmp(out, msg) == 0);
@@ -68,7 +68,7 @@ TEST_CASE("BufferIODevice: write and read back") {
 }
 
 TEST_CASE("BufferIODevice: seek and position") {
-        Buffer buf(256);
+        Buffer         buf(256);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
@@ -87,7 +87,7 @@ TEST_CASE("BufferIODevice: seek and position") {
 }
 
 TEST_CASE("BufferIODevice: bytesAvailable") {
-        Buffer buf(256);
+        Buffer         buf(256);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
@@ -102,7 +102,7 @@ TEST_CASE("BufferIODevice: bytesAvailable") {
 }
 
 TEST_CASE("BufferIODevice: atEnd") {
-        Buffer buf(256);
+        Buffer         buf(256);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
@@ -118,31 +118,31 @@ TEST_CASE("BufferIODevice: atEnd") {
 }
 
 TEST_CASE("BufferIODevice: isSequential returns false") {
-        Buffer buf(256);
+        Buffer         buf(256);
         BufferIODevice dev(&buf);
         CHECK_FALSE(dev.isSequential());
 }
 
 TEST_CASE("BufferIODevice: read returns 0 at end") {
-        Buffer buf(256);
+        Buffer         buf(256);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
         dev.write("abc", 3);
 
-        char out[4] = {};
+        char    out[4] = {};
         int64_t n = dev.read(out, 4);
         CHECK(n == 0);
         dev.close();
 }
 
 TEST_CASE("BufferIODevice: partial read") {
-        Buffer buf(256);
+        Buffer         buf(256);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
         dev.write("Hello", 5);
         dev.seek(3);
 
-        char out[10] = {};
+        char    out[10] = {};
         int64_t n = dev.read(out, 10);
         CHECK(n == 2);
         CHECK(out[0] == 'l');
@@ -151,7 +151,7 @@ TEST_CASE("BufferIODevice: partial read") {
 }
 
 TEST_CASE("BufferIODevice: write fails when buffer too small") {
-        Buffer buf(4);
+        Buffer         buf(4);
         BufferIODevice dev(&buf);
         dev.open(IODevice::WriteOnly);
 
@@ -162,7 +162,7 @@ TEST_CASE("BufferIODevice: write fails when buffer too small") {
 }
 
 TEST_CASE("BufferIODevice: read on write-only returns -1") {
-        Buffer buf(256);
+        Buffer         buf(256);
         BufferIODevice dev(&buf);
         dev.open(IODevice::WriteOnly);
         char out[4];
@@ -182,8 +182,8 @@ TEST_CASE("BufferIODevice: write on read-only returns -1") {
 }
 
 TEST_CASE("BufferIODevice: setBuffer") {
-        Buffer buf1(64);
-        Buffer buf2(128);
+        Buffer         buf1(64);
+        Buffer         buf2(128);
         BufferIODevice dev(&buf1);
         CHECK(dev.buffer() == &buf1);
         dev.setBuffer(&buf2);
@@ -191,9 +191,9 @@ TEST_CASE("BufferIODevice: setBuffer") {
 }
 
 TEST_CASE("BufferIODevice: aboutToClose signal") {
-        Buffer buf(64);
+        Buffer         buf(64);
         BufferIODevice dev(&buf);
-        bool fired = false;
+        bool           fired = false;
         dev.aboutToCloseSignal.connect([&fired]() { fired = true; });
         dev.open(IODevice::ReadWrite);
         dev.close();
@@ -201,9 +201,9 @@ TEST_CASE("BufferIODevice: aboutToClose signal") {
 }
 
 TEST_CASE("BufferIODevice: bytesWritten signal") {
-        Buffer buf(256);
+        Buffer         buf(256);
         BufferIODevice dev(&buf);
-        int64_t reported = 0;
+        int64_t        reported = 0;
         dev.bytesWrittenSignal.connect([&reported](int64_t n) { reported = n; });
         dev.open(IODevice::WriteOnly);
         dev.write("test", 4);
@@ -212,7 +212,7 @@ TEST_CASE("BufferIODevice: bytesWritten signal") {
 }
 
 TEST_CASE("BufferIODevice: multiple writes accumulate") {
-        Buffer buf(256);
+        Buffer         buf(256);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
@@ -230,7 +230,7 @@ TEST_CASE("BufferIODevice: multiple writes accumulate") {
 }
 
 TEST_CASE("BufferIODevice: overwrite in middle") {
-        Buffer buf(256);
+        Buffer         buf(256);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
@@ -252,15 +252,15 @@ TEST_CASE("BufferIODevice: overwrite in middle") {
 }
 
 TEST_CASE("BufferIODevice: close when not open returns error") {
-        Buffer buf(64);
+        Buffer         buf(64);
         BufferIODevice dev(&buf);
-        Error err = dev.close();
+        Error          err = dev.close();
         CHECK(err.code() == Error::NotOpen);
 }
 
 TEST_CASE("BufferIODevice: destructor auto-closes") {
         Buffer buf(64);
-        bool fired = false;
+        bool   fired = false;
         {
                 BufferIODevice dev(&buf);
                 dev.aboutToCloseSignal.connect([&fired]() { fired = true; });
@@ -271,22 +271,22 @@ TEST_CASE("BufferIODevice: destructor auto-closes") {
 }
 
 TEST_CASE("BufferIODevice: seek on closed device returns error") {
-        Buffer buf(64);
+        Buffer         buf(64);
         BufferIODevice dev(&buf);
-        Error err = dev.seek(0);
+        Error          err = dev.seek(0);
         CHECK(err.isError());
 }
 
 TEST_CASE("BufferIODevice: bytesAvailable on closed device") {
-        Buffer buf(64);
+        Buffer         buf(64);
         BufferIODevice dev(&buf);
         CHECK(dev.bytesAvailable() == 0);
 }
 
 TEST_CASE("BufferIODevice: errorOccurred signal on write failure") {
-        Buffer buf(4);
+        Buffer         buf(4);
         BufferIODevice dev(&buf);
-        Error reported;
+        Error          reported;
         dev.errorOccurredSignal.connect([&reported](const Error &e) { reported = e; });
         dev.open(IODevice::WriteOnly);
         dev.write("this is way too long", 20);

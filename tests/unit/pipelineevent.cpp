@@ -20,16 +20,19 @@
 using namespace promeki;
 
 TEST_CASE("PipelineEvent_KindRoundTrip") {
-        struct Pair { PipelineEvent::Kind k; const char *name; };
-        const Pair pairs[] = {
-                { PipelineEvent::Kind::StateChanged, "StateChanged" },
-                { PipelineEvent::Kind::StageState,   "StageState"   },
-                { PipelineEvent::Kind::StageError,   "StageError"   },
-                { PipelineEvent::Kind::StatsUpdated, "StatsUpdated" },
-                { PipelineEvent::Kind::PlanResolved, "PlanResolved" },
-                { PipelineEvent::Kind::Log,          "Log"          },
+        struct Pair {
+                        PipelineEvent::Kind k;
+                        const char         *name;
         };
-        for(const Pair &p : pairs) {
+        const Pair pairs[] = {
+                {PipelineEvent::Kind::StateChanged, "StateChanged"},
+                {PipelineEvent::Kind::StageState, "StageState"},
+                {PipelineEvent::Kind::StageError, "StageError"},
+                {PipelineEvent::Kind::StatsUpdated, "StatsUpdated"},
+                {PipelineEvent::Kind::PlanResolved, "PlanResolved"},
+                {PipelineEvent::Kind::Log, "Log"},
+        };
+        for (const Pair &p : pairs) {
                 CHECK(PipelineEvent::kindToString(p.k) == String(p.name));
                 bool ok = false;
                 CHECK(PipelineEvent::kindFromString(String(p.name), &ok) == p.k);
@@ -37,8 +40,7 @@ TEST_CASE("PipelineEvent_KindRoundTrip") {
         }
 
         bool ok = true;
-        CHECK(PipelineEvent::kindFromString(String("BogusKind"), &ok)
-              == PipelineEvent::Kind::StateChanged);
+        CHECK(PipelineEvent::kindFromString(String("BogusKind"), &ok) == PipelineEvent::Kind::StateChanged);
         CHECK_FALSE(ok);
 }
 
@@ -52,7 +54,7 @@ TEST_CASE("PipelineEvent_StateChangedJsonRoundTrip") {
         CHECK(j.getString("kind") == "StateChanged");
         CHECK(j.getString("payload") == "Running");
 
-        Error err;
+        Error         err;
         PipelineEvent round = PipelineEvent::fromJson(j, &err);
         CHECK(err.isOk());
         CHECK(round.kind() == PipelineEvent::Kind::StateChanged);
@@ -69,7 +71,7 @@ TEST_CASE("PipelineEvent_StageStateJsonRoundTrip") {
         CHECK(j.getString("stage") == "tpg1");
         CHECK(j.getString("payload") == "Started");
 
-        Error err;
+        Error         err;
         PipelineEvent round = PipelineEvent::fromJson(j, &err);
         CHECK(err.isOk());
         CHECK(round.kind() == PipelineEvent::Kind::StageState);
@@ -86,20 +88,19 @@ TEST_CASE("PipelineEvent_StageErrorJsonRoundTrip") {
         m.set(Metadata::ID(String("code")), String("IOError"));
         ev.setMetadata(m);
 
-        JsonObject j = ev.toJson();
-        Error err;
+        JsonObject    j = ev.toJson();
+        Error         err;
         PipelineEvent round = PipelineEvent::fromJson(j, &err);
         CHECK(err.isOk());
         CHECK(round.kind() == PipelineEvent::Kind::StageError);
         CHECK(round.stageName() == "sink1");
         CHECK(round.payload().get<String>() == "write failed");
-        CHECK(round.metadata().get(Metadata::ID(String("code"))).get<String>()
-              == "IOError");
+        CHECK(round.metadata().get(Metadata::ID(String("code"))).get<String>() == "IOError");
 }
 
 TEST_CASE("PipelineEvent_StatsUpdatedJsonRoundTrip") {
         MediaPipelineStats stats;
-        MediaIOStats stage;
+        MediaIOStats       stage;
         stage.set(MediaIOStats::FramesDropped, FrameCount(3));
         stats.setStageStats(String("src"), stage);
         stats.recomputeAggregate();
@@ -111,19 +112,18 @@ TEST_CASE("PipelineEvent_StatsUpdatedJsonRoundTrip") {
         JsonObject j = ev.toJson();
         CHECK(j.valueIsObject("payload"));
 
-        Error err;
+        Error         err;
         PipelineEvent round = PipelineEvent::fromJson(j, &err);
         CHECK(err.isOk());
         CHECK(round.kind() == PipelineEvent::Kind::StatsUpdated);
-        Error sErr;
-        MediaPipelineStats reStats =
-                MediaPipelineStats::fromJson(round.jsonPayload(), &sErr);
+        Error              sErr;
+        MediaPipelineStats reStats = MediaPipelineStats::fromJson(round.jsonPayload(), &sErr);
         CHECK(sErr.isOk());
         CHECK(reStats.containsStage(String("src")));
 }
 
 TEST_CASE("PipelineEvent_PlanResolvedJsonRoundTrip") {
-        MediaPipelineConfig cfg;
+        MediaPipelineConfig        cfg;
         MediaPipelineConfig::Stage s;
         s.name = "src";
         s.type = "TPG";
@@ -137,13 +137,12 @@ TEST_CASE("PipelineEvent_PlanResolvedJsonRoundTrip") {
         JsonObject j = ev.toJson();
         CHECK(j.valueIsObject("payload"));
 
-        Error err;
+        Error         err;
         PipelineEvent round = PipelineEvent::fromJson(j, &err);
         CHECK(err.isOk());
         CHECK(round.kind() == PipelineEvent::Kind::PlanResolved);
-        Error cErr;
-        MediaPipelineConfig reCfg =
-                MediaPipelineConfig::fromJson(round.jsonPayload(), &cErr);
+        Error               cErr;
+        MediaPipelineConfig reCfg = MediaPipelineConfig::fromJson(round.jsonPayload(), &cErr);
         CHECK(cErr.isOk());
         CHECK(reCfg.stages().size() == 1);
 }
@@ -159,24 +158,21 @@ TEST_CASE("PipelineEvent_LogJsonRoundTrip") {
         m.set(Metadata::ID(String("threadName")), String("worker"));
         ev.setMetadata(m);
 
-        JsonObject j = ev.toJson();
-        Error err;
+        JsonObject    j = ev.toJson();
+        Error         err;
         PipelineEvent round = PipelineEvent::fromJson(j, &err);
         CHECK(err.isOk());
         CHECK(round.kind() == PipelineEvent::Kind::Log);
         CHECK(round.payload().get<String>() == "Hello");
-        CHECK(round.metadata().get(Metadata::ID(String("level"))).get<String>()
-              == "Info");
-        CHECK(round.metadata().get(Metadata::ID(String("source"))).get<String>()
-              == "foo.cpp");
-        CHECK(round.metadata().get(Metadata::ID(String("threadName"))).get<String>()
-              == "worker");
+        CHECK(round.metadata().get(Metadata::ID(String("level"))).get<String>() == "Info");
+        CHECK(round.metadata().get(Metadata::ID(String("source"))).get<String>() == "foo.cpp");
+        CHECK(round.metadata().get(Metadata::ID(String("threadName"))).get<String>() == "worker");
 }
 
 TEST_CASE("PipelineEvent_FromJsonMissingKind") {
         JsonObject j;
         j.set("stage", "src");
-        Error err;
+        Error         err;
         PipelineEvent ev = PipelineEvent::fromJson(j, &err);
         CHECK(err == Error::ParseFailed);
         // The default-constructed event is returned.
@@ -186,7 +182,7 @@ TEST_CASE("PipelineEvent_FromJsonMissingKind") {
 TEST_CASE("PipelineEvent_FromJsonUnknownKind") {
         JsonObject j;
         j.set("kind", "Unknown");
-        Error err;
+        Error         err;
         PipelineEvent ev = PipelineEvent::fromJson(j, &err);
         CHECK(err == Error::ParseFailed);
         CHECK(ev.kind() == PipelineEvent::Kind::StateChanged);

@@ -78,7 +78,7 @@ TEST_CASE("Deque: swap") {
 
 TEST_CASE("Deque: forEach") {
         Deque<int> d = {1, 2, 3};
-        int sum = 0;
+        int        sum = 0;
         d.forEach([&](int v) { sum += v; });
         CHECK(sum == 6);
 }
@@ -108,8 +108,8 @@ TEST_CASE("Deque: equality") {
 
 TEST_CASE("Deque: reverse iterators") {
         Deque<int> d = {1, 2, 3};
-        List<int> rev;
-        for(auto it = d.rbegin(); it != d.rend(); ++it) {
+        List<int>  rev;
+        for (auto it = d.rbegin(); it != d.rend(); ++it) {
                 rev.pushToBack(*it);
         }
         CHECK(rev[0] == 3);
@@ -119,8 +119,8 @@ TEST_CASE("Deque: reverse iterators") {
 
 TEST_CASE("Deque: range-based for") {
         Deque<int> d = {10, 20, 30};
-        int sum = 0;
-        for(const auto &v : d) sum += v;
+        int        sum = 0;
+        for (const auto &v : d) sum += v;
         CHECK(sum == 60);
 }
 

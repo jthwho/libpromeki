@@ -52,12 +52,12 @@ class Error {
                  * have no errno mapping.
                  */
                 enum Code {
-                        Ok = 0,                 ///< No error.
+                        Ok = 0,                  ///< No error.
                         UnsupportedSystemError,  ///< Unmapped system error.
                         LibraryFailure,          ///< An external library call failed.
                         SingularMatrix,          ///< Matrix is singular and cannot be inverted.
                         NotImplemented,          ///< Feature is not implemented.
-                        PixelFormatNotSupported,  ///< Pixel format is not supported.
+                        PixelFormatNotSupported, ///< Pixel format is not supported.
                         OutOfRange,              ///< Value is out of range.
                         PermissionDenied,        ///< Permission denied (EACCES).
                         TryAgain,                ///< Resource temporarily unavailable (EAGAIN).
@@ -70,8 +70,8 @@ class Error {
                         Invalid,                 ///< Invalid value or argument (EINVAL).
                         IOError,                 ///< Input/output error (EIO).
                         IsDir,                   ///< Is a directory (EISDIR).
-                        TooManyOpenFiles,         ///< Too many open files in process (EMFILE).
-                        TooManyOpenSysFiles,      ///< Too many open files system-wide (ENFILE).
+                        TooManyOpenFiles,        ///< Too many open files in process (EMFILE).
+                        TooManyOpenSysFiles,     ///< Too many open files system-wide (ENFILE).
                         NotExist,                ///< File or resource does not exist (ENOENT).
                         NoMem,                   ///< Out of memory (ENOMEM).
                         NoSpace,                 ///< No space left on device (ENOSPC).
@@ -103,21 +103,21 @@ class Error {
                         FormatMismatch,          ///< Audio/video format does not match the expected format.
                         FontUnavailable,         ///< Font could not be loaded or has zero metrics.
                         BrokenPipe,              ///< Peer closed the stream before we could write (EPIPE).
-                        ConnectionReset,         ///< Peer reset the connection while we were reading/writing (ECONNRESET).
-                        ConnectionRefused,       ///< Peer refused the connection attempt (ECONNREFUSED).
-                        HostNotFound,            ///< DNS lookup for the requested host failed.
-                        ParseFailed,             ///< Text input (expression, URL, etc.) failed to parse.
-                        ClockDomainMismatch,     ///< Operation mixed MediaTimeStamps from different ClockDomains.
-                        ObjectGone,              ///< Referenced object has been destroyed.
-                        ClockPaused,             ///< Clock is paused; operation cannot complete until resumed.
-                        DurationUnknown,         ///< MediaDuration has one or more Unknown fields.
-                        FrameRangeInfinite,      ///< MediaDuration is infinite and cannot be expressed as a bounded FrameRange.
-                        NotAdjacent,             ///< Two MediaDurations are not frame-adjacent and cannot be joined.
-                        PipelineBuildFailed,     ///< MediaPipeline build step (including planner) could not resolve the requested pipeline.
-                        PipelineRuntimeError,    ///< A stage emitted a runtime error (pipelineErrorSignal) after start().
-                        InspectorDiscontinuityDetected,  ///< Inspector observed at least one discontinuity during its run.
-                        Empty,                   ///< Container or queue has no element to return.
-                        NotFound                 ///< Requested element or value was not present in the searched container.
+                        ConnectionReset,     ///< Peer reset the connection while we were reading/writing (ECONNRESET).
+                        ConnectionRefused,   ///< Peer refused the connection attempt (ECONNREFUSED).
+                        HostNotFound,        ///< DNS lookup for the requested host failed.
+                        ParseFailed,         ///< Text input (expression, URL, etc.) failed to parse.
+                        ClockDomainMismatch, ///< Operation mixed MediaTimeStamps from different ClockDomains.
+                        ObjectGone,          ///< Referenced object has been destroyed.
+                        ClockPaused,         ///< Clock is paused; operation cannot complete until resumed.
+                        DurationUnknown,     ///< MediaDuration has one or more Unknown fields.
+                        FrameRangeInfinite, ///< MediaDuration is infinite and cannot be expressed as a bounded FrameRange.
+                        NotAdjacent,        ///< Two MediaDurations are not frame-adjacent and cannot be joined.
+                        PipelineBuildFailed, ///< MediaPipeline build step (including planner) could not resolve the requested pipeline.
+                        PipelineRuntimeError, ///< A stage emitted a runtime error (pipelineErrorSignal) after start().
+                        InspectorDiscontinuityDetected, ///< Inspector observed at least one discontinuity during its run.
+                        Empty,                          ///< Container or queue has no element to return.
+                        NotFound ///< Requested element or value was not present in the searched container.
                 };
 
                 /**
@@ -160,10 +160,10 @@ class Error {
                  * @brief Constructs an Error with the given code.
                  * @param code The error code (default: Ok).
                  */
-                Error(Code code = Ok) : _code(code) { }
+                Error(Code code = Ok) : _code(code) {}
 
                 /** @brief Destructor. */
-                ~Error() { }
+                ~Error() {}
 
                 /** @brief Returns true if both errors have the same code. */
                 bool operator==(const Error &other) const { return _code == other._code; }
@@ -221,8 +221,7 @@ class Error {
                 int systemError() const;
 
         private:
-                Code    _code;
+                Code _code;
 };
 
 PROMEKI_NAMESPACE_END
-

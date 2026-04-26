@@ -31,17 +31,14 @@ using namespace promeki;
 // Fill a planar YUV payload with a deterministic pattern.  Works for
 // 8-bit (uint8_t samples) and 10/12-bit LE (uint16_t samples).
 // Luma is a horizontal ramp, chroma planes are flat mid-grey.
-static UncompressedVideoPayload::Ptr makePlanarYUV(int w, int h,
-                                                   PixelFormat::ID pd,
-                                                   int bitDepth, bool is420) {
-        auto img = UncompressedVideoPayload::allocate(
-                ImageDesc(w, h, PixelFormat(pd)));
-        if(!img.isValid()) return img;
-        const int chromaMid = (bitDepth == 8) ? 128 : (bitDepth == 10) ? 512 : 2048;
-        const int lumaMax   = (bitDepth == 8) ? 219 : (bitDepth == 10) ? 876 : 3504;
+static UncompressedVideoPayload::Ptr makePlanarYUV(int w, int h, PixelFormat::ID pd, int bitDepth, bool is420) {
+        auto img = UncompressedVideoPayload::allocate(ImageDesc(w, h, PixelFormat(pd)));
+        if (!img.isValid()) return img;
+        const int    chromaMid = (bitDepth == 8) ? 128 : (bitDepth == 10) ? 512 : 2048;
+        const int    lumaMax = (bitDepth == 8) ? 219 : (bitDepth == 10) ? 876 : 3504;
         const size_t pixSize = (bitDepth > 8) ? 2 : 1;
-        auto store = [&](uint8_t *row, int x, int val) {
-                if(pixSize == 1) {
+        auto         store = [&](uint8_t *row, int x, int val) {
+                if (pixSize == 1) {
                         row[x] = (uint8_t)val;
                 } else {
                         row[x * 2 + 0] = (uint8_t)(val & 0xFF);
@@ -51,11 +48,11 @@ static UncompressedVideoPayload::Ptr makePlanarYUV(int w, int h,
         const auto &ml = img->desc().pixelFormat().memLayout();
         // Luma plane.
         {
-                uint8_t *plane = img.modify()->data()[0].data();
+                uint8_t     *plane = img.modify()->data()[0].data();
                 const size_t stride = ml.lineStride(0, w);
-                for(int y = 0; y < h; y++) {
+                for (int y = 0; y < h; y++) {
                         uint8_t *row = plane + y * stride;
-                        for(int x = 0; x < w; x++) {
+                        for (int x = 0; x < w; x++) {
                                 store(row, x, ((x * lumaMax) / w) + 16);
                         }
                 }
@@ -63,12 +60,12 @@ static UncompressedVideoPayload::Ptr makePlanarYUV(int w, int h,
         // Chroma planes.
         const int chromaW = w / 2;
         const int chromaH = is420 ? (h / 2) : h;
-        for(size_t p = 1; p < img->desc().pixelFormat().planeCount(); p++) {
-                uint8_t *plane = img.modify()->data()[p].data();
+        for (size_t p = 1; p < img->desc().pixelFormat().planeCount(); p++) {
+                uint8_t     *plane = img.modify()->data()[p].data();
                 const size_t stride = ml.lineStride(p, w);
-                for(int y = 0; y < chromaH; y++) {
+                for (int y = 0; y < chromaH; y++) {
                         uint8_t *row = plane + y * stride;
-                        for(int x = 0; x < chromaW; x++) {
+                        for (int x = 0; x < chromaW; x++) {
                                 store(row, x, chromaMid);
                         }
                 }
@@ -82,23 +79,22 @@ static UncompressedVideoPayload::Ptr makePlanarYUV422_8(int w, int h) {
 }
 
 // Mean absolute difference on the luma plane.  Works for 8-bit only.
-static double lumaMeanAbsDiff8(const UncompressedVideoPayload &a,
-                               const UncompressedVideoPayload &b) {
+static double lumaMeanAbsDiff8(const UncompressedVideoPayload &a, const UncompressedVideoPayload &b) {
         REQUIRE(a.isValid());
         REQUIRE(b.isValid());
         REQUIRE(a.desc().width() == b.desc().width());
         REQUIRE(a.desc().height() == b.desc().height());
-        const int w = static_cast<int>(a.desc().width());
-        const int h = static_cast<int>(a.desc().height());
+        const int      w = static_cast<int>(a.desc().width());
+        const int      h = static_cast<int>(a.desc().height());
         const uint8_t *pa = a.plane(0).data();
         const uint8_t *pb = b.plane(0).data();
-        const size_t sa = a.desc().pixelFormat().memLayout().lineStride(0, w);
-        const size_t sb = b.desc().pixelFormat().memLayout().lineStride(0, w);
-        double sum = 0.0;
-        for(int y = 0; y < h; ++y) {
+        const size_t   sa = a.desc().pixelFormat().memLayout().lineStride(0, w);
+        const size_t   sb = b.desc().pixelFormat().memLayout().lineStride(0, w);
+        double         sum = 0.0;
+        for (int y = 0; y < h; ++y) {
                 const uint8_t *ra = pa + y * sa;
                 const uint8_t *rb = pb + y * sb;
-                for(int x = 0; x < w; ++x) {
+                for (int x = 0; x < w; ++x) {
                         sum += std::abs(static_cast<int>(ra[x]) - static_cast<int>(rb[x]));
                 }
         }
@@ -107,13 +103,12 @@ static double lumaMeanAbsDiff8(const UncompressedVideoPayload &a,
 
 // Compare two files on disk byte-for-byte.  Returns true if
 // identical, false otherwise.  Sets la/lb to their sizes.
-static bool filesIdentical(const char *pathA, const char *pathB,
-                           long &laOut, long &lbOut) {
+static bool filesIdentical(const char *pathA, const char *pathB, long &laOut, long &lbOut) {
         FILE *fa = std::fopen(pathA, "rb");
         FILE *fb = std::fopen(pathB, "rb");
-        if(!fa || !fb) {
-                if(fa) std::fclose(fa);
-                if(fb) std::fclose(fb);
+        if (!fa || !fb) {
+                if (fa) std::fclose(fa);
+                if (fb) std::fclose(fb);
                 return false;
         }
         std::fseek(fa, 0, SEEK_END);
@@ -122,24 +117,24 @@ static bool filesIdentical(const char *pathA, const char *pathB,
         lbOut = std::ftell(fb);
         std::fseek(fa, 0, SEEK_SET);
         std::fseek(fb, 0, SEEK_SET);
-        if(laOut != lbOut || laOut <= 0) {
+        if (laOut != lbOut || laOut <= 0) {
                 std::fclose(fa);
                 std::fclose(fb);
                 return false;
         }
         std::vector<uint8_t> ba(laOut), bb(lbOut);
-        size_t ra = std::fread(ba.data(), 1, laOut, fa);
-        size_t rb = std::fread(bb.data(), 1, lbOut, fb);
+        size_t               ra = std::fread(ba.data(), 1, laOut, fa);
+        size_t               rb = std::fread(bb.data(), 1, lbOut, fb);
         std::fclose(fa);
         std::fclose(fb);
-        if(static_cast<long>(ra) != laOut || static_cast<long>(rb) != lbOut) return false;
+        if (static_cast<long>(ra) != laOut || static_cast<long>(rb) != lbOut) return false;
         return std::memcmp(ba.data(), bb.data(), laOut) == 0;
 }
 
 // Returns the file size in bytes, or -1 on error.
 static long fileSize(const char *path) {
         FILE *f = std::fopen(path, "rb");
-        if(!f) return -1;
+        if (!f) return -1;
         std::fseek(f, 0, SEEK_END);
         long sz = std::ftell(f);
         std::fclose(f);
@@ -171,7 +166,7 @@ TEST_CASE("ImageFileIO JpegXS: handler is registered") {
 
 TEST_CASE("ImageFileIO JpegXS: YUV8 422 round-trip") {
         const char *fn = "/tmp/promeki_jpegxs_yuv8_422.jxs";
-        auto src = makePlanarYUV422_8(320, 240);
+        auto        src = makePlanarYUV422_8(320, 240);
 
         ImageFile sf(ImageFile::JpegXS);
         sf.setFilename(fn);
@@ -191,7 +186,8 @@ TEST_CASE("ImageFileIO JpegXS: YUV8 422 round-trip") {
         CHECK(loaded->desc().width() == 320);
         CHECK(loaded->desc().height() == 240);
 
-        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded), PixelFormat(PixelFormat::YUV8_422_Planar_Rec709));
+        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded),
+                                                               PixelFormat(PixelFormat::YUV8_422_Planar_Rec709));
         REQUIRE(decoded.isValid());
         REQUIRE(!decoded->isCompressed());
         CHECK(decoded->desc().width() == 320);
@@ -205,8 +201,7 @@ TEST_CASE("ImageFileIO JpegXS: YUV8 422 round-trip") {
 
 TEST_CASE("ImageFileIO JpegXS: YUV8 420 round-trip") {
         const char *fn = "/tmp/promeki_jpegxs_yuv8_420.jxs";
-        auto src = makePlanarYUV(320, 240,
-                PixelFormat::YUV8_420_Planar_Rec709, 8, true);
+        auto        src = makePlanarYUV(320, 240, PixelFormat::YUV8_420_Planar_Rec709, 8, true);
         REQUIRE(src.isValid());
 
         ImageFile sf(ImageFile::JpegXS);
@@ -225,7 +220,8 @@ TEST_CASE("ImageFileIO JpegXS: YUV8 420 round-trip") {
         CHECK(loaded->isCompressed());
         CHECK(loaded->desc().pixelFormat().id() == PixelFormat::JPEG_XS_YUV8_420_Rec709);
 
-        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded), PixelFormat(PixelFormat::YUV8_420_Planar_Rec709));
+        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded),
+                                                               PixelFormat(PixelFormat::YUV8_420_Planar_Rec709));
         REQUIRE(decoded.isValid());
         CHECK(!decoded->isCompressed());
         CHECK(decoded->desc().width() == 320);
@@ -237,8 +233,7 @@ TEST_CASE("ImageFileIO JpegXS: YUV8 420 round-trip") {
 
 TEST_CASE("ImageFileIO JpegXS: YUV10 422 round-trip") {
         const char *fn = "/tmp/promeki_jpegxs_yuv10_422.jxs";
-        auto src = makePlanarYUV(320, 240,
-                PixelFormat::YUV10_422_Planar_LE_Rec709, 10, false);
+        auto        src = makePlanarYUV(320, 240, PixelFormat::YUV10_422_Planar_LE_Rec709, 10, false);
         REQUIRE(src.isValid());
 
         ImageFile sf(ImageFile::JpegXS);
@@ -257,7 +252,8 @@ TEST_CASE("ImageFileIO JpegXS: YUV10 422 round-trip") {
         CHECK(loaded->isCompressed());
         CHECK(loaded->desc().pixelFormat().id() == PixelFormat::JPEG_XS_YUV10_422_Rec709);
 
-        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded), PixelFormat(PixelFormat::YUV10_422_Planar_LE_Rec709));
+        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded),
+                                                               PixelFormat(PixelFormat::YUV10_422_Planar_LE_Rec709));
         REQUIRE(decoded.isValid());
         CHECK(!decoded->isCompressed());
         CHECK(decoded->desc().width() == 320);
@@ -268,8 +264,7 @@ TEST_CASE("ImageFileIO JpegXS: YUV10 422 round-trip") {
 
 TEST_CASE("ImageFileIO JpegXS: YUV12 422 round-trip") {
         const char *fn = "/tmp/promeki_jpegxs_yuv12_422.jxs";
-        auto src = makePlanarYUV(320, 240,
-                PixelFormat::YUV12_422_Planar_LE_Rec709, 12, false);
+        auto        src = makePlanarYUV(320, 240, PixelFormat::YUV12_422_Planar_LE_Rec709, 12, false);
         REQUIRE(src.isValid());
 
         ImageFile sf(ImageFile::JpegXS);
@@ -288,7 +283,8 @@ TEST_CASE("ImageFileIO JpegXS: YUV12 422 round-trip") {
         CHECK(loaded->isCompressed());
         CHECK(loaded->desc().pixelFormat().id() == PixelFormat::JPEG_XS_YUV12_422_Rec709);
 
-        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded), PixelFormat(PixelFormat::YUV12_422_Planar_LE_Rec709));
+        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded),
+                                                               PixelFormat(PixelFormat::YUV12_422_Planar_LE_Rec709));
         REQUIRE(decoded.isValid());
         CHECK(!decoded->isCompressed());
         CHECK(decoded->desc().width() == 320);
@@ -299,8 +295,7 @@ TEST_CASE("ImageFileIO JpegXS: YUV12 422 round-trip") {
 
 TEST_CASE("ImageFileIO JpegXS: YUV10 420 round-trip") {
         const char *fn = "/tmp/promeki_jpegxs_yuv10_420.jxs";
-        auto src = makePlanarYUV(320, 240,
-                PixelFormat::YUV10_420_Planar_LE_Rec709, 10, true);
+        auto        src = makePlanarYUV(320, 240, PixelFormat::YUV10_420_Planar_LE_Rec709, 10, true);
         REQUIRE(src.isValid());
 
         ImageFile sf(ImageFile::JpegXS);
@@ -318,7 +313,8 @@ TEST_CASE("ImageFileIO JpegXS: YUV10 420 round-trip") {
         REQUIRE(loaded.isValid());
         CHECK(loaded->desc().pixelFormat().id() == PixelFormat::JPEG_XS_YUV10_420_Rec709);
 
-        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded), PixelFormat(PixelFormat::YUV10_420_Planar_LE_Rec709));
+        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded),
+                                                               PixelFormat(PixelFormat::YUV10_420_Planar_LE_Rec709));
         REQUIRE(decoded.isValid());
         CHECK(!decoded->isCompressed());
 
@@ -327,8 +323,7 @@ TEST_CASE("ImageFileIO JpegXS: YUV10 420 round-trip") {
 
 TEST_CASE("ImageFileIO JpegXS: YUV12 420 round-trip") {
         const char *fn = "/tmp/promeki_jpegxs_yuv12_420.jxs";
-        auto src = makePlanarYUV(320, 240,
-                PixelFormat::YUV12_420_Planar_LE_Rec709, 12, true);
+        auto        src = makePlanarYUV(320, 240, PixelFormat::YUV12_420_Planar_LE_Rec709, 12, true);
         REQUIRE(src.isValid());
 
         ImageFile sf(ImageFile::JpegXS);
@@ -346,7 +341,8 @@ TEST_CASE("ImageFileIO JpegXS: YUV12 420 round-trip") {
         REQUIRE(loaded.isValid());
         CHECK(loaded->desc().pixelFormat().id() == PixelFormat::JPEG_XS_YUV12_420_Rec709);
 
-        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded), PixelFormat(PixelFormat::YUV12_420_Planar_LE_Rec709));
+        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded),
+                                                               PixelFormat(PixelFormat::YUV12_420_Planar_LE_Rec709));
         REQUIRE(decoded.isValid());
         CHECK(!decoded->isCompressed());
 
@@ -361,7 +357,7 @@ TEST_CASE("ImageFileIO JpegXS: pass-through preserves bytes") {
         const char *fnA = "/tmp/promeki_jpegxs_pt_a.jxs";
         const char *fnB = "/tmp/promeki_jpegxs_pt_b.jxs";
 
-        auto src = makePlanarYUV422_8(256, 192);
+        auto        src = makePlanarYUV422_8(256, 192);
         MediaConfig cfg;
         cfg.set(MediaConfig::JpegXsBpp, 4);
         ImageFile sf(ImageFile::JpegXS);
@@ -395,7 +391,7 @@ TEST_CASE("ImageFileIO JpegXS: pass-through preserves bytes") {
 
 TEST_CASE("ImageFileIO JpegXS: loaded image has correct properties") {
         const char *fn = "/tmp/promeki_jpegxs_props.jxs";
-        auto src = makePlanarYUV422_8(160, 120);
+        auto        src = makePlanarYUV422_8(160, 120);
 
         ImageFile sf(ImageFile::JpegXS);
         sf.setFilename(fn);
@@ -431,7 +427,7 @@ TEST_CASE("ImageFileIO JpegXS: loaded image has correct properties") {
 TEST_CASE("ImageFileIO JpegXS: save honours MediaConfig::JpegXsBpp") {
         const char *fnLo = "/tmp/promeki_jpegxs_bpp2.jxs";
         const char *fnHi = "/tmp/promeki_jpegxs_bpp8.jxs";
-        auto src = makePlanarYUV422_8(256, 192);
+        auto        src = makePlanarYUV422_8(256, 192);
 
         MediaConfig low;
         low.set(MediaConfig::JpegXsBpp, 2);
@@ -458,7 +454,7 @@ TEST_CASE("ImageFileIO JpegXS: save honours MediaConfig::JpegXsBpp") {
 
 TEST_CASE("ImageFileIO JpegXS: default bpp produces valid output") {
         const char *fn = "/tmp/promeki_jpegxs_default_bpp.jxs";
-        auto src = makePlanarYUV422_8(320, 240);
+        auto        src = makePlanarYUV422_8(320, 240);
 
         // Save with no MediaConfig — should use the codec's default
         // bpp of 3.
@@ -485,7 +481,7 @@ TEST_CASE("ImageFileIO JpegXS: default bpp produces valid output") {
 
 TEST_CASE("ImageFileIO JpegXS: written file starts with SOC marker") {
         const char *fn = "/tmp/promeki_jpegxs_soc.jxs";
-        auto src = makePlanarYUV422_8(64, 48);
+        auto        src = makePlanarYUV422_8(64, 48);
 
         ImageFile sf(ImageFile::JpegXS);
         sf.setFilename(fn);
@@ -515,7 +511,7 @@ TEST_CASE("ImageFileIO JpegXS: written file starts with SOC marker") {
 
 TEST_CASE("ImageFileIO JpegXS: load then convert to RGBA8") {
         const char *fn = "/tmp/promeki_jpegxs_to_rgba.jxs";
-        auto src = makePlanarYUV422_8(256, 192);
+        auto        src = makePlanarYUV422_8(256, 192);
 
         ImageFile sf(ImageFile::JpegXS);
         sf.setFilename(fn);
@@ -533,7 +529,8 @@ TEST_CASE("ImageFileIO JpegXS: load then convert to RGBA8") {
         REQUIRE(loaded->isCompressed());
 
         // Two-hop path: JPEG XS → YUV8_422_Planar → RGBA8_sRGB
-        auto rgba = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded), PixelFormat(PixelFormat::RGBA8_sRGB));
+        auto rgba = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded),
+                                                            PixelFormat(PixelFormat::RGBA8_sRGB));
         REQUIRE(rgba.isValid());
         CHECK(!rgba->isCompressed());
         CHECK(rgba->desc().pixelFormat().id() == PixelFormat::RGBA8_sRGB);
@@ -555,7 +552,7 @@ TEST_CASE("ImageFileIO JpegXS: multi-generation pass-through") {
         const char *fn1 = "/tmp/promeki_jpegxs_gen1.jxs";
         const char *fn2 = "/tmp/promeki_jpegxs_gen2.jxs";
 
-        auto src = makePlanarYUV422_8(192, 128);
+        auto        src = makePlanarYUV422_8(192, 128);
         MediaConfig cfg;
         cfg.set(MediaConfig::JpegXsBpp, 4);
         ImageFile sf(ImageFile::JpegXS);
@@ -601,20 +598,20 @@ TEST_CASE("ImageFileIO JpegXS: multi-generation pass-through") {
 
 TEST_CASE("ImageFileIO JpegXS: save from interleaved YUV8 422") {
         const char *fn = "/tmp/promeki_jpegxs_uyvy.jxs";
-        auto src = UncompressedVideoPayload::allocate(
-                ImageDesc(320, 240, PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709)));
+        auto        src =
+                UncompressedVideoPayload::allocate(ImageDesc(320, 240, PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709)));
         REQUIRE(src.isValid());
 
         // Fill with a simple pattern: alternating Y ramp, flat chroma.
-        uint8_t *data = src.modify()->data()[0].data();
+        uint8_t     *data = src.modify()->data()[0].data();
         const size_t stride = src->desc().pixelFormat().memLayout().lineStride(0, src->desc().width());
-        for(int y = 0; y < 240; y++) {
+        for (int y = 0; y < 240; y++) {
                 uint8_t *row = data + y * stride;
-                for(int x = 0; x < 320; x += 2) {
+                for (int x = 0; x < 320; x += 2) {
                         // UYVY: Cb Y0 Cr Y1
-                        row[x * 2 + 0] = 128;   // Cb
-                        row[x * 2 + 1] = static_cast<uint8_t>(16 + (x * 219) / 320); // Y0
-                        row[x * 2 + 2] = 128;   // Cr
+                        row[x * 2 + 0] = 128;                                              // Cb
+                        row[x * 2 + 1] = static_cast<uint8_t>(16 + (x * 219) / 320);       // Y0
+                        row[x * 2 + 2] = 128;                                              // Cr
                         row[x * 2 + 3] = static_cast<uint8_t>(16 + ((x + 1) * 219) / 320); // Y1
                 }
         }
@@ -649,7 +646,7 @@ TEST_CASE("ImageFileIO JpegXS: save from interleaved YUV8 422") {
 
 TEST_CASE("ImageFileIO JpegXS: 1920x1080 round-trip") {
         const char *fn = "/tmp/promeki_jpegxs_hd.jxs";
-        auto src = makePlanarYUV422_8(1920, 1080);
+        auto        src = makePlanarYUV422_8(1920, 1080);
 
         ImageFile sf(ImageFile::JpegXS);
         sf.setFilename(fn);
@@ -673,7 +670,8 @@ TEST_CASE("ImageFileIO JpegXS: 1920x1080 round-trip") {
         CHECK(loaded->desc().height() == 1080);
 
         // Decode and spot-check dimensions.
-        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded), PixelFormat(PixelFormat::YUV8_422_Planar_Rec709));
+        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded),
+                                                               PixelFormat(PixelFormat::YUV8_422_Planar_Rec709));
         REQUIRE(decoded.isValid());
         CHECK(decoded->desc().width() == 1920);
         CHECK(decoded->desc().height() == 1080);
@@ -690,7 +688,7 @@ TEST_CASE("ImageFileIO JpegXS: 1920x1080 round-trip") {
 
 TEST_CASE("ImageFileIO JpegXS: compressedSize matches file size") {
         const char *fn = "/tmp/promeki_jpegxs_csize.jxs";
-        auto src = makePlanarYUV422_8(128, 96);
+        auto        src = makePlanarYUV422_8(128, 96);
 
         ImageFile sf(ImageFile::JpegXS);
         sf.setFilename(fn);
@@ -723,7 +721,7 @@ TEST_CASE("ImageFileIO JpegXS: load nonexistent file returns error") {
 
 TEST_CASE("ImageFileIO JpegXS: load garbage file returns error") {
         const char *fn = "/tmp/promeki_jpegxs_bad.jxs";
-        FILE *fp = std::fopen(fn, "wb");
+        FILE       *fp = std::fopen(fn, "wb");
         REQUIRE(fp);
         const char garbage[] = "Definitely not a JPEG XS codestream.";
         std::fwrite(garbage, 1, sizeof(garbage), fp);
@@ -738,10 +736,10 @@ TEST_CASE("ImageFileIO JpegXS: load garbage file returns error") {
 
 TEST_CASE("ImageFileIO JpegXS: load truncated codestream returns error") {
         const char *fnGood = "/tmp/promeki_jpegxs_trunc_full.jxs";
-        const char *fnBad  = "/tmp/promeki_jpegxs_trunc_cut.jxs";
+        const char *fnBad = "/tmp/promeki_jpegxs_trunc_cut.jxs";
 
         // Write a valid codestream first.
-        auto src = makePlanarYUV422_8(128, 96);
+        auto      src = makePlanarYUV422_8(128, 96);
         ImageFile sf(ImageFile::JpegXS);
         sf.setFilename(fnGood);
         sf.setVideoPayload(src);
@@ -754,7 +752,7 @@ TEST_CASE("ImageFileIO JpegXS: load truncated codestream returns error") {
         FILE *fi = std::fopen(fnGood, "rb");
         REQUIRE(fi);
         std::vector<uint8_t> buf(64);
-        size_t rd = std::fread(buf.data(), 1, 64, fi);
+        size_t               rd = std::fread(buf.data(), 1, 64, fi);
         std::fclose(fi);
         REQUIRE(rd == 64);
 
@@ -780,7 +778,7 @@ TEST_CASE("ImageFileIO JpegXS: load file with wrong SOC marker returns error") {
         // instead of the JPEG XS SOC marker (FF 10).
         FILE *fp = std::fopen(fn, "wb");
         REQUIRE(fp);
-        uint8_t fake[] = { 0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10 };
+        uint8_t fake[] = {0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10};
         std::fwrite(fake, 1, sizeof(fake), fp);
         std::fclose(fp);
 
@@ -793,9 +791,9 @@ TEST_CASE("ImageFileIO JpegXS: load file with wrong SOC marker returns error") {
 
 TEST_CASE("ImageFileIO JpegXS: load 2-byte file returns error") {
         const char *fn = "/tmp/promeki_jpegxs_tiny.jxs";
-        FILE *fp = std::fopen(fn, "wb");
+        FILE       *fp = std::fopen(fn, "wb");
         REQUIRE(fp);
-        uint8_t tiny[] = { 0xFF, 0x10 };
+        uint8_t tiny[] = {0xFF, 0x10};
         std::fwrite(tiny, 1, sizeof(tiny), fp);
         std::fclose(fp);
 
@@ -819,19 +817,18 @@ TEST_CASE("ImageFileIO JpegXS: save rejects non-JPEG-XS compressed input") {
                 ImageDesc(320, 240, PixelFormat(PixelFormat::YUV8_422_Planar_Rec709)));
         REQUIRE(src.isValid());
         // Fill luma with ramp for a non-trivial encode.
-        uint8_t *luma = src.modify()->data()[0].data();
+        uint8_t     *luma = src.modify()->data()[0].data();
         const size_t stride = src->desc().pixelFormat().memLayout().lineStride(0, src->desc().width());
-        for(int y = 0; y < 240; y++) {
+        for (int y = 0; y < 240; y++) {
                 uint8_t *row = luma + y * stride;
-                for(int x = 0; x < 320; x++) {
+                for (int x = 0; x < 320; x++) {
                         row[x] = static_cast<uint8_t>(16 + (x * 219) / 320);
                 }
         }
 
         // Encode to JPEG (not JPEG XS).
-        auto jpeg = promeki::tests::encodePayloadToCompressed(
-                src, PixelFormat(PixelFormat::JPEG_YUV8_422_Rec709));
-        if(!jpeg.isValid()) return;  // skip if JPEG codec not available
+        auto jpeg = promeki::tests::encodePayloadToCompressed(src, PixelFormat(PixelFormat::JPEG_YUV8_422_Rec709));
+        if (!jpeg.isValid()) return; // skip if JPEG codec not available
         REQUIRE(jpeg->desc().pixelFormat().videoCodec().id() == VideoCodec::JPEG);
 
         ImageFile sf(ImageFile::JpegXS);
@@ -850,14 +847,13 @@ TEST_CASE("ImageFileIO JpegXS: save rejects non-JPEG-XS compressed input") {
 // JPEG_XS_RGB8 → RGB8_Planar (codec) → RGB8 (CSC fast path).
 
 static UncompressedVideoPayload::Ptr makeRGB8(int w, int h) {
-        auto img = UncompressedVideoPayload::allocate(
-                ImageDesc(w, h, PixelFormat(PixelFormat::RGB8_sRGB)));
+        auto img = UncompressedVideoPayload::allocate(ImageDesc(w, h, PixelFormat(PixelFormat::RGB8_sRGB)));
         REQUIRE(img.isValid());
-        uint8_t *data = img.modify()->data()[0].data();
+        uint8_t     *data = img.modify()->data()[0].data();
         const size_t stride = img->desc().pixelFormat().memLayout().lineStride(0, w);
-        for(int y = 0; y < h; y++) {
+        for (int y = 0; y < h; y++) {
                 uint8_t *row = data + y * stride;
-                for(int x = 0; x < w; x++) {
+                for (int x = 0; x < w; x++) {
                         row[x * 3 + 0] = static_cast<uint8_t>(x * 255 / w);
                         row[x * 3 + 1] = static_cast<uint8_t>(y * 255 / h);
                         row[x * 3 + 2] = 128;
@@ -866,23 +862,22 @@ static UncompressedVideoPayload::Ptr makeRGB8(int w, int h) {
         return img;
 }
 
-static double rgb8MeanAbsDiff(const UncompressedVideoPayload &a,
-                              const UncompressedVideoPayload &b) {
+static double rgb8MeanAbsDiff(const UncompressedVideoPayload &a, const UncompressedVideoPayload &b) {
         REQUIRE(a.isValid());
         REQUIRE(b.isValid());
         REQUIRE(a.desc().width() == b.desc().width());
         REQUIRE(a.desc().height() == b.desc().height());
-        const int w = static_cast<int>(a.desc().width());
-        const int h = static_cast<int>(a.desc().height());
+        const int      w = static_cast<int>(a.desc().width());
+        const int      h = static_cast<int>(a.desc().height());
         const uint8_t *pa = a.plane(0).data();
         const uint8_t *pb = b.plane(0).data();
-        const size_t sa = a.desc().pixelFormat().memLayout().lineStride(0, w);
-        const size_t sb = b.desc().pixelFormat().memLayout().lineStride(0, w);
-        double sum = 0.0;
-        for(int y = 0; y < h; y++) {
+        const size_t   sa = a.desc().pixelFormat().memLayout().lineStride(0, w);
+        const size_t   sb = b.desc().pixelFormat().memLayout().lineStride(0, w);
+        double         sum = 0.0;
+        for (int y = 0; y < h; y++) {
                 const uint8_t *ra = pa + y * sa;
                 const uint8_t *rb = pb + y * sb;
-                for(int x = 0; x < w * 3; x++) {
+                for (int x = 0; x < w * 3; x++) {
                         sum += std::abs(static_cast<int>(ra[x]) - static_cast<int>(rb[x]));
                 }
         }
@@ -891,7 +886,7 @@ static double rgb8MeanAbsDiff(const UncompressedVideoPayload &a,
 
 TEST_CASE("ImageFileIO JpegXS: RGB8 round-trip") {
         const char *fn = "/tmp/promeki_jpegxs_rgb8.jxs";
-        auto src = makeRGB8(256, 192);
+        auto        src = makeRGB8(256, 192);
 
         ImageFile sf(ImageFile::JpegXS);
         sf.setFilename(fn);
@@ -913,7 +908,8 @@ TEST_CASE("ImageFileIO JpegXS: RGB8 round-trip") {
 
         // Decode through the payload conversion chain:
         // JPEG_XS_RGB8 → RGB8_Planar (codec) → RGB8 (CSC fast path)
-        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded), PixelFormat(PixelFormat::RGB8_sRGB));
+        auto decoded = promeki::tests::decodeCompressedPayload(sharedPointerCast<CompressedVideoPayload>(loaded),
+                                                               PixelFormat(PixelFormat::RGB8_sRGB));
         REQUIRE(decoded.isValid());
         CHECK(!decoded->isCompressed());
         CHECK(decoded->desc().pixelFormat().id() == PixelFormat::RGB8_sRGB);
@@ -930,7 +926,7 @@ TEST_CASE("ImageFileIO JpegXS: RGB8 pass-through preserves bytes") {
         const char *fnA = "/tmp/promeki_jpegxs_rgb_pt_a.jxs";
         const char *fnB = "/tmp/promeki_jpegxs_rgb_pt_b.jxs";
 
-        auto src = makeRGB8(192, 128);
+        auto        src = makeRGB8(192, 128);
         MediaConfig cfg;
         cfg.set(MediaConfig::JpegXsBpp, 4);
         ImageFile sf(ImageFile::JpegXS);
@@ -960,14 +956,13 @@ TEST_CASE("ImageFileIO JpegXS: RGBA8 input encodes as RGB") {
         const char *fn = "/tmp/promeki_jpegxs_rgba_to_rgb.jxs";
 
         // RGBA8 → should route to JPEG_XS_RGB8_sRGB since it's sRGB family.
-        auto src = UncompressedVideoPayload::allocate(
-                ImageDesc(256, 192, PixelFormat(PixelFormat::RGBA8_sRGB)));
+        auto src = UncompressedVideoPayload::allocate(ImageDesc(256, 192, PixelFormat(PixelFormat::RGBA8_sRGB)));
         REQUIRE(src.isValid());
-        uint8_t *data = src.modify()->data()[0].data();
+        uint8_t     *data = src.modify()->data()[0].data();
         const size_t stride = src->desc().pixelFormat().memLayout().lineStride(0, src->desc().width());
-        for(int y = 0; y < 192; y++) {
+        for (int y = 0; y < 192; y++) {
                 uint8_t *row = data + y * stride;
-                for(int x = 0; x < 256; x++) {
+                for (int x = 0; x < 256; x++) {
                         row[x * 4 + 0] = static_cast<uint8_t>(x);
                         row[x * 4 + 1] = static_cast<uint8_t>(y);
                         row[x * 4 + 2] = 128;
@@ -1002,7 +997,7 @@ TEST_CASE("ImageFileIO JpegXS: RGBA8 input encodes as RGB") {
 
 TEST_CASE("ImageFileIO JpegXS: load emits a CompressedVideoPayload") {
         const char *fn = "/tmp/promeki_jpegxs_packet.jxs";
-        auto src = makePlanarYUV422_8(128, 96);
+        auto        src = makePlanarYUV422_8(128, 96);
 
         ImageFile sf(ImageFile::JpegXS);
         sf.setFilename(fn);
@@ -1014,7 +1009,7 @@ TEST_CASE("ImageFileIO JpegXS: load emits a CompressedVideoPayload") {
         REQUIRE(lf.load() == Error::Ok);
 
         const Frame &frame = lf.frame();
-        auto vids = frame.videoPayloads();
+        auto         vids = frame.videoPayloads();
         REQUIRE(vids.size() == 1);
         const auto *cvp = vids[0]->as<CompressedVideoPayload>();
         REQUIRE(cvp != nullptr);
@@ -1026,7 +1021,7 @@ TEST_CASE("ImageFileIO JpegXS: load emits a CompressedVideoPayload") {
 
 TEST_CASE("ImageFileIO JpegXS: successive loads don't stack payloads") {
         const char *fn = "/tmp/promeki_jpegxs_packet_reload.jxs";
-        auto src = makePlanarYUV422_8(64, 48);
+        auto        src = makePlanarYUV422_8(64, 48);
 
         ImageFile sf(ImageFile::JpegXS);
         sf.setFilename(fn);

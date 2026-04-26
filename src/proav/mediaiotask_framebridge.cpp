@@ -35,7 +35,7 @@ PROMEKI_REGISTER_MEDIAIO(MediaIOTask_FrameBridge)
 // layer without translation tables.
 // ---------------------------------------------------------------------------
 static Error frameBridgeUrlToConfig(const Url &url, MediaIO::Config *outConfig) {
-        if(url.host().isEmpty()) {
+        if (url.host().isEmpty()) {
                 promekiErr("pmfb URL requires a non-empty name "
                            "(e.g. pmfb://my-bridge): got '%s'",
                            url.toString().cstr());
@@ -51,23 +51,21 @@ MediaIO::FormatDesc MediaIOTask_FrameBridge::formatDesc() {
         desc.displayName = "Frame Bridge";
         desc.description = "Cross-process shared-memory frame transport";
         desc.extensions = {};
-        desc.canBeSource = true;   // reads from bridge (consumer)
-        desc.canBeSink = true;     // writes to bridge  (producer)
+        desc.canBeSource = true; // reads from bridge (consumer)
+        desc.canBeSink = true;   // writes to bridge  (producer)
         desc.canBeTransform = false;
         desc.create = []() -> MediaIOTask * {
                 return new MediaIOTask_FrameBridge();
         };
         desc.configSpecs = []() -> MediaIO::Config::SpecMap {
                 MediaIO::Config::SpecMap specs;
-                auto s = [&specs](MediaConfig::ID id, const Variant &def) {
+                auto                     s = [&specs](MediaConfig::ID id, const Variant &def) {
                         const VariantSpec *gs = MediaConfig::spec(id);
-                        specs.insert(id, gs ? VariantSpec(*gs).setDefault(def)
-                                            : VariantSpec().setDefault(def));
+                        specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
                 };
                 s(MediaConfig::FrameBridgeName, String());
                 s(MediaConfig::FrameBridgeRingDepth, int32_t(2));
-                s(MediaConfig::FrameBridgeMetadataReserveBytes,
-                  int32_t(64 * 1024));
+                s(MediaConfig::FrameBridgeMetadataReserveBytes, int32_t(64 * 1024));
                 s(MediaConfig::FrameBridgeAudioHeadroomFraction, 0.20);
                 s(MediaConfig::FrameBridgeAccessMode, int32_t(0600));
                 s(MediaConfig::FrameBridgeGroupName, String());
@@ -79,23 +77,21 @@ MediaIO::FormatDesc MediaIOTask_FrameBridge::formatDesc() {
                 Metadata m;
                 return m;
         };
-        desc.schemes = { "pmfb" };
+        desc.schemes = {"pmfb"};
         desc.urlToConfig = frameBridgeUrlToConfig;
         return desc;
 }
 
-MediaIOTask_FrameBridge::MediaIOTask_FrameBridge()
-        : _bridge(FrameBridge::UPtr::create()) {
-}
+MediaIOTask_FrameBridge::MediaIOTask_FrameBridge() : _bridge(FrameBridge::UPtr::create()) {}
 
 MediaIOTask_FrameBridge::~MediaIOTask_FrameBridge() {
-        if(_bridge) _bridge->close();
+        if (_bridge) _bridge->close();
 }
 
 Error MediaIOTask_FrameBridge::executeCmd(MediaIOCommandOpen &cmd) {
         const MediaIO::Config &cfg = cmd.config;
-        const String name = cfg.getAs<String>(MediaConfig::FrameBridgeName);
-        if(name.isEmpty()) {
+        const String           name = cfg.getAs<String>(MediaConfig::FrameBridgeName);
+        if (name.isEmpty()) {
                 promekiErr("MediaIOTask_FrameBridge: FrameBridgeName is required");
                 return Error::InvalidArgument;
         }
@@ -106,32 +102,26 @@ Error MediaIOTask_FrameBridge::executeCmd(MediaIOCommandOpen &cmd) {
         // the bridge is opened in Output mode.  Output means "this task
         // produces frames" — the caller reads, so we open the bridge
         // as Input and pull from a remote publisher.
-        if(cmd.mode == MediaIO_Sink) {
+        if (cmd.mode == MediaIO_Sink) {
                 // Caller writes into us → we publish to the bridge.
                 _isOutput = true;
                 FrameBridge::Config bcfg;
                 bcfg.mediaDesc = cmd.pendingMediaDesc;
                 bcfg.audioDesc = cmd.pendingAudioDesc;
-                if(!bcfg.mediaDesc.isValid()) {
+                if (!bcfg.mediaDesc.isValid()) {
                         return Error::Invalid;
                 }
-                bcfg.ringDepth = cfg.getAs<int32_t>(
-                        MediaConfig::FrameBridgeRingDepth, int32_t(2));
+                bcfg.ringDepth = cfg.getAs<int32_t>(MediaConfig::FrameBridgeRingDepth, int32_t(2));
                 bcfg.metadataReserveBytes = static_cast<size_t>(
-                        cfg.getAs<int32_t>(MediaConfig::FrameBridgeMetadataReserveBytes,
-                                           int32_t(64 * 1024)));
-                bcfg.audioHeadroomFraction = cfg.getAs<double>(
-                        MediaConfig::FrameBridgeAudioHeadroomFraction, 0.20);
-                bcfg.accessMode = static_cast<uint32_t>(
-                        cfg.getAs<int32_t>(MediaConfig::FrameBridgeAccessMode,
-                                           int32_t(0600)));
-                bcfg.groupName = cfg.getAs<String>(
-                        MediaConfig::FrameBridgeGroupName, String());
-                bcfg.waitForConsumer = cfg.getAs<bool>(
-                        MediaConfig::FrameBridgeWaitForConsumer, true);
+                        cfg.getAs<int32_t>(MediaConfig::FrameBridgeMetadataReserveBytes, int32_t(64 * 1024)));
+                bcfg.audioHeadroomFraction = cfg.getAs<double>(MediaConfig::FrameBridgeAudioHeadroomFraction, 0.20);
+                bcfg.accessMode =
+                        static_cast<uint32_t>(cfg.getAs<int32_t>(MediaConfig::FrameBridgeAccessMode, int32_t(0600)));
+                bcfg.groupName = cfg.getAs<String>(MediaConfig::FrameBridgeGroupName, String());
+                bcfg.waitForConsumer = cfg.getAs<bool>(MediaConfig::FrameBridgeWaitForConsumer, true);
 
                 Error err = _bridge->openOutput(name, bcfg);
-                if(err.isError()) return err;
+                if (err.isError()) return err;
 
                 cmd.mediaDesc = bcfg.mediaDesc;
                 cmd.audioDesc = bcfg.audioDesc;
@@ -140,13 +130,12 @@ Error MediaIOTask_FrameBridge::executeCmd(MediaIOCommandOpen &cmd) {
                 cmd.canSeek = false;
                 cmd.frameCount = MediaIO::FrameCountInfinite;
                 return Error::Ok;
-        } else if(cmd.mode == MediaIO_Source) {
+        } else if (cmd.mode == MediaIO_Source) {
                 // Caller reads from us → we consume from the bridge.
                 _isOutput = false;
-                const bool sync = cfg.getAs<bool>(
-                        MediaConfig::FrameBridgeSyncMode, true);
-                Error err = _bridge->openInput(name, sync);
-                if(err.isError()) return err;
+                const bool sync = cfg.getAs<bool>(MediaConfig::FrameBridgeSyncMode, true);
+                Error      err = _bridge->openInput(name, sync);
+                if (err.isError()) return err;
 
                 cmd.mediaDesc = _bridge->mediaDesc();
                 cmd.audioDesc = _bridge->audioDesc();
@@ -161,38 +150,34 @@ Error MediaIOTask_FrameBridge::executeCmd(MediaIOCommandOpen &cmd) {
 
 Error MediaIOTask_FrameBridge::executeCmd(MediaIOCommandClose &cmd) {
         (void)cmd;
-        if(_bridge) _bridge->close();
+        if (_bridge) _bridge->close();
         return Error::Ok;
 }
 
 Error MediaIOTask_FrameBridge::executeCmd(MediaIOCommandRead &cmd) {
         // Read from the bridge (we were opened in Input mode).
-        if(_isOutput) return Error::NotSupported;
+        if (_isOutput) return Error::NotSupported;
         // Poll for a fresh TICK with a wide-ish deadline so slow
         // sources (low frame rates, or paused publishers) don't
         // bounce the caller with TryAgain every few hundred ms.
-        const auto deadline = std::chrono::steady_clock::now() +
-                              std::chrono::milliseconds(1000);
-        while(std::chrono::steady_clock::now() < deadline) {
-                Error rerr;
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(1000);
+        while (std::chrono::steady_clock::now() < deadline) {
+                Error      rerr;
                 Frame::Ptr f = _bridge->readFrame(&rerr);
-                if(rerr.isError()) return rerr;
-                if(f) {
+                if (rerr.isError()) return rerr;
+                if (f) {
                         // Stamp the source UUID for downstream correlation.
-                        f.modify()->metadata().set(
-                                Metadata::stringToID(String("SourceUUID")),
-                                _bridge->uuid().toString());
+                        f.modify()->metadata().set(Metadata::stringToID(String("SourceUUID")),
+                                                   _bridge->uuid().toString());
                         // Stamp the publisher's queue timestamp.  The
                         // FrameBridge wire protocol carries a steady_clock
                         // value, which is SystemMonotonic on POSIX and
                         // comparable across processes on the same host.
                         f.modify()->metadata().set(
                                 Metadata::FrameBridgeTimeStamp,
-                                MediaTimeStamp(_bridge->lastFrameTimeStamp(),
-                                               ClockDomain::SystemMonotonic));
+                                MediaTimeStamp(_bridge->lastFrameTimeStamp(), ClockDomain::SystemMonotonic));
                         cmd.frame = f;
-                        cmd.currentFrame = f->metadata().getAs<int64_t>(
-                                Metadata::FrameNumber, int64_t(0));
+                        cmd.currentFrame = f->metadata().getAs<int64_t>(Metadata::FrameNumber, int64_t(0));
                         return Error::Ok;
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(2));
@@ -206,18 +191,18 @@ void MediaIOTask_FrameBridge::cancelBlockingWork() {
         // writeFrame.  Tripping the bridge's abort flag makes that
         // writeFrame return Error::Cancelled promptly so the strand is
         // free to process the Close we're about to submit.
-        if(_bridge) _bridge->abort();
+        if (_bridge) _bridge->abort();
 }
 
 Error MediaIOTask_FrameBridge::executeCmd(MediaIOCommandWrite &cmd) {
         // Write to the bridge (we were opened in Output mode).
-        if(!_isOutput) return Error::NotSupported;
-        if(!cmd.frame) return Error::Invalid;
+        if (!_isOutput) return Error::NotSupported;
+        if (!cmd.frame) return Error::Invalid;
         // Service pending accepts so a newly-arriving consumer joins
         // before the next TICK.
         _bridge->service();
         Error err = _bridge->writeFrame(cmd.frame);
-        if(err.isError()) return err;
+        if (err.isError()) return err;
         cmd.currentFrame++;
         cmd.frameCount = FrameCount(cmd.currentFrame.value());
         return Error::Ok;

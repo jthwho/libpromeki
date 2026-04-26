@@ -39,9 +39,8 @@ PROMEKI_NAMESPACE_BEGIN
  * ages.forEach([](const String &k, int v) { ... });
  * @endcode
  */
-template <typename K, typename V>
-class Map {
-        PROMEKI_SHARED_FINAL(Map)
+template <typename K, typename V> class Map {
+                PROMEKI_SHARED_FINAL(Map)
         public:
                 /** @brief Shared pointer type for Map. */
                 using Ptr = SharedPtr<Map>;
@@ -179,7 +178,7 @@ class Map {
                  */
                 V value(const K &key, const V &defaultValue = V{}) const {
                         auto it = d.find(key);
-                        if(it != d.end()) return it->second;
+                        if (it != d.end()) return it->second;
                         return defaultValue;
                 }
 
@@ -238,27 +237,21 @@ class Map {
                  * @param val The value.
                  * @return True if inserted, false if @p key already existed.
                  */
-                bool insertNew(const K &key, const V &val) {
-                        return d.emplace(key, val).second;
-                }
+                bool insertNew(const K &key, const V &val) { return d.emplace(key, val).second; }
 
                 /**
                  * @brief Removes the entry for @p key.
                  * @param key The key to remove.
                  * @return True if an entry was removed, false if the key was not found.
                  */
-                bool remove(const K &key) {
-                        return d.erase(key) > 0;
-                }
+                bool remove(const K &key) { return d.erase(key) > 0; }
 
                 /**
                  * @brief Removes the entry at @p pos.
                  * @param pos Iterator to the entry to remove.
                  * @return Iterator to the next entry.
                  */
-                Iterator remove(Iterator pos) {
-                        return d.erase(pos);
-                }
+                Iterator remove(Iterator pos) { return d.erase(pos); }
 
                 /** @brief Removes all entries. */
                 void clear() noexcept {
@@ -281,7 +274,7 @@ class Map {
                 List<K> keys() const {
                         List<K> ret;
                         ret.reserve(d.size());
-                        for(const auto &[k, v] : d) ret.pushToBack(k);
+                        for (const auto &[k, v] : d) ret.pushToBack(k);
                         return ret;
                 }
 
@@ -289,7 +282,7 @@ class Map {
                 List<V> values() const {
                         List<V> ret;
                         ret.reserve(d.size());
-                        for(const auto &[k, v] : d) ret.pushToBack(v);
+                        for (const auto &[k, v] : d) ret.pushToBack(v);
                         return ret;
                 }
 
@@ -298,9 +291,8 @@ class Map {
                  * @tparam Func Callable with signature void(const K &, const V &).
                  * @param func The function to invoke.
                  */
-                template <typename Func>
-                void forEach(Func &&func) const {
-                        for(const auto &[k, v] : d) func(k, v);
+                template <typename Func> void forEach(Func &&func) const {
+                        for (const auto &[k, v] : d) func(k, v);
                         return;
                 }
 

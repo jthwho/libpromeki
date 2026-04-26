@@ -51,7 +51,7 @@ PROMEKI_NAMESPACE_BEGIN
  * across threads.
  */
 class MediaPipelineStats {
-        PROMEKI_SHARED_FINAL(MediaPipelineStats)
+                PROMEKI_SHARED_FINAL(MediaPipelineStats)
         public:
                 /** @brief Shared pointer alias. */
                 using Ptr = SharedPtr<MediaPipelineStats>;
@@ -92,9 +92,7 @@ class MediaPipelineStats {
                 MediaIOStats stageStats(const String &stageName) const;
 
                 /** @brief Returns true if @p stageName has a stored record. */
-                bool containsStage(const String &stageName) const {
-                        return _perStage.contains(stageName);
-                }
+                bool containsStage(const String &stageName) const { return _perStage.contains(stageName); }
 
                 /** @brief Removes every per-stage record and clears the aggregate. */
                 void clear();

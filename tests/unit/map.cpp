@@ -74,7 +74,7 @@ TEST_CASE("Map: remove by key") {
 
 TEST_CASE("Map: remove by iterator") {
         Map<int, int> m = {{1, 10}, {2, 20}, {3, 30}};
-        auto it = m.find(2);
+        auto          it = m.find(2);
         m.remove(it);
         CHECK_FALSE(m.contains(2));
         CHECK(m.size() == 2);
@@ -89,7 +89,7 @@ TEST_CASE("Map: clear") {
 
 TEST_CASE("Map: keys") {
         Map<int, String> m = {{3, "c"}, {1, "a"}, {2, "b"}};
-        auto k = m.keys();
+        auto             k = m.keys();
         CHECK(k.size() == 3);
         // std::map is ordered, so keys come out sorted
         CHECK(k[0] == 1);
@@ -99,7 +99,7 @@ TEST_CASE("Map: keys") {
 
 TEST_CASE("Map: values") {
         Map<int, String> m = {{1, "a"}, {2, "b"}};
-        auto v = m.values();
+        auto             v = m.values();
         CHECK(v.size() == 2);
         CHECK(v[0] == "a");
         CHECK(v[1] == "b");
@@ -107,7 +107,7 @@ TEST_CASE("Map: values") {
 
 TEST_CASE("Map: forEach") {
         Map<String, int> m = {{"x", 10}, {"y", 20}};
-        int sum = 0;
+        int              sum = 0;
         m.forEach([&](const String &, int v) { sum += v; });
         CHECK(sum == 30);
 }
@@ -145,8 +145,8 @@ TEST_CASE("Map: insert overwrites") {
 
 TEST_CASE("Map: range-based for") {
         Map<int, int> m = {{1, 10}, {2, 20}};
-        int count = 0;
-        for(const auto &[k, v] : m) {
+        int           count = 0;
+        for (const auto &[k, v] : m) {
                 CHECK(v == k * 10);
                 count++;
         }
@@ -155,8 +155,8 @@ TEST_CASE("Map: range-based for") {
 
 TEST_CASE("Map: revBegin/revEnd") {
         Map<int, int> m = {{1, 10}, {2, 20}, {3, 30}};
-        List<int> rev;
-        for(auto it = m.revBegin(); it != m.revEnd(); ++it) {
+        List<int>     rev;
+        for (auto it = m.revBegin(); it != m.revEnd(); ++it) {
                 rev.pushToBack(it->first);
         }
         CHECK(rev[0] == 3);
@@ -166,8 +166,8 @@ TEST_CASE("Map: revBegin/revEnd") {
 
 TEST_CASE("Map: constRevBegin/constRevEnd") {
         const Map<int, int> m = {{1, 10}, {2, 20}};
-        List<int> rev;
-        for(auto it = m.constRevBegin(); it != m.constRevEnd(); ++it) {
+        List<int>           rev;
+        for (auto it = m.constRevBegin(); it != m.constRevEnd(); ++it) {
                 rev.pushToBack(it->first);
         }
         CHECK(rev[0] == 2);

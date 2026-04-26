@@ -65,7 +65,7 @@ class TcpSocket;
  * @endcode
  */
 class HttpResponse {
-        PROMEKI_SHARED_FINAL(HttpResponse)
+                PROMEKI_SHARED_FINAL(HttpResponse)
         public:
                 /** @brief Shared pointer type for HttpResponse. */
                 using Ptr = SharedPtr<HttpResponse>;
@@ -86,7 +86,10 @@ class HttpResponse {
                 const HttpStatus &status() const { return _status; }
 
                 /** @brief Replaces the response status. */
-                void setStatus(const HttpStatus &s) { _status = s; _customReason.clear(); }
+                void setStatus(const HttpStatus &s) {
+                        _status = s;
+                        _customReason.clear();
+                }
 
                 /**
                  * @brief Replaces the status by raw integer.
@@ -95,7 +98,10 @@ class HttpResponse {
                  * @ref HttpStatus::reasonPhrase fallback ("Status NNN")
                  * is used unless @ref setReasonPhrase overrides it.
                  */
-                void setStatus(int code) { _status = HttpStatus{code}; _customReason.clear(); }
+                void setStatus(int code) {
+                        _status = HttpStatus{code};
+                        _customReason.clear();
+                }
 
                 /**
                  * @brief Reason phrase that will be sent on the wire.
@@ -119,14 +125,10 @@ class HttpResponse {
                 void setHeaders(const HttpHeaders &h) { _headers = h; }
 
                 /** @brief Single-value header convenience. */
-                void setHeader(const String &name, const String &value) {
-                        _headers.set(name, value);
-                }
+                void setHeader(const String &name, const String &value) { _headers.set(name, value); }
 
                 /** @brief Append-style header convenience. */
-                void addHeader(const String &name, const String &value) {
-                        _headers.add(name, value);
-                }
+                void addHeader(const String &name, const String &value) { _headers.add(name, value); }
 
                 /** @brief Returns the in-memory body buffer. */
                 const Buffer &body() const { return _body; }
@@ -147,9 +149,7 @@ class HttpResponse {
                  * if @ref hasBodyStream is false.
                  */
                 IODevice *bodyStream() const {
-                        return _bodyStream.isValid()
-                                ? const_cast<IODevice *>(_bodyStream.ptr())
-                                : nullptr;
+                        return _bodyStream.isValid() ? const_cast<IODevice *>(_bodyStream.ptr()) : nullptr;
                 }
 
                 /**
@@ -159,9 +159,7 @@ class HttpResponse {
                  * the device alive past the response's lifetime
                  * without taking sole ownership.
                  */
-                const IODevice::Shared &bodyStreamShared() const {
-                        return _bodyStream;
-                }
+                const IODevice::Shared &bodyStreamShared() const { return _bodyStream; }
 
                 /**
                  * @brief Reported length of a streamed body, or -1 if unknown.
@@ -240,16 +238,14 @@ class HttpResponse {
                  * to it.  Otherwise the caller is responsible for
                  * setting the header.
                  */
-                void setBodyStream(IODevice::Shared device,
-                                   int64_t length = -1,
-                                   const String &mimeType = String());
+                void setBodyStream(IODevice::Shared device, int64_t length = -1, const String &mimeType = String());
 
                 /** @brief Convenience: 2xx status. */
-                bool isSuccess()       const { return _status.isSuccess(); }
+                bool isSuccess() const { return _status.isSuccess(); }
                 /** @brief Convenience: 3xx status. */
-                bool isRedirect()      const { return _status.isRedirect(); }
+                bool isRedirect() const { return _status.isRedirect(); }
                 /** @brief Convenience: 4xx or 5xx status. */
-                bool isError()         const { return _status.isError(); }
+                bool isError() const { return _status.isError(); }
 
                 /** @brief Wire HTTP version (defaults to @c "HTTP/1.1"). */
                 const String &httpVersion() const { return _httpVersion; }
@@ -316,14 +312,14 @@ class HttpResponse {
                 const UpgradeHook &upgradeHook() const { return _upgradeHook; }
 
         private:
-                HttpStatus              _status = HttpStatus::Ok;
-                String                  _customReason;
-                HttpHeaders             _headers;
-                Buffer                  _body;
+                HttpStatus       _status = HttpStatus::Ok;
+                String           _customReason;
+                HttpHeaders      _headers;
+                Buffer           _body;
                 IODevice::Shared _bodyStream;
                 int64_t          _bodyStreamLength = -1;
-                String                  _httpVersion = DefaultHttpVersion;
-                UpgradeHook             _upgradeHook;
+                String           _httpVersion = DefaultHttpVersion;
+                UpgradeHook      _upgradeHook;
 };
 
 PROMEKI_NAMESPACE_END

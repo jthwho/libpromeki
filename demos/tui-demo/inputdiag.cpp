@@ -15,15 +15,13 @@
 using namespace promeki;
 
 class DiagWidget : public TuiWidget {
-        PROMEKI_OBJECT(DiagWidget, TuiWidget)
+                PROMEKI_OBJECT(DiagWidget, TuiWidget)
         public:
-                DiagWidget(ObjectBase *parent = nullptr) : TuiWidget(parent) {
-                        setFocusPolicy(StrongFocus);
-                }
+                DiagWidget(ObjectBase *parent = nullptr) : TuiWidget(parent) { setFocusPolicy(StrongFocus); }
 
                 void addLine(const String &line) {
                         _lines += line;
-                        if(static_cast<int>(_lines.size()) > 100) {
+                        if (static_cast<int>(_lines.size()) > 100) {
                                 _lines.remove(0);
                         }
                         update();
@@ -32,9 +30,9 @@ class DiagWidget : public TuiWidget {
         protected:
                 void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
-                        if(!app) return;
+                        if (!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
-                        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
+                        Rect2Di32  clipRect(screenPos.x(), screenPos.y(), width(), height());
                         TuiPainter painter(app->screen(), clipRect);
 
                         painter.setForeground(Color::White);
@@ -43,11 +41,11 @@ class DiagWidget : public TuiWidget {
 
                         // Show last N lines that fit
                         int startLine = std::max(0, static_cast<int>(_lines.size()) - height());
-                        for(int row = 0; row < height(); ++row) {
+                        for (int row = 0; row < height(); ++row) {
                                 int idx = startLine + row;
-                                if(idx >= static_cast<int>(_lines.size())) break;
+                                if (idx >= static_cast<int>(_lines.size())) break;
                                 String display = _lines[idx];
-                                if(static_cast<int>(display.length()) > width()) {
+                                if (static_cast<int>(display.length()) > width()) {
                                         display = display.substr(0, width());
                                 }
                                 painter.drawText(0, row, display);
@@ -57,11 +55,11 @@ class DiagWidget : public TuiWidget {
                 void keyEvent(KeyEvent *e) override {
                         String msg = "KEY: code=" + String::number(static_cast<int>(e->key()));
                         msg += " mod=0x" + String::number(e->modifiers(), 16);
-                        if(!e->text().isEmpty()) {
+                        if (!e->text().isEmpty()) {
                                 msg += " text=\"" + e->text() + "\"";
                         }
 
-                        switch(e->key()) {
+                        switch (e->key()) {
                                 case KeyEvent::Key_Tab: msg += " [TAB]"; break;
                                 case KeyEvent::Key_Enter: msg += " [ENTER]"; break;
                                 case KeyEvent::Key_Escape: msg += " [ESC]"; break;
@@ -78,9 +76,8 @@ class DiagWidget : public TuiWidget {
                 }
 
                 void mouseEvent(MouseEvent *e) override {
-                        String msg = "MOUSE: pos=(" + String::number(e->x()) +
-                                "," + String::number(e->y()) + ")";
-                        switch(e->action()) {
+                        String msg = "MOUSE: pos=(" + String::number(e->x()) + "," + String::number(e->y()) + ")";
+                        switch (e->action()) {
                                 case MouseEvent::Press: msg += " PRESS"; break;
                                 case MouseEvent::Release: msg += " RELEASE"; break;
                                 case MouseEvent::Move: msg += " MOVE"; break;
@@ -96,7 +93,7 @@ class DiagWidget : public TuiWidget {
 };
 
 class DiagRoot : public TuiWidget {
-        PROMEKI_OBJECT(DiagRoot, TuiWidget)
+                PROMEKI_OBJECT(DiagRoot, TuiWidget)
         public:
                 DiagRoot(ObjectBase *parent = nullptr) : TuiWidget(parent) {
                         _layout = new TuiVBoxLayout(this);
@@ -117,9 +114,9 @@ class DiagRoot : public TuiWidget {
         protected:
                 void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
-                        if(!app) return;
+                        if (!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
-                        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
+                        Rect2Di32  clipRect(screenPos.x(), screenPos.y(), width(), height());
                         TuiPainter painter(app->screen(), clipRect);
                         painter.setForeground(Color::White);
                         painter.setBackground(Color::Black);
@@ -127,13 +124,13 @@ class DiagRoot : public TuiWidget {
                 }
 
                 void resizeEvent(ResizeEvent *) override {
-                        if(_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
+                        if (_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
                 }
 
         private:
-                TuiVBoxLayout   *_layout;
-                TuiLabel        *_title;
-                DiagWidget      *_diag;
+                TuiVBoxLayout *_layout;
+                TuiLabel      *_title;
+                DiagWidget    *_diag;
 };
 
 int main(int argc, char **argv) {

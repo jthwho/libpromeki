@@ -31,30 +31,29 @@
 
 using namespace promeki;
 
-static constexpr int NumWorkers = 4;
+static constexpr int     NumWorkers = 4;
 static std::atomic<bool> g_running{true};
-static std::atomic<int> g_crashTarget{-1}; // -1 = main, 0..N-1 = worker index
+static std::atomic<int>  g_crashTarget{-1}; // -1 = main, 0..N-1 = worker index
 
 // --------------------------------------------------------------------
 // Worker thread — loops until told to stop or asked to crash.
 // --------------------------------------------------------------------
 
 class WorkerThread : public Thread {
-        PROMEKI_OBJECT(WorkerThread, Thread)
+                PROMEKI_OBJECT(WorkerThread, Thread)
         public:
-                WorkerThread(int index, ObjectBase *parent = nullptr)
-                        : Thread(parent), _index(index) {}
+                WorkerThread(int index, ObjectBase *parent = nullptr) : Thread(parent), _index(index) {}
 
         protected:
                 void run() override {
                         int cycle = 0;
-                        while(g_running.load()) {
+                        while (g_running.load()) {
                                 // Simulate useful work.
                                 volatile int sum = 0;
-                                for(int i = 0; i < 100000; ++i) sum += i;
+                                for (int i = 0; i < 100000; ++i) sum += i;
                                 (void)sum;
 
-                                if(g_crashTarget.load() == _index) {
+                                if (g_crashTarget.load() == _index) {
                                         promekiInfo("worker-%d: triggering crash", _index);
                                         promekiLogSync();
                                         triggerCrash();
@@ -72,13 +71,9 @@ class WorkerThread : public Thread {
 
                 // Crash through a few stack frames so the trace is
                 // more interesting than a one-liner.
-                [[gnu::noinline]] void triggerCrash() {
-                        crashLevelA();
-                }
+                [[gnu::noinline]] void triggerCrash() { crashLevelA(); }
 
-                [[gnu::noinline]] void crashLevelA() {
-                        crashLevelB(42);
-                }
+                [[gnu::noinline]] void crashLevelA() { crashLevelB(42); }
 
                 [[gnu::noinline]] void crashLevelB(int val) {
                         volatile int *bad = nullptr;
@@ -106,38 +101,35 @@ int main(int argc, char **argv) {
         Application::setAppName("crashtest");
 
         // Parse which thread should crash (or trace).
-        int crashThread = -1; // default: main
+        int  crashThread = -1; // default: main
         bool traceOnly = false;
-        if(argc > 1) {
-                if(std::strcmp(argv[1], "main") == 0) {
+        if (argc > 1) {
+                if (std::strcmp(argv[1], "main") == 0) {
                         crashThread = -1;
-                } else if(std::strcmp(argv[1], "worker") == 0) {
+                } else if (std::strcmp(argv[1], "worker") == 0) {
                         crashThread = 0;
-                } else if(std::strcmp(argv[1], "trace") == 0) {
+                } else if (std::strcmp(argv[1], "trace") == 0) {
                         traceOnly = true;
                 } else {
                         crashThread = std::atoi(argv[1]);
-                        if(crashThread < 0 || crashThread >= NumWorkers) {
-                                std::fprintf(stderr,
-                                        "Usage: %s [main|worker|0-%d|trace]\n",
-                                        argv[0], NumWorkers - 1);
+                        if (crashThread < 0 || crashThread >= NumWorkers) {
+                                std::fprintf(stderr, "Usage: %s [main|worker|0-%d|trace]\n", argv[0], NumWorkers - 1);
                                 return 1;
                         }
                 }
         }
 
         promekiInfo("crashtest: starting %d worker threads", NumWorkers);
-        if(traceOnly) {
+        if (traceOnly) {
                 promekiInfo("crashtest: mode = trace (no crash)");
         } else {
                 promekiInfo("crashtest: crash target = %s",
-                            crashThread < 0 ? "main" :
-                            String::sprintf("worker-%d", crashThread).cstr());
+                            crashThread < 0 ? "main" : String::sprintf("worker-%d", crashThread).cstr());
         }
 
         // Start worker threads.
         WorkerThread *workers[NumWorkers];
-        for(int i = 0; i < NumWorkers; ++i) {
+        for (int i = 0; i < NumWorkers; ++i) {
                 workers[i] = new WorkerThread(i);
                 workers[i]->setName(String::sprintf("worker-%d", i));
                 workers[i]->start();
@@ -148,7 +140,7 @@ int main(int argc, char **argv) {
         struct timespec ts = {0, 100'000'000}; // 100 ms
         nanosleep(&ts, nullptr);
 
-        if(traceOnly) {
+        if (traceOnly) {
                 // Call writeTrace a few times with different reasons
                 // to exercise the sequence number and show that it
                 // does NOT terminate the process.
@@ -159,7 +151,7 @@ int main(int argc, char **argv) {
                 promekiInfo("crashtest: writing trace #3 (no reason)");
                 Application::writeTrace();
                 promekiInfo("crashtest: all traces written, shutting down");
-        } else if(crashThread < 0) {
+        } else if (crashThread < 0) {
                 // Crash on main thread.
                 promekiInfo("crashtest: crashing on main thread");
                 promekiLogSync();
@@ -177,7 +169,7 @@ int main(int argc, char **argv) {
         }
 
         g_running.store(false);
-        for(int i = 0; i < NumWorkers; ++i) {
+        for (int i = 0; i < NumWorkers; ++i) {
                 workers[i]->wait();
                 delete workers[i];
         }

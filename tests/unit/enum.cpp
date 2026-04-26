@@ -20,34 +20,25 @@ using namespace promeki;
 
 namespace {
 
-// A test enum type registered once at static-init time.
-struct TestCodec {
-        static inline const Enum::Type Type = Enum::registerType("TestCodec",
-                {
-                        { "H264", 1 },
-                        { "H265", 2 },
-                        { "VP9",  3 }
-                },
-                1);  // default = H264
+        // A test enum type registered once at static-init time.
+        struct TestCodec {
+                        static inline const Enum::Type Type =
+                                Enum::registerType("TestCodec", {{"H264", 1}, {"H265", 2}, {"VP9", 3}},
+                                                   1); // default = H264
 
-        static inline const Enum H264{Type, 1};
-        static inline const Enum H265{Type, 2};
-        static inline const Enum VP9 {Type, 3};
-};
+                        static inline const Enum H264{Type, 1};
+                        static inline const Enum H265{Type, 2};
+                        static inline const Enum VP9{Type, 3};
+        };
 
-// A second test enum type to exercise multiple registrations and to
-// exercise negative integer values (to prove -1 is handled cleanly as a
-// value rather than only as a failure sentinel).
-struct TestSeverity {
-        static inline const Enum::Type Type = Enum::registerType("TestSeverity",
-                {
-                        { "Debug",   -1 },
-                        { "Info",     0 },
-                        { "Warning",  1 },
-                        { "Error",    2 }
-                },
-                0);  // default = Info
-};
+        // A second test enum type to exercise multiple registrations and to
+        // exercise negative integer values (to prove -1 is handled cleanly as a
+        // value rather than only as a failure sentinel).
+        struct TestSeverity {
+                        static inline const Enum::Type Type = Enum::registerType(
+                                "TestSeverity", {{"Debug", -1}, {"Info", 0}, {"Warning", 1}, {"Error", 2}},
+                                0); // default = Info
+        };
 
 } // namespace
 
@@ -121,7 +112,7 @@ TEST_CASE("Enum: valueOf returns Result with value on hit, IdNotFound on miss") 
 }
 
 TEST_CASE("Enum: nameOf sets err on miss, leaves it Ok on hit") {
-        Error err;
+        Error  err;
         String n = Enum::nameOf(TestCodec::Type, 3, &err);
         CHECK(err.isOk());
         CHECK(n == String("VP9"));
@@ -181,12 +172,12 @@ TEST_CASE("Enum: registeredTypes() contains the test types") {
 TEST_CASE("Enum: toString returns \"TypeName::ValueName\"") {
         CHECK(TestCodec::H264.toString() == String("TestCodec::H264"));
         CHECK(TestCodec::H265.toString() == String("TestCodec::H265"));
-        CHECK(TestCodec::VP9 .toString() == String("TestCodec::VP9"));
+        CHECK(TestCodec::VP9.toString() == String("TestCodec::VP9"));
 }
 
 TEST_CASE("Enum: lookup parses \"TypeName::ValueName\" back into an Enum") {
         Error err;
-        Enum e = Enum::lookup("TestCodec::H265", &err);
+        Enum  e = Enum::lookup("TestCodec::H265", &err);
         CHECK(err.isOk());
         CHECK(e.isValid());
         CHECK(e == TestCodec::H265);
@@ -194,14 +185,14 @@ TEST_CASE("Enum: lookup parses \"TypeName::ValueName\" back into an Enum") {
 
 TEST_CASE("Enum: lookup rejects malformed strings") {
         Error err;
-        Enum e = Enum::lookup("no_colons_here", &err);
+        Enum  e = Enum::lookup("no_colons_here", &err);
         CHECK(err == Error::InvalidArgument);
         CHECK_FALSE(e.isValid());
 }
 
 TEST_CASE("Enum: lookup returns invalid for unknown type or non-integer value") {
         Error err;
-        Enum a = Enum::lookup("NoSuchType::H264", &err);
+        Enum  a = Enum::lookup("NoSuchType::H264", &err);
         CHECK(err == Error::IdNotFound);
         CHECK_FALSE(a.isValid());
 
@@ -217,7 +208,7 @@ TEST_CASE("Enum: equality compares type and value") {
         CHECK(TestCodec::H264 != TestCodec::H265);
         // Different types with the same integer value are not equal.
         Enum codecOne(TestCodec::Type, 1);
-        Enum severityOne(TestSeverity::Type, 1);  // "Warning"
+        Enum severityOne(TestSeverity::Type, 1); // "Warning"
         CHECK(codecOne != severityOne);
 }
 
@@ -234,24 +225,24 @@ TEST_CASE("Variant: get<String>() on Enum returns \"TypeName::ValueName\"") {
 
 TEST_CASE("Variant: get<int>() on Enum returns the integer value") {
         Variant v = TestCodec::H265;
-        Error err;
-        int n = v.get<int>(&err);
+        Error   err;
+        int     n = v.get<int>(&err);
         CHECK(err.isOk());
         CHECK(n == 2);
 }
 
 TEST_CASE("Variant: get<Enum>() from String parses the TypeName::ValueName form") {
         Variant v = String("TestCodec::H264");
-        Error err;
-        Enum e = v.get<Enum>(&err);
+        Error   err;
+        Enum    e = v.get<Enum>(&err);
         CHECK(err.isOk());
         CHECK(e == TestCodec::H264);
 }
 
 TEST_CASE("Variant: get<Enum>() from int is unsupported") {
         Variant v = int32_t(1);
-        Error err;
-        Enum e = v.get<Enum>(&err);
+        Error   err;
+        Enum    e = v.get<Enum>(&err);
         CHECK(err == Error::Invalid);
         CHECK_FALSE(e.isValid());
 }
@@ -282,14 +273,14 @@ TEST_CASE("Variant: Enum does not compare equal to a mismatched String") {
 }
 
 TEST_CASE("Variant: Enum compares equal to its integer value (both directions)") {
-        Variant ve = TestCodec::H265;          // value == 2
+        Variant ve = TestCodec::H265; // value == 2
         Variant vi = int32_t(2);
         CHECK(ve == vi);
         CHECK(vi == ve);
 }
 
 TEST_CASE("Variant: Enum does not compare equal to a mismatched integer") {
-        Variant ve = TestCodec::H264;          // value == 1
+        Variant ve = TestCodec::H264; // value == 1
         Variant vi = int32_t(999);
         CHECK(ve != vi);
         CHECK(vi != ve);
@@ -300,7 +291,7 @@ TEST_CASE("Variant: Enum does not compare equal to a mismatched integer") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("DataStream: round-trip Variant Enum") {
-        Buffer buf(4096);
+        Buffer         buf(4096);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
@@ -313,7 +304,7 @@ TEST_CASE("DataStream: round-trip Variant Enum") {
         dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&dev);
-                Variant vOut;
+                Variant    vOut;
                 rs >> vOut;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(vOut.type() == Variant::TypeEnum);
@@ -327,7 +318,7 @@ TEST_CASE("DataStream: round-trip Variant Enum") {
 }
 
 TEST_CASE("DataStream: round-trip Variant Enum preserves negative value") {
-        Buffer buf(4096);
+        Buffer         buf(4096);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
@@ -343,7 +334,7 @@ TEST_CASE("DataStream: round-trip Variant Enum preserves negative value") {
         dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&dev);
-                Variant vOut;
+                Variant    vOut;
                 rs >> vOut;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(vOut.type() == Variant::TypeEnum);
@@ -360,12 +351,12 @@ TEST_CASE("DataStream: round-trip Variant Enum preserves negative value") {
 
 TEST_CASE("VariantDatabase: Enum round-trips through JSON as its String form") {
         using TestDb = VariantDatabase<"EnumTestDb">;
-        TestDb db;
+        TestDb     db;
         TestDb::ID codec("codec");
         db.set(codec, Variant(TestCodec::H265));
 
         JsonObject json = db.toJson();
-        TestDb dbOut = TestDb::fromJson(json);
+        TestDb     dbOut = TestDb::fromJson(json);
 
         // JSON has no way to preserve Enum's typed identity so the value
         // comes back as a String, but get<Enum>() can recover the typed form.
@@ -374,20 +365,20 @@ TEST_CASE("VariantDatabase: Enum round-trips through JSON as its String form") {
         CHECK(out.get<String>() == String("TestCodec::H265"));
 
         Error err;
-        Enum e = out.get<Enum>(&err);
+        Enum  e = out.get<Enum>(&err);
         CHECK(err.isOk());
         CHECK(e == TestCodec::H265);
 }
 
 TEST_CASE("VariantDatabase: getAs<Enum> recovers Enum from a stored String") {
         using TestDb = VariantDatabase<"EnumTestDb">;
-        TestDb db;
+        TestDb     db;
         TestDb::ID codec("codec2");
         // Mimic what happens after a JSON round-trip: value arrives as String.
         db.set(codec, Variant(String("TestCodec::VP9")));
 
         Error err;
-        Enum e = db.getAs<Enum>(codec, Enum(), &err);
+        Enum  e = db.getAs<Enum>(codec, Enum(), &err);
         CHECK(err.isOk());
         CHECK(e == TestCodec::VP9);
 }
@@ -420,7 +411,7 @@ TEST_CASE("Enum: toString of an invalid Enum is \"::\"") {
 
 TEST_CASE("Enum: lookup accepts the \"TypeName::<int>\" integer form for out-of-list values") {
         Error err;
-        Enum e = Enum::lookup("TestCodec::100", &err);
+        Enum  e = Enum::lookup("TestCodec::100", &err);
         CHECK(err.isOk());
         CHECK(e.isValid());
         CHECK_FALSE(e.hasListedValue());
@@ -431,7 +422,7 @@ TEST_CASE("Enum: lookup accepts the \"TypeName::<int>\" integer form for out-of-
 
 TEST_CASE("Enum: lookup accepts a negative integer form") {
         Error err;
-        Enum e = Enum::lookup("TestSeverity::-42", &err);
+        Enum  e = Enum::lookup("TestSeverity::-42", &err);
         CHECK(err.isOk());
         CHECK(e.isValid());
         CHECK_FALSE(e.hasListedValue());
@@ -442,7 +433,7 @@ TEST_CASE("Enum: lookup still prefers name lookup when the name is a numeric-loo
         // The "Debug" value in TestSeverity has integer -1; lookup by the
         // registered name should hit the name branch, not the integer branch.
         Error err;
-        Enum e = Enum::lookup("TestSeverity::Debug", &err);
+        Enum  e = Enum::lookup("TestSeverity::Debug", &err);
         CHECK(err.isOk());
         CHECK(e.hasListedValue());
         CHECK(e.value() == -1);
@@ -450,19 +441,19 @@ TEST_CASE("Enum: lookup still prefers name lookup when the name is a numeric-loo
 }
 
 TEST_CASE("Enum: toString -> lookup round-trip preserves out-of-list values") {
-        Enum original(TestCodec::Type, 12345);
+        Enum   original(TestCodec::Type, 12345);
         String s = original.toString();
         CHECK(s == String("TestCodec::12345"));
 
         Error err;
-        Enum round = Enum::lookup(s, &err);
+        Enum  round = Enum::lookup(s, &err);
         CHECK(err.isOk());
         CHECK(round == original);
         CHECK(round.value() == 12345);
 }
 
 TEST_CASE("DataStream: round-trip Variant Enum with an out-of-list value") {
-        Buffer buf(4096);
+        Buffer         buf(4096);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
@@ -475,7 +466,7 @@ TEST_CASE("DataStream: round-trip Variant Enum with an out-of-list value") {
         dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&dev);
-                Variant vOut;
+                Variant    vOut;
                 rs >> vOut;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(vOut.type() == Variant::TypeEnum);
@@ -495,8 +486,8 @@ TEST_CASE("Variant: get<String>() on an out-of-list Enum emits the integer form"
 
 TEST_CASE("Variant: get<Enum>() from \"TypeName::<int>\" String parses the out-of-list form") {
         Variant v = String("TestCodec::100");
-        Error err;
-        Enum e = v.get<Enum>(&err);
+        Error   err;
+        Enum    e = v.get<Enum>(&err);
         CHECK(err.isOk());
         CHECK(e.isValid());
         CHECK_FALSE(e.hasListedValue());
@@ -509,56 +500,56 @@ TEST_CASE("Variant: get<Enum>() from \"TypeName::<int>\" String parses the out-o
 
 TEST_CASE("Variant::asEnum: passes through a matching-type Enum") {
         Variant v = TestCodec::H265;
-        Error err;
-        Enum e = v.asEnum(TestCodec::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(TestCodec::Type, &err);
         CHECK(err.isOk());
         CHECK(e == TestCodec::H265);
 }
 
 TEST_CASE("Variant::asEnum: rejects a mismatched-type Enum") {
         Variant v = TestCodec::H265;
-        Error err;
-        Enum e = v.asEnum(TestSeverity::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(TestSeverity::Type, &err);
         CHECK(err == Error::Invalid);
         CHECK_FALSE(e.isValid());
 }
 
 TEST_CASE("Variant::asEnum: parses a qualified String \"TypeName::ValueName\"") {
         Variant v = String("TestCodec::VP9");
-        Error err;
-        Enum e = v.asEnum(TestCodec::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(TestCodec::Type, &err);
         CHECK(err.isOk());
         CHECK(e == TestCodec::VP9);
 }
 
 TEST_CASE("Variant::asEnum: rejects a qualified String whose type doesn't match") {
         Variant v = String("TestCodec::H264");
-        Error err;
-        Enum e = v.asEnum(TestSeverity::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(TestSeverity::Type, &err);
         CHECK(err == Error::Invalid);
         CHECK_FALSE(e.isValid());
 }
 
 TEST_CASE("Variant::asEnum: resolves an unqualified value-name String against the target type") {
         Variant v = String("H265");
-        Error err;
-        Enum e = v.asEnum(TestCodec::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(TestCodec::Type, &err);
         CHECK(err.isOk());
         CHECK(e == TestCodec::H265);
 }
 
 TEST_CASE("Variant::asEnum: rejects an unqualified name that isn't in the target type") {
         Variant v = String("Bogus");
-        Error err;
-        Enum e = v.asEnum(TestCodec::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(TestCodec::Type, &err);
         CHECK(err == Error::Invalid);
         CHECK_FALSE(e.isValid());
 }
 
 TEST_CASE("Variant::asEnum: parses a bare decimal-integer String as an out-of-list value") {
         Variant v = String("100");
-        Error err;
-        Enum e = v.asEnum(TestCodec::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(TestCodec::Type, &err);
         CHECK(err.isOk());
         CHECK(e.isValid());
         CHECK_FALSE(e.hasListedValue());
@@ -568,16 +559,16 @@ TEST_CASE("Variant::asEnum: parses a bare decimal-integer String as an out-of-li
 
 TEST_CASE("Variant::asEnum: parses a bare negative-integer String") {
         Variant v = String("-42");
-        Error err;
-        Enum e = v.asEnum(TestCodec::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(TestCodec::Type, &err);
         CHECK(err.isOk());
         CHECK(e.value() == -42);
 }
 
 TEST_CASE("Variant::asEnum: wraps an integer Variant") {
         Variant v = int32_t(2);
-        Error err;
-        Enum e = v.asEnum(TestCodec::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(TestCodec::Type, &err);
         CHECK(err.isOk());
         CHECK(e.isValid());
         CHECK(e.hasListedValue());
@@ -587,8 +578,8 @@ TEST_CASE("Variant::asEnum: wraps an integer Variant") {
 
 TEST_CASE("Variant::asEnum: wraps an unsigned integer Variant of a different width") {
         Variant v = uint8_t(3);
-        Error err;
-        Enum e = v.asEnum(TestCodec::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(TestCodec::Type, &err);
         CHECK(err.isOk());
         CHECK(e.value() == 3);
         CHECK(e == TestCodec::VP9);
@@ -596,8 +587,8 @@ TEST_CASE("Variant::asEnum: wraps an unsigned integer Variant of a different wid
 
 TEST_CASE("Variant::asEnum: wraps a bool Variant") {
         Variant v = true;
-        Error err;
-        Enum e = v.asEnum(TestCodec::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(TestCodec::Type, &err);
         CHECK(err.isOk());
         CHECK(e.value() == 1);
         CHECK(e == TestCodec::H264);
@@ -605,8 +596,8 @@ TEST_CASE("Variant::asEnum: wraps a bool Variant") {
 
 TEST_CASE("Variant::asEnum: out-of-list integer Variant yields an out-of-list Enum") {
         Variant v = int32_t(777);
-        Error err;
-        Enum e = v.asEnum(TestCodec::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(TestCodec::Type, &err);
         CHECK(err.isOk());
         CHECK(e.isValid());
         CHECK_FALSE(e.hasListedValue());
@@ -615,8 +606,8 @@ TEST_CASE("Variant::asEnum: out-of-list integer Variant yields an out-of-list En
 
 TEST_CASE("Variant::asEnum: rejects an invalid target type") {
         Variant v = String("H264");
-        Error err;
-        Enum e = v.asEnum(Enum::Type(), &err);
+        Error   err;
+        Enum    e = v.asEnum(Enum::Type(), &err);
         CHECK(err == Error::InvalidArgument);
         CHECK_FALSE(e.isValid());
 }
@@ -630,15 +621,15 @@ TEST_CASE("Variant::asEnum: a default-constructed Variant returns the type's reg
         Variant v;
         CHECK(v.type() == Variant::TypeInvalid);
         Error err;
-        Enum e = v.asEnum(TestCodec::Type, &err);
+        Enum  e = v.asEnum(TestCodec::Type, &err);
         CHECK(err.isOk());
-        CHECK(e == TestCodec::H264);   // H264 is the registered default
+        CHECK(e == TestCodec::H264); // H264 is the registered default
 }
 
 TEST_CASE("Variant::asEnum: rejects an unsupported source type (e.g. Color)") {
         Variant v = Color::Red;
-        Error err;
-        Enum e = v.asEnum(TestCodec::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(TestCodec::Type, &err);
         CHECK(err == Error::Invalid);
         CHECK_FALSE(e.isValid());
 }
@@ -659,24 +650,24 @@ TEST_CASE("ImgSeqPathMode: default Variant resolves to Relative") {
         // Simulates what happens when SaveImgSeqPathMode is absent from
         // the config: asEnum must return the registered default (Relative).
         Variant v;
-        Error err;
-        Enum e = v.asEnum(ImgSeqPathMode::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(ImgSeqPathMode::Type, &err);
         CHECK(err.isOk());
         CHECK(e == ImgSeqPathMode::Relative);
 }
 
 TEST_CASE("ImgSeqPathMode: named String round-trip") {
         Variant v = String("ImgSeqPathMode::Absolute");
-        Error err;
-        Enum e = v.asEnum(ImgSeqPathMode::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(ImgSeqPathMode::Type, &err);
         CHECK(err.isOk());
         CHECK(e == ImgSeqPathMode::Absolute);
 }
 
 TEST_CASE("ImgSeqPathMode: unqualified name resolves against type") {
         Variant v = String("Relative");
-        Error err;
-        Enum e = v.asEnum(ImgSeqPathMode::Type, &err);
+        Error   err;
+        Enum    e = v.asEnum(ImgSeqPathMode::Type, &err);
         CHECK(err.isOk());
         CHECK(e == ImgSeqPathMode::Relative);
 }
@@ -710,7 +701,7 @@ TEST_CASE("Enum: toString() is NOT literal-backed for out-of-list values") {
         // Out-of-list values have no pre-built qualified form, so the
         // result falls through to a concatenation and lands in a
         // mutable Latin1 buffer.
-        Enum e(TestCodec::Type, 999);
+        Enum   e(TestCodec::Type, 999);
         String s = e.toString();
         CHECK(s == String("TestCodec::999"));
         CHECK_FALSE(s.isLiteral());
@@ -720,8 +711,8 @@ TEST_CASE("Enum: two Enums of the same in-list value share toString() backing") 
         // Same StringLiteralData record backs both returned Strings, so
         // the underlying byte pointers compare equal and any downstream
         // String == short-circuits on identity before byte compare.
-        Enum a(TestCodec::Type, 2);  // H265
-        Enum b(TestCodec::Type, 2);  // H265
+        Enum   a(TestCodec::Type, 2); // H265
+        Enum   b(TestCodec::Type, 2); // H265
         String sa = a.toString();
         String sb = b.toString();
         CHECK(sa == sb);
@@ -734,31 +725,31 @@ TEST_CASE("Enum: two Enums of the same in-list value share toString() backing") 
 
 namespace {
 
-// Exercises that a Metadata ID declared via PROMEKI_DECLARE_ID is a
-// true constant expression — suitable for `switch` labels and
-// `static_assert`.  Any regression in the constexpr-id path here would
-// surface as a compile error in this helper, not a runtime failure.
-constexpr int classifyMetadataId(uint64_t id) {
-        switch(id) {
-                case Metadata::Title.id():     return 1;
-                case Metadata::Artist.id():    return 2;
-                case Metadata::Copyright.id(): return 3;
-                default:                       return 0;
+        // Exercises that a Metadata ID declared via PROMEKI_DECLARE_ID is a
+        // true constant expression — suitable for `switch` labels and
+        // `static_assert`.  Any regression in the constexpr-id path here would
+        // surface as a compile error in this helper, not a runtime failure.
+        constexpr int classifyMetadataId(uint64_t id) {
+                switch (id) {
+                        case Metadata::Title.id(): return 1;
+                        case Metadata::Artist.id(): return 2;
+                        case Metadata::Copyright.id(): return 3;
+                        default: return 0;
+                }
         }
-}
 
-static_assert(classifyMetadataId(Metadata::Title.id())     == 1);
-static_assert(classifyMetadataId(Metadata::Artist.id())    == 2);
-static_assert(classifyMetadataId(Metadata::Copyright.id()) == 3);
-static_assert(classifyMetadataId(0xdeadbeef)                == 0);
+        static_assert(classifyMetadataId(Metadata::Title.id()) == 1);
+        static_assert(classifyMetadataId(Metadata::Artist.id()) == 2);
+        static_assert(classifyMetadataId(Metadata::Copyright.id()) == 3);
+        static_assert(classifyMetadataId(0xdeadbeef) == 0);
 
 } // namespace
 
 TEST_CASE("Metadata: constexpr ID usable in a switch statement") {
-        CHECK(classifyMetadataId(Metadata::Title.id())     == 1);
-        CHECK(classifyMetadataId(Metadata::Artist.id())    == 2);
+        CHECK(classifyMetadataId(Metadata::Title.id()) == 1);
+        CHECK(classifyMetadataId(Metadata::Artist.id()) == 2);
         CHECK(classifyMetadataId(Metadata::Copyright.id()) == 3);
-        CHECK(classifyMetadataId(0xdeadbeef)                == 0);
+        CHECK(classifyMetadataId(0xdeadbeef) == 0);
 }
 
 // ============================================================================
@@ -786,18 +777,18 @@ TEST_CASE("RateControlMode: all four registered values") {
 
         // toString / lookup round-trip on the new ABR value.
         Error err;
-        Enum back = Enum::lookup("RateControlMode::ABR", &err);
+        Enum  back = Enum::lookup("RateControlMode::ABR", &err);
         CHECK(err.isOk());
         CHECK(back == RateControlMode::ABR);
 }
 
 TEST_CASE("OpusApplication: values and names") {
-        CHECK(OpusApplication::Voip.value()     == 0);
-        CHECK(OpusApplication::Audio.value()    == 1);
+        CHECK(OpusApplication::Voip.value() == 0);
+        CHECK(OpusApplication::Audio.value() == 1);
         CHECK(OpusApplication::LowDelay.value() == 2);
 
-        CHECK(OpusApplication::Voip.valueName()     == "Voip");
-        CHECK(OpusApplication::Audio.valueName()    == "Audio");
+        CHECK(OpusApplication::Voip.valueName() == "Voip");
+        CHECK(OpusApplication::Audio.valueName() == "Audio");
         CHECK(OpusApplication::LowDelay.valueName() == "LowDelay");
 
         // Default (per registration comment) is Audio.
@@ -806,7 +797,7 @@ TEST_CASE("OpusApplication: values and names") {
 
         // Round-trip through Enum::lookup.
         Error err;
-        Enum back = Enum::lookup("OpusApplication::LowDelay", &err);
+        Enum  back = Enum::lookup("OpusApplication::LowDelay", &err);
         CHECK(err.isOk());
         CHECK(back == OpusApplication::LowDelay);
 }

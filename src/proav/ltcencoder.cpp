@@ -20,7 +20,7 @@ void LtcEncoder::setLevel(float level) {
 
 List<int8_t> LtcEncoder::encode(const Timecode &tc) {
         const VtcFormat *fmt = tc.vtcFormat();
-        if(fmt == nullptr) return List<int8_t>();
+        if (fmt == nullptr) return List<int8_t>();
 
         // Allocate buffer with headroom
         size_t approx = vtc_ltc_audio_frame_size_approx(_encoder.sample_rate, fmt);
@@ -41,7 +41,7 @@ List<int8_t> LtcEncoder::encode(const Timecode &tc) {
 
         // Encode
         size_t written = vtc_ltc_audio_encode(&_encoder, &vtc, out.data(), bufSize);
-        if(written == 0) return List<int8_t>();
+        if (written == 0) return List<int8_t>();
 
         out.resize(written);
         return out;

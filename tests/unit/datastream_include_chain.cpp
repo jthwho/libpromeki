@@ -30,11 +30,11 @@
 using namespace promeki;
 
 namespace {
-constexpr size_t TestBufSize = 1024;
+        constexpr size_t TestBufSize = 1024;
 } // namespace
 
 TEST_CASE("include chain: AudioDesc serializes through audiodesc.h alone") {
-        Buffer buf(TestBufSize);
+        Buffer         buf(TestBufSize);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
@@ -47,7 +47,7 @@ TEST_CASE("include chain: AudioDesc serializes through audiodesc.h alone") {
         dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&dev);
-                AudioDesc out;
+                AudioDesc  out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.format().id() == AudioFormat::PCMI_S24LE);
@@ -62,7 +62,7 @@ TEST_CASE("include chain: AudioDesc serializes through audiodesc.h alone") {
 #include <promeki/imagedesc.h>
 
 TEST_CASE("include chain: ImageDesc serializes through imagedesc.h alone") {
-        Buffer buf(TestBufSize);
+        Buffer         buf(TestBufSize);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
@@ -77,7 +77,7 @@ TEST_CASE("include chain: ImageDesc serializes through imagedesc.h alone") {
         dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&dev);
-                ImageDesc out;
+                ImageDesc  out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.width() == 1280);
@@ -94,7 +94,7 @@ TEST_CASE("include chain: ImageDesc serializes through imagedesc.h alone") {
 #include <promeki/mediadesc.h>
 
 TEST_CASE("include chain: MediaDesc serializes through mediadesc.h alone") {
-        Buffer buf(TestBufSize);
+        Buffer         buf(TestBufSize);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
@@ -109,7 +109,7 @@ TEST_CASE("include chain: MediaDesc serializes through mediadesc.h alone") {
         dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&dev);
-                MediaDesc out;
+                MediaDesc  out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.frameRate().numerator() == 25u);
@@ -130,7 +130,7 @@ TEST_CASE("include chain: MediaDesc serializes through mediadesc.h alone") {
 #include <promeki/datastream.h>
 
 TEST_CASE("include chain: XYZColor requires datastream.h") {
-        Buffer buf(TestBufSize);
+        Buffer         buf(TestBufSize);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
@@ -143,7 +143,7 @@ TEST_CASE("include chain: XYZColor requires datastream.h") {
         dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&dev);
-                XYZColor out;
+                XYZColor   out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.data()[0] == doctest::Approx(0.4));

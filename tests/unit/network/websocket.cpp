@@ -23,142 +23,134 @@ using namespace promeki;
 
 namespace {
 
-// Spin up an HttpServer with a single WebSocket route.  Mirrors the
-// pattern used by the HttpServer / HttpClient suites — the server
-// runs on a worker Thread with its own EventLoop, the test thread
-// manipulates state via postCallable / atomic flags.
-struct WsServerFixture {
-        Thread          thread;
-        HttpServer      *server = nullptr;
-        WebSocket       *acceptedSocket = nullptr;
-        uint16_t        port = 0;
+        // Spin up an HttpServer with a single WebSocket route.  Mirrors the
+        // pattern used by the HttpServer / HttpClient suites — the server
+        // runs on a worker Thread with its own EventLoop, the test thread
+        // manipulates state via postCallable / atomic flags.
+        struct WsServerFixture {
+                        Thread      thread;
+                        HttpServer *server = nullptr;
+                        WebSocket  *acceptedSocket = nullptr;
+                        uint16_t    port = 0;
 
-        // Per-test config knobs.
-        std::function<void(WebSocket *)> onAccepted;
+                        // Per-test config knobs.
+                        std::function<void(WebSocket *)> onAccepted;
 
-        WsServerFixture() {
-                thread.start();
-                thread.threadEventLoop()->postCallable([this]() {
-                        server = new HttpServer();
-                });
-                for(int i = 0; i < 200 && server == nullptr; ++i) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
-                }
-                REQUIRE(server != nullptr);
-        }
-
-        ~WsServerFixture() {
-                thread.threadEventLoop()->postCallable([this]() {
-                        if(acceptedSocket != nullptr) {
-                                acceptedSocket->abort();
-                                delete acceptedSocket;
-                                acceptedSocket = nullptr;
+                        WsServerFixture() {
+                                thread.start();
+                                thread.threadEventLoop()->postCallable([this]() { server = new HttpServer(); });
+                                for (int i = 0; i < 200 && server == nullptr; ++i) {
+                                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                                }
+                                REQUIRE(server != nullptr);
                         }
-                        delete server;
-                        server = nullptr;
-                });
-                thread.quit();
-                thread.wait(2000);
-        }
 
-        void listenWithRoute(const String &pattern,
-                             std::function<void(WebSocket *)> handler) {
-                bool done = false;
-                onAccepted = std::move(handler);
-                thread.threadEventLoop()->postCallable([this, pattern, &done]() {
-                        server->routeWebSocket(pattern,
-                                [this](WebSocket *ws, const HttpRequest &) {
-                                        acceptedSocket = ws;
-                                        if(onAccepted) onAccepted(ws);
+                        ~WsServerFixture() {
+                                thread.threadEventLoop()->postCallable([this]() {
+                                        if (acceptedSocket != nullptr) {
+                                                acceptedSocket->abort();
+                                                delete acceptedSocket;
+                                                acceptedSocket = nullptr;
+                                        }
+                                        delete server;
+                                        server = nullptr;
                                 });
-                        Error err = server->listen(SocketAddress::localhost(0));
-                        REQUIRE(err.isOk());
-                        port = server->serverAddress().port();
-                        done = true;
-                });
-                for(int i = 0; i < 500 && !done; ++i) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                }
-                REQUIRE(done);
-                REQUIRE(port != 0);
-        }
-};
-
-// Simple client driver that lives on its own EventLoop thread.
-// Mirrors the WsServerFixture pattern but for the client side.
-struct WsClientFixture {
-        Thread          thread;
-        WebSocket       *ws = nullptr;
-
-        WsClientFixture() {
-                thread.start();
-                thread.threadEventLoop()->postCallable([this]() {
-                        ws = new WebSocket();
-                });
-                for(int i = 0; i < 200 && ws == nullptr; ++i) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
-                }
-                REQUIRE(ws != nullptr);
-        }
-
-        ~WsClientFixture() {
-                thread.threadEventLoop()->postCallable([this]() {
-                        if(ws != nullptr) {
-                                ws->abort();
-                                delete ws;
-                                ws = nullptr;
+                                thread.quit();
+                                thread.wait(2000);
                         }
-                });
-                thread.quit();
-                thread.wait(2000);
-        }
 
-        Error connect(const String &url) {
-                Error result = Error::Invalid;
-                bool done = false;
-                thread.threadEventLoop()->postCallable([&]() {
-                        result = ws->connectToUrl(url);
-                        done = true;
-                });
-                for(int i = 0; i < 500 && !done; ++i) {
+                        void listenWithRoute(const String &pattern, std::function<void(WebSocket *)> handler) {
+                                bool done = false;
+                                onAccepted = std::move(handler);
+                                thread.threadEventLoop()->postCallable([this, pattern, &done]() {
+                                        server->routeWebSocket(pattern, [this](WebSocket *ws, const HttpRequest &) {
+                                                acceptedSocket = ws;
+                                                if (onAccepted) onAccepted(ws);
+                                        });
+                                        Error err = server->listen(SocketAddress::localhost(0));
+                                        REQUIRE(err.isOk());
+                                        port = server->serverAddress().port();
+                                        done = true;
+                                });
+                                for (int i = 0; i < 500 && !done; ++i) {
+                                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                }
+                                REQUIRE(done);
+                                REQUIRE(port != 0);
+                        }
+        };
+
+        // Simple client driver that lives on its own EventLoop thread.
+        // Mirrors the WsServerFixture pattern but for the client side.
+        struct WsClientFixture {
+                        Thread     thread;
+                        WebSocket *ws = nullptr;
+
+                        WsClientFixture() {
+                                thread.start();
+                                thread.threadEventLoop()->postCallable([this]() { ws = new WebSocket(); });
+                                for (int i = 0; i < 200 && ws == nullptr; ++i) {
+                                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                                }
+                                REQUIRE(ws != nullptr);
+                        }
+
+                        ~WsClientFixture() {
+                                thread.threadEventLoop()->postCallable([this]() {
+                                        if (ws != nullptr) {
+                                                ws->abort();
+                                                delete ws;
+                                                ws = nullptr;
+                                        }
+                                });
+                                thread.quit();
+                                thread.wait(2000);
+                        }
+
+                        Error connect(const String &url) {
+                                Error result = Error::Invalid;
+                                bool  done = false;
+                                thread.threadEventLoop()->postCallable([&]() {
+                                        result = ws->connectToUrl(url);
+                                        done = true;
+                                });
+                                for (int i = 0; i < 500 && !done; ++i) {
+                                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                }
+                                REQUIRE(done);
+                                return result;
+                        }
+
+                        // Run a callable on the client's event loop.
+                        void run(std::function<void()> fn) {
+                                bool done = false;
+                                thread.threadEventLoop()->postCallable([&]() {
+                                        fn();
+                                        done = true;
+                                });
+                                for (int i = 0; i < 500 && !done; ++i) {
+                                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                }
+                                REQUIRE(done);
+                        }
+        };
+
+        // Wait up to @p ms milliseconds for @p pred to become true.  Returns
+        // true if @p pred fired within the budget.
+        template <typename Pred> static bool waitFor(int ms, Pred pred) {
+                for (int i = 0; i < ms; ++i) {
+                        if (pred()) return true;
                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 }
-                REQUIRE(done);
-                return result;
+                return pred();
         }
-
-        // Run a callable on the client's event loop.
-        void run(std::function<void()> fn) {
-                bool done = false;
-                thread.threadEventLoop()->postCallable([&]() {
-                        fn();
-                        done = true;
-                });
-                for(int i = 0; i < 500 && !done; ++i) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                }
-                REQUIRE(done);
-        }
-};
-
-// Wait up to @p ms milliseconds for @p pred to become true.  Returns
-// true if @p pred fired within the budget.
-template <typename Pred>
-static bool waitFor(int ms, Pred pred) {
-        for(int i = 0; i < ms; ++i) {
-                if(pred()) return true;
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-        return pred();
-}
 
 } // anonymous namespace
 
 TEST_CASE("WebSocket - computeAcceptValue matches RFC 6455 example") {
         // RFC 6455 §1.3: client key "dGhlIHNhbXBsZSBub25jZQ==" must
         // produce accept value "s3pPLMBiTxaQ9kYGzzhZRbK+xOo="
-        const String accept = WebSocket::computeAcceptValue(
-                String("dGhlIHNhbXBsZSBub25jZQ=="));
+        const String accept = WebSocket::computeAcceptValue(String("dGhlIHNhbXBsZSBub25jZQ=="));
         CHECK(accept == String("s3pPLMBiTxaQ9kYGzzhZRbK+xOo="));
 }
 
@@ -167,18 +159,17 @@ TEST_CASE("WebSocket - text message echo round trip") {
         std::atomic<bool> serverGotEcho{false};
         std::atomic<bool> clientConnected{false};
         std::atomic<bool> clientGotMessage{false};
-        String serverReceivedText;
-        String clientReceivedText;
+        String            serverReceivedText;
+        String            clientReceivedText;
 
         WsServerFixture sf;
         sf.listenWithRoute("/echo", [&](WebSocket *ws) {
                 serverConnected = true;
-                ws->textMessageReceivedSignal.connect(
-                        [ws, &serverReceivedText, &serverGotEcho](String msg) {
-                                serverReceivedText = msg;
-                                ws->sendTextMessage(String("echo:") + msg);
-                                serverGotEcho = true;
-                        });
+                ws->textMessageReceivedSignal.connect([ws, &serverReceivedText, &serverGotEcho](String msg) {
+                        serverReceivedText = msg;
+                        ws->sendTextMessage(String("echo:") + msg);
+                        serverGotEcho = true;
+                });
         });
 
         WsClientFixture cf;
@@ -198,9 +189,7 @@ TEST_CASE("WebSocket - text message echo round trip") {
 
         // The server's accept callback runs after the upgrade
         // response drains; give both sides a generous window.
-        REQUIRE(waitFor(2000, [&]() {
-                return clientConnected.load() && serverConnected.load();
-        }));
+        REQUIRE(waitFor(2000, [&]() { return clientConnected.load() && serverConnected.load(); }));
         REQUIRE(waitFor(2000, [&]() { return clientGotMessage.load(); }));
         CHECK(serverReceivedText == String("hello"));
         CHECK(clientReceivedText == String("echo:hello"));
@@ -208,13 +197,11 @@ TEST_CASE("WebSocket - text message echo round trip") {
 
 TEST_CASE("WebSocket - binary message echo round trip") {
         std::atomic<bool> clientReceivedBinary{false};
-        Buffer received;
+        Buffer            received;
 
         WsServerFixture sf;
         sf.listenWithRoute("/binecho", [&](WebSocket *ws) {
-                ws->binaryMessageReceivedSignal.connect([ws](Buffer msg) {
-                        ws->sendBinaryMessage(msg);
-                });
+                ws->binaryMessageReceivedSignal.connect([ws](Buffer msg) { ws->sendBinaryMessage(msg); });
         });
 
         WsClientFixture cf;
@@ -222,9 +209,9 @@ TEST_CASE("WebSocket - binary message echo round trip") {
                 cf.ws->connectedSignal.connect([&]() {
                         // Send a 200-byte payload — large enough to
                         // exercise the 2-byte length encoding path.
-                        Buffer payload(200);
+                        Buffer   payload(200);
                         uint8_t *p = static_cast<uint8_t *>(payload.data());
-                        for(int i = 0; i < 200; ++i) {
+                        for (int i = 0; i < 200; ++i) {
                                 p[i] = static_cast<uint8_t>(i & 0xFF);
                         }
                         payload.setSize(200);
@@ -241,19 +228,18 @@ TEST_CASE("WebSocket - binary message echo round trip") {
 
         REQUIRE(waitFor(2000, [&]() { return clientReceivedBinary.load(); }));
         REQUIRE(received.size() == 200);
-        for(int i = 0; i < 200; ++i) {
-                CHECK(static_cast<const uint8_t *>(received.data())[i]
-                        == static_cast<uint8_t>(i & 0xFF));
+        for (int i = 0; i < 200; ++i) {
+                CHECK(static_cast<const uint8_t *>(received.data())[i] == static_cast<uint8_t>(i & 0xFF));
         }
 }
 
 TEST_CASE("WebSocket - ping reply is a pong with same payload") {
         std::atomic<bool> clientGotPong{false};
-        Buffer pongPayload;
+        Buffer            pongPayload;
 
         WsServerFixture sf;
         sf.listenWithRoute("/ping", [&](WebSocket *ws) {
-                (void)ws;       // server handles ping internally
+                (void)ws; // server handles ping internally
         });
 
         WsClientFixture cf;
@@ -292,11 +278,11 @@ TEST_CASE("WebSocket - rejects non-WebSocket GET on the upgrade route") {
         const char *req = "GET /ws HTTP/1.1\r\nHost: localhost\r\n"
                           "Connection: close\r\n\r\n";
         sock.write(req, std::strlen(req));
-        char buf[4096];
+        char   buf[4096];
         String raw;
-        for(;;) {
+        for (;;) {
                 int64_t n = sock.read(buf, sizeof(buf));
-                if(n <= 0) break;
+                if (n <= 0) break;
                 raw += String(buf, static_cast<size_t>(n));
         }
         sock.close();

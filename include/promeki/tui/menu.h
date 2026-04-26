@@ -23,13 +23,12 @@ PROMEKI_NAMESPACE_BEGIN
  * that owns the parent menu.
  */
 class TuiAction : public ObjectBase {
-        PROMEKI_OBJECT(TuiAction, ObjectBase)
+                PROMEKI_OBJECT(TuiAction, ObjectBase)
         public:
-                TuiAction(const String &text, ObjectBase *parent = nullptr)
-                        : ObjectBase(parent), _text(text) {}
+                TuiAction(const String &text, ObjectBase *parent = nullptr) : ObjectBase(parent), _text(text) {}
 
                 const String &text() const { return _text; }
-                void setText(const String &text) { _text = text; }
+                void          setText(const String &text) { _text = text; }
 
                 bool isEnabled() const { return _enabled; }
                 void setEnabled(bool enabled) { _enabled = enabled; }
@@ -37,8 +36,8 @@ class TuiAction : public ObjectBase {
                 PROMEKI_SIGNAL(triggered)
 
         private:
-                String  _text;
-                bool    _enabled = true;
+                String _text;
+                bool   _enabled = true;
 };
 
 /**
@@ -48,20 +47,23 @@ class TuiAction : public ObjectBase {
  * Thread-affine — see @ref TuiWidget.
  */
 class TuiMenu : public TuiWidget {
-        PROMEKI_OBJECT(TuiMenu, TuiWidget)
+                PROMEKI_OBJECT(TuiMenu, TuiWidget)
         public:
                 TuiMenu(const String &title = String(), ObjectBase *parent = nullptr);
                 ~TuiMenu() override;
 
                 const String &title() const { return _title; }
-                void setTitle(const String &title) { _title = title; update(); }
+                void          setTitle(const String &title) {
+                        _title = title;
+                        update();
+                }
 
                 TuiAction *addAction(const String &text);
-                void addSeparator();
+                void       addSeparator();
 
                 const List<TuiAction *> &actions() const { return _actions; }
 
-                int currentIndex() const { return _currentIndex; }
+                int  currentIndex() const { return _currentIndex; }
                 void setCurrentIndex(int index);
 
                 bool isOpen() const { return _open; }
@@ -75,11 +77,11 @@ class TuiMenu : public TuiWidget {
                 void keyPressEvent(KeyEvent *e) override;
 
         private:
-                String                  _title;
-                List<TuiAction *>       _actions;
-                List<int>               _separators; // 1 = separator at this index
-                int                     _currentIndex = 0;
-                bool                    _open = false;
+                String            _title;
+                List<TuiAction *> _actions;
+                List<int>         _separators; // 1 = separator at this index
+                int               _currentIndex = 0;
+                bool              _open = false;
 };
 
 /**
@@ -89,12 +91,12 @@ class TuiMenu : public TuiWidget {
  * Thread-affine — see @ref TuiWidget.
  */
 class TuiMenuBar : public TuiWidget {
-        PROMEKI_OBJECT(TuiMenuBar, TuiWidget)
+                PROMEKI_OBJECT(TuiMenuBar, TuiWidget)
         public:
                 TuiMenuBar(ObjectBase *parent = nullptr);
                 ~TuiMenuBar() override;
 
-                TuiMenu *addMenu(const String &title);
+                TuiMenu               *addMenu(const String &title);
                 const List<TuiMenu *> &menus() const { return _menus; }
 
                 int currentIndex() const { return _currentIndex; }

@@ -61,7 +61,8 @@ class Clock;
  * may call from any thread.
  */
 class SDLPlayerTask : public MediaIOTask {
-        friend class SDLPlayerWidget;
+                friend class SDLPlayerWidget;
+
         public:
                 /** @brief Unique-ownership pointer to an SDLPlayerTask. */
                 using UPtr = UniquePtr<SDLPlayerTask>;
@@ -118,17 +119,14 @@ class SDLPlayerTask : public MediaIOTask {
                  * @param useAudioClock Prefer the audio device as the
                  *                      timing source (default true).
                  */
-                SDLPlayerTask(SDLPlayerWidget *widget,
-                              SDLAudioOutput *audio,
-                              bool useAudioClock);
+                SDLPlayerTask(SDLPlayerWidget *widget, SDLAudioOutput *audio, bool useAudioClock);
 
                 Error executeCmd(MediaIOCommandOpen &cmd) override;
                 Error executeCmd(MediaIOCommandClose &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
 
                 Error describe(MediaIODescription *out) const override;
-                Error proposeInput(const MediaDesc &offered,
-                                   MediaDesc *preferred) const override;
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
 
                 // MediaIO::close(false) (the watchdog's forced-close
                 // path) calls this from a thread that's NOT the
@@ -160,19 +158,19 @@ class SDLPlayerTask : public MediaIOTask {
                 SDLPlayerWidget *_widget = nullptr;
                 SDLAudioOutput  *_audioOutput = nullptr;
 
-                bool            _useAudioClock = true;
+                bool _useAudioClock = true;
 
                 // Per-open state.
-                bool            _audioConfigured = false;
-                FrameRate       _frameRate;
-                AudioDesc       _audioDesc;
-                Clock::Ptr      _clock;
-                mutable Mutex   _clockMutex;    ///< Guards @ref _clock.
-                FrameSync       _sync;
+                bool          _audioConfigured = false;
+                FrameRate     _frameRate;
+                AudioDesc     _audioDesc;
+                Clock::Ptr    _clock;
+                mutable Mutex _clockMutex; ///< Guards @ref _clock.
+                FrameSync     _sync;
 
                 // Pull-thread state.
-                std::thread     _pullThread;
-                Atomic<bool>    _pullRunning;
+                std::thread  _pullThread;
+                Atomic<bool> _pullRunning;
 };
 
 PROMEKI_NAMESPACE_END

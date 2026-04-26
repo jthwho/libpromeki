@@ -16,37 +16,37 @@ PROMEKI_NAMESPACE_BEGIN
 
 StringList promekiStackTrace(bool demangle) {
         StringList ret;
-        const int max_frames = 100;
-        void* frames[max_frames];
-        int framect = backtrace(frames, max_frames);
-        char** symbols = backtrace_symbols(frames, framect);
-        String lastFile;
-        for(int i = 0; i < framect; i++) {
-                if(demangle) {
-                        char c, *p = symbols[i];
-                        int state = 0;
+        const int  max_frames = 100;
+        void      *frames[max_frames];
+        int        framect = backtrace(frames, max_frames);
+        char     **symbols = backtrace_symbols(frames, framect);
+        String     lastFile;
+        for (int i = 0; i < framect; i++) {
+                if (demangle) {
+                        char   c, *p = symbols[i];
+                        int    state = 0;
                         String segment[4];
                         // Parse the backtrace_symbol into the various bits of information
-                        while((c = *p++) != 0) {
-                                switch(state) {
+                        while ((c = *p++) != 0) {
+                                switch (state) {
                                         case 0: // Filename (and possibly a line number)
-                                                if(c == '(') {
+                                                if (c == '(') {
                                                         state = 1;
                                                         continue;
                                                 }
                                                 break;
                                         case 1: // Mangled function
-                                                if(c == '+') {
+                                                if (c == '+') {
                                                         state = 2;
                                                         continue;
                                                 }
-                                                if(c == ')') {
+                                                if (c == ')') {
                                                         state = 3;
                                                         continue;
                                                 }
                                                 break;
                                         case 2: // Offset
-                                                if(c == ')') {
+                                                if (c == ')') {
                                                         state = 3;
                                                         continue;
                                                 }
@@ -58,13 +58,13 @@ StringList promekiStackTrace(bool demangle) {
                                 segment[state] += c;
                         }
                         // Attempt to demangle the mangled name.
-                        int status;
+                        int   status;
                         char *demangled = abi::__cxa_demangle(segment[1].cstr(), nullptr, nullptr, &status);
-                        if(demangled) {
+                        if (demangled) {
                                 segment[1] = demangled;
                                 std::free(demangled);
                         }
-                        if(lastFile != segment[0]) {
+                        if (lastFile != segment[0]) {
                                 ret += String("In: %1").arg(segment[0]);
                                 lastFile = segment[0];
                         }
@@ -72,7 +72,7 @@ StringList promekiStackTrace(bool demangle) {
                         str += segment[3];
                         str += " ";
                         str += segment[1];
-                        if(!segment[2].isEmpty()) {
+                        if (!segment[2].isEmpty()) {
                                 str += " +";
                                 str += segment[2];
                         }
@@ -86,4 +86,3 @@ StringList promekiStackTrace(bool demangle) {
 }
 
 PROMEKI_NAMESPACE_END
-

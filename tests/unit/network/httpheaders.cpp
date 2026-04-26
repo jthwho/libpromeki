@@ -61,14 +61,12 @@ TEST_CASE("HttpHeaders") {
         SUBCASE("forEach yields canonical casing in arrival order") {
                 HttpHeaders h;
                 h.add("Content-Type", "text/plain");
-                h.add("X-Multi",      "first");
-                h.add("X-Multi",      "second");
+                h.add("X-Multi", "first");
+                h.add("X-Multi", "second");
                 h.add("Content-Length", "42");
 
                 StringList order;
-                h.forEach([&](const String &k, const String &v) {
-                        order.pushToBack(k + "=" + v);
-                });
+                h.forEach([&](const String &k, const String &v) { order.pushToBack(k + "=" + v); });
                 REQUIRE(order.size() == 4);
                 CHECK(order[0] == "Content-Type=text/plain");
                 CHECK(order[1] == "X-Multi=first");
@@ -78,8 +76,8 @@ TEST_CASE("HttpHeaders") {
 
         SUBCASE("foldName lowercases ASCII") {
                 CHECK(HttpHeaders::foldName("Content-Type") == "content-type");
-                CHECK(HttpHeaders::foldName("X-Foo-Bar")    == "x-foo-bar");
-                CHECK(HttpHeaders::foldName("already-lc")   == "already-lc");
+                CHECK(HttpHeaders::foldName("X-Foo-Bar") == "x-foo-bar");
+                CHECK(HttpHeaders::foldName("already-lc") == "already-lc");
         }
 
         SUBCASE("equality depends on registered order and values") {

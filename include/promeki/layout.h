@@ -29,7 +29,7 @@ class Widget;
  * UI backend).
  */
 class Layout : public ObjectBase {
-        PROMEKI_OBJECT(Layout, ObjectBase)
+                PROMEKI_OBJECT(Layout, ObjectBase)
         public:
                 Layout(ObjectBase *parent = nullptr);
                 virtual ~Layout();
@@ -86,15 +86,15 @@ class Layout : public ObjectBase {
                  */
                 Rect2Di32 contentRect(const Rect2Di32 &available) const;
 
-                List<Widget *>          _widgets;
-                List<Layout *>          _layouts;
+                List<Widget *> _widgets;
+                List<Layout *> _layouts;
 
         private:
-                int     _spacing = 0;
-                int     _marginTop = 0;
-                int     _marginRight = 0;
-                int     _marginBottom = 0;
-                int     _marginLeft = 0;
+                int _spacing = 0;
+                int _marginTop = 0;
+                int _marginRight = 0;
+                int _marginBottom = 0;
+                int _marginLeft = 0;
 };
 
 /**
@@ -117,7 +117,7 @@ enum BoxDirection {
  * participate in size negotiation and positioning just like widgets.
  */
 class BoxLayout : public Layout {
-        PROMEKI_OBJECT(BoxLayout, Layout)
+                PROMEKI_OBJECT(BoxLayout, Layout)
         public:
                 /**
                  * @brief Constructs a BoxLayout.
@@ -150,15 +150,19 @@ class BoxLayout : public Layout {
         private:
                 /** @brief A single item in the box layout's ordered list. */
                 struct Item {
-                        enum Type { WidgetItem, LayoutItem, StretchItem };
-                        Type            type;
-                        Widget          *widget = nullptr;
-                        Layout          *layout = nullptr;
-                        int             stretchFactor = 0;
+                                enum Type {
+                                        WidgetItem,
+                                        LayoutItem,
+                                        StretchItem
+                                };
+                                Type    type;
+                                Widget *widget = nullptr;
+                                Layout *layout = nullptr;
+                                int     stretchFactor = 0;
                 };
 
-                BoxDirection            _direction;
-                List<Item>              _items;
+                BoxDirection _direction;
+                List<Item>   _items;
 };
 
 /**
@@ -166,10 +170,9 @@ class BoxLayout : public Layout {
  * @ingroup widget
  */
 class HBoxLayout : public BoxLayout {
-        PROMEKI_OBJECT(HBoxLayout, BoxLayout)
+                PROMEKI_OBJECT(HBoxLayout, BoxLayout)
         public:
-                HBoxLayout(ObjectBase *parent = nullptr)
-                        : BoxLayout(LeftToRight, parent) {}
+                HBoxLayout(ObjectBase *parent = nullptr) : BoxLayout(LeftToRight, parent) {}
 };
 
 /**
@@ -177,10 +180,9 @@ class HBoxLayout : public BoxLayout {
  * @ingroup widget
  */
 class VBoxLayout : public BoxLayout {
-        PROMEKI_OBJECT(VBoxLayout, BoxLayout)
+                PROMEKI_OBJECT(VBoxLayout, BoxLayout)
         public:
-                VBoxLayout(ObjectBase *parent = nullptr)
-                        : BoxLayout(TopToBottom, parent) {}
+                VBoxLayout(ObjectBase *parent = nullptr) : BoxLayout(TopToBottom, parent) {}
 };
 
 /**
@@ -188,15 +190,14 @@ class VBoxLayout : public BoxLayout {
  * @ingroup widget
  */
 class GridLayout : public Layout {
-        PROMEKI_OBJECT(GridLayout, Layout)
+                PROMEKI_OBJECT(GridLayout, Layout)
         public:
                 GridLayout(ObjectBase *parent = nullptr);
 
                 /**
                  * @brief Adds a widget at the given row/column with optional span.
                  */
-                void addWidget(Widget *widget, int row, int col,
-                               int rowSpan = 1, int colSpan = 1);
+                void addWidget(Widget *widget, int row, int col, int rowSpan = 1, int colSpan = 1);
 
                 /** @brief Sets the stretch factor for a row. */
                 void setRowStretch(int row, int factor);
@@ -215,19 +216,19 @@ class GridLayout : public Layout {
 
         private:
                 struct GridItem {
-                        Widget          *widget;
-                        int             row;
-                        int             col;
-                        int             rowSpan;
-                        int             colSpan;
+                                Widget *widget;
+                                int     row;
+                                int     col;
+                                int     rowSpan;
+                                int     colSpan;
                 };
-                List<GridItem>          _items;
-                Map<int, int>           _rowStretch;
-                Map<int, int>           _colStretch;
-                Map<int, int>           _rowMinHeight;
-                Map<int, int>           _colMinWidth;
-                int                     _rowCount = 0;
-                int                     _colCount = 0;
+                List<GridItem> _items;
+                Map<int, int>  _rowStretch;
+                Map<int, int>  _colStretch;
+                Map<int, int>  _rowMinHeight;
+                Map<int, int>  _colMinWidth;
+                int            _rowCount = 0;
+                int            _colCount = 0;
 };
 
 PROMEKI_NAMESPACE_END

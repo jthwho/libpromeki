@@ -51,7 +51,7 @@ PROMEKI_NAMESPACE_BEGIN
  * ciphertext has arrived to produce at least one record.
  */
 class SslSocket : public TcpSocket {
-        PROMEKI_OBJECT(SslSocket, TcpSocket)
+                PROMEKI_OBJECT(SslSocket, TcpSocket)
         public:
                 /** @brief Convenience list type. */
                 using List = promeki::List<SslSocket *>;
@@ -135,7 +135,7 @@ class SslSocket : public TcpSocket {
                 int64_t read(void *data, int64_t maxSize) override;
                 int64_t write(const void *data, int64_t maxSize) override;
                 int64_t bytesAvailable() const override;
-                Error close() override;
+                Error   close() override;
 
                 /** @brief Emitted once the TLS handshake succeeds. @signal */
                 PROMEKI_SIGNAL(encrypted);
@@ -156,8 +156,8 @@ class SslSocket : public TcpSocket {
 
         private:
                 struct Impl;
-                Impl                            *_d = nullptr;
-                SslContext::Ptr                 _ctx;
+                Impl           *_d = nullptr;
+                SslContext::Ptr _ctx;
 
                 enum SslState {
                         NotEncrypted,
@@ -165,7 +165,7 @@ class SslSocket : public TcpSocket {
                         Encrypted,
                         Failed
                 };
-                SslState                        _state = NotEncrypted;
+                SslState _state = NotEncrypted;
 
                 Error performHandshakeStep();
 };

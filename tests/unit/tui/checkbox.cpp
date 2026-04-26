@@ -47,7 +47,7 @@ TEST_CASE("TuiCheckBox: toggle") {
 
 TEST_CASE("TuiCheckBox: sizeHint") {
         TuiCheckBox cb("Test");
-        Size2Di32 hint = cb.sizeHint();
+        Size2Di32   hint = cb.sizeHint();
         CHECK(hint.width() == 8); // "[x] Test" = 4 + 4
         CHECK(hint.height() == 1);
 }
@@ -55,7 +55,7 @@ TEST_CASE("TuiCheckBox: sizeHint") {
 TEST_CASE("TuiCheckBox: sizeHint with UTF-8 text") {
         // "café" is 5 bytes but 4 codepoints (é is 2 bytes in UTF-8)
         TuiCheckBox cb(String::fromUtf8("caf\xc3\xa9", 5));
-        Size2Di32 hint = cb.sizeHint();
+        Size2Di32   hint = cb.sizeHint();
         CHECK(hint.width() == 8); // "[x] café" = 4 + 4 codepoints
         CHECK(hint.height() == 1);
 }

@@ -48,8 +48,7 @@ class NumNameSeq {
                  * @param h The head (first) index of the sequence.
                  * @param t The tail (last) index of the sequence.
                  */
-                NumNameSeq(const NumName &n, size_t h, size_t t) :
-                        _name(n), _head(h), _tail(t) {}
+                NumNameSeq(const NumName &n, size_t h, size_t t) : _name(n), _head(h), _tail(t) {}
 
                 /**
                  * @brief Returns the NumName for this sequence.
@@ -80,12 +79,11 @@ class NumNameSeq {
                  * @return The ending index.
                  */
                 size_t tail() const { return _tail; }
-                
+
         private:
-                NumName         _name;
-                size_t          _head = 0;
-                size_t          _tail = 0;
+                NumName _name;
+                size_t  _head = 0;
+                size_t  _tail = 0;
 };
 
 PROMEKI_NAMESPACE_END
-

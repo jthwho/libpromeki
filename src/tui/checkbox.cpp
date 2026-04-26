@@ -14,21 +14,20 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-TuiCheckBox::TuiCheckBox(const String &text, ObjectBase *parent)
-        : TuiWidget(parent), _text(text) {
+TuiCheckBox::TuiCheckBox(const String &text, ObjectBase *parent) : TuiWidget(parent), _text(text) {
         setFocusPolicy(StrongFocus);
 }
 
 TuiCheckBox::~TuiCheckBox() = default;
 
 void TuiCheckBox::setText(const String &text) {
-        if(_text == text) return;
+        if (_text == text) return;
         _text = text;
         update();
 }
 
 void TuiCheckBox::setChecked(bool checked) {
-        if(_checked == checked) return;
+        if (_checked == checked) return;
         _checked = checked;
         toggledSignal.emit(_checked);
         update();
@@ -45,15 +44,15 @@ Size2Di32 TuiCheckBox::sizeHint() const {
 
 void TuiCheckBox::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
-        if(!app) return;
+        if (!app) return;
 
         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
-        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
+        Rect2Di32  clipRect(screenPos.x(), screenPos.y(), width(), height());
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        TuiStyle s = pal.style(TuiPalette::WindowText, hasFocus(), isEnabled())
-                        .merged(pal.style(TuiPalette::Window, hasFocus(), isEnabled()));
+        TuiStyle          s = pal.style(TuiPalette::WindowText, hasFocus(), isEnabled())
+                             .merged(pal.style(TuiPalette::Window, hasFocus(), isEnabled()));
         painter.setStyle(s);
         painter.fillRect(Rect2Di32(0, 0, width(), height()));
 
@@ -62,14 +61,14 @@ void TuiCheckBox::paintEvent(PaintEvent *) {
 }
 
 void TuiCheckBox::keyPressEvent(KeyEvent *e) {
-        if(e->key() == KeyEvent::Key_Enter || e->key() == KeyEvent::Key_Space) {
+        if (e->key() == KeyEvent::Key_Enter || e->key() == KeyEvent::Key_Space) {
                 toggle();
                 e->accept();
         }
 }
 
 void TuiCheckBox::mouseEvent(MouseEvent *e) {
-        if(e->action() == MouseEvent::Press && e->button() == MouseEvent::LeftButton) {
+        if (e->action() == MouseEvent::Press && e->button() == MouseEvent::LeftButton) {
                 toggle();
                 e->accept();
         }

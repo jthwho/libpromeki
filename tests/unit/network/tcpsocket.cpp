@@ -23,7 +23,7 @@ TEST_CASE("TcpSocket") {
 
         SUBCASE("open and close") {
                 TcpSocket sock;
-                Error err = sock.open(IODevice::ReadWrite);
+                Error     err = sock.open(IODevice::ReadWrite);
                 CHECK(err.isOk());
                 CHECK(sock.isOpen());
                 err = sock.close();
@@ -33,7 +33,7 @@ TEST_CASE("TcpSocket") {
 
         SUBCASE("open IPv6") {
                 TcpSocket sock;
-                Error err = sock.openIpv6(IODevice::ReadWrite);
+                Error     err = sock.openIpv6(IODevice::ReadWrite);
                 CHECK(err.isOk());
                 CHECK(sock.isOpen());
                 sock.close();
@@ -55,7 +55,7 @@ TEST_CASE("TcpSocket") {
 
         SUBCASE("loopback echo via TcpServer") {
                 TcpServer server;
-                Error err = server.listen(SocketAddress::localhost(0));
+                Error     err = server.listen(SocketAddress::localhost(0));
                 REQUIRE(err.isOk());
                 REQUIRE(server.isListening());
                 uint16_t port = server.serverAddress().port();
@@ -80,10 +80,10 @@ TEST_CASE("TcpSocket") {
 
                 // Send from client, receive on server
                 const char *msg = "hello TCP";
-                int64_t sent = client.write(msg, std::strlen(msg));
+                int64_t     sent = client.write(msg, std::strlen(msg));
                 CHECK(sent == static_cast<int64_t>(std::strlen(msg)));
 
-                char buf[256];
+                char    buf[256];
                 int64_t received = accepted->read(buf, sizeof(buf));
                 REQUIRE(received > 0);
                 CHECK(received == static_cast<int64_t>(std::strlen(msg)));
@@ -125,7 +125,7 @@ TEST_CASE("TcpSocket") {
 
         SUBCASE("read and write on closed socket") {
                 TcpSocket sock;
-                char buf[16];
+                char      buf[16];
                 CHECK(sock.read(buf, sizeof(buf)) == -1);
                 CHECK(sock.write("test", 4) == -1);
         }
@@ -156,7 +156,7 @@ TEST_CASE("TcpSocket") {
                 Error err = client.connectToHost(SocketAddress::localhost(port));
                 CHECK(err.isOk());
                 // Either already connected or connecting
-                if(client.state() == AbstractSocket::Connecting) {
+                if (client.state() == AbstractSocket::Connecting) {
                         err = client.waitForConnected(1000);
                         CHECK(err.isOk());
                 }

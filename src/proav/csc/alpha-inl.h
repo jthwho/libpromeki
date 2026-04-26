@@ -19,51 +19,51 @@
 
 HWY_BEFORE_NAMESPACE();
 namespace promeki {
-namespace csc {
-namespace HWY_NAMESPACE {
-namespace hn = hwy::HWY_NAMESPACE;
+        namespace csc {
+                namespace HWY_NAMESPACE {
+                        namespace hn = hwy::HWY_NAMESPACE;
 
-void AlphaFillImpl(float *buffer, size_t width, float value, bool useSimd) {
-        const hn::ScalableTag<float> df;
-        const size_t N = useSimd ? hn::Lanes(df) : width + 1;
-        const auto vval = hn::Set(df, value);
+                        void AlphaFillImpl(float *buffer, size_t width, float value, bool useSimd) {
+                                const hn::ScalableTag<float> df;
+                                const size_t                 N = useSimd ? hn::Lanes(df) : width + 1;
+                                const auto                   vval = hn::Set(df, value);
 
-        size_t x = 0;
-        for(; x + N <= width; x += N) {
-                hn::StoreU(vval, df, buffer + x);
-        }
-        for(; x < width; x++) {
-                buffer[x] = value;
-        }
-        return;
-}
+                                size_t x = 0;
+                                for (; x + N <= width; x += N) {
+                                        hn::StoreU(vval, df, buffer + x);
+                                }
+                                for (; x < width; x++) {
+                                        buffer[x] = value;
+                                }
+                                return;
+                        }
 
-void RangeMapImpl(float *const *buffers, size_t width, int compCount,
-                  const float *scale, const float *bias, bool useSimd) {
-        const hn::ScalableTag<float> df;
-        const size_t N = useSimd ? hn::Lanes(df) : width + 1;
+                        void RangeMapImpl(float *const *buffers, size_t width, int compCount, const float *scale,
+                                          const float *bias, bool useSimd) {
+                                const hn::ScalableTag<float> df;
+                                const size_t                 N = useSimd ? hn::Lanes(df) : width + 1;
 
-        for(int c = 0; c < compCount; c++) {
-                const auto vs = hn::Set(df, scale[c]);
-                const auto vb = hn::Set(df, bias[c]);
-                float *buf = buffers[c];
+                                for (int c = 0; c < compCount; c++) {
+                                        const auto vs = hn::Set(df, scale[c]);
+                                        const auto vb = hn::Set(df, bias[c]);
+                                        float     *buf = buffers[c];
 
-                size_t x = 0;
-                for(; x + N <= width; x += N) {
-                        auto v = hn::LoadU(df, buf + x);
-                        v = hn::MulAdd(v, vs, vb);
-                        hn::StoreU(v, df, buf + x);
-                }
-                for(; x < width; x++) {
-                        buf[x] = buf[x] * scale[c] + bias[c];
-                }
-        }
-        return;
-}
+                                        size_t x = 0;
+                                        for (; x + N <= width; x += N) {
+                                                auto v = hn::LoadU(df, buf + x);
+                                                v = hn::MulAdd(v, vs, vb);
+                                                hn::StoreU(v, df, buf + x);
+                                        }
+                                        for (; x < width; x++) {
+                                                buf[x] = buf[x] * scale[c] + bias[c];
+                                        }
+                                }
+                                return;
+                        }
 
-}  // namespace HWY_NAMESPACE
-}  // namespace csc
-}  // namespace promeki
+                } // namespace HWY_NAMESPACE
+        } // namespace csc
+} // namespace promeki
 HWY_AFTER_NAMESPACE();
 
 #endif

@@ -208,7 +208,7 @@ class ImgSeq {
                  * @return The number of frames, or 0 if empty/invalid.
                  */
                 size_t length() const {
-                        if(!isValid()) return 0;
+                        if (!isValid()) return 0;
                         return (_tail >= _head) ? (_tail - _head + 1) : 0;
                 }
 
@@ -278,21 +278,19 @@ class ImgSeq {
                  * @param idx Zero-based offset from @c head().
                  * @return The computed filename (not including any directory).
                  */
-                String frameFileName(size_t idx) const {
-                        return _name.name(static_cast<int>(_head + idx));
-                }
+                String frameFileName(size_t idx) const { return _name.name(static_cast<int>(_head + idx)); }
 
         private:
-                FilePath        _dir;
-                NumName         _name;
-                size_t          _head = 0;
-                size_t          _tail = 0;
-                FrameRate       _frameRate;
-                Size2Du32       _videoSize;
-                PixelFormat       _pixelFormat;
-                String          _audioFile;
-                Metadata        _metadata;
-                FilePath        _sidecarPath;
+                FilePath    _dir;
+                NumName     _name;
+                size_t      _head = 0;
+                size_t      _tail = 0;
+                FrameRate   _frameRate;
+                Size2Du32   _videoSize;
+                PixelFormat _pixelFormat;
+                String      _audioFile;
+                Metadata    _metadata;
+                FilePath    _sidecarPath;
 };
 
 PROMEKI_NAMESPACE_END

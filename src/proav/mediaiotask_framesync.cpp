@@ -25,93 +25,86 @@ PROMEKI_REGISTER_MEDIAIO(MediaIOTask_FrameSync)
 
 namespace {
 
-// Bridge: FrameSync resyncs frame rate (and optionally audio rate /
-// channels / sample format).  Inserted by the planner when the only
-// gap between source and sink is temporal cadence.
-bool framesyncBridge(const MediaDesc &from,
-                     const MediaDesc &to,
-                     MediaIO::Config *outConfig,
-                     int *outCost) {
-        // Pixel descriptions must already match — pixel conversion
-        // is CSC's job; FrameSync only re-times.
-        if(!from.imageList().isEmpty() && !to.imageList().isEmpty()) {
-                if(from.imageList()[0].pixelFormat() !=
-                   to.imageList()[0].pixelFormat()) return false;
-                if(from.imageList()[0].size() !=
-                   to.imageList()[0].size()) return false;
-        }
-
-        const bool rateDiffers = from.frameRate() != to.frameRate();
-
-        bool audioRateDiffers      = false;
-        bool audioChannelsDiffer   = false;
-        bool audioDataTypeDiffers  = false;
-        if(!from.audioList().isEmpty() && !to.audioList().isEmpty()) {
-                const AudioDesc &a = from.audioList()[0];
-                const AudioDesc &b = to.audioList()[0];
-                audioRateDiffers     = a.sampleRate() != b.sampleRate();
-                audioChannelsDiffer  = a.channels()   != b.channels();
-                audioDataTypeDiffers = a.format().id()   != b.format().id();
-        }
-
-        // Nothing to do — let the planner skip insertion.
-        if(!rateDiffers && !audioRateDiffers
-           && !audioChannelsDiffer && !audioDataTypeDiffers) {
-                return false;
-        }
-
-        if(outConfig != nullptr) {
-                *outConfig = MediaIO::defaultConfig("FrameSync");
-                if(rateDiffers && to.frameRate().isValid()) {
-                        outConfig->set(MediaConfig::OutputFrameRate, to.frameRate());
+        // Bridge: FrameSync resyncs frame rate (and optionally audio rate /
+        // channels / sample format).  Inserted by the planner when the only
+        // gap between source and sink is temporal cadence.
+        bool framesyncBridge(const MediaDesc &from, const MediaDesc &to, MediaIO::Config *outConfig, int *outCost) {
+                // Pixel descriptions must already match — pixel conversion
+                // is CSC's job; FrameSync only re-times.
+                if (!from.imageList().isEmpty() && !to.imageList().isEmpty()) {
+                        if (from.imageList()[0].pixelFormat() != to.imageList()[0].pixelFormat()) return false;
+                        if (from.imageList()[0].size() != to.imageList()[0].size()) return false;
                 }
-                if(!to.audioList().isEmpty()) {
-                        const AudioDesc &dst = to.audioList()[0];
-                        if(audioRateDiffers && dst.sampleRate() > 0.0f) {
-                                outConfig->set(MediaConfig::OutputAudioRate,
-                                               dst.sampleRate());
+
+                const bool rateDiffers = from.frameRate() != to.frameRate();
+
+                bool audioRateDiffers = false;
+                bool audioChannelsDiffer = false;
+                bool audioDataTypeDiffers = false;
+                if (!from.audioList().isEmpty() && !to.audioList().isEmpty()) {
+                        const AudioDesc &a = from.audioList()[0];
+                        const AudioDesc &b = to.audioList()[0];
+                        audioRateDiffers = a.sampleRate() != b.sampleRate();
+                        audioChannelsDiffer = a.channels() != b.channels();
+                        audioDataTypeDiffers = a.format().id() != b.format().id();
+                }
+
+                // Nothing to do — let the planner skip insertion.
+                if (!rateDiffers && !audioRateDiffers && !audioChannelsDiffer && !audioDataTypeDiffers) {
+                        return false;
+                }
+
+                if (outConfig != nullptr) {
+                        *outConfig = MediaIO::defaultConfig("FrameSync");
+                        if (rateDiffers && to.frameRate().isValid()) {
+                                outConfig->set(MediaConfig::OutputFrameRate, to.frameRate());
                         }
-                        if(audioChannelsDiffer && dst.channels() > 0) {
-                                outConfig->set(MediaConfig::OutputAudioChannels,
-                                               static_cast<int>(dst.channels()));
-                        }
-                        if(audioDataTypeDiffers && dst.format().id() != AudioFormat::Invalid) {
-                                outConfig->set(MediaConfig::OutputAudioDataType,
-                                               AudioDataType(dst.format().id()));
+                        if (!to.audioList().isEmpty()) {
+                                const AudioDesc &dst = to.audioList()[0];
+                                if (audioRateDiffers && dst.sampleRate() > 0.0f) {
+                                        outConfig->set(MediaConfig::OutputAudioRate, dst.sampleRate());
+                                }
+                                if (audioChannelsDiffer && dst.channels() > 0) {
+                                        outConfig->set(MediaConfig::OutputAudioChannels,
+                                                       static_cast<int>(dst.channels()));
+                                }
+                                if (audioDataTypeDiffers && dst.format().id() != AudioFormat::Invalid) {
+                                        outConfig->set(MediaConfig::OutputAudioDataType,
+                                                       AudioDataType(dst.format().id()));
+                                }
                         }
                 }
+                if (outCost != nullptr) {
+                        // Frame-rate change is the dominant cost (drop /
+                        // repeat / interpolate).  Audio resampling adds a
+                        // smaller penalty.  Both fit in the "bounded-error
+                        // lossy" band.
+                        int cost = 0;
+                        if (rateDiffers) cost += 100;
+                        if (audioRateDiffers || audioChannelsDiffer || audioDataTypeDiffers) cost += 75;
+                        *outCost = cost;
+                }
+                return true;
         }
-        if(outCost != nullptr) {
-                // Frame-rate change is the dominant cost (drop /
-                // repeat / interpolate).  Audio resampling adds a
-                // smaller penalty.  Both fit in the "bounded-error
-                // lossy" band.
-                int cost = 0;
-                if(rateDiffers) cost += 100;
-                if(audioRateDiffers || audioChannelsDiffer
-                   || audioDataTypeDiffers) cost += 75;
-                *outCost = cost;
-        }
-        return true;
-}
 
 } // namespace
 
 MediaIO::FormatDesc MediaIOTask_FrameSync::formatDesc() {
         MediaIO::FormatDesc d;
-        d.name              = "FrameSync";
-        d.displayName       = "Frame Rate Sync";
-        d.description       = "Frame synchroniser — resyncs media to a target clock cadence";
-        d.canBeSource       = false;
-        d.canBeSink         = false;
-        d.canBeTransform    = true;
-        d.create            = []() -> MediaIOTask * { return new MediaIOTask_FrameSync(); };
-        d.configSpecs       = []() -> MediaIO::Config::SpecMap {
+        d.name = "FrameSync";
+        d.displayName = "Frame Rate Sync";
+        d.description = "Frame synchroniser — resyncs media to a target clock cadence";
+        d.canBeSource = false;
+        d.canBeSink = false;
+        d.canBeTransform = true;
+        d.create = []() -> MediaIOTask * {
+                return new MediaIOTask_FrameSync();
+        };
+        d.configSpecs = []() -> MediaIO::Config::SpecMap {
                 MediaIO::Config::SpecMap specs;
-                auto s = [&specs](MediaConfig::ID id, const Variant &def) {
+                auto                     s = [&specs](MediaConfig::ID id, const Variant &def) {
                         const VariantSpec *gs = MediaConfig::spec(id);
-                        specs.insert(id, gs ? VariantSpec(*gs).setDefault(def)
-                                            : VariantSpec().setDefault(def));
+                        specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
                 };
                 s(MediaConfig::OutputFrameRate, FrameRate());
                 s(MediaConfig::OutputAudioRate, 0.0f);
@@ -120,7 +113,7 @@ MediaIO::FormatDesc MediaIOTask_FrameSync::formatDesc() {
                 s(MediaConfig::InputQueueCapacity, int32_t(8));
                 return specs;
         };
-        d.bridge            = framesyncBridge;
+        d.bridge = framesyncBridge;
         return d;
 }
 
@@ -131,53 +124,49 @@ void MediaIOTask_FrameSync::setClock(const Clock::Ptr &clock) {
 }
 
 Error MediaIOTask_FrameSync::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::Transform) {
+        if (cmd.mode != MediaIO::Transform) {
                 promekiErr("MediaIOTask_FrameSync: only InputAndOutput mode is supported");
                 return Error::NotSupported;
         }
 
         const MediaIO::Config &cfg = cmd.config;
-        const MediaDesc &mdesc = cmd.pendingMediaDesc;
+        const MediaDesc       &mdesc = cmd.pendingMediaDesc;
 
         FrameRate srcFps = mdesc.frameRate();
-        if(!srcFps.isValid()) {
+        if (!srcFps.isValid()) {
                 promekiErr("MediaIOTask_FrameSync: pendingMediaDesc has no valid frame rate");
                 return Error::InvalidArgument;
         }
 
         FrameRate outFps = cfg.getAs<FrameRate>(MediaConfig::OutputFrameRate, FrameRate());
-        if(!outFps.isValid()) outFps = srcFps;
+        if (!outFps.isValid()) outFps = srcFps;
 
         int queueCap = cfg.getAs<int>(MediaConfig::InputQueueCapacity, 8);
-        if(queueCap < 1) queueCap = 1;
+        if (queueCap < 1) queueCap = 1;
 
         AudioDesc srcAdesc;
-        if(!mdesc.audioList().isEmpty()) srcAdesc = mdesc.audioList()[0];
+        if (!mdesc.audioList().isEmpty()) srcAdesc = mdesc.audioList()[0];
 
         AudioDesc adesc = srcAdesc;
-        if(adesc.isValid()) {
-                float outRate = cfg.getAs<float>(MediaConfig::OutputAudioRate, 0.0f);
-                int outChannels = cfg.getAs<int>(MediaConfig::OutputAudioChannels, 0);
+        if (adesc.isValid()) {
+                float           outRate = cfg.getAs<float>(MediaConfig::OutputAudioRate, 0.0f);
+                int             outChannels = cfg.getAs<int>(MediaConfig::OutputAudioChannels, 0);
                 AudioFormat::ID outDt = adesc.format().id();
 
                 Error adtErr;
-                Enum adtEnum = cfg.get(MediaConfig::OutputAudioDataType)
-                                   .asEnum(AudioDataType::Type, &adtErr);
-                if(adtErr.isOk() && adtEnum.hasListedValue() &&
-                   static_cast<AudioFormat::ID>(adtEnum.value()) != AudioFormat::Invalid) {
+                Enum  adtEnum = cfg.get(MediaConfig::OutputAudioDataType).asEnum(AudioDataType::Type, &adtErr);
+                if (adtErr.isOk() && adtEnum.hasListedValue() &&
+                    static_cast<AudioFormat::ID>(adtEnum.value()) != AudioFormat::Invalid) {
                         outDt = static_cast<AudioFormat::ID>(adtEnum.value());
                 }
 
-                adesc = AudioDesc(
-                        outDt,
-                        (outRate > 0.0f) ? outRate : srcAdesc.sampleRate(),
-                        (outChannels > 0) ? static_cast<unsigned int>(outChannels)
-                                          : srcAdesc.channels());
+                adesc = AudioDesc(outDt, (outRate > 0.0f) ? outRate : srcAdesc.sampleRate(),
+                                  (outChannels > 0) ? static_cast<unsigned int>(outChannels) : srcAdesc.channels());
                 adesc.metadata() = srcAdesc.metadata();
         }
 
         Clock::Ptr clock = _externalClock;
-        if(clock.isNull()) {
+        if (clock.isNull()) {
                 _ownedClock = Clock::Ptr::takeOwnership(new SyntheticClock());
                 clock = _ownedClock;
         }
@@ -194,14 +183,14 @@ Error MediaIOTask_FrameSync::executeCmd(MediaIOCommandOpen &cmd) {
 
         MediaDesc outDesc;
         outDesc.setFrameRate(outFps);
-        for(const auto &img : mdesc.imageList()) {
+        for (const auto &img : mdesc.imageList()) {
                 outDesc.imageList().pushToBack(img);
         }
-        if(adesc.isValid()) {
+        if (adesc.isValid()) {
                 outDesc.audioList().pushToBack(adesc);
         }
         cmd.mediaDesc = outDesc;
-        if(adesc.isValid()) cmd.audioDesc = adesc;
+        if (adesc.isValid()) cmd.audioDesc = adesc;
         cmd.metadata = cmd.pendingMetadata;
         cmd.frameRate = outFps;
         cmd.canSeek = false;
@@ -224,7 +213,7 @@ Error MediaIOTask_FrameSync::executeCmd(MediaIOCommandClose &cmd) {
 }
 
 Error MediaIOTask_FrameSync::executeCmd(MediaIOCommandWrite &cmd) {
-        if(!cmd.frame.isValid()) {
+        if (!cmd.frame.isValid()) {
                 promekiErr("MediaIOTask_FrameSync: write with null frame");
                 return Error::InvalidArgument;
         }
@@ -244,17 +233,17 @@ Error MediaIOTask_FrameSync::executeCmd(MediaIOCommandRead &cmd) {
         // frameReadySignal on every successful push, which re-arms
         // this prefetch as soon as the producer queues a frame.
         auto result = _sync.pullFrame(/*blockOnEmpty=*/false);
-        if(result.second().isError()) {
+        if (result.second().isError()) {
                 return result.second();
         }
 
         const FrameSync::PullResult &pr = result.first();
-        if(!pr.frame.isValid()) {
+        if (!pr.frame.isValid()) {
                 return Error::EndOfFile;
         }
 
-        if(pr.framesRepeated.value() > 0) noteFrameRepeated();
-        if(pr.framesDropped.value() > 0) noteFrameDropped();
+        if (pr.framesRepeated.value() > 0) noteFrameRepeated();
+        if (pr.framesDropped.value() > 0) noteFrameDropped();
 
         ++_framesPulled;
         cmd.frame = pr.frame;
@@ -273,7 +262,7 @@ Error MediaIOTask_FrameSync::executeCmd(MediaIOCommandStats &cmd) {
 // ---- Phase 1 introspection / negotiation overrides ----
 
 Error MediaIOTask_FrameSync::describe(MediaIODescription *out) const {
-        if(out == nullptr) return Error::Invalid;
+        if (out == nullptr) return Error::Invalid;
         // FrameSync accepts any MediaDesc and produces what
         // applyOutputOverrides yields against its current config.
         // No probe — the wrapper has already populated identity and
@@ -281,16 +270,15 @@ Error MediaIOTask_FrameSync::describe(MediaIODescription *out) const {
         return Error::Ok;
 }
 
-Error MediaIOTask_FrameSync::proposeInput(const MediaDesc &offered,
-                                          MediaDesc *preferred) const {
-        if(preferred == nullptr) return Error::Invalid;
-        if(offered.imageList().isEmpty()) {
+Error MediaIOTask_FrameSync::proposeInput(const MediaDesc &offered, MediaDesc *preferred) const {
+        if (preferred == nullptr) return Error::Invalid;
+        if (offered.imageList().isEmpty()) {
                 // Audio-only frame: no pixel constraint, pass through.
                 *preferred = offered;
                 return Error::Ok;
         }
         const PixelFormat &pd = offered.imageList()[0].pixelFormat();
-        if(!pd.isValid() || !pd.isCompressed()) {
+        if (!pd.isValid() || !pd.isCompressed()) {
                 // Uncompressed (or unknown) — FrameSync has no opinion
                 // on the shape; it just re-times whatever it receives.
                 *preferred = offered;
@@ -303,19 +291,18 @@ Error MediaIOTask_FrameSync::proposeInput(const MediaDesc &offered,
         // same-family uncompressed substitute via the shared helper;
         // the planner's VideoDecoder bridge closes the gap in one hop.
         const PixelFormat target = defaultUncompressedPixelFormat(pd);
-        MediaDesc want = offered;
-        ImageDesc::List &imgs = want.imageList();
-        for(size_t i = 0; i < imgs.size(); ++i) {
+        MediaDesc         want = offered;
+        ImageDesc::List  &imgs = want.imageList();
+        for (size_t i = 0; i < imgs.size(); ++i) {
                 imgs[i].setPixelFormat(target);
         }
         *preferred = want;
         return Error::Ok;
 }
 
-Error MediaIOTask_FrameSync::proposeOutput(const MediaDesc &requested,
-                                           MediaDesc *achievable) const {
-        if(achievable == nullptr) return Error::Invalid;
-        const MediaIO *io = mediaIo();
+Error MediaIOTask_FrameSync::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+        if (achievable == nullptr) return Error::Invalid;
+        const MediaIO     *io = mediaIo();
         const MediaConfig &cfg = (io != nullptr) ? io->config() : MediaConfig();
         *achievable = applyOutputOverrides(requested, cfg);
         return Error::Ok;

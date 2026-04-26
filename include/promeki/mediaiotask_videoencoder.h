@@ -116,13 +116,11 @@ class MediaIOTask_VideoEncoder : public MediaIOTask {
                 Error executeCmd(MediaIOCommandRead &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
-                int pendingOutput() const override;
+                int   pendingOutput() const override;
 
                 Error describe(MediaIODescription *out) const override;
-                Error proposeInput(const MediaDesc &offered,
-                                   MediaDesc *preferred) const override;
-                Error proposeOutput(const MediaDesc &requested,
-                                    MediaDesc *achievable) const override;
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
+                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const override;
 
                 // Drains the underlying encoder's ready packets into
                 // per-packet output frames, appending each to
@@ -134,11 +132,11 @@ class MediaIOTask_VideoEncoder : public MediaIOTask {
                 void configChanged(const MediaConfig &delta) override;
                 void drainEncoderInto();
 
-                MediaConfig           _config;
-                VideoCodec            _codec;
-                VideoEncoder::UPtr    _encoder;
-                int                   _capacity = 8;
-                List<Frame::Ptr>      _outputQueue;
+                MediaConfig        _config;
+                VideoCodec         _codec;
+                VideoEncoder::UPtr _encoder;
+                int                _capacity = 8;
+                List<Frame::Ptr>   _outputQueue;
 
                 // FIFO of submitted source Frames awaiting a matching
                 // packet from the encoder.  One entry is pushed per
@@ -149,14 +147,14 @@ class MediaIOTask_VideoEncoder : public MediaIOTask {
                 // source frame's metadata + audio across the
                 // NEED_MORE_INPUT case where submit N's packet emerges
                 // during submit N+1.
-                List<Frame::Ptr>      _pendingSrcFrames;
-                FrameCount            _frameCount{0};
-                int64_t               _readCount = 0;
-                FrameCount            _framesEncoded{0};
-                int64_t               _packetsOut = 0;
-                bool                  _capacityWarned = false;
-                bool                  _multiImageWarned = false;
-                bool                  _closed = false;
+                List<Frame::Ptr> _pendingSrcFrames;
+                FrameCount       _frameCount{0};
+                int64_t          _readCount = 0;
+                FrameCount       _framesEncoded{0};
+                int64_t          _packetsOut = 0;
+                bool             _capacityWarned = false;
+                bool             _multiImageWarned = false;
+                bool             _closed = false;
 };
 
 PROMEKI_NAMESPACE_END

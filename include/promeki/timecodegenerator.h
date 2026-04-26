@@ -39,9 +39,9 @@ class TimecodeGenerator {
         public:
                 /** @brief Run mode for the generator. */
                 enum RunMode {
-                        Still,          ///< @brief Timecode does not advance.
-                        Forward,        ///< @brief Timecode increments each frame.
-                        Reverse         ///< @brief Timecode decrements each frame.
+                        Still,   ///< @brief Timecode does not advance.
+                        Forward, ///< @brief Timecode increments each frame.
+                        Reverse  ///< @brief Timecode decrements each frame.
                 };
 
                 /** @brief Constructs a default generator with no frame rate set. */
@@ -98,7 +98,10 @@ class TimecodeGenerator {
                  * @brief Sets the run mode.
                  * @param mode The run mode (Still, Forward, or Reverse).
                  */
-                void setRunMode(RunMode mode) { _runMode = mode; return; }
+                void setRunMode(RunMode mode) {
+                        _runMode = mode;
+                        return;
+                }
 
                 /**
                  * @brief Returns the current timecode value.
@@ -150,13 +153,13 @@ class TimecodeGenerator {
                 void reset();
 
         private:
-                FrameRate       _frameRate;
-                bool            _dropFrame = false;
-                Timecode::Mode  _mode;
-                RunMode         _runMode = Forward;
-                Timecode        _timecode;
-                Timecode        _startTimecode;
-                FrameCount      _frameCount{0};
+                FrameRate      _frameRate;
+                bool           _dropFrame = false;
+                Timecode::Mode _mode;
+                RunMode        _runMode = Forward;
+                Timecode       _timecode;
+                Timecode       _startTimecode;
+                FrameCount     _frameCount{0};
 
                 void deriveMode();
                 void applyMode();

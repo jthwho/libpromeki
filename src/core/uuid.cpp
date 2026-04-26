@@ -18,11 +18,11 @@ PROMEKI_NAMESPACE_BEGIN
 
 inline int hexCharToVal(char num) {
         int val;
-        if(num >= 'A' && num <= 'F') {
+        if (num >= 'A' && num <= 'F') {
                 val = static_cast<int>(num) - static_cast<int>('A') + 10;
-        } else if(num >= 'a' && num <= 'f') {
+        } else if (num >= 'a' && num <= 'f') {
                 val = static_cast<int>(num) - static_cast<int>('a') + 10;
-        } else if(num >= '0' && num <= '9') {
+        } else if (num >= '0' && num <= '9') {
                 val = static_cast<int>(num) - static_cast<int>('0');
         } else {
                 val = -1;
@@ -32,13 +32,13 @@ inline int hexCharToVal(char num) {
 
 inline bool hexStr(uint8_t *to, const char *buf, Error *err) {
         int d1 = hexCharToVal(buf[0]);
-        if(d1 == -1) {
-                if(err != nullptr) *err = Error::Invalid;
+        if (d1 == -1) {
+                if (err != nullptr) *err = Error::Invalid;
                 return false;
         }
         int d2 = hexCharToVal(buf[1]);
-        if(d2 == -1) {
-                if(err != nullptr) *err = Error::Invalid;
+        if (d2 == -1) {
+                if (err != nullptr) *err = Error::Invalid;
                 return false;
         }
         *to = d1 * 16 + d2;
@@ -46,7 +46,7 @@ inline bool hexStr(uint8_t *to, const char *buf, Error *err) {
 }
 
 UUID UUID::generate(int version) {
-        switch(version) {
+        switch (version) {
                 case 1: return generateV1();
                 case 3: {
                         return generateV3(Application::appUUID(), Application::appName());
@@ -69,9 +69,9 @@ UUID UUID::generateV1() {
 
 UUID UUID::generateV3(const UUID &ns, const String &name) {
         // Concatenate namespace UUID bytes + name bytes, then MD5 hash
-        const auto &nsData = ns.data();
-        size_t nameLen = name.size();
-        size_t totalLen = 16 + nameLen;
+        const auto   &nsData = ns.data();
+        size_t        nameLen = name.size();
+        size_t        totalLen = 16 + nameLen;
         List<uint8_t> input(totalLen);
         std::memcpy(input.data(), nsData.data(), 16);
         std::memcpy(input.data() + 16, name.cstr(), nameLen);
@@ -87,8 +87,8 @@ UUID UUID::generateV3(const UUID &ns, const String &name) {
 
 UUID UUID::generateV4() {
         DataFormat d;
-        Error err = Random::trueRandom(d.data(), d.size());
-        if(err.isOk()) {
+        Error      err = Random::trueRandom(d.data(), d.size());
+        if (err.isOk()) {
                 d[6] = (d[6] & 0x0F) | 0x40; // Version 4
                 d[8] = (d[8] & 0x3F) | 0x80; // Variant 2
                 return UUID(d);
@@ -98,9 +98,9 @@ UUID UUID::generateV4() {
 
 UUID UUID::generateV5(const UUID &ns, const String &name) {
         // Concatenate namespace UUID bytes + name bytes, then SHA-1 hash
-        const auto &nsData = ns.data();
-        size_t nameLen = name.size();
-        size_t totalLen = 16 + nameLen;
+        const auto   &nsData = ns.data();
+        size_t        nameLen = name.size();
+        size_t        totalLen = 16 + nameLen;
         List<uint8_t> input(totalLen);
         std::memcpy(input.data(), nsData.data(), 16);
         std::memcpy(input.data() + 16, name.cstr(), nameLen);
@@ -117,16 +117,15 @@ UUID UUID::generateV5(const UUID &ns, const String &name) {
 
 UUID UUID::generateV7(int64_t timestampMs) {
         // 48-bit millisecond Unix timestamp + 74 bits of random data
-        if(timestampMs < 0) {
+        if (timestampMs < 0) {
                 auto now = std::chrono::system_clock::now();
-                timestampMs = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        now.time_since_epoch()).count();
+                timestampMs = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
         }
         uint64_t timestamp = static_cast<uint64_t>(timestampMs);
 
         DataFormat d;
-        Error err = Random::trueRandom(d.data(), d.size());
-        if(!err.isOk()) return UUID();
+        Error      err = Random::trueRandom(d.data(), d.size());
+        if (!err.isOk()) return UUID();
 
         // Bytes 0-5: 48-bit timestamp (big-endian)
         d[0] = static_cast<uint8_t>(timestamp >> 40);
@@ -143,76 +142,107 @@ UUID UUID::generateV7(int64_t timestampMs) {
 
 UUID UUID::fromString(const char *str, Error *err) {
         DataFormat data;
-        uint8_t *d = data.data();
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(*str++ != '-') {
-                if(err != nullptr) *err = Error::Invalid;
+        uint8_t   *d = data.data();
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (*str++ != '-') {
+                if (err != nullptr) *err = Error::Invalid;
                 return UUID();
         }
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(*str++ != '-') {
-                if(err != nullptr) *err = Error::Invalid;
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (*str++ != '-') {
+                if (err != nullptr) *err = Error::Invalid;
                 return UUID();
         }
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(*str++ != '-') {
-                if(err != nullptr) *err = Error::Invalid;
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (*str++ != '-') {
+                if (err != nullptr) *err = Error::Invalid;
                 return UUID();
         }
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(*str++ != '-') {
-                if(err != nullptr) *err = Error::Invalid;
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (*str++ != '-') {
+                if (err != nullptr) *err = Error::Invalid;
                 return UUID();
         }
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(!hexStr(d++, str, err)) return UUID(); str += 2;
-        if(!hexStr(d, str, err)) return UUID();
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (!hexStr(d++, str, err)) return UUID();
+        str += 2;
+        if (!hexStr(d, str, err)) return UUID();
 
-        if(err != nullptr) *err = Error::Ok;
+        if (err != nullptr) *err = Error::Ok;
         return UUID(data);
 }
 
 inline void strHex(char *str, const uint8_t *d) {
         static const char digits[] = "0123456789abcdef";
-        uint8_t val = *d;
+        uint8_t           val = *d;
         str[0] = digits[val / 16];
         str[1] = digits[val % 16];
         return;
 }
 
 String UUID::toString() const {
-        char buf[37];
-        char *str = buf;
+        char           buf[37];
+        char          *str = buf;
         const uint8_t *data = d.data();
-        strHex(str, data++); str += 2;
-        strHex(str, data++); str += 2;
-        strHex(str, data++); str += 2;
-        strHex(str, data++); str += 2;
+        strHex(str, data++);
+        str += 2;
+        strHex(str, data++);
+        str += 2;
+        strHex(str, data++);
+        str += 2;
+        strHex(str, data++);
+        str += 2;
         *str++ = '-';
-        strHex(str, data++); str += 2;
-        strHex(str, data++); str += 2;
+        strHex(str, data++);
+        str += 2;
+        strHex(str, data++);
+        str += 2;
         *str++ = '-';
-        strHex(str, data++); str += 2;
-        strHex(str, data++); str += 2;
+        strHex(str, data++);
+        str += 2;
+        strHex(str, data++);
+        str += 2;
         *str++ = '-';
-        strHex(str, data++); str += 2;
-        strHex(str, data++); str += 2;
+        strHex(str, data++);
+        str += 2;
+        strHex(str, data++);
+        str += 2;
         *str++ = '-';
-        strHex(str, data++); str += 2;
-        strHex(str, data++); str += 2;
-        strHex(str, data++); str += 2;
-        strHex(str, data++); str += 2;
-        strHex(str, data++); str += 2;
-        strHex(str, data); str += 2;
+        strHex(str, data++);
+        str += 2;
+        strHex(str, data++);
+        str += 2;
+        strHex(str, data++);
+        str += 2;
+        strHex(str, data++);
+        str += 2;
+        strHex(str, data++);
+        str += 2;
+        strHex(str, data);
+        str += 2;
         *str = 0;
         return buf;
 }

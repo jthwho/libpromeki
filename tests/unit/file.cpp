@@ -35,13 +35,13 @@ TEST_CASE("File: construction with filename") {
 
 TEST_CASE("File: construction with FilePath") {
         FilePath fp("/tmp/test_file");
-        File f(fp);
+        File     f(fp);
         CHECK(f.filename() == "/tmp/test_file");
         CHECK_FALSE(f.isOpen());
 }
 
 TEST_CASE("File: open nonexistent file for read fails") {
-        File f("/tmp/promeki_test_nonexistent_file_xyz");
+        File  f("/tmp/promeki_test_nonexistent_file_xyz");
         Error err = f.open(IODevice::ReadOnly);
         CHECK(err.isError());
         CHECK_FALSE(f.isOpen());
@@ -52,7 +52,7 @@ TEST_CASE("File: create, write, read, close") {
         std::remove(path);
 
         {
-                File f(path);
+                File  f(path);
                 Error err = f.open(IODevice::ReadWrite, File::Create | File::Truncate);
                 CHECK(err.isOk());
                 CHECK(f.isOpen());
@@ -60,14 +60,14 @@ TEST_CASE("File: create, write, read, close") {
                 CHECK(f.isWritable());
 
                 const char *data = "Hello, promeki!";
-                int64_t written = f.write(data, 15);
+                int64_t     written = f.write(data, 15);
                 CHECK(written == 15);
 
                 // Seek back to beginning
                 Error seekErr = f.seek(0);
                 CHECK(seekErr.isOk());
 
-                char buf[16] = {};
+                char    buf[16] = {};
                 int64_t bytesRead = f.read(buf, 15);
                 CHECK(bytesRead == 15);
                 CHECK(String(buf) == "Hello, promeki!");
@@ -83,7 +83,7 @@ TEST_CASE("File: position tracking") {
         const char *path = testPath("pos");
         std::remove(path);
 
-        File f(path);
+        File  f(path);
         Error err = f.open(IODevice::ReadWrite, File::Create | File::Truncate);
         REQUIRE(err.isOk());
 
@@ -112,7 +112,7 @@ TEST_CASE("File: truncate") {
         const char *path = testPath("trunc");
         std::remove(path);
 
-        File f(path);
+        File  f(path);
         Error err = f.open(IODevice::ReadWrite, File::Create | File::Truncate);
         REQUIRE(err.isOk());
 
@@ -132,7 +132,7 @@ TEST_CASE("File: size and atEnd") {
         const char *path = testPath("size");
         std::remove(path);
 
-        File f(path);
+        File  f(path);
         Error err = f.open(IODevice::ReadWrite, File::Create | File::Truncate);
         REQUIRE(err.isOk());
 
@@ -159,7 +159,7 @@ TEST_CASE("File: polymorphic use via IODevice pointer") {
         const char *path = testPath("poly");
         std::remove(path);
 
-        File f(path);
+        File      f(path);
         IODevice *dev = &f;
 
         Error err = f.open(IODevice::ReadWrite, File::Create | File::Truncate);
@@ -167,12 +167,12 @@ TEST_CASE("File: polymorphic use via IODevice pointer") {
 
         // Write via IODevice interface
         const char *data = "polymorphic!";
-        int64_t written = dev->write(data, 12);
+        int64_t     written = dev->write(data, 12);
         CHECK(written == 12);
 
         // Seek and read via IODevice interface
         CHECK(dev->seek(0).isOk());
-        char buf[13] = {};
+        char    buf[13] = {};
         int64_t n = dev->read(buf, 12);
         CHECK(n == 12);
         CHECK(std::strcmp(buf, "polymorphic!") == 0);
@@ -189,9 +189,7 @@ TEST_CASE("File: aboutToClose signal emitted on close") {
         f.open(IODevice::WriteOnly, File::Create | File::Truncate);
 
         bool signalFired = false;
-        f.aboutToCloseSignal.connect([&signalFired]() {
-                signalFired = true;
-        });
+        f.aboutToCloseSignal.connect([&signalFired]() { signalFired = true; });
 
         f.close();
         CHECK(signalFired);
@@ -207,9 +205,7 @@ TEST_CASE("File: bytesWritten signal emitted on write") {
         f.open(IODevice::WriteOnly, File::Create | File::Truncate);
 
         int64_t reportedBytes = 0;
-        f.bytesWrittenSignal.connect([&reportedBytes](int64_t n) {
-                reportedBytes = n;
-        });
+        f.bytesWrittenSignal.connect([&reportedBytes](int64_t n) { reportedBytes = n; });
 
         f.write("test", 4);
         CHECK(reportedBytes == 4);
@@ -341,7 +337,7 @@ TEST_CASE("File: open already-open file returns error") {
         const char *path = testPath("dblopen");
         std::remove(path);
 
-        File f(path);
+        File  f(path);
         Error err = f.open(IODevice::WriteOnly, File::Create | File::Truncate);
         REQUIRE(err.isOk());
 
@@ -366,7 +362,7 @@ TEST_CASE("File: read on write-only returns -1") {
         File f(path);
         f.open(IODevice::WriteOnly, File::Create | File::Truncate);
 
-        char buf[4];
+        char    buf[4];
         int64_t n = f.read(buf, 4);
         CHECK(n == -1);
 
@@ -413,7 +409,7 @@ TEST_CASE("File: pos/seek/size on closed file") {
 }
 
 TEST_CASE("File: truncate on closed file returns error") {
-        File f;
+        File  f;
         Error err = f.truncate(0);
         CHECK(err.isError());
 }
@@ -423,15 +419,15 @@ TEST_CASE("File: truncate on closed file returns error") {
 // Byte at offset i = (i & 0xFF).
 // ---------------------------------------------------------------
 static void writePatternFile(const char *path, size_t totalSize) {
-        File f(path);
+        File  f(path);
         Error err = f.open(IODevice::WriteOnly, File::Create | File::Truncate);
         REQUIRE(err.isOk());
         // Write in 4K chunks
         uint8_t chunk[4096];
-        size_t written = 0;
-        while(written < totalSize) {
+        size_t  written = 0;
+        while (written < totalSize) {
                 size_t chunkSz = std::min(sizeof(chunk), totalSize - written);
-                for(size_t i = 0; i < chunkSz; i++) {
+                for (size_t i = 0; i < chunkSz; i++) {
                         chunk[i] = static_cast<uint8_t>((written + i) & 0xFF);
                 }
                 int64_t n = f.write(chunk, static_cast<int64_t>(chunkSz));
@@ -445,8 +441,8 @@ static void writePatternFile(const char *path, size_t totalSize) {
 // matches the pattern: byte at file offset i = (i & 0xFF).
 static bool verifyPattern(const void *data, size_t len, size_t startOffset) {
         const uint8_t *p = static_cast<const uint8_t *>(data);
-        for(size_t i = 0; i < len; i++) {
-                if(p[i] != static_cast<uint8_t>((startOffset + i) & 0xFF)) return false;
+        for (size_t i = 0; i < len; i++) {
+                if (p[i] != static_cast<uint8_t>((startOffset + i) & 0xFF)) return false;
         }
         return true;
 }
@@ -467,7 +463,7 @@ TEST_CASE("File: seek invalidates read buffer") {
         f.open(IODevice::ReadOnly);
 
         // First read fills the buffer and returns "AAAA"
-        char buf[4] = {};
+        char    buf[4] = {};
         int64_t n = f.read(buf, 4);
         CHECK(n == 4);
         CHECK(std::memcmp(buf, "AAAA", 4) == 0);
@@ -534,8 +530,7 @@ TEST_CASE("File: readBulk aligned position and size") {
         Error err = f.readBulk(buf, readSize);
         CHECK(err.isOk());
         CHECK(buf.size() == static_cast<size_t>(readSize));
-        CHECK(verifyPattern(buf.data(), static_cast<size_t>(readSize),
-                            static_cast<size_t>(offset)));
+        CHECK(verifyPattern(buf.data(), static_cast<size_t>(readSize), static_cast<size_t>(offset)));
 
         f.close();
         std::remove(path);
@@ -565,8 +560,7 @@ TEST_CASE("File: readBulk unaligned position") {
         REQUIRE(buf.isValid());
         Error err = f.readBulk(buf, readSize);
         CHECK(err.isOk());
-        CHECK(verifyPattern(buf.data(), static_cast<size_t>(readSize),
-                            static_cast<size_t>(offset)));
+        CHECK(verifyPattern(buf.data(), static_cast<size_t>(readSize), static_cast<size_t>(offset)));
 
         f.close();
         std::remove(path);
@@ -596,8 +590,7 @@ TEST_CASE("File: readBulk unaligned size") {
         REQUIRE(buf.isValid());
         Error err = f.readBulk(buf, readSize);
         CHECK(err.isOk());
-        CHECK(verifyPattern(buf.data(), static_cast<size_t>(readSize),
-                            static_cast<size_t>(offset)));
+        CHECK(verifyPattern(buf.data(), static_cast<size_t>(readSize), static_cast<size_t>(offset)));
 
         f.close();
         std::remove(path);
@@ -627,8 +620,7 @@ TEST_CASE("File: readBulk unaligned position and size") {
         REQUIRE(buf.isValid());
         Error err = f.readBulk(buf, readSize);
         CHECK(err.isOk());
-        CHECK(verifyPattern(buf.data(), static_cast<size_t>(readSize),
-                            static_cast<size_t>(offset)));
+        CHECK(verifyPattern(buf.data(), static_cast<size_t>(readSize), static_cast<size_t>(offset)));
 
         f.close();
         std::remove(path);
@@ -658,17 +650,16 @@ TEST_CASE("File: readBulk region smaller than alignment (no DIO portion)") {
         REQUIRE(buf.isValid());
         Error err = f.readBulk(buf, readSize);
         CHECK(err.isOk());
-        CHECK(verifyPattern(buf.data(), static_cast<size_t>(readSize),
-                            static_cast<size_t>(offset)));
+        CHECK(verifyPattern(buf.data(), static_cast<size_t>(readSize), static_cast<size_t>(offset)));
 
         f.close();
         std::remove(path);
 }
 
 TEST_CASE("File: readBulk on closed file returns NotOpen") {
-        File f;
+        File   f;
         Buffer buf(1024);
-        Error err = f.readBulk(buf, 1024);
+        Error  err = f.readBulk(buf, 1024);
         CHECK(err.isError());
         CHECK(err.code() == Error::NotOpen);
 }
@@ -692,7 +683,7 @@ TEST_CASE("File: readBulk with buffer too small returns BufferTooSmall") {
         // then allocate a buffer that doesn't account for the shift
         f.seek(7);
         Buffer buf(100); // too small: needs 100 + shift
-        Error err = f.readBulk(buf, 100);
+        Error  err = f.readBulk(buf, 100);
         CHECK(err.isError());
         CHECK(err.code() == Error::BufferTooSmall);
 
@@ -713,7 +704,7 @@ TEST_CASE("File: readBulk with non-host-accessible buffer returns error") {
         REQUIRE(f.isOpen());
 
         Buffer buf; // invalid buffer
-        Error err = f.readBulk(buf, 100);
+        Error  err = f.readBulk(buf, 100);
         CHECK(err.isError());
 
         f.close();
@@ -751,8 +742,7 @@ TEST_CASE("File: readBulk large media-like read") {
         REQUIRE(payload.isValid());
         Error err = f.readBulk(payload, payloadSize);
         CHECK(err.isOk());
-        CHECK(verifyPattern(payload.data(), static_cast<size_t>(payloadSize),
-                            static_cast<size_t>(payloadOffset)));
+        CHECK(verifyPattern(payload.data(), static_cast<size_t>(payloadSize), static_cast<size_t>(payloadOffset)));
 
         f.close();
         std::remove(path);
@@ -782,8 +772,8 @@ TEST_CASE("File: manual DIO workflow (step-by-step)") {
         int64_t A = static_cast<int64_t>(align);
         int64_t alignedStart = (dataOffset + A - 1) & ~(A - 1);
         int64_t alignedEnd = (dataOffset + dataSize) & ~(A - 1);
-        size_t headBytes = static_cast<size_t>(alignedStart - dataOffset);
-        size_t tailBytes = static_cast<size_t>((dataOffset + dataSize) - alignedEnd);
+        size_t  headBytes = static_cast<size_t>(alignedStart - dataOffset);
+        size_t  tailBytes = static_cast<size_t>((dataOffset + dataSize) - alignedEnd);
         int64_t dioBytes = alignedEnd - alignedStart;
         REQUIRE(dioBytes > 0);
 
@@ -796,7 +786,7 @@ TEST_CASE("File: manual DIO workflow (step-by-step)") {
         uint8_t *dest = static_cast<uint8_t *>(buf.data());
 
         // Step 3: Read unaligned head with normal I/O
-        if(headBytes > 0) {
+        if (headBytes > 0) {
                 f.seek(dataOffset);
                 int64_t n = f.read(dest, static_cast<int64_t>(headBytes));
                 CHECK(n == static_cast<int64_t>(headBytes));
@@ -820,16 +810,14 @@ TEST_CASE("File: manual DIO workflow (step-by-step)") {
         f.setDirectIO(false);
         CHECK_FALSE(f.isDirectIO());
 
-        if(tailBytes > 0) {
+        if (tailBytes > 0) {
                 f.seek(alignedEnd);
-                n = f.read(dest + headBytes + static_cast<size_t>(dioBytes),
-                           static_cast<int64_t>(tailBytes));
+                n = f.read(dest + headBytes + static_cast<size_t>(dioBytes), static_cast<int64_t>(tailBytes));
                 CHECK(n == static_cast<int64_t>(tailBytes));
         }
 
         // Step 6: Verify the entire payload
-        CHECK(verifyPattern(dest, static_cast<size_t>(dataSize),
-                            static_cast<size_t>(dataOffset)));
+        CHECK(verifyPattern(dest, static_cast<size_t>(dataSize), static_cast<size_t>(dataOffset)));
 
         f.close();
         std::remove(path);
@@ -852,7 +840,7 @@ TEST_CASE("File: readBulk at file start (position 0, aligned)") {
 
         // Position is already 0 (aligned), read aligned size
         int64_t readSize = static_cast<int64_t>(align * 8);
-        Buffer buf(static_cast<size_t>(readSize) + align, align);
+        Buffer  buf(static_cast<size_t>(readSize) + align, align);
         REQUIRE(buf.isValid());
         Error err = f.readBulk(buf, readSize);
         CHECK(err.isOk());
@@ -880,7 +868,7 @@ TEST_CASE("File: readBulk exact single block") {
         // Read exactly one aligned block from an aligned position
         f.seek(static_cast<int64_t>(align));
         int64_t readSize = static_cast<int64_t>(align);
-        Buffer buf(static_cast<size_t>(readSize) + align, align);
+        Buffer  buf(static_cast<size_t>(readSize) + align, align);
         REQUIRE(buf.isValid());
         Error err = f.readBulk(buf, readSize);
         CHECK(err.isOk());
@@ -972,7 +960,7 @@ TEST_CASE("File: readBulk past EOF with sub-block region") {
 
         // Request more than the entire file
         int64_t readSize = static_cast<int64_t>(align * 2);
-        Buffer buf(static_cast<size_t>(readSize) + align, align);
+        Buffer  buf(static_cast<size_t>(readSize) + align, align);
         REQUIRE(buf.isValid());
         Error err = f.readBulk(buf, readSize);
         CHECK(err.isOk());
@@ -1074,7 +1062,7 @@ TEST_CASE("File: readBulk DIO fallback on tmpfs") {
 
         // Read a region that spans multiple alignment blocks so there's a DIO portion
         int64_t readSize = static_cast<int64_t>(align * 4);
-        Buffer buf(static_cast<size_t>(readSize) + align, align);
+        Buffer  buf(static_cast<size_t>(readSize) + align, align);
         REQUIRE(buf.isValid());
 
         Error err = f.readBulk(buf, readSize);
@@ -1112,8 +1100,7 @@ TEST_CASE("File: readBulk DIO fallback with unaligned position on tmpfs") {
         Error err = f.readBulk(buf, readSize);
         CHECK(err.isOk());
         CHECK(buf.size() == static_cast<size_t>(readSize));
-        CHECK(verifyPattern(buf.data(), static_cast<size_t>(readSize),
-                            static_cast<size_t>(offset)));
+        CHECK(verifyPattern(buf.data(), static_cast<size_t>(readSize), static_cast<size_t>(offset)));
 
         f.close();
         std::remove(path);
@@ -1131,7 +1118,7 @@ TEST_CASE("File: readBulk with invalid size returns error") {
         REQUIRE(f.isOpen());
 
         Buffer buf(1024);
-        Error err = f.readBulk(buf, 0);
+        Error  err = f.readBulk(buf, 0);
         CHECK(err.isError());
         CHECK(err.code() == Error::InvalidArgument);
 
@@ -1161,10 +1148,10 @@ TEST_CASE("File: writeBulk aligned position and size with aligned buffer") {
 
         // Allocate an aligned buffer via the Buffer class (page-aligned by default)
         const size_t payloadSize = align * 4;
-        Buffer buf(payloadSize, align);
+        Buffer       buf(payloadSize, align);
         REQUIRE(buf.isValid());
         uint8_t *p = static_cast<uint8_t *>(buf.data());
-        for(size_t i = 0; i < payloadSize; ++i) p[i] = static_cast<uint8_t>(i & 0xff);
+        for (size_t i = 0; i < payloadSize; ++i) p[i] = static_cast<uint8_t>(i & 0xff);
 
         int64_t n = f.writeBulk(buf.data(), static_cast<int64_t>(payloadSize));
         CHECK(n == static_cast<int64_t>(payloadSize));
@@ -1175,7 +1162,7 @@ TEST_CASE("File: writeBulk aligned position and size with aligned buffer") {
         uint8_t check[payloadSize] = {};
         int64_t r = f.read(check, static_cast<int64_t>(payloadSize));
         CHECK(r == static_cast<int64_t>(payloadSize));
-        for(size_t i = 0; i < payloadSize; ++i) CHECK(check[i] == static_cast<uint8_t>(i & 0xff));
+        for (size_t i = 0; i < payloadSize; ++i) CHECK(check[i] == static_cast<uint8_t>(i & 0xff));
         f.close();
         std::remove(path);
 }
@@ -1190,9 +1177,9 @@ TEST_CASE("File: writeBulk unaligned source pointer falls back to normal write")
 
         // Unaligned source (offset by 3 bytes into an allocated buffer)
         const size_t payloadSize = 4096;
-        uint8_t raw[payloadSize + 16];
-        uint8_t *unaligned = raw + 3;
-        for(size_t i = 0; i < payloadSize; ++i) unaligned[i] = static_cast<uint8_t>((i + 1) & 0xff);
+        uint8_t      raw[payloadSize + 16];
+        uint8_t     *unaligned = raw + 3;
+        for (size_t i = 0; i < payloadSize; ++i) unaligned[i] = static_cast<uint8_t>((i + 1) & 0xff);
 
         int64_t n = f.writeBulk(unaligned, static_cast<int64_t>(payloadSize));
         CHECK(n == static_cast<int64_t>(payloadSize));
@@ -1203,7 +1190,7 @@ TEST_CASE("File: writeBulk unaligned source pointer falls back to normal write")
         uint8_t check[payloadSize] = {};
         int64_t r = f.read(check, static_cast<int64_t>(payloadSize));
         CHECK(r == static_cast<int64_t>(payloadSize));
-        for(size_t i = 0; i < payloadSize; ++i) {
+        for (size_t i = 0; i < payloadSize; ++i) {
                 CHECK(check[i] == static_cast<uint8_t>((i + 1) & 0xff));
         }
         f.close();
@@ -1218,9 +1205,9 @@ TEST_CASE("File: writeBulk region smaller than alignment block") {
         f.open(IODevice::WriteOnly, File::Create | File::Truncate);
         REQUIRE(f.isOpen());
 
-        Buffer buf(4096, 4096);
+        Buffer   buf(4096, 4096);
         uint8_t *p = static_cast<uint8_t *>(buf.data());
-        for(size_t i = 0; i < 100; ++i) p[i] = static_cast<uint8_t>(0x55);
+        for (size_t i = 0; i < 100; ++i) p[i] = static_cast<uint8_t>(0x55);
 
         // Write only 100 bytes — smaller than one alignment block, so
         // writeBulk should fall back to normal I/O entirely.
@@ -1233,7 +1220,7 @@ TEST_CASE("File: writeBulk region smaller than alignment block") {
         uint8_t check[100] = {};
         int64_t r = f.read(check, 100);
         CHECK(r == 100);
-        for(int i = 0; i < 100; ++i) CHECK(check[i] == 0x55);
+        for (int i = 0; i < 100; ++i) CHECK(check[i] == 0x55);
         f.close();
         std::remove(path);
 }
@@ -1251,13 +1238,13 @@ TEST_CASE("File: writeBulk unaligned position") {
 
         // Pre-write some bytes to advance the position off-alignment,
         // then writeBulk a larger chunk spanning into the aligned region.
-        char prefix[7] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G' };
+        char prefix[7] = {'A', 'B', 'C', 'D', 'E', 'F', 'G'};
         f.write(prefix, 7);
 
         const size_t payloadSize = align * 3 + 5;
-        Buffer buf(payloadSize + align, align);
-        uint8_t *p = static_cast<uint8_t *>(buf.data());
-        for(size_t i = 0; i < payloadSize; ++i) p[i] = static_cast<uint8_t>((i + 0xC0) & 0xff);
+        Buffer       buf(payloadSize + align, align);
+        uint8_t     *p = static_cast<uint8_t *>(buf.data());
+        for (size_t i = 0; i < payloadSize; ++i) p[i] = static_cast<uint8_t>((i + 0xC0) & 0xff);
 
         int64_t n = f.writeBulk(buf.data(), static_cast<int64_t>(payloadSize));
         CHECK(n == static_cast<int64_t>(payloadSize));
@@ -1267,11 +1254,11 @@ TEST_CASE("File: writeBulk unaligned position") {
         f.open(IODevice::ReadOnly);
         char got_prefix[7];
         f.read(got_prefix, 7);
-        for(int i = 0; i < 7; ++i) CHECK(got_prefix[i] == prefix[i]);
+        for (int i = 0; i < 7; ++i) CHECK(got_prefix[i] == prefix[i]);
 
         std::vector<uint8_t> check(payloadSize);
         f.read(check.data(), static_cast<int64_t>(payloadSize));
-        for(size_t i = 0; i < payloadSize; ++i) {
+        for (size_t i = 0; i < payloadSize; ++i) {
                 CHECK(check[i] == static_cast<uint8_t>((i + 0xC0) & 0xff));
         }
         f.close();
@@ -1279,7 +1266,7 @@ TEST_CASE("File: writeBulk unaligned position") {
 }
 
 TEST_CASE("File: writeBulk on closed file returns -1") {
-        File f;
+        File    f;
         int64_t n = f.writeBulk("hello", 5);
         CHECK(n == -1);
 }
@@ -1315,7 +1302,7 @@ TEST_CASE("File: pos() accounts for buffered read-ahead") {
 
         // Read 10 bytes — the buffer will read-ahead up to 8192 bytes from
         // the device, but pos() must report the logical position (10).
-        char buf[10];
+        char    buf[10];
         int64_t n = f.read(buf, 10);
         REQUIRE(n == 10);
         CHECK(f.pos() == 10);
@@ -1353,7 +1340,7 @@ TEST_CASE("File: pos() accounts for buffered read-ahead") {
 
 TEST_CASE("File: construction with const char*") {
         const char *path = "/tmp/test_cstr_file";
-        File f(path);
+        File        f(path);
         CHECK(f.filename() == "/tmp/test_cstr_file");
         CHECK_FALSE(f.isOpen());
 }
@@ -1407,7 +1394,7 @@ TEST_CASE("File: Append flag writes to end") {
 
         // Reopen in append mode and write more
         {
-                File f(path);
+                File  f(path);
                 Error err = f.open(IODevice::WriteOnly, File::Append);
                 CHECK(err.isOk());
                 f.write("world", 5);
@@ -1441,7 +1428,7 @@ TEST_CASE("File: Exclusive flag fails if file exists") {
 
         // Try to create with Exclusive — should fail since file exists
         {
-                File f(path);
+                File  f(path);
                 Error err = f.open(IODevice::WriteOnly, File::Create | File::Exclusive);
                 CHECK(err.isError());
                 CHECK(err.code() == Error::Exists);
@@ -1455,7 +1442,7 @@ TEST_CASE("File: Exclusive flag succeeds if file does not exist") {
         const char *path = testPath("excl_new");
         std::remove(path);
 
-        File f(path);
+        File  f(path);
         Error err = f.open(IODevice::WriteOnly, File::Create | File::Exclusive);
         CHECK(err.isOk());
         CHECK(f.isOpen());
@@ -1468,12 +1455,12 @@ TEST_CASE("File: writev writes multiple buffers as single call") {
         const char *path = testPath("writev");
         std::remove(path);
 
-        File f(path);
+        File  f(path);
         Error err = f.open(IODevice::WriteOnly, File::Create | File::Truncate);
         REQUIRE(err.isOk());
 
-        const char part1[] = "Hello, ";
-        const char part2[] = "World!";
+        const char  part1[] = "Hello, ";
+        const char  part2[] = "World!";
         File::IOVec iov[2];
         iov[0].data = part1;
         iov[0].size = sizeof(part1) - 1;
@@ -1498,7 +1485,7 @@ TEST_CASE("File: writev writes multiple buffers as single call") {
 
 TEST_CASE("File: writev on closed file returns -1") {
         File::IOVec iov[1];
-        const char data[] = "x";
+        const char  data[] = "x";
         iov[0].data = data;
         iov[0].size = 1;
         File f;
@@ -1509,7 +1496,7 @@ TEST_CASE("File: preallocate reserves space") {
         const char *path = testPath("prealloc");
         std::remove(path);
 
-        File f(path);
+        File  f(path);
         Error err = f.open(IODevice::WriteOnly, File::Create | File::Truncate);
         REQUIRE(err.isOk());
 
@@ -1517,14 +1504,13 @@ TEST_CASE("File: preallocate reserves space") {
         Error pa = f.preallocate(0, 64 * 1024);
         // On tmpfs posix_fallocate may return EOPNOTSUPP; treat both ok and
         // NotImplemented/NotSupported as acceptable (the call must not crash).
-        CHECK((pa.isOk() || pa == Error::NotImplemented || pa == Error::NotSupported
-               || pa.isError()));
+        CHECK((pa.isOk() || pa == Error::NotImplemented || pa == Error::NotSupported || pa.isError()));
         f.close();
         std::remove(path);
 }
 
 TEST_CASE("File: preallocate on closed file returns NotOpen error") {
-        File f;
+        File  f;
         Error err = f.preallocate(0, 4096);
         CHECK(err.isError());
         CHECK(err == Error::NotOpen);
@@ -1547,7 +1533,7 @@ TEST_CASE("File: DIO toggle during reads preserves data") {
 
         // Read first 100 bytes normally (buffered)
         f.seek(0);
-        char header[100] = {};
+        char    header[100] = {};
         int64_t n = f.read(header, 100);
         CHECK(n == 100);
         CHECK(verifyPattern(header, 100, 0));

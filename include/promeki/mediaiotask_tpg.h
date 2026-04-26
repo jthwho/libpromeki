@@ -131,8 +131,7 @@ class MediaIOTask_TPG : public MediaIOTask {
                 Error executeCmd(MediaIOCommandRead &cmd) override;
 
                 Error describe(MediaIODescription *out) const override;
-                Error proposeOutput(const MediaDesc &requested,
-                                    MediaDesc *achievable) const override;
+                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const override;
 
                 // Helper that derives the MediaDesc the generator would
                 // emit given its current MediaConfig — used by both
@@ -141,32 +140,32 @@ class MediaIOTask_TPG : public MediaIOTask {
                 MediaDesc producedFromConfig(const MediaIO::Config &cfg) const;
 
                 // Video state
-                VideoTestPattern        _videoPattern;
-                ImageDesc               _imageDesc;
-                double                  _motion = 0.0;
-                double                  _motionOffset = 0.0;
-                bool                    _videoEnabled = false;
-                bool                    _burnEnabled = false;
-                String                  _burnTextTemplate;
+                VideoTestPattern _videoPattern;
+                ImageDesc        _imageDesc;
+                double           _motion = 0.0;
+                double           _motionOffset = 0.0;
+                bool             _videoEnabled = false;
+                bool             _burnEnabled = false;
+                String           _burnTextTemplate;
 
                 // Binary data encoder pass (VITC-style frame stamp).
-                ImageDataEncoder        _dataEncoder;
-                bool                    _dataEncoderEnabled = false;
-                uint32_t                _dataEncoderRepeat  = 16;
-                uint32_t                _streamId           = 0;
+                ImageDataEncoder _dataEncoder;
+                bool             _dataEncoderEnabled = false;
+                uint32_t         _dataEncoderRepeat = 16;
+                uint32_t         _streamId = 0;
 
                 // Audio state
-                AudioTestPattern::UPtr   _audioPattern;
-                AudioDesc               _audioDesc;
-                bool                    _audioEnabled = false;
+                AudioTestPattern::UPtr _audioPattern;
+                AudioDesc              _audioDesc;
+                bool                   _audioEnabled = false;
 
                 // Timecode state
-                TimecodeGenerator       _tcGen;
-                bool                    _timecodeEnabled = false;
+                TimecodeGenerator _tcGen;
+                bool              _timecodeEnabled = false;
 
                 // General state
-                FrameRate               _frameRate;
-                FrameCount              _frameCount{0};
+                FrameRate  _frameRate;
+                FrameCount _frameCount{0};
 };
 
 PROMEKI_NAMESPACE_END

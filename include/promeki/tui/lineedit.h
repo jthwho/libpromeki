@@ -21,15 +21,18 @@ PROMEKI_NAMESPACE_BEGIN
  * Thread-affine — see @ref TuiWidget.
  */
 class TuiLineEdit : public TuiWidget {
-        PROMEKI_OBJECT(TuiLineEdit, TuiWidget)
+                PROMEKI_OBJECT(TuiLineEdit, TuiWidget)
         public:
                 TuiLineEdit(const String &text = String(), ObjectBase *parent = nullptr);
                 ~TuiLineEdit() override;
 
-                void setText(const String &text);
+                void          setText(const String &text);
                 const String &text() const { return _text; }
 
-                void setPlaceholder(const String &text) { _placeholder = text; update(); }
+                void setPlaceholder(const String &text) {
+                        _placeholder = text;
+                        update();
+                }
                 const String &placeholder() const { return _placeholder; }
 
                 Size2Di32 sizeHint() const override;
@@ -44,10 +47,10 @@ class TuiLineEdit : public TuiWidget {
                 void focusOutEvent(Event *e) override;
 
         private:
-                String  _text;
-                String  _placeholder;
-                int     _cursorPos = 0;
-                int     _scrollOffset = 0;
+                String _text;
+                String _placeholder;
+                int    _cursorPos = 0;
+                int    _scrollOffset = 0;
 };
 
 PROMEKI_NAMESPACE_END

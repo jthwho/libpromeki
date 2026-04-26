@@ -68,9 +68,9 @@ class TextStream {
 
                 /** @brief Field alignment for padded output. */
                 enum FieldAlignment {
-                        Left,   ///< @brief Left-aligned (pad on right).
-                        Right,  ///< @brief Right-aligned (pad on left, default).
-                        Center  ///< @brief Center-aligned (pad both sides).
+                        Left,  ///< @brief Left-aligned (pad on right).
+                        Right, ///< @brief Right-aligned (pad on left, default).
+                        Center ///< @brief Center-aligned (pad both sides).
                 };
 
                 /** @brief Floating-point notation styles. */
@@ -376,22 +376,22 @@ class TextStream {
                  */
                 String readToken();
 
-                IODevice                *_device                = nullptr;
-                IODevice::UPtr           _ownedDevice;
+                IODevice      *_device = nullptr;
+                IODevice::UPtr _ownedDevice;
 
                 // Encoding
-                String                  _encoding{"UTF-8"};
+                String _encoding{"UTF-8"};
 
                 // Formatting state
-                int                     _fieldWidth             = 0;
-                FieldAlignment          _fieldAlignment         = Right;
-                char                    _padChar                = ' ';
-                int                     _integerBase            = 10;
-                int                     _realNumberPrecision    = 6;
-                RealNumberNotation      _realNumberNotation     = SmartNotation;
+                int                _fieldWidth = 0;
+                FieldAlignment     _fieldAlignment = Right;
+                char               _padChar = ' ';
+                int                _integerBase = 10;
+                int                _realNumberPrecision = 6;
+                RealNumberNotation _realNumberNotation = SmartNotation;
 
                 // Status
-                Status                  _status = Ok;
+                Status _status = Ok;
 };
 
 // ============================================================================
@@ -489,8 +489,7 @@ template <typename T> class Span;
  * @param a Atomic to read from.
  * @return  @p s for chaining.
  */
-template <typename T>
-inline TextStream &operator<<(TextStream &s, const Atomic<T> &a) {
+template <typename T> inline TextStream &operator<<(TextStream &s, const Atomic<T> &a) {
         s << a.value();
         return s;
 }
@@ -504,8 +503,7 @@ inline TextStream &operator<<(TextStream &s, const Atomic<T> &a) {
  * @param p Pair to write.
  * @return  @p s for chaining.
  */
-template <typename A, typename B>
-inline TextStream &operator<<(TextStream &s, const Pair<A, B> &p) {
+template <typename A, typename B> inline TextStream &operator<<(TextStream &s, const Pair<A, B> &p) {
         s << "(" << p.first() << ", " << p.second() << ")";
         return s;
 }
@@ -520,11 +518,10 @@ inline TextStream &operator<<(TextStream &s, const Pair<A, B> &p) {
  * @param span Span to write.
  * @return     @p s for chaining.
  */
-template <typename T>
-inline TextStream &operator<<(TextStream &s, const Span<T> &span) {
+template <typename T> inline TextStream &operator<<(TextStream &s, const Span<T> &span) {
         s << "[";
-        for(size_t i = 0; i < span.size(); ++i) {
-                if(i != 0) s << ", ";
+        for (size_t i = 0; i < span.size(); ++i) {
+                if (i != 0) s << ", ";
                 s << span[i];
         }
         s << "]";

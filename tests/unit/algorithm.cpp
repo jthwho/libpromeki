@@ -46,7 +46,7 @@ TEST_CASE("Algorithm: filtered") {
 
 TEST_CASE("Algorithm: mapped") {
         List<int> l = {1, 2, 3};
-        auto doubled = mapped(l, [](int x) { return x * 2; });
+        auto      doubled = mapped(l, [](int x) { return x * 2; });
         CHECK(doubled.size() == 3);
         CHECK(doubled[0] == 2);
         CHECK(doubled[1] == 4);
@@ -55,7 +55,7 @@ TEST_CASE("Algorithm: mapped") {
 
 TEST_CASE("Algorithm: mapped type transformation") {
         List<int> l = {1, 2, 3};
-        auto strings = mapped(l, [](int x) { return String::sprintf("%d", x); });
+        auto      strings = mapped(l, [](int x) { return String::sprintf("%d", x); });
         CHECK(strings.size() == 3);
         CHECK(strings[0] == "1");
 }
@@ -80,26 +80,26 @@ TEST_CASE("Algorithm: noneOf") {
 
 TEST_CASE("Algorithm: forEach") {
         List<int> l = {1, 2, 3};
-        int sum = 0;
+        int       sum = 0;
         forEach(l, [&sum](int x) { sum += x; });
         CHECK(sum == 6);
 }
 
 TEST_CASE("Algorithm: accumulate") {
         List<int> l = {1, 2, 3, 4, 5};
-        int sum = accumulate(l, 0, [](int a, int b) { return a + b; });
+        int       sum = accumulate(l, 0, [](int a, int b) { return a + b; });
         CHECK(sum == 15);
 }
 
 TEST_CASE("Algorithm: minElement") {
         List<int> l = {5, 2, 8, 1, 9};
-        auto it = minElement(l);
+        auto      it = minElement(l);
         CHECK(*it == 1);
 }
 
 TEST_CASE("Algorithm: maxElement") {
         List<int> l = {5, 2, 8, 1, 9};
-        auto it = maxElement(l);
+        auto      it = maxElement(l);
         CHECK(*it == 9);
 }
 
@@ -124,7 +124,7 @@ TEST_CASE("Algorithm: allOf/anyOf/noneOf with empty container") {
 
 TEST_CASE("Algorithm: accumulate with Deque") {
         Deque<int> d = {1, 2, 3};
-        int product = accumulate(d, 1, [](int a, int b) { return a * b; });
+        int        product = accumulate(d, 1, [](int a, int b) { return a * b; });
         CHECK(product == 6);
 }
 
@@ -155,13 +155,13 @@ TEST_CASE("Algorithm: filtered with empty container") {
 
 TEST_CASE("Algorithm: mapped with empty container") {
         List<int> empty;
-        auto result = mapped(empty, [](int x) { return x * 2; });
+        auto      result = mapped(empty, [](int x) { return x * 2; });
         CHECK(result.isEmpty());
 }
 
 TEST_CASE("Algorithm: mapped with Deque") {
         Deque<int> d = {1, 2, 3};
-        auto result = mapped(d, [](int x) { return x * 10; });
+        auto       result = mapped(d, [](int x) { return x * 10; });
         CHECK(result.size() == 3);
         CHECK(result[0] == 10);
         CHECK(result[2] == 30);
@@ -169,7 +169,7 @@ TEST_CASE("Algorithm: mapped with Deque") {
 
 TEST_CASE("Algorithm: forEach with Deque") {
         Deque<int> d = {10, 20, 30};
-        int sum = 0;
+        int        sum = 0;
         forEach(d, [&sum](int x) { sum += x; });
         CHECK(sum == 60);
 }

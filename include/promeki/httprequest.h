@@ -58,7 +58,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  */
 class HttpRequest {
-        PROMEKI_SHARED_FINAL(HttpRequest)
+                PROMEKI_SHARED_FINAL(HttpRequest)
         public:
                 /** @brief Shared pointer type for HttpRequest. */
                 using Ptr = SharedPtr<HttpRequest>;
@@ -98,8 +98,7 @@ class HttpRequest {
                 const String &path() const { return _url.path(); }
 
                 /** @brief Convenience for @c url().queryValue(). */
-                String queryValue(const String &key,
-                                  const String &defaultValue = String()) const {
+                String queryValue(const String &key, const String &defaultValue = String()) const {
                         return _url.queryValue(key, defaultValue);
                 }
 
@@ -113,8 +112,7 @@ class HttpRequest {
                 void setHeaders(const HttpHeaders &h) { _headers = h; }
 
                 /** @brief Single-value header convenience accessor. */
-                String header(const String &name,
-                              const String &defaultValue = String()) const {
+                String header(const String &name, const String &defaultValue = String()) const {
                         return _headers.value(name, defaultValue);
                 }
 
@@ -184,8 +182,7 @@ class HttpRequest {
                  * @param name         The placeholder name from the route pattern.
                  * @param defaultValue Fallback when the placeholder is absent.
                  */
-                String pathParam(const String &name,
-                                 const String &defaultValue = String()) const {
+                String pathParam(const String &name, const String &defaultValue = String()) const {
                         return _pathParams.value(name, defaultValue);
                 }
 

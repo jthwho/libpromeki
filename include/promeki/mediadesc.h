@@ -37,21 +37,21 @@ class SdpSession;
  * threads.
  */
 class MediaDesc {
-    PROMEKI_SHARED_FINAL(MediaDesc)
-    public:
-        /** @brief Shared pointer type for MediaDesc. */
-        using Ptr = SharedPtr<MediaDesc>;
+                PROMEKI_SHARED_FINAL(MediaDesc)
+        public:
+                /** @brief Shared pointer type for MediaDesc. */
+                using Ptr = SharedPtr<MediaDesc>;
 
-        /** @brief List of MediaDesc values. */
-        using List = promeki::List<MediaDesc>;
+                /** @brief List of MediaDesc values. */
+                using List = promeki::List<MediaDesc>;
 
-        /** @brief List of shared MediaDesc pointers. */
-        using PtrList = promeki::List<Ptr>;
+                /** @brief List of shared MediaDesc pointers. */
+                using PtrList = promeki::List<Ptr>;
 
-        /** @brief Constructs a default (invalid) media description. */
-        MediaDesc() = default;
+                /** @brief Constructs a default (invalid) media description. */
+                MediaDesc() = default;
 
-        /**
+                /**
          * @brief Aggregates the per-@c m= descriptors from an SDP session.
          *
          * Walks every media description in @p session, calls
@@ -72,9 +72,9 @@ class MediaDesc {
          * @return A MediaDesc with the image and audio lists
          *         populated from @p session.
          */
-        static MediaDesc fromSdp(const SdpSession &session);
+                static MediaDesc fromSdp(const SdpSession &session);
 
-        /**
+                /**
          * @brief Builds an SdpSession from this MediaDesc.
          *
          * The inverse of @ref fromSdp.  Walks the image and audio
@@ -90,23 +90,25 @@ class MediaDesc {
          * @param videoPayloadType Starting PT for video streams.
          * @return A populated SdpSession.
          */
-        SdpSession toSdp(uint8_t videoPayloadType = 96) const;
+                SdpSession toSdp(uint8_t videoPayloadType = 96) const;
 
-        /** @brief Returns true if the media description is valid (has a valid frame rate and at least one image or audio description). */
-        bool isValid() const { return _frameRate.isValid() && (_imageList.size() > 0 || _audioList.size() > 0); }
+                /** @brief Returns true if the media description is valid (has a valid frame rate and at least one image or audio description). */
+                bool isValid() const {
+                        return _frameRate.isValid() && (_imageList.size() > 0 || _audioList.size() > 0);
+                }
 
-        /** @brief Returns the frame rate. */
-        const FrameRate &frameRate() const { return _frameRate; }
-        /** @brief Sets the frame rate.
+                /** @brief Returns the frame rate. */
+                const FrameRate &frameRate() const { return _frameRate; }
+                /** @brief Sets the frame rate.
          *  @param val The new frame rate. */
-        void setFrameRate(const FrameRate &val) { _frameRate = val; }
+                void setFrameRate(const FrameRate &val) { _frameRate = val; }
 
-        /** @brief Returns a const reference to the list of image descriptions. */
-        const ImageDesc::List &imageList() const { return _imageList; }
-        /** @brief Returns a mutable reference to the list of image descriptions. */
-        ImageDesc::List &imageList() { return _imageList; }
+                /** @brief Returns a const reference to the list of image descriptions. */
+                const ImageDesc::List &imageList() const { return _imageList; }
+                /** @brief Returns a mutable reference to the list of image descriptions. */
+                ImageDesc::List &imageList() { return _imageList; }
 
-        /**
+                /**
          * @brief Returns the VideoFormat for the image at @p index.
          *
          * Composes the MediaDesc-wide @ref frameRate with the
@@ -118,34 +120,32 @@ class MediaDesc {
          * @return The composed VideoFormat, or an invalid
          *         VideoFormat when @p index is out of range.
          */
-        VideoFormat videoFormat(size_t index) const {
-                if(index >= _imageList.size()) return VideoFormat();
-                const ImageDesc &img = _imageList[index];
-                return VideoFormat(img.size(), _frameRate, img.videoScanMode());
-        }
+                VideoFormat videoFormat(size_t index) const {
+                        if (index >= _imageList.size()) return VideoFormat();
+                        const ImageDesc &img = _imageList[index];
+                        return VideoFormat(img.size(), _frameRate, img.videoScanMode());
+                }
 
-        /** @brief Returns a const reference to the list of audio descriptions. */
-        const AudioDesc::List &audioList() const { return _audioList; }
-        /** @brief Returns a mutable reference to the list of audio descriptions. */
-        AudioDesc::List &audioList() { return _audioList; }
+                /** @brief Returns a const reference to the list of audio descriptions. */
+                const AudioDesc::List &audioList() const { return _audioList; }
+                /** @brief Returns a mutable reference to the list of audio descriptions. */
+                AudioDesc::List &audioList() { return _audioList; }
 
-        /** @brief Returns a const reference to the metadata. */
-        const Metadata &metadata() const { return _metadata; }
-        /** @brief Returns a mutable reference to the metadata. */
-        Metadata &metadata() { return _metadata; }
+                /** @brief Returns a const reference to the metadata. */
+                const Metadata &metadata() const { return _metadata; }
+                /** @brief Returns a mutable reference to the metadata. */
+                Metadata &metadata() { return _metadata; }
 
-        /** @brief Returns true if every member of both descriptors is equal. */
-        bool operator==(const MediaDesc &other) const {
-                return _frameRate == other._frameRate
-                    && _imageList == other._imageList
-                    && _audioList == other._audioList
-                    && _metadata  == other._metadata;
-        }
+                /** @brief Returns true if every member of both descriptors is equal. */
+                bool operator==(const MediaDesc &other) const {
+                        return _frameRate == other._frameRate && _imageList == other._imageList &&
+                               _audioList == other._audioList && _metadata == other._metadata;
+                }
 
-        /** @brief Returns true if any member differs. */
-        bool operator!=(const MediaDesc &other) const { return !(*this == other); }
+                /** @brief Returns true if any member differs. */
+                bool operator!=(const MediaDesc &other) const { return !(*this == other); }
 
-        /**
+                /**
          * @brief Compares structural media fields, ignoring metadata on
          *        the MediaDesc itself and on every ImageDesc / AudioDesc.
          *
@@ -160,24 +160,24 @@ class MediaDesc {
          * @param other The MediaDesc to compare against.
          * @return true if every structural field matches.
          */
-        bool formatEquals(const MediaDesc &other) const {
-                if(_frameRate != other._frameRate) return false;
-                if(_imageList.size() != other._imageList.size()) return false;
-                if(_audioList.size() != other._audioList.size()) return false;
-                for(size_t i = 0; i < _imageList.size(); ++i) {
-                        if(!_imageList[i].formatEquals(other._imageList[i])) return false;
+                bool formatEquals(const MediaDesc &other) const {
+                        if (_frameRate != other._frameRate) return false;
+                        if (_imageList.size() != other._imageList.size()) return false;
+                        if (_audioList.size() != other._audioList.size()) return false;
+                        for (size_t i = 0; i < _imageList.size(); ++i) {
+                                if (!_imageList[i].formatEquals(other._imageList[i])) return false;
+                        }
+                        for (size_t i = 0; i < _audioList.size(); ++i) {
+                                if (!_audioList[i].formatEquals(other._audioList[i])) return false;
+                        }
+                        return true;
                 }
-                for(size_t i = 0; i < _audioList.size(); ++i) {
-                        if(!_audioList[i].formatEquals(other._audioList[i])) return false;
-                }
-                return true;
-        }
 
-    private:
-        FrameRate           _frameRate;
-        ImageDesc::List     _imageList;
-        AudioDesc::List     _audioList;
-        Metadata            _metadata;
+        private:
+                FrameRate       _frameRate;
+                ImageDesc::List _imageList;
+                AudioDesc::List _audioList;
+                Metadata        _metadata;
 };
 
 /**
@@ -202,13 +202,19 @@ inline DataStream &operator<<(DataStream &stream, const MediaDesc &desc) {
  * @return The stream, for chaining.
  */
 inline DataStream &operator>>(DataStream &stream, MediaDesc &desc) {
-        if(!stream.readTag(DataStream::TypeMediaDesc)) { desc = MediaDesc(); return stream; }
-        FrameRate fr;
+        if (!stream.readTag(DataStream::TypeMediaDesc)) {
+                desc = MediaDesc();
+                return stream;
+        }
+        FrameRate       fr;
         ImageDesc::List imgs;
         AudioDesc::List auds;
-        Metadata meta;
+        Metadata        meta;
         stream >> fr >> imgs >> auds >> meta;
-        if(stream.status() != DataStream::Ok) { desc = MediaDesc(); return stream; }
+        if (stream.status() != DataStream::Ok) {
+                desc = MediaDesc();
+                return stream;
+        }
         desc = MediaDesc();
         desc.setFrameRate(fr);
         desc.imageList() = std::move(imgs);

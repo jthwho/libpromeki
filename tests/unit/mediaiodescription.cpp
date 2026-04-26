@@ -20,47 +20,45 @@ using namespace promeki;
 
 namespace {
 
-// Builds a fully-populated description so round-trip tests cover
-// every member.  Uses a couple of representative MediaDescs in each
-// of the producible / acceptable lists so list serialization is
-// exercised.
-MediaDesc makeUncompressedDesc(uint32_t w, uint32_t h, const PixelFormat &pd) {
-        MediaDesc md;
-        md.setFrameRate(FrameRate(FrameRate::FPS_29_97));
-        ImageDesc id(Size2Du32(w, h), pd);
-        md.imageList().pushToBack(id);
-        return md;
-}
+        // Builds a fully-populated description so round-trip tests cover
+        // every member.  Uses a couple of representative MediaDescs in each
+        // of the producible / acceptable lists so list serialization is
+        // exercised.
+        MediaDesc makeUncompressedDesc(uint32_t w, uint32_t h, const PixelFormat &pd) {
+                MediaDesc md;
+                md.setFrameRate(FrameRate(FrameRate::FPS_29_97));
+                ImageDesc id(Size2Du32(w, h), pd);
+                md.imageList().pushToBack(id);
+                return md;
+        }
 
-MediaIODescription makeSample() {
-        MediaIODescription d;
-        d.setBackendName("TPG");
-        d.setBackendDescription("Synthetic test pattern generator");
-        d.setName("tpg-1");
-        d.setUuid(UUID::generate(4));
-        d.setLocalId(7);
-        d.setCanBeSource(true);
-        d.setCanBeSink(false);
-        d.setCanBeTransform(false);
+        MediaIODescription makeSample() {
+                MediaIODescription d;
+                d.setBackendName("TPG");
+                d.setBackendDescription("Synthetic test pattern generator");
+                d.setName("tpg-1");
+                d.setUuid(UUID::generate(4));
+                d.setLocalId(7);
+                d.setCanBeSource(true);
+                d.setCanBeSink(false);
+                d.setCanBeTransform(false);
 
-        d.producibleFormats().pushToBack(
-                makeUncompressedDesc(1920, 1080, PixelFormat(PixelFormat::RGBA8_sRGB)));
-        d.producibleFormats().pushToBack(
-                makeUncompressedDesc(1280,  720, PixelFormat(PixelFormat::RGBA8_sRGB)));
-        d.setPreferredFormat(
-                makeUncompressedDesc(1920, 1080, PixelFormat(PixelFormat::RGBA8_sRGB)));
+                d.producibleFormats().pushToBack(
+                        makeUncompressedDesc(1920, 1080, PixelFormat(PixelFormat::RGBA8_sRGB)));
+                d.producibleFormats().pushToBack(makeUncompressedDesc(1280, 720, PixelFormat(PixelFormat::RGBA8_sRGB)));
+                d.setPreferredFormat(makeUncompressedDesc(1920, 1080, PixelFormat(PixelFormat::RGBA8_sRGB)));
 
-        d.setCanSeek(true);
-        d.setFrameCount(MediaIODescription::FrameCountInfinite);
-        d.setFrameRate(FrameRate(FrameRate::FPS_29_97));
+                d.setCanSeek(true);
+                d.setFrameCount(MediaIODescription::FrameCountInfinite);
+                d.setFrameRate(FrameRate(FrameRate::FPS_29_97));
 
-        Metadata md;
-        md.set(Metadata::Title, String("MediaIODescription sample"));
-        d.setContainerMetadata(md);
+                Metadata md;
+                md.set(Metadata::Title, String("MediaIODescription sample"));
+                d.setContainerMetadata(md);
 
-        d.setProbeStatus(Error::Ok);
-        return d;
-}
+                d.setProbeStatus(Error::Ok);
+                return d;
+        }
 
 } // namespace
 
@@ -134,14 +132,13 @@ TEST_CASE("MediaIODescription_Equality") {
 
         b = makeSample();
         b.setUuid(a.uuid());
-        b.acceptableFormats().pushToBack(
-                makeUncompressedDesc(640, 480, PixelFormat(PixelFormat::RGBA8_sRGB)));
+        b.acceptableFormats().pushToBack(makeUncompressedDesc(640, 480, PixelFormat(PixelFormat::RGBA8_sRGB)));
         CHECK(a != b);
 }
 
 TEST_CASE("MediaIODescription_Summary") {
         MediaIODescription d = makeSample();
-        const StringList lines = d.summary();
+        const StringList   lines = d.summary();
         REQUIRE(lines.size() > 0);
 
         // Header line must include the backend name and the
@@ -152,13 +149,13 @@ TEST_CASE("MediaIODescription_Summary") {
         // Roles line must list the source role and only that role.
         bool foundRoles = false;
         bool foundProducible = false;
-        for(size_t i = 0; i < lines.size(); ++i) {
-                if(lines[i].startsWith("  Roles:")) {
+        for (size_t i = 0; i < lines.size(); ++i) {
+                if (lines[i].startsWith("  Roles:")) {
                         CHECK(lines[i].contains("source"));
                         CHECK_FALSE(lines[i].contains("sink"));
                         foundRoles = true;
                 }
-                if(lines[i].startsWith("  Producible")) foundProducible = true;
+                if (lines[i].startsWith("  Producible")) foundProducible = true;
         }
         CHECK(foundRoles);
         CHECK(foundProducible);
@@ -166,8 +163,8 @@ TEST_CASE("MediaIODescription_Summary") {
 
 TEST_CASE("MediaIODescription_DataStreamRoundTrip") {
         MediaIODescription orig = makeSample();
-        Buffer buf(16384);
-        BufferIODevice dev(&buf);
+        Buffer             buf(16384);
+        BufferIODevice     dev(&buf);
         dev.open(IODevice::ReadWrite);
 
         {
@@ -192,12 +189,12 @@ TEST_CASE("MediaIODescription_DataStreamRoundTrip") {
 
 TEST_CASE("MediaIODescription_JsonShape") {
         MediaIODescription orig = makeSample();
-        JsonObject j = orig.toJson();
+        JsonObject         j = orig.toJson();
 
         // Identity fields surface verbatim.
         CHECK(j.getString("backendName") == "TPG");
-        CHECK(j.getString("name")         == "tpg-1");
-        CHECK(j.getInt("localId")         == 7);
+        CHECK(j.getString("name") == "tpg-1");
+        CHECK(j.getInt("localId") == 7);
 
         // Role flags appear as a string array.
         REQUIRE(j.valueIsArray("roles"));
@@ -209,8 +206,8 @@ TEST_CASE("MediaIODescription_JsonShape") {
         REQUIRE(j.valueIsArray("producibleFormats"));
         CHECK(j.getArray("producibleFormats").size() == 2);
         const String preferred = j.getString("preferredFormat");
-        const bool hasRaster = preferred.contains("1920");
-        const bool hasPixel  = preferred.contains("RGBA");
+        const bool   hasRaster = preferred.contains("1920");
+        const bool   hasPixel = preferred.contains("RGBA");
         CHECK((hasRaster || hasPixel));
 
         // Capabilities surface only when non-default.
@@ -245,27 +242,27 @@ TEST_CASE("MediaIODescription_JsonElidesDefaults") {
 
 TEST_CASE("MediaIODescription_JsonScalarRoundTrip") {
         MediaIODescription orig = makeSample();
-        JsonObject j = orig.toJson();
+        JsonObject         j = orig.toJson();
 
-        Error err;
+        Error              err;
         MediaIODescription round = MediaIODescription::fromJson(j, &err);
         CHECK(err.isOk());
 
         // Scalar / single-value fields round-trip lossless via JSON.
-        CHECK(round.backendName()        == orig.backendName());
+        CHECK(round.backendName() == orig.backendName());
         CHECK(round.backendDescription() == orig.backendDescription());
-        CHECK(round.name()               == orig.name());
-        CHECK(round.uuid()               == orig.uuid());
-        CHECK(round.localId()            == orig.localId());
-        CHECK(round.canBeSource()        == orig.canBeSource());
-        CHECK(round.canBeSink()          == orig.canBeSink());
-        CHECK(round.canBeTransform()     == orig.canBeTransform());
-        CHECK(round.canSeek()            == orig.canSeek());
-        CHECK(round.frameCount()         == orig.frameCount());
-        CHECK(round.frameRate()          == orig.frameRate());
-        CHECK(round.containerMetadata()  == orig.containerMetadata());
-        CHECK(round.probeStatus()        == orig.probeStatus());
-        CHECK(round.probeMessage()       == orig.probeMessage());
+        CHECK(round.name() == orig.name());
+        CHECK(round.uuid() == orig.uuid());
+        CHECK(round.localId() == orig.localId());
+        CHECK(round.canBeSource() == orig.canBeSource());
+        CHECK(round.canBeSink() == orig.canBeSink());
+        CHECK(round.canBeTransform() == orig.canBeTransform());
+        CHECK(round.canSeek() == orig.canSeek());
+        CHECK(round.frameCount() == orig.frameCount());
+        CHECK(round.frameRate() == orig.frameRate());
+        CHECK(round.containerMetadata() == orig.containerMetadata());
+        CHECK(round.probeStatus() == orig.probeStatus());
+        CHECK(round.probeMessage() == orig.probeMessage());
 
         // Format lists are intentionally one-way through JSON; the
         // canonical lossless path is the DataStream operators.  After
@@ -299,9 +296,9 @@ TEST_CASE("MediaIODescription_ProbeFailure") {
 
         // Summary surfaces the probe diagnostic.
         const StringList lines = d.summary();
-        bool found = false;
-        for(size_t i = 0; i < lines.size(); ++i) {
-                if(lines[i].contains("Probe:") && lines[i].contains("NotExist")) {
+        bool             found = false;
+        for (size_t i = 0; i < lines.size(); ++i) {
+                if (lines[i].contains("Probe:") && lines[i].contains("NotExist")) {
                         CHECK(lines[i].contains("file not found"));
                         found = true;
                 }
@@ -309,8 +306,8 @@ TEST_CASE("MediaIODescription_ProbeFailure") {
         CHECK(found);
 
         // JSON round-trip preserves the probe code and message.
-        JsonObject j = d.toJson();
-        Error err;
+        JsonObject         j = d.toJson();
+        Error              err;
         MediaIODescription round = MediaIODescription::fromJson(j, &err);
         CHECK(err.isOk());
         CHECK(round.probeStatus() == Error::NotExist);

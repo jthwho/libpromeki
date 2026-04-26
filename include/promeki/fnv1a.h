@@ -62,8 +62,8 @@ constexpr uint64_t fnv1aData(const void *data, size_t len, uint64_t seed = 0xcbf
  */
 constexpr uint64_t fnv1aMixCodepoint(uint64_t seed, char32_t cp) {
         constexpr uint64_t prime = 0x100000001b3ULL;
-        seed = (seed ^ static_cast<uint64_t>((cp >>  0) & 0xffu)) * prime;
-        seed = (seed ^ static_cast<uint64_t>((cp >>  8) & 0xffu)) * prime;
+        seed = (seed ^ static_cast<uint64_t>((cp >> 0) & 0xffu)) * prime;
+        seed = (seed ^ static_cast<uint64_t>((cp >> 8) & 0xffu)) * prime;
         seed = (seed ^ static_cast<uint64_t>((cp >> 16) & 0xffu)) * prime;
         seed = (seed ^ static_cast<uint64_t>((cp >> 24) & 0xffu)) * prime;
         return seed;
@@ -81,8 +81,7 @@ constexpr uint64_t fnv1aMixCodepoint(uint64_t seed, char32_t cp) {
  * @param seed  Initial hash value (defaults to the FNV offset basis).
  * @return The 64-bit FNV-1a hash.
  */
-constexpr uint64_t fnv1aCodepoints(const char32_t *data, size_t count,
-                                   uint64_t seed = 0xcbf29ce484222325ULL) {
+constexpr uint64_t fnv1aCodepoints(const char32_t *data, size_t count, uint64_t seed = 0xcbf29ce484222325ULL) {
         for (size_t i = 0; i < count; ++i) {
                 seed = fnv1aMixCodepoint(seed, data[i]);
         }
@@ -102,8 +101,7 @@ constexpr uint64_t fnv1aCodepoints(const char32_t *data, size_t count,
  * @param seed Initial hash value (defaults to the FNV offset basis).
  * @return The 64-bit FNV-1a hash.
  */
-constexpr uint64_t fnv1aLatin1AsCodepoints(const void *data, size_t len,
-                                           uint64_t seed = 0xcbf29ce484222325ULL) {
+constexpr uint64_t fnv1aLatin1AsCodepoints(const void *data, size_t len, uint64_t seed = 0xcbf29ce484222325ULL) {
         const auto *p = static_cast<const unsigned char *>(data);
         for (size_t i = 0; i < len; ++i) {
                 seed = fnv1aMixCodepoint(seed, static_cast<char32_t>(p[i]));

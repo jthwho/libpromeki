@@ -70,7 +70,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  */
 class DebugServer : public ObjectBase {
-        PROMEKI_OBJECT(DebugServer, ObjectBase)
+                PROMEKI_OBJECT(DebugServer, ObjectBase)
         public:
                 /** @brief Default base prefix for the API surface. */
                 static const String DefaultApiPrefix;
@@ -161,8 +161,8 @@ class DebugServer : public ObjectBase {
                 static Result<SocketAddress> parseSpec(const String &spec);
 
         private:
-                HttpServer      _server;
-                HttpApi         _api;
+                HttpServer _server;
+                HttpApi    _api;
 };
 
 PROMEKI_NAMESPACE_END

@@ -58,23 +58,15 @@ static std::atomic<int> g_nextLocalId{0};
 // payload is empty.  Concrete @ref VideoPayload accepts and stores
 // the one-frame value.
 
-static void ensurePayloadTiming(Frame::Ptr &frame,
-                                const MediaTimeStamp &synMts,
-                                const FrameRate &frameRate) {
-        if(!frame.isValid()) return;
-        const Duration oneFrame = frameRate.isValid()
-                ? frameRate.frameDuration()
-                : Duration();
-        for(size_t i = 0; i < frame->payloadList().size(); ++i) {
+static void ensurePayloadTiming(Frame::Ptr &frame, const MediaTimeStamp &synMts, const FrameRate &frameRate) {
+        if (!frame.isValid()) return;
+        const Duration oneFrame = frameRate.isValid() ? frameRate.frameDuration() : Duration();
+        for (size_t i = 0; i < frame->payloadList().size(); ++i) {
                 const MediaPayload::Ptr &p = frame->payloadList()[i];
-                if(!p.isValid()) continue;
-                MediaPayload *mp = frame.modify()
-                        ->payloadList()[i]
-                        .modify();
-                if(!mp->pts().isValid()) mp->setPts(synMts);
-                if(mp->hasDuration() &&
-                   mp->duration().isZero() &&
-                   !oneFrame.isZero()) {
+                if (!p.isValid()) continue;
+                MediaPayload *mp = frame.modify()->payloadList()[i].modify();
+                if (!mp->pts().isValid()) mp->setPts(synMts);
+                if (mp->hasDuration() && mp->duration().isZero() && !oneFrame.isZero()) {
                         // Best-effort: subclasses whose duration is
                         // derived (audio) return NotSupported and we
                         // leave their duration alone.
@@ -98,8 +90,8 @@ ThreadPool &MediaIO::pool() {
         // is "definitely lost" under valgrind because the threads stay
         // alive past main().
         struct PoolHolder {
-                ThreadPool tp;
-                PoolHolder() { tp.setNamePrefix("media"); }
+                        ThreadPool tp;
+                        PoolHolder() { tp.setNamePrefix("media"); }
         };
         static PoolHolder h;
         return h.tp;
@@ -107,7 +99,7 @@ ThreadPool &MediaIO::pool() {
 
 int MediaIO::registerFormat(const FormatDesc &desc) {
         FormatDescList &list = formatRegistry();
-        int ret = list.size();
+        int             ret = list.size();
         list.pushToBack(desc);
         promekiDebug("Registered MediaIO '%s'", desc.name.cstr());
         return ret;
@@ -119,44 +111,42 @@ const MediaIO::FormatDescList &MediaIO::registeredFormats() {
 
 static const MediaIO::FormatDesc *findFormatByName(const String &name) {
         const MediaIO::FormatDescList &list = formatRegistry();
-        for(const auto &desc : list) {
-                if(desc.name == name) return &desc;
+        for (const auto &desc : list) {
+                if (desc.name == name) return &desc;
         }
         return nullptr;
 }
 
 const MediaIO::FormatDesc *MediaIO::findFormatByScheme(const String &scheme) {
-        if(scheme.isEmpty()) return nullptr;
+        if (scheme.isEmpty()) return nullptr;
         // Compare case-insensitively on both sides.  The parser
         // already lowercased the input scheme, but a backend's
         // declaration could be in any case — normalizing here keeps
         // registrations forgiving.
-        const String needle = scheme.toLower();
+        const String          needle = scheme.toLower();
         const FormatDescList &list = formatRegistry();
-        for(const auto &desc : list) {
-                for(const auto &s : desc.schemes) {
-                        if(s.toLower() == needle) return &desc;
+        for (const auto &desc : list) {
+                for (const auto &s : desc.schemes) {
+                        if (s.toLower() == needle) return &desc;
                 }
         }
         return nullptr;
 }
 
-Error MediaIO::applyQueryToConfig(const Url &url,
-                                  const Config::SpecMap &specs,
-                                  Config *outConfig) {
-        if(outConfig == nullptr) return Error::Invalid;
+Error MediaIO::applyQueryToConfig(const Url &url, const Config::SpecMap &specs, Config *outConfig) {
+        if (outConfig == nullptr) return Error::Invalid;
 
         // Iterate the query map in its natural (key-sorted) order
         // so error messages are deterministic — tests and users
         // see failures on a stable, lowest-key-first basis.
-        for(const auto &[name, rawValue] : url.query()) {
+        for (const auto &[name, rawValue] : url.query()) {
                 // ID::find does NOT register a new name — we want
                 // exactly the opposite of the PROMEKI_DECLARE_ID
                 // path, so unknown names stay unknown and surface
                 // as a caller error rather than silently creating a
                 // new entry in the global registry.
                 ConfigID id = ConfigID::find(name);
-                if(!id.isValid()) {
+                if (!id.isValid()) {
                         promekiWarn("MediaIO::applyQueryToConfig: "
                                     "unknown query key '%s'",
                                     name.cstr());
@@ -170,7 +160,7 @@ Error MediaIO::applyQueryToConfig(const Url &url,
                 // is still a caller error, because this backend
                 // makes no promise to honor it.
                 auto it = specs.find(id);
-                if(it == specs.cend()) {
+                if (it == specs.cend()) {
                         promekiWarn("MediaIO::applyQueryToConfig: "
                                     "key '%s' is not part of this "
                                     "backend's spec map",
@@ -179,9 +169,9 @@ Error MediaIO::applyQueryToConfig(const Url &url,
                 }
                 const VariantSpec &spec = it->second;
 
-                Error parseErr = Error::Ok;
+                Error   parseErr = Error::Ok;
                 Variant value = spec.parseString(rawValue, &parseErr);
-                if(parseErr.isError()) {
+                if (parseErr.isError()) {
                         promekiWarn("MediaIO::applyQueryToConfig: "
                                     "failed to parse '%s=%s' as expected type",
                                     name.cstr(), rawValue.cstr());
@@ -202,13 +192,11 @@ Error MediaIO::applyQueryToConfig(const Url &url,
                 // default Warn validation would otherwise store the
                 // bad value and only emit a log line.
                 Error validateErr = Error::Ok;
-                if(!spec.validate(value, &validateErr)) {
+                if (!spec.validate(value, &validateErr)) {
                         promekiWarn("MediaIO::applyQueryToConfig: "
                                     "'%s=%s' failed spec validation",
                                     name.cstr(), rawValue.cstr());
-                        return validateErr.isError()
-                                ? validateErr
-                                : Error::InvalidArgument;
+                        return validateErr.isError() ? validateErr : Error::InvalidArgument;
                 }
 
                 outConfig->set(id, value);
@@ -218,17 +206,17 @@ Error MediaIO::applyQueryToConfig(const Url &url,
 
 static String extractExtension(const String &filename) {
         size_t dot = filename.rfind('.');
-        if(dot == String::npos || dot + 1 >= filename.size()) return String();
+        if (dot == String::npos || dot + 1 >= filename.size()) return String();
         return filename.mid(dot + 1).toLower();
 }
 
 static const MediaIO::FormatDesc *findFormatByExtension(const String &filename) {
         String ext = extractExtension(filename);
-        if(ext.isEmpty()) return nullptr;
+        if (ext.isEmpty()) return nullptr;
         const MediaIO::FormatDescList &list = formatRegistry();
-        for(const auto &desc : list) {
-                for(const auto &e : desc.extensions) {
-                        if(ext == e) return &desc;
+        for (const auto &desc : list) {
+                for (const auto &e : desc.extensions) {
+                        if (ext == e) return &desc;
                 }
         }
         return nullptr;
@@ -238,31 +226,31 @@ static const MediaIO::FormatDesc *findFormatForFileRead(const String &filename) 
         const MediaIO::FormatDescList &list = formatRegistry();
 
         // Pass 0: path-based probe (device nodes like /dev/video0)
-        for(const auto &desc : list) {
-                if(!desc.canBeSource) continue;
-                if(desc.canHandlePath && desc.canHandlePath(filename)) return &desc;
+        for (const auto &desc : list) {
+                if (!desc.canBeSource) continue;
+                if (desc.canHandlePath && desc.canHandlePath(filename)) return &desc;
         }
 
         // Pass 1: extension match (fast path)
         String ext = extractExtension(filename);
-        if(!ext.isEmpty()) {
-                for(const auto &desc : list) {
-                        if(!desc.canBeSource) continue;
-                        for(const auto &e : desc.extensions) {
-                                if(ext == e) return &desc;
+        if (!ext.isEmpty()) {
+                for (const auto &desc : list) {
+                        if (!desc.canBeSource) continue;
+                        for (const auto &e : desc.extensions) {
+                                if (ext == e) return &desc;
                         }
                 }
         }
 
         // Pass 2: content-based probe
         File probeFile(filename);
-        if(probeFile.open(IODevice::ReadOnly).isError()) return nullptr;
+        if (probeFile.open(IODevice::ReadOnly).isError()) return nullptr;
         const MediaIO::FormatDesc *result = nullptr;
-        for(const auto &desc : list) {
-                if(!desc.canBeSource) continue;
-                if(!desc.canHandleDevice) continue;
+        for (const auto &desc : list) {
+                if (!desc.canBeSource) continue;
+                if (!desc.canHandleDevice) continue;
                 probeFile.seek(0);
-                if(desc.canHandleDevice(&probeFile)) {
+                if (desc.canHandleDevice(&probeFile)) {
                         result = &desc;
                         break;
                 }
@@ -277,13 +265,13 @@ static const MediaIO::FormatDesc *findFormatForFileRead(const String &filename) 
 
 MediaIO::Config MediaIO::defaultConfig(const String &typeName) {
         const FormatDesc *desc = findFormatByName(typeName);
-        if(desc == nullptr || !desc->configSpecs) return Config();
+        if (desc == nullptr || !desc->configSpecs) return Config();
         Config cfg;
         cfg.setValidation(SpecValidation::None);
         Config::SpecMap specs = desc->configSpecs();
-        for(auto it = specs.cbegin(); it != specs.cend(); ++it) {
+        for (auto it = specs.cbegin(); it != specs.cend(); ++it) {
                 const Variant &def = it->second.defaultValue();
-                if(def.isValid()) cfg.set(it->first, def);
+                if (def.isValid()) cfg.set(it->first, def);
         }
         cfg.setValidation(SpecValidation::Warn);
         cfg.set(MediaConfig::Type, typeName);
@@ -292,18 +280,17 @@ MediaIO::Config MediaIO::defaultConfig(const String &typeName) {
 
 MediaIO::Config::SpecMap MediaIO::configSpecs(const String &typeName) {
         const FormatDesc *desc = findFormatByName(typeName);
-        if(desc == nullptr || !desc->configSpecs) return Config::SpecMap();
+        if (desc == nullptr || !desc->configSpecs) return Config::SpecMap();
         return desc->configSpecs();
 }
 
 Metadata MediaIO::defaultMetadata(const String &typeName) {
         const FormatDesc *desc = findFormatByName(typeName);
-        if(desc == nullptr || !desc->defaultMetadata) return Metadata();
+        if (desc == nullptr || !desc->defaultMetadata) return Metadata();
         return desc->defaultMetadata();
 }
 
-StringList MediaIO::unknownConfigKeys(const String &typeName,
-                                      const Config &cfg) {
+StringList MediaIO::unknownConfigKeys(const String &typeName, const Config &cfg) {
         // Detection is intentionally spec-driven: pull the backend's
         // spec map once, and let VariantDatabase::unknownKeys fall back
         // to the global MediaConfig spec registry for common keys like
@@ -315,68 +302,57 @@ StringList MediaIO::unknownConfigKeys(const String &typeName,
         return cfg.unknownKeys(specs);
 }
 
-Error MediaIO::validateConfigKeys(const String &typeName,
-                                  const Config &cfg,
-                                  ConfigValidation mode,
+Error MediaIO::validateConfigKeys(const String &typeName, const Config &cfg, ConfigValidation mode,
                                   const String &contextLabel) {
         StringList unknown = unknownConfigKeys(typeName, cfg);
-        if(unknown.isEmpty()) return Error::Ok;
+        if (unknown.isEmpty()) return Error::Ok;
 
         // One log line per unknown key so a caller's grep-friendly log
         // shows each typo individually.  The contextLabel lets the
         // caller embed its own scope (e.g. "mediaplay: input[TPG]")
         // without the framework having to know anything about the
         // caller — MediaIO stays caller-agnostic.
-        const char *modeTag = (mode == ConfigValidation::Strict)
-                ? "rejecting"
-                : "ignoring";
-        for(size_t i = 0; i < unknown.size(); ++i) {
-                if(contextLabel.isEmpty()) {
-                        promekiWarn("MediaIO[%s]: unknown config key '%s' (%s)",
-                                typeName.cstr(),
-                                unknown[i].cstr(),
-                                modeTag);
+        const char *modeTag = (mode == ConfigValidation::Strict) ? "rejecting" : "ignoring";
+        for (size_t i = 0; i < unknown.size(); ++i) {
+                if (contextLabel.isEmpty()) {
+                        promekiWarn("MediaIO[%s]: unknown config key '%s' (%s)", typeName.cstr(), unknown[i].cstr(),
+                                    modeTag);
                 } else {
-                        promekiWarn("%s: MediaIO[%s]: unknown config key '%s' (%s)",
-                                contextLabel.cstr(),
-                                typeName.cstr(),
-                                unknown[i].cstr(),
-                                modeTag);
+                        promekiWarn("%s: MediaIO[%s]: unknown config key '%s' (%s)", contextLabel.cstr(),
+                                    typeName.cstr(), unknown[i].cstr(), modeTag);
                 }
         }
-        return (mode == ConfigValidation::Strict)
-                ? Error::InvalidArgument
-                : Error::Ok;
+        return (mode == ConfigValidation::Strict) ? Error::InvalidArgument : Error::Ok;
 }
 
 MediaIO *MediaIO::create(const Config &config, ObjectBase *parent) {
         const FormatDesc *desc = nullptr;
 
-        if(config.contains(MediaConfig::Type)) {
+        if (config.contains(MediaConfig::Type)) {
                 String typeName = config.getAs<String>(MediaConfig::Type);
                 desc = findFormatByName(typeName);
-                if(desc == nullptr) {
+                if (desc == nullptr) {
                         promekiWarn("MediaIO::create: unknown type '%s'", typeName.cstr());
                         return nullptr;
                 }
         }
 
-        if(desc == nullptr && config.contains(MediaConfig::Filename)) {
+        if (desc == nullptr && config.contains(MediaConfig::Filename)) {
                 String filename = config.getAs<String>(MediaConfig::Filename);
                 desc = findFormatByExtension(filename);
-                if(desc == nullptr) {
+                if (desc == nullptr) {
                         promekiWarn("MediaIO::create: no backend for '%s'", filename.cstr());
                         return nullptr;
                 }
         }
 
-        if(desc == nullptr) {
+        if (desc == nullptr) {
                 promekiWarn("MediaIO::create: config has neither Type nor Filename");
                 return nullptr;
         }
 
         MediaIOTask *task = desc->create();
-        if(task == nullptr) {
+        if (task == nullptr) {
                 promekiWarn("MediaIO::create: factory for '%s' returned null", desc->name.cstr());
                 return nullptr;
         }
@@ -392,32 +368,29 @@ MediaIO *MediaIO::create(const Config &config, ObjectBase *parent) {
 // parses with a non-empty scheme AND we have a backend registered for
 // that scheme — so a path like "C:/foo" on Windows doesn't accidentally
 // get routed through URL dispatch just because it parses.
-static const MediaIO::FormatDesc *tryResolveAsUrl(const String &maybeUrl,
-                                                  Url *outUrl) {
+static const MediaIO::FormatDesc *tryResolveAsUrl(const String &maybeUrl, Url *outUrl) {
         // Fast path: a string with no ':' can never be a URL.
-        if(maybeUrl.find(':') == String::npos) return nullptr;
+        if (maybeUrl.find(':') == String::npos) return nullptr;
         Result<Url> parsed = Url::fromString(maybeUrl);
-        if(parsed.second().isError() || !parsed.first().isValid()) return nullptr;
-        Url url = parsed.first();
-        const MediaIO::FormatDesc *desc =
-                MediaIO::findFormatByScheme(url.scheme());
-        if(desc == nullptr) return nullptr;
-        if(outUrl != nullptr) *outUrl = url;
+        if (parsed.second().isError() || !parsed.first().isValid()) return nullptr;
+        Url                        url = parsed.first();
+        const MediaIO::FormatDesc *desc = MediaIO::findFormatByScheme(url.scheme());
+        if (desc == nullptr) return nullptr;
+        if (outUrl != nullptr) *outUrl = url;
         return desc;
 }
 
 MediaIO *MediaIO::createFromUrl(const Url &url, ObjectBase *parent) {
-        if(!url.isValid()) {
+        if (!url.isValid()) {
                 promekiWarn("MediaIO::createFromUrl: invalid URL");
                 return nullptr;
         }
         const FormatDesc *desc = findFormatByScheme(url.scheme());
-        if(desc == nullptr) {
-                promekiWarn("MediaIO::createFromUrl: no backend for scheme '%s'",
-                            url.scheme().cstr());
+        if (desc == nullptr) {
+                promekiWarn("MediaIO::createFromUrl: no backend for scheme '%s'", url.scheme().cstr());
                 return nullptr;
         }
-        if(!desc->urlToConfig) {
+        if (!desc->urlToConfig) {
                 promekiWarn("MediaIO::createFromUrl: backend '%s' claims scheme '%s' "
                             "but provides no urlToConfig callback",
                             desc->name.cstr(), url.scheme().cstr());
@@ -440,9 +413,8 @@ MediaIO *MediaIO::createFromUrl(const Url &url, ObjectBase *parent) {
         // — those bits are scheme-specific and cannot be generalized
         // (pmfb://<name> ≠ rtp://<addr>:<port> ≠ file:///<path>).
         Error err = desc->urlToConfig(url, &cfg);
-        if(err.isError()) {
-                promekiWarn("MediaIO::createFromUrl: '%s' rejected URL '%s'",
-                            desc->name.cstr(), url.toString().cstr());
+        if (err.isError()) {
+                promekiWarn("MediaIO::createFromUrl: '%s' rejected URL '%s'", desc->name.cstr(), url.toString().cstr());
                 return nullptr;
         }
 
@@ -452,19 +424,18 @@ MediaIO *MediaIO::createFromUrl(const Url &url, ObjectBase *parent) {
         // entry.  Unknown keys, bad values, and out-of-range values
         // all fail the open — the open() error path is the right
         // place for URL-level bugs, not a silent default substitution.
-        if(desc->configSpecs && !url.query().isEmpty()) {
+        if (desc->configSpecs && !url.query().isEmpty()) {
                 Error qerr = applyQueryToConfig(url, desc->configSpecs(), &cfg);
-                if(qerr.isError()) {
+                if (qerr.isError()) {
                         promekiWarn("MediaIO::createFromUrl: '%s' query "
                                     "application failed for '%s' (%s)",
-                                    desc->name.cstr(), url.toString().cstr(),
-                                    qerr.name().cstr());
+                                    desc->name.cstr(), url.toString().cstr(), qerr.name().cstr());
                         return nullptr;
                 }
         }
 
         MediaIOTask *task = desc->create();
-        if(task == nullptr) return nullptr;
+        if (task == nullptr) return nullptr;
         MediaIO *io = new MediaIO(parent);
         task->_owner = io;
         io->_task = UniquePtr<MediaIOTask>::takeOwnership(task);
@@ -474,9 +445,8 @@ MediaIO *MediaIO::createFromUrl(const Url &url, ObjectBase *parent) {
 
 MediaIO *MediaIO::createFromUrl(const String &url, ObjectBase *parent) {
         Result<Url> parsed = Url::fromString(url);
-        if(parsed.second().isError() || !parsed.first().isValid()) {
-                promekiWarn("MediaIO::createFromUrl: failed to parse '%s'",
-                            url.cstr());
+        if (parsed.second().isError() || !parsed.first().isValid()) {
+                promekiWarn("MediaIO::createFromUrl: failed to parse '%s'", url.cstr());
                 return nullptr;
         }
         return createFromUrl(parsed.first(), parent);
@@ -489,8 +459,8 @@ MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) 
         // still get it, because findFormatByScheme returns nullptr for
         // any scheme no backend claims.
         Url url;
-        if(const FormatDesc *urlDesc = tryResolveAsUrl(filename, &url)) {
-                if(!urlDesc->canBeSource) {
+        if (const FormatDesc *urlDesc = tryResolveAsUrl(filename, &url)) {
+                if (!urlDesc->canBeSource) {
                         promekiWarn("MediaIO::createForFileRead: backend '%s' "
                                     "claims scheme '%s' but cannot be a source",
                                     urlDesc->name.cstr(), url.scheme().cstr());
@@ -500,16 +470,16 @@ MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) 
         }
 
         const FormatDesc *desc = findFormatForFileRead(filename);
-        if(desc == nullptr) {
+        if (desc == nullptr) {
                 promekiWarn("MediaIO::createForFileRead: no backend for '%s'", filename.cstr());
                 return nullptr;
         }
-        if(!desc->canBeSource) {
+        if (!desc->canBeSource) {
                 promekiWarn("MediaIO::createForFileRead: '%s' does not support reading", desc->name.cstr());
                 return nullptr;
         }
         MediaIOTask *task = desc->create();
-        if(task == nullptr) return nullptr;
+        if (task == nullptr) return nullptr;
         MediaIO *io = new MediaIO(parent);
         task->_owner = io;
         io->_task = UniquePtr<MediaIOTask>::takeOwnership(task);
@@ -526,8 +496,8 @@ MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) 
 MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent) {
         // Mirror the URL takeover behavior from createForFileRead.
         Url url;
-        if(const FormatDesc *urlDesc = tryResolveAsUrl(filename, &url)) {
-                if(!urlDesc->canBeSink) {
+        if (const FormatDesc *urlDesc = tryResolveAsUrl(filename, &url)) {
+                if (!urlDesc->canBeSink) {
                         promekiWarn("MediaIO::createForFileWrite: backend '%s' "
                                     "claims scheme '%s' but cannot be a sink",
                                     urlDesc->name.cstr(), url.scheme().cstr());
@@ -537,16 +507,16 @@ MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent)
         }
 
         const FormatDesc *desc = findFormatByExtension(filename);
-        if(desc == nullptr) {
+        if (desc == nullptr) {
                 promekiWarn("MediaIO::createForFileWrite: no backend for '%s'", filename.cstr());
                 return nullptr;
         }
-        if(!desc->canBeSink) {
+        if (!desc->canBeSink) {
                 promekiWarn("MediaIO::createForFileWrite: '%s' does not support writing", desc->name.cstr());
                 return nullptr;
         }
         MediaIOTask *task = desc->create();
-        if(task == nullptr) return nullptr;
+        if (task == nullptr) return nullptr;
         MediaIO *io = new MediaIO(parent);
         task->_owner = io;
         io->_task = UniquePtr<MediaIOTask>::takeOwnership(task);
@@ -564,51 +534,48 @@ Error MediaIO::copyFramesSeekTo(MediaIO *src, const FrameNumber &fromFrame) {
         // Prefer a single seek when the source supports it; otherwise
         // read-and-discard to advance (expensive for large offsets but
         // lets sequential-only sources still participate).
-        if(src->canSeek()) return src->seekToFrame(fromFrame);
+        if (src->canSeek()) return src->seekToFrame(fromFrame);
         const int64_t target = fromFrame.isValid() ? fromFrame.value() : 0;
-        for(int64_t skipped = 0; skipped < target; ++skipped) {
+        for (int64_t skipped = 0; skipped < target; ++skipped) {
                 Frame::Ptr discard;
-                Error e = src->readFrame(discard);
-                if(e.isError()) return e;
+                Error      e = src->readFrame(discard);
+                if (e.isError()) return e;
         }
         return Error::Ok;
 }
 
-Result<FrameCount> MediaIO::copyFrames(MediaIO *src, MediaIO *dst,
-                                       const FrameNumber &fromFrame, const FrameCount &count) {
+Result<FrameCount> MediaIO::copyFrames(MediaIO *src, MediaIO *dst, const FrameNumber &fromFrame,
+                                       const FrameCount &count) {
         // Delegates to the template overload with a trivial pass-through
         // mutate.  Each call site instantiates the template against the
         // same identity lambda, so there is no run-time cost to the
         // extra hop.
-        return copyFrames(src, dst, fromFrame, count,
-                          [](const Frame::Ptr &f, int64_t) { return f; });
+        return copyFrames(src, dst, fromFrame, count, [](const Frame::Ptr &f, int64_t) { return f; });
 }
 
 StringList MediaIO::enumerate(const String &typeName) {
         const FormatDesc *desc = findFormatByName(typeName);
-        if(desc == nullptr || !desc->enumerate) return StringList();
+        if (desc == nullptr || !desc->enumerate) return StringList();
         return desc->enumerate();
 }
 
 const MediaIO::FormatDesc *MediaIO::findFormatForPath(const String &path) {
         const FormatDescList &list = formatRegistry();
-        for(const auto &desc : list) {
-                if(desc.canHandlePath && desc.canHandlePath(path)) return &desc;
+        for (const auto &desc : list) {
+                if (desc.canHandlePath && desc.canHandlePath(path)) return &desc;
         }
         return nullptr;
 }
 
-List<MediaDesc> MediaIO::queryDevice(const String &typeName,
-                                     const Config &config) {
+List<MediaDesc> MediaIO::queryDevice(const String &typeName, const Config &config) {
         const FormatDesc *desc = findFormatByName(typeName);
-        if(desc == nullptr || !desc->queryDevice) return {};
+        if (desc == nullptr || !desc->queryDevice) return {};
         return desc->queryDevice(config);
 }
 
-void MediaIO::printDeviceInfo(const String &typeName,
-                              const Config &config) {
+void MediaIO::printDeviceInfo(const String &typeName, const Config &config) {
         const FormatDesc *desc = findFormatByName(typeName);
-        if(desc != nullptr && desc->printDeviceInfo) {
+        if (desc != nullptr && desc->printDeviceInfo) {
                 desc->printDeviceInfo(config);
         }
 }
@@ -644,7 +611,7 @@ void MediaIO::resolveIdentifiersAndBenchmark() {
         // config() lookup sees the effective name rather than an empty
         // string.
         String cfgName = _config.getAs<String>(MediaConfig::Name, String());
-        if(!cfgName.isEmpty()) {
+        if (!cfgName.isEmpty()) {
                 _name = cfgName;
         }
         _config.set(MediaConfig::Name, _name);
@@ -653,7 +620,7 @@ void MediaIO::resolveIdentifiersAndBenchmark() {
         // Same pattern: override from config if a valid UUID is
         // supplied, otherwise keep the constructor-assigned one.
         UUID cfgUuid = _config.getAs<UUID>(MediaConfig::Uuid, UUID());
-        if(cfgUuid.isValid()) {
+        if (cfgUuid.isValid()) {
                 _uuid = cfgUuid;
         }
         _config.set(MediaConfig::Uuid, _uuid);
@@ -665,13 +632,13 @@ void MediaIO::resolveIdentifiersAndBenchmark() {
         // Benchmark StringRegistry once per open() with the resolved
         // name as prefix, so reports correlate back to the stage.
         _benchmarkEnabled = _config.getAs<bool>(MediaConfig::EnableBenchmark, false);
-        if(_benchmarkEnabled) {
-                _idStampEnqueue   = Benchmark::Id(_name + ".enqueue");
-                _idStampDequeue   = Benchmark::Id(_name + ".dequeue");
+        if (_benchmarkEnabled) {
+                _idStampEnqueue = Benchmark::Id(_name + ".enqueue");
+                _idStampDequeue = Benchmark::Id(_name + ".dequeue");
                 _idStampTaskBegin = Benchmark::Id(_name + ".taskBegin");
-                _idStampTaskEnd   = Benchmark::Id(_name + ".taskEnd");
+                _idStampTaskEnd = Benchmark::Id(_name + ".taskEnd");
                 _idStampWorkBegin = Benchmark::Id(_name + ".workBegin");
-                _idStampWorkEnd   = Benchmark::Id(_name + ".workEnd");
+                _idStampWorkEnd = Benchmark::Id(_name + ".workEnd");
         }
 
         // Fresh telemetry window per open.  A reopen must not show
@@ -689,11 +656,11 @@ int64_t MediaIO::frameByteSize(const Frame::Ptr &frame) {
         // filled scratch buffers do not inflate the reported rate.
         // The loop skips invalid pointers defensively because some
         // backends build frames lazily.
-        if(!frame.isValid()) return 0;
+        if (!frame.isValid()) return 0;
         int64_t total = 0;
-        for(const MediaPayload::Ptr &p : frame->payloadList()) {
-                if(!p.isValid()) continue;
-                for(size_t i = 0; i < p->planeCount(); ++i) {
+        for (const MediaPayload::Ptr &p : frame->payloadList()) {
+                if (!p.isValid()) continue;
+                for (size_t i = 0; i < p->planeCount(); ++i) {
                         total += static_cast<int64_t>(p->plane(i).size());
                 }
         }
@@ -711,12 +678,9 @@ void MediaIO::populateStandardStats(MediaIOStats &stats) const {
         // Lifetime drop / repeat / late counters.  Backends report
         // these through the MediaIOTask::noteFrameDropped family of
         // protected helpers, which simply increment these atomics.
-        stats.set(MediaIOStats::FramesDropped,
-                FrameCount(_framesDroppedTotal.value()));
-        stats.set(MediaIOStats::FramesRepeated,
-                FrameCount(_framesRepeatedTotal.value()));
-        stats.set(MediaIOStats::FramesLate,
-                FrameCount(_framesLateTotal.value()));
+        stats.set(MediaIOStats::FramesDropped, FrameCount(_framesDroppedTotal.value()));
+        stats.set(MediaIOStats::FramesRepeated, FrameCount(_framesRepeatedTotal.value()));
+        stats.set(MediaIOStats::FramesLate, FrameCount(_framesLateTotal.value()));
 
         // Latency is only populated when the caller opted into
         // benchmarking and provided somewhere to aggregate the stamps.
@@ -732,17 +696,17 @@ void MediaIO::populateStandardStats(MediaIOStats &stats) const {
         // latency.  The reader path skips the enqueue hop because
         // reads are pulled by the strand worker, not pushed from the
         // user thread.
-        if(_benchmarkEnabled && _benchmarkReporter != nullptr) {
-                double avgMs  = 0.0;
-                double peakMs = 0.0;
+        if (_benchmarkEnabled && _benchmarkReporter != nullptr) {
+                double   avgMs = 0.0;
+                double   peakMs = 0.0;
                 uint64_t minCount = UINT64_MAX;
 
                 auto addPair = [&](Benchmark::Id from, Benchmark::Id to) {
                         auto s = _benchmarkReporter->stepStats(from, to);
-                        if(s.count == 0) return;
-                        avgMs  += s.avg * 1000.0;
+                        if (s.count == 0) return;
+                        avgMs += s.avg * 1000.0;
                         peakMs += s.max * 1000.0;
-                        if(s.count < minCount) minCount = s.count;
+                        if (s.count < minCount) minCount = s.count;
                 };
 
                 // The enqueue→dequeue stamp exists only on the sink
@@ -753,13 +717,13 @@ void MediaIO::populateStandardStats(MediaIOStats &stats) const {
                 // strand directly and has no equivalent step, so we
                 // only pair this stamp when the MediaIO is accepting
                 // frames.
-                if(_mode == Sink || _mode == Transform) {
-                        addPair(_idStampEnqueue,   _idStampDequeue);
+                if (_mode == Sink || _mode == Transform) {
+                        addPair(_idStampEnqueue, _idStampDequeue);
                 }
-                addPair(_idStampDequeue,   _idStampTaskBegin);
+                addPair(_idStampDequeue, _idStampTaskBegin);
                 addPair(_idStampTaskBegin, _idStampTaskEnd);
 
-                if(minCount != UINT64_MAX && minCount > 0) {
+                if (minCount != UINT64_MAX && minCount > 0) {
                         stats.set(MediaIOStats::AverageLatencyMs, avgMs);
                         stats.set(MediaIOStats::PeakLatencyMs, peakMs);
                 }
@@ -768,13 +732,10 @@ void MediaIO::populateStandardStats(MediaIOStats &stats) const {
                 // workBegin and workEnd stamps.  Only populated when
                 // the task actually calls stampWorkBegin/stampWorkEnd;
                 // tasks that don't will simply omit these keys.
-                auto ws = _benchmarkReporter->stepStats(
-                        _idStampWorkBegin, _idStampWorkEnd);
-                if(ws.count > 0) {
-                        stats.set(MediaIOStats::AverageProcessingMs,
-                                  ws.avg * 1000.0);
-                        stats.set(MediaIOStats::PeakProcessingMs,
-                                  ws.max * 1000.0);
+                auto ws = _benchmarkReporter->stepStats(_idStampWorkBegin, _idStampWorkEnd);
+                if (ws.count > 0) {
+                        stats.set(MediaIOStats::AverageProcessingMs, ws.avg * 1000.0);
+                        stats.set(MediaIOStats::PeakProcessingMs, ws.max * 1000.0);
                 }
         }
 
@@ -782,8 +743,7 @@ void MediaIO::populateStandardStats(MediaIOStats &stats) const {
         // (e.g. mediaplay --stats) surface this to let operators see
         // when I/O is falling behind without every backend having to
         // reimplement "how many operations are pending".
-        stats.set(MediaIOStats::PendingOperations,
-                  static_cast<int64_t>(_strand.pendingCount()));
+        stats.set(MediaIOStats::PendingOperations, static_cast<int64_t>(_strand.pendingCount()));
 }
 
 String MediaIOStats::toString() const {
@@ -800,48 +760,40 @@ String MediaIOStats::toString() const {
         // something shows up that wasn't there before.
         StringList parts;
 
-        if(contains(BytesPerSecond)) {
-                parts.pushToBack(Units::fromBytesPerSec(
-                        getAs<double>(BytesPerSecond)));
+        if (contains(BytesPerSecond)) {
+                parts.pushToBack(Units::fromBytesPerSec(getAs<double>(BytesPerSecond)));
         }
-        if(contains(FramesPerSecond)) {
-                parts.pushToBack(String::format("{:.1f} fps",
-                        getAs<double>(FramesPerSecond)));
+        if (contains(FramesPerSecond)) {
+                parts.pushToBack(String::format("{:.1f} fps", getAs<double>(FramesPerSecond)));
         }
-        if(contains(FramesDropped)) {
-                parts.pushToBack(String::format("drop={}",
-                        getAs<int64_t>(FramesDropped)));
+        if (contains(FramesDropped)) {
+                parts.pushToBack(String::format("drop={}", getAs<int64_t>(FramesDropped)));
         }
-        if(contains(FramesRepeated)) {
+        if (contains(FramesRepeated)) {
                 int64_t v = getAs<int64_t>(FramesRepeated);
-                if(v > 0) parts.pushToBack(String::format("rep={}", v));
+                if (v > 0) parts.pushToBack(String::format("rep={}", v));
         }
-        if(contains(FramesLate)) {
+        if (contains(FramesLate)) {
                 int64_t v = getAs<int64_t>(FramesLate);
-                if(v > 0) parts.pushToBack(String::format("late={}", v));
+                if (v > 0) parts.pushToBack(String::format("late={}", v));
         }
-        if(contains(AverageLatencyMs) || contains(PeakLatencyMs)) {
-                parts.pushToBack(String::format("lat={:.2f}/{:.2f} ms",
-                        getAs<double>(AverageLatencyMs),
-                        getAs<double>(PeakLatencyMs)));
+        if (contains(AverageLatencyMs) || contains(PeakLatencyMs)) {
+                parts.pushToBack(String::format("lat={:.2f}/{:.2f} ms", getAs<double>(AverageLatencyMs),
+                                                getAs<double>(PeakLatencyMs)));
         }
-        if(contains(AverageProcessingMs) || contains(PeakProcessingMs)) {
-                parts.pushToBack(String::format("proc={:.2f}/{:.2f} ms",
-                        getAs<double>(AverageProcessingMs),
-                        getAs<double>(PeakProcessingMs)));
+        if (contains(AverageProcessingMs) || contains(PeakProcessingMs)) {
+                parts.pushToBack(String::format("proc={:.2f}/{:.2f} ms", getAs<double>(AverageProcessingMs),
+                                                getAs<double>(PeakProcessingMs)));
         }
-        if(contains(QueueDepth) || contains(QueueCapacity)) {
-                parts.pushToBack(String::format("q={}/{}",
-                        getAs<int64_t>(QueueDepth),
-                        getAs<int64_t>(QueueCapacity)));
+        if (contains(QueueDepth) || contains(QueueCapacity)) {
+                parts.pushToBack(String::format("q={}/{}", getAs<int64_t>(QueueDepth), getAs<int64_t>(QueueCapacity)));
         }
-        if(contains(PendingOperations)) {
-                parts.pushToBack(String::format("pend={}",
-                        getAs<int64_t>(PendingOperations)));
+        if (contains(PendingOperations)) {
+                parts.pushToBack(String::format("pend={}", getAs<int64_t>(PendingOperations)));
         }
-        if(contains(LastErrorMessage)) {
+        if (contains(LastErrorMessage)) {
                 String msg = getAs<String>(LastErrorMessage);
-                if(!msg.isEmpty()) {
+                if (!msg.isEmpty()) {
                         parts.pushToBack(String::format("err={}", msg));
                 }
         }
@@ -857,8 +809,8 @@ void MediaIO::ensureFrameBenchmark(Frame::Ptr &frame) {
         // non-const reference because `.modify()` triggers copy-on-write
         // on the caller's Frame::Ptr; callers that want their original
         // Ptr untouched pass a local copy (see writeFrame).
-        if(!frame.isValid()) return;
-        if(frame->benchmark().isValid()) return;
+        if (!frame.isValid()) return;
+        if (frame->benchmark().isValid()) return;
         frame.modify()->setBenchmark(Benchmark::Ptr::takeOwnership(new Benchmark()));
 }
 
@@ -868,18 +820,18 @@ void MediaIO::submitBenchmarkIfSink(const Frame::Ptr &frame) {
         // per-step statistics.  Non-sink stages (e.g. middle of a
         // MediaPipeline) stamp but don't submit — the terminal stage
         // sees all accumulated stamps and submits once.
-        if(!_benchmarkIsSink) return;
-        if(_benchmarkReporter == nullptr) return;
-        if(!frame.isValid()) return;
+        if (!_benchmarkIsSink) return;
+        if (_benchmarkReporter == nullptr) return;
+        if (!frame.isValid()) return;
         Benchmark::Ptr bm = frame->benchmark();
-        if(!bm.isValid()) return;
+        if (!bm.isValid()) return;
         _benchmarkReporter->submit(*bm);
 }
 
 Error MediaIO::adoptTask(MediaIOTask *task) {
-        if(isOpen()) return Error::AlreadyOpen;
-        if(task == nullptr) return Error::Invalid;
-        if(_task.isValid()) return Error::Invalid;
+        if (isOpen()) return Error::AlreadyOpen;
+        if (task == nullptr) return Error::Invalid;
+        if (_task.isValid()) return Error::Invalid;
         task->_owner = this;
         _task = UniquePtr<MediaIOTask>::takeOwnership(task);
         return Error::Ok;
@@ -889,9 +841,9 @@ Clock *MediaIO::createClock() {
         // Prefer the task's own device clock (audio drain, capture
         // hardware, PTP) when it supplies one — those track the real
         // timing source rather than a synthesized frame count.
-        if(_task.isValid()) {
+        if (_task.isValid()) {
                 Clock *taskClock = _task->createClock();
-                if(taskClock != nullptr) return taskClock;
+                if (taskClock != nullptr) return taskClock;
         }
         // Fallback: synthesize time from currentFrame() × framePeriod.
         // ObjectBasePtr inside MediaIOClock keeps raw() safe against
@@ -900,7 +852,7 @@ Clock *MediaIO::createClock() {
 }
 
 MediaIO::~MediaIO() {
-        if(isOpen()) close();
+        if (isOpen()) close();
         // Wait for any in-flight strand task to complete before the
         // _task UniquePtr destructor fires.  The Strand destructor would
         // also wait, but doing it here makes the order explicit: drain
@@ -915,21 +867,14 @@ MediaIO::~MediaIO() {
 
 Error MediaIO::dispatchCommand(MediaIOCommand::Ptr cmd) {
         MediaIOCommand *raw = cmd.modify();
-        switch(raw->type()) {
-                case MediaIOCommand::Open:
-                        return _task->executeCmd(*static_cast<MediaIOCommandOpen *>(raw));
-                case MediaIOCommand::Close:
-                        return _task->executeCmd(*static_cast<MediaIOCommandClose *>(raw));
-                case MediaIOCommand::Read:
-                        return _task->executeCmd(*static_cast<MediaIOCommandRead *>(raw));
-                case MediaIOCommand::Write:
-                        return _task->executeCmd(*static_cast<MediaIOCommandWrite *>(raw));
-                case MediaIOCommand::Seek:
-                        return _task->executeCmd(*static_cast<MediaIOCommandSeek *>(raw));
-                case MediaIOCommand::Params:
-                        return _task->executeCmd(*static_cast<MediaIOCommandParams *>(raw));
-                case MediaIOCommand::Stats:
-                        return _task->executeCmd(*static_cast<MediaIOCommandStats *>(raw));
+        switch (raw->type()) {
+                case MediaIOCommand::Open: return _task->executeCmd(*static_cast<MediaIOCommandOpen *>(raw));
+                case MediaIOCommand::Close: return _task->executeCmd(*static_cast<MediaIOCommandClose *>(raw));
+                case MediaIOCommand::Read: return _task->executeCmd(*static_cast<MediaIOCommandRead *>(raw));
+                case MediaIOCommand::Write: return _task->executeCmd(*static_cast<MediaIOCommandWrite *>(raw));
+                case MediaIOCommand::Seek: return _task->executeCmd(*static_cast<MediaIOCommandSeek *>(raw));
+                case MediaIOCommand::Params: return _task->executeCmd(*static_cast<MediaIOCommandParams *>(raw));
+                case MediaIOCommand::Stats: return _task->executeCmd(*static_cast<MediaIOCommandStats *>(raw));
         }
         return Error::NotSupported;
 }
@@ -945,11 +890,9 @@ Error MediaIO::submitAndWait(MediaIOCommand::Ptr cmd, bool urgent) {
         auto runner = [this, cmd]() mutable {
                 return dispatchCommand(cmd);
         };
-        Future<Error> future = urgent
-                ? _strand.submitUrgent(std::move(runner))
-                : _strand.submit(std::move(runner));
-        auto r = future.result();
-        if(r.second().isError()) return r.second();
+        Future<Error> future = urgent ? _strand.submitUrgent(std::move(runner)) : _strand.submit(std::move(runner));
+        auto          r = future.result();
+        if (r.second().isError()) return r.second();
         return r.first();
 }
 
@@ -969,7 +912,7 @@ void MediaIO::submitReadCommand() {
         _strand.submit(
                 [this, cmd]() mutable {
                         MediaIOCommand *raw = cmd.modify();
-                        auto *cr = static_cast<MediaIOCommandRead *>(raw);
+                        auto           *cr = static_cast<MediaIOCommandRead *>(raw);
 
                         // Reads have no enqueue stamp — the user thread
                         // never handed us an existing frame — but we
@@ -979,7 +922,7 @@ void MediaIO::submitReadCommand() {
                         // Intermediate timestamps live in a local
                         // Benchmark until the frame exists.
                         Benchmark::Ptr readBm;
-                        if(_benchmarkEnabled) {
+                        if (_benchmarkEnabled) {
                                 readBm = Benchmark::Ptr::takeOwnership(new Benchmark());
                                 readBm.modify()->stamp(_idStampDequeue);
                                 readBm.modify()->stamp(_idStampTaskBegin);
@@ -994,12 +937,11 @@ void MediaIO::submitReadCommand() {
                         // their payload size into the rate tracker so
                         // BytesPerSecond / FramesPerSecond work for
                         // every backend with zero migration.
-                        if(cr->result.isOk() && cr->frame.isValid()) {
-                                _rateTracker.record(
-                                        frameByteSize(cr->frame));
+                        if (cr->result.isOk() && cr->frame.isValid()) {
+                                _rateTracker.record(frameByteSize(cr->frame));
                         }
 
-                        if(_benchmarkEnabled && readBm.isValid()) {
+                        if (_benchmarkEnabled && readBm.isValid()) {
                                 readBm.modify()->stamp(_idStampTaskEnd);
                                 // Attach the collected benchmark to the
                                 // produced frame so downstream stages
@@ -1009,7 +951,7 @@ void MediaIO::submitReadCommand() {
                                 // isn't supported — the fresh one wins
                                 // since it has the correct stamp IDs
                                 // scoped to this stage's name.
-                                if(cr->frame.isValid()) {
+                                if (cr->frame.isValid()) {
                                         cr->frame.modify()->setBenchmark(readBm);
                                         submitBenchmarkIfSink(cr->frame);
                                 }
@@ -1035,9 +977,9 @@ void MediaIO::submitReadCommand() {
                         // frameReadySignal after a successful write,
                         // which drives the downstream pipeline to call
                         // readFrame again and re-arm the prefetch.
-                        if(cr->result == Error::TryAgain) {
+                        if (cr->result == Error::TryAgain) {
                                 _pendingReadCount.fetchAndSub(1);
-                                if(_mode == Source && !_closing) {
+                                if (_mode == Source && !_closing) {
                                         submitReadCommand();
                                 }
                                 return;
@@ -1063,7 +1005,7 @@ void MediaIO::submitReadCommand() {
                         // capacity.  Fire frameWanted here so the
                         // upstream pipeline resumes regardless of
                         // which side of the strand released the slot.
-                        if(cr->result.isOk()) frameWantedSignal.emit();
+                        if (cr->result.isOk()) frameWantedSignal.emit();
                 },
                 [this]() {
                         // Cancellation cleanup: release the slot we
@@ -1078,15 +1020,15 @@ void MediaIO::submitReadCommand() {
 // ============================================================================
 
 Error MediaIO::open(Mode mode) {
-        if(isOpen()) return Error::AlreadyOpen;
-        if(mode == NotOpen) return Error::InvalidArgument;
-        if(_task.isNull()) return Error::Invalid;
+        if (isOpen()) return Error::AlreadyOpen;
+        if (mode == NotOpen) return Error::InvalidArgument;
+        if (_task.isNull()) return Error::Invalid;
 
         // Defensive: drain any orphaned read results (e.g. an
         // unconsumed trailing EOS left behind when an async close
         // completed without the consumer draining).  Guarantees the
         // new session starts with an empty queue.
-        while(_readResultQueue.tryPop().second().isOk()) {}
+        while (_readResultQueue.tryPop().second().isOk()) {}
 
         // Resolve the Name / Uuid / EnableBenchmark defaults before
         // building the open command so the backend sees the final
@@ -1102,7 +1044,7 @@ Error MediaIO::open(Mode mode) {
         // the free-standing pending metadata and the media descriptor's
         // own metadata, so writer backends see the same information
         // regardless of which path they read from.
-        if(mode == Source || mode == Transform) {
+        if (mode == Source || mode == Transform) {
                 _pendingMetadata.applyMediaIOWriteDefaults();
                 _pendingMediaDesc.metadata().applyMediaIOWriteDefaults();
         }
@@ -1117,8 +1059,8 @@ Error MediaIO::open(Mode mode) {
         cmdOpen->audioTracks = _pendingAudioTracks;
 
         MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdOpen);
-        Error err = submitAndWait(cmd);
-        if(err.isOk()) {
+        Error               err = submitAndWait(cmd);
+        if (err.isOk()) {
                 _mode = mode;
                 _mediaDesc = cmdOpen->mediaDesc;
                 _audioDesc = cmdOpen->audioDesc;
@@ -1131,19 +1073,19 @@ Error MediaIO::open(Mode mode) {
                 _writeFrameCount = 0;
                 _step = cmdOpen->defaultStep;
                 _defaultSeekMode = cmdOpen->defaultSeekMode;
-                if(!_prefetchDepthExplicit) {
+                if (!_prefetchDepthExplicit) {
                         _prefetchDepth = cmdOpen->defaultPrefetchDepth;
-                        if(_prefetchDepth < 1) _prefetchDepth = 1;
+                        if (_prefetchDepth < 1) _prefetchDepth = 1;
                 }
                 _writeDepth = cmdOpen->defaultWriteDepth;
-                if(_writeDepth < 1) _writeDepth = 1;
+                if (_writeDepth < 1) _writeDepth = 1;
         } else {
                 // Open failed — give the task a chance to clean up any
                 // partially-allocated resources via its Close handler.
                 // Backends must tolerate Close from a failed-open state.
-                auto *cmdClose = new MediaIOCommandClose();
+                auto               *cmdClose = new MediaIOCommandClose();
                 MediaIOCommand::Ptr closeCmd = MediaIOCommand::Ptr::takeOwnership(cmdClose);
-                submitAndWait(closeCmd);  // ignore close error
+                submitAndWait(closeCmd); // ignore close error
         }
         return err;
 }
@@ -1173,9 +1115,8 @@ void MediaIO::resetClosedState() {
 }
 
 Error MediaIO::close(bool block) {
-        promekiDebug("MediaIO::close ENTER block=%d isOpen=%d _closing=%d",
-                     (int)block, (int)isOpen(), (int)_closing);
-        if(!isOpen() || _closing) return Error::NotOpen;
+        promekiDebug("MediaIO::close ENTER block=%d isOpen=%d _closing=%d", (int)block, (int)isOpen(), (int)_closing);
+        if (!isOpen() || _closing) return Error::NotOpen;
 
         // Latch closing state.  This gates readFrame() from submitting
         // new prefetches and writeFrame() from accepting new writes,
@@ -1188,7 +1129,7 @@ Error MediaIO::close(bool block) {
         // can block on external signals (for example, a FrameBridge
         // publisher waiting for a consumer) would otherwise keep the
         // strand busy and starve the Close we're about to submit.
-        if(_task.isValid()) _task->cancelBlockingWork();
+        if (_task.isValid()) _task->cancelBlockingWork();
 
         // Graceful close: do NOT cancel pending strand work.  Any
         // reads/writes submitted before close() keep running to
@@ -1199,10 +1140,9 @@ Error MediaIO::close(bool block) {
         // has completed.
         Future<Error> closeFuture = _strand.submit([this]() -> Error {
                 promekiDebug("MediaIO::close strand running CmdClose");
-                auto *cmdClose = new MediaIOCommandClose();
-                MediaIOCommand::Ptr closeCmd =
-                        MediaIOCommand::Ptr::takeOwnership(cmdClose);
-                Error err = dispatchCommand(closeCmd);
+                auto               *cmdClose = new MediaIOCommandClose();
+                MediaIOCommand::Ptr closeCmd = MediaIOCommand::Ptr::takeOwnership(cmdClose);
+                Error               err = dispatchCommand(closeCmd);
 
                 // Push a single synthetic EOS read result so
                 // signal-driven consumers receive exactly one trailing
@@ -1213,8 +1153,7 @@ Error MediaIO::close(bool block) {
                 // all first and EOS last.
                 auto *cmdEos = new MediaIOCommandRead();
                 cmdEos->result = Error::EndOfFile;
-                _readResultQueue.push(
-                        MediaIOCommand::Ptr::takeOwnership(cmdEos));
+                _readResultQueue.push(MediaIOCommand::Ptr::takeOwnership(cmdEos));
                 frameReadySignal.emit();
 
                 resetClosedState();
@@ -1222,15 +1161,15 @@ Error MediaIO::close(bool block) {
                 return err;
         });
 
-        if(!block) return Error::Ok;
+        if (!block) return Error::Ok;
         auto r = closeFuture.result();
         // Sync close: drain any results that finalize pushed (the
         // real prior reads plus the trailing EOS) so that, on return,
         // @ref readyReads reports zero — matching the pre-refactor
         // contract.  Signal-driven async consumers don't need this;
         // they walk the queue themselves on @c frameReady.
-        while(_readResultQueue.tryPop().second().isOk()) {}
-        if(r.second().isError()) return r.second();
+        while (_readResultQueue.tryPop().second().isOk()) {}
+        if (r.second().isError()) return r.second();
         return r.first();
 }
 
@@ -1239,19 +1178,19 @@ Error MediaIO::close(bool block) {
 // ============================================================================
 
 Error MediaIO::setExpectedDesc(const MediaDesc &desc) {
-        if(isOpen()) return Error::AlreadyOpen;
+        if (isOpen()) return Error::AlreadyOpen;
         _pendingMediaDesc = desc;
         return Error::Ok;
 }
 
 Error MediaIO::setExpectedAudioDesc(const AudioDesc &desc) {
-        if(isOpen()) return Error::AlreadyOpen;
+        if (isOpen()) return Error::AlreadyOpen;
         _pendingAudioDesc = desc;
         return Error::Ok;
 }
 
 Error MediaIO::setExpectedMetadata(const Metadata &meta) {
-        if(isOpen()) return Error::AlreadyOpen;
+        if (isOpen()) return Error::AlreadyOpen;
         _pendingMetadata = meta;
         return Error::Ok;
 }
@@ -1267,18 +1206,17 @@ Error MediaIO::setExpectedMetadata(const Metadata &meta) {
 // callers can negotiate without touching the task layer.
 
 Error MediaIO::describe(MediaIODescription *out) const {
-        if(out == nullptr) return Error::Invalid;
+        if (out == nullptr) return Error::Invalid;
         *out = MediaIODescription();
 
         // Backend identity / role flags from the registered FormatDesc.
         // The Type config key is set by every create / createForFile*
         // path, so it is always present once the MediaIO has a task.
-        const String typeName = _config.contains(MediaConfig::Type)
-                ? _config.getAs<String>(MediaConfig::Type)
-                : String();
-        if(!typeName.isEmpty()) {
+        const String typeName =
+                _config.contains(MediaConfig::Type) ? _config.getAs<String>(MediaConfig::Type) : String();
+        if (!typeName.isEmpty()) {
                 const FormatDesc *desc = findFormatByName(typeName);
-                if(desc != nullptr) {
+                if (desc != nullptr) {
                         out->setBackendName(desc->name);
                         out->setBackendDescription(desc->description);
                         out->setCanBeSource(desc->canBeSource);
@@ -1294,21 +1232,21 @@ Error MediaIO::describe(MediaIODescription *out) const {
 
         // Cached state — only meaningful while open.  Pre-open
         // backends will fill these via their describe() probe.
-        if(isOpen()) {
+        if (isOpen()) {
                 out->setCanSeek(_canSeek);
                 out->setFrameCount(_frameCount);
                 out->setFrameRate(_frameRate);
                 out->setContainerMetadata(_metadata);
-                if(_mediaDesc.isValid()) {
+                if (_mediaDesc.isValid()) {
                         out->setPreferredFormat(_mediaDesc);
                 }
         }
 
         // Backend supplement.  Tasks fill in producibleFormats /
         // acceptableFormats and any pre-open probe results.
-        if(_task.isValid()) {
+        if (_task.isValid()) {
                 Error err = _task->describe(out);
-                if(err.isError()) {
+                if (err.isError()) {
                         out->setProbeStatus(err);
                         return err;
                 }
@@ -1317,35 +1255,35 @@ Error MediaIO::describe(MediaIODescription *out) const {
 }
 
 Error MediaIO::proposeInput(const MediaDesc &offered, MediaDesc *preferred) const {
-        if(_task.isNull()) {
-                if(preferred != nullptr) *preferred = MediaDesc();
+        if (_task.isNull()) {
+                if (preferred != nullptr) *preferred = MediaDesc();
                 return Error::NotSupported;
         }
         return _task->proposeInput(offered, preferred);
 }
 
 Error MediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
-        if(_task.isNull()) {
-                if(achievable != nullptr) *achievable = MediaDesc();
+        if (_task.isNull()) {
+                if (achievable != nullptr) *achievable = MediaDesc();
                 return Error::NotSupported;
         }
         return _task->proposeOutput(requested, achievable);
 }
 
 Error MediaIO::setVideoTracks(const List<int> &tracks) {
-        if(isOpen()) return Error::AlreadyOpen;
+        if (isOpen()) return Error::AlreadyOpen;
         _pendingVideoTracks = tracks;
         return Error::Ok;
 }
 
 Error MediaIO::setAudioTracks(const List<int> &tracks) {
-        if(isOpen()) return Error::AlreadyOpen;
+        if (isOpen()) return Error::AlreadyOpen;
         _pendingAudioTracks = tracks;
         return Error::Ok;
 }
 
 void MediaIO::setPrefetchDepth(int n) {
-        if(n < 1) n = 1;
+        if (n < 1) n = 1;
         _prefetchDepth = n;
         _prefetchDepthExplicit = true;
 }
@@ -1373,7 +1311,7 @@ int MediaIO::pendingWrites() const {
 
 int MediaIO::writesAccepted() const {
         int used = _pendingWriteCount.value();
-        if(_task.isValid()) used += _task->pendingOutput();
+        if (_task.isValid()) used += _task->pendingOutput();
         int avail = _writeDepth - used;
         return avail > 0 ? avail : 0;
 }
@@ -1387,32 +1325,32 @@ Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
         // before the signal slot runs on the consumer's event loop).
         // Stale entries from a prior session cannot leak here because
         // @ref open clears the queue.
-        auto popped = _readResultQueue.tryPop();
-        bool gotResult = popped.second().isOk();
+        auto                popped = _readResultQueue.tryPop();
+        bool                gotResult = popped.second().isOk();
         MediaIOCommand::Ptr resultCmd = gotResult ? popped.first() : MediaIOCommand::Ptr();
-        if(!gotResult) {
-                if(!isOpen()) return Error::NotOpen;
+        if (!gotResult) {
+                if (!isOpen()) return Error::NotOpen;
                 // readFrame() pulls a frame out of the MediaIO — the
                 // caller is consuming the backend's output, so the
                 // backend must have been opened in Output (source) or
                 // InputAndOutput mode.
-                if(_mode != Source && _mode != Transform) return Error::NotSupported;
+                if (_mode != Source && _mode != Transform) return Error::NotSupported;
                 // Once EOF has been hit, every subsequent read returns
                 // EOF without going down to the backend.  Cleared on
                 // seek/close.
-                if(_atEnd) return Error::EndOfFile;
+                if (_atEnd) return Error::EndOfFile;
                 // Top up the in-flight read queue to the desired depth.
                 // During an async close we don't submit new prefetches —
                 // the finalize step will push a synthetic EOS instead.
-                if(!_closing) {
-                        while(_pendingReadCount.value() < _prefetchDepth) {
+                if (!_closing) {
+                        while (_pendingReadCount.value() < _prefetchDepth) {
                                 submitReadCommand();
                         }
                 }
-                if(!block) return Error::TryAgain;
+                if (!block) return Error::TryAgain;
                 // Block on the result queue until something arrives.
                 auto [popped, popErr] = _readResultQueue.pop();
-                if(popErr.isError()) return popErr;
+                if (popErr.isError()) return popErr;
                 resultCmd = popped;
         } else {
                 // We just consumed a prefetched result; top up again so
@@ -1421,9 +1359,8 @@ Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
                 // gone (@c _mode flipped back to NotOpen by
                 // @ref resetClosedState).  The mode check covers the
                 // not-open case without a separate @ref isOpen call.
-                if(!_closing && !_atEnd &&
-                   (_mode == Source || _mode == Transform)) {
-                        while(_pendingReadCount.value() < _prefetchDepth) {
+                if (!_closing && !_atEnd && (_mode == Source || _mode == Transform)) {
+                        while (_pendingReadCount.value() < _prefetchDepth) {
                                 submitReadCommand();
                         }
                 }
@@ -1434,27 +1371,25 @@ Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
         // If the backend pushed a mid-stream descriptor change, update
         // our cache and notify listeners.  We do this BEFORE handing the
         // frame back so the user sees the new descriptors immediately.
-        if(cmdRead->mediaDescChanged) {
+        if (cmdRead->mediaDescChanged) {
                 _mediaDesc = cmdRead->updatedMediaDesc;
                 _frameRate = _mediaDesc.frameRate();
-                if(!_mediaDesc.audioList().isEmpty()) {
+                if (!_mediaDesc.audioList().isEmpty()) {
                         _audioDesc = _mediaDesc.audioList()[0];
                 }
                 _metadata = _mediaDesc.metadata();
                 descriptorChangedSignal.emit();
         }
 
-        if(cmdRead->result.isOk()) {
+        if (cmdRead->result.isOk()) {
                 frame = std::move(cmdRead->frame);
                 _currentFrame = cmdRead->currentFrame;
                 // Stamp the current frame number into the frame's metadata
                 // so downstream consumers know which frame it is.
-                if(frame.isValid()) {
-                        frame.modify()->metadata().set(
-                                Metadata::FrameNumber, _currentFrame);
-                        if(cmdRead->mediaDescChanged) {
-                                frame.modify()->metadata().set(
-                                        Metadata::MediaDescChanged, true);
+                if (frame.isValid()) {
+                        frame.modify()->metadata().set(Metadata::FrameNumber, _currentFrame);
+                        if (cmdRead->mediaDescChanged) {
+                                frame.modify()->metadata().set(Metadata::MediaDescChanged, true);
                         }
                         // Fill in any missing native pts / video
                         // duration with a Synthetic fallback.  Every
@@ -1462,22 +1397,19 @@ Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
                         // timing regardless of backend support.
                         {
                                 int64_t ns = _frameRate.cumulativeTicks(
-                                        INT64_C(1000000000),
-                                        _currentFrame.isValid() ? _currentFrame.value() : 0);
-                                TimeStamp synTs = _originTime +
-                                        Duration::fromNanoseconds(ns);
-                                MediaTimeStamp synMts(synTs,
-                                        ClockDomain::Synthetic);
+                                        INT64_C(1000000000), _currentFrame.isValid() ? _currentFrame.value() : 0);
+                                TimeStamp      synTs = _originTime + Duration::fromNanoseconds(ns);
+                                MediaTimeStamp synMts(synTs, ClockDomain::Synthetic);
                                 ensurePayloadTiming(frame, synMts, _frameRate);
                         }
                 }
-        } else if(cmdRead->result == Error::EndOfFile) {
+        } else if (cmdRead->result == Error::EndOfFile) {
                 // Latch EOF — stop submitting prefetches.  Drain any
                 // already-queued results so we don't return them after
                 // signalling EOF (the backend has said it's done).
                 _atEnd = true;
                 _strand.cancelPending();
-                while(_readResultQueue.tryPop().second().isOk()) {}
+                while (_readResultQueue.tryPop().second().isOk()) {}
         }
         return cmdRead->result;
 }
@@ -1487,7 +1419,7 @@ bool MediaIO::isIdle() const {
 }
 
 size_t MediaIO::cancelPending() {
-        if(!isOpen()) return 0;
+        if (!isOpen()) return 0;
         // Cancel anything queued in the strand (the Strand's per-task
         // cancel callbacks balance any reference counts on our side,
         // such as _pendingReadCount).  Any prefetched read results that
@@ -1495,16 +1427,16 @@ size_t MediaIO::cancelPending() {
         // readFrame() submits fresh work.
         size_t cancelled = _strand.cancelPending();
         size_t dropped = 0;
-        while(_readResultQueue.tryPop().second().isOk()) dropped++;
+        while (_readResultQueue.tryPop().second().isOk()) dropped++;
         return cancelled + dropped;
 }
 
 Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
-        if(!isOpen() || _closing) return Error::NotOpen;
+        if (!isOpen() || _closing) return Error::NotOpen;
         // writeFrame() pushes a frame into the MediaIO — the caller is
         // feeding the backend, so the backend must have been opened in
         // Input (sink) or InputAndOutput mode.
-        if(_mode != Sink && _mode != Transform) return Error::NotSupported;
+        if (_mode != Sink && _mode != Transform) return Error::NotSupported;
 
         // Non-blocking capacity gate.  Per the documented contract,
         // non-blocking writeFrame only queues when @ref writesAccepted
@@ -1514,7 +1446,7 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
         // unbounded behind its back.  Blocking writes deliberately
         // skip this gate — the caller is already pacing itself by
         // waiting on the future.
-        if(!block && writesAccepted() <= 0) {
+        if (!block && writesAccepted() <= 0) {
                 return Error::TryAgain;
         }
 
@@ -1525,12 +1457,10 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
         // Fill in any missing native pts / video duration with a
         // Synthetic fallback.  Every payload the backend sees has
         // valid timing regardless of whether the caller stamped it.
-        if(cmdWrite->frame.isValid()) {
-                int64_t ns = _frameRate.cumulativeTicks(
-                        INT64_C(1000000000),
-                        _writeFrameCount.isFinite() ? _writeFrameCount.value() : 0);
-                TimeStamp synTs = _originTime +
-                        Duration::fromNanoseconds(ns);
+        if (cmdWrite->frame.isValid()) {
+                int64_t        ns = _frameRate.cumulativeTicks(INT64_C(1000000000),
+                                                        _writeFrameCount.isFinite() ? _writeFrameCount.value() : 0);
+                TimeStamp      synTs = _originTime + Duration::fromNanoseconds(ns);
                 MediaTimeStamp synMts(synTs, ClockDomain::Synthetic);
                 ensurePayloadTiming(cmdWrite->frame, synMts, _frameRate);
                 _writeFrameCount++;
@@ -1546,10 +1476,10 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
         // and the copy-on-write clone triggered by modify() only
         // affects our copy.  The caller's original Frame::Ptr stays
         // pristine.
-        if(_benchmarkEnabled && cmdWrite->frame.isValid()) {
+        if (_benchmarkEnabled && cmdWrite->frame.isValid()) {
                 ensureFrameBenchmark(cmdWrite->frame);
                 Benchmark::Ptr &bmp = cmdWrite->frame.modify()->benchmark();
-                if(bmp.isValid()) {
+                if (bmp.isValid()) {
                         bmp.modify()->stamp(_idStampEnqueue);
                 }
         }
@@ -1564,10 +1494,9 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
         Future<Error> future = _strand.submit(
                 [this, cmd]() mutable {
                         MediaIOCommand *raw = cmd.modify();
-                        auto *cw = static_cast<MediaIOCommandWrite *>(raw);
+                        auto           *cw = static_cast<MediaIOCommandWrite *>(raw);
 
-                        if(cw->frame.isValid() &&
-                           !cw->frame->configUpdate().isEmpty()) {
+                        if (cw->frame.isValid() && !cw->frame->configUpdate().isEmpty()) {
                                 _task->configChanged(cw->frame->configUpdate());
                         }
 
@@ -1576,14 +1505,14 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
                         // Together with the enqueue stamp on the user
                         // thread, they cover queue-wait and work-time
                         // for every frame the writer sees.
-                        if(_benchmarkEnabled && cw->frame.isValid()) {
+                        if (_benchmarkEnabled && cw->frame.isValid()) {
                                 // cw->frame is a non-const Ptr on a
                                 // command we own, so modify() never
                                 // clones here — the command holds the
                                 // only live reference to this Frame
                                 // object graph on the worker thread.
                                 Benchmark::Ptr &bmp = cw->frame.modify()->benchmark();
-                                if(bmp.isValid()) {
+                                if (bmp.isValid()) {
                                         Benchmark *bm = bmp.modify();
                                         bm->stamp(_idStampDequeue);
                                         bm->stamp(_idStampTaskBegin);
@@ -1592,9 +1521,8 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
                                         _task->_activeBenchmark = nullptr;
                                         bm->stamp(_idStampTaskEnd);
                                         submitBenchmarkIfSink(cw->frame);
-                                        if(err.isOk()) {
-                                                _rateTracker.record(
-                                                        frameByteSize(cw->frame));
+                                        if (err.isOk()) {
+                                                _rateTracker.record(frameByteSize(cw->frame));
                                                 frameWantedSignal.emit();
                                                 // Transform tasks may have
                                                 // produced output as a
@@ -1610,7 +1538,7 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
                                                 // since readFrame on a
                                                 // Transform returns TryAgain
                                                 // without pushing a result.
-                                                if(_mode == Transform) {
+                                                if (_mode == Transform) {
                                                         frameReadySignal.emit();
                                                 }
                                         } else {
@@ -1622,13 +1550,12 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
                         }
 
                         Error err = _task->executeCmd(*cw);
-                        if(err.isOk()) {
-                                _rateTracker.record(
-                                        frameByteSize(cw->frame));
+                        if (err.isOk()) {
+                                _rateTracker.record(frameByteSize(cw->frame));
                                 frameWantedSignal.emit();
                                 // Wake the read side — see the matching
                                 // comment on the benchmarked path above.
-                                if(_mode == Transform) {
+                                if (_mode == Transform) {
                                         frameReadySignal.emit();
                                 }
                         } else {
@@ -1647,12 +1574,12 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
 
         // Non-blocking submit: the command is now in the strand's hands
         // and any failure arrives asynchronously on @c writeErrorSignal.
-        if(!block) return Error::Ok;
+        if (!block) return Error::Ok;
 
         auto r = future.result();
-        if(r.second().isError()) return r.second();
+        if (r.second().isError()) return r.second();
         Error err = r.first();
-        if(err.isOk()) {
+        if (err.isOk()) {
                 _currentFrame = cmdWrite->currentFrame;
                 _frameCount = cmdWrite->frameCount;
         }
@@ -1660,22 +1587,22 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
 }
 
 Error MediaIO::sendParams(const String &name, const MediaIOParams &params, MediaIOParams *result) {
-        if(!isOpen() || _closing) return Error::NotOpen;
+        if (!isOpen() || _closing) return Error::NotOpen;
 
         // Base-class Benchmark commands short-circuit before reaching
         // the strand so they don't queue behind real work — callers
         // typically poll these to render a status display.  Without an
         // attached reporter there's nothing useful to report, so
         // surface NotSupported.
-        if(name == ParamBenchmarkReport.name()) {
-                if(_benchmarkReporter == nullptr) return Error::NotSupported;
-                if(result != nullptr) {
+        if (name == ParamBenchmarkReport.name()) {
+                if (_benchmarkReporter == nullptr) return Error::NotSupported;
+                if (result != nullptr) {
                         result->set(ParamBenchmarkReport, _benchmarkReporter->summaryReport());
                 }
                 return Error::Ok;
         }
-        if(name == ParamBenchmarkReset.name()) {
-                if(_benchmarkReporter == nullptr) return Error::NotSupported;
+        if (name == ParamBenchmarkReset.name()) {
+                if (_benchmarkReporter == nullptr) return Error::NotSupported;
                 _benchmarkReporter->reset();
                 return Error::Ok;
         }
@@ -1684,16 +1611,16 @@ Error MediaIO::sendParams(const String &name, const MediaIOParams &params, Media
         cmdParams->name = name;
         cmdParams->params = params;
         MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdParams);
-        Error err = submitAndWait(cmd);
-        if(result != nullptr) {
+        Error               err = submitAndWait(cmd);
+        if (result != nullptr) {
                 *result = std::move(cmdParams->result);
         }
         return err;
 }
 
 MediaIOStats MediaIO::stats() {
-        if(!isOpen() || _closing) return MediaIOStats();
-        auto *cmdStats = new MediaIOCommandStats();
+        if (!isOpen() || _closing) return MediaIOStats();
+        auto               *cmdStats = new MediaIOCommandStats();
         MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdStats);
         // Urgent: telemetry pollers (UI overlays, live monitors) call
         // stats() on a cadence and shouldn't block behind a deep queue
@@ -1701,7 +1628,7 @@ MediaIOStats MediaIO::stats() {
         // into the strand caps the latency at "one task duration"
         // instead of "full queue drain".
         Error err = submitAndWait(cmd, /*urgent=*/true);
-        if(err.isError()) return MediaIOStats();
+        if (err.isError()) return MediaIOStats();
         // Let the base-class telemetry overlay the backend's stats.
         // populateStandardStats() writes the standard keys after the
         // backend has populated anything backend-specific, so drivers
@@ -1717,43 +1644,43 @@ MediaIOStats MediaIO::stats() {
 // ============================================================================
 
 void MediaIO::setStep(int val) {
-        if(val == _step) return;
+        if (val == _step) return;
         // Outstanding prefetched reads were submitted with the old step;
         // they're stale relative to the new direction/speed.  Cancel them
         // and discard any results that already came back.  Also clear
         // the EOF latch — the new direction may make more frames available
         // (e.g. flipping from forward-EOF to reverse).
-        if(isOpen()) {
+        if (isOpen()) {
                 _strand.cancelPending();
-                while(_readResultQueue.tryPop().second().isOk()) {}
+                while (_readResultQueue.tryPop().second().isOk()) {}
                 _atEnd = false;
         }
         _step = val;
 }
 
 Error MediaIO::seekToFrame(const FrameNumber &frameNumber, SeekMode mode) {
-        if(!isOpen() || _closing) return Error::NotOpen;
-        if(!_canSeek) return Error::IllegalSeek;
+        if (!isOpen() || _closing) return Error::NotOpen;
+        if (!_canSeek) return Error::IllegalSeek;
 
         // Cancel any prefetched reads from the old position before
         // submitting the seek.  Otherwise the next read would return
         // a stale frame from the pre-seek queue.
         _strand.cancelPending();
-        while(_readResultQueue.tryPop().second().isOk()) {}
+        while (_readResultQueue.tryPop().second().isOk()) {}
         // Seeking past EOF clears the EOF latch — the new position may
         // be re-readable.
         _atEnd = false;
 
         // Resolve Default to the task's preferred mode so the backend
         // always sees a concrete mode.
-        if(mode == SeekDefault) mode = _defaultSeekMode;
+        if (mode == SeekDefault) mode = _defaultSeekMode;
 
         auto *cmdSeek = new MediaIOCommandSeek();
         cmdSeek->frameNumber = frameNumber;
         cmdSeek->mode = mode;
         MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdSeek);
-        Error err = submitAndWait(cmd);
-        if(err.isOk()) {
+        Error               err = submitAndWait(cmd);
+        if (err.isOk()) {
                 _currentFrame = cmdSeek->currentFrame;
         }
         return err;

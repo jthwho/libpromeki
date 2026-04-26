@@ -16,10 +16,10 @@
 #include <promeki/platform.h>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
-#       include <winsock2.h>
-#       include <ws2tcpip.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #elif !defined(PROMEKI_PLATFORM_EMSCRIPTEN)
-#       include <netinet/in.h>
+#include <netinet/in.h>
 #endif
 
 PROMEKI_NAMESPACE_BEGIN
@@ -76,20 +76,20 @@ class Ipv6Address {
                 static Ipv6Address loopback();
 
                 /** @brief Default constructor. Creates a null (all-zero) address. */
-                Ipv6Address() : _addr{}, _scopeId(0) { }
+                Ipv6Address() : _addr{}, _scopeId(0) {}
 
                 /**
                  * @brief Constructs from raw 16-byte data.
                  * @param bytes The 16 bytes of the IPv6 address in network byte order.
                  */
-                explicit Ipv6Address(const DataFormat &bytes) : _addr(bytes), _scopeId(0) { }
+                explicit Ipv6Address(const DataFormat &bytes) : _addr(bytes), _scopeId(0) {}
 
                 /**
                  * @brief Constructs from a raw byte pointer (copies 16 bytes).
                  * @param bytes Pointer to 16 bytes in network byte order.
                  */
                 explicit Ipv6Address(const uint8_t *bytes) : _scopeId(0) {
-                        for(size_t i = 0; i < 16; ++i) _addr[i] = bytes[i];
+                        for (size_t i = 0; i < 16; ++i) _addr[i] = bytes[i];
                 }
 
                 /** @brief Returns true if all bytes are zero and scope ID is zero. */
@@ -194,13 +194,13 @@ class Ipv6Address {
                 /** @brief Less-than comparison for ordering (lexicographic, then scope). */
                 bool operator<(const Ipv6Address &other) const {
                         int cmp = std::memcmp(_addr.data(), other._addr.data(), 16);
-                        if(cmp != 0) return cmp < 0;
+                        if (cmp != 0) return cmp < 0;
                         return _scopeId < other._scopeId;
                 }
 
         private:
-                DataFormat      _addr;          ///< Address stored in network byte order.
-                uint32_t        _scopeId;       ///< Numeric scope ID (0 if not set).
+                DataFormat _addr;    ///< Address stored in network byte order.
+                uint32_t   _scopeId; ///< Numeric scope ID (0 if not set).
 };
 
 /** @brief Writes a colon-hex IPv6 address to the stream. */

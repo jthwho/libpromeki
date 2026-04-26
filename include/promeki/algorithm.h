@@ -23,8 +23,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @param c The source container.
  * @return A sorted copy.
  */
-template <typename Container>
-Container sorted(Container c) {
+template <typename Container> Container sorted(Container c) {
         std::sort(c.begin(), c.end());
         return c;
 }
@@ -37,8 +36,7 @@ Container sorted(Container c) {
  * @param comp The comparator.
  * @return A sorted copy.
  */
-template <typename Container, typename Compare>
-Container sorted(Container c, Compare comp) {
+template <typename Container, typename Compare> Container sorted(Container c, Compare comp) {
         std::sort(c.begin(), c.end(), comp);
         return c;
 }
@@ -51,11 +49,10 @@ Container sorted(Container c, Compare comp) {
  * @param pred The predicate.
  * @return A filtered copy.
  */
-template <typename Container, typename Predicate>
-Container filtered(const Container &c, Predicate pred) {
+template <typename Container, typename Predicate> Container filtered(const Container &c, Predicate pred) {
         Container result;
-        for(auto it = c.begin(); it != c.end(); ++it) {
-                if(pred(*it)) result += *it;
+        for (auto it = c.begin(); it != c.end(); ++it) {
+                if (pred(*it)) result += *it;
         }
         return result;
 }
@@ -68,12 +65,11 @@ Container filtered(const Container &c, Predicate pred) {
  * @param fn The transform function.
  * @return A List of transformed values.
  */
-template <typename Container, typename Transform>
-auto mapped(const Container &c, Transform fn) {
+template <typename Container, typename Transform> auto mapped(const Container &c, Transform fn) {
         using ResultType = decltype(fn(*c.begin()));
         List<ResultType> result;
         result.reserve(c.size());
-        for(auto it = c.begin(); it != c.end(); ++it) {
+        for (auto it = c.begin(); it != c.end(); ++it) {
                 result += fn(*it);
         }
         return result;
@@ -87,8 +83,7 @@ auto mapped(const Container &c, Transform fn) {
  * @param pred The predicate.
  * @return True if all elements match.
  */
-template <typename Container, typename Predicate>
-bool allOf(const Container &c, Predicate pred) {
+template <typename Container, typename Predicate> bool allOf(const Container &c, Predicate pred) {
         return std::all_of(c.begin(), c.end(), pred);
 }
 
@@ -100,8 +95,7 @@ bool allOf(const Container &c, Predicate pred) {
  * @param pred The predicate.
  * @return True if any element matches.
  */
-template <typename Container, typename Predicate>
-bool anyOf(const Container &c, Predicate pred) {
+template <typename Container, typename Predicate> bool anyOf(const Container &c, Predicate pred) {
         return std::any_of(c.begin(), c.end(), pred);
 }
 
@@ -113,8 +107,7 @@ bool anyOf(const Container &c, Predicate pred) {
  * @param pred The predicate.
  * @return True if no elements match.
  */
-template <typename Container, typename Predicate>
-bool noneOf(const Container &c, Predicate pred) {
+template <typename Container, typename Predicate> bool noneOf(const Container &c, Predicate pred) {
         return std::none_of(c.begin(), c.end(), pred);
 }
 
@@ -125,8 +118,7 @@ bool noneOf(const Container &c, Predicate pred) {
  * @param c The container.
  * @param fn The function to apply.
  */
-template <typename Container, typename Callable>
-void forEach(const Container &c, Callable fn) {
+template <typename Container, typename Callable> void forEach(const Container &c, Callable fn) {
         std::for_each(c.begin(), c.end(), fn);
 }
 
@@ -151,8 +143,7 @@ Init accumulate(const Container &c, Init init, BinaryOp op) {
  * @param c The container.
  * @return Iterator to the minimum element.
  */
-template <typename Container>
-auto minElement(const Container &c) {
+template <typename Container> auto minElement(const Container &c) {
         return std::min_element(c.begin(), c.end());
 }
 
@@ -162,8 +153,7 @@ auto minElement(const Container &c) {
  * @param c The container.
  * @return Iterator to the maximum element.
  */
-template <typename Container>
-auto maxElement(const Container &c) {
+template <typename Container> auto maxElement(const Container &c) {
         return std::max_element(c.begin(), c.end());
 }
 
@@ -175,8 +165,7 @@ auto maxElement(const Container &c) {
  * @param val The value to search for.
  * @return True if found.
  */
-template <typename Container, typename Value>
-bool contains(const Container &c, const Value &val) {
+template <typename Container, typename Value> bool contains(const Container &c, const Value &val) {
         return std::find(c.begin(), c.end(), val) != c.end();
 }
 

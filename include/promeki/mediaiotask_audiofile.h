@@ -58,24 +58,22 @@ class MediaIOTask_AudioFile : public MediaIOTask {
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandSeek &cmd) override;
 
-                Error proposeInput(const MediaDesc &offered,
-                                   MediaDesc *preferred) const override;
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
 
                 // Returns the AudioFormat::ID libsndfile prefers
                 // for @p filename's extension, picking the closest
                 // form to @p source so the inserted SRC bridge does
                 // not drop bit depth (e.g. 24-bit source stays 24-bit
                 // through a BWF write).
-                AudioFormat::ID preferredWriterDataType(
-                        const String &filename, AudioFormat::ID source) const;
+                AudioFormat::ID preferredWriterDataType(const String &filename, AudioFormat::ID source) const;
 
-                AudioFile       _audioFile;
-                FrameRate       _frameRate;
-                AudioDesc       _audioDesc;
-                MediaIOMode     _mode = MediaIO_NotOpen;
-                size_t          _samplesPerFrame = 0;
-                FrameNumber     _currentFrame{0};
-                FrameCount      _totalFrames{0};
+                AudioFile   _audioFile;
+                FrameRate   _frameRate;
+                AudioDesc   _audioDesc;
+                MediaIOMode _mode = MediaIO_NotOpen;
+                size_t      _samplesPerFrame = 0;
+                FrameNumber _currentFrame{0};
+                FrameCount  _totalFrames{0};
 };
 
 PROMEKI_NAMESPACE_END

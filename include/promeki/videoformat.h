@@ -30,18 +30,18 @@ PROMEKI_NAMESPACE_BEGIN
  * ("NTSC", "PAL", "1080", "2160", "4KUHD", etc.) are listed in the
  * source file.
  */
-#define PROMEKI_WELL_KNOWN_RASTERS                  \
-        X(Raster_Invalid, "INV",    0,    0   )     \
-        X(Raster_SD525,   "SD525",  720,  486 )     \
-        X(Raster_SD625,   "SD625",  720,  576 )     \
-        X(Raster_HD720,   "HD720",  1280, 720 )     \
-        X(Raster_HD,      "HD",     1920, 1080)     \
-        X(Raster_2K,      "2K",     2048, 1080)     \
-        X(Raster_QHD,     "QHD",    2560, 1440)     \
-        X(Raster_UHD,     "UHD",    3840, 2160)     \
-        X(Raster_4K,      "4K",     4096, 2160)     \
-        X(Raster_UHD8K,   "UHD8K",  7680, 4320)     \
-        X(Raster_8K,      "8K",     8192, 4320)
+#define PROMEKI_WELL_KNOWN_RASTERS                                                                                     \
+        X(Raster_Invalid, "INV", 0, 0)                                                                                 \
+        X(Raster_SD525, "SD525", 720, 486)                                                                             \
+        X(Raster_SD625, "SD625", 720, 576)                                                                             \
+        X(Raster_HD720, "HD720", 1280, 720)                                                                            \
+        X(Raster_HD, "HD", 1920, 1080)                                                                                 \
+        X(Raster_2K, "2K", 2048, 1080)                                                                                 \
+        X(Raster_QHD, "QHD", 2560, 1440)                                                                               \
+        X(Raster_UHD, "UHD", 3840, 2160)                                                                               \
+        X(Raster_4K, "4K", 4096, 2160)                                                                                 \
+        X(Raster_UHD8K, "UHD8K", 7680, 4320)                                                                           \
+        X(Raster_8K, "8K", 8192, 4320)
 
 /**
  * @brief X-macro defining well-known video formats.
@@ -64,56 +64,59 @@ PROMEKI_NAMESPACE_BEGIN
  * Expanded in both @ref VideoFormat::WellKnownFormat (enum generation)
  * and in @c videoformat.cpp (registry data).
  */
-#define PROMEKI_WELL_KNOWN_VIDEO_FORMATS                                                                                   \
-        X(Smpte486i59_94,    Raster_SD525, FPS_29_97, Interlaced,  FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Sd)      \
-        X(Smpte576i50,       Raster_SD625, FPS_25,   Interlaced,  FormatFlag_Smpte | FormatFlag_Pal  | FormatFlag_Sd)      \
-        X(Smpte720p50,       Raster_HD720, FPS_50,   Progressive, FormatFlag_Smpte | FormatFlag_Pal  | FormatFlag_Hd)      \
-        X(Smpte720p59_94,    Raster_HD720, FPS_59_94, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Hd)      \
-        X(Smpte720p60,       Raster_HD720, FPS_60,   Progressive, FormatFlag_Smpte | FormatFlag_Hd)                        \
-        X(Smpte1080i50,      Raster_HD,    FPS_25,   Interlaced,  FormatFlag_Smpte | FormatFlag_Pal  | FormatFlag_Hd)      \
-        X(Smpte1080i59_94,   Raster_HD,    FPS_29_97, Interlaced,  FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Hd)      \
-        X(Smpte1080i60,      Raster_HD,    FPS_30,   Interlaced,  FormatFlag_Smpte | FormatFlag_Hd)                        \
-        X(Smpte1080p23_98,   Raster_HD,    FPS_23_98, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Hd)      \
-        X(Smpte1080p24,      Raster_HD,    FPS_24,   Progressive, FormatFlag_Smpte | FormatFlag_Hd)                        \
-        X(Smpte1080p25,      Raster_HD,    FPS_25,   Progressive, FormatFlag_Smpte | FormatFlag_Pal  | FormatFlag_Hd)      \
-        X(Smpte1080p29_97,   Raster_HD,    FPS_29_97, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Hd)      \
-        X(Smpte1080p30,      Raster_HD,    FPS_30,   Progressive, FormatFlag_Smpte | FormatFlag_Hd)                        \
-        X(Smpte1080p50,      Raster_HD,    FPS_50,   Progressive, FormatFlag_Smpte | FormatFlag_Pal  | FormatFlag_Hd)      \
-        X(Smpte1080p59_94,   Raster_HD,    FPS_59_94, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Hd)      \
-        X(Smpte1080p60,      Raster_HD,    FPS_60,   Progressive, FormatFlag_Smpte | FormatFlag_Hd)                        \
-        X(Smpte1080psf23_98, Raster_HD,    FPS_23_98, PsF,         FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Hd)      \
-        X(Smpte1080psf24,    Raster_HD,    FPS_24,   PsF,         FormatFlag_Smpte | FormatFlag_Hd)                        \
-        X(Smpte1080psf25,    Raster_HD,    FPS_25,   PsF,         FormatFlag_Smpte | FormatFlag_Pal  | FormatFlag_Hd)      \
-        X(Smpte1080psf29_97, Raster_HD,    FPS_29_97, PsF,         FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Hd)      \
-        X(Smpte1080psf30,    Raster_HD,    FPS_30,   PsF,         FormatFlag_Smpte | FormatFlag_Hd)                        \
-        X(Smpte2160p23_98,   Raster_UHD,   FPS_23_98, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Uhd)     \
-        X(Smpte2160p24,      Raster_UHD,   FPS_24,   Progressive, FormatFlag_Smpte | FormatFlag_Uhd)                       \
-        X(Smpte2160p25,      Raster_UHD,   FPS_25,   Progressive, FormatFlag_Smpte | FormatFlag_Pal  | FormatFlag_Uhd)     \
-        X(Smpte2160p29_97,   Raster_UHD,   FPS_29_97, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Uhd)     \
-        X(Smpte2160p30,      Raster_UHD,   FPS_30,   Progressive, FormatFlag_Smpte | FormatFlag_Uhd)                       \
-        X(Smpte2160p50,      Raster_UHD,   FPS_50,   Progressive, FormatFlag_Smpte | FormatFlag_Pal  | FormatFlag_Uhd)     \
-        X(Smpte2160p59_94,   Raster_UHD,   FPS_59_94, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Uhd)     \
-        X(Smpte2160p60,      Raster_UHD,   FPS_60,   Progressive, FormatFlag_Smpte | FormatFlag_Uhd)                       \
-        X(Smpte4320p23_98,   Raster_UHD8K, FPS_23_98, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Uhd8k)   \
-        X(Smpte4320p24,      Raster_UHD8K, FPS_24,   Progressive, FormatFlag_Smpte | FormatFlag_Uhd8k)                     \
-        X(Smpte4320p25,      Raster_UHD8K, FPS_25,   Progressive, FormatFlag_Smpte | FormatFlag_Pal  | FormatFlag_Uhd8k)   \
-        X(Smpte4320p29_97,   Raster_UHD8K, FPS_29_97, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Uhd8k)   \
-        X(Smpte4320p30,      Raster_UHD8K, FPS_30,   Progressive, FormatFlag_Smpte | FormatFlag_Uhd8k)                     \
-        X(Smpte4320p50,      Raster_UHD8K, FPS_50,   Progressive, FormatFlag_Smpte | FormatFlag_Pal  | FormatFlag_Uhd8k)   \
-        X(Smpte4320p59_94,   Raster_UHD8K, FPS_59_94, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Uhd8k)   \
-        X(Smpte4320p60,      Raster_UHD8K, FPS_60,   Progressive, FormatFlag_Smpte | FormatFlag_Uhd8k)                     \
-        X(Dci2Kp24,          Raster_2K,    FPS_24,   Progressive, FormatFlag_Dci)                                          \
-        X(Dci2Kp25,          Raster_2K,    FPS_25,   Progressive, FormatFlag_Dci)                                          \
-        X(Dci2Kp30,          Raster_2K,    FPS_30,   Progressive, FormatFlag_Dci)                                          \
-        X(Dci2Kp48,          Raster_2K,    FPS_48,   Progressive, FormatFlag_Dci)                                          \
-        X(Dci2Kp50,          Raster_2K,    FPS_50,   Progressive, FormatFlag_Dci)                                          \
-        X(Dci2Kp60,          Raster_2K,    FPS_60,   Progressive, FormatFlag_Dci)                                          \
-        X(Dci4Kp24,          Raster_4K,    FPS_24,   Progressive, FormatFlag_Dci)                                          \
-        X(Dci4Kp25,          Raster_4K,    FPS_25,   Progressive, FormatFlag_Dci)                                          \
-        X(Dci4Kp30,          Raster_4K,    FPS_30,   Progressive, FormatFlag_Dci)                                          \
-        X(Dci4Kp48,          Raster_4K,    FPS_48,   Progressive, FormatFlag_Dci)                                          \
-        X(Dci4Kp50,          Raster_4K,    FPS_50,   Progressive, FormatFlag_Dci)                                          \
-        X(Dci4Kp60,          Raster_4K,    FPS_60,   Progressive, FormatFlag_Dci)
+#define PROMEKI_WELL_KNOWN_VIDEO_FORMATS                                                                               \
+        X(Smpte486i59_94, Raster_SD525, FPS_29_97, Interlaced, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Sd)     \
+        X(Smpte576i50, Raster_SD625, FPS_25, Interlaced, FormatFlag_Smpte | FormatFlag_Pal | FormatFlag_Sd)            \
+        X(Smpte720p50, Raster_HD720, FPS_50, Progressive, FormatFlag_Smpte | FormatFlag_Pal | FormatFlag_Hd)           \
+        X(Smpte720p59_94, Raster_HD720, FPS_59_94, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Hd)    \
+        X(Smpte720p60, Raster_HD720, FPS_60, Progressive, FormatFlag_Smpte | FormatFlag_Hd)                            \
+        X(Smpte1080i50, Raster_HD, FPS_25, Interlaced, FormatFlag_Smpte | FormatFlag_Pal | FormatFlag_Hd)              \
+        X(Smpte1080i59_94, Raster_HD, FPS_29_97, Interlaced, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Hd)       \
+        X(Smpte1080i60, Raster_HD, FPS_30, Interlaced, FormatFlag_Smpte | FormatFlag_Hd)                               \
+        X(Smpte1080p23_98, Raster_HD, FPS_23_98, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Hd)      \
+        X(Smpte1080p24, Raster_HD, FPS_24, Progressive, FormatFlag_Smpte | FormatFlag_Hd)                              \
+        X(Smpte1080p25, Raster_HD, FPS_25, Progressive, FormatFlag_Smpte | FormatFlag_Pal | FormatFlag_Hd)             \
+        X(Smpte1080p29_97, Raster_HD, FPS_29_97, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Hd)      \
+        X(Smpte1080p30, Raster_HD, FPS_30, Progressive, FormatFlag_Smpte | FormatFlag_Hd)                              \
+        X(Smpte1080p50, Raster_HD, FPS_50, Progressive, FormatFlag_Smpte | FormatFlag_Pal | FormatFlag_Hd)             \
+        X(Smpte1080p59_94, Raster_HD, FPS_59_94, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Hd)      \
+        X(Smpte1080p60, Raster_HD, FPS_60, Progressive, FormatFlag_Smpte | FormatFlag_Hd)                              \
+        X(Smpte1080psf23_98, Raster_HD, FPS_23_98, PsF, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Hd)            \
+        X(Smpte1080psf24, Raster_HD, FPS_24, PsF, FormatFlag_Smpte | FormatFlag_Hd)                                    \
+        X(Smpte1080psf25, Raster_HD, FPS_25, PsF, FormatFlag_Smpte | FormatFlag_Pal | FormatFlag_Hd)                   \
+        X(Smpte1080psf29_97, Raster_HD, FPS_29_97, PsF, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Hd)            \
+        X(Smpte1080psf30, Raster_HD, FPS_30, PsF, FormatFlag_Smpte | FormatFlag_Hd)                                    \
+        X(Smpte2160p23_98, Raster_UHD, FPS_23_98, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Uhd)    \
+        X(Smpte2160p24, Raster_UHD, FPS_24, Progressive, FormatFlag_Smpte | FormatFlag_Uhd)                            \
+        X(Smpte2160p25, Raster_UHD, FPS_25, Progressive, FormatFlag_Smpte | FormatFlag_Pal | FormatFlag_Uhd)           \
+        X(Smpte2160p29_97, Raster_UHD, FPS_29_97, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Uhd)    \
+        X(Smpte2160p30, Raster_UHD, FPS_30, Progressive, FormatFlag_Smpte | FormatFlag_Uhd)                            \
+        X(Smpte2160p50, Raster_UHD, FPS_50, Progressive, FormatFlag_Smpte | FormatFlag_Pal | FormatFlag_Uhd)           \
+        X(Smpte2160p59_94, Raster_UHD, FPS_59_94, Progressive, FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Uhd)    \
+        X(Smpte2160p60, Raster_UHD, FPS_60, Progressive, FormatFlag_Smpte | FormatFlag_Uhd)                            \
+        X(Smpte4320p23_98, Raster_UHD8K, FPS_23_98, Progressive,                                                       \
+          FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Uhd8k)                                                       \
+        X(Smpte4320p24, Raster_UHD8K, FPS_24, Progressive, FormatFlag_Smpte | FormatFlag_Uhd8k)                        \
+        X(Smpte4320p25, Raster_UHD8K, FPS_25, Progressive, FormatFlag_Smpte | FormatFlag_Pal | FormatFlag_Uhd8k)       \
+        X(Smpte4320p29_97, Raster_UHD8K, FPS_29_97, Progressive,                                                       \
+          FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Uhd8k)                                                       \
+        X(Smpte4320p30, Raster_UHD8K, FPS_30, Progressive, FormatFlag_Smpte | FormatFlag_Uhd8k)                        \
+        X(Smpte4320p50, Raster_UHD8K, FPS_50, Progressive, FormatFlag_Smpte | FormatFlag_Pal | FormatFlag_Uhd8k)       \
+        X(Smpte4320p59_94, Raster_UHD8K, FPS_59_94, Progressive,                                                       \
+          FormatFlag_Smpte | FormatFlag_Ntsc | FormatFlag_Uhd8k)                                                       \
+        X(Smpte4320p60, Raster_UHD8K, FPS_60, Progressive, FormatFlag_Smpte | FormatFlag_Uhd8k)                        \
+        X(Dci2Kp24, Raster_2K, FPS_24, Progressive, FormatFlag_Dci)                                                    \
+        X(Dci2Kp25, Raster_2K, FPS_25, Progressive, FormatFlag_Dci)                                                    \
+        X(Dci2Kp30, Raster_2K, FPS_30, Progressive, FormatFlag_Dci)                                                    \
+        X(Dci2Kp48, Raster_2K, FPS_48, Progressive, FormatFlag_Dci)                                                    \
+        X(Dci2Kp50, Raster_2K, FPS_50, Progressive, FormatFlag_Dci)                                                    \
+        X(Dci2Kp60, Raster_2K, FPS_60, Progressive, FormatFlag_Dci)                                                    \
+        X(Dci4Kp24, Raster_4K, FPS_24, Progressive, FormatFlag_Dci)                                                    \
+        X(Dci4Kp25, Raster_4K, FPS_25, Progressive, FormatFlag_Dci)                                                    \
+        X(Dci4Kp30, Raster_4K, FPS_30, Progressive, FormatFlag_Dci)                                                    \
+        X(Dci4Kp48, Raster_4K, FPS_48, Progressive, FormatFlag_Dci)                                                    \
+        X(Dci4Kp50, Raster_4K, FPS_50, Progressive, FormatFlag_Dci)                                                    \
+        X(Dci4Kp60, Raster_4K, FPS_60, Progressive, FormatFlag_Dci)
 
 /**
  * @brief Combined video raster, frame rate, and scan mode.
@@ -205,14 +208,14 @@ class VideoFormat {
                  * accessors.
                  */
                 enum WellKnownFormatFlag : uint32_t {
-                        FormatFlag_Smpte  = 1u << 0, ///< Standardised by SMPTE.
-                        FormatFlag_Dci    = 1u << 1, ///< Digital Cinema Initiative format.
-                        FormatFlag_Ntsc   = 1u << 2, ///< NTSC family (525 lines or 1000/1001 rate).
-                        FormatFlag_Pal    = 1u << 3, ///< PAL family (625 lines or 50 Hz cadence).
-                        FormatFlag_Sd     = 1u << 4, ///< Standard Definition raster.
-                        FormatFlag_Hd     = 1u << 5, ///< High Definition raster (720 or 1080 lines).
-                        FormatFlag_Uhd    = 1u << 6, ///< Ultra HD raster (3840×2160).
-                        FormatFlag_Uhd8k  = 1u << 7, ///< 8K UHD raster (7680×4320).
+                        FormatFlag_Smpte = 1u << 0, ///< Standardised by SMPTE.
+                        FormatFlag_Dci = 1u << 1,   ///< Digital Cinema Initiative format.
+                        FormatFlag_Ntsc = 1u << 2,  ///< NTSC family (525 lines or 1000/1001 rate).
+                        FormatFlag_Pal = 1u << 3,   ///< PAL family (625 lines or 50 Hz cadence).
+                        FormatFlag_Sd = 1u << 4,    ///< Standard Definition raster.
+                        FormatFlag_Hd = 1u << 5,    ///< High Definition raster (720 or 1080 lines).
+                        FormatFlag_Uhd = 1u << 6,   ///< Ultra HD raster (3840×2160).
+                        FormatFlag_Uhd8k = 1u << 7, ///< 8K UHD raster (7680×4320).
                 };
 
                 /**
@@ -243,7 +246,7 @@ class VideoFormat {
 
                 /** @brief Controls how toString() formats the result. */
                 struct StringOptions {
-                        /**
+                                /**
                          * @brief Prefer a well-known raster name over the SMPTE height prefix.
                          *
                          * When @c true, toString() emits e.g.
@@ -253,12 +256,12 @@ class VideoFormat {
                          * form (the SMPTE height prefix is only used
                          * when this flag is @c false).
                          */
-                        bool useNamedRaster = false;
+                                bool useNamedRaster = false;
                 };
 
                 /** @brief Controls how fromString() interprets the rate suffix. */
                 struct ParseOptions {
-                        /**
+                                /**
                          * @brief Strictly interpret the rate suffix of an interlaced form
                          * as the SMPTE field rate.
                          *
@@ -276,7 +279,7 @@ class VideoFormat {
                          * @c "1080i29.97" (interpreted as 1080i at
                          * 29.97 frames/second).
                          */
-                        bool strictInterlacedFieldRate = true;
+                                bool strictInterlacedFieldRate = true;
                 };
 
                 /** @brief Default-constructs an invalid VideoFormat. */
@@ -334,9 +337,7 @@ class VideoFormat {
                 WellKnownRaster wellKnownRaster() const;
 
                 /** @brief Returns true if this raster matches a well-known entry. */
-                bool isWellKnownRaster() const {
-                        return wellKnownRaster() != Raster_NotWellKnown;
-                }
+                bool isWellKnownRaster() const { return wellKnownRaster() != Raster_NotWellKnown; }
 
                 /**
                  * @brief Returns the WellKnownFormat id matching this format.
@@ -419,9 +420,7 @@ class VideoFormat {
                  * …) and for invalid frame rates.  Works on any
                  * VideoFormat, not just well-known ones.
                  */
-                bool isIntegerCadence() const {
-                        return _rate.isValid() && _rate.denominator() == 1;
-                }
+                bool isIntegerCadence() const { return _rate.isValid() && _rate.denominator() == 1; }
 
                 /**
                  * @brief Returns the flags for a WellKnownFormat id.
@@ -498,9 +497,7 @@ class VideoFormat {
                  * @param str  Input string (case-insensitive).
                  * @return     Parsed VideoFormat on success, or @c Error::Invalid.
                  */
-                static Result<VideoFormat> fromString(const String &str) {
-                        return fromString(str, ParseOptions());
-                }
+                static Result<VideoFormat> fromString(const String &str) { return fromString(str, ParseOptions()); }
                 /**
                  * @brief Parses a VideoFormat from a string with explicit parse options.
                  *
@@ -508,14 +505,11 @@ class VideoFormat {
                  * @param opts Parsing options.
                  * @return     Parsed VideoFormat on success, or @c Error::Invalid.
                  */
-                static Result<VideoFormat> fromString(const String &str,
-                                                      const ParseOptions &opts);
+                static Result<VideoFormat> fromString(const String &str, const ParseOptions &opts);
 
                 /** @brief Returns true if both formats are equal in all three components. */
                 bool operator==(const VideoFormat &o) const {
-                        return _raster == o._raster &&
-                               _rate   == o._rate &&
-                               _scanMode == o._scanMode;
+                        return _raster == o._raster && _rate == o._rate && _scanMode == o._scanMode;
                 }
 
                 /** @brief Returns true if the formats differ. */
@@ -544,7 +538,7 @@ class VideoFormat {
         private:
                 Size2Du32     _raster;
                 FrameRate     _rate;
-                VideoScanMode _scanMode { VideoScanMode::Progressive };
+                VideoScanMode _scanMode{VideoScanMode::Progressive};
 };
 
 PROMEKI_NAMESPACE_END
@@ -571,55 +565,55 @@ PROMEKI_NAMESPACE_END
  * Unrecognised style hints fall through to the standard string format
  * parser, so a stray spec like @c {:>16} still works.
  */
-template <>
-struct std::formatter<promeki::VideoFormat> {
-        enum class Style {
-                Smpte, ///< Default SMPTE height form ("1080p29.97").
-                Named, ///< Well-known raster names ("HDp29.97").
-        };
-
-        Style _style = Style::Smpte;
-        std::formatter<std::string_view> _base;
-
-        constexpr auto parse(std::format_parse_context &ctx) {
-                auto it = ctx.begin();
-                auto end = ctx.end();
-
-                // Match a style keyword at the start of the spec.  Each
-                // candidate stops at end-of-spec or a ':' separator so
-                // trailing std-spec forwarding still works.
-                auto tryKeyword = [&](const char *kw, Style s) {
-                        auto p = it;
-                        while(*kw && p != end && *p == *kw) { ++p; ++kw; }
-                        if(*kw == 0 && (p == end || *p == '}' || *p == ':')) {
-                                it = p;
-                                _style = s;
-                                return true;
-                        }
-                        return false;
+template <> struct std::formatter<promeki::VideoFormat> {
+                enum class Style {
+                        Smpte, ///< Default SMPTE height form ("1080p29.97").
+                        Named, ///< Well-known raster names ("HDp29.97").
                 };
 
-                if(!tryKeyword("smpte", Style::Smpte)
-                   && !tryKeyword("named", Style::Named)) {
-                        // No keyword — leave _style at default and let
-                        // the base parser consume the entire remaining spec.
+                Style                            _style = Style::Smpte;
+                std::formatter<std::string_view> _base;
+
+                constexpr auto parse(std::format_parse_context &ctx) {
+                        auto it = ctx.begin();
+                        auto end = ctx.end();
+
+                        // Match a style keyword at the start of the spec.  Each
+                        // candidate stops at end-of-spec or a ':' separator so
+                        // trailing std-spec forwarding still works.
+                        auto tryKeyword = [&](const char *kw, Style s) {
+                                auto p = it;
+                                while (*kw && p != end && *p == *kw) {
+                                        ++p;
+                                        ++kw;
+                                }
+                                if (*kw == 0 && (p == end || *p == '}' || *p == ':')) {
+                                        it = p;
+                                        _style = s;
+                                        return true;
+                                }
+                                return false;
+                        };
+
+                        if (!tryKeyword("smpte", Style::Smpte) && !tryKeyword("named", Style::Named)) {
+                                // No keyword — leave _style at default and let
+                                // the base parser consume the entire remaining spec.
+                        }
+
+                        // Separating ':' between the style hint and a standard
+                        // string format spec is consumed here so the base parser
+                        // sees a bare ">16" rather than ":>16".
+                        if (it != end && *it == ':') ++it;
+
+                        ctx.advance_to(it);
+                        return _base.parse(ctx);
                 }
 
-                // Separating ':' between the style hint and a standard
-                // string format spec is consumed here so the base parser
-                // sees a bare ">16" rather than ":>16".
-                if(it != end && *it == ':') ++it;
-
-                ctx.advance_to(it);
-                return _base.parse(ctx);
-        }
-
-        template <typename FormatContext>
-        auto format(const promeki::VideoFormat &vf, FormatContext &ctx) const {
-                promeki::VideoFormat::StringOptions opts;
-                opts.useNamedRaster = (_style == Style::Named);
-                const promeki::String s = vf.toString(opts);
-                return _base.format(std::string_view(s.cstr(), s.byteCount()), ctx);
-        }
+                template <typename FormatContext>
+                auto format(const promeki::VideoFormat &vf, FormatContext &ctx) const {
+                        promeki::VideoFormat::StringOptions opts;
+                        opts.useNamedRaster = (_style == Style::Named);
+                        const promeki::String s = vf.toString(opts);
+                        return _base.format(std::string_view(s.cstr(), s.byteCount()), ctx);
+                }
 };
-

@@ -15,17 +15,16 @@ PROMEKI_NAMESPACE_BEGIN
 const Event::Type PaintEvent::Paint = Event::registerType();
 const Event::Type ResizeEvent::Resize = Event::registerType();
 
-Widget::Widget(ObjectBase *parent) : ObjectBase(parent) {
-}
+Widget::Widget(ObjectBase *parent) : ObjectBase(parent) {}
 
 Widget::~Widget() = default;
 
 void Widget::setGeometry(const Rect2Di32 &rect) {
-        if(_geometry == rect) return;
+        if (_geometry == rect) return;
         Size2Di32 oldSize = size();
         _geometry = rect;
         Size2Di32 newSize = size();
-        if(oldSize.width() != newSize.width() || oldSize.height() != newSize.height()) {
+        if (oldSize.width() != newSize.width() || oldSize.height() != newSize.height()) {
                 ResizeEvent e(newSize);
                 resizeEvent(&e);
                 resizedSignal.emit(newSize);
@@ -42,21 +41,21 @@ void Widget::hide() {
 }
 
 bool Widget::isEffectivelyVisible() const {
-        if(!_visible) return false;
+        if (!_visible) return false;
         Widget *pw = dynamic_cast<Widget *>(parent());
-        if(pw) return pw->isEffectivelyVisible();
+        if (pw) return pw->isEffectivelyVisible();
         return true;
 }
 
 void Widget::setVisible(bool visible) {
-        if(_visible == visible) return;
+        if (_visible == visible) return;
         _visible = visible;
         visibilityChangedSignal.emit(visible);
         update();
 }
 
 void Widget::setFocus() {
-        if(_focusPolicy == NoFocus) return;
+        if (_focusPolicy == NoFocus) return;
         _focused = true;
         Event e(Event::InvalidType);
         focusInEvent(&e);
@@ -81,19 +80,19 @@ Point2Di32 Widget::mapFromParent(const Point2Di32 &p) const {
 
 Point2Di32 Widget::mapToGlobal(const Point2Di32 &p) const {
         Point2Di32 result = mapToParent(p);
-        Widget *pw = dynamic_cast<Widget *>(parent());
-        if(pw) return pw->mapToGlobal(result);
+        Widget    *pw = dynamic_cast<Widget *>(parent());
+        if (pw) return pw->mapToGlobal(result);
         return result;
 }
 
 Point2Di32 Widget::mapFromGlobal(const Point2Di32 &p) const {
-        Widget *pw = dynamic_cast<Widget *>(parent());
+        Widget    *pw = dynamic_cast<Widget *>(parent());
         Point2Di32 local = pw ? pw->mapFromGlobal(p) : p;
         return mapFromParent(local);
 }
 
 Size2Di32 Widget::sizeHint() const {
-        if(_layout) return _layout->sizeHint();
+        if (_layout) return _layout->sizeHint();
         return Size2Di32(10, 1);
 }
 
@@ -101,42 +100,36 @@ Size2Di32 Widget::minimumSizeHint() const {
         return Size2Di32(1, 1);
 }
 
-void Widget::paintEvent(PaintEvent *) {
-}
+void Widget::paintEvent(PaintEvent *) {}
 
-void Widget::keyPressEvent(KeyEvent *) {
-}
+void Widget::keyPressEvent(KeyEvent *) {}
 
-void Widget::keyReleaseEvent(KeyEvent *) {
-}
+void Widget::keyReleaseEvent(KeyEvent *) {}
 
-void Widget::mouseEvent(MouseEvent *) {
-}
+void Widget::mouseEvent(MouseEvent *) {}
 
 void Widget::resizeEvent(ResizeEvent *) {
-        if(_layout) {
+        if (_layout) {
                 _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
         }
 }
 
-void Widget::focusInEvent(Event *) {
-}
+void Widget::focusInEvent(Event *) {}
 
-void Widget::focusOutEvent(Event *) {
-}
+void Widget::focusOutEvent(Event *) {}
 
 void Widget::event(Event *e) {
-        if(e->type() == PaintEvent::Paint) {
+        if (e->type() == PaintEvent::Paint) {
                 paintEvent(static_cast<PaintEvent *>(e));
                 e->accept();
-        } else if(e->type() == ResizeEvent::Resize) {
+        } else if (e->type() == ResizeEvent::Resize) {
                 resizeEvent(static_cast<ResizeEvent *>(e));
                 e->accept();
-        } else if(e->type() == KeyEvent::KeyPress) {
+        } else if (e->type() == KeyEvent::KeyPress) {
                 keyPressEvent(static_cast<KeyEvent *>(e));
-        } else if(e->type() == KeyEvent::KeyRelease) {
+        } else if (e->type() == KeyEvent::KeyRelease) {
                 keyReleaseEvent(static_cast<KeyEvent *>(e));
-        } else if(e->type() == MouseEvent::Mouse) {
+        } else if (e->type() == MouseEvent::Mouse) {
                 mouseEvent(static_cast<MouseEvent *>(e));
         } else {
                 ObjectBase::event(e);

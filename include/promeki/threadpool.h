@@ -87,16 +87,14 @@ class ThreadPool {
                  * @param callable The callable to execute.
                  * @return A Future whose result type matches the callable's return type.
                  */
-                template <typename F>
-                auto submit(F &&callable) -> Future<std::invoke_result_t<F>> {
+                template <typename F> auto submit(F &&callable) -> Future<std::invoke_result_t<F>> {
                         using R = std::invoke_result_t<F>;
-                        auto task = std::make_shared<std::packaged_task<R()>>(
-                                std::forward<F>(callable));
+                        auto      task = std::make_shared<std::packaged_task<R()>>(std::forward<F>(callable));
                         Future<R> fut(task->get_future());
-                        bool runInline = false;
+                        bool      runInline = false;
                         {
                                 Mutex::Locker locker(_mutex);
-                                if(_maxThreadCount == 0) {
+                                if (_maxThreadCount == 0) {
                                         runInline = true;
                                 } else {
                                         _tasks.pushToBack([task]() { (*task)(); });
@@ -104,7 +102,7 @@ class ThreadPool {
                                         _cv.wakeOne();
                                 }
                         }
-                        if(runInline) (*task)();
+                        if (runInline) (*task)();
                         return fut;
                 }
 
@@ -181,17 +179,17 @@ class ThreadPool {
                 void spawnThreads(int count);
                 void maybeSpawnOne();
 
-                mutable Mutex           _mutex;
-                WaitCondition           _cv;
-                WaitCondition           _doneCv;
-                List<Task>              _tasks;
-                List<std::thread>       _threads;
-                String                  _namePrefix;
-                int                     _maxThreadCount = 0;
-                int                     _threadCount = 0;
-                int                     _activeCount = 0;
-                int                     _waitingCount = 0;
-                bool                    _shutdown = false;
+                mutable Mutex     _mutex;
+                WaitCondition     _cv;
+                WaitCondition     _doneCv;
+                List<Task>        _tasks;
+                List<std::thread> _threads;
+                String            _namePrefix;
+                int               _maxThreadCount = 0;
+                int               _threadCount = 0;
+                int               _activeCount = 0;
+                int               _waitingCount = 0;
+                bool              _shutdown = false;
 };
 
 PROMEKI_NAMESPACE_END

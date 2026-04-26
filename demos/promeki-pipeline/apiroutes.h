@@ -8,14 +8,14 @@
 #pragma once
 
 namespace promeki {
-class HttpServer;
+        class HttpServer;
 }
 
 namespace promekipipeline {
 
-class PipelineManager;
+        class PipelineManager;
 
-/**
+        /**
  * @brief Registers the demo's REST routes on an @c HttpServer.
  *
  * Wires the full Phase D REST surface — type-registry introspection,
@@ -33,12 +33,12 @@ class PipelineManager;
  * upper bound as Phase C: the server's lifetime; routes are not
  * unregistered on destruction.
  */
-class ApiRoutes {
-        public:
-                /** @brief Length (hex chars) of the pipeline id placeholder. */
-                static constexpr int IdParamLength = 8;
+        class ApiRoutes {
+                public:
+                        /** @brief Length (hex chars) of the pipeline id placeholder. */
+                        static constexpr int IdParamLength = 8;
 
-                /**
+                        /**
                  * @brief Mounts the full Phase D REST surface on @p server.
                  *
                  * @param server  HTTP server to register routes on.
@@ -46,25 +46,25 @@ class ApiRoutes {
                  *                introspection calls into; held by
                  *                reference, must outlive @ref ApiRoutes.
                  */
-                ApiRoutes(promeki::HttpServer &server, PipelineManager &manager);
+                        ApiRoutes(promeki::HttpServer &server, PipelineManager &manager);
 
-                ApiRoutes(const ApiRoutes &) = delete;
-                ApiRoutes(ApiRoutes &&) = delete;
-                ApiRoutes &operator=(const ApiRoutes &) = delete;
-                ApiRoutes &operator=(ApiRoutes &&) = delete;
+                        ApiRoutes(const ApiRoutes &) = delete;
+                        ApiRoutes(ApiRoutes &&) = delete;
+                        ApiRoutes &operator=(const ApiRoutes &) = delete;
+                        ApiRoutes &operator=(ApiRoutes &&) = delete;
 
-        private:
-                /** @brief Wires @c GET @c /api/health and @c /api/types* routes. */
-                void registerTypeRoutes();
+                private:
+                        /** @brief Wires @c GET @c /api/health and @c /api/types* routes. */
+                        void registerTypeRoutes();
 
-                /** @brief Wires the @c /api/pipelines and @c /api/pipelines/{id}* routes. */
-                void registerPipelineRoutes();
+                        /** @brief Wires the @c /api/pipelines and @c /api/pipelines/{id}* routes. */
+                        void registerPipelineRoutes();
 
-                /** @brief Wires @c GET @c /api/pipelines/{id}/preview/{stage}. */
-                void registerPreviewRoute();
+                        /** @brief Wires @c GET @c /api/pipelines/{id}/preview/{stage}. */
+                        void registerPreviewRoute();
 
-                promeki::HttpServer &_server;
-                PipelineManager     &_manager;
-};
+                        promeki::HttpServer &_server;
+                        PipelineManager     &_manager;
+        };
 
 } // namespace promekipipeline

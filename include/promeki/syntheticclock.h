@@ -55,17 +55,15 @@ class SyntheticClock : public Clock {
                  * @brief Constructs a SyntheticClock with no frame rate.
                  * @param domain Optional domain override.
                  */
-                explicit SyntheticClock(
-                        const ClockDomain &domain = ClockDomain(ClockDomain::Synthetic));
+                explicit SyntheticClock(const ClockDomain &domain = ClockDomain(ClockDomain::Synthetic));
 
                 /**
                  * @brief Constructs a SyntheticClock with the given frame rate.
                  * @param frameRate The target frame rate.
                  * @param domain    Optional domain override.
                  */
-                explicit SyntheticClock(
-                        const FrameRate &frameRate,
-                        const ClockDomain &domain = ClockDomain(ClockDomain::Synthetic));
+                explicit SyntheticClock(const FrameRate   &frameRate,
+                                        const ClockDomain &domain = ClockDomain(ClockDomain::Synthetic));
 
                 /**
                  * @brief Sets the frame rate.
@@ -87,9 +85,7 @@ class SyntheticClock : public Clock {
                 void setCurrentFrame(const FrameNumber &frame);
 
                 /** @brief Returns the current frame counter. */
-                FrameNumber currentFrame() const {
-                        return FrameNumber(_currentFrame.load(std::memory_order_relaxed));
-                }
+                FrameNumber currentFrame() const { return FrameNumber(_currentFrame.load(std::memory_order_relaxed)); }
 
                 /**
                  * @brief Advances the frame counter.
@@ -113,9 +109,9 @@ class SyntheticClock : public Clock {
         private:
                 void recomputePeriod();
 
-                FrameRate                   _frameRate;
-                std::atomic<int64_t>        _framePeriodNs{0};
-                std::atomic<int64_t>        _currentFrame{0};
+                FrameRate            _frameRate;
+                std::atomic<int64_t> _framePeriodNs{0};
+                std::atomic<int64_t> _currentFrame{0};
 };
 
 PROMEKI_NAMESPACE_END

@@ -34,8 +34,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @tparam Compare Comparison function type (default: std::less<T>, which
  *         gives a max-heap where pop() returns the largest element).
  */
-template <typename T, typename Compare = std::less<T>>
-class PriorityQueue {
+template <typename T, typename Compare = std::less<T>> class PriorityQueue {
         public:
                 /** @brief Default constructor. Creates an empty priority queue. */
                 PriorityQueue() = default;
@@ -100,7 +99,7 @@ class PriorityQueue {
                  * @return The removed element.
                  */
                 T pop() {
-                        if(d.empty()) throw std::logic_error("PriorityQueue::pop on empty queue");
+                        if (d.empty()) throw std::logic_error("PriorityQueue::pop on empty queue");
                         T val = d.top();
                         d.pop();
                         return val;

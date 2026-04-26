@@ -38,25 +38,25 @@ class MidiNoteNames {
                  * Otherwise, the default MidiNote::name() is returned.
                  */
                 String name(MidiNote note) const {
-                        if(!note.isValid()) return String();
+                        if (!note.isValid()) return String();
                         const String &n = _names[note.rawValue()];
-                        if(!n.isEmpty()) return n;
+                        if (!n.isEmpty()) return n;
                         return note.name();
                 }
 
                 /** @brief Sets a custom name for a MIDI note. */
                 void setName(MidiNote note, const String &name) {
-                        if(note.isValid()) _names[note.rawValue()] = name;
+                        if (note.isValid()) _names[note.rawValue()] = name;
                 }
 
                 /** @brief Clears the custom name for a MIDI note (reverts to default). */
                 void clearName(MidiNote note) {
-                        if(note.isValid()) _names[note.rawValue()] = String();
+                        if (note.isValid()) _names[note.rawValue()] = String();
                 }
 
                 /** @brief Returns true if a custom name is set for the given note. */
                 bool hasName(MidiNote note) const {
-                        if(!note.isValid()) return false;
+                        if (!note.isValid()) return false;
                         return !_names[note.rawValue()].isEmpty();
                 }
 

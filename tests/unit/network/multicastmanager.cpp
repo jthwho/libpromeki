@@ -28,13 +28,13 @@ TEST_CASE("MulticastManager") {
 
         SUBCASE("join and leave group") {
                 MulticastManager mgr;
-                UdpSocket sock;
+                UdpSocket        sock;
                 sock.open(IODevice::ReadWrite);
                 sock.setReuseAddress(true);
                 sock.bind(SocketAddress::any(0));
 
                 SocketAddress group(Ipv4Address(239, 255, 0, 1), sock.localAddress().port());
-                Error err = mgr.joinGroup(group, &sock);
+                Error         err = mgr.joinGroup(group, &sock);
                 CHECK(err.isOk());
                 CHECK(mgr.isMemberOf(group));
                 CHECK(mgr.activeGroups().size() == 1);
@@ -47,7 +47,7 @@ TEST_CASE("MulticastManager") {
 
         SUBCASE("join multiple groups") {
                 MulticastManager mgr;
-                UdpSocket sock;
+                UdpSocket        sock;
                 sock.open(IODevice::ReadWrite);
                 sock.setReuseAddress(true);
                 sock.bind(SocketAddress::any(0));
@@ -69,7 +69,7 @@ TEST_CASE("MulticastManager") {
 
         SUBCASE("leaveAllGroups") {
                 MulticastManager mgr;
-                UdpSocket sock;
+                UdpSocket        sock;
                 sock.open(IODevice::ReadWrite);
                 sock.setReuseAddress(true);
                 sock.bind(SocketAddress::any(0));
@@ -90,18 +90,18 @@ TEST_CASE("MulticastManager") {
 
         SUBCASE("isMemberOf false for non-member") {
                 MulticastManager mgr;
-                SocketAddress group(Ipv4Address(239, 255, 0, 50), 5004);
+                SocketAddress    group(Ipv4Address(239, 255, 0, 50), 5004);
                 CHECK_FALSE(mgr.isMemberOf(group));
         }
 
         SUBCASE("groupJoined signal") {
                 MulticastManager mgr;
-                UdpSocket sock;
+                UdpSocket        sock;
                 sock.open(IODevice::ReadWrite);
                 sock.setReuseAddress(true);
                 sock.bind(SocketAddress::any(0));
 
-                bool signalFired = false;
+                bool          signalFired = false;
                 SocketAddress receivedGroup;
                 mgr.groupJoinedSignal.connect([&](const SocketAddress &g) {
                         signalFired = true;
@@ -118,7 +118,7 @@ TEST_CASE("MulticastManager") {
 
         SUBCASE("groupLeft signal") {
                 MulticastManager mgr;
-                UdpSocket sock;
+                UdpSocket        sock;
                 sock.open(IODevice::ReadWrite);
                 sock.setReuseAddress(true);
                 sock.bind(SocketAddress::any(0));
@@ -127,9 +127,7 @@ TEST_CASE("MulticastManager") {
                 mgr.joinGroup(group, &sock);
 
                 bool signalFired = false;
-                mgr.groupLeftSignal.connect([&](const SocketAddress &g) {
-                        signalFired = true;
-                });
+                mgr.groupLeftSignal.connect([&](const SocketAddress &g) { signalFired = true; });
 
                 mgr.leaveGroup(group, &sock);
                 CHECK(signalFired);
@@ -137,8 +135,8 @@ TEST_CASE("MulticastManager") {
 
         SUBCASE("multicast data flow through managed group") {
                 MulticastManager mgr;
-                UdpSocket sender;
-                UdpSocket receiver;
+                UdpSocket        sender;
+                UdpSocket        receiver;
 
                 sender.open(IODevice::ReadWrite);
                 sender.setMulticastLoopback(true);
@@ -150,17 +148,16 @@ TEST_CASE("MulticastManager") {
                 uint16_t port = receiver.localAddress().port();
 
                 SocketAddress group(Ipv4Address(239, 255, 0, 30), port);
-                Error err = mgr.joinGroup(group, &receiver);
+                Error         err = mgr.joinGroup(group, &receiver);
                 REQUIRE(err.isOk());
 
                 const char *msg = "managed multicast";
-                sender.writeDatagram(msg, std::strlen(msg),
-                        SocketAddress(Ipv4Address(239, 255, 0, 30), port));
+                sender.writeDatagram(msg, std::strlen(msg), SocketAddress(Ipv4Address(239, 255, 0, 30), port));
 
-                char buf[256];
+                char    buf[256];
                 int64_t n = receiver.readDatagram(buf, sizeof(buf));
                 CHECK(n > 0);
-                if(n > 0) {
+                if (n > 0) {
                         CHECK(std::memcmp(buf, msg, n) == 0);
                 }
 
@@ -176,7 +173,7 @@ TEST_CASE("MulticastManager") {
 
                 {
                         MulticastManager mgr;
-                        SocketAddress group(Ipv4Address(239, 255, 0, 40), port);
+                        SocketAddress    group(Ipv4Address(239, 255, 0, 40), port);
                         mgr.joinGroup(group, &sock);
                         CHECK(mgr.isMemberOf(group));
                         // Destructor should call leaveAllGroups

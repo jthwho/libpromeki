@@ -45,22 +45,22 @@ TEST_CASE("UUID: case insensitive parsing") {
 
 TEST_CASE("UUID: invalid string") {
         Error err;
-        UUID v = UUID::fromString("94EB2454-X116-4814-889F-7EB9BCB58BF1", &err);
+        UUID  v = UUID::fromString("94EB2454-X116-4814-889F-7EB9BCB58BF1", &err);
         CHECK_FALSE(v.isValid());
         CHECK(err != Error::Ok);
 }
 
 TEST_CASE("UUID: construct from String type") {
         String s("91809c4d-3682-4868-800c-05b871b84c0b");
-        UUID v = UUID::fromString(s);
+        UUID   v = UUID::fromString(s);
         CHECK(v.isValid());
         CHECK(v.toString() == s);
 }
 
 TEST_CASE("UUID: toString roundtrip") {
-        UUID v = UUID::generate();
+        UUID   v = UUID::generate();
         String s = v.toString();
-        UUID v2 = UUID::fromString(s);
+        UUID   v2 = UUID::fromString(s);
         CHECK(v == v2);
 }
 
@@ -79,7 +79,7 @@ TEST_CASE("UUID: comparison operators") {
 TEST_CASE("UUID: less than is consistent with greater than") {
         UUID a = UUID::generate();
         UUID b = UUID::generate();
-        if(a < b) {
+        if (a < b) {
                 CHECK(b > a);
                 CHECK(a <= b);
                 CHECK(b >= a);
@@ -91,32 +91,32 @@ TEST_CASE("UUID: less than is consistent with greater than") {
 }
 
 TEST_CASE("UUID: String conversion operator") {
-        UUID v = UUID::fromString("91809c4d-3682-4868-800c-05b871b84c0b");
+        UUID   v = UUID::fromString("91809c4d-3682-4868-800c-05b871b84c0b");
         String s = v;
         CHECK_FALSE(s.isEmpty());
 }
 
 TEST_CASE("UUID: raw data access") {
-        UUID v = UUID::generate();
+        UUID           v = UUID::generate();
         const uint8_t *raw = v.raw();
         CHECK(raw != nullptr);
 }
 
 TEST_CASE("UUID: data accessor") {
-        UUID v = UUID::generate();
+        UUID        v = UUID::generate();
         const auto &d = v.data();
         CHECK(d.size() == 16);
 }
 
 TEST_CASE("UUID: fromString with error") {
         Error err;
-        UUID v = UUID::fromString("invalid-uuid", &err);
+        UUID  v = UUID::fromString("invalid-uuid", &err);
         CHECK_FALSE(v.isValid());
 }
 
 TEST_CASE("UUID: fromString valid") {
         Error err;
-        UUID v = UUID::fromString("94eb2454-5116-4814-889f-7eb9bcb58bf1", &err);
+        UUID  v = UUID::fromString("94eb2454-5116-4814-889f-7eb9bcb58bf1", &err);
         CHECK(v.isValid());
 }
 
@@ -147,8 +147,8 @@ TEST_CASE("UUID: generateV7 embeds timestamp") {
 
 TEST_CASE("UUID: generateV7 with explicit timestamp") {
         int64_t ts = 1700000000000LL; // 2023-11-14T22:13:20Z
-        UUID a = UUID::generateV7(ts);
-        UUID b = UUID::generateV7(ts);
+        UUID    a = UUID::generateV7(ts);
+        UUID    b = UUID::generateV7(ts);
         CHECK(a.isValid());
         CHECK(b.isValid());
         CHECK(a.version() == 7);
@@ -157,7 +157,7 @@ TEST_CASE("UUID: generateV7 with explicit timestamp") {
         // First 6 bytes (48-bit timestamp) should be identical
         const uint8_t *ra = a.raw();
         const uint8_t *rb = b.raw();
-        for(int i = 0; i < 6; i++) {
+        for (int i = 0; i < 6; i++) {
                 CHECK(ra[i] == rb[i]);
         }
 }
@@ -165,16 +165,16 @@ TEST_CASE("UUID: generateV7 with explicit timestamp") {
 TEST_CASE("UUID: generateV7 explicit timestamps are sortable") {
         int64_t ts1 = 1700000000000LL;
         int64_t ts2 = 1700000001000LL; // 1 second later
-        UUID a = UUID::generateV7(ts1);
-        UUID b = UUID::generateV7(ts2);
+        UUID    a = UUID::generateV7(ts1);
+        UUID    b = UUID::generateV7(ts2);
         CHECK(b > a);
 }
 
 TEST_CASE("UUID: generateV3 is deterministic") {
-        UUID ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"); // DNS namespace
+        UUID   ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"); // DNS namespace
         String name("example.com");
-        UUID a = UUID::generateV3(ns, name);
-        UUID b = UUID::generateV3(ns, name);
+        UUID   a = UUID::generateV3(ns, name);
+        UUID   b = UUID::generateV3(ns, name);
         CHECK(a == b);
         CHECK(a.version() == 3);
 }
@@ -187,10 +187,10 @@ TEST_CASE("UUID: generateV3 different names produce different UUIDs") {
 }
 
 TEST_CASE("UUID: generateV5 is deterministic") {
-        UUID ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID   ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
         String name("example.com");
-        UUID a = UUID::generateV5(ns, name);
-        UUID b = UUID::generateV5(ns, name);
+        UUID   a = UUID::generateV5(ns, name);
+        UUID   b = UUID::generateV5(ns, name);
         CHECK(a == b);
         CHECK(a.version() == 5);
 }
@@ -240,9 +240,9 @@ TEST_CASE("UUID: generateV3 with long name exceeding stack buffer") {
         // Names longer than 256 bytes previously triggered a heap allocation
         // via raw new[]/delete[].  This test exercises that path (now using
         // List<uint8_t>) to verify no leaks or crashes.
-        UUID ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID   ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
         String longName(512, 'x');
-        UUID a = UUID::generateV3(ns, longName);
+        UUID   a = UUID::generateV3(ns, longName);
         CHECK(a.isValid());
         CHECK(a.version() == 3);
         // Must be deterministic
@@ -251,9 +251,9 @@ TEST_CASE("UUID: generateV3 with long name exceeding stack buffer") {
 }
 
 TEST_CASE("UUID: generateV5 with long name exceeding stack buffer") {
-        UUID ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID   ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
         String longName(512, 'y');
-        UUID a = UUID::generateV5(ns, longName);
+        UUID   a = UUID::generateV5(ns, longName);
         CHECK(a.isValid());
         CHECK(a.version() == 5);
         UUID b = UUID::generateV5(ns, longName);

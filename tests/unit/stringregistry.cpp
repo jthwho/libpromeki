@@ -27,7 +27,7 @@ TEST_CASE("StringRegistry: findId returns InvalidID for unknown string") {
 }
 
 TEST_CASE("StringRegistry: findOrCreateProbe assigns IDs") {
-        auto &reg = TestRegistry::instance();
+        auto    &reg = TestRegistry::instance();
         uint64_t id1 = reg.findOrCreateProbe("sr.first");
         uint64_t id2 = reg.findOrCreateProbe("sr.second");
         CHECK(id1 != id2);
@@ -36,21 +36,21 @@ TEST_CASE("StringRegistry: findOrCreateProbe assigns IDs") {
 }
 
 TEST_CASE("StringRegistry: findOrCreateProbe returns same ID for same string") {
-        auto &reg = TestRegistry::instance();
+        auto    &reg = TestRegistry::instance();
         uint64_t id1 = reg.findOrCreateProbe("sr.duplicate");
         uint64_t id2 = reg.findOrCreateProbe("sr.duplicate");
         CHECK(id1 == id2);
 }
 
 TEST_CASE("StringRegistry: findId returns correct ID after registration") {
-        auto &reg = TestRegistry::instance();
+        auto    &reg = TestRegistry::instance();
         uint64_t created = reg.findOrCreateProbe("sr.findtest");
         uint64_t found = reg.findId("sr.findtest");
         CHECK(created == found);
 }
 
 TEST_CASE("StringRegistry: name returns correct string for ID") {
-        auto &reg = TestRegistry::instance();
+        auto    &reg = TestRegistry::instance();
         uint64_t id = reg.findOrCreateProbe("sr.nametest");
         CHECK(reg.name(id) == "sr.nametest");
 }
@@ -68,7 +68,7 @@ TEST_CASE("StringRegistry: contains works correctly") {
 }
 
 TEST_CASE("StringRegistry: findOrCreateStrict agrees with the pure hash") {
-        auto &reg = TestRegistry::instance();
+        auto    &reg = TestRegistry::instance();
         uint64_t id = reg.findOrCreateStrict("sr.strict.one");
         CHECK(id == fnv1a("sr.strict.one"));
         // Idempotent on the same name.
@@ -122,7 +122,7 @@ TEST_CASE("StringRegistry::Item: less-than for ordered containers") {
 }
 
 TEST_CASE("StringRegistry::Item: literal matches runtime-registered ID") {
-        TestItem runtime("item.literal.match");
+        TestItem           runtime("item.literal.match");
         constexpr TestItem compile = TestItem::literal("item.literal.match");
         CHECK(runtime.id() == compile.id());
 }

@@ -40,7 +40,7 @@ TEST_CASE("Histogram") {
 
         SUBCASE("multiple samples in same octave") {
                 Histogram h;
-                for(int i = 32; i < 64; i++) {
+                for (int i = 32; i < 64; i++) {
                         h.addSample(i);
                 }
                 CHECK(h.count() == 32);
@@ -59,11 +59,11 @@ TEST_CASE("Histogram") {
         SUBCASE("multiple samples across octaves") {
                 Histogram h;
                 // 10 small samples in octave 0 (value 1)
-                for(int i = 0; i < 10; i++) h.addSample(1);
+                for (int i = 0; i < 10; i++) h.addSample(1);
                 // 10 medium samples in octave 9 (value 800 ∈ [512, 1024))
-                for(int i = 0; i < 10; i++) h.addSample(800);
+                for (int i = 0; i < 10; i++) h.addSample(800);
                 // 10 large samples in octave 19 (value 800000 ∈ [524288, 1048576))
-                for(int i = 0; i < 10; i++) h.addSample(800000);
+                for (int i = 0; i < 10; i++) h.addSample(800000);
 
                 CHECK(h.count() == 30);
                 CHECK(h.min() == 1);
@@ -103,12 +103,12 @@ TEST_CASE("Histogram") {
                 Histogram h;
                 h.addSample(Duration::fromMicroseconds(33333));
                 CHECK(h.count() == 1);
-                CHECK(h.min() == 33333000);  // 33333us == 33,333,000ns
+                CHECK(h.min() == 33333000); // 33333us == 33,333,000ns
         }
 
         SUBCASE("reset clears state") {
                 Histogram h;
-                for(int i = 0; i < 100; i++) h.addSample(i * 10);
+                for (int i = 0; i < 100; i++) h.addSample(i * 10);
                 CHECK(h.count() == 100);
                 h.reset();
                 CHECK(h.count() == 0);
@@ -130,7 +130,7 @@ TEST_CASE("Histogram") {
 
         SUBCASE("percentile bounds: p<=0 returns min, p>=1 returns max") {
                 Histogram h;
-                for(int i = 1; i <= 100; i++) h.addSample(i * 100);
+                for (int i = 1; i <= 100; i++) h.addSample(i * 100);
                 CHECK(h.percentile(0.0) == 100);
                 CHECK(h.percentile(-0.5) == 100);
                 CHECK(h.percentile(1.0) == 10000);
@@ -141,7 +141,7 @@ TEST_CASE("Histogram") {
                 Histogram h;
                 h.setName("test");
                 h.setUnit("ns");
-                for(int i = 1; i <= 1000; i++) h.addSample(i);
+                for (int i = 1; i <= 1000; i++) h.addSample(i);
                 String s = h.toString();
                 CHECK(s.contains("test"));
                 CHECK(s.contains("count=1000"));
@@ -155,7 +155,7 @@ TEST_CASE("Histogram") {
 
         SUBCASE("monotone increasing samples produce monotone percentiles") {
                 Histogram h;
-                for(int i = 1; i <= 1000; i++) h.addSample(i * 1000);
+                for (int i = 1; i <= 1000; i++) h.addSample(i * 1000);
                 int64_t p25 = h.percentile(0.25);
                 int64_t p50 = h.percentile(0.50);
                 int64_t p75 = h.percentile(0.75);

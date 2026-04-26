@@ -60,28 +60,28 @@ PROMEKI_NAMESPACE_BEGIN
  * them.
  */
 struct HevcDecoderConfig {
-        uint8_t                configurationVersion              = 1;    ///< Always 1.
-        uint8_t                generalProfileSpace               = 0;    ///< 2 bits.
-        uint8_t                generalTierFlag                   = 0;    ///< 1 bit.
-        uint8_t                generalProfileIdc                 = 0;    ///< 5 bits.
-        uint32_t               generalProfileCompatibilityFlags  = 0;    ///< 32 bits.
-        uint64_t               generalConstraintIndicatorFlags   = 0;    ///< 48 bits, stored in low 48.
-        uint8_t                generalLevelIdc                   = 0;    ///< 8 bits.
-        uint16_t               minSpatialSegmentationIdc         = 0;    ///< 12 bits.
-        uint8_t                parallelismType                   = 0;    ///< 2 bits; 0 = unknown / mixed.
-        uint8_t                chromaFormat                      = 1;    ///< 2 bits; 1 = 4:2:0.
-        uint8_t                bitDepthLumaMinus8                = 0;    ///< 3 bits.
-        uint8_t                bitDepthChromaMinus8              = 0;    ///< 3 bits.
-        uint16_t               avgFrameRate                      = 0;    ///< 16 bits; 0 = unknown.
-        uint8_t                constantFrameRate                 = 0;    ///< 2 bits; 0 = unknown.
-        uint8_t                numTemporalLayers                 = 1;    ///< 3 bits; at least 1.
-        uint8_t                temporalIdNested                  = 0;    ///< 1 bit.
-        uint8_t                lengthSizeMinusOne                = 3;    ///< 2 bits; 3 = 4-byte prefix.
-        List<Buffer::Ptr>      vps;    ///< Video parameter set NAL payloads (no start code, no length prefix).
-        List<Buffer::Ptr>      sps;    ///< Sequence parameter set NAL payloads.
-        List<Buffer::Ptr>      pps;    ///< Picture parameter set NAL payloads.
+                uint8_t           configurationVersion = 1;             ///< Always 1.
+                uint8_t           generalProfileSpace = 0;              ///< 2 bits.
+                uint8_t           generalTierFlag = 0;                  ///< 1 bit.
+                uint8_t           generalProfileIdc = 0;                ///< 5 bits.
+                uint32_t          generalProfileCompatibilityFlags = 0; ///< 32 bits.
+                uint64_t          generalConstraintIndicatorFlags = 0;  ///< 48 bits, stored in low 48.
+                uint8_t           generalLevelIdc = 0;                  ///< 8 bits.
+                uint16_t          minSpatialSegmentationIdc = 0;        ///< 12 bits.
+                uint8_t           parallelismType = 0;                  ///< 2 bits; 0 = unknown / mixed.
+                uint8_t           chromaFormat = 1;                     ///< 2 bits; 1 = 4:2:0.
+                uint8_t           bitDepthLumaMinus8 = 0;               ///< 3 bits.
+                uint8_t           bitDepthChromaMinus8 = 0;             ///< 3 bits.
+                uint16_t          avgFrameRate = 0;                     ///< 16 bits; 0 = unknown.
+                uint8_t           constantFrameRate = 0;                ///< 2 bits; 0 = unknown.
+                uint8_t           numTemporalLayers = 1;                ///< 3 bits; at least 1.
+                uint8_t           temporalIdNested = 0;                 ///< 1 bit.
+                uint8_t           lengthSizeMinusOne = 3;               ///< 2 bits; 3 = 4-byte prefix.
+                List<Buffer::Ptr> vps; ///< Video parameter set NAL payloads (no start code, no length prefix).
+                List<Buffer::Ptr> sps; ///< Sequence parameter set NAL payloads.
+                List<Buffer::Ptr> pps; ///< Picture parameter set NAL payloads.
 
-        /**
+                /**
          * @brief Populate an @c HevcDecoderConfig from an Annex-B
          *        access unit.
          *
@@ -99,25 +99,25 @@ struct HevcDecoderConfig {
          *         no SPS is present or the SPS is too short to
          *         contain the profile_tier_level fixed fields.
          */
-        static Error fromAnnexB(const BufferView &au, HevcDecoderConfig &out);
+                static Error fromAnnexB(const BufferView &au, HevcDecoderConfig &out);
 
-        /**
+                /**
          * @brief Parse a serialized @c hvcC payload.
          *
          * @param payload  Bytes of the @c hvcC record (no box header).
          * @param out      Receives the parsed configuration.
          */
-        static Error parse(const BufferView &payload, HevcDecoderConfig &out);
+                static Error parse(const BufferView &payload, HevcDecoderConfig &out);
 
-        /** @brief Serialize this configuration to an @c hvcC payload. */
-        Error serialize(Buffer::Ptr &outBuf) const;
+                /** @brief Serialize this configuration to an @c hvcC payload. */
+                Error serialize(Buffer::Ptr &outBuf) const;
 
-        /**
+                /**
          * @brief Concatenate @c vps, @c sps, and @c pps as an
          *        Annex-B byte stream with 4-byte start codes, in
          *        that order.
          */
-        Error toAnnexB(Buffer::Ptr &outBuf) const;
+                Error toAnnexB(Buffer::Ptr &outBuf) const;
 };
 
 PROMEKI_NAMESPACE_END

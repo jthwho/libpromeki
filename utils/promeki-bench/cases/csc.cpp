@@ -49,46 +49,46 @@
 PROMEKI_NAMESPACE_BEGIN
 namespace benchutil {
 
-namespace {
+        namespace {
 
-struct ConvPair {
-        PixelFormat::ID src;
-        PixelFormat::ID dst;
-};
+                struct ConvPair {
+                                PixelFormat::ID src;
+                                PixelFormat::ID dst;
+                };
 
-/**
+                /**
  * @brief Looks up a PixelFormat by name, returning Invalid and logging on miss.
  *
  * Declared early so the anchor / pair-generation helpers below can
  * use it; the same function is also used by `registerCscCases()` to
  * resolve user-supplied `csc.src` / `csc.dst` names.
  */
-PixelFormat::ID resolveFormat(const String &name) {
-        PixelFormat pd = PixelFormat::lookup(name);
-        if(pd.isValid()) return pd.id();
-        std::fprintf(stderr, "promeki-bench: unknown PixelFormat '%s'\n", name.cstr());
-        return PixelFormat::Invalid;
-}
+                PixelFormat::ID resolveFormat(const String &name) {
+                        PixelFormat pd = PixelFormat::lookup(name);
+                        if (pd.isValid()) return pd.id();
+                        std::fprintf(stderr, "promeki-bench: unknown PixelFormat '%s'\n", name.cstr());
+                        return PixelFormat::Invalid;
+                }
 
-/**
+                /**
  * @brief Returns every registered non-compressed PixelFormat ID.
  *
  * CSC benches care about scalar pixel conversion; compressed formats
  * (JPEG, JPEG XS) belong in a dedicated codec suite, so they are
  * filtered out here.
  */
-List<PixelFormat::ID> nonCompressedFormats() {
-        List<PixelFormat::ID> out;
-        PixelFormat::IDList ids = PixelFormat::registeredIDs();
-        for(auto id : ids) {
-                PixelFormat pd(id);
-                if(pd.isCompressed()) continue;
-                out.pushToBack(id);
-        }
-        return out;
-}
+                List<PixelFormat::ID> nonCompressedFormats() {
+                        List<PixelFormat::ID> out;
+                        PixelFormat::IDList   ids = PixelFormat::registeredIDs();
+                        for (auto id : ids) {
+                                PixelFormat pd(id);
+                                if (pd.isCompressed()) continue;
+                                out.pushToBack(id);
+                        }
+                        return out;
+                }
 
-/**
+                /**
  * @brief Canonical anchor PixelFormat names used when `csc.anchors` is unset.
  *
  * RGBA8_sRGB is the canonical RGB pivot — almost every capture,
@@ -97,44 +97,44 @@ List<PixelFormat::ID> nonCompressedFormats() {
  * Together they form a complete graph over the common CSC paths
  * without forcing a full N² run.
  */
-StringList defaultAnchorNames() {
-        StringList out;
-        out.pushToBack(String("RGBA8_sRGB"));
-        out.pushToBack(String("YUV8_422_Rec709"));
-        return out;
-}
+                StringList defaultAnchorNames() {
+                        StringList out;
+                        out.pushToBack(String("RGBA8_sRGB"));
+                        out.pushToBack(String("YUV8_422_Rec709"));
+                        return out;
+                }
 
-/**
+                /**
  * @brief Resolves the active anchor list from BenchParams.
  *
  * Reads `csc.anchors` (a StringList) and falls back to
  * `defaultAnchorNames()` if the key is absent.  Names that do not
  * resolve to a valid `PixelFormat::ID` are skipped with a warning.
  */
-List<PixelFormat::ID> resolveAnchors() {
-        StringList names = benchParams().getStringList(String("csc.anchors"));
-        if(names.isEmpty()) names = defaultAnchorNames();
+                List<PixelFormat::ID> resolveAnchors() {
+                        StringList names = benchParams().getStringList(String("csc.anchors"));
+                        if (names.isEmpty()) names = defaultAnchorNames();
 
-        List<PixelFormat::ID> out;
-        for(const auto &n : names) {
-                PixelFormat::ID id = resolveFormat(n);
-                if(id == PixelFormat::Invalid) continue;
-                out.pushToBack(id);
-        }
-        return out;
-}
+                        List<PixelFormat::ID> out;
+                        for (const auto &n : names) {
+                                PixelFormat::ID id = resolveFormat(n);
+                                if (id == PixelFormat::Invalid) continue;
+                                out.pushToBack(id);
+                        }
+                        return out;
+                }
 
-/**
+                /**
  * @brief Packs an ordered (src, dst) PixelFormat pair into a dedup key.
  *
  * PixelFormat IDs are small (a few hundred at most), so a 32-bit packed
  * key fits comfortably and gives us O(1) dedup lookups via Map.
  */
-uint32_t packPairKey(PixelFormat::ID s, PixelFormat::ID d) {
-        return (static_cast<uint32_t>(s) << 16) | static_cast<uint32_t>(d);
-}
+                uint32_t packPairKey(PixelFormat::ID s, PixelFormat::ID d) {
+                        return (static_cast<uint32_t>(s) << 16) | static_cast<uint32_t>(d);
+                }
 
-/**
+                /**
  * @brief Builds the default CSC pair set anchored on the resolved anchor list.
  *
  * For every anchor, every non-compressed format becomes a pair in
@@ -148,34 +148,34 @@ uint32_t packPairKey(PixelFormat::ID s, PixelFormat::ID d) {
  * a ~5-minute run at default settings, versus the ~2½ hours the full
  * matrix would take.
  */
-List<ConvPair> anchoredPairs() {
-        List<ConvPair> pairs;
-        List<PixelFormat::ID> anchors = resolveAnchors();
-        if(anchors.isEmpty()) return pairs;
+                List<ConvPair> anchoredPairs() {
+                        List<ConvPair>        pairs;
+                        List<PixelFormat::ID> anchors = resolveAnchors();
+                        if (anchors.isEmpty()) return pairs;
 
-        List<PixelFormat::ID> candidates = nonCompressedFormats();
-        MediaConfig validityConfig;
-        Map<uint32_t, bool> seen;
+                        List<PixelFormat::ID> candidates = nonCompressedFormats();
+                        MediaConfig           validityConfig;
+                        Map<uint32_t, bool>   seen;
 
-        auto add = [&](PixelFormat::ID s, PixelFormat::ID d) {
-                uint32_t key = packPairKey(s, d);
-                if(seen.contains(key)) return;
-                CSCPipeline pipeline(s, d, validityConfig);
-                if(!pipeline.isValid()) return;
-                pairs.pushToBack({s, d});
-                seen.insert(key, true);
-        };
+                        auto add = [&](PixelFormat::ID s, PixelFormat::ID d) {
+                                uint32_t key = packPairKey(s, d);
+                                if (seen.contains(key)) return;
+                                CSCPipeline pipeline(s, d, validityConfig);
+                                if (!pipeline.isValid()) return;
+                                pairs.pushToBack({s, d});
+                                seen.insert(key, true);
+                        };
 
-        for(auto anc : anchors) {
-                for(auto cand : candidates) {
-                        add(anc, cand);
-                        add(cand, anc);
+                        for (auto anc : anchors) {
+                                for (auto cand : candidates) {
+                                        add(anc, cand);
+                                        add(cand, anc);
+                                }
+                        }
+                        return pairs;
                 }
-        }
-        return pairs;
-}
 
-/**
+                /**
  * @brief Enumerates every valid CSC conversion the library supports.
  *
  * The full N² matrix of non-compressed `PixelFormat` IDs, filtered
@@ -184,22 +184,22 @@ List<ConvPair> anchoredPairs() {
  * ~18k cases and a multi-hour run at default measurement settings;
  * this mode is for regression sweeps, not day-to-day dev work.
  */
-List<ConvPair> fullMatrixPairs() {
-        List<ConvPair> pairs;
-        List<PixelFormat::ID> candidates = nonCompressedFormats();
-        MediaConfig validityConfig;
+                List<ConvPair> fullMatrixPairs() {
+                        List<ConvPair>        pairs;
+                        List<PixelFormat::ID> candidates = nonCompressedFormats();
+                        MediaConfig           validityConfig;
 
-        for(auto src : candidates) {
-                for(auto dst : candidates) {
-                        CSCPipeline pipeline(src, dst, validityConfig);
-                        if(!pipeline.isValid()) continue;
-                        pairs.pushToBack({src, dst});
+                        for (auto src : candidates) {
+                                for (auto dst : candidates) {
+                                        CSCPipeline pipeline(src, dst, validityConfig);
+                                        if (!pipeline.isValid()) continue;
+                                        pairs.pushToBack({src, dst});
+                                }
+                        }
+                        return pairs;
                 }
-        }
-        return pairs;
-}
 
-/**
+                /**
  * @brief Reads `csc.config.*` entries out of BenchParams into a MediaConfig.
  *
  * Every BenchParams key that begins with `csc.config.` contributes one
@@ -207,20 +207,20 @@ List<ConvPair> fullMatrixPairs() {
  * passed through as a MediaConfigID, letting users override any
  * CSC-relevant key without the case file knowing about it in advance.
  */
-MediaConfig readCscMediaConfig() {
-        MediaConfig cfg;
-        const String prefix("csc.config.");
-        benchParams().forEach([&](const String &key, const StringList &values) {
-                if(!key.startsWith(prefix)) return;
-                if(values.isEmpty()) return;
-                String suffix = key.mid(prefix.size());
-                if(suffix.isEmpty()) return;
-                cfg.set(MediaConfigID(suffix), values.back());
-        });
-        return cfg;
-}
+                MediaConfig readCscMediaConfig() {
+                        MediaConfig  cfg;
+                        const String prefix("csc.config.");
+                        benchParams().forEach([&](const String &key, const StringList &values) {
+                                if (!key.startsWith(prefix)) return;
+                                if (values.isEmpty()) return;
+                                String suffix = key.mid(prefix.size());
+                                if (suffix.isEmpty()) return;
+                                cfg.set(MediaConfigID(suffix), values.back());
+                        });
+                        return cfg;
+                }
 
-/**
+                /**
  * @brief Builds the case body for a single src → dst pair.
  *
  * The returned callable captures the pair by value, constructs a
@@ -229,159 +229,151 @@ MediaConfig readCscMediaConfig() {
  * destination images, warms the source buffer with a non-trivial
  * pattern, and executes the pipeline in the hot loop.
  */
-BenchmarkCase::Function buildCase(ConvPair pair) {
-        return [pair](BenchmarkState &state) {
-                BenchParams &params = benchParams();
-                int width  = params.getInt(String("csc.width"), 1920);
-                int height = params.getInt(String("csc.height"), 1080);
+                BenchmarkCase::Function buildCase(ConvPair pair) {
+                        return [pair](BenchmarkState &state) {
+                                BenchParams &params = benchParams();
+                                int          width = params.getInt(String("csc.width"), 1920);
+                                int          height = params.getInt(String("csc.height"), 1080);
 
-                MediaConfig cfg = readCscMediaConfig();
-                CSCPipeline pipeline(pair.src, pair.dst, cfg);
-                bool identity = pipeline.isIdentity();
-                bool fastPath = pipeline.isFastPath();
-                int  stages   = pipeline.stageCount();
+                                MediaConfig cfg = readCscMediaConfig();
+                                CSCPipeline pipeline(pair.src, pair.dst, cfg);
+                                bool        identity = pipeline.isIdentity();
+                                bool        fastPath = pipeline.isFastPath();
+                                int         stages = pipeline.stageCount();
 
-                if(!pipeline.isValid()) {
-                        state.setCounter(String("invalid"), 1.0);
-                        // Run a no-op loop so the runner sees iterations.
-                        for(auto _ : state) (void)_;
-                        return;
+                                if (!pipeline.isValid()) {
+                                        state.setCounter(String("invalid"), 1.0);
+                                        // Run a no-op loop so the runner sees iterations.
+                                        for (auto _ : state) (void)_;
+                                        return;
+                                }
+
+                                auto src = UncompressedVideoPayload::allocate(ImageDesc(width, height, pair.src));
+                                auto dst = UncompressedVideoPayload::allocate(ImageDesc(width, height, pair.dst));
+                                if (!src.isValid() || !dst.isValid()) {
+                                        state.setCounter(String("invalid"), 1.0);
+                                        for (auto _ : state) (void)_;
+                                        return;
+                                }
+
+                                // Fill source with a non-trivial pattern so codec-like
+                                // paths can't take shortcuts on zeroed input.
+                                uint8_t *data = src.modify()->data()[0].data();
+                                size_t   planeSize = src->plane(0).size();
+                                for (size_t i = 0; i < planeSize; i++) {
+                                        data[i] = static_cast<uint8_t>((i * 137 + 43) & 0xFF);
+                                }
+
+                                // Discard the first conversion — the warmup covers
+                                // one-time allocations and CPU caches inside the
+                                // pipeline.
+                                pipeline.execute(*src, *dst.modify());
+
+                                double mpix = static_cast<double>(width) * static_cast<double>(height);
+                                size_t bytesPerIter = static_cast<size_t>(planeSize);
+
+                                for (auto _ : state) {
+                                        (void)_;
+                                        pipeline.execute(*src, *dst.modify());
+                                }
+
+                                state.setItemsProcessed(state.iterations());
+                                state.setBytesProcessed(state.iterations() * bytesPerIter);
+
+                                state.setCounter(String("mpix_per_iter"), mpix / 1.0e6);
+                                state.setCounter(String("stages"), static_cast<double>(stages));
+                                state.setCounter(String("identity"), identity ? 1.0 : 0.0);
+                                state.setCounter(String("fast_path"), fastPath ? 1.0 : 0.0);
+
+                                String label = String::number(width) + "x" + String::number(height) + " " +
+                                               PixelFormat(pair.src).name() + " -> " + PixelFormat(pair.dst).name();
+                                state.setLabel(label);
+                        };
                 }
 
-                auto src = UncompressedVideoPayload::allocate(ImageDesc(width, height, pair.src));
-                auto dst = UncompressedVideoPayload::allocate(ImageDesc(width, height, pair.dst));
-                if(!src.isValid() || !dst.isValid()) {
-                        state.setCounter(String("invalid"), 1.0);
-                        for(auto _ : state) (void)_;
-                        return;
+                String caseName(ConvPair pair) {
+                        return PixelFormat(pair.src).name() + "_to_" + PixelFormat(pair.dst).name();
                 }
 
-                // Fill source with a non-trivial pattern so codec-like
-                // paths can't take shortcuts on zeroed input.
-                uint8_t *data = src.modify()->data()[0].data();
-                size_t planeSize = src->plane(0).size();
-                for(size_t i = 0; i < planeSize; i++) {
-                        data[i] = static_cast<uint8_t>((i * 137 + 43) & 0xFF);
+                String caseDescription(ConvPair pair) {
+                        return String("CSC from ") + PixelFormat(pair.src).name() + " to " +
+                               PixelFormat(pair.dst).name();
                 }
 
-                // Discard the first conversion — the warmup covers
-                // one-time allocations and CPU caches inside the
-                // pipeline.
-                pipeline.execute(*src, *dst.modify());
+        } // namespace
 
-                double mpix = static_cast<double>(width)
-                            * static_cast<double>(height);
-                size_t bytesPerIter = static_cast<size_t>(planeSize);
+        void registerCscCases() {
+                const BenchParams &params = benchParams();
+                StringList         customSrc = params.getStringList(String("csc.src"));
+                StringList         customDst = params.getStringList(String("csc.dst"));
+                bool               fullMatrix = params.getBool(String("csc.full"), false);
 
-                for(auto _ : state) {
-                        (void)_;
-                        pipeline.execute(*src, *dst.modify());
-                }
+                List<ConvPair> pairs;
 
-                state.setItemsProcessed(state.iterations());
-                state.setBytesProcessed(state.iterations() * bytesPerIter);
-
-                state.setCounter(String("mpix_per_iter"), mpix / 1.0e6);
-                state.setCounter(String("stages"), static_cast<double>(stages));
-                state.setCounter(String("identity"), identity ? 1.0 : 0.0);
-                state.setCounter(String("fast_path"), fastPath ? 1.0 : 0.0);
-
-                String label = String::number(width) + "x" + String::number(height)
-                             + " " + PixelFormat(pair.src).name()
-                             + " -> " + PixelFormat(pair.dst).name();
-                state.setLabel(label);
-        };
-}
-
-String caseName(ConvPair pair) {
-        return PixelFormat(pair.src).name()
-             + "_to_"
-             + PixelFormat(pair.dst).name();
-}
-
-String caseDescription(ConvPair pair) {
-        return String("CSC from ") + PixelFormat(pair.src).name()
-             + " to " + PixelFormat(pair.dst).name();
-}
-
-} // namespace
-
-void registerCscCases() {
-        const BenchParams &params = benchParams();
-        StringList customSrc = params.getStringList(String("csc.src"));
-        StringList customDst = params.getStringList(String("csc.dst"));
-        bool       fullMatrix = params.getBool(String("csc.full"), false);
-
-        List<ConvPair> pairs;
-
-        if(!customSrc.isEmpty() || !customDst.isEmpty()) {
-                // Explicit cross product overrides the default set.
-                List<PixelFormat::ID> srcIDs;
-                List<PixelFormat::ID> dstIDs;
-                for(const auto &n : customSrc) {
-                        PixelFormat::ID id = resolveFormat(n);
-                        if(id == PixelFormat::Invalid) continue;
-                        srcIDs.pushToBack(id);
-                }
-                for(const auto &n : customDst) {
-                        PixelFormat::ID id = resolveFormat(n);
-                        if(id == PixelFormat::Invalid) continue;
-                        dstIDs.pushToBack(id);
-                }
-                if(srcIDs.isEmpty()) srcIDs = dstIDs;
-                if(dstIDs.isEmpty()) dstIDs = srcIDs;
-
-                for(auto sid : srcIDs) {
-                        for(auto did : dstIDs) {
-                                pairs.pushToBack({sid, did});
+                if (!customSrc.isEmpty() || !customDst.isEmpty()) {
+                        // Explicit cross product overrides the default set.
+                        List<PixelFormat::ID> srcIDs;
+                        List<PixelFormat::ID> dstIDs;
+                        for (const auto &n : customSrc) {
+                                PixelFormat::ID id = resolveFormat(n);
+                                if (id == PixelFormat::Invalid) continue;
+                                srcIDs.pushToBack(id);
                         }
+                        for (const auto &n : customDst) {
+                                PixelFormat::ID id = resolveFormat(n);
+                                if (id == PixelFormat::Invalid) continue;
+                                dstIDs.pushToBack(id);
+                        }
+                        if (srcIDs.isEmpty()) srcIDs = dstIDs;
+                        if (dstIDs.isEmpty()) dstIDs = srcIDs;
+
+                        for (auto sid : srcIDs) {
+                                for (auto did : dstIDs) {
+                                        pairs.pushToBack({sid, did});
+                                }
+                        }
+                } else if (fullMatrix) {
+                        // Exhaustive mode: every valid pair, ~18k cases, for
+                        // regression sweeps.
+                        pairs = fullMatrixPairs();
+                } else {
+                        // Default: every conversion that touches a canonical
+                        // anchor format (~500 pairs at default anchor count),
+                        // auto-generated from PixelFormat::registeredIDs() so the
+                        // set expands automatically as new formats land.
+                        pairs = anchoredPairs();
                 }
-        } else if(fullMatrix) {
-                // Exhaustive mode: every valid pair, ~18k cases, for
-                // regression sweeps.
-                pairs = fullMatrixPairs();
-        } else {
-                // Default: every conversion that touches a canonical
-                // anchor format (~500 pairs at default anchor count),
-                // auto-generated from PixelFormat::registeredIDs() so the
-                // set expands automatically as new formats land.
-                pairs = anchoredPairs();
+
+                for (const auto &p : pairs) {
+                        BenchmarkRunner::registerCase(
+                                BenchmarkCase(String("csc"), caseName(p), caseDescription(p), buildCase(p)));
+                }
+                return;
         }
 
-        for(const auto &p : pairs) {
-                BenchmarkRunner::registerCase(BenchmarkCase(
-                        String("csc"),
-                        caseName(p),
-                        caseDescription(p),
-                        buildCase(p)));
+        String cscParamHelp() {
+                return String("csc suite parameters:\n"
+                              "  csc.width=<int>          Image width in pixels (default: 1920)\n"
+                              "  csc.height=<int>         Image height in pixels (default: 1080)\n"
+                              "  csc.anchors+=<name>      Canonical pivot format (default anchors:\n"
+                              "                             RGBA8_sRGB, YUV8_422_Rec709)\n"
+                              "  csc.full=1               Register every valid pair (full N x N matrix,\n"
+                              "                             ~18k cases — for regression sweeps only)\n"
+                              "  csc.src+=<name>          Explicit source PixelFormat (overrides the default\n"
+                              "                             set and forms a cross product with csc.dst)\n"
+                              "  csc.dst+=<name>          Explicit destination PixelFormat\n"
+                              "  csc.config.<KEY>=<val>   MediaConfig override passed into the CSCPipeline\n"
+                              "                             e.g. csc.config.CscPath=Scalar\n"
+                              "\n"
+                              "  The CSC case set is generated by walking PixelFormat::registeredIDs(),\n"
+                              "  filtering out compressed formats, and validating each candidate\n"
+                              "  against CSCPipeline — there is no hand-curated list, so new pixel\n"
+                              "  formats show up in the bench automatically.  The default mode\n"
+                              "  registers only pairs where at least one endpoint is a canonical\n"
+                              "  anchor (configurable via csc.anchors), keeping run time reasonable\n"
+                              "  at roughly 500 pairs.  Use csc.full=1 for exhaustive coverage, or\n"
+                              "  csc.src / csc.dst for a targeted cross product.\n");
         }
-        return;
-}
-
-String cscParamHelp() {
-        return String(
-                "csc suite parameters:\n"
-                "  csc.width=<int>          Image width in pixels (default: 1920)\n"
-                "  csc.height=<int>         Image height in pixels (default: 1080)\n"
-                "  csc.anchors+=<name>      Canonical pivot format (default anchors:\n"
-                "                             RGBA8_sRGB, YUV8_422_Rec709)\n"
-                "  csc.full=1               Register every valid pair (full N x N matrix,\n"
-                "                             ~18k cases — for regression sweeps only)\n"
-                "  csc.src+=<name>          Explicit source PixelFormat (overrides the default\n"
-                "                             set and forms a cross product with csc.dst)\n"
-                "  csc.dst+=<name>          Explicit destination PixelFormat\n"
-                "  csc.config.<KEY>=<val>   MediaConfig override passed into the CSCPipeline\n"
-                "                             e.g. csc.config.CscPath=Scalar\n"
-                "\n"
-                "  The CSC case set is generated by walking PixelFormat::registeredIDs(),\n"
-                "  filtering out compressed formats, and validating each candidate\n"
-                "  against CSCPipeline — there is no hand-curated list, so new pixel\n"
-                "  formats show up in the bench automatically.  The default mode\n"
-                "  registers only pairs where at least one endpoint is a canonical\n"
-                "  anchor (configurable via csc.anchors), keeping run time reasonable\n"
-                "  at roughly 500 pairs.  Use csc.full=1 for exhaustive coverage, or\n"
-                "  csc.src / csc.dst for a targeted cross product.\n");
-}
 
 } // namespace benchutil
 PROMEKI_NAMESPACE_END
@@ -391,14 +383,13 @@ PROMEKI_NAMESPACE_END
 PROMEKI_NAMESPACE_BEGIN
 namespace benchutil {
 
-void registerCscCases() {
-        // CSC disabled at configure time — no cases to register.
-}
+        void registerCscCases() {
+                // CSC disabled at configure time — no cases to register.
+        }
 
-String cscParamHelp() {
-        return String(
-                "csc suite parameters: (disabled — built without PROMEKI_ENABLE_CSC)\n");
-}
+        String cscParamHelp() {
+                return String("csc suite parameters: (disabled — built without PROMEKI_ENABLE_CSC)\n");
+        }
 
 } // namespace benchutil
 PROMEKI_NAMESPACE_END

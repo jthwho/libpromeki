@@ -132,8 +132,8 @@ TEST_CASE("ImgSeq: fromJson round-trips") {
         orig.setVideoSize(Size2Du32(1920, 1080));
 
         JsonObject json = orig.toJson();
-        Error err;
-        ImgSeq parsed = ImgSeq::fromJson(json, &err);
+        Error      err;
+        ImgSeq     parsed = ImgSeq::fromJson(json, &err);
         CHECK(err.isOk());
         CHECK(parsed.isValid());
         CHECK(parsed.name().prefix() == "shot_");
@@ -147,7 +147,7 @@ TEST_CASE("ImgSeq: fromJson round-trips") {
 TEST_CASE("ImgSeq: fromJson rejects missing type") {
         JsonObject root;
         root.set("name", String("shot_####.dpx"));
-        Error err;
+        Error  err;
         ImgSeq parsed = ImgSeq::fromJson(root, &err);
         CHECK(err.isError());
         CHECK_FALSE(parsed.isValid());
@@ -157,7 +157,7 @@ TEST_CASE("ImgSeq: fromJson rejects wrong type") {
         JsonObject root;
         root.set("type", String("other_format"));
         root.set("name", String("shot_####.dpx"));
-        Error err;
+        Error  err;
         ImgSeq parsed = ImgSeq::fromJson(root, &err);
         CHECK(err.isError());
         CHECK_FALSE(parsed.isValid());
@@ -168,7 +168,7 @@ TEST_CASE("ImgSeq: fromJson rejects missing name") {
         root.set("type", String("imgseq"));
         root.set("head", 1);
         root.set("tail", 10);
-        Error err;
+        Error  err;
         ImgSeq parsed = ImgSeq::fromJson(root, &err);
         CHECK(err.isError());
         CHECK_FALSE(parsed.isValid());
@@ -178,7 +178,7 @@ TEST_CASE("ImgSeq: fromJson accepts printf-style mask") {
         JsonObject root;
         root.set("type", String("imgseq"));
         root.set("name", String("shot_%04d.dpx"));
-        Error err;
+        Error  err;
         ImgSeq parsed = ImgSeq::fromJson(root, &err);
         CHECK(err.isOk());
         CHECK(parsed.isValid());
@@ -192,7 +192,7 @@ TEST_CASE("ImgSeq: fromJson accepts plain filename and parses it") {
         JsonObject root;
         root.set("type", String("imgseq"));
         root.set("name", String("shot_0001.dpx"));
-        Error err;
+        Error  err;
         ImgSeq parsed = ImgSeq::fromJson(root, &err);
         CHECK(err.isOk());
         CHECK(parsed.isValid());
@@ -225,10 +225,10 @@ TEST_CASE("ImgSeq: isImgSeqJson rejects garbage") {
 // ============================================================================
 
 TEST_CASE("ImgSeq: save and load round-trip") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath scratch = t.path() / "promeki_imgseq_file";
-        Dir d(scratch);
-        if(d.exists()) d.removeRecursively();
+        Dir      d(scratch);
+        if (d.exists()) d.removeRecursively();
         d.mkdir();
         FilePath sidecar = scratch / "clip.imgseq";
 
@@ -243,7 +243,7 @@ TEST_CASE("ImgSeq: save and load round-trip") {
         CHECK(orig.save(sidecar).isOk());
         CHECK(sidecar.exists());
 
-        Error err;
+        Error  err;
         ImgSeq loaded = ImgSeq::load(sidecar, &err);
         CHECK(err.isOk());
         CHECK(loaded.isValid());
@@ -261,26 +261,26 @@ TEST_CASE("ImgSeq: save and load round-trip") {
 }
 
 TEST_CASE("ImgSeq: load fails on missing file") {
-        Error err;
+        Error  err;
         ImgSeq loaded = ImgSeq::load(FilePath("/nonexistent_path_imgseq_12345.imgseq"), &err);
         CHECK(err.isError());
         CHECK_FALSE(loaded.isValid());
 }
 
 TEST_CASE("ImgSeq: load fails on non-JSON file") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath scratch = t.path() / "promeki_imgseq_badjson";
-        Dir d(scratch);
-        if(d.exists()) d.removeRecursively();
+        Dir      d(scratch);
+        if (d.exists()) d.removeRecursively();
         d.mkdir();
         FilePath sidecar = scratch / "bad.imgseq";
-        File f(sidecar.toString());
+        File     f(sidecar.toString());
         REQUIRE(f.open(IODevice::WriteOnly, File::Create | File::Truncate).isOk());
         const char *junk = "this is not JSON at all";
         f.write(junk, std::strlen(junk));
         f.close();
 
-        Error err;
+        Error  err;
         ImgSeq loaded = ImgSeq::load(sidecar, &err);
         CHECK(err.isError());
         CHECK_FALSE(loaded.isValid());
@@ -289,8 +289,8 @@ TEST_CASE("ImgSeq: load fails on non-JSON file") {
 }
 
 TEST_CASE("ImgSeq: save fails on invalid sequence") {
-        ImgSeq seq;  // default-constructed — no pattern set
-        Dir t = Dir::temp();
+        ImgSeq   seq; // default-constructed — no pattern set
+        Dir      t = Dir::temp();
         FilePath sidecar = t.path() / "promeki_imgseq_should_not_exist.imgseq";
         CHECK(seq.save(sidecar).isError());
 }
@@ -300,16 +300,16 @@ TEST_CASE("ImgSeq: save fails on invalid sequence") {
 // ============================================================================
 
 TEST_CASE("ImgSeq: detectRange scans folder") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath dir = t.path() / "promeki_imgseq_detect";
-        Dir d(dir);
-        if(d.exists()) d.removeRecursively();
+        Dir      d(dir);
+        if (d.exists()) d.removeRecursively();
         d.mkdir();
 
         makeDummyFile(dir / "shot_0005.dpx");
         makeDummyFile(dir / "shot_0010.dpx");
         makeDummyFile(dir / "shot_0100.dpx");
-        makeDummyFile(dir / "readme.txt");  // non-matching
+        makeDummyFile(dir / "readme.txt"); // non-matching
 
         ImgSeq seq;
         seq.setName(NumName::fromMask("shot_####.dpx"));
@@ -321,10 +321,10 @@ TEST_CASE("ImgSeq: detectRange scans folder") {
 }
 
 TEST_CASE("ImgSeq: detectRange ignores other sequences") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath dir = t.path() / "promeki_imgseq_detect_mixed";
-        Dir d(dir);
-        if(d.exists()) d.removeRecursively();
+        Dir      d(dir);
+        if (d.exists()) d.removeRecursively();
         d.mkdir();
 
         // Two different sequences sharing a directory.
@@ -350,10 +350,10 @@ TEST_CASE("ImgSeq: detectRange ignores other sequences") {
 }
 
 TEST_CASE("ImgSeq: detectRange leaves range unchanged when no matches") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath dir = t.path() / "promeki_imgseq_detect_empty";
-        Dir d(dir);
-        if(d.exists()) d.removeRecursively();
+        Dir      d(dir);
+        if (d.exists()) d.removeRecursively();
         d.mkdir();
 
         makeDummyFile(dir / "unrelated.txt");
@@ -371,8 +371,8 @@ TEST_CASE("ImgSeq: detectRange leaves range unchanged when no matches") {
 }
 
 TEST_CASE("ImgSeq: detectRange on invalid pattern fails") {
-        ImgSeq seq;  // no pattern
-        Dir t = Dir::temp();
+        ImgSeq seq; // no pattern
+        Dir    t = Dir::temp();
         CHECK(seq.detectRange(t.path()).isError());
 }
 
@@ -386,7 +386,7 @@ TEST_CASE("ImgSeq: dir field defaults to empty") {
 }
 
 TEST_CASE("ImgSeq: setDir / dir round-trip") {
-        ImgSeq seq;
+        ImgSeq   seq;
         FilePath d("/media/renders/shot001");
         seq.setDir(d);
         CHECK(seq.dir() == d);
@@ -417,7 +417,7 @@ TEST_CASE("ImgSeq: fromJson parses dir field") {
         root.set("type", String("imgseq"));
         root.set("name", String("shot_####.dpx"));
         root.set("dir", String("/media/renders/shot001"));
-        Error err;
+        Error  err;
         ImgSeq seq = ImgSeq::fromJson(root, &err);
         CHECK(err.isOk());
         CHECK(seq.isValid());
@@ -431,17 +431,17 @@ TEST_CASE("ImgSeq: dir round-trips through JSON") {
         orig.setTail(5);
         orig.setDir(FilePath("../images/shot001"));
         JsonObject json = orig.toJson();
-        Error err;
-        ImgSeq parsed = ImgSeq::fromJson(json, &err);
+        Error      err;
+        ImgSeq     parsed = ImgSeq::fromJson(json, &err);
         CHECK(err.isOk());
         CHECK(parsed.dir() == FilePath("../images/shot001"));
 }
 
 TEST_CASE("ImgSeq: dir round-trips through save/load") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath scratch = t.path() / "promeki_imgseq_dir_field";
-        Dir d(scratch);
-        if(d.exists()) d.removeRecursively();
+        Dir      d(scratch);
+        if (d.exists()) d.removeRecursively();
         d.mkdir();
         FilePath sidecar = scratch / "clip.imgseq";
 
@@ -453,7 +453,7 @@ TEST_CASE("ImgSeq: dir round-trips through save/load") {
 
         CHECK(orig.save(sidecar).isOk());
 
-        Error err;
+        Error  err;
         ImgSeq loaded = ImgSeq::load(sidecar, &err);
         CHECK(err.isOk());
         CHECK(loaded.dir() == FilePath("../renders/clip"));
@@ -462,10 +462,10 @@ TEST_CASE("ImgSeq: dir round-trips through save/load") {
 }
 
 TEST_CASE("ImgSeq: save writes human-readable JSON with indentation") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath scratch = t.path() / "promeki_imgseq_readable";
-        Dir d(scratch);
-        if(d.exists()) d.removeRecursively();
+        Dir      d(scratch);
+        if (d.exists()) d.removeRecursively();
         d.mkdir();
         FilePath sidecar = scratch / "test.imgseq";
 

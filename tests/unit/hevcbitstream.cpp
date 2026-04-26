@@ -14,26 +14,26 @@ using namespace promeki;
 
 namespace {
 
-Buffer::Ptr makeBuffer(const std::vector<uint8_t> &bytes) {
-        auto buf = Buffer::Ptr::create(bytes.size());
-        if(!bytes.empty()) std::memcpy(buf->data(), bytes.data(), bytes.size());
-        buf->setSize(bytes.size());
-        return buf;
-}
+        Buffer::Ptr makeBuffer(const std::vector<uint8_t> &bytes) {
+                auto buf = Buffer::Ptr::create(bytes.size());
+                if (!bytes.empty()) std::memcpy(buf->data(), bytes.data(), bytes.size());
+                buf->setSize(bytes.size());
+                return buf;
+        }
 
-BufferView viewOf(const Buffer::Ptr &buf) {
-        return BufferView(buf, 0, buf ? buf->size() : 0);
-}
+        BufferView viewOf(const Buffer::Ptr &buf) {
+                return BufferView(buf, 0, buf ? buf->size() : 0);
+        }
 
-std::vector<uint8_t> bytesOf(const Buffer::Ptr &buf) {
-        std::vector<uint8_t> v;
-        if(!buf) return v;
-        v.resize(buf->size());
-        if(!v.empty()) std::memcpy(v.data(), buf->data(), buf->size());
-        return v;
-}
+        std::vector<uint8_t> bytesOf(const Buffer::Ptr &buf) {
+                std::vector<uint8_t> v;
+                if (!buf) return v;
+                v.resize(buf->size());
+                if (!v.empty()) std::memcpy(v.data(), buf->data(), buf->size());
+                return v;
+        }
 
-/**
+        /**
  * @brief Build a canned HEVC SPS NAL with known profile/level bytes.
  *
  * Layout (15 minimum bytes):
@@ -46,27 +46,27 @@ std::vector<uint8_t> bytesOf(const Buffer::Ptr &buf) {
  *   8-13: constraint_indicator_flags = 0x900000000000
  *   14: level_idc = 93 (Level 3.1 = 93)
  */
-std::vector<uint8_t> cannedHevcSps() {
-        return {
-                0x42, 0x01,                               // NAL header
-                0x01,                                     // sps_vps_id byte
-                0x01,                                     // ptl byte 0
-                0x60, 0x00, 0x00, 0x00,                   // compat_flags
-                0x90, 0x00, 0x00, 0x00, 0x00, 0x00,       // constraint_flags
-                0x5d,                                     // level_idc (93)
-                0xaa, 0xbb                                // trailing RBSP (ignored)
-        };
-}
+        std::vector<uint8_t> cannedHevcSps() {
+                return {
+                        0x42, 0x01,                         // NAL header
+                        0x01,                               // sps_vps_id byte
+                        0x01,                               // ptl byte 0
+                        0x60, 0x00, 0x00, 0x00,             // compat_flags
+                        0x90, 0x00, 0x00, 0x00, 0x00, 0x00, // constraint_flags
+                        0x5d,                               // level_idc (93)
+                        0xaa, 0xbb                          // trailing RBSP (ignored)
+                };
+        }
 
-std::vector<uint8_t> cannedHevcVps() {
-        // NAL type 32 = 0x40 in bits 1-6 → (32 << 1) = 0x40.
-        return { 0x40, 0x01, 0x11, 0x22, 0x33 };
-}
+        std::vector<uint8_t> cannedHevcVps() {
+                // NAL type 32 = 0x40 in bits 1-6 → (32 << 1) = 0x40.
+                return {0x40, 0x01, 0x11, 0x22, 0x33};
+        }
 
-std::vector<uint8_t> cannedHevcPps() {
-        // NAL type 34 = 0x44.
-        return { 0x44, 0x01, 0xc1, 0x62 };
-}
+        std::vector<uint8_t> cannedHevcPps() {
+                // NAL type 34 = 0x44.
+                return {0x44, 0x01, 0xc1, 0x62};
+        }
 
 } // namespace
 
@@ -78,23 +78,23 @@ TEST_CASE("HevcDecoderConfig — extract from Annex-B access unit") {
                 auto pps = cannedHevcPps();
 
                 std::vector<uint8_t> au;
-                au.insert(au.end(), { 0x00, 0x00, 0x00, 0x01 });
+                au.insert(au.end(), {0x00, 0x00, 0x00, 0x01});
                 au.insert(au.end(), vps.begin(), vps.end());
-                au.insert(au.end(), { 0x00, 0x00, 0x00, 0x01 });
+                au.insert(au.end(), {0x00, 0x00, 0x00, 0x01});
                 au.insert(au.end(), sps.begin(), sps.end());
-                au.insert(au.end(), { 0x00, 0x00, 0x00, 0x01 });
+                au.insert(au.end(), {0x00, 0x00, 0x00, 0x01});
                 au.insert(au.end(), pps.begin(), pps.end());
                 auto buf = makeBuffer(au);
 
                 HevcDecoderConfig cfg;
-                Error err = HevcDecoderConfig::fromAnnexB(viewOf(buf), cfg);
+                Error             err = HevcDecoderConfig::fromAnnexB(viewOf(buf), cfg);
                 CHECK(err == Error::Ok);
                 CHECK(cfg.configurationVersion == 1);
                 CHECK(cfg.generalProfileSpace == 0);
                 CHECK(cfg.generalTierFlag == 0);
                 CHECK(cfg.generalProfileIdc == 1);
                 CHECK(cfg.generalProfileCompatibilityFlags == 0x60000000u);
-                CHECK(cfg.generalConstraintIndicatorFlags  == 0x900000000000ull);
+                CHECK(cfg.generalConstraintIndicatorFlags == 0x900000000000ull);
                 CHECK(cfg.generalLevelIdc == 93);
                 CHECK(cfg.numTemporalLayers == 1);
                 CHECK(cfg.temporalIdNested == 1);
@@ -107,11 +107,11 @@ TEST_CASE("HevcDecoderConfig — extract from Annex-B access unit") {
         }
 
         SUBCASE("missing SPS returns InvalidArgument") {
-                auto vps = cannedHevcVps();
+                auto                 vps = cannedHevcVps();
                 std::vector<uint8_t> au;
-                au.insert(au.end(), { 0x00, 0x00, 0x00, 0x01 });
+                au.insert(au.end(), {0x00, 0x00, 0x00, 0x01});
                 au.insert(au.end(), vps.begin(), vps.end());
-                auto buf = makeBuffer(au);
+                auto              buf = makeBuffer(au);
                 HevcDecoderConfig cfg;
                 CHECK(HevcDecoderConfig::fromAnnexB(viewOf(buf), cfg) == Error::InvalidArgument);
         }
@@ -119,12 +119,9 @@ TEST_CASE("HevcDecoderConfig — extract from Annex-B access unit") {
         SUBCASE("SPS too short for profile fields returns InvalidArgument") {
                 // Well-formed SPS NAL header but only 5 bytes of payload —
                 // not enough to contain profile_tier_level fixed fields.
-                std::vector<uint8_t> au = {
-                        0x00, 0x00, 0x00, 0x01,
-                        0x42, 0x01, 0x01, 0x01, 0x00
-                };
-                auto buf = makeBuffer(au);
-                HevcDecoderConfig cfg;
+                std::vector<uint8_t> au = {0x00, 0x00, 0x00, 0x01, 0x42, 0x01, 0x01, 0x01, 0x00};
+                auto                 buf = makeBuffer(au);
+                HevcDecoderConfig    cfg;
                 CHECK(HevcDecoderConfig::fromAnnexB(viewOf(buf), cfg) == Error::InvalidArgument);
         }
 }
@@ -133,22 +130,22 @@ TEST_CASE("HevcDecoderConfig — serialize / parse round trip") {
 
         SUBCASE("VPS+SPS+PPS round-trips and reserved bits are set") {
                 HevcDecoderConfig cfg;
-                cfg.generalProfileSpace  = 0;
-                cfg.generalTierFlag      = 1;
-                cfg.generalProfileIdc    = 2;     // Main10
+                cfg.generalProfileSpace = 0;
+                cfg.generalTierFlag = 1;
+                cfg.generalProfileIdc = 2; // Main10
                 cfg.generalProfileCompatibilityFlags = 0x40000000;
-                cfg.generalConstraintIndicatorFlags  = 0x800000000000ull;
-                cfg.generalLevelIdc      = 120;   // Level 4.0
-                cfg.parallelismType      = 0;
-                cfg.chromaFormat         = 1;
-                cfg.bitDepthLumaMinus8   = 2;     // 10-bit
+                cfg.generalConstraintIndicatorFlags = 0x800000000000ull;
+                cfg.generalLevelIdc = 120; // Level 4.0
+                cfg.parallelismType = 0;
+                cfg.chromaFormat = 1;
+                cfg.bitDepthLumaMinus8 = 2; // 10-bit
                 cfg.bitDepthChromaMinus8 = 2;
-                cfg.numTemporalLayers    = 1;
-                cfg.temporalIdNested     = 1;
-                cfg.lengthSizeMinusOne   = 3;
-                cfg.vps.pushToBack(makeBuffer({ 0x40, 0x01, 0xaa, 0xbb }));
+                cfg.numTemporalLayers = 1;
+                cfg.temporalIdNested = 1;
+                cfg.lengthSizeMinusOne = 3;
+                cfg.vps.pushToBack(makeBuffer({0x40, 0x01, 0xaa, 0xbb}));
                 cfg.sps.pushToBack(makeBuffer(cannedHevcSps()));
-                cfg.pps.pushToBack(makeBuffer({ 0x44, 0x01, 0xc1, 0x62 }));
+                cfg.pps.pushToBack(makeBuffer({0x44, 0x01, 0xc1, 0x62}));
 
                 Buffer::Ptr payload;
                 CHECK(cfg.serialize(payload) == Error::Ok);
@@ -172,7 +169,7 @@ TEST_CASE("HevcDecoderConfig — serialize / parse round trip") {
                 CHECK(parsed.generalTierFlag == cfg.generalTierFlag);
                 CHECK(parsed.generalProfileIdc == cfg.generalProfileIdc);
                 CHECK(parsed.generalProfileCompatibilityFlags == cfg.generalProfileCompatibilityFlags);
-                CHECK(parsed.generalConstraintIndicatorFlags  == cfg.generalConstraintIndicatorFlags);
+                CHECK(parsed.generalConstraintIndicatorFlags == cfg.generalConstraintIndicatorFlags);
                 CHECK(parsed.generalLevelIdc == cfg.generalLevelIdc);
                 CHECK(parsed.chromaFormat == cfg.chromaFormat);
                 CHECK(parsed.bitDepthLumaMinus8 == cfg.bitDepthLumaMinus8);
@@ -189,8 +186,8 @@ TEST_CASE("HevcDecoderConfig — serialize / parse round trip") {
 
         SUBCASE("missing-VPS serialize emits only SPS+PPS arrays") {
                 HevcDecoderConfig cfg;
-                cfg.sps.pushToBack(makeBuffer({ 0x42, 0x01, 0xaa }));
-                cfg.pps.pushToBack(makeBuffer({ 0x44, 0x01, 0xbb }));
+                cfg.sps.pushToBack(makeBuffer({0x42, 0x01, 0xaa}));
+                cfg.pps.pushToBack(makeBuffer({0x44, 0x01, 0xbb}));
                 Buffer::Ptr payload;
                 CHECK(cfg.serialize(payload) == Error::Ok);
                 // numOfArrays byte (index 22) should be 2.
@@ -204,7 +201,7 @@ TEST_CASE("HevcDecoderConfig — serialize / parse round trip") {
         }
 
         SUBCASE("truncated payload returns CorruptData") {
-                auto buf = makeBuffer({ 0x01, 0x22, 0x00 });
+                auto              buf = makeBuffer({0x01, 0x22, 0x00});
                 HevcDecoderConfig cfg;
                 CHECK(HevcDecoderConfig::parse(viewOf(buf), cfg) == Error::CorruptData);
         }
@@ -213,9 +210,9 @@ TEST_CASE("HevcDecoderConfig — serialize / parse round trip") {
                 // Valid fixed header, one array with one NAL declared length
                 // 100 but only 5 payload bytes follow.
                 std::vector<uint8_t> payload(23, 0);
-                payload[0]  = 0x01;                // configVersion
-                payload[21] = 0x0b;                // numTemporalLayers=1, lengthSizeMinusOne=3
-                payload[22] = 1;                   // numOfArrays
+                payload[0] = 0x01;  // configVersion
+                payload[21] = 0x0b; // numTemporalLayers=1, lengthSizeMinusOne=3
+                payload[22] = 1;    // numOfArrays
                 // Array header: type=33 (SPS), numNalus=1.
                 payload.push_back(0x80 | 33);
                 payload.push_back(0x00);
@@ -223,9 +220,9 @@ TEST_CASE("HevcDecoderConfig — serialize / parse round trip") {
                 // NAL length=100, but only 5 bytes of payload.
                 payload.push_back(0x00);
                 payload.push_back(0x64);
-                for(int i = 0; i < 5; ++i) payload.push_back(static_cast<uint8_t>(i));
+                for (int i = 0; i < 5; ++i) payload.push_back(static_cast<uint8_t>(i));
 
-                auto buf = makeBuffer(payload);
+                auto              buf = makeBuffer(payload);
                 HevcDecoderConfig cfg;
                 CHECK(HevcDecoderConfig::parse(viewOf(buf), cfg) == Error::CorruptData);
         }
@@ -233,15 +230,12 @@ TEST_CASE("HevcDecoderConfig — serialize / parse round trip") {
 
 TEST_CASE("HevcDecoderConfig::toAnnexB") {
         HevcDecoderConfig cfg;
-        cfg.vps.pushToBack(makeBuffer({ 0x40, 0x01, 0xaa }));
-        cfg.sps.pushToBack(makeBuffer({ 0x42, 0x01, 0xbb }));
-        cfg.pps.pushToBack(makeBuffer({ 0x44, 0x01, 0xcc }));
+        cfg.vps.pushToBack(makeBuffer({0x40, 0x01, 0xaa}));
+        cfg.sps.pushToBack(makeBuffer({0x42, 0x01, 0xbb}));
+        cfg.pps.pushToBack(makeBuffer({0x44, 0x01, 0xcc}));
         Buffer::Ptr annexB;
         CHECK(cfg.toAnnexB(annexB) == Error::Ok);
-        std::vector<uint8_t> expected = {
-                0x00, 0x00, 0x00, 0x01, 0x40, 0x01, 0xaa,
-                0x00, 0x00, 0x00, 0x01, 0x42, 0x01, 0xbb,
-                0x00, 0x00, 0x00, 0x01, 0x44, 0x01, 0xcc
-        };
+        std::vector<uint8_t> expected = {0x00, 0x00, 0x00, 0x01, 0x40, 0x01, 0xaa, 0x00, 0x00, 0x00, 0x01,
+                                         0x42, 0x01, 0xbb, 0x00, 0x00, 0x00, 0x01, 0x44, 0x01, 0xcc};
         CHECK(bytesOf(annexB) == expected);
 }

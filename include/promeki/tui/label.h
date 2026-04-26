@@ -31,7 +31,7 @@ enum TuiAlignment {
  * Thread-affine — see @ref TuiWidget.
  */
 class TuiLabel : public TuiWidget {
-        PROMEKI_OBJECT(TuiLabel, TuiWidget)
+                PROMEKI_OBJECT(TuiLabel, TuiWidget)
         public:
                 TuiLabel(const String &text = String(), ObjectBase *parent = nullptr);
                 ~TuiLabel() override;
@@ -43,13 +43,19 @@ class TuiLabel : public TuiWidget {
                 const String &text() const { return _text; }
 
                 /** @brief Sets the text alignment. */
-                void setAlignment(TuiAlignment align) { _alignment = align; update(); }
+                void setAlignment(TuiAlignment align) {
+                        _alignment = align;
+                        update();
+                }
 
                 /** @brief Returns the text alignment. */
                 TuiAlignment alignment() const { return _alignment; }
 
                 /** @brief Enables or disables word wrapping. */
-                void setWordWrap(bool wrap) { _wordWrap = wrap; update(); }
+                void setWordWrap(bool wrap) {
+                        _wordWrap = wrap;
+                        update();
+                }
 
                 /** @brief Returns true if word wrapping is enabled. */
                 bool wordWrap() const { return _wordWrap; }
@@ -60,9 +66,9 @@ class TuiLabel : public TuiWidget {
                 void paintEvent(PaintEvent *e) override;
 
         private:
-                String          _text;
-                TuiAlignment    _alignment = AlignLeft;
-                bool            _wordWrap = false;
+                String       _text;
+                TuiAlignment _alignment = AlignLeft;
+                bool         _wordWrap = false;
 };
 
 PROMEKI_NAMESPACE_END

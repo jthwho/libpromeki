@@ -73,14 +73,14 @@ TEST_CASE("SelfPipe: cross-thread wake") {
         REQUIRE(pipe.isValid());
 
         std::atomic<bool> done{false};
-        std::thread waiter([&] {
+        std::thread       waiter([&] {
                 pollfd pfd;
                 pfd.fd = pipe.readFd();
                 pfd.events = POLLIN;
                 pfd.revents = 0;
                 // Block until the other thread wakes us, or 1 s elapses.
                 int rc = ::poll(&pfd, 1, 1000);
-                if(rc == 1 && (pfd.revents & POLLIN)) {
+                if (rc == 1 && (pfd.revents & POLLIN)) {
                         done.store(true, std::memory_order_release);
                         pipe.drain();
                 }
@@ -102,7 +102,7 @@ TEST_CASE("SelfPipe: write end is non-blocking (many wakes don't stall)") {
         // can hold if each wake were one byte.  The write end is
         // O_NONBLOCK, so a saturated pipe drops extra bytes silently
         // rather than blocking the caller.
-        for(int i = 0; i < 100000; ++i) pipe.wake();
+        for (int i = 0; i < 100000; ++i) pipe.wake();
 
         // Drain — must complete promptly.
         auto t0 = std::chrono::steady_clock::now();

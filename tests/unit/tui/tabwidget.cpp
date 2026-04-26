@@ -19,8 +19,8 @@ TEST_CASE("TuiTabWidget: default construction") {
 
 TEST_CASE("TuiTabWidget: addTab") {
         TuiTabWidget tabs;
-        TuiWidget *w1 = new TuiWidget(&tabs);
-        TuiWidget *w2 = new TuiWidget(&tabs);
+        TuiWidget   *w1 = new TuiWidget(&tabs);
+        TuiWidget   *w2 = new TuiWidget(&tabs);
 
         tabs.addTab(w1, "Tab 1");
         CHECK(tabs.count() == 1);
@@ -33,9 +33,9 @@ TEST_CASE("TuiTabWidget: addTab") {
 
 TEST_CASE("TuiTabWidget: setCurrentIndex") {
         TuiTabWidget tabs;
-        TuiWidget *w1 = new TuiWidget(&tabs);
-        TuiWidget *w2 = new TuiWidget(&tabs);
-        TuiWidget *w3 = new TuiWidget(&tabs);
+        TuiWidget   *w1 = new TuiWidget(&tabs);
+        TuiWidget   *w2 = new TuiWidget(&tabs);
+        TuiWidget   *w3 = new TuiWidget(&tabs);
 
         tabs.addTab(w1, "A");
         tabs.addTab(w2, "B");
@@ -52,8 +52,8 @@ TEST_CASE("TuiTabWidget: setCurrentIndex") {
 
 TEST_CASE("TuiTabWidget: removeTab") {
         TuiTabWidget tabs;
-        TuiWidget *w1 = new TuiWidget(&tabs);
-        TuiWidget *w2 = new TuiWidget(&tabs);
+        TuiWidget   *w1 = new TuiWidget(&tabs);
+        TuiWidget   *w2 = new TuiWidget(&tabs);
 
         tabs.addTab(w1, "A");
         tabs.addTab(w2, "B");
@@ -65,7 +65,7 @@ TEST_CASE("TuiTabWidget: removeTab") {
 
 TEST_CASE("TuiTabWidget: sizeHint") {
         TuiTabWidget tabs;
-        TuiWidget *w1 = new TuiWidget(&tabs);
+        TuiWidget   *w1 = new TuiWidget(&tabs);
         tabs.addTab(w1, "Tab");
 
         Size2Di32 hint = tabs.sizeHint();

@@ -55,13 +55,12 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @tparam T The type of the object being managed.
  */
-template<typename T>
-class UniquePtr {
+template <typename T> class UniquePtr {
         public:
                 // All UniquePtr instantiations are friends of each other so the
                 // upcast/downcast helpers can reach the private _ptr across
                 // type boundaries.
-                template<typename U> friend class UniquePtr;
+                template <typename U> friend class UniquePtr;
 
                 /** @brief Constructs a null UniquePtr. */
                 UniquePtr() = default;
@@ -86,10 +85,7 @@ class UniquePtr {
                  * have a virtual destructor; otherwise deleting through the
                  * base pointer is undefined behavior.
                  */
-                template<typename U,
-                                 typename = std::enable_if_t<
-                                         std::is_base_of_v<T, U> &&
-                                         !std::is_same_v<T, U>>>
+                template <typename U, typename = std::enable_if_t<std::is_base_of_v<T, U> && !std::is_same_v<T, U>>>
                 UniquePtr(UniquePtr<U> &&o) noexcept : _ptr(o._ptr) {
                         o._ptr = nullptr;
                 }
@@ -98,7 +94,7 @@ class UniquePtr {
 
                 /** @brief Move-assigns from another UniquePtr, releasing any prior object. */
                 UniquePtr &operator=(UniquePtr &&o) noexcept {
-                        if(&o == this) return *this;
+                        if (&o == this) return *this;
                         clear();
                         _ptr = o._ptr;
                         o._ptr = nullptr;
@@ -111,10 +107,7 @@ class UniquePtr {
                  * Releases any currently owned object, then takes ownership of
                  * the derived pointer, leaving the source null.
                  */
-                template<typename U,
-                                 typename = std::enable_if_t<
-                                         std::is_base_of_v<T, U> &&
-                                         !std::is_same_v<T, U>>>
+                template <typename U, typename = std::enable_if_t<std::is_base_of_v<T, U> && !std::is_same_v<T, U>>>
                 UniquePtr &operator=(UniquePtr<U> &&o) noexcept {
                         clear();
                         _ptr = o._ptr;
@@ -126,8 +119,7 @@ class UniquePtr {
                  * @brief Constructs a new T in-place and returns a UniquePtr owning it.
                  * @param args Arguments forwarded to T's constructor.
                  */
-                template<typename... Args>
-                static UniquePtr create(Args&&... args) {
+                template <typename... Args> static UniquePtr create(Args &&...args) {
                         UniquePtr up;
                         up._ptr = new T(std::forward<Args>(args)...);
                         return up;
@@ -149,7 +141,7 @@ class UniquePtr {
 
                 /** @brief Deletes the owned object (if any) and becomes null. */
                 void clear() {
-                        if(_ptr == nullptr) return;
+                        if (_ptr == nullptr) return;
                         delete _ptr;
                         _ptr = nullptr;
                         return;
@@ -177,16 +169,14 @@ class UniquePtr {
                  * already-owned pointer is a no-op.
                  */
                 void reset(T *obj = nullptr) {
-                        if(_ptr == obj) return;
+                        if (_ptr == obj) return;
                         delete _ptr;
                         _ptr = obj;
                         return;
                 }
 
                 /** @brief Swaps the managed pointer with @p other. */
-                void swap(UniquePtr &other) noexcept {
-                        std::swap(_ptr, other._ptr);
-                }
+                void swap(UniquePtr &other) noexcept { std::swap(_ptr, other._ptr); }
 
                 /** @brief Returns true if this UniquePtr owns no object. */
                 bool isNull() const { return _ptr == nullptr; }
@@ -221,9 +211,7 @@ class UniquePtr {
                  * Useful for exposing the owned pointer through an accessor
                  * that may legitimately return null.
                  */
-                T *get() const {
-                        return _ptr;
-                }
+                T *get() const { return _ptr; }
 
                 T *operator->() const { return ptr(); }
                 T &operator*() const { return *ptr(); }
@@ -233,9 +221,8 @@ class UniquePtr {
 };
 
 /** @brief Non-member swap for UniquePtr. */
-template<typename T>
-void swap(UniquePtr<T> &a, UniquePtr<T> &b) noexcept {
-    a.swap(b);
+template <typename T> void swap(UniquePtr<T> &a, UniquePtr<T> &b) noexcept {
+        a.swap(b);
 }
 
 /**
@@ -258,15 +245,13 @@ void swap(UniquePtr<T> &a, UniquePtr<T> &b) noexcept {
  * }
  * @endcode
  */
-template<typename Derived, typename Base>
-UniquePtr<Derived> uniquePointerCast(UniquePtr<Base> &&up) {
-    static_assert(std::is_base_of_v<Base, Derived>,
-                  "Derived must publicly derive from Base");
-    if(up.isNull()) return UniquePtr<Derived>();
-    Derived *d = dynamic_cast<Derived *>(up.ptr());
-    if(d == nullptr) return UniquePtr<Derived>();
-    up.release();
-    return UniquePtr<Derived>::takeOwnership(d);
+template <typename Derived, typename Base> UniquePtr<Derived> uniquePointerCast(UniquePtr<Base> &&up) {
+        static_assert(std::is_base_of_v<Base, Derived>, "Derived must publicly derive from Base");
+        if (up.isNull()) return UniquePtr<Derived>();
+        Derived *d = dynamic_cast<Derived *>(up.ptr());
+        if (d == nullptr) return UniquePtr<Derived>();
+        up.release();
+        return UniquePtr<Derived>::takeOwnership(d);
 }
 
 PROMEKI_NAMESPACE_END

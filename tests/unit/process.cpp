@@ -47,14 +47,14 @@ TEST_CASE("Process") {
 
         SUBCASE("Start with empty program returns error") {
                 Process p;
-                Error err = p.start();
+                Error   err = p.start();
                 CHECK(err == Error::Invalid);
                 CHECK(p.state() == Process::NotRunning);
         }
 
         SUBCASE("Start already-running process returns error") {
                 Process p;
-                Error err = p.start("/bin/sleep", {"10"});
+                Error   err = p.start("/bin/sleep", {"10"});
                 REQUIRE(err.isOk());
                 CHECK(p.isRunning());
 
@@ -67,7 +67,7 @@ TEST_CASE("Process") {
 
         SUBCASE("Run echo and read stdout") {
                 Process p;
-                Error err = p.start("/bin/echo", {"-n", "Hello, promeki!"});
+                Error   err = p.start("/bin/echo", {"-n", "Hello, promeki!"});
                 REQUIRE(err.isOk());
                 CHECK(p.isRunning());
                 CHECK(p.pid() > 0);
@@ -85,7 +85,7 @@ TEST_CASE("Process") {
 
         SUBCASE("Convenience start(program, args)") {
                 Process p;
-                Error err = p.start("/bin/true", {});
+                Error   err = p.start("/bin/true", {});
                 REQUIRE(err.isOk());
 
                 err = p.waitForFinished();
@@ -95,7 +95,7 @@ TEST_CASE("Process") {
 
         SUBCASE("Non-zero exit code") {
                 Process p;
-                Error err = p.start("/bin/false", {});
+                Error   err = p.start("/bin/false", {});
                 REQUIRE(err.isOk());
 
                 err = p.waitForFinished();
@@ -105,7 +105,7 @@ TEST_CASE("Process") {
 
         SUBCASE("Program not found returns error") {
                 Process p;
-                Error err = p.start("/nonexistent/program", {});
+                Error   err = p.start("/nonexistent/program", {});
                 // With exec-notify pipe, exec failure is reported directly
                 CHECK(err == Error::NotExist);
                 CHECK_FALSE(p.isRunning());
@@ -113,12 +113,12 @@ TEST_CASE("Process") {
 
         SUBCASE("Write to stdin and read back via cat") {
                 Process p;
-                Error err = p.start("/bin/cat", {});
+                Error   err = p.start("/bin/cat", {});
                 REQUIRE(err.isOk());
 
                 const char *input = "stdin round-trip test";
-                size_t len = std::strlen(input);
-                ssize_t written = p.writeToStdin(input, len);
+                size_t      len = std::strlen(input);
+                ssize_t     written = p.writeToStdin(input, len);
                 CHECK(written == static_cast<ssize_t>(len));
                 p.closeWriteChannel();
 
@@ -134,7 +134,7 @@ TEST_CASE("Process") {
 
         SUBCASE("Read stderr") {
                 Process p;
-                Error err = p.start("/bin/sh", {"-c", "echo -n error_output >&2"});
+                Error   err = p.start("/bin/sh", {"-c", "echo -n error_output >&2"});
                 REQUIRE(err.isOk());
 
                 err = p.waitForFinished();
@@ -165,7 +165,7 @@ TEST_CASE("Process") {
         }
 
         SUBCASE("Custom environment") {
-                Process p;
+                Process             p;
                 Map<String, String> env;
                 env.insert("PROMEKI_TEST_VAR", "hello123");
                 env.insert("PATH", "/usr/bin:/bin");
@@ -186,7 +186,7 @@ TEST_CASE("Process") {
 
         SUBCASE("Kill running process") {
                 Process p;
-                Error err = p.start("/bin/sleep", {"60"});
+                Error   err = p.start("/bin/sleep", {"60"});
                 REQUIRE(err.isOk());
                 CHECK(p.isRunning());
 
@@ -200,7 +200,7 @@ TEST_CASE("Process") {
 
         SUBCASE("Terminate running process") {
                 Process p;
-                Error err = p.start("/bin/sleep", {"60"});
+                Error   err = p.start("/bin/sleep", {"60"});
                 REQUIRE(err.isOk());
                 CHECK(p.isRunning());
 
@@ -213,32 +213,32 @@ TEST_CASE("Process") {
 
         SUBCASE("waitForFinished on non-running process") {
                 Process p;
-                Error err = p.waitForFinished();
+                Error   err = p.waitForFinished();
                 CHECK(err == Error::NotOpen);
         }
 
         SUBCASE("waitForStarted on non-running process") {
                 Process p;
-                Error err = p.waitForStarted();
+                Error   err = p.waitForStarted();
                 CHECK(err == Error::NotOpen);
         }
 
         SUBCASE("writeToStdin on non-running process returns -1") {
-                Process p;
+                Process     p;
                 const char *data = "test";
-                ssize_t written = p.writeToStdin(data, 4);
+                ssize_t     written = p.writeToStdin(data, 4);
                 CHECK(written == -1);
         }
 
         SUBCASE("readAllStdout on non-running process returns empty buffer") {
                 Process p;
-                Buffer buf = p.readAllStdout();
+                Buffer  buf = p.readAllStdout();
                 CHECK_FALSE(buf.isValid());
         }
 
         SUBCASE("readAllStderr on non-running process returns empty buffer") {
                 Process p;
-                Buffer buf = p.readAllStderr();
+                Buffer  buf = p.readAllStderr();
                 CHECK_FALSE(buf.isValid());
         }
 
@@ -259,13 +259,11 @@ TEST_CASE("Process") {
 
         SUBCASE("Signals") {
                 Process p;
-                bool startedEmitted = false;
-                bool finishedEmitted = false;
-                int finishedCode = -999;
+                bool    startedEmitted = false;
+                bool    finishedEmitted = false;
+                int     finishedCode = -999;
 
-                p.startedSignal.connect([&]() {
-                        startedEmitted = true;
-                });
+                p.startedSignal.connect([&]() { startedEmitted = true; });
 
                 p.finishedSignal.connect([&](int code) {
                         finishedEmitted = true;

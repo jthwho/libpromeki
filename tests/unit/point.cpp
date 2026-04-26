@@ -58,7 +58,7 @@ TEST_CASE("Point: distanceTo") {
 TEST_CASE("Point: lerp") {
         Point2Dd a(0.0, 0.0);
         Point2Dd b(10.0, 20.0);
-        auto mid = a.lerp(b, 0.5);
+        auto     mid = a.lerp(b, 0.5);
         CHECK(mid.x() == doctest::Approx(5.0));
         CHECK(mid.y() == doctest::Approx(10.0));
 }
@@ -66,8 +66,8 @@ TEST_CASE("Point: lerp") {
 TEST_CASE("Point: lerp endpoints") {
         Point2Dd a(1.0, 2.0);
         Point2Dd b(5.0, 6.0);
-        auto start = a.lerp(b, 0.0);
-        auto end = a.lerp(b, 1.0);
+        auto     start = a.lerp(b, 0.0);
+        auto     end = a.lerp(b, 1.0);
         CHECK(start.x() == doctest::Approx(1.0));
         CHECK(end.x() == doctest::Approx(5.0));
 }
@@ -76,7 +76,7 @@ TEST_CASE("Point: clamp") {
         Point2Di32 p(15, -5);
         Point2Di32 minP(0, 0);
         Point2Di32 maxP(10, 10);
-        auto clamped = p.clamp(minP, maxP);
+        auto       clamped = p.clamp(minP, maxP);
         CHECK(clamped.x() == 10);
         CHECK(clamped.y() == 0);
 }

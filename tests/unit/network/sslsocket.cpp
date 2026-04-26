@@ -18,20 +18,20 @@ TEST_CASE("SslSocket - default state") {
 
 TEST_CASE("SslSocket - startEncryption without context fails") {
         SslSocket sock;
-        Error e = sock.startEncryption("example.com");
+        Error     e = sock.startEncryption("example.com");
         CHECK(e == Error::Invalid);
         CHECK_FALSE(sock.isEncrypted());
 }
 
 TEST_CASE("SslSocket - startServerEncryption without context fails") {
         SslSocket sock;
-        Error e = sock.startServerEncryption();
+        Error     e = sock.startServerEncryption();
         CHECK(e == Error::Invalid);
         CHECK_FALSE(sock.isEncrypted());
 }
 
 TEST_CASE("SslSocket - setSslContext attaches the context") {
-        SslSocket sock;
+        SslSocket       sock;
         SslContext::Ptr ctx = SslContext::Ptr::takeOwnership(new SslContext());
         sock.setSslContext(ctx);
         CHECK(sock.sslContext().isValid());

@@ -73,9 +73,9 @@ class EventLoop {
         public:
                 /** @brief Flags controlling processEvents() behavior. */
                 enum ProcessEventsFlag : uint32_t {
-                        ExcludeTimers       = 0x01,  ///< Skip timer processing.
-                        ExcludePosted       = 0x02,  ///< Skip posted callables and events.
-                        WaitForMore         = 0x04   ///< Block until at least one event is available.
+                        ExcludeTimers = 0x01, ///< Skip timer processing.
+                        ExcludePosted = 0x02, ///< Skip posted callables and events.
+                        WaitForMore = 0x04    ///< Block until at least one event is available.
                 };
 
                 /**
@@ -168,8 +168,7 @@ class EventLoop {
                  * @param singleShot If true, the timer fires once and is removed.
                  * @return The timer ID, usable with stopTimer().
                  */
-                int startTimer(ObjectBase *receiver, unsigned int intervalMs,
-                               bool singleShot = false);
+                int startTimer(ObjectBase *receiver, unsigned int intervalMs, bool singleShot = false);
 
                 /**
                  * @brief Starts a standalone callable timer.
@@ -183,9 +182,7 @@ class EventLoop {
                  * @param singleShot If true, the timer fires once and is removed.
                  * @return The timer ID, usable with stopTimer().
                  */
-                int startTimer(unsigned int intervalMs,
-                               std::function<void()> func,
-                               bool singleShot = false);
+                int startTimer(unsigned int intervalMs, std::function<void()> func, bool singleShot = false);
 
                 /**
                  * @brief Stops and removes a timer.
@@ -239,9 +236,9 @@ class EventLoop {
                  * implicit integer-conversion footgun.
                  * @{
                  */
-                static constexpr uint32_t IoRead  = 0x01;  ///< fd is readable
-                static constexpr uint32_t IoWrite = 0x02;  ///< fd is writable
-                static constexpr uint32_t IoError = 0x04;  ///< error / hangup (always reported; mask is informational)
+                static constexpr uint32_t IoRead = 0x01;  ///< fd is readable
+                static constexpr uint32_t IoWrite = 0x02; ///< fd is writable
+                static constexpr uint32_t IoError = 0x04; ///< error / hangup (always reported; mask is informational)
                 /** @} */
 
                 /**
@@ -315,25 +312,32 @@ class EventLoop {
                 void removeIoSource(int handle);
 
         private:
-                struct CallableItem { std::function<void()> func; };
-                struct EventItem { ObjectBase *receiver; Event *event; };
-                struct QuitItem { int code; };
+                struct CallableItem {
+                                std::function<void()> func;
+                };
+                struct EventItem {
+                                ObjectBase *receiver;
+                                Event      *event;
+                };
+                struct QuitItem {
+                                int code;
+                };
                 using Item = std::variant<CallableItem, EventItem, QuitItem>;
 
                 struct TimerInfo {
-                        int                     id;
-                        ObjectBase              *receiver;      ///< nullptr for callable timers
-                        std::function<void()>   func;           ///< For callable timers
-                        unsigned int            intervalMs;
-                        bool                    singleShot;
-                        TimeStamp               nextFire;
+                                int                   id;
+                                ObjectBase           *receiver; ///< nullptr for callable timers
+                                std::function<void()> func;     ///< For callable timers
+                                unsigned int          intervalMs;
+                                bool                  singleShot;
+                                TimeStamp             nextFire;
                 };
 
-                static thread_local EventLoop   *_current;
+                static thread_local EventLoop *_current;
 
-                Queue<Item>                     _queue;
-                Atomic<bool>                    _running;
-                Atomic<int>                     _exitCode;
+                Queue<Item>  _queue;
+                Atomic<bool> _running;
+                Atomic<int>  _exitCode;
 
                 // Timer list access is guarded by _timersMutex.  Any
                 // thread may install or stop timers via startTimer /
@@ -343,9 +347,9 @@ class EventLoop {
                 // invokes callbacks — this avoids deadlocks if a timer
                 // callback calls startTimer() or stopTimer() on the
                 // same event loop, and keeps the lock hold time bounded.
-                mutable Mutex                   _timersMutex;
-                List<TimerInfo>                 _timers;
-                Atomic<int>                     _nextTimerId{1};
+                mutable Mutex   _timersMutex;
+                List<TimerInfo> _timers;
+                Atomic<int>     _nextTimerId{1};
 
                 // Platform wake fd (eventfd on Linux, self-pipe
                 // elsewhere).  Owned by the EventLoop; opened in the
@@ -354,7 +358,7 @@ class EventLoop {
                 // stopTimer to unblock poll() in waitOnSources, and
                 // included in every poll set as index 0.
                 using WakeFdUPtr = UniquePtr<EventLoopWakeFd>;
-                WakeFdUPtr                       _wake;
+                WakeFdUPtr _wake;
 
                 // I/O source registration.  Mutation under _ioMutex,
                 // poll set built under _ioMutex into a short-lived
@@ -363,15 +367,15 @@ class EventLoop {
                 // removeIoSource on the same EventLoop without
                 // deadlocking.
                 struct IoSource {
-                        int             handle;
-                        int             fd;
-                        uint32_t        events;
-                        IoCallback      cb;
-                        bool            pendingRemove = false;
+                                int        handle;
+                                int        fd;
+                                uint32_t   events;
+                                IoCallback cb;
+                                bool       pendingRemove = false;
                 };
-                mutable Mutex                   _ioMutex;
-                List<IoSource>                  _ioSources;
-                Atomic<int>                     _nextIoHandle{1};
+                mutable Mutex  _ioMutex;
+                List<IoSource> _ioSources;
+                Atomic<int>    _nextIoHandle{1};
 
                 /**
                  * @brief Writes to the internal wake fd unconditionally.

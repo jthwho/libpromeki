@@ -360,34 +360,34 @@ class AudioBuffer {
                 size_t bytesPerSample() const;
 
                 /** @brief Writes @p samples samples (already in storage format) starting at _tail. */
-                void   writeBytesAtTail(const uint8_t *data, size_t samples);
+                void writeBytesAtTail(const uint8_t *data, size_t samples);
 
                 /** @brief Reads @p samples samples from @p startSample into @p dst. */
-                void   readBytesFromHead(uint8_t *dst, size_t samples, size_t skip) const;
+                void readBytesFromHead(uint8_t *dst, size_t samples, size_t skip) const;
 
                 // Lock-free internals called with _mutex already held.
                 Error  pushLocked(const void *data, size_t samples, const AudioDesc &srcFormat);
                 size_t popLocked(void *dst, size_t samples);
 
-                mutable Mutex   _mutex;
-                WaitCondition   _cv;
+                mutable Mutex _mutex;
+                WaitCondition _cv;
 
                 AudioDesc _format;
                 AudioDesc _inputFormat;
                 Buffer    _storage;
                 size_t    _capacity = 0;
-                size_t    _head = 0;      ///< Next sample index to pop (mod _capacity).
-                size_t    _tail = 0;      ///< Next sample index to push (mod _capacity).
-                size_t    _count = 0;     ///< Currently buffered samples.
+                size_t    _head = 0;  ///< Next sample index to pop (mod _capacity).
+                size_t    _tail = 0;  ///< Next sample index to push (mod _capacity).
+                size_t    _count = 0; ///< Currently buffered samples.
 
 #if PROMEKI_ENABLE_SRC
-                SrcQuality      _resamplerQuality;
-                AudioResampler  _resampler;
-                bool            _driftEnabled = false;
-                size_t          _driftTarget  = 0;
-                double          _driftGain    = 0.001;
-                double          _driftRatio   = 1.0;    ///< Last applied ratio.
-                double          _driftIntegral = 0.0;   ///< Accumulated error for I term.
+                SrcQuality     _resamplerQuality;
+                AudioResampler _resampler;
+                bool           _driftEnabled = false;
+                size_t         _driftTarget = 0;
+                double         _driftGain = 0.001;
+                double         _driftRatio = 1.0;    ///< Last applied ratio.
+                double         _driftIntegral = 0.0; ///< Accumulated error for I term.
 
                 /** @brief Resamples native-float data and writes the result to the ring. */
                 Error resampleAndPush(const float *nativeData, size_t samples);

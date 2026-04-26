@@ -28,7 +28,7 @@ PROMEKI_NAMESPACE_BEGIN
 static Terminal *g_activeTerminal = nullptr;
 
 static void signalHandler(int sig) {
-        if(g_activeTerminal) {
+        if (g_activeTerminal) {
                 g_activeTerminal->disableMouseTracking();
                 g_activeTerminal->disableAlternateScreen();
                 g_activeTerminal->disableRawMode();
@@ -44,17 +44,11 @@ static void sigwinchHandler(int) {
 
 #endif
 
-Terminal::Terminal() :
-        _inputFd(STDIN_FILENO),
-        _outputFd(STDOUT_FILENO)
-{
+Terminal::Terminal() : _inputFd(STDIN_FILENO), _outputFd(STDOUT_FILENO) {
         init();
 }
 
-Terminal::Terminal(int inputFd, int outputFd) :
-        _inputFd(inputFd),
-        _outputFd(outputFd)
-{
+Terminal::Terminal(int inputFd, int outputFd) : _inputFd(inputFd), _outputFd(outputFd) {
         init();
 }
 
@@ -66,21 +60,21 @@ void Terminal::init() {
 }
 
 Terminal::~Terminal() {
-        if(_mouseTracking) disableMouseTracking();
-        if(_bracketedPaste) disableBracketedPaste();
-        if(_alternateScreen) disableAlternateScreen();
-        if(_rawMode) disableRawMode();
+        if (_mouseTracking) disableMouseTracking();
+        if (_bracketedPaste) disableBracketedPaste();
+        if (_alternateScreen) disableAlternateScreen();
+        if (_rawMode) disableRawMode();
 #if defined(PROMEKI_PLATFORM_POSIX)
-        if(g_activeTerminal == this) g_activeTerminal = nullptr;
+        if (g_activeTerminal == this) g_activeTerminal = nullptr;
         delete static_cast<::termios *>(_origState);
 #endif
 }
 
 Error Terminal::enableRawMode() {
-        if(_rawMode) return Error();
+        if (_rawMode) return Error();
 #if defined(PROMEKI_PLATFORM_POSIX)
         ::termios *orig = static_cast<::termios *>(_origState);
-        if(tcgetattr(_inputFd, orig) == -1) return Error::syserr();
+        if (tcgetattr(_inputFd, orig) == -1) return Error::syserr();
         ::termios raw = *orig;
         raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
         raw.c_oflag &= ~(OPOST);
@@ -88,21 +82,21 @@ Error Terminal::enableRawMode() {
         raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
         raw.c_cc[VMIN] = 0;
         raw.c_cc[VTIME] = 0;
-        if(tcsetattr(_inputFd, TCSAFLUSH, &raw) == -1) return Error::syserr();
+        if (tcsetattr(_inputFd, TCSAFLUSH, &raw) == -1) return Error::syserr();
         _rawMode = true;
         return Error();
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
-        DWORD mode;
-        if(!GetConsoleMode(hStdin, &mode)) return Error::syserr();
+        DWORD  mode;
+        if (!GetConsoleMode(hStdin, &mode)) return Error::syserr();
         mode &= ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
         mode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
-        if(!SetConsoleMode(hStdin, mode)) return Error::syserr();
+        if (!SetConsoleMode(hStdin, mode)) return Error::syserr();
         HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-        DWORD outMode;
-        if(!GetConsoleMode(hStdout, &outMode)) return Error::syserr();
+        DWORD  outMode;
+        if (!GetConsoleMode(hStdout, &outMode)) return Error::syserr();
         outMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-        if(!SetConsoleMode(hStdout, outMode)) return Error::syserr();
+        if (!SetConsoleMode(hStdout, outMode)) return Error::syserr();
         _rawMode = true;
         return Error();
 #else
@@ -111,9 +105,9 @@ Error Terminal::enableRawMode() {
 }
 
 Error Terminal::disableRawMode() {
-        if(!_rawMode) return Error();
+        if (!_rawMode) return Error();
 #if defined(PROMEKI_PLATFORM_POSIX)
-        if(tcsetattr(_inputFd, TCSAFLUSH, static_cast<::termios *>(_origState)) == -1) return Error::syserr();
+        if (tcsetattr(_inputFd, TCSAFLUSH, static_cast<::termios *>(_origState)) == -1) return Error::syserr();
         _rawMode = false;
         return Error();
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
@@ -127,23 +121,23 @@ Error Terminal::disableRawMode() {
 Result<int> Terminal::readInput(char *buf, int maxLen) {
 #if defined(PROMEKI_PLATFORM_POSIX)
         // Check for resize
-        if(_resizeCallback) {
+        if (_resizeCallback) {
                 int cols, rows;
                 windowSize(cols, rows);
         }
         ssize_t n = read(_inputFd, buf, maxLen);
-        if(n == -1) {
-                if(errno == EAGAIN || errno == EWOULDBLOCK) return makeResult(0);
+        if (n == -1) {
+                if (errno == EAGAIN || errno == EWOULDBLOCK) return makeResult(0);
                 return makeError<int>(Error::syserr());
         }
         return makeResult(static_cast<int>(n));
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
-        DWORD available = 0;
-        if(!PeekConsoleInput(hStdin, nullptr, 0, &available)) return makeError<int>(Error::syserr());
-        if(available == 0) return makeResult(0);
+        DWORD  available = 0;
+        if (!PeekConsoleInput(hStdin, nullptr, 0, &available)) return makeError<int>(Error::syserr());
+        if (available == 0) return makeResult(0);
         DWORD bytesRead = 0;
-        if(!ReadFile(hStdin, buf, maxLen, &bytesRead, nullptr)) return makeError<int>(Error::syserr());
+        if (!ReadFile(hStdin, buf, maxLen, &bytesRead, nullptr)) return makeError<int>(Error::syserr());
         return makeResult(static_cast<int>(bytesRead));
 #else
         return makeError<int>(Error::NotSupported);
@@ -153,13 +147,13 @@ Result<int> Terminal::readInput(char *buf, int maxLen) {
 Error Terminal::windowSize(int &cols, int &rows) const {
 #if defined(PROMEKI_PLATFORM_POSIX)
         struct winsize ws;
-        if(ioctl(_outputFd, TIOCGWINSZ, &ws) != 0) return Error::syserr();
+        if (ioctl(_outputFd, TIOCGWINSZ, &ws) != 0) return Error::syserr();
         cols = ws.ws_col;
         rows = ws.ws_row;
         return Error();
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         CONSOLE_SCREEN_BUFFER_INFO csbi;
-        if(!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) return Error::syserr();
+        if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) return Error::syserr();
         cols = csbi.srWindow.Right - csbi.srWindow.Left + 1;
         rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
         return Error();
@@ -175,55 +169,55 @@ Size2Di32 Terminal::size() const {
 }
 
 Error Terminal::enableMouseTracking() {
-        if(_mouseTracking) return Error();
+        if (_mouseTracking) return Error();
         const char *seq = "\033[?1000h\033[?1003h\033[?1006h";
         auto [n, err] = writeOutput(seq, std::strlen(seq));
-        if(err.isError()) return err;
+        if (err.isError()) return err;
         _mouseTracking = true;
         return Error();
 }
 
 Error Terminal::disableMouseTracking() {
-        if(!_mouseTracking) return Error();
+        if (!_mouseTracking) return Error();
         const char *seq = "\033[?1006l\033[?1003l\033[?1000l";
         auto [n, err] = writeOutput(seq, std::strlen(seq));
-        if(err.isError()) return err;
+        if (err.isError()) return err;
         _mouseTracking = false;
         return Error();
 }
 
 Error Terminal::enableBracketedPaste() {
-        if(_bracketedPaste) return Error();
+        if (_bracketedPaste) return Error();
         const char *seq = "\033[?2004h";
         auto [n, err] = writeOutput(seq, std::strlen(seq));
-        if(err.isError()) return err;
+        if (err.isError()) return err;
         _bracketedPaste = true;
         return Error();
 }
 
 Error Terminal::disableBracketedPaste() {
-        if(!_bracketedPaste) return Error();
+        if (!_bracketedPaste) return Error();
         const char *seq = "\033[?2004l";
         auto [n, err] = writeOutput(seq, std::strlen(seq));
-        if(err.isError()) return err;
+        if (err.isError()) return err;
         _bracketedPaste = false;
         return Error();
 }
 
 Error Terminal::enableAlternateScreen() {
-        if(_alternateScreen) return Error();
+        if (_alternateScreen) return Error();
         const char *seq = "\033[?1049h";
         auto [n, err] = writeOutput(seq, std::strlen(seq));
-        if(err.isError()) return err;
+        if (err.isError()) return err;
         _alternateScreen = true;
         return Error();
 }
 
 Error Terminal::disableAlternateScreen() {
-        if(!_alternateScreen) return Error();
+        if (!_alternateScreen) return Error();
         const char *seq = "\033[?1049l";
         auto [n, err] = writeOutput(seq, std::strlen(seq));
-        if(err.isError()) return err;
+        if (err.isError()) return err;
         _alternateScreen = false;
         return Error();
 }
@@ -231,7 +225,7 @@ Error Terminal::disableAlternateScreen() {
 void Terminal::setResizeCallback(ResizeCallback cb) {
         _resizeCallback = std::move(cb);
 #if defined(PROMEKI_PLATFORM_POSIX)
-        if(_resizeCallback) {
+        if (_resizeCallback) {
                 signal(SIGWINCH, sigwinchHandler);
         } else {
                 signal(SIGWINCH, SIG_DFL);
@@ -250,9 +244,9 @@ void Terminal::installSignalHandlers() {
 }
 
 Terminal::ColorSupport Terminal::colorSupport() {
-        static bool detected = false;
+        static bool         detected = false;
         static ColorSupport level = NoColor;
-        if(detected) return level;
+        if (detected) return level;
         detected = true;
 
         // NO_COLOR convention: https://no-color.org/
@@ -260,49 +254,55 @@ Terminal::ColorSupport Terminal::colorSupport() {
 
         // PROMEKI_COLOR override: allow forcing a specific level.
         String force = Env::get("PROMEKI_COLOR");
-        if(!force.isEmpty()) {
-                if(force == "truecolor" || force == "24bit") { level = noColor ? GrayscaleTrue : TrueColor; return level; }
-                if(force == "256")                           { level = noColor ? Grayscale256  : Color256;   return level; }
-                if(force == "basic" || force == "ansi" || force == "16") { level = noColor ? Grayscale16 : Basic; return level; }
-                if(force == "none")                          return level;
+        if (!force.isEmpty()) {
+                if (force == "truecolor" || force == "24bit") {
+                        level = noColor ? GrayscaleTrue : TrueColor;
+                        return level;
+                }
+                if (force == "256") {
+                        level = noColor ? Grayscale256 : Color256;
+                        return level;
+                }
+                if (force == "basic" || force == "ansi" || force == "16") {
+                        level = noColor ? Grayscale16 : Basic;
+                        return level;
+                }
+                if (force == "none") return level;
         }
 
         // COLORTERM is set to "truecolor" or "24bit" by many modern terminals.
         String colorTerm = Env::get("COLORTERM");
         String term = Env::get("TERM");
 
-        if(colorTerm == "truecolor" || colorTerm == "24bit") {
+        if (colorTerm == "truecolor" || colorTerm == "24bit") {
                 level = TrueColor;
-        } else if(!term.isEmpty() && term.contains("256color")) {
+        } else if (!term.isEmpty() && term.contains("256color")) {
                 level = Color256;
-        } else if(!term.isEmpty() && term.contains("truecolor")) {
+        } else if (!term.isEmpty() && term.contains("truecolor")) {
                 level = TrueColor;
-        } else if(!term.isEmpty() && term == "dumb") {
+        } else if (!term.isEmpty() && term == "dumb") {
                 // "dumb" terminals have no color.
-        } else if(!colorTerm.isEmpty()) {
+        } else if (!colorTerm.isEmpty()) {
                 // If COLORTERM is set at all, at least basic color is supported.
                 level = Basic;
         } else {
                 // Check for TERM_PROGRAM known to support color.
                 String termProg = Env::get("TERM_PROGRAM");
-                if(!termProg.isEmpty()) {
-                        if(termProg == "iTerm.app" || termProg == "Hyper") {
+                if (!termProg.isEmpty()) {
+                        if (termProg == "iTerm.app" || termProg == "Hyper") {
                                 level = TrueColor;
-                        } else if(termProg == "Apple_Terminal") {
+                        } else if (termProg == "Apple_Terminal") {
                                 level = Color256;
                         } else {
                                 // Other known terminal programs generally support basic color.
                                 level = Basic;
                         }
-                } else if(!term.isEmpty()) {
+                } else if (!term.isEmpty()) {
                         // Known ANSI-capable TERM values that didn't match above patterns.
-                        static const char *basicTerminals[] = {
-                                "xterm", "vt100", "screen", "tmux",
-                                "rxvt", "rxvt-unicode", "ansi", "linux",
-                                "cygwin"
-                        };
-                        for(const char *t : basicTerminals) {
-                                if(term == t) {
+                        static const char *basicTerminals[] = {"xterm",        "vt100", "screen", "tmux",  "rxvt",
+                                                               "rxvt-unicode", "ansi",  "linux",  "cygwin"};
+                        for (const char *t : basicTerminals) {
+                                if (term == t) {
                                         level = Basic;
                                         break;
                                 }
@@ -317,10 +317,10 @@ Terminal::ColorSupport Terminal::colorSupport() {
         }
 
         // If NO_COLOR is set, map detected capability to grayscale equivalent.
-        if(noColor) {
-                switch(level) {
-                        case Basic:     level = Grayscale16;   break;
-                        case Color256:  level = Grayscale256;  break;
+        if (noColor) {
+                switch (level) {
+                        case Basic: level = Grayscale16; break;
+                        case Color256: level = Grayscale256; break;
                         case TrueColor: level = GrayscaleTrue; break;
                         default: break;
                 }
@@ -332,11 +332,11 @@ Terminal::ColorSupport Terminal::colorSupport() {
 Result<int> Terminal::writeOutput(const char *data, int len) {
 #if defined(PROMEKI_PLATFORM_POSIX)
         ssize_t n = write(_outputFd, data, len);
-        if(n < 0) return makeError<int>(Error::syserr());
+        if (n < 0) return makeError<int>(Error::syserr());
         return makeResult(static_cast<int>(n));
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         DWORD written = 0;
-        if(!WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), data, len, &written, nullptr)) {
+        if (!WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), data, len, &written, nullptr)) {
                 return makeError<int>(Error::syserr());
         }
         return makeResult(static_cast<int>(written));

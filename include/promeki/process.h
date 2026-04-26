@@ -51,15 +51,15 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  */
 class Process : public ObjectBase {
-        PROMEKI_OBJECT(Process, ObjectBase)
+                PROMEKI_OBJECT(Process, ObjectBase)
         public:
                 /**
                  * @brief Process state.
                  */
                 enum State {
-                        NotRunning = 0,  ///< @brief Process is not running.
-                        Starting,        ///< @brief Process is being started.
-                        Running          ///< @brief Process is running.
+                        NotRunning = 0, ///< @brief Process is not running.
+                        Starting,       ///< @brief Process is being started.
+                        Running         ///< @brief Process is running.
                 };
 
                 /** @brief Deleted copy constructor (non-copyable). */
@@ -246,20 +246,20 @@ class Process : public ObjectBase {
                 PROMEKI_SIGNAL(errorOccurred, Error);
 
         private:
-                String                  _program;
-                List<String>            _arguments;
-                FilePath                _workingDirectory;
-                Map<String, String>     _environment;
-                State                   _state = NotRunning;
-                pid_t                   _pid = -1;
-                int                     _exitCode = -1;
-                int                     _stdinPipe[2]  = {-1, -1};
-                int                     _stdoutPipe[2] = {-1, -1};
-                int                     _stderrPipe[2] = {-1, -1};
-                List<Buffer>            _stdoutChunks;
-                List<Buffer>            _stderrChunks;
-                size_t                  _stdoutTotal = 0;
-                size_t                  _stderrTotal = 0;
+                String              _program;
+                List<String>        _arguments;
+                FilePath            _workingDirectory;
+                Map<String, String> _environment;
+                State               _state = NotRunning;
+                pid_t               _pid = -1;
+                int                 _exitCode = -1;
+                int                 _stdinPipe[2] = {-1, -1};
+                int                 _stdoutPipe[2] = {-1, -1};
+                int                 _stderrPipe[2] = {-1, -1};
+                List<Buffer>        _stdoutChunks;
+                List<Buffer>        _stderrChunks;
+                size_t              _stdoutTotal = 0;
+                size_t              _stderrTotal = 0;
 
                 /** @brief Closes a pipe file descriptor and sets it to -1. */
                 void closeFd(int &fd);

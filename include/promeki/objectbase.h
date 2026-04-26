@@ -26,31 +26,29 @@ class EventLoop;
 class Event;
 class TimerEvent;
 
-#define PROMEKI_OBJECT(ObjectName, ParentObjectName) \
-        public: \
-                static const MetaInfo &metaInfo() { \
-                        static const MetaInfo __metaInfo( \
-                                typeid(ObjectName).name(), \
-                                &ParentObjectName::metaInfo() \
-                        ); \
-                        return __metaInfo; \
-                }
-               
-#define PROMEKI_SIGNAL(SIGNALNAME, ...) \
-        static constexpr const char *SIGNALNAME##SignalName = PROMEKI_STRINGIFY(SIGNALNAME) "(" PROMEKI_STRINGIFY_ARGS(__VA_ARGS__) ")"; \
-        static inline SignalMeta SIGNALNAME##SignalMeta = SignalMeta(metaInfo(), SIGNALNAME##SignalName); \
-        Signal<__VA_ARGS__> SIGNALNAME##Signal = Signal<__VA_ARGS__>(this, SIGNALNAME##SignalName);
+#define PROMEKI_OBJECT(ObjectName, ParentObjectName)                                                                   \
+public:                                                                                                                \
+        static const MetaInfo &metaInfo() {                                                                            \
+                static const MetaInfo __metaInfo(typeid(ObjectName).name(), &ParentObjectName::metaInfo());            \
+                return __metaInfo;                                                                                     \
+        }
 
-#define PROMEKI_SLOT(SLOTNAME, ...) \
-        static constexpr const char *SLOTNAME##SlotName = PROMEKI_STRINGIFY(SLOTNAME) "(" PROMEKI_STRINGIFY_ARGS(__VA_ARGS__) ")"; \
-        static inline SlotMeta SLOTNAME##SlotMeta = SlotMeta(metaInfo(), SLOTNAME##SlotName); \
-        void SLOTNAME(__VA_ARGS__); \
-        Slot<__VA_ARGS__> SLOTNAME##Slot = Slot<__VA_ARGS__>( \
-                [this](auto&&... args) { this->SLOTNAME(std::forward<decltype(args)>(args)...); }, \
-                this, SLOTNAME##SlotName \
-        ); \
+#define PROMEKI_SIGNAL(SIGNALNAME, ...)                                                                                \
+        static constexpr const char *SIGNALNAME##SignalName =                                                          \
+                PROMEKI_STRINGIFY(SIGNALNAME) "(" PROMEKI_STRINGIFY_ARGS(__VA_ARGS__) ")";                             \
+        static inline SignalMeta SIGNALNAME##SignalMeta = SignalMeta(metaInfo(), SIGNALNAME##SignalName);              \
+        Signal<__VA_ARGS__>      SIGNALNAME##Signal = Signal<__VA_ARGS__>(this, SIGNALNAME##SignalName);
+
+#define PROMEKI_SLOT(SLOTNAME, ...)                                                                                    \
+        static constexpr const char *SLOTNAME##SlotName =                                                              \
+                PROMEKI_STRINGIFY(SLOTNAME) "(" PROMEKI_STRINGIFY_ARGS(__VA_ARGS__) ")";                               \
+        static inline SlotMeta SLOTNAME##SlotMeta = SlotMeta(metaInfo(), SLOTNAME##SlotName);                          \
+        void                   SLOTNAME(__VA_ARGS__);                                                                  \
+        Slot<__VA_ARGS__>      SLOTNAME##Slot =                                                                        \
+                Slot<__VA_ARGS__>([this](auto &&...args) { this->SLOTNAME(std::forward<decltype(args)>(args)...); },   \
+                                  this, SLOTNAME##SlotName);                                                           \
         int SLOTNAME##SlotID = registerSlot(&SLOTNAME##Slot);
- 
+
 
 class ObjectBase;
 
@@ -81,37 +79,35 @@ using ObjectBaseList = List<ObjectBase *>;
  * concurrent read/write from multiple threads without external
  * synchronization.
  */
-template <typename T = ObjectBase>
-class ObjectBasePtr {
-        friend class ObjectBase;
-        template <typename U> friend class ObjectBasePtr;
+template <typename T = ObjectBase> class ObjectBasePtr {
+                friend class ObjectBase;
+                template <typename U> friend class ObjectBasePtr;
+
         public:
                 /** @brief Constructs a pointer tracking the given object. */
                 ObjectBasePtr(T *object = nullptr) : p(object) { link(); }
 
                 /** @brief Copy constructor. Tracks the same object as the source. */
-                ObjectBasePtr(const ObjectBasePtr &other) :
-                        p(other.p.load(std::memory_order_relaxed)) { link(); }
+                ObjectBasePtr(const ObjectBasePtr &other) : p(other.p.load(std::memory_order_relaxed)) { link(); }
 
                 /**
                  * @brief Converting copy-constructor from an ObjectBasePtr
                  * tracking a derived type.
                  * @tparam U Source type; must derive from @c T.
                  */
-                template <typename U,
-                        typename = std::enable_if_t<std::is_base_of_v<T, U> && !std::is_same_v<T, U>>>
-                ObjectBasePtr(const ObjectBasePtr<U> &other) :
-                        p(other.p.load(std::memory_order_relaxed)) { link(); }
+                template <typename U, typename = std::enable_if_t<std::is_base_of_v<T, U> && !std::is_same_v<T, U>>>
+                ObjectBasePtr(const ObjectBasePtr<U> &other) : p(other.p.load(std::memory_order_relaxed)) {
+                        link();
+                }
 
                 /** @brief Destructor. Unlinks from the tracked object. */
                 ~ObjectBasePtr() { unlink(); }
 
                 /** @brief Copy assignment operator. Re-links to the new object. */
                 ObjectBasePtr &operator=(const ObjectBasePtr &other) {
-                        if(this == &other) return *this;
+                        if (this == &other) return *this;
                         unlink();
-                        p.store(other.p.load(std::memory_order_relaxed),
-                                std::memory_order_relaxed);
+                        p.store(other.p.load(std::memory_order_relaxed), std::memory_order_relaxed);
                         link();
                         return *this;
                 }
@@ -133,8 +129,7 @@ class ObjectBasePtr {
 };
 
 /** @brief Deduction guide: @c ObjectBasePtr(Foo*) deduces to @c ObjectBasePtr<Foo>. */
-template <typename T>
-ObjectBasePtr(T *) -> ObjectBasePtr<T>;
+template <typename T> ObjectBasePtr(T *) -> ObjectBasePtr<T>;
 
 
 /**
@@ -162,8 +157,9 @@ ObjectBasePtr(T *) -> ObjectBasePtr<T>;
  * the tracked object is destroyed.
  */
 class ObjectBase {
-        template <typename U> friend class ObjectBasePtr;
-        friend class EventLoop;
+                template <typename U> friend class ObjectBasePtr;
+                friend class EventLoop;
+
         public:
                 class SignalMeta;
                 class SlotMeta;
@@ -172,8 +168,9 @@ class ObjectBase {
                  * @brief Captures all the metadata about this object.
                  */
                 class MetaInfo {
-                        friend class SignalMeta;
-                        friend class SlotMeta;
+                                friend class SignalMeta;
+                                friend class SlotMeta;
+
                         public:
                                 using SignalList = List<SignalMeta *>;
                                 using SlotList = List<SlotMeta *>;
@@ -200,11 +197,11 @@ class ObjectBase {
                                 void dumpToLog() const;
 
                         private:
-                                const MetaInfo                  *_parent;
-                                const char                      *_name;
-                                mutable String                  _demangledName;
-                                mutable SignalList              _signalList;
-                                mutable SlotList                _slotList;
+                                const MetaInfo    *_parent;
+                                const char        *_name;
+                                mutable String     _demangledName;
+                                mutable SignalList _signalList;
+                                mutable SlotList   _slotList;
                 };
 
                 /** @brief Metadata entry describing a signal on an ObjectBase-derived class. */
@@ -215,17 +212,16 @@ class ObjectBase {
                                  * @param m The MetaInfo of the owning class.
                                  * @param n The signal prototype string.
                                  */
-                                SignalMeta(const MetaInfo &m, const char *n) :
-                                        _meta(m), _name(n)
-                                {
+                                SignalMeta(const MetaInfo &m, const char *n) : _meta(m), _name(n) {
                                         m._signalList += this;
                                 }
 
                                 /** @brief Returns the signal prototype string. */
                                 const char *name() const { return _name; }
+
                         private:
-                                const MetaInfo  &_meta;
-                                const char      *_name;
+                                const MetaInfo &_meta;
+                                const char     *_name;
                 };
 
                 /** @brief Metadata entry describing a slot on an ObjectBase-derived class. */
@@ -236,23 +232,19 @@ class ObjectBase {
                                  * @param m The MetaInfo of the owning class.
                                  * @param n The slot prototype string.
                                  */
-                                SlotMeta(const MetaInfo &m, const char *n) :
-                                        _meta(m), _name(n)
-                                {
-                                        m._slotList += this;
-                                }
+                                SlotMeta(const MetaInfo &m, const char *n) : _meta(m), _name(n) { m._slotList += this; }
 
                                 /** @brief Returns the slot prototype string. */
                                 const char *name() const { return _name; }
+
                         private:
-                                const MetaInfo  &_meta;
-                                const char      *_name;
+                                const MetaInfo &_meta;
+                                const char     *_name;
                 };
 
                 /** @brief Returns the MetaInfo for the ObjectBase class. */
                 static const MetaInfo &metaInfo() {
-                        static const MetaInfo __metaInfo(
-                                typeid(ObjectBase).name());
+                        static const MetaInfo __metaInfo(typeid(ObjectBase).name());
                         return __metaInfo;
                 }
 
@@ -287,9 +279,7 @@ class ObjectBase {
                  * @brief Returns the parent object, if one.  nullptr if none.
                  * @return Parent object pointer, or nullptr if none.
                  */
-                ObjectBase *parent() const {
-                        return _parent;
-                }
+                ObjectBase *parent() const { return _parent; }
 
                 /**
                  * @brief Sets the parent of this object.
@@ -298,9 +288,9 @@ class ObjectBase {
                  * new one.
                  */
                 void setParent(ObjectBase *p) {
-                        if(_parent != nullptr) _parent->removeChild(this);
+                        if (_parent != nullptr) _parent->removeChild(this);
                         _parent = p;
-                        if(_parent != nullptr) _parent->addChild(this);
+                        if (_parent != nullptr) _parent->addChild(this);
                         return;
                 }
 
@@ -308,9 +298,7 @@ class ObjectBase {
                  * @brief Returns a list of children of this object
                  * @return List of children
                  */
-                const ObjectBaseList &childList() const {
-                        return _childList;
-                }
+                const ObjectBaseList &childList() const { return _childList; }
 
                 /**
                  * @brief Registers a slot with this object and assigns it an ID.
@@ -399,24 +387,25 @@ class ObjectBase {
                 using CleanupFunc = std::function<void(ObjectBase *)>;
 
                 struct SlotItem {
-                        int                     id;
-                        const char              *prototype;
+                                int         id;
+                                const char *prototype;
                 };
 
                 struct Cleanup {
-                        ObjectBasePtr<>         object;
-                        CleanupFunc             func;
+                                ObjectBasePtr<> object;
+                                CleanupFunc     func;
                 };
 
-                ObjectBase                                      *_parent = nullptr;
-                ObjectBase                                      *_signalSender = nullptr;
-                EventLoop                                       *_eventLoop = nullptr;
-                ObjectBaseList                                  _childList;
-                List<SlotItem>                                  _slotList;
-                mutable Mutex                                   _pointerMapMutex; ///< Guards _pointerMap for cross-thread ObjectBasePtr invalidation.
+                ObjectBase    *_parent = nullptr;
+                ObjectBase    *_signalSender = nullptr;
+                EventLoop     *_eventLoop = nullptr;
+                ObjectBaseList _childList;
+                List<SlotItem> _slotList;
+                mutable Mutex  _pointerMapMutex; ///< Guards _pointerMap for cross-thread ObjectBasePtr invalidation.
                 Map<std::atomic<ObjectBase *> *,
-                    std::atomic<ObjectBase *> *>                _pointerMap; ///< Keys are &ObjectBasePtr::p; stored as a type-erased handle so runCleanup() can null every tracker without knowing its @c T.
-                List<Cleanup>                                   _cleanupList;
+                    std::atomic<ObjectBase *> *>
+                        _pointerMap; ///< Keys are &ObjectBasePtr::p; stored as a type-erased handle so runCleanup() can null every tracker without knowing its @c T.
+                List<Cleanup> _cleanupList;
 
                 void setEventLoopRecursive(EventLoop *loop);
 
@@ -431,7 +420,7 @@ class ObjectBase {
                 }
 
                 void destroyChildren() {
-                        for(auto child : _childList) {
+                        for (auto child : _childList) {
                                 child->_parent = nullptr;
                                 delete child;
                         }
@@ -445,15 +434,15 @@ class ObjectBase {
                         // on another thread won't modify _pointerMap mid-iteration.
                         {
                                 Mutex::Locker lock(_pointerMapMutex);
-                                for(auto item : _pointerMap) {
+                                for (auto item : _pointerMap) {
                                         item.first->store(nullptr, std::memory_order_release);
                                 }
                                 _pointerMap.clear();
                         }
 
                         // Walk down the cleanup list and run any cleanup functions
-                        for(auto &item : _cleanupList) {
-                                if(!item.object.isValid()) continue;
+                        for (auto &item : _cleanupList) {
+                                if (!item.object.isValid()) continue;
                                 item.func(this);
                         }
                         _cleanupList.clear();
@@ -461,23 +450,21 @@ class ObjectBase {
                 }
 };
 
-template <typename T>
-inline void ObjectBasePtr<T>::link() {
+template <typename T> inline void ObjectBasePtr<T>::link() {
         ObjectBase *obj = p.load(std::memory_order_relaxed);
-        if(obj != nullptr) {
+        if (obj != nullptr) {
                 Mutex::Locker lock(obj->_pointerMapMutex);
                 obj->_pointerMap[&p] = &p;
         }
         return;
 }
 
-template <typename T>
-inline void ObjectBasePtr<T>::unlink() {
+template <typename T> inline void ObjectBasePtr<T>::unlink() {
         ObjectBase *obj = p.exchange(nullptr, std::memory_order_acq_rel);
-        if(obj != nullptr) {
+        if (obj != nullptr) {
                 Mutex::Locker lock(obj->_pointerMapMutex);
-                auto it = obj->_pointerMap.find(&p);
-                if(it != obj->_pointerMap.end()) {
+                auto          it = obj->_pointerMap.find(&p);
+                if (it != obj->_pointerMap.end()) {
                         obj->_pointerMap.remove(it);
                 }
         }
@@ -491,4 +478,3 @@ PROMEKI_NAMESPACE_END
 // into every TU that includes @c objectbase.h — ~270 of them.  They
 // now live in @c objectbase.tpp; TUs that actually call those methods
 // must include @c promeki/objectbase.tpp.
-

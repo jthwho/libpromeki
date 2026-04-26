@@ -58,7 +58,7 @@ PROMEKI_NAMESPACE_BEGIN
  * externally synchronized.
  */
 class AudioPayload : public MediaPayload {
-        PROMEKI_SHARED_ABSTRACT(AudioPayload)
+                PROMEKI_SHARED_ABSTRACT(AudioPayload)
         public:
                 /** @brief Shared-pointer alias for AudioPayload ownership. */
                 using Ptr = SharedPtr<AudioPayload, /*CopyOnWrite=*/true, AudioPayload>;
@@ -73,19 +73,15 @@ class AudioPayload : public MediaPayload {
                  * @brief Constructs an audio payload with the given
                  *        descriptor and (optional) sample count.
                  */
-                explicit AudioPayload(const AudioDesc &desc,
-                                      size_t sampleCount = 0) :
-                        _desc(desc), _sampleCount(sampleCount) { }
+                explicit AudioPayload(const AudioDesc &desc, size_t sampleCount = 0)
+                    : _desc(desc), _sampleCount(sampleCount) {}
 
                 /**
                  * @brief Constructs an audio payload with a descriptor,
                  *        sample count, and plane list.
                  */
-                AudioPayload(const AudioDesc &desc,
-                             size_t sampleCount,
-                             const BufferView &data) :
-                        MediaPayload(data), _desc(desc),
-                        _sampleCount(sampleCount) { }
+                AudioPayload(const AudioDesc &desc, size_t sampleCount, const BufferView &data)
+                    : MediaPayload(data), _desc(desc), _sampleCount(sampleCount) {}
 
                 /** @brief Returns @ref MediaPayloadKind::Audio. */
                 const MediaPayloadKind &kind() const override { return MediaPayloadKind::Audio; }
@@ -126,9 +122,7 @@ class AudioPayload : public MediaPayload {
                  *        @c desc().sampleRate().
                  */
                 Duration duration() const override {
-                        return Duration::fromSamples(
-                                static_cast<int64_t>(_sampleCount),
-                                _desc.sampleRate());
+                        return Duration::fromSamples(static_cast<int64_t>(_sampleCount), _desc.sampleRate());
                 }
 
                 /**

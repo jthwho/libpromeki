@@ -71,7 +71,7 @@ class EventLoop;
  * @endcode
  */
 class HttpClient : public ObjectBase {
-        PROMEKI_OBJECT(HttpClient, ObjectBase)
+                PROMEKI_OBJECT(HttpClient, ObjectBase)
         public:
                 /** @brief Default per-request timeout in milliseconds. */
                 static constexpr unsigned int DefaultTimeoutMs = 30'000;
@@ -194,20 +194,20 @@ class HttpClient : public ObjectBase {
                 struct Pending;
                 using PendingPtr = SharedPtr<Pending, false>;
 
-                EventLoop                       *_loop = nullptr;
-                HttpHeaders                     _defaultHeaders;
-                Url                             _baseUrl;
-                unsigned int                    _timeoutMs = DefaultTimeoutMs;
-                int64_t                         _maxBodyBytes = DefaultMaxBodyBytes;
-                List<PendingPtr>                _active;
+                EventLoop       *_loop = nullptr;
+                HttpHeaders      _defaultHeaders;
+                Url              _baseUrl;
+                unsigned int     _timeoutMs = DefaultTimeoutMs;
+                int64_t          _maxBodyBytes = DefaultMaxBodyBytes;
+                List<PendingPtr> _active;
 #if PROMEKI_ENABLE_TLS
-                SslContext::Ptr                 _sslContext;
+                SslContext::Ptr _sslContext;
 #endif
 
                 Future<HttpResponse> dispatch(HttpRequest request);
-                void resolveTargetUrl(HttpRequest &request) const;
-                void applyDefaultHeaders(HttpRequest &request) const;
-                void retire(const PendingPtr &p);
+                void                 resolveTargetUrl(HttpRequest &request) const;
+                void                 applyDefaultHeaders(HttpRequest &request) const;
+                void                 retire(const PendingPtr &p);
 
                 // The per-request state machine lives in the cpp;
                 // it needs to reach back into _active and emit signals.

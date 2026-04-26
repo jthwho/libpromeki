@@ -32,7 +32,7 @@ TEST_CASE("CIEWavelengthTable: 550nm green peak region") {
 }
 
 TEST_CASE("CIEWavelengthTable: wavelengths are monotonically increasing") {
-        for(int i = 1; i < 471; ++i) {
+        for (int i = 1; i < 471; ++i) {
                 CHECK(cieWavelengthTable[i].wavelength > cieWavelengthTable[i - 1].wavelength);
         }
 }

@@ -30,14 +30,14 @@ class File;
  * run-length-encoded forms.
  */
 struct QuickTimeWriterTrack {
-        uint32_t              id = 0;
-        QuickTime::TrackType  type = QuickTime::InvalidTrack;
-        uint32_t              timescale = 0;     ///< mdia.mdhd timescale.
-        FrameRate             frameRate;
-        // Video specifics:
-        PixelFormat             pixelFormat;
-        Size2Du32             size;
-        /**
+                uint32_t             id = 0;
+                QuickTime::TrackType type = QuickTime::InvalidTrack;
+                uint32_t             timescale = 0; ///< mdia.mdhd timescale.
+                FrameRate            frameRate;
+                // Video specifics:
+                PixelFormat pixelFormat;
+                Size2Du32   size;
+                /**
          * @brief Codec-specific sample-description extension payload
          *        (e.g. serialized @c avcC or @c hvcC record).
          *
@@ -48,46 +48,47 @@ struct QuickTimeWriterTrack {
          * layout: at @c ensureInitMoovWritten()).  Empty for codecs
          * that do not need an out-of-band configuration record.
          */
-        Buffer::Ptr           codecConfigBox;
-        FourCC                codecConfigType{'\0','\0','\0','\0'};   ///< @c avcC, @c hvcC, ... (zero FourCC when @c codecConfigBox is empty).
-        // Audio specifics:
-        AudioDesc             audioDesc;
-        uint32_t              pcmBytesPerSample = 0;  ///< channels × bytesPerSample, for audio tracks.
-        // Timecode specifics:
-        uint32_t              tcStartFrame = 0;
-        uint32_t              tcFlags = 0;
-        uint8_t               tcFrameCount = 0;
+                Buffer::Ptr codecConfigBox;
+                FourCC      codecConfigType{'\0', '\0', '\0',
+                                       '\0'}; ///< @c avcC, @c hvcC, ... (zero FourCC when @c codecConfigBox is empty).
+                // Audio specifics:
+                AudioDesc audioDesc;
+                uint32_t  pcmBytesPerSample = 0; ///< channels × bytesPerSample, for audio tracks.
+                // Timecode specifics:
+                uint32_t tcStartFrame = 0;
+                uint32_t tcFlags = 0;
+                uint8_t  tcFrameCount = 0;
 
-        // ---- Video / timecode / generic: per-sample arrays ----
-        // Each writeSample call records one entry per array.
-        List<int64_t>         offsets;
-        List<uint32_t>        sizes;
-        List<uint32_t>        durations;     ///< In track timescale.
-        List<int32_t>         ctsOffsets;    ///< pts - dts; all zero in MVP.
-        List<uint8_t>         keyframes;     ///< 1 if sync sample.
-        uint64_t              totalDuration = 0;
+                // ---- Video / timecode / generic: per-sample arrays ----
+                // Each writeSample call records one entry per array.
+                List<int64_t>  offsets;
+                List<uint32_t> sizes;
+                List<uint32_t> durations;  ///< In track timescale.
+                List<int32_t>  ctsOffsets; ///< pts - dts; all zero in MVP.
+                List<uint8_t>  keyframes;  ///< 1 if sync sample.
+                uint64_t       totalDuration = 0;
 
-        // ---- Audio: chunk-based arrays ----
-        // QuickTime PCM audio stores N "samples" (one per PCM frame) grouped
-        // into chunks. Each writeSample call appends one chunk and records
-        // how many PCM frames it contains.
-        List<int64_t>         audioChunkOffsets;
-        List<uint32_t>        audioChunkSampleCounts;
-        uint64_t              totalAudioSamples = 0;
+                // ---- Audio: chunk-based arrays ----
+                // QuickTime PCM audio stores N "samples" (one per PCM frame) grouped
+                // into chunks. Each writeSample call appends one chunk and records
+                // how many PCM frames it contains.
+                List<int64_t>  audioChunkOffsets;
+                List<uint32_t> audioChunkSampleCounts;
+                uint64_t       totalAudioSamples = 0;
 
-        // ---- Fragmented: per-fragment sample state ----
-        // Populated for samples written since the last flush(). Each track
-        // has its own fragPayload so that at flush time all of the track's
-        // samples can be written contiguously in the fragment's mdat —
-        // which trun requires, since it describes samples as a consecutive
-        // run starting from a single data_offset.
-        List<uint32_t>        fragSampleSizes;
-        List<uint32_t>        fragSampleDurations;
-        List<int32_t>         fragSampleCtsOffsets;
-        List<uint8_t>         fragSampleKeyframes;
-        List<uint8_t>         fragPayload;                       ///< Sample bytes for this track in the current fragment.
-        uint64_t              fragBaseDts = 0;                   ///< dts of the first sample in the current fragment.
-        uint64_t              fragRunningDts = 0;                ///< Next dts to assign (advances across fragments).
+                // ---- Fragmented: per-fragment sample state ----
+                // Populated for samples written since the last flush(). Each track
+                // has its own fragPayload so that at flush time all of the track's
+                // samples can be written contiguously in the fragment's mdat —
+                // which trun requires, since it describes samples as a consecutive
+                // run starting from a single data_offset.
+                List<uint32_t> fragSampleSizes;
+                List<uint32_t> fragSampleDurations;
+                List<int32_t>  fragSampleCtsOffsets;
+                List<uint8_t>  fragSampleKeyframes;
+                List<uint8_t>  fragPayload;        ///< Sample bytes for this track in the current fragment.
+                uint64_t       fragBaseDts = 0;    ///< dts of the first sample in the current fragment.
+                uint64_t       fragRunningDts = 0; ///< Next dts to assign (advances across fragments).
 };
 
 /**
@@ -104,7 +105,7 @@ struct QuickTimeWriterTrack {
  * the bulk @c mdat write path.
  */
 class QuickTimeWriter : public QuickTime::Impl {
-        PROMEKI_SHARED_DERIVED(QuickTime::Impl, QuickTimeWriter)
+                PROMEKI_SHARED_DERIVED(QuickTime::Impl, QuickTimeWriter)
         public:
                 QuickTimeWriter();
                 ~QuickTimeWriter() override;
@@ -115,11 +116,11 @@ class QuickTimeWriter : public QuickTime::Impl {
 
                 Error setLayout(QuickTime::Layout layout) override;
 
-                Error addVideoTrack(const PixelFormat &codec, const Size2Du32 &size,
-                                    const FrameRate &frameRate, uint32_t *outTrackId) override;
+                Error addVideoTrack(const PixelFormat &codec, const Size2Du32 &size, const FrameRate &frameRate,
+                                    uint32_t *outTrackId) override;
                 Error addAudioTrack(const AudioDesc &desc, uint32_t *outTrackId) override;
-                Error addTimecodeTrack(const Timecode &startTimecode,
-                                       const FrameRate &frameRate, uint32_t *outTrackId) override;
+                Error addTimecodeTrack(const Timecode &startTimecode, const FrameRate &frameRate,
+                                       uint32_t *outTrackId) override;
                 Error writeSample(uint32_t trackId, const QuickTime::Sample &sample) override;
                 void  setContainerMetadata(const Metadata &meta) override;
                 Error flush() override;
@@ -131,8 +132,7 @@ class QuickTimeWriter : public QuickTime::Impl {
 
                 // ---- Classic layout helpers ----
                 Error writeMoov();
-                void  appendTrak(quicktime_atom::AtomWriter &mw, const QuickTimeWriterTrack &t,
-                                 uint32_t movieTimescale);
+                void appendTrak(quicktime_atom::AtomWriter &mw, const QuickTimeWriterTrack &t, uint32_t movieTimescale);
                 Error patchMdatSize();
 
                 /**
@@ -146,7 +146,7 @@ class QuickTimeWriter : public QuickTime::Impl {
                  * when the container metadata has no recognized text
                  * fields.
                  */
-                void  appendUdta(quicktime_atom::AtomWriter &mw);
+                void appendUdta(quicktime_atom::AtomWriter &mw);
 
                 // ---- Fragmented layout helpers ----
 
@@ -158,29 +158,28 @@ class QuickTimeWriter : public QuickTime::Impl {
                 Error writeInitMoov();
 
                 /** @brief Appends a trak to the init moov with empty sample tables. */
-                void  appendInitTrak(quicktime_atom::AtomWriter &mw,
-                                     const QuickTimeWriterTrack &t,
-                                     uint32_t movieTimescale);
+                void appendInitTrak(quicktime_atom::AtomWriter &mw, const QuickTimeWriterTrack &t,
+                                    uint32_t movieTimescale);
 
                 /** @brief Appends the mvex box (movie extends) with trex per track. */
-                void  appendMvex(quicktime_atom::AtomWriter &mw);
+                void appendMvex(quicktime_atom::AtomWriter &mw);
 
                 /** @brief Emits the current pending fragment as a moof+mdat pair. */
                 Error writeFragment();
 
                 /** @brief Returns true if any track has pending fragment samples. */
-                bool  hasPendingFragmentSamples() const;
+                bool hasPendingFragmentSamples() const;
 
                 // ---- Common ----
 
-                File                       *_file = nullptr;
-                bool                        _isOpen = false;
-                int64_t                     _mdatHeaderOffset = 0;
-                int64_t                     _mdatPayloadStart = 0;
-                int64_t                     _mdatCursor = 0;
-                List<QuickTimeWriterTrack>  _writeTracks;
-                Metadata                    _writerMetadata;
-                uint32_t                    _nextTrackId = 1;
+                File                      *_file = nullptr;
+                bool                       _isOpen = false;
+                int64_t                    _mdatHeaderOffset = 0;
+                int64_t                    _mdatPayloadStart = 0;
+                int64_t                    _mdatCursor = 0;
+                List<QuickTimeWriterTrack> _writeTracks;
+                Metadata                   _writerMetadata;
+                uint32_t                   _nextTrackId = 1;
 
                 // Fragmented-mode state. Sample bytes are accumulated in
                 // per-track @c QuickTimeWriterTrack::fragPayload buffers
@@ -189,8 +188,8 @@ class QuickTimeWriter : public QuickTime::Impl {
                 // us the standard moof-before-mdat layout for maximum
                 // player compatibility at the cost of buffering one
                 // fragment's worth of sample data in memory.
-                bool                        _initMoovWritten = false;
-                uint32_t                    _fragmentSequence = 1;
+                bool     _initMoovWritten = false;
+                uint32_t _fragmentSequence = 1;
 };
 
 PROMEKI_NAMESPACE_END

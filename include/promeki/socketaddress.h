@@ -15,11 +15,11 @@
 #include <promeki/networkaddress.h>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
-#       include <winsock2.h>
-#       include <ws2tcpip.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #elif !defined(PROMEKI_PLATFORM_EMSCRIPTEN)
-#       include <sys/socket.h>
-#       include <netinet/in.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #endif
 
 PROMEKI_NAMESPACE_BEGIN
@@ -70,18 +70,14 @@ class SocketAddress {
                  * @param port The port number.
                  * @return A SocketAddress bound to any interface on the given port.
                  */
-                static SocketAddress any(uint16_t port) {
-                        return SocketAddress(Ipv4Address::any(), port);
-                }
+                static SocketAddress any(uint16_t port) { return SocketAddress(Ipv4Address::any(), port); }
 
                 /**
                  * @brief Returns localhost (127.0.0.1) with the given port.
                  * @param port The port number.
                  * @return A SocketAddress bound to localhost on the given port.
                  */
-                static SocketAddress localhost(uint16_t port) {
-                        return SocketAddress(Ipv4Address::loopback(), port);
-                }
+                static SocketAddress localhost(uint16_t port) { return SocketAddress(Ipv4Address::loopback(), port); }
 
                 /** @brief Default constructor. Creates a null address with port 0. */
                 SocketAddress() = default;
@@ -91,24 +87,21 @@ class SocketAddress {
                  * @param address The network address.
                  * @param port The port number.
                  */
-                SocketAddress(const NetworkAddress &address, uint16_t port)
-                        : _address(address), _port(port) { }
+                SocketAddress(const NetworkAddress &address, uint16_t port) : _address(address), _port(port) {}
 
                 /**
                  * @brief Constructs from an IPv4 address and port.
                  * @param addr The IPv4 address.
                  * @param port The port number.
                  */
-                SocketAddress(const Ipv4Address &addr, uint16_t port)
-                        : _address(addr), _port(port) { }
+                SocketAddress(const Ipv4Address &addr, uint16_t port) : _address(addr), _port(port) {}
 
                 /**
                  * @brief Constructs from an IPv6 address and port.
                  * @param addr The IPv6 address.
                  * @param port The port number.
                  */
-                SocketAddress(const Ipv6Address &addr, uint16_t port)
-                        : _address(addr), _port(port) { }
+                SocketAddress(const Ipv6Address &addr, uint16_t port) : _address(addr), _port(port) {}
 
                 /** @brief Returns the network address component. */
                 const NetworkAddress &address() const { return _address; }
@@ -169,13 +162,11 @@ class SocketAddress {
                 }
 
                 /** @brief Inequality comparison. */
-                bool operator!=(const SocketAddress &other) const {
-                        return !(*this == other);
-                }
+                bool operator!=(const SocketAddress &other) const { return !(*this == other); }
 
         private:
-                NetworkAddress  _address;
-                uint16_t        _port = 0;
+                NetworkAddress _address;
+                uint16_t       _port = 0;
 };
 
 /** @brief Writes the socket address to the stream. */

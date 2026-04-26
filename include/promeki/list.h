@@ -44,9 +44,8 @@ PROMEKI_NAMESPACE_BEGIN
  * List<String>::Ptr shared = List<String>::Ptr::create();
  * @endcode
  */
-template <typename T>
-class List {
-        PROMEKI_SHARED_FINAL(List)
+template <typename T> class List {
+                PROMEKI_SHARED_FINAL(List)
         public:
                 /** @brief Shared pointer type for List. */
                 using Ptr = SharedPtr<List>;
@@ -163,84 +162,52 @@ class List {
                 }
 
                 /** @brief Returns a mutable iterator to the first element. */
-                Iterator begin() noexcept {
-                        return d.begin();
-                }
+                Iterator begin() noexcept { return d.begin(); }
 
                 /** @brief Returns a const iterator to the first element. */
-                ConstIterator begin() const noexcept {
-                        return d.cbegin();
-                }
+                ConstIterator begin() const noexcept { return d.cbegin(); }
 
                 /** @brief Returns a const iterator to the first element. */
-                ConstIterator cbegin() const noexcept {
-                        return d.cbegin();
-                }
+                ConstIterator cbegin() const noexcept { return d.cbegin(); }
 
                 /// @copydoc cbegin()
-                ConstIterator constBegin() const noexcept {
-                        return d.cbegin();
-                }
+                ConstIterator constBegin() const noexcept { return d.cbegin(); }
 
                 /** @brief Returns a mutable reverse iterator to the last element. */
-                RevIterator rbegin() noexcept {
-                        return d.rbegin();
-                }
+                RevIterator rbegin() noexcept { return d.rbegin(); }
 
                 /// @copydoc rbegin()
-                RevIterator revBegin() noexcept {
-                        return d.rbegin();
-                }
+                RevIterator revBegin() noexcept { return d.rbegin(); }
 
                 /** @brief Returns a const reverse iterator to the last element. */
-                ConstRevIterator crbegin() const noexcept {
-                        return d.crbegin();
-                }
+                ConstRevIterator crbegin() const noexcept { return d.crbegin(); }
 
                 /// @copydoc crbegin()
-                ConstRevIterator constRevBegin() const noexcept {
-                        return d.crbegin();
-                }
+                ConstRevIterator constRevBegin() const noexcept { return d.crbegin(); }
 
                 /** @brief Returns a mutable iterator to one past the last element. */
-                Iterator end() noexcept {
-                        return d.end();
-                }
+                Iterator end() noexcept { return d.end(); }
 
                 /** @brief Returns a const iterator to one past the last element. */
-                ConstIterator end() const noexcept {
-                        return d.cend();
-                }
+                ConstIterator end() const noexcept { return d.cend(); }
 
                 /** @brief Returns a const iterator to one past the last element. */
-                ConstIterator cend() const noexcept {
-                        return d.cend();
-                }
+                ConstIterator cend() const noexcept { return d.cend(); }
 
                 /// @copydoc cend()
-                ConstIterator constEnd() const noexcept {
-                        return d.cend();
-                }
+                ConstIterator constEnd() const noexcept { return d.cend(); }
 
                 /** @brief Returns a mutable reverse iterator to one before the first element. */
-                RevIterator rend() noexcept {
-                        return d.rend();
-                }
+                RevIterator rend() noexcept { return d.rend(); }
 
                 /// @copydoc rend()
-                RevIterator revEnd() noexcept {
-                        return d.rend();
-                }
+                RevIterator revEnd() noexcept { return d.rend(); }
 
                 /** @brief Returns a const reverse iterator to one before the first element. */
-                ConstRevIterator crend() const noexcept {
-                        return d.crend();
-                }
+                ConstRevIterator crend() const noexcept { return d.crend(); }
 
                 /// @copydoc crend()
-                ConstRevIterator constRevEnd() const noexcept {
-                        return d.crend();
-                }
+                ConstRevIterator constRevEnd() const noexcept { return d.crend(); }
 
                 /**
                  * @brief Returns a reference to the element at @p index with bounds checking.
@@ -251,13 +218,13 @@ class List {
                  * @return Reference to the element.
                  */
                 T &at(size_t index) {
-                        if(index >= d.size()) throw std::logic_error("List::at index out of range");
+                        if (index >= d.size()) throw std::logic_error("List::at index out of range");
                         return d[index];
                 }
 
                 /// @copydoc at()
                 const T &at(size_t index) const {
-                        if(index >= d.size()) throw std::logic_error("List::at index out of range");
+                        if (index >= d.size()) throw std::logic_error("List::at index out of range");
                         return d[index];
                 }
 
@@ -266,72 +233,46 @@ class List {
                  * @param index Zero-based element index.
                  * @return Reference to the element.
                  */
-                T &operator[](size_t index) {
-                        return d[index];
-                }
+                T &operator[](size_t index) { return d[index]; }
 
                 /// @copydoc operator[]()
-                const T &operator[](size_t index) const {
-                        return d[index];
-                }
+                const T &operator[](size_t index) const { return d[index]; }
 
                 /** @brief Returns a reference to the first element. */
-                T &front() {
-                        return d.front();
-                }
+                T &front() { return d.front(); }
 
                 /// @copydoc front()
-                const T &front() const {
-                        return d.front();
-                }
+                const T &front() const { return d.front(); }
 
                 /** @brief Returns a reference to the last element. */
-                T &back() {
-                        return d.back();
-                }
+                T &back() { return d.back(); }
 
                 /// @copydoc back()
-                const T &back() const {
-                        return d.back();
-                }
+                const T &back() const { return d.back(); }
 
                 /** @brief Returns a pointer to the underlying contiguous storage. */
-                T *data() noexcept {
-                        return d.data();
-                }
+                T *data() noexcept { return d.data(); }
 
                 /// @copydoc data()
-                const T *data() const noexcept {
-                        return d.data();
-                }
+                const T *data() const noexcept { return d.data(); }
 
                 /** @brief Returns true if the list has no elements. */
-                bool isEmpty() const noexcept {
-                        return d.empty();
-                }
+                bool isEmpty() const noexcept { return d.empty(); }
 
                 /** @brief Returns the number of elements in the list. */
-                size_t size() const noexcept {
-                        return d.size();
-                }
+                size_t size() const noexcept { return d.size(); }
 
                 /** @brief Returns the maximum number of elements the list can theoretically hold. */
-                size_t maxSize() const noexcept {
-                        return d.max_size();
-                }
+                size_t maxSize() const noexcept { return d.max_size(); }
 
                 /**
                  * @brief Pre-allocates storage for at least @p newCapacity elements.
                  * @param newCapacity Minimum capacity to reserve.
                  */
-                void reserve(size_t newCapacity) {
-                        d.reserve(newCapacity);
-                }
+                void reserve(size_t newCapacity) { d.reserve(newCapacity); }
 
                 /** @brief Returns the number of elements the list can hold without reallocating. */
-                size_t capacity() const noexcept {
-                        return d.capacity();
-                }
+                size_t capacity() const noexcept { return d.capacity(); }
 
                 /** @brief Releases unused memory by shrinking capacity to fit the current size. */
                 void shrink() {
@@ -351,9 +292,7 @@ class List {
                  * @param value The value to insert.
                  * @return Iterator to the newly inserted element.
                  */
-                Iterator insert(ConstIterator pos, const T &value) {
-                        return d.insert(pos, value);
-                }
+                Iterator insert(ConstIterator pos, const T &value) { return d.insert(pos, value); }
 
                 /**
                  * @brief Inserts a value before the position given by an iterator (move overload).
@@ -361,9 +300,7 @@ class List {
                  * @param value The value to move-insert.
                  * @return Iterator to the newly inserted element.
                  */
-                Iterator insert(ConstIterator pos, T &&value) {
-                        return d.insert(pos, std::move(value));
-                }
+                Iterator insert(ConstIterator pos, T &&value) { return d.insert(pos, std::move(value)); }
 
                 /**
                  * @brief Inserts a value before the given index.
@@ -371,9 +308,7 @@ class List {
                  * @param value The value to insert.
                  * @return Iterator to the newly inserted element.
                  */
-                Iterator insert(size_t pos, const T &value) {
-                        return d.insert(constBegin() + pos, value);
-                }
+                Iterator insert(size_t pos, const T &value) { return d.insert(constBegin() + pos, value); }
 
                 /**
                  * @brief Inserts a value before the given index (move overload).
@@ -381,9 +316,7 @@ class List {
                  * @param value The value to move-insert.
                  * @return Iterator to the newly inserted element.
                  */
-                Iterator insert(size_t pos, T &&value) {
-                        return d.insert(constBegin() + pos, std::move(value));
-                }
+                Iterator insert(size_t pos, T &&value) { return d.insert(constBegin() + pos, std::move(value)); }
 
                 /**
                  * @brief Emplaces an object right before the given position.
@@ -412,9 +345,7 @@ class List {
                  * @param pos Iterator to the element to remove.
                  * @return Iterator to the element following the removed one.
                  */
-                Iterator remove(ConstIterator pos) {
-                        return d.erase(pos);
-                }
+                Iterator remove(ConstIterator pos) { return d.erase(pos); }
 
                 /**
                  * @brief Removes elements in the range [first, last).
@@ -422,18 +353,14 @@ class List {
                  * @param last  Iterator past the last element to remove.
                  * @return Iterator to the element following the last removed one.
                  */
-                Iterator erase(ConstIterator first, ConstIterator last) {
-                        return d.erase(first, last);
-                }
+                Iterator erase(ConstIterator first, ConstIterator last) { return d.erase(first, last); }
 
                 /**
                  * @brief Removes the element at the given index.
                  * @param index Zero-based index of the element to remove.
                  * @return Iterator to the element following the removed one.
                  */
-                Iterator remove(size_t index) {
-                        return d.erase(d.begin() + index);
-                }
+                Iterator remove(size_t index) { return d.erase(d.begin() + index); }
 
                 /**
                  * @brief Runs a test function on all the items and removes them if it returns true.
@@ -451,8 +378,8 @@ class List {
                  */
                 bool removeFirst(const T &value) {
                         bool ret = false;
-                        for(auto item = begin(); item != end(); ++item) {
-                                if(*item == value) {
+                        for (auto item = begin(); item != end(); ++item) {
+                                if (*item == value) {
                                         remove(item);
                                         ret = true;
                                         break;
@@ -493,7 +420,8 @@ class List {
                  * @param list The list whose items are move-appended.
                  */
                 void pushToBack(List<T> &&list) {
-                        d.insert(d.end(), std::make_move_iterator(list.d.begin()), std::make_move_iterator(list.d.end()));
+                        d.insert(d.end(), std::make_move_iterator(list.d.begin()),
+                                 std::make_move_iterator(list.d.end()));
                         return;
                 }
 
@@ -552,7 +480,7 @@ class List {
                  * @return True if the index was valid and the item was set, false otherwise.
                  */
                 bool set(size_t index, const T &val) {
-                        if(index >= size()) return false;
+                        if (index >= size()) return false;
                         d[index] = val;
                         return true;
                 }
@@ -592,9 +520,8 @@ class List {
                  * @tparam Func Callable with signature void(const T &).
                  * @param func The function to invoke.
                  */
-                template <typename Func>
-                void forEach(Func &&func) const {
-                        for(const auto &item : d) func(item);
+                template <typename Func> void forEach(Func &&func) const {
+                        for (const auto &item : d) func(item);
                         return;
                 }
 
@@ -604,8 +531,8 @@ class List {
                  * @return True if found, false otherwise.
                  */
                 bool contains(const T &val) const {
-                        for(const auto &item : d) {
-                                if(item == val) return true;
+                        for (const auto &item : d) {
+                                if (item == val) return true;
                         }
                         return false;
                 }
@@ -617,8 +544,8 @@ class List {
                  *         @c Error::NotFound if @p value is not present.
                  */
                 Result<size_t> indexOf(const T &value) const {
-                        for(size_t i = 0; i < d.size(); ++i) {
-                                if(d[i] == value) return makeResult<size_t>(i);
+                        for (size_t i = 0; i < d.size(); ++i) {
+                                if (d[i] == value) return makeResult<size_t>(i);
                         }
                         return makeError<size_t>(Error::NotFound);
                 }
@@ -630,9 +557,9 @@ class List {
                  *         @c Error::NotFound if @p value is not present.
                  */
                 Result<size_t> lastIndexOf(const T &value) const {
-                        for(size_t i = d.size(); i > 0; --i) {
+                        for (size_t i = d.size(); i > 0; --i) {
                                 size_t idx = i - 1;
-                                if(d[idx] == value) return makeResult<size_t>(idx);
+                                if (d[idx] == value) return makeResult<size_t>(idx);
                         }
                         return makeError<size_t>(Error::NotFound);
                 }
@@ -644,8 +571,8 @@ class List {
                  */
                 size_t count(const T &value) const {
                         size_t n = 0;
-                        for(const auto &item : d) {
-                                if(item == value) ++n;
+                        for (const auto &item : d) {
+                                if (item == value) ++n;
                         }
                         return n;
                 }
@@ -658,46 +585,34 @@ class List {
                  */
                 List<T> mid(size_t pos, size_t length) const {
                         List<T> ret;
-                        size_t end = pos + length;
-                        if(end > d.size()) end = d.size();
-                        if(pos >= d.size()) return ret;
+                        size_t  end = pos + length;
+                        if (end > d.size()) end = d.size();
+                        if (pos >= d.size()) return ret;
                         ret.reserve(end - pos);
-                        for(size_t i = pos; i < end; ++i) ret.pushToBack(d[i]);
+                        for (size_t i = pos; i < end; ++i) ret.pushToBack(d[i]);
                         return ret;
                 }
 
                 /** @brief Returns true if both lists have identical contents. */
-                friend bool operator==(const List<T> &lhs, const List<T> &rhs) {
-                        return lhs.d == rhs.d;
-                }
+                friend bool operator==(const List<T> &lhs, const List<T> &rhs) { return lhs.d == rhs.d; }
 
                 /** @brief Returns true if the lists differ. */
-                friend bool operator!=(const List<T> &lhs, const List<T> &rhs) {
-                        return lhs.d != rhs.d;
-                }
+                friend bool operator!=(const List<T> &lhs, const List<T> &rhs) { return lhs.d != rhs.d; }
 
                 /** @brief Lexicographic less-than comparison. */
-                friend bool operator<(const List<T> &lhs, const List<T> &rhs) {
-                        return lhs.d < rhs.d;
-                }
+                friend bool operator<(const List<T> &lhs, const List<T> &rhs) { return lhs.d < rhs.d; }
 
                 /** @brief Lexicographic greater-than comparison. */
-                friend bool operator>(const List<T> &lhs, const List<T> &rhs) {
-                        return lhs.d > rhs.d;
-                }
+                friend bool operator>(const List<T> &lhs, const List<T> &rhs) { return lhs.d > rhs.d; }
 
                 /** @brief Lexicographic less-than-or-equal comparison. */
-                friend bool operator<=(const List<T> &lhs, const List<T> &rhs) {
-                        return lhs.d <= rhs.d;
-                }
+                friend bool operator<=(const List<T> &lhs, const List<T> &rhs) { return lhs.d <= rhs.d; }
 
                 /** @brief Lexicographic greater-than-or-equal comparison. */
-                friend bool operator>=(const List<T> &lhs, const List<T> &rhs) {
-                        return lhs.d >= rhs.d;
-                }
+                friend bool operator>=(const List<T> &lhs, const List<T> &rhs) { return lhs.d >= rhs.d; }
 
         private:
-                Data  d;
+                Data d;
 };
 
 PROMEKI_NAMESPACE_END

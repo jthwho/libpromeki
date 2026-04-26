@@ -28,9 +28,9 @@ namespace BackendWeight {
         /** @brief Vendored / built-in backend (lowest of the standard bands). */
         constexpr int Vendored = 100;
         /** @brief System / host-installed backend (FFmpeg, OS, …). */
-        constexpr int System   = 200;
+        constexpr int System = 200;
         /** @brief Application-supplied backend; wins over library defaults. */
-        constexpr int User     = 1000;
+        constexpr int User = 1000;
 }
 
 PROMEKI_NAMESPACE_END

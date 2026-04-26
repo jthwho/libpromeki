@@ -15,5 +15,4 @@ TEST_CASE("ObjectBase2") {
 
         TestOne one;
         TestTwo two;
-
 }

@@ -49,14 +49,10 @@ class Mutex {
                                  * @brief Constructs a Locker and locks the given mutex.
                                  * @param mutex The mutex to lock.
                                  */
-                                Locker(Mutex &mutex) : _mutex(mutex) {
-                                        _mutex.lock();
-                                }
+                                Locker(Mutex &mutex) : _mutex(mutex) { _mutex.lock(); }
 
                                 /** @brief Destructor.  Unlocks the mutex. */
-                                ~Locker() {
-                                        _mutex.unlock();
-                                }
+                                ~Locker() { _mutex.unlock(); }
 
                                 Locker(const Locker &) = delete;
                                 Locker &operator=(const Locker &) = delete;
@@ -79,22 +75,16 @@ class Mutex {
                 Mutex &operator=(Mutex &&) = delete;
 
                 /** @brief Locks the mutex.  Blocks if already locked by another thread. */
-                void lock() {
-                        _mutex.lock();
-                }
+                void lock() { _mutex.lock(); }
 
                 /** @brief Unlocks the mutex. */
-                void unlock() {
-                        _mutex.unlock();
-                }
+                void unlock() { _mutex.unlock(); }
 
                 /**
                  * @brief Attempts to lock the mutex without blocking.
                  * @return True if the lock was acquired, false otherwise.
                  */
-                bool tryLock() {
-                        return _mutex.try_lock();
-                }
+                bool tryLock() { return _mutex.try_lock(); }
 
         private:
                 friend class WaitCondition;

@@ -19,8 +19,9 @@
  *
  * @param name The ImageFileIO subclass to instantiate and register.
  */
-#define PROMEKI_REGISTER_IMAGEFILEIO(name) [[maybe_unused]] static int PROMEKI_CONCAT(__promeki_imagefileio_, PROMEKI_UNIQUE_ID) = \
-        ImageFileIO::registerImageFileIO(new name);
+#define PROMEKI_REGISTER_IMAGEFILEIO(name)                                                                             \
+        [[maybe_unused]] static int PROMEKI_CONCAT(__promeki_imagefileio_, PROMEKI_UNIQUE_ID) =                        \
+                ImageFileIO::registerImageFileIO(new name);
 
 
 PROMEKI_NAMESPACE_BEGIN
@@ -78,41 +79,31 @@ class ImageFileIO {
                  * @brief Returns the format identifier for this backend.
                  * @return The format ID.
                  */
-                int id() const {
-                        return _id;
-                }
+                int id() const { return _id; }
 
                 /**
                  * @brief Returns true if this backend has a valid (non-zero) format ID.
                  * @return true if the ID is not zero.
                  */
-                bool isValid() const {
-                        return _id != 0;
-                }
+                bool isValid() const { return _id != 0; }
 
                 /**
                  * @brief Returns true if this backend supports loading images.
                  * @return true if loading is supported.
                  */
-                bool canLoad() const {
-                        return _canLoad;
-                }
+                bool canLoad() const { return _canLoad; }
 
                 /**
                  * @brief Returns true if this backend supports saving images.
                  * @return true if saving is supported.
                  */
-                bool canSave() const {
-                        return _canSave;
-                }
+                bool canSave() const { return _canSave; }
 
                 /**
                  * @brief Returns the human-readable name of this backend.
                  * @return The backend name as a String.
                  */
-                String name() const {
-                        return _name;
-                }
+                String name() const { return _name; }
 
                 /**
                  * @brief Returns a short human-readable description of the backend.
@@ -123,9 +114,7 @@ class ImageFileIO {
                  *
                  * @return The backend description (may be empty).
                  */
-                String description() const {
-                        return _description;
-                }
+                String description() const { return _description; }
 
                 /**
                  * @brief Returns the lowercase file extensions this backend handles.
@@ -138,9 +127,7 @@ class ImageFileIO {
                  *
                  * @return The list of extensions claimed by the backend.
                  */
-                const StringList &extensions() const {
-                        return _extensions;
-                }
+                const StringList &extensions() const { return _extensions; }
 
                 /**
                  * @brief Returns the preferred backend name for MediaIO registration.
@@ -156,7 +143,7 @@ class ImageFileIO {
                  * @return The backend's MediaIO name.
                  */
                 String mediaIoName() const {
-                        if(!_mediaIoName.isEmpty()) return _mediaIoName;
+                        if (!_mediaIoName.isEmpty()) return _mediaIoName;
                         return String("ImgSeq") + _name;
                 }
 
@@ -170,8 +157,7 @@ class ImageFileIO {
                  *                  @ref MediaConfig.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                virtual Error load(ImageFile &imageFile,
-                                   const MediaConfig &config = MediaConfig()) const;
+                virtual Error load(ImageFile &imageFile, const MediaConfig &config = MediaConfig()) const;
 
                 /**
                  * @brief Saves the image from the given ImageFile to disk.
@@ -183,19 +169,16 @@ class ImageFileIO {
                  *                  value is an empty @ref MediaConfig.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                virtual Error save(ImageFile &imageFile,
-                                   const MediaConfig &config = MediaConfig()) const;
+                virtual Error save(ImageFile &imageFile, const MediaConfig &config = MediaConfig()) const;
 
         protected:
-                int             _id = 0;         ///< @brief Format identifier.
-                bool            _canLoad = false; ///< @brief Whether loading is supported.
-                bool            _canSave = false; ///< @brief Whether saving is supported.
-                String          _name;            ///< @brief Human-readable format name.
-                String          _description;    ///< @brief One-line human-readable description.
-                StringList      _extensions;     ///< @brief Lowercase extensions claimed by this backend.
-                String          _mediaIoName;    ///< @brief Override for @ref mediaIoName() (empty = default).
-
+                int        _id = 0;          ///< @brief Format identifier.
+                bool       _canLoad = false; ///< @brief Whether loading is supported.
+                bool       _canSave = false; ///< @brief Whether saving is supported.
+                String     _name;            ///< @brief Human-readable format name.
+                String     _description;     ///< @brief One-line human-readable description.
+                StringList _extensions;      ///< @brief Lowercase extensions claimed by this backend.
+                String     _mediaIoName;     ///< @brief Override for @ref mediaIoName() (empty = default).
 };
 
 PROMEKI_NAMESPACE_END
-

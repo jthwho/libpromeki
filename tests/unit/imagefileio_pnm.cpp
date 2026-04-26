@@ -23,14 +23,12 @@ TEST_CASE("ImageFileIO PNM: handler is registered") {
         CHECK(io->name() == "PNM");
 }
 
-static void pnmRoundTrip(const char *fn, size_t w, size_t h, PixelFormat::ID pdId,
-                         uint8_t seed) {
-        auto src = UncompressedVideoPayload::allocate(
-                ImageDesc(w, h, PixelFormat(pdId)));
+static void pnmRoundTrip(const char *fn, size_t w, size_t h, PixelFormat::ID pdId, uint8_t seed) {
+        auto src = UncompressedVideoPayload::allocate(ImageDesc(w, h, PixelFormat(pdId)));
         REQUIRE(src.isValid());
         uint8_t *data = src.modify()->data()[0].data();
-        size_t bytes = src->plane(0).size();
-        for(size_t i = 0; i < bytes; ++i) data[i] = static_cast<uint8_t>((i * seed) & 0xFF);
+        size_t   bytes = src->plane(0).size();
+        for (size_t i = 0; i < bytes; ++i) data[i] = static_cast<uint8_t>((i * seed) & 0xFF);
 
         ImageFile sf(ImageFile::PNM);
         sf.setFilename(fn);

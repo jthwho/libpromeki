@@ -11,49 +11,42 @@ PROMEKI_NAMESPACE_BEGIN
 
 namespace {
 
-// libpromeki ships a FiraCode monospace font through its compiled-in
-// resource filesystem (see Resource). Font subclasses that call
-// effectiveFilename() with an empty _fontFilename get this path
-// back. It is deliberately kept out of the public header so that
-// the exact bundled default is an internal implementation detail
-// that can be moved or renamed without touching the Font API.
-constexpr const char *kDefaultFontFilename =
-        ":/.PROMEKI/fonts/FiraCodeNerdFontMono-Regular.ttf";
+        // libpromeki ships a FiraCode monospace font through its compiled-in
+        // resource filesystem (see Resource). Font subclasses that call
+        // effectiveFilename() with an empty _fontFilename get this path
+        // back. It is deliberately kept out of the public header so that
+        // the exact bundled default is an internal implementation detail
+        // that can be moved or renamed without touching the Font API.
+        constexpr const char *kDefaultFontFilename = ":/.PROMEKI/fonts/FiraCodeNerdFontMono-Regular.ttf";
 
 } // namespace
 
-Font::Font(const PaintEngine &pe) : _paintEngine(pe) {
+Font::Font(const PaintEngine &pe) : _paintEngine(pe) {}
 
-}
+Font::~Font() {}
 
-Font::~Font() {
-
-}
-
-void Font::onStateChanged() {
-
-}
+void Font::onStateChanged() {}
 
 void Font::setFontFilename(const String &val) {
-        if(_fontFilename == val) return;
+        if (_fontFilename == val) return;
         _fontFilename = val;
         onStateChanged();
 }
 
 void Font::setFontSize(int val) {
-        if(_fontSize == val) return;
+        if (_fontSize == val) return;
         _fontSize = val;
         onStateChanged();
 }
 
 void Font::setForegroundColor(const Color &color) {
-        if(_fg == color) return;
+        if (_fg == color) return;
         _fg = color;
         onStateChanged();
 }
 
 void Font::setBackgroundColor(const Color &color) {
-        if(_bg == color) return;
+        if (_bg == color) return;
         _bg = color;
         onStateChanged();
 }
@@ -69,14 +62,13 @@ void Font::setPaintEngine(const PaintEngine &pe) {
         // path, which creates a new PaintEngine on each detached
         // image copy) would otherwise thrash the glyph cache on every
         // frame even though nothing observable has changed.
-        const bool formatChanged =
-                (_paintEngine.pixelFormat() != pe.pixelFormat());
+        const bool formatChanged = (_paintEngine.pixelFormat() != pe.pixelFormat());
         _paintEngine = pe;
-        if(formatChanged) onStateChanged();
+        if (formatChanged) onStateChanged();
 }
 
 void Font::setKerningEnabled(bool val) {
-        if(_kerning == val) return;
+        if (_kerning == val) return;
         _kerning = val;
         onStateChanged();
 }

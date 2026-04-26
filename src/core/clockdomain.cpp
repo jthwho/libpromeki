@@ -16,11 +16,11 @@ PROMEKI_NAMESPACE_BEGIN
 // ============================================================================
 
 struct ClockDomain::Data {
-        ID          id;
-        String      name;
-        String      description;
-        ClockEpoch  epoch;
-        Metadata    metadata;
+                ID         id;
+                String     name;
+                String     description;
+                ClockEpoch epoch;
+                Metadata   metadata;
 };
 
 // ============================================================================
@@ -28,47 +28,47 @@ struct ClockDomain::Data {
 // ============================================================================
 
 struct ClockDomainRegistry {
-        Map<uint64_t, ClockDomain::Data> entries;
+                Map<uint64_t, ClockDomain::Data> entries;
 
-        ClockDomainRegistry() {
-                // Synthetic — frame-rate derived, per-stream epoch
-                {
-                        ClockDomain::Data d;
-                        d.id          = ClockDomain::Synthetic;
-                        d.name        = "Synthetic";
-                        d.description = "Computed from frame rate, drift-free";
-                        d.epoch       = ClockEpoch::PerStream;
-                        add(std::move(d));
+                ClockDomainRegistry() {
+                        // Synthetic — frame-rate derived, per-stream epoch
+                        {
+                                ClockDomain::Data d;
+                                d.id = ClockDomain::Synthetic;
+                                d.name = "Synthetic";
+                                d.description = "Computed from frame rate, drift-free";
+                                d.epoch = ClockEpoch::PerStream;
+                                add(std::move(d));
+                        }
+                        // SystemMonotonic — steady_clock, correlated within process
+                        {
+                                ClockDomain::Data d;
+                                d.id = ClockDomain::SystemMonotonic;
+                                d.name = "SystemMonotonic";
+                                d.description = "std::chrono::steady_clock";
+                                d.epoch = ClockEpoch::Correlated;
+                                add(std::move(d));
+                        }
                 }
-                // SystemMonotonic — steady_clock, correlated within process
-                {
-                        ClockDomain::Data d;
-                        d.id          = ClockDomain::SystemMonotonic;
-                        d.name        = "SystemMonotonic";
-                        d.description = "std::chrono::steady_clock";
-                        d.epoch       = ClockEpoch::Correlated;
-                        add(std::move(d));
+
+                void add(ClockDomain::Data &&d) {
+                        uint64_t key = d.id.id();
+                        entries.insert(key, std::move(d));
                 }
-        }
 
-        void add(ClockDomain::Data &&d) {
-                uint64_t key = d.id.id();
-                entries.insert(key, std::move(d));
-        }
+                const ClockDomain::Data *find(const ClockDomain::ID &id) const {
+                        if (!id.isValid()) return nullptr;
+                        auto it = entries.find(id.id());
+                        if (it != entries.end()) return &it->second;
+                        return nullptr;
+                }
 
-        const ClockDomain::Data *find(const ClockDomain::ID &id) const {
-                if(!id.isValid()) return nullptr;
-                auto it = entries.find(id.id());
-                if(it != entries.end()) return &it->second;
-                return nullptr;
-        }
-
-        ClockDomain::Data *findMutable(const ClockDomain::ID &id) {
-                if(!id.isValid()) return nullptr;
-                auto it = entries.find(id.id());
-                if(it != entries.end()) return &it->second;
-                return nullptr;
-        }
+                ClockDomain::Data *findMutable(const ClockDomain::ID &id) {
+                        if (!id.isValid()) return nullptr;
+                        auto it = entries.find(id.id());
+                        if (it != entries.end()) return &it->second;
+                        return nullptr;
+                }
 };
 
 static ClockDomainRegistry &registry() {
@@ -87,32 +87,29 @@ const ClockDomain::ID ClockDomain::SystemMonotonic("SystemMonotonic");
 // Static API
 // ============================================================================
 
-ClockDomain::ID ClockDomain::registerDomain(const String &name,
-                                            const String &description,
-                                            const ClockEpoch &epoch) {
-        ID id(name);
+ClockDomain::ID ClockDomain::registerDomain(const String &name, const String &description, const ClockEpoch &epoch) {
+        ID    id(name);
         auto &reg = registry();
-        if(reg.find(id) != nullptr) return id;
+        if (reg.find(id) != nullptr) return id;
         Data d;
-        d.id          = id;
-        d.name        = name;
+        d.id = id;
+        d.name = name;
         d.description = description;
-        d.epoch       = epoch;
+        d.epoch = epoch;
         reg.add(std::move(d));
         return id;
 }
 
-void ClockDomain::setDomainMetadata(const ID &id,
-                                    const Metadata &metadata) {
+void ClockDomain::setDomainMetadata(const ID &id, const Metadata &metadata) {
         auto &reg = registry();
         Data *d = reg.findMutable(id);
-        if(d != nullptr) d->metadata = metadata;
+        if (d != nullptr) d->metadata = metadata;
 }
 
 ClockDomain::IDList ClockDomain::registeredIDs() {
         IDList ret;
-        auto &reg = registry();
-        for(auto it = reg.entries.begin(); it != reg.entries.end(); ++it) {
+        auto  &reg = registry();
+        for (auto it = reg.entries.begin(); it != reg.entries.end(); ++it) {
                 ret.pushToBack(it->second.id);
         }
         return ret;
@@ -120,9 +117,9 @@ ClockDomain::IDList ClockDomain::registeredIDs() {
 
 ClockDomain ClockDomain::lookup(const String &name) {
         ID id = ID::find(name);
-        if(!id.isValid()) return ClockDomain();
+        if (!id.isValid()) return ClockDomain();
         auto &reg = registry();
-        if(reg.find(id) != nullptr) return ClockDomain(id);
+        if (reg.find(id) != nullptr) return ClockDomain(id);
         return ClockDomain();
 }
 
@@ -169,13 +166,12 @@ const Metadata &ClockDomain::metadata() const {
 }
 
 bool ClockDomain::isCrossStreamComparable() const {
-        if(!d) return false;
-        return d->epoch == ClockEpoch::Correlated ||
-               d->epoch == ClockEpoch::Absolute;
+        if (!d) return false;
+        return d->epoch == ClockEpoch::Correlated || d->epoch == ClockEpoch::Absolute;
 }
 
 bool ClockDomain::isCrossMachineComparable() const {
-        if(!d) return false;
+        if (!d) return false;
         return d->epoch == ClockEpoch::Absolute;
 }
 

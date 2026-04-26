@@ -15,20 +15,20 @@ using namespace promeki;
 
 TEST_CASE("ThreadPool_SubmitAndGet") {
         ThreadPool pool(2);
-        auto f = pool.submit([] { return 42; });
+        auto       f = pool.submit([] { return 42; });
         auto [val, err] = f.result();
         CHECK(err == Error::Ok);
         CHECK(val == 42);
 }
 
 TEST_CASE("ThreadPool_MultipleTasks") {
-        ThreadPool pool(2);
-        const int count = 20;
+        ThreadPool        pool(2);
+        const int         count = 20;
         List<Future<int>> futures;
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
                 futures.pushToBack(pool.submit([i] { return i * 2; }));
         }
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
                 auto [val, err] = futures[i].result();
                 CHECK(err == Error::Ok);
                 CHECK(val == i * 2);
@@ -36,9 +36,9 @@ TEST_CASE("ThreadPool_MultipleTasks") {
 }
 
 TEST_CASE("ThreadPool_WaitForDone") {
-        ThreadPool pool(2);
+        ThreadPool       pool(2);
         std::atomic<int> counter{0};
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
                 pool.submit([&] { counter++; });
         }
         pool.waitForDone();
@@ -47,9 +47,7 @@ TEST_CASE("ThreadPool_WaitForDone") {
 
 TEST_CASE("ThreadPool_WaitForDoneTimeout") {
         ThreadPool pool(1);
-        pool.submit([] {
-                std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        });
+        pool.submit([] { std::this_thread::sleep_for(std::chrono::milliseconds(200)); });
         Error err = pool.waitForDone(10);
         CHECK(err == Error::Timeout);
         pool.waitForDone();
@@ -58,16 +56,16 @@ TEST_CASE("ThreadPool_WaitForDoneTimeout") {
 TEST_CASE("ThreadPool_ThreadCount") {
         ThreadPool pool(4);
         CHECK(pool.maxThreadCount() == 4);
-        CHECK(pool.threadCount() == 0);  // lazy: no threads until work arrives
+        CHECK(pool.threadCount() == 0); // lazy: no threads until work arrives
         auto f = pool.submit([] { return 1; });
         f.waitForFinished();
-        CHECK(pool.threadCount() == 1);  // one thread spawned on demand
+        CHECK(pool.threadCount() == 1); // one thread spawned on demand
 }
 
 TEST_CASE("ThreadPool_ThreadCount_Eager") {
         ThreadPool pool(4, false);
         CHECK(pool.maxThreadCount() == 4);
-        CHECK(pool.threadCount() == 4);  // all threads pre-spawned
+        CHECK(pool.threadCount() == 4); // all threads pre-spawned
 }
 
 TEST_CASE("ThreadPool_InlineMode") {
@@ -75,7 +73,7 @@ TEST_CASE("ThreadPool_InlineMode") {
         CHECK(pool.threadCount() == 0);
         std::thread::id callerThread = std::this_thread::get_id();
         std::thread::id taskThread;
-        auto f = pool.submit([&] {
+        auto            f = pool.submit([&] {
                 taskThread = std::this_thread::get_id();
                 return 99;
         });
@@ -113,12 +111,10 @@ TEST_CASE("ThreadPool_SetThreadCountToZero") {
 TEST_CASE("ThreadPool_Clear") {
         ThreadPool pool(1);
         // Submit a blocking task to occupy the thread
-        pool.submit([] {
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        });
+        pool.submit([] { std::this_thread::sleep_for(std::chrono::milliseconds(50)); });
         // Submit more tasks that should be clearable
         std::atomic<int> counter{0};
-        for(int i = 0; i < 100; i++) {
+        for (int i = 0; i < 100; i++) {
                 pool.submit([&] { counter++; });
         }
         pool.clear();
@@ -128,9 +124,9 @@ TEST_CASE("ThreadPool_Clear") {
 }
 
 TEST_CASE("ThreadPool_VoidTasks") {
-        ThreadPool pool(2);
+        ThreadPool       pool(2);
         std::atomic<int> counter{0};
-        auto f = pool.submit([&] { counter++; });
+        auto             f = pool.submit([&] { counter++; });
         f.waitForFinished();
         CHECK(counter == 1);
 }
@@ -159,9 +155,9 @@ TEST_CASE("ThreadPool_LazySpawn") {
         // Submit tasks that block so we can observe thread growth
         std::atomic<int> barrier{0};
         std::atomic<int> running{0};
-        auto blockingTask = [&] {
+        auto             blockingTask = [&] {
                 running++;
-                while(barrier.load() == 0) {
+                while (barrier.load() == 0) {
                         std::this_thread::yield();
                 }
         };
@@ -171,7 +167,7 @@ TEST_CASE("ThreadPool_LazySpawn") {
         Future<void> f2 = pool.submit(blockingTask);
         Future<void> f3 = pool.submit(blockingTask);
         // Wait for threads to actually start running
-        while(running.load() < 3) std::this_thread::yield();
+        while (running.load() < 3) std::this_thread::yield();
         CHECK(pool.threadCount() >= 3);
         CHECK(pool.threadCount() <= 4);
 

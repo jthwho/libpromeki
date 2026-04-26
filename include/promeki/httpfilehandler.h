@@ -62,7 +62,7 @@ PROMEKI_NAMESPACE_BEGIN
  * synchronization.
  */
 class HttpFileHandler : public HttpHandler {
-        PROMEKI_SHARED_DERIVED(HttpHandler, HttpFileHandler)
+                PROMEKI_SHARED_DERIVED(HttpHandler, HttpFileHandler)
         public:
                 /** @brief Default index file served for directory-style requests. */
                 static const String DefaultIndexFile;
@@ -140,25 +140,21 @@ class HttpFileHandler : public HttpHandler {
                 String mimeType(const String &filePath) const;
 
                 /** @brief Implements @ref HttpHandler::serve. */
-                void serve(const HttpRequest &request,
-                           HttpResponse &response) override;
+                void serve(const HttpRequest &request, HttpResponse &response) override;
 
         private:
-                Dir                             _root;
-                String                          _pathParam = "path";
-                String                          _indexFile = DefaultIndexFile;
-                bool                            _listDirs  = false;
-                HashMap<String, String>         _extraMime;
+                Dir                     _root;
+                String                  _pathParam = "path";
+                String                  _indexFile = DefaultIndexFile;
+                bool                    _listDirs = false;
+                HashMap<String, String> _extraMime;
 
                 static String etagFor(int64_t size, int64_t mtimeEpoch);
                 static String httpDateFor(int64_t mtimeEpoch);
-                static bool isPathSafe(const String &relPath);
+                static bool   isPathSafe(const String &relPath);
 
-                bool serveRange(const HttpRequest &request,
-                                HttpResponse &response,
-                                const String &fullPath,
-                                int64_t fileSize,
-                                const String &mime);
+                bool serveRange(const HttpRequest &request, HttpResponse &response, const String &fullPath,
+                                int64_t fileSize, const String &mime);
 };
 
 PROMEKI_NAMESPACE_END

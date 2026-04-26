@@ -21,75 +21,75 @@ using namespace promeki;
 
 namespace {
 
-BenchmarkRunner makeFastRunner() {
-        // Keep the runner snappy so the test suite stays fast.
-        // 10 ms measurement window, 2 ms warmup, no verbose output.
-        BenchmarkRunner runner;
-        runner.setMinTimeMs(10);
-        runner.setWarmupMs(2);
-        runner.setRepeats(3);
-        return runner;
-}
-
-// Case that increments a counter and is cheap per iteration.
-int g_trivialInvocations = 0;
-void trivialCase(BenchmarkState &state) {
-        g_trivialInvocations++;
-        volatile int sink = 0;
-        for(auto _ : state) {
-                (void)_;
-                sink += 1;
+        BenchmarkRunner makeFastRunner() {
+                // Keep the runner snappy so the test suite stays fast.
+                // 10 ms measurement window, 2 ms warmup, no verbose output.
+                BenchmarkRunner runner;
+                runner.setMinTimeMs(10);
+                runner.setWarmupMs(2);
+                runner.setRepeats(3);
+                return runner;
         }
-        (void)sink;
-}
 
-// Case that reports itemsProcessed / bytesProcessed for throughput validation.
-void throughputCase(BenchmarkState &state) {
-        volatile int sink = 0;
-        for(auto _ : state) {
-                (void)_;
-                sink += 1;
+        // Case that increments a counter and is cheap per iteration.
+        int  g_trivialInvocations = 0;
+        void trivialCase(BenchmarkState &state) {
+                g_trivialInvocations++;
+                volatile int sink = 0;
+                for (auto _ : state) {
+                        (void)_;
+                        sink += 1;
+                }
+                (void)sink;
         }
-        (void)sink;
-        state.setItemsProcessed(state.iterations() * 16);
-        state.setBytesProcessed(state.iterations() * 1024);
-        state.setLabel(String("16-items/iter"));
-        state.setCounter(String("custom_metric"), 42.0);
-}
 
-// Case that pauses timing around a faked "untimed" block. The
-// effective measurement should exclude the sleep, so avgNsPerIter
-// stays tiny even though wall time per iteration is >= 50us.
-//
-// The inner loop includes real timed work (a volatile accumulator)
-// so the calibrator's wall-time-based iteration sizing converges
-// quickly — a case with zero timed work would still calibrate
-// correctly now that the runner uses wall time, but exercising a
-// realistic pauseTiming pattern is a more useful test.
-void pauseCase(BenchmarkState &state) {
-        volatile int sink = 0;
-        for(auto _ : state) {
-                (void)_;
-                state.pauseTiming();
-                std::this_thread::sleep_for(std::chrono::microseconds(50));
-                state.resumeTiming();
-                for(int i = 0; i < 100; i++) sink += i;
+        // Case that reports itemsProcessed / bytesProcessed for throughput validation.
+        void throughputCase(BenchmarkState &state) {
+                volatile int sink = 0;
+                for (auto _ : state) {
+                        (void)_;
+                        sink += 1;
+                }
+                (void)sink;
+                state.setItemsProcessed(state.iterations() * 16);
+                state.setBytesProcessed(state.iterations() * 1024);
+                state.setLabel(String("16-items/iter"));
+                state.setCounter(String("custom_metric"), 42.0);
         }
-        (void)sink;
-}
 
-// Case that uses the imperative keepRunning() primitive instead of range-for.
-void keepRunningCase(BenchmarkState &state) {
-        volatile int sink = 0;
-        while(state.keepRunning()) sink += 1;
-        (void)sink;
-}
+        // Case that pauses timing around a faked "untimed" block. The
+        // effective measurement should exclude the sleep, so avgNsPerIter
+        // stays tiny even though wall time per iteration is >= 50us.
+        //
+        // The inner loop includes real timed work (a volatile accumulator)
+        // so the calibrator's wall-time-based iteration sizing converges
+        // quickly — a case with zero timed work would still calibrate
+        // correctly now that the runner uses wall time, but exercising a
+        // realistic pauseTiming pattern is a more useful test.
+        void pauseCase(BenchmarkState &state) {
+                volatile int sink = 0;
+                for (auto _ : state) {
+                        (void)_;
+                        state.pauseTiming();
+                        std::this_thread::sleep_for(std::chrono::microseconds(50));
+                        state.resumeTiming();
+                        for (int i = 0; i < 100; i++) sink += i;
+                }
+                (void)sink;
+        }
 
-// Case that never iterates — used to verify the "did not iterate" failure.
-void brokenCase(BenchmarkState &state) {
-        (void)state;
-        // Deliberately does nothing.
-}
+        // Case that uses the imperative keepRunning() primitive instead of range-for.
+        void keepRunningCase(BenchmarkState &state) {
+                volatile int sink = 0;
+                while (state.keepRunning()) sink += 1;
+                (void)sink;
+        }
+
+        // Case that never iterates — used to verify the "did not iterate" failure.
+        void brokenCase(BenchmarkState &state) {
+                (void)state;
+                // Deliberately does nothing.
+        }
 
 } // namespace
 
@@ -99,8 +99,8 @@ void brokenCase(BenchmarkState &state) {
 
 TEST_CASE("BenchmarkState: range-for iterates exactly iterations() times") {
         BenchmarkState state(100);
-        uint64_t count = 0;
-        for(auto _ : state) {
+        uint64_t       count = 0;
+        for (auto _ : state) {
                 (void)_;
                 count++;
         }
@@ -110,16 +110,16 @@ TEST_CASE("BenchmarkState: range-for iterates exactly iterations() times") {
 
 TEST_CASE("BenchmarkState: keepRunning iterates exactly iterations() times") {
         BenchmarkState state(50);
-        uint64_t count = 0;
-        while(state.keepRunning()) count++;
+        uint64_t       count = 0;
+        while (state.keepRunning()) count++;
         CHECK(count == 50);
         CHECK(state.completed());
 }
 
 TEST_CASE("BenchmarkState: zero iterations completes immediately") {
         BenchmarkState state(0);
-        uint64_t count = 0;
-        for(auto _ : state) {
+        uint64_t       count = 0;
+        for (auto _ : state) {
                 (void)_;
                 count++;
         }
@@ -150,7 +150,7 @@ TEST_CASE("BenchmarkState: setters store values") {
 TEST_CASE("BenchmarkRunner: runs a trivial case successfully") {
         BenchmarkRunner runner = makeFastRunner();
         g_trivialInvocations = 0;
-        BenchmarkCase c("test", "trivial", "Trivial counter loop", trivialCase);
+        BenchmarkCase   c("test", "trivial", "Trivial counter loop", trivialCase);
         BenchmarkResult r = runner.runCase(c);
         CHECK(r.succeeded);
         CHECK(r.suite == "test");
@@ -164,7 +164,7 @@ TEST_CASE("BenchmarkRunner: runs a trivial case successfully") {
 
 TEST_CASE("BenchmarkRunner: keepRunning variant produces valid results") {
         BenchmarkRunner runner = makeFastRunner();
-        BenchmarkCase c("test", "keepRunning", "", keepRunningCase);
+        BenchmarkCase   c("test", "keepRunning", "", keepRunningCase);
         BenchmarkResult r = runner.runCase(c);
         CHECK(r.succeeded);
         CHECK(r.iterations >= 1);
@@ -173,7 +173,7 @@ TEST_CASE("BenchmarkRunner: keepRunning variant produces valid results") {
 
 TEST_CASE("BenchmarkRunner: items/bytes counters produce throughput values") {
         BenchmarkRunner runner = makeFastRunner();
-        BenchmarkCase c("test", "throughput", "", throughputCase);
+        BenchmarkCase   c("test", "throughput", "", throughputCase);
         BenchmarkResult r = runner.runCase(c);
         CHECK(r.succeeded);
         CHECK(r.itemsPerSecond > 0.0);
@@ -185,7 +185,7 @@ TEST_CASE("BenchmarkRunner: items/bytes counters produce throughput values") {
 
 TEST_CASE("BenchmarkRunner: broken case fails gracefully") {
         BenchmarkRunner runner = makeFastRunner();
-        BenchmarkCase c("test", "broken", "", brokenCase);
+        BenchmarkCase   c("test", "broken", "", brokenCase);
         BenchmarkResult r = runner.runCase(c);
         CHECK_FALSE(r.succeeded);
         CHECK_FALSE(r.errorMessage.isEmpty());
@@ -193,7 +193,7 @@ TEST_CASE("BenchmarkRunner: broken case fails gracefully") {
 
 TEST_CASE("BenchmarkRunner: pauseTiming excludes excluded regions") {
         BenchmarkRunner runner = makeFastRunner();
-        BenchmarkCase c("test", "pause", "", pauseCase);
+        BenchmarkCase   c("test", "pause", "", pauseCase);
         BenchmarkResult r = runner.runCase(c);
         // If pauseTiming() worked, ns/iter should be a tiny fraction of
         // the 50us sleep we faked. Accept anything well under 50,000 ns.
@@ -208,7 +208,7 @@ TEST_CASE("BenchmarkRunner: pauseTiming excludes excluded regions") {
 
 TEST_CASE("BenchmarkRunner: filteredCaseCount respects the filter") {
         BenchmarkRunner runner;
-        int totalBefore = static_cast<int>(BenchmarkRunner::registeredCases().size());
+        int             totalBefore = static_cast<int>(BenchmarkRunner::registeredCases().size());
 
         // No filter: every registered case counts.
         CHECK(runner.filteredCaseCount() == totalBefore);
@@ -230,7 +230,7 @@ TEST_CASE("BenchmarkRunner: estimatedDurationMs scales with count and settings")
         runner.setRepeats(3);
 
         // With no filter the estimate is nonzero if any cases are registered.
-        int matching = runner.filteredCaseCount();
+        int     matching = runner.filteredCaseCount();
         int64_t perCase = 100 + 3 * 500; // warmup + repeats * minTime
         CHECK(runner.estimatedDurationMs() == matching * perCase);
 
@@ -326,7 +326,7 @@ TEST_CASE("BenchmarkResult: JSON round-trip preserves all fields") {
         r.custom.insert(String("stages"), 2.0);
         r.succeeded = true;
 
-        JsonObject obj = r.toJson();
+        JsonObject      obj = r.toJson();
         BenchmarkResult round = BenchmarkResult::fromJson(obj);
 
         CHECK(round.suite == r.suite);
@@ -355,7 +355,7 @@ TEST_CASE("BenchmarkResult: failed case round-trips error message") {
         r.succeeded = false;
         r.errorMessage = "Something went wrong";
 
-        JsonObject obj = r.toJson();
+        JsonObject      obj = r.toJson();
         BenchmarkResult round = BenchmarkResult::fromJson(obj);
 
         CHECK_FALSE(round.succeeded);
@@ -368,17 +368,17 @@ TEST_CASE("BenchmarkResult: failed case round-trips error message") {
 
 TEST_CASE("BenchmarkRunner: writeJson produces readable output") {
         BenchmarkRunner runner = makeFastRunner();
-        BenchmarkCase c("test", "trivial", "", trivialCase);
+        BenchmarkCase   c("test", "trivial", "", trivialCase);
         runner.runCase(c);
 
-        Error err;
+        Error  err;
         String dir = Dir::temp().path().toString();
         String path = dir + "/promeki-benchmarkrunner-test.json";
         err = runner.writeJson(path);
         CHECK(err.isOk());
 
         // Load back as a baseline and verify a result is present.
-        Error loadErr;
+        Error                 loadErr;
         List<BenchmarkResult> base = BenchmarkRunner::loadBaseline(path, &loadErr);
         CHECK(loadErr.isOk());
         REQUIRE(base.size() >= 1);
@@ -390,10 +390,9 @@ TEST_CASE("BenchmarkRunner: writeJson produces readable output") {
 }
 
 TEST_CASE("BenchmarkRunner: loadBaseline returns NotExist for missing file") {
-        Error err;
-        List<BenchmarkResult> base = BenchmarkRunner::loadBaseline(
-                String("/tmp/promeki-nonexistent-benchmark-baseline-xyzzy.json"),
-                &err);
+        Error                 err;
+        List<BenchmarkResult> base =
+                BenchmarkRunner::loadBaseline(String("/tmp/promeki-nonexistent-benchmark-baseline-xyzzy.json"), &err);
         CHECK(err == Error::NotExist);
         CHECK(base.isEmpty());
 }
@@ -418,7 +417,7 @@ TEST_CASE("BenchmarkRunner: toJson carries config and version") {
 
 TEST_CASE("BenchmarkRunner: formatTable returns a non-empty string with results") {
         BenchmarkRunner runner = makeFastRunner();
-        BenchmarkCase c("test", "trivial", "", trivialCase);
+        BenchmarkCase   c("test", "trivial", "", trivialCase);
         runner.runCase(c);
         String table = runner.formatTable();
         CHECK_FALSE(table.isEmpty());
@@ -438,11 +437,11 @@ TEST_CASE("BenchmarkRunner: formatTable reports empty state") {
 
 TEST_CASE("BenchmarkRunner: formatComparison marks new cases") {
         BenchmarkRunner runner = makeFastRunner();
-        BenchmarkCase c("test", "trivial", "", trivialCase);
+        BenchmarkCase   c("test", "trivial", "", trivialCase);
         runner.runCase(c);
 
-        List<BenchmarkResult> baseline;  // empty
-        String report = runner.formatComparison(baseline);
+        List<BenchmarkResult> baseline; // empty
+        String                report = runner.formatComparison(baseline);
         CHECK(report.contains("test"));
         CHECK(report.contains("trivial"));
         CHECK(report.contains("(new)"));
@@ -450,13 +449,13 @@ TEST_CASE("BenchmarkRunner: formatComparison marks new cases") {
 
 TEST_CASE("BenchmarkRunner: formatComparison computes delta percentage") {
         BenchmarkRunner runner = makeFastRunner();
-        BenchmarkCase c("test", "trivial", "", trivialCase);
+        BenchmarkCase   c("test", "trivial", "", trivialCase);
         runner.runCase(c);
 
         // Synthesize a baseline that's 2x slower, then check the delta is
         // around -50% (negative = improvement).
         List<BenchmarkResult> baseline;
-        BenchmarkResult b = runner.results()[0];
+        BenchmarkResult       b = runner.results()[0];
         b.avgNsPerIter = runner.results()[0].avgNsPerIter * 2.0;
         baseline.pushToBack(b);
         String report = runner.formatComparison(baseline);
@@ -477,18 +476,17 @@ TEST_CASE("BenchmarkRunner: formatComparison computes delta percentage") {
 // test body — they are just proof-of-registration.
 
 static void registrationSmokeCase(BenchmarkState &state) {
-        for(auto _ : state) (void)_;
+        for (auto _ : state) (void)_;
 }
 
-PROMEKI_REGISTER_BENCHMARK("unittest", "macro_smoke",
-                           "Smoke test for PROMEKI_REGISTER_BENCHMARK",
+PROMEKI_REGISTER_BENCHMARK("unittest", "macro_smoke", "Smoke test for PROMEKI_REGISTER_BENCHMARK",
                            registrationSmokeCase)
 
 TEST_CASE("BenchmarkRunner: PROMEKI_REGISTER_BENCHMARK populates registry") {
         const List<BenchmarkCase> &cases = BenchmarkRunner::registeredCases();
-        bool found = false;
-        for(const auto &c : cases) {
-                if(c.fullName() == "unittest.macro_smoke") {
+        bool                       found = false;
+        for (const auto &c : cases) {
+                if (c.fullName() == "unittest.macro_smoke") {
                         found = true;
                         CHECK(c.description() == "Smoke test for PROMEKI_REGISTER_BENCHMARK");
                         break;

@@ -28,9 +28,9 @@ static const char *kDefaultSoftwareTag = "libpromeki (https://howardlogic.com)";
 static const char *kDefaultOriginatorTag = "libpromeki howardlogic.com";
 
 static String currentUtcDateString() {
-        auto now = std::chrono::system_clock::now();
+        auto        now = std::chrono::system_clock::now();
         std::time_t t = std::chrono::system_clock::to_time_t(now);
-        std::tm tm{};
+        std::tm     tm{};
         gmtime_r(&t, &tm);
         char buf[32];
         std::strftime(buf, sizeof(buf), "%Y-%m-%d", &tm);
@@ -38,9 +38,9 @@ static String currentUtcDateString() {
 }
 
 static String currentUtcDateTimeString() {
-        auto now = std::chrono::system_clock::now();
+        auto        now = std::chrono::system_clock::now();
         std::time_t t = std::chrono::system_clock::to_time_t(now);
-        std::tm tm{};
+        std::tm     tm{};
         gmtime_r(&t, &tm);
         char buf[32];
         // BWF BEXT-compatible ISO 8601 form.
@@ -50,9 +50,9 @@ static String currentUtcDateTimeString() {
 
 Metadata Metadata::fromJson(const JsonObject &json, Error *err) {
         Metadata ret;
-        bool good = true;
+        bool     good = true;
         json.forEach([&good, &ret](const String &key, const Variant &val) {
-                if(!val.isValid()) {
+                if (!val.isValid()) {
                         promekiWarn("Metadata::fromJson() key '%s' has invalid value.  Will ignore.", key.cstr());
                         good = false;
                         return;
@@ -62,13 +62,12 @@ Metadata Metadata::fromJson(const JsonObject &json, Error *err) {
                 // come back as their proper Variant kind instead of a raw
                 // TypeString that fails spec validation.
                 Error serr = ret.setFromJson(ID(key), val);
-                if(serr.isError()) {
-                        promekiWarn("Metadata::fromJson() key '%s' rejected: %s",
-                                    key.cstr(), serr.desc().cstr());
+                if (serr.isError()) {
+                        promekiWarn("Metadata::fromJson() key '%s' rejected: %s", key.cstr(), serr.desc().cstr());
                         good = false;
                 }
         });
-        if(err) *err = good ? Error::Ok : Error::Invalid;
+        if (err) *err = good ? Error::Ok : Error::Invalid;
         return ret;
 }
 
@@ -94,7 +93,7 @@ void Metadata::applyMediaIOWriteDefaults() {
         setIfMissing(OriginationDateTime, currentUtcDateTimeString());
 
         const String &appName = Application::appName();
-        if(!appName.isEmpty()) {
+        if (!appName.isEmpty()) {
                 setIfMissing(Software, appName);
         } else {
                 setIfMissing(Software, String(kDefaultSoftwareTag));

@@ -68,8 +68,9 @@ class KeyEvent;
  * lifecycle) is restricted to the SDL event thread.
  */
 class SDLPlayerWidget : public SDLVideoWidget {
-        PROMEKI_OBJECT(SDLPlayerWidget, SDLVideoWidget)
-        friend class SDLPlayerTask;
+                PROMEKI_OBJECT(SDLPlayerWidget, SDLVideoWidget)
+                friend class SDLPlayerTask;
+
         public:
                 /**
                  * @brief Constructs an SDLPlayerWidget.
@@ -84,8 +85,7 @@ class SDLPlayerWidget : public SDLVideoWidget {
                  *                      timing source (default true).
                  * @param parent        Optional parent widget / window.
                  */
-                explicit SDLPlayerWidget(SDLAudioOutput *audio = nullptr,
-                                         bool useAudioClock = true,
+                explicit SDLPlayerWidget(SDLAudioOutput *audio = nullptr, bool useAudioClock = true,
                                          ObjectBase *parent = nullptr);
 
                 ~SDLPlayerWidget() override;
@@ -135,18 +135,18 @@ class SDLPlayerWidget : public SDLVideoWidget {
                 // window.
                 bool renderPending();
 
-                void wakeMainThread();
+                void            wakeMainThread();
                 static uint32_t userEventType();
 
-                MediaIO::UPtr    _mediaIO;               ///< Owned.
-                SDLPlayerTask   *_task = nullptr;        ///< Non-owning — lifetime tied to @ref _mediaIO.
+                MediaIO::UPtr  _mediaIO;        ///< Owned.
+                SDLPlayerTask *_task = nullptr; ///< Non-owning — lifetime tied to @ref _mediaIO.
 
                 // Main-thread render stash (written by the pull thread,
                 // drained by the main thread).
                 UncompressedVideoPayload::Ptr _pendingPayload;
-                mutable Mutex   _pendingMutex;
-                Atomic<bool>    _renderScheduled;
-                Atomic<int64_t> _framesPresented;
+                mutable Mutex                 _pendingMutex;
+                Atomic<bool>                  _renderScheduled;
+                Atomic<int64_t>               _framesPresented;
 };
 
 PROMEKI_NAMESPACE_END

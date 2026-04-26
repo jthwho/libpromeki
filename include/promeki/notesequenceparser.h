@@ -56,26 +56,26 @@ class NoteSequenceParser {
 
         private:
                 struct Params {
-                        double       tempo       = 100.0;
-                        double       noteLength  = 0.25;
-                        float        amplitude   = 0.5f;
-                        int          octave      = 4;
-                        MusicalScale scale;
-                        float        legato      = 0.5f;
-                        float        vibrato     = 0.0f;
-                        float        vibratoRate = 5.0f;
-                        float        tremolo     = 0.0f;
-                        float        tremoloRate = 5.0f;
+                                double       tempo = 100.0;
+                                double       noteLength = 0.25;
+                                float        amplitude = 0.5f;
+                                int          octave = 4;
+                                MusicalScale scale;
+                                float        legato = 0.5f;
+                                float        vibrato = 0.0f;
+                                float        vibratoRate = 5.0f;
+                                float        tremolo = 0.0f;
+                                float        tremoloRate = 5.0f;
                 };
 
-                String                        _input;
-                size_t                        _pos         = 0;
-                double                        _currentTime = 0.0;
-                Params                        _params;
-                List<Params>                  _paramStack;
+                String              _input;
+                size_t              _pos = 0;
+                double              _currentTime = 0.0;
+                Params              _params;
+                List<Params>        _paramStack;
                 Map<String, Params> _namedParams;
-                MusicalNote::List             _notes;
-                StringList                    _errors;
+                MusicalNote::List   _notes;
+                StringList          _errors;
 
                 void parseToken();
                 void parseTempo();
@@ -97,14 +97,14 @@ class NoteSequenceParser {
                 void skipComment();
                 void skipWhitespace();
 
-                char        current() const;
-                char        peek(int offset) const;
-                bool        atEnd() const;
+                char   current() const;
+                char   peek(int offset) const;
+                bool   atEnd() const;
                 String readParenArg();
-                double      parseDurationModifier();
-                void        emitNote(float midiNote, int dots, double lengthMod);
-                void        emitRest(int dots, double lengthMod);
-                void        addError(const String &msg);
+                double parseDurationModifier();
+                void   emitNote(float midiNote, int dots, double lengthMod);
+                void   emitRest(int dots, double lengthMod);
+                void   addError(const String &msg);
 
                 static double parseNoteLengthValue(const String &s);
                 static double applyDots(double length, int dots);

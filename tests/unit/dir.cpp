@@ -44,11 +44,9 @@ TEST_CASE("Dir: temp directory") {
 TEST_CASE("Dir: temp respects LibraryOptions::TempDir override") {
         // Save and restore so the singleton state doesn't leak into
         // other tests.
-        const String saved = LibraryOptions::instance().getAs<String>(
-                LibraryOptions::TempDir);
+        const String saved = LibraryOptions::instance().getAs<String>(LibraryOptions::TempDir);
 
-        LibraryOptions::instance().set(LibraryOptions::TempDir,
-                String("/var/lib/promeki-test-override"));
+        LibraryOptions::instance().set(LibraryOptions::TempDir, String("/var/lib/promeki-test-override"));
         CHECK(Dir::temp().path().toString() == "/var/lib/promeki-test-override");
 
         // Empty value falls back to the OS default — the system temp
@@ -65,8 +63,7 @@ TEST_CASE("Dir: temp respects LibraryOptions::TempDir override") {
 TEST_CASE("Dir: ipc default is non-empty") {
         // The override is cleared by other tests; make sure the default
         // path exists and is non-empty on any platform we run on.
-        const String saved = LibraryOptions::instance().getAs<String>(
-                LibraryOptions::IpcDir);
+        const String saved = LibraryOptions::instance().getAs<String>(LibraryOptions::IpcDir);
         LibraryOptions::instance().set(LibraryOptions::IpcDir, String());
 
         Dir d = Dir::ipc();
@@ -79,13 +76,10 @@ TEST_CASE("Dir: ipc default is non-empty") {
 }
 
 TEST_CASE("Dir: ipc respects LibraryOptions::IpcDir override") {
-        const String saved = LibraryOptions::instance().getAs<String>(
-                LibraryOptions::IpcDir);
+        const String saved = LibraryOptions::instance().getAs<String>(LibraryOptions::IpcDir);
 
-        LibraryOptions::instance().set(LibraryOptions::IpcDir,
-                String("/var/run/promeki-test-override"));
-        CHECK(Dir::ipc().path().toString() ==
-              String("/var/run/promeki-test-override"));
+        LibraryOptions::instance().set(LibraryOptions::IpcDir, String("/var/run/promeki-test-override"));
+        CHECK(Dir::ipc().path().toString() == String("/var/run/promeki-test-override"));
 
         LibraryOptions::instance().set(LibraryOptions::IpcDir, String());
         Dir def = Dir::ipc();
@@ -95,12 +89,12 @@ TEST_CASE("Dir: ipc respects LibraryOptions::IpcDir override") {
 }
 
 TEST_CASE("Dir: mkdir and remove") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath testDir = t.path() / "promeki_dir_test_mkdir";
-        Dir d(testDir);
+        Dir      d(testDir);
 
         // Clean up if left over from a previous run
-        if(d.exists()) d.removeRecursively();
+        if (d.exists()) d.removeRecursively();
 
         Error err = d.mkdir();
         CHECK(err.isOk());
@@ -113,13 +107,13 @@ TEST_CASE("Dir: mkdir and remove") {
 }
 
 TEST_CASE("Dir: mkpath and removeRecursively") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath testDir = t.path() / "promeki_dir_test_mkpath" / "sub1" / "sub2";
-        Dir d(testDir);
+        Dir      d(testDir);
 
         // Clean up root if left over
         Dir root(t.path() / "promeki_dir_test_mkpath");
-        if(root.exists()) root.removeRecursively();
+        if (root.exists()) root.removeRecursively();
 
         Error err = d.mkpath();
         CHECK(err.isOk());
@@ -131,11 +125,11 @@ TEST_CASE("Dir: mkpath and removeRecursively") {
 }
 
 TEST_CASE("Dir: entryList") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath testDir = t.path() / "promeki_dir_test_entrylist";
-        Dir d(testDir);
+        Dir      d(testDir);
 
-        if(d.exists()) d.removeRecursively();
+        if (d.exists()) d.removeRecursively();
         d.mkdir();
 
         // Create some files
@@ -150,11 +144,11 @@ TEST_CASE("Dir: entryList") {
 }
 
 TEST_CASE("Dir: entryList with filter") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath testDir = t.path() / "promeki_dir_test_filter";
-        Dir d(testDir);
+        Dir      d(testDir);
 
-        if(d.exists()) d.removeRecursively();
+        if (d.exists()) d.removeRecursively();
         d.mkdir();
 
         createTestFile(testDir.toStdPath() / "alpha.txt", 'a');
@@ -171,11 +165,11 @@ TEST_CASE("Dir: entryList with filter") {
 }
 
 TEST_CASE("Dir: isEmpty") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath testDir = t.path() / "promeki_dir_test_empty";
-        Dir d(testDir);
+        Dir      d(testDir);
 
-        if(d.exists()) d.removeRecursively();
+        if (d.exists()) d.removeRecursively();
         d.mkdir();
         CHECK(d.isEmpty());
 
@@ -194,15 +188,15 @@ TEST_CASE("Dir: non-existent directory") {
 TEST_CASE("Dir: setCurrent") {
         Dir original = Dir::current();
 
-        Dir t = Dir::temp();
+        Dir   t = Dir::temp();
         Error err = Dir::setCurrent(t.path());
         CHECK(err.isOk());
 
         Dir now = Dir::current();
         // Resolve symlinks for comparison
         std::error_code ec;
-        auto expected = std::filesystem::canonical(t.path().toStdPath(), ec);
-        auto actual = std::filesystem::canonical(now.path().toStdPath(), ec);
+        auto            expected = std::filesystem::canonical(t.path().toStdPath(), ec);
+        auto            actual = std::filesystem::canonical(now.path().toStdPath(), ec);
         CHECK(expected == actual);
 
         // Restore
@@ -216,7 +210,7 @@ TEST_CASE("Dir: construction from String") {
 
 TEST_CASE("Dir: construction from FilePath") {
         FilePath fp("/tmp");
-        Dir d(fp);
+        Dir      d(fp);
         CHECK(d.path().toString() == "/tmp");
 }
 
@@ -225,10 +219,10 @@ TEST_CASE("Dir: construction from FilePath") {
 // ============================================================================
 
 TEST_CASE("Dir: numberedSequences single sequence") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath testDir = t.path() / "promeki_dir_test_numseq_single";
-        Dir d(testDir);
-        if(d.exists()) d.removeRecursively();
+        Dir      d(testDir);
+        if (d.exists()) d.removeRecursively();
         d.mkdir();
 
         createTestFile(testDir.toStdPath() / "render.0001.exr", 'a');
@@ -250,10 +244,10 @@ TEST_CASE("Dir: numberedSequences single sequence") {
 }
 
 TEST_CASE("Dir: numberedSequences multiple sequences") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath testDir = t.path() / "promeki_dir_test_numseq_multi";
-        Dir d(testDir);
-        if(d.exists()) d.removeRecursively();
+        Dir      d(testDir);
+        if (d.exists()) d.removeRecursively();
         d.mkdir();
 
         createTestFile(testDir.toStdPath() / "shotA.001.exr", 'a');
@@ -269,9 +263,9 @@ TEST_CASE("Dir: numberedSequences multiple sequences") {
 
         // Find each sequence by prefix
         int idxA = -1, idxB = -1;
-        for(size_t i = 0; i < seqs.size(); i++) {
-                if(seqs[i].name().prefix() == "shotA.") idxA = (int)i;
-                if(seqs[i].name().prefix() == "shotB.") idxB = (int)i;
+        for (size_t i = 0; i < seqs.size(); i++) {
+                if (seqs[i].name().prefix() == "shotA.") idxA = (int)i;
+                if (seqs[i].name().prefix() == "shotB.") idxB = (int)i;
         }
         REQUIRE(idxA >= 0);
         REQUIRE(idxB >= 0);
@@ -290,10 +284,10 @@ TEST_CASE("Dir: numberedSequences multiple sequences") {
 }
 
 TEST_CASE("Dir: numberedSequences empty directory") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath testDir = t.path() / "promeki_dir_test_numseq_empty";
-        Dir d(testDir);
-        if(d.exists()) d.removeRecursively();
+        Dir      d(testDir);
+        if (d.exists()) d.removeRecursively();
         d.mkdir();
 
         NumNameSeq::List seqs = d.numberedSequences();
@@ -303,14 +297,14 @@ TEST_CASE("Dir: numberedSequences empty directory") {
 }
 
 TEST_CASE("Dir: numberedSequences only non-numname files") {
-        Dir t = Dir::temp();
+        Dir      t = Dir::temp();
         FilePath testDir = t.path() / "promeki_dir_test_numseq_nonames";
-        Dir d(testDir);
-        if(d.exists()) d.removeRecursively();
+        Dir      d(testDir);
+        if (d.exists()) d.removeRecursively();
         d.mkdir();
 
         createTestFile(testDir.toStdPath() / "readme.txt", 'a');
-        createTestFile(testDir.toStdPath() / "notes.md",   'b');
+        createTestFile(testDir.toStdPath() / "notes.md", 'b');
 
         NumNameSeq::List seqs = d.numberedSequences();
         CHECK(seqs.isEmpty());
@@ -319,7 +313,7 @@ TEST_CASE("Dir: numberedSequences only non-numname files") {
 }
 
 TEST_CASE("Dir: numberedSequences nonexistent directory") {
-        Dir d("/nonexistent_promeki_numseq_path_98765");
+        Dir              d("/nonexistent_promeki_numseq_path_98765");
         NumNameSeq::List seqs = d.numberedSequences();
         CHECK(seqs.isEmpty());
 }

@@ -27,7 +27,7 @@ TEST_CASE("Pair: value construction") {
 
 TEST_CASE("Pair: from std::pair") {
         std::pair<int, double> sp(10, 3.14);
-        Pair<int, double> p(sp);
+        Pair<int, double>      p(sp);
         CHECK(p.first() == 10);
         CHECK(p.second() == doctest::Approx(3.14));
 }
@@ -50,7 +50,7 @@ TEST_CASE("Pair: setters") {
 
 TEST_CASE("Pair: toStdPair") {
         Pair<int, double> p(5, 2.5);
-        const auto &sp = p.toStdPair();
+        const auto       &sp = p.toStdPair();
         CHECK(sp.first == 5);
         CHECK(sp.second == doctest::Approx(2.5));
 }
@@ -115,7 +115,7 @@ TEST_CASE("Pair: move") {
 
 TEST_CASE("Pair: TextStream operator") {
         Pair<int, String> p(42, "hello");
-        StreamString out;
+        StreamString      out;
         out.stream() << p << promeki::flush;
         CHECK(out.line() == "(42, hello)");
 }

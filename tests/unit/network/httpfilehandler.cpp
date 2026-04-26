@@ -18,28 +18,28 @@ using namespace promeki;
 
 namespace {
 
-String writeScratch(const String &name, const char *payload) {
-        const String root = "/mnt/data/tmp/promeki/httpfilehandler-test";
-        std::filesystem::create_directories(root.cstr());
-        const String path = root + "/" + name;
-        File f{path};
-        f.open(IODevice::WriteOnly, File::Create | File::Truncate);
-        f.write(payload, std::strlen(payload));
-        f.close();
-        return root;
-}
+        String writeScratch(const String &name, const char *payload) {
+                const String root = "/mnt/data/tmp/promeki/httpfilehandler-test";
+                std::filesystem::create_directories(root.cstr());
+                const String path = root + "/" + name;
+                File         f{path};
+                f.open(IODevice::WriteOnly, File::Create | File::Truncate);
+                f.write(payload, std::strlen(payload));
+                f.close();
+                return root;
+        }
 
-HttpRequest requestFor(const String &pathParam) {
-        HttpRequest req;
-        req.setMethod(HttpMethod::Get);
-        HashMap<String, String> pp;
-        pp.insert("path", pathParam);
-        req.setPathParams(pp);
-        Url u;
-        u.setPath("/static/" + pathParam);
-        req.setUrl(u);
-        return req;
-}
+        HttpRequest requestFor(const String &pathParam) {
+                HttpRequest req;
+                req.setMethod(HttpMethod::Get);
+                HashMap<String, String> pp;
+                pp.insert("path", pathParam);
+                req.setPathParams(pp);
+                Url u;
+                u.setPath("/static/" + pathParam);
+                req.setUrl(u);
+                return req;
+        }
 
 } // anonymous namespace
 
@@ -48,8 +48,8 @@ TEST_CASE("HttpFileHandler") {
 
         SUBCASE("serves an existing file") {
                 HttpFileHandler h{root};
-                HttpRequest  req = requestFor("hello.txt");
-                HttpResponse res;
+                HttpRequest     req = requestFor("hello.txt");
+                HttpResponse    res;
                 h.serve(req, res);
                 CHECK(res.status() == HttpStatus::Ok);
                 CHECK(res.hasBodyStream());
@@ -61,23 +61,23 @@ TEST_CASE("HttpFileHandler") {
 
         SUBCASE("404 for missing files") {
                 HttpFileHandler h{root};
-                HttpRequest  req = requestFor("not-there.txt");
-                HttpResponse res;
+                HttpRequest     req = requestFor("not-there.txt");
+                HttpResponse    res;
                 h.serve(req, res);
                 CHECK(res.status() == HttpStatus::NotFound);
         }
 
         SUBCASE("forbids path traversal") {
                 HttpFileHandler h{root};
-                HttpRequest  req = requestFor("../../etc/passwd");
-                HttpResponse res;
+                HttpRequest     req = requestFor("../../etc/passwd");
+                HttpResponse    res;
                 h.serve(req, res);
                 CHECK(res.status() == HttpStatus::Forbidden);
         }
 
         SUBCASE("HEAD returns headers without streamed body") {
                 HttpFileHandler h{root};
-                HttpRequest  req = requestFor("hello.txt");
+                HttpRequest     req = requestFor("hello.txt");
                 req.setMethod(HttpMethod::Head);
                 HttpResponse res;
                 h.serve(req, res);
@@ -88,7 +88,7 @@ TEST_CASE("HttpFileHandler") {
 
         SUBCASE("rejects non-GET/HEAD methods") {
                 HttpFileHandler h{root};
-                HttpRequest  req = requestFor("hello.txt");
+                HttpRequest     req = requestFor("hello.txt");
                 req.setMethod(HttpMethod::Post);
                 HttpResponse res;
                 h.serve(req, res);
@@ -99,7 +99,7 @@ TEST_CASE("HttpFileHandler") {
         SUBCASE("MIME type lookup uses extension") {
                 HttpFileHandler h{root};
                 CHECK(h.mimeType("foo.html").contains("text/html"));
-                CHECK(h.mimeType("foo.PNG")  == "image/png");
+                CHECK(h.mimeType("foo.PNG") == "image/png");
                 CHECK(h.mimeType("foo.json") == "application/json");
                 CHECK(h.mimeType("foo.unknown") == "application/octet-stream");
                 CHECK(h.mimeType("noext") == "application/octet-stream");
@@ -113,8 +113,8 @@ TEST_CASE("HttpFileHandler") {
 
         SUBCASE("If-None-Match yields 304") {
                 HttpFileHandler h{root};
-                HttpRequest  req = requestFor("hello.txt");
-                HttpResponse first;
+                HttpRequest     req = requestFor("hello.txt");
+                HttpResponse    first;
                 h.serve(req, first);
                 const String etag = first.headers().value("ETag");
                 REQUIRE_FALSE(etag.isEmpty());

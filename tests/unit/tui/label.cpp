@@ -34,7 +34,7 @@ TEST_CASE("TuiLabel: alignment") {
 }
 
 TEST_CASE("TuiLabel: sizeHint") {
-        TuiLabel label("Hello");
+        TuiLabel  label("Hello");
         Size2Di32 hint = label.sizeHint();
         CHECK(hint.width() == 5);
         CHECK(hint.height() == 1);

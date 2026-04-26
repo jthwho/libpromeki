@@ -11,14 +11,12 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-BufferIODevice::BufferIODevice(Buffer *buffer, ObjectBase *parent) :
-        IODevice(parent), _buffer(buffer) { }
+BufferIODevice::BufferIODevice(Buffer *buffer, ObjectBase *parent) : IODevice(parent), _buffer(buffer) {}
 
-BufferIODevice::BufferIODevice(ObjectBase *parent) :
-        IODevice(parent) { }
+BufferIODevice::BufferIODevice(ObjectBase *parent) : IODevice(parent) {}
 
 BufferIODevice::~BufferIODevice() {
-        if(isOpen()) close();
+        if (isOpen()) close();
 }
 
 void BufferIODevice::setBuffer(Buffer *buffer) {
@@ -27,21 +25,21 @@ void BufferIODevice::setBuffer(Buffer *buffer) {
 }
 
 Error BufferIODevice::open(OpenMode mode) {
-        if(isOpen()) return Error(Error::AlreadyOpen);
-        if(_buffer == nullptr) return Error(Error::Invalid);
+        if (isOpen()) return Error(Error::AlreadyOpen);
+        if (_buffer == nullptr) return Error(Error::Invalid);
         // When auto-grow is enabled, allocate an initial buffer if
         // the caller handed us an empty/invalid one.
-        if(!_buffer->isValid() && _autoGrow && (mode & WriteOnly)) {
+        if (!_buffer->isValid() && _autoGrow && (mode & WriteOnly)) {
                 *_buffer = Buffer(4096);
         }
-        if(!_buffer->isValid()) return Error(Error::Invalid);
+        if (!_buffer->isValid()) return Error(Error::Invalid);
         setOpenMode(mode);
         _pos = 0;
         return Error();
 }
 
 Error BufferIODevice::close() {
-        if(!isOpen()) return Error(Error::NotOpen);
+        if (!isOpen()) return Error(Error::NotOpen);
         aboutToCloseSignal.emit();
         setOpenMode(NotOpen);
         _pos = 0;
@@ -53,41 +51,38 @@ bool BufferIODevice::isOpen() const {
 }
 
 int64_t BufferIODevice::read(void *data, int64_t maxSize) {
-        if(!isOpen() || !isReadable()) return -1;
+        if (!isOpen() || !isReadable()) return -1;
         int64_t avail = static_cast<int64_t>(_buffer->size()) - _pos;
-        if(avail <= 0) return 0;
+        if (avail <= 0) return 0;
         int64_t toRead = std::min(maxSize, avail);
-        std::memcpy(data, static_cast<const uint8_t *>(_buffer->data()) + _pos,
-                static_cast<size_t>(toRead));
+        std::memcpy(data, static_cast<const uint8_t *>(_buffer->data()) + _pos, static_cast<size_t>(toRead));
         _pos += toRead;
         return toRead;
 }
 
 int64_t BufferIODevice::write(const void *data, int64_t maxSize) {
-        if(!isOpen() || !isWritable()) return -1;
+        if (!isOpen() || !isWritable()) return -1;
         int64_t endPos = _pos + maxSize;
-        if(endPos > static_cast<int64_t>(_buffer->availSize())) {
-                if(!_autoGrow) {
+        if (endPos > static_cast<int64_t>(_buffer->availSize())) {
+                if (!_autoGrow) {
                         setError(Error(Error::BufferTooSmall));
                         return -1;
                 }
                 // Grow: double current size or fit the write, whichever is larger.
                 size_t needed = static_cast<size_t>(endPos);
                 size_t newCap = _buffer->availSize();
-                if(newCap < 4096) newCap = 4096;
-                while(newCap < needed) newCap *= 2;
+                if (newCap < 4096) newCap = 4096;
+                while (newCap < needed) newCap *= 2;
                 Buffer grown(newCap);
-                if(_buffer->size() > 0) {
-                        _buffer->memSpace().copy(
-                                _buffer->allocation(), grown.allocation(), _buffer->size());
+                if (_buffer->size() > 0) {
+                        _buffer->memSpace().copy(_buffer->allocation(), grown.allocation(), _buffer->size());
                 }
                 grown.setSize(_buffer->size());
                 *_buffer = std::move(grown);
         }
-        std::memcpy(static_cast<uint8_t *>(_buffer->data()) + _pos, data,
-                static_cast<size_t>(maxSize));
+        std::memcpy(static_cast<uint8_t *>(_buffer->data()) + _pos, data, static_cast<size_t>(maxSize));
         _pos += maxSize;
-        if(static_cast<size_t>(_pos) > _buffer->size()) {
+        if (static_cast<size_t>(_pos) > _buffer->size()) {
                 _buffer->setSize(static_cast<size_t>(_pos));
         }
         bytesWrittenSignal.emit(maxSize);
@@ -95,7 +90,7 @@ int64_t BufferIODevice::write(const void *data, int64_t maxSize) {
 }
 
 int64_t BufferIODevice::bytesAvailable() const {
-        if(!isOpen()) return 0;
+        if (!isOpen()) return 0;
         int64_t avail = static_cast<int64_t>(_buffer->size()) - _pos;
         return avail > 0 ? avail : 0;
 }
@@ -105,13 +100,12 @@ bool BufferIODevice::isSequential() const {
 }
 
 Error BufferIODevice::seek(int64_t pos) {
-        if(!isOpen()) return Error(Error::NotOpen);
-        if(pos < 0) return Error(Error::OutOfRange);
+        if (!isOpen()) return Error(Error::NotOpen);
+        if (pos < 0) return Error(Error::OutOfRange);
         // Allow seeking up to availSize for writers, up to size for readers
-        int64_t limit = isWritable()
-                ? static_cast<int64_t>(_buffer->availSize())
-                : static_cast<int64_t>(_buffer->size());
-        if(pos > limit) return Error(Error::OutOfRange);
+        int64_t limit =
+                isWritable() ? static_cast<int64_t>(_buffer->availSize()) : static_cast<int64_t>(_buffer->size());
+        if (pos > limit) return Error(Error::OutOfRange);
         _pos = pos;
         return Error();
 }
@@ -121,12 +115,12 @@ int64_t BufferIODevice::pos() const {
 }
 
 Result<int64_t> BufferIODevice::size() const {
-        if(_buffer == nullptr) return makeError<int64_t>(Error(Error::Invalid));
+        if (_buffer == nullptr) return makeError<int64_t>(Error(Error::Invalid));
         return makeResult(static_cast<int64_t>(_buffer->size()));
 }
 
 bool BufferIODevice::atEnd() const {
-        if(!isOpen()) return true;
+        if (!isOpen()) return true;
         return _pos >= static_cast<int64_t>(_buffer->size());
 }
 

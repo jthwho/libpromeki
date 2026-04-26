@@ -45,7 +45,7 @@ TEST_CASE("FourCC: ordering") {
 }
 
 TEST_CASE("FourCC: constexpr construction") {
-        constexpr FourCC f("TEST");
+        constexpr FourCC   f("TEST");
         constexpr uint32_t v = f.value();
         CHECK(v != 0);
 }
@@ -60,7 +60,7 @@ TEST_CASE("FourCC: different codes have different values") {
 }
 
 TEST_CASE("FourCC: byte order is big-endian") {
-        FourCC f('A', 'B', 'C', 'D');
+        FourCC   f('A', 'B', 'C', 'D');
         uint32_t expected = (uint32_t('A') << 24) | (uint32_t('B') << 16) | (uint32_t('C') << 8) | uint32_t('D');
         CHECK(f.value() == expected);
 }

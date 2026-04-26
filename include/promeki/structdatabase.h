@@ -36,8 +36,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @tparam KeyType    The type used as the lookup key (must be convertible from 0 for the fallback).
  * @tparam StructType The struct type stored in the database; must have `id` and `name` members.
  */
-template<typename KeyType, typename StructType>
-class StructDatabase {
+template <typename KeyType, typename StructType> class StructDatabase {
         public:
                 using Database = promeki::Map<KeyType, StructType>;
                 using NameDatabase = promeki::Map<String, KeyType>;
@@ -47,9 +46,7 @@ class StructDatabase {
 
                 /** @brief Constructs a database and populates it from an initializer list.
                  *  @param list Initializer list of StructType entries to load. */
-                StructDatabase(std::initializer_list<StructType> list) {
-                        load(list);
-                }
+                StructDatabase(std::initializer_list<StructType> list) { load(list); }
 
                 /** @brief Adds a single entry to the database.
                  *  @param val The struct entry to add (keyed by val.id). */
@@ -64,9 +61,9 @@ class StructDatabase {
                  *  @return A const reference to the matching entry, or the fallback entry. */
                 const StructType &get(const KeyType &id) const {
                         auto it = _db.find(id);
-                        if(it != _db.end()) return it->second;
+                        if (it != _db.end()) return it->second;
                         it = _db.find(static_cast<KeyType>(0));
-                        if(it != _db.end()) return it->second;
+                        if (it != _db.end()) return it->second;
                         static const StructType fallback{};
                         return fallback;
                 }
@@ -77,14 +74,14 @@ class StructDatabase {
                  *          @c Error::NotFound when @p name is not registered. */
                 Result<KeyType> lookupKeyByName(const String &name) const {
                         auto it = _nameDb.find(name);
-                        if(it == _nameDb.end()) return Result<KeyType>(KeyType{}, Error::NotFound);
+                        if (it == _nameDb.end()) return Result<KeyType>(KeyType{}, Error::NotFound);
                         return Result<KeyType>(it->second, Error::Ok);
                 }
-                        
+
                 /** @brief Loads all entries from an initializer list.
                  *  @param list The initializer list of entries to add. */
                 void load(std::initializer_list<StructType> list) {
-                        for(const auto &item : list) add(item);
+                        for (const auto &item : list) add(item);
                         return;
                 }
 
@@ -99,4 +96,3 @@ class StructDatabase {
 };
 
 PROMEKI_NAMESPACE_END
-

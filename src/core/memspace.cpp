@@ -36,21 +36,21 @@ MemSpace::ID MemSpace::registerType() {
 
 MemSpace::Stats::Snapshot MemSpace::Stats::snapshot() const {
         Snapshot s;
-        s.allocCount     = allocCount.value();
-        s.allocBytes     = allocBytes.value();
+        s.allocCount = allocCount.value();
+        s.allocBytes = allocBytes.value();
         s.allocFailCount = allocFailCount.value();
-        s.maxAllocBytes  = maxAllocBytes.value();
-        s.releaseCount   = releaseCount.value();
-        s.releaseBytes   = releaseBytes.value();
-        s.copyCount      = copyCount.value();
-        s.copyBytes      = copyBytes.value();
-        s.copyFailCount  = copyFailCount.value();
-        s.fillCount      = fillCount.value();
-        s.fillBytes      = fillBytes.value();
-        s.liveCount      = liveCount.value();
-        s.liveBytes      = liveBytes.value();
-        s.peakCount      = peakCount.value();
-        s.peakBytes      = peakBytes.value();
+        s.maxAllocBytes = maxAllocBytes.value();
+        s.releaseCount = releaseCount.value();
+        s.releaseBytes = releaseBytes.value();
+        s.copyCount = copyCount.value();
+        s.copyBytes = copyBytes.value();
+        s.copyFailCount = copyFailCount.value();
+        s.fillCount = fillCount.value();
+        s.fillBytes = fillBytes.value();
+        s.liveCount = liveCount.value();
+        s.liveBytes = liveBytes.value();
+        s.peakCount = peakCount.value();
+        s.peakBytes = peakBytes.value();
         return s;
 }
 
@@ -78,7 +78,7 @@ void MemSpace::Stats::recordAlloc(uint64_t bytes) {
 
         // Update the max-single-alloc watermark via CAS.
         uint64_t prevMax = maxAllocBytes.value();
-        while(bytes > prevMax && !maxAllocBytes.compareAndSwap(prevMax, bytes)) {
+        while (bytes > prevMax && !maxAllocBytes.compareAndSwap(prevMax, bytes)) {
                 // prevMax is updated by compareAndSwap on failure.
         }
 
@@ -87,13 +87,11 @@ void MemSpace::Stats::recordAlloc(uint64_t bytes) {
         const uint64_t newLiveBytes = liveBytes.fetchAndAdd(bytes) + bytes;
 
         uint64_t prevPeakCount = peakCount.value();
-        while(newLiveCount > prevPeakCount
-              && !peakCount.compareAndSwap(prevPeakCount, newLiveCount)) {
+        while (newLiveCount > prevPeakCount && !peakCount.compareAndSwap(prevPeakCount, newLiveCount)) {
                 // prevPeakCount updated by compareAndSwap on failure.
         }
         uint64_t prevPeakBytes = peakBytes.value();
-        while(newLiveBytes > prevPeakBytes
-              && !peakBytes.compareAndSwap(prevPeakBytes, newLiveBytes)) {
+        while (newLiveBytes > prevPeakBytes && !peakBytes.compareAndSwap(prevPeakBytes, newLiveBytes)) {
                 // prevPeakBytes updated by compareAndSwap on failure.
         }
 }
@@ -110,109 +108,109 @@ void MemSpace::Stats::recordRelease(uint64_t bytes) {
 // ---------------------------------------------------------------------------
 
 struct MemSpaceRegistry {
-        Map<MemSpace::ID, MemSpace::Ops> entries;
+                Map<MemSpace::ID, MemSpace::Ops> entries;
 
-        // Stats are heap-allocated and stashed in Ops::stats; the
-        // registry owns them and frees them on destruction so a clean
-        // shutdown leaves no stranded allocations under valgrind.
-        static MemSpace::Stats *makeStats() { return new MemSpace::Stats(); }
+                // Stats are heap-allocated and stashed in Ops::stats; the
+                // registry owns them and frees them on destruction so a clean
+                // shutdown leaves no stranded allocations under valgrind.
+                static MemSpace::Stats *makeStats() { return new MemSpace::Stats(); }
 
-        ~MemSpaceRegistry() {
-                for(auto it = entries.begin(); it != entries.end(); ++it) {
-                        delete it->second.stats;
-                        it->second.stats = nullptr;
+                ~MemSpaceRegistry() {
+                        for (auto it = entries.begin(); it != entries.end(); ++it) {
+                                delete it->second.stats;
+                                it->second.stats = nullptr;
+                        }
                 }
-        }
 
-        MemSpaceRegistry() {
-                entries[MemSpace::System] = {
-                        .id = MemSpace::System,
-                        .name = "System",
-                        .isHostAccessible = [](const MemAllocation &) -> bool { return true; },
-                        .alloc = [](MemAllocation &a) -> void {
-                                // Wrapper guarantees: a.size > 0.
-                                PROMEKI_ASSERT(a.size > 0);
-                                size_t allocSize = (a.size + a.align - 1) & ~(a.align - 1);
-                                a.ptr = std::aligned_alloc(a.align, allocSize);
-                                PROMEKI_ASSERT(a.ptr != nullptr);
-                                //promekiDebug("%p: system allocate %d (aligned %d), align %d", a.ptr, (int)a.size, (int)allocSize, (int)a.align);
-                        },
-                        .release = [](MemAllocation &a) -> void {
-                                // Wrapper guarantees: a.ptr != nullptr.
-                                PROMEKI_ASSERT(a.ptr != nullptr);
-                                //promekiDebug("%p: system free", a.ptr);
-                                std::free(a.ptr);
-                        },
-                        .copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
-                                // Wrapper guarantees: src.ptr and dst.ptr are non-null.
-                                PROMEKI_ASSERT(src.ptr != nullptr && dst.ptr != nullptr);
-                                MemSpace::ID did = dst.ms.id();
-                                if(did == MemSpace::System || did == MemSpace::SystemSecure) {
-                                        std::memcpy(dst.ptr, src.ptr, bytes);
+                MemSpaceRegistry() {
+                        entries[MemSpace::System] = {
+                                .id = MemSpace::System,
+                                .name = "System",
+                                .isHostAccessible = [](const MemAllocation &) -> bool { return true; },
+                                .alloc = [](MemAllocation &a) -> void {
+                                        // Wrapper guarantees: a.size > 0.
+                                        PROMEKI_ASSERT(a.size > 0);
+                                        size_t allocSize = (a.size + a.align - 1) & ~(a.align - 1);
+                                        a.ptr = std::aligned_alloc(a.align, allocSize);
+                                        PROMEKI_ASSERT(a.ptr != nullptr);
+                                        //promekiDebug("%p: system allocate %d (aligned %d), align %d", a.ptr, (int)a.size, (int)allocSize, (int)a.align);
+                                },
+                                .release = [](MemAllocation &a) -> void {
+                                        // Wrapper guarantees: a.ptr != nullptr.
+                                        PROMEKI_ASSERT(a.ptr != nullptr);
+                                        //promekiDebug("%p: system free", a.ptr);
+                                        std::free(a.ptr);
+                                },
+                                .copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
+                                        // Wrapper guarantees: src.ptr and dst.ptr are non-null.
+                                        PROMEKI_ASSERT(src.ptr != nullptr && dst.ptr != nullptr);
+                                        MemSpace::ID did = dst.ms.id();
+                                        if (did == MemSpace::System || did == MemSpace::SystemSecure) {
+                                                std::memcpy(dst.ptr, src.ptr, bytes);
+                                                return Error::Ok;
+                                        }
+                                        promekiErr(
+                                                "(%p -> %p, %llu bytes) Copy from System to memspace %d not supported",
+                                                src.ptr, dst.ptr, (unsigned long long)bytes, dst.ms.id());
+                                        return Error::NotSupported;
+                                },
+                                .fill = [](void *ptr, size_t bytes, char value) -> Error {
+                                        // Wrapper guarantees: ptr != nullptr.
+                                        PROMEKI_ASSERT(ptr != nullptr);
+                                        std::memset(ptr, value, bytes);
                                         return Error::Ok;
-                                }
-                                promekiErr("(%p -> %p, %llu bytes) Copy from System to memspace %d not supported",
-                                        src.ptr, dst.ptr, (unsigned long long)bytes, dst.ms.id());
-                                return Error::NotSupported;
-                        },
-                        .fill = [](void *ptr, size_t bytes, char value) -> Error {
-                                // Wrapper guarantees: ptr != nullptr.
-                                PROMEKI_ASSERT(ptr != nullptr);
-                                std::memset(ptr, value, bytes);
-                                return Error::Ok;
-                        },
-                        .stats = makeStats()
-                };
+                                },
+                                .stats = makeStats()};
 
-                entries[MemSpace::SystemSecure] = {
-                        .id = MemSpace::SystemSecure,
-                        .name = "SystemSecure",
-                        .isHostAccessible = [](const MemAllocation &) -> bool { return true; },
-                        .alloc = [](MemAllocation &a) -> void {
-                                // Wrapper guarantees: a.size > 0.
-                                PROMEKI_ASSERT(a.size > 0);
-                                size_t allocSize = (a.size + a.align - 1) & ~(a.align - 1);
-                                a.ptr = std::aligned_alloc(a.align, allocSize);
-                                PROMEKI_ASSERT(a.ptr != nullptr);
-                                //promekiDebug("%p: secure allocate %d (aligned %d), align %d", a.ptr, (int)a.size, (int)allocSize, (int)a.align);
-                                Error err = promeki::secureLock(a.ptr, allocSize);
-                                if(err.isError()) {
-                                        promekiWarn("%p: secureLock failed (%s), buffer may be swapped to disk",
-                                                a.ptr, err.desc().cstr());
-                                }
-                        },
-                        .release = [](MemAllocation &a) -> void {
-                                // Wrapper guarantees: a.ptr != nullptr.
-                                PROMEKI_ASSERT(a.ptr != nullptr);
-                                //promekiDebug("%p: secure free", a.ptr);
-                                promeki::secureZero(a.ptr, a.size);
-                                Error err = promeki::secureUnlock(a.ptr, a.size);
-                                if(err.isError()) {
-                                        promekiWarn("%p: secureUnlock failed (%s)", a.ptr, err.desc().cstr());
-                                }
-                                std::free(a.ptr);
-                        },
-                        .copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
-                                // Wrapper guarantees: src.ptr and dst.ptr are non-null.
-                                PROMEKI_ASSERT(src.ptr != nullptr && dst.ptr != nullptr);
-                                MemSpace::ID did = dst.ms.id();
-                                if(did == MemSpace::System || did == MemSpace::SystemSecure) {
-                                        std::memcpy(dst.ptr, src.ptr, bytes);
+                        entries[MemSpace::SystemSecure] = {
+                                .id = MemSpace::SystemSecure,
+                                .name = "SystemSecure",
+                                .isHostAccessible = [](const MemAllocation &) -> bool { return true; },
+                                .alloc = [](MemAllocation &a) -> void {
+                                        // Wrapper guarantees: a.size > 0.
+                                        PROMEKI_ASSERT(a.size > 0);
+                                        size_t allocSize = (a.size + a.align - 1) & ~(a.align - 1);
+                                        a.ptr = std::aligned_alloc(a.align, allocSize);
+                                        PROMEKI_ASSERT(a.ptr != nullptr);
+                                        //promekiDebug("%p: secure allocate %d (aligned %d), align %d", a.ptr, (int)a.size, (int)allocSize, (int)a.align);
+                                        Error err = promeki::secureLock(a.ptr, allocSize);
+                                        if (err.isError()) {
+                                                promekiWarn("%p: secureLock failed (%s), buffer may be swapped to disk",
+                                                            a.ptr, err.desc().cstr());
+                                        }
+                                },
+                                .release = [](MemAllocation &a) -> void {
+                                        // Wrapper guarantees: a.ptr != nullptr.
+                                        PROMEKI_ASSERT(a.ptr != nullptr);
+                                        //promekiDebug("%p: secure free", a.ptr);
+                                        promeki::secureZero(a.ptr, a.size);
+                                        Error err = promeki::secureUnlock(a.ptr, a.size);
+                                        if (err.isError()) {
+                                                promekiWarn("%p: secureUnlock failed (%s)", a.ptr, err.desc().cstr());
+                                        }
+                                        std::free(a.ptr);
+                                },
+                                .copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
+                                        // Wrapper guarantees: src.ptr and dst.ptr are non-null.
+                                        PROMEKI_ASSERT(src.ptr != nullptr && dst.ptr != nullptr);
+                                        MemSpace::ID did = dst.ms.id();
+                                        if (did == MemSpace::System || did == MemSpace::SystemSecure) {
+                                                std::memcpy(dst.ptr, src.ptr, bytes);
+                                                return Error::Ok;
+                                        }
+                                        promekiErr("(%p -> %p, %llu bytes) Copy from SystemSecure to memspace %d not "
+                                                   "supported",
+                                                   src.ptr, dst.ptr, (unsigned long long)bytes, dst.ms.id());
+                                        return Error::NotSupported;
+                                },
+                                .fill = [](void *ptr, size_t bytes, char value) -> Error {
+                                        // Wrapper guarantees: ptr != nullptr.
+                                        PROMEKI_ASSERT(ptr != nullptr);
+                                        std::memset(ptr, value, bytes);
                                         return Error::Ok;
-                                }
-                                promekiErr("(%p -> %p, %llu bytes) Copy from SystemSecure to memspace %d not supported",
-                                        src.ptr, dst.ptr, (unsigned long long)bytes, dst.ms.id());
-                                return Error::NotSupported;
-                        },
-                        .fill = [](void *ptr, size_t bytes, char value) -> Error {
-                                // Wrapper guarantees: ptr != nullptr.
-                                PROMEKI_ASSERT(ptr != nullptr);
-                                std::memset(ptr, value, bytes);
-                                return Error::Ok;
-                        },
-                        .stats = makeStats()
-                };
-        }
+                                },
+                                .stats = makeStats()};
+                }
 };
 
 static MemSpaceRegistry &registry() {
@@ -222,8 +220,8 @@ static MemSpaceRegistry &registry() {
 
 const MemSpace::Ops *MemSpace::lookup(ID id) {
         auto &reg = registry();
-        auto it = reg.entries.find(id);
-        if(it != reg.entries.end()) return &it->second;
+        auto  it = reg.entries.find(id);
+        if (it != reg.entries.end()) return &it->second;
         return &reg.entries[System];
 }
 
@@ -232,70 +230,58 @@ void MemSpace::registerData(Ops &&ops) {
         // Users don't need to touch Ops::stats — allocate one here
         // if they didn't.  The Stats object is owned by the registry
         // and lives for the process lifetime.
-        if(ops.stats == nullptr) ops.stats = MemSpaceRegistry::makeStats();
+        if (ops.stats == nullptr) ops.stats = MemSpaceRegistry::makeStats();
         reg.entries[ops.id] = std::move(ops);
 }
 
 StringList MemSpace::statsReport() const {
         MemSpace::Stats::Snapshot s = d->stats->snapshot();
-        StringList lines;
-        lines.pushToBack(String::sprintf("MemSpace[%d:%s] stats:",
-                (int)d->id, d->name.cstr()));
-        lines.pushToBack(String::sprintf(
-                "  alloc:   %llu calls, %s  (fail: %llu, max single: %s)",
-                (unsigned long long)s.allocCount,
-                Units::fromByteCount(s.allocBytes).cstr(),
-                (unsigned long long)s.allocFailCount,
-                Units::fromByteCount(s.maxAllocBytes).cstr()));
-        lines.pushToBack(String::sprintf(
-                "  release: %llu calls, %s",
-                (unsigned long long)s.releaseCount,
-                Units::fromByteCount(s.releaseBytes).cstr()));
-        lines.pushToBack(String::sprintf(
-                "  live:    %llu outstanding, %s  (peak: %llu, %s)",
-                (unsigned long long)s.liveCount,
-                Units::fromByteCount(s.liveBytes).cstr(),
-                (unsigned long long)s.peakCount,
-                Units::fromByteCount(s.peakBytes).cstr()));
-        lines.pushToBack(String::sprintf(
-                "  copy:    %llu calls, %s  (fail: %llu)",
-                (unsigned long long)s.copyCount,
-                Units::fromByteCount(s.copyBytes).cstr(),
-                (unsigned long long)s.copyFailCount));
-        lines.pushToBack(String::sprintf(
-                "  fill:    %llu calls, %s",
-                (unsigned long long)s.fillCount,
-                Units::fromByteCount(s.fillBytes).cstr()));
+        StringList                lines;
+        lines.pushToBack(String::sprintf("MemSpace[%d:%s] stats:", (int)d->id, d->name.cstr()));
+        lines.pushToBack(String::sprintf("  alloc:   %llu calls, %s  (fail: %llu, max single: %s)",
+                                         (unsigned long long)s.allocCount, Units::fromByteCount(s.allocBytes).cstr(),
+                                         (unsigned long long)s.allocFailCount,
+                                         Units::fromByteCount(s.maxAllocBytes).cstr()));
+        lines.pushToBack(String::sprintf("  release: %llu calls, %s", (unsigned long long)s.releaseCount,
+                                         Units::fromByteCount(s.releaseBytes).cstr()));
+        lines.pushToBack(String::sprintf("  live:    %llu outstanding, %s  (peak: %llu, %s)",
+                                         (unsigned long long)s.liveCount, Units::fromByteCount(s.liveBytes).cstr(),
+                                         (unsigned long long)s.peakCount, Units::fromByteCount(s.peakBytes).cstr()));
+        lines.pushToBack(String::sprintf("  copy:    %llu calls, %s  (fail: %llu)", (unsigned long long)s.copyCount,
+                                         Units::fromByteCount(s.copyBytes).cstr(),
+                                         (unsigned long long)s.copyFailCount));
+        lines.pushToBack(String::sprintf("  fill:    %llu calls, %s", (unsigned long long)s.fillCount,
+                                         Units::fromByteCount(s.fillBytes).cstr()));
         return lines;
 }
 
 StringList MemSpace::allStatsReport() {
         StringList lines;
-        for(ID id : registeredIDs()) {
+        for (ID id : registeredIDs()) {
                 StringList sub = MemSpace(id).statsReport();
-                for(const String &line : sub) lines.pushToBack(line);
+                for (const String &line : sub) lines.pushToBack(line);
         }
         return lines;
 }
 
 void MemSpace::logStats() const {
         StringList lines = statsReport();
-        for(const String &line : lines) {
+        for (const String &line : lines) {
                 promekiInfo("%s", line.cstr());
         }
 }
 
 void MemSpace::logAllStats() {
         StringList lines = allStatsReport();
-        for(const String &line : lines) {
+        for (const String &line : lines) {
                 promekiInfo("%s", line.cstr());
         }
 }
 
 MemSpace::IDList MemSpace::registeredIDs() {
-        auto &reg = registry();
+        auto  &reg = registry();
         IDList ret;
-        for(const auto &[id, data] : reg.entries) {
+        for (const auto &[id, data] : reg.entries) {
                 ret.pushToBack(id);
         }
         return ret;

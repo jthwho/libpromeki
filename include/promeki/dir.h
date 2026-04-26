@@ -47,19 +47,19 @@ class Dir {
                  * @brief Constructs a Dir for the given path.
                  * @param path The directory path.
                  */
-                Dir(const FilePath &path) : _path(path) { }
+                Dir(const FilePath &path) : _path(path) {}
 
                 /**
                  * @brief Constructs a Dir from a String path.
                  * @param path The directory path string.
                  */
-                Dir(const String &path) : _path(path) { }
+                Dir(const String &path) : _path(path) {}
 
                 /**
                  * @brief Constructs a Dir from a C string path.
                  * @param path The directory path string.
                  */
-                Dir(const char *path) : _path(path) { }
+                Dir(const char *path) : _path(path) {}
 
                 /**
                  * @brief Returns the directory path.

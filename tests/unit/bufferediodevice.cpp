@@ -17,13 +17,12 @@ using namespace promeki;
  * @brief In-memory BufferedIODevice implementation for testing.
  */
 class BufferedMemoryDevice : public BufferedIODevice {
-        PROMEKI_OBJECT(BufferedMemoryDevice, BufferedIODevice)
+                PROMEKI_OBJECT(BufferedMemoryDevice, BufferedIODevice)
         public:
-                BufferedMemoryDevice(ObjectBase *parent = nullptr) :
-                        BufferedIODevice(parent) { }
+                BufferedMemoryDevice(ObjectBase *parent = nullptr) : BufferedIODevice(parent) {}
 
                 Error open(OpenMode mode) override {
-                        if(isOpen()) return Error(Error::AlreadyOpen);
+                        if (isOpen()) return Error(Error::AlreadyOpen);
                         setOpenMode(mode);
                         _pos = 0;
                         ensureReadBuffer();
@@ -38,15 +37,13 @@ class BufferedMemoryDevice : public BufferedIODevice {
                         return Error();
                 }
 
-                bool isOpen() const override {
-                        return openMode() != NotOpen;
-                }
+                bool isOpen() const override { return openMode() != NotOpen; }
 
                 int64_t write(const void *data, int64_t maxSize) override {
-                        if(!isOpen() || !isWritable()) return -1;
+                        if (!isOpen() || !isWritable()) return -1;
                         const uint8_t *src = static_cast<const uint8_t *>(data);
-                        int64_t endPos = _pos + maxSize;
-                        if(endPos > static_cast<int64_t>(_storage.size())) {
+                        int64_t        endPos = _pos + maxSize;
+                        if (endPos > static_cast<int64_t>(_storage.size())) {
                                 _storage.resize(static_cast<size_t>(endPos));
                         }
                         std::memcpy(_storage.data() + _pos, src, static_cast<size_t>(maxSize));
@@ -73,7 +70,7 @@ class BufferedMemoryDevice : public BufferedIODevice {
                 int64_t readFromDevice(void *data, int64_t maxSize) override {
                         ++_readFromDeviceCount;
                         int64_t avail = static_cast<int64_t>(_storage.size()) - _pos;
-                        if(avail <= 0) return 0;
+                        if (avail <= 0) return 0;
                         int64_t toRead = std::min(maxSize, avail);
                         std::memcpy(data, _storage.data() + _pos, static_cast<size_t>(toRead));
                         _pos += toRead;
@@ -87,8 +84,8 @@ class BufferedMemoryDevice : public BufferedIODevice {
 
         private:
                 std::vector<uint8_t> _storage;
-                int64_t _pos = 0;
-                int _readFromDeviceCount = 0;
+                int64_t              _pos = 0;
+                int                  _readFromDeviceCount = 0;
 };
 
 TEST_CASE("BufferedIODevice: default state") {
@@ -99,11 +96,11 @@ TEST_CASE("BufferedIODevice: default state") {
 
 TEST_CASE("BufferedIODevice: buffered read") {
         BufferedMemoryDevice dev;
-        const char *data = "Hello, BufferedIODevice!";
+        const char          *data = "Hello, BufferedIODevice!";
         dev.setData(data, 24);
         dev.open(IODevice::ReadOnly);
 
-        char buf[25] = {};
+        char    buf[25] = {};
         int64_t n = dev.read(buf, 24);
         CHECK(n == 24);
         CHECK(std::strcmp(buf, "Hello, BufferedIODevice!") == 0);
@@ -113,7 +110,7 @@ TEST_CASE("BufferedIODevice: buffered read") {
 
 TEST_CASE("BufferedIODevice: readLine with newline") {
         BufferedMemoryDevice dev;
-        const char *data = "line1\nline2\nline3\n";
+        const char          *data = "line1\nline2\nline3\n";
         dev.setData(data, std::strlen(data));
         dev.open(IODevice::ReadOnly);
 
@@ -132,7 +129,7 @@ TEST_CASE("BufferedIODevice: readLine with newline") {
 
 TEST_CASE("BufferedIODevice: readLine without trailing newline") {
         BufferedMemoryDevice dev;
-        const char *data = "no newline";
+        const char          *data = "no newline";
         dev.setData(data, std::strlen(data));
         dev.open(IODevice::ReadOnly);
 
@@ -146,7 +143,7 @@ TEST_CASE("BufferedIODevice: readLine without trailing newline") {
 
 TEST_CASE("BufferedIODevice: readLine maxLength") {
         BufferedMemoryDevice dev;
-        const char *data = "a very long line\n";
+        const char          *data = "a very long line\n";
         dev.setData(data, std::strlen(data));
         dev.open(IODevice::ReadOnly);
 
@@ -160,7 +157,7 @@ TEST_CASE("BufferedIODevice: readLine maxLength") {
 
 TEST_CASE("BufferedIODevice: readAll") {
         BufferedMemoryDevice dev;
-        const char *data = "all the data here";
+        const char          *data = "all the data here";
         dev.setData(data, std::strlen(data));
         dev.open(IODevice::ReadOnly);
 
@@ -174,7 +171,7 @@ TEST_CASE("BufferedIODevice: readAll") {
 
 TEST_CASE("BufferedIODevice: readBytes") {
         BufferedMemoryDevice dev;
-        const char *data = "0123456789";
+        const char          *data = "0123456789";
         dev.setData(data, 10);
         dev.open(IODevice::ReadOnly);
 
@@ -188,7 +185,7 @@ TEST_CASE("BufferedIODevice: readBytes") {
 
 TEST_CASE("BufferedIODevice: canReadLine") {
         BufferedMemoryDevice dev;
-        const char *data = "hello\nworld";
+        const char          *data = "hello\nworld";
         dev.setData(data, std::strlen(data));
         dev.open(IODevice::ReadOnly);
 
@@ -208,7 +205,7 @@ TEST_CASE("BufferedIODevice: canReadLine") {
 
 TEST_CASE("BufferedIODevice: peek void* overload") {
         BufferedMemoryDevice dev;
-        const char *data = "peek test";
+        const char          *data = "peek test";
         dev.setData(data, 9);
         dev.open(IODevice::ReadOnly);
 
@@ -218,7 +215,7 @@ TEST_CASE("BufferedIODevice: peek void* overload") {
         CHECK(tmp[0] == 'p');
 
         // Peek should not consume data
-        char peekBuf[4] = {};
+        char    peekBuf[4] = {};
         int64_t n = dev.peek(peekBuf, 4);
         CHECK(n == 4);
         CHECK(std::memcmp(peekBuf, "eek ", 4) == 0);
@@ -233,7 +230,7 @@ TEST_CASE("BufferedIODevice: peek void* overload") {
 
 TEST_CASE("BufferedIODevice: peek Buffer overload") {
         BufferedMemoryDevice dev;
-        const char *data = "buffer peek";
+        const char          *data = "buffer peek";
         dev.setData(data, 11);
         dev.open(IODevice::ReadOnly);
 
@@ -256,7 +253,7 @@ TEST_CASE("BufferedIODevice: peek Buffer overload") {
 
 TEST_CASE("BufferedIODevice: bytesAvailable includes buffered data") {
         BufferedMemoryDevice dev;
-        const char *data = "bytesavail";
+        const char          *data = "bytesavail";
         dev.setData(data, 10);
         dev.open(IODevice::ReadOnly);
 
@@ -277,14 +274,14 @@ TEST_CASE("BufferedIODevice: large read bypasses buffer") {
         BufferedMemoryDevice dev;
         // Create data larger than the default buffer (8192)
         std::vector<uint8_t> bigData(16384);
-        for(size_t i = 0; i < bigData.size(); i++) {
+        for (size_t i = 0; i < bigData.size(); i++) {
                 bigData[i] = static_cast<uint8_t>(i & 0xFF);
         }
         dev.setData(bigData.data(), bigData.size());
         dev.open(IODevice::ReadOnly);
 
         std::vector<uint8_t> readBuf(16384);
-        int64_t n = dev.read(readBuf.data(), 16384);
+        int64_t              n = dev.read(readBuf.data(), 16384);
         CHECK(n == 16384);
         CHECK(std::memcmp(readBuf.data(), bigData.data(), 16384) == 0);
 
@@ -293,7 +290,7 @@ TEST_CASE("BufferedIODevice: large read bypasses buffer") {
 
 TEST_CASE("BufferedIODevice: setReadBuffer before open succeeds") {
         BufferedMemoryDevice dev;
-        Buffer customBuf(4096);
+        Buffer               customBuf(4096);
         CHECK(customBuf.isHostAccessible());
         Error err = dev.setReadBuffer(std::move(customBuf));
         CHECK(err.isOk());
@@ -302,7 +299,7 @@ TEST_CASE("BufferedIODevice: setReadBuffer before open succeeds") {
 
 TEST_CASE("BufferedIODevice: setReadBuffer with secure memory succeeds") {
         BufferedMemoryDevice dev;
-        Buffer secureBuf(4096, Buffer::DefaultAlign, MemSpace::SystemSecure);
+        Buffer               secureBuf(4096, Buffer::DefaultAlign, MemSpace::SystemSecure);
         CHECK(secureBuf.isHostAccessible());
         Error err = dev.setReadBuffer(std::move(secureBuf));
         CHECK(err.isOk());
@@ -315,7 +312,7 @@ TEST_CASE("BufferedIODevice: setReadBuffer while open returns error") {
         dev.open(IODevice::ReadOnly);
 
         Buffer customBuf(4096);
-        Error err = dev.setReadBuffer(std::move(customBuf));
+        Error  err = dev.setReadBuffer(std::move(customBuf));
         CHECK(err.code() == Error::AlreadyOpen);
 
         dev.close();
@@ -323,7 +320,7 @@ TEST_CASE("BufferedIODevice: setReadBuffer while open returns error") {
 
 TEST_CASE("BufferedIODevice: buffer reuse across close/reopen") {
         BufferedMemoryDevice dev;
-        const char *data1 = "first";
+        const char          *data1 = "first";
         dev.setData(data1, 5);
         dev.open(IODevice::ReadOnly);
 
@@ -364,7 +361,7 @@ TEST_CASE("BufferedIODevice: stale buffer data does not leak across sessions") {
         dev.setData(data2, 2);
         dev.open(IODevice::ReadOnly);
 
-        char buf2[3] = {};
+        char    buf2[3] = {};
         int64_t n = dev.read(buf2, 2);
         CHECK(n == 2);
         CHECK(buf2[0] == 'X');
@@ -389,7 +386,7 @@ TEST_CASE("BufferedIODevice: write then read across reopen") {
 
         // Session 2: read it back
         dev.open(IODevice::ReadOnly);
-        char buf[6] = {};
+        char    buf[6] = {};
         int64_t n = dev.read(buf, 5);
         CHECK(n == 5);
         CHECK(std::strcmp(buf, "hello") == 0);
@@ -453,7 +450,7 @@ TEST_CASE("BufferedIODevice: peek resets correctly across sessions") {
         char tmp[3];
         dev.read(tmp, 3);
 
-        char peekBuf[3] = {};
+        char    peekBuf[3] = {};
         int64_t pn = dev.peek(peekBuf, 3);
         CHECK(pn == 3);
         CHECK(std::memcmp(peekBuf, "DEF", 3) == 0);
@@ -501,7 +498,7 @@ TEST_CASE("BufferedIODevice: peek on empty buffer") {
         BufferedMemoryDevice dev;
         dev.open(IODevice::ReadOnly);
 
-        char buf[4];
+        char    buf[4];
         int64_t n = dev.peek(buf, 4);
         CHECK(n == 0);
 
@@ -513,19 +510,19 @@ TEST_CASE("BufferedIODevice: peek on empty buffer") {
 
 TEST_CASE("BufferedIODevice: multiple small reads") {
         BufferedMemoryDevice dev;
-        const char *data = "ABCDEFGHIJ";
+        const char          *data = "ABCDEFGHIJ";
         dev.setData(data, 10);
         dev.open(IODevice::ReadOnly);
 
-        for(int i = 0; i < 10; i++) {
-                char c;
+        for (int i = 0; i < 10; i++) {
+                char    c;
                 int64_t n = dev.read(&c, 1);
                 CHECK(n == 1);
                 CHECK(c == ('A' + i));
         }
 
         // Should be at end now
-        char c;
+        char    c;
         int64_t n = dev.read(&c, 1);
         CHECK(n == 0);
 
@@ -536,7 +533,7 @@ TEST_CASE("BufferedIODevice: read on write-only returns -1") {
         BufferedMemoryDevice dev;
         dev.open(IODevice::WriteOnly);
 
-        char buf[4];
+        char    buf[4];
         int64_t n = dev.read(buf, 4);
         CHECK(n == -1);
 
@@ -556,20 +553,20 @@ TEST_CASE("BufferedIODevice: readBytes zero returns empty") {
 
 TEST_CASE("BufferedIODevice: readLine on non-open device") {
         BufferedMemoryDevice dev;
-        Buffer line = dev.readLine();
+        Buffer               line = dev.readLine();
         CHECK_FALSE(line.isValid());
 }
 
 TEST_CASE("BufferedIODevice: readAll on non-open device") {
         BufferedMemoryDevice dev;
-        Buffer all = dev.readAll();
+        Buffer               all = dev.readAll();
         CHECK_FALSE(all.isValid());
 }
 
 TEST_CASE("BufferedIODevice: peek on non-open device") {
         BufferedMemoryDevice dev;
-        char buf[4];
-        int64_t n = dev.peek(buf, 4);
+        char                 buf[4];
+        int64_t              n = dev.peek(buf, 4);
         CHECK(n == -1);
 
         Buffer peeked = dev.peek(4);
@@ -624,13 +621,13 @@ TEST_CASE("BufferedIODevice: unbuffered defaults to false") {
 
 TEST_CASE("BufferedIODevice: unbuffered read goes directly to device") {
         BufferedMemoryDevice dev;
-        const char *data = "direct read test";
+        const char          *data = "direct read test";
         dev.setData(data, std::strlen(data));
         dev.setUnbuffered(true);
         dev.open(IODevice::ReadOnly);
 
         dev.resetReadFromDeviceCount();
-        char buf[17] = {};
+        char    buf[17] = {};
         int64_t n = dev.read(buf, 16);
         CHECK(n == 16);
         CHECK(std::strcmp(buf, "direct read test") == 0);
@@ -643,7 +640,7 @@ TEST_CASE("BufferedIODevice: unbuffered read goes directly to device") {
 
 TEST_CASE("BufferedIODevice: unbuffered readLine") {
         BufferedMemoryDevice dev;
-        const char *data = "line1\nline2\nline3";
+        const char          *data = "line1\nline2\nline3";
         dev.setData(data, std::strlen(data));
         dev.setUnbuffered(true);
         dev.open(IODevice::ReadOnly);
@@ -669,7 +666,7 @@ TEST_CASE("BufferedIODevice: unbuffered readLine") {
 
 TEST_CASE("BufferedIODevice: unbuffered readLine maxLength") {
         BufferedMemoryDevice dev;
-        const char *data = "a very long line\n";
+        const char          *data = "a very long line\n";
         dev.setData(data, std::strlen(data));
         dev.setUnbuffered(true);
         dev.open(IODevice::ReadOnly);
@@ -684,7 +681,7 @@ TEST_CASE("BufferedIODevice: unbuffered readLine maxLength") {
 
 TEST_CASE("BufferedIODevice: unbuffered readAll") {
         BufferedMemoryDevice dev;
-        const char *data = "all the unbuffered data";
+        const char          *data = "all the unbuffered data";
         dev.setData(data, std::strlen(data));
         dev.setUnbuffered(true);
         dev.open(IODevice::ReadOnly);
@@ -699,7 +696,7 @@ TEST_CASE("BufferedIODevice: unbuffered readAll") {
 
 TEST_CASE("BufferedIODevice: unbuffered readBytes") {
         BufferedMemoryDevice dev;
-        const char *data = "0123456789";
+        const char          *data = "0123456789";
         dev.setData(data, 10);
         dev.setUnbuffered(true);
         dev.open(IODevice::ReadOnly);
@@ -714,7 +711,7 @@ TEST_CASE("BufferedIODevice: unbuffered readBytes") {
 
 TEST_CASE("BufferedIODevice: unbuffered canReadLine returns false") {
         BufferedMemoryDevice dev;
-        const char *data = "hello\nworld";
+        const char          *data = "hello\nworld";
         dev.setData(data, std::strlen(data));
         dev.setUnbuffered(true);
         dev.open(IODevice::ReadOnly);
@@ -728,12 +725,12 @@ TEST_CASE("BufferedIODevice: unbuffered canReadLine returns false") {
 
 TEST_CASE("BufferedIODevice: unbuffered peek returns empty") {
         BufferedMemoryDevice dev;
-        const char *data = "peek test";
+        const char          *data = "peek test";
         dev.setData(data, 9);
         dev.setUnbuffered(true);
         dev.open(IODevice::ReadOnly);
 
-        char peekBuf[4] = {};
+        char    peekBuf[4] = {};
         int64_t n = dev.peek(peekBuf, 4);
         CHECK(n == 0);
 
@@ -745,7 +742,7 @@ TEST_CASE("BufferedIODevice: unbuffered peek returns empty") {
 
 TEST_CASE("BufferedIODevice: unbuffered bytesAvailable returns only device bytes") {
         BufferedMemoryDevice dev;
-        const char *data = "bytesavail";
+        const char          *data = "bytesavail";
         dev.setData(data, 10);
         dev.setUnbuffered(true);
         dev.open(IODevice::ReadOnly);
@@ -762,7 +759,7 @@ TEST_CASE("BufferedIODevice: unbuffered bytesAvailable returns only device bytes
 
 TEST_CASE("BufferedIODevice: switch to unbuffered while open drains buffer") {
         BufferedMemoryDevice dev;
-        const char *data = "ABCDEFGHIJKLMNOP";
+        const char          *data = "ABCDEFGHIJKLMNOP";
         dev.setData(data, 16);
         dev.open(IODevice::ReadOnly);
 
@@ -794,7 +791,7 @@ TEST_CASE("BufferedIODevice: switch to unbuffered while open drains buffer") {
 
         // Subsequent reads go directly to device (which is at end)
         dev.resetReadFromDeviceCount();
-        char buf[4] = {};
+        char    buf[4] = {};
         int64_t n = dev.read(buf, 4);
         CHECK(n == 0);
         CHECK(dev.readFromDeviceCount() == 1);
@@ -804,7 +801,7 @@ TEST_CASE("BufferedIODevice: switch to unbuffered while open drains buffer") {
 
 TEST_CASE("BufferedIODevice: switch from unbuffered back to buffered") {
         BufferedMemoryDevice dev;
-        const char *data = "ABCDEFGHIJ";
+        const char          *data = "ABCDEFGHIJ";
         dev.setData(data, 10);
         dev.setUnbuffered(true);
         dev.open(IODevice::ReadOnly);
@@ -819,7 +816,7 @@ TEST_CASE("BufferedIODevice: switch from unbuffered back to buffered") {
         dev.setUnbuffered(false);
 
         // Buffer should be re-enabled. Read remaining data.
-        char buf[9] = {};
+        char    buf[9] = {};
         int64_t n = dev.read(buf, 8);
         CHECK(n == 8);
         CHECK(std::memcmp(buf, "CDEFGHIJ", 8) == 0);
@@ -836,7 +833,7 @@ TEST_CASE("BufferedIODevice: multiple unbuffered/buffered switches") {
         // Use data large enough that the buffer fill doesn't consume it all.
         // Default buffer is 8192, so use 20000 bytes.
         std::vector<uint8_t> bigData(20000);
-        for(size_t i = 0; i < bigData.size(); i++) {
+        for (size_t i = 0; i < bigData.size(); i++) {
                 bigData[i] = static_cast<uint8_t>(i & 0xFF);
         }
         dev.setData(bigData.data(), bigData.size());
@@ -869,7 +866,7 @@ TEST_CASE("BufferedIODevice: multiple unbuffered/buffered switches") {
 
 TEST_CASE("BufferedIODevice: unbuffered set before open") {
         BufferedMemoryDevice dev;
-        const char *data = "pre-set unbuffered";
+        const char          *data = "pre-set unbuffered";
         dev.setData(data, std::strlen(data));
 
         // Set unbuffered before opening
@@ -877,7 +874,7 @@ TEST_CASE("BufferedIODevice: unbuffered set before open") {
         dev.open(IODevice::ReadOnly);
 
         dev.resetReadFromDeviceCount();
-        char buf[19] = {};
+        char    buf[19] = {};
         int64_t n = dev.read(buf, 18);
         CHECK(n == 18);
         CHECK(std::strcmp(buf, "pre-set unbuffered") == 0);

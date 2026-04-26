@@ -24,11 +24,11 @@ PROMEKI_NAMESPACE_BEGIN
  * available on every platform — unsupported values map to Default.
  */
 enum class SchedulePolicy {
-        Default,        ///< Normal time-sharing (SCHED_OTHER on POSIX).
-        RoundRobin,     ///< Real-time round-robin (SCHED_RR).
-        Fifo,           ///< Real-time first-in-first-out (SCHED_FIFO).
-        Batch,          ///< Batch scheduling, Linux only (SCHED_BATCH).
-        Idle            ///< Idle scheduling, Linux only (SCHED_IDLE).
+        Default,    ///< Normal time-sharing (SCHED_OTHER on POSIX).
+        RoundRobin, ///< Real-time round-robin (SCHED_RR).
+        Fifo,       ///< Real-time first-in-first-out (SCHED_FIFO).
+        Batch,      ///< Batch scheduling, Linux only (SCHED_BATCH).
+        Idle        ///< Idle scheduling, Linux only (SCHED_IDLE).
 };
 
 /**
@@ -55,7 +55,7 @@ enum class SchedulePolicy {
  * @c hardwareConcurrency) may be called from any thread.
  */
 class Thread : public ObjectBase {
-        PROMEKI_OBJECT(Thread, ObjectBase)
+                PROMEKI_OBJECT(Thread, ObjectBase)
         public:
                 /** @brief Platform-specific native thread handle type. */
                 using NativeHandle = std::thread::native_handle_type;
@@ -267,8 +267,7 @@ class Thread : public ObjectBase {
                  *         is not running, Error::LibraryFailure on OS-level
                  *         failure.
                  */
-                Error setPriority(int priority,
-                                  SchedulePolicy policy = SchedulePolicy::Default);
+                Error setPriority(int priority, SchedulePolicy policy = SchedulePolicy::Default);
 
                 /**
                  * @brief Returns the name of this thread.
@@ -346,7 +345,7 @@ class Thread : public ObjectBase {
                 virtual void run();
 
         private:
-                static thread_local Thread      *_currentThread;
+                static thread_local Thread *_currentThread;
 
                 std::thread             _thread;
                 Atomic<bool>            _running;
@@ -354,7 +353,7 @@ class Thread : public ObjectBase {
                 Atomic<uint64_t>        _nativeId;
                 Atomic<std::thread::id> _stdId;
                 String                  _name;
-                EventLoop               *_threadLoop = nullptr;
+                EventLoop              *_threadLoop = nullptr;
                 mutable Mutex           _mutex;
                 WaitCondition           _startedCv;
                 WaitCondition           _finishedCv;
@@ -362,7 +361,7 @@ class Thread : public ObjectBase {
                 bool                    _finished = false;
                 bool                    _adopted = false;
                 bool                    _usesPthread = false;
-                NativeHandle _pthreadHandle{};
+                NativeHandle            _pthreadHandle{};
 
                 /**
                  * @brief Returns the native thread handle for priority operations.
@@ -374,10 +373,10 @@ class Thread : public ObjectBase {
                  * @return The platform-specific thread handle.
                  */
                 NativeHandle nativeHandle() const;
-                bool isJoinable() const;
-                void joinThread();
-                void applyOsName();
-                void threadEntry();
+                bool         isJoinable() const;
+                void         joinThread();
+                void         applyOsName();
+                void         threadEntry();
 };
 
 PROMEKI_NAMESPACE_END

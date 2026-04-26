@@ -14,9 +14,9 @@
 using namespace promeki;
 
 TEST_CASE("WaitCondition_WakeOne") {
-        Mutex m;
+        Mutex         m;
         WaitCondition cv;
-        bool ready = false;
+        bool          ready = false;
 
         std::thread t([&] {
                 m.lock();
@@ -35,8 +35,8 @@ TEST_CASE("WaitCondition_WakeOne") {
 }
 
 TEST_CASE("WaitCondition_WakeOneNoPredicate") {
-        Mutex m;
-        WaitCondition cv;
+        Mutex             m;
+        WaitCondition     cv;
         std::atomic<bool> woken{false};
 
         std::thread t([&] {
@@ -53,9 +53,9 @@ TEST_CASE("WaitCondition_WakeOneNoPredicate") {
 }
 
 TEST_CASE("WaitCondition_WakeAll") {
-        Mutex m;
-        WaitCondition cv;
-        bool ready = false;
+        Mutex            m;
+        WaitCondition    cv;
+        bool             ready = false;
         std::atomic<int> wokenCount{0};
 
         auto waiter = [&] {
@@ -80,7 +80,7 @@ TEST_CASE("WaitCondition_WakeAll") {
 }
 
 TEST_CASE("WaitCondition_Timeout") {
-        Mutex m;
+        Mutex         m;
         WaitCondition cv;
         m.lock();
         Error err = cv.wait(m, 10);
@@ -91,7 +91,7 @@ TEST_CASE("WaitCondition_Timeout") {
 }
 
 TEST_CASE("WaitCondition_TimeoutWithPredicate") {
-        Mutex m;
+        Mutex         m;
         WaitCondition cv;
         m.lock();
         Error err = cv.wait(m, [] { return false; }, 10);
@@ -100,7 +100,7 @@ TEST_CASE("WaitCondition_TimeoutWithPredicate") {
 }
 
 TEST_CASE("WaitCondition_PredicateAlreadyTrue") {
-        Mutex m;
+        Mutex         m;
         WaitCondition cv;
         m.lock();
         Error err = cv.wait(m, [] { return true; }, 10);
@@ -109,9 +109,9 @@ TEST_CASE("WaitCondition_PredicateAlreadyTrue") {
 }
 
 TEST_CASE("WaitCondition_IndefinitePredicateWait") {
-        Mutex m;
+        Mutex         m;
         WaitCondition cv;
-        bool ready = false;
+        bool          ready = false;
 
         std::thread t([&] {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));

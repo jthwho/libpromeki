@@ -10,32 +10,28 @@
 #include <promeki/system.h>
 #include <promeki/string.h>
 
- #include <array>
- #include <cstring>
- #include <cerrno>
- #ifdef PROMEKI_PLATFORM_WINDOWS
-     #include <winsock2.h>
-     #pragma comment(lib, "ws2_32.lib")
- #else
-     #include <unistd.h>
- #endif
+#include <array>
+#include <cstring>
+#include <cerrno>
+#ifdef PROMEKI_PLATFORM_WINDOWS
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
+#else
+#include <unistd.h>
+#endif
 
 
 PROMEKI_NAMESPACE_BEGIN
 
 String System::hostname() {
-    std::array<char, HOST_NAME_MAX> hostname;
-     return gethostname(hostname.data(), hostname.size()) == 0 ? hostname.data() : String();
+        std::array<char, HOST_NAME_MAX> hostname;
+        return gethostname(hostname.data(), hostname.size()) == 0 ? hostname.data() : String();
 }
 
 String System::demangleSymbol(const char *val, bool useCache) {
-        int status = 0;
-        std::unique_ptr<char, void(*)(void*)> result(
-                abi::__cxa_demangle(val, nullptr, nullptr, &status),
-                std::free
-        );
+        int                                     status = 0;
+        std::unique_ptr<char, void (*)(void *)> result(abi::__cxa_demangle(val, nullptr, nullptr, &status), std::free);
         return (status == 0) ? result.get() : val;
 }
 
 PROMEKI_NAMESPACE_END
-

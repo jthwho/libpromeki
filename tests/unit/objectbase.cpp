@@ -47,7 +47,7 @@ TEST_CASE("ObjectBase: setParent") {
 
 TEST_CASE("ObjectBase: parent destroys children") {
         {
-                TestOne parent;
+                TestOne  parent;
                 TestOne *child = new TestOne(&parent);
                 (void)child;
                 CHECK(parent.childList().size() == 1);
@@ -113,7 +113,7 @@ TEST_CASE("ObjectBase: signal cleanup on slot owner destruction") {
 }
 
 TEST_CASE("ObjectBase: ObjectBasePtr tracks object") {
-        TestOne *obj = new TestOne();
+        TestOne      *obj = new TestOne();
         ObjectBasePtr ptr(obj);
         CHECK(ptr.isValid());
         CHECK(ptr.data() == obj);
@@ -123,7 +123,7 @@ TEST_CASE("ObjectBase: ObjectBasePtr tracks object") {
 }
 
 TEST_CASE("ObjectBase: ObjectBasePtr copy") {
-        TestOne *obj = new TestOne();
+        TestOne      *obj = new TestOne();
         ObjectBasePtr ptr1(obj);
         ObjectBasePtr ptr2(ptr1);
         CHECK(ptr1.isValid());
@@ -135,8 +135,8 @@ TEST_CASE("ObjectBase: ObjectBasePtr copy") {
 }
 
 TEST_CASE("ObjectBase: ObjectBasePtr assignment") {
-        TestOne *obj1 = new TestOne();
-        TestOne *obj2 = new TestOne();
+        TestOne      *obj1 = new TestOne();
+        TestOne      *obj2 = new TestOne();
         ObjectBasePtr ptr(obj1);
         CHECK(ptr.data() == obj1);
         ptr = ObjectBasePtr(obj2);
@@ -154,7 +154,7 @@ TEST_CASE("ObjectBase: ObjectBasePtr default is null") {
 }
 
 TEST_CASE("ObjectBase: ObjectBasePtr typed data() returns derived pointer") {
-        TestOne *obj = new TestOne();
+        TestOne               *obj = new TestOne();
         ObjectBasePtr<TestOne> ptr(obj);
         // data() is typed as TestOne*, no cast required.
         TestOne *typed = ptr.data();
@@ -164,7 +164,7 @@ TEST_CASE("ObjectBase: ObjectBasePtr typed data() returns derived pointer") {
 }
 
 TEST_CASE("ObjectBase: ObjectBasePtr CTAD deduces derived type") {
-        TestOne *obj = new TestOne();
+        TestOne      *obj = new TestOne();
         ObjectBasePtr ptr(obj); // CTAD -> ObjectBasePtr<TestOne>
         static_assert(std::is_same_v<decltype(ptr.data()), TestOne *>);
         CHECK(ptr.data() == obj);
@@ -172,8 +172,8 @@ TEST_CASE("ObjectBase: ObjectBasePtr CTAD deduces derived type") {
 }
 
 TEST_CASE("ObjectBase: ObjectBasePtr derived-to-base conversion") {
-        TestOne *obj = new TestOne();
-        ObjectBasePtr<TestOne> derived(obj);
+        TestOne                  *obj = new TestOne();
+        ObjectBasePtr<TestOne>    derived(obj);
         ObjectBasePtr<ObjectBase> base(derived); // implicit upcast
         CHECK(base.isValid());
         CHECK(base.data() == obj);

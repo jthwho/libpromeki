@@ -21,7 +21,7 @@
 PROMEKI_NAMESPACE_BEGIN
 namespace benchutil {
 
-/**
+        /**
  * @brief Registers CSC pair cases into the BenchmarkRunner registry.
  *
  * Reads `csc.src` and `csc.dst` from BenchParams to decide whether to
@@ -30,38 +30,38 @@ namespace benchutil {
  * does that from `-p` arguments) and before
  * `BenchmarkRunner::runAll()`.
  */
-void registerCscCases();
+        void registerCscCases();
 
-/**
+        /**
  * @brief Returns per-suite help text for the CSC suite.
  *
  * Printed by main.cpp when the user passes `--help`.  Describes the
  * `csc.*` parameter keys each case reads from `BenchParams` and the
  * default values applied when a key is missing.
  */
-String cscParamHelp();
+        String cscParamHelp();
 
-/**
+        /**
  * @brief Registers ImageDataEncoder + ImageDataDecoder cases.
  *
  * Reads `imagedata.format` and `imagedata.size` from BenchParams to
  * decide which (PixelFormat, dimensions) pairs to register.
  */
-void registerImageDataCases();
+        void registerImageDataCases();
 
-/** @brief Returns per-suite help text for the imagedata suite. */
-String imageDataParamHelp();
+        /** @brief Returns per-suite help text for the imagedata suite. */
+        String imageDataParamHelp();
 
-/**
+        /**
  * @brief Registers MediaIOTask_Inspector full-pipeline cases.
  *
  * Reads `inspector.format` and `inspector.size` from BenchParams to
  * decide which TPG → Inspector pipeline configurations to register.
  */
-void registerInspectorCases();
+        void registerInspectorCases();
 
-/** @brief Returns per-suite help text for the inspector suite. */
-String inspectorParamHelp();
+        /** @brief Returns per-suite help text for the inspector suite. */
+        String inspectorParamHelp();
 
 } // namespace benchutil
 PROMEKI_NAMESPACE_END

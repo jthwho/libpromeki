@@ -54,7 +54,7 @@ class DataStream;
  * externally synchronized.
  */
 class VideoPayload : public MediaPayload {
-        PROMEKI_SHARED_ABSTRACT(VideoPayload)
+                PROMEKI_SHARED_ABSTRACT(VideoPayload)
         public:
                 /** @brief Shared-pointer alias for VideoPayload ownership. */
                 using Ptr = SharedPtr<VideoPayload, /*CopyOnWrite=*/true, VideoPayload>;
@@ -72,13 +72,12 @@ class VideoPayload : public MediaPayload {
                  * @ref setData or by constructing the payload with the
                  * two-argument form below.
                  */
-                explicit VideoPayload(const ImageDesc &desc) : _desc(desc) { }
+                explicit VideoPayload(const ImageDesc &desc) : _desc(desc) {}
 
                 /**
                  * @brief Constructs a video payload with a descriptor and planes.
                  */
-                VideoPayload(const ImageDesc &desc, const BufferView &data) :
-                        MediaPayload(data), _desc(desc) { }
+                VideoPayload(const ImageDesc &desc, const BufferView &data) : MediaPayload(data), _desc(desc) {}
 
                 /** @brief Returns @ref MediaPayloadKind::Video. */
                 const MediaPayloadKind &kind() const override { return MediaPayloadKind::Video; }

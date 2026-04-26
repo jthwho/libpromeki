@@ -72,7 +72,7 @@ TEST_CASE("BufferView") {
                 auto buf = Buffer::Ptr::create(256);
                 buf->setSize(256);
                 BufferView view(buf, 0, 256);
-                uint8_t *d = view.data();
+                uint8_t   *d = view.data();
                 REQUIRE(d != nullptr);
                 d[0] = 0x42;
                 CHECK(static_cast<const uint8_t *>(buf->data())[0] == 0x42);
@@ -83,7 +83,7 @@ TEST_CASE("BufferView") {
                 buf->setSize(3000);
 
                 BufferView views;
-                for(size_t i = 0; i < 3; i++) {
+                for (size_t i = 0; i < 3; i++) {
                         views.pushToBack(buf, i * 1000, 1000);
                 }
                 CHECK(views.count() == 3);
@@ -111,9 +111,9 @@ TEST_CASE("BufferViewList domain operations") {
                 a->setSize(1024);
                 b->setSize(2048);
                 BufferView list = {
-                        BufferView(a, 0,   200),
+                        BufferView(a, 0, 200),
                         BufferView(a, 200, 300),
-                        BufferView(b, 0,   1000),
+                        BufferView(b, 0, 1000),
                 };
                 CHECK(list.totalSize() == 200 + 300 + 1000);
         }
@@ -124,7 +124,7 @@ TEST_CASE("BufferViewList domain operations") {
                 auto buf = Buffer::Ptr::create(1024);
                 buf->setSize(1024);
                 BufferView list = {
-                        BufferView(buf, 0,   512),
+                        BufferView(buf, 0, 512),
                         BufferView(buf, 512, 512),
                 };
                 // Drop the external handle so only the list's two
@@ -152,8 +152,8 @@ TEST_CASE("BufferViewList domain operations") {
                 auto buf = Buffer::Ptr::create(1024);
                 buf->setSize(1024);
                 const Buffer *originalKey = buf.ptr();
-                BufferView list = {
-                        BufferView(buf, 0,   256),
+                BufferView    list = {
+                        BufferView(buf, 0, 256),
                         BufferView(buf, 256, 256),
                         BufferView(buf, 512, 512),
                 };
@@ -171,9 +171,12 @@ TEST_CASE("BufferViewList domain operations") {
                 CHECK(list[1].buffer().ptr() == cloneKey);
                 CHECK(list[2].buffer().ptr() == cloneKey);
                 // Offsets / sizes preserved.
-                CHECK(list[0].offset() == 0);   CHECK(list[0].size() == 256);
-                CHECK(list[1].offset() == 256); CHECK(list[1].size() == 256);
-                CHECK(list[2].offset() == 512); CHECK(list[2].size() == 512);
+                CHECK(list[0].offset() == 0);
+                CHECK(list[0].size() == 256);
+                CHECK(list[1].offset() == 256);
+                CHECK(list[1].size() == 256);
+                CHECK(list[2].offset() == 512);
+                CHECK(list[2].size() == 512);
                 // Caller's `buf` still points at the unchanged original.
                 CHECK(buf.ptr() == originalKey);
                 // And the list is now exclusive.
@@ -188,7 +191,7 @@ TEST_CASE("BufferViewList domain operations") {
                 auto buf = Buffer::Ptr::create(1024);
                 buf->setSize(1024);
                 BufferView list = {
-                        BufferView(buf, 0,   512),
+                        BufferView(buf, 0, 512),
                         BufferView(buf, 512, 512),
                 };
                 const Buffer *key = buf.ptr();
@@ -207,8 +210,8 @@ TEST_CASE("BufferViewList domain operations") {
                 shared->setSize(1024);
                 unique->setSize(512);
                 BufferView list = {
-                        BufferView(shared, 0, 1024),   // externally held → clone
-                        BufferView(unique, 0, 512),    // externally held → clone
+                        BufferView(shared, 0, 1024), // externally held → clone
+                        BufferView(unique, 0, 512),  // externally held → clone
                 };
                 const Buffer *sharedKey = shared.ptr();
                 const Buffer *uniqueKey = unique.ptr();

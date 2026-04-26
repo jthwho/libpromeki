@@ -58,37 +58,32 @@ class MasteringDisplay {
 
                 MasteringDisplay() = default;
 
-                MasteringDisplay(const CIEPoint &red, const CIEPoint &green,
-                                 const CIEPoint &blue, const CIEPoint &wp,
+                MasteringDisplay(const CIEPoint &red, const CIEPoint &green, const CIEPoint &blue, const CIEPoint &wp,
                                  double minLum, double maxLum)
-                        : _red(red), _green(green), _blue(blue),
-                          _whitePoint(wp), _minLum(minLum), _maxLum(maxLum) {}
+                    : _red(red), _green(green), _blue(blue), _whitePoint(wp), _minLum(minLum), _maxLum(maxLum) {}
 
                 bool isValid() const {
-                        return _red.isValid() && _green.isValid() &&
-                               _blue.isValid() && _whitePoint.isValid() &&
+                        return _red.isValid() && _green.isValid() && _blue.isValid() && _whitePoint.isValid() &&
                                _maxLum > 0.0;
                 }
 
-                const CIEPoint &red() const        { return _red; }
-                const CIEPoint &green() const      { return _green; }
-                const CIEPoint &blue() const       { return _blue; }
+                const CIEPoint &red() const { return _red; }
+                const CIEPoint &green() const { return _green; }
+                const CIEPoint &blue() const { return _blue; }
                 const CIEPoint &whitePoint() const { return _whitePoint; }
-                double minLuminance() const         { return _minLum; }
-                double maxLuminance() const         { return _maxLum; }
+                double          minLuminance() const { return _minLum; }
+                double          maxLuminance() const { return _maxLum; }
 
-                void setRed(const CIEPoint &v)        { _red = v; }
-                void setGreen(const CIEPoint &v)      { _green = v; }
-                void setBlue(const CIEPoint &v)       { _blue = v; }
+                void setRed(const CIEPoint &v) { _red = v; }
+                void setGreen(const CIEPoint &v) { _green = v; }
+                void setBlue(const CIEPoint &v) { _blue = v; }
                 void setWhitePoint(const CIEPoint &v) { _whitePoint = v; }
-                void setMinLuminance(double v)         { _minLum = v; }
-                void setMaxLuminance(double v)         { _maxLum = v; }
+                void setMinLuminance(double v) { _minLum = v; }
+                void setMaxLuminance(double v) { _maxLum = v; }
 
                 bool operator==(const MasteringDisplay &o) const {
-                        return _red.data() == o._red.data() &&
-                               _green.data() == o._green.data() &&
-                               _blue.data() == o._blue.data() &&
-                               _whitePoint.data() == o._whitePoint.data() &&
+                        return _red.data() == o._red.data() && _green.data() == o._green.data() &&
+                               _blue.data() == o._blue.data() && _whitePoint.data() == o._whitePoint.data() &&
                                _minLum == o._minLum && _maxLum == o._maxLum;
                 }
                 bool operator!=(const MasteringDisplay &o) const { return !(*this == o); }

@@ -53,7 +53,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  */
 class HttpHeaders {
-        PROMEKI_SHARED_FINAL(HttpHeaders)
+                PROMEKI_SHARED_FINAL(HttpHeaders)
         public:
                 /** @brief Shared pointer type for HttpHeaders. */
                 using Ptr = SharedPtr<HttpHeaders>;
@@ -103,8 +103,7 @@ class HttpHeaders {
                  * present, the value added first wins; use @ref values
                  * to get the full list.
                  */
-                String value(const String &name,
-                             const String &defaultValue = String()) const;
+                String value(const String &name, const String &defaultValue = String()) const;
 
                 /**
                  * @brief Returns every value stored for @p name in arrival order.
@@ -133,8 +132,7 @@ class HttpHeaders {
                  * multi-valued headers, all values for one name are
                  * emitted contiguously in arrival order.
                  */
-                void forEach(std::function<void(const String &name,
-                                                const String &value)> func) const;
+                void forEach(std::function<void(const String &name, const String &value)> func) const;
 
                 /** @brief Equality on the full set of (name, value) pairs. */
                 bool operator==(const HttpHeaders &other) const;
@@ -155,9 +153,9 @@ class HttpHeaders {
 
         private:
                 struct Entry {
-                        using List = promeki::List<Entry>;
-                        String  name;     ///< Canonical case as first stored.
-                        String  value;
+                                using List = promeki::List<Entry>;
+                                String name; ///< Canonical case as first stored.
+                                String value;
                 };
 
                 // Parallel index: lower-case key -> indices in _entries.
@@ -165,18 +163,18 @@ class HttpHeaders {
                 // use a plain list-of-pairs because typical header counts
                 // are well under 30 and the constant-factor wins.
                 struct KeyBucket {
-                        using List = promeki::List<KeyBucket>;
-                        using IndexList = promeki::List<size_t>;
-                        String          lower;
-                        IndexList       indices;
+                                using List = promeki::List<KeyBucket>;
+                                using IndexList = promeki::List<size_t>;
+                                String    lower;
+                                IndexList indices;
                 };
 
                 // Per-name lookup uses the lower-cased name as the
                 // index into _index, which holds a list of indices
                 // into _entries.  This preserves arrival order across
                 // names and supports duplicates without a multimap.
-                Entry::List             _entries;
-                KeyBucket::List         _index;
+                Entry::List     _entries;
+                KeyBucket::List _index;
 
                 size_t findBucket(const String &lower) const;
                 size_t getOrCreateBucket(const String &lower);

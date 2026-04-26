@@ -79,10 +79,7 @@ class EnumList {
                  *           `static const Enum::Type Type` member.
                  * @return A fresh, empty list bound to @c T::Type.
                  */
-                template <typename T>
-                static EnumList forType() {
-                        return EnumList(T::Type);
-                }
+                template <typename T> static EnumList forType() { return EnumList(T::Type); }
 
                 // --------------------------------------------------------------
                 // State
@@ -145,9 +142,7 @@ class EnumList {
                  * @brief Returns the @p i'th element as an @ref Enum.
                  * @param i Zero-based index.
                  */
-                Enum at(size_t i) const {
-                        return Enum(_type, _values[i]);
-                }
+                Enum at(size_t i) const { return Enum(_type, _values[i]); }
 
                 /** @brief Subscript access; equivalent to @ref at. */
                 Enum operator[](size_t i) const { return at(i); }
@@ -204,8 +199,7 @@ class EnumList {
                  * @return The parsed list, or an invalid (unbound) list on
                  *         total failure.
                  */
-                static EnumList fromString(Enum::Type type, const String &text,
-                                           Error *err = nullptr);
+                static EnumList fromString(Enum::Type type, const String &text, Error *err = nullptr);
 
                 // --------------------------------------------------------------
                 // Equality
@@ -214,9 +208,7 @@ class EnumList {
                 /**
                  * @brief Equality: same element type and identical integer sequence.
                  */
-                bool operator==(const EnumList &o) const {
-                        return _type == o._type && _values == o._values;
-                }
+                bool operator==(const EnumList &o) const { return _type == o._type && _values == o._values; }
                 bool operator!=(const EnumList &o) const { return !(*this == o); }
 
         private:

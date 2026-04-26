@@ -47,7 +47,7 @@ TEST_CASE("RegEx: search with regex pattern") {
 
 TEST_CASE("RegEx: matches returns all matches") {
         RegEx re("[0-9]+");
-        auto results = re.matches("abc 123 def 456 ghi 789");
+        auto  results = re.matches("abc 123 def 456 ghi 789");
         CHECK(results.size() == 3);
         CHECK(results[0] == "123");
         CHECK(results[1] == "456");
@@ -56,7 +56,7 @@ TEST_CASE("RegEx: matches returns all matches") {
 
 TEST_CASE("RegEx: matches with no results") {
         RegEx re("[0-9]+");
-        auto results = re.matches("no digits");
+        auto  results = re.matches("no digits");
         CHECK(results.isEmpty());
 }
 

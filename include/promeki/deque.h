@@ -39,9 +39,8 @@ PROMEKI_NAMESPACE_BEGIN
  * dq.popFromFront();
  * @endcode
  */
-template <typename T>
-class Deque {
-        PROMEKI_SHARED_FINAL(Deque)
+template <typename T> class Deque {
+                PROMEKI_SHARED_FINAL(Deque)
         public:
                 /** @brief Shared pointer type for Deque. */
                 using Ptr = SharedPtr<Deque>;
@@ -230,7 +229,7 @@ class Deque {
                  * @return The removed element.
                  */
                 T popFromFront() {
-                        if(d.empty()) throw std::logic_error("Deque::popFromFront on empty deque");
+                        if (d.empty()) throw std::logic_error("Deque::popFromFront on empty deque");
                         T val = std::move(d.front());
                         d.pop_front();
                         return val;
@@ -242,7 +241,7 @@ class Deque {
                  * @return The removed element.
                  */
                 T popFromBack() {
-                        if(d.empty()) throw std::logic_error("Deque::popFromBack on empty deque");
+                        if (d.empty()) throw std::logic_error("Deque::popFromBack on empty deque");
                         T val = std::move(d.back());
                         d.pop_back();
                         return val;
@@ -268,9 +267,8 @@ class Deque {
                  * @tparam Func Callable with signature void(const T &).
                  * @param func The function to invoke.
                  */
-                template <typename Func>
-                void forEach(Func &&func) const {
-                        for(const auto &v : d) func(v);
+                template <typename Func> void forEach(Func &&func) const {
+                        for (const auto &v : d) func(v);
                         return;
                 }
 

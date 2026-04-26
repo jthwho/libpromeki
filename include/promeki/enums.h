@@ -57,27 +57,12 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class VideoPattern : public TypedEnum<VideoPattern> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("VideoPattern", 0,
-                                { "ColorBars",    0  },
-                                { "ColorBars75",  1  },
-                                { "Ramp",         2  },
-                                { "Grid",         3  },
-                                { "Crosshatch",   4  },
-                                { "Checkerboard", 5  },
-                                { "SolidColor",   6  },
-                                { "White",        7  },
-                                { "Black",        8  },
-                                { "Noise",        9  },
-                                { "ZonePlate",    10 },
-                                { "ColorChecker", 11 },
-                                { "SMPTE219",     12 },
-                                { "AvSync",       13 },
-                                { "MultiBurst",   14 },
-                                { "LimitRange",   15 },
-                                { "CircularZone", 16 },
-                                { "Alignment",    17 },
-                                { "SDIPathEQ",    18 },
-                                { "SDIPathPLL",   19 });  // default: ColorBars
+                PROMEKI_REGISTER_ENUM_TYPE("VideoPattern", 0, {"ColorBars", 0}, {"ColorBars75", 1}, {"Ramp", 2},
+                                           {"Grid", 3}, {"Crosshatch", 4}, {"Checkerboard", 5}, {"SolidColor", 6},
+                                           {"White", 7}, {"Black", 8}, {"Noise", 9}, {"ZonePlate", 10},
+                                           {"ColorChecker", 11}, {"SMPTE219", 12}, {"AvSync", 13}, {"MultiBurst", 14},
+                                           {"LimitRange", 15}, {"CircularZone", 16}, {"Alignment", 17},
+                                           {"SDIPathEQ", 18}, {"SDIPathPLL", 19}); // default: ColorBars
 
                 using TypedEnum<VideoPattern>::TypedEnum;
 
@@ -103,26 +88,26 @@ class VideoPattern : public TypedEnum<VideoPattern> {
                 static const VideoPattern SDIPathPLL;
 };
 
-inline const VideoPattern VideoPattern::ColorBars    { 0  };
-inline const VideoPattern VideoPattern::ColorBars75  { 1  };
-inline const VideoPattern VideoPattern::Ramp         { 2  };
-inline const VideoPattern VideoPattern::Grid         { 3  };
-inline const VideoPattern VideoPattern::Crosshatch   { 4  };
-inline const VideoPattern VideoPattern::Checkerboard { 5  };
-inline const VideoPattern VideoPattern::SolidColor   { 6  };
-inline const VideoPattern VideoPattern::White        { 7  };
-inline const VideoPattern VideoPattern::Black        { 8  };
-inline const VideoPattern VideoPattern::Noise        { 9  };
-inline const VideoPattern VideoPattern::ZonePlate    { 10 };
-inline const VideoPattern VideoPattern::ColorChecker { 11 };
-inline const VideoPattern VideoPattern::SMPTE219     { 12 };
-inline const VideoPattern VideoPattern::AvSync       { 13 };
-inline const VideoPattern VideoPattern::MultiBurst   { 14 };
-inline const VideoPattern VideoPattern::LimitRange   { 15 };
-inline const VideoPattern VideoPattern::CircularZone { 16 };
-inline const VideoPattern VideoPattern::Alignment    { 17 };
-inline const VideoPattern VideoPattern::SDIPathEQ    { 18 };
-inline const VideoPattern VideoPattern::SDIPathPLL   { 19 };
+inline const VideoPattern VideoPattern::ColorBars{0};
+inline const VideoPattern VideoPattern::ColorBars75{1};
+inline const VideoPattern VideoPattern::Ramp{2};
+inline const VideoPattern VideoPattern::Grid{3};
+inline const VideoPattern VideoPattern::Crosshatch{4};
+inline const VideoPattern VideoPattern::Checkerboard{5};
+inline const VideoPattern VideoPattern::SolidColor{6};
+inline const VideoPattern VideoPattern::White{7};
+inline const VideoPattern VideoPattern::Black{8};
+inline const VideoPattern VideoPattern::Noise{9};
+inline const VideoPattern VideoPattern::ZonePlate{10};
+inline const VideoPattern VideoPattern::ColorChecker{11};
+inline const VideoPattern VideoPattern::SMPTE219{12};
+inline const VideoPattern VideoPattern::AvSync{13};
+inline const VideoPattern VideoPattern::MultiBurst{14};
+inline const VideoPattern VideoPattern::LimitRange{15};
+inline const VideoPattern VideoPattern::CircularZone{16};
+inline const VideoPattern VideoPattern::Alignment{17};
+inline const VideoPattern VideoPattern::SDIPathEQ{18};
+inline const VideoPattern VideoPattern::SDIPathPLL{19};
 
 /**
  * @brief Well-known Enum type for on-screen burn-in position presets.
@@ -133,14 +118,9 @@ inline const VideoPattern VideoPattern::SDIPathPLL   { 19 };
  */
 class BurnPosition : public TypedEnum<BurnPosition> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("BurnPosition", 4,
-                                { "TopLeft",      0 },
-                                { "TopCenter",    1 },
-                                { "TopRight",     2 },
-                                { "BottomLeft",   3 },
-                                { "BottomCenter", 4 },
-                                { "BottomRight",  5 },
-                                { "Center",       6 });  // default: BottomCenter
+                PROMEKI_REGISTER_ENUM_TYPE("BurnPosition", 4, {"TopLeft", 0}, {"TopCenter", 1}, {"TopRight", 2},
+                                           {"BottomLeft", 3}, {"BottomCenter", 4}, {"BottomRight", 5},
+                                           {"Center", 6}); // default: BottomCenter
 
                 using TypedEnum<BurnPosition>::TypedEnum;
 
@@ -153,13 +133,13 @@ class BurnPosition : public TypedEnum<BurnPosition> {
                 static const BurnPosition Center;
 };
 
-inline const BurnPosition BurnPosition::TopLeft      { 0 };
-inline const BurnPosition BurnPosition::TopCenter    { 1 };
-inline const BurnPosition BurnPosition::TopRight     { 2 };
-inline const BurnPosition BurnPosition::BottomLeft   { 3 };
-inline const BurnPosition BurnPosition::BottomCenter { 4 };
-inline const BurnPosition BurnPosition::BottomRight  { 5 };
-inline const BurnPosition BurnPosition::Center       { 6 };
+inline const BurnPosition BurnPosition::TopLeft{0};
+inline const BurnPosition BurnPosition::TopCenter{1};
+inline const BurnPosition BurnPosition::TopRight{2};
+inline const BurnPosition BurnPosition::BottomLeft{3};
+inline const BurnPosition BurnPosition::BottomCenter{4};
+inline const BurnPosition BurnPosition::BottomRight{5};
+inline const BurnPosition BurnPosition::Center{6};
 
 /**
  * @brief Well-known Enum type for audio test pattern generator modes.
@@ -253,25 +233,11 @@ inline const BurnPosition BurnPosition::Center       { 6 };
  */
 class AudioPattern : public TypedEnum<AudioPattern> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("AudioPattern", 0,
-                                { "Tone",        0 },
-                                { "Silence",     1 },
-                                { "LTC",         2 },
-                                { "AvSync",      3 },
-                                { "SrcProbe",    4 },
-                                { "ChannelId",   5 },
-                                { "PcmMarker",   6 },
-                                { "WhiteNoise",  7 },
-                                { "PinkNoise",   8 },
-                                { "Chirp",       9 },
-                                { "DualTone",   10 },
-                                { "Sweep",      11 },
-                                { "Polarity",   12 },
-                                { "SteppedTone",13 },
-                                { "Blits",      14 },
-                                { "EbuLineup",  15 },
-                                { "Dialnorm",   16 },
-                                { "Iec60958",   17 });  // default: Tone
+                PROMEKI_REGISTER_ENUM_TYPE("AudioPattern", 0, {"Tone", 0}, {"Silence", 1}, {"LTC", 2}, {"AvSync", 3},
+                                           {"SrcProbe", 4}, {"ChannelId", 5}, {"PcmMarker", 6}, {"WhiteNoise", 7},
+                                           {"PinkNoise", 8}, {"Chirp", 9}, {"DualTone", 10}, {"Sweep", 11},
+                                           {"Polarity", 12}, {"SteppedTone", 13}, {"Blits", 14}, {"EbuLineup", 15},
+                                           {"Dialnorm", 16}, {"Iec60958", 17}); // default: Tone
 
                 using TypedEnum<AudioPattern>::TypedEnum;
 
@@ -295,24 +261,24 @@ class AudioPattern : public TypedEnum<AudioPattern> {
                 static const AudioPattern Iec60958;
 };
 
-inline const AudioPattern AudioPattern::Tone        { 0  };
-inline const AudioPattern AudioPattern::Silence     { 1  };
-inline const AudioPattern AudioPattern::LTC         { 2  };
-inline const AudioPattern AudioPattern::AvSync      { 3  };
-inline const AudioPattern AudioPattern::SrcProbe    { 4  };
-inline const AudioPattern AudioPattern::ChannelId   { 5  };
-inline const AudioPattern AudioPattern::PcmMarker   { 6  };
-inline const AudioPattern AudioPattern::WhiteNoise  { 7  };
-inline const AudioPattern AudioPattern::PinkNoise   { 8  };
-inline const AudioPattern AudioPattern::Chirp       { 9  };
-inline const AudioPattern AudioPattern::DualTone    { 10 };
-inline const AudioPattern AudioPattern::Sweep       { 11 };
-inline const AudioPattern AudioPattern::Polarity    { 12 };
-inline const AudioPattern AudioPattern::SteppedTone { 13 };
-inline const AudioPattern AudioPattern::Blits       { 14 };
-inline const AudioPattern AudioPattern::EbuLineup   { 15 };
-inline const AudioPattern AudioPattern::Dialnorm    { 16 };
-inline const AudioPattern AudioPattern::Iec60958    { 17 };
+inline const AudioPattern AudioPattern::Tone{0};
+inline const AudioPattern AudioPattern::Silence{1};
+inline const AudioPattern AudioPattern::LTC{2};
+inline const AudioPattern AudioPattern::AvSync{3};
+inline const AudioPattern AudioPattern::SrcProbe{4};
+inline const AudioPattern AudioPattern::ChannelId{5};
+inline const AudioPattern AudioPattern::PcmMarker{6};
+inline const AudioPattern AudioPattern::WhiteNoise{7};
+inline const AudioPattern AudioPattern::PinkNoise{8};
+inline const AudioPattern AudioPattern::Chirp{9};
+inline const AudioPattern AudioPattern::DualTone{10};
+inline const AudioPattern AudioPattern::Sweep{11};
+inline const AudioPattern AudioPattern::Polarity{12};
+inline const AudioPattern AudioPattern::SteppedTone{13};
+inline const AudioPattern AudioPattern::Blits{14};
+inline const AudioPattern AudioPattern::EbuLineup{15};
+inline const AudioPattern AudioPattern::Dialnorm{16};
+inline const AudioPattern AudioPattern::Iec60958{17};
 
 /**
  * @brief Well-known Enum type for chroma subsampling modes.
@@ -323,10 +289,8 @@ inline const AudioPattern AudioPattern::Iec60958    { 17 };
  */
 class ChromaSubsampling : public TypedEnum<ChromaSubsampling> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("ChromaSubsampling", 1,
-                                { "YUV444", 0 },
-                                { "YUV422", 1 },
-                                { "YUV420", 2 });  // default: YUV422 (RFC 2435 JPEG-over-RTP compatible)
+                PROMEKI_REGISTER_ENUM_TYPE("ChromaSubsampling", 1, {"YUV444", 0}, {"YUV422", 1},
+                                           {"YUV420", 2}); // default: YUV422 (RFC 2435 JPEG-over-RTP compatible)
 
                 using TypedEnum<ChromaSubsampling>::TypedEnum;
 
@@ -335,9 +299,9 @@ class ChromaSubsampling : public TypedEnum<ChromaSubsampling> {
                 static const ChromaSubsampling YUV420;
 };
 
-inline const ChromaSubsampling ChromaSubsampling::YUV444 { 0 };
-inline const ChromaSubsampling ChromaSubsampling::YUV422 { 1 };
-inline const ChromaSubsampling ChromaSubsampling::YUV420 { 2 };
+inline const ChromaSubsampling ChromaSubsampling::YUV444{0};
+inline const ChromaSubsampling ChromaSubsampling::YUV422{1};
+inline const ChromaSubsampling ChromaSubsampling::YUV420{2};
 
 /**
  * @brief Well-known Enum type for audio sample formats.
@@ -355,24 +319,12 @@ inline const ChromaSubsampling ChromaSubsampling::YUV420 { 2 };
  */
 class AudioDataType : public TypedEnum<AudioDataType> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("AudioDataType", 1,
-                                { "Invalid",        0  },
-                                { "PCMI_Float32LE", 1  },
-                                { "PCMI_Float32BE", 2  },
-                                { "PCMI_S8",        3  },
-                                { "PCMI_U8",        4  },
-                                { "PCMI_S16LE",     5  },
-                                { "PCMI_U16LE",     6  },
-                                { "PCMI_S16BE",     7  },
-                                { "PCMI_U16BE",     8  },
-                                { "PCMI_S24LE",     9  },
-                                { "PCMI_U24LE",     10 },
-                                { "PCMI_S24BE",     11 },
-                                { "PCMI_U24BE",     12 },
-                                { "PCMI_S32LE",     13 },
-                                { "PCMI_U32LE",     14 },
-                                { "PCMI_S32BE",     15 },
-                                { "PCMI_U32BE",     16 });  // default: PCMI_Float32LE
+                PROMEKI_REGISTER_ENUM_TYPE("AudioDataType", 1, {"Invalid", 0}, {"PCMI_Float32LE", 1},
+                                           {"PCMI_Float32BE", 2}, {"PCMI_S8", 3}, {"PCMI_U8", 4}, {"PCMI_S16LE", 5},
+                                           {"PCMI_U16LE", 6}, {"PCMI_S16BE", 7}, {"PCMI_U16BE", 8}, {"PCMI_S24LE", 9},
+                                           {"PCMI_U24LE", 10}, {"PCMI_S24BE", 11}, {"PCMI_U24BE", 12},
+                                           {"PCMI_S32LE", 13}, {"PCMI_U32LE", 14}, {"PCMI_S32BE", 15},
+                                           {"PCMI_U32BE", 16}); // default: PCMI_Float32LE
 
                 using TypedEnum<AudioDataType>::TypedEnum;
 
@@ -395,23 +347,23 @@ class AudioDataType : public TypedEnum<AudioDataType> {
                 static const AudioDataType PCMI_U32BE;
 };
 
-inline const AudioDataType AudioDataType::Invalid        { 0  };
-inline const AudioDataType AudioDataType::PCMI_Float32LE { 1  };
-inline const AudioDataType AudioDataType::PCMI_Float32BE { 2  };
-inline const AudioDataType AudioDataType::PCMI_S8        { 3  };
-inline const AudioDataType AudioDataType::PCMI_U8        { 4  };
-inline const AudioDataType AudioDataType::PCMI_S16LE     { 5  };
-inline const AudioDataType AudioDataType::PCMI_U16LE     { 6  };
-inline const AudioDataType AudioDataType::PCMI_S16BE     { 7  };
-inline const AudioDataType AudioDataType::PCMI_U16BE     { 8  };
-inline const AudioDataType AudioDataType::PCMI_S24LE     { 9  };
-inline const AudioDataType AudioDataType::PCMI_U24LE     { 10 };
-inline const AudioDataType AudioDataType::PCMI_S24BE     { 11 };
-inline const AudioDataType AudioDataType::PCMI_U24BE     { 12 };
-inline const AudioDataType AudioDataType::PCMI_S32LE     { 13 };
-inline const AudioDataType AudioDataType::PCMI_U32LE     { 14 };
-inline const AudioDataType AudioDataType::PCMI_S32BE     { 15 };
-inline const AudioDataType AudioDataType::PCMI_U32BE     { 16 };
+inline const AudioDataType AudioDataType::Invalid{0};
+inline const AudioDataType AudioDataType::PCMI_Float32LE{1};
+inline const AudioDataType AudioDataType::PCMI_Float32BE{2};
+inline const AudioDataType AudioDataType::PCMI_S8{3};
+inline const AudioDataType AudioDataType::PCMI_U8{4};
+inline const AudioDataType AudioDataType::PCMI_S16LE{5};
+inline const AudioDataType AudioDataType::PCMI_U16LE{6};
+inline const AudioDataType AudioDataType::PCMI_S16BE{7};
+inline const AudioDataType AudioDataType::PCMI_U16BE{8};
+inline const AudioDataType AudioDataType::PCMI_S24LE{9};
+inline const AudioDataType AudioDataType::PCMI_U24LE{10};
+inline const AudioDataType AudioDataType::PCMI_S24BE{11};
+inline const AudioDataType AudioDataType::PCMI_U24BE{12};
+inline const AudioDataType AudioDataType::PCMI_S32LE{13};
+inline const AudioDataType AudioDataType::PCMI_U32LE{14};
+inline const AudioDataType AudioDataType::PCMI_S32BE{15};
+inline const AudioDataType AudioDataType::PCMI_U32BE{16};
 
 /**
  * @brief Well-known Enum type for @ref CSCPipeline processing-path selection.
@@ -425,9 +377,7 @@ inline const AudioDataType AudioDataType::PCMI_U32BE     { 16 };
  */
 class CscPath : public TypedEnum<CscPath> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("CscPath", 0,
-                                { "Optimized", 0 },
-                                { "Scalar",    1 });  // default: Optimized
+                PROMEKI_REGISTER_ENUM_TYPE("CscPath", 0, {"Optimized", 0}, {"Scalar", 1}); // default: Optimized
 
                 using TypedEnum<CscPath>::TypedEnum;
 
@@ -435,8 +385,8 @@ class CscPath : public TypedEnum<CscPath> {
                 static const CscPath Scalar;
 };
 
-inline const CscPath CscPath::Optimized { 0 };
-inline const CscPath CscPath::Scalar    { 1 };
+inline const CscPath CscPath::Optimized{0};
+inline const CscPath CscPath::Scalar{1};
 
 /**
  * @brief Well-known Enum type for QuickTime / ISO-BMFF container layout.
@@ -449,9 +399,8 @@ inline const CscPath CscPath::Scalar    { 1 };
  */
 class QuickTimeLayout : public TypedEnum<QuickTimeLayout> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("QuickTimeLayout", 1,
-                                { "Classic",    0 },
-                                { "Fragmented", 1 });  // default: Fragmented
+                PROMEKI_REGISTER_ENUM_TYPE("QuickTimeLayout", 1, {"Classic", 0},
+                                           {"Fragmented", 1}); // default: Fragmented
 
                 using TypedEnum<QuickTimeLayout>::TypedEnum;
 
@@ -459,8 +408,8 @@ class QuickTimeLayout : public TypedEnum<QuickTimeLayout> {
                 static const QuickTimeLayout Fragmented;
 };
 
-inline const QuickTimeLayout QuickTimeLayout::Classic    { 0 };
-inline const QuickTimeLayout QuickTimeLayout::Fragmented { 1 };
+inline const QuickTimeLayout QuickTimeLayout::Classic{0};
+inline const QuickTimeLayout QuickTimeLayout::Fragmented{1};
 
 /**
  * @brief Well-known Enum type for RTP sender pacing mode.
@@ -493,12 +442,8 @@ inline const QuickTimeLayout QuickTimeLayout::Fragmented { 1 };
  */
 class RtpPacingMode : public TypedEnum<RtpPacingMode> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("RtpPacingMode", 4,
-                                { "None",      0 },
-                                { "Userspace", 1 },
-                                { "KernelFq",  2 },
-                                { "TxTime",    3 },
-                                { "Auto",      4 });  // default: Auto
+                PROMEKI_REGISTER_ENUM_TYPE("RtpPacingMode", 4, {"None", 0}, {"Userspace", 1}, {"KernelFq", 2},
+                                           {"TxTime", 3}, {"Auto", 4}); // default: Auto
 
                 using TypedEnum<RtpPacingMode>::TypedEnum;
 
@@ -509,11 +454,11 @@ class RtpPacingMode : public TypedEnum<RtpPacingMode> {
                 static const RtpPacingMode Auto;
 };
 
-inline const RtpPacingMode RtpPacingMode::None      { 0 };
-inline const RtpPacingMode RtpPacingMode::Userspace { 1 };
-inline const RtpPacingMode RtpPacingMode::KernelFq  { 2 };
-inline const RtpPacingMode RtpPacingMode::TxTime    { 3 };
-inline const RtpPacingMode RtpPacingMode::Auto      { 4 };
+inline const RtpPacingMode RtpPacingMode::None{0};
+inline const RtpPacingMode RtpPacingMode::Userspace{1};
+inline const RtpPacingMode RtpPacingMode::KernelFq{2};
+inline const RtpPacingMode RtpPacingMode::TxTime{3};
+inline const RtpPacingMode RtpPacingMode::Auto{4};
 
 /**
  * @brief Well-known Enum type for the metadata-stream wire format over RTP.
@@ -536,9 +481,8 @@ inline const RtpPacingMode RtpPacingMode::Auto      { 4 };
  */
 class MetadataRtpFormat : public TypedEnum<MetadataRtpFormat> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("MetadataRtpFormat", 0,
-                                { "JsonMetadata", 0 },
-                                { "St2110_40",    1 });  // default: JsonMetadata
+                PROMEKI_REGISTER_ENUM_TYPE("MetadataRtpFormat", 0, {"JsonMetadata", 0},
+                                           {"St2110_40", 1}); // default: JsonMetadata
 
                 using TypedEnum<MetadataRtpFormat>::TypedEnum;
 
@@ -546,8 +490,8 @@ class MetadataRtpFormat : public TypedEnum<MetadataRtpFormat> {
                 static const MetadataRtpFormat St2110_40;
 };
 
-inline const MetadataRtpFormat MetadataRtpFormat::JsonMetadata { 0 };
-inline const MetadataRtpFormat MetadataRtpFormat::St2110_40    { 1 };
+inline const MetadataRtpFormat MetadataRtpFormat::JsonMetadata{0};
+inline const MetadataRtpFormat MetadataRtpFormat::St2110_40{1};
 
 /**
  * @brief Well-known Enum type for human-readable byte-count formatting.
@@ -580,14 +524,12 @@ inline const MetadataRtpFormat MetadataRtpFormat::St2110_40    { 1 };
  */
 class ByteCountStyle : public TypedEnum<ByteCountStyle> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("ByteCountStyle", 0,
-                                { "Metric", 0 },
-                                { "Binary", 1 });  // default: Metric
+                PROMEKI_REGISTER_ENUM_TYPE("ByteCountStyle", 0, {"Metric", 0}, {"Binary", 1}); // default: Metric
 
                 using TypedEnum<ByteCountStyle>::TypedEnum;
 
-                static const ByteCountStyle Metric;     ///< Powers of 1000 (`KB`, `MB`, ...).
-                static const ByteCountStyle Binary;     ///< Powers of 1024 (`KiB`, `MiB`, ...).
+                static const ByteCountStyle Metric; ///< Powers of 1000 (`KB`, `MB`, ...).
+                static const ByteCountStyle Binary; ///< Powers of 1024 (`KiB`, `MiB`, ...).
 };
 
 inline const ByteCountStyle ByteCountStyle::Metric{0};
@@ -603,9 +545,7 @@ inline const ByteCountStyle ByteCountStyle::Binary{1};
  */
 class ImgSeqPathMode : public TypedEnum<ImgSeqPathMode> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("ImgSeqPathMode", 0,
-                                { "Relative", 0 },
-                                { "Absolute", 1 });  // default: Relative
+                PROMEKI_REGISTER_ENUM_TYPE("ImgSeqPathMode", 0, {"Relative", 0}, {"Absolute", 1}); // default: Relative
 
                 using TypedEnum<ImgSeqPathMode>::TypedEnum;
 
@@ -613,8 +553,8 @@ class ImgSeqPathMode : public TypedEnum<ImgSeqPathMode> {
                 static const ImgSeqPathMode Absolute;
 };
 
-inline const ImgSeqPathMode ImgSeqPathMode::Relative { 0 };
-inline const ImgSeqPathMode ImgSeqPathMode::Absolute { 1 };
+inline const ImgSeqPathMode ImgSeqPathMode::Relative{0};
+inline const ImgSeqPathMode ImgSeqPathMode::Absolute{1};
 
 /**
  * @brief Selects the on-the-wire BCD time-address layout used by
@@ -654,9 +594,7 @@ inline const ImgSeqPathMode ImgSeqPathMode::Absolute { 1 };
  */
 class TimecodePackFormat : public TypedEnum<TimecodePackFormat> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("TimecodePackFormat", 0,
-                                { "Vitc", 0 },
-                                { "Ltc",  1 });  // default: Vitc
+                PROMEKI_REGISTER_ENUM_TYPE("TimecodePackFormat", 0, {"Vitc", 0}, {"Ltc", 1}); // default: Vitc
 
                 using TypedEnum<TimecodePackFormat>::TypedEnum;
 
@@ -664,8 +602,8 @@ class TimecodePackFormat : public TypedEnum<TimecodePackFormat> {
                 static const TimecodePackFormat Ltc;
 };
 
-inline const TimecodePackFormat TimecodePackFormat::Vitc { 0 };
-inline const TimecodePackFormat TimecodePackFormat::Ltc  { 1 };
+inline const TimecodePackFormat TimecodePackFormat::Vitc{0};
+inline const TimecodePackFormat TimecodePackFormat::Ltc{1};
 
 /**
  * @brief Well-known Enum type for progressive / interlaced video scan mode.
@@ -706,13 +644,9 @@ inline const TimecodePackFormat TimecodePackFormat::Ltc  { 1 };
  */
 class VideoScanMode : public TypedEnum<VideoScanMode> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("VideoScanMode", 0,
-                                { "Unknown",             0 },
-                                { "Progressive",         1 },
-                                { "Interlaced",          2 },
-                                { "InterlacedEvenFirst", 3 },
-                                { "InterlacedOddFirst",  4 },
-                                { "PsF",                 5 });  // default: Unknown
+                PROMEKI_REGISTER_ENUM_TYPE("VideoScanMode", 0, {"Unknown", 0}, {"Progressive", 1}, {"Interlaced", 2},
+                                           {"InterlacedEvenFirst", 3}, {"InterlacedOddFirst", 4},
+                                           {"PsF", 5}); // default: Unknown
 
                 using TypedEnum<VideoScanMode>::TypedEnum;
 
@@ -734,18 +668,18 @@ class VideoScanMode : public TypedEnum<VideoScanMode> {
                  */
                 bool isInterlaced() const {
                         const int v = value();
-                        return v == 2 /*Interlaced*/
-                            || v == 3 /*InterlacedEvenFirst*/
-                            || v == 4 /*InterlacedOddFirst*/;
+                        return v == 2    /*Interlaced*/
+                               || v == 3 /*InterlacedEvenFirst*/
+                               || v == 4 /*InterlacedOddFirst*/;
                 }
 };
 
-inline const VideoScanMode VideoScanMode::Unknown             { 0 };
-inline const VideoScanMode VideoScanMode::Progressive         { 1 };
-inline const VideoScanMode VideoScanMode::Interlaced          { 2 };
-inline const VideoScanMode VideoScanMode::InterlacedEvenFirst { 3 };
-inline const VideoScanMode VideoScanMode::InterlacedOddFirst  { 4 };
-inline const VideoScanMode VideoScanMode::PsF                 { 5 };
+inline const VideoScanMode VideoScanMode::Unknown{0};
+inline const VideoScanMode VideoScanMode::Progressive{1};
+inline const VideoScanMode VideoScanMode::Interlaced{2};
+inline const VideoScanMode VideoScanMode::InterlacedEvenFirst{3};
+inline const VideoScanMode VideoScanMode::InterlacedOddFirst{4};
+inline const VideoScanMode VideoScanMode::PsF{5};
 
 /**
  * @brief Well-known Enum type for MediaIO open direction.
@@ -768,10 +702,8 @@ inline const VideoScanMode VideoScanMode::PsF                 { 5 };
  */
 class MediaIODirection : public TypedEnum<MediaIODirection> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("MediaIODirection", 0,
-                                { "Source",    0 },
-                                { "Sink",      1 },
-                                { "Transform", 2 });  // default: Source
+                PROMEKI_REGISTER_ENUM_TYPE("MediaIODirection", 0, {"Source", 0}, {"Sink", 1},
+                                           {"Transform", 2}); // default: Source
 
                 using TypedEnum<MediaIODirection>::TypedEnum;
 
@@ -780,9 +712,9 @@ class MediaIODirection : public TypedEnum<MediaIODirection> {
                 static const MediaIODirection Transform;
 };
 
-inline const MediaIODirection MediaIODirection::Source    { 0 };
-inline const MediaIODirection MediaIODirection::Sink      { 1 };
-inline const MediaIODirection MediaIODirection::Transform { 2 };
+inline const MediaIODirection MediaIODirection::Source{0};
+inline const MediaIODirection MediaIODirection::Sink{1};
+inline const MediaIODirection MediaIODirection::Transform{2};
 
 /**
  * @brief Well-known Enum type for the coarse category of a
@@ -811,13 +743,8 @@ inline const MediaIODirection MediaIODirection::Transform { 2 };
  */
 class MediaPayloadKind : public TypedEnum<MediaPayloadKind> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("MediaPayloadKind", 0,
-                                { "Video",         0 },
-                                { "Audio",         1 },
-                                { "Metadata",      2 },
-                                { "Subtitle",      3 },
-                                { "AncillaryData", 4 },
-                                { "Custom",        5 });  // default: Video
+                PROMEKI_REGISTER_ENUM_TYPE("MediaPayloadKind", 0, {"Video", 0}, {"Audio", 1}, {"Metadata", 2},
+                                           {"Subtitle", 3}, {"AncillaryData", 4}, {"Custom", 5}); // default: Video
 
                 using TypedEnum<MediaPayloadKind>::TypedEnum;
 
@@ -829,12 +756,12 @@ class MediaPayloadKind : public TypedEnum<MediaPayloadKind> {
                 static const MediaPayloadKind Custom;
 };
 
-inline const MediaPayloadKind MediaPayloadKind::Video         { 0 };
-inline const MediaPayloadKind MediaPayloadKind::Audio         { 1 };
-inline const MediaPayloadKind MediaPayloadKind::Metadata      { 2 };
-inline const MediaPayloadKind MediaPayloadKind::Subtitle      { 3 };
-inline const MediaPayloadKind MediaPayloadKind::AncillaryData { 4 };
-inline const MediaPayloadKind MediaPayloadKind::Custom        { 5 };
+inline const MediaPayloadKind MediaPayloadKind::Video{0};
+inline const MediaPayloadKind MediaPayloadKind::Audio{1};
+inline const MediaPayloadKind MediaPayloadKind::Metadata{2};
+inline const MediaPayloadKind MediaPayloadKind::Subtitle{3};
+inline const MediaPayloadKind MediaPayloadKind::AncillaryData{4};
+inline const MediaPayloadKind MediaPayloadKind::Custom{5};
 
 /**
  * @brief Well-known Enum type for the role of a compressed video
@@ -864,13 +791,8 @@ inline const MediaPayloadKind MediaPayloadKind::Custom        { 5 };
  */
 class FrameType : public TypedEnum<FrameType> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("FrameType", 0,
-                                { "Unknown", 0 },
-                                { "I",       1 },
-                                { "P",       2 },
-                                { "B",       3 },
-                                { "IDR",     4 },
-                                { "BRef",    5 });  // default: Unknown
+                PROMEKI_REGISTER_ENUM_TYPE("FrameType", 0, {"Unknown", 0}, {"I", 1}, {"P", 2}, {"B", 3}, {"IDR", 4},
+                                           {"BRef", 5}); // default: Unknown
 
                 using TypedEnum<FrameType>::TypedEnum;
 
@@ -882,12 +804,12 @@ class FrameType : public TypedEnum<FrameType> {
                 static const FrameType BRef;
 };
 
-inline const FrameType FrameType::Unknown { 0 };
-inline const FrameType FrameType::I       { 1 };
-inline const FrameType FrameType::P       { 2 };
-inline const FrameType FrameType::B       { 3 };
-inline const FrameType FrameType::IDR     { 4 };
-inline const FrameType FrameType::BRef    { 5 };
+inline const FrameType FrameType::Unknown{0};
+inline const FrameType FrameType::I{1};
+inline const FrameType FrameType::P{2};
+inline const FrameType FrameType::B{3};
+inline const FrameType FrameType::IDR{4};
+inline const FrameType FrameType::BRef{5};
 
 /**
  * @brief Preferred audio source for image-sequence readers.
@@ -909,9 +831,7 @@ inline const FrameType FrameType::BRef    { 5 };
  */
 class AudioSourceHint : public TypedEnum<AudioSourceHint> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("AudioSourceHint", 0,
-                                { "Sidecar",  0 },
-                                { "Embedded", 1 });  // default: Sidecar
+                PROMEKI_REGISTER_ENUM_TYPE("AudioSourceHint", 0, {"Sidecar", 0}, {"Embedded", 1}); // default: Sidecar
 
                 using TypedEnum<AudioSourceHint>::TypedEnum;
 
@@ -919,8 +839,8 @@ class AudioSourceHint : public TypedEnum<AudioSourceHint> {
                 static const AudioSourceHint Embedded;
 };
 
-inline const AudioSourceHint AudioSourceHint::Sidecar  { 0 };
-inline const AudioSourceHint AudioSourceHint::Embedded { 1 };
+inline const AudioSourceHint AudioSourceHint::Sidecar{0};
+inline const AudioSourceHint AudioSourceHint::Embedded{1};
 
 /**
  * @brief Well-known Enum type for V4L2 power line frequency filter.
@@ -929,11 +849,8 @@ inline const AudioSourceHint AudioSourceHint::Embedded { 1 };
  */
 class V4l2PowerLineMode : public TypedEnum<V4l2PowerLineMode> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("V4l2PowerLineMode", 3,
-                                { "Disabled", 0 },
-                                { "50Hz",     1 },
-                                { "60Hz",     2 },
-                                { "Auto",     3 });  // default: Auto
+                PROMEKI_REGISTER_ENUM_TYPE("V4l2PowerLineMode", 3, {"Disabled", 0}, {"50Hz", 1}, {"60Hz", 2},
+                                           {"Auto", 3}); // default: Auto
 
                 using TypedEnum<V4l2PowerLineMode>::TypedEnum;
 
@@ -943,10 +860,10 @@ class V4l2PowerLineMode : public TypedEnum<V4l2PowerLineMode> {
                 static const V4l2PowerLineMode Auto;
 };
 
-inline const V4l2PowerLineMode V4l2PowerLineMode::Disabled { 0 };
-inline const V4l2PowerLineMode V4l2PowerLineMode::Hz50     { 1 };
-inline const V4l2PowerLineMode V4l2PowerLineMode::Hz60     { 2 };
-inline const V4l2PowerLineMode V4l2PowerLineMode::Auto     { 3 };
+inline const V4l2PowerLineMode V4l2PowerLineMode::Disabled{0};
+inline const V4l2PowerLineMode V4l2PowerLineMode::Hz50{1};
+inline const V4l2PowerLineMode V4l2PowerLineMode::Hz60{2};
+inline const V4l2PowerLineMode V4l2PowerLineMode::Auto{3};
 
 /**
  * @brief Well-known Enum type for V4L2 auto exposure mode.
@@ -955,11 +872,8 @@ inline const V4l2PowerLineMode V4l2PowerLineMode::Auto     { 3 };
  */
 class V4l2ExposureMode : public TypedEnum<V4l2ExposureMode> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("V4l2ExposureMode", 3,
-                                { "Auto",             0 },
-                                { "Manual",           1 },
-                                { "ShutterPriority",  2 },
-                                { "AperturePriority", 3 });  // default: AperturePriority
+                PROMEKI_REGISTER_ENUM_TYPE("V4l2ExposureMode", 3, {"Auto", 0}, {"Manual", 1}, {"ShutterPriority", 2},
+                                           {"AperturePriority", 3}); // default: AperturePriority
 
                 using TypedEnum<V4l2ExposureMode>::TypedEnum;
 
@@ -969,10 +883,10 @@ class V4l2ExposureMode : public TypedEnum<V4l2ExposureMode> {
                 static const V4l2ExposureMode AperturePriority;
 };
 
-inline const V4l2ExposureMode V4l2ExposureMode::Auto             { 0 };
-inline const V4l2ExposureMode V4l2ExposureMode::Manual           { 1 };
-inline const V4l2ExposureMode V4l2ExposureMode::ShutterPriority  { 2 };
-inline const V4l2ExposureMode V4l2ExposureMode::AperturePriority { 3 };
+inline const V4l2ExposureMode V4l2ExposureMode::Auto{0};
+inline const V4l2ExposureMode V4l2ExposureMode::Manual{1};
+inline const V4l2ExposureMode V4l2ExposureMode::ShutterPriority{2};
+inline const V4l2ExposureMode V4l2ExposureMode::AperturePriority{3};
 
 /**
  * @brief Well-known Enum type for audio sample rate conversion quality.
@@ -998,12 +912,8 @@ inline const V4l2ExposureMode V4l2ExposureMode::AperturePriority { 3 };
  */
 class SrcQuality : public TypedEnum<SrcQuality> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("SrcQuality", 1,
-                                { "SincBest",      0 },
-                                { "SincMedium",    1 },
-                                { "SincFastest",   2 },
-                                { "Linear",        3 },
-                                { "ZeroOrderHold", 4 });  // default: SincMedium
+                PROMEKI_REGISTER_ENUM_TYPE("SrcQuality", 1, {"SincBest", 0}, {"SincMedium", 1}, {"SincFastest", 2},
+                                           {"Linear", 3}, {"ZeroOrderHold", 4}); // default: SincMedium
 
                 using TypedEnum<SrcQuality>::TypedEnum;
 
@@ -1014,11 +924,11 @@ class SrcQuality : public TypedEnum<SrcQuality> {
                 static const SrcQuality ZeroOrderHold;
 };
 
-inline const SrcQuality SrcQuality::SincBest      { 0 };
-inline const SrcQuality SrcQuality::SincMedium    { 1 };
-inline const SrcQuality SrcQuality::SincFastest   { 2 };
-inline const SrcQuality SrcQuality::Linear        { 3 };
-inline const SrcQuality SrcQuality::ZeroOrderHold { 4 };
+inline const SrcQuality SrcQuality::SincBest{0};
+inline const SrcQuality SrcQuality::SincMedium{1};
+inline const SrcQuality SrcQuality::SincFastest{2};
+inline const SrcQuality SrcQuality::Linear{3};
+inline const SrcQuality SrcQuality::ZeroOrderHold{4};
 
 /**
  * @brief Well-known Enum type for clock domain epoch behaviour.
@@ -1039,10 +949,8 @@ inline const SrcQuality SrcQuality::ZeroOrderHold { 4 };
  */
 class ClockEpoch : public TypedEnum<ClockEpoch> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("ClockEpoch", 1,
-                                { "PerStream",  0 },
-                                { "Correlated", 1 },
-                                { "Absolute",   2 });  // default: Correlated
+                PROMEKI_REGISTER_ENUM_TYPE("ClockEpoch", 1, {"PerStream", 0}, {"Correlated", 1},
+                                           {"Absolute", 2}); // default: Correlated
 
                 using TypedEnum<ClockEpoch>::TypedEnum;
 
@@ -1051,9 +959,9 @@ class ClockEpoch : public TypedEnum<ClockEpoch> {
                 static const ClockEpoch Absolute;
 };
 
-inline const ClockEpoch ClockEpoch::PerStream  { 0 };
-inline const ClockEpoch ClockEpoch::Correlated { 1 };
-inline const ClockEpoch ClockEpoch::Absolute   { 2 };
+inline const ClockEpoch ClockEpoch::PerStream{0};
+inline const ClockEpoch ClockEpoch::Correlated{1};
+inline const ClockEpoch ClockEpoch::Absolute{2};
 
 /**
  * @brief Well-known Enum type for EUI-64 string formats.
@@ -1067,10 +975,8 @@ inline const ClockEpoch ClockEpoch::Absolute   { 2 };
  */
 class EUI64Format : public TypedEnum<EUI64Format> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("EUI64Format", 0,
-                                { "OctetHyphen", 0 },
-                                { "OctetColon",  1 },
-                                { "IPv6",        2 });  // default: OctetHyphen
+                PROMEKI_REGISTER_ENUM_TYPE("EUI64Format", 0, {"OctetHyphen", 0}, {"OctetColon", 1},
+                                           {"IPv6", 2}); // default: OctetHyphen
 
                 using TypedEnum<EUI64Format>::TypedEnum;
 
@@ -1079,9 +985,9 @@ class EUI64Format : public TypedEnum<EUI64Format> {
                 static const EUI64Format IPv6;
 };
 
-inline const EUI64Format EUI64Format::OctetHyphen { 0 };
-inline const EUI64Format EUI64Format::OctetColon  { 1 };
-inline const EUI64Format EUI64Format::IPv6        { 2 };
+inline const EUI64Format EUI64Format::OctetHyphen{0};
+inline const EUI64Format EUI64Format::OctetColon{1};
+inline const EUI64Format EUI64Format::IPv6{2};
 
 /**
  * @brief Well-known Enum type for @c MediaIOTask_Inspector test selection.
@@ -1112,14 +1018,9 @@ inline const EUI64Format EUI64Format::IPv6        { 2 };
  */
 class InspectorTest : public TypedEnum<InspectorTest> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("InspectorTest", 0,
-                                { "ImageData",    0 },
-                                { "Ltc",          1 },
-                                { "TcSync",       2 },
-                                { "Continuity",   3 },
-                                { "Timestamp",    4 },
-                                { "AudioSamples", 5 },
-                                { "CaptureStats", 6 });
+                PROMEKI_REGISTER_ENUM_TYPE("InspectorTest", 0, {"ImageData", 0}, {"Ltc", 1}, {"TcSync", 2},
+                                           {"Continuity", 3}, {"Timestamp", 4}, {"AudioSamples", 5},
+                                           {"CaptureStats", 6});
 
                 using TypedEnum<InspectorTest>::TypedEnum;
 
@@ -1132,13 +1033,13 @@ class InspectorTest : public TypedEnum<InspectorTest> {
                 static const InspectorTest CaptureStats;
 };
 
-inline const InspectorTest InspectorTest::ImageData    { 0 };
-inline const InspectorTest InspectorTest::Ltc          { 1 };
-inline const InspectorTest InspectorTest::TcSync       { 2 };
-inline const InspectorTest InspectorTest::Continuity   { 3 };
-inline const InspectorTest InspectorTest::Timestamp    { 4 };
-inline const InspectorTest InspectorTest::AudioSamples { 5 };
-inline const InspectorTest InspectorTest::CaptureStats { 6 };
+inline const InspectorTest InspectorTest::ImageData{0};
+inline const InspectorTest InspectorTest::Ltc{1};
+inline const InspectorTest InspectorTest::TcSync{2};
+inline const InspectorTest InspectorTest::Continuity{3};
+inline const InspectorTest InspectorTest::Timestamp{4};
+inline const InspectorTest InspectorTest::AudioSamples{5};
+inline const InspectorTest InspectorTest::CaptureStats{6};
 
 /**
  * @brief Well-known Enum type for codec rate-control modes (audio + video).
@@ -1166,11 +1067,8 @@ inline const InspectorTest InspectorTest::CaptureStats { 6 };
  */
 class RateControlMode : public TypedEnum<RateControlMode> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("RateControlMode", 1,
-                                { "CBR", 0 },
-                                { "VBR", 1 },
-                                { "ABR", 2 },
-                                { "CQP", 3 });  // default: VBR
+                PROMEKI_REGISTER_ENUM_TYPE("RateControlMode", 1, {"CBR", 0}, {"VBR", 1}, {"ABR", 2},
+                                           {"CQP", 3}); // default: VBR
 
                 using TypedEnum<RateControlMode>::TypedEnum;
 
@@ -1180,10 +1078,10 @@ class RateControlMode : public TypedEnum<RateControlMode> {
                 static const RateControlMode CQP;
 };
 
-inline const RateControlMode RateControlMode::CBR { 0 };
-inline const RateControlMode RateControlMode::VBR { 1 };
-inline const RateControlMode RateControlMode::ABR { 2 };
-inline const RateControlMode RateControlMode::CQP { 3 };
+inline const RateControlMode RateControlMode::CBR{0};
+inline const RateControlMode RateControlMode::VBR{1};
+inline const RateControlMode RateControlMode::ABR{2};
+inline const RateControlMode RateControlMode::CQP{3};
 
 /**
  * @brief Well-known Enum type for video-encoder speed / quality presets.
@@ -1207,12 +1105,8 @@ inline const RateControlMode RateControlMode::CQP { 3 };
  */
 class VideoEncoderPreset : public TypedEnum<VideoEncoderPreset> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("VideoEncoderPreset", 2,
-                                { "UltraLowLatency", 0 },
-                                { "LowLatency",      1 },
-                                { "Balanced",        2 },
-                                { "HighQuality",     3 },
-                                { "Lossless",        4 });  // default: Balanced
+                PROMEKI_REGISTER_ENUM_TYPE("VideoEncoderPreset", 2, {"UltraLowLatency", 0}, {"LowLatency", 1},
+                                           {"Balanced", 2}, {"HighQuality", 3}, {"Lossless", 4}); // default: Balanced
 
                 using TypedEnum<VideoEncoderPreset>::TypedEnum;
 
@@ -1223,11 +1117,11 @@ class VideoEncoderPreset : public TypedEnum<VideoEncoderPreset> {
                 static const VideoEncoderPreset Lossless;
 };
 
-inline const VideoEncoderPreset VideoEncoderPreset::UltraLowLatency { 0 };
-inline const VideoEncoderPreset VideoEncoderPreset::LowLatency      { 1 };
-inline const VideoEncoderPreset VideoEncoderPreset::Balanced        { 2 };
-inline const VideoEncoderPreset VideoEncoderPreset::HighQuality     { 3 };
-inline const VideoEncoderPreset VideoEncoderPreset::Lossless        { 4 };
+inline const VideoEncoderPreset VideoEncoderPreset::UltraLowLatency{0};
+inline const VideoEncoderPreset VideoEncoderPreset::LowLatency{1};
+inline const VideoEncoderPreset VideoEncoderPreset::Balanced{2};
+inline const VideoEncoderPreset VideoEncoderPreset::HighQuality{3};
+inline const VideoEncoderPreset VideoEncoderPreset::Lossless{4};
 
 /**
  * @brief Well-known Enum type for the Opus encoder application mode.
@@ -1250,10 +1144,8 @@ inline const VideoEncoderPreset VideoEncoderPreset::Lossless        { 4 };
  */
 class OpusApplication : public TypedEnum<OpusApplication> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("OpusApplication", 1,
-                                { "Voip",     0 },
-                                { "Audio",    1 },
-                                { "LowDelay", 2 });  // default: Audio
+                PROMEKI_REGISTER_ENUM_TYPE("OpusApplication", 1, {"Voip", 0}, {"Audio", 1},
+                                           {"LowDelay", 2}); // default: Audio
 
                 using TypedEnum<OpusApplication>::TypedEnum;
 
@@ -1262,9 +1154,9 @@ class OpusApplication : public TypedEnum<OpusApplication> {
                 static const OpusApplication LowDelay;
 };
 
-inline const OpusApplication OpusApplication::Voip     { 0 };
-inline const OpusApplication OpusApplication::Audio    { 1 };
-inline const OpusApplication OpusApplication::LowDelay { 2 };
+inline const OpusApplication OpusApplication::Voip{0};
+inline const OpusApplication OpusApplication::Audio{1};
+inline const OpusApplication OpusApplication::LowDelay{2};
 
 /**
  * @brief Well-known Enum type for video value range (aka quantization
@@ -1286,10 +1178,8 @@ inline const OpusApplication OpusApplication::LowDelay { 2 };
  */
 class VideoRange : public TypedEnum<VideoRange> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("VideoRange", 0,
-                                { "Unknown", 0 },
-                                { "Limited", 1 },
-                                { "Full",    2 });  // default: Unknown
+                PROMEKI_REGISTER_ENUM_TYPE("VideoRange", 0, {"Unknown", 0}, {"Limited", 1},
+                                           {"Full", 2}); // default: Unknown
 
                 using TypedEnum<VideoRange>::TypedEnum;
 
@@ -1298,9 +1188,9 @@ class VideoRange : public TypedEnum<VideoRange> {
                 static const VideoRange Full;
 };
 
-inline const VideoRange VideoRange::Unknown { 0 };
-inline const VideoRange VideoRange::Limited { 1 };
-inline const VideoRange VideoRange::Full    { 2 };
+inline const VideoRange VideoRange::Unknown{0};
+inline const VideoRange VideoRange::Limited{1};
+inline const VideoRange VideoRange::Full{2};
 
 /**
  * @brief Well-known Enum type for VUI / container color primaries.
@@ -1321,20 +1211,10 @@ class ColorPrimaries : public TypedEnum<ColorPrimaries> {
                 // collide with a spec-registered primary.  Encoders
                 // that see @c Auto resolve it by inspecting the input
                 // PixelFormat's ColorModel at session init time.
-                PROMEKI_REGISTER_ENUM_TYPE("ColorPrimaries", 255,
-                                { "BT709",       1 },
-                                { "Unspecified", 2 },
-                                { "BT470M",      4 },
-                                { "BT470BG",     5 },
-                                { "SMPTE170M",   6 },
-                                { "SMPTE240M",   7 },
-                                { "Film",        8 },
-                                { "BT2020",      9 },
-                                { "SMPTE428",   10 },
-                                { "SMPTE431",   11 },
-                                { "SMPTE432",   12 },
-                                { "JEDEC_P22",  22 },
-                                { "Auto",      255 });  // default: Auto
+                PROMEKI_REGISTER_ENUM_TYPE("ColorPrimaries", 255, {"BT709", 1}, {"Unspecified", 2}, {"BT470M", 4},
+                                           {"BT470BG", 5}, {"SMPTE170M", 6}, {"SMPTE240M", 7}, {"Film", 8},
+                                           {"BT2020", 9}, {"SMPTE428", 10}, {"SMPTE431", 11}, {"SMPTE432", 12},
+                                           {"JEDEC_P22", 22}, {"Auto", 255}); // default: Auto
 
                 using TypedEnum<ColorPrimaries>::TypedEnum;
 
@@ -1353,19 +1233,19 @@ class ColorPrimaries : public TypedEnum<ColorPrimaries> {
                 static const ColorPrimaries JEDEC_P22;
 };
 
-inline const ColorPrimaries ColorPrimaries::Auto        { 255 };
-inline const ColorPrimaries ColorPrimaries::Unspecified {  2 };
-inline const ColorPrimaries ColorPrimaries::BT709       {  1 };
-inline const ColorPrimaries ColorPrimaries::BT470M      {  4 };
-inline const ColorPrimaries ColorPrimaries::BT470BG     {  5 };
-inline const ColorPrimaries ColorPrimaries::SMPTE170M   {  6 };
-inline const ColorPrimaries ColorPrimaries::SMPTE240M   {  7 };
-inline const ColorPrimaries ColorPrimaries::Film        {  8 };
-inline const ColorPrimaries ColorPrimaries::BT2020      {  9 };
-inline const ColorPrimaries ColorPrimaries::SMPTE428    { 10 };
-inline const ColorPrimaries ColorPrimaries::SMPTE431    { 11 };
-inline const ColorPrimaries ColorPrimaries::SMPTE432    { 12 };
-inline const ColorPrimaries ColorPrimaries::JEDEC_P22   { 22 };
+inline const ColorPrimaries ColorPrimaries::Auto{255};
+inline const ColorPrimaries ColorPrimaries::Unspecified{2};
+inline const ColorPrimaries ColorPrimaries::BT709{1};
+inline const ColorPrimaries ColorPrimaries::BT470M{4};
+inline const ColorPrimaries ColorPrimaries::BT470BG{5};
+inline const ColorPrimaries ColorPrimaries::SMPTE170M{6};
+inline const ColorPrimaries ColorPrimaries::SMPTE240M{7};
+inline const ColorPrimaries ColorPrimaries::Film{8};
+inline const ColorPrimaries ColorPrimaries::BT2020{9};
+inline const ColorPrimaries ColorPrimaries::SMPTE428{10};
+inline const ColorPrimaries ColorPrimaries::SMPTE431{11};
+inline const ColorPrimaries ColorPrimaries::SMPTE432{12};
+inline const ColorPrimaries ColorPrimaries::JEDEC_P22{22};
 
 /**
  * @brief Well-known Enum type for VUI / container transfer characteristic
@@ -1386,25 +1266,12 @@ class TransferCharacteristics : public TypedEnum<TransferCharacteristics> {
                 // SDR curve matching the primaries and callers must
                 // set an explicit @c SMPTE2084 / @c ARIB_STD_B67 for
                 // HDR content.
-                PROMEKI_REGISTER_ENUM_TYPE("TransferCharacteristics", 255,
-                                { "BT709",         1 },
-                                { "Unspecified",   2 },
-                                { "Gamma22",       4 },
-                                { "Gamma28",       5 },
-                                { "SMPTE170M",     6 },
-                                { "SMPTE240M",     7 },
-                                { "Linear",        8 },
-                                { "Log",           9 },
-                                { "LogSqrt",      10 },
-                                { "IEC61966_2_4", 11 },
-                                { "BT1361",       12 },
-                                { "SRGB",         13 },
-                                { "BT2020_10",    14 },
-                                { "BT2020_12",    15 },
-                                { "SMPTE2084",    16 },
-                                { "SMPTE428",     17 },
-                                { "ARIB_STD_B67", 18 },
-                                { "Auto",        255 });  // default: Auto
+                PROMEKI_REGISTER_ENUM_TYPE("TransferCharacteristics", 255, {"BT709", 1}, {"Unspecified", 2},
+                                           {"Gamma22", 4}, {"Gamma28", 5}, {"SMPTE170M", 6}, {"SMPTE240M", 7},
+                                           {"Linear", 8}, {"Log", 9}, {"LogSqrt", 10}, {"IEC61966_2_4", 11},
+                                           {"BT1361", 12}, {"SRGB", 13}, {"BT2020_10", 14}, {"BT2020_12", 15},
+                                           {"SMPTE2084", 16}, {"SMPTE428", 17}, {"ARIB_STD_B67", 18},
+                                           {"Auto", 255}); // default: Auto
 
                 using TypedEnum<TransferCharacteristics>::TypedEnum;
 
@@ -1423,29 +1290,29 @@ class TransferCharacteristics : public TypedEnum<TransferCharacteristics> {
                 static const TransferCharacteristics SRGB;
                 static const TransferCharacteristics BT2020_10;
                 static const TransferCharacteristics BT2020_12;
-                static const TransferCharacteristics SMPTE2084;   ///< PQ (HDR10).
+                static const TransferCharacteristics SMPTE2084; ///< PQ (HDR10).
                 static const TransferCharacteristics SMPTE428;
                 static const TransferCharacteristics ARIB_STD_B67; ///< HLG.
 };
 
-inline const TransferCharacteristics TransferCharacteristics::Auto          { 255 };
-inline const TransferCharacteristics TransferCharacteristics::Unspecified   {  2 };
-inline const TransferCharacteristics TransferCharacteristics::BT709         {  1 };
-inline const TransferCharacteristics TransferCharacteristics::Gamma22       {  4 };
-inline const TransferCharacteristics TransferCharacteristics::Gamma28       {  5 };
-inline const TransferCharacteristics TransferCharacteristics::SMPTE170M     {  6 };
-inline const TransferCharacteristics TransferCharacteristics::SMPTE240M     {  7 };
-inline const TransferCharacteristics TransferCharacteristics::Linear        {  8 };
-inline const TransferCharacteristics TransferCharacteristics::Log           {  9 };
-inline const TransferCharacteristics TransferCharacteristics::LogSqrt       { 10 };
-inline const TransferCharacteristics TransferCharacteristics::IEC61966_2_4  { 11 };
-inline const TransferCharacteristics TransferCharacteristics::BT1361        { 12 };
-inline const TransferCharacteristics TransferCharacteristics::SRGB          { 13 };
-inline const TransferCharacteristics TransferCharacteristics::BT2020_10     { 14 };
-inline const TransferCharacteristics TransferCharacteristics::BT2020_12     { 15 };
-inline const TransferCharacteristics TransferCharacteristics::SMPTE2084     { 16 };
-inline const TransferCharacteristics TransferCharacteristics::SMPTE428      { 17 };
-inline const TransferCharacteristics TransferCharacteristics::ARIB_STD_B67  { 18 };
+inline const TransferCharacteristics TransferCharacteristics::Auto{255};
+inline const TransferCharacteristics TransferCharacteristics::Unspecified{2};
+inline const TransferCharacteristics TransferCharacteristics::BT709{1};
+inline const TransferCharacteristics TransferCharacteristics::Gamma22{4};
+inline const TransferCharacteristics TransferCharacteristics::Gamma28{5};
+inline const TransferCharacteristics TransferCharacteristics::SMPTE170M{6};
+inline const TransferCharacteristics TransferCharacteristics::SMPTE240M{7};
+inline const TransferCharacteristics TransferCharacteristics::Linear{8};
+inline const TransferCharacteristics TransferCharacteristics::Log{9};
+inline const TransferCharacteristics TransferCharacteristics::LogSqrt{10};
+inline const TransferCharacteristics TransferCharacteristics::IEC61966_2_4{11};
+inline const TransferCharacteristics TransferCharacteristics::BT1361{12};
+inline const TransferCharacteristics TransferCharacteristics::SRGB{13};
+inline const TransferCharacteristics TransferCharacteristics::BT2020_10{14};
+inline const TransferCharacteristics TransferCharacteristics::BT2020_12{15};
+inline const TransferCharacteristics TransferCharacteristics::SMPTE2084{16};
+inline const TransferCharacteristics TransferCharacteristics::SMPTE428{17};
+inline const TransferCharacteristics TransferCharacteristics::ARIB_STD_B67{18};
 
 /**
  * @brief Well-known Enum type for VUI / container matrix coefficients
@@ -1462,19 +1329,10 @@ class MatrixCoefficients : public TypedEnum<MatrixCoefficients> {
                 // PixelFormat's ColorModel (RGB models → @c RGB,
                 // YCbCr_Rec709 → @c BT709, YCbCr_Rec2020 → @c BT2020_NCL,
                 // etc.) at session init time.
-                PROMEKI_REGISTER_ENUM_TYPE("MatrixCoefficients", 255,
-                                { "RGB",         0 },
-                                { "BT709",       1 },
-                                { "Unspecified", 2 },
-                                { "FCC",         4 },
-                                { "BT470BG",     5 },
-                                { "SMPTE170M",   6 },
-                                { "SMPTE240M",   7 },
-                                { "YCgCo",       8 },
-                                { "BT2020_NCL",  9 },
-                                { "BT2020_CL",  10 },
-                                { "SMPTE2085",  11 },
-                                { "Auto",      255 });  // default: Auto
+                PROMEKI_REGISTER_ENUM_TYPE("MatrixCoefficients", 255, {"RGB", 0}, {"BT709", 1}, {"Unspecified", 2},
+                                           {"FCC", 4}, {"BT470BG", 5}, {"SMPTE170M", 6}, {"SMPTE240M", 7}, {"YCgCo", 8},
+                                           {"BT2020_NCL", 9}, {"BT2020_CL", 10}, {"SMPTE2085", 11},
+                                           {"Auto", 255}); // default: Auto
 
                 using TypedEnum<MatrixCoefficients>::TypedEnum;
 
@@ -1492,18 +1350,18 @@ class MatrixCoefficients : public TypedEnum<MatrixCoefficients> {
                 static const MatrixCoefficients SMPTE2085;
 };
 
-inline const MatrixCoefficients MatrixCoefficients::Auto        { 255 };
-inline const MatrixCoefficients MatrixCoefficients::Unspecified {  2 };
-inline const MatrixCoefficients MatrixCoefficients::RGB         {  0 };
-inline const MatrixCoefficients MatrixCoefficients::BT709       {  1 };
-inline const MatrixCoefficients MatrixCoefficients::FCC         {  4 };
-inline const MatrixCoefficients MatrixCoefficients::BT470BG     {  5 };
-inline const MatrixCoefficients MatrixCoefficients::SMPTE170M   {  6 };
-inline const MatrixCoefficients MatrixCoefficients::SMPTE240M   {  7 };
-inline const MatrixCoefficients MatrixCoefficients::YCgCo       {  8 };
-inline const MatrixCoefficients MatrixCoefficients::BT2020_NCL  {  9 };
-inline const MatrixCoefficients MatrixCoefficients::BT2020_CL   { 10 };
-inline const MatrixCoefficients MatrixCoefficients::SMPTE2085   { 11 };
+inline const MatrixCoefficients MatrixCoefficients::Auto{255};
+inline const MatrixCoefficients MatrixCoefficients::Unspecified{2};
+inline const MatrixCoefficients MatrixCoefficients::RGB{0};
+inline const MatrixCoefficients MatrixCoefficients::BT709{1};
+inline const MatrixCoefficients MatrixCoefficients::FCC{4};
+inline const MatrixCoefficients MatrixCoefficients::BT470BG{5};
+inline const MatrixCoefficients MatrixCoefficients::SMPTE170M{6};
+inline const MatrixCoefficients MatrixCoefficients::SMPTE240M{7};
+inline const MatrixCoefficients MatrixCoefficients::YCgCo{8};
+inline const MatrixCoefficients MatrixCoefficients::BT2020_NCL{9};
+inline const MatrixCoefficients MatrixCoefficients::BT2020_CL{10};
+inline const MatrixCoefficients MatrixCoefficients::SMPTE2085{11};
 
 /**
  * @brief Well-known Enum type for @ref MediaIOTask_NullPacing pacing strategy.
@@ -1522,9 +1380,7 @@ inline const MatrixCoefficients MatrixCoefficients::SMPTE2085   { 11 };
  */
 class NullPacingMode : public TypedEnum<NullPacingMode> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("NullPacingMode", 0,
-                                { "Wallclock", 0 },
-                                { "Free",      1 });
+                PROMEKI_REGISTER_ENUM_TYPE("NullPacingMode", 0, {"Wallclock", 0}, {"Free", 1});
 
                 using TypedEnum<NullPacingMode>::TypedEnum;
 
@@ -1532,8 +1388,8 @@ class NullPacingMode : public TypedEnum<NullPacingMode> {
                 static const NullPacingMode Free;
 };
 
-inline const NullPacingMode NullPacingMode::Wallclock { 0 };
-inline const NullPacingMode NullPacingMode::Free      { 1 };
+inline const NullPacingMode NullPacingMode::Wallclock{0};
+inline const NullPacingMode NullPacingMode::Free{1};
 
 /** @} */
 

@@ -46,7 +46,7 @@ TEST_CASE("TuiStatusBar: showMessage replaces previous") {
 
 TEST_CASE("TuiStatusBar: sizeHint") {
         TuiStatusBar bar;
-        Size2Di32 hint = bar.sizeHint();
+        Size2Di32    hint = bar.sizeHint();
         CHECK(hint.width() >= 0);
         CHECK(hint.height() >= 1);
 }

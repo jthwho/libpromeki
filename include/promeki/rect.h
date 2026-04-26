@@ -42,12 +42,10 @@ template <typename T> class Rect {
                 Rect() = default;
 
                 /** @brief Constructs a rectangle from position and size. */
-                Rect(const Point<T, 2> &pos, const Size2DTemplate<T> &size)
-                        : _pos(pos), _size(size) {}
+                Rect(const Point<T, 2> &pos, const Size2DTemplate<T> &size) : _pos(pos), _size(size) {}
 
                 /** @brief Constructs a rectangle from individual components. */
-                Rect(T x, T y, T width, T height)
-                        : _pos(x, y), _size(width, height) {}
+                Rect(T x, T y, T width, T height) : _pos(x, y), _size(width, height) {}
 
                 /** @brief Returns the X coordinate of the left edge. */
                 T x() const { return _pos.x(); }
@@ -108,20 +106,19 @@ template <typename T> class Rect {
 
                 /** @brief Returns true if the given point is inside this rectangle. */
                 bool contains(const Point<T, 2> &p) const {
-                        return p.x() >= x() && p.x() < x() + width() &&
-                               p.y() >= y() && p.y() < y() + height();
+                        return p.x() >= x() && p.x() < x() + width() && p.y() >= y() && p.y() < y() + height();
                 }
 
                 /** @brief Returns true if the given rectangle is entirely inside this rectangle. */
                 bool contains(const Rect &r) const {
-                        return r.x() >= x() && r.x() + r.width() <= x() + width() &&
-                               r.y() >= y() && r.y() + r.height() <= y() + height();
+                        return r.x() >= x() && r.x() + r.width() <= x() + width() && r.y() >= y() &&
+                               r.y() + r.height() <= y() + height();
                 }
 
                 /** @brief Returns true if the given rectangle overlaps this rectangle. */
                 bool intersects(const Rect &r) const {
-                        return x() < r.x() + r.width() && x() + width() > r.x() &&
-                               y() < r.y() + r.height() && y() + height() > r.y();
+                        return x() < r.x() + r.width() && x() + width() > r.x() && y() < r.y() + r.height() &&
+                               y() + height() > r.y();
                 }
 
                 /** @brief Returns the intersection of this rectangle with another. */
@@ -130,14 +127,14 @@ template <typename T> class Rect {
                         T iy = std::max(y(), r.y());
                         T ix2 = std::min(x() + width(), r.x() + r.width());
                         T iy2 = std::min(y() + height(), r.y() + r.height());
-                        if(ix2 <= ix || iy2 <= iy) return Rect();
+                        if (ix2 <= ix || iy2 <= iy) return Rect();
                         return Rect(ix, iy, ix2 - ix, iy2 - iy);
                 }
 
                 /** @brief Returns the smallest rectangle containing both this and another. */
                 Rect united(const Rect &r) const {
-                        if(isEmpty()) return r;
-                        if(r.isEmpty()) return *this;
+                        if (isEmpty()) return r;
+                        if (r.isEmpty()) return *this;
                         T ux = std::min(x(), r.x());
                         T uy = std::min(y(), r.y());
                         T ux2 = std::max(x() + width(), r.x() + r.width());
@@ -147,14 +144,11 @@ template <typename T> class Rect {
 
                 /** @brief Returns a rectangle adjusted by the given deltas. */
                 Rect adjusted(T dx1, T dy1, T dx2, T dy2) const {
-                        return Rect(x() + dx1, y() + dy1,
-                                    width() + dx2 - dx1, height() + dy2 - dy1);
+                        return Rect(x() + dx1, y() + dy1, width() + dx2 - dx1, height() + dy2 - dy1);
                 }
 
                 /** @brief Returns a rectangle translated by dx, dy. */
-                Rect translated(T dx, T dy) const {
-                        return Rect(x() + dx, y() + dy, width(), height());
-                }
+                Rect translated(T dx, T dy) const { return Rect(x() + dx, y() + dy, width(), height()); }
 
                 /** @brief Equality operator. */
                 bool operator==(const Rect &other) const {
@@ -163,13 +157,11 @@ template <typename T> class Rect {
                 }
 
                 /** @brief Inequality operator. */
-                bool operator!=(const Rect &other) const {
-                        return !(*this == other);
-                }
+                bool operator!=(const Rect &other) const { return !(*this == other); }
 
         private:
-                Point<T, 2>            _pos;
-                Size2DTemplate<T>      _size;
+                Point<T, 2>       _pos;
+                Size2DTemplate<T> _size;
 };
 
 /** @brief 2D rectangle with int32_t components. */

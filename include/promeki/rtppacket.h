@@ -76,8 +76,7 @@ class RtpPacket : public BufferView {
                  * @param offset Byte offset into the buffer where this packet begins.
                  * @param size Byte size of this packet.
                  */
-                RtpPacket(Buffer::Ptr buf, size_t offset, size_t size)
-                        : BufferView(std::move(buf), offset, size) { }
+                RtpPacket(Buffer::Ptr buf, size_t offset, size_t size) : BufferView(std::move(buf), offset, size) {}
 
                 /**
                  * @brief Returns true if the buffer pointer is null.
@@ -95,9 +94,9 @@ class RtpPacket : public BufferView {
                  * it declares.
                  */
                 bool isValid() const {
-                        if(data() == nullptr) return false;
-                        if(size() < HeaderSize) return false;
-                        if(((data()[0] >> 6) & 0x03) != 2) return false;
+                        if (data() == nullptr) return false;
+                        if (size() < HeaderSize) return false;
+                        if (((data()[0] >> 6) & 0x03) != 2) return false;
                         return headerSize() != 0;
                 }
 
@@ -110,9 +109,7 @@ class RtpPacket : public BufferView {
                  * allocates a separate buffer per packet — for bulk packet
                  * construction, prefer createList().
                  */
-                explicit RtpPacket(size_t packetSize)
-                        : BufferView(Buffer::Ptr::create(packetSize), 0, packetSize)
-                {
+                explicit RtpPacket(size_t packetSize) : BufferView(Buffer::Ptr::create(packetSize), 0, packetSize) {
                         std::memset(data(), 0, packetSize);
                         setVersion(2);
                 }
@@ -129,12 +126,12 @@ class RtpPacket : public BufferView {
                  */
                 static List createList(size_t count, size_t packetSize) {
                         List ret;
-                        if(count == 0 || packetSize == 0) return ret;
+                        if (count == 0 || packetSize == 0) return ret;
                         size_t totalSize = count * packetSize;
-                        auto buf = Buffer::Ptr::create(totalSize);
+                        auto   buf = Buffer::Ptr::create(totalSize);
                         std::memset(buf->data(), 0, totalSize);
                         ret.reserve(count);
-                        for(size_t i = 0; i < count; ++i) {
+                        for (size_t i = 0; i < count; ++i) {
                                 RtpPacket pkt(buf, i * packetSize, packetSize);
                                 pkt.setVersion(2);
                                 ret.pushToBack(std::move(pkt));
@@ -154,17 +151,17 @@ class RtpPacket : public BufferView {
                  */
                 static List createList(const SizeList &sizes) {
                         List ret;
-                        if(sizes.isEmpty()) return ret;
+                        if (sizes.isEmpty()) return ret;
                         size_t totalSize = 0;
-                        for(size_t i = 0; i < sizes.size(); ++i) totalSize += sizes[i];
-                        if(totalSize == 0) return ret;
+                        for (size_t i = 0; i < sizes.size(); ++i) totalSize += sizes[i];
+                        if (totalSize == 0) return ret;
                         auto buf = Buffer::Ptr::create(totalSize);
                         std::memset(buf->data(), 0, totalSize);
                         ret.reserve(sizes.size());
                         size_t offset = 0;
-                        for(size_t i = 0; i < sizes.size(); ++i) {
+                        for (size_t i = 0; i < sizes.size(); ++i) {
                                 RtpPacket pkt(buf, offset, sizes[i]);
-                                if(sizes[i] >= HeaderSize) pkt.setVersion(2);
+                                if (sizes[i] >= HeaderSize) pkt.setVersion(2);
                                 ret.pushToBack(std::move(pkt));
                                 offset += sizes[i];
                         }
@@ -205,9 +202,7 @@ class RtpPacket : public BufferView {
                 void setPayloadType(uint8_t pt) { hdr()[1] = (hdr()[1] & 0x80) | (pt & 0x7F); }
 
                 /** @brief Returns the sequence number. */
-                uint16_t sequenceNumber() const {
-                        return (static_cast<uint16_t>(hdr()[2]) << 8) | hdr()[3];
-                }
+                uint16_t sequenceNumber() const { return (static_cast<uint16_t>(hdr()[2]) << 8) | hdr()[3]; }
 
                 /** @brief Sets the sequence number. */
                 void setSequenceNumber(uint16_t seq) {
@@ -217,10 +212,8 @@ class RtpPacket : public BufferView {
 
                 /** @brief Returns the timestamp. */
                 uint32_t timestamp() const {
-                        return (static_cast<uint32_t>(hdr()[4]) << 24) |
-                               (static_cast<uint32_t>(hdr()[5]) << 16) |
-                               (static_cast<uint32_t>(hdr()[6]) << 8) |
-                               static_cast<uint32_t>(hdr()[7]);
+                        return (static_cast<uint32_t>(hdr()[4]) << 24) | (static_cast<uint32_t>(hdr()[5]) << 16) |
+                               (static_cast<uint32_t>(hdr()[6]) << 8) | static_cast<uint32_t>(hdr()[7]);
                 }
 
                 /** @brief Sets the timestamp. */
@@ -233,16 +226,14 @@ class RtpPacket : public BufferView {
 
                 /** @brief Returns the SSRC. */
                 uint32_t ssrc() const {
-                        return (static_cast<uint32_t>(hdr()[8]) << 24) |
-                               (static_cast<uint32_t>(hdr()[9]) << 16) |
-                               (static_cast<uint32_t>(hdr()[10]) << 8) |
-                               static_cast<uint32_t>(hdr()[11]);
+                        return (static_cast<uint32_t>(hdr()[8]) << 24) | (static_cast<uint32_t>(hdr()[9]) << 16) |
+                               (static_cast<uint32_t>(hdr()[10]) << 8) | static_cast<uint32_t>(hdr()[11]);
                 }
 
                 /** @brief Sets the SSRC. */
                 void setSsrc(uint32_t s) {
-                        hdr()[8]  = static_cast<uint8_t>((s >> 24) & 0xFF);
-                        hdr()[9]  = static_cast<uint8_t>((s >> 16) & 0xFF);
+                        hdr()[8] = static_cast<uint8_t>((s >> 24) & 0xFF);
+                        hdr()[9] = static_cast<uint8_t>((s >> 16) & 0xFF);
                         hdr()[10] = static_cast<uint8_t>((s >> 8) & 0xFF);
                         hdr()[11] = static_cast<uint8_t>(s & 0xFF);
                 }
@@ -257,16 +248,16 @@ class RtpPacket : public BufferView {
                  * declared CSRC entries or extension data.
                  */
                 size_t headerSize() const {
-                        if(size() < HeaderSize) return 0;
+                        if (size() < HeaderSize) return 0;
                         size_t hs = HeaderSize + csrcCount() * 4;
-                        if(hs > size()) return 0;
-                        if(extension()) {
+                        if (hs > size()) return 0;
+                        if (extension()) {
                                 // Need at least 4 bytes for the extension header
-                                if(hs + 4 > size()) return 0;
+                                if (hs + 4 > size()) return 0;
                                 const uint8_t *ext = data() + hs;
-                                uint16_t extLen = (static_cast<uint16_t>(ext[2]) << 8) | ext[3];
+                                uint16_t       extLen = (static_cast<uint16_t>(ext[2]) << 8) | ext[3];
                                 hs += 4 + extLen * 4;
-                                if(hs > size()) return 0;
+                                if (hs > size()) return 0;
                         }
                         return hs;
                 }
@@ -276,9 +267,9 @@ class RtpPacket : public BufferView {
                  * @return The 16-bit profile-specific extension identifier.
                  */
                 uint16_t extensionProfile() const {
-                        if(!extension()) return 0;
+                        if (!extension()) return 0;
                         size_t extOffset = HeaderSize + csrcCount() * 4;
-                        if(extOffset + 4 > size()) return 0;
+                        if (extOffset + 4 > size()) return 0;
                         const uint8_t *ext = data() + extOffset;
                         return (static_cast<uint16_t>(ext[0]) << 8) | ext[1];
                 }
@@ -288,9 +279,9 @@ class RtpPacket : public BufferView {
                  * @return Extension length in 32-bit words.
                  */
                 uint16_t extensionLength() const {
-                        if(!extension()) return 0;
+                        if (!extension()) return 0;
                         size_t extOffset = HeaderSize + csrcCount() * 4;
-                        if(extOffset + 4 > size()) return 0;
+                        if (extOffset + 4 > size()) return 0;
                         const uint8_t *ext = data() + extOffset;
                         return (static_cast<uint16_t>(ext[2]) << 8) | ext[3];
                 }
@@ -303,14 +294,14 @@ class RtpPacket : public BufferView {
                  */
                 const uint8_t *payload() const {
                         size_t hs = headerSize();
-                        if(hs == 0 || hs >= size()) return nullptr;
+                        if (hs == 0 || hs >= size()) return nullptr;
                         return data() + hs;
                 }
 
                 /** @copydoc payload() const */
                 uint8_t *payload() {
                         size_t hs = headerSize();
-                        if(hs == 0 || hs >= size()) return nullptr;
+                        if (hs == 0 || hs >= size()) return nullptr;
                         return data() + hs;
                 }
 
@@ -322,7 +313,7 @@ class RtpPacket : public BufferView {
                  */
                 size_t payloadSize() const {
                         size_t hs = headerSize();
-                        if(hs == 0 || hs >= size()) return 0;
+                        if (hs == 0 || hs >= size()) return 0;
                         return size() - hs;
                 }
 
@@ -332,7 +323,7 @@ class RtpPacket : public BufferView {
                  * Useful for reusing packets from a pre-allocated pool.
                  */
                 void clear() {
-                        if(isNull()) return;
+                        if (isNull()) return;
                         std::memset(data(), 0, size());
                         setVersion(2);
                 }

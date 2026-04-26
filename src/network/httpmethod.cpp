@@ -18,9 +18,9 @@ String HttpMethod::wireName() const {
 
 bool HttpMethod::allowsBody() const {
         const int v = value();
-        return v == 2  // Post
-            || v == 3  // Put
-            || v == 5; // Patch
+        return v == 2     // Post
+               || v == 3  // Put
+               || v == 5; // Patch
 }
 
 PROMEKI_NAMESPACE_END

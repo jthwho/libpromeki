@@ -91,9 +91,8 @@ class CompressedAudioPayload : public AudioPayload {
                  * Block audio codecs (Opus, AAC, MP3, …) always know
                  * this value at encode time.
                  */
-                explicit CompressedAudioPayload(const AudioDesc &desc,
-                                                size_t sampleCount = 0) :
-                        AudioPayload(desc, sampleCount) { }
+                explicit CompressedAudioPayload(const AudioDesc &desc, size_t sampleCount = 0)
+                    : AudioPayload(desc, sampleCount) {}
 
                 /**
                  * @brief Constructs a compressed audio payload with a
@@ -104,20 +103,15 @@ class CompressedAudioPayload : public AudioPayload {
                  * constructed by passing @c BufferView(buf, offset,
                  * size) directly.
                  */
-                CompressedAudioPayload(const AudioDesc &desc,
-                                       const BufferView &data,
-                                       size_t sampleCount = 0) :
-                        AudioPayload(desc, sampleCount, data) { }
+                CompressedAudioPayload(const AudioDesc &desc, const BufferView &data, size_t sampleCount = 0)
+                    : AudioPayload(desc, sampleCount, data) {}
 
                 /**
                  * @brief Constructs a compressed audio payload that owns
                  *        a whole buffer as its single-plane payload.
                  */
-                CompressedAudioPayload(const AudioDesc &desc, Buffer::Ptr buffer,
-                                       size_t sampleCount = 0) :
-                        AudioPayload(desc, sampleCount,
-                                buffer ? BufferView(buffer, 0, buffer->size())
-                                       : BufferView()) { }
+                CompressedAudioPayload(const AudioDesc &desc, Buffer::Ptr buffer, size_t sampleCount = 0)
+                    : AudioPayload(desc, sampleCount, buffer ? BufferView(buffer, 0, buffer->size()) : BufferView()) {}
 
                 /**
                  * @brief Always returns @c true — this class only models
@@ -130,9 +124,7 @@ class CompressedAudioPayload : public AudioPayload {
                  *        audio format on the descriptor.
                  */
                 bool isValid() const override {
-                        return MediaPayload::isValid()
-                            && desc().format().isValid()
-                            && desc().format().isCompressed();
+                        return MediaPayload::isValid() && desc().format().isValid() && desc().format().isCompressed();
                 }
 
                 /**
@@ -155,17 +147,14 @@ class CompressedAudioPayload : public AudioPayload {
                  *   codec identity is treated as unsafe.
                  */
                 bool isSafeCutPoint() const override {
-                        if(!isValid()) return false;
+                        if (!isValid()) return false;
                         const AudioCodec &codec = desc().format().audioCodec();
-                        if(!codec.isValid()) return false;
-                        switch(codec.packetIndependence()) {
-                                case AudioCodec::PacketIndependenceEvery:
-                                        return true;
-                                case AudioCodec::PacketIndependenceKeyframe:
-                                        return isKeyframe();
+                        if (!codec.isValid()) return false;
+                        switch (codec.packetIndependence()) {
+                                case AudioCodec::PacketIndependenceEvery: return true;
+                                case AudioCodec::PacketIndependenceKeyframe: return isKeyframe();
                                 case AudioCodec::PacketIndependenceInter:
-                                case AudioCodec::PacketIndependenceInvalid:
-                                        return false;
+                                case AudioCodec::PacketIndependenceInvalid: return false;
                         }
                         return false;
                 }
@@ -177,9 +166,7 @@ class CompressedAudioPayload : public AudioPayload {
                 const Buffer::Ptr &inBandCodecData() const { return _inBandCodecData; }
 
                 /** @brief Replaces the per-payload codec-private data buffer. */
-                void setInBandCodecData(Buffer::Ptr b) {
-                        _inBandCodecData = std::move(b);
-                }
+                void setInBandCodecData(Buffer::Ptr b) { _inBandCodecData = std::move(b); }
 
         protected:
                 /**
@@ -187,8 +174,7 @@ class CompressedAudioPayload : public AudioPayload {
                  *        exclusive field.  @sa @ref MediaPayload::isExclusive
                  */
                 bool isExclusiveExtras() const override {
-                        return !_inBandCodecData.isValid() ||
-                                _inBandCodecData.referenceCount() <= 1;
+                        return !_inBandCodecData.isValid() || _inBandCodecData.referenceCount() <= 1;
                 }
 
                 /**
@@ -196,19 +182,16 @@ class CompressedAudioPayload : public AudioPayload {
                  *        the plane buffers.
                  */
                 void ensureExclusiveExtras() override {
-                        if(_inBandCodecData.isValid() &&
-                           _inBandCodecData.referenceCount() > 1) {
+                        if (_inBandCodecData.isValid() && _inBandCodecData.referenceCount() > 1) {
                                 _inBandCodecData.modify();
                         }
                 }
 
         public:
                 /** @brief Stable FourCC for DataStream serialisation. */
-                static constexpr FourCC kSubclassFourCC{'C','A','d','p'};
+                static constexpr FourCC kSubclassFourCC{'C', 'A', 'd', 'p'};
 
-                uint32_t subclassFourCC() const override {
-                        return kSubclassFourCC.value();
-                }
+                uint32_t subclassFourCC() const override { return kSubclassFourCC.value(); }
 
                 /** @copydoc MediaPayload::serialisePayload */
                 void serialisePayload(DataStream &s) const override;

@@ -123,7 +123,7 @@ TEST_CASE("Rational: toString") {
 
 TEST_CASE("Rational: implicit String conversion") {
         Rational r(1, 2);
-        String s = r;
+        String   s = r;
         CHECK(s == "1/2");
 }
 

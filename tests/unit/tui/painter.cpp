@@ -15,7 +15,7 @@ TEST_CASE("TuiPainter: drawChar") {
         TuiScreen screen;
         screen.resize(20, 10);
 
-        Rect2Di32 clip(0, 0, 20, 10);
+        Rect2Di32  clip(0, 0, 20, 10);
         TuiPainter painter(screen, clip);
 
         painter.setForeground(Color::Red);
@@ -30,7 +30,7 @@ TEST_CASE("TuiPainter: drawText") {
         TuiScreen screen;
         screen.resize(20, 10);
 
-        Rect2Di32 clip(0, 0, 20, 10);
+        Rect2Di32  clip(0, 0, 20, 10);
         TuiPainter painter(screen, clip);
 
         painter.drawText(0, 0, "Hello");
@@ -46,7 +46,7 @@ TEST_CASE("TuiPainter: fillRect") {
         TuiScreen screen;
         screen.resize(20, 10);
 
-        Rect2Di32 clip(0, 0, 20, 10);
+        Rect2Di32  clip(0, 0, 20, 10);
         TuiPainter painter(screen, clip);
 
         painter.setForeground(Color::Green);
@@ -63,17 +63,17 @@ TEST_CASE("TuiPainter: drawRect with box chars") {
         TuiScreen screen;
         screen.resize(20, 10);
 
-        Rect2Di32 clip(0, 0, 20, 10);
+        Rect2Di32  clip(0, 0, 20, 10);
         TuiPainter painter(screen, clip);
 
         painter.drawRect(Rect2Di32(0, 0, 5, 3));
 
-        CHECK(screen.cell(0, 0).ch == Char(U'\u250C'));  // top-left
-        CHECK(screen.cell(4, 0).ch == Char(U'\u2510'));  // top-right
-        CHECK(screen.cell(0, 2).ch == Char(U'\u2514'));  // bottom-left
-        CHECK(screen.cell(4, 2).ch == Char(U'\u2518'));  // bottom-right
-        CHECK(screen.cell(1, 0).ch == Char(U'\u2500'));  // top horizontal
-        CHECK(screen.cell(0, 1).ch == Char(U'\u2502'));  // left vertical
+        CHECK(screen.cell(0, 0).ch == Char(U'\u250C')); // top-left
+        CHECK(screen.cell(4, 0).ch == Char(U'\u2510')); // top-right
+        CHECK(screen.cell(0, 2).ch == Char(U'\u2514')); // bottom-left
+        CHECK(screen.cell(4, 2).ch == Char(U'\u2518')); // bottom-right
+        CHECK(screen.cell(1, 0).ch == Char(U'\u2500')); // top horizontal
+        CHECK(screen.cell(0, 1).ch == Char(U'\u2502')); // left vertical
 }
 
 TEST_CASE("TuiPainter: clipping") {
@@ -81,7 +81,7 @@ TEST_CASE("TuiPainter: clipping") {
         screen.resize(20, 10);
 
         // Clip to 5x5 at position (2,2)
-        Rect2Di32 clip(2, 2, 5, 5);
+        Rect2Di32  clip(2, 2, 5, 5);
         TuiPainter painter(screen, clip);
 
         // Drawing at (0,0) in painter coords = screen (2,2)
@@ -90,23 +90,23 @@ TEST_CASE("TuiPainter: clipping") {
 
         // Drawing outside clip should be ignored
         painter.drawChar(10, 10, U'B');
-        CHECK(screen.cell(12, 12).ch == Char(U' '));  // unchanged
+        CHECK(screen.cell(12, 12).ch == Char(U' ')); // unchanged
 }
 
 TEST_CASE("TuiPainter: drawHLine and drawVLine") {
         TuiScreen screen;
         screen.resize(20, 10);
 
-        Rect2Di32 clip(0, 0, 20, 10);
+        Rect2Di32  clip(0, 0, 20, 10);
         TuiPainter painter(screen, clip);
 
         painter.drawHLine(0, 0, 5);
-        for(int i = 0; i < 5; ++i) {
+        for (int i = 0; i < 5; ++i) {
                 CHECK(screen.cell(i, 0).ch == Char(U'\u2500'));
         }
 
         painter.drawVLine(0, 1, 3);
-        for(int i = 1; i <= 3; ++i) {
+        for (int i = 1; i <= 3; ++i) {
                 CHECK(screen.cell(0, i).ch == Char(U'\u2502'));
         }
 }
@@ -115,7 +115,7 @@ TEST_CASE("TuiPainter: style flags") {
         TuiScreen screen;
         screen.resize(20, 10);
 
-        Rect2Di32 clip(0, 0, 20, 10);
+        Rect2Di32  clip(0, 0, 20, 10);
         TuiPainter painter(screen, clip);
 
         painter.setAttrs(TuiStyle::Bold | TuiStyle::Underline);

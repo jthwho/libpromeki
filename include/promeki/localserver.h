@@ -45,7 +45,7 @@ class LocalSocket;
  * @endcode
  */
 class LocalServer : public ObjectBase {
-        PROMEKI_OBJECT(LocalServer, ObjectBase)
+                PROMEKI_OBJECT(LocalServer, ObjectBase)
         public:
                 /** @brief Default backlog for @c listen(2). */
                 static constexpr int DefaultBacklog = 50;
@@ -79,9 +79,7 @@ class LocalServer : public ObjectBase {
                  * @param backlog    Maximum pending-connection queue length.
                  * @return @c Error::Ok on success, or an error.
                  */
-                Error listen(const String &path,
-                             uint32_t mode = DefaultPermissions,
-                             const String &groupName = String(),
+                Error listen(const String &path, uint32_t mode = DefaultPermissions, const String &groupName = String(),
                              int backlog = DefaultBacklog);
 
                 /** @brief Stops listening and unlinks the socket file. */
@@ -121,10 +119,10 @@ class LocalServer : public ObjectBase {
                 PROMEKI_SIGNAL(newConnection);
 
         private:
-                int     _fd            = -1;
-                bool    _listening     = false;
-                bool    _unlinkOnClose = false;
-                String  _path;
+                int    _fd = -1;
+                bool   _listening = false;
+                bool   _unlinkOnClose = false;
+                String _path;
 };
 
 PROMEKI_NAMESPACE_END

@@ -62,7 +62,7 @@ PROMEKI_NAMESPACE_BEGIN
  * the thread that owns the bound @ref SdlSubsystem.
  */
 class SDLAudioOutput : public ObjectBase {
-        PROMEKI_OBJECT(SDLAudioOutput, ObjectBase)
+                PROMEKI_OBJECT(SDLAudioOutput, ObjectBase)
         public:
                 /** @brief Constructs an SDLAudioOutput. */
                 explicit SDLAudioOutput(ObjectBase *parent = nullptr);

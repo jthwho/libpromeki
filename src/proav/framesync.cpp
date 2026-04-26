@@ -41,7 +41,7 @@ static constexpr double kSourceRateTimeConstantS = 1.0;
 
 static bool firstTimestampNs(const MediaPayload &payload, int64_t &outNs) {
         const MediaTimeStamp &mts = payload.pts();
-        if(!mts.isValid()) return false;
+        if (!mts.isValid()) return false;
         outNs = mts.timeStamp().nanoseconds() + mts.offset().nanoseconds();
         return true;
 }
@@ -77,9 +77,7 @@ FrameSync::~FrameSync() = default;
 void FrameSync::setTargetFrameRate(const FrameRate &fps) {
         Mutex::Locker lock(_mutex);
         _targetFrameRate = fps;
-        _framePeriodNs = fps.isValid()
-                ? fps.frameDuration().nanoseconds()
-                : 0;
+        _framePeriodNs = fps.isValid() ? fps.frameDuration().nanoseconds() : 0;
 }
 
 void FrameSync::setTargetAudioDesc(const AudioDesc &desc) {
@@ -93,13 +91,11 @@ void FrameSync::setTargetAudioDesc(const AudioDesc &desc) {
 void FrameSync::setClock(const Clock::Ptr &clock) {
         Mutex::Locker lock(_mutex);
         _clock = clock;
-        _syntheticClock = _clock.isValid()
-                ? dynamic_cast<SyntheticClock *>(_clock.modify())
-                : nullptr;
+        _syntheticClock = _clock.isValid() ? dynamic_cast<SyntheticClock *>(_clock.modify()) : nullptr;
 }
 
 void FrameSync::setInputQueueCapacity(int capacity) {
-        if(capacity < 1) capacity = 1;
+        if (capacity < 1) capacity = 1;
         Mutex::Locker lock(_mutex);
         _queueCapacity = capacity;
         // Waking here lets any blocked producer re-check the new
@@ -138,7 +134,7 @@ void FrameSync::resetLocked(bool setExplicitOrigin, int64_t originNs) {
         _heldVideoSourceTsNs = 0;
 
         _pendingFrameSyncDrops = 0;
-        _frameSyncRepeatIndex  = 0;
+        _frameSyncRepeatIndex = 0;
 
         _sourceAudioRateHz = 0.0;
         _sourceVideoRateHz = 0.0;
@@ -159,27 +155,23 @@ void FrameSync::resetLocked(bool setExplicitOrigin, int64_t originNs) {
         _framesDropped.setValue(0);
         _overflowDrops.setValue(0);
 
-        if(_resampler.isValid()) _resampler->reset();
+        if (_resampler.isValid()) _resampler->reset();
 }
 
 void FrameSync::reset() {
         Mutex::Locker lock(_mutex);
         resetLocked(false, 0);
-        promekiDebug("FrameSync[%s]: reset (target %s, clock=%s)",
-                     _name.cstr(),
-                     _targetFrameRate.isValid()
-                        ? _targetFrameRate.toString().cstr() : "none",
+        promekiDebug("FrameSync[%s]: reset (target %s, clock=%s)", _name.cstr(),
+                     _targetFrameRate.isValid() ? _targetFrameRate.toString().cstr() : "none",
                      _clock ? _clock->domain().name().cstr() : "none");
 }
 
 void FrameSync::reset(int64_t originNs) {
         Mutex::Locker lock(_mutex);
         resetLocked(true, originNs);
-        promekiDebug("FrameSync[%s]: reset origin=%lld ns (target %s, clock=%s)",
-                     _name.cstr(),
+        promekiDebug("FrameSync[%s]: reset origin=%lld ns (target %s, clock=%s)", _name.cstr(),
                      static_cast<long long>(originNs),
-                     _targetFrameRate.isValid()
-                        ? _targetFrameRate.toString().cstr() : "none",
+                     _targetFrameRate.isValid() ? _targetFrameRate.toString().cstr() : "none",
                      _clock ? _clock->domain().name().cstr() : "none");
 }
 
@@ -188,31 +180,29 @@ void FrameSync::reset(int64_t originNs) {
 // ============================================================================
 
 Error FrameSync::pushFrame(const Frame::Ptr &frame) {
-        if(!frame.isValid()) return Error::InvalidArgument;
+        if (!frame.isValid()) return Error::InvalidArgument;
 
         QueuedFrame qf;
         qf.frame = frame;
         auto vids = frame->videoPayloads();
-        if(!vids.isEmpty() && vids[0].isValid()) {
-                qf.hasVideoTs = firstTimestampNs(
-                        *vids[0], qf.videoTsNs);
+        if (!vids.isEmpty() && vids[0].isValid()) {
+                qf.hasVideoTs = firstTimestampNs(*vids[0], qf.videoTsNs);
         }
         auto auds = frame->audioPayloads();
-        if(!auds.isEmpty() && auds[0].isValid()) {
-                qf.hasAudioTs = firstTimestampNs(
-                        *auds[0], qf.audioTsNs);
+        if (!auds.isEmpty() && auds[0].isValid()) {
+                qf.hasAudioTs = firstTimestampNs(*auds[0], qf.audioTsNs);
         }
 
         {
                 Mutex::Locker lock(_mutex);
 
                 // Anchor source origin on the first valid-timestamped push.
-                if(!_sourceOriginValid) {
-                        if(qf.hasVideoTs) {
+                if (!_sourceOriginValid) {
+                        if (qf.hasVideoTs) {
                                 _sourceVideoOriginNs = qf.videoTsNs;
                                 _sourceOriginValid = true;
                         }
-                        if(qf.hasAudioTs) {
+                        if (qf.hasAudioTs) {
                                 _sourceAudioOriginNs = qf.audioTsNs;
                                 _sourceOriginValid = true;
                         }
@@ -221,11 +211,11 @@ Error FrameSync::pushFrame(const Frame::Ptr &frame) {
                 // Feed the source video-rate estimator.  Video-only
                 // streams have no audio-ts path, so this is the only
                 // source-rate signal FrameSync has.
-                if(qf.hasVideoTs) updateSourceVideoRate(qf.videoTsNs);
+                if (qf.hasVideoTs) updateSourceVideoRate(qf.videoTsNs);
 
                 // Apply overflow policy.
-                while((int)_queue.size() >= _queueCapacity) {
-                        if(_overflowPolicy == InputOverflowPolicy::DropOldest) {
+                while ((int)_queue.size() >= _queueCapacity) {
+                        if (_overflowPolicy == InputOverflowPolicy::DropOldest) {
                                 _queue.remove(_queue.begin());
                                 _overflowDrops.fetchAndAdd(1);
                                 break;
@@ -240,15 +230,15 @@ Error FrameSync::pushFrame(const Frame::Ptr &frame) {
                         // by the first waiter and subsequent
                         // pushFrames block forever on a fresh
                         // CV.wait that nothing will ever wake.
-                        if(_eos) return Error::EndOfFile;
+                        if (_eos) return Error::EndOfFile;
                         // Block until pullFrame makes room or the
                         // sync is interrupted.
                         _cv.wait(_mutex);
-                        if(_interrupted) {
+                        if (_interrupted) {
                                 _interrupted = false;
                                 return Error::Interrupt;
                         }
-                        if(_eos) return Error::EndOfFile;
+                        if (_eos) return Error::EndOfFile;
                 }
                 _queue.pushToBack(qf);
 
@@ -259,22 +249,22 @@ Error FrameSync::pushFrame(const Frame::Ptr &frame) {
                 // skipping conversion would cause produceAudio() to
                 // discard the buffer at the @c isNative() check and
                 // emit silence instead.
-                if(!auds.isEmpty() && auds[0].isValid()) {
+                if (!auds.isEmpty() && auds[0].isValid()) {
                         const auto *uap = auds[0]->as<PcmAudioPayload>();
-                        if(uap != nullptr && uap->sampleCount() > 0) {
+                        if (uap != nullptr && uap->sampleCount() > 0) {
                                 updateSourceAudioRate(*uap, qf.audioTsNs);
                                 PcmAudioPayload::Ptr toQueue;
-                                if(uap->desc().format().id() == AudioFormat::NativeFloat) {
+                                if (uap->desc().format().id() == AudioFormat::NativeFloat) {
                                         toQueue = sharedPointerCast<PcmAudioPayload>(auds[0]);
                                 } else {
                                         toQueue = uap->convert(AudioFormat(AudioFormat::NativeFloat));
-                                        if(!toQueue.isValid()) {
+                                        if (!toQueue.isValid()) {
                                                 promekiWarn("FrameSync[%s]: convert to native float failed; "
                                                             "dropping audio buffer",
                                                             _name.cstr());
                                         }
                                 }
-                                if(toQueue.isValid()) _audioInput.pushToBack(toQueue);
+                                if (toQueue.isValid()) _audioInput.pushToBack(toQueue);
                         }
                 }
 
@@ -297,7 +287,7 @@ void FrameSync::pushEndOfStream() {
 
 void FrameSync::updateSourceAudioRate(const PcmAudioPayload &audio, int64_t audioTsNs) {
         // Seed from the nominal source rate the first time we see audio.
-        if(_sourceAudioRateHz <= 0.0) {
+        if (_sourceAudioRateHz <= 0.0) {
                 _sourceAudioRateHz = audio.desc().sampleRate();
         }
 
@@ -309,61 +299,54 @@ void FrameSync::updateSourceAudioRate(const PcmAudioPayload &audio, int64_t audi
         // _lastAudioTsForRateNs.  If timestamps are monotone and
         // contiguous, (deltaTs) should equal (_lastAudioTsSamples /
         // sampleRate).  Any mismatch feeds the LPF.
-        if(_lastAudioTsForRateNs != 0 && _lastAudioTsSamples > 0) {
+        if (_lastAudioTsForRateNs != 0 && _lastAudioTsSamples > 0) {
                 double deltaSec = (double)(audioTsNs - _lastAudioTsForRateNs) / 1e9;
-                if(deltaSec > 0.0) {
+                if (deltaSec > 0.0) {
                         double measured = (double)_lastAudioTsSamples / deltaSec;
                         // Exponential moving average.  alpha based on
                         // deltaSec / timeConstant, clamped.
                         double alpha = deltaSec / kSourceRateTimeConstantS;
-                        if(alpha > 1.0) alpha = 1.0;
-                        if(alpha < 0.0) alpha = 0.0;
+                        if (alpha > 1.0) alpha = 1.0;
+                        if (alpha < 0.0) alpha = 0.0;
                         double before = _sourceAudioRateHz;
-                        _sourceAudioRateHz +=
-                                alpha * (measured - _sourceAudioRateHz);
-                        if(std::abs(before - _sourceAudioRateHz) > 100.0) {
+                        _sourceAudioRateHz += alpha * (measured - _sourceAudioRateHz);
+                        if (std::abs(before - _sourceAudioRateHz) > 100.0) {
                                 promekiDebug("FrameSync[%s]: sourceAudioRate "
                                              "%.2f -> %.2f (measured=%.2f "
                                              "deltaSec=%.6f lastSamples=%lld "
                                              "audioTsNs=%lld lastTsNs=%lld "
                                              "alpha=%.4f)",
-                                             _name.cstr(), before,
-                                             _sourceAudioRateHz, measured,
-                                             deltaSec,
-                                             (long long)_lastAudioTsSamples,
-                                             (long long)audioTsNs,
-                                             (long long)_lastAudioTsForRateNs,
-                                             alpha);
+                                             _name.cstr(), before, _sourceAudioRateHz, measured, deltaSec,
+                                             (long long)_lastAudioTsSamples, (long long)audioTsNs,
+                                             (long long)_lastAudioTsForRateNs, alpha);
                         }
                 }
         }
 
         _lastAudioTsForRateNs = audioTsNs;
-        _lastAudioTsSamples   = audio.sampleCount();
+        _lastAudioTsSamples = audio.sampleCount();
 }
 
 void FrameSync::updateSourceVideoRate(int64_t videoTsNs) {
         // Seed from the target rate on first sight.  We have no
         // better prior; the estimator converges to the true rate
         // within a few frames.
-        if(_sourceVideoRateHz <= 0.0) {
-                _sourceVideoRateHz = _targetFrameRate.isValid()
-                        ? _targetFrameRate.toDouble() : 0.0;
+        if (_sourceVideoRateHz <= 0.0) {
+                _sourceVideoRateHz = _targetFrameRate.isValid() ? _targetFrameRate.toDouble() : 0.0;
         }
 
         // One frame per push, so the delta between two consecutive
         // push timestamps is one source frame period.  Same LPF
         // structure as the audio estimator; identical time constant
         // keeps the two signals on a common timescale.
-        if(_lastVideoTsForRateNs != 0) {
+        if (_lastVideoTsForRateNs != 0) {
                 double deltaSec = (double)(videoTsNs - _lastVideoTsForRateNs) / 1e9;
-                if(deltaSec > 0.0) {
+                if (deltaSec > 0.0) {
                         double measured = 1.0 / deltaSec;
                         double alpha = deltaSec / kSourceRateTimeConstantS;
-                        if(alpha > 1.0) alpha = 1.0;
-                        if(alpha < 0.0) alpha = 0.0;
-                        _sourceVideoRateHz +=
-                                alpha * (measured - _sourceVideoRateHz);
+                        if (alpha > 1.0) alpha = 1.0;
+                        if (alpha < 0.0) alpha = 0.0;
+                        _sourceVideoRateHz += alpha * (measured - _sourceVideoRateHz);
                 }
         }
 
@@ -374,12 +357,8 @@ void FrameSync::updateSourceVideoRate(int64_t videoTsNs) {
 // Pull path
 // ============================================================================
 
-void FrameSync::selectVideo(int64_t sourceTimeNs,
-                            int64_t /*nextSourceTimeNs*/,
-                            VideoPayload::Ptr &outVideo,
-                            int64_t &outRepeated,
-                            int64_t &outDropped)
-{
+void FrameSync::selectVideo(int64_t sourceTimeNs, int64_t /*nextSourceTimeNs*/, VideoPayload::Ptr &outVideo,
+                            int64_t &outRepeated, int64_t &outDropped) {
         // Each pull owns the source-time slot centred on
         // @p sourceTimeNs.  We pick the best-matching frame in the
         // queue — the one whose relTs is closest to sourceTimeNs —
@@ -415,13 +394,13 @@ void FrameSync::selectVideo(int64_t sourceTimeNs,
         };
 
         bool emitted = false;
-        while(!_queue.isEmpty() && !emitted) {
+        while (!_queue.isEmpty() && !emitted) {
                 const QueuedFrame &front = _queue.front();
-                int64_t frontRelTs = 0;
-                const bool frontHasTs = front.hasVideoTs;
-                if(frontHasTs) {
+                int64_t            frontRelTs = 0;
+                const bool         frontHasTs = front.hasVideoTs;
+                if (frontHasTs) {
                         frontRelTs = front.videoTsNs - _sourceVideoOriginNs;
-                        if(frontRelTs > upperBound) break; // future
+                        if (frontRelTs > upperBound) break; // future
                 }
 
                 // Lookahead: does the queue carry a later candidate
@@ -431,33 +410,31 @@ void FrameSync::selectVideo(int64_t sourceTimeNs,
                 // itself in the future doesn't count — its slot is
                 // a later pull, not this one.
                 bool hasBetter = false;
-                if(frontHasTs && _queue.size() >= 2) {
+                if (frontHasTs && _queue.size() >= 2) {
                         const QueuedFrame &next = _queue[1];
-                        if(next.hasVideoTs) {
-                                int64_t nextRelTs =
-                                        next.videoTsNs - _sourceVideoOriginNs;
-                                if(nextRelTs <= upperBound &&
-                                   absDelta(nextRelTs, sourceTimeNs) <
-                                   absDelta(frontRelTs, sourceTimeNs)) {
+                        if (next.hasVideoTs) {
+                                int64_t nextRelTs = next.videoTsNs - _sourceVideoOriginNs;
+                                if (nextRelTs <= upperBound &&
+                                    absDelta(nextRelTs, sourceTimeNs) < absDelta(frontRelTs, sourceTimeNs)) {
                                         hasBetter = true;
                                 }
                         }
                 }
 
                 VideoPayload::Ptr vp;
-                auto vids = front.frame->videoPayloads();
-                if(!vids.isEmpty() && vids[0].isValid()) {
+                auto              vids = front.frame->videoPayloads();
+                if (!vids.isEmpty() && vids[0].isValid()) {
                         vp = vids[0];
                 }
                 _queue.remove(_queue.begin());
 
-                if(vp.isValid()) {
+                if (vp.isValid()) {
                         _heldVideo = vp;
                         _hasHeldVideo = true;
                         _heldVideoSourceTsNs = frontRelTs;
                 }
 
-                if(hasBetter) {
+                if (hasBetter) {
                         // Drop this frame; the later queued frame
                         // is a better match.  Keep the dropped
                         // frame's image as the held "current" view
@@ -472,25 +449,24 @@ void FrameSync::selectVideo(int64_t sourceTimeNs,
                 emitted = true;
         }
 
-        if(!emitted) outRepeated = 1;
+        if (!emitted) outRepeated = 1;
         outVideo = _heldVideo;
 }
 
 PcmAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
-        if(!_targetAudioDesc.isValid() || targetSamples <= 0) {
+        if (!_targetAudioDesc.isValid() || targetSamples <= 0) {
                 return PcmAudioPayload::Ptr();
         }
         const unsigned int channels = _targetAudioDesc.channels();
-        const float       targetRate = _targetAudioDesc.sampleRate();
-        if(channels == 0 || targetRate <= 0.0f) return PcmAudioPayload::Ptr();
+        const float        targetRate = _targetAudioDesc.sampleRate();
+        if (channels == 0 || targetRate <= 0.0f) return PcmAudioPayload::Ptr();
 
         // Lazy init the resampler once we know channel count.
-        if(_resampler.isNull()) {
+        if (_resampler.isNull()) {
                 _resampler = AudioResampler::UPtr::create();
                 Error err = _resampler->setup(channels);
-                if(err.isError()) {
-                        promekiWarn("FrameSync[%s]: resampler setup failed",
-                                    _name.cstr());
+                if (err.isError()) {
+                        promekiWarn("FrameSync[%s]: resampler setup failed", _name.cstr());
                         _resampler.clear();
                         return PcmAudioPayload::Ptr();
                 }
@@ -500,20 +476,16 @@ PcmAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
         // outputRate is the destination-rate adjusted for clock
         // drift, and inputRate is the measured source rate.  Seed
         // with nominal if no measurement yet.
-        double sourceRate = (_sourceAudioRateHz > 0.0)
-                ? _sourceAudioRateHz
-                : (double)targetRate;
+        double sourceRate = (_sourceAudioRateHz > 0.0) ? _sourceAudioRateHz : (double)targetRate;
         double clockRatio = (_clock != nullptr) ? _clock->rateRatio() : 1.0;
         double destRate = (double)targetRate * clockRatio;
         double ratio = destRate / sourceRate;
-        if(ratio <= 0.0) ratio = 1.0;
-        if(std::abs(ratio - _currentResampleRatio) > 0.01) {
+        if (ratio <= 0.0) ratio = 1.0;
+        if (std::abs(ratio - _currentResampleRatio) > 0.01) {
                 promekiDebug("FrameSync[%s]: resample ratio %.4f -> %.4f "
                              "(clockRatio=%.4f sourceRate=%.2f "
                              "targetRate=%.2f)",
-                             _name.cstr(),
-                             _currentResampleRatio, ratio,
-                             clockRatio, sourceRate, (double)targetRate);
+                             _name.cstr(), _currentResampleRatio, ratio, clockRatio, sourceRate, (double)targetRate);
         }
         _currentResampleRatio = ratio;
         _resampler->setRatio(ratio);
@@ -525,44 +497,39 @@ PcmAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
         // allocated as native float regardless of @c _targetAudioDesc 's
         // declared sample format.  Downstream consumers that need a
         // different sample format convert via PcmAudioPayload::convert.
-        AudioDesc outDesc(AudioFormat::NativeFloat, targetRate, channels);
+        AudioDesc    outDesc(AudioFormat::NativeFloat, targetRate, channels);
         const size_t outBytes = outDesc.bufferSize(targetSamples);
-        auto outBuf = Buffer::Ptr::create(outBytes);
+        auto         outBuf = Buffer::Ptr::create(outBytes);
         outBuf.modify()->setSize(outBytes);
         std::memset(outBuf.modify()->data(), 0, outBytes);
         float *outPtr = static_cast<float *>(outBuf.modify()->data());
 
         long outWritten = 0;
-        while(outWritten < (long)targetSamples) {
-                if(_audioInput.isEmpty()) break;
+        while (outWritten < (long)targetSamples) {
+                if (_audioInput.isEmpty()) break;
                 const PcmAudioPayload::Ptr &front = _audioInput.front();
-                if(!front.isValid() || front->sampleCount() == 0 ||
-                   front->desc().format().id() != AudioFormat::NativeFloat ||
-                   front->planeCount() == 0) {
+                if (!front.isValid() || front->sampleCount() == 0 ||
+                    front->desc().format().id() != AudioFormat::NativeFloat || front->planeCount() == 0) {
                         _audioInput.remove(_audioInput.begin());
                         _audioSamplesConsumed = 0;
                         continue;
                 }
 
                 const float *inPtr = reinterpret_cast<const float *>(front->plane(0).data());
-                long inAvail = (long)front->sampleCount() - (long)_audioSamplesConsumed;
-                if(inAvail <= 0) {
+                long         inAvail = (long)front->sampleCount() - (long)_audioSamplesConsumed;
+                if (inAvail <= 0) {
                         _audioInput.remove(_audioInput.begin());
                         _audioSamplesConsumed = 0;
                         continue;
                 }
 
-                long inUsed = 0;
-                long outGen = 0;
-                Error err = _resampler->process(
-                        inPtr + (long)_audioSamplesConsumed * channels,
-                        inAvail,
-                        outPtr + outWritten * channels,
-                        (long)targetSamples - outWritten,
-                        inUsed, outGen, false);
-                if(err.isError()) {
-                        promekiWarn("FrameSync[%s]: resampler process failed",
-                                    _name.cstr());
+                long  inUsed = 0;
+                long  outGen = 0;
+                Error err = _resampler->process(inPtr + (long)_audioSamplesConsumed * channels, inAvail,
+                                                outPtr + outWritten * channels, (long)targetSamples - outWritten,
+                                                inUsed, outGen, false);
+                if (err.isError()) {
+                        promekiWarn("FrameSync[%s]: resampler process failed", _name.cstr());
                         break;
                 }
 
@@ -571,10 +538,10 @@ PcmAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
 
                 // If libsamplerate consumed nothing AND produced
                 // nothing we would spin forever — break out.
-                if(inUsed == 0 && outGen == 0) break;
+                if (inUsed == 0 && outGen == 0) break;
 
                 // If we drained the front buffer, pop it.
-                if((size_t)_audioSamplesConsumed >= front->sampleCount()) {
+                if ((size_t)_audioSamplesConsumed >= front->sampleCount()) {
                         _audioInput.remove(_audioInput.begin());
                         _audioSamplesConsumed = 0;
                 }
@@ -582,24 +549,23 @@ PcmAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
 
         BufferView planes;
         planes.pushToBack(outBuf, 0, outBytes);
-        return PcmAudioPayload::Ptr::create(outDesc,
-                static_cast<size_t>(targetSamples), planes);
+        return PcmAudioPayload::Ptr::create(outDesc, static_cast<size_t>(targetSamples), planes);
 }
 
 Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
         PullResult result;
-        if(_clock == nullptr) {
+        if (_clock == nullptr) {
                 return Result<PullResult>(result, Error::Invalid);
         }
-        if(!_targetFrameRate.isValid() || _framePeriodNs <= 0) {
+        if (!_targetFrameRate.isValid() || _framePeriodNs <= 0) {
                 return Result<PullResult>(result, Error::Invalid);
         }
 
         int64_t currentIndex = 0;
-        int64_t deadlineNs   = 0;
+        int64_t deadlineNs = 0;
         {
                 Mutex::Locker lock(_mutex);
-                if(_interrupted) {
+                if (_interrupted) {
                         _interrupted = false;
                         return Result<PullResult>(result, Error::Interrupt);
                 }
@@ -618,25 +584,21 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
                 // SDLPlayerTask::pullLoop) keep the legacy blocking
                 // behaviour so they can wait indefinitely for the
                 // first push.
-                if(!_started) {
-                        if(blockOnEmpty) {
-                                while(_queue.isEmpty() && !_eos &&
-                                      !_interrupted) {
+                if (!_started) {
+                        if (blockOnEmpty) {
+                                while (_queue.isEmpty() && !_eos && !_interrupted) {
                                         _cv.wait(_mutex);
                                 }
-                                if(_interrupted) {
+                                if (_interrupted) {
                                         _interrupted = false;
-                                        return Result<PullResult>(
-                                                result, Error::Interrupt);
+                                        return Result<PullResult>(result, Error::Interrupt);
                                 }
-                        } else if(_queue.isEmpty()) {
-                                if(_eos) return Result<PullResult>(
-                                                result, Error::EndOfFile);
-                                return Result<PullResult>(
-                                        result, Error::TryAgain);
+                        } else if (_queue.isEmpty()) {
+                                if (_eos) return Result<PullResult>(result, Error::EndOfFile);
+                                return Result<PullResult>(result, Error::TryAgain);
                         }
                         auto originRes = _clock->nowNs();
-                        if(isError(originRes)) {
+                        if (isError(originRes)) {
                                 return Result<PullResult>(result, error(originRes));
                         }
                         _originNs = value(originRes);
@@ -651,10 +613,7 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
                 // systematic offset (kernel sleep latency, clock
                 // interpolation mismatch, per-pull work time) so
                 // the realised pull cadence tracks the target rate.
-                deadlineNs   = _originNs +
-                        _targetFrameRate.cumulativeTicks(
-                                1000000000LL, currentIndex) -
-                        _deadlineBiasNs;
+                deadlineNs = _originNs + _targetFrameRate.cumulativeTicks(1000000000LL, currentIndex) - _deadlineBiasNs;
         }
 
         // Block on the clock — no-op for SyntheticClock.  A paused
@@ -665,52 +624,47 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
         // Interrupt so the flag gets consumed here rather than
         // leaking into the next pullFrame call.
         {
-                TimeStamp ts{TimeStamp::Clock::time_point(
-                        std::chrono::nanoseconds(deadlineNs))};
+                TimeStamp      ts{TimeStamp::Clock::time_point(std::chrono::nanoseconds(deadlineNs))};
                 MediaTimeStamp deadline(ts, _clock->domain());
-                Error sleepErr = _clock->sleepUntil(deadline);
-                if(sleepErr.isError()) {
+                Error          sleepErr = _clock->sleepUntil(deadline);
+                if (sleepErr.isError()) {
                         // If an interrupt is pending at the same time
                         // (e.g. the caller asked us to stop before the
                         // clock paused), return Interrupt so the flag
                         // gets consumed here rather than leaking into
                         // the next pullFrame call.
                         Mutex::Locker lock(_mutex);
-                        if(_interrupted) {
+                        if (_interrupted) {
                                 _interrupted = false;
-                                return Result<PullResult>(
-                                        result, Error::Interrupt);
+                                return Result<PullResult>(result, Error::Interrupt);
                         }
                         return Result<PullResult>(result, sleepErr);
                 }
         }
 
         // Build the output frame.
-        VideoPayload::Ptr             outVideo;
-        int64_t    outRepeated = 0;
-        int64_t    outDropped  = 0;
-        int64_t    audioTargetSamples = 0;
-        if(_targetAudioDesc.isValid()) {
-                audioTargetSamples = (int64_t)_targetFrameRate.samplesPerFrame(
-                        (int64_t)_targetAudioDesc.sampleRate(), currentIndex);
+        VideoPayload::Ptr outVideo;
+        int64_t           outRepeated = 0;
+        int64_t           outDropped = 0;
+        int64_t           audioTargetSamples = 0;
+        if (_targetAudioDesc.isValid()) {
+                audioTargetSamples =
+                        (int64_t)_targetFrameRate.samplesPerFrame((int64_t)_targetAudioDesc.sampleRate(), currentIndex);
         }
         PcmAudioPayload::Ptr outAudio;
-        int64_t    actualNs = 0;
-        int64_t    frameSyncDrop = 0;
-        int64_t    frameSyncRepeat = 0;
+        int64_t              actualNs = 0;
+        int64_t              frameSyncDrop = 0;
+        int64_t              frameSyncRepeat = 0;
         {
                 Mutex::Locker lock(_mutex);
-                if(_interrupted) {
+                if (_interrupted) {
                         _interrupted = false;
                         return Result<PullResult>(result, Error::Interrupt);
                 }
 
-                int64_t sourceTimeNs = _targetFrameRate.cumulativeTicks(
-                        1000000000LL, currentIndex);
-                int64_t nextSourceTimeNs = _targetFrameRate.cumulativeTicks(
-                        1000000000LL, currentIndex + 1);
-                selectVideo(sourceTimeNs, nextSourceTimeNs,
-                            outVideo, outRepeated, outDropped);
+                int64_t sourceTimeNs = _targetFrameRate.cumulativeTicks(1000000000LL, currentIndex);
+                int64_t nextSourceTimeNs = _targetFrameRate.cumulativeTicks(1000000000LL, currentIndex + 1);
+                selectVideo(sourceTimeNs, nextSourceTimeNs, outVideo, outRepeated, outDropped);
                 outAudio = produceAudio(audioTargetSamples);
 
                 // Compute FrameSyncDrop/FrameSyncRepeat values for
@@ -721,18 +675,18 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
                 // represents the "resumed new input" — per the spec,
                 // FrameSyncDrop is always zero on repeat frames.
                 _pendingFrameSyncDrops += outDropped;
-                if(outRepeated > 0) {
+                if (outRepeated > 0) {
                         _frameSyncRepeatIndex++;
                         frameSyncRepeat = _frameSyncRepeatIndex;
                         // frameSyncDrop stays 0 on repeats.
                 } else {
                         frameSyncDrop = _pendingFrameSyncDrops;
                         _pendingFrameSyncDrops = 0;
-                        _frameSyncRepeatIndex  = 0;
+                        _frameSyncRepeatIndex = 0;
                 }
 
                 auto actualRes = _clock->nowNs();
-                if(isError(actualRes)) {
+                if (isError(actualRes)) {
                         return Result<PullResult>(result, error(actualRes));
                 }
                 actualNs = value(actualRes);
@@ -743,8 +697,7 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
                 // wake-error so that the realised pull cadence
                 // matches the ideal schedule.  Alpha = 1/16 gives
                 // a ~0.5 s half-life at 30 fps.
-                _deadlineBiasNs +=
-                        (_accumulatedErrorNs - _deadlineBiasNs) / 16;
+                _deadlineBiasNs += (_accumulatedErrorNs - _deadlineBiasNs) / 16;
 
                 _frameCount++;
                 periodicDebugLog(actualNs);
@@ -756,7 +709,7 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
         MediaTimeStamp outStamp = stampAt(deadlineNs, _clock->domain());
 
         Frame::Ptr outFrame = Frame::Ptr::create();
-        if(outVideo.isValid()) {
+        if (outVideo.isValid()) {
                 // modify() CoW-clones the payload so our output stamp
                 // doesn't overwrite the source payload's timestamp
                 // when the same payload is emitted across multiple
@@ -765,7 +718,7 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
                 stamped.modify()->setPts(outStamp);
                 outFrame.modify()->addPayload(stamped);
         }
-        if(outAudio.isValid()) {
+        if (outAudio.isValid()) {
                 outAudio.modify()->setPts(outStamp);
                 outFrame.modify()->addPayload(outAudio);
         }
@@ -776,25 +729,25 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
         // not silently wrap or truncate on the 64→32-bit cast.
         constexpr int64_t kMaxS32 = static_cast<int64_t>(INT32_MAX);
         outFrame.modify()->metadata().set(Metadata::FrameSyncDrop,
-                static_cast<int32_t>(std::min(frameSyncDrop, kMaxS32)));
+                                          static_cast<int32_t>(std::min(frameSyncDrop, kMaxS32)));
         outFrame.modify()->metadata().set(Metadata::FrameSyncRepeat,
-                static_cast<int32_t>(std::min(frameSyncRepeat, kMaxS32)));
+                                          static_cast<int32_t>(std::min(frameSyncRepeat, kMaxS32)));
 
         // Advance the synthetic clock in lockstep so its nowNs() tracks
         // the number of emitted output frames.
-        if(_syntheticClock != nullptr) {
+        if (_syntheticClock != nullptr) {
                 _syntheticClock->advance(1);
         }
 
-        if(outRepeated > 0) _framesRepeated.fetchAndAdd(outRepeated);
-        if(outDropped  > 0) _framesDropped.fetchAndAdd(outDropped);
+        if (outRepeated > 0) _framesRepeated.fetchAndAdd(outRepeated);
+        if (outDropped > 0) _framesDropped.fetchAndAdd(outDropped);
         _framesOut.fetchAndAdd(1);
 
-        result.frame           = outFrame;
-        result.frameIndex      = currentIndex;
-        result.framesRepeated  = outRepeated;
-        result.framesDropped   = outDropped;
-        result.error           = Duration::fromNanoseconds(actualNs - deadlineNs);
+        result.frame = outFrame;
+        result.frameIndex = currentIndex;
+        result.framesRepeated = outRepeated;
+        result.framesDropped = outDropped;
+        result.error = Duration::fromNanoseconds(actualNs - deadlineNs);
         return Result<PullResult>(result, Error::Ok);
 }
 
@@ -812,7 +765,7 @@ void FrameSync::clearInterrupt() {
 void FrameSync::resetSourceRateEstimator() {
         Mutex::Locker lock(_mutex);
         _lastAudioTsForRateNs = 0;
-        _lastAudioTsSamples   = 0;
+        _lastAudioTsSamples = 0;
         _lastVideoTsForRateNs = 0;
 }
 
@@ -821,33 +774,24 @@ void FrameSync::resetSourceRateEstimator() {
 // ============================================================================
 
 void FrameSync::periodicDebugLog(int64_t nowNs) {
-        if(nowNs - _lastPeriodicLogNs < kPeriodicIntervalNs) return;
+        if (nowNs - _lastPeriodicLogNs < kPeriodicIntervalNs) return;
 
         const FrameCount elapsed = _frameCount - _frameCountAtLastLog;
-        const int64_t elapsedFrames = elapsed.isFinite() ? elapsed.value() : 0;
-        const double  elapsedSec    = (double)(nowNs - _lastPeriodicLogNs) / 1e9;
-        const double  actualFps     = (elapsedSec > 0.0)
-                ? (double)elapsedFrames / elapsedSec : 0.0;
+        const int64_t    elapsedFrames = elapsed.isFinite() ? elapsed.value() : 0;
+        const double     elapsedSec = (double)(nowNs - _lastPeriodicLogNs) / 1e9;
+        const double     actualFps = (elapsedSec > 0.0) ? (double)elapsedFrames / elapsedSec : 0.0;
 
         promekiDebug("[%s] out=%lld fps=%.2f in=%lld rpt=%lld drp=%lld ovf=%lld "
                      "srcVHz=%.2f srcAHz=%.2f ratio=%.6f accErr=%.3fms bias=%.3fms "
                      "clk=%s rRatio=%.6f",
-                     _name.cstr(),
-                     static_cast<long long>(_frameCount.value()),
-                     actualFps,
-                     static_cast<long long>(_framesIn.value()),
-                     static_cast<long long>(_framesRepeated.value()),
-                     static_cast<long long>(_framesDropped.value()),
-                     static_cast<long long>(_overflowDrops.value()),
-                     _sourceVideoRateHz,
-                     _sourceAudioRateHz,
-                     _currentResampleRatio,
-                     (double)_accumulatedErrorNs / 1e6,
-                     (double)_deadlineBiasNs / 1e6,
-                     _clock ? _clock->domain().name().cstr() : "none",
+                     _name.cstr(), static_cast<long long>(_frameCount.value()), actualFps,
+                     static_cast<long long>(_framesIn.value()), static_cast<long long>(_framesRepeated.value()),
+                     static_cast<long long>(_framesDropped.value()), static_cast<long long>(_overflowDrops.value()),
+                     _sourceVideoRateHz, _sourceAudioRateHz, _currentResampleRatio, (double)_accumulatedErrorNs / 1e6,
+                     (double)_deadlineBiasNs / 1e6, _clock ? _clock->domain().name().cstr() : "none",
                      _clock ? _clock->rateRatio() : 1.0);
 
-        _lastPeriodicLogNs   = nowNs;
+        _lastPeriodicLogNs = nowNs;
         _frameCountAtLastLog = _frameCount;
 }
 

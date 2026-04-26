@@ -14,11 +14,10 @@ using namespace promeki;
 PROMEKI_DEBUG(ObjectBaseTest)
 
 class TestOne : public ObjectBase {
-        PROMEKI_OBJECT(TestOne, ObjectBase);
-        public:
-                TestOne(ObjectBase *p = nullptr) : ObjectBase(p) {
+                PROMEKI_OBJECT(TestOne, ObjectBase);
 
-                }
+        public:
+                TestOne(ObjectBase *p = nullptr) : ObjectBase(p) {}
 
                 PROMEKI_SIGNAL(somethingHappened, const String &);
                 PROMEKI_SIGNAL(foo, const String &, bool, void *);
@@ -35,18 +34,15 @@ class TestOne : public ObjectBase {
 };
 
 class TestTwo : public ObjectBase {
-        PROMEKI_OBJECT(TestTwo, ObjectBase);
-        public:
-                TestTwo(ObjectBase *p = nullptr) : ObjectBase(p) {
+                PROMEKI_OBJECT(TestTwo, ObjectBase);
 
-                }
+        public:
+                TestTwo(ObjectBase *p = nullptr) : ObjectBase(p) {}
 
                 PROMEKI_SLOT(handleSomething, const String &);
-
 };
 
 inline void TestTwo::handleSomething(const String &val) {
         promekiInfo("TestTwo::handleSomething(%s) %p", val.cstr(), signalSender());
         return;
 }
-

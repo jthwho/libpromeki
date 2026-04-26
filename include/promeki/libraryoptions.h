@@ -55,30 +55,31 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                 // ============================================================
 
                 /// @brief bool — install crash signal handlers (default true).
-                PROMEKI_DECLARE_ID(CrashHandler,
-                        VariantSpec().setType(Variant::TypeBool)
-                                .setDefault(true)
-                                .setDescription("Install crash signal handlers."));
+                PROMEKI_DECLARE_ID(CrashHandler, VariantSpec()
+                                                         .setType(Variant::TypeBool)
+                                                         .setDefault(true)
+                                                         .setDescription("Install crash signal handlers."));
 
                 /// @brief bool — raise RLIMIT_CORE for core dumps (default false).
-                PROMEKI_DECLARE_ID(CoreDumps,
-                        VariantSpec().setType(Variant::TypeBool)
-                                .setDefault(false)
-                                .setDescription("Enable core dumps via RLIMIT_CORE."));
+                PROMEKI_DECLARE_ID(CoreDumps, VariantSpec()
+                                                      .setType(Variant::TypeBool)
+                                                      .setDefault(false)
+                                                      .setDescription("Enable core dumps via RLIMIT_CORE."));
 
                 /// @brief String — crash log directory (empty = Dir::temp()).
-                PROMEKI_DECLARE_ID(CrashLogDir,
-                        VariantSpec().setType(Variant::TypeString)
-                                .setDefault(String())
-                                .setDescription("Crash log directory (empty = system temp)."));
+                PROMEKI_DECLARE_ID(CrashLogDir, VariantSpec()
+                                                        .setType(Variant::TypeString)
+                                                        .setDefault(String())
+                                                        .setDescription("Crash log directory (empty = system temp)."));
 
                 /// @brief bool — include the process environment in crash/trace
                 /// reports (default true).  Disable if the environment may
                 /// contain secrets you don't want written to disk.
                 PROMEKI_DECLARE_ID(CaptureEnvironment,
-                        VariantSpec().setType(Variant::TypeBool)
-                                .setDefault(true)
-                                .setDescription("Include environment variables in crash reports."));
+                                   VariantSpec()
+                                           .setType(Variant::TypeBool)
+                                           .setDefault(true)
+                                           .setDescription("Include environment variables in crash reports."));
 
                 // ============================================================
                 // Filesystem
@@ -113,11 +114,10 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                 /// is not auto-created.  Callers that require the
                 /// directory to exist should @ref Dir::mkpath the
                 /// result themselves.
-                PROMEKI_DECLARE_ID(TempDir,
-                        VariantSpec().setType(Variant::TypeString)
-                                .setDefault(String())
-                                .setDescription(
-                                        "Override for Dir::temp() (empty = OS default)."));
+                PROMEKI_DECLARE_ID(TempDir, VariantSpec()
+                                                    .setType(Variant::TypeString)
+                                                    .setDefault(String())
+                                                    .setDescription("Override for Dir::temp() (empty = OS default)."));
 
                 /// @brief String — override for the path returned by
                 /// @ref Dir::ipc (empty = platform default, which is
@@ -158,10 +158,10 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                 /// directory to exist should @ref Dir::mkpath the
                 /// result themselves.
                 PROMEKI_DECLARE_ID(IpcDir,
-                        VariantSpec().setType(Variant::TypeString)
-                                .setDefault(String())
-                                .setDescription(
-                                        "Override for Dir::ipc() (empty = platform default)."));
+                                   VariantSpec()
+                                           .setType(Variant::TypeString)
+                                           .setDefault(String())
+                                           .setDescription("Override for Dir::ipc() (empty = platform default)."));
 
                 // ============================================================
                 // Termination signal handling
@@ -176,9 +176,10 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                 /// calls plus a wake-up posted to the main
                 /// @ref EventLoop.
                 PROMEKI_DECLARE_ID(TerminationSignalHandler,
-                        VariantSpec().setType(Variant::TypeBool)
-                                .setDefault(true)
-                                .setDescription("Install termination signal handlers (Ctrl-C/kill)."));
+                                   VariantSpec()
+                                           .setType(Variant::TypeBool)
+                                           .setDefault(true)
+                                           .setDescription("Install termination signal handlers (Ctrl-C/kill)."));
 
                 /// @brief bool — force-exit on a second termination signal
                 /// delivery (default @c true).  When true, the first
@@ -189,9 +190,10 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                 /// applications that want to handle multiple signals
                 /// themselves.
                 PROMEKI_DECLARE_ID(SignalDoubleTapExit,
-                        VariantSpec().setType(Variant::TypeBool)
-                                .setDefault(true)
-                                .setDescription("Force-exit on second termination signal delivery."));
+                                   VariantSpec()
+                                           .setType(Variant::TypeBool)
+                                           .setDefault(true)
+                                           .setDescription("Force-exit on second termination signal delivery."));
 
                 /**
                  * @brief Returns the global LibraryOptions singleton.

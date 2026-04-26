@@ -91,17 +91,17 @@ class MusicalNote {
                 void setRest(bool v) { _rest = v; }
 
         private:
-                float  _midiNote     = -1.0f;
-                double _startTime    = 0.0;
-                double _duration     = 0.0;
+                float  _midiNote = -1.0f;
+                double _startTime = 0.0;
+                double _duration = 0.0;
                 double _fullDuration = 0.0;
-                float  _amplitude    = 0.5f;
-                float  _legato       = 0.5f;
-                float  _vibrato      = 0.0f;
-                float  _vibratoRate  = 5.0f;
-                float  _tremolo      = 0.0f;
-                float  _tremoloRate  = 5.0f;
-                bool   _rest         = false;
+                float  _amplitude = 0.5f;
+                float  _legato = 0.5f;
+                float  _vibrato = 0.0f;
+                float  _vibratoRate = 5.0f;
+                float  _tremolo = 0.0f;
+                float  _tremoloRate = 5.0f;
+                bool   _rest = false;
 };
 
 PROMEKI_NAMESPACE_END

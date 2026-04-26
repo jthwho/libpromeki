@@ -49,38 +49,31 @@ int main(int argc, char **argv) {
 
         CmdLineParser parser;
         parser.registerOptions({
-                { 'p', "port", "Port to listen on (default 8080)",
-                  CmdLineParser::OptionIntCallback(
-                        [&port](int v) {
-                                if(v < 0 || v > 65535) {
-                                        std::fprintf(stderr,
-                                                "Invalid port: %d\n", v);
-                                        return 1;
-                                }
-                                port = static_cast<uint16_t>(v);
-                                return 0;
-                        }) },
-                { 'b', "bind", "Bind address (default 0.0.0.0)",
-                  CmdLineParser::OptionStringCallback(
-                        [&bindHost](const String &s) {
-                                bindHost = s;
-                                return 0;
-                        }) },
-                { 'h', "help", "Print usage and exit",
-                  CmdLineParser::OptionCallback(
-                        [&wantHelp]() {
-                                wantHelp = true;
-                                return 0;
-                        }) },
+                {'p', "port", "Port to listen on (default 8080)", CmdLineParser::OptionIntCallback([&port](int v) {
+                         if (v < 0 || v > 65535) {
+                                 std::fprintf(stderr, "Invalid port: %d\n", v);
+                                 return 1;
+                         }
+                         port = static_cast<uint16_t>(v);
+                         return 0;
+                 })},
+                {'b', "bind", "Bind address (default 0.0.0.0)",
+                 CmdLineParser::OptionStringCallback([&bindHost](const String &s) {
+                         bindHost = s;
+                         return 0;
+                 })},
+                {'h', "help", "Print usage and exit", CmdLineParser::OptionCallback([&wantHelp]() {
+                         wantHelp = true;
+                         return 0;
+                 })},
         });
 
-        if(parser.parseMain(argc, argv) != 0) return 1;
-        if(wantHelp) {
+        if (parser.parseMain(argc, argv) != 0) return 1;
+        if (wantHelp) {
                 const auto *info = getBuildInfo();
-                std::printf("%s %s — pipeline editor demo backend\n\n",
-                        info->name, info->version);
+                std::printf("%s %s — pipeline editor demo backend\n\n", info->name, info->version);
                 std::printf("Usage: promeki-pipeline [options]\n\nOptions:\n");
-                for(const String &line : parser.generateUsage()) {
+                for (const String &line : parser.generateUsage()) {
                         std::printf("  %s\n", line.cstr());
                 }
                 return 0;
@@ -105,36 +98,28 @@ int main(int argc, char **argv) {
         // Static files: anything not consumed by /api/* falls through
         // to the embedded cirf bundle mounted at :/promeki-pipeline/.
         server.route("/{path:*}", HttpMethod::Get,
-                HttpHandler::Ptr::takeOwnership(
-                        new HttpFileHandler(String(":/promeki-pipeline"))));
+                     HttpHandler::Ptr::takeOwnership(new HttpFileHandler(String(":/promeki-pipeline"))));
 
         SocketAddress address;
-        if(bindHost == "0.0.0.0") {
+        if (bindHost == "0.0.0.0") {
                 address = SocketAddress::any(port);
-        } else if(bindHost == "127.0.0.1" || bindHost == "localhost") {
+        } else if (bindHost == "127.0.0.1" || bindHost == "localhost") {
                 address = SocketAddress::localhost(port);
         } else {
-                Result<SocketAddress> r = SocketAddress::fromString(
-                        bindHost + ":" + String::number(port));
-                if(r.second().isError()) {
-                        promekiErr("Invalid bind address \"%s\": %s",
-                                bindHost.cstr(),
-                                r.second().name().cstr());
+                Result<SocketAddress> r = SocketAddress::fromString(bindHost + ":" + String::number(port));
+                if (r.second().isError()) {
+                        promekiErr("Invalid bind address \"%s\": %s", bindHost.cstr(), r.second().name().cstr());
                         return 1;
                 }
                 address = r.first();
         }
 
         Error err = server.listen(address);
-        if(err.isError()) {
-                promekiErr("Failed to listen on %s: %s",
-                        address.toString().cstr(),
-                        err.name().cstr());
+        if (err.isError()) {
+                promekiErr("Failed to listen on %s: %s", address.toString().cstr(), err.name().cstr());
                 return 1;
         }
-        promekiInfo("ProMeKi Pipeline listening on http://%s:%u/",
-                bindHost.cstr(),
-                static_cast<unsigned>(port));
+        promekiInfo("ProMeKi Pipeline listening on http://%s:%u/", bindHost.cstr(), static_cast<unsigned>(port));
 
         return app.exec();
 }

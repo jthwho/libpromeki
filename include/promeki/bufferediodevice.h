@@ -32,7 +32,7 @@ PROMEKI_NAMESPACE_BEGIN
  * only be used from the thread that created it.
  */
 class BufferedIODevice : public IODevice {
-        PROMEKI_OBJECT(BufferedIODevice, IODevice)
+                PROMEKI_OBJECT(BufferedIODevice, IODevice)
         public:
                 /**
                  * @brief Constructs a BufferedIODevice.
@@ -162,7 +162,6 @@ class BufferedIODevice : public IODevice {
                 bool isUnbuffered() const { return _unbuffered; }
 
         protected:
-
                 /**
                  * @brief Reads raw data from the underlying device.
                  *
@@ -194,9 +193,7 @@ class BufferedIODevice : public IODevice {
                  *
                  * @return The number of unconsumed bytes in the read buffer.
                  */
-                size_t bufferedBytesUnconsumed() const {
-                        return _readBufFill - _readBufPos;
-                }
+                size_t bufferedBytesUnconsumed() const { return _readBufFill - _readBufPos; }
 
                 /**
                  * @brief Ensures the read buffer is allocated.
@@ -218,11 +215,11 @@ class BufferedIODevice : public IODevice {
                 /** @brief Default read buffer size in bytes. */
                 static constexpr size_t DefaultReadBufSize = 8192;
 
-                bool    _unbuffered = false;              ///< Unbuffered option storage.
-                Buffer  _readBuf;                        ///< The read buffer (replaceable).
-                size_t  _readBufPos = 0;                 ///< Read cursor within buffer.
-                size_t  _readBufFill = 0;                ///< Bytes of valid data in buffer.
-                bool    _bufferAllocated = false;        ///< True after buffer is ready.
+                bool   _unbuffered = false;      ///< Unbuffered option storage.
+                Buffer _readBuf;                 ///< The read buffer (replaceable).
+                size_t _readBufPos = 0;          ///< Read cursor within buffer.
+                size_t _readBufFill = 0;         ///< Bytes of valid data in buffer.
+                bool   _bufferAllocated = false; ///< True after buffer is ready.
 
                 /**
                  * @brief Fills the internal read buffer from the device.

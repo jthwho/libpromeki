@@ -142,31 +142,31 @@ class ColorModel {
                  * starts at UserDefined.
                  */
                 enum ID {
-                        Invalid          = 0,   ///< Invalid or unset.
-                        sRGB             = 1,   ///< sRGB (IEC 61966-2-1).
-                        LinearSRGB       = 2,   ///< Linear sRGB (scene-referred).
-                        Rec709           = 3,   ///< ITU-R BT.709 (gamma-corrected).
-                        LinearRec709     = 4,   ///< ITU-R BT.709 (linear).
-                        Rec601_PAL       = 5,   ///< ITU-R BT.601 PAL (gamma-corrected).
-                        LinearRec601_PAL = 6,   ///< ITU-R BT.601 PAL (linear).
-                        Rec601_NTSC      = 7,   ///< ITU-R BT.601 NTSC (gamma-corrected).
-                        LinearRec601_NTSC= 8,   ///< ITU-R BT.601 NTSC (linear).
-                        Rec2020          = 9,   ///< ITU-R BT.2020 (gamma-corrected).
-                        LinearRec2020    = 10,  ///< ITU-R BT.2020 (linear).
-                        DCI_P3           = 11,  ///< DCI-P3 Display (D65, sRGB transfer).
-                        LinearDCI_P3     = 12,  ///< Linear DCI-P3 Display (D65).
-                        AdobeRGB         = 13,  ///< Adobe RGB (1998).
-                        LinearAdobeRGB   = 14,  ///< Linear Adobe RGB (1998).
-                        ACES_AP0         = 15,  ///< ACES 2065-1 (AP0 primaries, linear).
-                        ACES_AP1         = 16,  ///< ACEScg (AP1 primaries, linear).
-                        CIEXYZ           = 17,  ///< CIE 1931 XYZ (connection space).
-                        CIELab           = 18,  ///< CIE L*a*b* (D65 white point).
-                        HSV_sRGB         = 19,  ///< HSV derived from sRGB.
-                        HSL_sRGB         = 20,  ///< HSL derived from sRGB.
-                        YCbCr_Rec709     = 21,  ///< YCbCr with BT.709 coefficients.
-                        YCbCr_Rec601     = 22,  ///< YCbCr with BT.601 coefficients.
-                        YCbCr_Rec2020    = 23,  ///< YCbCr with BT.2020 coefficients.
-                        UserDefined      = 1024 ///< First ID available for user-registered types.
+                        Invalid = 0,           ///< Invalid or unset.
+                        sRGB = 1,              ///< sRGB (IEC 61966-2-1).
+                        LinearSRGB = 2,        ///< Linear sRGB (scene-referred).
+                        Rec709 = 3,            ///< ITU-R BT.709 (gamma-corrected).
+                        LinearRec709 = 4,      ///< ITU-R BT.709 (linear).
+                        Rec601_PAL = 5,        ///< ITU-R BT.601 PAL (gamma-corrected).
+                        LinearRec601_PAL = 6,  ///< ITU-R BT.601 PAL (linear).
+                        Rec601_NTSC = 7,       ///< ITU-R BT.601 NTSC (gamma-corrected).
+                        LinearRec601_NTSC = 8, ///< ITU-R BT.601 NTSC (linear).
+                        Rec2020 = 9,           ///< ITU-R BT.2020 (gamma-corrected).
+                        LinearRec2020 = 10,    ///< ITU-R BT.2020 (linear).
+                        DCI_P3 = 11,           ///< DCI-P3 Display (D65, sRGB transfer).
+                        LinearDCI_P3 = 12,     ///< Linear DCI-P3 Display (D65).
+                        AdobeRGB = 13,         ///< Adobe RGB (1998).
+                        LinearAdobeRGB = 14,   ///< Linear Adobe RGB (1998).
+                        ACES_AP0 = 15,         ///< ACES 2065-1 (AP0 primaries, linear).
+                        ACES_AP1 = 16,         ///< ACEScg (AP1 primaries, linear).
+                        CIEXYZ = 17,           ///< CIE 1931 XYZ (connection space).
+                        CIELab = 18,           ///< CIE L*a*b* (D65 white point).
+                        HSV_sRGB = 19,         ///< HSV derived from sRGB.
+                        HSL_sRGB = 20,         ///< HSL derived from sRGB.
+                        YCbCr_Rec709 = 21,     ///< YCbCr with BT.709 coefficients.
+                        YCbCr_Rec601 = 22,     ///< YCbCr with BT.601 coefficients.
+                        YCbCr_Rec2020 = 23,    ///< YCbCr with BT.2020 coefficients.
+                        UserDefined = 1024     ///< First ID available for user-registered types.
                 };
 
                 /**
@@ -178,13 +178,13 @@ class ColorModel {
                  * despite using different primaries.
                  */
                 enum Type {
-                        TypeInvalid = 0,  ///< Invalid or unset.
-                        TypeRGB,          ///< Red, Green, Blue.
-                        TypeXYZ,          ///< CIE 1931 XYZ.
-                        TypeLab,          ///< CIE L*a*b*.
-                        TypeYCbCr,        ///< Luma + chroma-difference.
-                        TypeHSV,          ///< Hue, Saturation, Value.
-                        TypeHSL           ///< Hue, Saturation, Lightness.
+                        TypeInvalid = 0, ///< Invalid or unset.
+                        TypeRGB,         ///< Red, Green, Blue.
+                        TypeXYZ,         ///< CIE 1931 XYZ.
+                        TypeLab,         ///< CIE L*a*b*.
+                        TypeYCbCr,       ///< Luma + chroma-difference.
+                        TypeHSV,         ///< Hue, Saturation, Value.
+                        TypeHSL          ///< Hue, Saturation, Lightness.
                 };
 
                 /**
@@ -199,10 +199,10 @@ class ColorModel {
                  * range is 0-360 degrees.
                  */
                 struct CompInfo {
-                        String  name;       ///< Full name (e.g. "Red", "Hue", "Luma").
-                        String  abbrev;     ///< Abbreviation (e.g. "R", "H", "Y").
-                        float   nativeMin;  ///< Minimum in native display units.
-                        float   nativeMax;  ///< Maximum in native display units.
+                                String name;      ///< Full name (e.g. "Red", "Hue", "Luma").
+                                String abbrev;    ///< Abbreviation (e.g. "R", "H", "Y").
+                                float  nativeMin; ///< Minimum in native display units.
+                                float  nativeMax; ///< Maximum in native display units.
                 };
 
                 /**
@@ -242,26 +242,28 @@ class ColorModel {
                  * @see @ref typeregistry "TypeRegistry Pattern"
                  */
                 struct Data {
-                        ID                      id = Invalid;               ///< The ID this data was registered under.
-                        Type                    type = TypeInvalid;            ///< Geometric type (RGB, HSV, etc.).
-                        String                  name;                          ///< Human-readable name.
-                        String                  desc;                          ///< Longer description.
-                        Primaries               primaries;                     ///< CIE chromaticity primaries and white point.
-                        CompInfo                comps[3] = {};                 ///< Component descriptors (3 color channels).
-                        TransferFunc            oetf = nullptr;                ///< Linear -> encoded transfer function.
-                        TransferFunc            eotf = nullptr;                ///< Encoded -> linear transfer function.
-                        bool                    linear = false;                ///< True if transfer function is identity.
-                        ID                      linearCounterpart = Invalid;    ///< ID of linear version (or self).
-                        ID                      nonlinearCounterpart = Invalid; ///< ID of gamma-encoded version (or self).
-                        ID                      parentModel = Invalid;          ///< Parent RGB model for derived types.
-                        Matrix3x3               rgbToXyz;                      ///< RGB-to-XYZ Normalized Primary Matrix.
-                        Matrix3x3               xyzToRgb;                      ///< XYZ-to-RGB (inverse of rgbToXyz).
-                        Matrix3x3               toParentMatrix;                ///< For matrix-derived models (YCbCr).
-                        Matrix3x3               fromParentMatrix;              ///< Inverse of toParentMatrix.
-                        float                   toParentOffset[3] = {};        ///< Offset applied before toParentMatrix.
-                        float                   fromParentOffset[3] = {};      ///< Offset applied after fromParentMatrix.
-                        void (*toXYZFunc)(const Data *d, const float *src, float *dst) = nullptr;   ///< Convert to CIE XYZ.
-                        void (*fromXYZFunc)(const Data *d, const float *src, float *dst) = nullptr; ///< Convert from CIE XYZ.
+                                ID           id = Invalid;       ///< The ID this data was registered under.
+                                Type         type = TypeInvalid; ///< Geometric type (RGB, HSV, etc.).
+                                String       name;               ///< Human-readable name.
+                                String       desc;               ///< Longer description.
+                                Primaries    primaries;          ///< CIE chromaticity primaries and white point.
+                                CompInfo     comps[3] = {};      ///< Component descriptors (3 color channels).
+                                TransferFunc oetf = nullptr;     ///< Linear -> encoded transfer function.
+                                TransferFunc eotf = nullptr;     ///< Encoded -> linear transfer function.
+                                bool         linear = false;     ///< True if transfer function is identity.
+                                ID           linearCounterpart = Invalid;    ///< ID of linear version (or self).
+                                ID           nonlinearCounterpart = Invalid; ///< ID of gamma-encoded version (or self).
+                                ID           parentModel = Invalid;          ///< Parent RGB model for derived types.
+                                Matrix3x3    rgbToXyz;                       ///< RGB-to-XYZ Normalized Primary Matrix.
+                                Matrix3x3    xyzToRgb;                       ///< XYZ-to-RGB (inverse of rgbToXyz).
+                                Matrix3x3    toParentMatrix;                 ///< For matrix-derived models (YCbCr).
+                                Matrix3x3    fromParentMatrix;               ///< Inverse of toParentMatrix.
+                                float        toParentOffset[3] = {};         ///< Offset applied before toParentMatrix.
+                                float        fromParentOffset[3] = {};       ///< Offset applied after fromParentMatrix.
+                                void (*toXYZFunc)(const Data *d, const float *src,
+                                                  float *dst) = nullptr; ///< Convert to CIE XYZ.
+                                void (*fromXYZFunc)(const Data *d, const float *src,
+                                                    float *dst) = nullptr; ///< Convert from CIE XYZ.
                 };
 
                 /**
@@ -318,9 +320,9 @@ class ColorModel {
                  *       stamp the correct transfer on the encoder config.
                  */
                 struct H273 {
-                        uint8_t primaries  = 0;   ///< H.273 @c colour_primaries.
-                        uint8_t transfer   = 0;   ///< H.273 @c transfer_characteristics.
-                        uint8_t matrix     = 0;   ///< H.273 @c matrix_coefficients.
+                                uint8_t primaries = 0; ///< H.273 @c colour_primaries.
+                                uint8_t transfer = 0;  ///< H.273 @c transfer_characteristics.
+                                uint8_t matrix = 0;    ///< H.273 @c matrix_coefficients.
                 };
 
                 /**
@@ -470,7 +472,7 @@ class ColorModel {
                  * @return The value in native units (e.g. 0-360 for hue).
                  */
                 float toNative(size_t comp, float normalized) const {
-                        if(comp >= 3) return 0.0f;
+                        if (comp >= 3) return 0.0f;
                         const CompInfo &ci = _d->comps[comp];
                         return ci.nativeMin + normalized * (ci.nativeMax - ci.nativeMin);
                 }
@@ -482,10 +484,10 @@ class ColorModel {
                  * @return The normalized value.
                  */
                 float fromNative(size_t comp, float native) const {
-                        if(comp >= 3) return 0.0f;
+                        if (comp >= 3) return 0.0f;
                         const CompInfo &ci = _d->comps[comp];
-                        float range = ci.nativeMax - ci.nativeMin;
-                        if(range == 0.0f) return 0.0f;
+                        float           range = ci.nativeMax - ci.nativeMin;
+                        if (range == 0.0f) return 0.0f;
                         return (native - ci.nativeMin) / range;
                 }
 
@@ -493,7 +495,7 @@ class ColorModel {
                 const Data *data() const { return _d; }
 
         private:
-                const Data *_d = nullptr;
+                const Data        *_d = nullptr;
                 static const Data *lookupData(ID id);
 };
 

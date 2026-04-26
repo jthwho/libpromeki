@@ -43,7 +43,7 @@ template <typename... Args> class Signal {
 
                 /** @brief Metafunction that strips const and reference qualifiers from a type. */
                 template <typename T> struct removeConstAndRef {
-                        using type = std::remove_const_t<std::remove_reference_t<T>>;
+                                using type = std::remove_const_t<std::remove_reference_t<T>>;
                 };
 
                 /** @brief Convenience alias for removeConstAndRef. */
@@ -74,8 +74,7 @@ template <typename... Args> class Signal {
                  * @param[in] owner Pointer to the object/data that owns this signal.
                  * @param[in] prototype Optional prototype string describing the signal signature.
                  */
-                Signal(void *owner = nullptr, const char *prototype = nullptr) :
-                        _owner(owner), _prototype(prototype) {}
+                Signal(void *owner = nullptr, const char *prototype = nullptr) : _owner(owner), _prototype(prototype) {}
 
                 /**
                  * @brief Returns the owner of this signal, or nullptr if not defined
@@ -156,13 +155,8 @@ template <typename... Args> class Signal {
                  */
                 template <typename T> size_t connect(T *obj, void (T::*memberFunction)(Args...)) {
                         size_t slotID = nextSlotId();
-                        _slots += Info(
-                                slotID,
-                                ([obj, memberFunction](Args... args) {
-                                         (obj->*memberFunction)(args...);
-                                }),
-                                obj
-                        );
+                        _slots += Info(slotID,
+                                       ([obj, memberFunction](Args... args) { (obj->*memberFunction)(args...); }), obj);
                         return slotID;
                 }
 
@@ -194,8 +188,8 @@ template <typename... Args> class Signal {
                  * @param memberFunction Pointer to the member function to disconnect.
                  */
                 template <typename T> void disconnect(const T *object, void (T::*memberFunction)(Args...)) {
-                        _slots.removeIf([object, memberFunction](const Info &info) { 
-                                        return static_cast<const T *>(info.object) == object && info.func == memberFunction;
+                        _slots.removeIf([object, memberFunction](const Info &info) {
+                                return static_cast<const T *>(info.object) == object && info.func == memberFunction;
                         });
                         return;
                 }
@@ -207,7 +201,8 @@ template <typename... Args> class Signal {
                  * @param object Pointer to the object whose slots should be removed.
                  */
                 template <typename T> void disconnectFromObject(const T *object) {
-                        _slots.removeIf([object](const Info &info) { return static_cast<const T *>(info.object) == object; });
+                        _slots.removeIf(
+                                [object](const Info &info) { return static_cast<const T *>(info.object) == object; });
                         return;
                 }
 
@@ -227,17 +222,16 @@ template <typename... Args> class Signal {
 
         private:
                 struct Info {
-                        size_t          id = 0;
-                        Function        func;
-                        const void      *object = nullptr;
+                                size_t      id = 0;
+                                Function    func;
+                                const void *object = nullptr;
 
-                        Info(size_t id, Function f, const void *obj = nullptr)
-                                : id(id), func(f), object(obj) {}
+                                Info(size_t id, Function f, const void *obj = nullptr) : id(id), func(f), object(obj) {}
                 };
 
-                void            *_owner = nullptr;
-                const char      *_prototype = nullptr;
-                List<Info>      _slots;
+                void       *_owner = nullptr;
+                const char *_prototype = nullptr;
+                List<Info>  _slots;
 
                 // Process-wide monotonic ID source.  Kept as a function-local
                 // static (rather than a member) so that adding it does not
@@ -251,4 +245,3 @@ template <typename... Args> class Signal {
 };
 
 PROMEKI_NAMESPACE_END
-

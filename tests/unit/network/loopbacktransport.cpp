@@ -39,15 +39,15 @@ TEST_CASE("LoopbackTransport") {
                 a.open();
                 b.open();
 
-                const char *msg = "hello loopback";
+                const char   *msg = "hello loopback";
                 SocketAddress src(Ipv4Address::loopback(), 12345);
-                ssize_t sent = a.sendPacket(msg, std::strlen(msg), src);
+                ssize_t       sent = a.sendPacket(msg, std::strlen(msg), src);
                 CHECK(sent == static_cast<ssize_t>(std::strlen(msg)));
                 CHECK(b.pendingPackets() == 1);
 
-                char buf[64];
+                char          buf[64];
                 SocketAddress from;
-                ssize_t n = b.receivePacket(buf, sizeof(buf), &from);
+                ssize_t       n = b.receivePacket(buf, sizeof(buf), &from);
                 REQUIRE(n > 0);
                 CHECK(std::memcmp(buf, msg, n) == 0);
                 CHECK(from == src);
@@ -61,12 +61,12 @@ TEST_CASE("LoopbackTransport") {
                 b.open();
 
                 SocketAddress src(Ipv4Address::loopback(), 1111);
-                char msgs[4][16];
-                for(int i = 0; i < 4; i++) {
+                char          msgs[4][16];
+                for (int i = 0; i < 4; i++) {
                         std::snprintf(msgs[i], sizeof(msgs[i]), "loop%d", i);
                 }
                 PacketTransport::DatagramList batch;
-                for(int i = 0; i < 4; i++) {
+                for (int i = 0; i < 4; i++) {
                         PacketTransport::Datagram d;
                         d.data = msgs[i];
                         d.size = std::strlen(msgs[i]);
@@ -77,8 +77,8 @@ TEST_CASE("LoopbackTransport") {
                 CHECK(sent == 4);
                 CHECK(b.pendingPackets() == 4);
 
-                for(int i = 0; i < 4; i++) {
-                        char buf[16];
+                for (int i = 0; i < 4; i++) {
+                        char    buf[16];
                         ssize_t n = b.receivePacket(buf, sizeof(buf));
                         REQUIRE(n > 0);
                         char expected[16];
@@ -109,7 +109,8 @@ TEST_CASE("LoopbackTransport") {
         SUBCASE("receive on empty queue returns -1") {
                 LoopbackTransport a, b;
                 LoopbackTransport::pair(&a, &b);
-                a.open(); b.open();
+                a.open();
+                b.open();
                 char buf[16];
                 CHECK(b.receivePacket(buf, sizeof(buf)) == -1);
         }
@@ -117,7 +118,8 @@ TEST_CASE("LoopbackTransport") {
         SUBCASE("close clears pending packets") {
                 LoopbackTransport a, b;
                 LoopbackTransport::pair(&a, &b);
-                a.open(); b.open();
+                a.open();
+                b.open();
                 a.sendPacket("x", 1, SocketAddress());
                 CHECK(b.pendingPackets() == 1);
                 b.close();

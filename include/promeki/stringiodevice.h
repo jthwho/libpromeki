@@ -35,7 +35,7 @@ PROMEKI_NAMESPACE_BEGIN
  * only be used from the thread that created it.
  */
 class StringIODevice : public IODevice {
-        PROMEKI_OBJECT(StringIODevice, IODevice)
+                PROMEKI_OBJECT(StringIODevice, IODevice)
         public:
                 /**
                  * @brief Constructs a StringIODevice with an external String.
@@ -71,21 +71,21 @@ class StringIODevice : public IODevice {
                  */
                 String *string() const { return _string; }
 
-                Error open(OpenMode mode) override;
-                Error close() override;
-                bool isOpen() const override;
-                int64_t read(void *data, int64_t maxSize) override;
-                int64_t write(const void *data, int64_t maxSize) override;
-                int64_t bytesAvailable() const override;
-                bool isSequential() const override;
-                Error seek(int64_t pos) override;
-                int64_t pos() const override;
+                Error           open(OpenMode mode) override;
+                Error           close() override;
+                bool            isOpen() const override;
+                int64_t         read(void *data, int64_t maxSize) override;
+                int64_t         write(const void *data, int64_t maxSize) override;
+                int64_t         bytesAvailable() const override;
+                bool            isSequential() const override;
+                Error           seek(int64_t pos) override;
+                int64_t         pos() const override;
                 Result<int64_t> size() const override;
-                bool atEnd() const override;
+                bool            atEnd() const override;
 
         private:
-                String  *_string = nullptr;
-                int64_t _pos     = 0;
+                String *_string = nullptr;
+                int64_t _pos = 0;
 };
 
 PROMEKI_NAMESPACE_END

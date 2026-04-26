@@ -61,11 +61,9 @@ static const size_t TestBufSize = 4096;
 // ============================================================================
 
 struct WriterFixture {
-        Buffer buf;
-        BufferIODevice dev;
-        WriterFixture() : buf(TestBufSize), dev(&buf) {
-                dev.open(IODevice::ReadWrite);
-        }
+                Buffer         buf;
+                BufferIODevice dev;
+                WriterFixture() : buf(TestBufSize), dev(&buf) { dev.open(IODevice::ReadWrite); }
 };
 
 // ============================================================================
@@ -74,7 +72,7 @@ struct WriterFixture {
 
 TEST_CASE("DataStream: writer writes header") {
         WriterFixture f;
-        DataStream ws = DataStream::createWriter(&f.dev);
+        DataStream    ws = DataStream::createWriter(&f.dev);
         CHECK(ws.status() == DataStream::Ok);
         CHECK(ws.version() == DataStream::CurrentVersion);
         // Header is 16 bytes: 4 magic + 2 version + 1 byte-order + 9 reserved
@@ -93,7 +91,7 @@ TEST_CASE("DataStream: writer writes header") {
         // Default byte order is BigEndian → 'B'
         CHECK(raw[6] == 'B');
         // Reserved bytes 7-15 must be zero
-        for(int i = 7; i < 16; ++i) CHECK(raw[i] == 0x00);
+        for (int i = 7; i < 16; ++i) CHECK(raw[i] == 0x00);
 }
 
 TEST_CASE("DataStream: writer records little-endian byte order in header") {
@@ -104,7 +102,7 @@ TEST_CASE("DataStream: writer records little-endian byte order in header") {
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
         CHECK(raw[6] == 'L');
-        for(int i = 7; i < 16; ++i) CHECK(raw[i] == 0x00);
+        for (int i = 7; i < 16; ++i) CHECK(raw[i] == 0x00);
 }
 
 TEST_CASE("DataStream: reader auto-configures byte order from header") {
@@ -124,7 +122,7 @@ TEST_CASE("DataStream: reader auto-configures byte order from header") {
 
 TEST_CASE("DataStream: reader rejects invalid byte-order marker") {
         WriterFixture f;
-        DataStream ws = DataStream::createWriter(&f.dev);
+        DataStream    ws = DataStream::createWriter(&f.dev);
         static_cast<uint8_t *>(f.buf.data())[6] = 0xFF;
         f.dev.seek(0);
         DataStream rs = DataStream::createReader(&f.dev);
@@ -134,7 +132,7 @@ TEST_CASE("DataStream: reader rejects invalid byte-order marker") {
 
 TEST_CASE("DataStream: reader rejects non-zero reserved bytes") {
         WriterFixture f;
-        DataStream ws = DataStream::createWriter(&f.dev);
+        DataStream    ws = DataStream::createWriter(&f.dev);
         // Poke a non-zero byte into the reserved area
         static_cast<uint8_t *>(f.buf.data())[10] = 0x42;
         f.dev.seek(0);
@@ -187,10 +185,10 @@ TEST_CASE("DataStream: reader handles truncated header") {
 
 TEST_CASE("DataStream: raw constructor skips header") {
         WriterFixture f;
-        DataStream ds(&f.dev);
+        DataStream    ds(&f.dev);
         CHECK(ds.status() == DataStream::Ok);
         CHECK(ds.version() == 0); // no header read
-        CHECK(f.dev.pos() == 0); // no bytes consumed
+        CHECK(f.dev.pos() == 0);  // no bytes consumed
 }
 
 // ============================================================================
@@ -210,7 +208,7 @@ TEST_CASE("DataStream: round-trip int8_t") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                int8_t a, b, c, d;
+                int8_t     a, b, c, d;
                 rs >> a >> b >> c >> d;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(a == -42);
@@ -229,7 +227,7 @@ TEST_CASE("DataStream: round-trip uint8_t") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                uint8_t a, b;
+                uint8_t    a, b;
                 rs >> a >> b;
                 CHECK(a == 0);
                 CHECK(b == 255);
@@ -245,7 +243,7 @@ TEST_CASE("DataStream: round-trip int16_t") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                int16_t a, b;
+                int16_t    a, b;
                 rs >> a >> b;
                 CHECK(a == -1234);
                 CHECK(b == 32767);
@@ -261,7 +259,7 @@ TEST_CASE("DataStream: round-trip uint16_t") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                uint16_t a, b;
+                uint16_t   a, b;
                 rs >> a >> b;
                 CHECK(a == 0);
                 CHECK(b == 65535);
@@ -277,7 +275,7 @@ TEST_CASE("DataStream: round-trip int32_t") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                int32_t a, b;
+                int32_t    a, b;
                 rs >> a >> b;
                 CHECK(a == -123456789);
                 CHECK(b == 2147483647);
@@ -293,7 +291,7 @@ TEST_CASE("DataStream: round-trip uint32_t") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                uint32_t a, b;
+                uint32_t   a, b;
                 rs >> a >> b;
                 CHECK(a == 0);
                 CHECK(b == 4294967295u);
@@ -309,7 +307,7 @@ TEST_CASE("DataStream: round-trip int64_t") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                int64_t a, b;
+                int64_t    a, b;
                 rs >> a >> b;
                 CHECK(a == -9876543210LL);
                 CHECK(b == 9223372036854775807LL);
@@ -325,7 +323,7 @@ TEST_CASE("DataStream: round-trip uint64_t") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                uint64_t a, b;
+                uint64_t   a, b;
                 rs >> a >> b;
                 CHECK(a == 0);
                 CHECK(b == 18446744073709551615ULL);
@@ -341,7 +339,7 @@ TEST_CASE("DataStream: round-trip float") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                float a, b, c;
+                float      a, b, c;
                 rs >> a >> b >> c;
                 CHECK(a == doctest::Approx(3.14f));
                 CHECK(b == -0.0f);
@@ -358,7 +356,7 @@ TEST_CASE("DataStream: round-trip double") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                double a, b, c;
+                double     a, b, c;
                 rs >> a >> b >> c;
                 CHECK(a == doctest::Approx(3.141592653589793));
                 CHECK(b == doctest::Approx(-1.0e-300));
@@ -375,7 +373,7 @@ TEST_CASE("DataStream: round-trip bool") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                bool a, b;
+                bool       a, b;
                 rs >> a >> b;
                 CHECK(a == true);
                 CHECK(b == false);
@@ -388,9 +386,9 @@ TEST_CASE("DataStream: round-trip bool") {
 
 TEST_CASE("DataStream: round-trip String") {
         WriterFixture f;
-        String hello("Hello, DataStream!");
-        String empty;
-        String special("line1\nline2\ttab");
+        String        hello("Hello, DataStream!");
+        String        empty;
+        String        special("line1\nline2\ttab");
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << hello << empty << special;
@@ -399,7 +397,7 @@ TEST_CASE("DataStream: round-trip String") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                String a, b, c;
+                String     a, b, c;
                 rs >> a >> b >> c;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(a == hello);
@@ -410,8 +408,8 @@ TEST_CASE("DataStream: round-trip String") {
 
 TEST_CASE("DataStream: round-trip Unicode String") {
         WriterFixture f;
-        const char *utf8 = "\xc3\xa9\xc3\xa0\xc3\xbc"; // éàü in UTF-8
-        String unicode = String::fromUtf8(utf8, 6);
+        const char   *utf8 = "\xc3\xa9\xc3\xa0\xc3\xbc"; // éàü in UTF-8
+        String        unicode = String::fromUtf8(utf8, 6);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << unicode;
@@ -420,7 +418,7 @@ TEST_CASE("DataStream: round-trip Unicode String") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                String val;
+                String     val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.length() == 3);
@@ -434,7 +432,7 @@ TEST_CASE("DataStream: round-trip Unicode String") {
 
 TEST_CASE("DataStream: round-trip Buffer") {
         WriterFixture f;
-        Buffer payload(64);
+        Buffer        payload(64);
         std::memset(payload.data(), 0xAB, 64);
         payload.setSize(64);
 
@@ -447,7 +445,7 @@ TEST_CASE("DataStream: round-trip Buffer") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Buffer a, b;
+                Buffer     a, b;
                 rs >> a >> b;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(a.size() == 64);
@@ -463,12 +461,12 @@ TEST_CASE("DataStream: round-trip Buffer") {
 
 TEST_CASE("DataStream: round-trip Variant primitives") {
         WriterFixture f;
-        Variant vInvalid;
-        Variant vBool(true);
-        Variant vU32(static_cast<uint32_t>(42));
-        Variant vS64(static_cast<int64_t>(-99));
-        Variant vDouble(2.718);
-        Variant vString(String("test"));
+        Variant       vInvalid;
+        Variant       vBool(true);
+        Variant       vU32(static_cast<uint32_t>(42));
+        Variant       vS64(static_cast<int64_t>(-99));
+        Variant       vDouble(2.718);
+        Variant       vString(String("test"));
 
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -478,7 +476,7 @@ TEST_CASE("DataStream: round-trip Variant primitives") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant a, b, c, d, e, g;
+                Variant    a, b, c, d, e, g;
                 rs >> a >> b >> c >> d >> e >> g;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK_FALSE(a.isValid());
@@ -505,7 +503,7 @@ TEST_CASE("DataStream: big-endian vs little-endian wire format") {
         }
         // After header(16) + tag(2), the 4 value bytes start at offset 18
         uint8_t *raw = static_cast<uint8_t *>(f1.buf.data());
-        CHECK(raw[6] == 'B'); // byte-order marker
+        CHECK(raw[6] == 'B');   // byte-order marker
         CHECK(raw[16] == 0x00); // tag high byte (big-endian)
         CHECK(raw[17] == DataStream::TypeUInt32);
         CHECK(raw[18] == 0x01);
@@ -529,9 +527,9 @@ TEST_CASE("DataStream: big-endian vs little-endian wire format") {
                 ws << testVal;
         }
         raw = static_cast<uint8_t *>(f2.buf.data());
-        CHECK(raw[6] == 'L'); // byte-order marker
+        CHECK(raw[6] == 'L');                     // byte-order marker
         CHECK(raw[16] == DataStream::TypeUInt32); // tag low byte (little-endian)
-        CHECK(raw[17] == 0x00); // tag high byte (little-endian)
+        CHECK(raw[17] == 0x00);                   // tag high byte (little-endian)
         CHECK(raw[18] == 0x04);
         CHECK(raw[19] == 0x03);
         CHECK(raw[20] == 0x02);
@@ -549,7 +547,7 @@ TEST_CASE("DataStream: big-endian vs little-endian wire format") {
 
 TEST_CASE("DataStream: byte order for 16-bit values") {
         WriterFixture f;
-        uint16_t testVal = 0xABCD;
+        uint16_t      testVal = 0xABCD;
         {
                 DataStream ws = DataStream::createWriter(&f.dev, DataStream::BigEndian);
                 ws << testVal;
@@ -563,7 +561,7 @@ TEST_CASE("DataStream: byte order for 16-bit values") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                uint16_t val;
+                uint16_t   val;
                 rs >> val;
                 CHECK(val == 0xABCD);
         }
@@ -571,18 +569,18 @@ TEST_CASE("DataStream: byte order for 16-bit values") {
 
 TEST_CASE("DataStream: byte order for 64-bit values") {
         WriterFixture f;
-        uint64_t testVal = 0x0102030405060708ULL;
+        uint64_t      testVal = 0x0102030405060708ULL;
         {
                 DataStream ws = DataStream::createWriter(&f.dev, DataStream::BigEndian);
                 ws << testVal;
         }
         // header(16) + tag(2) = value at offset 18
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data()) + 18;
-        for(int i = 0; i < 8; ++i) CHECK(raw[i] == static_cast<uint8_t>(i + 1));
+        for (int i = 0; i < 8; ++i) CHECK(raw[i] == static_cast<uint8_t>(i + 1));
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                uint64_t val;
+                uint64_t   val;
                 rs >> val;
                 CHECK(val == 0x0102030405060708ULL);
         }
@@ -613,13 +611,13 @@ TEST_CASE("DataStream: ReadPastEnd on truncated data") {
         // Write a header + TypeUInt32 tag + only 2 of the 4 value bytes.
         // The tag is emitted through writeTag() so the test stays
         // agnostic to the on-wire tag width.
-        Buffer buf(TestBufSize);
+        Buffer         buf(TestBufSize);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
         {
                 DataStream ws = DataStream::createWriter(&dev);
                 ws.writeTag(DataStream::TypeUInt32);
-                uint8_t partial[2] = { 0x01, 0x02 };
+                uint8_t partial[2] = {0x01, 0x02};
                 ws.writeRawData(partial, 2);
         }
         dev.seek(0);
@@ -658,18 +656,18 @@ TEST_CASE("DataStream: status propagates — no further reads after error") {
 
 TEST_CASE("DataStream: readRawData and writeRawData") {
         WriterFixture f;
-        const char *data = "raw bytes test";
-        size_t len = std::strlen(data);
+        const char   *data = "raw bytes test";
+        size_t        len = std::strlen(data);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
-                ssize_t n = ws.writeRawData(data, len);
+                ssize_t    n = ws.writeRawData(data, len);
                 CHECK(n == static_cast<ssize_t>(len));
         }
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                char out[32] = {};
-                ssize_t n = rs.readRawData(out, len);
+                char       out[32] = {};
+                ssize_t    n = rs.readRawData(out, len);
                 CHECK(n == static_cast<ssize_t>(len));
                 CHECK(std::memcmp(out, data, len) == 0);
         }
@@ -722,7 +720,7 @@ TEST_CASE("DataStream: atEnd") {
 // ============================================================================
 
 TEST_CASE("DataStream: resetStatus") {
-        Buffer buf(4); // too small for the 16-byte header
+        Buffer         buf(4); // too small for the 16-byte header
         BufferIODevice dev(&buf);
         dev.open(IODevice::WriteOnly);
         DataStream ds = DataStream::createWriter(&dev);
@@ -750,7 +748,12 @@ TEST_CASE("DataStream: mixed types round-trip") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                uint8_t a; int32_t b; double c; String d; bool e; uint64_t g;
+                uint8_t    a;
+                int32_t    b;
+                double     c;
+                String     d;
+                bool       e;
+                uint64_t   g;
                 rs >> a >> b >> c >> d >> e >> g;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(a == 1);
@@ -806,13 +809,13 @@ TEST_CASE("DataStream: float round-trip with byte order switching") {
 
 TEST_CASE("DataStream: round-trip Variant all numeric subtypes") {
         WriterFixture f;
-        Variant vU8(static_cast<uint8_t>(200));
-        Variant vS8(static_cast<int8_t>(-42));
-        Variant vU16(static_cast<uint16_t>(60000));
-        Variant vS16(static_cast<int16_t>(-1234));
-        Variant vS32(static_cast<int32_t>(-999999));
-        Variant vU64(static_cast<uint64_t>(18446744073709551615ULL));
-        Variant vFloat(1.5f);
+        Variant       vU8(static_cast<uint8_t>(200));
+        Variant       vS8(static_cast<int8_t>(-42));
+        Variant       vU16(static_cast<uint16_t>(60000));
+        Variant       vS16(static_cast<int16_t>(-1234));
+        Variant       vS32(static_cast<int32_t>(-999999));
+        Variant       vU64(static_cast<uint64_t>(18446744073709551615ULL));
+        Variant       vFloat(1.5f);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vU8 << vS8 << vU16 << vS16 << vS32 << vU64 << vFloat;
@@ -821,7 +824,7 @@ TEST_CASE("DataStream: round-trip Variant all numeric subtypes") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant a, b, c, d, e, g, h;
+                Variant    a, b, c, d, e, g, h;
                 rs >> a >> b >> c >> d >> e >> g >> h;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(a.get<uint8_t>() == 200);
@@ -840,8 +843,8 @@ TEST_CASE("DataStream: round-trip Variant all numeric subtypes") {
 
 TEST_CASE("DataStream: round-trip Variant DateTime") {
         WriterFixture f;
-        DateTime dt = DateTime::fromString("2025-06-15 12:30:45");
-        Variant vDt(dt);
+        DateTime      dt = DateTime::fromString("2025-06-15 12:30:45");
+        Variant       vDt(dt);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vDt;
@@ -850,7 +853,7 @@ TEST_CASE("DataStream: round-trip Variant DateTime") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeDateTime);
@@ -860,8 +863,8 @@ TEST_CASE("DataStream: round-trip Variant DateTime") {
 
 TEST_CASE("DataStream: round-trip Variant UUID") {
         WriterFixture f;
-        UUID id = UUID::generateV4();
-        Variant vId(id);
+        UUID          id = UUID::generateV4();
+        Variant       vId(id);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vId;
@@ -870,7 +873,7 @@ TEST_CASE("DataStream: round-trip Variant UUID") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeUUID);
@@ -880,8 +883,8 @@ TEST_CASE("DataStream: round-trip Variant UUID") {
 
 TEST_CASE("DataStream: round-trip Variant UMID (Extended)") {
         WriterFixture f;
-        UMID id = UMID::generate(UMID::Extended);
-        Variant vId(id);
+        UMID          id = UMID::generate(UMID::Extended);
+        Variant       vId(id);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vId;
@@ -890,7 +893,7 @@ TEST_CASE("DataStream: round-trip Variant UMID (Extended)") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeUMID);
@@ -903,8 +906,8 @@ TEST_CASE("DataStream: round-trip Variant UMID (Extended)") {
 
 TEST_CASE("DataStream: round-trip Variant UMID (Basic)") {
         WriterFixture f;
-        UMID id = UMID::generate(UMID::Basic);
-        Variant vId(id);
+        UMID          id = UMID::generate(UMID::Basic);
+        Variant       vId(id);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vId;
@@ -913,7 +916,7 @@ TEST_CASE("DataStream: round-trip Variant UMID (Basic)") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeUMID);
@@ -968,13 +971,13 @@ TEST_CASE("DataStream: double byte order round-trip both endiannesses") {
 
 TEST_CASE("DataStream: WriteFailed on full buffer") {
         // Header alone is 16 bytes; 18 bytes leaves 2 for payload.
-        Buffer buf(18);
+        Buffer         buf(18);
         BufferIODevice dev(&buf);
         dev.open(IODevice::WriteOnly);
         DataStream ws = DataStream::createWriter(&dev);
         // Writing a uint32_t (tag(2) + value(4) = 6 bytes) should fail
         // with only 2 bytes remaining after the header.
-        if(ws.status() == DataStream::Ok) {
+        if (ws.status() == DataStream::Ok) {
                 ws << static_cast<uint32_t>(42);
                 CHECK(ws.status() == DataStream::WriteFailed);
         }
@@ -986,7 +989,7 @@ TEST_CASE("DataStream: WriteFailed on full buffer") {
 
 TEST_CASE("DataStream: default byte order is BigEndian") {
         WriterFixture f;
-        DataStream ds(&f.dev);
+        DataStream    ds(&f.dev);
         CHECK(ds.byteOrder() == DataStream::BigEndian);
 }
 
@@ -996,7 +999,7 @@ TEST_CASE("DataStream: default byte order is BigEndian") {
 
 TEST_CASE("DataStream: device accessor") {
         WriterFixture f;
-        DataStream ds(&f.dev);
+        DataStream    ds(&f.dev);
         CHECK(ds.device() == &f.dev);
 }
 
@@ -1006,8 +1009,8 @@ TEST_CASE("DataStream: device accessor") {
 
 TEST_CASE("DataStream: round-trip Variant Color") {
         WriterFixture f;
-        Color c(128, 64, 32, 200);
-        Variant vc(c);
+        Color         c(128, 64, 32, 200);
+        Variant       vc(c);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vc;
@@ -1016,7 +1019,7 @@ TEST_CASE("DataStream: round-trip Variant Color") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeColor);
@@ -1030,7 +1033,7 @@ TEST_CASE("DataStream: round-trip Variant Color") {
 
 TEST_CASE("DataStream: round-trip Variant Color named constants") {
         WriterFixture f;
-        Variant vc(Color::White);
+        Variant       vc(Color::White);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vc;
@@ -1039,7 +1042,7 @@ TEST_CASE("DataStream: round-trip Variant Color named constants") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeColor);
@@ -1056,8 +1059,8 @@ TEST_CASE("DataStream: round-trip Variant Color named constants") {
 
 TEST_CASE("DataStream: round-trip Variant TimeStamp") {
         WriterFixture f;
-        TimeStamp ts = TimeStamp::now();
-        Variant vts(ts);
+        TimeStamp     ts = TimeStamp::now();
+        Variant       vts(ts);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vts;
@@ -1066,7 +1069,7 @@ TEST_CASE("DataStream: round-trip Variant TimeStamp") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeTimeStamp);
@@ -1077,8 +1080,8 @@ TEST_CASE("DataStream: round-trip Variant TimeStamp") {
 
 TEST_CASE("DataStream: round-trip Variant Size2D") {
         WriterFixture f;
-        Size2Du32 sz(1920, 1080);
-        Variant vsz(sz);
+        Size2Du32     sz(1920, 1080);
+        Variant       vsz(sz);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vsz;
@@ -1087,7 +1090,7 @@ TEST_CASE("DataStream: round-trip Variant Size2D") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeSize2D);
@@ -1100,7 +1103,7 @@ TEST_CASE("DataStream: round-trip Variant Size2D") {
 TEST_CASE("DataStream: round-trip Variant Rational") {
         WriterFixture f;
         Rational<int> r(24000, 1001);
-        Variant vr(r);
+        Variant       vr(r);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vr;
@@ -1109,7 +1112,7 @@ TEST_CASE("DataStream: round-trip Variant Rational") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeRational);
@@ -1121,8 +1124,8 @@ TEST_CASE("DataStream: round-trip Variant Rational") {
 
 TEST_CASE("DataStream: round-trip Variant FrameRate") {
         WriterFixture f;
-        FrameRate fr(FrameRate::RationalType(30000u, 1001u));
-        Variant vfr(fr);
+        FrameRate     fr(FrameRate::RationalType(30000u, 1001u));
+        Variant       vfr(fr);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vfr;
@@ -1131,7 +1134,7 @@ TEST_CASE("DataStream: round-trip Variant FrameRate") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeFrameRate);
@@ -1143,10 +1146,10 @@ TEST_CASE("DataStream: round-trip Variant FrameRate") {
 
 TEST_CASE("DataStream: round-trip Variant StringList") {
         WriterFixture f;
-        StringList list;
+        StringList    list;
         list.pushToBack(String("alpha"));
-        list.pushToBack(String("beta, with comma"));  // would break a CSV encoding
-        list.pushToBack(String(""));                  // empty element
+        list.pushToBack(String("beta, with comma")); // would break a CSV encoding
+        list.pushToBack(String(""));                 // empty element
         list.pushToBack(String("gamma"));
         Variant vlist(list);
         {
@@ -1157,7 +1160,7 @@ TEST_CASE("DataStream: round-trip Variant StringList") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeStringList);
@@ -1172,8 +1175,8 @@ TEST_CASE("DataStream: round-trip Variant StringList") {
 
 TEST_CASE("DataStream: round-trip Variant empty StringList") {
         WriterFixture f;
-        StringList list;
-        Variant vlist(list);
+        StringList    list;
+        Variant       vlist(list);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vlist;
@@ -1182,7 +1185,7 @@ TEST_CASE("DataStream: round-trip Variant empty StringList") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeStringList);
@@ -1192,8 +1195,8 @@ TEST_CASE("DataStream: round-trip Variant empty StringList") {
 
 TEST_CASE("DataStream: round-trip Variant ColorModel") {
         WriterFixture f;
-        ColorModel cm(ColorModel::Rec709);
-        Variant vcm(cm);
+        ColorModel    cm(ColorModel::Rec709);
+        Variant       vcm(cm);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vcm;
@@ -1202,7 +1205,7 @@ TEST_CASE("DataStream: round-trip Variant ColorModel") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeColorModel);
@@ -1213,8 +1216,8 @@ TEST_CASE("DataStream: round-trip Variant ColorModel") {
 
 TEST_CASE("DataStream: round-trip Variant MemSpace") {
         WriterFixture f;
-        MemSpace ms(MemSpace::SystemSecure);
-        Variant vms(ms);
+        MemSpace      ms(MemSpace::SystemSecure);
+        Variant       vms(ms);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vms;
@@ -1223,7 +1226,7 @@ TEST_CASE("DataStream: round-trip Variant MemSpace") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeMemSpace);
@@ -1233,9 +1236,9 @@ TEST_CASE("DataStream: round-trip Variant MemSpace") {
 }
 
 TEST_CASE("DataStream: round-trip Variant PixelMemLayout") {
-        WriterFixture f;
+        WriterFixture  f;
         PixelMemLayout pf(PixelMemLayout::I_4x8);
-        Variant vpf(pf);
+        Variant        vpf(pf);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vpf;
@@ -1244,7 +1247,7 @@ TEST_CASE("DataStream: round-trip Variant PixelMemLayout") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypePixelMemLayout);
@@ -1255,8 +1258,8 @@ TEST_CASE("DataStream: round-trip Variant PixelMemLayout") {
 
 TEST_CASE("DataStream: round-trip Variant PixelFormat") {
         WriterFixture f;
-        PixelFormat pd(PixelFormat::RGB8_sRGB);
-        Variant vpd(pd);
+        PixelFormat   pd(PixelFormat::RGB8_sRGB);
+        Variant       vpd(pd);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vpd;
@@ -1265,7 +1268,7 @@ TEST_CASE("DataStream: round-trip Variant PixelFormat") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypePixelFormat);
@@ -1276,8 +1279,8 @@ TEST_CASE("DataStream: round-trip Variant PixelFormat") {
 
 TEST_CASE("DataStream: round-trip Variant Timecode") {
         WriterFixture f;
-        Timecode tc(Timecode::Mode(Timecode::NDF25), 10, 20, 30, 5);
-        Variant vtc(tc);
+        Timecode      tc(Timecode::Mode(Timecode::NDF25), 10, 20, 30, 5);
+        Variant       vtc(tc);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vtc;
@@ -1286,7 +1289,7 @@ TEST_CASE("DataStream: round-trip Variant Timecode") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeTimecode);
@@ -1300,7 +1303,7 @@ TEST_CASE("DataStream: round-trip Variant Timecode") {
 
 TEST_CASE("DataStream: round-trip Variant Enum") {
         WriterFixture f;
-        Variant vEnum(VideoPattern::Crosshatch);
+        Variant       vEnum(VideoPattern::Crosshatch);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vEnum;
@@ -1309,7 +1312,7 @@ TEST_CASE("DataStream: round-trip Variant Enum") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeEnum);
@@ -1324,8 +1327,8 @@ TEST_CASE("DataStream: round-trip Variant DateTime preserves value") {
         // stores nanoseconds since epoch so the underlying time_point is
         // preserved exactly.
         WriterFixture f;
-        DateTime dt = DateTime::now();
-        Variant vdt(dt);
+        DateTime      dt = DateTime::now();
+        Variant       vdt(dt);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vdt;
@@ -1334,7 +1337,7 @@ TEST_CASE("DataStream: round-trip Variant DateTime preserves value") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant val;
+                Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeDateTime);
@@ -1348,7 +1351,7 @@ TEST_CASE("DataStream: round-trip Variant DateTime preserves value") {
 
 TEST_CASE("DataStream: direct round-trip UUID") {
         WriterFixture f;
-        UUID id = UUID::generateV4();
+        UUID          id = UUID::generateV4();
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << id;
@@ -1357,7 +1360,7 @@ TEST_CASE("DataStream: direct round-trip UUID") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                UUID out;
+                UUID       out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out == id);
@@ -1366,7 +1369,7 @@ TEST_CASE("DataStream: direct round-trip UUID") {
 
 TEST_CASE("DataStream: direct round-trip UMID") {
         WriterFixture f;
-        UMID id = UMID::generate(UMID::Extended);
+        UMID          id = UMID::generate(UMID::Extended);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << id;
@@ -1375,7 +1378,7 @@ TEST_CASE("DataStream: direct round-trip UMID") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                UMID out;
+                UMID       out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.isValid());
@@ -1385,7 +1388,7 @@ TEST_CASE("DataStream: direct round-trip UMID") {
 
 TEST_CASE("DataStream: default-constructed UMID round-trip") {
         WriterFixture f;
-        UMID id;  // invalid
+        UMID          id; // invalid
         CHECK_FALSE(id.isValid());
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -1395,7 +1398,7 @@ TEST_CASE("DataStream: default-constructed UMID round-trip") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                UMID out;
+                UMID       out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK_FALSE(out.isValid());
@@ -1405,7 +1408,7 @@ TEST_CASE("DataStream: default-constructed UMID round-trip") {
 
 TEST_CASE("DataStream: direct round-trip DateTime") {
         WriterFixture f;
-        DateTime dt = DateTime::now();
+        DateTime      dt = DateTime::now();
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << dt;
@@ -1413,7 +1416,7 @@ TEST_CASE("DataStream: direct round-trip DateTime") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                DateTime out;
+                DateTime   out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out == dt);
@@ -1422,7 +1425,7 @@ TEST_CASE("DataStream: direct round-trip DateTime") {
 
 TEST_CASE("DataStream: direct round-trip TimeStamp") {
         WriterFixture f;
-        TimeStamp ts = TimeStamp::now();
+        TimeStamp     ts = TimeStamp::now();
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << ts;
@@ -1430,7 +1433,7 @@ TEST_CASE("DataStream: direct round-trip TimeStamp") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                TimeStamp out;
+                TimeStamp  out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.nanoseconds() == ts.nanoseconds());
@@ -1439,7 +1442,7 @@ TEST_CASE("DataStream: direct round-trip TimeStamp") {
 
 TEST_CASE("DataStream: direct round-trip Size2Du32") {
         WriterFixture f;
-        Size2Du32 sz(3840, 2160);
+        Size2Du32     sz(3840, 2160);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << sz;
@@ -1447,7 +1450,7 @@ TEST_CASE("DataStream: direct round-trip Size2Du32") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Size2Du32 out;
+                Size2Du32  out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.width() == 3840);
@@ -1464,7 +1467,7 @@ TEST_CASE("DataStream: direct round-trip Rational") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream    rs = DataStream::createReader(&f.dev);
                 Rational<int> out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -1475,7 +1478,7 @@ TEST_CASE("DataStream: direct round-trip Rational") {
 
 TEST_CASE("DataStream: direct round-trip FrameRate") {
         WriterFixture f;
-        FrameRate fr(FrameRate::RationalType(60000u, 1001u));
+        FrameRate     fr(FrameRate::RationalType(60000u, 1001u));
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << fr;
@@ -1483,7 +1486,7 @@ TEST_CASE("DataStream: direct round-trip FrameRate") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                FrameRate out;
+                FrameRate  out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.numerator() == 60000u);
@@ -1493,7 +1496,7 @@ TEST_CASE("DataStream: direct round-trip FrameRate") {
 
 TEST_CASE("DataStream: direct round-trip Timecode") {
         WriterFixture f;
-        Timecode tc(Timecode::Mode(Timecode::NDF30), 1, 2, 3, 4);
+        Timecode      tc(Timecode::Mode(Timecode::NDF30), 1, 2, 3, 4);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << tc;
@@ -1501,7 +1504,7 @@ TEST_CASE("DataStream: direct round-trip Timecode") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Timecode out;
+                Timecode   out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.hour() == 1);
@@ -1513,7 +1516,7 @@ TEST_CASE("DataStream: direct round-trip Timecode") {
 
 TEST_CASE("DataStream: direct round-trip Color") {
         WriterFixture f;
-        Color c(10, 20, 30, 40);
+        Color         c(10, 20, 30, 40);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << c;
@@ -1521,7 +1524,7 @@ TEST_CASE("DataStream: direct round-trip Color") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Color out;
+                Color      out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.r8() == 10);
@@ -1533,7 +1536,7 @@ TEST_CASE("DataStream: direct round-trip Color") {
 
 TEST_CASE("DataStream: direct round-trip ColorModel") {
         WriterFixture f;
-        ColorModel cm(ColorModel::LinearRec709);
+        ColorModel    cm(ColorModel::LinearRec709);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << cm;
@@ -1550,7 +1553,7 @@ TEST_CASE("DataStream: direct round-trip ColorModel") {
 
 TEST_CASE("DataStream: direct round-trip MemSpace") {
         WriterFixture f;
-        MemSpace ms(MemSpace::System);
+        MemSpace      ms(MemSpace::System);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << ms;
@@ -1558,7 +1561,7 @@ TEST_CASE("DataStream: direct round-trip MemSpace") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                MemSpace out;
+                MemSpace   out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.id() == MemSpace::System);
@@ -1566,7 +1569,7 @@ TEST_CASE("DataStream: direct round-trip MemSpace") {
 }
 
 TEST_CASE("DataStream: direct round-trip PixelMemLayout") {
-        WriterFixture f;
+        WriterFixture  f;
         PixelMemLayout pf(PixelMemLayout::I_422_3x8);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -1574,7 +1577,7 @@ TEST_CASE("DataStream: direct round-trip PixelMemLayout") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream     rs = DataStream::createReader(&f.dev);
                 PixelMemLayout out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -1584,14 +1587,14 @@ TEST_CASE("DataStream: direct round-trip PixelMemLayout") {
 
 TEST_CASE("DataStream: direct round-trip PixelFormat") {
         WriterFixture f;
-        PixelFormat pd(PixelFormat::BGR8_sRGB);
+        PixelFormat   pd(PixelFormat::BGR8_sRGB);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << pd;
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream  rs = DataStream::createReader(&f.dev);
                 PixelFormat out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -1601,7 +1604,7 @@ TEST_CASE("DataStream: direct round-trip PixelFormat") {
 
 TEST_CASE("DataStream: direct round-trip Enum") {
         WriterFixture f;
-        Enum e = VideoPattern::ZonePlate;
+        Enum          e = VideoPattern::ZonePlate;
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << e;
@@ -1609,7 +1612,7 @@ TEST_CASE("DataStream: direct round-trip Enum") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Enum out;
+                Enum       out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out == VideoPattern::ZonePlate);
@@ -1618,7 +1621,7 @@ TEST_CASE("DataStream: direct round-trip Enum") {
 
 TEST_CASE("DataStream: direct round-trip StringList") {
         WriterFixture f;
-        StringList list;
+        StringList    list;
         list.pushToBack(String("one"));
         list.pushToBack(String("two, with comma"));
         list.pushToBack(String(""));
@@ -1647,8 +1650,8 @@ TEST_CASE("DataStream: direct round-trip StringList") {
 
 TEST_CASE("DataStream: direct write can be read as Variant") {
         WriterFixture f;
-        UUID id = UUID::generateV4();
-        Size2Du32 sz(1920, 1080);
+        UUID          id = UUID::generateV4();
+        Size2Du32     sz(1920, 1080);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << id << sz;
@@ -1656,7 +1659,7 @@ TEST_CASE("DataStream: direct write can be read as Variant") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant a, b;
+                Variant    a, b;
                 rs >> a >> b;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(a.type() == Variant::TypeUUID);
@@ -1668,8 +1671,8 @@ TEST_CASE("DataStream: direct write can be read as Variant") {
 
 TEST_CASE("DataStream: Variant write can be read as direct type") {
         WriterFixture f;
-        Color c(200, 150, 100, 255);
-        Variant vc(c);
+        Color         c(200, 150, 100, 255);
+        Variant       vc(c);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << vc;
@@ -1677,7 +1680,7 @@ TEST_CASE("DataStream: Variant write can be read as direct type") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Color out;
+                Color      out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.r8() == 200);
@@ -1692,7 +1695,7 @@ TEST_CASE("DataStream: Variant write can be read as direct type") {
 
 TEST_CASE("DataStream: round-trip Buffer::Ptr") {
         WriterFixture f;
-        Buffer::Ptr src = Buffer::Ptr::create(32);
+        Buffer::Ptr   src = Buffer::Ptr::create(32);
         std::memset(src->data(), 0xCD, 32);
         src->setSize(32);
         {
@@ -1702,7 +1705,7 @@ TEST_CASE("DataStream: round-trip Buffer::Ptr") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream  rs = DataStream::createReader(&f.dev);
                 Buffer::Ptr out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -1715,14 +1718,14 @@ TEST_CASE("DataStream: round-trip Buffer::Ptr") {
 
 TEST_CASE("DataStream: null Buffer::Ptr round-trips as null") {
         WriterFixture f;
-        Buffer::Ptr nullPtr;
+        Buffer::Ptr   nullPtr;
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << nullPtr;
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream  rs = DataStream::createReader(&f.dev);
                 Buffer::Ptr out = Buffer::Ptr::create(4); // pre-set to non-null
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -1732,14 +1735,14 @@ TEST_CASE("DataStream: null Buffer::Ptr round-trips as null") {
 
 TEST_CASE("DataStream: null Buffer::Ptr is distinct from empty Buffer::Ptr") {
         WriterFixture f;
-        Buffer::Ptr empty = Buffer::Ptr::create(0);
+        Buffer::Ptr   empty = Buffer::Ptr::create(0);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << empty;
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream  rs = DataStream::createReader(&f.dev);
                 Buffer::Ptr out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -1759,7 +1762,7 @@ TEST_CASE("DataStream: direct Buffer read rejects null Buffer::Ptr wire form") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Buffer out;
+                Buffer     out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::ReadCorruptData);
         }
@@ -1782,7 +1785,7 @@ TEST_CASE("DataStream: round-trip List<int32_t>") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream    rs = DataStream::createReader(&f.dev);
                 List<int32_t> out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -1796,14 +1799,14 @@ TEST_CASE("DataStream: round-trip List<int32_t>") {
 
 TEST_CASE("DataStream: round-trip empty List") {
         WriterFixture f;
-        List<String> empty;
+        List<String>  empty;
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << empty;
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream   rs = DataStream::createReader(&f.dev);
                 List<String> out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -1813,8 +1816,8 @@ TEST_CASE("DataStream: round-trip empty List") {
 
 TEST_CASE("DataStream: round-trip List<UUID>") {
         WriterFixture f;
-        List<UUID> ids;
-        for(int i = 0; i < 5; ++i) ids.pushToBack(UUID::generateV4());
+        List<UUID>    ids;
+        for (int i = 0; i < 5; ++i) ids.pushToBack(UUID::generateV4());
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << ids;
@@ -1826,12 +1829,12 @@ TEST_CASE("DataStream: round-trip List<UUID>") {
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 REQUIRE(out.size() == 5);
-                for(int i = 0; i < 5; ++i) CHECK(out[i] == ids[i]);
+                for (int i = 0; i < 5; ++i) CHECK(out[i] == ids[i]);
         }
 }
 
 TEST_CASE("DataStream: round-trip Map<String,int32_t>") {
-        WriterFixture f;
+        WriterFixture        f;
         Map<String, int32_t> map;
         map.insert(String("alpha"), 1);
         map.insert(String("beta"), 2);
@@ -1842,7 +1845,7 @@ TEST_CASE("DataStream: round-trip Map<String,int32_t>") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream           rs = DataStream::createReader(&f.dev);
                 Map<String, int32_t> out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -1855,7 +1858,7 @@ TEST_CASE("DataStream: round-trip Map<String,int32_t>") {
 
 TEST_CASE("DataStream: round-trip Set<String>") {
         WriterFixture f;
-        Set<String> set;
+        Set<String>   set;
         set.insert(String("red"));
         set.insert(String("green"));
         set.insert(String("blue"));
@@ -1865,7 +1868,7 @@ TEST_CASE("DataStream: round-trip Set<String>") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream  rs = DataStream::createReader(&f.dev);
                 Set<String> out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -1877,14 +1880,19 @@ TEST_CASE("DataStream: round-trip Set<String>") {
 }
 
 TEST_CASE("DataStream: round-trip nested List<List<int32_t>>") {
-        WriterFixture f;
+        WriterFixture       f;
         List<List<int32_t>> outer;
         {
-                List<int32_t> a; a.pushToBack(1); a.pushToBack(2);
+                List<int32_t> a;
+                a.pushToBack(1);
+                a.pushToBack(2);
                 outer.pushToBack(std::move(a));
         }
         {
-                List<int32_t> b; b.pushToBack(3); b.pushToBack(4); b.pushToBack(5);
+                List<int32_t> b;
+                b.pushToBack(3);
+                b.pushToBack(4);
+                b.pushToBack(5);
                 outer.pushToBack(std::move(b));
         }
         {
@@ -1893,7 +1901,7 @@ TEST_CASE("DataStream: round-trip nested List<List<int32_t>>") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream          rs = DataStream::createReader(&f.dev);
                 List<List<int32_t>> out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -1908,7 +1916,7 @@ TEST_CASE("DataStream: round-trip nested List<List<int32_t>>") {
 }
 
 TEST_CASE("DataStream: round-trip HashMap<String,int32_t>") {
-        WriterFixture f;
+        WriterFixture            f;
         HashMap<String, int32_t> map;
         map.insert(String("width"), 1920);
         map.insert(String("height"), 1080);
@@ -1919,7 +1927,7 @@ TEST_CASE("DataStream: round-trip HashMap<String,int32_t>") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream               rs = DataStream::createReader(&f.dev);
                 HashMap<String, int32_t> out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -1931,7 +1939,7 @@ TEST_CASE("DataStream: round-trip HashMap<String,int32_t>") {
 }
 
 TEST_CASE("DataStream: round-trip HashSet<int32_t>") {
-        WriterFixture f;
+        WriterFixture    f;
         HashSet<int32_t> set;
         set.insert(10);
         set.insert(20);
@@ -1942,7 +1950,7 @@ TEST_CASE("DataStream: round-trip HashSet<int32_t>") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream       rs = DataStream::createReader(&f.dev);
                 HashSet<int32_t> out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -1959,7 +1967,7 @@ TEST_CASE("DataStream: round-trip HashSet<int32_t>") {
 
 TEST_CASE("DataStream: round-trip Size2D<int32_t>") {
         WriterFixture f;
-        Size2Di32 sz(-100, 200);
+        Size2Di32     sz(-100, 200);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << sz;
@@ -1967,7 +1975,7 @@ TEST_CASE("DataStream: round-trip Size2D<int32_t>") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Size2Di32 out;
+                Size2Di32  out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.width() == -100);
@@ -1985,7 +1993,7 @@ TEST_CASE("DataStream: Size2D<uint32_t> cannot be read as Size2D<int32_t>") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Size2Di32 out;
+                Size2Di32  out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::ReadCorruptData);
         }
@@ -1993,7 +2001,7 @@ TEST_CASE("DataStream: Size2D<uint32_t> cannot be read as Size2D<int32_t>") {
 
 TEST_CASE("DataStream: round-trip Rect2Di32") {
         WriterFixture f;
-        Rect2Di32 rect(10, 20, 640, 480);
+        Rect2Di32     rect(10, 20, 640, 480);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << rect;
@@ -2001,7 +2009,7 @@ TEST_CASE("DataStream: round-trip Rect2Di32") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Rect2Di32 out;
+                Rect2Di32  out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.x() == 10);
@@ -2013,7 +2021,7 @@ TEST_CASE("DataStream: round-trip Rect2Di32") {
 
 TEST_CASE("DataStream: round-trip Point2Df") {
         WriterFixture f;
-        Point2Df p(3.5f, -2.25f);
+        Point2Df      p(3.5f, -2.25f);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << p;
@@ -2021,7 +2029,7 @@ TEST_CASE("DataStream: round-trip Point2Df") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Point2Df out;
+                Point2Df   out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.x() == 3.5f);
@@ -2031,7 +2039,7 @@ TEST_CASE("DataStream: round-trip Point2Df") {
 
 TEST_CASE("DataStream: round-trip Point3Di32") {
         WriterFixture f;
-        Point3Di32 p(1, -2, 3);
+        Point3Di32    p(1, -2, 3);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << p;
@@ -2070,7 +2078,7 @@ TEST_CASE("DataStream: Point dimension mismatch is caught") {
 
 TEST_CASE("DataStream: round-trip JsonObject") {
         WriterFixture f;
-        JsonObject obj;
+        JsonObject    obj;
         obj.set("name", String("clip001"));
         obj.set("width", 1920);
         obj.set("hdr", true);
@@ -2092,7 +2100,7 @@ TEST_CASE("DataStream: round-trip JsonObject") {
 
 TEST_CASE("DataStream: round-trip JsonArray") {
         WriterFixture f;
-        JsonArray arr;
+        JsonArray     arr;
         arr.add(String("a"));
         arr.add(String("b"));
         arr.add(42);
@@ -2103,7 +2111,7 @@ TEST_CASE("DataStream: round-trip JsonArray") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                JsonArray out;
+                JsonArray  out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.size() == 3);
@@ -2115,7 +2123,7 @@ TEST_CASE("DataStream: round-trip JsonArray") {
 
 TEST_CASE("DataStream: round-trip Metadata via VariantDatabase template") {
         WriterFixture f;
-        Metadata meta;
+        Metadata      meta;
         meta.set(Metadata::Title, String("My Clip"));
         meta.set(Metadata::FrameRate, Rational<int>(24000, 1001));
         meta.set(Metadata::FrameNumber, FrameNumber(42));
@@ -2127,7 +2135,7 @@ TEST_CASE("DataStream: round-trip Metadata via VariantDatabase template") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Metadata out;
+                Metadata   out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.get(Metadata::Title).get<String>() == String("My Clip"));
@@ -2148,7 +2156,7 @@ TEST_CASE("DataStream: read<T>() returns Result on success") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                auto r = rs.read<int32_t>();
+                auto       r = rs.read<int32_t>();
                 CHECK(r.second().isOk());
                 CHECK(r.first() == 123);
         }
@@ -2163,7 +2171,7 @@ TEST_CASE("DataStream: read<T>() returns Error on type mismatch") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                auto r = rs.read<int32_t>();
+                auto       r = rs.read<int32_t>();
                 CHECK(r.second().isError());
                 CHECK(r.second() == Error::CorruptData);
         }
@@ -2171,7 +2179,7 @@ TEST_CASE("DataStream: read<T>() returns Error on type mismatch") {
 
 TEST_CASE("DataStream: read<T>() works for data objects") {
         WriterFixture f;
-        UUID id = UUID::generateV4();
+        UUID          id = UUID::generateV4();
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << id;
@@ -2198,7 +2206,7 @@ TEST_CASE("DataStream: type mismatch populates errorContext") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                int64_t val;
+                int64_t    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::ReadCorruptData);
                 CHECK(!rs.errorContext().isEmpty());
@@ -2208,7 +2216,7 @@ TEST_CASE("DataStream: type mismatch populates errorContext") {
 
 TEST_CASE("DataStream: resetStatus clears errorContext") {
         WriterFixture f;
-        DataStream rs(&f.dev);
+        DataStream    rs(&f.dev);
         rs.setError(DataStream::ReadPastEnd, String("boom"));
         CHECK(rs.status() == DataStream::ReadPastEnd);
         CHECK(rs.errorContext() == String("boom"));
@@ -2219,7 +2227,7 @@ TEST_CASE("DataStream: resetStatus clears errorContext") {
 
 TEST_CASE("DataStream: toError maps Status to Error codes") {
         WriterFixture f;
-        DataStream rs(&f.dev);
+        DataStream    rs(&f.dev);
         CHECK(rs.toError() == Error::Ok);
         rs.setError(DataStream::ReadPastEnd, String());
         CHECK(rs.toError() == Error::EndOfFile);
@@ -2233,7 +2241,7 @@ TEST_CASE("DataStream: toError maps Status to Error codes") {
 
 TEST_CASE("DataStream: setError preserves first error") {
         WriterFixture f;
-        DataStream rs(&f.dev);
+        DataStream    rs(&f.dev);
         rs.setError(DataStream::ReadPastEnd, String("first"));
         rs.setError(DataStream::ReadCorruptData, String("second"));
         CHECK(rs.status() == DataStream::ReadPastEnd);
@@ -2257,10 +2265,13 @@ TEST_CASE("DataStream golden: uint32_t big-endian exact bytes") {
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
         // Bytes 0-15: PMDS header (checked elsewhere)
         // Bytes 16-17: TypeUInt32 tag 0x0006 (big-endian)
-        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x06);
+        CHECK(raw[16] == 0x00);
+        CHECK(raw[17] == 0x06);
         // Bytes 18-21: 0xDEADBEEF big-endian
-        CHECK(raw[18] == 0xDE); CHECK(raw[19] == 0xAD);
-        CHECK(raw[20] == 0xBE); CHECK(raw[21] == 0xEF);
+        CHECK(raw[18] == 0xDE);
+        CHECK(raw[19] == 0xAD);
+        CHECK(raw[20] == 0xBE);
+        CHECK(raw[21] == 0xEF);
         CHECK(f.dev.pos() == 22);
 }
 
@@ -2272,10 +2283,13 @@ TEST_CASE("DataStream golden: String exact bytes") {
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
         // Bytes 16-17: TypeString tag 0x000C
-        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x0C);
+        CHECK(raw[16] == 0x00);
+        CHECK(raw[17] == 0x0C);
         // Bytes 18-21: length = 2 (big-endian uint32)
-        CHECK(raw[18] == 0x00); CHECK(raw[19] == 0x00);
-        CHECK(raw[20] == 0x00); CHECK(raw[21] == 0x02);
+        CHECK(raw[18] == 0x00);
+        CHECK(raw[19] == 0x00);
+        CHECK(raw[20] == 0x00);
+        CHECK(raw[21] == 0x02);
         // Bytes 22-23: UTF-8 "hi"
         CHECK(raw[22] == 'h');
         CHECK(raw[23] == 'i');
@@ -2286,7 +2300,7 @@ TEST_CASE("DataStream golden: UUID direct write exact bytes") {
         WriterFixture f;
         // Construct a UUID with a known byte pattern.
         UUID::DataFormat bytes;
-        for(uint8_t i = 0; i < 16; ++i) bytes[i] = i;
+        for (uint8_t i = 0; i < 16; ++i) bytes[i] = i;
         UUID id(bytes);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2294,9 +2308,10 @@ TEST_CASE("DataStream golden: UUID direct write exact bytes") {
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
         // Bytes 16-17: TypeUUID tag 0x0010 (big-endian default)
-        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x10);
+        CHECK(raw[16] == 0x00);
+        CHECK(raw[17] == 0x10);
         // Bytes 18-33: raw UUID bytes
-        for(int i = 0; i < 16; ++i) CHECK(raw[18 + i] == i);
+        for (int i = 0; i < 16; ++i) CHECK(raw[18 + i] == i);
         CHECK(f.dev.pos() == 34);
 }
 
@@ -2308,17 +2323,24 @@ TEST_CASE("DataStream golden: Size2D<uint32_t> exact bytes") {
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
         // Bytes 16-17: TypeSize2D tag 0x0013
-        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x13);
+        CHECK(raw[16] == 0x00);
+        CHECK(raw[17] == 0x13);
         // Bytes 18-19: TypeUInt32 tag 0x0006 for width
-        CHECK(raw[18] == 0x00); CHECK(raw[19] == 0x06);
+        CHECK(raw[18] == 0x00);
+        CHECK(raw[19] == 0x06);
         // Bytes 20-23: width = 1920 = 0x00000780 (big-endian)
-        CHECK(raw[20] == 0x00); CHECK(raw[21] == 0x00);
-        CHECK(raw[22] == 0x07); CHECK(raw[23] == 0x80);
+        CHECK(raw[20] == 0x00);
+        CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x07);
+        CHECK(raw[23] == 0x80);
         // Bytes 24-25: TypeUInt32 tag 0x0006 for height
-        CHECK(raw[24] == 0x00); CHECK(raw[25] == 0x06);
+        CHECK(raw[24] == 0x00);
+        CHECK(raw[25] == 0x06);
         // Bytes 26-29: height = 1080 = 0x00000438 (big-endian)
-        CHECK(raw[26] == 0x00); CHECK(raw[27] == 0x00);
-        CHECK(raw[28] == 0x04); CHECK(raw[29] == 0x38);
+        CHECK(raw[26] == 0x00);
+        CHECK(raw[27] == 0x00);
+        CHECK(raw[28] == 0x04);
+        CHECK(raw[29] == 0x38);
         CHECK(f.dev.pos() == 30);
 }
 
@@ -2330,30 +2352,38 @@ TEST_CASE("DataStream golden: Rational<int> exact bytes") {
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
         // Bytes 16-17: TypeRational tag 0x0014
-        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x14);
+        CHECK(raw[16] == 0x00);
+        CHECK(raw[17] == 0x14);
         // Bytes 18-19: TypeInt32 tag 0x0005 for numerator
-        CHECK(raw[18] == 0x00); CHECK(raw[19] == 0x05);
+        CHECK(raw[18] == 0x00);
+        CHECK(raw[19] == 0x05);
         // Bytes 20-23: numerator = 24000 = 0x00005DC0 (big-endian)
-        CHECK(raw[20] == 0x00); CHECK(raw[21] == 0x00);
-        CHECK(raw[22] == 0x5D); CHECK(raw[23] == 0xC0);
+        CHECK(raw[20] == 0x00);
+        CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x5D);
+        CHECK(raw[23] == 0xC0);
         // Bytes 24-25: TypeInt32 tag 0x0005 for denominator
-        CHECK(raw[24] == 0x00); CHECK(raw[25] == 0x05);
+        CHECK(raw[24] == 0x00);
+        CHECK(raw[25] == 0x05);
         // Bytes 26-29: denominator = 1001 = 0x000003E9 (big-endian)
-        CHECK(raw[26] == 0x00); CHECK(raw[27] == 0x00);
-        CHECK(raw[28] == 0x03); CHECK(raw[29] == 0xE9);
+        CHECK(raw[26] == 0x00);
+        CHECK(raw[27] == 0x00);
+        CHECK(raw[28] == 0x03);
+        CHECK(raw[29] == 0xE9);
         CHECK(f.dev.pos() == 30);
 }
 
 TEST_CASE("DataStream golden: Invalid Variant exact bytes") {
         WriterFixture f;
-        Variant invalid;
+        Variant       invalid;
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << invalid;
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
         // Bytes 16-17: TypeInvalid tag 0x000E, no payload
-        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x0E);
+        CHECK(raw[16] == 0x00);
+        CHECK(raw[17] == 0x0E);
         CHECK(f.dev.pos() == 18);
 }
 
@@ -2368,19 +2398,29 @@ TEST_CASE("DataStream golden: List<int32_t> exact bytes") {
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
         // Bytes 16-17: TypeList tag 0x0020
-        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x20);
+        CHECK(raw[16] == 0x00);
+        CHECK(raw[17] == 0x20);
         // Bytes 18-23: count = 2 written as TypeUInt32 + big-endian value
-        CHECK(raw[18] == 0x00); CHECK(raw[19] == 0x06); // TypeUInt32
-        CHECK(raw[20] == 0x00); CHECK(raw[21] == 0x00);
-        CHECK(raw[22] == 0x00); CHECK(raw[23] == 0x02);
+        CHECK(raw[18] == 0x00);
+        CHECK(raw[19] == 0x06); // TypeUInt32
+        CHECK(raw[20] == 0x00);
+        CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x00);
+        CHECK(raw[23] == 0x02);
         // Bytes 24-29: element 1 = int32(1) written as TypeInt32 + big-endian
-        CHECK(raw[24] == 0x00); CHECK(raw[25] == 0x05); // TypeInt32
-        CHECK(raw[26] == 0x00); CHECK(raw[27] == 0x00);
-        CHECK(raw[28] == 0x00); CHECK(raw[29] == 0x01);
+        CHECK(raw[24] == 0x00);
+        CHECK(raw[25] == 0x05); // TypeInt32
+        CHECK(raw[26] == 0x00);
+        CHECK(raw[27] == 0x00);
+        CHECK(raw[28] == 0x00);
+        CHECK(raw[29] == 0x01);
         // Bytes 30-35: element 2 = int32(2)
-        CHECK(raw[30] == 0x00); CHECK(raw[31] == 0x05);
-        CHECK(raw[32] == 0x00); CHECK(raw[33] == 0x00);
-        CHECK(raw[34] == 0x00); CHECK(raw[35] == 0x02);
+        CHECK(raw[30] == 0x00);
+        CHECK(raw[31] == 0x05);
+        CHECK(raw[32] == 0x00);
+        CHECK(raw[33] == 0x00);
+        CHECK(raw[34] == 0x00);
+        CHECK(raw[35] == 0x02);
         CHECK(f.dev.pos() == 36);
 }
 
@@ -2392,12 +2432,16 @@ TEST_CASE("DataStream golden: MemSpace exact bytes") {
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
         // Bytes 16-17: TypeMemSpace tag 0x0019
-        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x19);
+        CHECK(raw[16] == 0x00);
+        CHECK(raw[17] == 0x19);
         // Bytes 18-19: TypeUInt32 tag 0x0006 for the ID
-        CHECK(raw[18] == 0x00); CHECK(raw[19] == 0x06);
+        CHECK(raw[18] == 0x00);
+        CHECK(raw[19] == 0x06);
         // Bytes 20-23: ID = SystemSecure = 1 (big-endian)
-        CHECK(raw[20] == 0x00); CHECK(raw[21] == 0x00);
-        CHECK(raw[22] == 0x00); CHECK(raw[23] == 0x01);
+        CHECK(raw[20] == 0x00);
+        CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x00);
+        CHECK(raw[23] == 0x01);
         CHECK(f.dev.pos() == 24);
 }
 
@@ -2407,7 +2451,7 @@ TEST_CASE("DataStream golden: MemSpace exact bytes") {
 
 TEST_CASE("DataStream: round-trip XYZColor") {
         WriterFixture f;
-        XYZColor col(0.3127, 0.3290, 0.3583);
+        XYZColor      col(0.3127, 0.3290, 0.3583);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << col;
@@ -2415,7 +2459,7 @@ TEST_CASE("DataStream: round-trip XYZColor") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                XYZColor out;
+                XYZColor   out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.data()[0] == doctest::Approx(0.3127));
@@ -2426,7 +2470,7 @@ TEST_CASE("DataStream: round-trip XYZColor") {
 
 TEST_CASE("DataStream: round-trip AudioDesc") {
         WriterFixture f;
-        AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc     desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         desc.metadata().set(Metadata::Title, String("test track"));
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2436,7 +2480,7 @@ TEST_CASE("DataStream: round-trip AudioDesc") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                AudioDesc out;
+                AudioDesc  out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.format().id() == AudioFormat::PCMI_S16LE);
@@ -2448,7 +2492,7 @@ TEST_CASE("DataStream: round-trip AudioDesc") {
 
 TEST_CASE("DataStream: round-trip ImageDesc") {
         WriterFixture f;
-        ImageDesc desc(1920, 1080, PixelFormat::RGBA8_sRGB);
+        ImageDesc     desc(1920, 1080, PixelFormat::RGBA8_sRGB);
         desc.setLinePad(16);
         desc.setLineAlign(64);
         desc.setVideoScanMode(VideoScanMode::InterlacedEvenFirst);
@@ -2461,7 +2505,7 @@ TEST_CASE("DataStream: round-trip ImageDesc") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                ImageDesc out;
+                ImageDesc  out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.width() == 1920);
@@ -2476,7 +2520,7 @@ TEST_CASE("DataStream: round-trip ImageDesc") {
 
 TEST_CASE("DataStream: round-trip MediaDesc") {
         WriterFixture f;
-        MediaDesc desc;
+        MediaDesc     desc;
         desc.setFrameRate(FrameRate(FrameRate::RationalType(24000u, 1001u)));
         desc.imageList().pushToBack(ImageDesc(1920, 1080, PixelFormat::RGBA8_sRGB));
         desc.audioList().pushToBack(AudioDesc(AudioFormat::PCMI_S24LE, 48000.0f, 6));
@@ -2489,7 +2533,7 @@ TEST_CASE("DataStream: round-trip MediaDesc") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                MediaDesc out;
+                MediaDesc  out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.frameRate().numerator() == 24000u);
@@ -2510,12 +2554,12 @@ TEST_CASE("DataStream: round-trip MediaDesc") {
 
 TEST_CASE("DataStream: round-trip VariantList") {
         WriterFixture f;
-        VariantList list;
+        VariantList   list;
         list.pushToBack(Variant(static_cast<int32_t>(42)));
         list.pushToBack(Variant(String("hello")));
         list.pushToBack(Variant(true));
         list.pushToBack(Variant(3.14));
-        list.pushToBack(Variant());  // invalid
+        list.pushToBack(Variant()); // invalid
         list.pushToBack(Variant(UUID::generateV4()));
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2524,7 +2568,7 @@ TEST_CASE("DataStream: round-trip VariantList") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream  rs = DataStream::createReader(&f.dev);
                 VariantList out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -2544,7 +2588,7 @@ TEST_CASE("DataStream: round-trip VariantList") {
 // ============================================================================
 
 TEST_CASE("DataStream: round-trip List<Buffer::Ptr> with shared buffers") {
-        WriterFixture f;
+        WriterFixture     f;
         List<Buffer::Ptr> list;
         // Three distinct buffers with identifiable payloads.
         {
@@ -2575,7 +2619,7 @@ TEST_CASE("DataStream: round-trip List<Buffer::Ptr> with shared buffers") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream        rs = DataStream::createReader(&f.dev);
                 List<Buffer::Ptr> out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -2625,10 +2669,10 @@ TEST_CASE("DataStream: round-trip through FileIODevice") {
                 DataStream rs = DataStream::createReader(&dev);
                 CHECK(rs.status() == DataStream::Ok);
 
-                int32_t n = 0;
-                String s;
+                int32_t   n = 0;
+                String    s;
                 Size2Du32 sz;
-                UUID id;
+                UUID      id;
                 rs >> n >> s >> sz >> id;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(n == -12345);
@@ -2646,12 +2690,9 @@ TEST_CASE("DataStream: round-trip through FileIODevice") {
 // ============================================================================
 
 TEST_CASE("DataStream: round-trip MasteringDisplay direct") {
-        WriterFixture f;
-        MasteringDisplay md(CIEPoint(0.708, 0.292),
-                            CIEPoint(0.170, 0.797),
-                            CIEPoint(0.131, 0.046),
-                            CIEPoint(0.3127, 0.3290),
-                            0.005, 1000.0);
+        WriterFixture    f;
+        MasteringDisplay md(CIEPoint(0.708, 0.292), CIEPoint(0.170, 0.797), CIEPoint(0.131, 0.046),
+                            CIEPoint(0.3127, 0.3290), 0.005, 1000.0);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << md;
@@ -2659,7 +2700,7 @@ TEST_CASE("DataStream: round-trip MasteringDisplay direct") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream       rs = DataStream::createReader(&f.dev);
                 MasteringDisplay out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -2676,7 +2717,7 @@ TEST_CASE("DataStream: round-trip MasteringDisplay HDR10 constant") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream       rs = DataStream::createReader(&f.dev);
                 MasteringDisplay out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -2685,7 +2726,7 @@ TEST_CASE("DataStream: round-trip MasteringDisplay HDR10 constant") {
 }
 
 TEST_CASE("DataStream: round-trip default-constructed MasteringDisplay") {
-        WriterFixture f;
+        WriterFixture    f;
         MasteringDisplay md;
         REQUIRE_FALSE(md.isValid());
         {
@@ -2695,7 +2736,7 @@ TEST_CASE("DataStream: round-trip default-constructed MasteringDisplay") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream       rs = DataStream::createReader(&f.dev);
                 MasteringDisplay out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -2705,7 +2746,7 @@ TEST_CASE("DataStream: round-trip default-constructed MasteringDisplay") {
 }
 
 TEST_CASE("DataStream: round-trip ContentLightLevel direct") {
-        WriterFixture f;
+        WriterFixture     f;
         ContentLightLevel cll(1000, 400);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2714,7 +2755,7 @@ TEST_CASE("DataStream: round-trip ContentLightLevel direct") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream        rs = DataStream::createReader(&f.dev);
                 ContentLightLevel out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -2725,7 +2766,7 @@ TEST_CASE("DataStream: round-trip ContentLightLevel direct") {
 }
 
 TEST_CASE("DataStream: round-trip default-constructed ContentLightLevel") {
-        WriterFixture f;
+        WriterFixture     f;
         ContentLightLevel cll;
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2734,7 +2775,7 @@ TEST_CASE("DataStream: round-trip default-constructed ContentLightLevel") {
         }
         f.dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&f.dev);
+                DataStream        rs = DataStream::createReader(&f.dev);
                 ContentLightLevel out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
@@ -2745,9 +2786,9 @@ TEST_CASE("DataStream: round-trip default-constructed ContentLightLevel") {
 }
 
 TEST_CASE("DataStream: round-trip Variant MasteringDisplay") {
-        WriterFixture f;
+        WriterFixture    f;
         MasteringDisplay md = MasteringDisplay::HDR10;
-        Variant v(md);
+        Variant          v(md);
         REQUIRE(v.type() == Variant::TypeMasteringDisplay);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2757,7 +2798,7 @@ TEST_CASE("DataStream: round-trip Variant MasteringDisplay") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant out;
+                Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.type() == Variant::TypeMasteringDisplay);
@@ -2766,9 +2807,9 @@ TEST_CASE("DataStream: round-trip Variant MasteringDisplay") {
 }
 
 TEST_CASE("DataStream: round-trip Variant ContentLightLevel") {
-        WriterFixture f;
+        WriterFixture     f;
         ContentLightLevel cll(4000, 1200);
-        Variant v(cll);
+        Variant           v(cll);
         REQUIRE(v.type() == Variant::TypeContentLightLevel);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2778,7 +2819,7 @@ TEST_CASE("DataStream: round-trip Variant ContentLightLevel") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant out;
+                Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.type() == Variant::TypeContentLightLevel);
@@ -2788,7 +2829,7 @@ TEST_CASE("DataStream: round-trip Variant ContentLightLevel") {
 
 TEST_CASE("DataStream: round-trip Variant Url") {
         WriterFixture f;
-        Url u = Url::fromString("pmfb://bridge?FrameBridgeRingDepth=4&FrameBridgeSyncMode=false").first();
+        Url           u = Url::fromString("pmfb://bridge?FrameBridgeRingDepth=4&FrameBridgeSyncMode=false").first();
         REQUIRE(u.isValid());
         Variant v(u);
         REQUIRE(v.type() == Variant::TypeUrl);
@@ -2800,7 +2841,7 @@ TEST_CASE("DataStream: round-trip Variant Url") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant out;
+                Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.type() == Variant::TypeUrl);
@@ -2810,7 +2851,7 @@ TEST_CASE("DataStream: round-trip Variant Url") {
 
 TEST_CASE("DataStream: round-trip Metadata carrying HDR types") {
         WriterFixture f;
-        Metadata meta;
+        Metadata      meta;
         meta.set(Metadata::MasteringDisplay, MasteringDisplay::HDR10);
         meta.set(Metadata::ContentLightLevel, ContentLightLevel(1000, 400));
         meta.set(Metadata::Title, String("HDR Test"));
@@ -2822,20 +2863,18 @@ TEST_CASE("DataStream: round-trip Metadata carrying HDR types") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Metadata out;
+                Metadata   out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out == meta);
-                CHECK(out.getAs<MasteringDisplay>(Metadata::MasteringDisplay) ==
-                      MasteringDisplay::HDR10);
-                CHECK(out.getAs<ContentLightLevel>(Metadata::ContentLightLevel) ==
-                      ContentLightLevel(1000, 400));
+                CHECK(out.getAs<MasteringDisplay>(Metadata::MasteringDisplay) == MasteringDisplay::HDR10);
+                CHECK(out.getAs<ContentLightLevel>(Metadata::ContentLightLevel) == ContentLightLevel(1000, 400));
                 CHECK(out.getAs<String>(Metadata::Title) == String("HDR Test"));
         }
 }
 
 TEST_CASE("DataStream: round-trip Duration direct") {
-        WriterFixture f;
+        WriterFixture  f;
         const Duration in = Duration::fromNanoseconds(1'234'567'890LL);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2845,7 +2884,7 @@ TEST_CASE("DataStream: round-trip Duration direct") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Duration out;
+                Duration   out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.nanoseconds() == in.nanoseconds());
@@ -2853,9 +2892,9 @@ TEST_CASE("DataStream: round-trip Duration direct") {
 }
 
 TEST_CASE("DataStream: round-trip Variant Duration") {
-        WriterFixture f;
+        WriterFixture  f;
         const Duration in = Duration::fromMilliseconds(42);
-        Variant v(in);
+        Variant        v(in);
         REQUIRE(v.type() == Variant::TypeDuration);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2865,7 +2904,7 @@ TEST_CASE("DataStream: round-trip Variant Duration") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant out;
+                Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.type() == Variant::TypeDuration);
@@ -2875,10 +2914,10 @@ TEST_CASE("DataStream: round-trip Variant Duration") {
 
 TEST_CASE("DataStream: round-trip Variant VideoCodec") {
         WriterFixture f;
-        auto r = VideoCodec::fromString("H264");
+        auto          r = VideoCodec::fromString("H264");
         REQUIRE_FALSE(error(r).isError());
         const VideoCodec in = value(r);
-        Variant v(in);
+        Variant          v(in);
         REQUIRE(v.type() == Variant::TypeVideoCodec);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2888,7 +2927,7 @@ TEST_CASE("DataStream: round-trip Variant VideoCodec") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant out;
+                Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.type() == Variant::TypeVideoCodec);
@@ -2898,10 +2937,10 @@ TEST_CASE("DataStream: round-trip Variant VideoCodec") {
 
 TEST_CASE("DataStream: round-trip Variant AudioCodec") {
         WriterFixture f;
-        auto r = AudioCodec::fromString("Opus");
+        auto          r = AudioCodec::fromString("Opus");
         REQUIRE_FALSE(error(r).isError());
         const AudioCodec in = value(r);
-        Variant v(in);
+        Variant          v(in);
         REQUIRE(v.type() == Variant::TypeAudioCodec);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2911,7 +2950,7 @@ TEST_CASE("DataStream: round-trip Variant AudioCodec") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant out;
+                Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.type() == Variant::TypeAudioCodec);
@@ -2922,10 +2961,10 @@ TEST_CASE("DataStream: round-trip Variant AudioCodec") {
 #if PROMEKI_ENABLE_NETWORK
 TEST_CASE("DataStream: round-trip Variant SocketAddress") {
         WriterFixture f;
-        auto r = SocketAddress::fromString("192.168.1.50:5004");
+        auto          r = SocketAddress::fromString("192.168.1.50:5004");
         REQUIRE_FALSE(error(r).isError());
         const SocketAddress in = value(r);
-        Variant v(in);
+        Variant             v(in);
         REQUIRE(v.type() == Variant::TypeSocketAddress);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2935,7 +2974,7 @@ TEST_CASE("DataStream: round-trip Variant SocketAddress") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant out;
+                Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.type() == Variant::TypeSocketAddress);
@@ -2948,18 +2987,17 @@ TEST_CASE("DataStream: round-trip Variant SdpSession") {
         // Minimal RFC 4566 SDP that SdpSession::fromString accepts —
         // just enough to exercise the wire path, not a conformance
         // test of the parser itself.
-        const String sdp =
-                "v=0\r\n"
-                "o=- 123456 1 IN IP4 192.168.1.1\r\n"
-                "s=Test Session\r\n"
-                "c=IN IP4 239.0.0.1\r\n"
-                "t=0 0\r\n"
-                "m=video 5004 RTP/AVP 96\r\n"
-                "a=rtpmap:96 raw/90000\r\n";
-        auto r = SdpSession::fromString(sdp);
+        const String sdp = "v=0\r\n"
+                           "o=- 123456 1 IN IP4 192.168.1.1\r\n"
+                           "s=Test Session\r\n"
+                           "c=IN IP4 239.0.0.1\r\n"
+                           "t=0 0\r\n"
+                           "m=video 5004 RTP/AVP 96\r\n"
+                           "a=rtpmap:96 raw/90000\r\n";
+        auto         r = SdpSession::fromString(sdp);
         REQUIRE_FALSE(error(r).isError());
         const SdpSession in = value(r);
-        Variant v(in);
+        Variant          v(in);
         REQUIRE(v.type() == Variant::TypeSdpSession);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2969,7 +3007,7 @@ TEST_CASE("DataStream: round-trip Variant SdpSession") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                Variant out;
+                Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.type() == Variant::TypeSdpSession);

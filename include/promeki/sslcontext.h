@@ -52,7 +52,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  */
 class SslContext {
-        PROMEKI_SHARED_FINAL_NOCOPY(SslContext)
+                PROMEKI_SHARED_FINAL_NOCOPY(SslContext)
         public:
                 /** @brief Shared pointer type for SslContext. */
                 using Ptr = SharedPtr<SslContext, false>;
@@ -62,9 +62,9 @@ class SslContext {
 
                 /** @brief Permitted TLS protocol version policy. */
                 enum SslProtocol {
-                        TlsV1_2,                ///< TLS 1.2 only.
-                        TlsV1_3,                ///< TLS 1.3 only.
-                        SecureProtocols         ///< TLS 1.2 + TLS 1.3 (the secure modern set).
+                        TlsV1_2,        ///< TLS 1.2 only.
+                        TlsV1_3,        ///< TLS 1.3 only.
+                        SecureProtocols ///< TLS 1.2 + TLS 1.3 (the secure modern set).
                 };
 
                 /** @brief Constructs an empty context with @ref SecureProtocols. */
@@ -107,12 +107,10 @@ class SslContext {
                  * @param file       Path to the key file (PEM/DER).
                  * @param passphrase Optional passphrase for an encrypted PEM key.
                  */
-                Error setPrivateKey(const FilePath &file,
-                                    const String &passphrase = String());
+                Error setPrivateKey(const FilePath &file, const String &passphrase = String());
 
                 /** @brief Loads the server's private key from memory. */
-                Error setPrivateKey(const Buffer &keyData,
-                                    const String &passphrase = String());
+                Error setPrivateKey(const Buffer &keyData, const String &passphrase = String());
 
                 // ----------------------------------------------------
                 // Trust store (used for peer verification on both sides)

@@ -136,7 +136,7 @@ TEST_CASE("StatsAccumulator: negative variance from numerical error clamps to 0"
         // can produce a tiny negative value due to floating-point error.
         // StatsAccumulator must clamp this to 0, not sqrt a negative.
         StatsAccumulator acc;
-        for(int i = 0; i < 1000; i++) acc.add(1e-9);
+        for (int i = 0; i < 1000; i++) acc.add(1e-9);
         CHECK(acc.variance() >= 0.0);
         CHECK(acc.stddev() >= 0.0);
 }

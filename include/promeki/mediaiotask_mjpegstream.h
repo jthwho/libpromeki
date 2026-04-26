@@ -108,20 +108,20 @@ class MjpegStreamSubscriber {
  * activity.
  */
 struct MjpegStreamSnapshot {
-        /// @brief JPEG payloads successfully encoded since open.
-        int64_t framesEncoded     = 0;
-        /// @brief Frames discarded by the rate gate before encoding.
-        int64_t framesRateLimited = 0;
-        /// @brief Frames the encoder rejected (zero on the happy path).
-        int64_t framesEncodeError = 0;
-        /// @brief Sum of per-frame encode times in microseconds.
-        int64_t totalEncodeUs     = 0;
-        /// @brief Largest single per-frame encode time in microseconds.
-        int64_t peakEncodeUs      = 0;
-        /// @brief Number of latency samples (== framesEncoded).
-        int64_t encodeSamples     = 0;
-        /// @brief Total encoded bytes since open.
-        int64_t totalEncodedBytes = 0;
+                /// @brief JPEG payloads successfully encoded since open.
+                int64_t framesEncoded = 0;
+                /// @brief Frames discarded by the rate gate before encoding.
+                int64_t framesRateLimited = 0;
+                /// @brief Frames the encoder rejected (zero on the happy path).
+                int64_t framesEncodeError = 0;
+                /// @brief Sum of per-frame encode times in microseconds.
+                int64_t totalEncodeUs = 0;
+                /// @brief Largest single per-frame encode time in microseconds.
+                int64_t peakEncodeUs = 0;
+                /// @brief Number of latency samples (== framesEncoded).
+                int64_t encodeSamples = 0;
+                /// @brief Total encoded bytes since open.
+                int64_t totalEncodedBytes = 0;
 };
 
 /**
@@ -259,7 +259,7 @@ class MediaIOTask_MjpegStream : public MediaIOTask {
                  * sink->detachSubscriber(id);
                  * @endcode
                  */
-                int  attachSubscriber(MjpegStreamSubscriber *s);
+                int attachSubscriber(MjpegStreamSubscriber *s);
 
                 /**
                  * @brief Detaches the subscriber registered under @p id.
@@ -409,8 +409,7 @@ class MediaIOTask_MjpegStream : public MediaIOTask {
                 Error executeCmd(MediaIOCommandClose &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
-                Error proposeInput(const MediaDesc &offered,
-                                   MediaDesc *preferred) const override;
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
 
                 /// @brief Encodes @p frame's first uncompressed video payload.
                 Error encodeFrame(const Frame &frame, Buffer::Ptr *out, TimeStamp *ts);
@@ -424,9 +423,9 @@ class MediaIOTask_MjpegStream : public MediaIOTask {
                 // ---- Resolved configuration (latched at open time) ----
                 FrameRate _maxRate;
                 Duration  _period;
-                int       _quality      = 80;
-                int       _ringDepth    = 1;
-                bool      _isOpen       = false;
+                int       _quality = 80;
+                int       _ringDepth = 1;
+                bool      _isOpen = false;
 
                 // ---- Encoder strand state ----
                 /// Lazily-constructed JPEG encoder.  Owned by this task.
@@ -436,23 +435,23 @@ class MediaIOTask_MjpegStream : public MediaIOTask {
                 /// are dropped by the rate gate.
                 TimeStamp _lastEncoded;
                 bool      _hasLastEncoded = false;
-                int64_t   _frameSerial    = 0;
+                int64_t   _frameSerial = 0;
 
                 // ---- Ring + subscribers (mutex-guarded) ----
                 struct RingEntry {
-                        Buffer::Ptr     jpeg;       ///< Shared, encode-once JPEG buffer.
-                        TimeStamp       timestamp;
+                                Buffer::Ptr jpeg; ///< Shared, encode-once JPEG buffer.
+                                TimeStamp   timestamp;
                 };
 
-                mutable Mutex                    _stateMutex;
-                List<RingEntry>                  _ring;
-                Map<int, MjpegStreamSubscriber*> _subscribers;
-                int                              _nextSubscriberId = 1;
-                MjpegStreamSnapshot              _stats;
+                mutable Mutex                     _stateMutex;
+                List<RingEntry>                   _ring;
+                Map<int, MjpegStreamSubscriber *> _subscribers;
+                int                               _nextSubscriberId = 1;
+                MjpegStreamSnapshot               _stats;
                 /// @brief Mirrors @c _isOpen but mutex-guarded so off-strand
                 ///        callers (e.g. an HTTP route handler) can read it
                 ///        safely without taking the strand lock.
-                bool                             _isStreaming   = false;
+                bool _isStreaming = false;
 };
 
 PROMEKI_NAMESPACE_END

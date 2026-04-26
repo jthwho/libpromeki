@@ -23,7 +23,7 @@ TEST_CASE("UdpSocket") {
 
         SUBCASE("open IPv4") {
                 UdpSocket sock;
-                Error err = sock.open(IODevice::ReadWrite);
+                Error     err = sock.open(IODevice::ReadWrite);
                 CHECK(err.isOk());
                 CHECK(sock.isOpen());
                 sock.close();
@@ -31,7 +31,7 @@ TEST_CASE("UdpSocket") {
 
         SUBCASE("open IPv6") {
                 UdpSocket sock;
-                Error err = sock.openIpv6(IODevice::ReadWrite);
+                Error     err = sock.openIpv6(IODevice::ReadWrite);
                 CHECK(err.isOk());
                 CHECK(sock.isOpen());
                 sock.close();
@@ -59,15 +59,15 @@ TEST_CASE("UdpSocket") {
                 uint16_t port = receiver.localAddress().port();
 
                 // Send data
-                const char *msg = "hello UDP";
+                const char   *msg = "hello UDP";
                 SocketAddress dest(Ipv4Address::loopback(), port);
-                int64_t sent = sender.writeDatagram(msg, std::strlen(msg), dest);
+                int64_t       sent = sender.writeDatagram(msg, std::strlen(msg), dest);
                 CHECK(sent == static_cast<int64_t>(std::strlen(msg)));
 
                 // Receive data
-                char buf[256];
+                char          buf[256];
                 SocketAddress from;
-                int64_t received = receiver.readDatagram(buf, sizeof(buf), &from);
+                int64_t       received = receiver.readDatagram(buf, sizeof(buf), &from);
                 REQUIRE(received > 0);
                 CHECK(received == static_cast<int64_t>(std::strlen(msg)));
                 CHECK(std::memcmp(buf, msg, received) == 0);
@@ -92,10 +92,10 @@ TEST_CASE("UdpSocket") {
 
                 // Use IODevice write/read
                 const char *msg = "connected UDP";
-                int64_t sent = sender.write(msg, std::strlen(msg));
+                int64_t     sent = sender.write(msg, std::strlen(msg));
                 CHECK(sent == static_cast<int64_t>(std::strlen(msg)));
 
-                char buf[256];
+                char    buf[256];
                 int64_t received = receiver.read(buf, sizeof(buf));
                 REQUIRE(received > 0);
                 CHECK(std::memcmp(buf, msg, received) == 0);
@@ -109,23 +109,23 @@ TEST_CASE("UdpSocket") {
                 receiver.open(IODevice::ReadWrite);
                 receiver.setReceiveTimeout(2000);
                 receiver.bind(SocketAddress::any(0));
-                uint16_t port = receiver.localAddress().port();
+                uint16_t      port = receiver.localAddress().port();
                 SocketAddress dest(Ipv4Address::loopback(), port);
 
                 // Send several datagrams
-                for(int i = 0; i < 5; i++) {
+                for (int i = 0; i < 5; i++) {
                         char msg[32];
-                        int len = std::snprintf(msg, sizeof(msg), "packet %d", i);
+                        int  len = std::snprintf(msg, sizeof(msg), "packet %d", i);
                         sender.writeDatagram(msg, len, dest);
                 }
 
                 // Receive all
-                for(int i = 0; i < 5; i++) {
-                        char buf[256];
+                for (int i = 0; i < 5; i++) {
+                        char    buf[256];
                         int64_t n = receiver.readDatagram(buf, sizeof(buf));
                         REQUIRE(n > 0);
                         char expected[32];
-                        int elen = std::snprintf(expected, sizeof(expected), "packet %d", i);
+                        int  elen = std::snprintf(expected, sizeof(expected), "packet %d", i);
                         CHECK(n == elen);
                         CHECK(std::memcmp(buf, expected, n) == 0);
                 }
@@ -142,8 +142,7 @@ TEST_CASE("UdpSocket") {
 
                 CHECK_FALSE(receiver.hasPendingDatagrams());
 
-                sender.writeDatagram("test", 4,
-                        SocketAddress(Ipv4Address::loopback(), port));
+                sender.writeDatagram("test", 4, SocketAddress(Ipv4Address::loopback(), port));
 
                 // Small delay to let the kernel deliver the packet
                 // hasPendingDatagrams should find it
@@ -182,14 +181,13 @@ TEST_CASE("UdpSocket") {
 
                 // Send to multicast group
                 const char *msg = "multicast test";
-                sender.writeDatagram(msg, std::strlen(msg),
-                        SocketAddress(Ipv4Address(239, 255, 0, 1), port));
+                sender.writeDatagram(msg, std::strlen(msg), SocketAddress(Ipv4Address(239, 255, 0, 1), port));
 
                 // Receive
-                char buf[256];
+                char    buf[256];
                 int64_t n = receiver.readDatagram(buf, sizeof(buf));
                 CHECK(n > 0);
-                if(n > 0) {
+                if (n > 0) {
                         CHECK(std::memcmp(buf, msg, n) == 0);
                 }
 
@@ -238,15 +236,15 @@ TEST_CASE("UdpSocket") {
                 uint16_t port = receiver.localAddress().port();
 
                 const char *msg = "buffer datagram";
-                size_t msgLen = std::strlen(msg);
-                Buffer buf(msgLen);
+                size_t      msgLen = std::strlen(msg);
+                Buffer      buf(msgLen);
                 buf.setSize(msgLen);
                 std::memcpy(buf.data(), msg, msgLen);
                 SocketAddress dest(Ipv4Address::loopback(), port);
-                int64_t sent = sender.writeDatagram(buf, dest);
+                int64_t       sent = sender.writeDatagram(buf, dest);
                 CHECK(sent == static_cast<int64_t>(std::strlen(msg)));
 
-                char rbuf[256];
+                char    rbuf[256];
                 int64_t received = receiver.readDatagram(rbuf, sizeof(rbuf));
                 REQUIRE(received > 0);
                 CHECK(std::memcmp(rbuf, msg, received) == 0);
@@ -263,8 +261,7 @@ TEST_CASE("UdpSocket") {
                 uint16_t port = receiver.localAddress().port();
 
                 const char *msg = "size check";
-                sender.writeDatagram(msg, std::strlen(msg),
-                        SocketAddress(Ipv4Address::loopback(), port));
+                sender.writeDatagram(msg, std::strlen(msg), SocketAddress(Ipv4Address::loopback(), port));
 
                 // Give kernel a moment to deliver
                 usleep(10000);
@@ -283,7 +280,7 @@ TEST_CASE("UdpSocket") {
 
         SUBCASE("read and write on closed socket") {
                 UdpSocket sock;
-                char buf[16];
+                char      buf[16];
                 CHECK(sock.read(buf, sizeof(buf)) == -1);
                 CHECK(sock.write("test", 4) == -1);
         }
@@ -295,7 +292,7 @@ TEST_CASE("UdpSocket") {
 
         SUBCASE("readDatagram on closed socket") {
                 UdpSocket sock;
-                char buf[16];
+                char      buf[16];
                 CHECK(sock.readDatagram(buf, sizeof(buf)) == -1);
         }
 
@@ -325,7 +322,7 @@ TEST_CASE("UdpSocket") {
         }
 
         SUBCASE("joinMulticastGroup on closed socket fails") {
-                UdpSocket sock;
+                UdpSocket     sock;
                 SocketAddress mc(Ipv4Address(239, 0, 0, 1), 5004);
                 CHECK(sock.joinMulticastGroup(mc).isError());
         }
@@ -338,7 +335,7 @@ TEST_CASE("UdpSocket") {
         }
 
         SUBCASE("leaveMulticastGroup on closed socket fails") {
-                UdpSocket sock;
+                UdpSocket     sock;
                 SocketAddress mc(Ipv4Address(239, 0, 0, 1), 5004);
                 CHECK(sock.leaveMulticastGroup(mc).isError());
         }
@@ -387,11 +384,11 @@ TEST_CASE("UdpSocket") {
                 // payload pointers must remain valid for the duration
                 // of the call, so we keep them in local storage.
                 char msgs[5][32];
-                for(int i = 0; i < 5; i++) {
+                for (int i = 0; i < 5; i++) {
                         std::snprintf(msgs[i], sizeof(msgs[i]), "batch %d", i);
                 }
                 UdpSocket::DatagramList batch;
-                for(int i = 0; i < 5; i++) {
+                for (int i = 0; i < 5; i++) {
                         UdpSocket::Datagram d;
                         d.data = msgs[i];
                         d.size = std::strlen(msgs[i]);
@@ -403,12 +400,12 @@ TEST_CASE("UdpSocket") {
                 CHECK(sent == 5);
 
                 // Receive all five and verify content.
-                for(int i = 0; i < 5; i++) {
-                        char buf[64];
+                for (int i = 0; i < 5; i++) {
+                        char    buf[64];
                         int64_t n = receiver.readDatagram(buf, sizeof(buf));
                         REQUIRE(n > 0);
                         char expected[32];
-                        int elen = std::snprintf(expected, sizeof(expected), "batch %d", i);
+                        int  elen = std::snprintf(expected, sizeof(expected), "batch %d", i);
                         CHECK(n == elen);
                         CHECK(std::memcmp(buf, expected, n) == 0);
                 }
@@ -422,9 +419,9 @@ TEST_CASE("UdpSocket") {
         }
 
         SUBCASE("writeDatagrams on closed socket") {
-                UdpSocket sock;
+                UdpSocket               sock;
                 UdpSocket::DatagramList batch;
-                UdpSocket::Datagram d;
+                UdpSocket::Datagram     d;
                 d.data = "x";
                 d.size = 1;
                 d.dest = SocketAddress::localhost(5004);
@@ -436,7 +433,7 @@ TEST_CASE("UdpSocket") {
                 UdpSocket sock;
                 sock.open(IODevice::ReadWrite);
                 UdpSocket::DatagramList batch;
-                UdpSocket::Datagram d;
+                UdpSocket::Datagram     d;
                 d.data = nullptr;
                 d.size = 0;
                 d.dest = SocketAddress::localhost(5004);

@@ -36,7 +36,7 @@ TEST_CASE("SignalHandler: install and uninstall") {
         CHECK(SignalHandler::isInstalled());
         SignalHandler::uninstall();
         CHECK_FALSE(SignalHandler::isInstalled());
-        if(wasInstalled) SignalHandler::install();
+        if (wasInstalled) SignalHandler::install();
 }
 
 TEST_CASE("SignalHandler: double install is a no-op") {
@@ -47,7 +47,7 @@ TEST_CASE("SignalHandler: double install is a no-op") {
         CHECK(SignalHandler::isInstalled());
         SignalHandler::uninstall();
         CHECK_FALSE(SignalHandler::isInstalled());
-        if(wasInstalled) SignalHandler::install();
+        if (wasInstalled) SignalHandler::install();
 }
 
 TEST_CASE("SignalHandler: uninstall when not installed is safe") {
@@ -56,7 +56,7 @@ TEST_CASE("SignalHandler: uninstall when not installed is safe") {
         CHECK_FALSE(SignalHandler::isInstalled());
         SignalHandler::uninstall();
         CHECK_FALSE(SignalHandler::isInstalled());
-        if(wasInstalled) SignalHandler::install();
+        if (wasInstalled) SignalHandler::install();
 }
 
 // ============================================================================
@@ -72,7 +72,7 @@ TEST_CASE("Application: signal handler forwarders") {
         CHECK(SignalHandler::isInstalled());
         Application::uninstallSignalHandlers();
         CHECK_FALSE(Application::areSignalHandlersInstalled());
-        if(wasInstalled) SignalHandler::install();
+        if (wasInstalled) SignalHandler::install();
 }
 
 // ============================================================================
@@ -86,16 +86,15 @@ TEST_CASE("SignalHandler: SIGINT translates to Application::quit and wakes Event
         // Disable the double-tap escape hatch — we raise SIGINT exactly
         // once but want to be sure a repeat during this test cannot
         // force _Exit.  Restore the option at the end.
-        const bool savedDoubleTap = LibraryOptions::instance()
-                .getAs<bool>(LibraryOptions::SignalDoubleTapExit);
+        const bool savedDoubleTap = LibraryOptions::instance().getAs<bool>(LibraryOptions::SignalDoubleTapExit);
         LibraryOptions::instance().set(LibraryOptions::SignalDoubleTapExit, false);
 
         // Construct an Application so Application::mainEventLoop() is
         // populated for this test.  The ctor also installs the signal
         // handler (and the crash handler), both of which the dtor
         // tears down.
-        char arg0[] = "signalhandler-test";
-        char *argv[] = { arg0 };
+        char        arg0[] = "signalhandler-test";
+        char       *argv[] = {arg0};
         Application app(1, argv);
 
         REQUIRE(Application::areSignalHandlersInstalled());
@@ -133,7 +132,7 @@ TEST_CASE("SignalHandler: SIGINT translates to Application::quit and wakes Event
         // hand-off should ever take.
         ElapsedTimer timer;
         timer.start();
-        while(!Application::shouldQuit() && timer.elapsed() < 1000) {
+        while (!Application::shouldQuit() && timer.elapsed() < 1000) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
 
@@ -149,8 +148,7 @@ TEST_CASE("SignalHandler: SIGINT translates to Application::quit and wakes Event
         CHECK(timer.elapsed() < 1000);
 
         // Restore the double-tap option for subsequent tests.
-        LibraryOptions::instance().set(LibraryOptions::SignalDoubleTapExit,
-                                       savedDoubleTap);
+        LibraryOptions::instance().set(LibraryOptions::SignalDoubleTapExit, savedDoubleTap);
 }
 
 // ============================================================================
@@ -162,21 +160,17 @@ TEST_CASE("SignalHandler: subscribe rejects invalid arguments") {
         SignalHandler::install();
 
         // Termination signals are reserved.
-        CHECK(SignalHandler::subscribe(SIGINT,
-                [](int){}) == -1);
-        CHECK(SignalHandler::subscribe(SIGTERM,
-                [](int){}) == -1);
+        CHECK(SignalHandler::subscribe(SIGINT, [](int) {}) == -1);
+        CHECK(SignalHandler::subscribe(SIGTERM, [](int) {}) == -1);
 
         // Empty callback.
-        CHECK(SignalHandler::subscribe(SIGUSR1,
-                SignalHandler::Callback()) == -1);
+        CHECK(SignalHandler::subscribe(SIGUSR1, SignalHandler::Callback()) == -1);
 
         // Subscribe before install is refused.
         SignalHandler::uninstall();
-        CHECK(SignalHandler::subscribe(SIGUSR1,
-                [](int){}) == -1);
+        CHECK(SignalHandler::subscribe(SIGUSR1, [](int) {}) == -1);
 
-        if(wasInstalled) SignalHandler::install();
+        if (wasInstalled) SignalHandler::install();
 }
 
 TEST_CASE("SignalHandler: subscribe dispatches the callback on signal delivery") {
@@ -185,7 +179,7 @@ TEST_CASE("SignalHandler: subscribe dispatches the callback on signal delivery")
 
         std::atomic<int> count{0};
         std::atomic<int> lastSigno{0};
-        int h = SignalHandler::subscribe(SIGUSR1, [&](int signo) {
+        int              h = SignalHandler::subscribe(SIGUSR1, [&](int signo) {
                 lastSigno.store(signo, std::memory_order_relaxed);
                 count.fetch_add(1, std::memory_order_relaxed);
         });
@@ -195,14 +189,14 @@ TEST_CASE("SignalHandler: subscribe dispatches the callback on signal delivery")
 
         ElapsedTimer timer;
         timer.start();
-        while(count.load() < 1 && timer.elapsed() < 1000) {
+        while (count.load() < 1 && timer.elapsed() < 1000) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
         CHECK(count.load() >= 1);
         CHECK(lastSigno.load() == SIGUSR1);
 
         SignalHandler::unsubscribe(h);
-        if(!wasInstalled) SignalHandler::uninstall();
+        if (!wasInstalled) SignalHandler::uninstall();
 }
 
 TEST_CASE("SignalHandler: unsubscribe stops further callbacks") {
@@ -210,15 +204,13 @@ TEST_CASE("SignalHandler: unsubscribe stops further callbacks") {
         SignalHandler::install();
 
         std::atomic<int> count{0};
-        int h = SignalHandler::subscribe(SIGUSR1, [&](int) {
-                count.fetch_add(1, std::memory_order_relaxed);
-        });
+        int h = SignalHandler::subscribe(SIGUSR1, [&](int) { count.fetch_add(1, std::memory_order_relaxed); });
         REQUIRE(h >= 0);
 
         REQUIRE(::kill(::getpid(), SIGUSR1) == 0);
         ElapsedTimer timer;
         timer.start();
-        while(count.load() < 1 && timer.elapsed() < 1000) {
+        while (count.load() < 1 && timer.elapsed() < 1000) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
         REQUIRE(count.load() >= 1);
@@ -233,7 +225,7 @@ TEST_CASE("SignalHandler: unsubscribe stops further callbacks") {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         CHECK(count.load() == before);
 
-        if(!wasInstalled) SignalHandler::uninstall();
+        if (!wasInstalled) SignalHandler::uninstall();
 }
 
 TEST_CASE("SignalHandler: multiple subscribers receive the same signal") {
@@ -242,12 +234,8 @@ TEST_CASE("SignalHandler: multiple subscribers receive the same signal") {
 
         std::atomic<int> a{0};
         std::atomic<int> b{0};
-        int ha = SignalHandler::subscribe(SIGUSR1, [&](int) {
-                a.fetch_add(1, std::memory_order_relaxed);
-        });
-        int hb = SignalHandler::subscribe(SIGUSR1, [&](int) {
-                b.fetch_add(1, std::memory_order_relaxed);
-        });
+        int ha = SignalHandler::subscribe(SIGUSR1, [&](int) { a.fetch_add(1, std::memory_order_relaxed); });
+        int hb = SignalHandler::subscribe(SIGUSR1, [&](int) { b.fetch_add(1, std::memory_order_relaxed); });
         REQUIRE(ha >= 0);
         REQUIRE(hb >= 0);
         CHECK(ha != hb);
@@ -255,7 +243,7 @@ TEST_CASE("SignalHandler: multiple subscribers receive the same signal") {
         REQUIRE(::kill(::getpid(), SIGUSR1) == 0);
         ElapsedTimer timer;
         timer.start();
-        while((a.load() < 1 || b.load() < 1) && timer.elapsed() < 1000) {
+        while ((a.load() < 1 || b.load() < 1) && timer.elapsed() < 1000) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
         CHECK(a.load() >= 1);
@@ -263,7 +251,7 @@ TEST_CASE("SignalHandler: multiple subscribers receive the same signal") {
 
         SignalHandler::unsubscribe(ha);
         SignalHandler::unsubscribe(hb);
-        if(!wasInstalled) SignalHandler::uninstall();
+        if (!wasInstalled) SignalHandler::uninstall();
 }
 
 #endif // PROMEKI_PLATFORM_POSIX

@@ -30,234 +30,235 @@ using namespace promeki;
 
 namespace {
 
-// Slots for the Passthrough codec's typed AudioCodec::ID and two
-// backend handles — populated at static-init time by
-// PassthroughRegistrar and read by every test that needs to resolve
-// them.  The "Vendored" backend registers at the Vendored weight, the
-// "User" backend at the User weight, so the default-selector tests can
-// prove higher weight wins and override tests can pin the lower-weight
-// entry explicitly.
-static AudioCodec::ID           gPassthroughCodecId;
-static AudioCodec::Backend      gVendoredBackend;
-static AudioCodec::Backend      gUserBackend;
+        // Slots for the Passthrough codec's typed AudioCodec::ID and two
+        // backend handles — populated at static-init time by
+        // PassthroughRegistrar and read by every test that needs to resolve
+        // them.  The "Vendored" backend registers at the Vendored weight, the
+        // "User" backend at the User weight, so the default-selector tests can
+        // prove higher weight wins and override tests can pin the lower-weight
+        // entry explicitly.
+        static AudioCodec::ID      gPassthroughCodecId;
+        static AudioCodec::Backend gVendoredBackend;
+        static AudioCodec::Backend gUserBackend;
 
-// Slot for the compressed @ref AudioFormat that mirrors
-// gPassthroughCodecId.  The payload-native output path needs a
-// compressed AudioFormat whose @ref AudioFormat::audioCodec matches
-// the session's codec, so @ref CompressedAudioPayload::isValid passes
-// and downstream consumers can recover the payload's codec identity.
-static AudioFormat gPassthroughCompressedFormat;
+        // Slot for the compressed @ref AudioFormat that mirrors
+        // gPassthroughCodecId.  The payload-native output path needs a
+        // compressed AudioFormat whose @ref AudioFormat::audioCodec matches
+        // the session's codec, so @ref CompressedAudioPayload::isValid passes
+        // and downstream consumers can recover the payload's codec identity.
+        static AudioFormat gPassthroughCompressedFormat;
 
-class PassthroughAudioEncoder : public AudioEncoder {
-        public:
-                void configure(const MediaConfig &config) override {
-                        _cfgBitrate = config.getAs<int32_t>(MediaConfig::BitrateKbps);
-                }
-
-                Error submitPayload(const PcmAudioPayload::Ptr &payload) override {
-                        clearError();
-                        if(!payload.isValid() || !payload->isValid() || payload->planeCount() == 0) {
-                                setError(Error::Invalid, "invalid audio payload");
-                                return _lastError;
+        class PassthroughAudioEncoder : public AudioEncoder {
+                public:
+                        void configure(const MediaConfig &config) override {
+                                _cfgBitrate = config.getAs<int32_t>(MediaConfig::BitrateKbps);
                         }
-                        // Passthrough: wrap the payload's plane-0 view
-                        // in a CompressedAudioPayload that shares the
-                        // same Buffer.  The descriptor uses the
-                        // registered compressed AudioFormat for this
-                        // test codec so CompressedAudioPayload::isValid
-                        // passes and any legacy bridge recovers the
-                        // right @ref AudioCodec identity.
-                        AudioDesc desc(gPassthroughCompressedFormat,
-                                       payload->desc().sampleRate(),
-                                       payload->desc().channels());
-                        auto pv = payload->plane(0);
-                        auto cvp = CompressedAudioPayload::Ptr::create(
-                                desc, BufferView(pv.buffer(), pv.offset(), pv.size()));
-                        cvp.modify()->setPts(payload->pts());
-                        _queue.push_back(cvp);
-                        return Error::Ok;
-                }
 
-                CompressedAudioPayload::Ptr receiveCompressedPayload() override {
-                        if(_queue.empty()) {
-                                if(_flushed && !_eosEmitted) {
-                                        _eosEmitted = true;
-                                        AudioDesc eosDesc(gPassthroughCompressedFormat, 0, 0);
-                                        auto eos = CompressedAudioPayload::Ptr::create(eosDesc);
-                                        eos.modify()->markEndOfStream();
-                                        return eos;
+                        Error submitPayload(const PcmAudioPayload::Ptr &payload) override {
+                                clearError();
+                                if (!payload.isValid() || !payload->isValid() || payload->planeCount() == 0) {
+                                        setError(Error::Invalid, "invalid audio payload");
+                                        return _lastError;
                                 }
-                                return CompressedAudioPayload::Ptr();
+                                // Passthrough: wrap the payload's plane-0 view
+                                // in a CompressedAudioPayload that shares the
+                                // same Buffer.  The descriptor uses the
+                                // registered compressed AudioFormat for this
+                                // test codec so CompressedAudioPayload::isValid
+                                // passes and any legacy bridge recovers the
+                                // right @ref AudioCodec identity.
+                                AudioDesc desc(gPassthroughCompressedFormat, payload->desc().sampleRate(),
+                                               payload->desc().channels());
+                                auto      pv = payload->plane(0);
+                                auto      cvp = CompressedAudioPayload::Ptr::create(
+                                        desc, BufferView(pv.buffer(), pv.offset(), pv.size()));
+                                cvp.modify()->setPts(payload->pts());
+                                _queue.push_back(cvp);
+                                return Error::Ok;
                         }
-                        auto pkt = _queue.front();
-                        _queue.pop_front();
-                        return pkt;
-                }
 
-                Error flush() override { _flushed = true; return Error::Ok; }
-                Error reset() override {
-                        _queue.clear();
-                        _flushed    = false;
-                        _eosEmitted = false;
-                        return Error::Ok;
-                }
-
-                int32_t configuredBitrate() const { return _cfgBitrate; }
-
-        private:
-                std::deque<CompressedAudioPayload::Ptr> _queue;
-                int32_t                      _cfgBitrate = 0;
-                bool                         _flushed    = false;
-                bool                         _eosEmitted = false;
-};
-
-class PassthroughAudioDecoder : public AudioDecoder {
-        public:
-                void configure(const MediaConfig &cfg) override {
-                        float sr = cfg.getAs<float>(MediaConfig::AudioRate);
-                        if(sr > 0.0f) _outDesc.setSampleRate(sr);
-                        int32_t ch = cfg.getAs<int32_t>(MediaConfig::AudioChannels);
-                        if(ch > 0) _outDesc.setChannels(static_cast<unsigned int>(ch));
-                }
-
-                Error submitPayload(const CompressedAudioPayload::Ptr &payload) override {
-                        clearError();
-                        if(!payload.isValid() || !payload->isValid()) {
-                                setError(Error::Invalid, "invalid payload");
-                                return _lastError;
+                        CompressedAudioPayload::Ptr receiveCompressedPayload() override {
+                                if (_queue.empty()) {
+                                        if (_flushed && !_eosEmitted) {
+                                                _eosEmitted = true;
+                                                AudioDesc eosDesc(gPassthroughCompressedFormat, 0, 0);
+                                                auto      eos = CompressedAudioPayload::Ptr::create(eosDesc);
+                                                eos.modify()->markEndOfStream();
+                                                return eos;
+                                        }
+                                        return CompressedAudioPayload::Ptr();
+                                }
+                                auto pkt = _queue.front();
+                                _queue.pop_front();
+                                return pkt;
                         }
-                        _pending.push_back(payload);
-                        return Error::Ok;
-                }
 
-                PcmAudioPayload::Ptr receiveAudioPayload() override {
-                        if(_pending.empty()) return PcmAudioPayload::Ptr();
-                        CompressedAudioPayload::Ptr in = std::move(_pending.front());
-                        _pending.pop_front();
-                        if(in->planeCount() == 0) return PcmAudioPayload::Ptr();
-                        // Compute sample count from bytes and the
-                        // configured output format.
-                        auto view = in->plane(0);
-                        size_t sampleBytes = _outDesc.bytesPerSample() * _outDesc.channels();
-                        size_t samples = sampleBytes ? view.size() / sampleBytes : 0;
-                        BufferView planes(view.buffer(), view.offset(), view.size());
-                        auto uap = PcmAudioPayload::Ptr::create(_outDesc, samples, planes);
-                        uap.modify()->setPts(in->pts());
-                        return uap;
-                }
+                        Error flush() override {
+                                _flushed = true;
+                                return Error::Ok;
+                        }
+                        Error reset() override {
+                                _queue.clear();
+                                _flushed = false;
+                                _eosEmitted = false;
+                                return Error::Ok;
+                        }
 
-                Error flush() override { return Error::Ok; }
-                Error reset() override { _pending.clear(); return Error::Ok; }
+                        int32_t configuredBitrate() const { return _cfgBitrate; }
 
-                void setOutputDesc(const AudioDesc &d) { _outDesc = d; }
+                private:
+                        std::deque<CompressedAudioPayload::Ptr> _queue;
+                        int32_t                                 _cfgBitrate = 0;
+                        bool                                    _flushed = false;
+                        bool                                    _eosEmitted = false;
+        };
 
-        private:
-                std::deque<CompressedAudioPayload::Ptr> _pending;
-                AudioDesc               _outDesc;
-};
+        class PassthroughAudioDecoder : public AudioDecoder {
+                public:
+                        void configure(const MediaConfig &cfg) override {
+                                float sr = cfg.getAs<float>(MediaConfig::AudioRate);
+                                if (sr > 0.0f) _outDesc.setSampleRate(sr);
+                                int32_t ch = cfg.getAs<int32_t>(MediaConfig::AudioChannels);
+                                if (ch > 0) _outDesc.setChannels(static_cast<unsigned int>(ch));
+                        }
 
-// Registers the passthrough codec exactly once per process so tests
-// can call AudioCodec::createEncoder / createDecoder.  Two encoder
-// backends are registered against the same codec ID (one Vendored,
-// one User) to exercise the weighted selection + override flow.
-struct PassthroughRegistrar {
-        PassthroughRegistrar() {
-                gPassthroughCodecId = AudioCodec::registerType();
-                AudioCodec::Data d;
-                d.id   = gPassthroughCodecId;
-                d.name = "PassthroughAudio";
-                d.desc = "Passthrough (test) audio codec";
-                d.supportedSampleFormats = {
-                        static_cast<int>(AudioFormat::PCMI_S16LE),
-                };
-                AudioCodec::registerData(std::move(d));
+                        Error submitPayload(const CompressedAudioPayload::Ptr &payload) override {
+                                clearError();
+                                if (!payload.isValid() || !payload->isValid()) {
+                                        setError(Error::Invalid, "invalid payload");
+                                        return _lastError;
+                                }
+                                _pending.push_back(payload);
+                                return Error::Ok;
+                        }
 
-                // Register a compressed AudioFormat for this codec so
-                // the Passthrough encoder's output payloads can mark
-                // themselves compressed via their descriptor.
-                AudioFormat::ID cfmtId = AudioFormat::registerType();
-                AudioFormat::Data cf;
-                cf.id         = cfmtId;
-                cf.name       = "PassthroughAudioCompressed";
-                cf.desc       = "Passthrough (test) compressed format";
-                cf.compressed = true;
-                cf.audioCodec = AudioCodec(gPassthroughCodecId);
-                AudioFormat::registerData(std::move(cf));
-                gPassthroughCompressedFormat = AudioFormat(cfmtId);
+                        PcmAudioPayload::Ptr receiveAudioPayload() override {
+                                if (_pending.empty()) return PcmAudioPayload::Ptr();
+                                CompressedAudioPayload::Ptr in = std::move(_pending.front());
+                                _pending.pop_front();
+                                if (in->planeCount() == 0) return PcmAudioPayload::Ptr();
+                                // Compute sample count from bytes and the
+                                // configured output format.
+                                auto       view = in->plane(0);
+                                size_t     sampleBytes = _outDesc.bytesPerSample() * _outDesc.channels();
+                                size_t     samples = sampleBytes ? view.size() / sampleBytes : 0;
+                                BufferView planes(view.buffer(), view.offset(), view.size());
+                                auto       uap = PcmAudioPayload::Ptr::create(_outDesc, samples, planes);
+                                uap.modify()->setPts(in->pts());
+                                return uap;
+                        }
 
-                auto vb = AudioCodec::registerBackend("PassthroughVendored");
-                if(error(vb).isError()) return;
-                gVendoredBackend = value(vb);
+                        Error flush() override { return Error::Ok; }
+                        Error reset() override {
+                                _pending.clear();
+                                return Error::Ok;
+                        }
 
-                auto ub = AudioCodec::registerBackend("PassthroughUser");
-                if(error(ub).isError()) return;
-                gUserBackend = value(ub);
+                        void setOutputDesc(const AudioDesc &d) { _outDesc = d; }
 
-                AudioEncoder::registerBackend({
-                        .codecId         = gPassthroughCodecId,
-                        .backend         = gVendoredBackend,
-                        .weight          = BackendWeight::Vendored,
-                        .supportedInputs = {
-                                static_cast<int>(AudioFormat::PCMI_S16LE),
-                        },
-                        .factory         = []() -> AudioEncoder * {
-                                return new PassthroughAudioEncoder();
-                        },
-                });
-                // Higher-weight User backend lives at the same codec
-                // ID with a different backend handle so override tests
-                // have something to pin against.
-                AudioEncoder::registerBackend({
-                        .codecId         = gPassthroughCodecId,
-                        .backend         = gUserBackend,
-                        .weight          = BackendWeight::User,
-                        .supportedInputs = {
-                                static_cast<int>(AudioFormat::PCMI_S16LE),
-                        },
-                        .factory         = []() -> AudioEncoder * {
-                                return new PassthroughAudioEncoder();
-                        },
-                });
+                private:
+                        std::deque<CompressedAudioPayload::Ptr> _pending;
+                        AudioDesc                               _outDesc;
+        };
 
-                AudioDecoder::registerBackend({
-                        .codecId          = gPassthroughCodecId,
-                        .backend          = gVendoredBackend,
-                        .weight           = BackendWeight::Vendored,
-                        .supportedOutputs = {
-                                static_cast<int>(AudioFormat::PCMI_S16LE),
-                        },
-                        .factory          = []() -> AudioDecoder * {
-                                return new PassthroughAudioDecoder();
-                        },
-                });
+        // Registers the passthrough codec exactly once per process so tests
+        // can call AudioCodec::createEncoder / createDecoder.  Two encoder
+        // backends are registered against the same codec ID (one Vendored,
+        // one User) to exercise the weighted selection + override flow.
+        struct PassthroughRegistrar {
+                        PassthroughRegistrar() {
+                                gPassthroughCodecId = AudioCodec::registerType();
+                                AudioCodec::Data d;
+                                d.id = gPassthroughCodecId;
+                                d.name = "PassthroughAudio";
+                                d.desc = "Passthrough (test) audio codec";
+                                d.supportedSampleFormats = {
+                                        static_cast<int>(AudioFormat::PCMI_S16LE),
+                                };
+                                AudioCodec::registerData(std::move(d));
+
+                                // Register a compressed AudioFormat for this codec so
+                                // the Passthrough encoder's output payloads can mark
+                                // themselves compressed via their descriptor.
+                                AudioFormat::ID   cfmtId = AudioFormat::registerType();
+                                AudioFormat::Data cf;
+                                cf.id = cfmtId;
+                                cf.name = "PassthroughAudioCompressed";
+                                cf.desc = "Passthrough (test) compressed format";
+                                cf.compressed = true;
+                                cf.audioCodec = AudioCodec(gPassthroughCodecId);
+                                AudioFormat::registerData(std::move(cf));
+                                gPassthroughCompressedFormat = AudioFormat(cfmtId);
+
+                                auto vb = AudioCodec::registerBackend("PassthroughVendored");
+                                if (error(vb).isError()) return;
+                                gVendoredBackend = value(vb);
+
+                                auto ub = AudioCodec::registerBackend("PassthroughUser");
+                                if (error(ub).isError()) return;
+                                gUserBackend = value(ub);
+
+                                AudioEncoder::registerBackend({
+                                        .codecId = gPassthroughCodecId,
+                                        .backend = gVendoredBackend,
+                                        .weight = BackendWeight::Vendored,
+                                        .supportedInputs =
+                                                {
+                                                        static_cast<int>(AudioFormat::PCMI_S16LE),
+                                                },
+                                        .factory = []() -> AudioEncoder * { return new PassthroughAudioEncoder(); },
+                                });
+                                // Higher-weight User backend lives at the same codec
+                                // ID with a different backend handle so override tests
+                                // have something to pin against.
+                                AudioEncoder::registerBackend({
+                                        .codecId = gPassthroughCodecId,
+                                        .backend = gUserBackend,
+                                        .weight = BackendWeight::User,
+                                        .supportedInputs =
+                                                {
+                                                        static_cast<int>(AudioFormat::PCMI_S16LE),
+                                                },
+                                        .factory = []() -> AudioEncoder * { return new PassthroughAudioEncoder(); },
+                                });
+
+                                AudioDecoder::registerBackend({
+                                        .codecId = gPassthroughCodecId,
+                                        .backend = gVendoredBackend,
+                                        .weight = BackendWeight::Vendored,
+                                        .supportedOutputs =
+                                                {
+                                                        static_cast<int>(AudioFormat::PCMI_S16LE),
+                                                },
+                                        .factory = []() -> AudioDecoder * { return new PassthroughAudioDecoder(); },
+                                });
+                        }
+        };
+        static PassthroughRegistrar _passthroughRegistrar;
+
+        // Helper: build a small PCM audio payload with deterministic bytes.
+        PcmAudioPayload::Ptr makePcmPayload(size_t samples, uint8_t fill,
+                                            const AudioDesc &desc = AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 2)) {
+                const size_t bytes = desc.bufferSize(samples);
+                auto         buf = Buffer::Ptr::create(bytes);
+                buf.modify()->fill(static_cast<char>(fill));
+                buf.modify()->setSize(bytes);
+                BufferView planes;
+                planes.pushToBack(buf, 0, bytes);
+                return PcmAudioPayload::Ptr::create(desc, samples, planes);
         }
-};
-static PassthroughRegistrar _passthroughRegistrar;
 
-// Helper: build a small PCM audio payload with deterministic bytes.
-PcmAudioPayload::Ptr makePcmPayload(size_t samples, uint8_t fill,
-                                             const AudioDesc &desc = AudioDesc(AudioFormat::PCMI_S16LE,
-                                                                               48000.0f, 2)) {
-        const size_t bytes = desc.bufferSize(samples);
-        auto buf = Buffer::Ptr::create(bytes);
-        buf.modify()->fill(static_cast<char>(fill));
-        buf.modify()->setSize(bytes);
-        BufferView planes;
-        planes.pushToBack(buf, 0, bytes);
-        return PcmAudioPayload::Ptr::create(desc, samples, planes);
-}
+        AudioEncoder *makePassthroughEncoder(const MediaConfig *cfg = nullptr) {
+                AudioCodec codec(gPassthroughCodecId);
+                auto       res = codec.createEncoder(cfg);
+                return isOk(res) ? value(res) : nullptr;
+        }
 
-AudioEncoder *makePassthroughEncoder(const MediaConfig *cfg = nullptr) {
-        AudioCodec codec(gPassthroughCodecId);
-        auto res = codec.createEncoder(cfg);
-        return isOk(res) ? value(res) : nullptr;
-}
-
-AudioDecoder *makePassthroughDecoder(const MediaConfig *cfg = nullptr) {
-        AudioCodec codec(gPassthroughCodecId);
-        auto res = codec.createDecoder(cfg);
-        return isOk(res) ? value(res) : nullptr;
-}
+        AudioDecoder *makePassthroughDecoder(const MediaConfig *cfg = nullptr) {
+                AudioCodec codec(gPassthroughCodecId);
+                auto       res = codec.createDecoder(cfg);
+                return isOk(res) ? value(res) : nullptr;
+        }
 
 } // namespace
 
@@ -300,7 +301,7 @@ TEST_CASE("AudioCodec: canEncode / canDecode return false for a codec without a 
 
 TEST_CASE("AudioCodec: availableEncoderBackends lists every registered backend") {
         AudioCodec codec(gPassthroughCodecId);
-        auto backends = codec.availableEncoderBackends();
+        auto       backends = codec.availableEncoderBackends();
         REQUIRE(backends.size() == 2);
         // Highest weight first: PassthroughUser before PassthroughVendored.
         CHECK(backends[0] == gUserBackend);
@@ -337,7 +338,7 @@ TEST_CASE("AudioCodec: CodecBackend override pins the requested backend") {
 }
 
 TEST_CASE("AudioCodec: pinned backend via AudioCodec wrapper resolves directly") {
-        AudioCodec codec(gPassthroughCodecId, gVendoredBackend);
+        AudioCodec    codec(gPassthroughCodecId, gVendoredBackend);
         AudioEncoder *enc = makePassthroughEncoder();
         // (the helper ignores the wrapper's backend; re-create through
         // the pinned AudioCodec here instead.)
@@ -395,7 +396,7 @@ TEST_CASE("AudioEncoder: submitPayload rejects invalid input") {
         REQUIRE(enc != nullptr);
 
         PcmAudioPayload::Ptr empty;
-        Error err = enc->submitPayload(empty);
+        Error                err = enc->submitPayload(empty);
         CHECK(err == Error::Invalid);
         CHECK(enc->lastError() == Error::Invalid);
         CHECK_FALSE(enc->lastErrorMessage().isEmpty());
@@ -427,7 +428,7 @@ TEST_CASE("Audio codec: encoder -> packet -> decoder round-trip") {
         CHECK(srcPlane.size() == outPlane.size());
         const uint8_t *srcBytes = srcPlane.data();
         const uint8_t *outBytes = outPlane.data();
-        for(size_t i = 0; i < srcPlane.size(); ++i) {
+        for (size_t i = 0; i < srcPlane.size(); ++i) {
                 CHECK(srcBytes[i] == outBytes[i]);
         }
 
@@ -448,7 +449,9 @@ TEST_CASE("AudioEncoder::registerBackend rejects malformed records") {
         CHECK(AudioEncoder::registerBackend(r) == Error::Invalid);
 
         // Invalid backend handle.
-        r.factory = []() -> AudioEncoder * { return nullptr; };
+        r.factory = []() -> AudioEncoder * {
+                return nullptr;
+        };
         r.backend = AudioCodec::Backend();
         CHECK(AudioEncoder::registerBackend(r) == Error::Invalid);
 
@@ -465,7 +468,9 @@ TEST_CASE("AudioDecoder::registerBackend rejects malformed records") {
         // No factory.
         CHECK(AudioDecoder::registerBackend(r) == Error::Invalid);
 
-        r.factory = []() -> AudioDecoder * { return nullptr; };
+        r.factory = []() -> AudioDecoder * {
+                return nullptr;
+        };
         r.backend = AudioCodec::Backend();
         CHECK(AudioDecoder::registerBackend(r) == Error::Invalid);
 
@@ -482,40 +487,33 @@ TEST_CASE("AudioEncoder::supportedInputsFor: union vs pinned-backend") {
         // Unpinned (invalid handle) returns the union across both
         // Passthrough backends — both registered PCMI_S16LE so the
         // union has a single entry.
-        auto unionList = AudioEncoder::supportedInputsFor(gPassthroughCodecId,
-                                                          AudioCodec::Backend());
+        auto unionList = AudioEncoder::supportedInputsFor(gPassthroughCodecId, AudioCodec::Backend());
         CHECK(unionList.contains(static_cast<int>(AudioFormat::PCMI_S16LE)));
 
         // Pinned to a registered backend returns just that backend's list.
-        auto pinned = AudioEncoder::supportedInputsFor(gPassthroughCodecId,
-                                                       gVendoredBackend);
+        auto pinned = AudioEncoder::supportedInputsFor(gPassthroughCodecId, gVendoredBackend);
         CHECK(pinned.contains(static_cast<int>(AudioFormat::PCMI_S16LE)));
 
         // Pinned to a registered-but-not-attached backend returns empty.
         auto bk = AudioCodec::registerBackend("AudioEncoderTest_UnattachedBackend");
         REQUIRE(isOk(bk));
-        auto missing = AudioEncoder::supportedInputsFor(gPassthroughCodecId,
-                                                        value(bk));
+        auto missing = AudioEncoder::supportedInputsFor(gPassthroughCodecId, value(bk));
         CHECK(missing.isEmpty());
 
         // Unknown codec ID returns empty regardless of backend pin.
-        auto bogus = AudioEncoder::supportedInputsFor(
-                static_cast<AudioCodec::ID>(0xDEADBEEF), AudioCodec::Backend());
+        auto bogus = AudioEncoder::supportedInputsFor(static_cast<AudioCodec::ID>(0xDEADBEEF), AudioCodec::Backend());
         CHECK(bogus.isEmpty());
 }
 
 TEST_CASE("AudioDecoder::supportedOutputsFor: union vs pinned-backend") {
-        auto unionList = AudioDecoder::supportedOutputsFor(gPassthroughCodecId,
-                                                           AudioCodec::Backend());
+        auto unionList = AudioDecoder::supportedOutputsFor(gPassthroughCodecId, AudioCodec::Backend());
         CHECK(unionList.contains(static_cast<int>(AudioFormat::PCMI_S16LE)));
 
-        auto pinned = AudioDecoder::supportedOutputsFor(gPassthroughCodecId,
-                                                        gVendoredBackend);
+        auto pinned = AudioDecoder::supportedOutputsFor(gPassthroughCodecId, gVendoredBackend);
         CHECK(pinned.contains(static_cast<int>(AudioFormat::PCMI_S16LE)));
 
         // Unknown codec returns empty.
-        auto bogus = AudioDecoder::supportedOutputsFor(
-                static_cast<AudioCodec::ID>(0xDEADBEEF), AudioCodec::Backend());
+        auto bogus = AudioDecoder::supportedOutputsFor(static_cast<AudioCodec::ID>(0xDEADBEEF), AudioCodec::Backend());
         CHECK(bogus.isEmpty());
 }
 
@@ -546,10 +544,10 @@ TEST_CASE("AudioCodec::registeredBackends includes the Passthrough backends") {
         CHECK_FALSE(backends.isEmpty());
 
         bool sawVendored = false;
-        bool sawUser     = false;
-        for(const auto &b : backends) {
-                if(b.name() == "PassthroughVendored") sawVendored = true;
-                if(b.name() == "PassthroughUser")     sawUser     = true;
+        bool sawUser = false;
+        for (const auto &b : backends) {
+                if (b.name() == "PassthroughVendored") sawVendored = true;
+                if (b.name() == "PassthroughUser") sawUser = true;
         }
         CHECK(sawVendored);
         CHECK(sawUser);
@@ -568,13 +566,15 @@ TEST_CASE("AudioEncoder::registerBackend replaces the prior record for the same 
         AudioEncoder::BackendRecord r;
         r.codecId = gPassthroughCodecId;
         r.backend = gVendoredBackend;
-        r.weight  = BackendWeight::User + 100;   // outrank the User entry
-        r.factory = []() -> AudioEncoder * { return new PassthroughAudioEncoder; };
-        r.supportedInputs = { static_cast<int>(AudioFormat::PCMI_S16LE) };
+        r.weight = BackendWeight::User + 100; // outrank the User entry
+        r.factory = []() -> AudioEncoder * {
+                return new PassthroughAudioEncoder;
+        };
+        r.supportedInputs = {static_cast<int>(AudioFormat::PCMI_S16LE)};
         REQUIRE(AudioEncoder::registerBackend(r) == Error::Ok);
 
         AudioCodec codec(gPassthroughCodecId);
-        auto backends = codec.availableEncoderBackends();
+        auto       backends = codec.availableEncoderBackends();
         // Highest weight first now: Vendored (just bumped) before User.
         REQUIRE(backends.size() == 2);
         CHECK(backends[0] == gVendoredBackend);
@@ -585,9 +585,11 @@ TEST_CASE("AudioEncoder::registerBackend replaces the prior record for the same 
         AudioEncoder::BackendRecord restore;
         restore.codecId = gPassthroughCodecId;
         restore.backend = gVendoredBackend;
-        restore.weight  = BackendWeight::Vendored;
-        restore.factory = []() -> AudioEncoder * { return new PassthroughAudioEncoder; };
-        restore.supportedInputs = { static_cast<int>(AudioFormat::PCMI_S16LE) };
+        restore.weight = BackendWeight::Vendored;
+        restore.factory = []() -> AudioEncoder * {
+                return new PassthroughAudioEncoder;
+        };
+        restore.supportedInputs = {static_cast<int>(AudioFormat::PCMI_S16LE)};
         REQUIRE(AudioEncoder::registerBackend(restore) == Error::Ok);
 
         auto restored = codec.availableEncoderBackends();
@@ -601,14 +603,12 @@ TEST_CASE("AudioEncoder::registerBackend replaces the prior record for the same 
 // ---------------------------------------------------------------------------
 
 TEST_CASE("AudioEncoder::create returns IdNotFound for unknown codec") {
-        auto res = AudioEncoder::create(static_cast<AudioCodec::ID>(0xDEAD),
-                                         AudioCodec::Backend(), nullptr);
+        auto res = AudioEncoder::create(static_cast<AudioCodec::ID>(0xDEAD), AudioCodec::Backend(), nullptr);
         CHECK(error(res) == Error::IdNotFound);
 }
 
 TEST_CASE("AudioDecoder::create returns IdNotFound for unknown codec") {
-        auto res = AudioDecoder::create(static_cast<AudioCodec::ID>(0xDEAD),
-                                         AudioCodec::Backend(), nullptr);
+        auto res = AudioDecoder::create(static_cast<AudioCodec::ID>(0xDEAD), AudioCodec::Backend(), nullptr);
         CHECK(error(res) == Error::IdNotFound);
 }
 
@@ -632,13 +632,13 @@ TEST_CASE("AudioDecoder::create with pin to unregistered backend returns IdNotFo
 
 TEST_CASE("AudioCodec::createDecoder on invalid codec returns Error::Invalid") {
         AudioCodec invalid;
-        auto res = invalid.createDecoder();
+        auto       res = invalid.createDecoder();
         CHECK(error(res) == Error::Invalid);
 }
 
 TEST_CASE("AudioCodec::createEncoder on invalid codec returns Error::Invalid") {
         AudioCodec invalid;
-        auto res = invalid.createEncoder();
+        auto       res = invalid.createEncoder();
         CHECK(error(res) == Error::Invalid);
 }
 
@@ -658,14 +658,15 @@ TEST_CASE("AudioDecoder: configure forwards AudioRate / AudioChannels") {
         static_cast<PassthroughAudioDecoder *>(dec)->setOutputDesc(seed);
 
         MediaConfig cfg;
-        cfg.set(MediaConfig::AudioRate,     48000.0f);
+        cfg.set(MediaConfig::AudioRate, 48000.0f);
         cfg.set(MediaConfig::AudioChannels, int32_t(2));
         dec->configure(cfg);
 
-        auto frame = makePcmPayload(64, 0x66,
-                AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 2));
+        auto      frame = makePcmPayload(64, 0x66, AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 2));
         AudioDesc cdesc(gPassthroughCompressedFormat, 48000.0f, 2);
-        auto fEntry = frame->plane(0); auto pkt = CompressedAudioPayload::Ptr::create(cdesc, BufferView(fEntry.buffer(), fEntry.offset(), fEntry.size()));
+        auto      fEntry = frame->plane(0);
+        auto      pkt =
+                CompressedAudioPayload::Ptr::create(cdesc, BufferView(fEntry.buffer(), fEntry.offset(), fEntry.size()));
         CHECK(dec->submitPayload(pkt) == Error::Ok);
         PcmAudioPayload::Ptr out = dec->receiveAudioPayload();
         REQUIRE(out.isValid());
@@ -678,10 +679,11 @@ TEST_CASE("AudioDecoder: reset clears any pending state") {
         auto *dec = makePassthroughDecoder();
         REQUIRE(dec != nullptr);
 
-        auto frame = makePcmPayload(32, 0x77,
-                AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 2));
+        auto      frame = makePcmPayload(32, 0x77, AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 2));
         AudioDesc cdesc(gPassthroughCompressedFormat, 48000.0f, 2);
-        auto fEntry = frame->plane(0); auto pkt = CompressedAudioPayload::Ptr::create(cdesc, BufferView(fEntry.buffer(), fEntry.offset(), fEntry.size()));
+        auto      fEntry = frame->plane(0);
+        auto      pkt =
+                CompressedAudioPayload::Ptr::create(cdesc, BufferView(fEntry.buffer(), fEntry.offset(), fEntry.size()));
         // Submit but don't drain — reset() should drop the packet.
         REQUIRE(dec->submitPayload(pkt) == Error::Ok);
         REQUIRE(dec->reset() == Error::Ok);

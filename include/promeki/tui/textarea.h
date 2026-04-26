@@ -22,12 +22,12 @@ PROMEKI_NAMESPACE_BEGIN
  * Thread-affine — see @ref TuiWidget.
  */
 class TuiTextArea : public TuiWidget {
-        PROMEKI_OBJECT(TuiTextArea, TuiWidget)
+                PROMEKI_OBJECT(TuiTextArea, TuiWidget)
         public:
                 TuiTextArea(ObjectBase *parent = nullptr);
                 ~TuiTextArea() override;
 
-                void setText(const String &text);
+                void   setText(const String &text);
                 String text() const;
 
                 void setReadOnly(bool readOnly) { _readOnly = readOnly; }
@@ -44,12 +44,12 @@ class TuiTextArea : public TuiWidget {
                 void keyPressEvent(KeyEvent *e) override;
 
         private:
-                StringList      _lines;
-                int             _cursorRow = 0;
-                int             _cursorCol = 0;
-                int             _scrollRow = 0;
-                int             _scrollCol = 0;
-                bool            _readOnly = false;
+                StringList _lines;
+                int        _cursorRow = 0;
+                int        _cursorCol = 0;
+                int        _scrollRow = 0;
+                int        _scrollCol = 0;
+                bool       _readOnly = false;
 };
 
 PROMEKI_NAMESPACE_END

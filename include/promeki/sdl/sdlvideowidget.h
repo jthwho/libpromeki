@@ -62,13 +62,13 @@ PROMEKI_NAMESPACE_BEGIN
  * thread.
  */
 class SDLVideoWidget : public Widget {
-        PROMEKI_OBJECT(SDLVideoWidget, Widget)
+                PROMEKI_OBJECT(SDLVideoWidget, Widget)
         public:
                 /** @brief Scaling mode for displayed images. */
                 enum ScaleMode {
-                        ScaleNone,      ///< No scaling, centered at native size.
-                        ScaleFit,       ///< Scale to fit, preserving aspect ratio.
-                        ScaleStretch    ///< Stretch to fill, ignoring aspect ratio.
+                        ScaleNone,   ///< No scaling, centered at native size.
+                        ScaleFit,    ///< Scale to fit, preserving aspect ratio.
+                        ScaleStretch ///< Stretch to fill, ignoring aspect ratio.
                 };
 
                 /**
@@ -171,20 +171,18 @@ class SDLVideoWidget : public Widget {
                 void paintEvent(PaintEvent *e) override;
 
         private:
-                SDL_Texture    *_texture = nullptr;
-                Size2Di32       _textureSize{0, 0};
-                uint32_t        _texturePixFmt = 0;
-                uint32_t        _textureColorspace = 0;
-                ScaleMode       _scaleMode = ScaleFit;
+                SDL_Texture                  *_texture = nullptr;
+                Size2Di32                     _textureSize{0, 0};
+                uint32_t                      _texturePixFmt = 0;
+                uint32_t                      _textureColorspace = 0;
+                ScaleMode                     _scaleMode = ScaleFit;
                 UncompressedVideoPayload::Ptr _currentPayload;
-                uint32_t        _frameCount = 0;
-                uint32_t        _framesFastPath = 0;
+                uint32_t                      _frameCount = 0;
+                uint32_t                      _framesFastPath = 0;
 
-                void ensureTexture(int w, int h, uint32_t sdlPixFmt,
-                                   uint32_t sdlColorspace);
-                void uploadPayload(const UncompressedVideoPayload &payload,
-                                   uint32_t sdlPixFmt);
-                bool uploadCurrentPayload();
+                void          ensureTexture(int w, int h, uint32_t sdlPixFmt, uint32_t sdlColorspace);
+                void          uploadPayload(const UncompressedVideoPayload &payload, uint32_t sdlPixFmt);
+                bool          uploadCurrentPayload();
                 SDL_Renderer *findRenderer() const;
 };
 

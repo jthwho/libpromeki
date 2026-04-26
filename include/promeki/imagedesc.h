@@ -41,7 +41,7 @@ class SdpMediaDescription;
  * threads.
  */
 class ImageDesc {
-        PROMEKI_SHARED_FINAL(ImageDesc)
+                PROMEKI_SHARED_FINAL(ImageDesc)
         public:
                 /** @brief Shared pointer type for ImageDesc. */
                 using Ptr = SharedPtr<ImageDesc>;
@@ -53,15 +53,14 @@ class ImageDesc {
                 using PtrList = promeki::List<Ptr>;
 
                 /** @brief Constructs an invalid (default) image description. */
-                ImageDesc() { }
+                ImageDesc() {}
 
                 /**
                  * @brief Constructs an image description from a size and pixel description.
                  * @param sz The image dimensions.
                  * @param pd The pixel description.
                  */
-                ImageDesc(const Size2Du32 &sz, const PixelFormat &pd) :
-                        _size(sz), _pixelFormat(pd) { }
+                ImageDesc(const Size2Du32 &sz, const PixelFormat &pd) : _size(sz), _pixelFormat(pd) {}
 
                 /**
                  * @brief Constructs an image description from width, height, and pixel description.
@@ -69,8 +68,7 @@ class ImageDesc {
                  * @param h  The image height in pixels.
                  * @param pd The pixel description.
                  */
-                ImageDesc(size_t w, size_t h, const PixelFormat &pd) :
-                        _size(Size2Du32(w, h)), _pixelFormat(pd) { }
+                ImageDesc(size_t w, size_t h, const PixelFormat &pd) : _size(Size2Du32(w, h)), _pixelFormat(pd) {}
 
                 /**
                  * @brief Derives an ImageDesc from an SDP media description.
@@ -130,11 +128,8 @@ class ImageDesc {
                  * @param isRgb       True for RGB (overrides subsampling).
                  * @return The matching PixelFormat::ID.
                  */
-                static PixelFormat::ID jpegPixelFormatFromSdp(
-                        const String &colorimetry,
-                        const String &range,
-                        bool is420,
-                        bool isRgb);
+                static PixelFormat::ID jpegPixelFormatFromSdp(const String &colorimetry, const String &range,
+                                                              bool is420, bool isRgb);
 
                 /**
                  * @brief Builds an SDP media description from this ImageDesc.
@@ -171,65 +166,49 @@ class ImageDesc {
                  * @brief Returns true if this image description has valid dimensions and pixel description.
                  * @return true if valid.
                  */
-                bool isValid() const {
-                        return _size.isValid() && _pixelFormat.isValid();
-                }
+                bool isValid() const { return _size.isValid() && _pixelFormat.isValid(); }
 
                 /**
                  * @brief Returns the pixel description.
                  * @return A const reference to the PixelFormat.
                  */
-                const PixelFormat &pixelFormat() const {
-                        return _pixelFormat;
-                }
+                const PixelFormat &pixelFormat() const { return _pixelFormat; }
 
                 /**
                  * @brief Sets the pixel description.
                  * @param pd The pixel description.
                  */
-                void setPixelFormat(const PixelFormat &pd) {
-                        _pixelFormat = pd;
-                }
+                void setPixelFormat(const PixelFormat &pd) { _pixelFormat = pd; }
 
                 /**
                  * @brief Returns the pixel format (memory layout) from the pixel description.
                  * @return A const reference to the PixelMemLayout.
                  */
-                const PixelMemLayout &memLayout() const {
-                        return _pixelFormat.memLayout();
-                }
+                const PixelMemLayout &memLayout() const { return _pixelFormat.memLayout(); }
 
                 /**
                  * @brief Returns the color model from the pixel description.
                  * @return A const reference to the ColorModel.
                  */
-                const ColorModel &colorModel() const {
-                        return _pixelFormat.colorModel();
-                }
+                const ColorModel &colorModel() const { return _pixelFormat.colorModel(); }
 
                 /**
                  * @brief Returns the image dimensions.
                  * @return A const reference to the Size2Du32.
                  */
-                const Size2Du32 &size() const {
-                        return _size;
-                }
+                const Size2Du32 &size() const { return _size; }
 
                 /**
                  * @brief Returns the image width in pixels.
                  * @return The width.
                  */
-                size_t width() const {
-                        return _size.width();
-                }
+                size_t width() const { return _size.width(); }
 
                 /**
                  * @brief Returns the image height in pixels.
                  * @return The height.
                  */
-                size_t height() const {
-                        return _size.height();
-                }
+                size_t height() const { return _size.height(); }
 
                 /**
                  * @brief Sets the image dimensions.
@@ -254,9 +233,7 @@ class ImageDesc {
                  * @brief Returns the number of padding bytes appended to each scanline.
                  * @return The line padding in bytes.
                  */
-                size_t linePad() const {
-                        return _linePad;
-                }
+                size_t linePad() const { return _linePad; }
 
                 /**
                  * @brief Sets the number of padding bytes appended to each scanline.
@@ -271,9 +248,7 @@ class ImageDesc {
                  * @brief Returns the scanline alignment requirement in bytes.
                  * @return The line alignment (e.g. 1 for no alignment, 16 for 16-byte alignment).
                  */
-                size_t lineAlign() const {
-                        return _lineAlign;
-                }
+                size_t lineAlign() const { return _lineAlign; }
 
                 /**
                  * @brief Sets the scanline alignment requirement.
@@ -294,9 +269,7 @@ class ImageDesc {
                  *
                  * @return The scan mode.
                  */
-                VideoScanMode videoScanMode() const {
-                        return _videoScanMode;
-                }
+                VideoScanMode videoScanMode() const { return _videoScanMode; }
 
                 /**
                  * @brief Sets the scan mode.
@@ -308,22 +281,16 @@ class ImageDesc {
                 }
 
                 /** @brief Returns a const reference to the metadata. */
-                const Metadata &metadata() const {
-                        return _metadata;
-                }
+                const Metadata &metadata() const { return _metadata; }
 
                 /** @brief Returns a mutable reference to the metadata. */
-                Metadata &metadata() {
-                        return _metadata;
-                }
+                Metadata &metadata() { return _metadata; }
 
                 /**
                  * @brief Returns the number of image planes defined by the pixel format.
                  * @return The plane count.
                  */
-                int planeCount() const {
-                        return _pixelFormat.planeCount();
-                }
+                int planeCount() const { return _pixelFormat.planeCount(); }
 
                 /**
                  * @brief Returns a human-readable string representation of this image description.
@@ -331,7 +298,7 @@ class ImageDesc {
                  */
                 String toString() const {
                         String ret = _size.toString();
-                        if(_pixelFormat.isValid()) {
+                        if (_pixelFormat.isValid()) {
                                 ret += ' ';
                                 ret += _pixelFormat.name();
                         }
@@ -339,14 +306,11 @@ class ImageDesc {
                 }
 
                 /** @brief Implicit conversion to String via toString(). */
-                operator String() const {
-                        return toString();
-                }
+                operator String() const { return toString(); }
 
                 /** @brief Returns true if every member of both descriptors is equal. */
                 bool operator==(const ImageDesc &other) const {
-                        return formatEquals(other)
-                            && _metadata      == other._metadata;
+                        return formatEquals(other) && _metadata == other._metadata;
                 }
 
                 /** @brief Returns true if any member differs. */
@@ -367,20 +331,17 @@ class ImageDesc {
                  * @return true if every structural field matches.
                  */
                 bool formatEquals(const ImageDesc &other) const {
-                        return _size          == other._size
-                            && _linePad       == other._linePad
-                            && _lineAlign     == other._lineAlign
-                            && _videoScanMode == other._videoScanMode
-                            && _pixelFormat     == other._pixelFormat;
+                        return _size == other._size && _linePad == other._linePad && _lineAlign == other._lineAlign &&
+                               _videoScanMode == other._videoScanMode && _pixelFormat == other._pixelFormat;
                 }
 
         private:
-                Size2Du32               _size;
-                size_t                  _linePad = 0;
-                size_t                  _lineAlign = 1;
-                VideoScanMode           _videoScanMode = VideoScanMode::Unknown;
-                PixelFormat               _pixelFormat;
-                Metadata                _metadata;
+                Size2Du32     _size;
+                size_t        _linePad = 0;
+                size_t        _lineAlign = 1;
+                VideoScanMode _videoScanMode = VideoScanMode::Unknown;
+                PixelFormat   _pixelFormat;
+                Metadata      _metadata;
 };
 
 /**
@@ -408,14 +369,20 @@ inline DataStream &operator<<(DataStream &stream, const ImageDesc &desc) {
  * @return The stream, for chaining.
  */
 inline DataStream &operator>>(DataStream &stream, ImageDesc &desc) {
-        if(!stream.readTag(DataStream::TypeImageDesc)) { desc = ImageDesc(); return stream; }
-        Size2Du32 size;
+        if (!stream.readTag(DataStream::TypeImageDesc)) {
+                desc = ImageDesc();
+                return stream;
+        }
+        Size2Du32   size;
         PixelFormat pd;
-        uint64_t linePad = 0, lineAlign = 1;
-        uint32_t scanValue = 0;
-        Metadata meta;
+        uint64_t    linePad = 0, lineAlign = 1;
+        uint32_t    scanValue = 0;
+        Metadata    meta;
         stream >> size >> pd >> linePad >> lineAlign >> scanValue >> meta;
-        if(stream.status() != DataStream::Ok) { desc = ImageDesc(); return stream; }
+        if (stream.status() != DataStream::Ok) {
+                desc = ImageDesc();
+                return stream;
+        }
         desc = ImageDesc(size, pd);
         desc.setLinePad(static_cast<size_t>(linePad));
         desc.setLineAlign(static_cast<size_t>(lineAlign));

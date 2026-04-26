@@ -10,7 +10,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 String FrameNumber::toString() const {
-        if(isUnknown()) return String();
+        if (isUnknown()) return String();
         return String::number(_value);
 }
 
@@ -20,28 +20,27 @@ FrameNumber FrameNumber::fromString(const String &str, Error *err) {
         // reject negative values (the only negative state we keep is
         // the canonical Unknown, reached by the empty-string branch).
         String t = str.trim();
-        if(t.isEmpty()) {
-                if(err != nullptr) *err = Error::Ok;
+        if (t.isEmpty()) {
+                if (err != nullptr) *err = Error::Ok;
                 return FrameNumber::unknown();
         }
         String lc = t.toLower();
-        if(lc == "unknown" || lc == "unk" || lc == "?") {
-                if(err != nullptr) *err = Error::Ok;
+        if (lc == "unknown" || lc == "unk" || lc == "?") {
+                if (err != nullptr) *err = Error::Ok;
                 return FrameNumber::unknown();
         }
-        Error parseErr;
+        Error   parseErr;
         int64_t v = t.to<int64_t>(&parseErr);
-        if(parseErr.isError()) {
-                if(err != nullptr) *err = Error::ParseFailed;
+        if (parseErr.isError()) {
+                if (err != nullptr) *err = Error::ParseFailed;
                 return FrameNumber::unknown();
         }
-        if(v < 0) {
-                if(err != nullptr) *err = Error::OutOfRange;
+        if (v < 0) {
+                if (err != nullptr) *err = Error::OutOfRange;
                 return FrameNumber::unknown();
         }
-        if(err != nullptr) *err = Error::Ok;
+        if (err != nullptr) *err = Error::Ok;
         return FrameNumber(v);
 }
 
 PROMEKI_NAMESPACE_END
-

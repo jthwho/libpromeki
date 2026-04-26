@@ -54,16 +54,14 @@ class WaitCondition {
                  */
                 Error wait(Mutex &mutex, unsigned int timeoutMs = 0) {
                         std::unique_lock<std::mutex> lock(mutex._mutex, std::adopt_lock);
-                        if(timeoutMs == 0) {
+                        if (timeoutMs == 0) {
                                 _cv.wait(lock);
                                 lock.release();
                                 return Error::Ok;
                         }
-                        std::cv_status status = _cv.wait_for(lock,
-                                std::chrono::milliseconds(timeoutMs));
+                        std::cv_status status = _cv.wait_for(lock, std::chrono::milliseconds(timeoutMs));
                         lock.release();
-                        return status == std::cv_status::no_timeout
-                                ? Error::Ok : Error::Timeout;
+                        return status == std::cv_status::no_timeout ? Error::Ok : Error::Timeout;
                 }
 
                 /**
@@ -80,30 +78,24 @@ class WaitCondition {
                  * @return Error::Ok if the predicate became true,
                  *         Error::Timeout if the timeout elapsed.
                  */
-                template <typename Predicate,
-                          typename = std::enable_if_t<std::is_invocable_r_v<bool, Predicate>>>
+                template <typename Predicate, typename = std::enable_if_t<std::is_invocable_r_v<bool, Predicate>>>
                 Error wait(Mutex &mutex, Predicate pred, unsigned int timeoutMs = 0) {
                         std::unique_lock<std::mutex> lock(mutex._mutex, std::adopt_lock);
-                        if(timeoutMs == 0) {
+                        if (timeoutMs == 0) {
                                 _cv.wait(lock, pred);
                                 lock.release();
                                 return Error::Ok;
                         }
-                        bool result = _cv.wait_for(lock,
-                                std::chrono::milliseconds(timeoutMs), pred);
+                        bool result = _cv.wait_for(lock, std::chrono::milliseconds(timeoutMs), pred);
                         lock.release();
                         return result ? Error::Ok : Error::Timeout;
                 }
 
                 /** @brief Wakes one waiting thread. */
-                void wakeOne() {
-                        _cv.notify_one();
-                }
+                void wakeOne() { _cv.notify_one(); }
 
                 /** @brief Wakes all waiting threads. */
-                void wakeAll() {
-                        _cv.notify_all();
-                }
+                void wakeAll() { _cv.notify_all(); }
 
         private:
                 std::condition_variable _cv;

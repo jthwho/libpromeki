@@ -30,8 +30,8 @@ void HttpResponse::setBody(const Buffer &body) {
 
 void HttpResponse::setBody(const String &text) {
         const size_t n = text.byteCount();
-        Buffer b(n);
-        if(n > 0) {
+        Buffer       b(n);
+        if (n > 0) {
                 std::memcpy(b.data(), text.cstr(), n);
                 b.setSize(n);
         }
@@ -52,7 +52,7 @@ void HttpResponse::setHtml(const String &html) {
 
 void HttpResponse::setBinary(const Buffer &body, const String &mimeType) {
         setBody(body);
-        if(!mimeType.isEmpty()) _headers.set("Content-Type", mimeType);
+        if (!mimeType.isEmpty()) _headers.set("Content-Type", mimeType);
 }
 
 void HttpResponse::setJson(const JsonObject &obj) {
@@ -75,16 +75,14 @@ void HttpResponse::setJsonPretty(const JsonArray &arr, unsigned int indent) {
         _headers.set("Content-Type", "application/json");
 }
 
-void HttpResponse::setBodyStream(IODevice::Shared device,
-                                 int64_t length,
-                                 const String &mimeType) {
+void HttpResponse::setBodyStream(IODevice::Shared device, int64_t length, const String &mimeType) {
         // Streamed body supersedes the in-memory body — clear it so
         // accidental setBody followed by setBodyStream still does what
         // the caller almost certainly meant.
         _body = Buffer{};
         _bodyStream = std::move(device);
         _bodyStreamLength = length;
-        if(!mimeType.isEmpty()) _headers.set("Content-Type", mimeType);
+        if (!mimeType.isEmpty()) _headers.set("Content-Type", mimeType);
 }
 
 // ============================================================
@@ -122,7 +120,7 @@ HttpResponse HttpResponse::badRequest(const String &message) {
 HttpResponse HttpResponse::methodNotAllowed(const String &allow) {
         HttpResponse r;
         r.setStatus(HttpStatus::MethodNotAllowed);
-        if(!allow.isEmpty()) r.setHeader("Allow", allow);
+        if (!allow.isEmpty()) r.setHeader("Allow", allow);
         r.setText(r.status().reasonPhrase());
         return r;
 }

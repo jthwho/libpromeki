@@ -53,10 +53,8 @@ class DateTime {
                 using Value = std::chrono::system_clock::time_point;
 
                 /** @brief Returns a DateTime representing the current wall-clock time. */
-                static DateTime now() {
-                        return DateTime(std::chrono::system_clock::now());
-                }
-                
+                static DateTime now() { return DateTime(std::chrono::system_clock::now()); }
+
                 /**
                  * @brief Parses a DateTime from a formatted string.
                  * @param str The date/time string to parse.
@@ -68,11 +66,11 @@ class DateTime {
                         std::tm tm = {};
                         tm.tm_isdst = -1;
                         const char *result = strptime(str.cstr(), fmt, &tm);
-                        if(result == nullptr) {
-                                if(err != nullptr) *err = Error::Invalid;
+                        if (result == nullptr) {
+                                if (err != nullptr) *err = Error::Invalid;
                                 return DateTime();
                         }
-                        if(err != nullptr) *err = Error::Ok;
+                        if (err != nullptr) *err = Error::Ok;
                         return DateTime(tm);
                 }
 
@@ -92,25 +90,25 @@ class DateTime {
                 static String strftime(const std::tm &tm, const char *format = DefaultFormat);
 
                 /** @brief Default constructor. The resulting time point is epoch (uninitialized). */
-                DateTime() { }
+                DateTime() {}
 
                 /**
                  * @brief Constructs a DateTime from a system_clock time point.
                  * @param val The time point value.
                  */
-                DateTime(const Value &val) : _value(val) { }
+                DateTime(const Value &val) : _value(val) {}
 
                 /**
                  * @brief Constructs a DateTime from a broken-down std::tm value.
                  * @param val The calendar time to convert.
                  */
-                DateTime(std::tm val) : _value(std::chrono::system_clock::from_time_t(std::mktime(&val))) { }
+                DateTime(std::tm val) : _value(std::chrono::system_clock::from_time_t(std::mktime(&val))) {}
 
                 /**
                  * @brief Constructs a DateTime from a time_t value.
                  * @param val The POSIX time value.
                  */
-                DateTime(time_t val) : _value(std::chrono::system_clock::from_time_t(val)) { }
+                DateTime(time_t val) : _value(std::chrono::system_clock::from_time_t(val)) {}
 
                 /**
                  * @brief Returns the time elapsed from @p other to this DateTime.
@@ -124,8 +122,7 @@ class DateTime {
                  */
                 Duration operator-(const DateTime &other) const {
                         return Duration::fromNanoseconds(
-                                std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                        _value - other._value).count());
+                                std::chrono::duration_cast<std::chrono::nanoseconds>(_value - other._value).count());
                 }
 
                 /**
@@ -173,7 +170,7 @@ class DateTime {
                  */
                 DateTime operator+(double seconds) const {
                         return DateTime(_value + std::chrono::duration_cast<std::chrono::system_clock::duration>(
-                                        std::chrono::duration<double>(seconds)));
+                                                         std::chrono::duration<double>(seconds)));
                 }
 
                 /**
@@ -183,7 +180,7 @@ class DateTime {
                  */
                 DateTime operator-(double seconds) const {
                         return DateTime(_value - std::chrono::duration_cast<std::chrono::system_clock::duration>(
-                                        std::chrono::duration<double>(seconds)));
+                                                         std::chrono::duration<double>(seconds)));
                 }
 
                 /**
@@ -193,7 +190,7 @@ class DateTime {
                  */
                 DateTime &operator+=(double seconds) {
                         _value += std::chrono::duration_cast<std::chrono::system_clock::duration>(
-                                        std::chrono::duration<double>(seconds));
+                                std::chrono::duration<double>(seconds));
                         return *this;
                 }
 
@@ -202,41 +199,29 @@ class DateTime {
                  * @param seconds Number of seconds to subtract.
                  * @return Reference to this DateTime.
                  */
-                DateTime& operator-=(double seconds) {
+                DateTime &operator-=(double seconds) {
                         _value -= std::chrono::duration_cast<std::chrono::system_clock::duration>(
-                                        std::chrono::duration<double>(seconds));
+                                std::chrono::duration<double>(seconds));
                         return *this;
                 }
 
                 /** @brief Returns true if both DateTimes represent the same time point. */
-                bool operator==(const DateTime &other) const {
-                        return _value == other._value;
-                }
+                bool operator==(const DateTime &other) const { return _value == other._value; }
 
                 /** @brief Returns true if the DateTimes represent different time points. */
-                bool operator!=(const DateTime &other) const {
-                        return _value != other._value;
-                }
+                bool operator!=(const DateTime &other) const { return _value != other._value; }
 
                 /** @brief Returns true if this DateTime is earlier than @p other. */
-                bool operator<(const DateTime &other) const {
-                        return _value < other._value;
-                }
+                bool operator<(const DateTime &other) const { return _value < other._value; }
 
                 /** @brief Returns true if this DateTime is earlier than or equal to @p other. */
-                bool operator<=(const DateTime &other) const {
-                        return _value <= other._value;
-                }
+                bool operator<=(const DateTime &other) const { return _value <= other._value; }
 
                 /** @brief Returns true if this DateTime is later than @p other. */
-                bool operator>(const DateTime &other) const {
-                        return _value > other._value;
-                }
+                bool operator>(const DateTime &other) const { return _value > other._value; }
 
                 /** @brief Returns true if this DateTime is later than or equal to @p other. */
-                bool operator>=(const DateTime& other) const {
-                        return _value >= other._value;
-                }
+                bool operator>=(const DateTime &other) const { return _value >= other._value; }
 
                 /**
                  * @brief Formats the DateTime as a string.
@@ -246,41 +231,34 @@ class DateTime {
                 String toString(const char *format = DefaultFormat) const;
 
                 /** @brief Implicit conversion to String via toString(). */
-                operator String() const {
-                        return toString();
-                }
+                operator String() const { return toString(); }
 
                 /**
                  * @brief Converts the DateTime to a POSIX time_t value.
                  * @return The time as seconds since the Unix epoch.
                  */
-                time_t toTimeT() const {
-                        return std::chrono::system_clock::to_time_t(_value);
-                }
+                time_t toTimeT() const { return std::chrono::system_clock::to_time_t(_value); }
 
                 /**
                  * @brief Converts the DateTime to a floating-point seconds value.
                  * @return Seconds since the Unix epoch as a double.
                  */
                 double toDouble() const {
-                        return std::chrono::duration_cast<std::chrono::duration<double>>(
-                                _value.time_since_epoch()).count();
+                        return std::chrono::duration_cast<std::chrono::duration<double>>(_value.time_since_epoch())
+                                .count();
                 }
 
                 /**
                  * @brief Returns the underlying system_clock time point.
                  * @return The stored time point value.
                  */
-                Value value() const {
-                        return _value;
-                }
+                Value value() const { return _value; }
 
         private:
-                Value   _value;
+                Value _value;
 };
 
 
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::DateTime);
-

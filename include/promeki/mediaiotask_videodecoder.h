@@ -104,13 +104,11 @@ class MediaIOTask_VideoDecoder : public MediaIOTask {
                 Error executeCmd(MediaIOCommandRead &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
-                int pendingOutput() const override;
+                int   pendingOutput() const override;
 
                 Error describe(MediaIODescription *out) const override;
-                Error proposeInput(const MediaDesc &offered,
-                                   MediaDesc *preferred) const override;
-                Error proposeOutput(const MediaDesc &requested,
-                                    MediaDesc *achievable) const override;
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
+                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const override;
 
                 // Drains every currently-available image out of the
                 // underlying decoder and pushes one Frame per image
@@ -120,17 +118,17 @@ class MediaIOTask_VideoDecoder : public MediaIOTask {
                 // metadata travel with the right input even across
                 // the DPB / reorder buffering delay every H.264 /
                 // HEVC decoder has on startup.
-                void configChanged(const MediaConfig &delta) override;
-                void drainDecoderInto();
+                void  configChanged(const MediaConfig &delta) override;
+                void  drainDecoderInto();
                 Error createDecoder(const VideoCodec &codec);
 
-                MediaConfig           _config;
-                VideoCodec            _codec;
-                VideoDecoder::UPtr    _decoder;
-                PixelFormat             _outputPixelFormat;
-                bool                  _outputPixelFormatSet = false;
-                int                   _capacity = 8;
-                List<Frame::Ptr>      _outputQueue;
+                MediaConfig        _config;
+                VideoCodec         _codec;
+                VideoDecoder::UPtr _decoder;
+                PixelFormat        _outputPixelFormat;
+                bool               _outputPixelFormatSet = false;
+                int                _capacity = 8;
+                List<Frame::Ptr>   _outputQueue;
 
                 // FIFO of source Frames awaiting a decoded image.  One
                 // entry is pushed per packet handed to @c submitPacket
@@ -139,13 +137,13 @@ class MediaIOTask_VideoDecoder : public MediaIOTask {
                 // buffer are stamped with the wrong input Frame's
                 // metadata, which shows up as off-by-N timecode /
                 // audio after an encode/decode round trip.
-                List<Frame::Ptr>      _pendingSrcFrames;
-                FrameCount            _frameCount{0};
-                int64_t               _readCount = 0;
-                int64_t               _packetsDecoded = 0;
-                int64_t               _imagesOut = 0;
-                bool                  _capacityWarned = false;
-                bool                  _closed = false;
+                List<Frame::Ptr> _pendingSrcFrames;
+                FrameCount       _frameCount{0};
+                int64_t          _readCount = 0;
+                int64_t          _packetsDecoded = 0;
+                int64_t          _imagesOut = 0;
+                bool             _capacityWarned = false;
+                bool             _closed = false;
 };
 
 PROMEKI_NAMESPACE_END

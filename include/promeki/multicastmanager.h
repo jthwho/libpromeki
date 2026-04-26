@@ -50,7 +50,7 @@ class UdpSocket;
  * @endcode
  */
 class MulticastManager : public ObjectBase {
-        PROMEKI_OBJECT(MulticastManager, ObjectBase)
+                PROMEKI_OBJECT(MulticastManager, ObjectBase)
         public:
                 /**
                  * @brief Constructs a MulticastManager.
@@ -76,8 +76,7 @@ class MulticastManager : public ObjectBase {
                  * @param iface The network interface name (e.g. "eth0").
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error joinGroup(const SocketAddress &group, UdpSocket *socket,
-                                const String &iface);
+                Error joinGroup(const SocketAddress &group, UdpSocket *socket, const String &iface);
 
                 /**
                  * @brief Leaves a multicast group on a socket.
@@ -111,9 +110,7 @@ class MulticastManager : public ObjectBase {
                  * @param socket The UDP socket.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error joinSourceGroup(const SocketAddress &group,
-                                      const SocketAddress &source,
-                                      UdpSocket *socket);
+                Error joinSourceGroup(const SocketAddress &group, const SocketAddress &source, UdpSocket *socket);
 
                 /**
                  * @brief Leaves a Source-Specific Multicast group.
@@ -122,9 +119,7 @@ class MulticastManager : public ObjectBase {
                  * @param socket The UDP socket.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error leaveSourceGroup(const SocketAddress &group,
-                                       const SocketAddress &source,
-                                       UdpSocket *socket);
+                Error leaveSourceGroup(const SocketAddress &group, const SocketAddress &source, UdpSocket *socket);
 
                 /**
                  * @brief Sets the default network interface for joins.
@@ -147,10 +142,10 @@ class MulticastManager : public ObjectBase {
 
         private:
                 struct Membership {
-                        SocketAddress   group;
-                        UdpSocket      *socket;
-                        SocketAddress   source; // For SSM, null otherwise
-                        bool            isSSM = false;
+                                SocketAddress group;
+                                UdpSocket    *socket;
+                                SocketAddress source; // For SSM, null otherwise
+                                bool          isSSM = false;
                 };
 
                 List<Membership> _memberships;

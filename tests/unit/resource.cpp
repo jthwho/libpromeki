@@ -23,8 +23,7 @@ using namespace promeki;
 // path is the canonical "is the resource set wired up at all" probe
 // — if these tests don't see the bytes, the cirf integration is
 // broken end-to-end.
-static const String kFontPath =
-        ":/.PROMEKI/fonts/FiraCodeNerdFontMono-Regular.ttf";
+static const String kFontPath = ":/.PROMEKI/fonts/FiraCodeNerdFontMono-Regular.ttf";
 static const String kFontDir = ":/.PROMEKI/fonts";
 
 // ============================================================================
@@ -80,7 +79,7 @@ TEST_CASE("Resource: nonexistent paths return nothing") {
 }
 
 TEST_CASE("Resource: data() returns a non-owning Buffer view") {
-        Error err;
+        Error  err;
         Buffer buf = Resource::data(kFontPath, &err);
         REQUIRE(err == Error(Error::Ok));
         REQUIRE(buf.isValid());
@@ -93,7 +92,7 @@ TEST_CASE("Resource: data() returns a non-owning Buffer view") {
 }
 
 TEST_CASE("Resource: data() reports NotExist for missing paths") {
-        Error err;
+        Error  err;
         Buffer buf = Resource::data(":/.PROMEKI/missing.bin", &err);
         CHECK(err == Error(Error::NotExist));
         CHECK_FALSE(buf.isValid());
@@ -112,34 +111,34 @@ TEST_CASE("Resource: mime() returns a non-empty type for known files") {
 // ============================================================================
 
 TEST_CASE("Resource: listFiles returns expected entries") {
-        Error err;
+        Error          err;
         List<FilePath> files = Resource::listFiles(kFontDir, &err);
         CHECK(err == Error(Error::Ok));
 
         bool sawFont = false;
-        for(const FilePath &fp : files) {
-                if(fp.toString() == kFontPath) sawFont = true;
+        for (const FilePath &fp : files) {
+                if (fp.toString() == kFontPath) sawFont = true;
         }
         CHECK(sawFont);
 }
 
 TEST_CASE("Resource: listFolders is empty inside fonts dir") {
         // .PROMEKI/fonts only contains files, no subdirectories.
-        Error err;
+        Error          err;
         List<FilePath> folders = Resource::listFolders(kFontDir, &err);
         CHECK(err == Error(Error::Ok));
         CHECK(folders.size() == 0);
 }
 
 TEST_CASE("Resource: listEntries lists the files in the fonts dir") {
-        Error err;
+        Error          err;
         List<FilePath> all = Resource::listEntries(kFontDir, &err);
         CHECK(err == Error(Error::Ok));
         CHECK(all.size() >= 1);
 }
 
 TEST_CASE("Resource: list functions on missing path set NotExist") {
-        Error err;
+        Error          err;
         List<FilePath> files = Resource::listFiles(":/.PROMEKI/nope", &err);
         CHECK(err == Error(Error::NotExist));
         CHECK(files.size() == 0);
@@ -213,7 +212,7 @@ TEST_CASE("File: write() to a read-open resource fails") {
         File f(kFontPath);
         REQUIRE(f.open(File::ReadOnly) == Error(Error::Ok));
         const char buf[] = "abcd";
-        int64_t n = f.write(buf, 4);
+        int64_t    n = f.write(buf, 4);
         CHECK(n == -1);
 }
 
@@ -232,7 +231,7 @@ TEST_CASE("File: seek + pos on a resource path") {
 
         // Reading after a partial seek returns the tail.
         REQUIRE(f.seek(sz - 4) == Error(Error::Ok));
-        char buf[16] = {};
+        char    buf[16] = {};
         int64_t n = f.read(buf, sizeof(buf));
         CHECK(n == 4);
         CHECK(f.atEnd());
@@ -262,8 +261,8 @@ TEST_CASE("Dir: existing resource directory") {
         List<FilePath> ttfs = d.entryList("*.ttf");
         REQUIRE(ttfs.size() >= 1);
         bool sawFont = false;
-        for(const FilePath &fp : ttfs) {
-                if(fp.toString() == kFontPath) sawFont = true;
+        for (const FilePath &fp : ttfs) {
+                if (fp.toString() == kFontPath) sawFont = true;
         }
         CHECK(sawFont);
         // Sanity: a filter that cannot match anything returns empty.

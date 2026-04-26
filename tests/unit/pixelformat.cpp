@@ -126,34 +126,32 @@ TEST_CASE("PixelFormat: JPEG YCbCr complement — matrix × range grid") {
         // Rec.601 _Full variants.
 
         struct Case {
-                PixelFormat::ID id;
-                bool          limitedRange;
-                bool          rec709;
-                bool          is420;
+                        PixelFormat::ID id;
+                        bool            limitedRange;
+                        bool            rec709;
+                        bool            is420;
         };
         const Case cases[] = {
                 // Limited-range entries.
-                { PixelFormat::JPEG_YUV8_422_Rec709,       true,  true,  false },
-                { PixelFormat::JPEG_YUV8_420_Rec709,       true,  true,  true  },
-                { PixelFormat::JPEG_YUV8_422_Rec601,       true,  false, false },
-                { PixelFormat::JPEG_YUV8_420_Rec601,       true,  false, true  },
+                {PixelFormat::JPEG_YUV8_422_Rec709, true, true, false},
+                {PixelFormat::JPEG_YUV8_420_Rec709, true, true, true},
+                {PixelFormat::JPEG_YUV8_422_Rec601, true, false, false},
+                {PixelFormat::JPEG_YUV8_420_Rec601, true, false, true},
                 // Full-range entries.
-                { PixelFormat::JPEG_YUV8_422_Rec709_Full,  false, true,  false },
-                { PixelFormat::JPEG_YUV8_420_Rec709_Full,  false, true,  true  },
-                { PixelFormat::JPEG_YUV8_422_Rec601_Full,  false, false, false },
-                { PixelFormat::JPEG_YUV8_420_Rec601_Full,  false, false, true  },
+                {PixelFormat::JPEG_YUV8_422_Rec709_Full, false, true, false},
+                {PixelFormat::JPEG_YUV8_420_Rec709_Full, false, true, true},
+                {PixelFormat::JPEG_YUV8_422_Rec601_Full, false, false, false},
+                {PixelFormat::JPEG_YUV8_420_Rec601_Full, false, false, true},
         };
-        for(const auto &c : cases) {
+        for (const auto &c : cases) {
                 PixelFormat pd(c.id);
                 CAPTURE(pd.name());
                 REQUIRE(pd.isValid());
                 CHECK(pd.isCompressed());
                 CHECK(pd.videoCodec().id() == VideoCodec::JPEG);
-                const ColorModel::ID expectedModel = c.rec709
-                        ? ColorModel::YCbCr_Rec709
-                        : ColorModel::YCbCr_Rec601;
+                const ColorModel::ID expectedModel = c.rec709 ? ColorModel::YCbCr_Rec709 : ColorModel::YCbCr_Rec601;
                 CHECK(pd.colorModel().id() == expectedModel);
-                if(c.limitedRange) {
+                if (c.limitedRange) {
                         CHECK(pd.compSemantic(0).rangeMin == 16);
                         CHECK(pd.compSemantic(0).rangeMax == 235);
                         CHECK(pd.compSemantic(1).rangeMin == 16);
@@ -212,7 +210,7 @@ TEST_CASE("PixelFormat: full-range uncompressed YCbCr intermediates") {
                 PixelFormat::YUV8_420_Planar_Rec709_Full,
                 PixelFormat::YUV8_420_Planar_Rec601_Full,
         };
-        for(PixelFormat::ID id : ids) {
+        for (PixelFormat::ID id : ids) {
                 PixelFormat pd(id);
                 CAPTURE(pd.name());
                 REQUIRE(pd.isValid());
@@ -258,17 +256,15 @@ TEST_CASE("PixelFormat: ProRes 422 family has correct FourCCs") {
         // lists the FourCC + the matching VideoCodec ID per variant
         // and we verify each one resolves through PixelFormat::videoCodec().
         struct Entry {
-                PixelFormat::ID  pdId;
-                const char    *fourcc;
-                VideoCodec::ID vc;
+                        PixelFormat::ID pdId;
+                        const char     *fourcc;
+                        VideoCodec::ID  vc;
         };
-        Entry entries[] = {
-                { PixelFormat::ProRes_422_Proxy, "apco", VideoCodec::ProRes_422_Proxy },
-                { PixelFormat::ProRes_422_LT,    "apcs", VideoCodec::ProRes_422_LT    },
-                { PixelFormat::ProRes_422,       "apcn", VideoCodec::ProRes_422       },
-                { PixelFormat::ProRes_422_HQ,    "apch", VideoCodec::ProRes_422_HQ    }
-        };
-        for(const auto &e : entries) {
+        Entry entries[] = {{PixelFormat::ProRes_422_Proxy, "apco", VideoCodec::ProRes_422_Proxy},
+                           {PixelFormat::ProRes_422_LT, "apcs", VideoCodec::ProRes_422_LT},
+                           {PixelFormat::ProRes_422, "apcn", VideoCodec::ProRes_422},
+                           {PixelFormat::ProRes_422_HQ, "apch", VideoCodec::ProRes_422_HQ}};
+        for (const auto &e : entries) {
                 PixelFormat pd(e.pdId);
                 CHECK(pd.isValid());
                 CHECK(pd.isCompressed());
@@ -305,12 +301,9 @@ TEST_CASE("PixelFormat: ProRes 4444 XQ has alpha and 12-bit") {
 }
 
 TEST_CASE("PixelFormat: new codec entries are each uniquely lookupable by name") {
-        const char *names[] = {
-                "H264", "HEVC",
-                "ProRes_422_Proxy", "ProRes_422_LT", "ProRes_422", "ProRes_422_HQ",
-                "ProRes_4444", "ProRes_4444_XQ"
-        };
-        for(const char *name : names) {
+        const char *names[] = {"H264",       "HEVC",          "ProRes_422_Proxy", "ProRes_422_LT",
+                               "ProRes_422", "ProRes_422_HQ", "ProRes_4444",      "ProRes_4444_XQ"};
+        for (const char *name : names) {
                 PixelFormat pd = PixelFormat::lookup(name);
                 CHECK(pd.isValid());
                 CHECK(pd.name() == name);
@@ -322,7 +315,7 @@ TEST_CASE("PixelFormat: new codec entries are each uniquely lookupable by name")
 // ============================================================================
 
 TEST_CASE("PixelFormat: RGBA8 lineStride via ImageDesc") {
-        ImageDesc desc(1920, 1080, PixelFormat::RGBA8_sRGB);
+        ImageDesc   desc(1920, 1080, PixelFormat::RGBA8_sRGB);
         PixelFormat pd(PixelFormat::RGBA8_sRGB);
         CHECK(pd.lineStride(0, desc) == 1920 * 4);
 }
@@ -484,7 +477,7 @@ TEST_CASE("PixelFormat: registeredIDs includes all formats") {
 
 TEST_CASE("PixelFormat: all registered descs have valid properties") {
         auto ids = PixelFormat::registeredIDs();
-        for(auto id : ids) {
+        for (auto id : ids) {
                 PixelFormat pd(id);
                 CHECK(pd.isValid());
                 CHECK_FALSE(pd.name().isEmpty());
@@ -823,30 +816,36 @@ TEST_CASE("PixelFormat: JPEG XS YCbCr entries have correct encode/decode targets
         // source (the matching planar uncompressed format) and at
         // least one decode target.
         struct Case {
-                PixelFormat::ID jpegXs;
-                PixelFormat::ID uncompressed;
+                        PixelFormat::ID jpegXs;
+                        PixelFormat::ID uncompressed;
         };
         const Case cases[] = {
-                { PixelFormat::JPEG_XS_YUV8_422_Rec709,  PixelFormat::YUV8_422_Planar_Rec709 },
-                { PixelFormat::JPEG_XS_YUV10_422_Rec709, PixelFormat::YUV10_422_Planar_LE_Rec709 },
-                { PixelFormat::JPEG_XS_YUV12_422_Rec709, PixelFormat::YUV12_422_Planar_LE_Rec709 },
-                { PixelFormat::JPEG_XS_YUV8_420_Rec709,  PixelFormat::YUV8_420_Planar_Rec709 },
-                { PixelFormat::JPEG_XS_YUV10_420_Rec709, PixelFormat::YUV10_420_Planar_LE_Rec709 },
-                { PixelFormat::JPEG_XS_YUV12_420_Rec709, PixelFormat::YUV12_420_Planar_LE_Rec709 },
+                {PixelFormat::JPEG_XS_YUV8_422_Rec709, PixelFormat::YUV8_422_Planar_Rec709},
+                {PixelFormat::JPEG_XS_YUV10_422_Rec709, PixelFormat::YUV10_422_Planar_LE_Rec709},
+                {PixelFormat::JPEG_XS_YUV12_422_Rec709, PixelFormat::YUV12_422_Planar_LE_Rec709},
+                {PixelFormat::JPEG_XS_YUV8_420_Rec709, PixelFormat::YUV8_420_Planar_Rec709},
+                {PixelFormat::JPEG_XS_YUV10_420_Rec709, PixelFormat::YUV10_420_Planar_LE_Rec709},
+                {PixelFormat::JPEG_XS_YUV12_420_Rec709, PixelFormat::YUV12_420_Planar_LE_Rec709},
         };
-        for(const auto &c : cases) {
+        for (const auto &c : cases) {
                 PixelFormat pd(c.jpegXs);
                 REQUIRE(pd.isValid());
                 // Encode source must include the uncompressed match.
                 bool foundSource = false;
-                for(const auto &src : pd.encodeSources()) {
-                        if(src == c.uncompressed) { foundSource = true; break; }
+                for (const auto &src : pd.encodeSources()) {
+                        if (src == c.uncompressed) {
+                                foundSource = true;
+                                break;
+                        }
                 }
                 CHECK_MESSAGE(foundSource, "encode source missing for ", (int)c.jpegXs);
                 // Decode target must include the uncompressed match.
                 bool foundTarget = false;
-                for(const auto &tgt : pd.decodeTargets()) {
-                        if(tgt == c.uncompressed) { foundTarget = true; break; }
+                for (const auto &tgt : pd.decodeTargets()) {
+                        if (tgt == c.uncompressed) {
+                                foundTarget = true;
+                                break;
+                        }
                 }
                 CHECK_MESSAGE(foundTarget, "decode target missing for ", (int)c.jpegXs);
         }
@@ -856,13 +855,19 @@ TEST_CASE("PixelFormat: JPEG_XS_RGB8_sRGB encode/decode targets") {
         PixelFormat pd(PixelFormat::JPEG_XS_RGB8_sRGB);
         REQUIRE(pd.isValid());
         bool foundPlanar = false;
-        for(const auto &src : pd.encodeSources()) {
-                if(src == PixelFormat::RGB8_Planar_sRGB) { foundPlanar = true; break; }
+        for (const auto &src : pd.encodeSources()) {
+                if (src == PixelFormat::RGB8_Planar_sRGB) {
+                        foundPlanar = true;
+                        break;
+                }
         }
         CHECK(foundPlanar);
         bool foundTarget = false;
-        for(const auto &tgt : pd.decodeTargets()) {
-                if(tgt == PixelFormat::RGB8_Planar_sRGB) { foundTarget = true; break; }
+        for (const auto &tgt : pd.decodeTargets()) {
+                if (tgt == PixelFormat::RGB8_Planar_sRGB) {
+                        foundTarget = true;
+                        break;
+                }
         }
         CHECK(foundTarget);
 }
@@ -872,8 +877,11 @@ TEST_CASE("PixelFormat: JPEG XS fourcc is jxsm") {
         PixelFormat pd(PixelFormat::JPEG_XS_YUV10_422_Rec709);
         REQUIRE(pd.isValid());
         bool foundFourcc = false;
-        for(const auto &cc : pd.fourccList()) {
-                if(cc == "jxsm") { foundFourcc = true; break; }
+        for (const auto &cc : pd.fourccList()) {
+                if (cc == "jxsm") {
+                        foundFourcc = true;
+                        break;
+                }
         }
         CHECK(foundFourcc);
 }
@@ -883,23 +891,21 @@ TEST_CASE("PixelFormat: JPEG XS string name round-trip via registeredIDs") {
         // and must have non-empty string names that start with
         // "JPEG_XS_".
         const PixelFormat::ID jxsIds[] = {
-                PixelFormat::JPEG_XS_YUV8_422_Rec709,
-                PixelFormat::JPEG_XS_YUV10_422_Rec709,
-                PixelFormat::JPEG_XS_YUV12_422_Rec709,
-                PixelFormat::JPEG_XS_YUV8_420_Rec709,
-                PixelFormat::JPEG_XS_YUV10_420_Rec709,
-                PixelFormat::JPEG_XS_YUV12_420_Rec709,
+                PixelFormat::JPEG_XS_YUV8_422_Rec709,  PixelFormat::JPEG_XS_YUV10_422_Rec709,
+                PixelFormat::JPEG_XS_YUV12_422_Rec709, PixelFormat::JPEG_XS_YUV8_420_Rec709,
+                PixelFormat::JPEG_XS_YUV10_420_Rec709, PixelFormat::JPEG_XS_YUV12_420_Rec709,
                 PixelFormat::JPEG_XS_RGB8_sRGB,
         };
         auto allIds = PixelFormat::registeredIDs();
-        for(PixelFormat::ID id : jxsIds) {
+        for (PixelFormat::ID id : jxsIds) {
                 bool foundInRegistry = false;
-                for(const auto &regId : allIds) {
-                        if(regId == id) { foundInRegistry = true; break; }
+                for (const auto &regId : allIds) {
+                        if (regId == id) {
+                                foundInRegistry = true;
+                                break;
+                        }
                 }
-                CHECK_MESSAGE(foundInRegistry,
-                              "JPEG XS ID ", (int)id,
-                              " not in registeredIDs");
+                CHECK_MESSAGE(foundInRegistry, "JPEG XS ID ", (int)id, " not in registeredIDs");
                 PixelFormat pd(id);
                 REQUIRE(pd.isValid());
                 CHECK(pd.name().startsWith("JPEG_XS_"));
@@ -984,7 +990,7 @@ TEST_CASE("PixelFormat: encodeSources/decodeTargets empty for uncompressed forma
 // ============================================================================
 
 TEST_CASE("PixelFormat: lineStride returns 0 for compressed formats") {
-        ImageDesc desc(1920, 1080, PixelFormat::JPEG_RGB8_sRGB);
+        ImageDesc   desc(1920, 1080, PixelFormat::JPEG_RGB8_sRGB);
         PixelFormat pd(PixelFormat::JPEG_RGB8_sRGB);
         CHECK(pd.lineStride(0, desc) == 0);
 }
@@ -993,13 +999,13 @@ TEST_CASE("PixelFormat: planeSize returns 0 for compressed without CompressedSiz
         // planeSize on a compressed format without Metadata::CompressedSize
         // must return 0 — callers are expected to set that metadata before
         // asking.
-        ImageDesc desc(1920, 1080, PixelFormat::JPEG_RGB8_sRGB);
+        ImageDesc   desc(1920, 1080, PixelFormat::JPEG_RGB8_sRGB);
         PixelFormat pd(PixelFormat::JPEG_RGB8_sRGB);
         CHECK(pd.planeSize(0, desc) == 0);
 }
 
 TEST_CASE("PixelFormat: planeSize non-compressed delegates to memLayout") {
-        ImageDesc desc(1920, 1080, PixelFormat::RGBA8_sRGB);
+        ImageDesc   desc(1920, 1080, PixelFormat::RGBA8_sRGB);
         PixelFormat pd(PixelFormat::RGBA8_sRGB);
         CHECK(pd.planeSize(0, desc) == 1920 * 1080 * 4);
 }
@@ -1009,13 +1015,13 @@ TEST_CASE("PixelFormat: lineStride respects ImageDesc linePad/lineAlign") {
         desc.setLinePad(8);
         desc.setLineAlign(64);
         PixelFormat pd(PixelFormat::RGBA8_sRGB);
-        size_t stride = pd.lineStride(0, desc);
+        size_t      stride = pd.lineStride(0, desc);
         CHECK(stride % 64 == 0);
         CHECK(stride >= 1920 * 4 + 8);
 }
 
 TEST_CASE("PixelFormat: planar YUV planeSize matches memLayout expectations") {
-        ImageDesc desc(1920, 1080, PixelFormat::YUV8_420_Planar_Rec709);
+        ImageDesc   desc(1920, 1080, PixelFormat::YUV8_420_Planar_Rec709);
         PixelFormat pd(PixelFormat::YUV8_420_Planar_Rec709);
         CHECK(pd.planeSize(0, desc) == 1920 * 1080);
         CHECK(pd.planeSize(1, desc) == 960 * 540);
@@ -1050,13 +1056,13 @@ TEST_CASE("PixelFormat: videoRange via registerData — user-defined Unknown pat
         // A user format whose compSemantic[0].rangeMax is <= 0 leaves
         // videoRange as Unknown.  The auto-derive code returns Unknown
         // immediately for max == 0.
-        PixelFormat::ID id = PixelFormat::registerType();
+        PixelFormat::ID   id = PixelFormat::registerType();
         PixelFormat::Data d;
-        d.id             = id;
-        d.name           = "TestUserUnknownRange";
-        d.desc           = "User-registered format with empty semantics";
-        d.memLayout      = PixelMemLayout(PixelMemLayout::I_4x8);
-        d.colorModel     = ColorModel(ColorModel::sRGB);
+        d.id = id;
+        d.name = "TestUserUnknownRange";
+        d.desc = "User-registered format with empty semantics";
+        d.memLayout = PixelMemLayout(PixelMemLayout::I_4x8);
+        d.colorModel = ColorModel(ColorModel::sRGB);
         // compSemantics left default: rangeMin=0, rangeMax=0.
         PixelFormat::registerData(std::move(d));
         PixelFormat pd(id);
@@ -1068,17 +1074,17 @@ TEST_CASE("PixelFormat: videoRange via registerData — exotic range stays Unkno
         // A full-looking range with a non-standard maximum (e.g. 200) is
         // neither a full-range bit-depth maximum nor limited (min==0), so
         // auto-derive yields Unknown.
-        PixelFormat::ID id = PixelFormat::registerType();
+        PixelFormat::ID   id = PixelFormat::registerType();
         PixelFormat::Data d;
-        d.id             = id;
-        d.name           = "TestUserExoticRange";
-        d.desc           = "User-registered format with odd max";
-        d.memLayout      = PixelMemLayout(PixelMemLayout::I_4x8);
-        d.colorModel     = ColorModel(ColorModel::sRGB);
-        d.compSemantics[0] = { "Red",   "R", 0.0f, 200.0f };
-        d.compSemantics[1] = { "Green", "G", 0.0f, 200.0f };
-        d.compSemantics[2] = { "Blue",  "B", 0.0f, 200.0f };
-        d.compSemantics[3] = { "Alpha", "A", 0.0f, 200.0f };
+        d.id = id;
+        d.name = "TestUserExoticRange";
+        d.desc = "User-registered format with odd max";
+        d.memLayout = PixelMemLayout(PixelMemLayout::I_4x8);
+        d.colorModel = ColorModel(ColorModel::sRGB);
+        d.compSemantics[0] = {"Red", "R", 0.0f, 200.0f};
+        d.compSemantics[1] = {"Green", "G", 0.0f, 200.0f};
+        d.compSemantics[2] = {"Blue", "B", 0.0f, 200.0f};
+        d.compSemantics[3] = {"Alpha", "A", 0.0f, 200.0f};
         PixelFormat::registerData(std::move(d));
         PixelFormat pd(id);
         CHECK(pd.videoRange() == VideoRange::Unknown);
@@ -1087,16 +1093,16 @@ TEST_CASE("PixelFormat: videoRange via registerData — exotic range stays Unkno
 TEST_CASE("PixelFormat: videoRange via registerData — explicit value not overridden") {
         // Factories may pre-set Data::videoRange; auto-derive must not
         // overwrite a non-Unknown value.
-        PixelFormat::ID id = PixelFormat::registerType();
+        PixelFormat::ID   id = PixelFormat::registerType();
         PixelFormat::Data d;
-        d.id             = id;
-        d.name           = "TestUserExplicitFull";
-        d.memLayout      = PixelMemLayout(PixelMemLayout::I_4x8);
-        d.colorModel     = ColorModel(ColorModel::sRGB);
-        d.videoRange     = VideoRange::Full;
+        d.id = id;
+        d.name = "TestUserExplicitFull";
+        d.memLayout = PixelMemLayout(PixelMemLayout::I_4x8);
+        d.colorModel = ColorModel(ColorModel::sRGB);
+        d.videoRange = VideoRange::Full;
         // Give the auto-derive a shape that would otherwise yield Limited
         // so we can prove the explicit value wins.
-        d.compSemantics[0] = { "Y", "Y", 16.0f, 235.0f };
+        d.compSemantics[0] = {"Y", "Y", 16.0f, 235.0f};
         PixelFormat::registerData(std::move(d));
         PixelFormat pd(id);
         CHECK(pd.videoRange() == VideoRange::Full);
@@ -1116,19 +1122,19 @@ TEST_CASE("PixelFormat: registerType returns unique monotonic IDs >= UserDefined
 }
 
 TEST_CASE("PixelFormat: registerData makes a user-defined format lookupable") {
-        PixelFormat::ID id = PixelFormat::registerType();
+        PixelFormat::ID   id = PixelFormat::registerType();
         PixelFormat::Data d;
-        d.id             = id;
-        d.name           = "TestUserRGBA8Copy";
-        d.desc           = "User-registered RGBA8 clone";
-        d.memLayout      = PixelMemLayout(PixelMemLayout::I_4x8);
-        d.colorModel     = ColorModel(ColorModel::sRGB);
-        d.hasAlpha       = true;
+        d.id = id;
+        d.name = "TestUserRGBA8Copy";
+        d.desc = "User-registered RGBA8 clone";
+        d.memLayout = PixelMemLayout(PixelMemLayout::I_4x8);
+        d.colorModel = ColorModel(ColorModel::sRGB);
+        d.hasAlpha = true;
         d.alphaCompIndex = 3;
-        d.compSemantics[0] = { "Red",   "R", 0, 255 };
-        d.compSemantics[1] = { "Green", "G", 0, 255 };
-        d.compSemantics[2] = { "Blue",  "B", 0, 255 };
-        d.compSemantics[3] = { "Alpha", "A", 0, 255 };
+        d.compSemantics[0] = {"Red", "R", 0, 255};
+        d.compSemantics[1] = {"Green", "G", 0, 255};
+        d.compSemantics[2] = {"Blue", "B", 0, 255};
+        d.compSemantics[3] = {"Alpha", "A", 0, 255};
         PixelFormat::registerData(std::move(d));
 
         PixelFormat pd(id);
@@ -1321,7 +1327,7 @@ TEST_CASE("PixelFormat: videoCodec accessor name matches for H264/HEVC") {
 
 TEST_CASE("PixelFormat: every registered ID round-trips through lookup by name") {
         auto ids = PixelFormat::registeredIDs();
-        for(auto id : ids) {
+        for (auto id : ids) {
                 PixelFormat pd(id);
                 REQUIRE(pd.isValid());
                 PixelFormat found = PixelFormat::lookup(pd.name());
@@ -1336,9 +1342,9 @@ TEST_CASE("PixelFormat: every registered ID round-trips through lookup by name")
 
 TEST_CASE("PixelFormat: every compressed format has a valid VideoCodec") {
         auto ids = PixelFormat::registeredIDs();
-        for(auto id : ids) {
+        for (auto id : ids) {
                 PixelFormat pd(id);
-                if(!pd.isCompressed()) continue;
+                if (!pd.isCompressed()) continue;
                 CAPTURE(pd.name());
                 CHECK(pd.videoCodec().id() != VideoCodec::Invalid);
         }
@@ -1370,14 +1376,13 @@ TEST_CASE("PixelFormat: Invalid sentinel name round-trips through lookup") {
         // Error-aware overload distinguishes "found Invalid" from
         // "name not found": Ok for the canonical sentinel,
         // IdNotFound for a genuinely missing name.
-        Error err;
+        Error       err;
         PixelFormat ok = PixelFormat::lookup("Invalid", &err);
         CHECK(err.isOk());
         CHECK(ok.id() == PixelFormat::Invalid);
 
-        Error miss;
-        PixelFormat notFound = PixelFormat::lookup(
-                "DefinitelyNotARealPixelFormat", &miss);
+        Error       miss;
+        PixelFormat notFound = PixelFormat::lookup("DefinitelyNotARealPixelFormat", &miss);
         CHECK(miss == Error::IdNotFound);
         CHECK(notFound.id() == PixelFormat::Invalid);
 }
@@ -1389,7 +1394,7 @@ TEST_CASE("PixelFormat: lookup-by-name covers every registered ID and Invalid") 
         // rely on; a regression here breaks the
         // defaultConfig-as-JSON round-trip the demo exercises.
         Error err;
-        for(auto id : PixelFormat::registeredIDs()) {
+        for (auto id : PixelFormat::registeredIDs()) {
                 PixelFormat pd(id);
                 CAPTURE(pd.name());
                 PixelFormat found = PixelFormat::lookup(pd.name(), &err);

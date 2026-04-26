@@ -48,8 +48,8 @@
  *
  * @param ClassName The MediaIOTask subclass to register.
  */
-#define PROMEKI_REGISTER_MEDIAIO(ClassName) \
-        [[maybe_unused]] static int PROMEKI_CONCAT(__promeki_mediaio_, PROMEKI_UNIQUE_ID) = \
+#define PROMEKI_REGISTER_MEDIAIO(ClassName)                                                                            \
+        [[maybe_unused]] static int PROMEKI_CONCAT(__promeki_mediaio_, PROMEKI_UNIQUE_ID) =                            \
                 MediaIO::registerFormat(ClassName::formatDesc());
 
 PROMEKI_NAMESPACE_BEGIN
@@ -76,10 +76,10 @@ class BenchmarkReporter;
  *                           the same instance, e.g. CSC, FrameSync).
  */
 enum MediaIOMode {
-        MediaIO_NotOpen = 0,        ///< @brief Resource is not open.
-        MediaIO_Source,             ///< @brief Open as a source — provides frames to the caller.
-        MediaIO_Sink,               ///< @brief Open as a sink — accepts frames from the caller.
-        MediaIO_Transform           ///< @brief Open as both — consumes and emits frames in the same instance.
+        MediaIO_NotOpen = 0, ///< @brief Resource is not open.
+        MediaIO_Source,      ///< @brief Open as a source — provides frames to the caller.
+        MediaIO_Sink,        ///< @brief Open as a sink — accepts frames from the caller.
+        MediaIO_Transform    ///< @brief Open as both — consumes and emits frames in the same instance.
 };
 
 /**
@@ -94,11 +94,11 @@ enum MediaIOMode {
  * B-frames, etc.).
  */
 enum MediaIOSeekMode {
-        MediaIO_SeekDefault = 0,        ///< @brief Backend picks (resolved per task).
-        MediaIO_SeekExact,              ///< @brief Land on the exact requested frame.
-        MediaIO_SeekNearestKeyframe,    ///< @brief Land on the nearest keyframe in either direction.
-        MediaIO_SeekKeyframeBefore,     ///< @brief Land on the closest keyframe at or before.
-        MediaIO_SeekKeyframeAfter       ///< @brief Land on the closest keyframe at or after.
+        MediaIO_SeekDefault = 0,     ///< @brief Backend picks (resolved per task).
+        MediaIO_SeekExact,           ///< @brief Land on the exact requested frame.
+        MediaIO_SeekNearestKeyframe, ///< @brief Land on the nearest keyframe in either direction.
+        MediaIO_SeekKeyframeBefore,  ///< @brief Land on the closest keyframe at or before.
+        MediaIO_SeekKeyframeAfter    ///< @brief Land on the closest keyframe at or after.
 };
 
 /**
@@ -121,63 +121,85 @@ class MediaIOStats : public VariantDatabase<"MediaIOStats"> {
                 using Base::Base;
 
                 /// @brief FrameCount — total frames dropped since open.
-                PROMEKI_DECLARE_ID(FramesDropped,
-                        VariantSpec().setType(Variant::TypeFrameCount).setDefault(FrameCount(0))
-                                .setDescription("Total frames dropped since open."));
+                PROMEKI_DECLARE_ID(FramesDropped, VariantSpec()
+                                                          .setType(Variant::TypeFrameCount)
+                                                          .setDefault(FrameCount(0))
+                                                          .setDescription("Total frames dropped since open."));
                 /// @brief FrameCount — total frames repeated due to underrun.
-                PROMEKI_DECLARE_ID(FramesRepeated,
-                        VariantSpec().setType(Variant::TypeFrameCount).setDefault(FrameCount(0))
-                                .setDescription("Total frames repeated due to underrun."));
+                PROMEKI_DECLARE_ID(FramesRepeated, VariantSpec()
+                                                           .setType(Variant::TypeFrameCount)
+                                                           .setDefault(FrameCount(0))
+                                                           .setDescription("Total frames repeated due to underrun."));
                 /// @brief FrameCount — total frames that arrived late.
-                PROMEKI_DECLARE_ID(FramesLate,
-                        VariantSpec().setType(Variant::TypeFrameCount).setDefault(FrameCount(0))
-                                .setDescription("Total frames that arrived late."));
+                PROMEKI_DECLARE_ID(FramesLate, VariantSpec()
+                                                       .setType(Variant::TypeFrameCount)
+                                                       .setDefault(FrameCount(0))
+                                                       .setDescription("Total frames that arrived late."));
                 /// @brief int64_t — current depth of internal buffer.
-                PROMEKI_DECLARE_ID(QueueDepth,
-                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
-                                .setMin(int64_t(0)).setDescription("Current depth of internal buffer."));
+                PROMEKI_DECLARE_ID(QueueDepth, VariantSpec()
+                                                       .setType(Variant::TypeS64)
+                                                       .setDefault(int64_t(0))
+                                                       .setMin(int64_t(0))
+                                                       .setDescription("Current depth of internal buffer."));
                 /// @brief int64_t — capacity of internal buffer.
-                PROMEKI_DECLARE_ID(QueueCapacity,
-                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
-                                .setMin(int64_t(0)).setDescription("Capacity of internal buffer."));
+                PROMEKI_DECLARE_ID(QueueCapacity, VariantSpec()
+                                                          .setType(Variant::TypeS64)
+                                                          .setDefault(int64_t(0))
+                                                          .setMin(int64_t(0))
+                                                          .setDescription("Capacity of internal buffer."));
                 /// @brief double — current data rate.
-                PROMEKI_DECLARE_ID(BytesPerSecond,
-                        VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
-                                .setMin(0.0).setDescription("Current data rate in bytes per second."));
+                PROMEKI_DECLARE_ID(BytesPerSecond, VariantSpec()
+                                                           .setType(Variant::TypeDouble)
+                                                           .setDefault(0.0)
+                                                           .setMin(0.0)
+                                                           .setDescription("Current data rate in bytes per second."));
                 /// @brief double — current frame rate (frames per second).
                 PROMEKI_DECLARE_ID(FramesPerSecond,
-                        VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
-                                .setMin(0.0).setDescription("Current frame rate in frames per second."));
+                                   VariantSpec()
+                                           .setType(Variant::TypeDouble)
+                                           .setDefault(0.0)
+                                           .setMin(0.0)
+                                           .setDescription("Current frame rate in frames per second."));
                 /// @brief double — average end-to-end latency.
-                PROMEKI_DECLARE_ID(AverageLatencyMs,
-                        VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
-                                .setMin(0.0).setDescription("Average end-to-end latency in ms."));
+                PROMEKI_DECLARE_ID(AverageLatencyMs, VariantSpec()
+                                                             .setType(Variant::TypeDouble)
+                                                             .setDefault(0.0)
+                                                             .setMin(0.0)
+                                                             .setDescription("Average end-to-end latency in ms."));
                 /// @brief double — peak observed latency.
-                PROMEKI_DECLARE_ID(PeakLatencyMs,
-                        VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
-                                .setMin(0.0).setDescription("Peak observed latency in ms."));
+                PROMEKI_DECLARE_ID(PeakLatencyMs, VariantSpec()
+                                                          .setType(Variant::TypeDouble)
+                                                          .setDefault(0.0)
+                                                          .setMin(0.0)
+                                                          .setDescription("Peak observed latency in ms."));
                 /// @brief double — average per-frame processing time.
                 PROMEKI_DECLARE_ID(AverageProcessingMs,
-                        VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
-                                .setMin(0.0).setDescription(
-                                        "Average per-frame processing time in ms."));
+                                   VariantSpec()
+                                           .setType(Variant::TypeDouble)
+                                           .setDefault(0.0)
+                                           .setMin(0.0)
+                                           .setDescription("Average per-frame processing time in ms."));
                 /// @brief double — peak per-frame processing time.
-                PROMEKI_DECLARE_ID(PeakProcessingMs,
-                        VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
-                                .setMin(0.0).setDescription(
-                                        "Peak per-frame processing time in ms."));
+                PROMEKI_DECLARE_ID(PeakProcessingMs, VariantSpec()
+                                                             .setType(Variant::TypeDouble)
+                                                             .setDefault(0.0)
+                                                             .setMin(0.0)
+                                                             .setDescription("Peak per-frame processing time in ms."));
                 /// @brief String — most recent error description.
-                PROMEKI_DECLARE_ID(LastErrorMessage,
-                        VariantSpec().setType(Variant::TypeString).setDefault(String())
-                                .setDescription("Most recent error description."));
+                PROMEKI_DECLARE_ID(LastErrorMessage, VariantSpec()
+                                                             .setType(Variant::TypeString)
+                                                             .setDefault(String())
+                                                             .setDescription("Most recent error description."));
                 /// @brief int64_t — number of commands queued on the strand but
                 /// not yet running.  Populated by the MediaIO base class from
                 /// Strand::pendingCount(); gives telemetry callers visibility
                 /// into backlog depth without every backend having to track it.
                 PROMEKI_DECLARE_ID(PendingOperations,
-                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
-                                .setMin(int64_t(0)).setDescription(
-                                        "Commands queued on the strand but not yet running."));
+                                   VariantSpec()
+                                           .setType(Variant::TypeS64)
+                                           .setDefault(int64_t(0))
+                                           .setMin(int64_t(0))
+                                           .setDescription("Commands queued on the strand but not yet running."));
 
                 /**
                  * @brief Renders the standard telemetry keys as a compact log line.
@@ -236,13 +258,15 @@ using MediaIOParamsID = MediaIOParams::ID;
  * @param NAME      The class name.
  * @param TYPE_TAG  The MediaIOCommand::Type enum value.
  */
-#define PROMEKI_MEDIAIO_COMMAND(NAME, TYPE_TAG)                       \
-        public:                                                       \
-                Type type() const override { return TYPE_TAG; }       \
-                NAME *_promeki_clone() const {                        \
-                        assert(false && #NAME " should not be cloned"); \
-                        return nullptr;                               \
-                }
+#define PROMEKI_MEDIAIO_COMMAND(NAME, TYPE_TAG)                                                                        \
+public:                                                                                                                \
+        Type type() const override {                                                                                   \
+                return TYPE_TAG;                                                                                       \
+        }                                                                                                              \
+        NAME *_promeki_clone() const {                                                                                 \
+                assert(false && #NAME " should not be cloned");                                                        \
+                return nullptr;                                                                                        \
+        }
 
 /**
  * @brief Base class for MediaIO commands.
@@ -304,28 +328,28 @@ class MediaIOCommand {
  * @ingroup proav
  */
 class MediaIOCommandOpen : public MediaIOCommand {
-        PROMEKI_MEDIAIO_COMMAND(MediaIOCommandOpen, Open)
+                PROMEKI_MEDIAIO_COMMAND(MediaIOCommandOpen, Open)
         public:
                 // ---- Inputs ----
-                MediaIOMode             mode = MediaIO_NotOpen;
-                MediaConfig             config;
-                MediaDesc               pendingMediaDesc;
-                Metadata                pendingMetadata;
-                AudioDesc               pendingAudioDesc;
-                List<int>               videoTracks;     ///< @brief Empty = task default (first video track).
-                List<int>               audioTracks;     ///< @brief Empty = task default (first audio track).
+                MediaIOMode mode = MediaIO_NotOpen;
+                MediaConfig config;
+                MediaDesc   pendingMediaDesc;
+                Metadata    pendingMetadata;
+                AudioDesc   pendingAudioDesc;
+                List<int>   videoTracks; ///< @brief Empty = task default (first video track).
+                List<int>   audioTracks; ///< @brief Empty = task default (first audio track).
 
                 // ---- Outputs ----
-                MediaDesc               mediaDesc;
-                AudioDesc               audioDesc;
-                Metadata                metadata;
-                FrameRate               frameRate;
-                bool                    canSeek = false;
-                FrameCount              frameCount = FrameCount::unknown();
-                int                     defaultStep = 1;             ///< @brief Backend's preferred default step.
-                int                     defaultPrefetchDepth = 1;    ///< @brief Backend's preferred prefetch depth.
-                int                     defaultWriteDepth = 4;       ///< @brief Backend's preferred write pipeline depth.
-                MediaIOSeekMode         defaultSeekMode = MediaIO_SeekExact; ///< @brief Backend's resolution of @c SeekDefault.
+                MediaDesc       mediaDesc;
+                AudioDesc       audioDesc;
+                Metadata        metadata;
+                FrameRate       frameRate;
+                bool            canSeek = false;
+                FrameCount      frameCount = FrameCount::unknown();
+                int             defaultStep = 1;          ///< @brief Backend's preferred default step.
+                int             defaultPrefetchDepth = 1; ///< @brief Backend's preferred prefetch depth.
+                int             defaultWriteDepth = 4;    ///< @brief Backend's preferred write pipeline depth.
+                MediaIOSeekMode defaultSeekMode = MediaIO_SeekExact; ///< @brief Backend's resolution of @c SeekDefault.
 };
 
 /**
@@ -333,7 +357,7 @@ class MediaIOCommandOpen : public MediaIOCommand {
  * @ingroup proav
  */
 class MediaIOCommandClose : public MediaIOCommand {
-        PROMEKI_MEDIAIO_COMMAND(MediaIOCommandClose, Close)
+                PROMEKI_MEDIAIO_COMMAND(MediaIOCommandClose, Close)
 };
 
 /**
@@ -341,15 +365,15 @@ class MediaIOCommandClose : public MediaIOCommand {
  * @ingroup proav
  */
 class MediaIOCommandRead : public MediaIOCommand {
-        PROMEKI_MEDIAIO_COMMAND(MediaIOCommandRead, Read)
+                PROMEKI_MEDIAIO_COMMAND(MediaIOCommandRead, Read)
         public:
                 // ---- Input ----
-                int                     step = 1;
+                int step = 1;
 
                 // ---- Outputs ----
-                Frame::Ptr              frame;
-                FrameNumber             currentFrame;
-                Error                   result;       ///< @brief Set by worker; carries success/error/EOF.
+                Frame::Ptr  frame;
+                FrameNumber currentFrame;
+                Error       result; ///< @brief Set by worker; carries success/error/EOF.
 
                 // ---- Optional outputs (mid-stream descriptor change) ----
                 /**
@@ -362,9 +386,9 @@ class MediaIOCommandRead : public MediaIOCommand {
                  * @c Metadata::MediaDescChanged on the returned frame,
                  * and emits the @c descriptorChanged signal.
                  */
-                bool                    mediaDescChanged = false;
+                bool mediaDescChanged = false;
                 /** @brief New MediaDesc — only valid when @c mediaDescChanged is true. */
-                MediaDesc               updatedMediaDesc;
+                MediaDesc updatedMediaDesc;
 };
 
 /**
@@ -372,14 +396,14 @@ class MediaIOCommandRead : public MediaIOCommand {
  * @ingroup proav
  */
 class MediaIOCommandWrite : public MediaIOCommand {
-        PROMEKI_MEDIAIO_COMMAND(MediaIOCommandWrite, Write)
+                PROMEKI_MEDIAIO_COMMAND(MediaIOCommandWrite, Write)
         public:
                 // ---- Input ----
-                Frame::Ptr              frame;
+                Frame::Ptr frame;
 
                 // ---- Outputs ----
-                FrameNumber             currentFrame;
-                FrameCount              frameCount;
+                FrameNumber currentFrame;
+                FrameCount  frameCount;
 };
 
 /**
@@ -387,14 +411,14 @@ class MediaIOCommandWrite : public MediaIOCommand {
  * @ingroup proav
  */
 class MediaIOCommandSeek : public MediaIOCommand {
-        PROMEKI_MEDIAIO_COMMAND(MediaIOCommandSeek, Seek)
+                PROMEKI_MEDIAIO_COMMAND(MediaIOCommandSeek, Seek)
         public:
                 // ---- Inputs ----
-                FrameNumber             frameNumber;
-                MediaIOSeekMode         mode = MediaIO_SeekDefault;
+                FrameNumber     frameNumber;
+                MediaIOSeekMode mode = MediaIO_SeekDefault;
 
                 // ---- Output ----
-                FrameNumber             currentFrame;
+                FrameNumber currentFrame;
 };
 
 /**
@@ -413,14 +437,14 @@ class MediaIOCommandSeek : public MediaIOCommand {
  * @c Error::NotSupported.
  */
 class MediaIOCommandParams : public MediaIOCommand {
-        PROMEKI_MEDIAIO_COMMAND(MediaIOCommandParams, Params)
+                PROMEKI_MEDIAIO_COMMAND(MediaIOCommandParams, Params)
         public:
                 // ---- Inputs ----
-                String                  name;       ///< @brief Operation name (backend-defined).
-                MediaIOParams            params;     ///< @brief Operation parameters.
+                String        name;   ///< @brief Operation name (backend-defined).
+                MediaIOParams params; ///< @brief Operation parameters.
 
                 // ---- Output ----
-                MediaIOParams            result;     ///< @brief Operation result fields.
+                MediaIOParams result; ///< @brief Operation result fields.
 };
 
 /**
@@ -436,10 +460,10 @@ class MediaIOCommandParams : public MediaIOCommand {
  * @c stats.
  */
 class MediaIOCommandStats : public MediaIOCommand {
-        PROMEKI_MEDIAIO_COMMAND(MediaIOCommandStats, Stats)
+                PROMEKI_MEDIAIO_COMMAND(MediaIOCommandStats, Stats)
         public:
                 // ---- Output ----
-                MediaIOStats            stats;      ///< @brief Stats keys/values populated by the backend.
+                MediaIOStats stats; ///< @brief Stats keys/values populated by the backend.
 };
 
 // ============================================================================
@@ -490,7 +514,7 @@ class MediaIOCommandStats : public MediaIOCommand {
  * receiver's EventLoop.
  */
 class MediaIO : public ObjectBase {
-        PROMEKI_OBJECT(MediaIO, ObjectBase)
+                PROMEKI_OBJECT(MediaIO, ObjectBase)
         public:
                 /** @brief Unique-ownership pointer to a MediaIO. */
                 using UPtr = UniquePtr<MediaIO>;
@@ -498,19 +522,19 @@ class MediaIO : public ObjectBase {
                 /** @brief Open direction (alias for MediaIOMode). */
                 using Mode = MediaIOMode;
 
-                static constexpr Mode NotOpen   = MediaIO_NotOpen;
-                static constexpr Mode Source    = MediaIO_Source;     ///< @brief Backend provides frames to the caller.
-                static constexpr Mode Sink      = MediaIO_Sink;       ///< @brief Backend accepts frames from the caller.
-                static constexpr Mode Transform = MediaIO_Transform;  ///< @brief Backend does both (consumer + emitter).
+                static constexpr Mode NotOpen = MediaIO_NotOpen;
+                static constexpr Mode Source = MediaIO_Source;       ///< @brief Backend provides frames to the caller.
+                static constexpr Mode Sink = MediaIO_Sink;           ///< @brief Backend accepts frames from the caller.
+                static constexpr Mode Transform = MediaIO_Transform; ///< @brief Backend does both (consumer + emitter).
 
                 /** @brief Seek mode (alias for MediaIOSeekMode). */
                 using SeekMode = MediaIOSeekMode;
 
-                static constexpr SeekMode SeekDefault         = MediaIO_SeekDefault;
-                static constexpr SeekMode SeekExact           = MediaIO_SeekExact;
+                static constexpr SeekMode SeekDefault = MediaIO_SeekDefault;
+                static constexpr SeekMode SeekExact = MediaIO_SeekExact;
                 static constexpr SeekMode SeekNearestKeyframe = MediaIO_SeekNearestKeyframe;
-                static constexpr SeekMode SeekKeyframeBefore  = MediaIO_SeekKeyframeBefore;
-                static constexpr SeekMode SeekKeyframeAfter   = MediaIO_SeekKeyframeAfter;
+                static constexpr SeekMode SeekKeyframeBefore = MediaIO_SeekKeyframeBefore;
+                static constexpr SeekMode SeekKeyframeAfter = MediaIO_SeekKeyframeAfter;
 
                 /** @brief Configuration database type. */
                 using Config = MediaConfig;
@@ -519,7 +543,7 @@ class MediaIO : public ObjectBase {
                 using ConfigID = MediaConfigID;
 
                 /** @brief Frame count is not yet known. */
-                static constexpr FrameCount FrameCountUnknown  = FrameCount::unknown();
+                static constexpr FrameCount FrameCountUnknown = FrameCount::unknown();
 
                 /** @brief Source is unbounded (generators, live devices). */
                 static constexpr FrameCount FrameCountInfinite = FrameCount::infinity();
@@ -528,9 +552,9 @@ class MediaIO : public ObjectBase {
                  * @brief Describes a registered media I/O backend.
                  */
                 struct FormatDesc {
-                        /** @brief Factory function that creates a new task instance. */
-                        using CreateFunc = std::function<MediaIOTask *()>;
-                        /**
+                                /** @brief Factory function that creates a new task instance. */
+                                using CreateFunc = std::function<MediaIOTask *()>;
+                                /**
                          * @brief Returns the config specs for this backend.
                          *
                          * The returned map lists every @ref MediaConfig::ID
@@ -545,8 +569,8 @@ class MediaIO : public ObjectBase {
                          * @ref MediaIO::configSpecs returns the raw map
                          * for introspection.
                          */
-                        using ConfigSpecFunc = std::function<Config::SpecMap ()>;
-                        /**
+                                using ConfigSpecFunc = std::function<Config::SpecMap()>;
+                                /**
                          * @brief Returns the metadata schema this backend honors.
                          *
                          * The returned @ref Metadata lists every
@@ -561,15 +585,15 @@ class MediaIO : public ObjectBase {
                          * callable null — @ref MediaIO::defaultMetadata
                          * then returns an empty @ref Metadata.
                          */
-                        using DefaultMetadataFunc = std::function<Metadata ()>;
-                        /**
+                                using DefaultMetadataFunc = std::function<Metadata()>;
+                                /**
                          * @brief Optional content probe via IODevice.
                          *
                          * @param device An open, seekable IODevice positioned at 0.
                          * @return true if this backend can handle the content.
                          */
-                        using ProbeFunc = std::function<bool(IODevice *device)>;
-                        /**
+                                using ProbeFunc = std::function<bool(IODevice *device)>;
+                                /**
                          * @brief Optional callback that lists available device instances.
                          *
                          * Returns the locator strings (suitable for use as
@@ -578,8 +602,8 @@ class MediaIO : public ObjectBase {
                          * generally leave this null; device backends
                          * provide an implementation that scans the system.
                          */
-                        using EnumerateFunc = std::function<StringList()>;
-                        /**
+                                using EnumerateFunc = std::function<StringList()>;
+                                /**
                          * @brief Optional path-based probe.
                          *
                          * Returns true if this backend can handle the
@@ -593,8 +617,8 @@ class MediaIO : public ObjectBase {
                          * @param path The filesystem path to test.
                          * @return true if this backend claims the path.
                          */
-                        using CanHandlePathFunc = std::function<bool(const String &path)>;
-                        /**
+                                using CanHandlePathFunc = std::function<bool(const String &path)>;
+                                /**
                          * @brief Optional device capability query.
                          *
                          * Returns every supported configuration as a
@@ -608,8 +632,8 @@ class MediaIO : public ObjectBase {
                          * @param config Backend config with the device locator.
                          * @return A list of supported MediaDesc configurations.
                          */
-                        using QueryFunc = std::function<List<MediaDesc>(const Config &config)>;
-                        /**
+                                using QueryFunc = std::function<List<MediaDesc>(const Config &config)>;
+                                /**
                          * @brief Optional device-info printer.
                          *
                          * Writes backend-specific device details (e.g.
@@ -618,9 +642,9 @@ class MediaIO : public ObjectBase {
                          *
                          * @param config Backend config with the device locator.
                          */
-                        using PrintDeviceInfoFunc = std::function<void(const Config &config)>;
+                                using PrintDeviceInfoFunc = std::function<void(const Config &config)>;
 
-                        /**
+                                /**
                          * @brief Optional bridge declaration for transform backends.
                          *
                          * When set, this backend declares that an
@@ -654,13 +678,10 @@ class MediaIO : public ObjectBase {
                          * Backends that are not transforms (sources,
                          * sinks, pure passthroughs) leave this null.
                          */
-                        using BridgeFunc = std::function<
-                                bool(const MediaDesc &from,
-                                     const MediaDesc &to,
-                                     Config *outConfig,
-                                     int *outCost)>;
+                                using BridgeFunc = std::function<bool(const MediaDesc &from, const MediaDesc &to,
+                                                                      Config *outConfig, int *outCost)>;
 
-                        /**
+                                /**
                          * @brief Optional URL → Config translator.
                          *
                          * Called when @ref createFromUrl (or the
@@ -692,27 +713,28 @@ class MediaIO : public ObjectBase {
                          * malformed URLs via the normal error path
                          * rather than a silently-misconfigured MediaIO.
                          */
-                        using UrlToConfigFunc = std::function<
-                                Error(const Url &url, Config *outConfig)>;
+                                using UrlToConfigFunc = std::function<Error(const Url &url, Config *outConfig)>;
 
-                        String              name;            ///< @brief Backend name (e.g. "MXF", "VideoDevice").
-                        String              displayName;     ///< @brief Human-readable label (e.g. "MJPEG Preview Stream"); empty falls back to @ref name in UIs / REST.
-                        String              description;     ///< @brief Human-readable description.
-                        StringList          extensions;      ///< @brief Supported file extensions (no dots).
-                        bool                canBeSource;     ///< @brief Whether the backend can act as a source (provides frames).
-                        bool                canBeSink;       ///< @brief Whether the backend can act as a sink (accepts frames).
-                        bool                canBeTransform;  ///< @brief Whether the backend can act as a transform (in + out).
-                        CreateFunc          create;          ///< @brief Backend factory.
-                        ConfigSpecFunc      configSpecs;     ///< @brief Backend config specs provider.
-                        DefaultMetadataFunc defaultMetadata; ///< @brief Honored metadata schema (may be null).
-                        ProbeFunc           canHandleDevice; ///< @brief Content-based probe.
-                        EnumerateFunc       enumerate;       ///< @brief Instance enumerator.
-                        CanHandlePathFunc   canHandlePath;   ///< @brief Path-based probe.
-                        QueryFunc           queryDevice;     ///< @brief Device capability query.
-                        PrintDeviceInfoFunc printDeviceInfo; ///< @brief Device-info printer.
-                        BridgeFunc          bridge;          ///< @brief Format-bridge declaration (planner-driven; may be null).
-                        StringList          schemes;         ///< @brief Claimed URL schemes (e.g. "pmfb").  Empty = no URL handling.
-                        UrlToConfigFunc     urlToConfig;     ///< @brief URL → Config translator (required if @c schemes is non-empty).
+                                String name; ///< @brief Backend name (e.g. "MXF", "VideoDevice").
+                                String displayName; ///< @brief Human-readable label (e.g. "MJPEG Preview Stream"); empty falls back to @ref name in UIs / REST.
+                                String     description; ///< @brief Human-readable description.
+                                StringList extensions;  ///< @brief Supported file extensions (no dots).
+                                bool canBeSource; ///< @brief Whether the backend can act as a source (provides frames).
+                                bool canBeSink;   ///< @brief Whether the backend can act as a sink (accepts frames).
+                                bool canBeTransform; ///< @brief Whether the backend can act as a transform (in + out).
+                                CreateFunc          create;          ///< @brief Backend factory.
+                                ConfigSpecFunc      configSpecs;     ///< @brief Backend config specs provider.
+                                DefaultMetadataFunc defaultMetadata; ///< @brief Honored metadata schema (may be null).
+                                ProbeFunc           canHandleDevice; ///< @brief Content-based probe.
+                                EnumerateFunc       enumerate;       ///< @brief Instance enumerator.
+                                CanHandlePathFunc   canHandlePath;   ///< @brief Path-based probe.
+                                QueryFunc           queryDevice;     ///< @brief Device capability query.
+                                PrintDeviceInfoFunc printDeviceInfo; ///< @brief Device-info printer.
+                                BridgeFunc bridge; ///< @brief Format-bridge declaration (planner-driven; may be null).
+                                StringList
+                                        schemes; ///< @brief Claimed URL schemes (e.g. "pmfb").  Empty = no URL handling.
+                                UrlToConfigFunc
+                                        urlToConfig; ///< @brief URL → Config translator (required if @c schemes is non-empty).
                 };
 
                 using FormatDescList = List<FormatDesc>;
@@ -810,8 +832,7 @@ class MediaIO : public ObjectBase {
                  * @return The sorted list of unrecognized key names; an
                  *         empty list when every key is recognized.
                  */
-                static StringList unknownConfigKeys(const String &typeName,
-                                                    const Config &cfg);
+                static StringList unknownConfigKeys(const String &typeName, const Config &cfg);
 
                 /**
                  * @brief Validates a config's key set against the registered specs.
@@ -844,9 +865,7 @@ class MediaIO : public ObjectBase {
                  *         @p mode.  Always @c Error::Ok when there are
                  *         no unknown keys.
                  */
-                static Error validateConfigKeys(const String &typeName,
-                                                const Config &cfg,
-                                                ConfigValidation mode,
+                static Error validateConfigKeys(const String &typeName, const Config &cfg, ConfigValidation mode,
                                                 const String &contextLabel = String());
 
                 /**
@@ -907,7 +926,7 @@ class MediaIO : public ObjectBase {
                  */
                 static Result<FrameCount> copyFrames(MediaIO *src, MediaIO *dst,
                                                      const FrameNumber &fromFrame = FrameNumber(0),
-                                                     const FrameCount &count      = FrameCount::infinity());
+                                                     const FrameCount  &count = FrameCount::infinity());
 
                 /**
                  * @brief Overload of @ref copyFrames with a per-frame @p mutate callback.
@@ -923,9 +942,8 @@ class MediaIO : public ObjectBase {
                  * into the copy loop.
                  */
                 template <typename Fn>
-                static Result<FrameCount> copyFrames(MediaIO *src, MediaIO *dst,
-                                                     const FrameNumber &fromFrame, const FrameCount &count,
-                                                     Fn &&mutate);
+                static Result<FrameCount> copyFrames(MediaIO *src, MediaIO *dst, const FrameNumber &fromFrame,
+                                                     const FrameCount &count, Fn &&mutate);
 
                 /**
                  * @brief Creates a MediaIO reader for the given filename.
@@ -1057,9 +1075,7 @@ class MediaIO : public ObjectBase {
                  * @return @c Error::Ok on success, or one of the error
                  *         codes listed above.
                  */
-                static Error applyQueryToConfig(const Url &url,
-                                                const Config::SpecMap &specs,
-                                                Config *outConfig);
+                static Error applyQueryToConfig(const Url &url, const Config::SpecMap &specs, Config *outConfig);
 
                 /**
                  * @brief Returns the shared thread pool used for the worker.
@@ -1125,8 +1141,7 @@ class MediaIO : public ObjectBase {
                  * @param config   Config carrying the device locator.
                  * @return A list of supported MediaDesc configurations.
                  */
-                static List<MediaDesc> queryDevice(const String &typeName,
-                                                   const Config &config);
+                static List<MediaDesc> queryDevice(const String &typeName, const Config &config);
 
                 /**
                  * @brief Prints backend-specific device info to stdout.
@@ -1138,8 +1153,7 @@ class MediaIO : public ObjectBase {
                  * @param typeName The registered backend name.
                  * @param config   Config carrying the device locator.
                  */
-                static void printDeviceInfo(const String &typeName,
-                                            const Config &config);
+                static void printDeviceInfo(const String &typeName, const Config &config);
 
                 /**
                  * @brief Constructs a MediaIO with an optional parent.
@@ -1259,9 +1273,7 @@ class MediaIO : public ObjectBase {
                  *
                  * @param reporter The reporter to attach, or nullptr.
                  */
-                void setBenchmarkReporter(BenchmarkReporter *reporter) {
-                        _benchmarkReporter = reporter;
-                }
+                void setBenchmarkReporter(BenchmarkReporter *reporter) { _benchmarkReporter = reporter; }
 
                 /** @brief Returns the currently attached BenchmarkReporter (may be nullptr). */
                 BenchmarkReporter *benchmarkReporter() const { return _benchmarkReporter; }
@@ -1599,8 +1611,7 @@ class MediaIO : public ObjectBase {
                  * @param preferred Receives the desc the backend wants.
                  * @return @c Error::Ok or @c Error::NotSupported.
                  */
-                Error proposeInput(const MediaDesc &offered,
-                                   MediaDesc *preferred) const;
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const;
 
                 /**
                  * @brief Asks the backend whether it can produce
@@ -1614,8 +1625,7 @@ class MediaIO : public ObjectBase {
                  * @param achievable Receives the desc the backend can produce.
                  * @return @c Error::Ok or @c Error::NotSupported.
                  */
-                Error proposeOutput(const MediaDesc &requested,
-                                    MediaDesc *achievable) const;
+                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const;
 
                 // ---- Frame I/O ----
 
@@ -1858,8 +1868,7 @@ class MediaIO : public ObjectBase {
                  *         backend doesn't recognize the name, or another
                  *         error from the backend.
                  */
-                Error sendParams(const String &name,
-                                 const MediaIOParams &params = MediaIOParams(),
+                Error sendParams(const String &name, const MediaIOParams &params = MediaIOParams(),
                                  MediaIOParams *result = nullptr);
 
                 /**
@@ -1950,10 +1959,10 @@ class MediaIO : public ObjectBase {
                  * callers of @ref close with @p block = false must wait
                  * for @ref closedSignal before touching those accessors.
                  */
-                void  resetClosedState();
-                void  resolveIdentifiersAndBenchmark();
-                void  ensureFrameBenchmark(Frame::Ptr &frame);
-                void  submitBenchmarkIfSink(const Frame::Ptr &frame);
+                void resetClosedState();
+                void resolveIdentifiersAndBenchmark();
+                void ensureFrameBenchmark(Frame::Ptr &frame);
+                void submitBenchmarkIfSink(const Frame::Ptr &frame);
 
                 /**
                  * @brief Walks a Frame and returns its total payload size.
@@ -1991,24 +2000,24 @@ class MediaIO : public ObjectBase {
                  */
                 void populateStandardStats(MediaIOStats &stats) const;
 
-                UniquePtr<MediaIOTask>      _task;
-                Config                      _config;
-                Mode                        _mode = NotOpen;
-                int                         _step = 1;
-                int                         _prefetchDepth = 1;
-                bool                        _prefetchDepthExplicit = false;
-                int                         _writeDepth = 4;
-                bool                        _atEnd = false;
-                bool                        _closing = false;
+                UniquePtr<MediaIOTask> _task;
+                Config                 _config;
+                Mode                   _mode = NotOpen;
+                int                    _step = 1;
+                int                    _prefetchDepth = 1;
+                bool                   _prefetchDepthExplicit = false;
+                int                    _writeDepth = 4;
+                bool                   _atEnd = false;
+                bool                   _closing = false;
 
                 // Per-instance identifiers.  _localId is assigned from a
                 // process-wide atomic counter in the constructor and is
                 // never user-settable.  _name and _uuid are seeded in the
                 // constructor but the open() path lets callers override
                 // them via MediaConfig::Name / MediaConfig::Uuid.
-                int                         _localId = 0;
-                String                      _name;
-                UUID                        _uuid;
+                int    _localId = 0;
+                String _name;
+                UUID   _uuid;
 
                 // Benchmark stamping state.  Opt-in via
                 // MediaConfig::EnableBenchmark; zero-cost when disabled
@@ -2018,15 +2027,15 @@ class MediaIO : public ObjectBase {
                 // but are never aggregated.  _benchmarkIsSink defaults to
                 // true so a standalone MediaIO submits its own frames;
                 // MediaPipeline flips it off for non-terminal stages.
-                bool                        _benchmarkEnabled = false;
-                bool                        _benchmarkIsSink  = true;
-                BenchmarkReporter          *_benchmarkReporter = nullptr;
-                Benchmark::Id               _idStampEnqueue;
-                Benchmark::Id               _idStampDequeue;
-                Benchmark::Id               _idStampTaskBegin;
-                Benchmark::Id               _idStampTaskEnd;
-                Benchmark::Id               _idStampWorkBegin;
-                Benchmark::Id               _idStampWorkEnd;
+                bool               _benchmarkEnabled = false;
+                bool               _benchmarkIsSink = true;
+                BenchmarkReporter *_benchmarkReporter = nullptr;
+                Benchmark::Id      _idStampEnqueue;
+                Benchmark::Id      _idStampDequeue;
+                Benchmark::Id      _idStampTaskBegin;
+                Benchmark::Id      _idStampTaskEnd;
+                Benchmark::Id      _idStampWorkBegin;
+                Benchmark::Id      _idStampWorkEnd;
 
                 // Live telemetry — always on.  RateTracker does a
                 // pair of atomic increments per recorded frame, so
@@ -2035,46 +2044,46 @@ class MediaIO : public ObjectBase {
                 // are lifetime totals, incremented by backends via the
                 // protected MediaIOTask helpers (noteFrameDropped
                 // etc.) and reported straight back out via stats().
-                RateTracker                 _rateTracker;
-                Atomic<int64_t>             _framesDroppedTotal{0};
-                Atomic<int64_t>             _framesRepeatedTotal{0};
-                Atomic<int64_t>             _framesLateTotal{0};
+                RateTracker     _rateTracker;
+                Atomic<int64_t> _framesDroppedTotal{0};
+                Atomic<int64_t> _framesRepeatedTotal{0};
+                Atomic<int64_t> _framesLateTotal{0};
 
                 // Cached state — only read/written by the user thread
-                MediaDesc                   _mediaDesc;
-                AudioDesc                   _audioDesc;
-                Metadata                    _metadata;
-                FrameRate                   _frameRate;
-                bool                        _canSeek = false;
-                FrameCount                  _frameCount;
-                FrameNumber                 _currentFrame;
-                TimeStamp                   _originTime;
-                FrameCount                  _writeFrameCount;
-                SeekMode                    _defaultSeekMode = SeekExact;
+                MediaDesc   _mediaDesc;
+                AudioDesc   _audioDesc;
+                Metadata    _metadata;
+                FrameRate   _frameRate;
+                bool        _canSeek = false;
+                FrameCount  _frameCount;
+                FrameNumber _currentFrame;
+                TimeStamp   _originTime;
+                FrameCount  _writeFrameCount;
+                SeekMode    _defaultSeekMode = SeekExact;
 
                 // Pre-open settings (passed into CmdOpen)
-                MediaDesc                   _pendingMediaDesc;
-                Metadata                    _pendingMetadata;
-                AudioDesc                   _pendingAudioDesc;
-                List<int>                   _pendingVideoTracks;
-                List<int>                   _pendingAudioTracks;
+                MediaDesc _pendingMediaDesc;
+                Metadata  _pendingMetadata;
+                AudioDesc _pendingAudioDesc;
+                List<int> _pendingVideoTracks;
+                List<int> _pendingAudioTracks;
 
                 // Strand serializes all backend command execution onto
                 // the shared ThreadPool.  Each command is a separate task
                 // submitted to the strand; the strand ensures only one
                 // runs at a time per MediaIO instance, while returning
                 // pool threads between tasks.
-                Strand                      _strand{pool()};
+                Strand _strand{pool()};
 
                 // Inbound read results (worker pushes, user pops).
                 // Filled by the strand task when a CmdRead completes.
-                Queue<MediaIOCommand::Ptr>  _readResultQueue;
+                Queue<MediaIOCommand::Ptr> _readResultQueue;
 
                 // Number of CmdRead commands currently in flight (queued
                 // or being processed).  Used to avoid duplicate submissions
                 // when readFrame() is called repeatedly while a read is
                 // pending.
-                Atomic<int>                 _pendingReadCount;
+                Atomic<int> _pendingReadCount;
 
                 // Number of CmdWrite commands currently in flight
                 // (queued or being processed).  Incremented in
@@ -2082,7 +2091,7 @@ class MediaIO : public ObjectBase {
                 // the strand task and the cancellation callback so
                 // the count stays accurate whether writes succeed,
                 // fail, or are cancelled.
-                Atomic<int>                 _pendingWriteCount;
+                Atomic<int> _pendingWriteCount;
 
                 /**
                  * @brief Shared read-skip helper for @ref copyFrames.
@@ -2097,39 +2106,38 @@ class MediaIO : public ObjectBase {
 };
 
 template <typename Fn>
-Result<FrameCount> MediaIO::copyFrames(MediaIO *src, MediaIO *dst,
-                                       const FrameNumber &fromFrame, const FrameCount &count,
-                                       Fn &&mutate) {
-        if(src == nullptr || dst == nullptr) return makeError<FrameCount>(Error::InvalidArgument);
+Result<FrameCount> MediaIO::copyFrames(MediaIO *src, MediaIO *dst, const FrameNumber &fromFrame,
+                                       const FrameCount &count, Fn &&mutate) {
+        if (src == nullptr || dst == nullptr) return makeError<FrameCount>(Error::InvalidArgument);
 
-        if(fromFrame.isValid() && fromFrame.value() > 0) {
+        if (fromFrame.isValid() && fromFrame.value() > 0) {
                 Error se = copyFramesSeekTo(src, fromFrame);
-                if(se == Error::EndOfFile) return makeResult(FrameCount(0));
-                if(se.isError()) return makeError<FrameCount>(se);
+                if (se == Error::EndOfFile) return makeResult(FrameCount(0));
+                if (se.isError()) return makeError<FrameCount>(se);
         }
 
         // remaining < 0 encodes the infinite-copy case; the
         // "if(remaining > 0) --remaining" branch below never fires in
         // that mode, so the loop runs until the source returns EOF.
         int64_t remaining = count.isInfinite() ? -1 : count.value();
-        int64_t written   = 0;
-        int64_t index     = fromFrame.isValid() ? fromFrame.value() : 0;
+        int64_t written = 0;
+        int64_t index = fromFrame.isValid() ? fromFrame.value() : 0;
 
-        while(remaining != 0) {
+        while (remaining != 0) {
                 Frame::Ptr frame;
-                Error rerr = src->readFrame(frame);
-                if(rerr == Error::EndOfFile) break;
-                if(rerr.isError()) return makeError<FrameCount>(rerr);
-                if(!frame.isValid()) {
-                        if(remaining > 0) --remaining;
+                Error      rerr = src->readFrame(frame);
+                if (rerr == Error::EndOfFile) break;
+                if (rerr.isError()) return makeError<FrameCount>(rerr);
+                if (!frame.isValid()) {
+                        if (remaining > 0) --remaining;
                         ++index;
                         continue;
                 }
 
                 Frame::Ptr outFrame = mutate(frame, index);
-                if(outFrame.isValid()) {
+                if (outFrame.isValid()) {
                         Error werr = dst->writeFrame(outFrame);
-                        if(werr.isError()) {
+                        if (werr.isError()) {
                                 Result<FrameCount> r = makeResult(FrameCount(written));
                                 r.second() = werr;
                                 return r;
@@ -2137,7 +2145,7 @@ Result<FrameCount> MediaIO::copyFrames(MediaIO *src, MediaIO *dst,
                         ++written;
                 }
                 ++index;
-                if(remaining > 0) --remaining;
+                if (remaining > 0) --remaining;
         }
 
         return makeResult(FrameCount(written));

@@ -71,7 +71,8 @@ class MediaDesc;
  * through @ref MediaIO commands posted to the strand.
  */
 class MediaIOTask {
-        friend class MediaIO;
+                friend class MediaIO;
+
         public:
                 /** @brief Unique-ownership pointer to a MediaIOTask. */
                 using UPtr = UniquePtr<MediaIOTask>;
@@ -123,8 +124,7 @@ class MediaIOTask {
                  * @param config The transform's MediaConfig (read-only).
                  * @return The MediaDesc the transform will produce.
                  */
-                static MediaDesc applyOutputOverrides(const MediaDesc &input,
-                                                     const MediaConfig &config);
+                static MediaDesc applyOutputOverrides(const MediaDesc &input, const MediaConfig &config);
 
                 /**
                  * @brief Returns a canonical uncompressed PixelFormat that
@@ -209,8 +209,8 @@ class MediaIOTask {
                 MediaIO *mediaIo() const { return _owner; }
 
         private:
-                MediaIO     *_owner = nullptr;
-                Benchmark   *_activeBenchmark = nullptr;
+                MediaIO   *_owner = nullptr;
+                Benchmark *_activeBenchmark = nullptr;
 
                 /**
                  * @brief Handles a CmdOpen command.
@@ -402,8 +402,7 @@ class MediaIOTask {
                  * @param preferred Receives the desc the task actually wants.
                  * @return @c Error::Ok or @c Error::NotSupported.
                  */
-                virtual Error proposeInput(const MediaDesc &offered,
-                                           MediaDesc *preferred) const;
+                virtual Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const;
 
                 /**
                  * @brief Optionally supplies a @ref Clock for the
@@ -454,8 +453,7 @@ class MediaIOTask {
                  * @param achievable Receives the desc the task can produce.
                  * @return @c Error::Ok or @c Error::NotSupported.
                  */
-                virtual Error proposeOutput(const MediaDesc &requested,
-                                            MediaDesc *achievable) const;
+                virtual Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const;
 };
 
 PROMEKI_NAMESPACE_END

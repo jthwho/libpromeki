@@ -29,53 +29,53 @@ using namespace promeki;
 
 namespace {
 
-// Builds a pipeline config that doesn't touch the filesystem:
-// TPG → CSC (pixel-format conversion stage configured as a
-// terminating transform).  Exercises the DAG plumbing without
-// needing a real output sink.
-MediaPipelineConfig makeTpgToCsc() {
-        MediaPipelineConfig cfg;
+        // Builds a pipeline config that doesn't touch the filesystem:
+        // TPG → CSC (pixel-format conversion stage configured as a
+        // terminating transform).  Exercises the DAG plumbing without
+        // needing a real output sink.
+        MediaPipelineConfig makeTpgToCsc() {
+                MediaPipelineConfig cfg;
 
-        MediaPipelineConfig::Stage src;
-        src.name = "src";
-        src.type = "TPG";
-        src.mode = MediaIO::Source;
-        src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
-        src.config.set(MediaConfig::VideoEnabled, true);
-        src.config.set(MediaConfig::AudioEnabled, false);
-        cfg.addStage(src);
+                MediaPipelineConfig::Stage src;
+                src.name = "src";
+                src.type = "TPG";
+                src.mode = MediaIO::Source;
+                src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
+                src.config.set(MediaConfig::VideoEnabled, true);
+                src.config.set(MediaConfig::AudioEnabled, false);
+                cfg.addStage(src);
 
-        MediaPipelineConfig::Stage csc;
-        csc.name = "csc";
-        csc.type = "CSC";
-        csc.mode = MediaIO::Transform;
-        cfg.addStage(csc);
+                MediaPipelineConfig::Stage csc;
+                csc.name = "csc";
+                csc.type = "CSC";
+                csc.mode = MediaIO::Transform;
+                cfg.addStage(csc);
 
-        cfg.addRoute("src", "csc");
-        return cfg;
-}
+                cfg.addRoute("src", "csc");
+                return cfg;
+        }
 
 } // namespace
 
 TEST_CASE("MediaPipeline_DefaultStateIsEmpty") {
-        EventLoop loop; // gives the pipeline an owner event loop.
+        EventLoop     loop; // gives the pipeline an owner event loop.
         MediaPipeline p;
         CHECK(p.state() == MediaPipeline::State::Empty);
         CHECK(p.stageNames().isEmpty());
 }
 
 TEST_CASE("MediaPipeline_BuildRejectsInvalidConfig") {
-        EventLoop loop;
-        MediaPipeline p;
+        EventLoop           loop;
+        MediaPipeline       p;
         MediaPipelineConfig cfg; // empty
-        Error err = p.build(cfg);
+        Error               err = p.build(cfg);
         CHECK(err.isError());
         CHECK(p.state() == MediaPipeline::State::Empty);
 }
 
 TEST_CASE("MediaPipeline_BuildRejectsFanIn") {
-        EventLoop loop;
-        MediaPipelineConfig cfg = makeTpgToCsc();
+        EventLoop                  loop;
+        MediaPipelineConfig        cfg = makeTpgToCsc();
         MediaPipelineConfig::Stage extraSrc;
         extraSrc.name = "src2";
         extraSrc.type = "TPG";
@@ -88,8 +88,8 @@ TEST_CASE("MediaPipeline_BuildRejectsFanIn") {
 }
 
 TEST_CASE("MediaPipeline_BuildSucceedsAndInstantiatesStages") {
-        EventLoop loop;
-        MediaPipeline p;
+        EventLoop           loop;
+        MediaPipeline       p;
         MediaPipelineConfig cfg = makeTpgToCsc();
         REQUIRE(p.build(cfg).isOk());
         CHECK(p.state() == MediaPipeline::State::Built);
@@ -105,7 +105,7 @@ TEST_CASE("MediaPipeline_BuildSucceedsAndInstantiatesStages") {
 }
 
 TEST_CASE("MediaPipeline_OpenAndClose") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -118,7 +118,7 @@ TEST_CASE("MediaPipeline_OpenAndClose") {
 }
 
 TEST_CASE("MediaPipeline_StatsAfterOpen") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -133,7 +133,7 @@ TEST_CASE("MediaPipeline_StatsAfterOpen") {
 }
 
 TEST_CASE("MediaPipeline_DescribeIncludesLiveState") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -141,8 +141,8 @@ TEST_CASE("MediaPipeline_DescribeIncludesLiveState") {
         StringList lines = p.describe();
         CHECK(!lines.isEmpty());
         bool hasLive = false;
-        for(size_t i = 0; i < lines.size(); ++i) {
-                if(lines[i].contains("Live state")) hasLive = true;
+        for (size_t i = 0; i < lines.size(); ++i) {
+                if (lines[i].contains("Live state")) hasLive = true;
         }
         CHECK(hasLive);
 
@@ -150,10 +150,10 @@ TEST_CASE("MediaPipeline_DescribeIncludesLiveState") {
 }
 
 TEST_CASE("MediaPipeline_BuildFromJsonRoundTrip") {
-        EventLoop loop;
+        EventLoop           loop;
         MediaPipelineConfig orig = makeTpgToCsc();
-        JsonObject j = orig.toJson();
-        Error err;
+        JsonObject          j = orig.toJson();
+        Error               err;
         MediaPipelineConfig round = MediaPipelineConfig::fromJson(j, &err);
         REQUIRE(err.isOk());
         CHECK(round == orig);
@@ -166,28 +166,28 @@ TEST_CASE("MediaPipeline_BuildFromJsonRoundTrip") {
 }
 
 TEST_CASE("MediaPipeline_StatsContainPipelineBucket") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
 
-        MediaPipelineStats snap = p.stats();
+        MediaPipelineStats   snap = p.stats();
         const PipelineStats &pp = snap.pipeline();
         // Counters are registered even before start(), so the state
         // is reported and the counters sit at their zero defaults.
         CHECK(pp.contains(PipelineStats::State));
         CHECK(pp.get(PipelineStats::State).get<String>() == "Open");
         CHECK(pp.get(PipelineStats::FramesProduced).get<int64_t>() == 0);
-        CHECK(pp.get(PipelineStats::WriteRetries).get<int64_t>()   == 0);
+        CHECK(pp.get(PipelineStats::WriteRetries).get<int64_t>() == 0);
         CHECK(pp.get(PipelineStats::PipelineErrors).get<int64_t>() == 0);
-        CHECK(pp.get(PipelineStats::SourcesAtEof).get<int64_t>()   == 0);
-        CHECK(pp.get(PipelineStats::PausedEdges).get<int64_t>()    == 0);
+        CHECK(pp.get(PipelineStats::SourcesAtEof).get<int64_t>() == 0);
+        CHECK(pp.get(PipelineStats::PausedEdges).get<int64_t>() == 0);
 
         (void)p.close();
 }
 
 TEST_CASE("MediaPipeline_FramesProducedCounterAdvances") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -199,27 +199,25 @@ TEST_CASE("MediaPipeline_FramesProducedCounterAdvances") {
         // to emit @c frameReady; processEvents() alone doesn't yield
         // to that thread.
         const int64_t deadlineMs = 1000;
-        ElapsedTimer t;
+        ElapsedTimer  t;
         t.start();
         int64_t produced = 0;
-        while(t.elapsed() < deadlineMs) {
+        while (t.elapsed() < deadlineMs) {
                 loop.processEvents();
-                produced = p.stats().pipeline()
-                        .get(PipelineStats::FramesProduced).get<int64_t>();
-                if(produced > 0) break;
+                produced = p.stats().pipeline().get(PipelineStats::FramesProduced).get<int64_t>();
+                if (produced > 0) break;
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
 
         CHECK(produced > 0);
-        CHECK(p.stats().pipeline().get(PipelineStats::State).get<String>()
-                == "Running");
+        CHECK(p.stats().pipeline().get(PipelineStats::State).get<String>() == "Running");
 
         CHECK(p.stop().isOk());
         CHECK(p.close().isOk());
 }
 
 TEST_CASE("MediaPipeline_StartDrainsFramesThroughChain") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -229,7 +227,7 @@ TEST_CASE("MediaPipeline_StartDrainsFramesThroughChain") {
         // Pump the EventLoop briefly so the signal-driven drain has a
         // chance to run; TPG is infinite so we just want some frames
         // through the chain before we stop.
-        for(int i = 0; i < 50; ++i) {
+        for (int i = 0; i < 50; ++i) {
                 loop.processEvents();
         }
 
@@ -246,7 +244,7 @@ TEST_CASE("MediaPipeline_FrameCountCapClosesPipelineCleanly") {
         MediaPipelineConfig cfg = makeTpgToCsc();
         cfg.setFrameCount(FrameCount(3));
 
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(cfg).isOk());
         REQUIRE(p.open().isOk());
@@ -254,8 +252,7 @@ TEST_CASE("MediaPipeline_FrameCountCapClosesPipelineCleanly") {
 
         ElapsedTimer watchdog;
         watchdog.start();
-        while(p.state() != MediaPipeline::State::Closed
-              && watchdog.elapsed() < 3000) {
+        while (p.state() != MediaPipeline::State::Closed && watchdog.elapsed() < 3000) {
                 loop.processEvents();
         }
         CHECK(p.state() == MediaPipeline::State::Closed);
@@ -274,9 +271,9 @@ TEST_CASE("MediaPipeline_DefaultFrameCountRunsUncapped") {
         // regression where unknown / infinite / empty FrameCount
         // states accidentally trip the cutoff.
         MediaPipelineConfig cfg = makeTpgToCsc();
-        CHECK(cfg.frameCount().isUnknown());  // default-constructed
+        CHECK(cfg.frameCount().isUnknown()); // default-constructed
 
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(cfg).isOk());
         REQUIRE(p.open().isOk());
@@ -284,7 +281,7 @@ TEST_CASE("MediaPipeline_DefaultFrameCountRunsUncapped") {
 
         // Pump briefly and then force-stop; the pipeline must still be
         // running (Running state) because the cap never fires.
-        for(int i = 0; i < 50; ++i) loop.processEvents();
+        for (int i = 0; i < 50; ++i) loop.processEvents();
         CHECK(p.state() == MediaPipeline::State::Running);
 
         CHECK(p.stop().isOk());
@@ -298,13 +295,13 @@ TEST_CASE("MediaPipeline_FrameCountInfinityRunsUncapped") {
         MediaPipelineConfig cfg = makeTpgToCsc();
         cfg.setFrameCount(FrameCount::infinity());
 
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(cfg).isOk());
         REQUIRE(p.open().isOk());
         REQUIRE(p.start().isOk());
 
-        for(int i = 0; i < 50; ++i) loop.processEvents();
+        for (int i = 0; i < 50; ++i) loop.processEvents();
         CHECK(p.state() == MediaPipeline::State::Running);
 
         CHECK(p.stop().isOk());
@@ -317,13 +314,13 @@ TEST_CASE("MediaPipeline_FrameCountEmptyRunsUncapped") {
         MediaPipelineConfig cfg = makeTpgToCsc();
         cfg.setFrameCount(FrameCount::empty());
 
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(cfg).isOk());
         REQUIRE(p.open().isOk());
         REQUIRE(p.start().isOk());
 
-        for(int i = 0; i < 50; ++i) loop.processEvents();
+        for (int i = 0; i < 50; ++i) loop.processEvents();
         CHECK(p.state() == MediaPipeline::State::Running);
 
         CHECK(p.stop().isOk());
@@ -331,7 +328,7 @@ TEST_CASE("MediaPipeline_FrameCountEmptyRunsUncapped") {
 }
 
 TEST_CASE("MediaPipeline_CloseFromBuiltStateIsSafe") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         // No open / start — close should still tear things down cleanly.
@@ -351,7 +348,7 @@ TEST_CASE("MediaPipeline_InjectStageSkipsFactory") {
         MediaIO *external = MediaIO::create(cfg);
         REQUIRE(external != nullptr);
 
-        MediaPipelineConfig mpc;
+        MediaPipelineConfig        mpc;
         MediaPipelineConfig::Stage src;
         src.name = "src";
         src.type = "TPG";
@@ -386,24 +383,23 @@ TEST_CASE("MediaPipeline_InjectStageSkipsFactory") {
 
 namespace {
 
-// Pumps the EventLoop until @p pred returns true, or @p timeoutMs elapses.
-// Returns true if the predicate fired, false on timeout.
-template <typename Pred>
-bool pumpUntil(EventLoop &loop, Pred pred, int64_t timeoutMs = 2000) {
-        ElapsedTimer t;
-        t.start();
-        while(t.elapsed() < timeoutMs) {
-                loop.processEvents();
-                if(pred()) return true;
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        // Pumps the EventLoop until @p pred returns true, or @p timeoutMs elapses.
+        // Returns true if the predicate fired, false on timeout.
+        template <typename Pred> bool pumpUntil(EventLoop &loop, Pred pred, int64_t timeoutMs = 2000) {
+                ElapsedTimer t;
+                t.start();
+                while (t.elapsed() < timeoutMs) {
+                        loop.processEvents();
+                        if (pred()) return true;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                }
+                return false;
         }
-        return false;
-}
 
 } // namespace
 
 TEST_CASE("MediaPipeline_CloseAsyncEmitsClosedSignal") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -411,12 +407,8 @@ TEST_CASE("MediaPipeline_CloseAsyncEmitsClosedSignal") {
 
         std::atomic<int> closedCount{0};
         std::atomic<int> finishedCount{0};
-        p.closedSignal.connect([&closedCount](Error) {
-                closedCount.fetch_add(1);
-        }, &p);
-        p.finishedSignal.connect([&finishedCount](bool) {
-                finishedCount.fetch_add(1);
-        }, &p);
+        p.closedSignal.connect([&closedCount](Error) { closedCount.fetch_add(1); }, &p);
+        p.finishedSignal.connect([&finishedCount](bool) { finishedCount.fetch_add(1); }, &p);
 
         CHECK(p.close(false).isOk());
         CHECK(p.isClosing());
@@ -432,16 +424,14 @@ TEST_CASE("MediaPipeline_CloseSyncPumpsEventsFromOwnEventLoop") {
         // When called from the pipeline's own EventLoop, close(true)
         // must pump events while waiting for the future so the
         // cross-thread closedSignal dispatches actually run.
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
         REQUIRE(p.start().isOk());
 
         std::atomic<int> closedCount{0};
-        p.closedSignal.connect([&closedCount](Error) {
-                closedCount.fetch_add(1);
-        }, &p);
+        p.closedSignal.connect([&closedCount](Error) { closedCount.fetch_add(1); }, &p);
 
         CHECK(p.close(true).isOk());
         // close(true) can't return without finalizeClose having run;
@@ -456,7 +446,7 @@ TEST_CASE("MediaPipeline_CloseFinishedFiresAtEndOfCascade") {
         // EOF but sinks might still be writing.  With the cascade,
         // finishedSignal only fires alongside closedSignal after
         // every stage has emitted its own closedSignal.
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -465,18 +455,20 @@ TEST_CASE("MediaPipeline_CloseFinishedFiresAtEndOfCascade") {
         std::atomic<int> stageClosedCount{0};
         std::atomic<int> finishedCount{0};
         std::atomic<int> closedCount{0};
-        p.stageClosedSignal.connect([&stageClosedCount](const String &) {
-                stageClosedCount.fetch_add(1);
-        }, &p);
-        p.finishedSignal.connect([&finishedCount, &stageClosedCount](bool) {
-                // Every stage must be closed by the time finishedSignal fires.
-                CHECK(stageClosedCount.load() >= 2);
-                finishedCount.fetch_add(1);
-        }, &p);
-        p.closedSignal.connect([&closedCount, &stageClosedCount](Error) {
-                CHECK(stageClosedCount.load() >= 2);
-                closedCount.fetch_add(1);
-        }, &p);
+        p.stageClosedSignal.connect([&stageClosedCount](const String &) { stageClosedCount.fetch_add(1); }, &p);
+        p.finishedSignal.connect(
+                [&finishedCount, &stageClosedCount](bool) {
+                        // Every stage must be closed by the time finishedSignal fires.
+                        CHECK(stageClosedCount.load() >= 2);
+                        finishedCount.fetch_add(1);
+                },
+                &p);
+        p.closedSignal.connect(
+                [&closedCount, &stageClosedCount](Error) {
+                        CHECK(stageClosedCount.load() >= 2);
+                        closedCount.fetch_add(1);
+                },
+                &p);
 
         CHECK(p.close(false).isOk());
         REQUIRE(pumpUntil(loop, [&]() { return closedCount.load() > 0; }));
@@ -486,16 +478,14 @@ TEST_CASE("MediaPipeline_CloseFinishedFiresAtEndOfCascade") {
 }
 
 TEST_CASE("MediaPipeline_DoubleCloseRejected") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
         REQUIRE(p.start().isOk());
 
         std::atomic<int> closedCount{0};
-        p.closedSignal.connect([&closedCount](Error) {
-                closedCount.fetch_add(1);
-        }, &p);
+        p.closedSignal.connect([&closedCount](Error) { closedCount.fetch_add(1); }, &p);
 
         CHECK(p.close(false).isOk());
         CHECK(p.isClosing());
@@ -513,14 +503,12 @@ TEST_CASE("MediaPipeline_DoubleCloseRejected") {
 TEST_CASE("MediaPipeline_CloseOnBuiltStateCascadesWithoutDrain") {
         // Built but not opened: every stage is not-open, so initiateClose
         // must finalize synchronously via the alreadyClosed path.
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
 
         std::atomic<int> closedCount{0};
-        p.closedSignal.connect([&closedCount](Error) {
-                closedCount.fetch_add(1);
-        }, &p);
+        p.closedSignal.connect([&closedCount](Error) { closedCount.fetch_add(1); }, &p);
 
         CHECK(p.close(false).isOk());
         // With no event loop involvement needed (signals fire
@@ -538,24 +526,18 @@ TEST_CASE("MediaPipeline_CloseFromRunningEmitsNoSpuriousError") {
         // stage whose _mode had already reset to NotOpen and surface
         // the NotOpen readFrame return as a pipelineError.  Verifies
         // that the full async close cycle emits zero pipeline errors.
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
         REQUIRE(p.start().isOk());
 
-        std::atomic<int> errorCount{0};
-        std::atomic<int> closedCount{0};
+        std::atomic<int>  errorCount{0};
+        std::atomic<int>  closedCount{0};
         std::atomic<bool> cleanFinish{false};
-        p.pipelineErrorSignal.connect([&errorCount](const String &, Error) {
-                errorCount.fetch_add(1);
-        }, &p);
-        p.finishedSignal.connect([&cleanFinish](bool clean) {
-                cleanFinish.store(clean);
-        }, &p);
-        p.closedSignal.connect([&closedCount](Error) {
-                closedCount.fetch_add(1);
-        }, &p);
+        p.pipelineErrorSignal.connect([&errorCount](const String &, Error) { errorCount.fetch_add(1); }, &p);
+        p.finishedSignal.connect([&cleanFinish](bool clean) { cleanFinish.store(clean); }, &p);
+        p.closedSignal.connect([&closedCount](Error) { closedCount.fetch_add(1); }, &p);
 
         CHECK(p.close(false).isOk());
         REQUIRE(pumpUntil(loop, [&]() { return closedCount.load() > 0; }));
@@ -569,86 +551,78 @@ TEST_CASE("MediaPipeline_CloseFromRunningEmitsNoSpuriousError") {
 
 namespace {
 
-struct EventCounts {
-        std::atomic<int> stateChanged{0};
-        std::atomic<int> stageState{0};
-        std::atomic<int> stageError{0};
-        std::atomic<int> statsUpdated{0};
-        std::atomic<int> planResolved{0};
-        std::atomic<int> log{0};
-        std::atomic<int> total{0};
-};
+        struct EventCounts {
+                        std::atomic<int> stateChanged{0};
+                        std::atomic<int> stageState{0};
+                        std::atomic<int> stageError{0};
+                        std::atomic<int> statsUpdated{0};
+                        std::atomic<int> planResolved{0};
+                        std::atomic<int> log{0};
+                        std::atomic<int> total{0};
+        };
 
-void countEvent(EventCounts &counts, const PipelineEvent &ev) {
-        counts.total.fetch_add(1);
-        switch(ev.kind()) {
-                case PipelineEvent::Kind::StateChanged: counts.stateChanged.fetch_add(1); break;
-                case PipelineEvent::Kind::StageState:   counts.stageState.fetch_add(1); break;
-                case PipelineEvent::Kind::StageError:   counts.stageError.fetch_add(1); break;
-                case PipelineEvent::Kind::StatsUpdated: counts.statsUpdated.fetch_add(1); break;
-                case PipelineEvent::Kind::PlanResolved: counts.planResolved.fetch_add(1); break;
-                case PipelineEvent::Kind::Log:          counts.log.fetch_add(1); break;
+        void countEvent(EventCounts &counts, const PipelineEvent &ev) {
+                counts.total.fetch_add(1);
+                switch (ev.kind()) {
+                        case PipelineEvent::Kind::StateChanged: counts.stateChanged.fetch_add(1); break;
+                        case PipelineEvent::Kind::StageState: counts.stageState.fetch_add(1); break;
+                        case PipelineEvent::Kind::StageError: counts.stageError.fetch_add(1); break;
+                        case PipelineEvent::Kind::StatsUpdated: counts.statsUpdated.fetch_add(1); break;
+                        case PipelineEvent::Kind::PlanResolved: counts.planResolved.fetch_add(1); break;
+                        case PipelineEvent::Kind::Log: counts.log.fetch_add(1); break;
+                }
         }
-}
 
 } // namespace
 
 TEST_CASE("MediaPipeline_SubscribeReceivesStateAndStageEvents") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
 
         EventCounts counts;
-        const int subId = p.subscribe(
-                [&counts](const PipelineEvent &ev) { countEvent(counts, ev); });
+        const int   subId = p.subscribe([&counts](const PipelineEvent &ev) { countEvent(counts, ev); });
         REQUIRE(subId >= 0);
 
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
         REQUIRE(p.start().isOk());
 
-        REQUIRE(pumpUntil(loop,
-                [&]() { return counts.stageState.load() >= 4; }, 1500));
+        REQUIRE(pumpUntil(loop, [&]() { return counts.stageState.load() >= 4; }, 1500));
         CHECK(counts.stateChanged.load() >= 3); // Built, Open, Running
         CHECK(counts.stageState.load() >= 4);   // 2 opened + 2 started
 
         CHECK(p.stop().isOk());
-        REQUIRE(pumpUntil(loop,
-                [&]() { return counts.stageState.load() >= 6; }, 1500));
+        REQUIRE(pumpUntil(loop, [&]() { return counts.stageState.load() >= 6; }, 1500));
 
         CHECK(p.close().isOk());
-        REQUIRE(pumpUntil(loop,
-                [&]() { return counts.stageState.load() >= 8; }, 1500));
+        REQUIRE(pumpUntil(loop, [&]() { return counts.stageState.load() >= 8; }, 1500));
         CHECK(counts.stateChanged.load() >= 5);
 
         p.unsubscribe(subId);
 }
 
 TEST_CASE("MediaPipeline_SubscribeBeforeBuildReceivesPlanResolved") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
-        EventCounts counts;
-        const int subId = p.subscribe(
-                [&counts](const PipelineEvent &ev) { countEvent(counts, ev); });
+        EventCounts   counts;
+        const int     subId = p.subscribe([&counts](const PipelineEvent &ev) { countEvent(counts, ev); });
         REQUIRE(subId >= 0);
 
         REQUIRE(p.build(makeTpgToCsc(), /*autoplan=*/true).isOk());
-        REQUIRE(pumpUntil(loop,
-                [&]() { return counts.planResolved.load() >= 1
-                            && counts.stateChanged.load() >= 1; }, 1500));
+        REQUIRE(pumpUntil(
+                loop, [&]() { return counts.planResolved.load() >= 1 && counts.stateChanged.load() >= 1; }, 1500));
         CHECK(counts.planResolved.load() == 1);
 
         CHECK(p.close().isOk());
-        REQUIRE(pumpUntil(loop,
-                [&]() { return counts.stateChanged.load() >= 2; }, 1500));
+        REQUIRE(pumpUntil(loop, [&]() { return counts.stateChanged.load() >= 2; }, 1500));
         p.unsubscribe(subId);
 }
 
 TEST_CASE("MediaPipeline_SetStatsIntervalEmitsTickEvents") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
-        EventCounts counts;
-        const int subId = p.subscribe(
-                [&counts](const PipelineEvent &ev) { countEvent(counts, ev); });
+        EventCounts   counts;
+        const int     subId = p.subscribe([&counts](const PipelineEvent &ev) { countEvent(counts, ev); });
         REQUIRE(subId >= 0);
 
         p.setStatsInterval(Duration::fromMilliseconds(50));
@@ -658,8 +632,7 @@ TEST_CASE("MediaPipeline_SetStatsIntervalEmitsTickEvents") {
         REQUIRE(p.open().isOk());
         REQUIRE(p.start().isOk());
 
-        const bool got = pumpUntil(loop,
-                [&]() { return counts.statsUpdated.load() >= 2; }, 800);
+        const bool got = pumpUntil(loop, [&]() { return counts.statsUpdated.load() >= 2; }, 800);
         CHECK(got);
         const int duringRun = counts.statsUpdated.load();
 
@@ -675,30 +648,26 @@ TEST_CASE("MediaPipeline_SetStatsIntervalEmitsTickEvents") {
 }
 
 TEST_CASE("MediaPipeline_UnsubscribeStopsEventsToThatSubscriber") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
 
         EventCounts countsA;
         EventCounts countsB;
-        const int idA = p.subscribe(
-                [&countsA](const PipelineEvent &ev) { countEvent(countsA, ev); });
-        const int idB = p.subscribe(
-                [&countsB](const PipelineEvent &ev) { countEvent(countsB, ev); });
+        const int   idA = p.subscribe([&countsA](const PipelineEvent &ev) { countEvent(countsA, ev); });
+        const int   idB = p.subscribe([&countsB](const PipelineEvent &ev) { countEvent(countsB, ev); });
         REQUIRE(idA >= 0);
         REQUIRE(idB >= 0);
 
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
-        REQUIRE(pumpUntil(loop,
-                [&]() { return countsA.stageState.load() >= 2
-                            && countsB.stageState.load() >= 2; }, 1500));
+        REQUIRE(pumpUntil(
+                loop, [&]() { return countsA.stageState.load() >= 2 && countsB.stageState.load() >= 2; }, 1500));
 
         const int aBaseline = countsA.total.load();
         p.unsubscribe(idA);
 
         REQUIRE(p.start().isOk());
-        REQUIRE(pumpUntil(loop,
-                [&]() { return countsB.stageState.load() >= 4; }, 1500));
+        REQUIRE(pumpUntil(loop, [&]() { return countsB.stageState.load() >= 4; }, 1500));
         CHECK(countsB.total.load() > aBaseline);
         CHECK(countsA.total.load() == aBaseline);
 
@@ -708,7 +677,7 @@ TEST_CASE("MediaPipeline_UnsubscribeStopsEventsToThatSubscriber") {
 }
 
 TEST_CASE("MediaPipeline_SubscriberOnAnotherThreadReceivesOnThatThread") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
 
         Thread worker;
@@ -716,12 +685,12 @@ TEST_CASE("MediaPipeline_SubscriberOnAnotherThreadReceivesOnThatThread") {
         // Wait for the worker thread's EventLoop to come up.
         ElapsedTimer t;
         t.start();
-        while(worker.threadEventLoop() == nullptr && t.elapsed() < 1000) {
+        while (worker.threadEventLoop() == nullptr && t.elapsed() < 1000) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         REQUIRE(worker.threadEventLoop() != nullptr);
 
-        std::atomic<int> received{0};
+        std::atomic<int>             received{0};
         std::atomic<std::thread::id> deliveryThread;
         deliveryThread.store(std::this_thread::get_id());
 
@@ -736,7 +705,7 @@ TEST_CASE("MediaPipeline_SubscriberOnAnotherThreadReceivesOnThatThread") {
                 subId.store(id);
         });
         // Spin until the post has executed.
-        while(subId.load() < 0) {
+        while (subId.load() < 0) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
@@ -746,7 +715,7 @@ TEST_CASE("MediaPipeline_SubscriberOnAnotherThreadReceivesOnThatThread") {
 
         // Wait for the worker thread to dispatch some events.
         t.start();
-        while(received.load() < 2 && t.elapsed() < 1500) {
+        while (received.load() < 2 && t.elapsed() < 1500) {
                 loop.processEvents();
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
@@ -761,24 +730,21 @@ TEST_CASE("MediaPipeline_SubscriberOnAnotherThreadReceivesOnThatThread") {
 }
 
 TEST_CASE("MediaPipeline_LogEntryMirroredAsLogEvent") {
-        EventLoop loop;
-        MediaPipeline p;
-        EventCounts counts;
+        EventLoop         loop;
+        MediaPipeline     p;
+        EventCounts       counts;
         std::atomic<bool> seenMessage{false};
-        const int subId = p.subscribe(
-                [&counts, &seenMessage](const PipelineEvent &ev) {
-                        countEvent(counts, ev);
-                        if(ev.kind() == PipelineEvent::Kind::Log) {
-                                if(ev.payload().get<String>().contains(
-                                        "pipeline-event-test-marker")) {
-                                        seenMessage.store(true);
-                                }
+        const int         subId = p.subscribe([&counts, &seenMessage](const PipelineEvent &ev) {
+                countEvent(counts, ev);
+                if (ev.kind() == PipelineEvent::Kind::Log) {
+                        if (ev.payload().get<String>().contains("pipeline-event-test-marker")) {
+                                seenMessage.store(true);
                         }
-                });
+                }
+        });
         REQUIRE(subId >= 0);
 
-        Logger::defaultLogger().log(Logger::Info, "test", 0,
-                String("pipeline-event-test-marker"));
+        Logger::defaultLogger().log(Logger::Info, "test", 0, String("pipeline-event-test-marker"));
         Logger::defaultLogger().sync();
         REQUIRE(pumpUntil(loop, [&]() { return seenMessage.load(); }, 1500));
         CHECK(counts.log.load() >= 1);
@@ -787,7 +753,7 @@ TEST_CASE("MediaPipeline_LogEntryMirroredAsLogEvent") {
 }
 
 TEST_CASE("MediaPipeline_CloseOnClosedStateIsNoOp") {
-        EventLoop loop;
+        EventLoop     loop;
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         CHECK(p.close().isOk());
@@ -796,9 +762,7 @@ TEST_CASE("MediaPipeline_CloseOnClosedStateIsNoOp") {
         // Second close on an already-Closed pipeline: does nothing,
         // emits no signals, returns Ok.
         std::atomic<int> closedCount{0};
-        p.closedSignal.connect([&closedCount](Error) {
-                closedCount.fetch_add(1);
-        }, &p);
+        p.closedSignal.connect([&closedCount](Error) { closedCount.fetch_add(1); }, &p);
         CHECK(p.close().isOk());
         CHECK(closedCount.load() == 0);
 }

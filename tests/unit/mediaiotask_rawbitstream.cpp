@@ -29,18 +29,17 @@ using namespace promeki;
 
 namespace {
 
-MediaIO *makeRawBitstream() {
-        MediaIO::Config cfg = MediaIO::defaultConfig("RawBitstream");
-        return MediaIO::create(cfg);
-}
+        MediaIO *makeRawBitstream() {
+                MediaIO::Config cfg = MediaIO::defaultConfig("RawBitstream");
+                return MediaIO::create(cfg);
+        }
 
-MediaDesc makeVideoDesc(uint32_t w, uint32_t h, PixelFormat::ID id) {
-        MediaDesc md;
-        md.setFrameRate(FrameRate(FrameRate::FPS_30));
-        md.imageList().pushToBack(
-                ImageDesc(Size2Du32(w, h), PixelFormat(id)));
-        return md;
-}
+        MediaDesc makeVideoDesc(uint32_t w, uint32_t h, PixelFormat::ID id) {
+                MediaDesc md;
+                md.setFrameRate(FrameRate(FrameRate::FPS_30));
+                md.imageList().pushToBack(ImageDesc(Size2Du32(w, h), PixelFormat(id)));
+                return md;
+        }
 
 } // namespace
 
@@ -48,8 +47,8 @@ TEST_CASE("MediaIOTask_RawBitstream: Registry") {
         // Sink-only, with the elementary-stream extensions the
         // mediaplay file-path auto-detection uses.
         bool found = false;
-        for(const auto &d : MediaIO::registeredFormats()) {
-                if(d.name == "RawBitstream") {
+        for (const auto &d : MediaIO::registeredFormats()) {
+                if (d.name == "RawBitstream") {
                         CHECK_FALSE(d.canBeSource);
                         CHECK(d.canBeSink);
                         CHECK_FALSE(d.canBeTransform);
@@ -86,7 +85,7 @@ TEST_CASE("MediaIOTask_RawBitstream: describe advertises compressed accept set")
         // avoid.
         const auto &accepted = d.acceptableFormats();
         REQUIRE_FALSE(accepted.isEmpty());
-        for(const MediaDesc &md : accepted) {
+        for (const MediaDesc &md : accepted) {
                 REQUIRE_FALSE(md.imageList().isEmpty());
                 const PixelFormat &pd = md.imageList()[0].pixelFormat();
                 CHECK(pd.isValid());
@@ -112,21 +111,20 @@ TEST_CASE("MediaIOTask_RawBitstream: describe covers every registered compressed
         REQUIRE(io->describe(&d) == Error::Ok);
 
         const auto &accepted = d.acceptableFormats();
-        for(VideoCodec::ID cid : VideoCodec::registeredIDs()) {
+        for (VideoCodec::ID cid : VideoCodec::registeredIDs()) {
                 VideoCodec codec(cid);
-                if(!codec.isValid()) continue;
-                for(const PixelFormat &pd : codec.compressedPixelFormats()) {
-                        if(!pd.isValid()) continue;
+                if (!codec.isValid()) continue;
+                for (const PixelFormat &pd : codec.compressedPixelFormats()) {
+                        if (!pd.isValid()) continue;
                         bool found = false;
-                        for(const MediaDesc &md : accepted) {
-                                if(md.imageList().isEmpty()) continue;
-                                if(md.imageList()[0].pixelFormat().id() == pd.id()) {
+                        for (const MediaDesc &md : accepted) {
+                                if (md.imageList().isEmpty()) continue;
+                                if (md.imageList()[0].pixelFormat().id() == pd.id()) {
                                         found = true;
                                         break;
                                 }
                         }
-                        INFO("codec=", codec.name().cstr(),
-                             " pixelFormat=", pd.name().cstr());
+                        INFO("codec=", codec.name().cstr(), " pixelFormat=", pd.name().cstr());
                         CHECK(found);
                 }
         }
@@ -146,7 +144,7 @@ TEST_CASE("MediaIOTask_RawBitstream: proposeInput accepts compressed") {
         REQUIRE(io != nullptr);
 
         const MediaDesc offered = makeVideoDesc(1920, 1080, PixelFormat::H264);
-        MediaDesc preferred;
+        MediaDesc       preferred;
         CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
         // Compressed in, compressed out — no rewrite.
         CHECK(preferred == offered);
@@ -159,7 +157,7 @@ TEST_CASE("MediaIOTask_RawBitstream: proposeInput accepts HEVC") {
         REQUIRE(io != nullptr);
 
         const MediaDesc offered = makeVideoDesc(3840, 2160, PixelFormat::HEVC);
-        MediaDesc preferred;
+        MediaDesc       preferred;
         CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
         CHECK(preferred == offered);
 
@@ -175,7 +173,7 @@ TEST_CASE("MediaIOTask_RawBitstream: proposeInput rejects uncompressed RGBA") {
         REQUIRE(io != nullptr);
 
         const MediaDesc offered = makeVideoDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
-        MediaDesc preferred;
+        MediaDesc       preferred;
         CHECK(io->proposeInput(offered, &preferred) == Error::NotSupported);
 
         delete io;
@@ -185,9 +183,8 @@ TEST_CASE("MediaIOTask_RawBitstream: proposeInput rejects uncompressed YUV") {
         MediaIO *io = makeRawBitstream();
         REQUIRE(io != nullptr);
 
-        const MediaDesc offered =
-                makeVideoDesc(1920, 1080, PixelFormat::YUV8_420_SemiPlanar_Rec709);
-        MediaDesc preferred;
+        const MediaDesc offered = makeVideoDesc(1920, 1080, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        MediaDesc       preferred;
         CHECK(io->proposeInput(offered, &preferred) == Error::NotSupported);
 
         delete io;

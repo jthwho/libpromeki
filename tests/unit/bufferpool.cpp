@@ -65,7 +65,7 @@ TEST_CASE("BufferPool: released buffer is reused on next acquire") {
         pool.reserve(1);
 
         Buffer b1 = pool.acquire();
-        void *p1 = b1.data();
+        void  *p1 = b1.data();
         pool.release(std::move(b1));
         Buffer b2 = pool.acquire();
         // Same memory region is reused.
@@ -74,14 +74,14 @@ TEST_CASE("BufferPool: released buffer is reused on next acquire") {
 
 TEST_CASE("BufferPool: release rejects shape mismatch") {
         BufferPool pool(1024, 4096);
-        Buffer wrong(2048, 4096);
+        Buffer     wrong(2048, 4096);
         pool.release(std::move(wrong));
         CHECK(pool.available() == 0);
 }
 
 TEST_CASE("BufferPool: acquired buffer is usable for writes") {
         BufferPool pool(4096, 4096);
-        Buffer b = pool.acquire();
+        Buffer     b = pool.acquire();
         REQUIRE(b.isValid());
         std::memset(b.data(), 0x42, 4096);
         CHECK(static_cast<uint8_t *>(b.data())[0] == 0x42);
@@ -99,7 +99,7 @@ TEST_CASE("BufferPool: clear drops all free buffers") {
 
 TEST_CASE("BufferPool: released buffer view is reset to base") {
         BufferPool pool(4096, 4096);
-        Buffer b = pool.acquire();
+        Buffer     b = pool.acquire();
         // Shift the view + set a size, then release.
         b.shiftData(128);
         b.setSize(100);

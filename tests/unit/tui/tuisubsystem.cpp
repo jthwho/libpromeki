@@ -23,10 +23,10 @@ using namespace promeki;
 // any app including a TuiSubsystem: the EventLoop wake fd unblocks
 // the main-thread wait without a UI-specific bridge.
 TEST_CASE("Main EventLoop: worker-thread quit wakes exec() promptly") {
-        char arg0[] = "tuisubsystem-test";
-        char *argv[] = { arg0 };
+        char        arg0[] = "tuisubsystem-test";
+        char       *argv[] = {arg0};
         Application app(1, argv);
-        EventLoop loop;
+        EventLoop   loop;
 
         std::thread worker([&] {
                 std::this_thread::sleep_for(std::chrono::milliseconds(30));

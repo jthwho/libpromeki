@@ -74,8 +74,8 @@ class SdpMediaDescription {
 
                 /** @brief Returns the value of a named attribute, or empty string. */
                 String attribute(const String &name) const {
-                        for(size_t i = 0; i < _attributes.size(); i++) {
-                                if(_attributes[i].first() == name) return _attributes[i].second();
+                        for (size_t i = 0; i < _attributes.size(); i++) {
+                                if (_attributes[i].first() == name) return _attributes[i].second();
                         }
                         return String();
                 }
@@ -88,8 +88,8 @@ class SdpMediaDescription {
                  * preserving insertion order.
                  */
                 void setAttribute(const String &name, const String &value) {
-                        for(size_t i = 0; i < _attributes.size(); i++) {
-                                if(_attributes[i].first() == name) {
+                        for (size_t i = 0; i < _attributes.size(); i++) {
+                                if (_attributes[i].first() == name) {
                                         _attributes[i].setSecond(value);
                                         return;
                                 }
@@ -119,11 +119,11 @@ class SdpMediaDescription {
                  * the split logic every time.
                  */
                 struct RtpMap {
-                        uint8_t         payloadType = 0;     ///< @brief RTP payload type (0-127).
-                        String          encoding;            ///< @brief Encoding name (e.g. @c "JPEG", @c "jxsv", @c "L16").
-                        uint32_t        clockRate = 0;       ///< @brief RTP timestamp clock rate in Hz.
-                        unsigned int    channels = 1;        ///< @brief Audio channels (defaults to 1 for video).
-                        bool            valid = false;       ///< @brief Set by @ref rtpMap() when parsing succeeded.
+                                uint8_t      payloadType = 0; ///< @brief RTP payload type (0-127).
+                                String       encoding; ///< @brief Encoding name (e.g. @c "JPEG", @c "jxsv", @c "L16").
+                                uint32_t     clockRate = 0; ///< @brief RTP timestamp clock rate in Hz.
+                                unsigned int channels = 1;  ///< @brief Audio channels (defaults to 1 for video).
+                                bool         valid = false; ///< @brief Set by @ref rtpMap() when parsing succeeded.
                 };
 
                 /**
@@ -151,26 +151,21 @@ class SdpMediaDescription {
 
                 /** @brief Equality comparison for Variant / container use. */
                 bool operator==(const SdpMediaDescription &other) const {
-                        return _mediaType          == other._mediaType &&
-                               _port               == other._port &&
-                               _protocol           == other._protocol &&
-                               _payloadTypes       == other._payloadTypes &&
-                               _attributes         == other._attributes &&
-                               _connectionAddress  == other._connectionAddress;
+                        return _mediaType == other._mediaType && _port == other._port && _protocol == other._protocol &&
+                               _payloadTypes == other._payloadTypes && _attributes == other._attributes &&
+                               _connectionAddress == other._connectionAddress;
                 }
 
                 /** @brief Inequality comparison. */
-                bool operator!=(const SdpMediaDescription &other) const {
-                        return !(*this == other);
-                }
+                bool operator!=(const SdpMediaDescription &other) const { return !(*this == other); }
 
         private:
-                String          _mediaType;
-                uint16_t        _port = 0;
-                String          _protocol;
-                List<uint8_t>   _payloadTypes;
-                AttributeList   _attributes;
-                String          _connectionAddress;
+                String        _mediaType;
+                uint16_t      _port = 0;
+                String        _protocol;
+                List<uint8_t> _payloadTypes;
+                AttributeList _attributes;
+                String        _connectionAddress;
 };
 
 /**
@@ -200,7 +195,7 @@ class SdpMediaDescription {
  * @endcode
  */
 class SdpSession {
-        PROMEKI_SHARED_FINAL(SdpSession)
+                PROMEKI_SHARED_FINAL(SdpSession)
         public:
                 /** @brief Shared pointer type. */
                 using Ptr = SharedPtr<SdpSession>;
@@ -261,9 +256,8 @@ class SdpSession {
                  * @param addrType Address type (default "IP4").
                  * @param address The originator's address.
                  */
-                void setOrigin(const String &username, uint64_t sessionId,
-                               uint64_t sessionVersion, const String &netType = "IN",
-                               const String &addrType = "IP4",
+                void setOrigin(const String &username, uint64_t sessionId, uint64_t sessionVersion,
+                               const String &netType = "IN", const String &addrType = "IP4",
                                const String &address = "0.0.0.0");
 
                 /** @brief Returns the origin network type (e.g. "IN"). */
@@ -308,31 +302,26 @@ class SdpSession {
 
                 /** @brief Equality comparison for Variant / container use. */
                 bool operator==(const SdpSession &other) const {
-                        return _sessionName        == other._sessionName &&
-                               _originUsername     == other._originUsername &&
-                               _sessionId          == other._sessionId &&
-                               _sessionVersion     == other._sessionVersion &&
-                               _originNetType      == other._originNetType &&
-                               _originAddrType     == other._originAddrType &&
-                               _originAddress      == other._originAddress &&
-                               _connectionAddress  == other._connectionAddress &&
-                               _mediaDescriptions  == other._mediaDescriptions;
+                        return _sessionName == other._sessionName && _originUsername == other._originUsername &&
+                               _sessionId == other._sessionId && _sessionVersion == other._sessionVersion &&
+                               _originNetType == other._originNetType && _originAddrType == other._originAddrType &&
+                               _originAddress == other._originAddress &&
+                               _connectionAddress == other._connectionAddress &&
+                               _mediaDescriptions == other._mediaDescriptions;
                 }
 
                 /** @brief Inequality comparison. */
-                bool operator!=(const SdpSession &other) const {
-                        return !(*this == other);
-                }
+                bool operator!=(const SdpSession &other) const { return !(*this == other); }
 
         private:
-                String          _sessionName;
-                String          _originUsername = "-";
-                uint64_t        _sessionId = 0;
-                uint64_t        _sessionVersion = 0;
-                String          _originNetType = "IN";
-                String          _originAddrType = "IP4";
-                String          _originAddress = "0.0.0.0";
-                String          _connectionAddress;
+                String                             _sessionName;
+                String                             _originUsername = "-";
+                uint64_t                           _sessionId = 0;
+                uint64_t                           _sessionVersion = 0;
+                String                             _originNetType = "IN";
+                String                             _originAddrType = "IP4";
+                String                             _originAddress = "0.0.0.0";
+                String                             _connectionAddress;
                 promeki::List<SdpMediaDescription> _mediaDescriptions;
 };
 

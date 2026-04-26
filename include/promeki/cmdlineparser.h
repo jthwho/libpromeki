@@ -70,12 +70,8 @@ class CmdLineParser {
                  * Always add new callback types to the end, as the variant index
                  * is used to infer the argument data type.
                  */
-                using OptionCallbackVariant = std::variant<
-                        OptionCallback,
-                        OptionBoolCallback,
-                        OptionStringCallback,
-                        OptionIntCallback,
-                        OptionDoubleCallback>;
+                using OptionCallbackVariant = std::variant<OptionCallback, OptionBoolCallback, OptionStringCallback,
+                                                           OptionIntCallback, OptionDoubleCallback>;
 
                 /**
                  * @brief Describes a single command-line option.
@@ -87,18 +83,18 @@ class CmdLineParser {
                         public:
                                 /** @brief Enumerates the argument types an option can accept. */
                                 enum ArgType {
-                                        ArgNone,        ///< No argument required.
-                                        ArgBool,        ///< Boolean argument.
-                                        ArgString,      ///< String argument.
-                                        ArgInt,         ///< Integer argument.
-                                        ArgDouble,      ///< Double argument.
-                                        ArgUnknown      ///< Unknown or unsupported type.
+                                        ArgNone,   ///< No argument required.
+                                        ArgBool,   ///< Boolean argument.
+                                        ArgString, ///< String argument.
+                                        ArgInt,    ///< Integer argument.
+                                        ArgDouble, ///< Double argument.
+                                        ArgUnknown ///< Unknown or unsupported type.
                                 };
 
-                                char                    shortName = 0;  ///< Single-character short option name, or 0 if none.
-                                String                  longName;       ///< Long option name, or empty if none.
-                                String                  desc;           ///< Description shown in usage/help text.
-                                OptionCallbackVariant   callback;       ///< Typed callback invoked when this option is parsed.
+                                char   shortName = 0;           ///< Single-character short option name, or 0 if none.
+                                String longName;                ///< Long option name, or empty if none.
+                                String desc;                    ///< Description shown in usage/help text.
+                                OptionCallbackVariant callback; ///< Typed callback invoked when this option is parsed.
 
                                 /** @brief Default constructor. */
                                 Option() = default;
@@ -110,22 +106,21 @@ class CmdLineParser {
                                  * @param d  Description for help text.
                                  * @param cb Typed callback variant.
                                  */
-                                Option(char sn, const String &ln, const String &d, OptionCallbackVariant cb) :
-                                        shortName(sn), longName(ln), desc(d), callback(cb) {}
+                                Option(char sn, const String &ln, const String &d, OptionCallbackVariant cb)
+                                    : shortName(sn), longName(ln), desc(d), callback(cb) {}
 
                                 /**
                                  * @brief Returns the argument type inferred from the callback variant.
                                  * @return The ArgType corresponding to the held callback type.
                                  */
                                 ArgType argType() const {
-                                        if(std::holds_alternative<OptionCallback>(callback)) return ArgNone;
-                                        if(std::holds_alternative<OptionBoolCallback>(callback)) return ArgBool;
-                                        if(std::holds_alternative<OptionIntCallback>(callback)) return ArgInt;
-                                        if(std::holds_alternative<OptionStringCallback>(callback)) return ArgString;
-                                        if(std::holds_alternative<OptionDoubleCallback>(callback)) return ArgDouble;
+                                        if (std::holds_alternative<OptionCallback>(callback)) return ArgNone;
+                                        if (std::holds_alternative<OptionBoolCallback>(callback)) return ArgBool;
+                                        if (std::holds_alternative<OptionIntCallback>(callback)) return ArgInt;
+                                        if (std::holds_alternative<OptionStringCallback>(callback)) return ArgString;
+                                        if (std::holds_alternative<OptionDoubleCallback>(callback)) return ArgDouble;
                                         return ArgUnknown;
                                 }
-
                 };
 
                 /**
@@ -137,11 +132,11 @@ class CmdLineParser {
                  * @param options An initializer list of Option objects to register.
                  */
                 void registerOptions(const std::initializer_list<Option> &options) {
-                        for(const auto &opt : options) {
-                                if(opt.shortName != 0) {
+                        for (const auto &opt : options) {
+                                if (opt.shortName != 0) {
                                         _optionsMap[String(1, opt.shortName)] = opt;
                                 }
-                                if(!opt.longName.isEmpty()) {
+                                if (!opt.longName.isEmpty()) {
                                         _optionsMap[opt.longName] = opt;
                                 }
                                 _options.pushToBack(opt);
@@ -174,11 +169,11 @@ class CmdLineParser {
                  */
                 int parseMain(int argc, char **argv) {
                         StringList args;
-                        if(argc > 1) args.reserve(static_cast<size_t>(argc - 1));
-                        for(int i = 1; i < argc; ++i) {
+                        if (argc > 1) args.reserve(static_cast<size_t>(argc - 1));
+                        for (int i = 1; i < argc; ++i) {
                                 const char *a = argv[i] ? argv[i] : "";
-                                size_t len = 0;
-                                while(a[len]) ++len;
+                                size_t      len = 0;
+                                while (a[len]) ++len;
                                 args.pushToBack(String::fromUtf8(a, len));
                         }
                         return parse(args);
@@ -215,9 +210,9 @@ class CmdLineParser {
                 StringList generateUsage() const;
 
         private:
-                Map<String, Option>             _optionsMap;    ///< Lookup map from option name to Option.
-                List<Option>                    _options;       ///< Ordered list of all registered options.
-                StringList                      _args;          ///< Non-option arguments collected after parsing.
+                Map<String, Option> _optionsMap; ///< Lookup map from option name to Option.
+                List<Option>        _options;    ///< Ordered list of all registered options.
+                StringList          _args;       ///< Non-option arguments collected after parsing.
 
                 /**
                  * @brief Builds a display name string for an option.

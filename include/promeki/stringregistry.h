@@ -19,7 +19,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 namespace detail {
 
-/**
+        /**
  * @brief Logs a fatal hash-collision diagnostic and aborts the process.
  *
  * Out-of-line so @ref StringRegistry does not need to pull in the
@@ -28,10 +28,8 @@ namespace detail {
  * registry instantiation; the caller threads the registry's name
  * through so the diagnostic can identify which registry collided.
  */
-[[noreturn]] void stringRegistryCollisionAbort(const char *registryName,
-                                               const String &existing,
-                                               const String &incoming,
-                                               uint64_t hash);
+        [[noreturn]] void stringRegistryCollisionAbort(const char *registryName, const String &existing,
+                                                       const String &incoming, uint64_t hash);
 
 } // namespace detail
 
@@ -90,8 +88,7 @@ namespace detail {
  * static_assert(Width.id() == MyItem::literal("video.width").id());
  * @endcode
  */
-template <CompiledString Name>
-class StringRegistry {
+template <CompiledString Name> class StringRegistry {
         public:
                 /** @brief Sentinel value representing an invalid/unregistered ID. */
                 static constexpr uint64_t InvalidID = UINT64_MAX;
@@ -219,11 +216,11 @@ class StringRegistry {
                  */
                 uint64_t findId(const String &str) const {
                         ReadWriteLock::ReadLocker lock(_lock);
-                        uint64_t slot = fnv1a(str.cstr());
-                        while(true) {
+                        uint64_t                  slot = fnv1a(str.cstr());
+                        while (true) {
                                 auto it = _names.find(slot);
-                                if(it == _names.end()) return InvalidID;
-                                if(it->second == str) return slot;
+                                if (it == _names.end()) return InvalidID;
+                                if (it->second == str) return slot;
                                 ++slot;
                         }
                 }
@@ -250,16 +247,16 @@ class StringRegistry {
                         // Fast path: check under a read lock first.
                         {
                                 ReadWriteLock::ReadLocker lock(_lock);
-                                auto it = _names.find(h);
-                                if(it != _names.end()) {
-                                        if(it->second == str) return h;
+                                auto                      it = _names.find(h);
+                                if (it != _names.end()) {
+                                        if (it->second == str) return h;
                                         detail::stringRegistryCollisionAbort(Name.bytes(), it->second, str, h);
                                 }
                         }
                         ReadWriteLock::WriteLocker lock(_lock);
-                        auto it = _names.find(h);
-                        if(it != _names.end()) {
-                                if(it->second == str) return h;
+                        auto                       it = _names.find(h);
+                        if (it != _names.end()) {
+                                if (it->second == str) return h;
                                 detail::stringRegistryCollisionAbort(Name.bytes(), it->second, str, h);
                         }
                         _names.insert(h, str);
@@ -283,25 +280,25 @@ class StringRegistry {
                         // Fast path: read-locked probe.
                         {
                                 ReadWriteLock::ReadLocker lock(_lock);
-                                uint64_t slot = start;
-                                while(true) {
+                                uint64_t                  slot = start;
+                                while (true) {
                                         auto it = _names.find(slot);
-                                        if(it == _names.end()) break;
-                                        if(it->second == str) return slot;
+                                        if (it == _names.end()) break;
+                                        if (it->second == str) return slot;
                                         ++slot;
                                 }
                         }
                         // Slow path: acquire write lock and retry so we can
                         // safely insert if still missing.
                         ReadWriteLock::WriteLocker lock(_lock);
-                        uint64_t slot = start;
-                        while(true) {
+                        uint64_t                   slot = start;
+                        while (true) {
                                 auto it = _names.find(slot);
-                                if(it == _names.end()) {
+                                if (it == _names.end()) {
                                         _names.insert(slot, str);
                                         return slot;
                                 }
-                                if(it->second == str) return slot;
+                                if (it->second == str) return slot;
                                 ++slot;
                         }
                 }
@@ -313,8 +310,8 @@ class StringRegistry {
                  */
                 String name(uint64_t id) const {
                         ReadWriteLock::ReadLocker lock(_lock);
-                        auto it = _names.find(id);
-                        if(it == _names.end()) return String();
+                        auto                      it = _names.find(id);
+                        if (it == _names.end()) return String();
                         return it->second;
                 }
 
@@ -332,15 +329,13 @@ class StringRegistry {
                  * @param str The string to check.
                  * @return True if the string has been registered.
                  */
-                bool contains(const String &str) const {
-                        return findId(str) != InvalidID;
-                }
+                bool contains(const String &str) const { return findId(str) != InvalidID; }
 
         private:
                 StringRegistry() = default;
 
-                mutable ReadWriteLock   _lock;
-                Map<uint64_t, String>   _names;
+                mutable ReadWriteLock _lock;
+                Map<uint64_t, String> _names;
 };
 
 PROMEKI_NAMESPACE_END

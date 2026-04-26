@@ -113,7 +113,7 @@ TEST_CASE("FrameRate: construction from well-known rate 50") {
 
 TEST_CASE("FrameRate: construction from rational") {
         FrameRate::RationalType r(90, 1);
-        FrameRate fr(r);
+        FrameRate               fr(r);
         CHECK(fr.isValid());
         CHECK(fr.numerator() == 90);
         CHECK(fr.denominator() == 1);
@@ -127,12 +127,12 @@ TEST_CASE("FrameRate: invalid well-known rate") {
 
 TEST_CASE("FrameRate: toString") {
         FrameRate fr(FrameRate::FPS_24);
-        String s = fr.toString();
+        String    s = fr.toString();
         CHECK_FALSE(s.isEmpty());
 }
 
 TEST_CASE("FrameRate: rational() accessor") {
-        FrameRate fr(FrameRate::FPS_29_97);
+        FrameRate                      fr(FrameRate::FPS_29_97);
         const FrameRate::RationalType &r = fr.rational();
         CHECK(r.numerator() == 30000);
         CHECK(r.denominator() == 1001);
@@ -150,7 +150,7 @@ TEST_CASE("FrameRate: operator== and operator!=") {
 
         // Same rational from different construction paths
         FrameRate::RationalType r(24, 1);
-        FrameRate d(r);
+        FrameRate               d(r);
         CHECK(a == d);
 }
 
@@ -270,17 +270,20 @@ TEST_CASE("FrameRate: fromString invalid") {
 // =========================================================================
 
 TEST_CASE("FrameRate: samplesPerFrame integer cadences are constant") {
-        struct Case { FrameRate::WellKnownRate rate; int64_t expected; };
-        Case cases[] = {
-                { FrameRate::FPS_24, 2000 },  // 48000 / 24
-                { FrameRate::FPS_25, 1920 },  // 48000 / 25
-                { FrameRate::FPS_30, 1600 },  // 48000 / 30
-                { FrameRate::FPS_50,  960 },  // 48000 / 50
-                { FrameRate::FPS_60,  800 },  // 48000 / 60
+        struct Case {
+                        FrameRate::WellKnownRate rate;
+                        int64_t                  expected;
         };
-        for(const auto &c : cases) {
+        Case cases[] = {
+                {FrameRate::FPS_24, 2000}, // 48000 / 24
+                {FrameRate::FPS_25, 1920}, // 48000 / 25
+                {FrameRate::FPS_30, 1600}, // 48000 / 30
+                {FrameRate::FPS_50, 960},  // 48000 / 50
+                {FrameRate::FPS_60, 800},  // 48000 / 60
+        };
+        for (const auto &c : cases) {
                 FrameRate fps(c.rate);
-                for(int64_t f = 0; f < 32; f++) {
+                for (int64_t f = 0; f < 32; f++) {
                         CHECK(fps.samplesPerFrame(48000, f) == (size_t)c.expected);
                 }
         }
@@ -289,7 +292,7 @@ TEST_CASE("FrameRate: samplesPerFrame integer cadences are constant") {
 TEST_CASE("FrameRate: samplesPerFrame 23.976 @ 48k is constant 2002") {
         // 48000 * 1001 / 24000 = 2002 exactly — no cadence needed.
         FrameRate fps(FrameRate::FPS_23_98);
-        for(int64_t f = 0; f < 32; f++) {
+        for (int64_t f = 0; f < 32; f++) {
                 CHECK(fps.samplesPerFrame(48000, f) == 2002u);
         }
 }
@@ -298,7 +301,7 @@ TEST_CASE("FrameRate: samplesPerFrame 29.97 @ 48k is cadenced and exact") {
         FrameRate fps(FrameRate::FPS_29_97);
         // Five frames must sum to exactly 8008 (= 48000 * 5 * 1001 / 30000).
         int64_t sum = 0;
-        for(int64_t f = 0; f < 5; f++) {
+        for (int64_t f = 0; f < 5; f++) {
                 size_t s = fps.samplesPerFrame(48000, f);
                 CHECK((s == 1601u || s == 1602u));
                 sum += s;
@@ -307,9 +310,8 @@ TEST_CASE("FrameRate: samplesPerFrame 29.97 @ 48k is cadenced and exact") {
 
         // The cadence must be cyclic with period 5: frame N and frame
         // N+5 emit the same count.
-        for(int64_t f = 0; f < 25; f++) {
-                CHECK(fps.samplesPerFrame(48000, f)
-                      == fps.samplesPerFrame(48000, f + 5));
+        for (int64_t f = 0; f < 25; f++) {
+                CHECK(fps.samplesPerFrame(48000, f) == fps.samplesPerFrame(48000, f + 5));
         }
 
         // Every five-frame cycle (the natural cadence period) must sum
@@ -317,11 +319,10 @@ TEST_CASE("FrameRate: samplesPerFrame 29.97 @ 48k is cadenced and exact") {
         // are.  Verifying this over 1000 cycles (~166 seconds at
         // 29.97 fps) demonstrates that the cumulative count never
         // drifts by even one sample.
-        for(int64_t cycle = 0; cycle < 1000; cycle++) {
+        for (int64_t cycle = 0; cycle < 1000; cycle++) {
                 int64_t cycleSum = 0;
-                for(int i = 0; i < 5; i++) {
-                        cycleSum += (int64_t)fps.samplesPerFrame(
-                                48000, cycle * 5 + i);
+                for (int i = 0; i < 5; i++) {
+                        cycleSum += (int64_t)fps.samplesPerFrame(48000, cycle * 5 + i);
                 }
                 CHECK(cycleSum == 8008);
         }
@@ -331,8 +332,8 @@ TEST_CASE("FrameRate: samplesPerFrame 29.97 @ 48k is cadenced and exact") {
         // floor(N * sampleRate * den / num) — i.e. exactly the
         // wall-clock-aligned integer sample count.
         const int64_t N = 30000; // = 1000 * 30 = exactly 1001 seconds
-        int64_t cum = 0;
-        for(int64_t f = 0; f < N; f++) {
+        int64_t       cum = 0;
+        for (int64_t f = 0; f < N; f++) {
                 cum += (int64_t)fps.samplesPerFrame(48000, f);
         }
         const int64_t expected = (N * INT64_C(48000) * INT64_C(1001)) / INT64_C(30000);
@@ -344,7 +345,7 @@ TEST_CASE("FrameRate: samplesPerFrame 59.94 @ 48k is cadenced and exact") {
         FrameRate fps(FrameRate::FPS_59_94);
         // Five frames must sum to exactly 4004 (= 48000 * 5 * 1001 / 60000).
         int64_t sum = 0;
-        for(int64_t f = 0; f < 5; f++) {
+        for (int64_t f = 0; f < 5; f++) {
                 size_t s = fps.samplesPerFrame(48000, f);
                 CHECK((s == 800u || s == 801u));
                 sum += s;
@@ -354,8 +355,8 @@ TEST_CASE("FrameRate: samplesPerFrame 59.94 @ 48k is cadenced and exact") {
 
 TEST_CASE("FrameRate: samplesPerFrame 119.88 @ 48k is cadenced and exact") {
         FrameRate fps(FrameRate::FPS_119_88);
-        int64_t sum = 0;
-        for(int64_t f = 0; f < 5; f++) {
+        int64_t   sum = 0;
+        for (int64_t f = 0; f < 5; f++) {
                 sum += (int64_t)fps.samplesPerFrame(48000, f);
         }
         // 48000 * 5 * 1001 / 120000 = 2002
@@ -364,10 +365,10 @@ TEST_CASE("FrameRate: samplesPerFrame 119.88 @ 48k is cadenced and exact") {
 
 TEST_CASE("FrameRate: samplesPerFrame respects sample rate") {
         FrameRate fps(FrameRate::FPS_30);
-        CHECK(fps.samplesPerFrame(44100, 0)  ==  1470u);
-        CHECK(fps.samplesPerFrame(48000, 0)  ==  1600u);
-        CHECK(fps.samplesPerFrame(96000, 0)  ==  3200u);
-        CHECK(fps.samplesPerFrame(192000, 0) ==  6400u);
+        CHECK(fps.samplesPerFrame(44100, 0) == 1470u);
+        CHECK(fps.samplesPerFrame(48000, 0) == 1600u);
+        CHECK(fps.samplesPerFrame(96000, 0) == 3200u);
+        CHECK(fps.samplesPerFrame(192000, 0) == 6400u);
 }
 
 TEST_CASE("FrameRate: samplesPerFrame on invalid frame rate returns 0") {
@@ -396,7 +397,7 @@ TEST_CASE("FrameRate: cumulativeTicks zero frame is always zero") {
 TEST_CASE("FrameRate: cumulativeTicks integer rate stride is exact") {
         // 30 fps @ 90000 Hz → exactly 3000 ticks per frame.
         FrameRate fps(FrameRate::FPS_30);
-        for(int64_t n = 0; n < 100; ++n) {
+        for (int64_t n = 0; n < 100; ++n) {
                 CHECK(fps.cumulativeTicks(90000, n) == n * 3000);
         }
 }
@@ -405,7 +406,7 @@ TEST_CASE("FrameRate: cumulativeTicks 29.97 @ 90000 is exact integer") {
         // 29.97 = 30000/1001.  Per-frame stride = 90000 * 1001 / 30000 = 3003
         // (integer, because 1001 divides evenly).
         FrameRate fps(FrameRate::FPS_29_97);
-        for(int64_t n = 0; n < 100; ++n) {
+        for (int64_t n = 0; n < 100; ++n) {
                 CHECK(fps.cumulativeTicks(90000, n) == n * 3003);
         }
 }
@@ -420,7 +421,7 @@ TEST_CASE("FrameRate: cumulativeTicks 23.976 @ 90000 matches rational truncation
         // matches the same rational truncation the caller would do
         // by hand.
         FrameRate fps(FrameRate::FPS_23_98);
-        for(int64_t n = 0; n <= 1001; ++n) {
+        for (int64_t n = 0; n <= 1001; ++n) {
                 int64_t expected = (n * 90000 * 1001) / 24000;
                 CHECK(fps.cumulativeTicks(90000, n) == expected);
         }
@@ -431,8 +432,8 @@ TEST_CASE("FrameRate: cumulativeTicks monotonic under fractional rates") {
         // when the per-frame stride alternates, cumulative(n+1) >=
         // cumulative(n) holds for every frame.
         FrameRate fps(FrameRate::FPS_29_97);
-        int64_t prev = 0;
-        for(int64_t n = 1; n < 1000; ++n) {
+        int64_t   prev = 0;
+        for (int64_t n = 1; n < 1000; ++n) {
                 int64_t cur = fps.cumulativeTicks(48000, n);
                 CHECK(cur >= prev);
                 prev = cur;
@@ -446,8 +447,8 @@ TEST_CASE("FrameRate: cumulativeTicks matches samplesPerFrame cumulative sum") {
         // values.  Validates that the refactor kept the two in sync
         // for fractional NTSC audio cadences.
         FrameRate fps(FrameRate::FPS_29_97);
-        int64_t sum = 0;
-        for(int64_t n = 0; n < 500; ++n) {
+        int64_t   sum = 0;
+        for (int64_t n = 0; n < 500; ++n) {
                 sum += static_cast<int64_t>(fps.samplesPerFrame(48000, n));
                 CHECK(sum == fps.cumulativeTicks(48000, n + 1));
         }
@@ -474,7 +475,7 @@ TEST_CASE("FrameRate: wellKnownRates() returns a non-empty list") {
         const auto rates = FrameRate::wellKnownRates();
         CHECK(rates.size() > 0);
         // The list must never include the FPS_Invalid sentinel.
-        for(size_t i = 0; i < rates.size(); ++i) {
+        for (size_t i = 0; i < rates.size(); ++i) {
                 CHECK(rates[i].rate.isValid());
                 CHECK_FALSE(rates[i].label.isEmpty());
         }
@@ -485,8 +486,8 @@ TEST_CASE("FrameRate: wellKnownRates() contains specific known entries") {
 
         // Helper to find an entry by label.
         auto findByLabel = [&](const String &lbl) -> const FrameRate::WellKnown * {
-                for(size_t i = 0; i < rates.size(); ++i) {
-                        if(rates[i].label == lbl) return &rates[i];
+                for (size_t i = 0; i < rates.size(); ++i) {
+                        if (rates[i].label == lbl) return &rates[i];
                 }
                 return nullptr;
         };
@@ -507,7 +508,7 @@ TEST_CASE("FrameRate: wellKnownRates() contains specific known entries") {
 
 TEST_CASE("FrameRate: wellKnownRates() entries round-trip through fromString") {
         const auto rates = FrameRate::wellKnownRates();
-        for(size_t i = 0; i < rates.size(); ++i) {
+        for (size_t i = 0; i < rates.size(); ++i) {
                 // Each entry's canonical rational toString must parse
                 // back to an equal FrameRate.
                 const String wireForm = rates[i].rate.toString();
@@ -525,7 +526,7 @@ TEST_CASE("FrameRate: wellKnownRates() entries round-trip through fromString") {
 TEST_CASE("FrameRate: wellKnownRates() is in ascending rate order") {
         const auto rates = FrameRate::wellKnownRates();
         REQUIRE(rates.size() >= 2);
-        for(size_t i = 1; i < rates.size(); ++i) {
+        for (size_t i = 1; i < rates.size(); ++i) {
                 CHECK(rates[i - 1].rate.toDouble() < rates[i].rate.toDouble());
         }
 }

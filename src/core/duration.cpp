@@ -14,8 +14,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 String Duration::toString() const {
         int64_t total = nanoseconds();
-        bool neg = total < 0;
-        if(neg) total = -total;
+        bool    neg = total < 0;
+        if (neg) total = -total;
 
         int64_t h = total / 3600000000000LL;
         total %= 3600000000000LL;
@@ -26,10 +26,10 @@ String Duration::toString() const {
         int64_t ms = total / 1000000LL;
 
         String result;
-        if(neg) result += "-";
-        if(h > 0) result += String::sprintf("%lldh ", (long long)h);
-        if(m > 0) result += String::sprintf("%lldm ", (long long)m);
-        if(ms > 0) {
+        if (neg) result += "-";
+        if (h > 0) result += String::sprintf("%lldh ", (long long)h);
+        if (m > 0) result += String::sprintf("%lldm ", (long long)m);
+        if (ms > 0) {
                 result += String::sprintf("%lld.%03llds", (long long)s, (long long)ms);
         } else {
                 result += String::sprintf("%llds", (long long)s);

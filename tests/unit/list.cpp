@@ -25,7 +25,7 @@ TEST_CASE("List_SizeConstruction") {
         List<int> list(5);
         CHECK(list.size() == 5);
         CHECK_FALSE(list.isEmpty());
-        for(size_t i = 0; i < list.size(); i++) {
+        for (size_t i = 0; i < list.size(); i++) {
                 CHECK(list[i] == 0);
         }
 }
@@ -113,7 +113,7 @@ TEST_CASE("List_PlusEqualsItem") {
 
 TEST_CASE("List_PlusEqualsMoveItem") {
         List<String> list;
-        String s = "hello";
+        String       s = "hello";
         list += std::move(s);
         CHECK(list.size() == 1);
         CHECK(list[0] == "hello");
@@ -181,7 +181,7 @@ TEST_CASE("List_ConstFrontBack") {
 
 TEST_CASE("List_Data") {
         List<int> list = {1, 2, 3};
-        int *p = list.data();
+        int      *p = list.data();
         CHECK(p[0] == 1);
         CHECK(p[2] == 3);
         p[1] = 42;
@@ -190,7 +190,7 @@ TEST_CASE("List_Data") {
 
 TEST_CASE("List_ConstData") {
         const List<int> list = {1, 2, 3};
-        const int *p = list.data();
+        const int      *p = list.data();
         CHECK(p[0] == 1);
         CHECK(p[2] == 3);
 }
@@ -288,7 +288,7 @@ TEST_CASE("List_EmplaceByIndex") {
 
 TEST_CASE("List_RemoveByIterator") {
         List<int> list = {10, 20, 30};
-        auto it = list.remove(list.cbegin() + 1);
+        auto      it = list.remove(list.cbegin() + 1);
         CHECK(list.size() == 2);
         CHECK(list[0] == 10);
         CHECK(list[1] == 30);
@@ -348,7 +348,7 @@ TEST_CASE("List_PushToBackList") {
 
 TEST_CASE("List_PushToBackMoveItem") {
         List<String> list;
-        String s = "test";
+        String       s = "test";
         list.pushToBack(std::move(s));
         CHECK(list.size() == 1);
         CHECK(list[0] == "test");
@@ -520,15 +520,15 @@ TEST_CASE("List_GreaterEqual") {
 
 TEST_CASE("List_RangeFor") {
         List<int> list = {1, 2, 3};
-        int sum = 0;
-        for(const auto &v : list) sum += v;
+        int       sum = 0;
+        for (const auto &v : list) sum += v;
         CHECK(sum == 6);
 }
 
 TEST_CASE("List_ReverseIteration") {
         List<int> list = {1, 2, 3};
         List<int> rev;
-        for(auto it = list.rbegin(); it != list.rend(); ++it) {
+        for (auto it = list.rbegin(); it != list.rend(); ++it) {
                 rev += *it;
         }
         CHECK(rev[0] == 3);
@@ -538,8 +538,8 @@ TEST_CASE("List_ReverseIteration") {
 
 TEST_CASE("List_ConstIterator") {
         const List<int> list = {10, 20, 30};
-        int sum = 0;
-        for(auto it = list.constBegin(); it != list.constEnd(); ++it) {
+        int             sum = 0;
+        for (auto it = list.constBegin(); it != list.constEnd(); ++it) {
                 sum += *it;
         }
         CHECK(sum == 60);
@@ -566,14 +566,14 @@ TEST_CASE("List_WithStrings") {
 
 TEST_CASE("List: forEach") {
         List<int> l = {1, 2, 3};
-        int sum = 0;
+        int       sum = 0;
         l.forEach([&](int v) { sum += v; });
         CHECK(sum == 6);
 }
 
 TEST_CASE("List: indexOf") {
         List<int> l = {10, 20, 30, 20, 40};
-        auto r1 = l.indexOf(20);
+        auto      r1 = l.indexOf(20);
         CHECK(r1.second() == Error::Ok);
         CHECK(r1.first() == 1u);
         auto r2 = l.indexOf(40);
@@ -585,7 +585,7 @@ TEST_CASE("List: indexOf") {
 
 TEST_CASE("List: lastIndexOf") {
         List<int> l = {10, 20, 30, 20, 40};
-        auto r1 = l.lastIndexOf(20);
+        auto      r1 = l.lastIndexOf(20);
         CHECK(r1.second() == Error::Ok);
         CHECK(r1.first() == 3u);
         auto r2 = l.lastIndexOf(10);
@@ -605,7 +605,7 @@ TEST_CASE("List: count") {
 
 TEST_CASE("List: mid") {
         List<int> l = {10, 20, 30, 40, 50};
-        auto m = l.mid(1, 3);
+        auto      m = l.mid(1, 3);
         CHECK(m.size() == 3);
         CHECK(m[0] == 20);
         CHECK(m[1] == 30);
@@ -614,7 +614,7 @@ TEST_CASE("List: mid") {
 
 TEST_CASE("List: mid edge cases") {
         List<int> l = {1, 2, 3};
-        auto m1 = l.mid(0, 10);
+        auto      m1 = l.mid(0, 10);
         CHECK(m1.size() == 3);
         auto m2 = l.mid(5, 2);
         CHECK(m2.isEmpty());

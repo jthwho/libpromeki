@@ -18,7 +18,7 @@ using namespace promeki;
 
 TEST_CASE("BackendWeight: standard tiers are strictly ordered Vendored < System < User") {
         CHECK(BackendWeight::Vendored < BackendWeight::System);
-        CHECK(BackendWeight::System   < BackendWeight::User);
+        CHECK(BackendWeight::System < BackendWeight::User);
 }
 
 TEST_CASE("BackendWeight: tiers leave room for inter-tier intermediate values") {
@@ -27,13 +27,13 @@ TEST_CASE("BackendWeight: tiers leave room for inter-tier intermediate values") 
         // the next.  Bands therefore must be wide enough to fit at
         // least a +50 bump.
         CHECK(BackendWeight::Vendored + 50 < BackendWeight::System);
-        CHECK(BackendWeight::System   + 50 < BackendWeight::User);
+        CHECK(BackendWeight::System + 50 < BackendWeight::User);
 }
 
 TEST_CASE("BackendWeight: well-known tier values are positive") {
         // Negative weights would never be selected against the default
         // sort comparator (descending) — pin that they're > 0.
         CHECK(BackendWeight::Vendored > 0);
-        CHECK(BackendWeight::System   > 0);
-        CHECK(BackendWeight::User     > 0);
+        CHECK(BackendWeight::System > 0);
+        CHECK(BackendWeight::User > 0);
 }

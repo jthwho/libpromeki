@@ -39,7 +39,7 @@ TEST_CASE("TuiLineEdit: placeholder") {
 
 TEST_CASE("TuiLineEdit: sizeHint") {
         TuiLineEdit edit("Hello");
-        Size2Di32 hint = edit.sizeHint();
+        Size2Di32   hint = edit.sizeHint();
         CHECK(hint.width() > 0);
         CHECK(hint.height() >= 1);
 }

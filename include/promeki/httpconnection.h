@@ -66,7 +66,7 @@ class EventLoop;
  * loop's @c postCallable.
  */
 class HttpConnection : public ObjectBase {
-        PROMEKI_OBJECT(HttpConnection, ObjectBase)
+                PROMEKI_OBJECT(HttpConnection, ObjectBase)
         public:
                 /** @brief Convenience list type. */
                 using List = promeki::List<HttpConnection *>;
@@ -86,8 +86,7 @@ class HttpConnection : public ObjectBase {
                  * handlers, copy the request and call @ref postResponse
                  * later from the same loop.
                  */
-                using RequestHandler = std::function<void(HttpRequest &request,
-                                                          HttpResponse &response)>;
+                using RequestHandler = std::function<void(HttpRequest &request, HttpResponse &response)>;
 
                 /**
                  * @brief Constructs a connection wrapping @p socket.
@@ -201,43 +200,43 @@ class HttpConnection : public ObjectBase {
                 // the dispatcher to populate a response, drain it,
                 // then either resume reading (keep-alive) or close.
                 enum class State {
-                        Handshaking,    ///< Driving the TLS server handshake.
-                        Reading,        ///< Awaiting / parsing a request.
-                        AwaitingResponse,///< Request done, dispatcher running.
-                        Writing,        ///< Streaming a response.
-                        Closing,        ///< Final flush in progress.
+                        Handshaking,      ///< Driving the TLS server handshake.
+                        Reading,          ///< Awaiting / parsing a request.
+                        AwaitingResponse, ///< Request done, dispatcher running.
+                        Writing,          ///< Streaming a response.
+                        Closing,          ///< Final flush in progress.
                         Closed
                 };
 
-                struct Impl;            ///< Pimpl: hides llhttp_t headers.
-                UniquePtr<Impl>         _impl;
+                struct Impl; ///< Pimpl: hides llhttp_t headers.
+                UniquePtr<Impl> _impl;
 
-                TcpSocket               *_socket = nullptr;     ///< Owned, parented onto this.
-                EventLoop               *_loop = nullptr;
-                int                     _ioHandle = -1;
-                int                     _timerId = -1;
-                State                   _state = State::Reading;
+                TcpSocket *_socket = nullptr; ///< Owned, parented onto this.
+                EventLoop *_loop = nullptr;
+                int        _ioHandle = -1;
+                int        _timerId = -1;
+                State      _state = State::Reading;
 
-                RequestHandler          _handler;
-                Buffer                  _readBuf;       ///< Scratch read landing zone.
-                Buffer                  _writeQueue;    ///< Pending bytes to send.
-                size_t                  _writeOffset = 0;
+                RequestHandler _handler;
+                Buffer         _readBuf;    ///< Scratch read landing zone.
+                Buffer         _writeQueue; ///< Pending bytes to send.
+                size_t         _writeOffset = 0;
 
-                HttpRequest             _pendingRequest;
-                HttpRequest             _lastRequest;   ///< Captured for responseSent signal.
-                IODevice::Shared        _streamSource;
-                int64_t                 _streamRemaining = -1;
-                bool                    _streamChunked = false;
-                bool                    _keepAlive = true;
+                HttpRequest      _pendingRequest;
+                HttpRequest      _lastRequest; ///< Captured for responseSent signal.
+                IODevice::Shared _streamSource;
+                int64_t          _streamRemaining = -1;
+                bool             _streamChunked = false;
+                bool             _keepAlive = true;
 
                 // Async-read parking: when the body IODevice returns
                 // read()==0 with atEnd()==false, the pump unsubscribes
                 // from IoWrite and waits on the device's readyRead
                 // signal.  _streamReadyReadSlotId is the slot id from
                 // Signal::connect — non-negative while parked.
-                size_t                  _streamReadyReadSlotId = 0;
-                bool                    _streamReadyReadConnected = false;
-                bool                    _streamParked = false;
+                size_t _streamReadyReadSlotId = 0;
+                bool   _streamReadyReadConnected = false;
+                bool   _streamParked = false;
 
                 // Protocol upgrade.  When the response carries an
                 // upgrade hook (HttpResponse::upgradeHook()) and is a
@@ -245,21 +244,21 @@ class HttpConnection : public ObjectBase {
                 // here and fires once the response finishes writing.
                 HttpResponse::UpgradeHook _pendingUpgradeHook;
 
-                unsigned int            _idleTimeoutMs = DefaultIdleTimeoutMs;
-                int64_t                 _maxBodyBytes  = DefaultMaxBodyBytes;
-                int64_t                 _bodyBytesSoFar = 0;
-                bool                    _needsServerHandshake = false;
+                unsigned int _idleTimeoutMs = DefaultIdleTimeoutMs;
+                int64_t      _maxBodyBytes = DefaultMaxBodyBytes;
+                int64_t      _bodyBytesSoFar = 0;
+                bool         _needsServerHandshake = false;
 
                 // Header-collection scratch.  llhttp emits header
                 // fields and values as separate callbacks (and may
                 // fragment a single field across multiple callbacks)
                 // so we accumulate into these strings until both
                 // sides are complete, then push into _pendingRequest.
-                String                  _hdrField;
-                String                  _hdrValue;
-                bool                    _hdrFieldComplete = false;
-                bool                    _hdrValueComplete = false;
-                String                  _urlBuf;
+                String _hdrField;
+                String _hdrValue;
+                bool   _hdrFieldComplete = false;
+                bool   _hdrValueComplete = false;
+                String _urlBuf;
 
                 void onIoReady(int fd, uint32_t events);
                 void onIdleTimeout();

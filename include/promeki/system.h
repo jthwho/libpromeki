@@ -41,29 +41,25 @@ class System {
                  * @brief Returns true if the host byte order is little-endian.
                  * @return true if little-endian, false otherwise.
                  */
-                static constexpr bool isLittleEndian() {
-                        return std::endian::native == std::endian::little;
-                }
+                static constexpr bool isLittleEndian() { return std::endian::native == std::endian::little; }
 
                 /**
                  * @brief Returns true if the host byte order is big-endian.
                  * @return true if big-endian, false otherwise.
                  */
-                static constexpr bool isBigEndian() {
-                        return std::endian::native == std::endian::big;
-                }
+                static constexpr bool isBigEndian() { return std::endian::native == std::endian::big; }
 
                 /**
                  * @brief Reverses the byte order of an arithmetic value in place.
                  * @tparam T An arithmetic type (integer or floating-point).
                  * @param value The value whose bytes will be swapped.
                  */
-                template<typename T> static void swapEndian(T &value) {
+                template <typename T> static void swapEndian(T &value) {
                         static_assert(std::is_arithmetic<T>::value, "swab() requires an arithmetic type");
                         constexpr size_t size = sizeof(T);
                         if constexpr (size == 1) return;
-                        unsigned char *data = reinterpret_cast<unsigned char*>(&value);
-                        #pragma unroll
+                        unsigned char *data = reinterpret_cast<unsigned char *>(&value);
+#pragma unroll
                         for (size_t i = 0; i < size / 2; ++i) {
                                 std::swap(data[i], data[size - i - 1]);
                         }
@@ -76,7 +72,7 @@ class System {
                  * @tparam ValueIsBigEndian true if the value is stored in big-endian order.
                  * @param value The value to convert in place.
                  */
-                template<typename T, bool ValueIsBigEndian> static void makeNativeEndian(T &value) {
+                template <typename T, bool ValueIsBigEndian> static void makeNativeEndian(T &value) {
                         if constexpr (ValueIsBigEndian && isBigEndian()) return;
                         swab(value);
                         return;
@@ -92,4 +88,3 @@ class System {
 };
 
 PROMEKI_NAMESPACE_END
-

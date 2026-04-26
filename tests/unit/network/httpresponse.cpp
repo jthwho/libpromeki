@@ -59,13 +59,13 @@ TEST_CASE("HttpResponse") {
                 r.setBodyStream(shared, 7, "application/octet-stream");
                 CHECK(r.hasBodyStream());
                 CHECK(r.bodyStreamLength() == 7);
-                CHECK(r.body().size() == 0);    // cleared
+                CHECK(r.body().size() == 0); // cleared
                 CHECK(r.headers().value("Content-Type") == "application/octet-stream");
         }
 
         SUBCASE("takeBodyStream transfers ownership") {
                 HttpResponse r;
-                auto shared = IODevice::Shared::takeOwnership(new StringIODevice());
+                auto         shared = IODevice::Shared::takeOwnership(new StringIODevice());
                 r.setBodyStream(shared, 0, "application/octet-stream");
                 auto taken = r.takeBodyStream();
                 CHECK(taken.isValid());
@@ -73,10 +73,10 @@ TEST_CASE("HttpResponse") {
         }
 
         SUBCASE("factory helpers") {
-                CHECK(HttpResponse::notFound().status()           == HttpStatus::NotFound);
-                CHECK(HttpResponse::badRequest().status()         == HttpStatus::BadRequest);
-                CHECK(HttpResponse::internalError().status()      == HttpStatus::InternalServerError);
-                CHECK(HttpResponse::noContent().status()          == HttpStatus::NoContent);
+                CHECK(HttpResponse::notFound().status() == HttpStatus::NotFound);
+                CHECK(HttpResponse::badRequest().status() == HttpStatus::BadRequest);
+                CHECK(HttpResponse::internalError().status() == HttpStatus::InternalServerError);
+                CHECK(HttpResponse::noContent().status() == HttpStatus::NoContent);
 
                 HttpResponse allow = HttpResponse::methodNotAllowed("GET, POST");
                 CHECK(allow.status() == HttpStatus::MethodNotAllowed);

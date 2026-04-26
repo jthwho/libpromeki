@@ -23,7 +23,7 @@
 // alongside the libpromeki thirdparty headers.
 struct cirf_file;
 struct cirf_folder;
-typedef struct cirf_file cirf_file_t;
+typedef struct cirf_file   cirf_file_t;
 typedef struct cirf_folder cirf_folder_t;
 
 PROMEKI_NAMESPACE_BEGIN
@@ -196,8 +196,7 @@ class Resource {
                  *
                  * @return @c Error::Ok on success, otherwise an error.
                  */
-                static Error registerRoot(const cirf_folder_t *root,
-                                          const String &prefix = String());
+                static Error registerRoot(const cirf_folder_t *root, const String &prefix = String());
 
                 /**
                  * @brief Unregisters a previously-registered root by prefix.
@@ -227,16 +226,14 @@ class Resource {
  * // "foo/bar.txt".
  * @endcode
  */
-#define PROMEKI_REGISTER_RESOURCES(NAME, PREFIX)                              \
-        namespace {                                                           \
-                struct PROMEKI_CONCAT(_promeki_resreg_, NAME) {               \
-                        PROMEKI_CONCAT(_promeki_resreg_, NAME)() {            \
-                                ::promeki::Resource::registerRoot(            \
-                                        &NAME##_root, PREFIX);                \
-                        }                                                     \
-                };                                                            \
-                static PROMEKI_CONCAT(_promeki_resreg_, NAME)                 \
-                        PROMEKI_CONCAT(_promeki_resreg_inst_, NAME);          \
+#define PROMEKI_REGISTER_RESOURCES(NAME, PREFIX)                                                                       \
+        namespace {                                                                                                    \
+                struct PROMEKI_CONCAT(_promeki_resreg_, NAME) {                                                        \
+                                PROMEKI_CONCAT(_promeki_resreg_, NAME)() {                                             \
+                                        ::promeki::Resource::registerRoot(&NAME##_root, PREFIX);                       \
+                                }                                                                                      \
+                };                                                                                                     \
+                static PROMEKI_CONCAT(_promeki_resreg_, NAME) PROMEKI_CONCAT(_promeki_resreg_inst_, NAME);             \
         }
 
 PROMEKI_NAMESPACE_END

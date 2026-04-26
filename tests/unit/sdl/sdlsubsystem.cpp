@@ -25,8 +25,8 @@ TEST_CASE("SdlSubsystem: worker-thread quit wakes Application::exec()") {
         // through the EventLoop's own wake fd, independent of any
         // SDL events arriving.  Regressions the old wake-callback
         // bridge was trying to handle.
-        char arg0[] = "sdlsubsystem-test";
-        char *argv[] = { arg0 };
+        char         arg0[] = "sdlsubsystem-test";
+        char        *argv[] = {arg0};
         Application  app(1, argv);
         SdlSubsystem sdl;
 
@@ -47,9 +47,9 @@ TEST_CASE("SdlSubsystem: worker-thread quit wakes Application::exec()") {
 }
 
 TEST_CASE("SdlSubsystem: instance() returns the constructed subsystem") {
-        char arg0[] = "sdlsubsystem-test";
-        char *argv[] = { arg0 };
-        Application  app(1, argv);
+        char        arg0[] = "sdlsubsystem-test";
+        char       *argv[] = {arg0};
+        Application app(1, argv);
 
         CHECK(SdlSubsystem::instance() == nullptr);
         {
@@ -61,42 +61,41 @@ TEST_CASE("SdlSubsystem: instance() returns the constructed subsystem") {
 
 namespace {
 
-// Test Widget that tracks which KeyEvents reach its keyPressEvent
-// handler.  Optionally accepts the event to halt propagation.
-class TrackingWidget : public Widget {
-        public:
-                TrackingWidget(bool shouldAccept = false,
-                               ObjectBase *parent = nullptr)
-                        : Widget(parent), _shouldAccept(shouldAccept) {}
+        // Test Widget that tracks which KeyEvents reach its keyPressEvent
+        // handler.  Optionally accepts the event to halt propagation.
+        class TrackingWidget : public Widget {
+                public:
+                        TrackingWidget(bool shouldAccept = false, ObjectBase *parent = nullptr)
+                            : Widget(parent), _shouldAccept(shouldAccept) {}
 
-                int pressCount() const { return _pressCount; }
-                int releaseCount() const { return _releaseCount; }
-                KeyEvent::Key lastKey() const { return _lastKey; }
+                        int           pressCount() const { return _pressCount; }
+                        int           releaseCount() const { return _releaseCount; }
+                        KeyEvent::Key lastKey() const { return _lastKey; }
 
-        protected:
-                void keyPressEvent(KeyEvent *e) override {
-                        ++_pressCount;
-                        _lastKey = e->key();
-                        if(_shouldAccept) e->accept();
-                }
+                protected:
+                        void keyPressEvent(KeyEvent *e) override {
+                                ++_pressCount;
+                                _lastKey = e->key();
+                                if (_shouldAccept) e->accept();
+                        }
 
-                void keyReleaseEvent(KeyEvent *e) override {
-                        ++_releaseCount;
-                        if(_shouldAccept) e->accept();
-                }
+                        void keyReleaseEvent(KeyEvent *e) override {
+                                ++_releaseCount;
+                                if (_shouldAccept) e->accept();
+                        }
 
-        private:
-                bool           _shouldAccept;
-                int            _pressCount = 0;
-                int            _releaseCount = 0;
-                KeyEvent::Key  _lastKey = KeyEvent::Key_Unknown;
-};
+                private:
+                        bool          _shouldAccept;
+                        int           _pressCount = 0;
+                        int           _releaseCount = 0;
+                        KeyEvent::Key _lastKey = KeyEvent::Key_Unknown;
+        };
 
 } // namespace
 
 TEST_CASE("Widget: sendEvent dispatches KeyPress to keyPressEvent") {
         TrackingWidget w;
-        KeyEvent ke(KeyEvent::KeyPress, KeyEvent::Key_Space);
+        KeyEvent       ke(KeyEvent::KeyPress, KeyEvent::Key_Space);
         w.sendEvent(&ke);
         CHECK(w.pressCount() == 1);
         CHECK(w.releaseCount() == 0);
@@ -105,7 +104,7 @@ TEST_CASE("Widget: sendEvent dispatches KeyPress to keyPressEvent") {
 
 TEST_CASE("Widget: sendEvent dispatches KeyRelease to keyReleaseEvent") {
         TrackingWidget w;
-        KeyEvent ke(KeyEvent::KeyRelease, KeyEvent::Key_Space);
+        KeyEvent       ke(KeyEvent::KeyRelease, KeyEvent::Key_Space);
         w.sendEvent(&ke);
         CHECK(w.pressCount() == 0);
         CHECK(w.releaseCount() == 1);
@@ -113,21 +112,21 @@ TEST_CASE("Widget: sendEvent dispatches KeyRelease to keyReleaseEvent") {
 
 TEST_CASE("Widget: default keyPressEvent leaves event unaccepted") {
         TrackingWidget w(/*shouldAccept=*/false);
-        KeyEvent ke(KeyEvent::KeyPress, KeyEvent::Key_Up);
+        KeyEvent       ke(KeyEvent::KeyPress, KeyEvent::Key_Up);
         w.sendEvent(&ke);
         CHECK_FALSE(ke.isAccepted());
 }
 
 TEST_CASE("Widget: keyPressEvent can call accept to claim the event") {
         TrackingWidget w(/*shouldAccept=*/true);
-        KeyEvent ke(KeyEvent::KeyPress, KeyEvent::Key_Down);
+        KeyEvent       ke(KeyEvent::KeyPress, KeyEvent::Key_Down);
         w.sendEvent(&ke);
         CHECK(ke.isAccepted());
 }
 
 TEST_CASE("SdlSubsystem: focusedWidget tracking") {
-        char arg0[] = "sdlsubsystem-test";
-        char *argv[] = { arg0 };
+        char         arg0[] = "sdlsubsystem-test";
+        char        *argv[] = {arg0};
         Application  app(1, argv);
         SdlSubsystem sdl;
 
@@ -153,10 +152,10 @@ TEST_CASE("Key event propagates up parent chain when unaccepted") {
         TrackingWidget child(/*accept=*/false, &parent);
 
         KeyEvent ke(KeyEvent::KeyPress, KeyEvent::Key_Right);
-        Widget *target = &child;
-        while(target != nullptr) {
+        Widget  *target = &child;
+        while (target != nullptr) {
                 target->sendEvent(&ke);
-                if(ke.isAccepted()) break;
+                if (ke.isAccepted()) break;
                 target = dynamic_cast<Widget *>(target->parent());
         }
 
@@ -172,10 +171,10 @@ TEST_CASE("Key event stops propagating when a widget accepts") {
         TrackingWidget child(/*accept=*/false, &parent);
 
         KeyEvent ke(KeyEvent::KeyPress, KeyEvent::Key_Space);
-        Widget *target = &child;
-        while(target != nullptr) {
+        Widget  *target = &child;
+        while (target != nullptr) {
                 target->sendEvent(&ke);
-                if(ke.isAccepted()) break;
+                if (ke.isAccepted()) break;
                 target = dynamic_cast<Widget *>(target->parent());
         }
 

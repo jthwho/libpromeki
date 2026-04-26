@@ -17,12 +17,12 @@ using namespace promeki;
  * @brief In-memory IODevice implementation for testing.
  */
 class MemoryIODevice : public IODevice {
-        PROMEKI_OBJECT(MemoryIODevice, IODevice)
+                PROMEKI_OBJECT(MemoryIODevice, IODevice)
         public:
-                MemoryIODevice(ObjectBase *parent = nullptr) : IODevice(parent) { }
+                MemoryIODevice(ObjectBase *parent = nullptr) : IODevice(parent) {}
 
                 Error open(OpenMode mode) override {
-                        if(isOpen()) return Error(Error::AlreadyOpen);
+                        if (isOpen()) return Error(Error::AlreadyOpen);
                         setOpenMode(mode);
                         _pos = 0;
                         return Error();
@@ -35,14 +35,12 @@ class MemoryIODevice : public IODevice {
                         return Error();
                 }
 
-                bool isOpen() const override {
-                        return openMode() != NotOpen;
-                }
+                bool isOpen() const override { return openMode() != NotOpen; }
 
                 int64_t read(void *data, int64_t maxSize) override {
-                        if(!isOpen() || !isReadable()) return -1;
+                        if (!isOpen() || !isReadable()) return -1;
                         int64_t avail = static_cast<int64_t>(_buf.size()) - _pos;
-                        if(avail <= 0) return 0;
+                        if (avail <= 0) return 0;
                         int64_t toRead = std::min(maxSize, avail);
                         std::memcpy(data, _buf.data() + _pos, static_cast<size_t>(toRead));
                         _pos += toRead;
@@ -50,10 +48,10 @@ class MemoryIODevice : public IODevice {
                 }
 
                 int64_t write(const void *data, int64_t maxSize) override {
-                        if(!isOpen() || !isWritable()) return -1;
+                        if (!isOpen() || !isWritable()) return -1;
                         const uint8_t *src = static_cast<const uint8_t *>(data);
-                        int64_t endPos = _pos + maxSize;
-                        if(endPos > static_cast<int64_t>(_buf.size())) {
+                        int64_t        endPos = _pos + maxSize;
+                        if (endPos > static_cast<int64_t>(_buf.size())) {
                                 _buf.resize(static_cast<size_t>(endPos));
                         }
                         std::memcpy(_buf.data() + _pos, src, static_cast<size_t>(maxSize));
@@ -67,23 +65,17 @@ class MemoryIODevice : public IODevice {
                         return avail > 0 ? avail : 0;
                 }
 
-                bool isSequential() const override {
-                        return false;
-                }
+                bool isSequential() const override { return false; }
 
                 Error seek(int64_t pos) override {
-                        if(pos < 0 || pos > static_cast<int64_t>(_buf.size())) return Error(Error::OutOfRange);
+                        if (pos < 0 || pos > static_cast<int64_t>(_buf.size())) return Error(Error::OutOfRange);
                         _pos = pos;
                         return Error();
                 }
 
-                int64_t pos() const override {
-                        return _pos;
-                }
+                int64_t pos() const override { return _pos; }
 
-                Result<int64_t> size() const override {
-                        return makeResult(static_cast<int64_t>(_buf.size()));
-                }
+                Result<int64_t> size() const override { return makeResult(static_cast<int64_t>(_buf.size())); }
 
                 bool atEnd() const override {
                         auto [s, err] = size();
@@ -100,7 +92,7 @@ class MemoryIODevice : public IODevice {
 
         private:
                 std::vector<uint8_t> _buf;
-                int64_t _pos = 0;
+                int64_t              _pos = 0;
 };
 
 
@@ -129,7 +121,7 @@ TEST_CASE("IODevice: open and close") {
 
 TEST_CASE("IODevice: open ReadOnly") {
         MemoryIODevice dev;
-        Error err = dev.open(IODevice::ReadOnly);
+        Error          err = dev.open(IODevice::ReadOnly);
         CHECK(err.isOk());
         CHECK(dev.isReadable());
         CHECK_FALSE(dev.isWritable());
@@ -138,7 +130,7 @@ TEST_CASE("IODevice: open ReadOnly") {
 
 TEST_CASE("IODevice: open WriteOnly") {
         MemoryIODevice dev;
-        Error err = dev.open(IODevice::WriteOnly);
+        Error          err = dev.open(IODevice::WriteOnly);
         CHECK(err.isOk());
         CHECK_FALSE(dev.isReadable());
         CHECK(dev.isWritable());
@@ -158,11 +150,11 @@ TEST_CASE("IODevice: write and read back") {
         dev.open(IODevice::ReadWrite);
 
         const char *msg = "Hello, IODevice!";
-        int64_t written = dev.write(msg, 16);
+        int64_t     written = dev.write(msg, 16);
         CHECK(written == 16);
 
         dev.seek(0);
-        char buf[17] = {};
+        char    buf[17] = {};
         int64_t bytesRead = dev.read(buf, 16);
         CHECK(bytesRead == 16);
         CHECK(std::strcmp(buf, "Hello, IODevice!") == 0);
@@ -242,7 +234,7 @@ TEST_CASE("IODevice: read returns 0 at end") {
         dev.write(data, 3);
         dev.seek(3);
 
-        char buf[4] = {};
+        char    buf[4] = {};
         int64_t bytesRead = dev.read(buf, 4);
         CHECK(bytesRead == 0);
 
@@ -257,7 +249,7 @@ TEST_CASE("IODevice: partial read") {
         dev.write(data, 5);
         dev.seek(3);
 
-        char buf[10] = {};
+        char    buf[10] = {};
         int64_t bytesRead = dev.read(buf, 10);
         CHECK(bytesRead == 2);
         CHECK(buf[0] == 'l');
@@ -270,7 +262,7 @@ TEST_CASE("IODevice: read on write-only returns -1") {
         MemoryIODevice dev;
         dev.open(IODevice::WriteOnly);
 
-        char buf[4];
+        char    buf[4];
         int64_t bytesRead = dev.read(buf, 4);
         CHECK(bytesRead == -1);
 
@@ -316,14 +308,14 @@ TEST_CASE("IODevice: Append mode implies WriteOnly") {
 
 TEST_CASE("IODevice: setData and read") {
         MemoryIODevice dev;
-        const char *data = "preloaded";
+        const char    *data = "preloaded";
         dev.setData(data, 9);
         dev.open(IODevice::ReadOnly);
 
         CHECK(value(dev.size()) == 9);
         CHECK(dev.bytesAvailable() == 9);
 
-        char buf[10] = {};
+        char    buf[10] = {};
         int64_t bytesRead = dev.read(buf, 9);
         CHECK(bytesRead == 9);
         CHECK(std::strcmp(buf, "preloaded") == 0);
@@ -333,9 +325,8 @@ TEST_CASE("IODevice: setData and read") {
 
 TEST_CASE("IODevice: aboutToClose signal") {
         MemoryIODevice dev;
-        bool signalFired = false;
-        dev.aboutToCloseSignal.connect(
-                [&signalFired]() { signalFired = true; });
+        bool           signalFired = false;
+        dev.aboutToCloseSignal.connect([&signalFired]() { signalFired = true; });
         dev.open(IODevice::ReadWrite);
         dev.close();
         CHECK(signalFired);
@@ -343,9 +334,8 @@ TEST_CASE("IODevice: aboutToClose signal") {
 
 TEST_CASE("IODevice: bytesWritten signal") {
         MemoryIODevice dev;
-        int64_t reportedBytes = 0;
-        dev.bytesWrittenSignal.connect(
-                [&reportedBytes](int64_t n) { reportedBytes = n; });
+        int64_t        reportedBytes = 0;
+        dev.bytesWrittenSignal.connect([&reportedBytes](int64_t n) { reportedBytes = n; });
         dev.open(IODevice::WriteOnly);
         dev.write("test", 4);
         CHECK(reportedBytes == 4);
@@ -354,9 +344,8 @@ TEST_CASE("IODevice: bytesWritten signal") {
 
 TEST_CASE("IODevice: errorOccurred signal wiring") {
         MemoryIODevice dev;
-        Error lastError;
-        dev.errorOccurredSignal.connect(
-                [&lastError](Error e) { lastError = e; });
+        Error          lastError;
+        dev.errorOccurredSignal.connect([&lastError](Error e) { lastError = e; });
         // Verify signal wiring compiles and default error state is Ok.
         CHECK(dev.error().isOk());
 }
@@ -376,7 +365,7 @@ TEST_CASE("IODevice: multiple writes then full read") {
         CHECK(dev.pos() == 9);
 
         dev.seek(0);
-        char buf[10] = {};
+        char    buf[10] = {};
         int64_t bytesRead = dev.read(buf, 9);
         CHECK(bytesRead == 9);
         CHECK(std::strcmp(buf, "abcdefghi") == 0);
@@ -406,4 +395,3 @@ TEST_CASE("IODevice: overwrite in middle") {
 
         dev.close();
 }
-

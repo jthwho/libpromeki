@@ -68,30 +68,26 @@ class TimeStamp {
                  * @brief Returns a TimeStamp representing the current time.
                  * @return A TimeStamp initialized to the current steady_clock time.
                  */
-                static TimeStamp now() {
-                        return TimeStamp(Clock::now());
-                }
+                static TimeStamp now() { return TimeStamp(Clock::now()); }
 
                 /** @brief Constructs a default (epoch) TimeStamp. */
-                TimeStamp() { }
+                TimeStamp() {}
 
                 /**
                  * @brief Constructs a TimeStamp from the given time point value.
                  * @param v The time point value.
                  */
-                TimeStamp(const Value &v) : _value(v) { }
+                TimeStamp(const Value &v) : _value(v) {}
 
                 /** @brief Converts the TimeStamp to its underlying Value type. */
-                operator Value() const {
-                        return _value;
-                }
+                operator Value() const { return _value; }
 
                 /**
                  * @brief Advances the timestamp by the given duration.
                  * @param duration The duration to add.
                  * @return Reference to this TimeStamp.
                  */
-                TimeStamp& operator+=(const Duration& duration) {
+                TimeStamp &operator+=(const Duration &duration) {
                         _value += duration;
                         return *this;
                 }
@@ -101,7 +97,7 @@ class TimeStamp {
                  * @param duration The duration to subtract.
                  * @return Reference to this TimeStamp.
                  */
-                TimeStamp& operator-=(const Duration& duration) {
+                TimeStamp &operator-=(const Duration &duration) {
                         _value -= duration;
                         return *this;
                 }
@@ -119,34 +115,27 @@ class TimeStamp {
                  * @brief Returns the underlying time point value.
                  * @return The stored time point.
                  */
-                Value value() const {
-                        return _value;
-                }
+                Value value() const { return _value; }
 
                 /** @brief Updates the timestamp to the current time. */
-                void update() {
-                        _value = Clock::now();
-                }
+                void update() { _value = Clock::now(); }
 
                 /** @brief Sleeps the current thread until this timestamp is reached. */
-                void sleepUntil() const {
-                        std::this_thread::sleep_until(_value);
-                }
+                void sleepUntil() const { std::this_thread::sleep_until(_value); }
 
                 /**
                  * @brief Returns the duration since the clock's epoch.
                  * @return The duration from epoch to this timestamp.
                  */
-                Duration timeSinceEpoch() const {
-                        return _value.time_since_epoch();
-                }
+                Duration timeSinceEpoch() const { return _value.time_since_epoch(); }
 
                 /**
                  * @brief Returns the time since epoch in seconds as a double.
                  * @return Seconds since the clock's epoch.
                  */
                 double seconds() const {
-                        return std::chrono::duration_cast<std::chrono::duration<double>>(_value.time_since_epoch()).count();
+                        return std::chrono::duration_cast<std::chrono::duration<double>>(_value.time_since_epoch())
+                                .count();
                 }
 
                 /**
@@ -209,9 +198,7 @@ class TimeStamp {
                  * @brief Returns a string representation of the timestamp in seconds.
                  * @return A String containing the seconds value.
                  */
-                String toString() const {
-                        return String::number(seconds());
-                }
+                String toString() const { return String::number(seconds()); }
 
                 /** @brief Returns true if both timestamps represent the same time point. */
                 bool operator==(const TimeStamp &other) const { return _value == other._value; }
@@ -220,9 +207,7 @@ class TimeStamp {
                 bool operator!=(const TimeStamp &other) const { return _value != other._value; }
 
                 /** @brief Converts the TimeStamp to a String. */
-                operator String() const {
-                        return toString();
-                }
+                operator String() const { return toString(); }
 
         private:
                 Value _value;
@@ -234,7 +219,7 @@ class TimeStamp {
  * @param duration The duration to add.
  * @return A new TimeStamp offset forward by @p duration.
  */
-inline TimeStamp operator+(const TimeStamp& ts, const TimeStamp::Duration& duration) {
+inline TimeStamp operator+(const TimeStamp &ts, const TimeStamp::Duration &duration) {
         TimeStamp result(ts);
         result += duration;
         return result;
@@ -246,7 +231,7 @@ inline TimeStamp operator+(const TimeStamp& ts, const TimeStamp::Duration& durat
  * @param duration The duration to subtract.
  * @return A new TimeStamp offset backward by @p duration.
  */
-inline TimeStamp operator-(const TimeStamp& ts, const TimeStamp::Duration& duration) {
+inline TimeStamp operator-(const TimeStamp &ts, const TimeStamp::Duration &duration) {
         TimeStamp result(ts);
         result -= duration;
         return result;
@@ -275,8 +260,7 @@ inline TimeStamp operator-(const TimeStamp& ts, const TimeStamp::Duration& durat
  * @return The equivalent @ref TimeStamp::Duration (clock-native).
  */
 inline TimeStamp::Duration toClockDuration(const Duration &d) {
-        return std::chrono::duration_cast<TimeStamp::Duration>(
-                std::chrono::nanoseconds(d.nanoseconds()));
+        return std::chrono::duration_cast<TimeStamp::Duration>(std::chrono::nanoseconds(d.nanoseconds()));
 }
 
 /**
@@ -347,4 +331,3 @@ inline Duration operator-(const TimeStamp &a, const TimeStamp &b) {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::TimeStamp);
-

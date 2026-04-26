@@ -115,34 +115,34 @@ class SDLAudioClock : public Clock {
                  * synchronisation mechanism.
                  */
                 struct Stats {
-                        /** @brief Total @ref nowNs calls. */
-                        int64_t updateCount        = 0;
-                        /** @brief Consumed-byte changes observed. */
-                        int64_t checkpointResyncs  = 0;
-                        /** @brief Resyncs where the new raw base was
+                                /** @brief Total @ref nowNs calls. */
+                                int64_t updateCount = 0;
+                                /** @brief Consumed-byte changes observed. */
+                                int64_t checkpointResyncs = 0;
+                                /** @brief Resyncs where the new raw base was
                          *         at or ahead of interpolation. */
-                        int64_t forwardSnaps       = 0;
-                        /** @brief Resyncs where the new raw base
+                                int64_t forwardSnaps = 0;
+                                /** @brief Resyncs where the new raw base
                          *         landed behind interpolation and the
                          *         wall anchor had to be back-dated. */
-                        int64_t backDates          = 0;
-                        /** @brief Times the final monotonicity clamp
+                                int64_t backDates = 0;
+                                /** @brief Times the final monotonicity clamp
                          *         kicked in.  Should be zero —
                          *         non-zero means FP rounding in the
                          *         back-date arithmetic would have
                          *         produced a backward step but the
                          *         clamp caught it. */
-                        int64_t clampedRegressions = 0;
-                        /** @brief Largest forward step between two
+                                int64_t clampedRegressions = 0;
+                                /** @brief Largest forward step between two
                          *         consecutive @ref nowNs values. */
-                        int64_t maxStepNs          = 0;
-                        /** @brief Largest absorbed interpolation
+                                int64_t maxStepNs = 0;
+                                /** @brief Largest absorbed interpolation
                          *         overshoot, i.e. interpolated minus
                          *         new raw base when back-dating. */
-                        int64_t maxBackDateNs      = 0;
-                        /** @brief Longest wall-clock gap observed
+                                int64_t maxBackDateNs = 0;
+                                /** @brief Longest wall-clock gap observed
                          *         between checkpoint resyncs. */
-                        int64_t maxCallbackGapNs   = 0;
+                                int64_t maxCallbackGapNs = 0;
                 };
 
                 /**
@@ -214,8 +214,8 @@ class SDLAudioClock : public Clock {
                 mutable std::atomic<int64_t> _rawAtPause{0};
 
                 ObjectBasePtr<SDLAudioOutput> _output;
-                double          _bytesPerSec;
-                int64_t         _resolutionNs;
+                double                        _bytesPerSec;
+                int64_t                       _resolutionNs;
 
                 // Rate-estimate state.  Kept mutable so the update
                 // can run inside nowNs().  Caller is expected to use
@@ -233,7 +233,7 @@ class SDLAudioClock : public Clock {
                 // time constant so that consumers (e.g. an audio
                 // resampler) can't detect the moment measurement
                 // stabilises as an audible pitch step.
-                mutable double  _publishedRateRatio = 1.0;
+                mutable double _publishedRateRatio = 1.0;
 
                 // Smooth-nowNs interpolation state.  Each advance
                 // of @c consumed (an SDL audio callback) is treated
@@ -257,7 +257,7 @@ class SDLAudioClock : public Clock {
                 // monotonicity clamp.  The live filter still
                 // drives @ref rateRatio and still takes effect at
                 // the next checkpoint update.
-                mutable double  _checkpointRate = 1.0;
+                mutable double _checkpointRate = 1.0;
 
                 // Last value returned from @ref nowNs.  Used as a
                 // final clamp to defend the monotonicity contract
@@ -275,7 +275,7 @@ class SDLAudioClock : public Clock {
                 // of @c consumed back to zero are treated as noise
                 // and routed through the normal back-date path so
                 // monotonicity is preserved.
-                mutable bool    _audioStarted = false;
+                mutable bool _audioStarted = false;
 
                 // Monitoring state.  @c _stats accumulates runtime
                 // counters; @c _lastCallbackWallNs is used to
@@ -289,11 +289,11 @@ class SDLAudioClock : public Clock {
                 // at the warmup→stable transition — startup
                 // transients dominate those maxes and would mask
                 // later, real misbehavior if left in place.
-                mutable Stats             _stats;
-                mutable int64_t           _lastCallbackWallNs = 0;
-                mutable PeriodicCallback  _monitor;
-                mutable Stats             _monitorSnapshot;
-                mutable bool              _prevRateStable = false;
+                mutable Stats            _stats;
+                mutable int64_t          _lastCallbackWallNs = 0;
+                mutable PeriodicCallback _monitor;
+                mutable Stats            _monitorSnapshot;
+                mutable bool             _prevRateStable = false;
 };
 
 PROMEKI_NAMESPACE_END

@@ -21,7 +21,7 @@ PROMEKI_NAMESPACE_BEGIN
  * Thread-affine — see @ref TuiWidget.
  */
 class TuiStatusBar : public TuiWidget {
-        PROMEKI_OBJECT(TuiStatusBar, TuiWidget)
+                PROMEKI_OBJECT(TuiStatusBar, TuiWidget)
         public:
                 TuiStatusBar(ObjectBase *parent = nullptr);
                 ~TuiStatusBar() override;
@@ -31,7 +31,7 @@ class TuiStatusBar : public TuiWidget {
 
                 const String &message() const { return _message; }
 
-                void setPermanentMessage(const String &message);
+                void          setPermanentMessage(const String &message);
                 const String &permanentMessage() const { return _permanentMessage; }
 
                 Size2Di32 sizeHint() const override;
@@ -41,9 +41,9 @@ class TuiStatusBar : public TuiWidget {
                 void timerEvent(TimerEvent *e) override;
 
         private:
-                String  _message;
-                String  _permanentMessage;
-                int     _messageTimerId = -1;
+                String _message;
+                String _permanentMessage;
+                int    _messageTimerId = -1;
 };
 
 PROMEKI_NAMESPACE_END

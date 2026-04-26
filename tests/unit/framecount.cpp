@@ -165,13 +165,13 @@ TEST_CASE("FrameCount toString and fromString") {
                 CHECK(FrameCount::fromString(String("UNKNOWN")).isUnknown());
         }
         SUBCASE("Negative integer is OutOfRange") {
-                Error err;
+                Error      err;
                 FrameCount c = FrameCount::fromString(String("-3"), &err);
                 CHECK(err == Error::OutOfRange);
                 CHECK(c.isUnknown());
         }
         SUBCASE("Garbage parses as ParseFailed") {
-                Error err;
+                Error      err;
                 FrameCount c = FrameCount::fromString(String("abc"), &err);
                 CHECK(err == Error::ParseFailed);
                 CHECK(c.isUnknown());
@@ -200,4 +200,3 @@ TEST_CASE("FrameCount Variant integration") {
                 CHECK(std::isnan(unk.get<double>()));
         }
 }
-

@@ -35,16 +35,8 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class HttpMethod : public TypedEnum<HttpMethod> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("HttpMethod", 0,
-                                { "GET",     0 },
-                                { "HEAD",    1 },
-                                { "POST",    2 },
-                                { "PUT",     3 },
-                                { "DELETE",  4 },
-                                { "PATCH",   5 },
-                                { "OPTIONS", 6 },
-                                { "CONNECT", 7 },
-                                { "TRACE",   8 });
+                PROMEKI_REGISTER_ENUM_TYPE("HttpMethod", 0, {"GET", 0}, {"HEAD", 1}, {"POST", 2}, {"PUT", 3},
+                                           {"DELETE", 4}, {"PATCH", 5}, {"OPTIONS", 6}, {"CONNECT", 7}, {"TRACE", 8});
 
                 using TypedEnum<HttpMethod>::TypedEnum;
 
@@ -79,14 +71,14 @@ class HttpMethod : public TypedEnum<HttpMethod> {
                 bool allowsBody() const;
 };
 
-inline const HttpMethod HttpMethod::Get     { 0 };
-inline const HttpMethod HttpMethod::Head    { 1 };
-inline const HttpMethod HttpMethod::Post    { 2 };
-inline const HttpMethod HttpMethod::Put     { 3 };
-inline const HttpMethod HttpMethod::Delete  { 4 };
-inline const HttpMethod HttpMethod::Patch   { 5 };
-inline const HttpMethod HttpMethod::Options { 6 };
-inline const HttpMethod HttpMethod::Connect { 7 };
-inline const HttpMethod HttpMethod::Trace   { 8 };
+inline const HttpMethod HttpMethod::Get{0};
+inline const HttpMethod HttpMethod::Head{1};
+inline const HttpMethod HttpMethod::Post{2};
+inline const HttpMethod HttpMethod::Put{3};
+inline const HttpMethod HttpMethod::Delete{4};
+inline const HttpMethod HttpMethod::Patch{5};
+inline const HttpMethod HttpMethod::Options{6};
+inline const HttpMethod HttpMethod::Connect{7};
+inline const HttpMethod HttpMethod::Trace{8};
 
 PROMEKI_NAMESPACE_END

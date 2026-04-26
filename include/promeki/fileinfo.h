@@ -52,57 +52,43 @@ class FileInfo {
                  * @brief Constructs a FileInfo for the given file path.
                  * @param filePath The path to the file or directory.
                  */
-                FileInfo(const String &filePath) : _path(filePath.str()) {
-
-                }
+                FileInfo(const String &filePath) : _path(filePath.str()) {}
 
                 /**
                  * @brief Constructs a FileInfo from a C string.
                  * @param filePath The path string.
                  */
-                FileInfo(const char *filePath) : _path(filePath) {
-
-                }
+                FileInfo(const char *filePath) : _path(filePath) {}
 
                 /**
                  * @brief Constructs a FileInfo from a FilePath.
                  * @param fp The file path.
                  */
-                FileInfo(const FilePath &fp) : _path(fp.toStdPath()) {
-
-                }
+                FileInfo(const FilePath &fp) : _path(fp.toStdPath()) {}
 
                 /**
                  * @brief Returns the path as a FilePath.
                  * @return The file path.
                  */
-                FilePath filePath() const {
-                        return FilePath(_path);
-                }
+                FilePath filePath() const { return FilePath(_path); }
 
                 /**
                  * @brief Returns true if the file or directory exists.
                  * @return true if the path refers to an existing file system entry.
                  */
-                bool exists() const {
-                        return std::filesystem::exists(status());
-                }
+                bool exists() const { return std::filesystem::exists(status()); }
 
                 /**
                  * @brief Returns the filename component of the path (including extension).
                  * @return The filename as a String.
                  */
-                String fileName() const {
-                        return _path.filename().string();
-                }
+                String fileName() const { return _path.filename().string(); }
 
                 /**
                  * @brief Returns the filename without its extension.
                  * @return The base name (stem) as a String.
                  */
-                String baseName() const {
-                        return _path.stem().string();
-                }
+                String baseName() const { return _path.stem().string(); }
 
                 /**
                  * @brief Returns the file extension without the leading dot.
@@ -110,7 +96,7 @@ class FileInfo {
                  */
                 String suffix() const {
                         auto ext = _path.extension().string();
-                        if(ext.empty()) return String();
+                        if (ext.empty()) return String();
                         return ext.substr(1); // Remove leading '.'
                 }
 
@@ -118,40 +104,32 @@ class FileInfo {
                  * @brief Returns the absolute path of the parent directory.
                  * @return The parent directory path as a String.
                  */
-                String absolutePath() const {
-                        return _path.parent_path().string();
-                }
+                String absolutePath() const { return _path.parent_path().string(); }
 
                 /**
                  * @brief Returns the absolute path to the file, including the filename.
                  * @return The fully resolved absolute file path as a String.
                  */
-                String absoluteFilePath() const {
-                        return std::filesystem::absolute(_path).string();
-                }
+                String absoluteFilePath() const { return std::filesystem::absolute(_path).string(); }
 
                 /**
                  * @brief Returns true if the path refers to a regular file.
                  * @return true if the entry is a regular file.
                  */
-                bool isFile() const {
-                        return std::filesystem::is_regular_file(status());
-                }
+                bool isFile() const { return std::filesystem::is_regular_file(status()); }
 
                 /**
                  * @brief Returns true if the path refers to a directory.
                  * @return true if the entry is a directory.
                  */
-                bool isDirectory() const {
-                        return std::filesystem::is_directory(status());
-                }
+                bool isDirectory() const { return std::filesystem::is_directory(status()); }
 
                 /**
                  * @brief Updates the cached file status.
                  * @param force If true, refreshes the status even if already cached.
                  */
                 void updateStatus(bool force = false) const {
-                        if(!_status.has_value() || force) {
+                        if (!_status.has_value() || force) {
                                 _status = std::filesystem::status(_path);
                         }
                         return;
@@ -178,10 +156,10 @@ class FileInfo {
                  * @return Result holding the size on success, or an Error on failure.
                  */
                 Result<int64_t> size() const {
-                        if(!isFile()) return makeError<int64_t>(Error::NotExist);
+                        if (!isFile()) return makeError<int64_t>(Error::NotExist);
                         std::error_code ec;
-                        auto sz = std::filesystem::file_size(_path, ec);
-                        if(ec) return makeError<int64_t>(Error::syserr(ec));
+                        auto            sz = std::filesystem::file_size(_path, ec);
+                        if (ec) return makeError<int64_t>(Error::syserr(ec));
                         return makeResult(static_cast<int64_t>(sz));
                 }
 
@@ -196,9 +174,7 @@ class FileInfo {
                  *
                  * @return true if the owner-read permission is set.
                  */
-                bool isReadable() const {
-                        return ownerHasPerm(std::filesystem::perms::owner_read);
-                }
+                bool isReadable() const { return ownerHasPerm(std::filesystem::perms::owner_read); }
 
                 /**
                  * @brief Returns true if the file is writable by the owner.
@@ -207,9 +183,7 @@ class FileInfo {
                  *
                  * @return true if the owner-write permission is set.
                  */
-                bool isWritable() const {
-                        return ownerHasPerm(std::filesystem::perms::owner_write);
-                }
+                bool isWritable() const { return ownerHasPerm(std::filesystem::perms::owner_write); }
 
                 /**
                  * @brief Returns true if the file is executable by the owner.
@@ -218,9 +192,7 @@ class FileInfo {
                  *
                  * @return true if the owner-exec permission is set.
                  */
-                bool isExecutable() const {
-                        return ownerHasPerm(std::filesystem::perms::owner_exec);
-                }
+                bool isExecutable() const { return ownerHasPerm(std::filesystem::perms::owner_exec); }
 
                 /**
                  * @brief Returns the file's last-modified wall-clock time.
@@ -237,8 +209,8 @@ class FileInfo {
                  */
                 DateTime lastModified() const {
                         std::error_code ec;
-                        auto t = std::filesystem::last_write_time(_path, ec);
-                        if(ec) return DateTime();
+                        auto            t = std::filesystem::last_write_time(_path, ec);
+                        if (ec) return DateTime();
                         // file_time_type is not directly convertible to
                         // system_clock::time_point in pre-C++20 stdlibs,
                         // and clock_cast (C++20) is not yet ubiquitous in
@@ -249,24 +221,21 @@ class FileInfo {
                         // clock, which is plenty for HTTP semantics.
                         const auto now_fc = decltype(t)::clock::now();
                         const auto now_sc = std::chrono::system_clock::now();
-                        const auto sc = std::chrono::time_point_cast<
-                                std::chrono::system_clock::duration>(
-                                        t - now_fc + now_sc);
+                        const auto sc =
+                                std::chrono::time_point_cast<std::chrono::system_clock::duration>(t - now_fc + now_sc);
                         return DateTime(sc);
                 }
 
         private:
-                std::filesystem::path           _path;
-                mutable std::optional<Status>   _status;
+                std::filesystem::path         _path;
+                mutable std::optional<Status> _status;
 
                 bool ownerHasPerm(std::filesystem::perms bit) const {
                         std::error_code ec;
-                        auto perms = std::filesystem::status(_path, ec).permissions();
-                        if(ec) return false;
+                        auto            perms = std::filesystem::status(_path, ec).permissions();
+                        if (ec) return false;
                         return (perms & bit) != std::filesystem::perms::none;
                 }
-
 };
 
 PROMEKI_NAMESPACE_END
-

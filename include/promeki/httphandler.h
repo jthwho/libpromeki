@@ -29,8 +29,7 @@ PROMEKI_NAMESPACE_BEGIN
  * the entire handler.  When a handler needs explicit state, derive
  * from @ref HttpHandler instead.
  */
-using HttpHandlerFunc = std::function<void(const HttpRequest &request,
-                                           HttpResponse &response)>;
+using HttpHandlerFunc = std::function<void(const HttpRequest &request, HttpResponse &response)>;
 
 /** @brief Convenience list of @ref HttpHandlerFunc values. */
 using HttpHandlerFuncList = List<HttpHandlerFunc>;
@@ -55,9 +54,8 @@ using HttpHandlerFuncList = List<HttpHandlerFunc>;
  * });
  * @endcode
  */
-using HttpMiddleware = std::function<void(const HttpRequest &request,
-                                          HttpResponse &response,
-                                          std::function<void()> next)>;
+using HttpMiddleware =
+        std::function<void(const HttpRequest &request, HttpResponse &response, std::function<void()> next)>;
 
 /** @brief Convenience list of @ref HttpMiddleware values. */
 using HttpMiddlewareList = List<HttpMiddleware>;
@@ -91,7 +89,7 @@ class HttpHandler {
                 // `new HttpHandler(*this)` in its default _promeki_clone,
                 // which fails on an abstract type.  Same approach used
                 // by MediaPayload.
-                RefCount _promeki_refct;
+                RefCount             _promeki_refct;
                 virtual HttpHandler *_promeki_clone() const = 0;
 
                 /** @brief Shared pointer type (CoW disabled — handlers carry identity). */
@@ -105,8 +103,7 @@ class HttpHandler {
                  * @param request  The parsed inbound request.
                  * @param response The response object to populate.
                  */
-                virtual void serve(const HttpRequest &request,
-                                   HttpResponse &response) = 0;
+                virtual void serve(const HttpRequest &request, HttpResponse &response) = 0;
 };
 
 /**
@@ -119,18 +116,16 @@ class HttpHandler {
  * @ref HttpHandler::Ptr.
  */
 class HttpFunctionHandler : public HttpHandler {
-        PROMEKI_SHARED_DERIVED(HttpHandler, HttpFunctionHandler)
+                PROMEKI_SHARED_DERIVED(HttpHandler, HttpFunctionHandler)
         public:
                 /**
                  * @brief Wraps @p func so it can be stored as an HttpHandler.
                  * @param func The function-style handler to invoke.
                  */
-                explicit HttpFunctionHandler(HttpHandlerFunc func) :
-                        _func(std::move(func)) {}
+                explicit HttpFunctionHandler(HttpHandlerFunc func) : _func(std::move(func)) {}
 
-                void serve(const HttpRequest &request,
-                           HttpResponse &response) override {
-                        if(_func) _func(request, response);
+                void serve(const HttpRequest &request, HttpResponse &response) override {
+                        if (_func) _func(request, response);
                 }
 
         private:

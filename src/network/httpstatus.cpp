@@ -16,7 +16,7 @@ String HttpStatus::reasonPhrase() const {
         // ("Not Found") differs from the C++-friendly registry name
         // ("NotFound") — these phrases include spaces and casing that
         // would not be valid identifiers in the Enum table.
-        switch(value()) {
+        switch (value()) {
                 // 1xx
                 case 100: return "Continue";
                 case 101: return "Switching Protocols";

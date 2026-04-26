@@ -58,9 +58,7 @@ class ImageFile {
                  * @brief Returns the filename associated with this image file.
                  * @return A const reference to the filename string.
                  */
-                const String &filename() const {
-                        return _filename;
-                }
+                const String &filename() const { return _filename; }
 
                 /**
                  * @brief Sets the filename for loading or saving.
@@ -75,17 +73,13 @@ class ImageFile {
                  * @brief Returns a const reference to the frame.
                  * @return The frame containing images, audio, and metadata.
                  */
-                const Frame &frame() const {
-                        return _frame;
-                }
+                const Frame &frame() const { return _frame; }
 
                 /**
                  * @brief Returns a mutable reference to the frame.
                  * @return The frame containing images, audio, and metadata.
                  */
-                Frame &frame() {
-                        return _frame;
-                }
+                Frame &frame() { return _frame; }
 
                 /**
                  * @brief Sets the frame.
@@ -102,7 +96,7 @@ class ImageFile {
                  */
                 VideoPayload::Ptr videoPayload() const {
                         auto vps = _frame.videoPayloads();
-                        if(vps.isEmpty()) return VideoPayload::Ptr();
+                        if (vps.isEmpty()) return VideoPayload::Ptr();
                         return vps[0];
                 }
 
@@ -112,7 +106,7 @@ class ImageFile {
                  */
                 UncompressedVideoPayload::Ptr uncompressedVideoPayload() const {
                         VideoPayload::Ptr vp = videoPayload();
-                        if(!vp.isValid()) return UncompressedVideoPayload::Ptr();
+                        if (!vp.isValid()) return UncompressedVideoPayload::Ptr();
                         return sharedPointerCast<UncompressedVideoPayload>(vp);
                 }
 
@@ -122,7 +116,7 @@ class ImageFile {
                  */
                 void setVideoPayload(const VideoPayload::Ptr &val) {
                         _frame.payloadList().clear();
-                        if(val.isValid()) _frame.addPayload(val);
+                        if (val.isValid()) _frame.addPayload(val);
                         return;
                 }
 
@@ -130,17 +124,13 @@ class ImageFile {
                  * @brief Returns a const reference to the frame metadata.
                  * @return The metadata container.
                  */
-                const Metadata &metadata() const {
-                        return _frame.metadata();
-                }
+                const Metadata &metadata() const { return _frame.metadata(); }
 
                 /**
                  * @brief Returns a mutable reference to the frame metadata.
                  * @return The metadata container.
                  */
-                Metadata &metadata() {
-                        return _frame.metadata();
-                }
+                Metadata &metadata() { return _frame.metadata(); }
 
                 /**
                  * @brief Loads media from the file specified by filename().
@@ -160,11 +150,9 @@ class ImageFile {
                 Error save(const MediaConfig &config = MediaConfig());
 
         private:
-                String                  _filename;
-                Frame                   _frame;
-                const ImageFileIO       *_io;
+                String             _filename;
+                Frame              _frame;
+                const ImageFileIO *_io;
 };
 
 PROMEKI_NAMESPACE_END
-
-

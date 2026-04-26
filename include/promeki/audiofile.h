@@ -65,7 +65,7 @@ class AudioFile {
                  * writing, seeking, and closing audio files.
                  */
                 class Impl {
-                        PROMEKI_SHARED(Impl)
+                                PROMEKI_SHARED(Impl)
                         public:
                                 /**
                                  * @brief Constructs an Impl for the given operation.
@@ -80,25 +80,19 @@ class AudioFile {
                                  * @brief Returns true if this implementation has a valid operation.
                                  * @return true if the operation is not InvalidOperation.
                                  */
-                                bool isValid() const {
-                                        return _operation != InvalidOperation;
-                                }
+                                bool isValid() const { return _operation != InvalidOperation; }
 
                                 /**
                                  * @brief Returns the operation type for this implementation.
                                  * @return The Operation value (Reader or Writer).
                                  */
-                                Operation operation() const {
-                                        return _operation;
-                                }
+                                Operation operation() const { return _operation; }
 
                                 /**
                                  * @brief Returns the filename associated with this audio file.
                                  * @return A const reference to the filename string.
                                  */
-                                const String &filename() const {
-                                        return _filename;
-                                }
+                                const String &filename() const { return _filename; }
 
                                 /**
                                  * @brief Sets the filename for this audio file.
@@ -113,9 +107,7 @@ class AudioFile {
                                  * @brief Returns the audio description (format, channels, sample rate, etc.).
                                  * @return The AudioDesc for this file.
                                  */
-                                AudioDesc desc() const {
-                                        return _desc;
-                                }
+                                AudioDesc desc() const { return _desc; }
 
                                 /**
                                  * @brief Sets the audio description for writing.
@@ -130,9 +122,7 @@ class AudioFile {
                                  * @brief Returns the IODevice associated with this audio file.
                                  * @return The device pointer, or nullptr if none is set.
                                  */
-                                IODevice *device() const {
-                                        return _device;
-                                }
+                                IODevice *device() const { return _device; }
 
                                 /**
                                  * @brief Sets the IODevice for this audio file.
@@ -151,9 +141,7 @@ class AudioFile {
                                  * @brief Returns the format hint (e.g. "wav"), no dot.
                                  * @return A const reference to the format hint string.
                                  */
-                                const String &formatHint() const {
-                                        return _formatHint;
-                                }
+                                const String &formatHint() const { return _formatHint; }
 
                                 /**
                                  * @brief Sets the format hint for device-based operation.
@@ -203,12 +191,12 @@ class AudioFile {
                                 virtual size_t sampleCount() const;
 
                         protected:
-                                Operation       _operation;
-                                String          _filename;
-                                AudioDesc       _desc;
-                                IODevice       *_device = nullptr;
-                                bool            _ownsDevice = false;
-                                String          _formatHint;
+                                Operation _operation;
+                                String    _filename;
+                                AudioDesc _desc;
+                                IODevice *_device = nullptr;
+                                bool      _ownsDevice = false;
+                                String    _formatHint;
                 };
 
                 /**
@@ -231,7 +219,8 @@ class AudioFile {
                  * @param formatHint Extension hint (e.g. "wav"), no dot.
                  * @return A Result containing the AudioFile, or an error.
                  */
-                static Result<AudioFile> createForOperation(Operation op, IODevice *device, const String &formatHint = "");
+                static Result<AudioFile> createForOperation(Operation op, IODevice *device,
+                                                            const String &formatHint = "");
 
                 /**
                  * @brief Creates an AudioFile reader for the given filename.
@@ -278,7 +267,10 @@ class AudioFile {
                  * @brief Sets the filename for this audio file.
                  * @param val The filename to set.
                  */
-                void setFilename(const String &val) { d.modify()->setFilename(val); return; }
+                void setFilename(const String &val) {
+                        d.modify()->setFilename(val);
+                        return;
+                }
 
                 /**
                  * @brief Returns the audio description.
@@ -290,7 +282,10 @@ class AudioFile {
                  * @brief Sets the audio description for writing.
                  * @param val The AudioDesc to set.
                  */
-                void setDesc(const AudioDesc &val) { d.modify()->setDesc(val); return; }
+                void setDesc(const AudioDesc &val) {
+                        d.modify()->setDesc(val);
+                        return;
+                }
 
                 /**
                  * @brief Returns the IODevice associated with this audio file.
@@ -305,7 +300,10 @@ class AudioFile {
                 Error open() { return d.modify()->open(); }
 
                 /** @brief Closes the audio file. */
-                void close() { d.modify()->close(); return; }
+                void close() {
+                        d.modify()->close();
+                        return;
+                }
 
                 /**
                  * @brief Reads audio samples from the file.
@@ -314,18 +312,14 @@ class AudioFile {
                  * @param maxSamples Maximum number of samples to read.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error read(PcmAudioPayload::Ptr &out, size_t maxSamples) {
-                        return d.modify()->read(out, maxSamples);
-                }
+                Error read(PcmAudioPayload::Ptr &out, size_t maxSamples) { return d.modify()->read(out, maxSamples); }
 
                 /**
                  * @brief Writes audio samples to the file.
                  * @param payload The PcmAudioPayload to write.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error write(const PcmAudioPayload &payload) {
-                        return d.modify()->write(payload);
-                }
+                Error write(const PcmAudioPayload &payload) { return d.modify()->write(payload); }
 
                 /**
                  * @brief Seeks to a specific sample position in the file.

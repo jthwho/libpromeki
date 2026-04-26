@@ -19,18 +19,18 @@ using namespace promeki;
 
 namespace {
 
-/// Picks a free UDP port on the loopback interface by binding then
-/// closing a throwaway socket.  The returned port may still race,
-/// but the odds are low enough for CI and the receiver retries
-/// through SO_REUSEADDR anyway.
-static uint16_t pickFreePort() {
-        UdpSocket sock;
-        sock.open(IODevice::ReadWrite);
-        sock.bind(SocketAddress::any(0));
-        uint16_t port = sock.localAddress().port();
-        sock.close();
-        return port;
-}
+        /// Picks a free UDP port on the loopback interface by binding then
+        /// closing a throwaway socket.  The returned port may still race,
+        /// but the odds are low enough for CI and the receiver retries
+        /// through SO_REUSEADDR anyway.
+        static uint16_t pickFreePort() {
+                UdpSocket sock;
+                sock.open(IODevice::ReadWrite);
+                sock.bind(SocketAddress::any(0));
+                uint16_t port = sock.localAddress().port();
+                sock.close();
+                return port;
+        }
 
 } // namespace
 
@@ -63,15 +63,15 @@ TEST_CASE("MulticastReceiver") {
 
         SUBCASE("addGroup rejects non-multicast") {
                 MulticastReceiver rx;
-                Error err = rx.addGroup(SocketAddress(Ipv4Address::loopback(), 5004));
+                Error             err = rx.addGroup(SocketAddress(Ipv4Address::loopback(), 5004));
                 CHECK(err.isError());
                 CHECK(rx.groups().isEmpty());
         }
 
         SUBCASE("addGroup accepts ASM address") {
                 MulticastReceiver rx;
-                SocketAddress group(Ipv4Address(239, 255, 0, 42), 5004);
-                Error err = rx.addGroup(group);
+                SocketAddress     group(Ipv4Address(239, 255, 0, 42), 5004);
+                Error             err = rx.addGroup(group);
                 CHECK(err.isOk());
                 REQUIRE(rx.groups().size() == 1);
                 CHECK(rx.groups()[0].group == group);
@@ -80,9 +80,9 @@ TEST_CASE("MulticastReceiver") {
 
         SUBCASE("addSourceGroup accepts SSM tuple") {
                 MulticastReceiver rx;
-                SocketAddress group(Ipv4Address(232, 0, 0, 1), 5004);
-                SocketAddress source(Ipv4Address(192, 0, 2, 10), 0);
-                Error err = rx.addSourceGroup(group, source);
+                SocketAddress     group(Ipv4Address(232, 0, 0, 1), 5004);
+                SocketAddress     source(Ipv4Address(192, 0, 2, 10), 0);
+                Error             err = rx.addSourceGroup(group, source);
                 CHECK(err.isOk());
                 REQUIRE(rx.groups().size() == 1);
                 CHECK(rx.groups()[0].isSSM);
@@ -92,18 +92,18 @@ TEST_CASE("MulticastReceiver") {
 
         SUBCASE("addSourceGroup rejects non-multicast group") {
                 MulticastReceiver rx;
-                SocketAddress group(Ipv4Address::loopback(), 5004);
-                SocketAddress source(Ipv4Address(192, 0, 2, 10), 0);
-                Error err = rx.addSourceGroup(group, source);
+                SocketAddress     group(Ipv4Address::loopback(), 5004);
+                SocketAddress     source(Ipv4Address(192, 0, 2, 10), 0);
+                Error             err = rx.addSourceGroup(group, source);
                 CHECK(err.isError());
                 CHECK(rx.groups().isEmpty());
         }
 
         SUBCASE("addSourceGroup rejects null source") {
                 MulticastReceiver rx;
-                SocketAddress group(Ipv4Address(232, 0, 0, 1), 5004);
-                SocketAddress nullSource;
-                Error err = rx.addSourceGroup(group, nullSource);
+                SocketAddress     group(Ipv4Address(232, 0, 0, 1), 5004);
+                SocketAddress     nullSource;
+                Error             err = rx.addSourceGroup(group, nullSource);
                 CHECK(err.isError());
                 CHECK(rx.groups().isEmpty());
         }
@@ -136,8 +136,7 @@ TEST_CASE("MulticastReceiver") {
                 MulticastReceiver rx;
                 rx.setLocalAddress(SocketAddress::any(0));
                 rx.setReceiveTimeout(20);
-                rx.setDatagramCallback(
-                        [](Buffer::Ptr, const SocketAddress &) {});
+                rx.setDatagramCallback([](Buffer::Ptr, const SocketAddress &) {});
                 Error err = rx.start();
                 REQUIRE(err.isOk());
                 CHECK(rx.isActive());
@@ -147,7 +146,7 @@ TEST_CASE("MulticastReceiver") {
 
         SUBCASE("receives multicast datagrams") {
                 const uint16_t port = pickFreePort();
-                SocketAddress group(Ipv4Address(239, 255, 0, 77), port);
+                SocketAddress  group(Ipv4Address(239, 255, 0, 77), port);
 
                 // Set up the receiver before sending so we do not
                 // drop the first datagram due to the kernel's
@@ -156,21 +155,18 @@ TEST_CASE("MulticastReceiver") {
                 rx.setLocalAddress(SocketAddress::any(port));
                 rx.setReceiveTimeout(20);
 
-                std::atomic<int> count{0};
+                std::atomic<int>    count{0};
                 std::atomic<size_t> lastSize{0};
-                uint8_t lastFirstByte = 0;
-                std::atomic<bool> sawData{false};
-                rx.setDatagramCallback(
-                        [&](Buffer::Ptr data, const SocketAddress &) {
-                                lastSize.store(data->size());
-                                if(data->size() > 0) {
-                                        lastFirstByte =
-                                                static_cast<const uint8_t *>(
-                                                        data->data())[0];
-                                }
-                                sawData.store(true);
-                                count.fetch_add(1);
-                        });
+                uint8_t             lastFirstByte = 0;
+                std::atomic<bool>   sawData{false};
+                rx.setDatagramCallback([&](Buffer::Ptr data, const SocketAddress &) {
+                        lastSize.store(data->size());
+                        if (data->size() > 0) {
+                                lastFirstByte = static_cast<const uint8_t *>(data->data())[0];
+                        }
+                        sawData.store(true);
+                        count.fetch_add(1);
+                });
                 REQUIRE(rx.addGroup(group).isOk());
                 REQUIRE(rx.start().isOk());
 
@@ -182,15 +178,14 @@ TEST_CASE("MulticastReceiver") {
                 tx.setMulticastLoopback(true);
                 tx.setMulticastTTL(1);
                 const uint8_t payload[] = {0xAB, 0xCD, 0xEF, 0x01, 0x02, 0x03};
-                int64_t sent = tx.writeDatagram(
-                        payload, sizeof(payload), group);
+                int64_t       sent = tx.writeDatagram(payload, sizeof(payload), group);
                 CHECK(sent == static_cast<int64_t>(sizeof(payload)));
 
                 // Wait up to 500 ms for the datagram to arrive on
                 // the receive thread.  The loopback path is fast
                 // but the test still needs to tolerate scheduler
                 // jitter.
-                for(int i = 0; i < 50 && !sawData.load(); i++) {
+                for (int i = 0; i < 50 && !sawData.load(); i++) {
                         std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
                 rx.stop();
@@ -206,8 +201,7 @@ TEST_CASE("MulticastReceiver") {
         SUBCASE("stop is idempotent") {
                 MulticastReceiver rx;
                 rx.setLocalAddress(SocketAddress::any(0));
-                rx.setDatagramCallback(
-                        [](Buffer::Ptr, const SocketAddress &) {});
+                rx.setDatagramCallback([](Buffer::Ptr, const SocketAddress &) {});
                 REQUIRE(rx.start().isOk());
                 rx.stop();
                 rx.stop(); // second call is a no-op
@@ -218,8 +212,7 @@ TEST_CASE("MulticastReceiver") {
                 MulticastReceiver rx;
                 rx.setLocalAddress(SocketAddress::any(0));
                 rx.setReceiveTimeout(20);
-                rx.setDatagramCallback(
-                        [](Buffer::Ptr, const SocketAddress &) {});
+                rx.setDatagramCallback([](Buffer::Ptr, const SocketAddress &) {});
                 REQUIRE(rx.start().isOk());
                 rx.stop();
                 REQUIRE(rx.start().isOk());

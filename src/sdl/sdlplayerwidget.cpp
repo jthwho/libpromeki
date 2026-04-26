@@ -24,25 +24,20 @@ uint32_t SDLPlayerWidget::userEventType() {
         return type;
 }
 
-SDLPlayerWidget::SDLPlayerWidget(SDLAudioOutput *audio,
-                                 bool useAudioClock,
-                                 ObjectBase *parent)
-        : SDLVideoWidget(parent)
-{
+SDLPlayerWidget::SDLPlayerWidget(SDLAudioOutput *audio, bool useAudioClock, ObjectBase *parent)
+    : SDLVideoWidget(parent) {
         setFocusPolicy(StrongFocus);
         _renderScheduled.setValue(false);
 
         // SDLPlayerTask's constructor is private; friendship lets this
         // TU construct it directly, but UniquePtr::create cannot reach it,
         // so wrap via takeOwnership from a raw allocation instead.
-        auto task = SDLPlayerTask::UPtr::takeOwnership(
-                new SDLPlayerTask(this, audio, useAudioClock));
+        auto task = SDLPlayerTask::UPtr::takeOwnership(new SDLPlayerTask(this, audio, useAudioClock));
         _mediaIO = MediaIO::UPtr::create(nullptr);
         SDLPlayerTask *taskRaw = task.ptr();
-        Error err = _mediaIO->adoptTask(taskRaw);
-        if(err.isError()) {
-                promekiErr("SDLPlayerWidget: adoptTask failed: %s",
-                           err.name().cstr());
+        Error          err = _mediaIO->adoptTask(taskRaw);
+        if (err.isError()) {
+                promekiErr("SDLPlayerWidget: adoptTask failed: %s", err.name().cstr());
                 _task = nullptr;
                 _mediaIO.clear();
                 // task UniquePtr falls out of scope and deletes on failure.
@@ -65,31 +60,29 @@ SDLPlayerWidget::~SDLPlayerWidget() {
 }
 
 void SDLPlayerWidget::togglePause() {
-        if(_task == nullptr) return;
+        if (_task == nullptr) return;
         _task->togglePause();
 }
 
 bool SDLPlayerWidget::isPaused() const {
-        if(_task == nullptr) return false;
+        if (_task == nullptr) return false;
         return _task->isPaused();
 }
 
 void SDLPlayerWidget::keyPressEvent(KeyEvent *e) {
         // Space toggles pause; other keys left unaccepted so the SDL
         // subsystem's parent-chain walk propagates them upward.
-        if(e->key() == KeyEvent::Key_Space
-                        && !e->isCtrl() && !e->isAlt()
-                        && !e->isMeta()) {
+        if (e->key() == KeyEvent::Key_Space && !e->isCtrl() && !e->isAlt() && !e->isMeta()) {
                 togglePause();
                 e->accept();
         }
 }
 
 void SDLPlayerWidget::presentVideo(const UncompressedVideoPayload::Ptr &payload) {
-        if(!payload.isValid()) return;
+        if (!payload.isValid()) return;
         {
                 Mutex::Locker lock(_pendingMutex);
-                if(_pendingPayload.isValid() && _task != nullptr) {
+                if (_pendingPayload.isValid() && _task != nullptr) {
                         // Previous payload hasn't been picked up —
                         // this replacement is a drop at the display
                         // stage.  Bill it to the task's lifetime
@@ -98,17 +91,15 @@ void SDLPlayerWidget::presentVideo(const UncompressedVideoPayload::Ptr &payload)
                 }
                 _pendingPayload = payload;
         }
-        if(!_renderScheduled.exchange(true)) {
+        if (!_renderScheduled.exchange(true)) {
                 wakeMainThread();
         }
 }
 
 void SDLPlayerWidget::wakeMainThread() {
         SdlSubsystem *app = SdlSubsystem::instance();
-        if(app != nullptr && app->eventLoop() != nullptr) {
-                app->eventLoop()->postCallable([this]() {
-                        renderPending();
-                });
+        if (app != nullptr && app->eventLoop() != nullptr) {
+                app->eventLoop()->postCallable([this]() { renderPending(); });
         }
         SDL_Event event = {};
         event.type = userEventType();
@@ -121,7 +112,7 @@ bool SDLPlayerWidget::renderPending() {
         UncompressedVideoPayload::Ptr payload;
         {
                 Mutex::Locker lock(_pendingMutex);
-                if(!_pendingPayload.isValid()) return false;
+                if (!_pendingPayload.isValid()) return false;
                 payload = _pendingPayload;
                 _pendingPayload = UncompressedVideoPayload::Ptr();
         }
@@ -132,9 +123,9 @@ bool SDLPlayerWidget::renderPending() {
 
         // Trigger a paint on the containing SDLWindow if we have one.
         ObjectBase *p = parent();
-        while(p != nullptr) {
+        while (p != nullptr) {
                 SDLWindow *win = dynamic_cast<SDLWindow *>(p);
-                if(win != nullptr) {
+                if (win != nullptr) {
                         win->paintAll();
                         break;
                 }

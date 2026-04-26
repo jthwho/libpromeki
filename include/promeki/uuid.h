@@ -115,19 +115,19 @@ class UUID {
                 }
 
                 /** @brief Constructs an invalid (all-zero) UUID. */
-                UUID() : d{} { }
+                UUID() : d{} {}
 
                 /** @brief Copy constructor. */
-                UUID(const UUID &u) : d(u.d) { }
+                UUID(const UUID &u) : d(u.d) {}
 
                 /** @brief Move constructor. */
-                UUID(UUID &&u) noexcept : d(std::move(u.d)) { }
+                UUID(UUID &&u) noexcept : d(std::move(u.d)) {}
 
                 /** @brief Constructs a UUID from raw 16-byte data. */
-                UUID(const DataFormat &val) : d(val) { }
+                UUID(const DataFormat &val) : d(val) {}
 
                 /** @brief Move-constructs a UUID from raw 16-byte data. */
-                UUID(DataFormat &&val) noexcept : d(std::move(val)) { }
+                UUID(DataFormat &&val) noexcept : d(std::move(val)) {}
 
                 /** @brief Copy assignment operator. */
                 UUID &operator=(const UUID &val) {
@@ -154,54 +154,38 @@ class UUID {
                 }
 
                 /** @brief Returns true if both UUIDs are equal. */
-                bool operator==(const UUID &other) const {
-                        return d == other.d;
-                }
+                bool operator==(const UUID &other) const { return d == other.d; }
 
                 /** @brief Returns true if the UUIDs are not equal. */
-                bool operator!=(const UUID &other) const {
-                        return d != other.d;
-                }
+                bool operator!=(const UUID &other) const { return d != other.d; }
 
                 /** @brief Less-than comparison for ordering (lexicographic). */
-                bool operator<(const UUID &other) const {
-                        return std::memcmp(d.data(), other.d.data(), 16) < 0;
-                }
+                bool operator<(const UUID &other) const { return std::memcmp(d.data(), other.d.data(), 16) < 0; }
 
                 /** @brief Greater-than comparison for ordering (lexicographic). */
-                bool operator>(const UUID &other) const {
-                        return std::memcmp(d.data(), other.d.data(), 16) > 0;
-                }
+                bool operator>(const UUID &other) const { return std::memcmp(d.data(), other.d.data(), 16) > 0; }
 
                 /** @brief Less-than-or-equal comparison for ordering (lexicographic). */
-                bool operator<=(const UUID &other) const {
-                        return std::memcmp(d.data(), other.d.data(), 16) <= 0;
-                }
+                bool operator<=(const UUID &other) const { return std::memcmp(d.data(), other.d.data(), 16) <= 0; }
 
                 /** @brief Greater-than-or-equal comparison for ordering (lexicographic). */
-                bool operator>=(const UUID &other) const {
-                        return std::memcmp(d.data(), other.d.data(), 16) >= 0;
-                }
+                bool operator>=(const UUID &other) const { return std::memcmp(d.data(), other.d.data(), 16) >= 0; }
 
                 /** @brief Implicit conversion to String via toString(). */
-                operator String() const {
-                        return toString();
-                }
+                operator String() const { return toString(); }
 
                 /**
                  * @brief Returns true if this UUID is not all-zero.
                  * @return true if the UUID contains at least one non-zero byte.
                  */
-                bool isValid() const {
-                        return !d.isZero();
-                }
+                bool isValid() const { return !d.isZero(); }
 
                 /**
                  * @brief Returns the UUID version number.
                  * @return The version (1-8) encoded in the UUID, or 0 if invalid.
                  */
                 int version() const {
-                        if(!isValid()) return 0;
+                        if (!isValid()) return 0;
                         return (d[6] >> 4) & 0x0F;
                 }
 
@@ -215,17 +199,13 @@ class UUID {
                  * @brief Returns a const reference to the raw 16-byte data.
                  * @return The underlying DataFormat array.
                  */
-                const DataFormat &data() const {
-                        return d;
-                }
+                const DataFormat &data() const { return d; }
 
                 /**
                  * @brief Returns a pointer to the raw byte data.
                  * @return A pointer to the first byte of the UUID.
                  */
-                const uint8_t *raw() const {
-                        return d.data();
-                }
+                const uint8_t *raw() const { return d.data(); }
 
         private:
                 DataFormat d;

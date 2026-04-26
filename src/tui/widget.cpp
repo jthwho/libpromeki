@@ -10,15 +10,14 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-TuiWidget::TuiWidget(ObjectBase *parent) : Widget(parent) {
-}
+TuiWidget::TuiWidget(ObjectBase *parent) : Widget(parent) {}
 
 TuiWidget::~TuiWidget() = default;
 
 void TuiWidget::update() {
         Widget::update();
         TuiSubsystem *app = TuiSubsystem::instance();
-        if(app) app->markNeedsRepaint();
+        if (app) app->markNeedsRepaint();
 }
 
 PROMEKI_NAMESPACE_END

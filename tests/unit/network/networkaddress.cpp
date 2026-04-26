@@ -130,7 +130,7 @@ TEST_CASE("NetworkAddress") {
 
         SUBCASE("TextStream operator<< IPv4") {
                 NetworkAddress addr(Ipv4Address(192, 168, 1, 1));
-                String str;
+                String         str;
                 {
                         TextStream ts(&str);
                         ts << addr;
@@ -140,7 +140,7 @@ TEST_CASE("NetworkAddress") {
 
         SUBCASE("TextStream operator<< hostname") {
                 NetworkAddress addr(String("example.com"));
-                String str;
+                String         str;
                 {
                         TextStream ts(&str);
                         ts << addr;
@@ -150,9 +150,9 @@ TEST_CASE("NetworkAddress") {
 
 #if !defined(PROMEKI_PLATFORM_EMSCRIPTEN)
         SUBCASE("toSockAddr IPv4") {
-                NetworkAddress addr(Ipv4Address(127, 0, 0, 1));
+                NetworkAddress          addr(Ipv4Address(127, 0, 0, 1));
                 struct sockaddr_storage storage;
-                size_t len = addr.toSockAddr(&storage);
+                size_t                  len = addr.toSockAddr(&storage);
                 CHECK(len == sizeof(struct sockaddr_in));
                 auto *sa4 = reinterpret_cast<struct sockaddr_in *>(&storage);
                 CHECK(sa4->sin_family == AF_INET);
@@ -160,44 +160,42 @@ TEST_CASE("NetworkAddress") {
         }
 
         SUBCASE("toSockAddr IPv6") {
-                NetworkAddress addr(Ipv6Address::loopback());
+                NetworkAddress          addr(Ipv6Address::loopback());
                 struct sockaddr_storage storage;
-                size_t len = addr.toSockAddr(&storage);
+                size_t                  len = addr.toSockAddr(&storage);
                 CHECK(len == sizeof(struct sockaddr_in6));
                 auto *sa6 = reinterpret_cast<struct sockaddr_in6 *>(&storage);
                 CHECK(sa6->sin6_family == AF_INET6);
         }
 
         SUBCASE("toSockAddr null returns 0") {
-                NetworkAddress addr;
+                NetworkAddress          addr;
                 struct sockaddr_storage storage;
                 CHECK(addr.toSockAddr(&storage) == 0);
         }
 
         SUBCASE("toSockAddr hostname returns 0") {
-                NetworkAddress addr(String("example.com"));
+                NetworkAddress          addr(String("example.com"));
                 struct sockaddr_storage storage;
                 CHECK(addr.toSockAddr(&storage) == 0);
         }
 
         SUBCASE("fromSockAddr IPv4 round-trip") {
-                NetworkAddress orig(Ipv4Address(192, 168, 1, 100));
+                NetworkAddress          orig(Ipv4Address(192, 168, 1, 100));
                 struct sockaddr_storage storage;
-                size_t len = orig.toSockAddr(&storage);
+                size_t                  len = orig.toSockAddr(&storage);
                 REQUIRE(len > 0);
-                auto [restored, err] = NetworkAddress::fromSockAddr(
-                        reinterpret_cast<struct sockaddr *>(&storage), len);
+                auto [restored, err] = NetworkAddress::fromSockAddr(reinterpret_cast<struct sockaddr *>(&storage), len);
                 CHECK(err.isOk());
                 CHECK(restored == orig);
         }
 
         SUBCASE("fromSockAddr IPv6 round-trip") {
-                NetworkAddress orig(Ipv6Address::loopback());
+                NetworkAddress          orig(Ipv6Address::loopback());
                 struct sockaddr_storage storage;
-                size_t len = orig.toSockAddr(&storage);
+                size_t                  len = orig.toSockAddr(&storage);
                 REQUIRE(len > 0);
-                auto [restored, err] = NetworkAddress::fromSockAddr(
-                        reinterpret_cast<struct sockaddr *>(&storage), len);
+                auto [restored, err] = NetworkAddress::fromSockAddr(reinterpret_cast<struct sockaddr *>(&storage), len);
                 CHECK(err.isOk());
                 CHECK(restored == orig);
         }

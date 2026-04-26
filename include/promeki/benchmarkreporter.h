@@ -44,14 +44,14 @@ class BenchmarkReporter {
         public:
                 /** @brief Timing statistics for a single step (pair of IDs). */
                 struct StepStats {
-                        Benchmark::Id fromId;           ///< @brief Starting event ID.
-                        Benchmark::Id toId;             ///< @brief Ending event ID.
-                        uint64_t      count = 0;        ///< @brief Number of observations.
-                        double        min = 0.0;        ///< @brief Minimum duration in seconds.
-                        double        max = 0.0;        ///< @brief Maximum duration in seconds.
-                        double        avg = 0.0;        ///< @brief Mean duration in seconds.
-                        double        stddev = 0.0;     ///< @brief Standard deviation in seconds.
-                        double        total = 0.0;      ///< @brief Sum of all durations in seconds.
+                                Benchmark::Id fromId;       ///< @brief Starting event ID.
+                                Benchmark::Id toId;         ///< @brief Ending event ID.
+                                uint64_t      count = 0;    ///< @brief Number of observations.
+                                double        min = 0.0;    ///< @brief Minimum duration in seconds.
+                                double        max = 0.0;    ///< @brief Maximum duration in seconds.
+                                double        avg = 0.0;    ///< @brief Mean duration in seconds.
+                                double        stddev = 0.0; ///< @brief Standard deviation in seconds.
+                                double        total = 0.0;  ///< @brief Sum of all durations in seconds.
                 };
 
                 /** @brief Constructs an empty BenchmarkReporter. */
@@ -99,20 +99,20 @@ class BenchmarkReporter {
         private:
                 /** @brief Internal accumulator for online variance computation. */
                 struct Accumulator {
-                        Benchmark::Id fromId;
-                        Benchmark::Id toId;
-                        uint64_t      count = 0;
-                        double        sum = 0.0;
-                        double        sumSq = 0.0;
-                        double        min = 0.0;
-                        double        max = 0.0;
+                                Benchmark::Id fromId;
+                                Benchmark::Id toId;
+                                uint64_t      count = 0;
+                                double        sum = 0.0;
+                                double        sumSq = 0.0;
+                                double        min = 0.0;
+                                double        max = 0.0;
                 };
 
                 using StepKey = Pair<uint32_t, uint32_t>;
 
-                mutable Mutex                   _mutex;
-                Map<StepKey, Accumulator>       _accumulators;
-                uint64_t                        _submittedCount = 0;
+                mutable Mutex             _mutex;
+                Map<StepKey, Accumulator> _accumulators;
+                uint64_t                  _submittedCount = 0;
 
                 StepStats accumulatorToStats(const Accumulator &acc) const;
 };

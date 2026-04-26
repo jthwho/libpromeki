@@ -27,8 +27,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @tparam T The value type.
  */
-template <typename T>
-using Result = Pair<T, Error>;
+template <typename T> using Result = Pair<T, Error>;
 
 /**
  * @brief Creates a successful Result wrapping @p value.
@@ -36,8 +35,7 @@ using Result = Pair<T, Error>;
  * @param value The value to wrap.
  * @return A Result with the value and Error::Ok.
  */
-template <typename T>
-Result<T> makeResult(T value) {
+template <typename T> Result<T> makeResult(T value) {
         return Result<T>(std::move(value), Error::Ok);
 }
 
@@ -47,8 +45,7 @@ Result<T> makeResult(T value) {
  * @param err The error code.
  * @return A Result with default-constructed T and the given error.
  */
-template <typename T>
-Result<T> makeError(Error err) {
+template <typename T> Result<T> makeError(Error err) {
         return Result<T>(T{}, std::move(err));
 }
 
@@ -58,8 +55,9 @@ Result<T> makeError(Error err) {
  * @param r The Result to query.
  * @return Const reference to the value.
  */
-template <typename T>
-const T &value(const Result<T> &r) { return r.first(); }
+template <typename T> const T &value(const Result<T> &r) {
+        return r.first();
+}
 
 /**
  * @brief Returns the error from a Result.
@@ -67,8 +65,9 @@ const T &value(const Result<T> &r) { return r.first(); }
  * @param r The Result to query.
  * @return The Error.
  */
-template <typename T>
-const Error &error(const Result<T> &r) { return r.second(); }
+template <typename T> const Error &error(const Result<T> &r) {
+        return r.second();
+}
 
 /**
  * @brief Returns true if the Result is successful (Error::Ok).
@@ -76,8 +75,9 @@ const Error &error(const Result<T> &r) { return r.second(); }
  * @param r The Result to query.
  * @return True if no error.
  */
-template <typename T>
-bool isOk(const Result<T> &r) { return r.second().isOk(); }
+template <typename T> bool isOk(const Result<T> &r) {
+        return r.second().isOk();
+}
 
 /**
  * @brief Returns true if the Result has an error.
@@ -85,7 +85,8 @@ bool isOk(const Result<T> &r) { return r.second().isOk(); }
  * @param r The Result to query.
  * @return True if error.
  */
-template <typename T>
-bool isError(const Result<T> &r) { return r.second().isError(); }
+template <typename T> bool isError(const Result<T> &r) {
+        return r.second().isError();
+}
 
 PROMEKI_NAMESPACE_END

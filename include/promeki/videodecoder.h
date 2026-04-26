@@ -74,17 +74,17 @@ class VideoDecoder {
                  * Mirrors @ref VideoEncoder::BackendRecord.
                  */
                 struct BackendRecord {
-                        VideoCodec::ID       codecId;                         ///< Codec family this record implements.
-                        VideoCodec::Backend  backend;                         ///< Typed backend handle.
-                        int                  weight = BackendWeight::Vendored; ///< Selection weight.
-                        /**
+                                VideoCodec::ID      codecId; ///< Codec family this record implements.
+                                VideoCodec::Backend backend; ///< Typed backend handle.
+                                int                 weight = BackendWeight::Vendored; ///< Selection weight.
+                                /**
                          * @brief Uncompressed @ref PixelFormat IDs this backend can emit.
                          *
                          * Stored as @c int.  Empty means "any format that
                          * can be converted from the codec's native output."
                          */
-                        List<int>            supportedOutputs;
-                        Factory              factory;                        ///< Creates a fresh session.
+                                List<int> supportedOutputs;
+                                Factory   factory; ///< Creates a fresh session.
                 };
 
                 /** @brief Virtual destructor. */
@@ -145,11 +145,9 @@ class VideoDecoder {
                 // ---- Internal bridge from VideoCodec (see VideoEncoder's equivalents) ----
 
                 static VideoCodec::BackendList availableBackends(VideoCodec::ID codecId);
-                static List<int> supportedOutputsFor(VideoCodec::ID codecId,
-                                                     VideoCodec::Backend backend);
-                static Result<VideoDecoder *> create(VideoCodec::ID codecId,
-                                                    VideoCodec::Backend pinned,
-                                                    const MediaConfig *config);
+                static List<int>               supportedOutputsFor(VideoCodec::ID codecId, VideoCodec::Backend backend);
+                static Result<VideoDecoder *>  create(VideoCodec::ID codecId, VideoCodec::Backend pinned,
+                                                      const MediaConfig *config);
 
         protected:
                 VideoDecoder() = default;
@@ -157,8 +155,8 @@ class VideoDecoder {
                 /** @brief Records the codec + backend this session implements. */
                 void setCodec(VideoCodec codec) { _codec = codec; }
 
-                Error   _lastError;
-                String  _lastErrorMessage;
+                Error  _lastError;
+                String _lastErrorMessage;
 
                 /** @brief Records a new error state. */
                 void setError(Error err, const String &msg = String());

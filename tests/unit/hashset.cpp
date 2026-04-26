@@ -54,7 +54,7 @@ TEST_CASE("HashSet: clear") {
 
 TEST_CASE("HashSet: toList") {
         HashSet<int> s = {3, 1, 2};
-        auto l = s.toList();
+        auto         l = s.toList();
         CHECK(l.size() == 3);
         CHECK(l.contains(1));
         CHECK(l.contains(2));
@@ -63,7 +63,7 @@ TEST_CASE("HashSet: toList") {
 
 TEST_CASE("HashSet: forEach") {
         HashSet<int> s = {1, 2, 3};
-        int sum = 0;
+        int          sum = 0;
         s.forEach([&](int v) { sum += v; });
         CHECK(sum == 6);
 }
@@ -71,7 +71,7 @@ TEST_CASE("HashSet: forEach") {
 TEST_CASE("HashSet: unite") {
         HashSet<int> a = {1, 2, 3};
         HashSet<int> b = {3, 4, 5};
-        auto u = a.unite(b);
+        auto         u = a.unite(b);
         CHECK(u.size() == 5);
         CHECK(u.contains(1));
         CHECK(u.contains(5));
@@ -80,7 +80,7 @@ TEST_CASE("HashSet: unite") {
 TEST_CASE("HashSet: intersect") {
         HashSet<int> a = {1, 2, 3};
         HashSet<int> b = {2, 3, 4};
-        auto i = a.intersect(b);
+        auto         i = a.intersect(b);
         CHECK(i.size() == 2);
         CHECK(i.contains(2));
         CHECK(i.contains(3));
@@ -90,7 +90,7 @@ TEST_CASE("HashSet: intersect") {
 TEST_CASE("HashSet: subtract") {
         HashSet<int> a = {1, 2, 3};
         HashSet<int> b = {2, 3, 4};
-        auto s = a.subtract(b);
+        auto         s = a.subtract(b);
         CHECK(s.size() == 1);
         CHECK(s.contains(1));
 }

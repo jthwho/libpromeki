@@ -41,7 +41,7 @@ TEST_CASE("ImageFileIO JPEG: handler is registered") {
 
 TEST_CASE("ImageFileIO JPEG: RGB8 round-trip") {
         const char *fn = "/tmp/promeki_jpeg_rgb8.jpg";
-        auto src = promeki::tests::makeGradientRGB8Payload(64, 48);
+        auto        src = promeki::tests::makeGradientRGB8Payload(64, 48);
 
         ImageFile sf(ImageFile::JPEG);
         sf.setFilename(fn);
@@ -61,8 +61,7 @@ TEST_CASE("ImageFileIO JPEG: RGB8 round-trip") {
 
         auto cvp = sharedPointerCast<CompressedVideoPayload>(loaded);
         REQUIRE(cvp.isValid());
-        auto decoded = promeki::tests::decodeCompressedPayload(
-                cvp, PixelFormat(PixelFormat::RGB8_sRGB));
+        auto decoded = promeki::tests::decodeCompressedPayload(cvp, PixelFormat(PixelFormat::RGB8_sRGB));
         REQUIRE(decoded.isValid());
         REQUIRE(!decoded->isCompressed());
         CHECK(decoded->desc().width() == 64);
@@ -83,7 +82,7 @@ TEST_CASE("ImageFileIO JPEG: pass-through preserves bytes") {
         const char *fnA = "/tmp/promeki_jpeg_passthrough_a.jpg";
         const char *fnB = "/tmp/promeki_jpeg_passthrough_b.jpg";
 
-        auto src = promeki::tests::makeGradientRGB8Payload(96, 64);
+        auto      src = promeki::tests::makeGradientRGB8Payload(96, 64);
         ImageFile sf(ImageFile::JPEG);
         sf.setFilename(fnA);
         sf.setVideoPayload(src);
@@ -113,7 +112,7 @@ TEST_CASE("ImageFileIO JPEG: pass-through preserves bytes") {
         std::fseek(fb, 0, SEEK_SET);
         CHECK(la == lb);
         CHECK(la > 0);
-        if(la == lb && la > 0) {
+        if (la == lb && la > 0) {
                 std::vector<uint8_t> ba(la), bb(lb);
                 CHECK(std::fread(ba.data(), 1, la, fa) == static_cast<size_t>(la));
                 CHECK(std::fread(bb.data(), 1, lb, fb) == static_cast<size_t>(lb));
@@ -133,14 +132,12 @@ TEST_CASE("ImageFileIO JPEG: pass-through preserves bytes") {
 TEST_CASE("VideoCodec JPEG: RGB8 -> JPEG round-trip via VideoEncoder/VideoDecoder") {
         auto src = promeki::tests::makeGradientRGB8Payload(80, 60);
 
-        auto jpeg = promeki::tests::encodePayloadToCompressed(
-                src, PixelFormat(PixelFormat::JPEG_YUV8_422_Rec709));
+        auto jpeg = promeki::tests::encodePayloadToCompressed(src, PixelFormat(PixelFormat::JPEG_YUV8_422_Rec709));
         REQUIRE(jpeg.isValid());
         CHECK(jpeg->desc().pixelFormat().videoCodec().id() == VideoCodec::JPEG);
         CHECK(jpeg->plane(0).size() > 0);
 
-        auto decoded = promeki::tests::decodeCompressedPayload(
-                jpeg, PixelFormat(PixelFormat::RGB8_sRGB));
+        auto decoded = promeki::tests::decodeCompressedPayload(jpeg, PixelFormat(PixelFormat::RGB8_sRGB));
         REQUIRE(decoded.isValid());
         CHECK(decoded->desc().width() == src->desc().width());
         CHECK(decoded->desc().height() == src->desc().height());
@@ -154,14 +151,12 @@ TEST_CASE("VideoCodec JPEG: honours MediaConfig::JpegQuality") {
 
         MediaConfig low;
         low.set(MediaConfig::JpegQuality, 10);
-        auto lowQ = promeki::tests::encodePayloadToCompressed(
-                src, PixelFormat(PixelFormat::JPEG_RGB8_sRGB), low);
+        auto lowQ = promeki::tests::encodePayloadToCompressed(src, PixelFormat(PixelFormat::JPEG_RGB8_sRGB), low);
         REQUIRE(lowQ.isValid());
 
         MediaConfig high;
         high.set(MediaConfig::JpegQuality, 95);
-        auto highQ = promeki::tests::encodePayloadToCompressed(
-                src, PixelFormat(PixelFormat::JPEG_RGB8_sRGB), high);
+        auto highQ = promeki::tests::encodePayloadToCompressed(src, PixelFormat(PixelFormat::JPEG_RGB8_sRGB), high);
         REQUIRE(highQ.isValid());
 
         CHECK(highQ->plane(0).size() > lowQ->plane(0).size());
@@ -174,7 +169,7 @@ TEST_CASE("VideoCodec JPEG: honours MediaConfig::JpegQuality") {
 TEST_CASE("ImageFileIO JPEG: save honours MediaConfig::JpegQuality") {
         const char *fnLo = "/tmp/promeki_jpeg_q10.jpg";
         const char *fnHi = "/tmp/promeki_jpeg_q95.jpg";
-        auto src = promeki::tests::makeGradientRGB8Payload(128, 96);
+        auto        src = promeki::tests::makeGradientRGB8Payload(128, 96);
 
         MediaConfig low;
         low.set(MediaConfig::JpegQuality, 10);
@@ -219,7 +214,7 @@ TEST_CASE("ImageFileIO JPEG: load nonexistent file returns error") {
 
 TEST_CASE("ImageFileIO JPEG: load garbage file returns error") {
         const char *fn = "/tmp/promeki_jpeg_bad.jpg";
-        FILE *fp = std::fopen(fn, "wb");
+        FILE       *fp = std::fopen(fn, "wb");
         REQUIRE(fp);
         const char garbage[] = "Definitely not a JPEG file, just some text.";
         std::fwrite(garbage, 1, sizeof(garbage), fp);
@@ -244,7 +239,7 @@ TEST_CASE("ImageFileIO JPEG: save empty image returns error") {
 
 TEST_CASE("ImageFileIO JPEG: load emits a CompressedVideoPayload") {
         const char *fn = "/tmp/promeki_jpeg_packet.jpg";
-        auto src = promeki::tests::makeGradientRGB8Payload(64, 48);
+        auto        src = promeki::tests::makeGradientRGB8Payload(64, 48);
 
         ImageFile sf(ImageFile::JPEG);
         sf.setFilename(fn);
@@ -256,7 +251,7 @@ TEST_CASE("ImageFileIO JPEG: load emits a CompressedVideoPayload") {
         REQUIRE(lf.load() == Error::Ok);
 
         const Frame &frame = lf.frame();
-        auto vids = frame.videoPayloads();
+        auto         vids = frame.videoPayloads();
         REQUIRE(vids.size() == 1);
         const auto *cvp = vids[0]->as<CompressedVideoPayload>();
         REQUIRE(cvp != nullptr);

@@ -119,75 +119,75 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeEUI64         | `EUI64`             |
  */
 #if PROMEKI_ENABLE_NETWORK
-#       define PROMEKI_VARIANT_TYPES_NETWORK    \
-                X(TypeSocketAddress, SocketAddress) \
-                X(TypeSdpSession, SdpSession) \
-                X(TypeMacAddress, MacAddress) \
-                X(TypeEUI64, EUI64)
+#define PROMEKI_VARIANT_TYPES_NETWORK                                                                                  \
+        X(TypeSocketAddress, SocketAddress)                                                                            \
+        X(TypeSdpSession, SdpSession)                                                                                  \
+        X(TypeMacAddress, MacAddress)                                                                                  \
+        X(TypeEUI64, EUI64)
 #else
-#       define PROMEKI_VARIANT_TYPES_NETWORK
+#define PROMEKI_VARIANT_TYPES_NETWORK
 #endif
 
-#define PROMEKI_VARIANT_TYPES           \
-        X(TypeInvalid, std::monostate)  \
-        X(TypeBool, bool)               \
-        X(TypeU8, uint8_t)              \
-        X(TypeS8, int8_t)               \
-        X(TypeU16, uint16_t)            \
-        X(TypeS16, int16_t)             \
-        X(TypeU32, uint32_t)            \
-        X(TypeS32, int32_t)             \
-        X(TypeU64, uint64_t)            \
-        X(TypeS64, int64_t)             \
-        X(TypeFloat, float)             \
-        X(TypeDouble, double)           \
-        X(TypeString, String)           \
-        X(TypeDateTime, DateTime)       \
-        X(TypeTimeStamp, TimeStamp)     \
-        X(TypeMediaTimeStamp, MediaTimeStamp) \
-        X(TypeFrameNumber, FrameNumber) \
-        X(TypeFrameCount, FrameCount)   \
-        X(TypeMediaDuration, MediaDuration) \
-        X(TypeDuration, Duration)       \
-        X(TypeSize2D, Size2Du32)           \
-        X(TypeUUID, UUID)               \
-        X(TypeUMID, UMID)               \
-        X(TypeTimecode, Timecode)       \
-        X(TypeRational, Rational<int>)  \
-        X(TypeFrameRate, FrameRate)     \
-        X(TypeVideoFormat, VideoFormat) \
-        X(TypeStringList, StringList)   \
-        X(TypeColor, Color)             \
-        X(TypeColorModel, ColorModel)   \
-        X(TypeMemSpace, MemSpace)       \
-        X(TypePixelMemLayout, PixelMemLayout) \
-        X(TypePixelFormat, PixelFormat)     \
-        X(TypeVideoCodec, VideoCodec)   \
-        X(TypeAudioCodec, AudioCodec)   \
-        X(TypeAudioFormat, AudioFormat) \
-        X(TypeEnum, Enum)               \
-        X(TypeEnumList, EnumList)       \
-        X(TypeMasteringDisplay, MasteringDisplay) \
-        X(TypeContentLightLevel, ContentLightLevel) \
-        X(TypeUrl, Url)                 \
+#define PROMEKI_VARIANT_TYPES                                                                                          \
+        X(TypeInvalid, std::monostate)                                                                                 \
+        X(TypeBool, bool)                                                                                              \
+        X(TypeU8, uint8_t)                                                                                             \
+        X(TypeS8, int8_t)                                                                                              \
+        X(TypeU16, uint16_t)                                                                                           \
+        X(TypeS16, int16_t)                                                                                            \
+        X(TypeU32, uint32_t)                                                                                           \
+        X(TypeS32, int32_t)                                                                                            \
+        X(TypeU64, uint64_t)                                                                                           \
+        X(TypeS64, int64_t)                                                                                            \
+        X(TypeFloat, float)                                                                                            \
+        X(TypeDouble, double)                                                                                          \
+        X(TypeString, String)                                                                                          \
+        X(TypeDateTime, DateTime)                                                                                      \
+        X(TypeTimeStamp, TimeStamp)                                                                                    \
+        X(TypeMediaTimeStamp, MediaTimeStamp)                                                                          \
+        X(TypeFrameNumber, FrameNumber)                                                                                \
+        X(TypeFrameCount, FrameCount)                                                                                  \
+        X(TypeMediaDuration, MediaDuration)                                                                            \
+        X(TypeDuration, Duration)                                                                                      \
+        X(TypeSize2D, Size2Du32)                                                                                       \
+        X(TypeUUID, UUID)                                                                                              \
+        X(TypeUMID, UMID)                                                                                              \
+        X(TypeTimecode, Timecode)                                                                                      \
+        X(TypeRational, Rational<int>)                                                                                 \
+        X(TypeFrameRate, FrameRate)                                                                                    \
+        X(TypeVideoFormat, VideoFormat)                                                                                \
+        X(TypeStringList, StringList)                                                                                  \
+        X(TypeColor, Color)                                                                                            \
+        X(TypeColorModel, ColorModel)                                                                                  \
+        X(TypeMemSpace, MemSpace)                                                                                      \
+        X(TypePixelMemLayout, PixelMemLayout)                                                                          \
+        X(TypePixelFormat, PixelFormat)                                                                                \
+        X(TypeVideoCodec, VideoCodec)                                                                                  \
+        X(TypeAudioCodec, AudioCodec)                                                                                  \
+        X(TypeAudioFormat, AudioFormat)                                                                                \
+        X(TypeEnum, Enum)                                                                                              \
+        X(TypeEnumList, EnumList)                                                                                      \
+        X(TypeMasteringDisplay, MasteringDisplay)                                                                      \
+        X(TypeContentLightLevel, ContentLightLevel)                                                                    \
+        X(TypeUrl, Url)                                                                                                \
         PROMEKI_VARIANT_TYPES_NETWORK
 
 namespace detail {
         /** @brief Sentinel type used to absorb the trailing comma from X-macro expansion. */
         struct VariantEnd {
-                bool operator==(const VariantEnd &) const { return true; }
-                bool operator!=(const VariantEnd &) const { return false; }
+                        bool operator==(const VariantEnd &) const { return true; }
+                        bool operator!=(const VariantEnd &) const { return false; }
         };
 
         /** @brief True for TypeRegistry wrapper types that have an integer ID. */
         template <typename T> struct is_type_registry : std::false_type {};
-        template <> struct is_type_registry<AudioCodec>   : std::true_type {};
-        template <> struct is_type_registry<AudioFormat>  : std::true_type {};
-        template <> struct is_type_registry<ColorModel>   : std::true_type {};
-        template <> struct is_type_registry<MemSpace>     : std::true_type {};
-        template <> struct is_type_registry<PixelMemLayout>  : std::true_type {};
-        template <> struct is_type_registry<PixelFormat>    : std::true_type {};
-        template <> struct is_type_registry<VideoCodec>   : std::true_type {};
+        template <> struct is_type_registry<AudioCodec> : std::true_type {};
+        template <> struct is_type_registry<AudioFormat> : std::true_type {};
+        template <> struct is_type_registry<ColorModel> : std::true_type {};
+        template <> struct is_type_registry<MemSpace> : std::true_type {};
+        template <> struct is_type_registry<PixelMemLayout> : std::true_type {};
+        template <> struct is_type_registry<PixelFormat> : std::true_type {};
+        template <> struct is_type_registry<VideoCodec> : std::true_type {};
         template <typename T> inline constexpr bool is_type_registry_v = is_type_registry<T>::value;
 }
 
@@ -219,28 +219,30 @@ namespace detail {
  */
 template <typename... Types> class VariantImpl {
         public:
-                #define X(name, type) name,
+#define X(name, type) name,
                 /**
                  * @brief Enumerates every type the variant can hold.
                  *
                  * The enumerator order matches the template argument order so that
                  * `std::variant::index()` can be cast directly to a Type value.
                  */
-                enum Type { PROMEKI_VARIANT_TYPES };
-                #undef X
+                enum Type {
+                        PROMEKI_VARIANT_TYPES
+                };
+#undef X
 
-                #define X(name, type) PROMEKI_STRINGIFY(type),
+#define X(name, type) PROMEKI_STRINGIFY(type),
                 /**
                  * @brief Returns the human-readable C++ type name for the given Type enumerator.
                  * @param[in] id  The Type enumerator value.
                  * @return A null-terminated string such as `"bool"`, `"String"`, etc.
                  */
                 static const char *typeName(Type id) {
-                        static const char *items[] = { PROMEKI_VARIANT_TYPES };
+                        static const char *items[] = {PROMEKI_VARIANT_TYPES};
                         PROMEKI_ASSERT(id < PROMEKI_ARRAY_SIZE(items));
                         return items[id];
                 }
-                #undef X
+#undef X
 
                 /**
                  * @brief Constructs a VariantImpl from a JSON value, inferring the best native type.
@@ -259,19 +261,21 @@ template <typename... Types> class VariantImpl {
                  * @return A VariantImpl holding the converted value.
                  */
                 static VariantImpl fromJson(const nlohmann::json &val) {
-                        if(val.is_null()) return VariantImpl();
-                        if(val.is_boolean()) return val.get<bool>();
-                        if(val.is_number_integer()) {
-                                if(val.is_number_unsigned()) return val.get<uint64_t>();
+                        if (val.is_null()) return VariantImpl();
+                        if (val.is_boolean()) return val.get<bool>();
+                        if (val.is_number_integer()) {
+                                if (val.is_number_unsigned()) return val.get<uint64_t>();
                                 return val.get<int64_t>();
                         }
-                        if(val.is_number_float()) return val.get<double>();
-                        if(val.is_string()) return String(val.get<std::string>());
-                        if(val.is_array()) {
+                        if (val.is_number_float()) return val.get<double>();
+                        if (val.is_string()) return String(val.get<std::string>());
+                        if (val.is_array()) {
                                 StringList list;
-                                for(const auto &item : val) {
-                                        if(item.is_string()) list.pushToBack(String(item.get<std::string>()));
-                                        else list.pushToBack(String(item.dump()));
+                                for (const auto &item : val) {
+                                        if (item.is_string())
+                                                list.pushToBack(String(item.get<std::string>()));
+                                        else
+                                                list.pushToBack(String(item.dump()));
                                 }
                                 return list;
                         }
@@ -294,14 +298,11 @@ template <typename... Types> class VariantImpl {
                  * @param value  The value to store.
                  */
                 template <typename T,
-                          typename = std::enable_if_t<
-                                  std::disjunction_v<std::is_convertible<const T &, Types>...>>>
-                VariantImpl(const T& value) : v(value) { }
+                          typename = std::enable_if_t<std::disjunction_v<std::is_convertible<const T &, Types>...>>>
+                VariantImpl(const T &value) : v(value) {}
 
                 /** @brief Returns true if the variant holds a value other than std::monostate. */
-                bool isValid() const {
-                        return v.index() != 0;
-                }
+                bool isValid() const { return v.index() != 0; }
 
                 /**
                  * @brief Replaces the currently held value with @p value.
@@ -314,9 +315,10 @@ template <typename... Types> class VariantImpl {
                  * @param value  The value to store.
                  */
                 template <typename T,
-                          typename = std::enable_if_t<
-                                  std::disjunction_v<std::is_convertible<const T &, Types>...>>>
-                void set(const T &value) { v = value; }
+                          typename = std::enable_if_t<std::disjunction_v<std::is_convertible<const T &, Types>...>>>
+                void set(const T &value) {
+                        v = value;
+                }
 
                 /**
                  * @brief Converts the stored value to the requested type @p To.
@@ -337,14 +339,10 @@ template <typename... Types> class VariantImpl {
                 template <typename To> To get(Error *err = nullptr) const;
 
                 /** @brief Returns the Type enumerator for the currently held value. */
-                Type type() const {
-                        return static_cast<Type>(v.index());
-                }
+                Type type() const { return static_cast<Type>(v.index()); }
 
                 /** @brief Returns the human-readable type name of the currently held value. */
-                const char *typeName() const {
-                        return typeName(type());
-                }
+                const char *typeName() const { return typeName(type()); }
 
                 /**
                  * @brief Converts complex types to their String representation, leaving simple types unchanged.
@@ -360,16 +358,18 @@ template <typename... Types> class VariantImpl {
                  *         String representation.
                  */
                 VariantImpl toStandardType() const {
-                        return std::visit([this](const auto &val) -> VariantImpl {
-                                using T = std::decay_t<decltype(val)>;
-                                if constexpr (std::is_same_v<T, std::monostate> ||
-                                              std::is_same_v<T, detail::VariantEnd> ||
-                                              std::is_arithmetic_v<T>) {
-                                        return *this;
-                                } else {
-                                        return get<String>();
-                                }
-                        }, v);
+                        return std::visit(
+                                [this](const auto &val) -> VariantImpl {
+                                        using T = std::decay_t<decltype(val)>;
+                                        if constexpr (std::is_same_v<T, std::monostate> ||
+                                                      std::is_same_v<T, detail::VariantEnd> ||
+                                                      std::is_arithmetic_v<T>) {
+                                                return *this;
+                                        } else {
+                                                return get<String>();
+                                        }
+                                },
+                                v);
                 }
 
                 /**
@@ -403,9 +403,9 @@ template <typename... Types> class VariantImpl {
                  * @return      The formatted String.
                  */
                 String format(const String &spec, Error *err = nullptr) const {
-                        if(err != nullptr) *err = Error::Ok;
+                        if (err != nullptr) *err = Error::Ok;
                         String defaultStr = get<String>();
-                        if(spec.isEmpty()) return defaultStr;
+                        if (spec.isEmpty()) return defaultStr;
 
                         std::string fmtStr;
                         fmtStr.reserve(spec.byteCount() + 3);
@@ -414,21 +414,24 @@ template <typename... Types> class VariantImpl {
                         fmtStr += '}';
 
                         try {
-                                return std::visit([&fmtStr, &defaultStr](auto &&arg) -> String {
-                                        using T = std::decay_t<decltype(arg)>;
-                                        if constexpr (std::is_same_v<T, std::monostate>) {
-                                                (void)fmtStr;
-                                                return String();
-                                        } else if constexpr (std::is_default_constructible_v<std::formatter<T, char>>) {
-                                                const auto &val = arg;
-                                                return String(std::vformat(fmtStr, std::make_format_args(val)));
-                                        } else {
-                                                std::string_view sv(defaultStr.cstr(), defaultStr.byteCount());
-                                                return String(std::vformat(fmtStr, std::make_format_args(sv)));
-                                        }
-                                }, v);
-                        } catch(const std::format_error &) {
-                                if(err != nullptr) *err = Error::Invalid;
+                                return std::visit(
+                                        [&fmtStr, &defaultStr](auto &&arg) -> String {
+                                                using T = std::decay_t<decltype(arg)>;
+                                                if constexpr (std::is_same_v<T, std::monostate>) {
+                                                        (void)fmtStr;
+                                                        return String();
+                                                } else if constexpr (std::is_default_constructible_v<
+                                                                             std::formatter<T, char>>) {
+                                                        const auto &val = arg;
+                                                        return String(std::vformat(fmtStr, std::make_format_args(val)));
+                                                } else {
+                                                        std::string_view sv(defaultStr.cstr(), defaultStr.byteCount());
+                                                        return String(std::vformat(fmtStr, std::make_format_args(sv)));
+                                                }
+                                        },
+                                        v);
+                        } catch (const std::format_error &) {
+                                if (err != nullptr) *err = Error::Invalid;
                                 return defaultStr;
                         }
                 }
@@ -484,19 +487,21 @@ template <typename... Types> class VariantImpl {
                  *         (invalid) @ref Enum on failure.
                  */
                 Enum asEnum(Enum::Type enumType, Error *err = nullptr) const {
-                        if(!enumType.isValid()) {
-                                if(err != nullptr) *err = Error::InvalidArgument;
+                        if (!enumType.isValid()) {
+                                if (err != nullptr) *err = Error::InvalidArgument;
                                 return Enum();
                         }
-                        auto setOk = [err]() { if(err != nullptr) *err = Error::Ok; };
-                        auto setErr = [err]() { if(err != nullptr) *err = Error::Invalid; };
-                        switch(type()) {
-                                case TypeInvalid:
-                                        setOk();
-                                        return Enum(enumType);
+                        auto setOk = [err]() {
+                                if (err != nullptr) *err = Error::Ok;
+                        };
+                        auto setErr = [err]() {
+                                if (err != nullptr) *err = Error::Invalid;
+                        };
+                        switch (type()) {
+                                case TypeInvalid: setOk(); return Enum(enumType);
                                 case TypeEnum: {
                                         Enum e = get<Enum>();
-                                        if(e.type() != enumType) {
+                                        if (e.type() != enumType) {
                                                 setErr();
                                                 return Enum();
                                         }
@@ -506,10 +511,10 @@ template <typename... Types> class VariantImpl {
                                 case TypeString: {
                                         String s = get<String>();
                                         // Qualified "TypeName::ValueName"?
-                                        if(s.contains("::")) {
+                                        if (s.contains("::")) {
                                                 Error parseErr;
-                                                Enum e = Enum::lookup(s, &parseErr);
-                                                if(parseErr.isOk() && e.type() == enumType) {
+                                                Enum  e = Enum::lookup(s, &parseErr);
+                                                if (parseErr.isOk() && e.type() == enumType) {
                                                         setOk();
                                                         return e;
                                                 }
@@ -518,14 +523,14 @@ template <typename... Types> class VariantImpl {
                                         }
                                         // Unqualified value name against the target type.
                                         Enum byName(enumType, s);
-                                        if(byName.hasListedValue()) {
+                                        if (byName.hasListedValue()) {
                                                 setOk();
                                                 return byName;
                                         }
                                         // Last resort: signed decimal integer.
                                         Error intErr;
-                                        int iv = s.template to<int>(&intErr);
-                                        if(intErr.isOk()) {
+                                        int   iv = s.template to<int>(&intErr);
+                                        if (intErr.isOk()) {
                                                 setOk();
                                                 return Enum(enumType, iv);
                                         }
@@ -542,16 +547,15 @@ template <typename... Types> class VariantImpl {
                                 case TypeU64:
                                 case TypeS64: {
                                         Error ge;
-                                        int iv = get<int32_t>(&ge);
-                                        if(ge.isError()) {
+                                        int   iv = get<int32_t>(&ge);
+                                        if (ge.isError()) {
                                                 setErr();
                                                 return Enum();
                                         }
                                         setOk();
                                         return Enum(enumType, iv);
                                 }
-                                default:
-                                        break;
+                                default: break;
                         }
                         setErr();
                         return Enum();
@@ -606,9 +610,9 @@ template <typename... Types> class VariantImpl {
  * @par Thread Safety
  * Conditionally thread-safe — same contract as @ref VariantImpl.
  */
-class Variant : public VariantImpl< PROMEKI_VARIANT_TYPES detail::VariantEnd > {
+class Variant : public VariantImpl<PROMEKI_VARIANT_TYPES detail::VariantEnd> {
         public:
-                using Base = VariantImpl< PROMEKI_VARIANT_TYPES detail::VariantEnd >;
+                using Base = VariantImpl<PROMEKI_VARIANT_TYPES detail::VariantEnd>;
                 using Base::Base;
                 Variant() = default;
                 Variant(const Base &b) : Base(b) {}
@@ -627,7 +631,7 @@ class VariantList : public List<Variant> {
                 using List<Variant>::List;
                 VariantList() = default;
                 VariantList(std::initializer_list<Variant> il) {
-                        for(const auto &v : il) pushToBack(v);
+                        for (const auto &v : il) pushToBack(v);
                 }
                 VariantList(const List<Variant> &other) : List<Variant>(other) {}
                 VariantList(List<Variant> &&other) : List<Variant>(std::move(other)) {}
@@ -649,7 +653,7 @@ class VariantMap : public Map<String, Variant> {
                 using Map<String, Variant>::Map;
                 VariantMap() = default;
                 VariantMap(std::initializer_list<std::pair<const String, Variant>> il) {
-                        for(const auto &kv : il) insert(kv.first, kv.second);
+                        for (const auto &kv : il) insert(kv.first, kv.second);
                 }
                 VariantMap(const Map<String, Variant> &other) : Map<String, Variant>(other) {}
                 VariantMap(Map<String, Variant> &&other) : Map<String, Variant>(std::move(other)) {}
@@ -666,11 +670,10 @@ class VariantMap : public Map<String, Variant> {
 // ---------------------------------------------------------------------------
 
 #define X(name, type) type,
-extern template class VariantImpl< PROMEKI_VARIANT_TYPES detail::VariantEnd >;
+extern template class VariantImpl<PROMEKI_VARIANT_TYPES detail::VariantEnd>;
 #undef X
 
-#define X(name, type) \
-        extern template type Variant::Base::get<type>(Error *err) const;
+#define X(name, type) extern template type Variant::Base::get<type>(Error * err) const;
 PROMEKI_VARIANT_TYPES
 #undef X
 
@@ -698,15 +701,13 @@ PROMEKI_NAMESPACE_END
  *   s = String::format("v = {}", v);        // "v = <uuid>"
  * @endcode
  */
-template <typename... Types>
-struct std::formatter<promeki::VariantImpl<Types...>>
-        : std::formatter<std::string_view> {
-        using Base = std::formatter<std::string_view>;
-        template <typename FormatContext>
-        auto format(const promeki::VariantImpl<Types...> &v, FormatContext &ctx) const {
-                promeki::String s = v.template get<promeki::String>();
-                return Base::format(std::string_view(s.cstr(), s.byteCount()), ctx);
-        }
+template <typename... Types> struct std::formatter<promeki::VariantImpl<Types...>> : std::formatter<std::string_view> {
+                using Base = std::formatter<std::string_view>;
+                template <typename FormatContext>
+                auto format(const promeki::VariantImpl<Types...> &v, FormatContext &ctx) const {
+                        promeki::String s = v.template get<promeki::String>();
+                        return Base::format(std::string_view(s.cstr(), s.byteCount()), ctx);
+                }
 };
 
 /**
@@ -718,7 +719,4 @@ struct std::formatter<promeki::VariantImpl<Types...>>
  * type.  This specialization reuses the VariantImpl formatter via
  * its base subobject.
  */
-template <>
-struct std::formatter<promeki::Variant>
-        : std::formatter<promeki::Variant::Base> {};
-
+template <> struct std::formatter<promeki::Variant> : std::formatter<promeki::Variant::Base> {};

@@ -43,7 +43,7 @@ class SdpMediaDescription;
  * threads.
  */
 class AudioDesc {
-        PROMEKI_SHARED_FINAL(AudioDesc)
+                PROMEKI_SHARED_FINAL(AudioDesc)
         public:
                 /** @brief Shared pointer type for AudioDesc. */
                 using Ptr = SharedPtr<AudioDesc>;
@@ -100,9 +100,8 @@ class AudioDesc {
                  * factory like @c AudioDesc::nativeFloat(sr, ch).
                  */
                 AudioDesc(float sr, unsigned int ch)
-                        : _format(AudioFormat::NativeFloat), _sampleRate(sr), _channels(ch)
-                {
-                        if(!validParams()) reset();
+                    : _format(AudioFormat::NativeFloat), _sampleRate(sr), _channels(ch) {
+                        if (!validParams()) reset();
                 }
 
                 /**
@@ -112,9 +111,8 @@ class AudioDesc {
                  * @param ch  Number of audio channels.
                  */
                 AudioDesc(const AudioFormat &fmt, float sr, unsigned int ch)
-                        : _format(fmt), _sampleRate(sr), _channels(ch)
-                {
-                        if(!validParams()) reset();
+                    : _format(fmt), _sampleRate(sr), _channels(ch) {
+                        if (!validParams()) reset();
                 }
 
                 /**
@@ -142,8 +140,7 @@ class AudioDesc {
                  * @return true if the audio format matches, ignoring metadata.
                  */
                 bool formatEquals(const AudioDesc &other) const {
-                        return _format == other._format &&
-                               _sampleRate == other._sampleRate &&
+                        return _format == other._format && _sampleRate == other._sampleRate &&
                                _channels == other._channels;
                 }
 
@@ -157,9 +154,7 @@ class AudioDesc {
                 }
 
                 /** @brief Returns true if this audio description is valid. */
-                bool isValid() const {
-                        return _format.isValid() && _sampleRate > 0.0f && _channels > 0;
-                }
+                bool isValid() const { return _format.isValid() && _sampleRate > 0.0f && _channels > 0; }
 
                 /** @brief Returns true if this description identifies a compressed bitstream. */
                 bool isCompressed() const { return _format.isCompressed(); }
@@ -176,14 +171,12 @@ class AudioDesc {
                  *        rate and channel count.
                  */
                 AudioDesc workingDesc() const {
-                        return AudioDesc(AudioFormat(AudioFormat::NativeFloat),
-                                         _sampleRate, _channels);
+                        return AudioDesc(AudioFormat(AudioFormat::NativeFloat), _sampleRate, _channels);
                 }
 
                 /** @brief Returns a human-readable string. */
                 String toString() const {
-                        return String::sprintf("[%s %fHz %uc]",
-                                _format.name().cstr(), _sampleRate, _channels);
+                        return String::sprintf("[%s %fHz %uc]", _format.name().cstr(), _sampleRate, _channels);
                 }
 
                 /**
@@ -197,7 +190,7 @@ class AudioDesc {
                         ret.set("Format", _format.name());
                         ret.set("SampleRate", _sampleRate);
                         ret.set("Channels", _channels);
-                        if(!_metadata.isEmpty()) ret.set("Metadata", _metadata.toJson());
+                        if (!_metadata.isEmpty()) ret.set("Metadata", _metadata.toJson());
                         return ret;
                 }
 
@@ -237,9 +230,7 @@ class AudioDesc {
                  * by the number of channels.
                  */
                 size_t bytesPerSampleStride() const {
-                        return _format.isPlanar() ?
-                                _format.bytesPerSample() :
-                                _format.bytesPerSample() * _channels;
+                        return _format.isPlanar() ? _format.bytesPerSample() : _format.bytesPerSample() * _channels;
                 }
 
                 /**
@@ -254,9 +245,8 @@ class AudioDesc {
                  * @return Byte offset to the start of the requested channel's data.
                  */
                 size_t channelBufferOffset(unsigned int chan, size_t bufferSamples) const {
-                        return _format.isPlanar() ?
-                                _format.bytesPerSample() * bufferSamples * chan :
-                                _format.bytesPerSample() * chan;
+                        return _format.isPlanar() ? _format.bytesPerSample() * bufferSamples * chan
+                                                  : _format.bytesPerSample() * chan;
                 }
 
                 /**
@@ -264,9 +254,7 @@ class AudioDesc {
                  * @param samples Number of samples per channel.
                  * @return Total size in bytes (@c bytesPerSample * channels * samples).
                  */
-                size_t bufferSize(size_t samples) const {
-                        return _format.bytesPerSample() * _channels * samples;
-                }
+                size_t bufferSize(size_t samples) const { return _format.bytesPerSample() * _channels * samples; }
 
                 /**
                  * @brief Converts samples from this description's format to normalized floats.
@@ -294,14 +282,12 @@ class AudioDesc {
                 unsigned int _channels = 0;
                 Metadata     _metadata;
 
-                bool validParams() const {
-                        return _format.isValid() && _sampleRate > 0.0f && _channels > 0;
-                }
+                bool validParams() const { return _format.isValid() && _sampleRate > 0.0f && _channels > 0; }
 
                 void reset() {
-                        _format     = AudioFormat();
+                        _format = AudioFormat();
                         _sampleRate = 0.0f;
-                        _channels   = 0;
+                        _channels = 0;
                 }
 };
 
@@ -321,13 +307,19 @@ inline DataStream &operator<<(DataStream &stream, const AudioDesc &desc) {
  * @brief Reads an AudioDesc from its tagged wire format.
  */
 inline DataStream &operator>>(DataStream &stream, AudioDesc &desc) {
-        if(!stream.readTag(DataStream::TypeAudioDesc)) { desc = AudioDesc(); return stream; }
+        if (!stream.readTag(DataStream::TypeAudioDesc)) {
+                desc = AudioDesc();
+                return stream;
+        }
         AudioFormat fmt;
-        float sr = 0.0f;
-        uint32_t ch = 0;
-        Metadata meta;
+        float       sr = 0.0f;
+        uint32_t    ch = 0;
+        Metadata    meta;
         stream >> fmt >> sr >> ch >> meta;
-        if(stream.status() != DataStream::Ok) { desc = AudioDesc(); return stream; }
+        if (stream.status() != DataStream::Ok) {
+                desc = AudioDesc();
+                return stream;
+        }
         desc = AudioDesc(fmt, sr, ch);
         desc.metadata() = std::move(meta);
         return stream;

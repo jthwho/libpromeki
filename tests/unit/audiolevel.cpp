@@ -65,8 +65,8 @@ TEST_CASE("AudioLevel_Clipping") {
 }
 
 TEST_CASE("AudioLevel_RoundTrip") {
-        double values[] = { 0.001, 0.01, 0.1, 0.25, 0.5, 0.75, 1.0 };
-        for(double v : values) {
+        double values[] = {0.001, 0.01, 0.1, 0.25, 0.5, 0.75, 1.0};
+        for (double v : values) {
                 AudioLevel level = AudioLevel::fromLinear(v);
                 CHECK(level.toLinear() == doctest::Approx(v).epsilon(0.0001));
         }
@@ -155,10 +155,10 @@ TEST_CASE("AudioLevel_FromLinearAboveFullScale") {
 }
 
 TEST_CASE("AudioLevel_DbfsRoundTrip") {
-        double dbValues[] = { -96.0, -48.0, -20.0, -12.0, -6.0, -3.0, 0.0, 3.0, 6.0 };
-        for(double db : dbValues) {
+        double dbValues[] = {-96.0, -48.0, -20.0, -12.0, -6.0, -3.0, 0.0, 3.0, 6.0};
+        for (double db : dbValues) {
                 AudioLevel level = AudioLevel::fromDbfs(db);
-                double linear = level.toLinear();
+                double     linear = level.toLinear();
                 AudioLevel reconstructed = AudioLevel::fromLinear(linear);
                 CHECK(reconstructed.dbfs() == doctest::Approx(db).epsilon(0.001));
         }

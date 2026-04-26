@@ -40,22 +40,22 @@ class File;
  * @c sampleDts() in QuickTimeReader for the lookup.
  */
 struct QuickTimeSampleIndex {
-        // ---- Per-sample path (video, timecode, generic, non-compact audio) ----
-        List<int64_t>  offset;     ///< Absolute file offset of each sample.
-        List<uint32_t> size;       ///< Size in bytes of each sample.
-        List<int64_t>  dts;        ///< Decode timestamp in track timescale.
-        List<int64_t>  pts;        ///< Presentation timestamp (dts + ctts offset).
-        List<uint32_t> duration;   ///< Sample duration in track timescale.
-        List<uint8_t>  keyframe;   ///< 1 if sync sample (or 1 for all if no stss).
+                // ---- Per-sample path (video, timecode, generic, non-compact audio) ----
+                List<int64_t>  offset;   ///< Absolute file offset of each sample.
+                List<uint32_t> size;     ///< Size in bytes of each sample.
+                List<int64_t>  dts;      ///< Decode timestamp in track timescale.
+                List<int64_t>  pts;      ///< Presentation timestamp (dts + ctts offset).
+                List<uint32_t> duration; ///< Sample duration in track timescale.
+                List<uint8_t>  keyframe; ///< 1 if sync sample (or 1 for all if no stss).
 
-        // ---- Compact audio path ----
-        bool           audioCompact = false;
-        List<int64_t>  audioChunkOffsets;      ///< File offset of each chunk (from stco/co64).
-        List<uint32_t> audioChunkSamplesPerChunk; ///< Samples in each chunk (from stsc expansion).
-        List<uint64_t> audioChunkFirstSample;  ///< Cumulative first-sample index per chunk.
-        uint32_t       audioSampleSize = 0;    ///< Constant bytes per PCM frame.
-        uint32_t       audioSampleDelta = 0;   ///< Constant stts delta per sample.
-        uint64_t       audioTotalSamples = 0;  ///< Total samples across all chunks.
+                // ---- Compact audio path ----
+                bool           audioCompact = false;
+                List<int64_t>  audioChunkOffsets;         ///< File offset of each chunk (from stco/co64).
+                List<uint32_t> audioChunkSamplesPerChunk; ///< Samples in each chunk (from stsc expansion).
+                List<uint64_t> audioChunkFirstSample;     ///< Cumulative first-sample index per chunk.
+                uint32_t       audioSampleSize = 0;       ///< Constant bytes per PCM frame.
+                uint32_t       audioSampleDelta = 0;      ///< Constant stts delta per sample.
+                uint64_t       audioTotalSamples = 0;     ///< Total samples across all chunks.
 };
 
 /**
@@ -74,7 +74,7 @@ struct QuickTimeSampleIndex {
  * managed manually in open()/close()/~QuickTimeReader().
  */
 class QuickTimeReader : public QuickTime::Impl {
-        PROMEKI_SHARED_DERIVED(QuickTime::Impl, QuickTimeReader)
+                PROMEKI_SHARED_DERIVED(QuickTime::Impl, QuickTimeReader)
         public:
                 QuickTimeReader();
                 ~QuickTimeReader() override;
@@ -83,22 +83,21 @@ class QuickTimeReader : public QuickTime::Impl {
                 void  close() override;
                 bool  isOpen() const override { return _isOpen; }
 
-                Error readSample(size_t trackIndex, uint64_t sampleIndex,
-                                 QuickTime::Sample &out) override;
+                Error readSample(size_t trackIndex, uint64_t sampleIndex, QuickTime::Sample &out) override;
 
-                Error readSampleRange(size_t trackIndex, uint64_t startSampleIndex,
-                                      uint64_t count, QuickTime::Sample &out) override;
+                Error readSampleRange(size_t trackIndex, uint64_t startSampleIndex, uint64_t count,
+                                      QuickTime::Sample &out) override;
 
         private:
                 /** @brief Holds per-track timecode entry parameters until the
                  *         single tmcd sample is read and turned into a Timecode. */
                 struct TimecodeTrackInfo {
-                        bool      present = false;
-                        size_t    trackIndex = 0;
-                        uint32_t  flags = 0;        ///< tmcd entry flags (bit0 = drop frame).
-                        uint32_t  timescale = 0;
-                        uint32_t  frameDuration = 0;
-                        uint8_t   numberOfFrames = 0;
+                                bool     present = false;
+                                size_t   trackIndex = 0;
+                                uint32_t flags = 0; ///< tmcd entry flags (bit0 = drop frame).
+                                uint32_t timescale = 0;
+                                uint32_t frameDuration = 0;
+                                uint8_t  numberOfFrames = 0;
                 };
 
                 /** @brief Parses the top-level atom list after @c ftyp. */
@@ -111,21 +110,20 @@ class QuickTimeReader : public QuickTime::Impl {
                 Error parseTrak(int64_t payloadOffset, int64_t payloadEnd);
 
                 /** @brief Parses the sample table atoms inside @c stbl. */
-                Error parseSampleTable(int64_t stblPayloadOffset, int64_t stblPayloadEnd,
-                                       QuickTimeSampleIndex &out, bool isAudio);
+                Error parseSampleTable(int64_t stblPayloadOffset, int64_t stblPayloadEnd, QuickTimeSampleIndex &out,
+                                       bool isAudio);
 
                 /** @brief Given a sample index, returns its absolute file offset. */
-                int64_t  sampleOffset(const QuickTimeSampleIndex &idx, uint64_t sampleIndex) const;
+                int64_t sampleOffset(const QuickTimeSampleIndex &idx, uint64_t sampleIndex) const;
                 /** @brief Given a sample index, returns its size in bytes. */
                 uint32_t sampleSize(const QuickTimeSampleIndex &idx, uint64_t sampleIndex) const;
                 /** @brief Given a sample index, returns its dts in the track's timescale. */
-                int64_t  sampleDts(const QuickTimeSampleIndex &idx, uint64_t sampleIndex) const;
+                int64_t sampleDts(const QuickTimeSampleIndex &idx, uint64_t sampleIndex) const;
                 /** @brief Returns the number of samples covered by @p idx. */
                 uint64_t sampleCount(const QuickTimeSampleIndex &idx) const;
 
                 /** @brief Parses @c edts/elst into a track edit start offset. */
-                Error parseEditList(int64_t edtsPayloadOffset, int64_t edtsPayloadEnd,
-                                    int64_t &outStartOffset);
+                Error parseEditList(int64_t edtsPayloadOffset, int64_t edtsPayloadEnd, int64_t &outStartOffset);
 
                 /** @brief Parses a @c tmcd sample-entry, capturing flags/scale. */
                 Error parseTimecodeSampleEntry(int64_t entryPayloadOffset, int64_t entryPayloadEnd,
@@ -149,10 +147,8 @@ class QuickTimeReader : public QuickTime::Impl {
                  * @c hvcC, @c colr, @c pasp) should walk
                  * <tt>[stream.pos(), entryPayloadEnd)</tt> from there.
                  */
-                Error parseVideoSampleEntry(quicktime_atom::ReadStream &stream,
-                                            FourCC entryType,
-                                            int64_t entryPayloadEnd,
-                                            QuickTime::Track &track);
+                Error parseVideoSampleEntry(quicktime_atom::ReadStream &stream, FourCC entryType,
+                                            int64_t entryPayloadEnd, QuickTime::Track &track);
 
                 /** @brief Parses @c udta at the given range into _containerMetadata. */
                 Error parseUdta(int64_t payloadOffset, int64_t payloadEnd);
@@ -169,19 +165,16 @@ class QuickTimeReader : public QuickTime::Impl {
                 Error parseTraf(int64_t trafPayloadOffset, int64_t trafPayloadEnd, int64_t moofStart);
 
                 /** @brief Parses one @c trun and appends samples to @p idx. */
-                Error parseTrun(int64_t trunPayloadOffset, int64_t trunPayloadEnd,
-                                size_t trackIdx, int64_t moofStart,
-                                bool baseDataOffsetPresent, uint64_t baseDataOffset,
-                                bool defaultBaseIsMoof,
-                                uint32_t defSampleDuration, uint32_t defSampleSize,
-                                uint32_t defSampleFlags,
+                Error parseTrun(int64_t trunPayloadOffset, int64_t trunPayloadEnd, size_t trackIdx, int64_t moofStart,
+                                bool baseDataOffsetPresent, uint64_t baseDataOffset, bool defaultBaseIsMoof,
+                                uint32_t defSampleDuration, uint32_t defSampleSize, uint32_t defSampleFlags,
                                 int64_t &cursorDts, int64_t &prevDataEnd);
 
                 /** @brief Looks up a track index by its QuickTime track ID. */
                 size_t findTrackIndexById(uint32_t trackId) const;
 
                 /** @brief After tracks are built, populates _mediaDesc. */
-                void  buildMediaDesc();
+                void buildMediaDesc();
 
                 /** @brief Reads the single sample of the tmcd track and builds
                  *         a Timecode in @c _startTimecode. */
@@ -195,12 +188,12 @@ class QuickTimeReader : public QuickTime::Impl {
                  *         this just verifies _metaFile is non-null. */
                 Error ensureImageFile();
 
-                File                          *_metaFile = nullptr;
-                bool                           _isOpen = false;
-                uint32_t                       _movieTimescale = 0;
-                uint64_t                       _movieDuration  = 0;
-                List<QuickTimeSampleIndex>     _sampleIndices;  ///< Parallel to _tracks.
-                TimecodeTrackInfo              _tmcdInfo;
+                File                      *_metaFile = nullptr;
+                bool                       _isOpen = false;
+                uint32_t                   _movieTimescale = 0;
+                uint64_t                   _movieDuration = 0;
+                List<QuickTimeSampleIndex> _sampleIndices; ///< Parallel to _tracks.
+                TimecodeTrackInfo          _tmcdInfo;
 };
 
 PROMEKI_NAMESPACE_END

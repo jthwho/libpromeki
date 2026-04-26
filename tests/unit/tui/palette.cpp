@@ -22,8 +22,8 @@ TEST_CASE("TuiPalette: default construction") {
 
 TEST_CASE("TuiPalette: setStyle and style") {
         TuiPalette pal;
-        TuiStyle red = TuiStyle::fromBackground(Color::Red);
-        TuiStyle blue = TuiStyle::fromBackground(Color::Blue);
+        TuiStyle   red = TuiStyle::fromBackground(Color::Red);
+        TuiStyle   blue = TuiStyle::fromBackground(Color::Blue);
 
         pal.setStyle(TuiPalette::Active, TuiPalette::Window, red);
         CHECK(pal.style(TuiPalette::Active, TuiPalette::Window).background() == Color::Red);
@@ -52,15 +52,16 @@ TEST_CASE("TuiPalette: convenience style method") {
         pal.setStyle(TuiPalette::Inactive, TuiPalette::Base, TuiStyle::fromBackground(Color::LightGray));
         pal.setStyle(TuiPalette::Disabled, TuiPalette::Base, TuiStyle::fromBackground(Color::DarkGray));
 
-        CHECK(pal.style(TuiPalette::Base, true, true).background() == Color::White);      // focused + enabled = Active
-        CHECK(pal.style(TuiPalette::Base, false, true).background() == Color::LightGray);  // !focused + enabled = Inactive
-        CHECK(pal.style(TuiPalette::Base, false, false).background() == Color::DarkGray);  // disabled
-        CHECK(pal.style(TuiPalette::Base, true, false).background() == Color::DarkGray);   // disabled overrides focus
+        CHECK(pal.style(TuiPalette::Base, true, true).background() == Color::White); // focused + enabled = Active
+        CHECK(pal.style(TuiPalette::Base, false, true).background() ==
+              Color::LightGray); // !focused + enabled = Inactive
+        CHECK(pal.style(TuiPalette::Base, false, false).background() == Color::DarkGray); // disabled
+        CHECK(pal.style(TuiPalette::Base, true, false).background() == Color::DarkGray);  // disabled overrides focus
 }
 
 TEST_CASE("TuiPalette: all roles queryable") {
         TuiPalette pal;
-        for(int role = 0; role < TuiPalette::RoleCount; ++role) {
+        for (int role = 0; role < TuiPalette::RoleCount; ++role) {
                 TuiStyle s = pal.style(TuiPalette::Active, static_cast<TuiPalette::ColorRole>(role));
                 // Every role should have at least a foreground or background defined
                 CHECK((s.hasForeground() || s.hasBackground()));

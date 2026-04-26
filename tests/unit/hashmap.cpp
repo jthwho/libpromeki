@@ -65,7 +65,7 @@ TEST_CASE("HashMap: remove by key") {
 
 TEST_CASE("HashMap: remove by iterator") {
         HashMap<int, int> m = {{1, 10}, {2, 20}};
-        auto it = m.find(1);
+        auto              it = m.find(1);
         m.remove(it);
         CHECK_FALSE(m.contains(1));
         CHECK(m.size() == 1);
@@ -80,8 +80,8 @@ TEST_CASE("HashMap: clear") {
 
 TEST_CASE("HashMap: keys and values") {
         HashMap<int, int> m = {{1, 10}, {2, 20}};
-        auto k = m.keys();
-        auto v = m.values();
+        auto              k = m.keys();
+        auto              v = m.values();
         CHECK(k.size() == 2);
         CHECK(v.size() == 2);
         CHECK(k.contains(1));
@@ -92,14 +92,14 @@ TEST_CASE("HashMap: keys and values") {
 
 TEST_CASE("HashMap: forEach") {
         HashMap<int, int> m = {{1, 10}, {2, 20}, {3, 30}};
-        int sum = 0;
+        int               sum = 0;
         m.forEach([&](int k, int v) { sum += k + v; });
         CHECK(sum == 66);
 }
 
 TEST_CASE("HashMap: find") {
         HashMap<int, int> m = {{5, 50}};
-        auto it = m.find(5);
+        auto              it = m.find(5);
         CHECK(it != m.end());
         CHECK(it->second == 50);
         CHECK(m.find(99) == m.end());
@@ -138,7 +138,7 @@ TEST_CASE("HashMap: equality") {
 
 TEST_CASE("HashMap: range-based for") {
         HashMap<int, int> m = {{1, 10}, {2, 20}};
-        int sum = 0;
-        for(const auto &[k, v] : m) sum += v;
+        int               sum = 0;
+        for (const auto &[k, v] : m) sum += v;
         CHECK(sum == 30);
 }

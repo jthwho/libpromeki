@@ -9,14 +9,13 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-PrioritySocket::PrioritySocket(ObjectBase *parent)
-        : UdpSocket(parent) { }
+PrioritySocket::PrioritySocket(ObjectBase *parent) : UdpSocket(parent) {}
 
 PrioritySocket::~PrioritySocket() = default;
 
 Error PrioritySocket::setPriority(Priority p) {
         Error err = setDscp(static_cast<uint8_t>(p));
-        if(err.isOk()) _priority = p;
+        if (err.isOk()) _priority = p;
         return err;
 }
 

@@ -107,37 +107,37 @@ class MediaPipelinePlanner {
                  * @ref Policy::maxBridgeDepth.
                  */
                 enum class Quality {
-                        Highest,        ///< @brief Lowest unmodified cost wins (default).
-                        Balanced,       ///< @brief Slight penalty for high-CPU bridges.
-                        Fastest,        ///< @brief Heavy penalty for high-CPU bridges; prefers cheap CPU paths.
-                        ZeroCopyOnly    ///< @brief Reject any bridge with cost > 100; fail if no zero-copy chain exists.
+                        Highest,     ///< @brief Lowest unmodified cost wins (default).
+                        Balanced,    ///< @brief Slight penalty for high-CPU bridges.
+                        Fastest,     ///< @brief Heavy penalty for high-CPU bridges; prefers cheap CPU paths.
+                        ZeroCopyOnly ///< @brief Reject any bridge with cost > 100; fail if no zero-copy chain exists.
                 };
 
                 /**
                  * @brief Tunable knobs for the planner.
                  */
                 struct Policy {
-                        /** @brief Default constructor — fields take their default values. */
-                        Policy() {}
+                                /** @brief Default constructor — fields take their default values. */
+                                Policy() {}
 
-                        /** @brief Quality preference; default @ref Quality::Highest. */
-                        Quality       quality = Quality::Highest;
+                                /** @brief Quality preference; default @ref Quality::Highest. */
+                                Quality quality = Quality::Highest;
 
-                        /**
+                                /**
                          * @brief Maximum number of bridges the planner may
                          *        insert per route.  Caps both single-hop
                          *        retries and (future) Dijkstra search
                          *        depth.  Default 4.
                          */
-                        int           maxBridgeDepth = 4;
+                                int maxBridgeDepth = 4;
 
-                        /**
+                                /**
                          * @brief Backend type names the planner is forbidden
                          *        from using as bridges.  Use to force a
                          *        particular path (e.g. block "VideoEncoder"
                          *        to force a transcode-free pipeline).
                          */
-                        StringList    excludedBridges;
+                                StringList excludedBridges;
                 };
 
                 /**
@@ -180,10 +180,8 @@ class MediaPipelinePlanner {
                  *         unbridgeable routes, @ref Error::Invalid for a
                  *         malformed input config).
                  */
-                static Error plan(const MediaPipelineConfig &in,
-                                  MediaPipelineConfig       *out,
-                                  const Policy              &policy = Policy(),
-                                  String                    *diagnostic = nullptr);
+                static Error plan(const MediaPipelineConfig &in, MediaPipelineConfig *out,
+                                  const Policy &policy = Policy(), String *diagnostic = nullptr);
 
                 /**
                  * @brief Same as @ref plan but consults @p injected for
@@ -197,11 +195,9 @@ class MediaPipelinePlanner {
                  * registry as before.  This is how injected SDL /
                  * device handles take part in the autoplan pass.
                  */
-                static Error plan(const MediaPipelineConfig &in,
-                                  MediaPipelineConfig       *out,
-                                  const InjectedStages      &injected,
-                                  const Policy              &policy = Policy(),
-                                  String                    *diagnostic = nullptr);
+                static Error plan(const MediaPipelineConfig &in, MediaPipelineConfig *out,
+                                  const InjectedStages &injected, const Policy &policy = Policy(),
+                                  String *diagnostic = nullptr);
 
                 /**
                  * @brief Returns true when every route in @p config is
@@ -219,8 +215,7 @@ class MediaPipelinePlanner {
                  *                   first gapped route on a false return.
                  * @return @c true when no bridge is required.
                  */
-                static bool isResolved(const MediaPipelineConfig &config,
-                                       String *diagnostic = nullptr);
+                static bool isResolved(const MediaPipelineConfig &config, String *diagnostic = nullptr);
 
                 /**
                  * @brief Applies the @p policy's quality bias to a raw

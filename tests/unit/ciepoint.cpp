@@ -69,6 +69,6 @@ TEST_CASE("CIEPoint: lerp") {
 
 TEST_CASE("CIEPoint: construction from DataType") {
         CIEPoint::DataType d(0.3, 0.3);
-        CIEPoint p(d);
+        CIEPoint           p(d);
         CHECK(p.isValid());
 }

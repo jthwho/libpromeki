@@ -15,46 +15,49 @@ TuiInputParser::TuiInputParser() = default;
 List<TuiInputParser::ParsedEvent> TuiInputParser::feed(const char *data, int len) {
         List<ParsedEvent> events;
 
-        for(int i = 0; i < len; ++i) {
+        for (int i = 0; i < len; ++i) {
                 char c = data[i];
 
-                switch(_state) {
+                switch (_state) {
                         case Normal:
-                                if(c == '\033') {
+                                if (c == '\033') {
                                         _state = EscapeStart;
                                         _buf.clear();
-                                } else if(c == '\r' || c == '\n') {
+                                } else if (c == '\r' || c == '\n') {
                                         ParsedEvent ev;
                                         ev.type = ParsedEvent::Key;
                                         ev.key = KeyEvent::Key_Enter;
                                         events += ev;
-                                } else if(c == '\t') {
+                                } else if (c == '\t') {
                                         ParsedEvent ev;
                                         ev.type = ParsedEvent::Key;
                                         ev.key = KeyEvent::Key_Tab;
                                         events += ev;
-                                } else if(c == 127 || c == '\b') {
+                                } else if (c == 127 || c == '\b') {
                                         ParsedEvent ev;
                                         ev.type = ParsedEvent::Key;
                                         ev.key = KeyEvent::Key_Backspace;
                                         events += ev;
-                                } else if(c >= 1 && c <= 26) {
+                                } else if (c >= 1 && c <= 26) {
                                         // Ctrl+letter
                                         ParsedEvent ev;
                                         ev.type = ParsedEvent::Key;
                                         ev.key = static_cast<KeyEvent::Key>(c + 'a' - 1);
                                         ev.modifiers = KeyEvent::CtrlModifier;
                                         events += ev;
-                                } else if(static_cast<uint8_t>(c) >= 0x80) {
+                                } else if (static_cast<uint8_t>(c) >= 0x80) {
                                         // UTF-8 multi-byte: collect and emit
                                         String text;
                                         text += c;
                                         uint8_t lead = static_cast<uint8_t>(c);
-                                        int remaining = 0;
-                                        if((lead & 0xE0) == 0xC0) remaining = 1;
-                                        else if((lead & 0xF0) == 0xE0) remaining = 2;
-                                        else if((lead & 0xF8) == 0xF0) remaining = 3;
-                                        for(int j = 0; j < remaining && i + 1 < len; ++j) {
+                                        int     remaining = 0;
+                                        if ((lead & 0xE0) == 0xC0)
+                                                remaining = 1;
+                                        else if ((lead & 0xF0) == 0xE0)
+                                                remaining = 2;
+                                        else if ((lead & 0xF8) == 0xF0)
+                                                remaining = 3;
+                                        for (int j = 0; j < remaining && i + 1 < len; ++j) {
                                                 i++;
                                                 text += data[i];
                                         }
@@ -74,10 +77,10 @@ List<TuiInputParser::ParsedEvent> TuiInputParser::feed(const char *data, int len
                                 break;
 
                         case EscapeStart:
-                                if(c == '[') {
+                                if (c == '[') {
                                         _state = CSIParam;
                                         _buf.clear();
-                                } else if(c == 'O') {
+                                } else if (c == 'O') {
                                         _state = SS3;
                                         _buf.clear();
                                 } else {
@@ -86,7 +89,7 @@ List<TuiInputParser::ParsedEvent> TuiInputParser::feed(const char *data, int len
                                         ev.type = ParsedEvent::Key;
                                         ev.key = static_cast<KeyEvent::Key>(c);
                                         ev.modifiers = KeyEvent::AltModifier;
-                                        if(c >= 32 && c < 127) {
+                                        if (c >= 32 && c < 127) {
                                                 ev.text = String(1, c);
                                         }
                                         events += ev;
@@ -95,11 +98,11 @@ List<TuiInputParser::ParsedEvent> TuiInputParser::feed(const char *data, int len
                                 break;
 
                         case CSIParam:
-                                if(c == '<') {
+                                if (c == '<') {
                                         // SGR mouse
                                         _state = MouseSGR;
                                         _buf.clear();
-                                } else if((c >= '0' && c <= '9') || c == ';') {
+                                } else if ((c >= '0' && c <= '9') || c == ';') {
                                         _buf += c;
                                 } else {
                                         // End of CSI sequence
@@ -115,7 +118,7 @@ List<TuiInputParser::ParsedEvent> TuiInputParser::feed(const char *data, int len
                                 break;
 
                         case MouseSGR:
-                                if(c == 'M' || c == 'm') {
+                                if (c == 'M' || c == 'm') {
                                         _buf += c;
                                         parseMouseSGR(_buf, events);
                                         _state = Normal;
@@ -124,14 +127,12 @@ List<TuiInputParser::ParsedEvent> TuiInputParser::feed(const char *data, int len
                                 }
                                 break;
 
-                        default:
-                                _state = Normal;
-                                break;
+                        default: _state = Normal; break;
                 }
         }
 
         // Handle bare Escape (no following character)
-        if(_state == EscapeStart) {
+        if (_state == EscapeStart) {
                 ParsedEvent ev;
                 ev.type = ParsedEvent::Key;
                 ev.key = KeyEvent::Key_Escape;
@@ -143,21 +144,21 @@ List<TuiInputParser::ParsedEvent> TuiInputParser::feed(const char *data, int len
 }
 
 void TuiInputParser::parseCSI(const String &seq, List<ParsedEvent> &events) {
-        if(seq.isEmpty()) return;
+        if (seq.isEmpty()) return;
 
-        char final = seq.str().back();
+        char   final = seq.str().back();
         String params = seq.substr(0, seq.length() - 1);
 
         // Parse semicolon-separated parameters
         List<int> nums;
-        if(!params.isEmpty()) {
+        if (!params.isEmpty()) {
                 size_t pos = 0;
-                while(pos < params.length()) {
+                while (pos < params.length()) {
                         size_t semi = params.str().find(';', pos);
-                        if(semi == std::string::npos) semi = params.length();
+                        if (semi == std::string::npos) semi = params.length();
                         String part = params.substr(pos, semi - pos);
-                        Error err;
-                        int val = part.toInt(&err);
+                        Error  err;
+                        int    val = part.toInt(&err);
                         nums += err.isOk() ? val : 0;
                         pos = semi + 1;
                 }
@@ -169,7 +170,7 @@ void TuiInputParser::parseCSI(const String &seq, List<ParsedEvent> &events) {
         ParsedEvent ev;
         ev.type = ParsedEvent::Key;
 
-        switch(final) {
+        switch (final) {
                 case 'A': ev.key = KeyEvent::Key_Up; break;
                 case 'B': ev.key = KeyEvent::Key_Down; break;
                 case 'C': ev.key = KeyEvent::Key_Right; break;
@@ -177,7 +178,7 @@ void TuiInputParser::parseCSI(const String &seq, List<ParsedEvent> &events) {
                 case 'H': ev.key = KeyEvent::Key_Home; break;
                 case 'F': ev.key = KeyEvent::Key_End; break;
                 case '~':
-                        switch(code) {
+                        switch (code) {
                                 case 1: ev.key = KeyEvent::Key_Home; break;
                                 case 2: ev.key = KeyEvent::Key_Insert; break;
                                 case 3: ev.key = KeyEvent::Key_Delete; break;
@@ -203,12 +204,12 @@ void TuiInputParser::parseCSI(const String &seq, List<ParsedEvent> &events) {
         }
 
         // Decode xterm modifier
-        if(modifier > 1) {
+        if (modifier > 1) {
                 modifier -= 1;
-                if(modifier & 1) ev.modifiers |= KeyEvent::ShiftModifier;
-                if(modifier & 2) ev.modifiers |= KeyEvent::AltModifier;
-                if(modifier & 4) ev.modifiers |= KeyEvent::CtrlModifier;
-                if(modifier & 8) ev.modifiers |= KeyEvent::MetaModifier;
+                if (modifier & 1) ev.modifiers |= KeyEvent::ShiftModifier;
+                if (modifier & 2) ev.modifiers |= KeyEvent::AltModifier;
+                if (modifier & 4) ev.modifiers |= KeyEvent::CtrlModifier;
+                if (modifier & 8) ev.modifiers |= KeyEvent::MetaModifier;
         }
 
         events += ev;
@@ -218,7 +219,7 @@ void TuiInputParser::parseSS3(char ch, List<ParsedEvent> &events) {
         ParsedEvent ev;
         ev.type = ParsedEvent::Key;
 
-        switch(ch) {
+        switch (ch) {
                 case 'P': ev.key = KeyEvent::Key_F1; break;
                 case 'Q': ev.key = KeyEvent::Key_F2; break;
                 case 'R': ev.key = KeyEvent::Key_F3; break;
@@ -237,26 +238,26 @@ void TuiInputParser::parseSS3(char ch, List<ParsedEvent> &events) {
 
 void TuiInputParser::parseMouseSGR(const String &seq, List<ParsedEvent> &events) {
         // Format: <button;col;row[Mm]
-        if(seq.isEmpty()) return;
+        if (seq.isEmpty()) return;
 
-        char final = seq.str().back();
+        char   final = seq.str().back();
         String params = seq.substr(0, seq.length() - 1);
 
         List<int> nums;
-        size_t pos = 0;
-        while(pos < params.length()) {
+        size_t    pos = 0;
+        while (pos < params.length()) {
                 size_t semi = params.str().find(';', pos);
-                if(semi == std::string::npos) semi = params.length();
+                if (semi == std::string::npos) semi = params.length();
                 String part = params.substr(pos, semi - pos);
-                Error err;
+                Error  err;
                 nums += part.toInt(&err);
                 pos = semi + 1;
         }
 
-        if(nums.size() < 3) return;
+        if (nums.size() < 3) return;
 
         int buttonCode = nums[0];
-        int col = nums[1] - 1;  // Convert to 0-based
+        int col = nums[1] - 1; // Convert to 0-based
         int row = nums[2] - 1;
 
         ParsedEvent ev;
@@ -264,17 +265,17 @@ void TuiInputParser::parseMouseSGR(const String &seq, List<ParsedEvent> &events)
         ev.mousePos = Point2Di32(col, row);
 
         // Decode modifiers from button code
-        if(buttonCode & 4) ev.modifiers |= KeyEvent::ShiftModifier;
-        if(buttonCode & 8) ev.modifiers |= KeyEvent::AltModifier;
-        if(buttonCode & 16) ev.modifiers |= KeyEvent::CtrlModifier;
+        if (buttonCode & 4) ev.modifiers |= KeyEvent::ShiftModifier;
+        if (buttonCode & 8) ev.modifiers |= KeyEvent::AltModifier;
+        if (buttonCode & 16) ev.modifiers |= KeyEvent::CtrlModifier;
 
-        int btn = buttonCode & 3;
+        int  btn = buttonCode & 3;
         bool motion = (buttonCode & 32) != 0;
         bool scroll = (buttonCode & 64) != 0;
 
         // Map SGR button code to Button flag
         auto btnFlag = [](int b) -> MouseEvent::Button {
-                switch(b) {
+                switch (b) {
                         case 0: return MouseEvent::LeftButton;
                         case 1: return MouseEvent::MiddleButton;
                         case 2: return MouseEvent::RightButton;
@@ -282,15 +283,15 @@ void TuiInputParser::parseMouseSGR(const String &seq, List<ParsedEvent> &events)
                 }
         };
 
-        if(scroll) {
+        if (scroll) {
                 ev.mouseButton = MouseEvent::NoButton;
                 ev.mouseAction = (btn == 0) ? MouseEvent::ScrollUp : MouseEvent::ScrollDown;
-        } else if(motion) {
+        } else if (motion) {
                 ev.mouseAction = MouseEvent::Move;
                 ev.mouseButton = btnFlag(btn);
         } else {
                 ev.mouseButton = btnFlag(btn);
-                if(final == 'M') {
+                if (final == 'M') {
                         ev.mouseAction = MouseEvent::Press;
                         _buttonState |= ev.mouseButton;
                 } else {
@@ -305,7 +306,7 @@ void TuiInputParser::parseMouseSGR(const String &seq, List<ParsedEvent> &events)
 
 KeyEvent::Key TuiInputParser::csiToKey(int code, int modifier) {
         (void)modifier;
-        switch(code) {
+        switch (code) {
                 case 1: return KeyEvent::Key_Home;
                 case 2: return KeyEvent::Key_Insert;
                 case 3: return KeyEvent::Key_Delete;

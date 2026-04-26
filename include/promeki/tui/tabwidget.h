@@ -22,7 +22,7 @@ PROMEKI_NAMESPACE_BEGIN
  * Thread-affine — see @ref TuiWidget.
  */
 class TuiTabWidget : public TuiWidget {
-        PROMEKI_OBJECT(TuiTabWidget, TuiWidget)
+                PROMEKI_OBJECT(TuiTabWidget, TuiWidget)
         public:
                 TuiTabWidget(ObjectBase *parent = nullptr);
                 ~TuiTabWidget() override;
@@ -30,11 +30,11 @@ class TuiTabWidget : public TuiWidget {
                 void addTab(TuiWidget *widget, const String &title);
                 void removeTab(int index);
 
-                int currentIndex() const { return _currentIndex; }
+                int  currentIndex() const { return _currentIndex; }
                 void setCurrentIndex(int index);
 
                 TuiWidget *currentWidget() const;
-                int count() const { return static_cast<int>(_tabs.size()); }
+                int        count() const { return static_cast<int>(_tabs.size()); }
 
                 Size2Di32 sizeHint() const override;
 
@@ -50,16 +50,16 @@ class TuiTabWidget : public TuiWidget {
 
         private:
                 struct Tab {
-                        TuiWidget       *widget;
-                        String          title;
+                                TuiWidget *widget;
+                                String     title;
                 };
                 struct TabPos {
-                        int startX;
-                        int endX;
+                                int startX;
+                                int endX;
                 };
-                List<Tab>       _tabs;
-                List<TabPos>    _tabPositions;
-                int             _currentIndex = -1;
+                List<Tab>    _tabs;
+                List<TabPos> _tabPositions;
+                int          _currentIndex = -1;
 
                 void updateTabGeometry();
 };

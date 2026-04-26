@@ -95,7 +95,7 @@ class VariantSpec {
                  */
                 VariantSpec &setTypes(std::initializer_list<Type> types) {
                         _types.clear();
-                        for(auto t : types) _types.pushToBack(t);
+                        for (auto t : types) _types.pushToBack(t);
                         return *this;
                 }
 
@@ -360,12 +360,12 @@ class VariantSpec {
                 operator Variant() const { return _default; }
 
         private:
-                TypeList        _types;
-                Variant         _default;
-                Variant         _min;
-                Variant         _max;
-                Enum::Type      _enumType;
-                String          _description;
+                TypeList   _types;
+                Variant    _default;
+                Variant    _min;
+                Variant    _max;
+                Enum::Type _enumType;
+                String     _description;
 };
 
 PROMEKI_NAMESPACE_END

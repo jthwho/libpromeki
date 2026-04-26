@@ -171,7 +171,7 @@ TEST_CASE("SocketAddress") {
 
         SUBCASE("TextStream operator<<") {
                 SocketAddress addr(Ipv4Address(192, 168, 1, 1), 5004);
-                String str;
+                String        str;
                 {
                         TextStream ts(&str);
                         ts << addr;
@@ -181,9 +181,9 @@ TEST_CASE("SocketAddress") {
 
 #if !defined(PROMEKI_PLATFORM_EMSCRIPTEN)
         SUBCASE("toSockAddr IPv4") {
-                SocketAddress addr(Ipv4Address(127, 0, 0, 1), 5004);
+                SocketAddress           addr(Ipv4Address(127, 0, 0, 1), 5004);
                 struct sockaddr_storage storage;
-                size_t len = addr.toSockAddr(&storage);
+                size_t                  len = addr.toSockAddr(&storage);
                 CHECK(len == sizeof(struct sockaddr_in));
                 auto *sa4 = reinterpret_cast<struct sockaddr_in *>(&storage);
                 CHECK(sa4->sin_family == AF_INET);
@@ -191,9 +191,9 @@ TEST_CASE("SocketAddress") {
         }
 
         SUBCASE("toSockAddr IPv6") {
-                SocketAddress addr(Ipv6Address::loopback(), 8080);
+                SocketAddress           addr(Ipv6Address::loopback(), 8080);
                 struct sockaddr_storage storage;
-                size_t len = addr.toSockAddr(&storage);
+                size_t                  len = addr.toSockAddr(&storage);
                 CHECK(len == sizeof(struct sockaddr_in6));
                 auto *sa6 = reinterpret_cast<struct sockaddr_in6 *>(&storage);
                 CHECK(sa6->sin6_family == AF_INET6);
@@ -201,29 +201,27 @@ TEST_CASE("SocketAddress") {
         }
 
         SUBCASE("toSockAddr null returns 0") {
-                SocketAddress addr;
+                SocketAddress           addr;
                 struct sockaddr_storage storage;
                 CHECK(addr.toSockAddr(&storage) == 0);
         }
 
         SUBCASE("fromSockAddr IPv4 round-trip") {
-                SocketAddress orig(Ipv4Address(192, 168, 1, 100), 5004);
+                SocketAddress           orig(Ipv4Address(192, 168, 1, 100), 5004);
                 struct sockaddr_storage storage;
-                size_t len = orig.toSockAddr(&storage);
+                size_t                  len = orig.toSockAddr(&storage);
                 REQUIRE(len > 0);
-                auto [restored, err] = SocketAddress::fromSockAddr(
-                        reinterpret_cast<struct sockaddr *>(&storage), len);
+                auto [restored, err] = SocketAddress::fromSockAddr(reinterpret_cast<struct sockaddr *>(&storage), len);
                 CHECK(err.isOk());
                 CHECK(restored == orig);
         }
 
         SUBCASE("fromSockAddr IPv6 round-trip") {
-                SocketAddress orig(Ipv6Address::loopback(), 8080);
+                SocketAddress           orig(Ipv6Address::loopback(), 8080);
                 struct sockaddr_storage storage;
-                size_t len = orig.toSockAddr(&storage);
+                size_t                  len = orig.toSockAddr(&storage);
                 REQUIRE(len > 0);
-                auto [restored, err] = SocketAddress::fromSockAddr(
-                        reinterpret_cast<struct sockaddr *>(&storage), len);
+                auto [restored, err] = SocketAddress::fromSockAddr(reinterpret_cast<struct sockaddr *>(&storage), len);
                 CHECK(err.isOk());
                 CHECK(restored == orig);
         }

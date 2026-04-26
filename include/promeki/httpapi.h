@@ -102,7 +102,7 @@ class HttpServer;
  * @endcode
  */
 class HttpApi : public ObjectBase {
-        PROMEKI_OBJECT(HttpApi, ObjectBase)
+                PROMEKI_OBJECT(HttpApi, ObjectBase)
         public:
                 /**
                  * @brief Default mount prefix for the API surface.
@@ -135,10 +135,10 @@ class HttpApi : public ObjectBase {
                  * field for @c Body.
                  */
                 enum class ParamIn {
-                        Path,    ///< Captured by the route pattern (e.g. @c "{id}").
-                        Query,   ///< URL query string.
-                        Header,  ///< HTTP request header.
-                        Body,    ///< JSON request body field (object keyed by @ref Param::name).
+                        Path,   ///< Captured by the route pattern (e.g. @c "{id}").
+                        Query,  ///< URL query string.
+                        Header, ///< HTTP request header.
+                        Body,   ///< JSON request body field (object keyed by @ref Param::name).
                 };
 
                 /**
@@ -150,12 +150,12 @@ class HttpApi : public ObjectBase {
                  * UI renders both with one code path.
                  */
                 struct Param {
-                        using List = promeki::List<Param>;
+                                using List = promeki::List<Param>;
 
-                        String          name;                       ///< Wire name (case-sensitive for headers).
-                        ParamIn         in       = ParamIn::Query;  ///< Where to read it from.
-                        bool            required = false;           ///< OpenAPI @c required flag.
-                        VariantSpec     spec;                       ///< Type, default, range, description.
+                                String      name;                ///< Wire name (case-sensitive for headers).
+                                ParamIn     in = ParamIn::Query; ///< Where to read it from.
+                                bool        required = false;    ///< OpenAPI @c required flag.
+                                VariantSpec spec;                ///< Type, default, range, description.
                 };
 
                 /**
@@ -169,11 +169,11 @@ class HttpApi : public ObjectBase {
                  * doesn't override it.
                  */
                 struct ErrorResponse {
-                        using List = promeki::List<ErrorResponse>;
+                                using List = promeki::List<ErrorResponse>;
 
-                        int             status = 0;             ///< HTTP status code (e.g. 400, 404, 500).
-                        String          description;            ///< One-line human-readable summary.
-                        VariantSpec     body;                   ///< Optional shape of the error body.
+                                int         status = 0;  ///< HTTP status code (e.g. 400, 404, 500).
+                                String      description; ///< One-line human-readable summary.
+                                VariantSpec body;        ///< Optional shape of the error body.
                 };
 
                 /**
@@ -188,9 +188,9 @@ class HttpApi : public ObjectBase {
                  * twice is a programming error.
                  */
                 struct Endpoint {
-                        using List = promeki::List<Endpoint>;
+                                using List = promeki::List<Endpoint>;
 
-                        /**
+                                /**
                          * @brief Route pattern, relative to the parent
                          *        @ref HttpApi's prefix.
                          *
@@ -205,33 +205,39 @@ class HttpApi : public ObjectBase {
                          * not the relative form, so clients see the
                          * URL they should actually call.
                          */
-                        String          path;
-                        HttpMethod      method;     ///< HTTP method (defaults to GET).
-                        String          title;      ///< Short human-readable label (used by explorer UI).
-                        String          summary;    ///< One-paragraph description (Markdown allowed for OpenAPI).
-                        StringList      tags;       ///< Grouping labels (used by Swagger UI / Redoc).
-                        Param::List     params;     ///< Path/query/header/body parameters in declaration order.
-                        VariantSpec     response;   ///< Shape of a successful (2xx) response body.
-                        String          responseContentType = "application/json"; ///< Wire type for the success body.
-                        ErrorResponse::List errors; ///< Declared error responses; empty = inherit defaults.
-                        bool            deprecated = false;     ///< Surfaces in the catalog and OpenAPI doc.
+                                String      path;
+                                HttpMethod  method;   ///< HTTP method (defaults to GET).
+                                String      title;    ///< Short human-readable label (used by explorer UI).
+                                String      summary;  ///< One-paragraph description (Markdown allowed for OpenAPI).
+                                StringList  tags;     ///< Grouping labels (used by Swagger UI / Redoc).
+                                Param::List params;   ///< Path/query/header/body parameters in declaration order.
+                                VariantSpec response; ///< Shape of a successful (2xx) response body.
+                                String responseContentType = "application/json"; ///< Wire type for the success body.
+                                ErrorResponse::List errors; ///< Declared error responses; empty = inherit defaults.
+                                bool                deprecated = false; ///< Surfaces in the catalog and OpenAPI doc.
 
-                        // FIXME(auth): when an authentication/authorization
-                        // story lands, add a `security` field here (list of
-                        // required scope/scheme names) and a matching
-                        // HttpApi::setSecurityScheme() / addSecurityScheme()
-                        // accessor for the OpenAPI components.securitySchemes
-                        // block.  The catalog and OpenAPI generators must
-                        // surface the per-endpoint security[] array, and the
-                        // route-installer must enforce it (returning 401/403
-                        // before invoking the handler) — neither is done
-                        // today.  Tracked so this isn't silently forgotten.
+                                // FIXME(auth): when an authentication/authorization
+                                // story lands, add a `security` field here (list of
+                                // required scope/scheme names) and a matching
+                                // HttpApi::setSecurityScheme() / addSecurityScheme()
+                                // accessor for the OpenAPI components.securitySchemes
+                                // block.  The catalog and OpenAPI generators must
+                                // surface the per-endpoint security[] array, and the
+                                // route-installer must enforce it (returning 401/403
+                                // before invoking the handler) — neither is done
+                                // today.  Tracked so this isn't silently forgotten.
 
-                        /** @brief Convenience: append a parameter and return *this. */
-                        Endpoint &addParam(Param p) { params.pushToBack(std::move(p)); return *this; }
+                                /** @brief Convenience: append a parameter and return *this. */
+                                Endpoint &addParam(Param p) {
+                                        params.pushToBack(std::move(p));
+                                        return *this;
+                                }
 
-                        /** @brief Convenience: append a tag and return *this. */
-                        Endpoint &addTag(const String &t) { tags.pushToBack(t); return *this; }
+                                /** @brief Convenience: append a tag and return *this. */
+                                Endpoint &addTag(const String &t) {
+                                        tags.pushToBack(t);
+                                        return *this;
+                                }
                 };
 
                 // ============================================================
@@ -277,8 +283,7 @@ class HttpApi : public ObjectBase {
                  * same @ref HttpServer at non-overlapping prefixes
                  * (e.g. @c "/api" and @c "/admin").
                  */
-                explicit HttpApi(HttpServer &server,
-                                 const String &prefix = DefaultPrefix,
+                explicit HttpApi(HttpServer &server, const String &prefix = DefaultPrefix,
                                  ObjectBase *parent = nullptr);
 
                 /** @brief Destructor.  Does not unmount routes from the server. */
@@ -406,9 +411,7 @@ class HttpApi : public ObjectBase {
                  *         registrations.
                  */
                 template <CompiledString N>
-                Error exposeDatabase(const String &mountPath,
-                                     const String &title,
-                                     VariantDatabase<N> &db,
+                Error exposeDatabase(const String &mountPath, const String &title, VariantDatabase<N> &db,
                                      bool readOnly = false);
 
                 /**
@@ -426,10 +429,7 @@ class HttpApi : public ObjectBase {
                  * @param title     Human-readable label.
                  * @param target    Instance to resolve against; must outlive this object.
                  */
-                template <typename T>
-                Error exposeLookup(const String &mountPath,
-                                   const String &title,
-                                   T &target);
+                template <typename T> Error exposeLookup(const String &mountPath, const String &title, T &target);
 
                 // ============================================================
                 // Bundled module installers
@@ -589,14 +589,13 @@ class HttpApi : public ObjectBase {
                  *                    @c $ref entries (inlines complex
                  *                    types instead).
                  */
-                static JsonObject variantSpecToJsonSchema(const VariantSpec &spec,
-                                                          JsonObject *componentsOut = nullptr);
+                static JsonObject variantSpecToJsonSchema(const VariantSpec &spec, JsonObject *componentsOut = nullptr);
 
         private:
                 struct ServerEntry {
-                        using List = promeki::List<ServerEntry>;
-                        String  url;
-                        String  description;
+                                using List = promeki::List<ServerEntry>;
+                                String url;
+                                String description;
                 };
 
                 // Internal: install a single endpoint into both the
@@ -609,22 +608,22 @@ class HttpApi : public ObjectBase {
                 const ErrorResponse::List &errorsFor(const Endpoint &ep) const;
 
                 // Internal: the three handler factories for mount().
-                HttpHandlerFunc makeCatalogHandler() const;
-                HttpHandlerFunc makeOpenApiHandler() const;
+                HttpHandlerFunc  makeCatalogHandler() const;
+                HttpHandlerFunc  makeOpenApiHandler() const;
                 HttpHandler::Ptr makeExplorerHandler() const;
 
-                HttpServer             &_server;
-                String                  _prefix;
-                bool                    _mounted = false;
-                String                  _title;
-                String                  _version;
-                String                  _description;
-                ServerEntry::List       _servers;
-                ErrorResponse::List     _defaultErrors;
-                Endpoint::List          _endpoints;
+                HttpServer         &_server;
+                String              _prefix;
+                bool                _mounted = false;
+                String              _title;
+                String              _version;
+                String              _description;
+                ServerEntry::List   _servers;
+                ErrorResponse::List _defaultErrors;
+                Endpoint::List      _endpoints;
 
                 // Internal helpers used by exposeDatabase / exposeLookup.
-                Error addEndpointDescriptor(Endpoint ep);
+                Error              addEndpointDescriptor(Endpoint ep);
                 static VariantSpec keyParamSpec(const StringList &knownKeys);
 };
 
@@ -633,10 +632,7 @@ class HttpApi : public ObjectBase {
 // ============================================================
 
 template <CompiledString N>
-Error HttpApi::exposeDatabase(const String &mountPath,
-                              const String &title,
-                              VariantDatabase<N> &db,
-                              bool readOnly) {
+Error HttpApi::exposeDatabase(const String &mountPath, const String &title, VariantDatabase<N> &db, bool readOnly) {
         using DB = VariantDatabase<N>;
         using ID = typename DB::ID;
 
@@ -654,111 +650,110 @@ Error HttpApi::exposeDatabase(const String &mountPath,
         // explorer's free-form input has a hint of valid values.
         StringList knownKeys;
         const auto specs = DB::registeredSpecs();
-        for(auto it = specs.cbegin(); it != specs.cend(); ++it) {
+        for (auto it = specs.cbegin(); it != specs.cend(); ++it) {
                 knownKeys.pushToBack(ID::fromId(it->first).name());
         }
 
         // GET <absMount> — full snapshot.
         Endpoint epAll;
-        epAll.path     = absMount;
-        epAll.method   = HttpMethod::Get;
-        epAll.title    = title + ": snapshot";
-        epAll.summary  = String("Returns every key/value pair in ") + title +
-                         " as a single JSON object.";
-        epAll.tags     = {title};
-        epAll.response = VariantSpec().setDescription(
-                "JSON object whose keys are the database IDs.");
-        if(Error err = addEndpointDescriptor(epAll); err.isError()) return err;
+        epAll.path = absMount;
+        epAll.method = HttpMethod::Get;
+        epAll.title = title + ": snapshot";
+        epAll.summary = String("Returns every key/value pair in ") + title + " as a single JSON object.";
+        epAll.tags = {title};
+        epAll.response = VariantSpec().setDescription("JSON object whose keys are the database IDs.");
+        if (Error err = addEndpointDescriptor(epAll); err.isError()) return err;
 
         // GET <absMount>/_schema — registered specs.
         Endpoint epSchema;
-        epSchema.path    = absMount + "/_schema";
-        epSchema.method  = HttpMethod::Get;
-        epSchema.title   = title + ": schema";
+        epSchema.path = absMount + "/_schema";
+        epSchema.method = HttpMethod::Get;
+        epSchema.title = title + ": schema";
         epSchema.summary = "Returns the registered VariantSpec for every "
-                          "declared key (type, default, range, description).";
-        epSchema.tags    = {title};
-        epSchema.response = VariantSpec().setDescription(
-                "JSON object keyed by ID name; each value carries the spec.");
-        if(Error err = addEndpointDescriptor(epSchema); err.isError()) return err;
+                           "declared key (type, default, range, description).";
+        epSchema.tags = {title};
+        epSchema.response = VariantSpec().setDescription("JSON object keyed by ID name; each value carries the spec.");
+        if (Error err = addEndpointDescriptor(epSchema); err.isError()) return err;
 
         // GET <absMount>/{key} — single value.
         Endpoint epGet;
-        epGet.path    = absMount + "/{key}";
-        epGet.method  = HttpMethod::Get;
-        epGet.title   = title + ": get key";
+        epGet.path = absMount + "/{key}";
+        epGet.method = HttpMethod::Get;
+        epGet.title = title + ": get key";
         epGet.summary = "Returns a single value plus its spec.";
-        epGet.tags    = {title};
-        epGet.params  = { Param{
-                .name = "key", .in = ParamIn::Path, .required = true,
+        epGet.tags = {title};
+        epGet.params = {Param{
+                .name = "key",
+                .in = ParamIn::Path,
+                .required = true,
                 .spec = keyParamSpec(knownKeys),
-        } };
-        epGet.response = VariantSpec().setDescription(
-                "JSON object with the value under its name and an "
-                "optional `_spec` companion.");
-        if(Error err = addEndpointDescriptor(epGet); err.isError()) return err;
+        }};
+        epGet.response = VariantSpec().setDescription("JSON object with the value under its name and an "
+                                                      "optional `_spec` companion.");
+        if (Error err = addEndpointDescriptor(epGet); err.isError()) return err;
 
-        if(readOnly) return Error::Ok;
+        if (readOnly) return Error::Ok;
 
         // PUT <absMount>/{key} — set.
         Endpoint epPut;
-        epPut.path    = absMount + "/{key}";
-        epPut.method  = HttpMethod::Put;
-        epPut.title   = title + ": set key";
+        epPut.path = absMount + "/{key}";
+        epPut.method = HttpMethod::Put;
+        epPut.title = title + ": set key";
         epPut.summary = "Updates a single value, validating it against the "
                         "registered spec.";
-        epPut.tags    = {title};
-        epPut.params  = {
+        epPut.tags = {title};
+        epPut.params = {
                 Param{
-                        .name = "key", .in = ParamIn::Path, .required = true,
+                        .name = "key",
+                        .in = ParamIn::Path,
+                        .required = true,
                         .spec = keyParamSpec(knownKeys),
                 },
                 Param{
-                        .name = "value", .in = ParamIn::Body, .required = true,
-                        .spec = VariantSpec().setDescription(
-                                "New value for the key (shape depends on spec)."),
+                        .name = "value",
+                        .in = ParamIn::Body,
+                        .required = true,
+                        .spec = VariantSpec().setDescription("New value for the key (shape depends on spec)."),
                 },
         };
-        epPut.response = VariantSpec().setDescription(
-                "JSON object with the stored value under its name.");
-        if(Error err = addEndpointDescriptor(epPut); err.isError()) return err;
+        epPut.response = VariantSpec().setDescription("JSON object with the stored value under its name.");
+        if (Error err = addEndpointDescriptor(epPut); err.isError()) return err;
 
         // DELETE <absMount>/{key} — clear.
         Endpoint epDel;
-        epDel.path    = absMount + "/{key}";
-        epDel.method  = HttpMethod::Delete;
-        epDel.title   = title + ": delete key";
+        epDel.path = absMount + "/{key}";
+        epDel.method = HttpMethod::Delete;
+        epDel.title = title + ": delete key";
         epDel.summary = "Clears the entry for a single key.";
-        epDel.tags    = {title};
-        epDel.params  = { Param{
-                .name = "key", .in = ParamIn::Path, .required = true,
+        epDel.tags = {title};
+        epDel.params = {Param{
+                .name = "key",
+                .in = ParamIn::Path,
+                .required = true,
                 .spec = keyParamSpec(knownKeys),
-        } };
+        }};
         return addEndpointDescriptor(epDel);
 }
 
-template <typename T>
-Error HttpApi::exposeLookup(const String &mountPath,
-                            const String &title,
-                            T &target) {
+template <typename T> Error HttpApi::exposeLookup(const String &mountPath, const String &title, T &target) {
         const String absMount = resolve(mountPath);
         _server.exposeLookup(absMount, target);
 
         Endpoint ep;
-        ep.path    = absMount + "/{path}";
-        ep.method  = HttpMethod::Get;
-        ep.title   = title;
+        ep.path = absMount + "/{path}";
+        ep.method = HttpMethod::Get;
+        ep.title = title;
         ep.summary = "Resolves a path-style key against the live object "
                      "tree (slashes mapped to dots; bare integer segments "
                      "to [N] index suffixes).";
-        ep.tags    = {title};
-        ep.params  = { Param{
-                .name = "path", .in = ParamIn::Path, .required = true,
-                .spec = VariantSpec().setType(Variant::TypeString)
-                                     .setDescription("Greedy lookup path."),
-        } };
-        ep.response = VariantSpec().setDescription(
-                "JSON object {\"value\": <variant>}.");
+        ep.tags = {title};
+        ep.params = {Param{
+                .name = "path",
+                .in = ParamIn::Path,
+                .required = true,
+                .spec = VariantSpec().setType(Variant::TypeString).setDescription("Greedy lookup path."),
+        }};
+        ep.response = VariantSpec().setDescription("JSON object {\"value\": <variant>}.");
         return addEndpointDescriptor(ep);
 }
 

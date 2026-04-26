@@ -47,15 +47,14 @@ class ContentLightLevel {
         public:
                 ContentLightLevel() = default;
 
-                ContentLightLevel(uint32_t maxCLL, uint32_t maxFALL)
-                        : _maxCLL(maxCLL), _maxFALL(maxFALL) {}
+                ContentLightLevel(uint32_t maxCLL, uint32_t maxFALL) : _maxCLL(maxCLL), _maxFALL(maxFALL) {}
 
                 bool isValid() const { return _maxCLL > 0; }
 
-                uint32_t maxCLL() const  { return _maxCLL; }
+                uint32_t maxCLL() const { return _maxCLL; }
                 uint32_t maxFALL() const { return _maxFALL; }
 
-                void setMaxCLL(uint32_t v)  { _maxCLL = v; }
+                void setMaxCLL(uint32_t v) { _maxCLL = v; }
                 void setMaxFALL(uint32_t v) { _maxFALL = v; }
 
                 bool operator==(const ContentLightLevel &o) const {
@@ -66,7 +65,7 @@ class ContentLightLevel {
                 String toString() const;
 
         private:
-                uint32_t _maxCLL  = 0;
+                uint32_t _maxCLL = 0;
                 uint32_t _maxFALL = 0;
 };
 

@@ -70,17 +70,17 @@ using namespace mediaplay;
 
 namespace {
 
-// Documented in --help.  Stable, hand-picked so adding new Error
-// codes can't renumber them.  Also used by scripts/roundtrip-codecs.sh.
-constexpr int ExitOk                      = 0;
-constexpr int ExitGeneric                 = 1;
-constexpr int ExitPipelineBuild           = 10;
-constexpr int ExitPipelineOpen            = 11;
-constexpr int ExitPipelineStart           = 12;
-constexpr int ExitPipelineRuntime         = 13;
-constexpr int ExitInspectorDiscontinuity  = 21;
+        // Documented in --help.  Stable, hand-picked so adding new Error
+        // codes can't renumber them.  Also used by scripts/roundtrip-codecs.sh.
+        constexpr int ExitOk = 0;
+        constexpr int ExitGeneric = 1;
+        constexpr int ExitPipelineBuild = 10;
+        constexpr int ExitPipelineOpen = 11;
+        constexpr int ExitPipelineStart = 12;
+        constexpr int ExitPipelineRuntime = 13;
+        constexpr int ExitInspectorDiscontinuity = 21;
 
-/**
+        /**
  * @brief Builds a MediaIO around a freshly-constructed
  *        @ref MediaIOTask_Inspector so mediaplay can retain a typed
  *        handle for post-run snapshot polling.
@@ -100,32 +100,30 @@ constexpr int ExitInspectorDiscontinuity  = 21;
  * @return The new MediaIO (ready for @c pipeline.injectStage), or
  *         @c nullptr on adoption failure.
  */
-MediaIO *createInspectorStage(const MediaPipelineConfig::Stage &stage,
-                              MediaIOTask_Inspector **taskOut) {
-        auto *task = new MediaIOTask_Inspector();
-        auto *io = new MediaIO();
-        MediaIO::Config cfg = MediaIO::defaultConfig(String("Inspector"));
-        // Copy any per-stage config keys supplied via --dc onto the
-        // backend default so --dc InspectorTests:Timestamp etc. still
-        // works when mediaplay is the one constructing the task.
-        const auto stageIds = stage.config.ids();
-        for(size_t i = 0; i < stageIds.size(); ++i) {
-                cfg.set(stageIds[i], stage.config.get(stageIds[i]));
+        MediaIO *createInspectorStage(const MediaPipelineConfig::Stage &stage, MediaIOTask_Inspector **taskOut) {
+                auto           *task = new MediaIOTask_Inspector();
+                auto           *io = new MediaIO();
+                MediaIO::Config cfg = MediaIO::defaultConfig(String("Inspector"));
+                // Copy any per-stage config keys supplied via --dc onto the
+                // backend default so --dc InspectorTests:Timestamp etc. still
+                // works when mediaplay is the one constructing the task.
+                const auto stageIds = stage.config.ids();
+                for (size_t i = 0; i < stageIds.size(); ++i) {
+                        cfg.set(stageIds[i], stage.config.get(stageIds[i]));
+                }
+                io->setConfig(cfg);
+                Error e = io->adoptTask(task);
+                if (e.isError()) {
+                        fprintf(stderr, "Error: adoptTask(Inspector) failed: %s\n", e.desc().cstr());
+                        delete io;
+                        delete task;
+                        return nullptr;
+                }
+                if (taskOut != nullptr) *taskOut = task;
+                return io;
         }
-        io->setConfig(cfg);
-        Error e = io->adoptTask(task);
-        if(e.isError()) {
-                fprintf(stderr, "Error: adoptTask(Inspector) failed: %s\n",
-                        e.desc().cstr());
-                delete io;
-                delete task;
-                return nullptr;
-        }
-        if(taskOut != nullptr) *taskOut = task;
-        return io;
-}
 
-/**
+        /**
  * @brief Handles mediaplay's legacy `--probe` short-circuit.
  *
  * Keeps the probe path byte-compatible with the pre-pipeline build:
@@ -137,92 +135,85 @@ MediaIO *createInspectorStage(const MediaPipelineConfig::Stage &stage,
  * @param opts The parsed CLI options.
  * @return The exit code to pass back from @c main().
  */
-int runProbe(const Options &opts) {
-        String probeName = opts.source.type;
-        MediaIO::Config probeCfg;
-        if(probeName == kStageFile) {
-                // URL-first: if the arg parses as a URL with a
-                // registered scheme, ask that backend to translate
-                // the URL into a Config (same path createFromUrl
-                // uses) so --probe works against pmfb://, pmdf:, etc.
-                // without the caller having to convert back to a
-                // fake filename.
-                auto [parsed, urlErr] = Url::fromString(opts.source.path);
-                const MediaIO::FormatDesc *urlDesc = nullptr;
-                if(urlErr.isOk() && parsed.isValid()) {
-                        urlDesc = MediaIO::findFormatByScheme(parsed.scheme());
-                }
-                if(urlDesc != nullptr) {
-                        probeName = urlDesc->name;
-                        probeCfg = MediaIO::defaultConfig(probeName);
-                        probeCfg.set(MediaConfig::Url, parsed);
-                        if(urlDesc->urlToConfig) {
-                                Error e = urlDesc->urlToConfig(parsed, &probeCfg);
-                                if(e.isError()) {
-                                        fprintf(stderr, "Error: '%s' rejected URL '%s'\n",
-                                                urlDesc->name.cstr(),
-                                                opts.source.path.cstr());
+        int runProbe(const Options &opts) {
+                String          probeName = opts.source.type;
+                MediaIO::Config probeCfg;
+                if (probeName == kStageFile) {
+                        // URL-first: if the arg parses as a URL with a
+                        // registered scheme, ask that backend to translate
+                        // the URL into a Config (same path createFromUrl
+                        // uses) so --probe works against pmfb://, pmdf:, etc.
+                        // without the caller having to convert back to a
+                        // fake filename.
+                        auto [parsed, urlErr] = Url::fromString(opts.source.path);
+                        const MediaIO::FormatDesc *urlDesc = nullptr;
+                        if (urlErr.isOk() && parsed.isValid()) {
+                                urlDesc = MediaIO::findFormatByScheme(parsed.scheme());
+                        }
+                        if (urlDesc != nullptr) {
+                                probeName = urlDesc->name;
+                                probeCfg = MediaIO::defaultConfig(probeName);
+                                probeCfg.set(MediaConfig::Url, parsed);
+                                if (urlDesc->urlToConfig) {
+                                        Error e = urlDesc->urlToConfig(parsed, &probeCfg);
+                                        if (e.isError()) {
+                                                fprintf(stderr, "Error: '%s' rejected URL '%s'\n", urlDesc->name.cstr(),
+                                                        opts.source.path.cstr());
+                                                return 1;
+                                        }
+                                }
+                                if (urlDesc->configSpecs && !parsed.query().isEmpty()) {
+                                        Error e =
+                                                MediaIO::applyQueryToConfig(parsed, urlDesc->configSpecs(), &probeCfg);
+                                        if (e.isError()) {
+                                                fprintf(stderr, "Error: query application failed for '%s'\n",
+                                                        opts.source.path.cstr());
+                                                return 1;
+                                        }
+                                }
+                        } else {
+                                const MediaIO::FormatDesc *desc = MediaIO::findFormatForPath(opts.source.path);
+                                if (desc == nullptr) {
+                                        fprintf(stderr, "Error: no backend recognises '%s'\n", opts.source.path.cstr());
                                         return 1;
                                 }
-                        }
-                        if(urlDesc->configSpecs && !parsed.query().isEmpty()) {
-                                Error e = MediaIO::applyQueryToConfig(
-                                        parsed, urlDesc->configSpecs(), &probeCfg);
-                                if(e.isError()) {
-                                        fprintf(stderr,
-                                                "Error: query application failed for '%s'\n",
-                                                opts.source.path.cstr());
-                                        return 1;
-                                }
+                                probeName = desc->name;
+                                probeCfg = MediaIO::defaultConfig(probeName);
+                                probeCfg.set(MediaConfig::Filename, opts.source.path);
                         }
                 } else {
-                        const MediaIO::FormatDesc *desc =
-                                MediaIO::findFormatForPath(opts.source.path);
-                        if(desc == nullptr) {
-                                fprintf(stderr, "Error: no backend recognises '%s'\n",
-                                        opts.source.path.cstr());
-                                return 1;
-                        }
-                        probeName = desc->name;
                         probeCfg = MediaIO::defaultConfig(probeName);
-                        probeCfg.set(MediaConfig::Filename, opts.source.path);
                 }
-        } else {
-                probeCfg = MediaIO::defaultConfig(probeName);
-        }
-        for(const auto &kv : opts.source.rawKeyValues) {
-                size_t sep = kv.find(':');
-                if(sep == String::npos) continue;
-                String key = kv.left(sep);
-                String val = kv.mid(sep + 1);
-                MediaIO::ConfigID id(key);
-                probeCfg.set(id, val);
-        }
-        auto caps = MediaIO::queryDevice(probeName, probeCfg);
-        if(caps.isEmpty()) {
-                fprintf(stderr, "No supported configurations reported by '%s'\n",
-                        probeName.cstr());
-                return 1;
-        }
-        fprintf(stdout, "Supported configurations for %s:\n", probeName.cstr());
-        for(const auto &md : caps) {
-                String line;
-                if(!md.imageList().isEmpty()) {
-                        const ImageDesc &id = md.imageList()[0];
-                        line = String::sprintf("  %s  %s",
-                                id.toString().cstr(),
-                                md.frameRate().toString().cstr());
-                } else {
-                        line = String::sprintf("  (no video)  %s",
-                                md.frameRate().toString().cstr());
+                for (const auto &kv : opts.source.rawKeyValues) {
+                        size_t sep = kv.find(':');
+                        if (sep == String::npos) continue;
+                        String            key = kv.left(sep);
+                        String            val = kv.mid(sep + 1);
+                        MediaIO::ConfigID id(key);
+                        probeCfg.set(id, val);
                 }
-                fprintf(stdout, "%s\n", line.cstr());
+                auto caps = MediaIO::queryDevice(probeName, probeCfg);
+                if (caps.isEmpty()) {
+                        fprintf(stderr, "No supported configurations reported by '%s'\n", probeName.cstr());
+                        return 1;
+                }
+                fprintf(stdout, "Supported configurations for %s:\n", probeName.cstr());
+                for (const auto &md : caps) {
+                        String line;
+                        if (!md.imageList().isEmpty()) {
+                                const ImageDesc &id = md.imageList()[0];
+                                line = String::sprintf("  %s  %s", id.toString().cstr(),
+                                                       md.frameRate().toString().cstr());
+                        } else {
+                                line = String::sprintf("  (no video)  %s", md.frameRate().toString().cstr());
+                        }
+                        fprintf(stdout, "%s\n", line.cstr());
+                }
+                MediaIO::printDeviceInfo(probeName, probeCfg);
+                return 0;
         }
-        MediaIO::printDeviceInfo(probeName, probeCfg);
-        return 0;
-}
 
-/**
+        /**
  * @brief Builds a @ref MediaPipelineConfig from CLI-parsed options.
  *
  * Stage names are assigned in pipeline order: @c "source",
@@ -232,61 +223,53 @@ int runProbe(const Options &opts) {
  * at the sink end.  Users who want a richer topology can author or
  * hand-edit the JSON preset.
  */
-Error buildConfigFromOptions(const Options &opts, MediaPipelineConfig &out) {
-        MediaPipelineConfig cfg;
+        Error buildConfigFromOptions(const Options &opts, MediaPipelineConfig &out) {
+                MediaPipelineConfig cfg;
 
-        MediaPipelineConfig::Stage srcStage;
-        Error se = resolveStagePlan(opts.source, MediaIO::Source,
-                                    String("source"),
-                                    String("--sc[") + opts.source.type + "]",
-                                    srcStage);
-        if(se.isError()) return se;
-        cfg.addStage(srcStage);
-        String prevName = "source";
+                MediaPipelineConfig::Stage srcStage;
+                Error                      se = resolveStagePlan(opts.source, MediaIO::Source, String("source"),
+                                                                 String("--sc[") + opts.source.type + "]", srcStage);
+                if (se.isError()) return se;
+                cfg.addStage(srcStage);
+                String prevName = "source";
 
-        for(size_t i = 0; i < opts.transforms.size(); ++i) {
-                const String name = String("stage") +
-                        String::number(static_cast<int64_t>(i));
-                MediaPipelineConfig::Stage s;
-                Error e = resolveStagePlan(opts.transforms[i],
-                        MediaIO::Transform, name,
-                        String("--cc[") + opts.transforms[i].type + "]",
-                        s);
-                if(e.isError()) return e;
-                cfg.addStage(s);
-                cfg.addRoute(prevName, name);
-                prevName = name;
+                for (size_t i = 0; i < opts.transforms.size(); ++i) {
+                        const String               name = String("stage") + String::number(static_cast<int64_t>(i));
+                        MediaPipelineConfig::Stage s;
+                        Error                      e = resolveStagePlan(opts.transforms[i], MediaIO::Transform, name,
+                                                                        String("--cc[") + opts.transforms[i].type + "]", s);
+                        if (e.isError()) return e;
+                        cfg.addStage(s);
+                        cfg.addRoute(prevName, name);
+                        prevName = name;
+                }
+
+                for (size_t i = 0; i < opts.sinks.size(); ++i) {
+                        const String               name = String("sink") + String::number(static_cast<int64_t>(i));
+                        MediaPipelineConfig::Stage s;
+                        Error                      e = resolveStagePlan(opts.sinks[i], MediaIO::Sink, name,
+                                                                        String("--dc[") + opts.sinks[i].type + "]", s);
+                        if (e.isError()) return e;
+                        cfg.addStage(s);
+                        cfg.addRoute(prevName, name);
+                }
+
+                out = cfg;
+                return Error::Ok;
         }
 
-        for(size_t i = 0; i < opts.sinks.size(); ++i) {
-                const String name = String("sink") +
-                        String::number(static_cast<int64_t>(i));
-                MediaPipelineConfig::Stage s;
-                Error e = resolveStagePlan(opts.sinks[i],
-                        MediaIO::Sink, name,
-                        String("--dc[") + opts.sinks[i].type + "]",
-                        s);
-                if(e.isError()) return e;
-                cfg.addStage(s);
-                cfg.addRoute(prevName, name);
-        }
-
-        out = cfg;
-        return Error::Ok;
-}
-
-/**
+        /**
  * @brief Lazily constructs the shared SDL window / audio output for
  *        the first SDL stage encountered, reusing them for later SDL
  *        stages that share the same pipeline.  A fresh
  *        @ref SDLPlayerWidget is created per stage.
  */
-struct SdlUi {
-        SDLWindow       *window      = nullptr;
-        SDLAudioOutput  *audioOutput = nullptr;
-};
+        struct SdlUi {
+                        SDLWindow      *window = nullptr;
+                        SDLAudioOutput *audioOutput = nullptr;
+        };
 
-/**
+        /**
  * @brief Builds an @ref SDLPlayerWidget-backed MediaIO for @p stage so
  *        it can be injected into the pipeline.
  *
@@ -299,60 +282,51 @@ struct SdlUi {
  * (parented to @c ui.window), so the caller must NOT delete it —
  * window deletion at shutdown frees everything in one shot.
  */
-MediaIO *createSdlStage(const MediaPipelineConfig::Stage &stage,
-                        SdlUi &ui, bool enableBenchmark) {
-        const String sdlTiming = stage.config.getAs<String>(
-                MediaConfig::SdlTimingSource, String("audio"));
-        const bool useAudioClock = (sdlTiming == String("audio"));
-        const Size2Du32 sdlWinSize = stage.config.getAs<Size2Du32>(
-                MediaConfig::SdlWindowSize, Size2Du32(1280, 720));
-        const String sdlWinTitle = stage.config.getAs<String>(
-                MediaConfig::SdlWindowTitle, String("mediaplay"));
+        MediaIO *createSdlStage(const MediaPipelineConfig::Stage &stage, SdlUi &ui, bool enableBenchmark) {
+                const String    sdlTiming = stage.config.getAs<String>(MediaConfig::SdlTimingSource, String("audio"));
+                const bool      useAudioClock = (sdlTiming == String("audio"));
+                const Size2Du32 sdlWinSize =
+                        stage.config.getAs<Size2Du32>(MediaConfig::SdlWindowSize, Size2Du32(1280, 720));
+                const String sdlWinTitle = stage.config.getAs<String>(MediaConfig::SdlWindowTitle, String("mediaplay"));
 
-        if(ui.window == nullptr) {
-                if(!sdlWinSize.isValid()) {
-                        fprintf(stderr, "Error: invalid SDL WindowSize\n");
+                if (ui.window == nullptr) {
+                        if (!sdlWinSize.isValid()) {
+                                fprintf(stderr, "Error: invalid SDL WindowSize\n");
+                                return nullptr;
+                        }
+                        ui.window = new SDLWindow(sdlWinTitle, static_cast<int>(sdlWinSize.width()),
+                                                  static_cast<int>(sdlWinSize.height()));
+                        ui.window->show();
+                        ui.audioOutput = new SDLAudioOutput(ui.window);
+                }
+
+                const Rect2Di32 fullRect(0, 0, static_cast<int>(sdlWinSize.width()),
+                                         static_cast<int>(sdlWinSize.height()));
+
+                auto *w = new SDLPlayerWidget(ui.audioOutput, useAudioClock, ui.window);
+                w->setGeometry(fullRect);
+                ui.window->resizedSignal.connect(
+                        [w](Size2Di32 sz) { w->setGeometry(Rect2Di32(0, 0, sz.width(), sz.height())); });
+                w->setFocus();
+                SdlSubsystem::instance()->setFocusedWidget(w);
+                MediaIO *player = w->mediaIO();
+                if (player == nullptr) {
+                        fprintf(stderr, "Error: SDL player creation failed for stage '%s'\n", stage.name.cstr());
                         return nullptr;
                 }
-                ui.window = new SDLWindow(sdlWinTitle,
-                                          static_cast<int>(sdlWinSize.width()),
-                                          static_cast<int>(sdlWinSize.height()));
-                ui.window->show();
-                ui.audioOutput = new SDLAudioOutput(ui.window);
+                if (enableBenchmark) {
+                        MediaIO::Config cfg = player->config();
+                        cfg.set(MediaConfig::EnableBenchmark, true);
+                        player->setConfig(cfg);
+                }
+                return player;
         }
-
-        const Rect2Di32 fullRect(
-                0, 0,
-                static_cast<int>(sdlWinSize.width()),
-                static_cast<int>(sdlWinSize.height()));
-
-        auto *w = new SDLPlayerWidget(ui.audioOutput, useAudioClock,
-                                      ui.window);
-        w->setGeometry(fullRect);
-        ui.window->resizedSignal.connect([w](Size2Di32 sz) {
-                w->setGeometry(Rect2Di32(0, 0, sz.width(), sz.height()));
-        });
-        w->setFocus();
-        SdlSubsystem::instance()->setFocusedWidget(w);
-        MediaIO *player = w->mediaIO();
-        if(player == nullptr) {
-                fprintf(stderr, "Error: SDL player creation failed for stage '%s'\n",
-                        stage.name.cstr());
-                return nullptr;
-        }
-        if(enableBenchmark) {
-                MediaIO::Config cfg = player->config();
-                cfg.set(MediaConfig::EnableBenchmark, true);
-                player->setConfig(cfg);
-        }
-        return player;
-}
 
 } // namespace
 
 int main(int argc, char **argv) {
         Options opts;
-        if(!parseOptions(argc, argv, opts)) {
+        if (!parseOptions(argc, argv, opts)) {
                 fprintf(stderr, "Use --help for usage information.\n");
                 return ExitGeneric;
         }
@@ -361,11 +335,11 @@ int main(int argc, char **argv) {
         // state is needed — the codec registries are populated at
         // static-init time by the linked-in backend libraries, so we
         // can walk them and exit.  Documented in --help.
-        if(opts.listCodecs != Options::ListCodecsNone) {
+        if (opts.listCodecs != Options::ListCodecsNone) {
                 CodecTsvKind kind = CodecTsvKind::All;
-                if(opts.listCodecs == Options::ListCodecsVideo) {
+                if (opts.listCodecs == Options::ListCodecsVideo) {
                         kind = CodecTsvKind::Video;
-                } else if(opts.listCodecs == Options::ListCodecsAudio) {
+                } else if (opts.listCodecs == Options::ListCodecsAudio) {
                         kind = CodecTsvKind::Audio;
                 }
                 printCodecsTsv(kind);
@@ -377,15 +351,12 @@ int main(int argc, char **argv) {
         // output through the logger, and silently eating it because
         // of an elevated default would be a lousy experience.
         const bool reportingEnabled = (opts.statsInterval > 0.0) || opts.verbose;
-        if(reportingEnabled
-           && Logger::defaultLogger().level() > Logger::LogLevel::Info) {
+        if (reportingEnabled && Logger::defaultLogger().level() > Logger::LogLevel::Info) {
                 Logger::defaultLogger().setLogLevel(Logger::LogLevel::Info);
         }
 
-        if(!opts.savePipelinePath.isEmpty()
-           && !opts.loadPipelinePath.isEmpty()) {
-                fprintf(stderr,
-                        "Error: --save-pipeline and --pipeline are mutually exclusive.\n");
+        if (!opts.savePipelinePath.isEmpty() && !opts.loadPipelinePath.isEmpty()) {
+                fprintf(stderr, "Error: --save-pipeline and --pipeline are mutually exclusive.\n");
                 return ExitGeneric;
         }
 
@@ -395,42 +366,37 @@ int main(int argc, char **argv) {
         // Default SDL sink when the user did not pass any -d and did
         // not ask to load a preset.  Saved presets carry their own
         // sink set, so never inject a default on the load path.
-        if(opts.loadPipelinePath.isEmpty() && !opts.explicitDst) {
+        if (opts.loadPipelinePath.isEmpty() && !opts.explicitDst) {
                 StageSpec sdlSpec;
                 sdlSpec.type = kStageSdl;
                 opts.sinks.pushToBack(sdlSpec);
         }
 
-        if(opts.probe) return runProbe(opts);
+        if (opts.probe) return runProbe(opts);
 
         // --- Resolve the MediaPipelineConfig ---
         MediaPipelineConfig pipelineCfg;
-        if(!opts.loadPipelinePath.isEmpty()) {
+        if (!opts.loadPipelinePath.isEmpty()) {
                 Error lerr;
-                pipelineCfg = MediaPipelineConfig::loadFromFile(
-                        FilePath(opts.loadPipelinePath), &lerr);
-                if(lerr.isError()) {
-                        fprintf(stderr, "Error: failed to load pipeline '%s': %s\n",
-                                opts.loadPipelinePath.cstr(),
+                pipelineCfg = MediaPipelineConfig::loadFromFile(FilePath(opts.loadPipelinePath), &lerr);
+                if (lerr.isError()) {
+                        fprintf(stderr, "Error: failed to load pipeline '%s': %s\n", opts.loadPipelinePath.cstr(),
                                 lerr.desc().cstr());
                         return ExitGeneric;
                 }
         } else {
                 Error berr = buildConfigFromOptions(opts, pipelineCfg);
-                if(berr.isError()) return ExitGeneric;
+                if (berr.isError()) return ExitGeneric;
         }
 
-        if(!opts.savePipelinePath.isEmpty()) {
-                Error serr = pipelineCfg.saveToFile(
-                        FilePath(opts.savePipelinePath));
-                if(serr.isError()) {
-                        fprintf(stderr, "Error: saveToFile '%s' failed: %s\n",
-                                opts.savePipelinePath.cstr(),
+        if (!opts.savePipelinePath.isEmpty()) {
+                Error serr = pipelineCfg.saveToFile(FilePath(opts.savePipelinePath));
+                if (serr.isError()) {
+                        fprintf(stderr, "Error: saveToFile '%s' failed: %s\n", opts.savePipelinePath.cstr(),
                                 serr.desc().cstr());
                         return ExitGeneric;
                 }
-                fprintf(stdout, "Pipeline saved to %s\n",
-                        opts.savePipelinePath.cstr());
+                fprintf(stdout, "Pipeline saved to %s\n", opts.savePipelinePath.cstr());
                 return ExitOk;
         }
 
@@ -456,17 +422,17 @@ int main(int argc, char **argv) {
         // from the stage name (as declared in the pipeline config)
         // to the task pointer we adopted into the MediaIO.
         promeki::Map<String, MediaIOTask_Inspector *> inspectorTasks;
-        for(size_t i = 0; i < pipelineCfg.stages().size(); ++i) {
+        for (size_t i = 0; i < pipelineCfg.stages().size(); ++i) {
                 const MediaPipelineConfig::Stage &s = pipelineCfg.stages()[i];
-                if(s.type == kStageSdl) {
+                if (s.type == kStageSdl) {
                         MediaIO *player = createSdlStage(s, ui, statsEnabled);
-                        if(player == nullptr) {
+                        if (player == nullptr) {
                                 delete ui.audioOutput;
                                 delete ui.window;
                                 return ExitGeneric;
                         }
                         injectedMap.insert(s.name, player);
-                } else if(s.type == String("Inspector")) {
+                } else if (s.type == String("Inspector")) {
                         // Always inject Inspector stages so main() can
                         // poll @c snapshot() after the run and surface
                         // any reported discontinuity as a dedicated exit
@@ -475,13 +441,13 @@ int main(int argc, char **argv) {
                         // requested number of frames, so a separate
                         // "expected frames" flag is no longer needed.
                         MediaIOTask_Inspector *task = nullptr;
-                        MediaIO *io = createInspectorStage(s, &task);
-                        if(io == nullptr) {
+                        MediaIO               *io = createInspectorStage(s, &task);
+                        if (io == nullptr) {
                                 delete ui.audioOutput;
                                 delete ui.window;
                                 return ExitGeneric;
                         }
-                        if(statsEnabled) {
+                        if (statsEnabled) {
                                 MediaIO::Config c = io->config();
                                 c.set(MediaConfig::EnableBenchmark, true);
                                 io->setConfig(c);
@@ -505,18 +471,15 @@ int main(int argc, char **argv) {
         // ---- --plan: run the planner and print the resolved config ----
         // Useful for "would this CLI invocation work?" pre-flight
         // checks without committing to actually opening anything.
-        if(opts.planOnly) {
+        if (opts.planOnly) {
                 MediaPipelineConfig planned;
-                String diag;
-                Error perr = MediaPipelinePlanner::plan(
-                        pipelineCfg, &planned, injectedMap, {}, &diag);
-                if(perr.isError()) {
-                        fprintf(stderr, "Error: planning failed: %s\n",
-                                perr.desc().cstr());
-                        if(!diag.isEmpty()) {
-                                const StringList lines =
-                                        diag.split(std::string("\n"));
-                                for(size_t i = 0; i < lines.size(); ++i) {
+                String              diag;
+                Error               perr = MediaPipelinePlanner::plan(pipelineCfg, &planned, injectedMap, {}, &diag);
+                if (perr.isError()) {
+                        fprintf(stderr, "Error: planning failed: %s\n", perr.desc().cstr());
+                        if (!diag.isEmpty()) {
+                                const StringList lines = diag.split(std::string("\n"));
+                                for (size_t i = 0; i < lines.size(); ++i) {
                                         fprintf(stderr, "  %s\n", lines[i].cstr());
                                 }
                         }
@@ -526,7 +489,7 @@ int main(int argc, char **argv) {
                 fprintf(stdout, "Planner inserted %zu bridge stage(s).\n",
                         planned.stages().size() - pipelineCfg.stages().size());
                 const StringList desc = planned.describe();
-                for(size_t i = 0; i < desc.size(); ++i) {
+                for (size_t i = 0; i < desc.size(); ++i) {
                         fprintf(stdout, "%s\n", desc[i].cstr());
                 }
                 cleanupInjected();
@@ -538,46 +501,43 @@ int main(int argc, char **argv) {
         // stage's describe() summary.  Uses the injected SDL stage
         // if one exists for the name; otherwise instantiates from
         // the registry.
-        if(opts.describeOnly) {
+        if (opts.describeOnly) {
                 int exitCode = 0;
-                for(size_t i = 0; i < pipelineCfg.stages().size(); ++i) {
+                for (size_t i = 0; i < pipelineCfg.stages().size(); ++i) {
                         const MediaPipelineConfig::Stage &s = pipelineCfg.stages()[i];
-                        MediaIO *io = nullptr;
-                        bool ownsIo = false;
-                        auto injIt = injectedMap.find(s.name);
-                        if(injIt != injectedMap.end()) {
+                        MediaIO                          *io = nullptr;
+                        bool                              ownsIo = false;
+                        auto                              injIt = injectedMap.find(s.name);
+                        if (injIt != injectedMap.end()) {
                                 io = injIt->second;
                         } else {
                                 MediaConfig mcfg = s.config;
-                                if(!s.type.isEmpty()) mcfg.set(MediaConfig::Type, s.type);
-                                if(!s.path.isEmpty()) mcfg.set(MediaConfig::Filename, s.path);
+                                if (!s.type.isEmpty()) mcfg.set(MediaConfig::Type, s.type);
+                                if (!s.path.isEmpty()) mcfg.set(MediaConfig::Filename, s.path);
                                 io = (!s.type.isEmpty())
-                                        ? MediaIO::create(mcfg)
-                                        : (s.mode == MediaIO::Source
-                                                ? MediaIO::createForFileRead(s.path)
-                                                : MediaIO::createForFileWrite(s.path));
+                                             ? MediaIO::create(mcfg)
+                                             : (s.mode == MediaIO::Source ? MediaIO::createForFileRead(s.path)
+                                                                          : MediaIO::createForFileWrite(s.path));
                                 ownsIo = (io != nullptr);
                         }
-                        if(io == nullptr) {
-                                fprintf(stderr, "[%s] failed to instantiate.\n",
-                                        s.name.cstr());
+                        if (io == nullptr) {
+                                fprintf(stderr, "[%s] failed to instantiate.\n", s.name.cstr());
                                 exitCode = 1;
                                 continue;
                         }
                         MediaIODescription d;
-                        Error derr = io->describe(&d);
-                        if(derr.isError()) {
-                                fprintf(stderr, "[%s] describe() failed: %s\n",
-                                        s.name.cstr(), derr.desc().cstr());
+                        Error              derr = io->describe(&d);
+                        if (derr.isError()) {
+                                fprintf(stderr, "[%s] describe() failed: %s\n", s.name.cstr(), derr.desc().cstr());
                                 exitCode = 1;
                         }
                         const StringList lines = d.summary();
-                        for(size_t j = 0; j < lines.size(); ++j) {
+                        for (size_t j = 0; j < lines.size(); ++j) {
                                 fprintf(stdout, "%s\n", lines[j].cstr());
                         }
                         fprintf(stdout, "\n");
-                        if(ownsIo) {
-                                if(io->isOpen()) (void)io->close();
+                        if (ownsIo) {
+                                if (io->isOpen()) (void)io->close();
                                 delete io;
                         }
                 }
@@ -590,14 +550,12 @@ int main(int argc, char **argv) {
         // shutdown snapshot.  Opened before the stats thread starts so
         // periodic writes have a valid handle from the first tick.
         File *statsFile = nullptr;
-        if(!opts.writeStatsPath.isEmpty()) {
+        if (!opts.writeStatsPath.isEmpty()) {
                 statsFile = new File(opts.writeStatsPath);
-                Error oe = statsFile->open(IODevice::WriteOnly,
-                                           File::Create | File::Truncate);
-                if(oe.isError()) {
-                        fprintf(stderr,
-                                "Error: --write-stats '%s' open failed: %s\n",
-                                opts.writeStatsPath.cstr(), oe.desc().cstr());
+                Error oe = statsFile->open(IODevice::WriteOnly, File::Create | File::Truncate);
+                if (oe.isError()) {
+                        fprintf(stderr, "Error: --write-stats '%s' open failed: %s\n", opts.writeStatsPath.cstr(),
+                                oe.desc().cstr());
                         delete statsFile;
                         return ExitGeneric;
                 }
@@ -607,9 +565,9 @@ int main(int argc, char **argv) {
         // build() so the MediaIO instances come up with per-frame
         // stamping on — the key is read in resolveIdentifiersAndBenchmark
         // at the top of open().
-        if(statsEnabled) {
+        if (statsEnabled) {
                 MediaPipelineConfig::StageList &stages = pipelineCfg.stages();
-                for(size_t i = 0; i < stages.size(); ++i) {
+                for (size_t i = 0; i < stages.size(); ++i) {
                         stages[i].config.set(MediaConfig::EnableBenchmark, true);
                 }
         }
@@ -621,7 +579,7 @@ int main(int argc, char **argv) {
         // to take priority.  Zero / unset means "unlimited" on both
         // sides, so skip the assignment in that case to preserve any
         // preset-defined cap.
-        if(opts.frameCount > 0) {
+        if (opts.frameCount > 0) {
                 pipelineCfg.setFrameCount(FrameCount(opts.frameCount));
         }
 
@@ -630,7 +588,7 @@ int main(int argc, char **argv) {
         // --plan and --describe see them too); here we just hand
         // them to the pipeline by name.
         MediaPipeline pipeline;
-        for(auto it = injectedMap.begin(); it != injectedMap.end(); ++it) {
+        for (auto it = injectedMap.begin(); it != injectedMap.end(); ++it) {
                 (void)pipeline.injectStage(it->first, it->second);
         }
 
@@ -640,16 +598,14 @@ int main(int argc, char **argv) {
         // Disable with --no-autoplan when you want a strict
         // fully-resolved config (e.g. regression scripts).
         Error berr = pipeline.build(pipelineCfg, opts.autoplan);
-        if(berr.isError()) {
+        if (berr.isError()) {
                 // The planner emits a multi-line diagnostic via
                 // promekiErr inside MediaPipeline::build, so the
                 // detailed "why" is already in the log by the time
                 // we get here.  The fprintf below just gives the
                 // user a single concise summary on stderr.
-                fprintf(stderr, "Error: pipeline build failed: %s%s\n",
-                        berr.desc().cstr(),
-                        opts.autoplan ? " (planner enabled — see logs above for details)"
-                                       : "");
+                fprintf(stderr, "Error: pipeline build failed: %s%s\n", berr.desc().cstr(),
+                        opts.autoplan ? " (planner enabled — see logs above for details)" : "");
                 delete ui.audioOutput;
                 delete ui.window;
                 return ExitPipelineBuild;
@@ -658,11 +614,11 @@ int main(int argc, char **argv) {
         // Attach BenchmarkReporters after build, before open, so the
         // stamps start accumulating from the very first frame.
         List<BenchmarkReporter *> reporters;
-        if(statsEnabled) {
+        if (statsEnabled) {
                 StringList names = pipeline.stageNames();
-                for(size_t i = 0; i < names.size(); ++i) {
+                for (size_t i = 0; i < names.size(); ++i) {
                         MediaIO *io = pipeline.stage(names[i]);
-                        if(io == nullptr) continue;
+                        if (io == nullptr) continue;
                         auto *rep = new BenchmarkReporter();
                         io->setBenchmarkReporter(rep);
                         reporters.pushToBack(rep);
@@ -670,11 +626,10 @@ int main(int argc, char **argv) {
         }
 
         Error oerr = pipeline.open();
-        if(oerr.isError()) {
-                fprintf(stderr, "Error: pipeline open failed: %s\n",
-                        oerr.desc().cstr());
+        if (oerr.isError()) {
+                fprintf(stderr, "Error: pipeline open failed: %s\n", oerr.desc().cstr());
                 (void)pipeline.close();
-                for(auto *r : reporters) delete r;
+                for (auto *r : reporters) delete r;
                 delete ui.audioOutput;
                 delete ui.window;
                 return ExitPipelineOpen;
@@ -683,7 +638,7 @@ int main(int argc, char **argv) {
         // One-line description of the live pipeline for humans.
         {
                 StringList lines = pipeline.describe();
-                for(size_t i = 0; i < lines.size(); ++i) {
+                for (size_t i = 0; i < lines.size(); ++i) {
                         fprintf(stdout, "%s\n", lines[i].cstr());
                 }
         }
@@ -697,34 +652,38 @@ int main(int argc, char **argv) {
         std::atomic<bool> runtimeErrorLatched{false};
         pipeline.pipelineErrorSignal.connect(
                 [&runtimeErrorLatched](const String &stageName, Error err) {
-                        fprintf(stderr, "Pipeline error at '%s': %s\n",
-                                stageName.cstr(), err.desc().cstr());
+                        fprintf(stderr, "Pipeline error at '%s': %s\n", stageName.cstr(), err.desc().cstr());
                         bool expected = false;
                         runtimeErrorLatched.compare_exchange_strong(expected, true);
-                }, &pipeline);
+                },
+                &pipeline);
         // finishedSignal now fires at the END of the close cascade
         // (alongside closedSignal), so just use it for a diagnostic
         // line when the run wasn't clean — the actual quit happens
         // from closedSignal below.
-        pipeline.finishedSignal.connect([&runtimeErrorLatched](bool clean) {
-                if(!clean) {
-                        fprintf(stderr, "Pipeline did not finish cleanly.\n");
-                        bool expected = false;
-                        runtimeErrorLatched.compare_exchange_strong(expected, true);
-                }
-        }, &pipeline);
+        pipeline.finishedSignal.connect(
+                [&runtimeErrorLatched](bool clean) {
+                        if (!clean) {
+                                fprintf(stderr, "Pipeline did not finish cleanly.\n");
+                                bool expected = false;
+                                runtimeErrorLatched.compare_exchange_strong(expected, true);
+                        }
+                },
+                &pipeline);
         // Cascade finished — drive the actual EventLoop quit now that
         // every stage has drained and released its resources.  Pass
         // the close-cascade error through to the exit-code logic via
         // the same latch so the caller sees "pipeline runtime error"
         // rather than a generic failure.
-        pipeline.closedSignal.connect([&runtimeErrorLatched](Error err) {
-                if(err.isError()) {
-                        bool expected = false;
-                        runtimeErrorLatched.compare_exchange_strong(expected, true);
-                }
-                Application::quit(err.isOk() ? ExitOk : ExitPipelineRuntime);
-        }, &pipeline);
+        pipeline.closedSignal.connect(
+                [&runtimeErrorLatched](Error err) {
+                        if (err.isError()) {
+                                bool expected = false;
+                                runtimeErrorLatched.compare_exchange_strong(expected, true);
+                        }
+                        Application::quit(err.isOk() ? ExitOk : ExitPipelineRuntime);
+                },
+                &pipeline);
 
         // Intercept Ctrl-C / signal-driven quit so the pipeline has a
         // chance to drain and close gracefully before the EventLoop
@@ -734,36 +693,36 @@ int main(int argc, char **argv) {
         // pipeline state is only mutated on its owning thread.
         EventLoop *mainEL = Application::mainEventLoop();
         Application::setQuitRequestHandler([&pipeline, mainEL](int /*code*/) -> bool {
-                if(pipeline.state() == MediaPipeline::State::Closed
-                   || pipeline.isClosing()) {
+                if (pipeline.state() == MediaPipeline::State::Closed || pipeline.isClosing()) {
                         // Pipeline already closed or closing — let the
                         // default quit path run so the EventLoop exits.
                         return false;
                 }
                 // close(false) is idempotent on re-entry, so the
                 // posted callable doesn't need to re-check state.
-                auto kick = [&pipeline]() { (void)pipeline.close(false); };
-                if(mainEL != nullptr) mainEL->postCallable(std::move(kick));
-                else kick();
+                auto kick = [&pipeline]() {
+                        (void)pipeline.close(false);
+                };
+                if (mainEL != nullptr)
+                        mainEL->postCallable(std::move(kick));
+                else
+                        kick();
                 return true;
         });
 
-        if(ui.window != nullptr) {
+        if (ui.window != nullptr) {
                 ui.window->closedSignal.connect([]() { Application::quit(0); });
         }
-        if(opts.duration > 0.0 && mainEL != nullptr) {
+        if (opts.duration > 0.0 && mainEL != nullptr) {
                 mainEL->startTimer(
-                        static_cast<unsigned int>(opts.duration * 1000.0),
-                        []() { Application::quit(0); },
-                        true);
+                        static_cast<unsigned int>(opts.duration * 1000.0), []() { Application::quit(0); }, true);
         }
-        if(opts.verbose && mainEL != nullptr) {
+        if (opts.verbose && mainEL != nullptr) {
                 mainEL->startTimer(2000, [&pipeline]() {
                         MediaPipelineStats s = pipeline.stats();
-                        StringList lines = s.describe();
-                        for(size_t i = 0; i < lines.size(); ++i) {
-                                fprintf(stdout, "[mediaplay] %s\n",
-                                        lines[i].cstr());
+                        StringList         lines = s.describe();
+                        for (size_t i = 0; i < lines.size(); ++i) {
+                                fprintf(stdout, "[mediaplay] %s\n", lines[i].cstr());
                         }
                 });
         }
@@ -774,11 +733,11 @@ int main(int argc, char **argv) {
         // @p statsFile never overlap across threads.
         auto emitStats = [&pipeline, statsFile](const char *label) {
                 MediaPipelineStats s = pipeline.stats();
-                StringList lines = s.describe();
-                for(size_t i = 0; i < lines.size(); ++i) {
+                StringList         lines = s.describe();
+                for (size_t i = 0; i < lines.size(); ++i) {
                         promekiInfo("[%s] %s", label, lines[i].cstr());
                 }
-                if(statsFile == nullptr) return;
+                if (statsFile == nullptr) return;
 
                 // One JSON object per line (JSONL).  We stamp a
                 // timestamp and a "phase" tag so downstream tooling
@@ -788,8 +747,7 @@ int main(int argc, char **argv) {
                 obj.set("timestamp", DateTime::now().toString());
                 obj.set("phase", String(label));
                 const String text = obj.toString() + "\n";
-                (void)statsFile->write(text.cstr(),
-                        static_cast<int64_t>(text.size()));
+                (void)statsFile->write(text.cstr(), static_cast<int64_t>(text.size()));
                 statsFile->flush();
         };
 
@@ -798,29 +756,26 @@ int main(int argc, char **argv) {
         // main-thread EventLoop that the SDL player relies on for
         // renderPending() dispatch.
         Thread statsThread;
-        if(statsEnabled) {
-                unsigned int intervalMs = static_cast<unsigned int>(
-                        opts.statsInterval * 1000.0);
-                if(intervalMs < 1) intervalMs = 1;
+        if (statsEnabled) {
+                unsigned int intervalMs = static_cast<unsigned int>(opts.statsInterval * 1000.0);
+                if (intervalMs < 1) intervalMs = 1;
                 statsThread.setName(String("mp-stats"));
                 statsThread.start();
-                statsThread.threadEventLoop()->startTimer(intervalMs,
-                        [&emitStats]() { emitStats("stats"); });
+                statsThread.threadEventLoop()->startTimer(intervalMs, [&emitStats]() { emitStats("stats"); });
         }
 
         Error serr = pipeline.start();
-        if(serr.isError()) {
-                fprintf(stderr, "Error: pipeline start failed: %s\n",
-                        serr.desc().cstr());
+        if (serr.isError()) {
+                fprintf(stderr, "Error: pipeline start failed: %s\n", serr.desc().cstr());
                 (void)pipeline.close();
-                if(statsEnabled) {
+                if (statsEnabled) {
                         statsThread.quit();
                         statsThread.wait();
                 }
-                for(auto *r : reporters) delete r;
+                for (auto *r : reporters) delete r;
                 delete ui.audioOutput;
                 delete ui.window;
-                if(statsFile != nullptr) {
+                if (statsFile != nullptr) {
                         statsFile->close();
                         delete statsFile;
                 }
@@ -839,7 +794,7 @@ int main(int argc, char **argv) {
         // Stop the stats thread first so it can't race the final
         // emitStats() call below — once we return from wait() the
         // stats file and the pipeline are ours alone.
-        if(statsEnabled) {
+        if (statsEnabled) {
                 statsThread.quit();
                 statsThread.wait();
         }
@@ -850,20 +805,20 @@ int main(int argc, char **argv) {
         // still live and the aggregate reflects the run).  Tagged
         // "final" so JSONL consumers can distinguish it from the
         // periodic "stats" ticks.
-        if(statsEnabled) emitStats("final");
+        if (statsEnabled) emitStats("final");
 
         (void)pipeline.close();
 
-        for(auto *r : reporters) delete r;
+        for (auto *r : reporters) delete r;
         delete ui.audioOutput;
         delete ui.window;
 
-        if(statsFile != nullptr) {
+        if (statsFile != nullptr) {
                 statsFile->close();
                 delete statsFile;
         }
 
-        if(opts.memStats) MemSpace::logAllStats();
+        if (opts.memStats) MemSpace::logAllStats();
 
         // --- Final exit code resolution ---
         //
@@ -876,19 +831,16 @@ int main(int argc, char **argv) {
         // "pipeline didn't make it" from "pipeline made it but the
         // frames don't hang together".
         int finalRc = rc;
-        if(runtimeErrorLatched.load()) {
+        if (runtimeErrorLatched.load()) {
                 finalRc = ExitPipelineRuntime;
-        } else if(!inspectorTasks.isEmpty()) {
+        } else if (!inspectorTasks.isEmpty()) {
                 int64_t totalDisc = 0;
-                for(auto it = inspectorTasks.begin();
-                    it != inspectorTasks.end(); ++it) {
+                for (auto it = inspectorTasks.begin(); it != inspectorTasks.end(); ++it) {
                         InspectorSnapshot snap = it->second->snapshot();
                         totalDisc += snap.totalDiscontinuities;
                 }
-                if(totalDisc > 0) {
-                        fprintf(stderr,
-                                "Inspector reported %lld discontinuit%s\n",
-                                (long long)totalDisc,
+                if (totalDisc > 0) {
+                        fprintf(stderr, "Inspector reported %lld discontinuit%s\n", (long long)totalDisc,
                                 totalDisc == 1 ? "y" : "ies");
                         finalRc = ExitInspectorDiscontinuity;
                 }

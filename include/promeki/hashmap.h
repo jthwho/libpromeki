@@ -38,9 +38,8 @@ PROMEKI_NAMESPACE_BEGIN
  * int w = cache.value("width", 0);  // 1920
  * @endcode
  */
-template <typename K, typename V>
-class HashMap {
-        PROMEKI_SHARED_FINAL(HashMap)
+template <typename K, typename V> class HashMap {
+                PROMEKI_SHARED_FINAL(HashMap)
         public:
                 /** @brief Shared pointer type for HashMap. */
                 using Ptr = SharedPtr<HashMap>;
@@ -154,7 +153,7 @@ class HashMap {
                  */
                 V value(const K &key, const V &defaultValue = V{}) const {
                         auto it = d.find(key);
-                        if(it != d.end()) return it->second;
+                        if (it != d.end()) return it->second;
                         return defaultValue;
                 }
 
@@ -198,18 +197,14 @@ class HashMap {
                  * @param key The key to remove.
                  * @return True if an entry was removed, false if the key was not found.
                  */
-                bool remove(const K &key) {
-                        return d.erase(key) > 0;
-                }
+                bool remove(const K &key) { return d.erase(key) > 0; }
 
                 /**
                  * @brief Removes the entry at @p pos.
                  * @param pos Iterator to the entry to remove.
                  * @return Iterator to the next entry.
                  */
-                Iterator remove(Iterator pos) {
-                        return d.erase(pos);
-                }
+                Iterator remove(Iterator pos) { return d.erase(pos); }
 
                 /** @brief Removes all entries. */
                 void clear() noexcept {
@@ -232,7 +227,7 @@ class HashMap {
                 List<K> keys() const {
                         List<K> ret;
                         ret.reserve(d.size());
-                        for(const auto &[k, v] : d) ret.pushToBack(k);
+                        for (const auto &[k, v] : d) ret.pushToBack(k);
                         return ret;
                 }
 
@@ -240,7 +235,7 @@ class HashMap {
                 List<V> values() const {
                         List<V> ret;
                         ret.reserve(d.size());
-                        for(const auto &[k, v] : d) ret.pushToBack(v);
+                        for (const auto &[k, v] : d) ret.pushToBack(v);
                         return ret;
                 }
 
@@ -249,9 +244,8 @@ class HashMap {
                  * @tparam Func Callable with signature void(const K &, const V &).
                  * @param func The function to invoke.
                  */
-                template <typename Func>
-                void forEach(Func &&func) const {
-                        for(const auto &[k, v] : d) func(k, v);
+                template <typename Func> void forEach(Func &&func) const {
+                        for (const auto &[k, v] : d) func(k, v);
                         return;
                 }
 

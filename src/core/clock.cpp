@@ -18,20 +18,10 @@ PROMEKI_NAMESPACE_BEGIN
 // Clock (base class)
 // ============================================================================
 
-Clock::Clock(const ClockDomain &domain,
-             const Duration &fixedOffset,
-             ClockPauseMode pauseMode,
-             ClockFilter *filter)
-        : _domain(domain),
-          _pauseMode(pauseMode),
-          _filter(ClockFilter::UPtr::takeOwnership(filter)),
-          _fixedOffsetNs(fixedOffset.nanoseconds()),
-          _pausedOffsetNs(0),
-          _frozenFilteredNs(0),
-          _paused(false),
-          _lastNowNs(INT64_MIN)
-{
-}
+Clock::Clock(const ClockDomain &domain, const Duration &fixedOffset, ClockPauseMode pauseMode, ClockFilter *filter)
+    : _domain(domain), _pauseMode(pauseMode), _filter(ClockFilter::UPtr::takeOwnership(filter)),
+      _fixedOffsetNs(fixedOffset.nanoseconds()), _pausedOffsetNs(0), _frozenFilteredNs(0), _paused(false),
+      _lastNowNs(INT64_MIN) {}
 
 Clock::~Clock() = default;
 
@@ -56,7 +46,7 @@ bool Clock::isPaused() const {
 
 Result<int64_t> Clock::applyFilter(int64_t raw) const {
         // _mutex is held by caller where filter mutation matters.
-        if(_filter) return makeResult<int64_t>(_filter->filter(raw));
+        if (_filter) return makeResult<int64_t>(_filter->filter(raw));
         return makeResult<int64_t>(raw);
 }
 
@@ -66,7 +56,7 @@ Result<MediaTimeStamp> Clock::now() const {
         {
                 std::lock_guard<std::mutex> lock(_mutex);
 
-                if(_paused) {
+                if (_paused) {
                         // While paused, the filtered value is frozen.
                         // raw() is not called — useful both to avoid
                         // cost and to avoid propagating transient
@@ -75,14 +65,14 @@ Result<MediaTimeStamp> Clock::now() const {
                         filteredNs = _frozenFilteredNs;
                 } else {
                         auto rawRes = raw();
-                        if(isError(rawRes)) {
+                        if (isError(rawRes)) {
                                 return makeError<MediaTimeStamp>(error(rawRes));
                         }
                         auto f = applyFilter(value(rawRes));
                         // applyFilter never errors today; kept as
                         // Result so a future filter implementation
                         // can fail gracefully.
-                        if(isError(f)) return makeError<MediaTimeStamp>(error(f));
+                        if (isError(f)) return makeError<MediaTimeStamp>(error(f));
                         filteredNs = value(f);
                 }
 
@@ -95,11 +85,10 @@ Result<MediaTimeStamp> Clock::now() const {
         // previous one.  CAS loop so concurrent callers all see a
         // non-decreasing sequence even without the mutex.
         int64_t last = _lastNowNs.load(std::memory_order_relaxed);
-        while(true) {
+        while (true) {
                 int64_t clamped = std::max(value, last);
-                if(_lastNowNs.compare_exchange_weak(last, clamped,
-                                                   std::memory_order_acq_rel,
-                                                   std::memory_order_relaxed)) {
+                if (_lastNowNs.compare_exchange_weak(last, clamped, std::memory_order_acq_rel,
+                                                     std::memory_order_relaxed)) {
                         value = clamped;
                         break;
                 }
@@ -107,47 +96,46 @@ Result<MediaTimeStamp> Clock::now() const {
         }
 
         TimeStamp ts{TimeStamp::Clock::time_point(std::chrono::nanoseconds(value))};
-        return makeResult(MediaTimeStamp(ts, _domain,
-                Duration::fromNanoseconds(totalOffsetNs)));
+        return makeResult(MediaTimeStamp(ts, _domain, Duration::fromNanoseconds(totalOffsetNs)));
 }
 
 Result<int64_t> Clock::nowNs() const {
         auto r = now();
-        if(isError(r)) return makeError<int64_t>(error(r));
+        if (isError(r)) return makeError<int64_t>(error(r));
         return makeResult<int64_t>(value(r).timeStamp().nanoseconds());
 }
 
 Error Clock::setPause(bool paused) {
-        if(_pauseMode == ClockPauseMode::CannotPause) {
+        if (_pauseMode == ClockPauseMode::CannotPause) {
                 return Error::NotSupported;
         }
 
         {
                 std::lock_guard<std::mutex> lock(_mutex);
-                if(_paused == paused) return {};
+                if (_paused == paused) return {};
 
-                if(paused) {
+                if (paused) {
                         auto rawRes = raw();
-                        if(isError(rawRes)) return error(rawRes);
+                        if (isError(rawRes)) return error(rawRes);
                         auto f = applyFilter(value(rawRes));
-                        if(isError(f)) return error(f);
+                        if (isError(f)) return error(f);
                         _frozenFilteredNs = value(f);
                         _paused = true;
                         Error e = onPause(true);
-                        if(e.isError()) {
+                        if (e.isError()) {
                                 _paused = false;
                                 return e;
                         }
                 } else {
                         Error e = onPause(false);
-                        if(e.isError()) return e;
+                        if (e.isError()) return e;
                         auto rawRes = raw();
-                        if(isError(rawRes)) {
+                        if (isError(rawRes)) {
                                 (void)onPause(true);
                                 return error(rawRes);
                         }
                         auto f = applyFilter(value(rawRes));
-                        if(isError(f)) {
+                        if (isError(f)) {
                                 (void)onPause(true);
                                 return error(f);
                         }
@@ -160,14 +148,14 @@ Error Clock::setPause(bool paused) {
 }
 
 Error Clock::sleepUntil(const MediaTimeStamp &deadline) const {
-        if(deadline.domain() != _domain) {
+        if (deadline.domain() != _domain) {
                 return Error::ClockDomainMismatch;
         }
 
         int64_t totalOffsetNs;
         {
                 std::lock_guard<std::mutex> lock(_mutex);
-                if(_paused) return Error::ClockPaused;
+                if (_paused) return Error::ClockPaused;
                 totalOffsetNs = _fixedOffsetNs + _pausedOffsetNs;
         }
 
@@ -179,10 +167,7 @@ Error Clock::sleepUntil(const MediaTimeStamp &deadline) const {
 // WallClock
 // ============================================================================
 
-WallClock::WallClock()
-        : Clock(ClockDomain(ClockDomain::SystemMonotonic))
-{
-}
+WallClock::WallClock() : Clock(ClockDomain(ClockDomain::SystemMonotonic)) {}
 
 int64_t WallClock::resolutionNs() const {
         // steady_clock::period on every platform we target is at
@@ -194,10 +179,7 @@ int64_t WallClock::resolutionNs() const {
 ClockJitter WallClock::jitter() const {
         // steady_clock reads are effectively instantaneous — any
         // measurable bias is dominated by the test harness itself.
-        return ClockJitter{
-                Duration::fromNanoseconds(-1),
-                Duration::fromNanoseconds(1)
-        };
+        return ClockJitter{Duration::fromNanoseconds(-1), Duration::fromNanoseconds(1)};
 }
 
 Result<int64_t> WallClock::raw() const {
@@ -205,8 +187,7 @@ Result<int64_t> WallClock::raw() const {
 }
 
 Error WallClock::sleepUntilNs(int64_t targetNs) const {
-        auto tp = TimeStamp::Clock::time_point(
-                std::chrono::nanoseconds(targetNs));
+        auto tp = TimeStamp::Clock::time_point(std::chrono::nanoseconds(targetNs));
         std::this_thread::sleep_until(tp);
         return {};
 }

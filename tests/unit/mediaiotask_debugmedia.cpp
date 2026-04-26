@@ -29,46 +29,43 @@ using namespace promeki;
 
 namespace {
 
-// Builds a minimal Frame with one video + one audio payload so
-// DebugMediaFile has something non-trivial to serialise on the
-// write side and the reader has a real desc set to recover.
-Frame::Ptr makeSmokeFrame() {
-        Frame::Ptr f = Frame::Ptr::create();
-        f.modify()->metadata().set(Metadata::FrameRate,
-                                   FrameRate(FrameRate::FPS_30));
+        // Builds a minimal Frame with one video + one audio payload so
+        // DebugMediaFile has something non-trivial to serialise on the
+        // write side and the reader has a real desc set to recover.
+        Frame::Ptr makeSmokeFrame() {
+                Frame::Ptr f = Frame::Ptr::create();
+                f.modify()->metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_30));
 
-        UncompressedVideoPayload::Ptr vp = UncompressedVideoPayload::allocate(
-                ImageDesc(Size2Du32(16, 8), PixelFormat(PixelFormat::RGB8_sRGB)));
-        if(!vp.isValid()) return Frame::Ptr();
-        f.modify()->addPayload(vp);
+                UncompressedVideoPayload::Ptr vp = UncompressedVideoPayload::allocate(
+                        ImageDesc(Size2Du32(16, 8), PixelFormat(PixelFormat::RGB8_sRGB)));
+                if (!vp.isValid()) return Frame::Ptr();
+                f.modify()->addPayload(vp);
 
-        AudioDesc adesc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
-        const size_t samples = 32;
-        Buffer::Ptr abuf = Buffer::Ptr::create(adesc.bufferSize(samples));
-        abuf.modify()->setSize(adesc.bufferSize(samples));
-        BufferView aview(abuf, 0, abuf->size());
-        PcmAudioPayload::Ptr ap = PcmAudioPayload::Ptr::create(
-                adesc, samples, aview);
-        if(!ap.isValid()) return Frame::Ptr();
-        f.modify()->addPayload(ap);
+                AudioDesc    adesc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
+                const size_t samples = 32;
+                Buffer::Ptr  abuf = Buffer::Ptr::create(adesc.bufferSize(samples));
+                abuf.modify()->setSize(adesc.bufferSize(samples));
+                BufferView           aview(abuf, 0, abuf->size());
+                PcmAudioPayload::Ptr ap = PcmAudioPayload::Ptr::create(adesc, samples, aview);
+                if (!ap.isValid()) return Frame::Ptr();
+                f.modify()->addPayload(ap);
 
-        return f;
-}
+                return f;
+        }
 
-// Writes a one-frame PMDF via the DebugMediaFile helper so the
-// source-open test has a known-good file to open.  Path is under
-// Dir::temp() so it honours LibraryOptions::TempDir overrides.
-String writeSinglePmdf() {
-        const String path = Dir::temp().path().toString()
-                + String("/promeki-pmdf-sourceopen-test.pmdf");
-        DebugMediaFile df;
-        REQUIRE(df.open(path, DebugMediaFile::Write).isOk());
-        Frame::Ptr f = makeSmokeFrame();
-        REQUIRE(f.isValid());
-        REQUIRE(df.writeFrame(f).isOk());
-        REQUIRE(df.close().isOk());
-        return path;
-}
+        // Writes a one-frame PMDF via the DebugMediaFile helper so the
+        // source-open test has a known-good file to open.  Path is under
+        // Dir::temp() so it honours LibraryOptions::TempDir overrides.
+        String writeSinglePmdf() {
+                const String   path = Dir::temp().path().toString() + String("/promeki-pmdf-sourceopen-test.pmdf");
+                DebugMediaFile df;
+                REQUIRE(df.open(path, DebugMediaFile::Write).isOk());
+                Frame::Ptr f = makeSmokeFrame();
+                REQUIRE(f.isValid());
+                REQUIRE(df.writeFrame(f).isOk());
+                REQUIRE(df.close().isOk());
+                return path;
+        }
 
 } // namespace
 
@@ -104,8 +101,7 @@ TEST_CASE("MediaIOTask_DebugMedia: source open populates mediaDesc/audioDesc") {
         REQUIRE_FALSE(md.imageList().isEmpty());
         CHECK(md.imageList()[0].width() == 16);
         CHECK(md.imageList()[0].height() == 8);
-        CHECK(md.imageList()[0].pixelFormat()
-              == PixelFormat(PixelFormat::RGB8_sRGB));
+        CHECK(md.imageList()[0].pixelFormat() == PixelFormat(PixelFormat::RGB8_sRGB));
 
         const AudioDesc &adesc = io->audioDesc();
         CHECK(adesc.isValid());
@@ -118,7 +114,7 @@ TEST_CASE("MediaIOTask_DebugMedia: source open populates mediaDesc/audioDesc") {
         // Rewind sanity: first readFrame after open must still yield
         // frame 0 — the peek-and-rewind would otherwise eat it.
         Frame::Ptr first;
-        Error re = io->readFrame(first);
+        Error      re = io->readFrame(first);
         REQUIRE(re.isOk());
         REQUIRE(first.isValid());
         CHECK(first->videoPayloads().size() == 1u);

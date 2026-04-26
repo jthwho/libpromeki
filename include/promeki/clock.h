@@ -42,19 +42,17 @@ PROMEKI_NAMESPACE_BEGIN
  * its next callback.
  */
 struct ClockJitter {
-        /** @brief Most negative expected value of @c reportedTime - trueTime. */
-        Duration minError;
+                /** @brief Most negative expected value of @c reportedTime - trueTime. */
+                Duration minError;
 
-        /** @brief Most positive expected value of @c reportedTime - trueTime. */
-        Duration maxError;
+                /** @brief Most positive expected value of @c reportedTime - trueTime. */
+                Duration maxError;
 
-        /** @brief Total width of the error envelope (@c maxError - minError). */
-        Duration span() const { return maxError - minError; }
+                /** @brief Total width of the error envelope (@c maxError - minError). */
+                Duration span() const { return maxError - minError; }
 
-        /** @brief True when the envelope is @c [-maxError, +maxError]. */
-        bool isSymmetric() const {
-                return minError.nanoseconds() == -maxError.nanoseconds();
-        }
+                /** @brief True when the envelope is @c [-maxError, +maxError]. */
+                bool isSymmetric() const { return minError.nanoseconds() == -maxError.nanoseconds(); }
 };
 
 /**
@@ -107,9 +105,9 @@ class ClockFilter {
  * clock source actually stops.
  */
 enum class ClockPauseMode {
-        CannotPause,              ///< @ref Clock::setPause returns NotSupported.
-        PausesRawKeepsRunning,    ///< Pause is bookkeeping only; raw() keeps advancing.
-        PausesRawStops            ///< onPause(true) freezes raw(); onPause(false) resumes.
+        CannotPause,           ///< @ref Clock::setPause returns NotSupported.
+        PausesRawKeepsRunning, ///< Pause is bookkeeping only; raw() keeps advancing.
+        PausesRawStops         ///< onPause(true) freezes raw(); onPause(false) resumes.
 };
 
 /**
@@ -175,10 +173,8 @@ class Clock {
                  *                   ownership.  @c nullptr disables
                  *                   filtering.
                  */
-                Clock(const ClockDomain &domain,
-                      const Duration &fixedOffset = Duration(),
-                      ClockPauseMode pauseMode = ClockPauseMode::CannotPause,
-                      ClockFilter *filter = nullptr);
+                Clock(const ClockDomain &domain, const Duration &fixedOffset = Duration(),
+                      ClockPauseMode pauseMode = ClockPauseMode::CannotPause, ClockFilter *filter = nullptr);
 
                 /** @brief Virtual destructor. */
                 virtual ~Clock();
@@ -364,17 +360,17 @@ class Clock {
         private:
                 Result<int64_t> applyFilter(int64_t raw) const;
 
-                ClockDomain                   _domain;
-                ClockPauseMode                _pauseMode;
-                ClockFilter::UPtr             _filter;
+                ClockDomain       _domain;
+                ClockPauseMode    _pauseMode;
+                ClockFilter::UPtr _filter;
 
-                mutable std::mutex            _mutex;
-                int64_t                       _fixedOffsetNs;
-                int64_t                       _pausedOffsetNs;
-                int64_t                       _frozenFilteredNs;
-                bool                          _paused;
+                mutable std::mutex _mutex;
+                int64_t            _fixedOffsetNs;
+                int64_t            _pausedOffsetNs;
+                int64_t            _frozenFilteredNs;
+                bool               _paused;
 
-                mutable std::atomic<int64_t>  _lastNowNs;
+                mutable std::atomic<int64_t> _lastNowNs;
 };
 
 /**

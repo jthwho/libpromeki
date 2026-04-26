@@ -27,19 +27,19 @@ TEST_CASE("ReadWriteLock_WriteLock") {
 
 TEST_CASE("ReadWriteLock_ConcurrentReads") {
         ReadWriteLock rwl;
-        Atomic<int> readersInside(0);
-        Atomic<int> maxConcurrentReaders(0);
-        Atomic<int> ready(0);
+        Atomic<int>   readersInside(0);
+        Atomic<int>   maxConcurrentReaders(0);
+        Atomic<int>   ready(0);
 
         auto reader = [&] {
                 // Ensure both threads are alive before acquiring the lock
                 ready.fetchAndAdd(1);
-                while(ready.value() < 2) std::this_thread::yield();
+                while (ready.value() < 2) std::this_thread::yield();
 
                 ReadWriteLock::ReadLocker locker(rwl);
-                int val = readersInside.fetchAndAdd(1) + 1;
-                int prev = maxConcurrentReaders.value();
-                while(val > prev && !maxConcurrentReaders.compareAndSwap(prev, val));
+                int                       val = readersInside.fetchAndAdd(1) + 1;
+                int                       prev = maxConcurrentReaders.value();
+                while (val > prev && !maxConcurrentReaders.compareAndSwap(prev, val));
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
                 readersInside.fetchAndSub(1);
         };
@@ -55,10 +55,10 @@ TEST_CASE("ReadWriteLock_WriteExcludesReaders") {
         ReadWriteLock rwl;
         rwl.lockForWrite();
 
-        bool gotReadLock = false;
+        bool        gotReadLock = false;
         std::thread t([&] {
                 gotReadLock = rwl.tryLockForRead();
-                if(gotReadLock) rwl.unlock();
+                if (gotReadLock) rwl.unlock();
         });
         t.join();
         CHECK_FALSE(gotReadLock);
@@ -69,10 +69,10 @@ TEST_CASE("ReadWriteLock_WriteExcludesWriters") {
         ReadWriteLock rwl;
         rwl.lockForWrite();
 
-        bool gotWriteLock = false;
+        bool        gotWriteLock = false;
         std::thread t([&] {
                 gotWriteLock = rwl.tryLockForWrite();
-                if(gotWriteLock) rwl.unlock();
+                if (gotWriteLock) rwl.unlock();
         });
         t.join();
         CHECK_FALSE(gotWriteLock);
@@ -94,10 +94,10 @@ TEST_CASE("ReadWriteLock_WriteLocker") {
         ReadWriteLock rwl;
         {
                 ReadWriteLock::WriteLocker locker(rwl);
-                bool got = false;
-                std::thread t([&] {
+                bool                       got = false;
+                std::thread                t([&] {
                         got = rwl.tryLockForRead();
-                        if(got) rwl.unlock();
+                        if (got) rwl.unlock();
                 });
                 t.join();
                 CHECK_FALSE(got);
@@ -110,10 +110,10 @@ TEST_CASE("ReadWriteLock_ReadExcludesWriters") {
         ReadWriteLock rwl;
         rwl.lockForRead();
 
-        bool gotWriteLock = false;
+        bool        gotWriteLock = false;
         std::thread t([&] {
                 gotWriteLock = rwl.tryLockForWrite();
-                if(gotWriteLock) rwl.unlock();
+                if (gotWriteLock) rwl.unlock();
         });
         t.join();
         CHECK_FALSE(gotWriteLock);

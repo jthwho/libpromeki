@@ -16,9 +16,9 @@ Event::Type Event::registerType() {
         return _nextType.fetchAndAdd(1);
 }
 
-const Event::Type Event::Timer       = Event::registerType();
+const Event::Type Event::Timer = Event::registerType();
 const Event::Type Event::DeferredCall = Event::registerType();
 const Event::Type Event::SignalEvent = Event::registerType();
-const Event::Type Event::Quit        = Event::registerType();
+const Event::Type Event::Quit = Event::registerType();
 
 PROMEKI_NAMESPACE_END

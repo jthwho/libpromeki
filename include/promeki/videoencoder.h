@@ -109,10 +109,12 @@ class VideoEncoder {
                  * a copy of the record for the process lifetime.
                  */
                 struct BackendRecord {
-                        VideoCodec::ID       codecId;                         ///< Codec family this record implements.
-                        VideoCodec::Backend  backend;                         ///< Typed backend handle (see @ref VideoCodec::registerBackend).
-                        int                  weight = BackendWeight::Vendored; ///< Selection weight when multiple backends share a codec.
-                        /**
+                                VideoCodec::ID codecId; ///< Codec family this record implements.
+                                VideoCodec::Backend
+                                        backend; ///< Typed backend handle (see @ref VideoCodec::registerBackend).
+                                int     weight = BackendWeight::
+                                        Vendored; ///< Selection weight when multiple backends share a codec.
+                                /**
                          * @brief Uncompressed @ref PixelFormat IDs this
                          *        backend ingests without internal conversion.
                          *
@@ -120,8 +122,8 @@ class VideoEncoder {
                          * Empty means "this backend accepts any uncompressed
                          * input it can convert internally."
                          */
-                        List<int>            supportedInputs;
-                        Factory              factory;                        ///< Creates a fresh session; never null.
+                                List<int> supportedInputs;
+                                Factory   factory; ///< Creates a fresh session; never null.
                 };
 
                 /** @brief Virtual destructor. */
@@ -243,8 +245,7 @@ class VideoEncoder {
                  * across every registered backend for @p codecId (the
                  * planner's "could any backend do it?" query).
                  */
-                static List<int> supportedInputsFor(VideoCodec::ID codecId,
-                                                    VideoCodec::Backend backend);
+                static List<int> supportedInputsFor(VideoCodec::ID codecId, VideoCodec::Backend backend);
 
                 /**
                  * @brief Resolves a backend and invokes its factory.
@@ -256,9 +257,8 @@ class VideoEncoder {
                  * returned encoder has @ref codec() pre-populated and
                  * @ref configure() invoked when @p config is non-null.
                  */
-                static Result<VideoEncoder *> create(VideoCodec::ID codecId,
-                                                    VideoCodec::Backend pinned,
-                                                    const MediaConfig *config);
+                static Result<VideoEncoder *> create(VideoCodec::ID codecId, VideoCodec::Backend pinned,
+                                                     const MediaConfig *config);
 
         protected:
                 VideoEncoder() = default;
@@ -275,8 +275,8 @@ class VideoEncoder {
                  */
                 void setCodec(VideoCodec codec) { _codec = codec; }
 
-                Error   _lastError;
-                String  _lastErrorMessage;
+                Error  _lastError;
+                String _lastErrorMessage;
 
                 /** @brief Records a new error state. */
                 void setError(Error err, const String &msg = String());

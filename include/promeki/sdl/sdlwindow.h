@@ -45,8 +45,9 @@ class SDLEventPump;
  * event thread, typically the main thread).
  */
 class SDLWindow : public Widget {
-        PROMEKI_OBJECT(SDLWindow, Widget)
-        friend class SDLEventPump;
+                PROMEKI_OBJECT(SDLWindow, Widget)
+                friend class SDLEventPump;
+
         public:
                 /**
                  * @brief Constructs a window with default size.
@@ -61,8 +62,7 @@ class SDLWindow : public Widget {
                  * @param height Window height in pixels.
                  * @param parent Parent ObjectBase, or nullptr.
                  */
-                SDLWindow(const String &title, int width, int height,
-                          ObjectBase *parent = nullptr);
+                SDLWindow(const String &title, int width, int height, ObjectBase *parent = nullptr);
 
                 /** @brief Destructor. Destroys the SDL window and renderer. */
                 ~SDLWindow();
@@ -156,11 +156,11 @@ class SDLWindow : public Widget {
                 PROMEKI_SIGNAL(moved, Point2Di32)
 
         private:
-                SDL_Window     *_sdlWindow = nullptr;
-                SDL_Renderer   *_sdlRenderer = nullptr;
-                String          _title = "promeki";
-                Point2Di32      _position{0, 0};
-                bool            _fullScreen = false;
+                SDL_Window   *_sdlWindow = nullptr;
+                SDL_Renderer *_sdlRenderer = nullptr;
+                String        _title = "promeki";
+                Point2Di32    _position{0, 0};
+                bool          _fullScreen = false;
 
                 void createWindow();
                 void destroyWindow();

@@ -136,16 +136,14 @@ class MediaIOTask_FrameSync : public MediaIOTask {
                 Error executeCmd(MediaIOCommandStats &cmd) override;
 
                 Error describe(MediaIODescription *out) const override;
-                Error proposeInput(const MediaDesc &offered,
-                                   MediaDesc *preferred) const override;
-                Error proposeOutput(const MediaDesc &requested,
-                                    MediaDesc *achievable) const override;
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
+                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const override;
 
-                FrameSync               _sync;
-                Clock::Ptr              _ownedClock;
-                Clock::Ptr              _externalClock;
-                FrameCount              _framesPushed{0};
-                FrameCount              _framesPulled{0};
+                FrameSync  _sync;
+                Clock::Ptr _ownedClock;
+                Clock::Ptr _externalClock;
+                FrameCount _framesPushed{0};
+                FrameCount _framesPulled{0};
 };
 
 PROMEKI_NAMESPACE_END

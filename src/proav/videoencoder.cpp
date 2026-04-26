@@ -62,23 +62,22 @@ void VideoEncoder::clearError() {
 
 namespace {
 
-struct EncoderRegistry {
-        ReadWriteLock                                   mutex;
-        Map<VideoCodec::ID, List<VideoEncoder::BackendRecord>> entries;
-};
+        struct EncoderRegistry {
+                        ReadWriteLock                                          mutex;
+                        Map<VideoCodec::ID, List<VideoEncoder::BackendRecord>> entries;
+        };
 
-EncoderRegistry &registry() {
-        static EncoderRegistry inst;
-        return inst;
-}
+        EncoderRegistry &registry() {
+                static EncoderRegistry inst;
+                return inst;
+        }
 
-void sortByWeight(List<VideoEncoder::BackendRecord> &list) {
-        std::sort(list.begin(), list.end(),
-                  [](const VideoEncoder::BackendRecord &a,
-                     const VideoEncoder::BackendRecord &b) {
-                          return a.weight > b.weight;
-                  });
-}
+        void sortByWeight(List<VideoEncoder::BackendRecord> &list) {
+                std::sort(list.begin(), list.end(),
+                          [](const VideoEncoder::BackendRecord &a, const VideoEncoder::BackendRecord &b) {
+                                  return a.weight > b.weight;
+                          });
+        }
 
 } // namespace
 
@@ -87,15 +86,15 @@ void sortByWeight(List<VideoEncoder::BackendRecord> &list) {
 // ---------------------------------------------------------------------------
 
 Error VideoEncoder::registerBackend(BackendRecord record) {
-        if(!record.factory) return Error::Invalid;
-        if(!record.backend.isValid()) return Error::Invalid;
-        if(record.codecId == VideoCodec::Invalid) return Error::Invalid;
+        if (!record.factory) return Error::Invalid;
+        if (!record.backend.isValid()) return Error::Invalid;
+        if (record.codecId == VideoCodec::Invalid) return Error::Invalid;
 
-        auto &reg = registry();
+        auto                      &reg = registry();
         ReadWriteLock::WriteLocker lock(reg.mutex);
-        auto &list = reg.entries[record.codecId];
-        for(auto &existing : list) {
-                if(existing.backend == record.backend) {
+        auto                      &list = reg.entries[record.codecId];
+        for (auto &existing : list) {
+                if (existing.backend == record.backend) {
                         existing = std::move(record);
                         sortByWeight(list);
                         return Error::Ok;
@@ -107,80 +106,81 @@ Error VideoEncoder::registerBackend(BackendRecord record) {
 }
 
 VideoCodec::BackendList VideoEncoder::availableBackends(VideoCodec::ID codecId) {
-        VideoCodec::BackendList out;
-        auto &reg = registry();
+        VideoCodec::BackendList   out;
+        auto                     &reg = registry();
         ReadWriteLock::ReadLocker lock(reg.mutex);
-        auto it = reg.entries.find(codecId);
-        if(it == reg.entries.end()) return out;
-        for(const auto &r : it->second) out.pushToBack(r.backend);
+        auto                      it = reg.entries.find(codecId);
+        if (it == reg.entries.end()) return out;
+        for (const auto &r : it->second) out.pushToBack(r.backend);
         return out;
 }
 
-List<int> VideoEncoder::supportedInputsFor(VideoCodec::ID codecId,
-                                            VideoCodec::Backend pinned) {
-        auto &reg = registry();
+List<int> VideoEncoder::supportedInputsFor(VideoCodec::ID codecId, VideoCodec::Backend pinned) {
+        auto                     &reg = registry();
         ReadWriteLock::ReadLocker lock(reg.mutex);
-        auto it = reg.entries.find(codecId);
-        if(it == reg.entries.end()) return {};
-        if(pinned.isValid()) {
-                for(const auto &r : it->second) {
-                        if(r.backend == pinned) return r.supportedInputs;
+        auto                      it = reg.entries.find(codecId);
+        if (it == reg.entries.end()) return {};
+        if (pinned.isValid()) {
+                for (const auto &r : it->second) {
+                        if (r.backend == pinned) return r.supportedInputs;
                 }
                 return {};
         }
         // Union across every registered backend for this codec.
         Set<int> acc;
-        for(const auto &r : it->second) {
-                for(int pd : r.supportedInputs) acc.insert(pd);
+        for (const auto &r : it->second) {
+                for (int pd : r.supportedInputs) acc.insert(pd);
         }
         List<int> out;
         out.reserve(acc.size());
-        for(int pd : acc) out.pushToBack(pd);
+        for (int pd : acc) out.pushToBack(pd);
         return out;
 }
 
-Result<VideoEncoder *> VideoEncoder::create(VideoCodec::ID codecId,
-                                             VideoCodec::Backend pinned,
-                                             const MediaConfig *config) {
-        auto &reg = registry();
+Result<VideoEncoder *> VideoEncoder::create(VideoCodec::ID codecId, VideoCodec::Backend pinned,
+                                            const MediaConfig *config) {
+        auto                &reg = registry();
         const BackendRecord *chosen = nullptr;
-        VideoCodec::Backend chosenTag;
+        VideoCodec::Backend  chosenTag;
         {
                 ReadWriteLock::ReadLocker lock(reg.mutex);
-                auto it = reg.entries.find(codecId);
-                if(it == reg.entries.end() || it->second.isEmpty()) {
+                auto                      it = reg.entries.find(codecId);
+                if (it == reg.entries.end() || it->second.isEmpty()) {
                         return makeError<VideoEncoder *>(Error::IdNotFound);
                 }
                 const auto &list = it->second;
 
-                if(pinned.isValid()) {
-                        for(const auto &r : list) {
-                                if(r.backend == pinned) { chosen = &r; break; }
+                if (pinned.isValid()) {
+                        for (const auto &r : list) {
+                                if (r.backend == pinned) {
+                                        chosen = &r;
+                                        break;
+                                }
                         }
-                        if(chosen == nullptr) {
+                        if (chosen == nullptr) {
                                 return makeError<VideoEncoder *>(Error::IdNotFound);
                         }
                 } else {
                         // Consult MediaConfig::CodecBackend as a soft pin.
-                        if(config != nullptr) {
+                        if (config != nullptr) {
                                 String backendName = config->getAs<String>(MediaConfig::CodecBackend);
-                                if(!backendName.isEmpty()) {
+                                if (!backendName.isEmpty()) {
                                         auto bk = VideoCodec::lookupBackend(backendName);
-                                        if(!error(bk).isError()) {
+                                        if (!error(bk).isError()) {
                                                 auto backend = value(bk);
-                                                for(const auto &r : list) {
-                                                        if(r.backend == backend) {
+                                                for (const auto &r : list) {
+                                                        if (r.backend == backend) {
                                                                 chosen = &r;
                                                                 break;
                                                         }
                                                 }
-                                                if(chosen == nullptr) {
+                                                if (chosen == nullptr) {
                                                         return makeError<VideoEncoder *>(Error::IdNotFound);
                                                 }
                                         }
                                 }
                         }
-                        if(chosen == nullptr) chosen = &list.front();
+                        if (chosen == nullptr) chosen = &list.front();
                 }
                 chosenTag = chosen->backend;
                 // Copy the factory out of the record so we can release
@@ -192,20 +192,23 @@ Result<VideoEncoder *> VideoEncoder::create(VideoCodec::ID codecId,
         Factory factory;
         {
                 ReadWriteLock::ReadLocker lock(reg.mutex);
-                auto it = reg.entries.find(codecId);
-                if(it == reg.entries.end()) {
+                auto                      it = reg.entries.find(codecId);
+                if (it == reg.entries.end()) {
                         return makeError<VideoEncoder *>(Error::IdNotFound);
                 }
-                for(const auto &r : it->second) {
-                        if(r.backend == chosenTag) { factory = r.factory; break; }
+                for (const auto &r : it->second) {
+                        if (r.backend == chosenTag) {
+                                factory = r.factory;
+                                break;
+                        }
                 }
         }
-        if(!factory) return makeError<VideoEncoder *>(Error::IdNotFound);
+        if (!factory) return makeError<VideoEncoder *>(Error::IdNotFound);
 
         VideoEncoder *enc = factory();
-        if(enc == nullptr) return makeError<VideoEncoder *>(Error::LibraryFailure);
+        if (enc == nullptr) return makeError<VideoEncoder *>(Error::LibraryFailure);
         enc->setCodec(VideoCodec(codecId, chosenTag));
-        if(config != nullptr) enc->configure(*config);
+        if (config != nullptr) enc->configure(*config);
         return makeResult(enc);
 }
 
@@ -214,22 +217,23 @@ Result<VideoEncoder *> VideoEncoder::create(VideoCodec::ID codecId,
 // ---------------------------------------------------------------------------
 
 bool VideoCodec::canEncode() const {
-        if(!isValid()) return false;
+        if (!isValid()) return false;
         auto list = VideoEncoder::availableBackends(id());
-        if(!_backend.isValid()) return !list.isEmpty();
-        for(auto b : list) if(b == _backend) return true;
+        if (!_backend.isValid()) return !list.isEmpty();
+        for (auto b : list)
+                if (b == _backend) return true;
         return false;
 }
 
 VideoCodec::BackendList VideoCodec::availableEncoderBackends() const {
-        if(!isValid()) return {};
+        if (!isValid()) return {};
         return VideoEncoder::availableBackends(id());
 }
 
 List<PixelFormat> VideoCodec::encoderSupportedInputs() const {
         List<PixelFormat> out;
-        if(!isValid()) return out;
-        for(int rawId : VideoEncoder::supportedInputsFor(id(), _backend)) {
+        if (!isValid()) return out;
+        for (int rawId : VideoEncoder::supportedInputsFor(id(), _backend)) {
                 out.pushToBack(PixelFormat(static_cast<PixelFormat::ID>(rawId)));
         }
         return out;
@@ -237,15 +241,15 @@ List<PixelFormat> VideoCodec::encoderSupportedInputs() const {
 
 List<PixelFormat> VideoCodec::compressedPixelFormats() const {
         List<PixelFormat> out;
-        if(!isValid()) return out;
-        for(int rawId : d->compressedPixelFormats) {
+        if (!isValid()) return out;
+        for (int rawId : d->compressedPixelFormats) {
                 out.pushToBack(PixelFormat(static_cast<PixelFormat::ID>(rawId)));
         }
         return out;
 }
 
 Result<VideoEncoder *> VideoCodec::createEncoder(const MediaConfig *config) const {
-        if(!isValid()) return makeError<VideoEncoder *>(Error::Invalid);
+        if (!isValid()) return makeError<VideoEncoder *>(Error::Invalid);
         return VideoEncoder::create(id(), _backend, config);
 }
 
@@ -255,14 +259,14 @@ Result<VideoEncoder *> VideoCodec::createEncoder(const MediaConfig *config) cons
 
 VideoCodec::BackendList VideoCodec::registeredBackends() {
         Set<uint64_t> seen;
-        BackendList out;
-        for(auto cid : registeredIDs()) {
+        BackendList   out;
+        for (auto cid : registeredIDs()) {
                 VideoCodec vc(cid);
-                for(auto b : vc.availableEncoderBackends()) {
-                        if(seen.insert(b.id()).second()) out.pushToBack(b);
+                for (auto b : vc.availableEncoderBackends()) {
+                        if (seen.insert(b.id()).second()) out.pushToBack(b);
                 }
-                for(auto b : vc.availableDecoderBackends()) {
-                        if(seen.insert(b.id()).second()) out.pushToBack(b);
+                for (auto b : vc.availableDecoderBackends()) {
+                        if (seen.insert(b.id()).second()) out.pushToBack(b);
                 }
         }
         return out;

@@ -84,15 +84,13 @@ class LoopbackTransport : public PacketTransport {
                 bool isOpen() const override { return _open; }
 
                 /** @copydoc PacketTransport::sendPacket() */
-                ssize_t sendPacket(const void *data, size_t size,
-                                   const SocketAddress &dest) override;
+                ssize_t sendPacket(const void *data, size_t size, const SocketAddress &dest) override;
 
                 /** @copydoc PacketTransport::sendPackets() */
                 int sendPackets(const DatagramList &datagrams) override;
 
                 /** @copydoc PacketTransport::receivePacket() */
-                ssize_t receivePacket(void *data, size_t maxSize,
-                                      SocketAddress *sender = nullptr) override;
+                ssize_t receivePacket(void *data, size_t maxSize, SocketAddress *sender = nullptr) override;
 
                 /** @copydoc PacketTransport::setPacingRate() */
                 Error setPacingRate(uint64_t bytesPerSec) override;
@@ -106,16 +104,16 @@ class LoopbackTransport : public PacketTransport {
         private:
                 /** @brief Entry in the internal receive queue. */
                 struct QueueEntry {
-                        Buffer          data;   ///< @brief Captured packet bytes.
-                        SocketAddress   sender; ///< @brief Peer's identity, echoed from the send call.
+                                Buffer        data;   ///< @brief Captured packet bytes.
+                                SocketAddress sender; ///< @brief Peer's identity, echoed from the send call.
                 };
 
                 /** @brief Called by the sending peer to enqueue a packet. */
                 void deliver(const void *data, size_t size, const SocketAddress &sender);
 
-                LoopbackTransport      *_peer = nullptr;
-                List<QueueEntry>        _recvQueue;
-                bool                    _open = false;
+                LoopbackTransport *_peer = nullptr;
+                List<QueueEntry>   _recvQueue;
+                bool               _open = false;
 };
 
 PROMEKI_NAMESPACE_END

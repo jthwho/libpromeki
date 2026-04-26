@@ -12,15 +12,11 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-ImageFile::ImageFile(int id) :
-        _io(ImageFileIO::lookup(id))
-{
-
-}
+ImageFile::ImageFile(int id) : _io(ImageFileIO::lookup(id)) {}
 
 Error ImageFile::load(const MediaConfig &config) {
         Error err = _io->load(*this, config);
-        if(err.isError()) return err;
+        if (err.isError()) return err;
 
         // Stamp the Keyframe flag onto every compressed video
         // payload the backend loaded — intraframe codecs (JPEG,
@@ -29,9 +25,9 @@ Error ImageFile::load(const MediaConfig &config) {
         // Downstream readers (Frame::isSafeCutPoint, the raw-
         // bitstream sink, the inspector) consult the payload's
         // Keyframe flag directly.
-        for(MediaPayload::Ptr &payloadPtr : _frame.payloadList()) {
-                if(!payloadPtr.isValid()) continue;
-                if(!payloadPtr->as<CompressedVideoPayload>()) continue;
+        for (MediaPayload::Ptr &payloadPtr : _frame.payloadList()) {
+                if (!payloadPtr.isValid()) continue;
+                if (!payloadPtr->as<CompressedVideoPayload>()) continue;
                 payloadPtr.modify()->addFlag(MediaPayload::Keyframe);
         }
         return Error::Ok;
@@ -42,5 +38,3 @@ Error ImageFile::save(const MediaConfig &config) {
 }
 
 PROMEKI_NAMESPACE_END
-
-

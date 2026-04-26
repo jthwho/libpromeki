@@ -18,37 +18,35 @@ String PipelineStats::toString() const {
         // "state=Running fanout=N retries=0 errors=0 eof=0 paused=0".
         StringList parts;
 
-        if(contains(State)) {
+        if (contains(State)) {
                 const String st = getAs<String>(State);
-                if(!st.isEmpty()) {
+                if (!st.isEmpty()) {
                         parts.pushToBack(String::format("state={}", st));
                 }
         }
-        if(contains(FramesProduced)) {
-                parts.pushToBack(String::format("fanout={}",
-                        getAs<int64_t>(FramesProduced)));
+        if (contains(FramesProduced)) {
+                parts.pushToBack(String::format("fanout={}", getAs<int64_t>(FramesProduced)));
         }
-        if(contains(WriteRetries)) {
+        if (contains(WriteRetries)) {
                 const int64_t v = getAs<int64_t>(WriteRetries);
-                if(v > 0) parts.pushToBack(String::format("retries={}", v));
+                if (v > 0) parts.pushToBack(String::format("retries={}", v));
         }
-        if(contains(PipelineErrors)) {
+        if (contains(PipelineErrors)) {
                 const int64_t v = getAs<int64_t>(PipelineErrors);
-                if(v > 0) parts.pushToBack(String::format("errors={}", v));
+                if (v > 0) parts.pushToBack(String::format("errors={}", v));
         }
-        if(contains(SourcesAtEof)) {
+        if (contains(SourcesAtEof)) {
                 const int64_t v = getAs<int64_t>(SourcesAtEof);
-                if(v > 0) parts.pushToBack(String::format("eof={}", v));
+                if (v > 0) parts.pushToBack(String::format("eof={}", v));
         }
-        if(contains(PausedEdges)) {
+        if (contains(PausedEdges)) {
                 const int64_t v = getAs<int64_t>(PausedEdges);
-                if(v > 0) parts.pushToBack(String::format("paused={}", v));
+                if (v > 0) parts.pushToBack(String::format("paused={}", v));
         }
-        if(contains(UptimeMs)) {
+        if (contains(UptimeMs)) {
                 const int64_t ms = getAs<int64_t>(UptimeMs);
-                if(ms > 0) {
-                        parts.pushToBack(String::format("up={:.2f}s",
-                                static_cast<double>(ms) / 1000.0));
+                if (ms > 0) {
+                        parts.pushToBack(String::format("up={:.2f}s", static_cast<double>(ms) / 1000.0));
                 }
         }
 

@@ -48,7 +48,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  */
 class UdpSocket : public AbstractSocket {
-        PROMEKI_OBJECT(UdpSocket, AbstractSocket)
+                PROMEKI_OBJECT(UdpSocket, AbstractSocket)
         public:
                 /** @brief Unique-ownership pointer to a UdpSocket. */
                 using UPtr = UniquePtr<UdpSocket>;
@@ -64,10 +64,11 @@ class UdpSocket : public AbstractSocket {
                  * requested send time.
                  */
                 struct Datagram {
-                        const void     *data = nullptr; ///< @brief Pointer to the packet bytes (caller-owned).
-                        size_t          size = 0;       ///< @brief Number of bytes to send.
-                        SocketAddress   dest;           ///< @brief Destination address and port.
-                        uint64_t        txTimeNs = 0;   ///< @brief Optional SCM_TXTIME nanoseconds since epoch (0 = immediate).
+                                const void   *data = nullptr; ///< @brief Pointer to the packet bytes (caller-owned).
+                                size_t        size = 0;       ///< @brief Number of bytes to send.
+                                SocketAddress dest;           ///< @brief Destination address and port.
+                                uint64_t      txTimeNs =
+                                        0; ///< @brief Optional SCM_TXTIME nanoseconds since epoch (0 = immediate).
                 };
 
                 /** @brief List of datagrams for batch send. */
@@ -334,7 +335,7 @@ class UdpSocket : public AbstractSocket {
                 Error setDscp(uint8_t dscp);
 
         private:
-                int _domain = 0;       ///< Address family (AF_INET or AF_INET6).
+                int _domain = 0; ///< Address family (AF_INET or AF_INET6).
 };
 
 PROMEKI_NAMESPACE_END

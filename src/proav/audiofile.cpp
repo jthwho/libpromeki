@@ -17,12 +17,12 @@ AudioFile AudioFile::createForOperation(Operation op, const String &fn) {
         ctx.operation = op;
         ctx.filename = fn;
         const AudioFileFactory *factory = AudioFileFactory::lookup(ctx);
-        if(factory == nullptr) {
+        if (factory == nullptr) {
                 promekiWarn("Failed to find audio file factory for operation %d, fn '%s'", op, fn.cstr());
                 return AudioFile();
         }
         auto [ret, err] = factory->createForOperation(ctx);
-        if(err.isError() || !ret.isValid()) {
+        if (err.isError() || !ret.isValid()) {
                 promekiWarn("Factory %s couldn't create for %d, fn '%s'", factory->name().cstr(), op, fn.cstr());
                 return AudioFile();
         }
@@ -31,10 +31,10 @@ AudioFile AudioFile::createForOperation(Operation op, const String &fn) {
 }
 
 Result<AudioFile> AudioFile::createForOperation(Operation op, IODevice *device, const String &formatHint) {
-        if(device == nullptr) {
+        if (device == nullptr) {
                 return makeError<AudioFile>(Error::InvalidArgument);
         }
-        if(device->isSequential()) {
+        if (device->isSequential()) {
                 return makeError<AudioFile>(Error::NotSupported);
         }
         AudioFileFactory::Context ctx;
@@ -42,15 +42,14 @@ Result<AudioFile> AudioFile::createForOperation(Operation op, IODevice *device, 
         ctx.formatHint = formatHint;
         ctx.device = device;
         const AudioFileFactory *factory = AudioFileFactory::lookup(ctx);
-        if(factory == nullptr) {
-                promekiWarn("Failed to find audio file factory for operation %d, hint '%s'",
-                        op, formatHint.cstr());
+        if (factory == nullptr) {
+                promekiWarn("Failed to find audio file factory for operation %d, hint '%s'", op, formatHint.cstr());
                 return makeError<AudioFile>(Error::NotSupported);
         }
         auto [ret, err] = factory->createForOperation(ctx);
-        if(err.isError() || !ret.isValid()) {
-                promekiWarn("Factory %s couldn't create for %d, hint '%s'",
-                        factory->name().cstr(), op, formatHint.cstr());
+        if (err.isError() || !ret.isValid()) {
+                promekiWarn("Factory %s couldn't create for %d, hint '%s'", factory->name().cstr(), op,
+                            formatHint.cstr());
                 return makeError<AudioFile>(err.isError() ? err : Error::NotSupported);
         }
         ret.d.modify()->setDevice(device);
@@ -59,7 +58,7 @@ Result<AudioFile> AudioFile::createForOperation(Operation op, IODevice *device, 
 }
 
 AudioFile::Impl::~Impl() {
-        if(_ownsDevice && _device != nullptr) {
+        if (_ownsDevice && _device != nullptr) {
                 delete _device;
                 _device = nullptr;
         }
@@ -74,7 +73,8 @@ void AudioFile::Impl::close() {
 }
 
 Error AudioFile::Impl::read(PcmAudioPayload::Ptr &out, size_t maxSamples) {
-        (void)out; (void)maxSamples;
+        (void)out;
+        (void)maxSamples;
         return Error::Invalid;
 }
 

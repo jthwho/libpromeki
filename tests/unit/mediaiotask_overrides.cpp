@@ -26,21 +26,20 @@ using namespace promeki;
 
 namespace {
 
-MediaDesc makeVideoAudioDesc() {
-        MediaDesc md;
-        md.setFrameRate(FrameRate(FrameRate::FPS_30));
+        MediaDesc makeVideoAudioDesc() {
+                MediaDesc md;
+                md.setFrameRate(FrameRate(FrameRate::FPS_30));
 
-        ImageDesc img(Size2Du32(1920, 1080),
-                      PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
-        md.imageList().pushToBack(img);
+                ImageDesc img(Size2Du32(1920, 1080), PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
+                md.imageList().pushToBack(img);
 
-        AudioDesc ad;
-        ad.setSampleRate(48000.0f);
-        ad.setChannels(2);
-        ad.setFormat(AudioFormat::PCMI_S16LE);
-        md.audioList().pushToBack(ad);
-        return md;
-}
+                AudioDesc ad;
+                ad.setSampleRate(48000.0f);
+                ad.setChannels(2);
+                ad.setFormat(AudioFormat::PCMI_S16LE);
+                md.audioList().pushToBack(ad);
+                return md;
+        }
 
 } // namespace
 
@@ -48,7 +47,7 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_PassThroughOnEmptyConfig") {
         // An empty config means "inherit everything" — the helper
         // returns a copy of the input untouched.
         const MediaDesc input = makeVideoAudioDesc();
-        MediaConfig cfg;
+        MediaConfig     cfg;
 
         const MediaDesc out = MediaIOTask::applyOutputOverrides(input, cfg);
         CHECK(out == input);
@@ -56,9 +55,8 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_PassThroughOnEmptyConfig") {
 
 TEST_CASE("MediaIOTask_applyOutputOverrides_OutputPixelFormatOverrides") {
         const MediaDesc input = makeVideoAudioDesc();
-        MediaConfig cfg;
-        cfg.set(MediaConfig::OutputPixelFormat,
-                PixelFormat(PixelFormat::RGBA8_sRGB));
+        MediaConfig     cfg;
+        cfg.set(MediaConfig::OutputPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
 
         const MediaDesc out = MediaIOTask::applyOutputOverrides(input, cfg);
         REQUIRE(out.imageList().size() == 1);
@@ -74,7 +72,7 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_InvalidPixelFormatIsPassThrough") {
         // An invalid PixelFormat means "inherit" — the helper must not
         // overwrite the input pixel format.
         const MediaDesc input = makeVideoAudioDesc();
-        MediaConfig cfg;
+        MediaConfig     cfg;
         cfg.set(MediaConfig::OutputPixelFormat, PixelFormat());
 
         const MediaDesc out = MediaIOTask::applyOutputOverrides(input, cfg);
@@ -83,7 +81,7 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_InvalidPixelFormatIsPassThrough") {
 
 TEST_CASE("MediaIOTask_applyOutputOverrides_OutputFrameRateOverrides") {
         const MediaDesc input = makeVideoAudioDesc();
-        MediaConfig cfg;
+        MediaConfig     cfg;
         cfg.set(MediaConfig::OutputFrameRate, FrameRate(FrameRate::FPS_24));
 
         const MediaDesc out = MediaIOTask::applyOutputOverrides(input, cfg);
@@ -94,7 +92,7 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_OutputFrameRateOverrides") {
 
 TEST_CASE("MediaIOTask_applyOutputOverrides_InvalidFrameRateIsPassThrough") {
         const MediaDesc input = makeVideoAudioDesc();
-        MediaConfig cfg;
+        MediaConfig     cfg;
         cfg.set(MediaConfig::OutputFrameRate, FrameRate());
 
         const MediaDesc out = MediaIOTask::applyOutputOverrides(input, cfg);
@@ -103,7 +101,7 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_InvalidFrameRateIsPassThrough") {
 
 TEST_CASE("MediaIOTask_applyOutputOverrides_OutputAudioRateOverrides") {
         const MediaDesc input = makeVideoAudioDesc();
-        MediaConfig cfg;
+        MediaConfig     cfg;
         cfg.set(MediaConfig::OutputAudioRate, 96000.0f);
 
         const MediaDesc out = MediaIOTask::applyOutputOverrides(input, cfg);
@@ -116,17 +114,16 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_OutputAudioRateOverrides") {
 
 TEST_CASE("MediaIOTask_applyOutputOverrides_ZeroAudioRateIsPassThrough") {
         const MediaDesc input = makeVideoAudioDesc();
-        MediaConfig cfg;
+        MediaConfig     cfg;
         cfg.set(MediaConfig::OutputAudioRate, 0.0f);
 
         const MediaDesc out = MediaIOTask::applyOutputOverrides(input, cfg);
-        CHECK(out.audioList()[0].sampleRate() ==
-              doctest::Approx(input.audioList()[0].sampleRate()));
+        CHECK(out.audioList()[0].sampleRate() == doctest::Approx(input.audioList()[0].sampleRate()));
 }
 
 TEST_CASE("MediaIOTask_applyOutputOverrides_OutputAudioChannelsOverrides") {
         const MediaDesc input = makeVideoAudioDesc();
-        MediaConfig cfg;
+        MediaConfig     cfg;
         cfg.set(MediaConfig::OutputAudioChannels, 6);
 
         const MediaDesc out = MediaIOTask::applyOutputOverrides(input, cfg);
@@ -135,7 +132,7 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_OutputAudioChannelsOverrides") {
 
 TEST_CASE("MediaIOTask_applyOutputOverrides_ZeroAudioChannelsIsPassThrough") {
         const MediaDesc input = makeVideoAudioDesc();
-        MediaConfig cfg;
+        MediaConfig     cfg;
         cfg.set(MediaConfig::OutputAudioChannels, 0);
 
         const MediaDesc out = MediaIOTask::applyOutputOverrides(input, cfg);
@@ -144,7 +141,7 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_ZeroAudioChannelsIsPassThrough") {
 
 TEST_CASE("MediaIOTask_applyOutputOverrides_OutputAudioDataTypeOverrides") {
         const MediaDesc input = makeVideoAudioDesc();
-        MediaConfig cfg;
+        MediaConfig     cfg;
         cfg.set(MediaConfig::OutputAudioDataType, AudioDataType::PCMI_S24LE);
 
         const MediaDesc out = MediaIOTask::applyOutputOverrides(input, cfg);
@@ -153,7 +150,7 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_OutputAudioDataTypeOverrides") {
 
 TEST_CASE("MediaIOTask_applyOutputOverrides_InvalidAudioDataTypeIsPassThrough") {
         const MediaDesc input = makeVideoAudioDesc();
-        MediaConfig cfg;
+        MediaConfig     cfg;
         cfg.set(MediaConfig::OutputAudioDataType, AudioDataType::Invalid);
 
         const MediaDesc out = MediaIOTask::applyOutputOverrides(input, cfg);
@@ -165,12 +162,10 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_AppliesToAllVideoLayers") {
         // override applied to every layer.
         MediaDesc input = makeVideoAudioDesc();
         input.imageList().pushToBack(
-                ImageDesc(Size2Du32(1280, 720),
-                          PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709)));
+                ImageDesc(Size2Du32(1280, 720), PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709)));
 
         MediaConfig cfg;
-        cfg.set(MediaConfig::OutputPixelFormat,
-                PixelFormat(PixelFormat::RGBA8_sRGB));
+        cfg.set(MediaConfig::OutputPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
 
         const MediaDesc out = MediaIOTask::applyOutputOverrides(input, cfg);
         REQUIRE(out.imageList().size() == 2);
@@ -196,10 +191,10 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_AppliesToAllAudioLayers") {
 
         const MediaDesc out = MediaIOTask::applyOutputOverrides(input, cfg);
         REQUIRE(out.audioList().size() == 2);
-        for(size_t i = 0; i < out.audioList().size(); ++i) {
+        for (size_t i = 0; i < out.audioList().size(); ++i) {
                 CHECK(out.audioList()[i].sampleRate() == doctest::Approx(48000.0f));
-                CHECK(out.audioList()[i].channels()   == 2);
-                CHECK(out.audioList()[i].format().id()   == AudioFormat::PCMI_S16LE);
+                CHECK(out.audioList()[i].channels() == 2);
+                CHECK(out.audioList()[i].format().id() == AudioFormat::PCMI_S16LE);
         }
 }
 
@@ -207,7 +202,7 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_CombinedOverrides") {
         // Setting every override at once should apply all of them
         // independently (no key shadows another).
         const MediaDesc input = makeVideoAudioDesc();
-        MediaConfig cfg;
+        MediaConfig     cfg;
         cfg.set(MediaConfig::OutputPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
         cfg.set(MediaConfig::OutputFrameRate, FrameRate(FrameRate::FPS_24));
         cfg.set(MediaConfig::OutputAudioRate, 96000.0f);
@@ -218,8 +213,8 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_CombinedOverrides") {
         CHECK(out.imageList()[0].pixelFormat().id() == PixelFormat::RGBA8_sRGB);
         CHECK(out.frameRate() == FrameRate(FrameRate::FPS_24));
         CHECK(out.audioList()[0].sampleRate() == doctest::Approx(96000.0f));
-        CHECK(out.audioList()[0].channels()   == 6);
-        CHECK(out.audioList()[0].format().id()   == AudioFormat::PCMI_Float32LE);
+        CHECK(out.audioList()[0].channels() == 6);
+        CHECK(out.audioList()[0].format().id() == AudioFormat::PCMI_Float32LE);
 }
 
 TEST_CASE("MediaIOTask_applyOutputOverrides_EmptyInputStaysEmpty") {
@@ -249,16 +244,15 @@ TEST_CASE("MediaIOTask_applyOutputOverrides_EmptyInputStaysEmpty") {
 TEST_CASE("MediaIOTask_defaultUncompressedPixelFormat_InvalidSourceFallsBackToRGBA") {
         // Default-constructed PixelFormat is invalid — isValid() gates
         // the YCbCr check to false, so the helper must return RGBA.
-        const PixelFormat out =
-                MediaIOTask::defaultUncompressedPixelFormat(PixelFormat());
+        const PixelFormat out = MediaIOTask::defaultUncompressedPixelFormat(PixelFormat());
         CHECK(out.id() == PixelFormat::RGBA8_sRGB);
 }
 
 TEST_CASE("MediaIOTask_defaultUncompressedPixelFormat_YUVSourceStaysYUV") {
         // Uncompressed YCbCr source — YCbCr type triggers the YUV
         // fallback so the planner picks a cheap CSC into YUV 4:2:2.
-        const PixelFormat out = MediaIOTask::defaultUncompressedPixelFormat(
-                PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
+        const PixelFormat out =
+                MediaIOTask::defaultUncompressedPixelFormat(PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
         CHECK(out.id() == PixelFormat::YUV8_422_Rec709);
 }
 
@@ -267,21 +261,18 @@ TEST_CASE("MediaIOTask_defaultUncompressedPixelFormat_CompressedYUVStaysYUV") {
         // helper treats the decode target as YCbCr too.  This matches
         // what the VideoEncoder / VideoDecoder bridges expect when they
         // splice a CSC between a YUV source and a RGB-only consumer.
-        const PixelFormat out = MediaIOTask::defaultUncompressedPixelFormat(
-                PixelFormat(PixelFormat::H264));
+        const PixelFormat out = MediaIOTask::defaultUncompressedPixelFormat(PixelFormat(PixelFormat::H264));
         CHECK(out.id() == PixelFormat::YUV8_422_Rec709);
 }
 
 TEST_CASE("MediaIOTask_defaultUncompressedPixelFormat_RGBSourceFallsBackToRGBA") {
         // RGB source — not YCbCr, so RGBA fallback wins.
-        const PixelFormat out = MediaIOTask::defaultUncompressedPixelFormat(
-                PixelFormat(PixelFormat::RGB8_sRGB));
+        const PixelFormat out = MediaIOTask::defaultUncompressedPixelFormat(PixelFormat(PixelFormat::RGB8_sRGB));
         CHECK(out.id() == PixelFormat::RGBA8_sRGB);
 }
 
 TEST_CASE("MediaIOTask_defaultUncompressedPixelFormat_RGBACarriesThroughAsRGBA") {
         // Explicit RGBA sRGB source — the idempotent path.
-        const PixelFormat out = MediaIOTask::defaultUncompressedPixelFormat(
-                PixelFormat(PixelFormat::RGBA8_sRGB));
+        const PixelFormat out = MediaIOTask::defaultUncompressedPixelFormat(PixelFormat(PixelFormat::RGBA8_sRGB));
         CHECK(out.id() == PixelFormat::RGBA8_sRGB);
 }

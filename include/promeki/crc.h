@@ -57,13 +57,10 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @see CrcParams, crc8_smbus, crc8_autosar, crc16_ccitt_false, crc32_iso_hdlc
  */
-template <typename T>
-class CRC {
+template <typename T> class CRC {
         public:
-                static_assert(std::is_same_v<T, uint8_t> ||
-                              std::is_same_v<T, uint16_t> ||
-                              std::is_same_v<T, uint32_t> ||
-                              std::is_same_v<T, uint64_t>,
+                static_assert(std::is_same_v<T, uint8_t> || std::is_same_v<T, uint16_t> ||
+                                      std::is_same_v<T, uint32_t> || std::is_same_v<T, uint64_t>,
                               "CRC<T> requires T = uint8_t / uint16_t / uint32_t / uint64_t");
 
                 /** @brief CRC register / result type. */
@@ -81,11 +78,11 @@ class CRC {
                  * provides have @c refIn == @c refOut.
                  */
                 struct Params {
-                        T               poly;       ///< Generator polynomial (canonical, MSB-first form).
-                        T               init;       ///< Initial value of the working register.
-                        T               xorOut;     ///< Final value XORed into the result.
-                        bool            reflect;    ///< @c true reflects both input bytes and the final result.
-                        const char     *name;       ///< Human-readable name (used by diagnostics; may be @c nullptr).
+                                T           poly;    ///< Generator polynomial (canonical, MSB-first form).
+                                T           init;    ///< Initial value of the working register.
+                                T           xorOut;  ///< Final value XORed into the result.
+                                bool        reflect; ///< @c true reflects both input bytes and the final result.
+                                const char *name;    ///< Human-readable name (used by diagnostics; may be @c nullptr).
                 };
 
                 /**
@@ -137,9 +134,9 @@ class CRC {
         private:
                 void buildTable();
 
-                Params  _params{};
-                T       _table[256]{};
-                T       _crc{};
+                Params _params{};
+                T      _table[256]{};
+                T      _crc{};
 };
 
 extern template class CRC<uint8_t>;
@@ -148,7 +145,7 @@ extern template class CRC<uint32_t>;
 extern template class CRC<uint64_t>;
 
 /** @brief 8-bit CRC. */
-using Crc8  = CRC<uint8_t>;
+using Crc8 = CRC<uint8_t>;
 /** @brief 16-bit CRC. */
 using Crc16 = CRC<uint16_t>;
 /** @brief 32-bit CRC. */
@@ -169,34 +166,42 @@ using Crc64 = CRC<uint64_t>;
 namespace CrcParams {
 
         /// CRC-8/SMBus — poly 0x07, init 0x00, no reflection, no xor.
-        inline constexpr Crc8::Params Crc8Smbus       { 0x07,       0x00,       0x00,       false, "CRC-8/SMBus"        };
+        inline constexpr Crc8::Params Crc8Smbus{0x07, 0x00, 0x00, false, "CRC-8/SMBus"};
         /// CRC-8/AUTOSAR — poly 0x2F, init 0xFF, no reflection, xor 0xFF.
         /// Best Hamming distance among the 8-bit CRCs at small payload sizes.
-        inline constexpr Crc8::Params Crc8Autosar     { 0x2F,       0xFF,       0xFF,       false, "CRC-8/AUTOSAR"      };
+        inline constexpr Crc8::Params Crc8Autosar{0x2F, 0xFF, 0xFF, false, "CRC-8/AUTOSAR"};
         /// CRC-8/Bluetooth — poly 0xA7, reflected, no xor.
-        inline constexpr Crc8::Params Crc8Bluetooth   { 0xA7,       0x00,       0x00,       true,  "CRC-8/Bluetooth"    };
+        inline constexpr Crc8::Params Crc8Bluetooth{0xA7, 0x00, 0x00, true, "CRC-8/Bluetooth"};
 
         /// CRC-16/CCITT-FALSE — poly 0x1021, init 0xFFFF, no reflection, no xor.
         /// Also known as CRC-16/AUTOSAR / CRC-16/IBM-3740.
-        inline constexpr Crc16::Params Crc16CcittFalse{ 0x1021,     0xFFFF,     0x0000,     false, "CRC-16/CCITT-FALSE" };
+        inline constexpr Crc16::Params Crc16CcittFalse{0x1021, 0xFFFF, 0x0000, false, "CRC-16/CCITT-FALSE"};
         /// CRC-16/Kermit — poly 0x1021, init 0x0000, reflected, no xor.
-        inline constexpr Crc16::Params Crc16Kermit    { 0x1021,     0x0000,     0x0000,     true,  "CRC-16/Kermit"      };
+        inline constexpr Crc16::Params Crc16Kermit{0x1021, 0x0000, 0x0000, true, "CRC-16/Kermit"};
 
         /// CRC-32/ISO-HDLC — the canonical zlib / IEEE 802.3 / PNG CRC.
         /// poly 0x04C11DB7, init 0xFFFFFFFF, reflected, xor 0xFFFFFFFF.
-        inline constexpr Crc32::Params Crc32IsoHdlc   { 0x04C11DB7u, 0xFFFFFFFFu, 0xFFFFFFFFu, true,  "CRC-32/ISO-HDLC"   };
+        inline constexpr Crc32::Params Crc32IsoHdlc{0x04C11DB7u, 0xFFFFFFFFu, 0xFFFFFFFFu, true, "CRC-32/ISO-HDLC"};
         /// CRC-32/BZIP2 — same poly as ISO-HDLC but unreflected.
-        inline constexpr Crc32::Params Crc32Bzip2     { 0x04C11DB7u, 0xFFFFFFFFu, 0xFFFFFFFFu, false, "CRC-32/BZIP2"      };
+        inline constexpr Crc32::Params Crc32Bzip2{0x04C11DB7u, 0xFFFFFFFFu, 0xFFFFFFFFu, false, "CRC-32/BZIP2"};
 
-}  // namespace CrcParams
+} // namespace CrcParams
 
 /// @brief Returns a fresh @ref Crc8 configured for CRC-8/SMBus.
-inline Crc8  crc8_smbus()         { return Crc8(CrcParams::Crc8Smbus); }
+inline Crc8 crc8_smbus() {
+        return Crc8(CrcParams::Crc8Smbus);
+}
 /// @brief Returns a fresh @ref Crc8 configured for CRC-8/AUTOSAR.
-inline Crc8  crc8_autosar()       { return Crc8(CrcParams::Crc8Autosar); }
+inline Crc8 crc8_autosar() {
+        return Crc8(CrcParams::Crc8Autosar);
+}
 /// @brief Returns a fresh @ref Crc16 configured for CRC-16/CCITT-FALSE.
-inline Crc16 crc16_ccitt_false()  { return Crc16(CrcParams::Crc16CcittFalse); }
+inline Crc16 crc16_ccitt_false() {
+        return Crc16(CrcParams::Crc16CcittFalse);
+}
 /// @brief Returns a fresh @ref Crc32 configured for CRC-32/ISO-HDLC.
-inline Crc32 crc32_iso_hdlc()     { return Crc32(CrcParams::Crc32IsoHdlc); }
+inline Crc32 crc32_iso_hdlc() {
+        return Crc32(CrcParams::Crc32IsoHdlc);
+}
 
 PROMEKI_NAMESPACE_END

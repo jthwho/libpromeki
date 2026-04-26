@@ -53,7 +53,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  */
 class Benchmark {
-        PROMEKI_SHARED_FINAL(Benchmark)
+                PROMEKI_SHARED_FINAL(Benchmark)
         public:
                 /** @brief Shared pointer type for Benchmark. */
                 using Ptr = SharedPtr<Benchmark>;
@@ -67,8 +67,8 @@ class Benchmark {
 
                 /** @brief A single timestamped benchmark entry. */
                 struct Entry {
-                        Id        id;           ///< @brief The event identifier.
-                        TimeStamp timestamp;    ///< @brief When the event occurred.
+                                Id        id;        ///< @brief The event identifier.
+                                TimeStamp timestamp; ///< @brief When the event occurred.
                 };
 
                 /** @brief List of benchmark entries. */
@@ -115,7 +115,10 @@ class Benchmark {
                 bool isEmpty() const { return _entries.isEmpty(); }
 
                 /** @brief Removes all entries. */
-                void clear() { _entries.clear(); return; }
+                void clear() {
+                        _entries.clear();
+                        return;
+                }
 
                 /**
                  * @brief Computes the duration between the first occurrences of two IDs.

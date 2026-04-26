@@ -67,12 +67,14 @@ class MemSpace {
                  *       compile silently.
                  */
                 enum ID {
-                        System       = 0,    ///< System (CPU) memory.
-                        SystemSecure = 1,    ///< System memory with secure zeroing on free and page locking.
-                        CudaDevice   = 2,    ///< CUDA device memory (GPU VRAM).  Not host-accessible.  Registered by CudaBootstrap when PROMEKI_ENABLE_CUDA is on.
-                        CudaHost     = 3,    ///< CUDA pinned host memory (page-locked).  Host-accessible; enables async DMA with CudaDevice.  Registered by CudaBootstrap.
-                        Default      = System, ///< Alias for System memory.
-                        UserDefined  = 1024  ///< First ID available for user-registered types.
+                        System = 0,       ///< System (CPU) memory.
+                        SystemSecure = 1, ///< System memory with secure zeroing on free and page locking.
+                        CudaDevice =
+                                2, ///< CUDA device memory (GPU VRAM).  Not host-accessible.  Registered by CudaBootstrap when PROMEKI_ENABLE_CUDA is on.
+                        CudaHost =
+                                3, ///< CUDA pinned host memory (page-locked).  Host-accessible; enables async DMA with CudaDevice.  Registered by CudaBootstrap.
+                        Default = System,  ///< Alias for System memory.
+                        UserDefined = 1024 ///< First ID available for user-registered types.
                 };
 
                 /** @brief List of MemSpace IDs. */
@@ -96,48 +98,50 @@ class MemSpace {
                  * Snapshot via snapshot() for reporting.
                  */
                 struct Stats {
-                        /** @brief Plain-value snapshot of a Stats for reporting. */
-                        struct Snapshot {
-                                uint64_t allocCount     = 0;    ///< Successful allocations.
-                                uint64_t allocBytes     = 0;    ///< Total bytes allocated (success only).
-                                uint64_t allocFailCount = 0;    ///< Allocations that returned a null pointer.
-                                uint64_t maxAllocBytes  = 0;    ///< Largest single successful allocation, in bytes.
-                                uint64_t releaseCount   = 0;    ///< Releases of non-null allocations.
-                                uint64_t releaseBytes   = 0;    ///< Total bytes released.
-                                uint64_t copyCount      = 0;    ///< Successful copy() calls.
-                                uint64_t copyBytes      = 0;    ///< Total bytes copied.
-                                uint64_t copyFailCount  = 0;    ///< copy() calls that returned false.
-                                uint64_t fillCount      = 0;    ///< Successful fill() calls.
-                                uint64_t fillBytes      = 0;    ///< Total bytes filled.
-                                uint64_t liveCount      = 0;    ///< Outstanding allocations at snapshot time.
-                                uint64_t liveBytes      = 0;    ///< Outstanding bytes at snapshot time.
-                                uint64_t peakCount      = 0;    ///< Highest liveCount ever observed.
-                                uint64_t peakBytes      = 0;    ///< Highest liveBytes ever observed.
-                        };
+                                /** @brief Plain-value snapshot of a Stats for reporting. */
+                                struct Snapshot {
+                                                uint64_t allocCount = 0; ///< Successful allocations.
+                                                uint64_t allocBytes = 0; ///< Total bytes allocated (success only).
+                                                uint64_t allocFailCount =
+                                                        0; ///< Allocations that returned a null pointer.
+                                                uint64_t maxAllocBytes =
+                                                        0; ///< Largest single successful allocation, in bytes.
+                                                uint64_t releaseCount = 0;  ///< Releases of non-null allocations.
+                                                uint64_t releaseBytes = 0;  ///< Total bytes released.
+                                                uint64_t copyCount = 0;     ///< Successful copy() calls.
+                                                uint64_t copyBytes = 0;     ///< Total bytes copied.
+                                                uint64_t copyFailCount = 0; ///< copy() calls that returned false.
+                                                uint64_t fillCount = 0;     ///< Successful fill() calls.
+                                                uint64_t fillBytes = 0;     ///< Total bytes filled.
+                                                uint64_t liveCount = 0; ///< Outstanding allocations at snapshot time.
+                                                uint64_t liveBytes = 0; ///< Outstanding bytes at snapshot time.
+                                                uint64_t peakCount = 0; ///< Highest liveCount ever observed.
+                                                uint64_t peakBytes = 0; ///< Highest liveBytes ever observed.
+                                };
 
-                        Atomic<uint64_t> allocCount     {0};    ///< @see Snapshot::allocCount
-                        Atomic<uint64_t> allocBytes     {0};    ///< @see Snapshot::allocBytes
-                        Atomic<uint64_t> allocFailCount {0};    ///< @see Snapshot::allocFailCount
-                        Atomic<uint64_t> maxAllocBytes  {0};    ///< @see Snapshot::maxAllocBytes
-                        Atomic<uint64_t> releaseCount   {0};    ///< @see Snapshot::releaseCount
-                        Atomic<uint64_t> releaseBytes   {0};    ///< @see Snapshot::releaseBytes
-                        Atomic<uint64_t> copyCount      {0};    ///< @see Snapshot::copyCount
-                        Atomic<uint64_t> copyBytes      {0};    ///< @see Snapshot::copyBytes
-                        Atomic<uint64_t> copyFailCount  {0};    ///< @see Snapshot::copyFailCount
-                        Atomic<uint64_t> fillCount      {0};    ///< @see Snapshot::fillCount
-                        Atomic<uint64_t> fillBytes      {0};    ///< @see Snapshot::fillBytes
-                        Atomic<uint64_t> liveCount      {0};    ///< @see Snapshot::liveCount
-                        Atomic<uint64_t> liveBytes      {0};    ///< @see Snapshot::liveBytes
-                        Atomic<uint64_t> peakCount      {0};    ///< @see Snapshot::peakCount
-                        Atomic<uint64_t> peakBytes      {0};    ///< @see Snapshot::peakBytes
+                                Atomic<uint64_t> allocCount{0};     ///< @see Snapshot::allocCount
+                                Atomic<uint64_t> allocBytes{0};     ///< @see Snapshot::allocBytes
+                                Atomic<uint64_t> allocFailCount{0}; ///< @see Snapshot::allocFailCount
+                                Atomic<uint64_t> maxAllocBytes{0};  ///< @see Snapshot::maxAllocBytes
+                                Atomic<uint64_t> releaseCount{0};   ///< @see Snapshot::releaseCount
+                                Atomic<uint64_t> releaseBytes{0};   ///< @see Snapshot::releaseBytes
+                                Atomic<uint64_t> copyCount{0};      ///< @see Snapshot::copyCount
+                                Atomic<uint64_t> copyBytes{0};      ///< @see Snapshot::copyBytes
+                                Atomic<uint64_t> copyFailCount{0};  ///< @see Snapshot::copyFailCount
+                                Atomic<uint64_t> fillCount{0};      ///< @see Snapshot::fillCount
+                                Atomic<uint64_t> fillBytes{0};      ///< @see Snapshot::fillBytes
+                                Atomic<uint64_t> liveCount{0};      ///< @see Snapshot::liveCount
+                                Atomic<uint64_t> liveBytes{0};      ///< @see Snapshot::liveBytes
+                                Atomic<uint64_t> peakCount{0};      ///< @see Snapshot::peakCount
+                                Atomic<uint64_t> peakBytes{0};      ///< @see Snapshot::peakBytes
 
-                        Stats() = default;
-                        Stats(const Stats &) = delete;
-                        Stats &operator=(const Stats &) = delete;
-                        Stats(Stats &&) = delete;
-                        Stats &operator=(Stats &&) = delete;
+                                Stats() = default;
+                                Stats(const Stats &) = delete;
+                                Stats &operator=(const Stats &) = delete;
+                                Stats(Stats &&) = delete;
+                                Stats &operator=(Stats &&) = delete;
 
-                        /**
+                                /**
                          * @brief Atomically captures a plain-value snapshot.
                          *
                          * Each field is loaded independently, so a
@@ -146,26 +150,26 @@ class MemSpace {
                          * consistent across fields.  This is fine for
                          * reporting and debugging.
                          */
-                        Snapshot snapshot() const;
+                                Snapshot snapshot() const;
 
-                        /** @brief Zeroes every counter. */
-                        void reset();
+                                /** @brief Zeroes every counter. */
+                                void reset();
 
-                        /**
+                                /**
                          * @brief Internal: records a successful allocation.
                          *
                          * Called by MemSpace::alloc().  Updates the
                          * cumulative, live, peak, and max counters.
                          */
-                        void recordAlloc(uint64_t bytes);
+                                void recordAlloc(uint64_t bytes);
 
-                        /**
+                                /**
                          * @brief Internal: records a release.
                          *
                          * Called by MemSpace::release().  Updates the
                          * cumulative and live counters.
                          */
-                        void recordRelease(uint64_t bytes);
+                                void recordRelease(uint64_t bytes);
                 };
 
                 /**
@@ -180,14 +184,25 @@ class MemSpace {
                  * - @c fill:    @c ptr != nullptr.
                  */
                 struct Ops {
-                        ID id;                                                              ///< The memory space identifier.
-                        String name;                                                        ///< Human-readable name of the memory space.
-                        bool (*isHostAccessible)(const MemAllocation &alloc);                ///< Returns true if the allocation is directly accessible from the host CPU.
-                        void (*alloc)(MemAllocation &alloc);                                ///< Allocate memory. Size and align are pre-filled; size > 0 guaranteed.
-                        void (*release)(MemAllocation &alloc);                              ///< Release previously allocated memory. Called only when ptr != nullptr.
-                        Error (*copy)(const MemAllocation &src, const MemAllocation &dst, size_t bytes); ///< Copy bytes from this space to another. Both pointers non-null. Returns Error::Ok on success or a specific error describing the failure.
-                        Error (*fill)(void *ptr, size_t bytes, char value);                 ///< Fill memory with a byte value. Called only when ptr != nullptr.
-                        Stats *stats = nullptr;                                             ///< Runtime counters; owned by the registry, auto-created by registerData() if null.
+                                ID     id;   ///< The memory space identifier.
+                                String name; ///< Human-readable name of the memory space.
+                                bool (*isHostAccessible)(
+                                        const MemAllocation &
+                                                alloc); ///< Returns true if the allocation is directly accessible from the host CPU.
+                                void (*alloc)(
+                                        MemAllocation &
+                                                alloc); ///< Allocate memory. Size and align are pre-filled; size > 0 guaranteed.
+                                void (*release)(
+                                        MemAllocation &
+                                                alloc); ///< Release previously allocated memory. Called only when ptr != nullptr.
+                                Error (*copy)(
+                                        const MemAllocation &src, const MemAllocation &dst,
+                                        size_t bytes); ///< Copy bytes from this space to another. Both pointers non-null. Returns Error::Ok on success or a specific error describing the failure.
+                                Error (*fill)(
+                                        void *ptr, size_t bytes,
+                                        char value); ///< Fill memory with a byte value. Called only when ptr != nullptr.
+                                Stats *stats =
+                                        nullptr; ///< Runtime counters; owned by the registry, auto-created by registerData() if null.
                 };
 
                 /**
@@ -273,9 +288,7 @@ class MemSpace {
                  * @param alloc The allocation to check.
                  * @return True if the memory can be directly read/written by the CPU.
                  */
-                bool isHostAccessible(const MemAllocation &alloc) const {
-                        return d->isHostAccessible(alloc);
-                }
+                bool isHostAccessible(const MemAllocation &alloc) const { return d->isHostAccessible(alloc); }
 
                 /**
                  * @brief Allocates memory in this memory space.
@@ -322,9 +335,9 @@ class MemSpace {
                  * @return Error::Ok on success, or an error if @p ptr is nullptr.
                  */
                 Error fill(void *ptr, size_t bytes, char value) const {
-                        if(ptr == nullptr) return Error::Invalid;
+                        if (ptr == nullptr) return Error::Invalid;
                         Error err = d->fill(ptr, bytes, value);
-                        if(err.isOk()) {
+                        if (err.isOk()) {
                                 d->stats->fillCount.fetchAndAdd(1);
                                 d->stats->fillBytes.fetchAndAdd(bytes);
                         }
@@ -400,7 +413,7 @@ class MemSpace {
                 bool operator!=(const MemSpace &o) const { return d != o.d; }
 
         private:
-                const Ops *d = nullptr;
+                const Ops        *d = nullptr;
                 static const Ops *lookup(ID id);
 };
 
@@ -412,25 +425,25 @@ class MemSpace {
  * MemSpace, and an opaque private pointer for allocator-specific data.
  */
 struct MemAllocation {
-        void    *ptr   = nullptr;       ///< Pointer to the allocated memory.
-        size_t  size   = 0;             ///< Size of the allocation in bytes.
-        size_t  align  = 0;             ///< Alignment of the allocation in bytes.
-        MemSpace ms;                    ///< The memory space this was allocated from.
-        void    *priv  = nullptr;       ///< Private data for the allocator implementation.
+                void    *ptr = nullptr;  ///< Pointer to the allocated memory.
+                size_t   size = 0;       ///< Size of the allocation in bytes.
+                size_t   align = 0;      ///< Alignment of the allocation in bytes.
+                MemSpace ms;             ///< The memory space this was allocated from.
+                void    *priv = nullptr; ///< Private data for the allocator implementation.
 
-        /** @brief Returns true if this allocation is valid. */
-        bool isValid() const { return ptr != nullptr; }
+                /** @brief Returns true if this allocation is valid. */
+                bool isValid() const { return ptr != nullptr; }
 };
 
 inline MemSpace::MemSpace(ID id) : d(lookup(id)) {}
 
 inline Error MemSpace::copy(const MemAllocation &src, const MemAllocation &dst, size_t bytes) const {
-        if(src.ptr == nullptr || dst.ptr == nullptr) {
+        if (src.ptr == nullptr || dst.ptr == nullptr) {
                 d->stats->copyFailCount.fetchAndAdd(1);
                 return Error::Invalid;
         }
         Error err = d->copy(src, dst, bytes);
-        if(err.isOk()) {
+        if (err.isOk()) {
                 d->stats->copyCount.fetchAndAdd(1);
                 d->stats->copyBytes.fetchAndAdd(bytes);
         } else {
@@ -447,9 +460,9 @@ inline MemAllocation MemSpace::alloc(size_t bytes, size_t align) const {
         // A zero-byte allocation is valid (returns a.ptr == nullptr) but
         // does not count as a failure. Skip stats so counters aren't
         // polluted by the legitimate empty-buffer case.
-        if(bytes == 0) return a;
+        if (bytes == 0) return a;
         d->alloc(a);
-        if(a.ptr != nullptr) {
+        if (a.ptr != nullptr) {
                 d->stats->recordAlloc(static_cast<uint64_t>(bytes));
         } else {
                 d->stats->allocFailCount.fetchAndAdd(1);
@@ -458,7 +471,7 @@ inline MemAllocation MemSpace::alloc(size_t bytes, size_t align) const {
 }
 
 inline void MemSpace::release(MemAllocation &alloc) const {
-        if(alloc.ptr == nullptr) return;
+        if (alloc.ptr == nullptr) return;
         uint64_t bytes = static_cast<uint64_t>(alloc.size);
         d->release(alloc);
         d->stats->recordRelease(bytes);

@@ -181,7 +181,7 @@ TEST_CASE("Timecode equality and comparison") {
                 // Mixing a format-less side with a moded side must also
                 // use digits — we have no rate with which to convert the
                 // unknown side to a frame number.
-                Timecode lit(1, 0, 0, 5);     // no mode
+                Timecode lit(1, 0, 0, 5); // no mode
                 Timecode moded(Timecode::NDF30, 1, 0, 0, 10);
                 REQUIRE_FALSE(lit.mode().hasFormat());
                 REQUIRE(moded.mode().hasFormat());
@@ -209,7 +209,7 @@ TEST_CASE("Timecode equality and comparison") {
                 // disagrees with digit ordering: DF30 drops frames so
                 // DF30 01:00:00:00 = 107892 frames < NDF30 108000.
                 Timecode ndf30(Timecode::NDF30, 1, 0, 0, 0);
-                Timecode df30 (Timecode::DF30,  1, 0, 0, 0);
+                Timecode df30(Timecode::DF30, 1, 0, 0, 0);
                 CHECK(df30 < ndf30);
                 CHECK(ndf30 > df30);
         }
@@ -342,42 +342,42 @@ TEST_CASE("Timecode toString") {
 
 TEST_CASE("Timecode toFrameNumber") {
         SUBCASE("Zero is zero") {
-                Timecode tc(Timecode::NDF30, 0, 0, 0, 0);
+                Timecode    tc(Timecode::NDF30, 0, 0, 0, 0);
                 FrameNumber fn = tc.toFrameNumber();
                 CHECK(fn.isValid());
                 CHECK(fn.value() == 0);
         }
 
         SUBCASE("One second at 30fps") {
-                Timecode tc(Timecode::NDF30, 0, 0, 1, 0);
+                Timecode    tc(Timecode::NDF30, 0, 0, 1, 0);
                 FrameNumber fn = tc.toFrameNumber();
                 CHECK(fn.isValid());
                 CHECK(fn.value() == 30);
         }
 
         SUBCASE("One second at 24fps") {
-                Timecode tc(Timecode::NDF24, 0, 0, 1, 0);
+                Timecode    tc(Timecode::NDF24, 0, 0, 1, 0);
                 FrameNumber fn = tc.toFrameNumber();
                 CHECK(fn.isValid());
                 CHECK(fn.value() == 24);
         }
 
         SUBCASE("One second at 25fps") {
-                Timecode tc(Timecode::NDF25, 0, 0, 1, 0);
+                Timecode    tc(Timecode::NDF25, 0, 0, 1, 0);
                 FrameNumber fn = tc.toFrameNumber();
                 CHECK(fn.isValid());
                 CHECK(fn.value() == 25);
         }
 
         SUBCASE("One minute NDF30") {
-                Timecode tc(Timecode::NDF30, 0, 1, 0, 0);
+                Timecode    tc(Timecode::NDF30, 0, 1, 0, 0);
                 FrameNumber fn = tc.toFrameNumber();
                 CHECK(fn.isValid());
                 CHECK(fn.value() == 1800);
         }
 
         SUBCASE("One hour NDF30 = 108000 frames") {
-                Timecode tc(Timecode::NDF30, 1, 0, 0, 0);
+                Timecode    tc(Timecode::NDF30, 1, 0, 0, 0);
                 FrameNumber fn = tc.toFrameNumber();
                 CHECK(fn.isValid());
                 CHECK(fn.value() == 108000);
@@ -386,7 +386,7 @@ TEST_CASE("Timecode toFrameNumber") {
         SUBCASE("One hour DF30 = 107892 frames") {
                 // SMPTE: 30fps DF drops 2 frames/min except every 10th
                 // = 108000 - (54 * 2) = 108000 - 108 = 107892
-                Timecode tc(Timecode::DF30, 1, 0, 0, 0);
+                Timecode    tc(Timecode::DF30, 1, 0, 0, 0);
                 FrameNumber fn = tc.toFrameNumber();
                 CHECK(fn.isValid());
                 CHECK(fn.value() == 107892);
@@ -394,20 +394,20 @@ TEST_CASE("Timecode toFrameNumber") {
 
         SUBCASE("24 hours DF30") {
                 // 24 * 107892 = 2589408
-                Timecode tc(Timecode::DF30, 24, 0, 0, 0);
+                Timecode    tc(Timecode::DF30, 24, 0, 0, 0);
                 FrameNumber fn = tc.toFrameNumber();
                 CHECK(fn.isValid());
                 CHECK(fn.value() == 24 * 107892);
         }
 
         SUBCASE("Invalid timecode returns Unknown") {
-                Timecode tc;
+                Timecode    tc;
                 FrameNumber fn = tc.toFrameNumber();
                 CHECK(fn.isUnknown());
         }
 
         SUBCASE("No format returns Unknown") {
-                Timecode tc(1, 2, 3, 4);
+                Timecode    tc(1, 2, 3, 4);
                 FrameNumber fn = tc.toFrameNumber();
                 CHECK(fn.isUnknown());
         }
@@ -444,16 +444,14 @@ TEST_CASE("Timecode fromFrameNumber") {
 
         SUBCASE("Invalid mode returns empty timecode") {
                 Timecode::Mode invalid;
-                Timecode tc = Timecode::fromFrameNumber(invalid, 100);
+                Timecode       tc = Timecode::fromFrameNumber(invalid, 100);
                 CHECK_FALSE(tc.isValid());
         }
 
         SUBCASE("Round trip for all modes") {
-                Timecode::Mode modes[] = {
-                        Timecode::NDF24, Timecode::NDF25, Timecode::NDF30, Timecode::DF30
-                };
-                for(auto &mode : modes) {
-                        Timecode tc(mode, 1, 23, 45, 10);
+                Timecode::Mode modes[] = {Timecode::NDF24, Timecode::NDF25, Timecode::NDF30, Timecode::DF30};
+                for (auto &mode : modes) {
+                        Timecode    tc(mode, 1, 23, 45, 10);
                         FrameNumber fn = tc.toFrameNumber();
                         CHECK(fn.isValid());
                         Timecode tc2 = Timecode::fromFrameNumber(mode, fn);
@@ -501,10 +499,10 @@ TEST_CASE("Timecode drop frame behavior") {
         }
 
         SUBCASE("DF skips at minutes 1-9 (except 0)") {
-                for(int m = 0; m < 9; m++) {
+                for (int m = 0; m < 9; m++) {
                         Timecode tc(Timecode::DF30, 0, m, 59, 29);
                         tc++;
-                        if((m + 1) % 10 == 0) {
+                        if ((m + 1) % 10 == 0) {
                                 CHECK(tc.frame() == 0);
                         } else {
                                 CHECK(tc.frame() == 2);
@@ -623,13 +621,13 @@ TEST_CASE("Timecode increment/decrement") {
 
 TEST_CASE("Timecode NDF round trips") {
         // Shorter round trips for NDF modes (1 hour each)
-        Timecode::TimecodeType modes[] = { Timecode::NDF24, Timecode::NDF25, Timecode::NDF30 };
-        int fpsValues[] = { 24, 25, 30 };
+        Timecode::TimecodeType modes[] = {Timecode::NDF24, Timecode::NDF25, Timecode::NDF30};
+        int                    fpsValues[] = {24, 25, 30};
 
-        for(int mi = 0; mi < 3; mi++) {
+        for (int mi = 0; mi < 3; mi++) {
                 auto mode = modes[mi];
-                int fps = fpsValues[mi];
-                int framesPerHour = fps * 3600;
+                int  fps = fpsValues[mi];
+                int  framesPerHour = fps * 3600;
 
                 CAPTURE(fps);
 
@@ -637,15 +635,15 @@ TEST_CASE("Timecode NDF round trips") {
                 CHECK(tc.toFrameNumber().value() == 0);
 
                 bool correct = true;
-                for(int i = 0; i < framesPerHour; i++) {
+                for (int i = 0; i < framesPerHour; i++) {
                         tc++;
                         FrameNumber fn = tc.toFrameNumber();
-                        if(!fn.isValid() || fn.value() != int64_t(i + 1)) {
+                        if (!fn.isValid() || fn.value() != int64_t(i + 1)) {
                                 correct = false;
                                 break;
                         }
                         Timecode rt = Timecode::fromFrameNumber(tc.mode(), fn);
-                        if(rt != tc) {
+                        if (rt != tc) {
                                 correct = false;
                                 break;
                         }
@@ -668,16 +666,16 @@ TEST_CASE("Timecode DF30 full 24h round trip") {
         CHECK(tc.toFrameNumber().value() == 0);
 
         bool fnumCorrect = true;
-        int last = 0;
-        for(int i = 0; i < framesToTest; i++) {
+        int  last = 0;
+        for (int i = 0; i < framesToTest; i++) {
                 tc++;
                 int fnum = static_cast<int>(tc.toFrameNumber().value());
-                if(fnum != i + 1 || last + 1 != fnum) {
+                if (fnum != i + 1 || last + 1 != fnum) {
                         fnumCorrect = false;
                         break;
                 }
                 Timecode rt = Timecode::fromFrameNumber(tc.mode(), FrameNumber(fnum));
-                if(rt != tc) {
+                if (rt != tc) {
                         fnumCorrect = false;
                         break;
                 }
@@ -687,7 +685,7 @@ TEST_CASE("Timecode DF30 full 24h round trip") {
         CHECK(tc.toFrameNumber().value() == int64_t(framesToTest));
 
         // Decrement all the way back
-        for(int i = 0; i < framesToTest; i++) tc--;
+        for (int i = 0; i < framesToTest; i++) tc--;
         CHECK(tc.toFrameNumber().value() == 0);
         CHECK(tc.hour() == 0);
         CHECK(tc.min() == 0);
@@ -696,7 +694,7 @@ TEST_CASE("Timecode DF30 full 24h round trip") {
 }
 
 TEST_CASE("Timecode vtcFormat access") {
-        Timecode tc(Timecode::DF30, 1, 0, 0, 0);
+        Timecode         tc(Timecode::DF30, 1, 0, 0, 0);
         const VtcFormat *fmt = tc.vtcFormat();
         CHECK(fmt != nullptr);
         CHECK(vtc_format_is_drop_frame(fmt));
@@ -708,7 +706,7 @@ TEST_CASE("Timecode vtcFormat access") {
 // ============================================================================
 
 TEST_CASE("Timecode invalid renders as the canonical sentinel string") {
-        Timecode tc;  // default-constructed; isValid() == false
+        Timecode tc; // default-constructed; isValid() == false
         REQUIRE_FALSE(tc.isValid());
         auto r = tc.toString();
         REQUIRE(r.second().isOk());
@@ -749,10 +747,10 @@ TEST_CASE("Timecode fromBcd64 produces format-less digits when given no mode") {
         // mode hint.  The result should carry the original digits and
         // be valid (so it renders to "01:23:45:12") but should fail
         // toFrameNumber because no rate is known.
-        Timecode src(Timecode::NDF25, 1, 23, 45, 12);
+        Timecode       src(Timecode::NDF25, 1, 23, 45, 12);
         const uint64_t bcd = src.toBcd64(TimecodePackFormat::Vitc);
 
-        auto r = Timecode::fromBcd64(bcd);  // no mode, no fmt — defaults
+        auto r = Timecode::fromBcd64(bcd); // no mode, no fmt — defaults
         REQUIRE(r.second().isOk());
         const Timecode &tc = r.first();
         CHECK(tc.isValid());
@@ -778,7 +776,7 @@ TEST_CASE("Timecode BCD64 round-trip Vitc 25fps") {
         // 25 fps does not support drop-frame so the DF bit must stay clear
         // throughout, which lets us round-trip cleanly without any rate
         // re-resolution complications.
-        Timecode tc(Timecode::NDF25, 12, 34, 56, 18);
+        Timecode       tc(Timecode::NDF25, 12, 34, 56, 18);
         const uint64_t bcd = tc.toBcd64(TimecodePackFormat::Vitc);
 
         auto rt = Timecode::fromBcd64(bcd, TimecodePackFormat::Vitc, tc.mode());
@@ -793,7 +791,7 @@ TEST_CASE("Timecode BCD64 round-trip Vitc 25fps") {
 }
 
 TEST_CASE("Timecode BCD64 round-trip Vitc 29.97 DF") {
-        Timecode tc(Timecode::DF30, 1, 23, 45, 12);
+        Timecode       tc(Timecode::DF30, 1, 23, 45, 12);
         const uint64_t bcd = tc.toBcd64(TimecodePackFormat::Vitc);
         // Drop-frame bit must be set on the wire.
         CHECK(((bcd >> 10) & 1u) != 0u);
@@ -809,7 +807,7 @@ TEST_CASE("Timecode BCD64 round-trip Vitc 29.97 DF") {
 }
 
 TEST_CASE("Timecode BCD64 round-trip Ltc 25fps") {
-        Timecode tc(Timecode::NDF25, 5, 10, 15, 20);
+        Timecode       tc(Timecode::NDF25, 5, 10, 15, 20);
         const uint64_t bcd = tc.toBcd64(TimecodePackFormat::Ltc);
 
         auto rt = Timecode::fromBcd64(bcd, TimecodePackFormat::Ltc, tc.mode());
@@ -823,7 +821,7 @@ TEST_CASE("Timecode BCD64 round-trip Ltc 25fps") {
 }
 
 TEST_CASE("Timecode BCD64 round-trip Ltc 29.97 DF") {
-        Timecode tc(Timecode::DF30, 1, 23, 45, 12);
+        Timecode       tc(Timecode::DF30, 1, 23, 45, 12);
         const uint64_t bcd = tc.toBcd64(TimecodePackFormat::Ltc);
         CHECK(((bcd >> 10) & 1u) != 0u);
 
@@ -840,13 +838,13 @@ TEST_CASE("Timecode BCD64 round-trip Ltc 29.97 DF") {
 TEST_CASE("Timecode BCD64 nibble layout") {
         // Verify that the BCD digits land at the documented nibble
         // positions in Vitc mode (which is the canonical layout).
-        Timecode tc(Timecode::NDF25, 9, 8, 7, 6);
+        Timecode       tc(Timecode::NDF25, 9, 8, 7, 6);
         const uint64_t bcd = tc.toBcd64(TimecodePackFormat::Vitc);
 
         // Frame units = 6 in bits 0..3
-        CHECK(((bcd >>  0) & 0xfu) == 6u);
+        CHECK(((bcd >> 0) & 0xfu) == 6u);
         // Frame tens = 0 in bits 8..9
-        CHECK(((bcd >>  8) & 0x3u) == 0u);
+        CHECK(((bcd >> 8) & 0x3u) == 0u);
         // Seconds units = 7 in bits 16..19
         CHECK(((bcd >> 16) & 0xfu) == 7u);
         // Seconds tens = 0 in bits 24..26
@@ -864,7 +862,7 @@ TEST_CASE("Timecode BCD64 nibble layout") {
 TEST_CASE("Timecode BCD64 unknown mode + DF flag infers 29.97 DF") {
         // Pack at 29.97 DF, then unpack supplying an empty mode — the DF
         // flag in the BCD must drive inference of 29.97 DF.
-        Timecode src(Timecode::DF30, 0, 1, 0, 0);
+        Timecode       src(Timecode::DF30, 0, 1, 0, 0);
         const uint64_t bcd = src.toBcd64(TimecodePackFormat::Vitc);
 
         auto rt = Timecode::fromBcd64(bcd, TimecodePackFormat::Vitc, Timecode::Mode());
@@ -877,14 +875,14 @@ TEST_CASE("Timecode BCD64 unknown mode + DF flag infers 29.97 DF") {
 
 TEST_CASE("Timecode BCD64 NDF mode + DF flag upgrades to DF sister") {
         // Build a BCD word with DF=1 by hand at NDF digits.
-        Timecode src(Timecode::DF30, 0, 0, 1, 0);
+        Timecode       src(Timecode::DF30, 0, 0, 1, 0);
         const uint64_t bcd = src.toBcd64(TimecodePackFormat::Vitc);
         CHECK(((bcd >> 10) & 1u) != 0u);
 
         // Caller supplies 29.97 NDF mode (which does not match the BCD's
         // DF flag) — the unpacker must upgrade to the DF sister.
         Timecode::Mode ndf(&VTC_FORMAT_29_97_NDF);
-        auto rt = Timecode::fromBcd64(bcd, TimecodePackFormat::Vitc, ndf);
+        auto           rt = Timecode::fromBcd64(bcd, TimecodePackFormat::Vitc, ndf);
         REQUIRE(rt.second().isOk());
         const Timecode &back = rt.first();
         CHECK(back.isDropFrame());
@@ -894,12 +892,12 @@ TEST_CASE("Timecode BCD64 NDF mode + DF flag upgrades to DF sister") {
 TEST_CASE("Timecode BCD64 DF flag with non-DF rate is an error") {
         // Pack a 29.97 DF timecode, then try to unpack it as 24 fps.
         // 24 fps has no DF sister, so the inconsistency must surface.
-        Timecode src(Timecode::DF30, 0, 0, 1, 0);
+        Timecode       src(Timecode::DF30, 0, 0, 1, 0);
         const uint64_t bcd = src.toBcd64(TimecodePackFormat::Vitc);
         CHECK(((bcd >> 10) & 1u) != 0u);
 
         Timecode::Mode ndf24(&VTC_FORMAT_24);
-        auto rt = Timecode::fromBcd64(bcd, TimecodePackFormat::Vitc, ndf24);
+        auto           rt = Timecode::fromBcd64(bcd, TimecodePackFormat::Vitc, ndf24);
         CHECK(rt.second().isError());
         CHECK(rt.second().code() == Error::ConversionFailed);
 }
@@ -918,7 +916,7 @@ TEST_CASE("Timecode BCD64 Vitc field marker carries first-field bit") {
         // Build a synthetic word with bit 27 set and verify the unpacked
         // Timecode reports first-field on.
         const uint64_t synth = bcd | (uint64_t(1) << 27);
-        auto rt = Timecode::fromBcd64(synth, TimecodePackFormat::Vitc, src.mode());
+        auto           rt = Timecode::fromBcd64(synth, TimecodePackFormat::Vitc, src.mode());
         REQUIRE(rt.second().isOk());
         CHECK(rt.first().isFirstField());
 }

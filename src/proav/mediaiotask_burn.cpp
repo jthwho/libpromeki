@@ -22,20 +22,17 @@ PROMEKI_NAMESPACE_BEGIN
 PROMEKI_REGISTER_MEDIAIO(MediaIOTask_Burn)
 
 MediaIO::FormatDesc MediaIOTask_Burn::formatDesc() {
-        return {
-                "Burn",
+        return {"Burn",
                 "Burn-in (Timecode / Text)",
                 "Text burn-in overlay on video frames",
                 {},
-                false,  // canBeSource
-                false,  // canBeSink
-                true,   // canBeTransform
-                []() -> MediaIOTask * {
-                        return new MediaIOTask_Burn();
-                },
+                false, // canBeSource
+                false, // canBeSink
+                true,  // canBeTransform
+                []() -> MediaIOTask * { return new MediaIOTask_Burn(); },
                 []() -> MediaIO::Config::SpecMap {
                         MediaIO::Config::SpecMap specs;
-                        auto s = [&specs](MediaConfig::ID id, const Variant &def) {
+                        auto                     s = [&specs](MediaConfig::ID id, const Variant &def) {
                                 const VariantSpec *gs = MediaConfig::spec(id);
                                 specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
                         };
@@ -49,14 +46,13 @@ MediaIO::FormatDesc MediaIOTask_Burn::formatDesc() {
                         s(MediaConfig::VideoBurnDrawBg, true);
                         s(MediaConfig::Capacity, int32_t(4));
                         return specs;
-                }
-        };
+                }};
 }
 
 MediaIOTask_Burn::~MediaIOTask_Burn() = default;
 
 Error MediaIOTask_Burn::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::Transform) {
+        if (cmd.mode != MediaIO::Transform) {
                 promekiErr("MediaIOTask_Burn: only InputAndOutput mode is supported");
                 return Error::NotSupported;
         }
@@ -66,34 +62,26 @@ Error MediaIOTask_Burn::executeCmd(MediaIOCommandOpen &cmd) {
         _burnEnabled = cfg.getAs<bool>(MediaConfig::VideoBurnEnabled, true);
         _pattern.setBurnEnabled(_burnEnabled);
 
-        if(_burnEnabled) {
-                _pattern.setBurnFontFilename(
-                        cfg.getAs<String>(MediaConfig::VideoBurnFontPath, String()));
-                _pattern.setBurnFontSize(
-                        cfg.getAs<int>(MediaConfig::VideoBurnFontSize, 0));
-                _burnTextTemplate =
-                        cfg.getAs<String>(MediaConfig::VideoBurnText, String());
-                _pattern.setBurnTextColor(
-                        cfg.getAs<Color>(MediaConfig::VideoBurnTextColor, Color::White));
-                _pattern.setBurnBackgroundColor(
-                        cfg.getAs<Color>(MediaConfig::VideoBurnBgColor, Color::Black));
-                _pattern.setBurnDrawBackground(
-                        cfg.getAs<bool>(MediaConfig::VideoBurnDrawBg, true));
+        if (_burnEnabled) {
+                _pattern.setBurnFontFilename(cfg.getAs<String>(MediaConfig::VideoBurnFontPath, String()));
+                _pattern.setBurnFontSize(cfg.getAs<int>(MediaConfig::VideoBurnFontSize, 0));
+                _burnTextTemplate = cfg.getAs<String>(MediaConfig::VideoBurnText, String());
+                _pattern.setBurnTextColor(cfg.getAs<Color>(MediaConfig::VideoBurnTextColor, Color::White));
+                _pattern.setBurnBackgroundColor(cfg.getAs<Color>(MediaConfig::VideoBurnBgColor, Color::Black));
+                _pattern.setBurnDrawBackground(cfg.getAs<bool>(MediaConfig::VideoBurnDrawBg, true));
 
                 Error posErr;
-                Enum posEnum = cfg.get(MediaConfig::VideoBurnPosition)
-                                   .asEnum(BurnPosition::Type, &posErr);
-                if(posErr.isError() || !posEnum.hasListedValue()) {
+                Enum  posEnum = cfg.get(MediaConfig::VideoBurnPosition).asEnum(BurnPosition::Type, &posErr);
+                if (posErr.isError() || !posEnum.hasListedValue()) {
                         promekiErr("MediaIOTask_Burn: unknown burn position '%s'",
-                                   cfg.get(MediaConfig::VideoBurnPosition)
-                                           .get<String>().cstr());
+                                   cfg.get(MediaConfig::VideoBurnPosition).get<String>().cstr());
                         return Error::InvalidArgument;
                 }
                 _pattern.setBurnPosition(BurnPosition(posEnum.value()));
         }
 
         _capacity = cfg.getAs<int>(MediaConfig::Capacity, 4);
-        if(_capacity < 1) _capacity = 1;
+        if (_capacity < 1) _capacity = 1;
 
         _frameCount = 0;
         _readCount = 0;
@@ -101,8 +89,7 @@ Error MediaIOTask_Burn::executeCmd(MediaIOCommandOpen &cmd) {
         _outputQueue.clear();
 
         cmd.mediaDesc = cmd.pendingMediaDesc;
-        if(!cmd.pendingMediaDesc.audioList().isEmpty())
-                cmd.audioDesc = cmd.pendingMediaDesc.audioList()[0];
+        if (!cmd.pendingMediaDesc.audioList().isEmpty()) cmd.audioDesc = cmd.pendingMediaDesc.audioList()[0];
         cmd.metadata = cmd.pendingMetadata;
         cmd.frameRate = cmd.pendingMediaDesc.frameRate();
         cmd.canSeek = false;
@@ -128,29 +115,29 @@ Error MediaIOTask_Burn::executeCmd(MediaIOCommandClose &cmd) {
 }
 
 Error MediaIOTask_Burn::burnFrame(const Frame::Ptr &input, Frame::Ptr &output) {
-        if(!input.isValid()) {
+        if (!input.isValid()) {
                 return Error::Invalid;
         }
 
-        if(!_burnEnabled || _burnTextTemplate.isEmpty()) {
+        if (!_burnEnabled || _burnTextTemplate.isEmpty()) {
                 output = input;
                 return Error::Ok;
         }
 
         Frame::Ptr outFrame = Frame::Ptr::create();
-        Frame *outRaw = outFrame.modify();
+        Frame     *outRaw = outFrame.modify();
         outRaw->metadata() = input->metadata();
 
         // Pass every payload through by reference; the burn loop below
         // calls modify() on each UncompressedVideoPayload slot to
         // CoW-clone before painting, so upstream frames sharing the
         // same Ptr stay unpainted.
-        for(const MediaPayload::Ptr &srcP : input->payloadList()) {
-                if(srcP.isValid()) outRaw->addPayload(srcP);
+        for (const MediaPayload::Ptr &srcP : input->payloadList()) {
+                if (srcP.isValid()) outRaw->addPayload(srcP);
         }
 
         String burnText = VariantLookup<Frame>::format(*outFrame, _burnTextTemplate);
-        if(!burnText.isEmpty()) {
+        if (!burnText.isEmpty()) {
                 // Burn operates payload-native: walk every
                 // @ref UncompressedVideoPayload slot in the output's
                 // @ref Frame::payloadList.  Mutation goes through the
@@ -164,14 +151,14 @@ Error MediaIOTask_Burn::burnFrame(const Frame::Ptr &input, Frame::Ptr &output) {
                 // @ref Frame::resyncVideoPayloadsFromImageList — the
                 // payload is the canonical representation downstream
                 // stages read.
-                for(MediaPayload::Ptr &payloadPtr : outRaw->payloadList()) {
-                        if(!payloadPtr.isValid()) continue;
-                        if(!payloadPtr->as<UncompressedVideoPayload>()) continue;
+                for (MediaPayload::Ptr &payloadPtr : outRaw->payloadList()) {
+                        if (!payloadPtr.isValid()) continue;
+                        if (!payloadPtr->as<UncompressedVideoPayload>()) continue;
 
-                        auto *uvp = static_cast<UncompressedVideoPayload *>(payloadPtr.modify());
+                        auto              *uvp = static_cast<UncompressedVideoPayload *>(payloadPtr.modify());
                         const PixelFormat &pf = uvp->desc().pixelFormat();
-                        if(!pf.hasPaintEngine()) {
-                                if(!_notPaintableWarned) {
+                        if (!pf.hasPaintEngine()) {
+                                if (!_notPaintableWarned) {
                                         promekiWarn("MediaIOTask_Burn: pixel format %s "
                                                     "has no paint engine; skipping burn",
                                                     pf.name().cstr());
@@ -181,9 +168,8 @@ Error MediaIOTask_Burn::burnFrame(const Frame::Ptr &input, Frame::Ptr &output) {
                         }
                         uvp->ensureExclusive();
                         Error burnErr = _pattern.applyBurn(*uvp, burnText);
-                        if(burnErr.isError()) {
-                                promekiWarn("MediaIOTask_Burn: applyBurn failed: %s",
-                                            burnErr.name().cstr());
+                        if (burnErr.isError()) {
+                                promekiWarn("MediaIOTask_Burn: applyBurn failed: %s", burnErr.name().cstr());
                         }
                 }
         }
@@ -193,21 +179,24 @@ Error MediaIOTask_Burn::burnFrame(const Frame::Ptr &input, Frame::Ptr &output) {
 }
 
 Error MediaIOTask_Burn::executeCmd(MediaIOCommandWrite &cmd) {
-        if(!cmd.frame.isValid()) {
+        if (!cmd.frame.isValid()) {
                 promekiErr("MediaIOTask_Burn: write with null frame");
                 return Error::InvalidArgument;
         }
         stampWorkBegin();
 
-        if(static_cast<int>(_outputQueue.size()) >= _capacity && !_capacityWarned) {
+        if (static_cast<int>(_outputQueue.size()) >= _capacity && !_capacityWarned) {
                 promekiWarn("MediaIOTask_Burn: output queue exceeded capacity (%d >= %d)",
-                        static_cast<int>(_outputQueue.size()), _capacity);
+                            static_cast<int>(_outputQueue.size()), _capacity);
                 _capacityWarned = true;
         }
 
         Frame::Ptr outFrame;
-        Error err = burnFrame(cmd.frame, outFrame);
-        if(err.isError()) { stampWorkEnd(); return err; }
+        Error      err = burnFrame(cmd.frame, outFrame);
+        if (err.isError()) {
+                stampWorkEnd();
+                return err;
+        }
 
         _outputQueue.pushToBack(std::move(outFrame));
         _frameCount++;
@@ -219,7 +208,7 @@ Error MediaIOTask_Burn::executeCmd(MediaIOCommandWrite &cmd) {
 }
 
 Error MediaIOTask_Burn::executeCmd(MediaIOCommandRead &cmd) {
-        if(_outputQueue.isEmpty()) {
+        if (_outputQueue.isEmpty()) {
                 return Error::TryAgain;
         }
 
@@ -252,17 +241,16 @@ int MediaIOTask_Burn::pendingOutput() const {
 // a non-paintable format, instead of hitting the "no paint engine"
 // warning at runtime.
 
-Error MediaIOTask_Burn::proposeInput(const MediaDesc &offered,
-                                     MediaDesc *preferred) const {
-        if(preferred == nullptr) return Error::Invalid;
-        if(offered.imageList().isEmpty()) {
+Error MediaIOTask_Burn::proposeInput(const MediaDesc &offered, MediaDesc *preferred) const {
+        if (preferred == nullptr) return Error::Invalid;
+        if (offered.imageList().isEmpty()) {
                 // Audio-only frame: burn has nothing to draw on but is
                 // still a valid passthrough.
                 *preferred = offered;
                 return Error::Ok;
         }
         const PixelFormat &pd = offered.imageList()[0].pixelFormat();
-        if(pd.isValid() && !pd.isCompressed() && pd.hasPaintEngine()) {
+        if (pd.isValid() && !pd.isCompressed() && pd.hasPaintEngine()) {
                 *preferred = offered;
                 return Error::Ok;
         }
@@ -272,18 +260,17 @@ Error MediaIOTask_Burn::proposeInput(const MediaDesc &offered,
         // every transform backend picks the same fallback; the planner
         // chooses the cheapest bridge chain that satisfies the gap.
         const PixelFormat target = defaultUncompressedPixelFormat(pd);
-        MediaDesc want = offered;
-        ImageDesc::List &imgs = want.imageList();
-        for(size_t i = 0; i < imgs.size(); ++i) {
+        MediaDesc         want = offered;
+        ImageDesc::List  &imgs = want.imageList();
+        for (size_t i = 0; i < imgs.size(); ++i) {
                 imgs[i].setPixelFormat(target);
         }
         *preferred = want;
         return Error::Ok;
 }
 
-Error MediaIOTask_Burn::proposeOutput(const MediaDesc &requested,
-                                      MediaDesc *achievable) const {
-        if(achievable == nullptr) return Error::Invalid;
+Error MediaIOTask_Burn::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+        if (achievable == nullptr) return Error::Invalid;
         // Pure passthrough transform: whatever shape comes in is the
         // shape that goes out.
         *achievable = requested;

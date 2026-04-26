@@ -35,8 +35,7 @@ TEST_CASE("ImageFile: filename accessors") {
 TEST_CASE("ImageFile: payload accessors") {
         ImageFile f;
         CHECK(!f.videoPayload().isValid());
-        auto payload = UncompressedVideoPayload::allocate(
-                ImageDesc(64, 64, PixelFormat::RGBA8_sRGB));
+        auto payload = UncompressedVideoPayload::allocate(ImageDesc(64, 64, PixelFormat::RGBA8_sRGB));
         REQUIRE(payload.isValid());
         f.setVideoPayload(payload);
         auto got = f.videoPayload();
@@ -54,8 +53,7 @@ TEST_CASE("ImageFile: isValid states") {
         valid.setFilename("/tmp/test.png");
         CHECK(!valid.filename().isEmpty());
 
-        auto payload = UncompressedVideoPayload::allocate(
-                ImageDesc(32, 32, PixelFormat::RGBA8_sRGB));
+        auto payload = UncompressedVideoPayload::allocate(ImageDesc(32, 32, PixelFormat::RGBA8_sRGB));
         valid.setVideoPayload(payload);
         CHECK(valid.videoPayload().isValid());
 }

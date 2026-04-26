@@ -34,7 +34,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  */
 class TcpSocket : public AbstractSocket {
-        PROMEKI_OBJECT(TcpSocket, AbstractSocket)
+                PROMEKI_OBJECT(TcpSocket, AbstractSocket)
         public:
                 /**
                  * @brief Constructs a TcpSocket.

@@ -36,7 +36,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  */
 class RawSocket : public AbstractSocket {
-        PROMEKI_OBJECT(RawSocket, AbstractSocket)
+                PROMEKI_OBJECT(RawSocket, AbstractSocket)
         public:
                 /**
                  * @brief Constructs a RawSocket.
@@ -121,8 +121,8 @@ class RawSocket : public AbstractSocket {
                 Error setPromiscuous(bool enable);
 
         private:
-                String          _interface;
-                uint16_t        _protocol = 0;
+                String   _interface;
+                uint16_t _protocol = 0;
 };
 
 PROMEKI_NAMESPACE_END

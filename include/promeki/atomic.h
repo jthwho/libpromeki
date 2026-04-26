@@ -28,8 +28,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @tparam T The value type.  Must satisfy std::atomic requirements.
  */
-template <typename T>
-class Atomic {
+template <typename T> class Atomic {
         public:
                 /**
                  * @brief Constructs an Atomic with the given initial value.
@@ -49,17 +48,13 @@ class Atomic {
                  * @brief Loads the current value with acquire semantics.
                  * @return The current value.
                  */
-                T value() const {
-                        return _value.load(std::memory_order_acquire);
-                }
+                T value() const { return _value.load(std::memory_order_acquire); }
 
                 /**
                  * @brief Stores a new value with release semantics.
                  * @param val The value to store.
                  */
-                void setValue(T val) {
-                        _value.store(val, std::memory_order_release);
-                }
+                void setValue(T val) { _value.store(val, std::memory_order_release); }
 
                 /**
                  * @brief Atomically adds @p val and returns the previous value.
@@ -67,9 +62,7 @@ class Atomic {
                  * @return The value before the addition.
                  * @note Only available for integral types.
                  */
-                T fetchAndAdd(T val) {
-                        return _value.fetch_add(val, std::memory_order_acq_rel);
-                }
+                T fetchAndAdd(T val) { return _value.fetch_add(val, std::memory_order_acq_rel); }
 
                 /**
                  * @brief Atomically subtracts @p val and returns the previous value.
@@ -77,9 +70,7 @@ class Atomic {
                  * @return The value before the subtraction.
                  * @note Only available for integral types.
                  */
-                T fetchAndSub(T val) {
-                        return _value.fetch_sub(val, std::memory_order_acq_rel);
-                }
+                T fetchAndSub(T val) { return _value.fetch_sub(val, std::memory_order_acq_rel); }
 
                 /**
                  * @brief Atomically compares and swaps.
@@ -93,8 +84,8 @@ class Atomic {
                  * @return True if the swap occurred.
                  */
                 bool compareAndSwap(T &expected, T desired) {
-                        return _value.compare_exchange_strong(expected, desired,
-                                std::memory_order_acq_rel, std::memory_order_acquire);
+                        return _value.compare_exchange_strong(expected, desired, std::memory_order_acq_rel,
+                                                              std::memory_order_acquire);
                 }
 
                 /**
@@ -102,9 +93,7 @@ class Atomic {
                  * @param desired The new value.
                  * @return The value before the exchange.
                  */
-                T exchange(T desired) {
-                        return _value.exchange(desired, std::memory_order_acq_rel);
-                }
+                T exchange(T desired) { return _value.exchange(desired, std::memory_order_acq_rel); }
 
         private:
                 std::atomic<T> _value;

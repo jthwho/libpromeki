@@ -53,7 +53,7 @@ TEST_CASE("TimeStamp: nanoseconds") {
 
 TEST_CASE("TimeStamp: operator+= duration") {
         TimeStamp ts = TimeStamp::now();
-        double before = ts.seconds();
+        double    before = ts.seconds();
         ts += TimeStamp::secondsToDuration(1.0);
         CHECK(ts.seconds() > before);
         CHECK(ts.seconds() == doctest::Approx(before + 1.0).epsilon(0.01));
@@ -61,7 +61,7 @@ TEST_CASE("TimeStamp: operator+= duration") {
 
 TEST_CASE("TimeStamp: operator-= duration") {
         TimeStamp ts = TimeStamp::now();
-        double before = ts.seconds();
+        double    before = ts.seconds();
         ts -= TimeStamp::secondsToDuration(1.0);
         CHECK(ts.seconds() < before);
 }
@@ -86,13 +86,13 @@ TEST_CASE("TimeStamp: secondsToDuration") {
 
 TEST_CASE("TimeStamp: toString") {
         TimeStamp ts = TimeStamp::now();
-        String s = ts.toString();
+        String    s = ts.toString();
         CHECK_FALSE(s.isEmpty());
 }
 
 TEST_CASE("TimeStamp: String conversion") {
         TimeStamp ts = TimeStamp::now();
-        String s = ts;
+        String    s = ts;
         CHECK_FALSE(s.isEmpty());
 }
 
@@ -104,9 +104,9 @@ TEST_CASE("TimeStamp: setValue") {
 }
 
 TEST_CASE("TimeStamp: Value conversion operator") {
-        TimeStamp ts = TimeStamp::now();
+        TimeStamp        ts = TimeStamp::now();
         TimeStamp::Value v = ts;
-        TimeStamp ts2(v);
+        TimeStamp        ts2(v);
         CHECK(ts2.seconds() == doctest::Approx(ts.seconds()));
 }
 
@@ -140,22 +140,22 @@ TEST_CASE("TimeStamp: equality default constructed") {
 
 TEST_CASE("TimeStamp: toClockDuration converts Duration to clock duration") {
         Duration d = Duration::fromMicroseconds(500);
-        auto cd = toClockDuration(d);
-        auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(cd);
+        auto     cd = toClockDuration(d);
+        auto     ns = std::chrono::duration_cast<std::chrono::nanoseconds>(cd);
         CHECK(ns.count() == 500000);
 }
 
 TEST_CASE("TimeStamp: toClockDuration zero Duration") {
         Duration d = Duration::fromNanoseconds(0);
-        auto cd = toClockDuration(d);
-        auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(cd);
+        auto     cd = toClockDuration(d);
+        auto     ns = std::chrono::duration_cast<std::chrono::nanoseconds>(cd);
         CHECK(ns.count() == 0);
 }
 
 TEST_CASE("TimeStamp: operator+= with Duration") {
         TimeStamp ts = TimeStamp::now();
-        double before = ts.seconds();
-        Duration d = Duration::fromMilliseconds(500);
+        double    before = ts.seconds();
+        Duration  d = Duration::fromMilliseconds(500);
         ts += d;
         double after = ts.seconds();
         CHECK(after > before);
@@ -164,8 +164,8 @@ TEST_CASE("TimeStamp: operator+= with Duration") {
 
 TEST_CASE("TimeStamp: operator-= with Duration") {
         TimeStamp ts = TimeStamp::now();
-        double before = ts.seconds();
-        Duration d = Duration::fromMilliseconds(500);
+        double    before = ts.seconds();
+        Duration  d = Duration::fromMilliseconds(500);
         ts -= d;
         double after = ts.seconds();
         CHECK(after < before);
@@ -174,7 +174,7 @@ TEST_CASE("TimeStamp: operator-= with Duration") {
 
 TEST_CASE("TimeStamp: operator+ with Duration") {
         TimeStamp ts = TimeStamp::now();
-        Duration d = Duration::fromMilliseconds(1000);
+        Duration  d = Duration::fromMilliseconds(1000);
         TimeStamp later = ts + d;
         CHECK(later.seconds() > ts.seconds());
         CHECK(later.seconds() == doctest::Approx(ts.seconds() + 1.0).epsilon(0.01));
@@ -182,7 +182,7 @@ TEST_CASE("TimeStamp: operator+ with Duration") {
 
 TEST_CASE("TimeStamp: operator- with Duration") {
         TimeStamp ts = TimeStamp::now();
-        Duration d = Duration::fromMilliseconds(1000);
+        Duration  d = Duration::fromMilliseconds(1000);
         TimeStamp earlier = ts - d;
         CHECK(earlier.seconds() < ts.seconds());
         CHECK(earlier.seconds() == doctest::Approx(ts.seconds() - 1.0).epsilon(0.01));
@@ -191,7 +191,7 @@ TEST_CASE("TimeStamp: operator- with Duration") {
 TEST_CASE("TimeStamp: operator- returns Duration between two timestamps") {
         TimeStamp a = TimeStamp::now();
         TimeStamp b = a + Duration::fromMicroseconds(250000); // 250ms
-        Duration diff = b - a;
+        Duration  diff = b - a;
         // The difference should be approximately 250ms = 250000us
         CHECK(diff.microseconds() == doctest::Approx(250000).epsilon(1000));
 }
@@ -199,20 +199,20 @@ TEST_CASE("TimeStamp: operator- returns Duration between two timestamps") {
 TEST_CASE("TimeStamp: Duration subtraction negative result") {
         TimeStamp a = TimeStamp::now();
         TimeStamp b = a + Duration::fromMilliseconds(100);
-        Duration diff = a - b;  // a is earlier so diff is negative
+        Duration  diff = a - b; // a is earlier so diff is negative
         CHECK(diff.nanoseconds() < 0);
 }
 
 TEST_CASE("TimeStamp: Duration subtraction same timestamp is zero") {
         TimeStamp ts = TimeStamp::now();
-        Duration diff = ts - ts;
+        Duration  diff = ts - ts;
         CHECK(diff.nanoseconds() == 0);
 }
 
 TEST_CASE("TimeStamp: Duration interop does not modify original") {
         TimeStamp ts = TimeStamp::now();
         TimeStamp original = ts;
-        Duration d = Duration::fromMilliseconds(100);
+        Duration  d = Duration::fromMilliseconds(100);
         TimeStamp result = ts + d;
         CHECK(ts == original); // original unchanged
         CHECK(result != original);

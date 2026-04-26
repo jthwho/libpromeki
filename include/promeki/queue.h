@@ -42,8 +42,7 @@ PROMEKI_NAMESPACE_BEGIN
  * bool empty = q.isEmpty();  // false
  * @endcode
  */
-template <typename T>
-class Queue {
+template <typename T> class Queue {
         public:
                 Queue() = default;
                 ~Queue() = default;
@@ -75,8 +74,7 @@ class Queue {
                  * @tparam Args Constructor argument types.
                  * @param args Arguments forwarded to the T constructor.
                  */
-                template <typename... Args>
-                void emplace(Args&&... args) {
+                template <typename... Args> void emplace(Args &&...args) {
                         Mutex::Locker locker(_mutex);
                         _queue.emplace(std::forward<Args>(args)...);
                         _cv.wakeOne();
@@ -89,7 +87,7 @@ class Queue {
                  */
                 void push(const List<T> &list) {
                         Mutex::Locker locker(_mutex);
-                        for(const auto &item : list) _queue.push(item);
+                        for (const auto &item : list) _queue.push(item);
                         _cv.wakeAll();
                         return;
                 }
@@ -104,12 +102,11 @@ class Queue {
                  */
                 Result<T> pop(unsigned int timeoutMs = 0) {
                         Mutex::Locker locker(_mutex);
-                        Error err = _cv.wait(_mutex,
-                                [this] { return !_queue.empty(); }, timeoutMs);
-                        if(err != Error::Ok) return Result<T>(T{}, err);
+                        Error         err = _cv.wait(_mutex, [this] { return !_queue.empty(); }, timeoutMs);
+                        if (err != Error::Ok) return Result<T>(T{}, err);
                         T ret = std::move(_queue.front());
                         _queue.pop();
-                        if(_queue.empty()) _cv.wakeAll();
+                        if (_queue.empty()) _cv.wakeAll();
                         return makeResult(std::move(ret));
                 }
 
@@ -121,10 +118,10 @@ class Queue {
                  */
                 Result<T> tryPop() {
                         Mutex::Locker locker(_mutex);
-                        if(_queue.empty()) return Result<T>(T{}, Error::Empty);
+                        if (_queue.empty()) return Result<T>(T{}, Error::Empty);
                         T ret = std::move(_queue.front());
                         _queue.pop();
-                        if(_queue.empty()) _cv.wakeAll();
+                        if (_queue.empty()) _cv.wakeAll();
                         return makeResult(std::move(ret));
                 }
 
@@ -139,9 +136,8 @@ class Queue {
                  */
                 Result<T> peek(unsigned int timeoutMs = 0) {
                         Mutex::Locker locker(_mutex);
-                        Error err = _cv.wait(_mutex,
-                                [this] { return !_queue.empty(); }, timeoutMs);
-                        if(err != Error::Ok) return Result<T>(T{}, err);
+                        Error         err = _cv.wait(_mutex, [this] { return !_queue.empty(); }, timeoutMs);
+                        if (err != Error::Ok) return Result<T>(T{}, err);
                         return makeResult(T(_queue.front()));
                 }
 
@@ -153,7 +149,7 @@ class Queue {
                  */
                 Result<T> tryPeek() {
                         Mutex::Locker locker(_mutex);
-                        if(_queue.empty()) return Result<T>(T{}, Error::Empty);
+                        if (_queue.empty()) return Result<T>(T{}, Error::Empty);
                         return makeResult(T(_queue.front()));
                 }
 
@@ -172,8 +168,7 @@ class Queue {
                  */
                 Error waitForEmpty(unsigned int timeoutMs = 0) {
                         Mutex::Locker locker(_mutex);
-                        return _cv.wait(_mutex,
-                                [this] { return _queue.empty(); }, timeoutMs);
+                        return _cv.wait(_mutex, [this] { return _queue.empty(); }, timeoutMs);
                 }
 
                 /**
@@ -205,9 +200,9 @@ class Queue {
                 }
 
         private:
-                mutable Mutex           _mutex;
-                WaitCondition           _cv;
-                std::queue<T>           _queue;
+                mutable Mutex _mutex;
+                WaitCondition _cv;
+                std::queue<T> _queue;
 };
 
 PROMEKI_NAMESPACE_END

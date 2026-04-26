@@ -49,23 +49,21 @@ class MediaIOTask_DebugMedia : public MediaIOTask {
                 ~MediaIOTask_DebugMedia() override;
 
         private:
-                Error executeCmd(MediaIOCommandOpen &cmd)  override;
+                Error executeCmd(MediaIOCommandOpen &cmd) override;
                 Error executeCmd(MediaIOCommandClose &cmd) override;
-                Error executeCmd(MediaIOCommandRead &cmd)  override;
+                Error executeCmd(MediaIOCommandRead &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
-                Error executeCmd(MediaIOCommandSeek &cmd)  override;
+                Error executeCmd(MediaIOCommandSeek &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
 
-                Error proposeInput(const MediaDesc &offered,
-                                   MediaDesc *preferred) const override;
-                Error proposeOutput(const MediaDesc &requested,
-                                    MediaDesc *achievable) const override;
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
+                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const override;
 
-                DebugMediaFile::UPtr             _file;
-                String                           _filename;
-                MediaIO::Mode                    _mode = MediaIO::NotOpen;
-                FrameCount                       _framesWritten{0};
-                FrameCount                       _framesRead{0};
+                DebugMediaFile::UPtr _file;
+                String               _filename;
+                MediaIO::Mode        _mode = MediaIO::NotOpen;
+                FrameCount           _framesWritten{0};
+                FrameCount           _framesRead{0};
 };
 
 PROMEKI_NAMESPACE_END

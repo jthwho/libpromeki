@@ -22,7 +22,7 @@ TEST_CASE("MediaTimeStamp: default is invalid") {
 }
 
 TEST_CASE("MediaTimeStamp: construction with TimeStamp and ClockDomain") {
-        TimeStamp ts = TimeStamp::now();
+        TimeStamp      ts = TimeStamp::now();
         MediaTimeStamp mts(ts, ClockDomain::SystemMonotonic);
         CHECK(mts.isValid());
         CHECK(mts.domain() == ClockDomain::SystemMonotonic);
@@ -31,8 +31,8 @@ TEST_CASE("MediaTimeStamp: construction with TimeStamp and ClockDomain") {
 }
 
 TEST_CASE("MediaTimeStamp: construction with offset") {
-        TimeStamp ts = TimeStamp::now();
-        Duration offset = Duration::fromMilliseconds(50);
+        TimeStamp      ts = TimeStamp::now();
+        Duration       offset = Duration::fromMilliseconds(50);
         MediaTimeStamp mts(ts, ClockDomain::Synthetic, offset);
         CHECK(mts.isValid());
         CHECK(mts.offset() == offset);
@@ -41,36 +41,36 @@ TEST_CASE("MediaTimeStamp: construction with offset") {
 TEST_CASE("MediaTimeStamp: toString format") {
         // Construct with a known time point so we can predict the output
         TimeStamp::Duration d = TimeStamp::secondsToDuration(1.5);
-        TimeStamp ts{TimeStamp::Value{d}};
-        MediaTimeStamp mts(ts, ClockDomain::Synthetic);
-        String s = mts.toString();
+        TimeStamp           ts{TimeStamp::Value{d}};
+        MediaTimeStamp      mts(ts, ClockDomain::Synthetic);
+        String              s = mts.toString();
         CHECK(s.startsWith("Synthetic "));
         CHECK(s.endsWith(" +0"));
 }
 
 TEST_CASE("MediaTimeStamp: toString with positive offset") {
         TimeStamp::Duration d = TimeStamp::secondsToDuration(1.0);
-        TimeStamp ts{TimeStamp::Value{d}};
-        Duration offset = Duration::fromMicroseconds(500);
-        MediaTimeStamp mts(ts, ClockDomain::Synthetic, offset);
-        String s = mts.toString();
+        TimeStamp           ts{TimeStamp::Value{d}};
+        Duration            offset = Duration::fromMicroseconds(500);
+        MediaTimeStamp      mts(ts, ClockDomain::Synthetic, offset);
+        String              s = mts.toString();
         CHECK(s.endsWith("+500000"));
 }
 
 TEST_CASE("MediaTimeStamp: toString with negative offset") {
         TimeStamp::Duration d = TimeStamp::secondsToDuration(1.0);
-        TimeStamp ts{TimeStamp::Value{d}};
-        Duration offset = Duration::fromNanoseconds(-1000);
-        MediaTimeStamp mts(ts, ClockDomain::SystemMonotonic, offset);
-        String s = mts.toString();
+        TimeStamp           ts{TimeStamp::Value{d}};
+        Duration            offset = Duration::fromNanoseconds(-1000);
+        MediaTimeStamp      mts(ts, ClockDomain::SystemMonotonic, offset);
+        String              s = mts.toString();
         CHECK(s.contains("-1000"));
 }
 
 TEST_CASE("MediaTimeStamp: fromString round-trip with zero offset") {
         TimeStamp::Duration d = TimeStamp::secondsToDuration(42.0);
-        TimeStamp ts{TimeStamp::Value{d}};
-        MediaTimeStamp original(ts, ClockDomain::Synthetic);
-        String s = original.toString();
+        TimeStamp           ts{TimeStamp::Value{d}};
+        MediaTimeStamp      original(ts, ClockDomain::Synthetic);
+        String              s = original.toString();
 
         auto [parsed, err] = MediaTimeStamp::fromString(s);
         CHECK(err.isOk());
@@ -82,10 +82,10 @@ TEST_CASE("MediaTimeStamp: fromString round-trip with zero offset") {
 
 TEST_CASE("MediaTimeStamp: fromString round-trip with offset") {
         TimeStamp::Duration d = TimeStamp::secondsToDuration(10.0);
-        TimeStamp ts{TimeStamp::Value{d}};
-        Duration offset = Duration::fromMilliseconds(25);
-        MediaTimeStamp original(ts, ClockDomain::SystemMonotonic, offset);
-        String s = original.toString();
+        TimeStamp           ts{TimeStamp::Value{d}};
+        Duration            offset = Duration::fromMilliseconds(25);
+        MediaTimeStamp      original(ts, ClockDomain::SystemMonotonic, offset);
+        String              s = original.toString();
 
         auto [parsed, err] = MediaTimeStamp::fromString(s);
         CHECK(err.isOk());
@@ -112,9 +112,9 @@ TEST_CASE("MediaTimeStamp: fromString with unknown domain") {
 }
 
 TEST_CASE("MediaTimeStamp: Variant round-trip") {
-        TimeStamp ts = TimeStamp::now();
+        TimeStamp      ts = TimeStamp::now();
         MediaTimeStamp original(ts, ClockDomain::Synthetic);
-        Variant v = original;
+        Variant        v = original;
         CHECK(v.type() == Variant::TypeMediaTimeStamp);
 
         MediaTimeStamp retrieved = v.get<MediaTimeStamp>();
@@ -125,20 +125,20 @@ TEST_CASE("MediaTimeStamp: Variant round-trip") {
 
 TEST_CASE("MediaTimeStamp: Variant to String conversion") {
         TimeStamp::Duration d = TimeStamp::secondsToDuration(5.0);
-        TimeStamp ts{TimeStamp::Value{d}};
-        MediaTimeStamp mts(ts, ClockDomain::Synthetic);
-        Variant v = mts;
-        String s = v.get<String>();
+        TimeStamp           ts{TimeStamp::Value{d}};
+        MediaTimeStamp      mts(ts, ClockDomain::Synthetic);
+        Variant             v = mts;
+        String              s = v.get<String>();
         CHECK(s.startsWith("Synthetic "));
 }
 
 TEST_CASE("MediaTimeStamp: DataStream round-trip") {
         TimeStamp::Duration d = TimeStamp::secondsToDuration(100.0);
-        TimeStamp ts{TimeStamp::Value{d}};
-        Duration offset = Duration::fromMicroseconds(-250);
-        MediaTimeStamp original(ts, ClockDomain::SystemMonotonic, offset);
+        TimeStamp           ts{TimeStamp::Value{d}};
+        Duration            offset = Duration::fromMicroseconds(-250);
+        MediaTimeStamp      original(ts, ClockDomain::SystemMonotonic, offset);
 
-        Buffer buf(4096);
+        Buffer         buf(4096);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
@@ -149,7 +149,7 @@ TEST_CASE("MediaTimeStamp: DataStream round-trip") {
         }
         dev.seek(0);
         {
-                DataStream rs = DataStream::createReader(&dev);
+                DataStream     rs = DataStream::createReader(&dev);
                 MediaTimeStamp loaded;
                 rs >> loaded;
                 CHECK(rs.status() == DataStream::Ok);
@@ -160,7 +160,7 @@ TEST_CASE("MediaTimeStamp: DataStream round-trip") {
 }
 
 TEST_CASE("MediaTimeStamp: Metadata set/get") {
-        TimeStamp ts = TimeStamp::now();
+        TimeStamp      ts = TimeStamp::now();
         MediaTimeStamp mts(ts, ClockDomain::Synthetic);
 
         // CaptureTime is a MediaTimeStamp-typed Metadata ID; use it to
@@ -168,8 +168,7 @@ TEST_CASE("MediaTimeStamp: Metadata set/get") {
         Metadata meta;
         meta.set(Metadata::CaptureTime, mts);
 
-        MediaTimeStamp retrieved = meta.get(Metadata::CaptureTime)
-                .get<MediaTimeStamp>();
+        MediaTimeStamp retrieved = meta.get(Metadata::CaptureTime).get<MediaTimeStamp>();
         CHECK(retrieved.isValid());
         CHECK(retrieved.domain() == ClockDomain::Synthetic);
         CHECK(retrieved.timeStamp() == ts);
@@ -177,8 +176,8 @@ TEST_CASE("MediaTimeStamp: Metadata set/get") {
 
 TEST_CASE("MediaTimeStamp: equality") {
         TimeStamp::Duration d = TimeStamp::secondsToDuration(1.0);
-        TimeStamp ts{TimeStamp::Value{d}};
-        Duration offset = Duration::fromMilliseconds(10);
+        TimeStamp           ts{TimeStamp::Value{d}};
+        Duration            offset = Duration::fromMilliseconds(10);
 
         MediaTimeStamp a(ts, ClockDomain::Synthetic, offset);
         MediaTimeStamp b(ts, ClockDomain::Synthetic, offset);

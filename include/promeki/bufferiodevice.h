@@ -39,7 +39,7 @@ PROMEKI_NAMESPACE_BEGIN
  * only be used from the thread that created it.
  */
 class BufferIODevice : public IODevice {
-        PROMEKI_OBJECT(BufferIODevice, IODevice)
+                PROMEKI_OBJECT(BufferIODevice, IODevice)
         public:
                 /**
                  * @brief Constructs a BufferIODevice with an external Buffer.
@@ -93,22 +93,22 @@ class BufferIODevice : public IODevice {
                 /** @brief Returns true if auto-growth is enabled. */
                 bool autoGrow() const { return _autoGrow; }
 
-                Error open(OpenMode mode) override;
-                Error close() override;
-                bool isOpen() const override;
-                int64_t read(void *data, int64_t maxSize) override;
-                int64_t write(const void *data, int64_t maxSize) override;
-                int64_t bytesAvailable() const override;
-                bool isSequential() const override;
-                Error seek(int64_t pos) override;
-                int64_t pos() const override;
+                Error           open(OpenMode mode) override;
+                Error           close() override;
+                bool            isOpen() const override;
+                int64_t         read(void *data, int64_t maxSize) override;
+                int64_t         write(const void *data, int64_t maxSize) override;
+                int64_t         bytesAvailable() const override;
+                bool            isSequential() const override;
+                Error           seek(int64_t pos) override;
+                int64_t         pos() const override;
                 Result<int64_t> size() const override;
-                bool atEnd() const override;
+                bool            atEnd() const override;
 
         private:
-                Buffer  *_buffer   = nullptr;
-                int64_t  _pos      = 0;
-                bool     _autoGrow = false;
+                Buffer *_buffer = nullptr;
+                int64_t _pos = 0;
+                bool    _autoGrow = false;
 };
 
 PROMEKI_NAMESPACE_END

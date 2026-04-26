@@ -276,9 +276,9 @@ TEST_CASE("Color: fromString boundary values") {
 }
 
 TEST_CASE("Color: toString/fromString round-trip") {
-        Color original(128, 64, 32);
+        Color  original(128, 64, 32);
         String str = original.toString();
-        Color parsed = Color::fromString(str);
+        Color  parsed = Color::fromString(str);
         CHECK(parsed.isValid());
         CHECK(parsed.r8() == original.r8());
         CHECK(parsed.g8() == original.g8());
@@ -286,9 +286,9 @@ TEST_CASE("Color: toString/fromString round-trip") {
 }
 
 TEST_CASE("Color: toString/fromString round-trip with alpha") {
-        Color original(128, 64, 32, 200);
+        Color  original(128, 64, 32, 200);
         String str = original.toString();
-        Color parsed = Color::fromString(str);
+        Color  parsed = Color::fromString(str);
         CHECK(parsed.isValid());
         CHECK(parsed.r8() == original.r8());
         CHECK(parsed.g8() == original.g8());
@@ -791,8 +791,8 @@ TEST_CASE("Color: lerp cross-model converts other") {
 }
 
 TEST_CASE("Color: lerp in HSV space") {
-        Color a = Color::hsv(0.0f, 1.0f, 1.0f);   // red
-        Color b = Color::hsv(0.5f, 1.0f, 1.0f);   // cyan
+        Color a = Color::hsv(0.0f, 1.0f, 1.0f); // red
+        Color b = Color::hsv(0.5f, 1.0f, 1.0f); // cyan
         Color mid = a.lerp(b, 0.5);
         CHECK(mid.h() == doctest::Approx(0.25f));
         CHECK(mid.s() == doctest::Approx(1.0f));
@@ -896,8 +896,8 @@ TEST_CASE("Color: isClose exact same color") {
 TEST_CASE("Color: isClose with large epsilon") {
         Color a = Color::srgb(0.5f, 0.3f, 0.1f);
         Color b = Color::srgb(0.6f, 0.4f, 0.2f);
-        CHECK_FALSE(a.isClose(b));        // default epsilon too small
-        CHECK(a.isClose(b, 0.2f));         // large epsilon
+        CHECK_FALSE(a.isClose(b)); // default epsilon too small
+        CHECK(a.isClose(b, 0.2f)); // large epsilon
 }
 
 TEST_CASE("Color: isClose checks alpha") {

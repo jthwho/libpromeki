@@ -121,20 +121,20 @@ class VideoCodec {
                  * @c UserDefined.
                  */
                 enum ID {
-                        Invalid     = 0,    ///< Invalid or uninitialised.
-                        H264        = 1,    ///< H.264 / MPEG-4 AVC.
-                        HEVC        = 2,    ///< H.265 / HEVC.
-                        AV1         = 3,    ///< AV1 (AOMedia Video 1).
-                        VP9         = 4,    ///< VP9.
-                        JPEG        = 5,    ///< JPEG (ISO/IEC 10918-1 / JFIF).
-                        JPEG_XS     = 6,    ///< JPEG XS (ISO/IEC 21122).
-                        ProRes_422_Proxy = 7,  ///< Apple ProRes 422 Proxy (apco).
-                        ProRes_422_LT    = 8,  ///< Apple ProRes 422 LT (apcs).
-                        ProRes_422       = 9,  ///< Apple ProRes 422 (apcn).
-                        ProRes_422_HQ    = 10, ///< Apple ProRes 422 HQ (apch).
-                        ProRes_4444      = 11, ///< Apple ProRes 4444 (ap4h).
-                        ProRes_4444_XQ   = 12, ///< Apple ProRes 4444 XQ (ap4x).
-                        UserDefined = 1024  ///< First ID available for user-registered codecs.
+                        Invalid = 0,          ///< Invalid or uninitialised.
+                        H264 = 1,             ///< H.264 / MPEG-4 AVC.
+                        HEVC = 2,             ///< H.265 / HEVC.
+                        AV1 = 3,              ///< AV1 (AOMedia Video 1).
+                        VP9 = 4,              ///< VP9.
+                        JPEG = 5,             ///< JPEG (ISO/IEC 10918-1 / JFIF).
+                        JPEG_XS = 6,          ///< JPEG XS (ISO/IEC 21122).
+                        ProRes_422_Proxy = 7, ///< Apple ProRes 422 Proxy (apco).
+                        ProRes_422_LT = 8,    ///< Apple ProRes 422 LT (apcs).
+                        ProRes_422 = 9,       ///< Apple ProRes 422 (apcn).
+                        ProRes_422_HQ = 10,   ///< Apple ProRes 422 HQ (apch).
+                        ProRes_4444 = 11,     ///< Apple ProRes 4444 (ap4h).
+                        ProRes_4444_XQ = 12,  ///< Apple ProRes 4444 XQ (ap4x).
+                        UserDefined = 1024    ///< First ID available for user-registered codecs.
                 };
 
                 /** @brief List of VideoCodec IDs. */
@@ -148,9 +148,10 @@ class VideoCodec {
                  * may safely drop packets mid-stream.
                  */
                 enum CodingType {
-                        CodingInvalid   = 0,    ///< Unknown / not classified.
-                        CodingIntraOnly = 1,    ///< Every frame is independently decodable (JPEG, JPEG XS, ProRes, Motion JPEG).
-                        CodingTemporal  = 2     ///< Frames may reference other frames (H.264, HEVC, AV1, VP9).
+                        CodingInvalid = 0, ///< Unknown / not classified.
+                        CodingIntraOnly =
+                                1, ///< Every frame is independently decodable (JPEG, JPEG XS, ProRes, Motion JPEG).
+                        CodingTemporal = 2 ///< Frames may reference other frames (H.264, HEVC, AV1, VP9).
                 };
 
                 /**
@@ -161,9 +162,9 @@ class VideoCodec {
                  * boundaries (IDR / keyframe).
                  */
                 enum RandomAccessGranularity {
-                        AccessInvalid = 0,      ///< Unknown / not classified.
-                        AccessFrame   = 1,      ///< Every coded frame is a random-access point.
-                        AccessGOP     = 2       ///< Random access at GOP / keyframe boundaries only.
+                        AccessInvalid = 0, ///< Unknown / not classified.
+                        AccessFrame = 1,   ///< Every coded frame is a random-access point.
+                        AccessGOP = 2      ///< Random access at GOP / keyframe boundaries only.
                 };
 
                 /**
@@ -198,14 +199,10 @@ class VideoCodec {
                                 constexpr uint64_t id() const { return _id; }
 
                                 /** @brief Returns the registered backend name (e.g. @c "Nvidia"). */
-                                String name() const {
-                                        return VideoCodecBackendRegistry::instance().name(_id);
-                                }
+                                String name() const { return VideoCodecBackendRegistry::instance().name(_id); }
 
                                 /** @brief Returns true when this handle refers to a registered backend. */
-                                constexpr bool isValid() const {
-                                        return _id != VideoCodecBackendRegistry::InvalidID;
-                                }
+                                constexpr bool isValid() const { return _id != VideoCodecBackendRegistry::InvalidID; }
 
                                 /** @brief Equality by ID. */
                                 constexpr bool operator==(const Backend &o) const { return _id == o._id; }
@@ -232,42 +229,46 @@ class VideoCodec {
                  * @ref VideoDecoder backend records.
                  */
                 struct Data {
-                        ID              id = Invalid;           ///< Unique codec identifier.
-                        String          name;                   ///< Short name, must be a valid C identifier (e.g. @c "H264").
-                        String          desc;                   ///< Human-readable description.
-                        FourCC::List      fourccList;             ///< Associated FourCC codes.
-                        /**
+                                ID           id = Invalid; ///< Unique codec identifier.
+                                String       name;       ///< Short name, must be a valid C identifier (e.g. @c "H264").
+                                String       desc;       ///< Human-readable description.
+                                FourCC::List fourccList; ///< Associated FourCC codes.
+                                /**
                          * @brief Compressed @ref PixelFormat IDs this codec produces / consumes.
                          *
                          * Stored as @c int for header-layering reasons
                          * (PixelFormat pulls in colormodel/pixelmemlayout).
                          * Callers wrap each as @ref PixelFormat(id) at use time.
                          */
-                        List<int>       compressedPixelFormats;
-                        CodingType      codingType = CodingInvalid;                 ///< Intra-only vs temporal.
-                        RandomAccessGranularity randomAccessGranularity = AccessInvalid; ///< Seek granularity.
-                        bool            supportsBFrames = false;                    ///< Codec spec allows B-frame reordering.
-                        bool            supportsLossless = false;                   ///< Codec has a lossless mode (H.264 Hi444, ProRes 4444 XQ near-lossless, …).
-                        bool            supportsAlpha = false;                      ///< Codec encodes an alpha channel (ProRes 4444 yes, H.264 no).
-                        bool            supportsVariableFrameSize = false;          ///< Each frame may declare new dimensions (JPEG yes, H.264 only at IDR).
-                        bool            supportsHDRMetadata = false;                ///< Bitstream carries mastering display / content-light metadata natively.
-                        bool            supportsInterlaced = false;                 ///< Codec signals / encodes interlaced scan natively.
-                        /**
+                                List<int>               compressedPixelFormats;
+                                CodingType              codingType = CodingInvalid; ///< Intra-only vs temporal.
+                                RandomAccessGranularity randomAccessGranularity = AccessInvalid; ///< Seek granularity.
+                                bool supportsBFrames = false; ///< Codec spec allows B-frame reordering.
+                                bool supportsLossless =
+                                        false; ///< Codec has a lossless mode (H.264 Hi444, ProRes 4444 XQ near-lossless, …).
+                                bool supportsAlpha =
+                                        false; ///< Codec encodes an alpha channel (ProRes 4444 yes, H.264 no).
+                                bool supportsVariableFrameSize =
+                                        false; ///< Each frame may declare new dimensions (JPEG yes, H.264 only at IDR).
+                                bool supportsHDRMetadata =
+                                        false; ///< Bitstream carries mastering display / content-light metadata natively.
+                                bool supportsInterlaced = false; ///< Codec signals / encodes interlaced scan natively.
+                                /**
                          * @brief Bit depths the codec spec permits, in bits per component.
                          *
                          * Empty means "no spec-level restriction" (unusual
                          * — most modern codecs enumerate 8 / 10 / 12).
                          */
-                        List<int>       supportedBitDepths;
-                        /**
+                                List<int> supportedBitDepths;
+                                /**
                          * @brief Rate-control modes the codec can be driven in.
                          *
                          * Same shape as @ref AudioCodec::Data::rateControlModes.
                          * Empty means "constant-quality / fixed codec"
                          * (lossless-only, JPEG at fixed quality, etc.).
                          */
-                        List<RateControlMode> rateControlModes;
-                        /**
+                                List<RateControlMode> rateControlModes;
+                                /**
                          * @brief Frame rates the codec spec permits.
                          *
                          * Populated only when the codec spec actually
@@ -275,10 +276,11 @@ class VideoCodec {
                          * rate".  Mirror of
                          * @ref AudioCodec::Data::supportedSampleRates.
                          */
-                        List<FrameRate> supportedFrameRates;
-                        int             maxWidth  = 0;                              ///< 0 = spec-unlimited.
-                        int             maxHeight = 0;                              ///< 0 = spec-unlimited.
-                        int             maxChannels = 0;                            ///< 0 = unlimited.  (Not meaningful for most video codecs; present for symmetry with audio.)
+                                List<FrameRate> supportedFrameRates;
+                                int             maxWidth = 0;  ///< 0 = spec-unlimited.
+                                int             maxHeight = 0; ///< 0 = spec-unlimited.
+                                int             maxChannels =
+                                        0; ///< 0 = unlimited.  (Not meaningful for most video codecs; present for symmetry with audio.)
                 };
 
                 /**
@@ -535,9 +537,7 @@ class VideoCodec {
                 String toString() const;
 
                 /** @brief Equality compares (underlying Data, pinned backend). */
-                bool operator==(const VideoCodec &o) const {
-                        return d == o.d && _backend == o._backend;
-                }
+                bool operator==(const VideoCodec &o) const { return d == o.d && _backend == o._backend; }
 
                 /** @brief Inequality. */
                 bool operator!=(const VideoCodec &o) const { return !(*this == o); }
@@ -546,12 +546,11 @@ class VideoCodec {
                 const Data *data() const { return d; }
 
         private:
-                const Data *d        = nullptr;
-                Backend     _backend;
+                const Data        *d = nullptr;
+                Backend            _backend;
                 static const Data *lookupData(ID id);
 };
 
-inline VideoCodec::VideoCodec(ID id, Backend backend)
-        : d(lookupData(id)), _backend(backend) {}
+inline VideoCodec::VideoCodec(ID id, Backend backend) : d(lookupData(id)), _backend(backend) {}
 
 PROMEKI_NAMESPACE_END

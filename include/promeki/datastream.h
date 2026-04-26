@@ -194,8 +194,8 @@ class DataStream {
         public:
                 /** @brief Byte order for multi-byte values. */
                 enum ByteOrder {
-                        BigEndian,    ///< @brief Network byte order (default).
-                        LittleEndian  ///< @brief Intel/ARM byte order.
+                        BigEndian,   ///< @brief Network byte order (default).
+                        LittleEndian ///< @brief Intel/ARM byte order.
                 };
 
                 /** @brief Stream status codes. */
@@ -234,83 +234,87 @@ class DataStream {
                  */
                 enum TypeId : uint16_t {
                         // Primitives ---------------------------------------------
-                        TypeInt8        = 0x01, ///< @brief int8_t
-                        TypeUInt8       = 0x02, ///< @brief uint8_t
-                        TypeInt16       = 0x03, ///< @brief int16_t
-                        TypeUInt16      = 0x04, ///< @brief uint16_t
-                        TypeInt32       = 0x05, ///< @brief int32_t
-                        TypeUInt32      = 0x06, ///< @brief uint32_t
-                        TypeInt64       = 0x07, ///< @brief int64_t
-                        TypeUInt64      = 0x08, ///< @brief uint64_t
-                        TypeFloat       = 0x09, ///< @brief float (IEEE 754)
-                        TypeDouble      = 0x0A, ///< @brief double (IEEE 754)
-                        TypeBool        = 0x0B, ///< @brief bool (as uint8_t)
-                        TypeString      = 0x0C, ///< @brief Length-prefixed UTF-8 String
-                        TypeBuffer      = 0x0D, ///< @brief Length-prefixed raw bytes
-                        TypeInvalid     = 0x0E, ///< @brief Explicit invalid marker (empty payload)
+                        TypeInt8 = 0x01,    ///< @brief int8_t
+                        TypeUInt8 = 0x02,   ///< @brief uint8_t
+                        TypeInt16 = 0x03,   ///< @brief int16_t
+                        TypeUInt16 = 0x04,  ///< @brief uint16_t
+                        TypeInt32 = 0x05,   ///< @brief int32_t
+                        TypeUInt32 = 0x06,  ///< @brief uint32_t
+                        TypeInt64 = 0x07,   ///< @brief int64_t
+                        TypeUInt64 = 0x08,  ///< @brief uint64_t
+                        TypeFloat = 0x09,   ///< @brief float (IEEE 754)
+                        TypeDouble = 0x0A,  ///< @brief double (IEEE 754)
+                        TypeBool = 0x0B,    ///< @brief bool (as uint8_t)
+                        TypeString = 0x0C,  ///< @brief Length-prefixed UTF-8 String
+                        TypeBuffer = 0x0D,  ///< @brief Length-prefixed raw bytes
+                        TypeInvalid = 0x0E, ///< @brief Explicit invalid marker (empty payload)
 
                         // Data objects (inner values are tagged primitives) -----
-                        TypeUUID        = 0x10, ///< @brief UUID (16 raw bytes)
-                        TypeDateTime    = 0x11, ///< @brief DateTime (tagged int64 ns since epoch)
-                        TypeTimeStamp   = 0x12, ///< @brief TimeStamp (tagged int64 ns since epoch)
-                        TypeSize2D      = 0x13, ///< @brief Size2DTemplate<T> (two tagged primitives)
-                        TypeRational    = 0x14, ///< @brief Rational<T> (two tagged primitives)
-                        TypeFrameRate   = 0x15, ///< @brief FrameRate (two tagged uint32)
-                        TypeTimecode    = 0x16, ///< @brief Timecode (length-prefixed string)
-                        TypeColor       = 0x17, ///< @brief Color (length-prefixed string)
-                        TypeColorModel  = 0x18, ///< @brief ColorModel (length-prefixed name)
-                        TypeMemSpace    = 0x19, ///< @brief MemSpace (tagged uint32 ID)
+                        TypeUUID = 0x10,           ///< @brief UUID (16 raw bytes)
+                        TypeDateTime = 0x11,       ///< @brief DateTime (tagged int64 ns since epoch)
+                        TypeTimeStamp = 0x12,      ///< @brief TimeStamp (tagged int64 ns since epoch)
+                        TypeSize2D = 0x13,         ///< @brief Size2DTemplate<T> (two tagged primitives)
+                        TypeRational = 0x14,       ///< @brief Rational<T> (two tagged primitives)
+                        TypeFrameRate = 0x15,      ///< @brief FrameRate (two tagged uint32)
+                        TypeTimecode = 0x16,       ///< @brief Timecode (length-prefixed string)
+                        TypeColor = 0x17,          ///< @brief Color (length-prefixed string)
+                        TypeColorModel = 0x18,     ///< @brief ColorModel (length-prefixed name)
+                        TypeMemSpace = 0x19,       ///< @brief MemSpace (tagged uint32 ID)
                         TypePixelMemLayout = 0x1A, ///< @brief PixelMemLayout (length-prefixed name)
-                        TypePixelFormat   = 0x1B, ///< @brief PixelFormat (length-prefixed name)
-                        TypeEnum        = 0x1C, ///< @brief Enum (length-prefixed qualified name)
-                        TypeStringList  = 0x1D, ///< @brief StringList (tagged uint32 count + N strings)
-                        TypeRect        = 0x1E, ///< @brief Rect<T> (four tagged primitives)
-                        TypePoint       = 0x1F, ///< @brief Point<T,N> (tagged uint32 dims + N tagged primitives)
+                        TypePixelFormat = 0x1B,    ///< @brief PixelFormat (length-prefixed name)
+                        TypeEnum = 0x1C,           ///< @brief Enum (length-prefixed qualified name)
+                        TypeStringList = 0x1D,     ///< @brief StringList (tagged uint32 count + N strings)
+                        TypeRect = 0x1E,           ///< @brief Rect<T> (four tagged primitives)
+                        TypePoint = 0x1F,          ///< @brief Point<T,N> (tagged uint32 dims + N tagged primitives)
 
                         // Containers --------------------------------------------
-                        TypeList        = 0x20, ///< @brief List<T> (tagged uint32 count + N tagged elements)
-                        TypeMap         = 0x21, ///< @brief Map<K,V> (tagged uint32 count + N key/value pairs)
-                        TypeSet         = 0x22, ///< @brief Set<T> (tagged uint32 count + N tagged elements)
-                        TypeHashMap     = 0x23, ///< @brief HashMap<K,V> (tagged uint32 count + N key/value pairs)
-                        TypeHashSet     = 0x24, ///< @brief HashSet<T> (tagged uint32 count + N tagged elements)
+                        TypeList = 0x20,    ///< @brief List<T> (tagged uint32 count + N tagged elements)
+                        TypeMap = 0x21,     ///< @brief Map<K,V> (tagged uint32 count + N key/value pairs)
+                        TypeSet = 0x22,     ///< @brief Set<T> (tagged uint32 count + N tagged elements)
+                        TypeHashMap = 0x23, ///< @brief HashMap<K,V> (tagged uint32 count + N key/value pairs)
+                        TypeHashSet = 0x24, ///< @brief HashSet<T> (tagged uint32 count + N tagged elements)
 
                         // Shareable types ---------------------------------------
-                        TypeJsonObject  = 0x30, ///< @brief JsonObject (length-prefixed serialized form)
-                        TypeJsonArray   = 0x31, ///< @brief JsonArray (length-prefixed serialized form)
-                        TypeXYZColor    = 0x32, ///< @brief XYZColor (three tagged doubles)
-                        TypeAudioDesc   = 0x33, ///< @brief AudioDesc (format + sample rate + channels + metadata)
-                        TypeImageDesc   = 0x34, ///< @brief ImageDesc (size + pixel desc + line pad + align + interlaced + metadata)
-                        TypeMediaDesc   = 0x35, ///< @brief MediaDesc (frame rate + image list + audio list + metadata)
-                        TypeUMID        = 0x36, ///< @brief UMID (uint8 length = 32 or 64, then N raw bytes)
-                        TypeEnumList    = 0x37, ///< @brief EnumList (type name + tagged uint32 count + N tagged int32 values)
-                        TypeMediaTimeStamp = 0x38, ///< @brief MediaTimeStamp (length-prefixed string round-trip)
-                        TypeMacAddress     = 0x39, ///< @brief MacAddress (length-prefixed string round-trip)
-                        TypeEUI64          = 0x3A, ///< @brief EUI64 (length-prefixed string round-trip)
-                        TypeMediaPipelineStage  = 0x3B, ///< @brief MediaPipelineConfig::Stage
-                        TypeMediaPipelineRoute  = 0x3C, ///< @brief MediaPipelineConfig::Route
+                        TypeJsonObject = 0x30, ///< @brief JsonObject (length-prefixed serialized form)
+                        TypeJsonArray = 0x31,  ///< @brief JsonArray (length-prefixed serialized form)
+                        TypeXYZColor = 0x32,   ///< @brief XYZColor (three tagged doubles)
+                        TypeAudioDesc = 0x33,  ///< @brief AudioDesc (format + sample rate + channels + metadata)
+                        TypeImageDesc =
+                                0x34, ///< @brief ImageDesc (size + pixel desc + line pad + align + interlaced + metadata)
+                        TypeMediaDesc = 0x35, ///< @brief MediaDesc (frame rate + image list + audio list + metadata)
+                        TypeUMID = 0x36,      ///< @brief UMID (uint8 length = 32 or 64, then N raw bytes)
+                        TypeEnumList =
+                                0x37, ///< @brief EnumList (type name + tagged uint32 count + N tagged int32 values)
+                        TypeMediaTimeStamp = 0x38,      ///< @brief MediaTimeStamp (length-prefixed string round-trip)
+                        TypeMacAddress = 0x39,          ///< @brief MacAddress (length-prefixed string round-trip)
+                        TypeEUI64 = 0x3A,               ///< @brief EUI64 (length-prefixed string round-trip)
+                        TypeMediaPipelineStage = 0x3B,  ///< @brief MediaPipelineConfig::Stage
+                        TypeMediaPipelineRoute = 0x3C,  ///< @brief MediaPipelineConfig::Route
                         TypeMediaPipelineConfig = 0x3D, ///< @brief MediaPipelineConfig (metadata + stages + routes)
-                        TypeMediaPipelineStats  = 0x3E, ///< @brief MediaPipelineStats (per-stage + aggregate)
-                        TypeVideoFormat        = 0x3F, ///< @brief VideoFormat (length-prefixed string round-trip)
+                        TypeMediaPipelineStats = 0x3E,  ///< @brief MediaPipelineStats (per-stage + aggregate)
+                        TypeVideoFormat = 0x3F,         ///< @brief VideoFormat (length-prefixed string round-trip)
 
                         // HDR color metadata ------------------------------------
-                        TypeMasteringDisplay    = 0x40, ///< @brief MasteringDisplay (SMPTE ST 2086): 10 tagged doubles
-                        TypeContentLightLevel   = 0x41, ///< @brief ContentLightLevel (CTA-861.3): two tagged uint32
+                        TypeMasteringDisplay = 0x40,  ///< @brief MasteringDisplay (SMPTE ST 2086): 10 tagged doubles
+                        TypeContentLightLevel = 0x41, ///< @brief ContentLightLevel (CTA-861.3): two tagged uint32
 
                         // MediaIO introspection ---------------------------------
-                        TypeMediaIODescription  = 0x42, ///< @brief MediaIODescription (identity + role + format landscape + capabilities)
+                        TypeMediaIODescription =
+                                0x42, ///< @brief MediaIODescription (identity + role + format landscape + capabilities)
 
                         // Frame timeline types ----------------------------------
-                        TypeFrameNumber         = 0x43, ///< @brief FrameNumber (length-prefixed string round-trip)
-                        TypeFrameCount          = 0x44, ///< @brief FrameCount (length-prefixed string round-trip)
-                        TypeMediaDuration       = 0x45, ///< @brief MediaDuration (length-prefixed string round-trip)
-                        TypeUrl                 = 0x46, ///< @brief Url (length-prefixed string round-trip)
-                        TypeAudioFormat         = 0x47, ///< @brief AudioFormat (length-prefixed name)
-                        TypeMediaPayload        = 0x48, ///< @brief MediaPayload (FourCC + common state + subclass-serialised tail)
-                        TypeDuration            = 0x49, ///< @brief Duration (int64 nanoseconds)
-                        TypeSocketAddress       = 0x4A, ///< @brief SocketAddress (length-prefixed string round-trip)
-                        TypeSdpSession          = 0x4B, ///< @brief SdpSession (length-prefixed string round-trip, RFC 4566)
-                        TypeVideoCodec          = 0x4C, ///< @brief VideoCodec (length-prefixed "Codec[:Backend]" round-trip)
-                        TypeAudioCodec          = 0x4D  ///< @brief AudioCodec (length-prefixed "Codec[:Backend]" round-trip)
+                        TypeFrameNumber = 0x43,   ///< @brief FrameNumber (length-prefixed string round-trip)
+                        TypeFrameCount = 0x44,    ///< @brief FrameCount (length-prefixed string round-trip)
+                        TypeMediaDuration = 0x45, ///< @brief MediaDuration (length-prefixed string round-trip)
+                        TypeUrl = 0x46,           ///< @brief Url (length-prefixed string round-trip)
+                        TypeAudioFormat = 0x47,   ///< @brief AudioFormat (length-prefixed name)
+                        TypeMediaPayload =
+                                0x48,        ///< @brief MediaPayload (FourCC + common state + subclass-serialised tail)
+                        TypeDuration = 0x49, ///< @brief Duration (int64 nanoseconds)
+                        TypeSocketAddress = 0x4A, ///< @brief SocketAddress (length-prefixed string round-trip)
+                        TypeSdpSession = 0x4B,    ///< @brief SdpSession (length-prefixed string round-trip, RFC 4566)
+                        TypeVideoCodec = 0x4C,    ///< @brief VideoCodec (length-prefixed "Codec[:Backend]" round-trip)
+                        TypeAudioCodec = 0x4D     ///< @brief AudioCodec (length-prefixed "Codec[:Backend]" round-trip)
                 };
 
                 /**
@@ -340,7 +344,7 @@ class DataStream {
                 static constexpr size_t HeaderSize = 16;
 
                 /** @brief Magic bytes identifying a DataStream ("PMDS"). */
-                static constexpr uint8_t Magic[4] = { 0x50, 0x4D, 0x44, 0x53 };
+                static constexpr uint8_t Magic[4] = {0x50, 0x4D, 0x44, 0x53};
 
                 /**
                  * @brief Constructs a DataStream for writing on an IODevice.
@@ -673,11 +677,10 @@ class DataStream {
                  * @tparam T Any type with a matching operator>>(DataStream&, T&).
                  * @return A Result<T> with the value and success/error.
                  */
-                template <typename T>
-                Result<T> read() {
+                template <typename T> Result<T> read() {
                         T val{};
                         *this >> val;
-                        if(_status != Ok) return makeError<T>(toError());
+                        if (_status != Ok) return makeError<T>(toError());
                         return makeResult(std::move(val));
                 }
 
@@ -824,45 +827,44 @@ class DataStream {
                 void writeStringListData(const StringList &val);
 
                 // Untagged value read helpers
-                int8_t   readInt8();
-                uint8_t  readUInt8();
-                int16_t  readInt16();
-                uint16_t readUInt16();
-                int32_t  readInt32();
-                uint32_t readUInt32();
-                int64_t  readInt64();
-                uint64_t readUInt64();
-                float    readFloat();
-                double   readDouble();
-                bool     readBoolValue();
-                String   readStringData();
-                Buffer   readBufferData();
-                UUID     readUUIDData();
-                UMID     readUMIDData();
-                DateTime readDateTimeData();
-                TimeStamp readTimeStampData();
-                FrameRate readFrameRateData();
-                VideoFormat readVideoFormatData();
-                Timecode  readTimecodeData();
-                Color     readColorData();
-                ColorModel readColorModelData();
-                MemSpace  readMemSpaceData();
+                int8_t         readInt8();
+                uint8_t        readUInt8();
+                int16_t        readInt16();
+                uint16_t       readUInt16();
+                int32_t        readInt32();
+                uint32_t       readUInt32();
+                int64_t        readInt64();
+                uint64_t       readUInt64();
+                float          readFloat();
+                double         readDouble();
+                bool           readBoolValue();
+                String         readStringData();
+                Buffer         readBufferData();
+                UUID           readUUIDData();
+                UMID           readUMIDData();
+                DateTime       readDateTimeData();
+                TimeStamp      readTimeStampData();
+                FrameRate      readFrameRateData();
+                VideoFormat    readVideoFormatData();
+                Timecode       readTimecodeData();
+                Color          readColorData();
+                ColorModel     readColorModelData();
+                MemSpace       readMemSpaceData();
                 PixelMemLayout readPixelMemLayoutData();
-                PixelFormat readPixelFormatData();
-                AudioFormat readAudioFormatData();
-                Enum      readEnumData();
-                EnumList  readEnumListData();
-                StringList readStringListData();
+                PixelFormat    readPixelFormatData();
+                AudioFormat    readAudioFormatData();
+                Enum           readEnumData();
+                EnumList       readEnumListData();
+                StringList     readStringListData();
 
                 /**
                  * @brief Swaps byte order of a value in-place if needed.
                  * @tparam T The type to byte-swap (2, 4, or 8 bytes).
                  * @param val The value to potentially swap.
                  */
-                template <typename T>
-                void swapIfNeeded(T &val) const {
+                template <typename T> void swapIfNeeded(T &val) const {
                         if constexpr (sizeof(T) == 1) return;
-                        if(_byteOrder == nativeByteOrder()) return;
+                        if (_byteOrder == nativeByteOrder()) return;
                         uint8_t *p = reinterpret_cast<uint8_t *>(&val);
                         if constexpr (sizeof(T) == 2) {
                                 std::swap(p[0], p[1]);
@@ -883,15 +885,14 @@ class DataStream {
                  */
                 static ByteOrder nativeByteOrder() {
                         static const uint16_t val = 1;
-                        return (*reinterpret_cast<const uint8_t *>(&val) == 1)
-                                ? LittleEndian : BigEndian;
+                        return (*reinterpret_cast<const uint8_t *>(&val) == 1) ? LittleEndian : BigEndian;
                 }
 
-                IODevice        *_device    = nullptr;
-                ByteOrder       _byteOrder  = BigEndian;
-                uint16_t        _version    = 0;
-                Status          _status     = Ok;
-                String          _errorContext;
+                IODevice *_device = nullptr;
+                ByteOrder _byteOrder = BigEndian;
+                uint16_t  _version = 0;
+                Status    _status = Ok;
+                String    _errorContext;
 };
 
 // ============================================================================
@@ -904,9 +905,9 @@ class DataStream {
 // count and then the fully-tagged elements.
 
 namespace detail {
-/** @brief Maximum element count accepted by container reads, to prevent
+        /** @brief Maximum element count accepted by container reads, to prevent
  *         runaway allocations on corrupt input. */
-inline constexpr uint32_t DataStreamMaxContainerCount = 256u * 1024u * 1024u;
+        inline constexpr uint32_t DataStreamMaxContainerCount = 256u * 1024u * 1024u;
 } // namespace detail
 
 // ============================================================================
@@ -927,8 +928,7 @@ inline constexpr uint32_t DataStreamMaxContainerCount = 256u * 1024u * 1024u;
  * @param sz     The size to serialize.
  * @return The stream, for chaining.
  */
-template <typename T>
-DataStream &operator<<(DataStream &stream, const Size2DTemplate<T> &sz) {
+template <typename T> DataStream &operator<<(DataStream &stream, const Size2DTemplate<T> &sz) {
         stream.writeTag(DataStream::TypeSize2D);
         stream << sz.width() << sz.height();
         return stream;
@@ -941,12 +941,17 @@ DataStream &operator<<(DataStream &stream, const Size2DTemplate<T> &sz) {
  * @param sz     The size to populate.
  * @return The stream, for chaining.
  */
-template <typename T>
-DataStream &operator>>(DataStream &stream, Size2DTemplate<T> &sz) {
-        if(!stream.readTag(DataStream::TypeSize2D)) { sz = Size2DTemplate<T>(); return stream; }
+template <typename T> DataStream &operator>>(DataStream &stream, Size2DTemplate<T> &sz) {
+        if (!stream.readTag(DataStream::TypeSize2D)) {
+                sz = Size2DTemplate<T>();
+                return stream;
+        }
         T w{}, h{};
         stream >> w >> h;
-        if(stream.status() != DataStream::Ok) { sz = Size2DTemplate<T>(); return stream; }
+        if (stream.status() != DataStream::Ok) {
+                sz = Size2DTemplate<T>();
+                return stream;
+        }
         sz = Size2DTemplate<T>(w, h);
         return stream;
 }
@@ -958,8 +963,7 @@ DataStream &operator>>(DataStream &stream, Size2DTemplate<T> &sz) {
  * @param r      The rational to serialize.
  * @return The stream, for chaining.
  */
-template <typename T>
-DataStream &operator<<(DataStream &stream, const Rational<T> &r) {
+template <typename T> DataStream &operator<<(DataStream &stream, const Rational<T> &r) {
         stream.writeTag(DataStream::TypeRational);
         stream << r.numerator() << r.denominator();
         return stream;
@@ -972,12 +976,17 @@ DataStream &operator<<(DataStream &stream, const Rational<T> &r) {
  * @param r      The rational to populate.
  * @return The stream, for chaining.
  */
-template <typename T>
-DataStream &operator>>(DataStream &stream, Rational<T> &r) {
-        if(!stream.readTag(DataStream::TypeRational)) { r = Rational<T>(); return stream; }
+template <typename T> DataStream &operator>>(DataStream &stream, Rational<T> &r) {
+        if (!stream.readTag(DataStream::TypeRational)) {
+                r = Rational<T>();
+                return stream;
+        }
         T num{}, den{1};
         stream >> num >> den;
-        if(stream.status() != DataStream::Ok) { r = Rational<T>(); return stream; }
+        if (stream.status() != DataStream::Ok) {
+                r = Rational<T>();
+                return stream;
+        }
         r = Rational<T>(num, den);
         return stream;
 }
@@ -989,8 +998,7 @@ DataStream &operator>>(DataStream &stream, Rational<T> &r) {
  * @param rect   The rectangle to serialize.
  * @return The stream, for chaining.
  */
-template <typename T>
-DataStream &operator<<(DataStream &stream, const Rect<T> &rect) {
+template <typename T> DataStream &operator<<(DataStream &stream, const Rect<T> &rect) {
         stream.writeTag(DataStream::TypeRect);
         stream << rect.x() << rect.y() << rect.width() << rect.height();
         return stream;
@@ -1003,12 +1011,17 @@ DataStream &operator<<(DataStream &stream, const Rect<T> &rect) {
  * @param rect   The rectangle to populate.
  * @return The stream, for chaining.
  */
-template <typename T>
-DataStream &operator>>(DataStream &stream, Rect<T> &rect) {
-        if(!stream.readTag(DataStream::TypeRect)) { rect = Rect<T>(); return stream; }
+template <typename T> DataStream &operator>>(DataStream &stream, Rect<T> &rect) {
+        if (!stream.readTag(DataStream::TypeRect)) {
+                rect = Rect<T>();
+                return stream;
+        }
         T x{}, y{}, w{}, h{};
         stream >> x >> y >> w >> h;
-        if(stream.status() != DataStream::Ok) { rect = Rect<T>(); return stream; }
+        if (stream.status() != DataStream::Ok) {
+                rect = Rect<T>();
+                return stream;
+        }
         rect = Rect<T>(x, y, w, h);
         return stream;
 }
@@ -1026,12 +1039,11 @@ DataStream &operator>>(DataStream &stream, Rect<T> &rect) {
  * @param point  The point to serialize.
  * @return The stream, for chaining.
  */
-template <typename T, size_t N>
-DataStream &operator<<(DataStream &stream, const Point<T, N> &point) {
+template <typename T, size_t N> DataStream &operator<<(DataStream &stream, const Point<T, N> &point) {
         stream.writeTag(DataStream::TypePoint);
         stream << static_cast<uint32_t>(N);
         const Array<T, N> &arr = point;
-        for(size_t i = 0; i < N; ++i) stream << arr[i];
+        for (size_t i = 0; i < N; ++i) stream << arr[i];
         return stream;
 }
 
@@ -1043,25 +1055,32 @@ DataStream &operator<<(DataStream &stream, const Point<T, N> &point) {
  * @param point  The point to populate.
  * @return The stream, for chaining.
  */
-template <typename T, size_t N>
-DataStream &operator>>(DataStream &stream, Point<T, N> &point) {
-        if(!stream.readTag(DataStream::TypePoint)) { point = Point<T, N>(); return stream; }
+template <typename T, size_t N> DataStream &operator>>(DataStream &stream, Point<T, N> &point) {
+        if (!stream.readTag(DataStream::TypePoint)) {
+                point = Point<T, N>();
+                return stream;
+        }
         uint32_t dims = 0;
         stream >> dims;
-        if(stream.status() != DataStream::Ok) { point = Point<T, N>(); return stream; }
-        if(dims != N) {
+        if (stream.status() != DataStream::Ok) {
+                point = Point<T, N>();
+                return stream;
+        }
+        if (dims != N) {
                 stream.setError(DataStream::ReadCorruptData,
-                        String::sprintf(
-                                "Point dimension mismatch: expected %zu, got %u",
-                                N, static_cast<unsigned>(dims)));
+                                String::sprintf("Point dimension mismatch: expected %zu, got %u", N,
+                                                static_cast<unsigned>(dims)));
                 point = Point<T, N>();
                 return stream;
         }
         Array<T, N> arr;
-        for(size_t i = 0; i < N; ++i) {
+        for (size_t i = 0; i < N; ++i) {
                 T val{};
                 stream >> val;
-                if(stream.status() != DataStream::Ok) { point = Point<T, N>(); return stream; }
+                if (stream.status() != DataStream::Ok) {
+                        point = Point<T, N>();
+                        return stream;
+                }
                 arr[i] = val;
         }
         point = Point<T, N>(arr);
@@ -1096,10 +1115,16 @@ inline DataStream &operator<<(DataStream &stream, const XYZColor &col) {
  * @return The stream, for chaining.
  */
 inline DataStream &operator>>(DataStream &stream, XYZColor &col) {
-        if(!stream.readTag(DataStream::TypeXYZColor)) { col = XYZColor(); return stream; }
+        if (!stream.readTag(DataStream::TypeXYZColor)) {
+                col = XYZColor();
+                return stream;
+        }
         double x = 0.0, y = 0.0, z = 0.0;
         stream >> x >> y >> z;
-        if(stream.status() != DataStream::Ok) { col = XYZColor(); return stream; }
+        if (stream.status() != DataStream::Ok) {
+                col = XYZColor();
+                return stream;
+        }
         col = XYZColor(x, y, z);
         return stream;
 }
@@ -1124,11 +1149,8 @@ inline DataStream &operator>>(DataStream &stream, XYZColor &col) {
  */
 inline DataStream &operator<<(DataStream &stream, const MasteringDisplay &md) {
         stream.writeTag(DataStream::TypeMasteringDisplay);
-        stream << md.red().x()        << md.red().y()
-               << md.green().x()      << md.green().y()
-               << md.blue().x()       << md.blue().y()
-               << md.whitePoint().x() << md.whitePoint().y()
-               << md.minLuminance()   << md.maxLuminance();
+        stream << md.red().x() << md.red().y() << md.green().x() << md.green().y() << md.blue().x() << md.blue().y()
+               << md.whitePoint().x() << md.whitePoint().y() << md.minLuminance() << md.maxLuminance();
         return stream;
 }
 
@@ -1139,7 +1161,7 @@ inline DataStream &operator<<(DataStream &stream, const MasteringDisplay &md) {
  * @return The stream, for chaining.
  */
 inline DataStream &operator>>(DataStream &stream, MasteringDisplay &md) {
-        if(!stream.readTag(DataStream::TypeMasteringDisplay)) {
+        if (!stream.readTag(DataStream::TypeMasteringDisplay)) {
                 md = MasteringDisplay();
                 return stream;
         }
@@ -1147,10 +1169,11 @@ inline DataStream &operator>>(DataStream &stream, MasteringDisplay &md) {
         double bx = 0.0, by = 0.0, wx = 0.0, wy = 0.0;
         double minL = 0.0, maxL = 0.0;
         stream >> rx >> ry >> gx >> gy >> bx >> by >> wx >> wy >> minL >> maxL;
-        if(stream.status() != DataStream::Ok) { md = MasteringDisplay(); return stream; }
-        md = MasteringDisplay(CIEPoint(rx, ry), CIEPoint(gx, gy),
-                              CIEPoint(bx, by), CIEPoint(wx, wy),
-                              minL, maxL);
+        if (stream.status() != DataStream::Ok) {
+                md = MasteringDisplay();
+                return stream;
+        }
+        md = MasteringDisplay(CIEPoint(rx, ry), CIEPoint(gx, gy), CIEPoint(bx, by), CIEPoint(wx, wy), minL, maxL);
         return stream;
 }
 
@@ -1176,13 +1199,16 @@ inline DataStream &operator<<(DataStream &stream, const ContentLightLevel &cll) 
  * @return The stream, for chaining.
  */
 inline DataStream &operator>>(DataStream &stream, ContentLightLevel &cll) {
-        if(!stream.readTag(DataStream::TypeContentLightLevel)) {
+        if (!stream.readTag(DataStream::TypeContentLightLevel)) {
                 cll = ContentLightLevel();
                 return stream;
         }
         uint32_t maxCLL = 0, maxFALL = 0;
         stream >> maxCLL >> maxFALL;
-        if(stream.status() != DataStream::Ok) { cll = ContentLightLevel(); return stream; }
+        if (stream.status() != DataStream::Ok) {
+                cll = ContentLightLevel();
+                return stream;
+        }
         cll = ContentLightLevel(maxCLL, maxFALL);
         return stream;
 }
@@ -1194,11 +1220,10 @@ inline DataStream &operator>>(DataStream &stream, ContentLightLevel &cll) {
  * @param list   The list to serialize.
  * @return The stream, for chaining.
  */
-template <typename T>
-DataStream &operator<<(DataStream &stream, const List<T> &list) {
+template <typename T> DataStream &operator<<(DataStream &stream, const List<T> &list) {
         stream.writeTag(DataStream::TypeList);
         stream << static_cast<uint32_t>(list.size());
-        for(const auto &item : list) stream << item;
+        for (const auto &item : list) stream << item;
         return stream;
 }
 
@@ -1209,23 +1234,21 @@ DataStream &operator<<(DataStream &stream, const List<T> &list) {
  * @param list   The list to populate (cleared first).
  * @return The stream, for chaining.
  */
-template <typename T>
-DataStream &operator>>(DataStream &stream, List<T> &list) {
+template <typename T> DataStream &operator>>(DataStream &stream, List<T> &list) {
         list.clear();
-        if(!stream.readTag(DataStream::TypeList)) return stream;
+        if (!stream.readTag(DataStream::TypeList)) return stream;
         uint32_t count = 0;
         stream >> count;
-        if(stream.status() != DataStream::Ok) return stream;
-        if(count > detail::DataStreamMaxContainerCount) {
-                stream.setError(DataStream::ReadCorruptData,
-                        String("List element count exceeds sanity limit"));
+        if (stream.status() != DataStream::Ok) return stream;
+        if (count > detail::DataStreamMaxContainerCount) {
+                stream.setError(DataStream::ReadCorruptData, String("List element count exceeds sanity limit"));
                 return stream;
         }
         list.reserve(count);
-        for(uint32_t i = 0; i < count; ++i) {
+        for (uint32_t i = 0; i < count; ++i) {
                 T item{};
                 stream >> item;
-                if(stream.status() != DataStream::Ok) return stream;
+                if (stream.status() != DataStream::Ok) return stream;
                 list.pushToBack(std::move(item));
         }
         return stream;
@@ -1239,11 +1262,10 @@ DataStream &operator>>(DataStream &stream, List<T> &list) {
  * @param map    The map to serialize.
  * @return The stream, for chaining.
  */
-template <typename K, typename V>
-DataStream &operator<<(DataStream &stream, const Map<K, V> &map) {
+template <typename K, typename V> DataStream &operator<<(DataStream &stream, const Map<K, V> &map) {
         stream.writeTag(DataStream::TypeMap);
         stream << static_cast<uint32_t>(map.size());
-        for(auto it = map.cbegin(); it != map.cend(); ++it) {
+        for (auto it = map.cbegin(); it != map.cend(); ++it) {
                 stream << it->first << it->second;
         }
         return stream;
@@ -1257,23 +1279,21 @@ DataStream &operator<<(DataStream &stream, const Map<K, V> &map) {
  * @param map    The map to populate (cleared first).
  * @return The stream, for chaining.
  */
-template <typename K, typename V>
-DataStream &operator>>(DataStream &stream, Map<K, V> &map) {
+template <typename K, typename V> DataStream &operator>>(DataStream &stream, Map<K, V> &map) {
         map.clear();
-        if(!stream.readTag(DataStream::TypeMap)) return stream;
+        if (!stream.readTag(DataStream::TypeMap)) return stream;
         uint32_t count = 0;
         stream >> count;
-        if(stream.status() != DataStream::Ok) return stream;
-        if(count > detail::DataStreamMaxContainerCount) {
-                stream.setError(DataStream::ReadCorruptData,
-                        String("Map entry count exceeds sanity limit"));
+        if (stream.status() != DataStream::Ok) return stream;
+        if (count > detail::DataStreamMaxContainerCount) {
+                stream.setError(DataStream::ReadCorruptData, String("Map entry count exceeds sanity limit"));
                 return stream;
         }
-        for(uint32_t i = 0; i < count; ++i) {
+        for (uint32_t i = 0; i < count; ++i) {
                 K key{};
                 V value{};
                 stream >> key >> value;
-                if(stream.status() != DataStream::Ok) return stream;
+                if (stream.status() != DataStream::Ok) return stream;
                 map.insert(std::move(key), std::move(value));
         }
         return stream;
@@ -1286,11 +1306,10 @@ DataStream &operator>>(DataStream &stream, Map<K, V> &map) {
  * @param set    The set to serialize.
  * @return The stream, for chaining.
  */
-template <typename T>
-DataStream &operator<<(DataStream &stream, const Set<T> &set) {
+template <typename T> DataStream &operator<<(DataStream &stream, const Set<T> &set) {
         stream.writeTag(DataStream::TypeSet);
         stream << static_cast<uint32_t>(set.size());
-        for(const auto &item : set) stream << item;
+        for (const auto &item : set) stream << item;
         return stream;
 }
 
@@ -1301,22 +1320,20 @@ DataStream &operator<<(DataStream &stream, const Set<T> &set) {
  * @param set    The set to populate (cleared first).
  * @return The stream, for chaining.
  */
-template <typename T>
-DataStream &operator>>(DataStream &stream, Set<T> &set) {
+template <typename T> DataStream &operator>>(DataStream &stream, Set<T> &set) {
         set.clear();
-        if(!stream.readTag(DataStream::TypeSet)) return stream;
+        if (!stream.readTag(DataStream::TypeSet)) return stream;
         uint32_t count = 0;
         stream >> count;
-        if(stream.status() != DataStream::Ok) return stream;
-        if(count > detail::DataStreamMaxContainerCount) {
-                stream.setError(DataStream::ReadCorruptData,
-                        String("Set element count exceeds sanity limit"));
+        if (stream.status() != DataStream::Ok) return stream;
+        if (count > detail::DataStreamMaxContainerCount) {
+                stream.setError(DataStream::ReadCorruptData, String("Set element count exceeds sanity limit"));
                 return stream;
         }
-        for(uint32_t i = 0; i < count; ++i) {
+        for (uint32_t i = 0; i < count; ++i) {
                 T item{};
                 stream >> item;
-                if(stream.status() != DataStream::Ok) return stream;
+                if (stream.status() != DataStream::Ok) return stream;
                 set.insert(std::move(item));
         }
         return stream;
@@ -1330,11 +1347,10 @@ DataStream &operator>>(DataStream &stream, Set<T> &set) {
  * @param map    The hash map to serialize.
  * @return The stream, for chaining.
  */
-template <typename K, typename V>
-DataStream &operator<<(DataStream &stream, const HashMap<K, V> &map) {
+template <typename K, typename V> DataStream &operator<<(DataStream &stream, const HashMap<K, V> &map) {
         stream.writeTag(DataStream::TypeHashMap);
         stream << static_cast<uint32_t>(map.size());
-        for(auto it = map.cbegin(); it != map.cend(); ++it) {
+        for (auto it = map.cbegin(); it != map.cend(); ++it) {
                 stream << it->first << it->second;
         }
         return stream;
@@ -1353,23 +1369,21 @@ DataStream &operator<<(DataStream &stream, const HashMap<K, V> &map) {
  * @param map    The hash map to populate (cleared first).
  * @return The stream, for chaining.
  */
-template <typename K, typename V>
-DataStream &operator>>(DataStream &stream, HashMap<K, V> &map) {
+template <typename K, typename V> DataStream &operator>>(DataStream &stream, HashMap<K, V> &map) {
         map.clear();
-        if(!stream.readTag(DataStream::TypeHashMap)) return stream;
+        if (!stream.readTag(DataStream::TypeHashMap)) return stream;
         uint32_t count = 0;
         stream >> count;
-        if(stream.status() != DataStream::Ok) return stream;
-        if(count > detail::DataStreamMaxContainerCount) {
-                stream.setError(DataStream::ReadCorruptData,
-                        String("HashMap entry count exceeds sanity limit"));
+        if (stream.status() != DataStream::Ok) return stream;
+        if (count > detail::DataStreamMaxContainerCount) {
+                stream.setError(DataStream::ReadCorruptData, String("HashMap entry count exceeds sanity limit"));
                 return stream;
         }
-        for(uint32_t i = 0; i < count; ++i) {
+        for (uint32_t i = 0; i < count; ++i) {
                 K key{};
                 V value{};
                 stream >> key >> value;
-                if(stream.status() != DataStream::Ok) return stream;
+                if (stream.status() != DataStream::Ok) return stream;
                 map.insert(std::move(key), std::move(value));
         }
         return stream;
@@ -1382,11 +1396,10 @@ DataStream &operator>>(DataStream &stream, HashMap<K, V> &map) {
  * @param set    The hash set to serialize.
  * @return The stream, for chaining.
  */
-template <typename T>
-DataStream &operator<<(DataStream &stream, const HashSet<T> &set) {
+template <typename T> DataStream &operator<<(DataStream &stream, const HashSet<T> &set) {
         stream.writeTag(DataStream::TypeHashSet);
         stream << static_cast<uint32_t>(set.size());
-        for(const auto &item : set) stream << item;
+        for (const auto &item : set) stream << item;
         return stream;
 }
 
@@ -1397,22 +1410,20 @@ DataStream &operator<<(DataStream &stream, const HashSet<T> &set) {
  * @param set    The hash set to populate (cleared first).
  * @return The stream, for chaining.
  */
-template <typename T>
-DataStream &operator>>(DataStream &stream, HashSet<T> &set) {
+template <typename T> DataStream &operator>>(DataStream &stream, HashSet<T> &set) {
         set.clear();
-        if(!stream.readTag(DataStream::TypeHashSet)) return stream;
+        if (!stream.readTag(DataStream::TypeHashSet)) return stream;
         uint32_t count = 0;
         stream >> count;
-        if(stream.status() != DataStream::Ok) return stream;
-        if(count > detail::DataStreamMaxContainerCount) {
-                stream.setError(DataStream::ReadCorruptData,
-                        String("HashSet element count exceeds sanity limit"));
+        if (stream.status() != DataStream::Ok) return stream;
+        if (count > detail::DataStreamMaxContainerCount) {
+                stream.setError(DataStream::ReadCorruptData, String("HashSet element count exceeds sanity limit"));
                 return stream;
         }
-        for(uint32_t i = 0; i < count; ++i) {
+        for (uint32_t i = 0; i < count; ++i) {
                 T item{};
                 stream >> item;
-                if(stream.status() != DataStream::Ok) return stream;
+                if (stream.status() != DataStream::Ok) return stream;
                 set.insert(std::move(item));
         }
         return stream;

@@ -41,18 +41,18 @@ class AudioGen {
         public:
                 /** @brief Type of audio signal to generate. */
                 enum Type {
-                        Silence = 0,   ///< Generate silence (all zeros).
-                        Sine           ///< Generate a sine wave.
+                        Silence = 0, ///< Generate silence (all zeros).
+                        Sine         ///< Generate a sine wave.
                 };
 
                 /** @brief Per-channel configuration for the audio generator. */
                 struct Config {
-                        Type            type;           ///< Signal type to generate.
-                        float           freq;           ///< Frequency in Hz.
-                        AudioLevel      level;          ///< Output level in dBFS.
-                        float           phase;          ///< Phase offset in radians.
-                        float           dutyCycle;      ///< Duty cycle (reserved for future waveform types).
-                        float           linearGain;     ///< Cached linear gain from level. Set internally by setConfig().
+                                Type       type;      ///< Signal type to generate.
+                                float      freq;      ///< Frequency in Hz.
+                                AudioLevel level;     ///< Output level in dBFS.
+                                float      phase;     ///< Phase offset in radians.
+                                float      dutyCycle; ///< Duty cycle (reserved for future waveform types).
+                                float linearGain;     ///< Cached linear gain from level. Set internally by setConfig().
                 };
 
                 /**
@@ -82,9 +82,7 @@ class AudioGen {
                  * @param chan Channel index.
                  * @return The channel's generator configuration.
                  */
-                const Config &config(size_t chan) const {
-                        return _chanConfig[chan];
-                }
+                const Config &config(size_t chan) const { return _chanConfig[chan]; }
 
                 /**
                  * @brief Sets the configuration for the given channel.
@@ -94,9 +92,9 @@ class AudioGen {
                 void setConfig(size_t chan, Config val);
 
         private:
-                AudioDesc       _desc;
-                List<Config>    _chanConfig;
-                size_t          _sampleCount = 0;
+                AudioDesc    _desc;
+                List<Config> _chanConfig;
+                size_t       _sampleCount = 0;
 
                 void genSilence(size_t chan, float *data, size_t samples) const;
                 void genSine(size_t chan, float *data, size_t samples) const;

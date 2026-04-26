@@ -97,17 +97,16 @@ TEST_CASE("SdpSession") {
         }
 
         SUBCASE("fromString parses SDP") {
-                String sdpText =
-                        "v=0\r\n"
-                        "o=vidgen 12345 1 IN IP4 192.168.1.1\r\n"
-                        "s=Test Stream\r\n"
-                        "c=IN IP4 239.0.0.1\r\n"
-                        "t=0 0\r\n"
-                        "m=video 5004 RTP/AVP 96\r\n"
-                        "a=rtpmap:96 raw/90000\r\n"
-                        "m=audio 5006 RTP/AVP 97\r\n"
-                        "a=rtpmap:97 L24/48000/2\r\n"
-                        "a=ptime:1\r\n";
+                String sdpText = "v=0\r\n"
+                                 "o=vidgen 12345 1 IN IP4 192.168.1.1\r\n"
+                                 "s=Test Stream\r\n"
+                                 "c=IN IP4 239.0.0.1\r\n"
+                                 "t=0 0\r\n"
+                                 "m=video 5004 RTP/AVP 96\r\n"
+                                 "a=rtpmap:96 raw/90000\r\n"
+                                 "m=audio 5006 RTP/AVP 97\r\n"
+                                 "a=rtpmap:97 L24/48000/2\r\n"
+                                 "a=ptime:1\r\n";
 
                 auto [sdp, err] = SdpSession::fromString(sdpText);
                 CHECK(err.isOk());
@@ -165,16 +164,15 @@ TEST_CASE("SdpSession") {
         }
 
         SUBCASE("AES67 SDP example") {
-                String aes67Sdp =
-                        "v=0\r\n"
-                        "o=- 1234567890 1 IN IP4 192.168.0.10\r\n"
-                        "s=AES67 Audio Stream\r\n"
-                        "c=IN IP4 239.69.0.1/32\r\n"
-                        "t=0 0\r\n"
-                        "m=audio 5004 RTP/AVP 97\r\n"
-                        "a=rtpmap:97 L24/48000/2\r\n"
-                        "a=ptime:1\r\n"
-                        "a=mediaclk:direct=0\r\n";
+                String aes67Sdp = "v=0\r\n"
+                                  "o=- 1234567890 1 IN IP4 192.168.0.10\r\n"
+                                  "s=AES67 Audio Stream\r\n"
+                                  "c=IN IP4 239.69.0.1/32\r\n"
+                                  "t=0 0\r\n"
+                                  "m=audio 5004 RTP/AVP 97\r\n"
+                                  "a=rtpmap:97 L24/48000/2\r\n"
+                                  "a=ptime:1\r\n"
+                                  "a=mediaclk:direct=0\r\n";
 
                 auto [sdp, err] = SdpSession::fromString(aes67Sdp);
                 CHECK(err.isOk());
@@ -237,14 +235,13 @@ TEST_CASE("SdpSession media-level connection address") {
         }
 
         SUBCASE("fromString parses media-level connection") {
-                String sdpText =
-                        "v=0\r\n"
-                        "o=- 1 1 IN IP4 0.0.0.0\r\n"
-                        "s=test\r\n"
-                        "t=0 0\r\n"
-                        "m=video 5004 RTP/AVP 96\r\n"
-                        "c=IN IP4 239.0.0.5\r\n"
-                        "a=rtpmap:96 raw/90000\r\n";
+                String sdpText = "v=0\r\n"
+                                 "o=- 1 1 IN IP4 0.0.0.0\r\n"
+                                 "s=test\r\n"
+                                 "t=0 0\r\n"
+                                 "m=video 5004 RTP/AVP 96\r\n"
+                                 "c=IN IP4 239.0.0.5\r\n"
+                                 "a=rtpmap:96 raw/90000\r\n";
 
                 auto [sdp, err] = SdpSession::fromString(sdpText);
                 CHECK(err.isOk());
@@ -333,14 +330,13 @@ TEST_CASE("SdpSession ts-refclk semantic interpretation") {
                 md.setPort(5004);
                 md.setProtocol("RTP/AVP");
                 md.addPayloadType(96);
-                md.setAttribute("ts-refclk",
-                        "ptp=IEEE1588-2008:00-1A-2B-FF-FE-3C-4D-5E");
+                md.setAttribute("ts-refclk", "ptp=IEEE1588-2008:00-1A-2B-FF-FE-3C-4D-5E");
                 md.setAttribute("mediaclk", "direct=0");
 
                 // Parse ts-refclk the same way applySdp does
                 String tsRefClk = md.attribute("ts-refclk");
                 REQUIRE(tsRefClk.startsWith("ptp="));
-                String ptpValue = tsRefClk.split("=")[1];
+                String     ptpValue = tsRefClk.split("=")[1];
                 StringList parts = ptpValue.split(":");
                 REQUIRE(parts.size() == 2);
                 String profile = parts[0];
@@ -349,11 +345,9 @@ TEST_CASE("SdpSession ts-refclk semantic interpretation") {
                 CHECK(gmErr.isOk());
                 CHECK_FALSE(gm.isNull());
 
-                ClockDomain::ID cdId = ClockDomain::registerDomain(
-                        String("ptp.") + profile,
-                        String("PTP reference clock"),
-                        ClockEpoch::Absolute);
-                ClockDomain cd(cdId);
+                ClockDomain::ID cdId = ClockDomain::registerDomain(String("ptp.") + profile,
+                                                                   String("PTP reference clock"), ClockEpoch::Absolute);
+                ClockDomain     cd(cdId);
                 CHECK(cd.isValid());
                 CHECK(cd.isCrossMachineComparable());
                 CHECK(cd.name() == "ptp.IEEE1588-2008");
@@ -370,18 +364,16 @@ TEST_CASE("SdpSession ts-refclk semantic interpretation") {
                 md.addPayloadType(97);
                 md.setAttribute("ts-refclk", "ptp=IEEE1588-2008");
 
-                String tsRefClk = md.attribute("ts-refclk");
-                String ptpValue = tsRefClk.split("=")[1];
+                String     tsRefClk = md.attribute("ts-refclk");
+                String     ptpValue = tsRefClk.split("=")[1];
                 StringList parts = ptpValue.split(":");
                 CHECK(parts.size() == 1);
                 String profile = parts[0];
                 CHECK(profile == "IEEE1588-2008");
 
-                ClockDomain::ID cdId = ClockDomain::registerDomain(
-                        String("ptp.") + profile,
-                        String("PTP reference clock"),
-                        ClockEpoch::Absolute);
-                ClockDomain cd(cdId);
+                ClockDomain::ID cdId = ClockDomain::registerDomain(String("ptp.") + profile,
+                                                                   String("PTP reference clock"), ClockEpoch::Absolute);
+                ClockDomain     cd(cdId);
                 CHECK(cd.isValid());
                 CHECK(cd.epoch() == ClockEpoch::Absolute);
         }
@@ -397,8 +389,7 @@ TEST_CASE("SdpSession ts-refclk semantic interpretation") {
                 md.setProtocol("RTP/AVP");
                 md.addPayloadType(96);
                 md.setAttribute("rtpmap", "96 raw/90000");
-                md.setAttribute("ts-refclk",
-                        "ptp=IEEE1588-2008:AA-BB-CC-DD-EE-FF-00-11");
+                md.setAttribute("ts-refclk", "ptp=IEEE1588-2008:AA-BB-CC-DD-EE-FF-00-11");
                 md.setAttribute("mediaclk", "direct=0");
                 sdp.addMediaDescription(md);
 
@@ -409,12 +400,11 @@ TEST_CASE("SdpSession ts-refclk semantic interpretation") {
                 REQUIRE(parsed.mediaDescriptions().size() == 1);
 
                 // Verify ts-refclk survived
-                String tsRefClk = parsed.mediaDescriptions()[0]
-                        .attribute("ts-refclk");
+                String tsRefClk = parsed.mediaDescriptions()[0].attribute("ts-refclk");
                 CHECK(tsRefClk == "ptp=IEEE1588-2008:AA-BB-CC-DD-EE-FF-00-11");
 
                 // Verify grandmaster is parseable
-                String ptpValue = tsRefClk.split("=")[1];
+                String     ptpValue = tsRefClk.split("=")[1];
                 StringList parts = ptpValue.split(":");
                 REQUIRE(parts.size() == 2);
                 auto [gm, gmErr] = EUI64::fromString(parts[1]);
@@ -443,13 +433,12 @@ TEST_CASE("SdpSession flag-only attributes") {
         }
 
         SUBCASE("fromString parses flag-only attribute") {
-                String sdpText =
-                        "v=0\r\n"
-                        "o=- 1 1 IN IP4 0.0.0.0\r\n"
-                        "s=test\r\n"
-                        "t=0 0\r\n"
-                        "m=audio 5006 RTP/AVP 97\r\n"
-                        "a=recvonly\r\n";
+                String sdpText = "v=0\r\n"
+                                 "o=- 1 1 IN IP4 0.0.0.0\r\n"
+                                 "s=test\r\n"
+                                 "t=0 0\r\n"
+                                 "m=audio 5006 RTP/AVP 97\r\n"
+                                 "a=recvonly\r\n";
 
                 auto [sdp, err] = SdpSession::fromString(sdpText);
                 CHECK(err.isOk());
@@ -563,7 +552,7 @@ TEST_CASE("SdpMediaDescription") {
 
         SUBCASE("rtpMap returns invalid on missing attribute") {
                 SdpMediaDescription md;
-                auto rm = md.rtpMap();
+                auto                rm = md.rtpMap();
                 CHECK_FALSE(rm.valid);
         }
 
@@ -576,9 +565,8 @@ TEST_CASE("SdpMediaDescription") {
 
         SUBCASE("fmtpParameters extracts key=value pairs") {
                 SdpMediaDescription md;
-                md.setAttribute("fmtp",
-                        "96 packetmode=0;rate=90000;sampling=YCbCr-4:2:2;"
-                        "depth=10;width=1920;height=1080;RANGE=NARROW");
+                md.setAttribute("fmtp", "96 packetmode=0;rate=90000;sampling=YCbCr-4:2:2;"
+                                        "depth=10;width=1920;height=1080;RANGE=NARROW");
                 auto params = md.fmtpParameters();
                 CHECK(params.value("packetmode") == "0");
                 CHECK(params.value("rate") == "90000");
@@ -591,7 +579,7 @@ TEST_CASE("SdpMediaDescription") {
 
         SUBCASE("fmtpParameters on missing attribute returns empty map") {
                 SdpMediaDescription md;
-                auto params = md.fmtpParameters();
+                auto                params = md.fmtpParameters();
                 CHECK(params.isEmpty());
         }
 
@@ -673,8 +661,7 @@ TEST_CASE("SdpMediaDescription") {
         }
 
         SUBCASE("fromFile / toFile round-trip") {
-                String tmpPath = String("/tmp/promeki-sdp-tofile-") +
-                                  String::number(getpid()) + String(".sdp");
+                String tmpPath = String("/tmp/promeki-sdp-tofile-") + String::number(getpid()) + String(".sdp");
                 std::remove(tmpPath.cstr());
 
                 // Build a non-trivial session, write it, parse it
@@ -689,10 +676,9 @@ TEST_CASE("SdpMediaDescription") {
                 video.setProtocol("RTP/AVP");
                 video.addPayloadType(96);
                 video.setAttribute("rtpmap", "96 jxsv/90000");
-                video.setAttribute("fmtp",
-                        "96 packetmode=0;rate=90000;sampling=YCbCr-4:2:2;"
-                        "depth=10;width=1920;height=1080;colorimetry=BT709;"
-                        "RANGE=NARROW");
+                video.setAttribute("fmtp", "96 packetmode=0;rate=90000;sampling=YCbCr-4:2:2;"
+                                           "depth=10;width=1920;height=1080;colorimetry=BT709;"
+                                           "RANGE=NARROW");
                 video.setAttribute("rtcp-mux", String());
                 original.addMediaDescription(video);
 

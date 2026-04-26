@@ -36,7 +36,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @see CSCPipeline
  */
 class CSCContext {
-        PROMEKI_SHARED_FINAL(CSCContext)
+                PROMEKI_SHARED_FINAL(CSCContext)
         public:
                 /** @brief Shared pointer type for CSCContext. */
                 using Ptr = SharedPtr<CSCContext>;
@@ -76,8 +76,8 @@ class CSCContext {
                 float *buffer(int index) const;
 
         private:
-                size_t          _maxWidth = 0;
-                Buffer::Ptr     _buffers[BufferCount];
+                size_t      _maxWidth = 0;
+                Buffer::Ptr _buffers[BufferCount];
 };
 
 PROMEKI_NAMESPACE_END

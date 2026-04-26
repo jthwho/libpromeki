@@ -20,8 +20,7 @@ TEST_CASE("VideoFormat: default construction is invalid") {
 }
 
 TEST_CASE("VideoFormat: construct from well-known raster + rate") {
-        VideoFormat vf(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97),
-                       VideoScanMode::Interlaced);
+        VideoFormat vf(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97), VideoScanMode::Interlaced);
         CHECK(vf.isValid());
         CHECK(vf.raster() == Size2Du32(1920, 1080));
         CHECK(vf.frameRate() == FrameRate(FrameRate::FPS_29_97));
@@ -40,16 +39,14 @@ TEST_CASE("VideoFormat: construct from explicit raster") {
 TEST_CASE("VideoFormat: invalid when raster or rate missing") {
         CHECK_FALSE(VideoFormat(Size2Du32(0, 0), FrameRate(FrameRate::FPS_30)).isValid());
         CHECK_FALSE(VideoFormat(Size2Du32(1920, 1080), FrameRate()).isValid());
-        CHECK_FALSE(VideoFormat(VideoFormat::Raster_Invalid,
-                                FrameRate(FrameRate::FPS_30)).isValid());
+        CHECK_FALSE(VideoFormat(VideoFormat::Raster_Invalid, FrameRate(FrameRate::FPS_30)).isValid());
 }
 
 TEST_CASE("VideoFormat: toString uses SMPTE height form for broadcast rasters") {
         VideoFormat p1080_2997(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97));
         CHECK(p1080_2997.toString() == "1080p29.97");
 
-        VideoFormat i1080_2997(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97),
-                               VideoScanMode::Interlaced);
+        VideoFormat i1080_2997(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97), VideoScanMode::Interlaced);
         CHECK(i1080_2997.toString() == "1080i59.94");
 
         VideoFormat p720_5994(VideoFormat::Raster_HD720, FrameRate(FrameRate::FPS_59_94));
@@ -58,8 +55,7 @@ TEST_CASE("VideoFormat: toString uses SMPTE height form for broadcast rasters") 
         VideoFormat uhd60(VideoFormat::Raster_UHD, FrameRate(FrameRate::FPS_60));
         CHECK(uhd60.toString() == "2160p60");
 
-        VideoFormat i1080_25(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_25),
-                             VideoScanMode::InterlacedEvenFirst);
+        VideoFormat i1080_25(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_25), VideoScanMode::InterlacedEvenFirst);
         CHECK(i1080_25.toString() == "1080i50");
 
         VideoFormat ntscI(VideoFormat::Raster_SD525, FrameRate(FrameRate::FPS_29_97),
@@ -68,12 +64,10 @@ TEST_CASE("VideoFormat: toString uses SMPTE height form for broadcast rasters") 
 }
 
 TEST_CASE("VideoFormat: toString uses PsF suffix") {
-        VideoFormat psf24(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_24),
-                          VideoScanMode::PsF);
+        VideoFormat psf24(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_24), VideoScanMode::PsF);
         CHECK(psf24.toString() == "1080psf24");
 
-        VideoFormat psf2398(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_23_98),
-                            VideoScanMode::PsF);
+        VideoFormat psf2398(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_23_98), VideoScanMode::PsF);
         CHECK(psf2398.toString() == "1080psf23.98");
 }
 
@@ -107,8 +101,7 @@ TEST_CASE("VideoFormat: toString uses named raster when requested") {
 }
 
 TEST_CASE("VideoFormat: rasterString and frameRateString accessors") {
-        VideoFormat vf(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97),
-                       VideoScanMode::Interlaced);
+        VideoFormat vf(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97), VideoScanMode::Interlaced);
         CHECK(vf.rasterString() == "1080i");
         CHECK(vf.frameRateString() == "59.94");
 
@@ -235,42 +228,31 @@ TEST_CASE("VideoFormat: loose mode tolerates interlaced rate as frame rate") {
 }
 
 TEST_CASE("VideoFormat: fromString tolerates whitespace and separators") {
-        const struct { const char *input; Size2Du32 raster; FrameRate rate;
-                       VideoScanMode mode; } cases[] = {
-                { "1920x1080 @ 29.97", Size2Du32(1920, 1080),
-                  FrameRate(FrameRate::FPS_29_97), VideoScanMode::Progressive },
-                { "1080p @ 29.97", Size2Du32(1920, 1080),
-                  FrameRate(FrameRate::FPS_29_97), VideoScanMode::Progressive },
-                { "1080 i 59.94", Size2Du32(1920, 1080),
-                  FrameRate(FrameRate::FPS_29_97), VideoScanMode::Interlaced },
-                { "HD, 29.97", Size2Du32(1920, 1080),
-                  FrameRate(FrameRate::FPS_29_97), VideoScanMode::Progressive },
-                { "  720p   60  ", Size2Du32(1280, 720),
-                  FrameRate(FrameRate::FPS_60), VideoScanMode::Progressive },
-                { "UHD @ 60", Size2Du32(3840, 2160),
-                  FrameRate(FrameRate::FPS_60), VideoScanMode::Progressive },
-                { "1080\tpsf\t24", Size2Du32(1920, 1080),
-                  FrameRate(FrameRate::FPS_24), VideoScanMode::PsF },
-                { "2048x1080 p 24", Size2Du32(2048, 1080),
-                  FrameRate(FrameRate::FPS_24), VideoScanMode::Progressive },
-                { "1080 29.97", Size2Du32(1920, 1080),
-                  FrameRate(FrameRate::FPS_29_97), VideoScanMode::Progressive },
-                { "1080 23.98p", Size2Du32(1920, 1080),
-                  FrameRate(FrameRate::FPS_23_98), VideoScanMode::Progressive },
-                { "1080 59.94i", Size2Du32(1920, 1080),
-                  FrameRate(FrameRate::FPS_29_97), VideoScanMode::Interlaced },
-                { "1080 24psf", Size2Du32(1920, 1080),
-                  FrameRate(FrameRate::FPS_24), VideoScanMode::PsF },
-                { "1080 29.97 p", Size2Du32(1920, 1080),
-                  FrameRate(FrameRate::FPS_29_97), VideoScanMode::Progressive },
-                { "1080 50 i", Size2Du32(1920, 1080),
-                  FrameRate(FrameRate::FPS_25), VideoScanMode::Interlaced },
-                { "1080 24 psf", Size2Du32(1920, 1080),
-                  FrameRate(FrameRate::FPS_24), VideoScanMode::PsF },
-                { "HD @ 23.98p", Size2Du32(1920, 1080),
-                  FrameRate(FrameRate::FPS_23_98), VideoScanMode::Progressive },
+        const struct {
+                        const char   *input;
+                        Size2Du32     raster;
+                        FrameRate     rate;
+                        VideoScanMode mode;
+        } cases[] = {
+                {"1920x1080 @ 29.97", Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_29_97),
+                 VideoScanMode::Progressive},
+                {"1080p @ 29.97", Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_29_97), VideoScanMode::Progressive},
+                {"1080 i 59.94", Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_29_97), VideoScanMode::Interlaced},
+                {"HD, 29.97", Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_29_97), VideoScanMode::Progressive},
+                {"  720p   60  ", Size2Du32(1280, 720), FrameRate(FrameRate::FPS_60), VideoScanMode::Progressive},
+                {"UHD @ 60", Size2Du32(3840, 2160), FrameRate(FrameRate::FPS_60), VideoScanMode::Progressive},
+                {"1080\tpsf\t24", Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_24), VideoScanMode::PsF},
+                {"2048x1080 p 24", Size2Du32(2048, 1080), FrameRate(FrameRate::FPS_24), VideoScanMode::Progressive},
+                {"1080 29.97", Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_29_97), VideoScanMode::Progressive},
+                {"1080 23.98p", Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_23_98), VideoScanMode::Progressive},
+                {"1080 59.94i", Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_29_97), VideoScanMode::Interlaced},
+                {"1080 24psf", Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_24), VideoScanMode::PsF},
+                {"1080 29.97 p", Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_29_97), VideoScanMode::Progressive},
+                {"1080 50 i", Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_25), VideoScanMode::Interlaced},
+                {"1080 24 psf", Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_24), VideoScanMode::PsF},
+                {"HD @ 23.98p", Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_23_98), VideoScanMode::Progressive},
         };
-        for(const auto &c : cases) {
+        for (const auto &c : cases) {
                 CAPTURE(c.input);
                 auto [vf, err] = VideoFormat::fromString(c.input);
                 REQUIRE(err.isOk());
@@ -291,17 +273,10 @@ TEST_CASE("VideoFormat: fromString rejects malformed input") {
 
 TEST_CASE("VideoFormat: round-trip preserves canonical forms") {
         const char *inputs[] = {
-                "1080i59.94",
-                "1080p29.97",
-                "720p59.94",
-                "2160p60",
-                "1080psf23.98",
-                "486i59.94",
-                "576i50",
-                "2048x1080p24",
-                "4096x2160p24",
+                "1080i59.94", "1080p29.97", "720p59.94",    "2160p60",      "1080psf23.98",
+                "486i59.94",  "576i50",     "2048x1080p24", "4096x2160p24",
         };
-        for(const char *s : inputs) {
+        for (const char *s : inputs) {
                 auto [vf, err] = VideoFormat::fromString(s);
                 CAPTURE(s);
                 REQUIRE(err.isOk());
@@ -310,12 +285,9 @@ TEST_CASE("VideoFormat: round-trip preserves canonical forms") {
 }
 
 TEST_CASE("VideoFormat: equality") {
-        VideoFormat a(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97),
-                      VideoScanMode::Interlaced);
-        VideoFormat b(Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_29_97),
-                      VideoScanMode::Interlaced);
-        VideoFormat c(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97),
-                      VideoScanMode::Progressive);
+        VideoFormat a(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97), VideoScanMode::Interlaced);
+        VideoFormat b(Size2Du32(1920, 1080), FrameRate(FrameRate::FPS_29_97), VideoScanMode::Interlaced);
+        VideoFormat c(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97), VideoScanMode::Progressive);
         CHECK(a == b);
         CHECK(a != c);
 }
@@ -369,18 +341,15 @@ TEST_CASE("VideoFormat: wellKnownFormat round-trip") {
         CHECK_FALSE(e.isWellKnownFormat());
 
         // Well-known raster + non-well-known rate → NotWellKnown.
-        VideoFormat f(VideoFormat::Raster_HD,
-                      FrameRate(FrameRate::RationalType(15, 1)));
+        VideoFormat f(VideoFormat::Raster_HD, FrameRate(FrameRate::RationalType(15, 1)));
         CHECK(f.wellKnownFormat() == VideoFormat::NotWellKnown);
 }
 
 TEST_CASE("VideoFormat: wellKnownFormat treats interlaced variants as equivalent") {
-        VideoFormat even(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97),
-                         VideoScanMode::InterlacedEvenFirst);
-        VideoFormat odd(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97),
-                        VideoScanMode::InterlacedOddFirst);
+        VideoFormat even(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97), VideoScanMode::InterlacedEvenFirst);
+        VideoFormat odd(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97), VideoScanMode::InterlacedOddFirst);
         CHECK(even.wellKnownFormat() == VideoFormat::Smpte1080i59_94);
-        CHECK(odd.wellKnownFormat()  == VideoFormat::Smpte1080i59_94);
+        CHECK(odd.wellKnownFormat() == VideoFormat::Smpte1080i59_94);
 }
 
 TEST_CASE("VideoFormat: comparison with WellKnownFormat enum") {
@@ -450,47 +419,47 @@ TEST_CASE("VideoFormat: format flag queries") {
 TEST_CASE("VideoFormat: formatFlags static accessor") {
         const uint32_t hdFlags = VideoFormat::formatFlags(VideoFormat::Smpte1080p29_97);
         CHECK((hdFlags & VideoFormat::FormatFlag_Smpte) != 0u);
-        CHECK((hdFlags & VideoFormat::FormatFlag_Ntsc)  != 0u);
-        CHECK((hdFlags & VideoFormat::FormatFlag_Hd)    != 0u);
-        CHECK((hdFlags & VideoFormat::FormatFlag_Pal)   == 0u);
+        CHECK((hdFlags & VideoFormat::FormatFlag_Ntsc) != 0u);
+        CHECK((hdFlags & VideoFormat::FormatFlag_Hd) != 0u);
+        CHECK((hdFlags & VideoFormat::FormatFlag_Pal) == 0u);
 
-        CHECK(VideoFormat::formatFlags(VideoFormat::Invalid)      == 0u);
+        CHECK(VideoFormat::formatFlags(VideoFormat::Invalid) == 0u);
         CHECK(VideoFormat::formatFlags(VideoFormat::NotWellKnown) == 0u);
 }
 
 TEST_CASE("VideoFormat: std::format default style") {
         VideoFormat vf(VideoFormat::Smpte1080p29_97);
-        CHECK(std::format("{}", vf)          == "1080p29.97");
-        CHECK(std::format("{:smpte}", vf)    == "1080p29.97");
+        CHECK(std::format("{}", vf) == "1080p29.97");
+        CHECK(std::format("{:smpte}", vf) == "1080p29.97");
 
         VideoFormat i1080(VideoFormat::Smpte1080i59_94);
-        CHECK(std::format("{}", i1080)       == "1080i59.94");
+        CHECK(std::format("{}", i1080) == "1080i59.94");
 
         VideoFormat dci(VideoFormat::Dci2Kp24);
-        CHECK(std::format("{}", dci)         == "2048x1080p24");
+        CHECK(std::format("{}", dci) == "2048x1080p24");
 }
 
 TEST_CASE("VideoFormat: std::format named-raster style") {
         VideoFormat hd(VideoFormat::Smpte1080p29_97);
-        CHECK(std::format("{:named}", hd)    == "HDp29.97");
+        CHECK(std::format("{:named}", hd) == "HDp29.97");
 
         VideoFormat uhd(VideoFormat::Smpte2160p60);
-        CHECK(std::format("{:named}", uhd)   == "UHDp60");
+        CHECK(std::format("{:named}", uhd) == "UHDp60");
 
         VideoFormat dci(VideoFormat::Dci2Kp24);
-        CHECK(std::format("{:named}", dci)   == "2Kp24");
+        CHECK(std::format("{:named}", dci) == "2Kp24");
 
         // Non-well-known raster still falls back to WxH.
         VideoFormat odd(Size2Du32(405, 314), FrameRate(FrameRate::FPS_30));
-        CHECK(std::format("{:named}", odd)   == "405x314p30");
+        CHECK(std::format("{:named}", odd) == "405x314p30");
 }
 
 TEST_CASE("VideoFormat: std::format style plus width/alignment") {
         VideoFormat hd(VideoFormat::Smpte1080p29_97);
-        CHECK(std::format("{:>16}", hd)           == "      1080p29.97");
-        CHECK(std::format("{:smpte:>16}", hd)     == "      1080p29.97");
-        CHECK(std::format("{:named:>16}", hd)     == "        HDp29.97");
-        CHECK(std::format("{:named:*<12}", hd)    == "HDp29.97****");
+        CHECK(std::format("{:>16}", hd) == "      1080p29.97");
+        CHECK(std::format("{:smpte:>16}", hd) == "      1080p29.97");
+        CHECK(std::format("{:named:>16}", hd) == "        HDp29.97");
+        CHECK(std::format("{:named:*<12}", hd) == "HDp29.97****");
 }
 
 TEST_CASE("VideoFormat: fromString accepts WellKnownFormat identifier") {
@@ -517,28 +486,26 @@ TEST_CASE("VideoFormat: allWellKnownFormats returns every entry and filters by f
         VideoFormat::WellKnownFormatList all = VideoFormat::allWellKnownFormats();
         CHECK(all.size() == 49);
         CHECK(all.front() == VideoFormat::Smpte486i59_94);
-        CHECK(all.back()  == VideoFormat::Dci4Kp60);
+        CHECK(all.back() == VideoFormat::Dci4Kp60);
 
-        VideoFormat::WellKnownFormatList dci =
-                VideoFormat::allWellKnownFormats(VideoFormat::FormatFlag_Dci);
+        VideoFormat::WellKnownFormatList dci = VideoFormat::allWellKnownFormats(VideoFormat::FormatFlag_Dci);
         CHECK(dci.size() == 12);
-        for(VideoFormat::WellKnownFormat f : dci) {
+        for (VideoFormat::WellKnownFormat f : dci) {
                 VideoFormat vf(f);
                 CHECK(vf.isDciFormat());
                 CHECK_FALSE(vf.isSmpteFormat());
         }
 
-        VideoFormat::WellKnownFormatList palHd = VideoFormat::allWellKnownFormats(
-                VideoFormat::FormatFlag_Pal | VideoFormat::FormatFlag_Hd);
+        VideoFormat::WellKnownFormatList palHd =
+                VideoFormat::allWellKnownFormats(VideoFormat::FormatFlag_Pal | VideoFormat::FormatFlag_Hd);
         CHECK_FALSE(palHd.isEmpty());
-        for(VideoFormat::WellKnownFormat f : palHd) {
+        for (VideoFormat::WellKnownFormat f : palHd) {
                 VideoFormat vf(f);
                 CHECK(vf.isPalFormat());
                 CHECK(vf.isHdFormat());
         }
 
-        VideoFormat::WellKnownFormatList uhd8k =
-                VideoFormat::allWellKnownFormats(VideoFormat::FormatFlag_Uhd8k);
+        VideoFormat::WellKnownFormatList uhd8k = VideoFormat::allWellKnownFormats(VideoFormat::FormatFlag_Uhd8k);
         CHECK(uhd8k.size() == 8);
 }
 
@@ -575,17 +542,15 @@ TEST_CASE("VideoFormat: broadcast / cinema / integer-cadence queries") {
 }
 
 TEST_CASE("VideoFormat: Variant round-trip via String") {
-        VideoFormat vf(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97),
-                       VideoScanMode::Interlaced);
-        Variant v(vf);
+        VideoFormat vf(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97), VideoScanMode::Interlaced);
+        Variant     v(vf);
         CHECK(v.type() == Variant::TypeVideoFormat);
         CHECK(v.get<String>() == "1080i59.94");
 
-        Variant s(String("720p59.94"));
-        Error err;
+        Variant     s(String("720p59.94"));
+        Error       err;
         VideoFormat parsed = s.get<VideoFormat>(&err);
         CHECK(err.isOk());
         CHECK(parsed.raster() == Size2Du32(1280, 720));
         CHECK(parsed.frameRate() == FrameRate(FrameRate::FPS_59_94));
 }
-

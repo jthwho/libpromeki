@@ -84,7 +84,7 @@ class File;
  * @ref ObjectBase signal/slot dispatch.
  */
 class DebugMediaFile : public ObjectBase {
-        PROMEKI_OBJECT(DebugMediaFile, ObjectBase)
+                PROMEKI_OBJECT(DebugMediaFile, ObjectBase)
         public:
                 /** @brief Unique-ownership pointer to a DebugMediaFile. */
                 using UPtr = UniquePtr<DebugMediaFile>;
@@ -103,22 +103,21 @@ class DebugMediaFile : public ObjectBase {
                  * fields they care about.
                  */
                 struct OpenOptions {
-                        /// @brief Metadata stamped into the session
-                        ///        chunk on @c Write.  Ignored on @c Read.
-                        Metadata sessionInfo;
+                                /// @brief Metadata stamped into the session
+                                ///        chunk on @c Write.  Ignored on @c Read.
+                                Metadata sessionInfo;
                 };
 
                 /** @brief One entry in the frame index. */
                 struct FrameIndexEntry {
-                        int64_t     fileOffset     = 0;  ///< Byte offset of the FRAM chunk header.
-                        FrameNumber frameNumber;         ///< Frame index recorded in the chunk.
-                        int64_t     presentationUs = 0;  ///< Presentation time in microseconds (reserved for future use, currently always 0).
+                                int64_t     fileOffset = 0; ///< Byte offset of the FRAM chunk header.
+                                FrameNumber frameNumber;    ///< Frame index recorded in the chunk.
+                                int64_t     presentationUs =
+                                        0; ///< Presentation time in microseconds (reserved for future use, currently always 0).
                 };
 
                 /** @brief The file-signature magic (8 bytes). */
-                static constexpr char kMagic[8] = {
-                        'P', 'M', 'D', 'F', '\x1A', '\x0A', '\x00', '\x00'
-                };
+                static constexpr char kMagic[8] = {'P', 'M', 'D', 'F', '\x1A', '\x0A', '\x00', '\x00'};
 
                 /** @brief Current format version stamped on write. */
                 static constexpr uint32_t kFormatVersion = 1;
@@ -132,7 +131,7 @@ class DebugMediaFile : public ObjectBase {
                 /** @brief Closes the file and releases resources. */
                 ~DebugMediaFile() override;
 
-                DebugMediaFile(const DebugMediaFile &)            = delete;
+                DebugMediaFile(const DebugMediaFile &) = delete;
                 DebugMediaFile &operator=(const DebugMediaFile &) = delete;
 
                 /**
@@ -149,8 +148,7 @@ class DebugMediaFile : public ObjectBase {
                  * @param opts     Open-time tunables.
                  * @return @c Error::Ok on success.
                  */
-                Error open(const String &filename, Mode mode,
-                           const OpenOptions &opts = {});
+                Error open(const String &filename, Mode mode, const OpenOptions &opts = {});
 
                 /**
                  * @brief Closes the file.
@@ -251,14 +249,14 @@ class DebugMediaFile : public ObjectBase {
 
         private:
                 String                        _filename;
-                Mode                          _mode         = NotOpen;
-                File                         *_file         = nullptr;  ///< Owned via ObjectBase parent-child tree.
-                uint32_t                      _fileFlags    = 0;
-                uint32_t                      _fileVersion  = 0;
-                int64_t                       _firstFramePos = 0;   ///< File position right after SESN chunk.
+                Mode                          _mode = NotOpen;
+                File                         *_file = nullptr; ///< Owned via ObjectBase parent-child tree.
+                uint32_t                      _fileFlags = 0;
+                uint32_t                      _fileVersion = 0;
+                int64_t                       _firstFramePos = 0; ///< File position right after SESN chunk.
                 FrameCount                    _framesWritten{0};
-                mutable FrameNumber           _readCursor{0};       ///< Current frame index when reading.
-                mutable bool                  _indexBuilt    = false;
+                mutable FrameNumber           _readCursor{0}; ///< Current frame index when reading.
+                mutable bool                  _indexBuilt = false;
                 mutable List<FrameIndexEntry> _index;
                 Metadata                      _sessionInfo;
 

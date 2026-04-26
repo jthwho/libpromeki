@@ -30,10 +30,10 @@ TEST_CASE("Mutex_TryLock") {
 TEST_CASE("Mutex_TryLockContended") {
         Mutex m;
         m.lock();
-        bool gotLock = false;
+        bool        gotLock = false;
         std::thread t([&] {
                 gotLock = m.tryLock();
-                if(gotLock) m.unlock();
+                if (gotLock) m.unlock();
         });
         t.join();
         CHECK_FALSE(gotLock);
@@ -45,10 +45,10 @@ TEST_CASE("Mutex_Locker") {
         {
                 Mutex::Locker locker(m);
                 // Mutex should be locked; another thread can't acquire it
-                bool gotLock = false;
+                bool        gotLock = false;
                 std::thread t([&] {
                         gotLock = m.tryLock();
-                        if(gotLock) m.unlock();
+                        if (gotLock) m.unlock();
                 });
                 t.join();
                 CHECK_FALSE(gotLock);
@@ -59,12 +59,12 @@ TEST_CASE("Mutex_Locker") {
 }
 
 TEST_CASE("Mutex_MutualExclusion") {
-        Mutex m;
-        int counter = 0;
+        Mutex     m;
+        int       counter = 0;
         const int iterations = 10000;
 
         auto increment = [&] {
-                for(int i = 0; i < iterations; i++) {
+                for (int i = 0; i < iterations; i++) {
                         Mutex::Locker locker(m);
                         counter++;
                 }

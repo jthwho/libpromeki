@@ -58,7 +58,7 @@ TEST_CASE("Size2Du32: toString") {
 
 TEST_CASE("Size2Du32: String conversion operator") {
         Size2Du32 s(640, 480);
-        String str = s;
+        String    str = s;
         CHECK(str == "640x480");
 }
 
@@ -68,7 +68,7 @@ TEST_CASE("Size2Du32: toString output") {
 }
 
 TEST_CASE("Size2Du32: pointIsInside") {
-        Size2Du32 s(100, 100);
+        Size2Du32  s(100, 100);
         Point2Di32 inside(50, 50);
         Point2Di32 outside(150, 50);
         Point2Di32 edge(0, 0);
@@ -149,13 +149,9 @@ TEST_CASE("Size2Du32: fromString uppercase X") {
 
 TEST_CASE("Size2Du32: fromString round-trips toString") {
         Size2Du32 sizes[] = {
-                Size2Du32(64, 64),
-                Size2Du32(320, 240),
-                Size2Du32(1920, 1080),
-                Size2Du32(3840, 2160),
-                Size2Du32(1, 1),
+                Size2Du32(64, 64), Size2Du32(320, 240), Size2Du32(1920, 1080), Size2Du32(3840, 2160), Size2Du32(1, 1),
         };
-        for(const auto &orig : sizes) {
+        for (const auto &orig : sizes) {
                 auto [parsed, err] = Size2Du32::fromString(orig.toString());
                 CHECK(err.isOk());
                 CHECK(parsed == orig);

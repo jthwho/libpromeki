@@ -39,9 +39,8 @@ PROMEKI_NAMESPACE_BEGIN
  * List<String> sorted = tags.toList();
  * @endcode
  */
-template <typename T>
-class Set {
-        PROMEKI_SHARED_FINAL(Set)
+template <typename T> class Set {
+                PROMEKI_SHARED_FINAL(Set)
         public:
                 /** @brief Shared pointer type for Set. */
                 using Ptr = SharedPtr<Set>;
@@ -194,9 +193,7 @@ class Set {
                  *         element already existed; the iterator points at the
                  *         element either way.
                  */
-                Pair<Iterator, bool> insert(const T &value) {
-                        return Pair<Iterator, bool>(d.insert(value));
-                }
+                Pair<Iterator, bool> insert(const T &value) { return Pair<Iterator, bool>(d.insert(value)); }
 
                 /**
                  * @brief Inserts a value into the set (move overload).
@@ -204,27 +201,21 @@ class Set {
                  * @return A @ref Pair of @c (iterator, bool); see
                  *         @ref insert(const T&) for the bool semantics.
                  */
-                Pair<Iterator, bool> insert(T &&value) {
-                        return Pair<Iterator, bool>(d.insert(std::move(value)));
-                }
+                Pair<Iterator, bool> insert(T &&value) { return Pair<Iterator, bool>(d.insert(std::move(value))); }
 
                 /**
                  * @brief Removes @p value from the set.
                  * @param value The value to remove.
                  * @return True if the element was removed, false if not found.
                  */
-                bool remove(const T &value) {
-                        return d.erase(value) > 0;
-                }
+                bool remove(const T &value) { return d.erase(value) > 0; }
 
                 /**
                  * @brief Removes the element at @p pos.
                  * @param pos Iterator to the element to remove.
                  * @return Iterator to the next element.
                  */
-                Iterator remove(Iterator pos) {
-                        return d.erase(pos);
-                }
+                Iterator remove(Iterator pos) { return d.erase(pos); }
 
                 /** @brief Removes all elements. */
                 void clear() noexcept {
@@ -250,7 +241,7 @@ class Set {
                  */
                 Set unite(const Set &other) const {
                         Set ret = *this;
-                        for(const auto &v : other.d) ret.d.insert(v);
+                        for (const auto &v : other.d) ret.d.insert(v);
                         return ret;
                 }
 
@@ -261,8 +252,8 @@ class Set {
                  */
                 Set intersect(const Set &other) const {
                         Set ret;
-                        for(const auto &v : d) {
-                                if(other.contains(v)) ret.d.insert(v);
+                        for (const auto &v : d) {
+                                if (other.contains(v)) ret.d.insert(v);
                         }
                         return ret;
                 }
@@ -274,8 +265,8 @@ class Set {
                  */
                 Set subtract(const Set &other) const {
                         Set ret;
-                        for(const auto &v : d) {
-                                if(!other.contains(v)) ret.d.insert(v);
+                        for (const auto &v : d) {
+                                if (!other.contains(v)) ret.d.insert(v);
                         }
                         return ret;
                 }
@@ -289,7 +280,7 @@ class Set {
                 List<T> toList() const {
                         List<T> ret;
                         ret.reserve(d.size());
-                        for(const auto &v : d) ret.pushToBack(v);
+                        for (const auto &v : d) ret.pushToBack(v);
                         return ret;
                 }
 
@@ -298,9 +289,8 @@ class Set {
                  * @tparam Func Callable with signature void(const T &).
                  * @param func The function to invoke.
                  */
-                template <typename Func>
-                void forEach(Func &&func) const {
-                        for(const auto &v : d) func(v);
+                template <typename Func> void forEach(Func &&func) const {
+                        for (const auto &v : d) func(v);
                         return;
                 }
 

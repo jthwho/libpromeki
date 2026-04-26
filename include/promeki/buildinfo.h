@@ -24,19 +24,19 @@ PROMEKI_NAMESPACE_BEGIN
  * are safe to call from any thread.
  */
 typedef struct {
-    const char * name;        ///< Project name.
-    const char * version;     ///< Version string (e.g. "1.2.3").
-    const char * repoident;   ///< Repository identifier (e.g. git commit hash).
-    const char * date;        ///< Build date string (__DATE__).
-    const char * time;        ///< Build time string (__TIME__).
-    const char * hostname;    ///< Hostname of the build machine.
-    const char * type;        ///< Build type (e.g. "Release", "Debug").
-    int          betaVersion; ///< Beta version number, or 0 if not a beta build.
-    int          rcVersion;   ///< Release candidate number, or 0 if not an RC build.
+                const char *name;        ///< Project name.
+                const char *version;     ///< Version string (e.g. "1.2.3").
+                const char *repoident;   ///< Repository identifier (e.g. git commit hash).
+                const char *date;        ///< Build date string (__DATE__).
+                const char *time;        ///< Build time string (__TIME__).
+                const char *hostname;    ///< Hostname of the build machine.
+                const char *type;        ///< Build type (e.g. "Release", "Debug").
+                int         betaVersion; ///< Beta version number, or 0 if not a beta build.
+                int         rcVersion;   ///< Release candidate number, or 0 if not an RC build.
 } BuildInfo;
 
 /** @brief Returns a pointer to the global BuildInfo structure. */
-const BuildInfo * getBuildInfo();
+const BuildInfo *getBuildInfo();
 
 /** @brief Writes all build information fields to the log output. */
 void logBuildInfo();
@@ -85,4 +85,3 @@ String debugStatusString();
 StringList buildInfoStrings();
 
 PROMEKI_NAMESPACE_END
-

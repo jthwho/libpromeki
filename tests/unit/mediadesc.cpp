@@ -26,8 +26,7 @@ TEST_CASE("MediaDesc_fromSdp_aggregates_video_and_audio") {
         video.setProtocol("RTP/AVP");
         video.addPayloadType(96);
         video.setAttribute("rtpmap", "96 jxsv/90000");
-        video.setAttribute("fmtp",
-                "96 sampling=YCbCr-4:2:2;depth=10;width=1280;height=720");
+        video.setAttribute("fmtp", "96 sampling=YCbCr-4:2:2;depth=10;width=1280;height=720");
         sdp.addMediaDescription(video);
 
         SdpMediaDescription audio;
@@ -42,8 +41,7 @@ TEST_CASE("MediaDesc_fromSdp_aggregates_video_and_audio") {
         REQUIRE(md.imageList().size() == 1);
         CHECK(md.imageList()[0].width() == 1280);
         CHECK(md.imageList()[0].height() == 720);
-        CHECK(md.imageList()[0].pixelFormat().id() ==
-              PixelFormat::JPEG_XS_YUV10_422_Rec709);
+        CHECK(md.imageList()[0].pixelFormat().id() == PixelFormat::JPEG_XS_YUV10_422_Rec709);
 
         REQUIRE(md.audioList().size() == 1);
         CHECK(md.audioList()[0].format().id() == AudioFormat::PCMI_S16BE);
@@ -56,7 +54,7 @@ TEST_CASE("MediaDesc_fromSdp_skips_unsupported_encodings") {
         // should skip it (MJPEG geometry lives in the RFC 2435
         // packet header, not the SDP) and return a MediaDesc with
         // an empty image list rather than an invalid one.
-        SdpSession sdp;
+        SdpSession          sdp;
         SdpMediaDescription video;
         video.setMediaType("video");
         video.addPayloadType(26);
@@ -70,7 +68,7 @@ TEST_CASE("MediaDesc_fromSdp_skips_unsupported_encodings") {
 
 TEST_CASE("MediaDesc_fromSdp_empty_session_returns_empty_desc") {
         SdpSession sdp;
-        MediaDesc md = MediaDesc::fromSdp(sdp);
+        MediaDesc  md = MediaDesc::fromSdp(sdp);
         CHECK(md.imageList().isEmpty());
         CHECK(md.audioList().isEmpty());
 }
@@ -189,18 +187,16 @@ TEST_CASE("MediaDesc_fromSdp_multiple_video_tracks") {
         SdpSession sdp;
         // Two video tracks at different resolutions — both
         // should land in the image list.
-        for(int i = 0; i < 2; i++) {
+        for (int i = 0; i < 2; i++) {
                 SdpMediaDescription v;
                 v.setMediaType("video");
                 v.setPort(static_cast<uint16_t>(5004 + i * 2));
                 v.setProtocol("RTP/AVP");
                 v.addPayloadType(96);
                 v.setAttribute("rtpmap", "96 jxsv/90000");
-                v.setAttribute("fmtp",
-                        String("96 sampling=YCbCr-4:2:2;depth=10;width=") +
-                        String::number(1920 / (i + 1)) +
-                        String(";height=") +
-                        String::number(1080 / (i + 1)));
+                v.setAttribute("fmtp", String("96 sampling=YCbCr-4:2:2;depth=10;width=") +
+                                               String::number(1920 / (i + 1)) + String(";height=") +
+                                               String::number(1080 / (i + 1)));
                 sdp.addMediaDescription(v);
         }
 

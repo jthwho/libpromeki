@@ -13,16 +13,13 @@
 PROMEKI_NAMESPACE_BEGIN
 
 const String DebugServer::DefaultApiPrefix = "/api";
-const String DebugServer::DefaultBindHost  = "127.0.0.1";
+const String DebugServer::DefaultBindHost = "127.0.0.1";
 
-DebugServer::DebugServer(ObjectBase *parent) :
-        ObjectBase(parent),
-        _api(_server, DefaultApiPrefix, this) {
+DebugServer::DebugServer(ObjectBase *parent) : ObjectBase(parent), _api(_server, DefaultApiPrefix, this) {
         _api.setTitle("Promeki Debug API");
-        _api.setDescription(
-                "Built-in diagnostic surface: build info, environment, "
-                "library options, memory stats, logger control, and "
-                "anything else mounted through this server's HttpApi.");
+        _api.setDescription("Built-in diagnostic surface: build info, environment, "
+                            "library options, memory stats, logger control, and "
+                            "anything else mounted through this server's HttpApi.");
 }
 
 DebugServer::~DebugServer() {
@@ -38,7 +35,7 @@ Error DebugServer::listen(uint16_t port) {
         // matches the documented default.  parseSpec is the canonical
         // place that knows how to fold ":port" into a real address.
         auto [addr, err] = parseSpec(String(":") + String::number(port));
-        if(err.isError()) return err;
+        if (err.isError()) return err;
         return _server.listen(addr);
 }
 
@@ -63,21 +60,20 @@ void DebugServer::installDefaultModules() {
         // control of "/" themselves.  The redirect target is the
         // debug UI's index page, which lives at <prefix>/promeki/.
         const String uiTarget = _api.resolve("/promeki/");
-        _server.route("/", HttpMethod::Get,
-                [uiTarget](const HttpRequest &, HttpResponse &res) {
-                        res.setStatus(HttpStatus::Found);
-                        res.setHeader("Location", uiTarget);
-                        res.setText("");
-                });
+        _server.route("/", HttpMethod::Get, [uiTarget](const HttpRequest &, HttpResponse &res) {
+                res.setStatus(HttpStatus::Found);
+                res.setHeader("Location", uiTarget);
+                res.setText("");
+        });
 }
 
 Result<SocketAddress> DebugServer::parseSpec(const String &spec) {
-        if(spec.isEmpty()) return makeError<SocketAddress>(Error::Invalid);
+        if (spec.isEmpty()) return makeError<SocketAddress>(Error::Invalid);
         // Bare ":port" form — fold in the loopback default so tools
         // can write `PROMEKI_DEBUG_SERVER=:1234` without spelling out
         // the host.  A user that wants any-iface exposure must say so
         // explicitly with `0.0.0.0:1234` or `[::]:1234`.
-        if(spec.startsWith(":")) {
+        if (spec.startsWith(":")) {
                 return SocketAddress::fromString(DefaultBindHost + spec);
         }
         return SocketAddress::fromString(spec);

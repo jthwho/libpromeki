@@ -161,15 +161,13 @@ class UdpSocketTransport : public PacketTransport {
                 bool isOpen() const override;
 
                 /** @copydoc PacketTransport::sendPacket() */
-                ssize_t sendPacket(const void *data, size_t size,
-                                   const SocketAddress &dest) override;
+                ssize_t sendPacket(const void *data, size_t size, const SocketAddress &dest) override;
 
                 /** @copydoc PacketTransport::sendPackets() */
                 int sendPackets(const DatagramList &datagrams) override;
 
                 /** @copydoc PacketTransport::receivePacket() */
-                ssize_t receivePacket(void *data, size_t maxSize,
-                                      SocketAddress *sender = nullptr) override;
+                ssize_t receivePacket(void *data, size_t maxSize, SocketAddress *sender = nullptr) override;
 
                 /** @copydoc PacketTransport::setPacingRate() */
                 Error setPacingRate(uint64_t bytesPerSec) override;

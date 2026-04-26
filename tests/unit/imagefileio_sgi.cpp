@@ -24,12 +24,11 @@ TEST_CASE("ImageFileIO SGI: handler is registered") {
 }
 
 static void sgiRoundTrip(const char *fn, size_t w, size_t h, PixelFormat::ID pdId) {
-        auto src = UncompressedVideoPayload::allocate(
-                ImageDesc(w, h, PixelFormat(pdId)));
+        auto src = UncompressedVideoPayload::allocate(ImageDesc(w, h, PixelFormat(pdId)));
         REQUIRE(src.isValid());
         uint8_t *data = src.modify()->data()[0].data();
-        size_t bytes = src->plane(0).size();
-        for(size_t i = 0; i < bytes; ++i) data[i] = static_cast<uint8_t>((i * 7 + 31) & 0xFF);
+        size_t   bytes = src->plane(0).size();
+        for (size_t i = 0; i < bytes; ++i) data[i] = static_cast<uint8_t>((i * 7 + 31) & 0xFF);
 
         ImageFile sf(ImageFile::SGI);
         sf.setFilename(fn);
@@ -81,7 +80,7 @@ TEST_CASE("ImageFileIO SGI: load nonexistent file returns error") {
 
 TEST_CASE("ImageFileIO SGI: load invalid file returns error") {
         const char *fn = "/tmp/promeki_sgi_bad.sgi";
-        FILE *fp = std::fopen(fn, "wb");
+        FILE       *fp = std::fopen(fn, "wb");
         REQUIRE(fp);
         const char garbage[] = "Not an SGI file";
         std::fwrite(garbage, 1, sizeof(garbage), fp);

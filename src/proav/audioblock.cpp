@@ -10,14 +10,11 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-AudioBlock::AudioBlock(const Config &config, ObjectBase *parent) :
-        ObjectBase(parent), 
-        _blockConfig(config) 
-{
-        for(size_t i = 0; i < _blockConfig.sinkChannels; ++i) {
+AudioBlock::AudioBlock(const Config &config, ObjectBase *parent) : ObjectBase(parent), _blockConfig(config) {
+        for (size_t i = 0; i < _blockConfig.sinkChannels; ++i) {
                 _sinkNameList += String::sprintf("Sink %d", (int)i);
         }
-        for(size_t i = 0; i < _blockConfig.sourceChannels; ++i) {
+        for (size_t i = 0; i < _blockConfig.sourceChannels; ++i) {
                 _sourceNameList += String::sprintf("Source %d", (int)i);
         }
 }
@@ -63,4 +60,3 @@ ssize_t AudioBlock::sinkSamplesAllowed(size_t channel) const {
 }
 
 PROMEKI_NAMESPACE_END
-

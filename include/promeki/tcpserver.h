@@ -35,7 +35,7 @@ class TcpSocket;
  * @endcode
  */
 class TcpServer : public ObjectBase {
-        PROMEKI_OBJECT(TcpServer, ObjectBase)
+                PROMEKI_OBJECT(TcpServer, ObjectBase)
         public:
                 /**
                  * @brief Constructs a TcpServer.
@@ -136,10 +136,10 @@ class TcpServer : public ObjectBase {
                 PROMEKI_SIGNAL(newConnection);
 
         private:
-                int             _fd = -1;
-                bool            _listening = false;
-                SocketAddress   _address;
-                int             _maxPending = 50;
+                int           _fd = -1;
+                bool          _listening = false;
+                SocketAddress _address;
+                int           _maxPending = 50;
 };
 
 PROMEKI_NAMESPACE_END

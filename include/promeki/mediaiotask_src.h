@@ -94,25 +94,23 @@ class MediaIOTask_SRC : public MediaIOTask {
                 Error executeCmd(MediaIOCommandRead &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
-                int pendingOutput() const override;
+                int   pendingOutput() const override;
 
                 Error describe(MediaIODescription *out) const override;
-                Error proposeInput(const MediaDesc &offered,
-                                   MediaDesc *preferred) const override;
-                Error proposeOutput(const MediaDesc &requested,
-                                    MediaDesc *achievable) const override;
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
+                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const override;
 
                 Error convertFrame(const Frame::Ptr &input, Frame::Ptr &output);
 
-                AudioFormat::ID             _outputAudioDataType = AudioFormat::Invalid;
-                bool                            _outputAudioDataTypeSet = false;
-                int                             _capacity = 4;
+                AudioFormat::ID _outputAudioDataType = AudioFormat::Invalid;
+                bool            _outputAudioDataTypeSet = false;
+                int             _capacity = 4;
 
-                List<Frame::Ptr>                _outputQueue;
-                FrameCount                      _frameCount{0};
-                int64_t                         _readCount = 0;
-                FrameCount                      _framesConverted{0};
-                bool                            _capacityWarned = false;
+                List<Frame::Ptr> _outputQueue;
+                FrameCount       _frameCount{0};
+                int64_t          _readCount = 0;
+                FrameCount       _framesConverted{0};
+                bool             _capacityWarned = false;
 };
 
 PROMEKI_NAMESPACE_END

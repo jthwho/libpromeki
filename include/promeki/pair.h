@@ -34,8 +34,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @tparam A First element type.
  * @tparam B Second element type.
  */
-template <typename A, typename B>
-class Pair {
+template <typename A, typename B> class Pair {
         public:
                 /** @brief Type of the first element. */
                 using FirstType = A;
@@ -64,11 +63,9 @@ class Pair {
                  * @param  b  Second element.
                  */
                 template <typename A2, typename B2,
-                          typename = std::enable_if_t<
-                              std::is_constructible_v<A, A2&&> &&
-                              std::is_constructible_v<B, B2&&>>>
-                Pair(A2 &&a, B2 &&b)
-                        : d(std::forward<A2>(a), std::forward<B2>(b)) {}
+                          typename = std::enable_if_t<std::is_constructible_v<A, A2 &&> &&
+                                                      std::is_constructible_v<B, B2 &&>>>
+                Pair(A2 &&a, B2 &&b) : d(std::forward<A2>(a), std::forward<B2>(b)) {}
 
                 /**
                  * @brief Constructs from an existing std::pair.
@@ -142,48 +139,43 @@ class Pair {
                  * @param b Second element.
                  * @return A new Pair.
                  */
-                static Pair make(A a, B b) {
-                        return Pair(std::move(a), std::move(b));
-                }
+                static Pair make(A a, B b) { return Pair(std::move(a), std::move(b)); }
 
                 /** @brief Returns true if both pairs have identical contents. */
-                friend bool operator==(const Pair &lhs, const Pair &rhs) {
-                        return lhs.d == rhs.d;
-                }
+                friend bool operator==(const Pair &lhs, const Pair &rhs) { return lhs.d == rhs.d; }
 
                 /** @brief Returns true if the pairs differ. */
-                friend bool operator!=(const Pair &lhs, const Pair &rhs) {
-                        return lhs.d != rhs.d;
-                }
+                friend bool operator!=(const Pair &lhs, const Pair &rhs) { return lhs.d != rhs.d; }
 
                 /** @brief Lexicographic less-than comparison. */
-                friend bool operator<(const Pair &lhs, const Pair &rhs) {
-                        return lhs.d < rhs.d;
-                }
+                friend bool operator<(const Pair &lhs, const Pair &rhs) { return lhs.d < rhs.d; }
 
                 /**
                  * @brief Structured bindings support: element access by index.
                  * @tparam I Element index (0 for first, 1 for second).
                  * @return Reference to the requested element.
                  */
-                template <std::size_t I>
-                auto &get() & {
-                        if constexpr (I == 0) return d.first;
-                        else return d.second;
+                template <std::size_t I> auto &get() & {
+                        if constexpr (I == 0)
+                                return d.first;
+                        else
+                                return d.second;
                 }
 
                 /// @copydoc get()
-                template <std::size_t I>
-                const auto &get() const & {
-                        if constexpr (I == 0) return d.first;
-                        else return d.second;
+                template <std::size_t I> const auto &get() const & {
+                        if constexpr (I == 0)
+                                return d.first;
+                        else
+                                return d.second;
                 }
 
                 /// @copydoc get()
-                template <std::size_t I>
-                auto &&get() && {
-                        if constexpr (I == 0) return std::move(d.first);
-                        else return std::move(d.second);
+                template <std::size_t I> auto &&get() && {
+                        if constexpr (I == 0)
+                                return std::move(d.first);
+                        else
+                                return std::move(d.second);
                 }
 
         private:
@@ -194,12 +186,14 @@ PROMEKI_NAMESPACE_END
 
 // Structured bindings support
 namespace std {
-template <typename A, typename B>
-struct tuple_size<promeki::Pair<A, B>> : std::integral_constant<std::size_t, 2> {};
+        template <typename A, typename B>
+        struct tuple_size<promeki::Pair<A, B>> : std::integral_constant<std::size_t, 2> {};
 
-template <typename A, typename B>
-struct tuple_element<0, promeki::Pair<A, B>> { using type = A; };
+        template <typename A, typename B> struct tuple_element<0, promeki::Pair<A, B>> {
+                        using type = A;
+        };
 
-template <typename A, typename B>
-struct tuple_element<1, promeki::Pair<A, B>> { using type = B; };
+        template <typename A, typename B> struct tuple_element<1, promeki::Pair<A, B>> {
+                        using type = B;
+        };
 } // namespace std

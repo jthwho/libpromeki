@@ -23,24 +23,24 @@ PROMEKI_NAMESPACE_BEGIN
 
 namespace {
 
-void sdiPathRepeatBlock(uint8_t *row, size_t bytes, const void *block, size_t blockSize) {
-        size_t off = 0;
-        while(off + blockSize <= bytes) {
-                std::memcpy(row + off, block, blockSize);
-                off += blockSize;
+        void sdiPathRepeatBlock(uint8_t *row, size_t bytes, const void *block, size_t blockSize) {
+                size_t off = 0;
+                while (off + blockSize <= bytes) {
+                        std::memcpy(row + off, block, blockSize);
+                        off += blockSize;
+                }
+                if (off < bytes) std::memcpy(row + off, block, bytes - off);
         }
-        if(off < bytes) std::memcpy(row + off, block, bytes - off);
-}
 
-void sdiPathStore16(uint8_t *dst, uint16_t val, bool be) {
-        if(be) {
-                dst[0] = static_cast<uint8_t>(val >> 8);
-                dst[1] = static_cast<uint8_t>(val);
-        } else {
-                dst[0] = static_cast<uint8_t>(val);
-                dst[1] = static_cast<uint8_t>(val >> 8);
+        void sdiPathStore16(uint8_t *dst, uint16_t val, bool be) {
+                if (be) {
+                        dst[0] = static_cast<uint8_t>(val >> 8);
+                        dst[1] = static_cast<uint8_t>(val);
+                } else {
+                        dst[0] = static_cast<uint8_t>(val);
+                        dst[1] = static_cast<uint8_t>(val >> 8);
+                }
         }
-}
 
 } // anonymous namespace
 
@@ -49,37 +49,37 @@ VideoTestPattern::VideoTestPattern() = default;
 VideoTestPattern::~VideoTestPattern() = default;
 
 void VideoTestPattern::setPattern(Pattern pattern) {
-        if(_pattern == pattern) return;
+        if (_pattern == pattern) return;
         _pattern = pattern;
         invalidatePayloadCache();
 }
 
 void VideoTestPattern::setSolidColor(const Color &color) {
-        if(_solidColor == color) return;
+        if (_solidColor == color) return;
         _solidColor = color;
         invalidatePayloadCache();
 }
 
 void VideoTestPattern::setBurnFontFilename(const String &path) {
-        if(_burnFontFilename == path) return;
+        if (_burnFontFilename == path) return;
         _burnFontFilename = path;
         _burnFontConfigDirty = true;
 }
 
 void VideoTestPattern::setBurnFontSize(int px) {
-        if(_burnFontSize == px) return;
+        if (_burnFontSize == px) return;
         _burnFontSize = px;
         _burnFontConfigDirty = true;
 }
 
 void VideoTestPattern::setBurnTextColor(const Color &c) {
-        if(_burnTextColor == c) return;
+        if (_burnTextColor == c) return;
         _burnTextColor = c;
         _burnFontConfigDirty = true;
 }
 
 void VideoTestPattern::setBurnBackgroundColor(const Color &c) {
-        if(_burnBackgroundColor == c) return;
+        if (_burnBackgroundColor == c) return;
         _burnBackgroundColor = c;
         _burnFontConfigDirty = true;
 }
@@ -89,7 +89,7 @@ bool VideoTestPattern::isStaticPattern() const {
 }
 
 void VideoTestPattern::invalidatePayloadCache() const {
-        for(int i = 0; i < CacheSlotCount; i++) {
+        for (int i = 0; i < CacheSlotCount; i++) {
                 _cachedPayloads[i] = UncompressedVideoPayload::Ptr();
         }
         _cacheW = 0;
@@ -109,19 +109,15 @@ ImageDesc VideoTestPattern::rgbScratchDesc(const ImageDesc &target) const {
         // benchmarks show this swap dropping the YUV burn-in/motion
         // cost by roughly the same factor the fast path is faster
         // than the scalar pipeline.
-        ImageDesc rd(target.width(), target.height(),
-                     PixelFormat(PixelFormat::RGBA8_sRGB));
+        ImageDesc rd(target.width(), target.height(), PixelFormat(PixelFormat::RGBA8_sRGB));
         rd.metadata() = target.metadata();
         return rd;
 }
 
-UncompressedVideoPayload::Ptr VideoTestPattern::createPayload(
-        const ImageDesc &desc, double motionOffset,
-        const Timecode &currentTimecode) const {
-        const bool directPaint = desc.pixelFormat().hasPaintEngine()
-                                 && _pattern != VideoPattern::ZonePlate
-                                 && _pattern != VideoPattern::CircularZone
-                                 && _pattern != VideoPattern::Noise;
+UncompressedVideoPayload::Ptr VideoTestPattern::createPayload(const ImageDesc &desc, double motionOffset,
+                                                              const Timecode &currentTimecode) const {
+        const bool directPaint = desc.pixelFormat().hasPaintEngine() && _pattern != VideoPattern::ZonePlate &&
+                                 _pattern != VideoPattern::CircularZone && _pattern != VideoPattern::Noise;
 
         // Patterns that use PaintEngine (color bars, ramp, grid, etc.)
         // render natively into any format that has a paint engine —
@@ -133,74 +129,65 @@ UncompressedVideoPayload::Ptr VideoTestPattern::createPayload(
         // separate pass (@ref applyBurn) so createPayload never has
         // to pick a paintable intermediate just because text might be
         // drawn later.
-        auto renderInto = [this, directPaint, &desc](
-                UncompressedVideoPayload::Ptr &dst, double mo,
-                const Color *solidColor) {
+        auto renderInto = [this, directPaint, &desc](UncompressedVideoPayload::Ptr &dst, double mo,
+                                                     const Color *solidColor) {
                 auto runPattern = [this, mo, solidColor](UncompressedVideoPayload &t) {
-                        if(solidColor != nullptr) {
+                        if (solidColor != nullptr) {
                                 renderSolid(t, *solidColor);
                         } else {
                                 render(t, mo);
                         }
                 };
-                if(directPaint) {
+                if (directPaint) {
                         runPattern(*dst.modify());
                         return;
                 }
                 // Scratch path: render into RGBA8 and CSC-convert.
                 ImageDesc rgbDesc = rgbScratchDesc(desc);
-                auto scratch = UncompressedVideoPayload::allocate(rgbDesc);
-                if(!scratch.isValid()) return;
+                auto      scratch = UncompressedVideoPayload::allocate(rgbDesc);
+                if (!scratch.isValid()) return;
                 runPattern(*scratch.modify());
-                auto conv = scratch->convert(desc.pixelFormat(),
-                                             desc.metadata(), MediaConfig());
-                if(conv.isValid()) dst = conv;
+                auto conv = scratch->convert(desc.pixelFormat(), desc.metadata(), MediaConfig());
+                if (conv.isValid()) dst = conv;
         };
 
         UncompressedVideoPayload::Ptr out;
 
-        if(_pattern == VideoPattern::AvSync) {
+        if (_pattern == VideoPattern::AvSync) {
                 // AvSync: slot 0 = marker (white), slot 1 = non-marker
                 // (black).  Each slot is cached once in target format
                 // and reused on every subsequent call.
-                const bool marker = currentTimecode.isValid()
-                                    && currentTimecode.frame() == 0;
-                if(marker) {
-                        out = cachedPayload(0, desc, [&](UncompressedVideoPayload::Ptr &p) {
-                                renderInto(p, 0.0, &Color::White);
-                        });
+                const bool marker = currentTimecode.isValid() && currentTimecode.frame() == 0;
+                if (marker) {
+                        out = cachedPayload(
+                                0, desc, [&](UncompressedVideoPayload::Ptr &p) { renderInto(p, 0.0, &Color::White); });
                 } else {
-                        out = cachedPayload(1, desc, [&](UncompressedVideoPayload::Ptr &p) {
-                                renderInto(p, 0.0, &Color::Black);
-                        });
+                        out = cachedPayload(
+                                1, desc, [&](UncompressedVideoPayload::Ptr &p) { renderInto(p, 0.0, &Color::Black); });
                 }
-        } else if(_pattern == VideoPattern::SDIPathEQ || _pattern == VideoPattern::SDIPathPLL) {
+        } else if (_pattern == VideoPattern::SDIPathEQ || _pattern == VideoPattern::SDIPathPLL) {
                 // SDI pathological patterns write exact digital word
                 // values for 422 targets, bypassing PaintEngine / CSC.
                 // Non-422 targets fall through to the scratch + CSC path
                 // which produces an approximate visual.
-                if(desc.pixelFormat().memLayout().sampling() == PixelMemLayout::Sampling422) {
-                        out = cachedPayload(0, desc, [&](UncompressedVideoPayload::Ptr &p) {
-                                render(*p.modify(), 0.0);
-                        });
+                if (desc.pixelFormat().memLayout().sampling() == PixelMemLayout::Sampling422) {
+                        out = cachedPayload(0, desc,
+                                            [&](UncompressedVideoPayload::Ptr &p) { render(*p.modify(), 0.0); });
                 } else {
-                        out = cachedPayload(0, desc, [&](UncompressedVideoPayload::Ptr &p) {
-                                renderInto(p, 0.0, nullptr);
-                        });
+                        out = cachedPayload(0, desc,
+                                            [&](UncompressedVideoPayload::Ptr &p) { renderInto(p, 0.0, nullptr); });
                 }
-        } else if(isStaticPattern() && motionOffset == 0.0) {
+        } else if (isStaticPattern() && motionOffset == 0.0) {
                 // Static pattern at offset 0 — render once into slot 0
                 // and reuse on subsequent calls.  setPattern() and
                 // setSolidColor() dump the cache, so the slot is
                 // always consistent with _pattern / _solidColor.
-                out = cachedPayload(0, desc, [&](UncompressedVideoPayload::Ptr &p) {
-                        renderInto(p, 0.0, nullptr);
-                });
+                out = cachedPayload(0, desc, [&](UncompressedVideoPayload::Ptr &p) { renderInto(p, 0.0, nullptr); });
         } else {
                 // Dynamic pattern (Noise, or any non-zero motion offset)
                 // — render fresh every call, no caching.
                 out = UncompressedVideoPayload::allocate(desc);
-                if(out.isValid()) {
+                if (out.isValid()) {
                         renderInto(out, motionOffset, nullptr);
                 }
         }
@@ -209,7 +196,7 @@ UncompressedVideoPayload::Ptr VideoTestPattern::createPayload(
 }
 
 void VideoTestPattern::applyBurnFontConfig() const {
-        if(_burnFont.isNull()) return;
+        if (_burnFont.isNull()) return;
         _burnFont->setFontFilename(_burnFontFilename);
         _burnFont->setFontSize(_burnEffectiveFontSize);
         _burnFont->setForegroundColor(_burnTextColor);
@@ -217,12 +204,11 @@ void VideoTestPattern::applyBurnFontConfig() const {
         _burnFontConfigDirty = false;
 }
 
-Error VideoTestPattern::applyBurn(UncompressedVideoPayload &inout,
-                                  const String &burnText) const {
-        if(!_burnEnabled || burnText.isEmpty()) return Error::Ok;
-        if(!inout.isValid()) return Error::InvalidArgument;
+Error VideoTestPattern::applyBurn(UncompressedVideoPayload &inout, const String &burnText) const {
+        if (!_burnEnabled || burnText.isEmpty()) return Error::Ok;
+        if (!inout.isValid()) return Error::InvalidArgument;
         const PixelFormat &pf = inout.desc().pixelFormat();
-        if(!pf.hasPaintEngine()) {
+        if (!pf.hasPaintEngine()) {
                 promekiWarn("VideoTestPattern::applyBurn: payload pixel "
                             "format '%s' has no paint engine — burn skipped",
                             pf.name().cstr());
@@ -234,11 +220,11 @@ Error VideoTestPattern::applyBurn(UncompressedVideoPayload &inout,
         // Interpret literal backslash-n as newline so config strings
         // from the command line (where shell quoting prevents real
         // newlines) split correctly.  Then split on actual newlines.
-        String text = burnText.replace("\\n", "\n");
+        String     text = burnText.replace("\\n", "\n");
         StringList lines = text.split("\n");
-        if(lines.isEmpty()) return Error::Ok;
+        if (lines.isEmpty()) return Error::Ok;
 
-        const int imgWidth  = static_cast<int>(inout.desc().size().width());
+        const int imgWidth = static_cast<int>(inout.desc().size().width());
         const int imgHeight = static_cast<int>(inout.desc().size().height());
 
         // Resolve the effective font size.  A configured size of 0
@@ -249,28 +235,28 @@ Error VideoTestPattern::applyBurn(UncompressedVideoPayload &inout,
         // because the image height changed under auto mode) the font
         // config gets marked dirty so FastFont is reconfigured below.
         int effectiveSize = _burnFontSize;
-        if(effectiveSize <= 0) {
+        if (effectiveSize <= 0) {
                 effectiveSize = (imgHeight * 36 + 540) / 1080;
-                if(effectiveSize < 1) effectiveSize = 1;
+                if (effectiveSize < 1) effectiveSize = 1;
         }
-        if(effectiveSize != _burnEffectiveFontSize) {
+        if (effectiveSize != _burnEffectiveFontSize) {
                 _burnEffectiveFontSize = effectiveSize;
                 _burnFontConfigDirty = true;
         }
 
         // Lazy-create the FastFont bound to this payload's paint engine.
         PaintEngine pe = inout.createPaintEngine();
-        if(_burnFont.isNull()) {
+        if (_burnFont.isNull()) {
                 _burnFont = FastFont::UPtr::create(pe);
                 _burnFontConfigDirty = true;
         } else {
                 _burnFont->setPaintEngine(pe);
         }
-        if(_burnFontConfigDirty) applyBurnFontConfig();
+        if (_burnFontConfigDirty) applyBurnFontConfig();
 
         const int ascender = _burnFont->ascender();
         const int lineHeight = _burnFont->lineHeight();
-        if(lineHeight <= 0 || ascender <= 0) {
+        if (lineHeight <= 0 || ascender <= 0) {
                 // FastFont failed to load — don't draw anything.
                 return Error::FontUnavailable;
         }
@@ -279,33 +265,29 @@ Error VideoTestPattern::applyBurn(UncompressedVideoPayload &inout,
         // width and the height stacks all lines with a quarter-line
         // gap between them.
         List<int> widths;
-        int maxTextWidth = 0;
-        for(const String &line : lines) {
+        int       maxTextWidth = 0;
+        for (const String &line : lines) {
                 int w = _burnFont->measureText(line);
                 widths.pushToBack(w);
-                if(w > maxTextWidth) maxTextWidth = w;
+                if (w > maxTextWidth) maxTextWidth = w;
         }
         const int lineSpacing = lineHeight / 4;
         const int n = static_cast<int>(lines.size());
-        const int totalHeight = n * lineHeight
-                              + (n > 1 ? (n - 1) * lineSpacing : 0);
+        const int totalHeight = n * lineHeight + (n > 1 ? (n - 1) * lineSpacing : 0);
 
         int x = 0, y = 0;
-        computeBurnPosition(imgWidth, imgHeight,
-                            maxTextWidth, totalHeight, ascender, x, y);
+        computeBurnPosition(imgWidth, imgHeight, maxTextWidth, totalHeight, ascender, x, y);
 
-        if(_burnDrawBackground) {
-                const int pad = lineHeight / 4;
+        if (_burnDrawBackground) {
+                const int          pad = lineHeight / 4;
                 PaintEngine::Pixel bgPixel = pe.createPixel(_burnBackgroundColor);
-                Rect<int32_t> bgRect(x - pad, y - ascender - pad,
-                                     maxTextWidth + pad * 2,
-                                     totalHeight + pad * 2);
+                Rect<int32_t>      bgRect(x - pad, y - ascender - pad, maxTextWidth + pad * 2, totalHeight + pad * 2);
                 pe.fillRect(bgPixel, bgRect);
         }
 
         // Draw lines top-to-bottom, each centered inside the bounding box.
         int cursorY = y;
-        for(int i = 0; i < n; ++i) {
+        for (int i = 0; i < n; ++i) {
                 const int lineX = x + (maxTextWidth - widths[i]) / 2;
                 _burnFont->drawText(lines[i], lineX, cursorY);
                 cursorY += lineHeight + lineSpacing;
@@ -313,86 +295,99 @@ Error VideoTestPattern::applyBurn(UncompressedVideoPayload &inout,
         return Error::Ok;
 }
 
-void VideoTestPattern::computeBurnPosition(int frameW, int frameH,
-                                           int textW, int totalH, int ascender,
-                                           int &x, int &y) const {
+void VideoTestPattern::computeBurnPosition(int frameW, int frameH, int textW, int totalH, int ascender, int &x,
+                                           int &y) const {
         const int margin = ascender / 2;
-        if(_burnPosition == BurnPosition::TopLeft) {
+        if (_burnPosition == BurnPosition::TopLeft) {
                 x = margin;
                 y = margin + ascender;
-        } else if(_burnPosition == BurnPosition::TopCenter) {
+        } else if (_burnPosition == BurnPosition::TopCenter) {
                 x = (frameW - textW) / 2;
                 y = margin + ascender;
-        } else if(_burnPosition == BurnPosition::TopRight) {
+        } else if (_burnPosition == BurnPosition::TopRight) {
                 x = frameW - textW - margin;
                 y = margin + ascender;
-        } else if(_burnPosition == BurnPosition::BottomLeft) {
+        } else if (_burnPosition == BurnPosition::BottomLeft) {
                 x = margin;
                 y = frameH - margin - totalH + ascender;
-        } else if(_burnPosition == BurnPosition::BottomCenter) {
+        } else if (_burnPosition == BurnPosition::BottomCenter) {
                 x = (frameW - textW) / 2;
                 y = frameH - margin - totalH + ascender;
-        } else if(_burnPosition == BurnPosition::BottomRight) {
+        } else if (_burnPosition == BurnPosition::BottomRight) {
                 x = frameW - textW - margin;
                 y = frameH - margin - totalH + ascender;
-        } else if(_burnPosition == BurnPosition::Center) {
+        } else if (_burnPosition == BurnPosition::Center) {
                 x = (frameW - textW) / 2;
                 y = (frameH - totalH) / 2 + ascender;
         }
 }
 
 void VideoTestPattern::render(UncompressedVideoPayload &img, double motionOffset) const {
-        if(_pattern == VideoPattern::ColorBars)         renderColorBars(img, motionOffset, true);
-        else if(_pattern == VideoPattern::ColorBars75)  renderColorBars(img, motionOffset, false);
-        else if(_pattern == VideoPattern::Ramp)         renderRamp(img, motionOffset);
-        else if(_pattern == VideoPattern::Grid)         renderGrid(img, motionOffset);
-        else if(_pattern == VideoPattern::Crosshatch)   renderCrosshatch(img, motionOffset);
-        else if(_pattern == VideoPattern::Checkerboard) renderCheckerboard(img, motionOffset);
-        else if(_pattern == VideoPattern::SolidColor)   renderSolid(img, _solidColor);
-        else if(_pattern == VideoPattern::White)        renderSolid(img, Color::White);
-        else if(_pattern == VideoPattern::Black)        renderSolid(img, Color::Black);
-        else if(_pattern == VideoPattern::Noise)        renderNoise(img);
-        else if(_pattern == VideoPattern::ZonePlate)    renderZonePlate(img, motionOffset);
-        else if(_pattern == VideoPattern::ColorChecker) renderColorChecker(img);
-        else if(_pattern == VideoPattern::SMPTE219)     renderSMPTE219(img);
-        else if(_pattern == VideoPattern::MultiBurst)   renderMultiBurst(img);
-        else if(_pattern == VideoPattern::LimitRange)   renderLimitRange(img);
-        else if(_pattern == VideoPattern::CircularZone) renderCircularZone(img, motionOffset);
-        else if(_pattern == VideoPattern::Alignment)    renderAlignment(img);
-        else if(_pattern == VideoPattern::SDIPathEQ)    renderSDIPathological(img, true);
-        else if(_pattern == VideoPattern::SDIPathPLL)   renderSDIPathological(img, false);
+        if (_pattern == VideoPattern::ColorBars)
+                renderColorBars(img, motionOffset, true);
+        else if (_pattern == VideoPattern::ColorBars75)
+                renderColorBars(img, motionOffset, false);
+        else if (_pattern == VideoPattern::Ramp)
+                renderRamp(img, motionOffset);
+        else if (_pattern == VideoPattern::Grid)
+                renderGrid(img, motionOffset);
+        else if (_pattern == VideoPattern::Crosshatch)
+                renderCrosshatch(img, motionOffset);
+        else if (_pattern == VideoPattern::Checkerboard)
+                renderCheckerboard(img, motionOffset);
+        else if (_pattern == VideoPattern::SolidColor)
+                renderSolid(img, _solidColor);
+        else if (_pattern == VideoPattern::White)
+                renderSolid(img, Color::White);
+        else if (_pattern == VideoPattern::Black)
+                renderSolid(img, Color::Black);
+        else if (_pattern == VideoPattern::Noise)
+                renderNoise(img);
+        else if (_pattern == VideoPattern::ZonePlate)
+                renderZonePlate(img, motionOffset);
+        else if (_pattern == VideoPattern::ColorChecker)
+                renderColorChecker(img);
+        else if (_pattern == VideoPattern::SMPTE219)
+                renderSMPTE219(img);
+        else if (_pattern == VideoPattern::MultiBurst)
+                renderMultiBurst(img);
+        else if (_pattern == VideoPattern::LimitRange)
+                renderLimitRange(img);
+        else if (_pattern == VideoPattern::CircularZone)
+                renderCircularZone(img, motionOffset);
+        else if (_pattern == VideoPattern::Alignment)
+                renderAlignment(img);
+        else if (_pattern == VideoPattern::SDIPathEQ)
+                renderSDIPathological(img, true);
+        else if (_pattern == VideoPattern::SDIPathPLL)
+                renderSDIPathological(img, false);
         // AvSync renders the "non-marker" frame (black) when called via
         // the bare render() path, since render() doesn't carry a
         // per-frame timecode.  The marker logic only kicks in via
         // createPayload(desc, motion, tc).
-        else if(_pattern == VideoPattern::AvSync)       renderSolid(img, Color::Black);
+        else if (_pattern == VideoPattern::AvSync)
+                renderSolid(img, Color::Black);
 }
 
 void VideoTestPattern::renderColorBars(UncompressedVideoPayload &img, double offset, bool full) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.desc().size().width();
-        int h = (int)img.desc().size().height();
-        int barWidth = w / 8;
-        if(barWidth < 1) barWidth = 1;
+        int         w = (int)img.desc().size().width();
+        int         h = (int)img.desc().size().height();
+        int         barWidth = w / 8;
+        if (barWidth < 1) barWidth = 1;
 
         const float lv = full ? 1.0f : 0.75f;
-        const Color bars[] = {
-                Color::srgb(lv,   lv,   lv),
-                Color::srgb(lv,   lv,   0.0f),
-                Color::srgb(0.0f, lv,   lv),
-                Color::srgb(0.0f, lv,   0.0f),
-                Color::srgb(lv,   0.0f, lv),
-                Color::srgb(lv,   0.0f, 0.0f),
-                Color::srgb(0.0f, 0.0f, lv),
-                Color::Black
-        };
-        int intOffset = (int)std::fmod(offset, (double)w);
-        if(intOffset < 0) intOffset += w;
+        const Color bars[] = {Color::srgb(lv, lv, lv),     Color::srgb(lv, lv, 0.0f),
+                              Color::srgb(0.0f, lv, lv),   Color::srgb(0.0f, lv, 0.0f),
+                              Color::srgb(lv, 0.0f, lv),   Color::srgb(lv, 0.0f, 0.0f),
+                              Color::srgb(0.0f, 0.0f, lv), Color::Black};
+        int         intOffset = (int)std::fmod(offset, (double)w);
+        if (intOffset < 0) intOffset += w;
 
-        for(int i = 0; i < 8; i++) {
+        for (int i = 0; i < 8; i++) {
                 auto pixel = pe.createPixel(bars[i]);
-                int x0 = (i * barWidth + intOffset) % w;
-                if(x0 + barWidth <= w) {
+                int  x0 = (i * barWidth + intOffset) % w;
+                if (x0 + barWidth <= w) {
                         pe.fillRect(pixel, Rect<int32_t>(x0, 0, barWidth, h));
                 } else {
                         int firstPart = w - x0;
@@ -400,75 +395,75 @@ void VideoTestPattern::renderColorBars(UncompressedVideoPayload &img, double off
                         pe.fillRect(pixel, Rect<int32_t>(0, 0, barWidth - firstPart, h));
                 }
         }
-        if(barWidth * 8 < w) {
+        if (barWidth * 8 < w) {
                 auto black = pe.createPixel(Color::Black);
-                int remaining = w - barWidth * 8;
-                int x0 = (barWidth * 8 + intOffset) % w;
+                int  remaining = w - barWidth * 8;
+                int  x0 = (barWidth * 8 + intOffset) % w;
                 pe.fillRect(black, Rect<int32_t>(x0, 0, remaining, h));
         }
 }
 
 void VideoTestPattern::renderRamp(UncompressedVideoPayload &img, double offset) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.desc().size().width();
-        int h = (int)img.desc().size().height();
-        int intOffset = (int)std::fmod(offset, (double)w);
-        if(intOffset < 0) intOffset += w;
+        int         w = (int)img.desc().size().width();
+        int         h = (int)img.desc().size().height();
+        int         intOffset = (int)std::fmod(offset, (double)w);
+        if (intOffset < 0) intOffset += w;
 
-        for(int x = 0; x < w; x++) {
-                int srcX = (x + intOffset) % w;
+        for (int x = 0; x < w; x++) {
+                int   srcX = (x + intOffset) % w;
                 float lum = (float)srcX / (float)(w - 1);
-                auto pixel = pe.createPixel(Color::srgb(lum, lum, lum));
+                auto  pixel = pe.createPixel(Color::srgb(lum, lum, lum));
                 pe.fillRect(pixel, Rect<int32_t>(x, 0, 1, h));
         }
 }
 
 void VideoTestPattern::renderGrid(UncompressedVideoPayload &img, double offset) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.desc().size().width();
-        int h = (int)img.desc().size().height();
+        int         w = (int)img.desc().size().width();
+        int         h = (int)img.desc().size().height();
 
         auto black = pe.createPixel(Color::Black);
         pe.fill(black);
 
         auto white = pe.createPixel(Color::White);
-        int spacing = 128;
-        int intOffset = (int)std::fmod(offset, (double)spacing);
-        if(intOffset < 0) intOffset += spacing;
+        int  spacing = 128;
+        int  intOffset = (int)std::fmod(offset, (double)spacing);
+        if (intOffset < 0) intOffset += spacing;
 
-        for(int x = intOffset; x < w; x += spacing) {
+        for (int x = intOffset; x < w; x += spacing) {
                 pe.fillRect(white, Rect<int32_t>(x, 0, 1, h));
         }
-        for(int y = intOffset; y < h; y += spacing) {
+        for (int y = intOffset; y < h; y += spacing) {
                 pe.fillRect(white, Rect<int32_t>(0, y, w, 1));
         }
 }
 
 void VideoTestPattern::renderCrosshatch(UncompressedVideoPayload &img, double offset) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.desc().size().width();
-        int h = (int)img.desc().size().height();
+        int         w = (int)img.desc().size().width();
+        int         h = (int)img.desc().size().height();
 
         auto black = pe.createPixel(Color::Black);
         pe.fill(black);
 
         auto white = pe.createPixel(Color::White);
-        int spacing = 96;
-        int intOffset = (int)std::fmod(offset, (double)spacing);
-        if(intOffset < 0) intOffset += spacing;
+        int  spacing = 96;
+        int  intOffset = (int)std::fmod(offset, (double)spacing);
+        if (intOffset < 0) intOffset += spacing;
 
-        for(int d = -h + intOffset; d < w + h; d += spacing) {
+        for (int d = -h + intOffset; d < w + h; d += spacing) {
                 pe.drawLine(white, d, 0, d + h, h);
         }
-        for(int d = -h + intOffset; d < w + h; d += spacing) {
+        for (int d = -h + intOffset; d < w + h; d += spacing) {
                 pe.drawLine(white, w - d, 0, w - d - h, h);
         }
 }
 
 void VideoTestPattern::renderCheckerboard(UncompressedVideoPayload &img, double offset) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.desc().size().width();
-        int h = (int)img.desc().size().height();
+        int         w = (int)img.desc().size().width();
+        int         h = (int)img.desc().size().height();
 
         auto black = pe.createPixel(Color::Black);
         auto white = pe.createPixel(Color::White);
@@ -476,14 +471,14 @@ void VideoTestPattern::renderCheckerboard(UncompressedVideoPayload &img, double 
 
         int squareSize = 64;
         int intOffset = (int)std::fmod(offset, (double)(squareSize * 2));
-        if(intOffset < 0) intOffset += squareSize * 2;
+        if (intOffset < 0) intOffset += squareSize * 2;
 
-        for(int y = 0; y < h; y += squareSize) {
-                for(int x = 0; x < w; x += squareSize) {
-                        int adjX = x + intOffset;
-                        int adjY = y + intOffset;
+        for (int y = 0; y < h; y += squareSize) {
+                for (int x = 0; x < w; x += squareSize) {
+                        int  adjX = x + intOffset;
+                        int  adjY = y + intOffset;
                         bool isWhite = ((adjX / squareSize) + (adjY / squareSize)) % 2 == 0;
-                        if(isWhite) {
+                        if (isWhite) {
                                 int rw = (x + squareSize > w) ? w - x : squareSize;
                                 int rh = (y + squareSize > h) ? h - y : squareSize;
                                 pe.fillRect(white, Rect<int32_t>(x, y, rw, rh));
@@ -497,27 +492,27 @@ void VideoTestPattern::renderZonePlate(UncompressedVideoPayload &img, double pha
         int h = (int)img.desc().size().height();
 
         const PixelMemLayout &ml = img.desc().pixelFormat().memLayout();
-        uint8_t *data = img.data()[0].data();
-        size_t stride = ml.lineStride(0, w);
-        int bpp = ml.bytesPerBlock();
-        int components = ml.compCount();
-        double cx = w / 2.0;
-        double cy = h / 2.0;
-        double scale = 0.001;
+        uint8_t              *data = img.data()[0].data();
+        size_t                stride = ml.lineStride(0, w);
+        int                   bpp = ml.bytesPerBlock();
+        int                   components = ml.compCount();
+        double                cx = w / 2.0;
+        double                cy = h / 2.0;
+        double                scale = 0.001;
 
-        for(int y = 0; y < h; y++) {
+        for (int y = 0; y < h; y++) {
                 uint8_t *row = data + y * stride;
-                for(int x = 0; x < w; x++) {
-                        double dx = x - cx;
-                        double dy = y - cy;
-                        double r2 = dx * dx + dy * dy;
-                        double val = (std::sin(r2 * scale + phase * 0.1) + 1.0) * 0.5;
-                        uint8_t lum = (uint8_t)(val * 255.0);
+                for (int x = 0; x < w; x++) {
+                        double   dx = x - cx;
+                        double   dy = y - cy;
+                        double   r2 = dx * dx + dy * dy;
+                        double   val = (std::sin(r2 * scale + phase * 0.1) + 1.0) * 0.5;
+                        uint8_t  lum = (uint8_t)(val * 255.0);
                         uint8_t *p = row + x * bpp;
-                        for(int c = 0; c < components && c < 3; c++) {
+                        for (int c = 0; c < components && c < 3; c++) {
                                 p[c] = lum;
                         }
-                        if(components >= 4) p[3] = 255;
+                        if (components >= 4) p[3] = 255;
                 }
         }
 }
@@ -527,62 +522,62 @@ void VideoTestPattern::renderNoise(UncompressedVideoPayload &img) const {
         int h = (int)img.desc().size().height();
 
         const PixelMemLayout &ml = img.desc().pixelFormat().memLayout();
-        uint8_t *data = img.data()[0].data();
-        size_t stride = ml.lineStride(0, w);
-        int bpp = ml.bytesPerBlock();
-        int components = ml.compCount();
+        uint8_t              *data = img.data()[0].data();
+        size_t                stride = ml.lineStride(0, w);
+        int                   bpp = ml.bytesPerBlock();
+        int                   components = ml.compCount();
 
         Random rng;
-        for(int y = 0; y < h; y++) {
+        for (int y = 0; y < h; y++) {
                 uint8_t *row = data + y * stride;
-                for(int x = 0; x < w; x++) {
+                for (int x = 0; x < w; x++) {
                         uint8_t *p = row + x * bpp;
-                        for(int c = 0; c < components && c < 3; c++) {
+                        for (int c = 0; c < components && c < 3; c++) {
                                 p[c] = (uint8_t)rng.randomInt(0, 255);
                         }
-                        if(components >= 4) p[3] = 255;
+                        if (components >= 4) p[3] = 255;
                 }
         }
 }
 
 void VideoTestPattern::renderSolid(UncompressedVideoPayload &img, const Color &color) const {
         PaintEngine pe = img.createPaintEngine();
-        auto pixel = pe.createPixel(color);
+        auto        pixel = pe.createPixel(color);
         pe.fill(pixel);
 }
 
 void VideoTestPattern::renderColorChecker(UncompressedVideoPayload &img) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.desc().size().width();
-        int h = (int)img.desc().size().height();
+        int         w = (int)img.desc().size().width();
+        int         h = (int)img.desc().size().height();
 
         // X-Rite ColorChecker Classic: 6 columns x 4 rows = 24 patches.
         // sRGB values from the BabelColor "Average" reference data set.
         static const Color patches[24] = {
-                Color::srgb(115/255.0f,  82/255.0f,  68/255.0f),  // Dark Skin
-                Color::srgb(194/255.0f, 150/255.0f, 130/255.0f),  // Light Skin
-                Color::srgb( 98/255.0f, 122/255.0f, 157/255.0f),  // Blue Sky
-                Color::srgb( 87/255.0f, 108/255.0f,  67/255.0f),  // Foliage
-                Color::srgb(133/255.0f, 128/255.0f, 177/255.0f),  // Blue Flower
-                Color::srgb(103/255.0f, 189/255.0f, 170/255.0f),  // Bluish Green
-                Color::srgb(214/255.0f, 126/255.0f,  44/255.0f),  // Orange
-                Color::srgb( 80/255.0f,  91/255.0f, 166/255.0f),  // Purplish Blue
-                Color::srgb(193/255.0f,  90/255.0f,  99/255.0f),  // Moderate Red
-                Color::srgb( 94/255.0f,  60/255.0f, 108/255.0f),  // Purple
-                Color::srgb(157/255.0f, 188/255.0f,  64/255.0f),  // Yellow Green
-                Color::srgb(224/255.0f, 163/255.0f,  46/255.0f),  // Orange Yellow
-                Color::srgb( 56/255.0f,  61/255.0f, 150/255.0f),  // Blue
-                Color::srgb( 70/255.0f, 148/255.0f,  73/255.0f),  // Green
-                Color::srgb(175/255.0f,  54/255.0f,  60/255.0f),  // Red
-                Color::srgb(231/255.0f, 199/255.0f,  31/255.0f),  // Yellow
-                Color::srgb(187/255.0f,  86/255.0f, 149/255.0f),  // Magenta
-                Color::srgb(  8/255.0f, 133/255.0f, 161/255.0f),  // Cyan
-                Color::srgb(243/255.0f, 243/255.0f, 242/255.0f),  // White 9.5
-                Color::srgb(200/255.0f, 200/255.0f, 200/255.0f),  // Neutral 8
-                Color::srgb(160/255.0f, 160/255.0f, 160/255.0f),  // Neutral 6.5
-                Color::srgb(122/255.0f, 122/255.0f, 121/255.0f),  // Neutral 5
-                Color::srgb( 85/255.0f,  85/255.0f,  85/255.0f),  // Neutral 3.5
-                Color::srgb( 52/255.0f,  52/255.0f,  52/255.0f),  // Black 2
+                Color::srgb(115 / 255.0f, 82 / 255.0f, 68 / 255.0f),   // Dark Skin
+                Color::srgb(194 / 255.0f, 150 / 255.0f, 130 / 255.0f), // Light Skin
+                Color::srgb(98 / 255.0f, 122 / 255.0f, 157 / 255.0f),  // Blue Sky
+                Color::srgb(87 / 255.0f, 108 / 255.0f, 67 / 255.0f),   // Foliage
+                Color::srgb(133 / 255.0f, 128 / 255.0f, 177 / 255.0f), // Blue Flower
+                Color::srgb(103 / 255.0f, 189 / 255.0f, 170 / 255.0f), // Bluish Green
+                Color::srgb(214 / 255.0f, 126 / 255.0f, 44 / 255.0f),  // Orange
+                Color::srgb(80 / 255.0f, 91 / 255.0f, 166 / 255.0f),   // Purplish Blue
+                Color::srgb(193 / 255.0f, 90 / 255.0f, 99 / 255.0f),   // Moderate Red
+                Color::srgb(94 / 255.0f, 60 / 255.0f, 108 / 255.0f),   // Purple
+                Color::srgb(157 / 255.0f, 188 / 255.0f, 64 / 255.0f),  // Yellow Green
+                Color::srgb(224 / 255.0f, 163 / 255.0f, 46 / 255.0f),  // Orange Yellow
+                Color::srgb(56 / 255.0f, 61 / 255.0f, 150 / 255.0f),   // Blue
+                Color::srgb(70 / 255.0f, 148 / 255.0f, 73 / 255.0f),   // Green
+                Color::srgb(175 / 255.0f, 54 / 255.0f, 60 / 255.0f),   // Red
+                Color::srgb(231 / 255.0f, 199 / 255.0f, 31 / 255.0f),  // Yellow
+                Color::srgb(187 / 255.0f, 86 / 255.0f, 149 / 255.0f),  // Magenta
+                Color::srgb(8 / 255.0f, 133 / 255.0f, 161 / 255.0f),   // Cyan
+                Color::srgb(243 / 255.0f, 243 / 255.0f, 242 / 255.0f), // White 9.5
+                Color::srgb(200 / 255.0f, 200 / 255.0f, 200 / 255.0f), // Neutral 8
+                Color::srgb(160 / 255.0f, 160 / 255.0f, 160 / 255.0f), // Neutral 6.5
+                Color::srgb(122 / 255.0f, 122 / 255.0f, 121 / 255.0f), // Neutral 5
+                Color::srgb(85 / 255.0f, 85 / 255.0f, 85 / 255.0f),    // Neutral 3.5
+                Color::srgb(52 / 255.0f, 52 / 255.0f, 52 / 255.0f),    // Black 2
         };
 
         auto bg = pe.createPixel(Color::srgb(0.2f, 0.2f, 0.2f));
@@ -590,17 +585,17 @@ void VideoTestPattern::renderColorChecker(UncompressedVideoPayload &img) const {
 
         const int cols = 6;
         const int rows = 4;
-        int gap = w / 80;
-        if(gap < 1) gap = 1;
+        int       gap = w / 80;
+        if (gap < 1) gap = 1;
 
         int patchW = (w - gap * (cols + 1)) / cols;
         int patchH = (h - gap * (rows + 1)) / rows;
 
-        for(int row = 0; row < rows; row++) {
-                for(int col = 0; col < cols; col++) {
-                        int idx = row * cols + col;
-                        int x = gap + col * (patchW + gap);
-                        int y = gap + row * (patchH + gap);
+        for (int row = 0; row < rows; row++) {
+                for (int col = 0; col < cols; col++) {
+                        int  idx = row * cols + col;
+                        int  x = gap + col * (patchW + gap);
+                        int  y = gap + row * (patchH + gap);
                         auto pixel = pe.createPixel(patches[idx]);
                         pe.fillRect(pixel, Rect<int32_t>(x, y, patchW, patchH));
                 }
@@ -609,8 +604,8 @@ void VideoTestPattern::renderColorChecker(UncompressedVideoPayload &img) const {
 
 void VideoTestPattern::renderSMPTE219(UncompressedVideoPayload &img) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.desc().size().width();
-        int h = (int)img.desc().size().height();
+        int         w = (int)img.desc().size().width();
+        int         h = (int)img.desc().size().height();
 
         const int topH = h * 2 / 3;
         const int midH = h / 12;
@@ -620,36 +615,27 @@ void VideoTestPattern::renderSMPTE219(UncompressedVideoPayload &img) const {
 
         const float lv = 0.75f;
         const Color topBars[7] = {
-                Color::srgb(lv,   lv,   lv),
-                Color::srgb(lv,   lv,   0.0f),
-                Color::srgb(0.0f, lv,   lv),
-                Color::srgb(0.0f, lv,   0.0f),
-                Color::srgb(lv,   0.0f, lv),
-                Color::srgb(lv,   0.0f, 0.0f),
+                Color::srgb(lv, lv, lv),     Color::srgb(lv, lv, 0.0f), Color::srgb(0.0f, lv, lv),
+                Color::srgb(0.0f, lv, 0.0f), Color::srgb(lv, 0.0f, lv), Color::srgb(lv, 0.0f, 0.0f),
                 Color::srgb(0.0f, 0.0f, lv),
         };
 
-        for(int i = 0; i < 7; i++) {
+        for (int i = 0; i < 7; i++) {
                 auto pixel = pe.createPixel(topBars[i]);
-                int x = i * barW;
-                int bw = (i == 6) ? (w - x) : barW;
+                int  x = i * barW;
+                int  bw = (i == 6) ? (w - x) : barW;
                 pe.fillRect(pixel, Rect<int32_t>(x, 0, bw, topH));
         }
 
         const Color midBars[7] = {
-                Color::srgb(0.0f, 0.0f, lv),
-                Color::Black,
-                Color::srgb(lv,   0.0f, lv),
-                Color::Black,
-                Color::srgb(0.0f, lv,   lv),
-                Color::Black,
-                Color::srgb(lv,   lv,   lv),
+                Color::srgb(0.0f, 0.0f, lv), Color::Black, Color::srgb(lv, 0.0f, lv), Color::Black,
+                Color::srgb(0.0f, lv, lv),   Color::Black, Color::srgb(lv, lv, lv),
         };
 
-        for(int i = 0; i < 7; i++) {
+        for (int i = 0; i < 7; i++) {
                 auto pixel = pe.createPixel(midBars[i]);
-                int x = i * barW;
-                int bw = (i == 6) ? (w - x) : barW;
+                int  x = i * barW;
+                int  bw = (i == 6) ? (w - x) : barW;
                 pe.fillRect(pixel, Rect<int32_t>(x, topH, bw, midH));
         }
 
@@ -668,17 +654,16 @@ void VideoTestPattern::renderSMPTE219(UncompressedVideoPayload &img) const {
         // PLUGE in bar 5 area: sub-black (same as black in sRGB) |
         // reference black | above-black (+4%).  Only the above-black
         // strip needs drawing over the black fill.
-        int plugeW = barW / 3;
-        int plugeX = barW * 5;
+        int  plugeW = barW / 3;
+        int  plugeX = barW * 5;
         auto aboveBlack = pe.createPixel(Color::srgb(0.04f, 0.04f, 0.04f));
-        pe.fillRect(aboveBlack, Rect<int32_t>(plugeX + plugeW * 2, botY,
-                                               plugeW, botH));
+        pe.fillRect(aboveBlack, Rect<int32_t>(plugeX + plugeW * 2, botY, plugeW, botH));
 }
 
 void VideoTestPattern::renderMultiBurst(UncompressedVideoPayload &img) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.desc().size().width();
-        int h = (int)img.desc().size().height();
+        int         w = (int)img.desc().size().width();
+        int         h = (int)img.desc().size().height();
 
         auto gray = pe.createPixel(Color::srgb(0.5f, 0.5f, 0.5f));
         pe.fill(gray);
@@ -687,32 +672,31 @@ void VideoTestPattern::renderMultiBurst(UncompressedVideoPayload &img) const {
         auto white = pe.createPixel(Color::White);
 
         int refW = w / 12;
-        if(refW < 2) refW = 2;
+        if (refW < 2) refW = 2;
         int margin = w / 60;
-        if(margin < 1) margin = 1;
+        if (margin < 1) margin = 1;
         pe.fillRect(white, Rect<int32_t>(margin, 0, refW, h));
 
         int packetStart = refW + margin * 2;
         int packetRegion = w - packetStart - margin;
         int gap = w / 120;
-        if(gap < 1) gap = 1;
+        if (gap < 1) gap = 1;
         const int packetCount = 6;
-        int packetW = (packetRegion - gap * (packetCount - 1)) / packetCount;
-        if(packetW < 2) packetW = 2;
+        int       packetW = (packetRegion - gap * (packetCount - 1)) / packetCount;
+        if (packetW < 2) packetW = 2;
 
         int baseBar = packetW / 4;
-        if(baseBar < 1) baseBar = 1;
+        if (baseBar < 1) baseBar = 1;
 
-        for(int s = 0; s < packetCount; s++) {
+        for (int s = 0; s < packetCount; s++) {
                 int x0 = packetStart + s * (packetW + gap);
                 int barW = baseBar >> s;
-                if(barW < 1) barW = 1;
-                for(int x = 0; x < packetW; ) {
+                if (barW < 1) barW = 1;
+                for (int x = 0; x < packetW;) {
                         bool isWhiteBand = (x / barW) % 2 == 0;
-                        int runEnd = ((x / barW) + 1) * barW;
-                        if(runEnd > packetW) runEnd = packetW;
-                        pe.fillRect(isWhiteBand ? white : black,
-                                    Rect<int32_t>(x0 + x, 0, runEnd - x, h));
+                        int  runEnd = ((x / barW) + 1) * barW;
+                        if (runEnd > packetW) runEnd = packetW;
+                        pe.fillRect(isWhiteBand ? white : black, Rect<int32_t>(x0 + x, 0, runEnd - x, h));
                         x = runEnd;
                 }
         }
@@ -720,33 +704,33 @@ void VideoTestPattern::renderMultiBurst(UncompressedVideoPayload &img) const {
 
 void VideoTestPattern::renderLimitRange(UncompressedVideoPayload &img) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.desc().size().width();
-        int h = (int)img.desc().size().height();
+        int         w = (int)img.desc().size().width();
+        int         h = (int)img.desc().size().height();
 
         struct Level {
-                float   lum;
-                Color   marker;
+                        float lum;
+                        Color marker;
         };
         static const Level levels[] = {
-                { 0.0f,          Color::srgb(0.25f, 0.0f,  0.0f)  },  // Black
-                { 16.0f / 255,   Color::srgb(0.0f,  0.0f,  0.25f) },  // Limited-range black
-                { 0.25f,         Color::Black                      },  // 25%
-                { 0.50f,         Color::Black                      },  // 50%
-                { 0.75f,         Color::Black                      },  // 75%
-                { 235.0f / 255,  Color::srgb(0.0f,  0.25f, 0.0f)  },  // Limited-range white
-                { 1.0f,          Color::srgb(0.25f, 0.0f,  0.0f)  },  // White
+                {0.0f, Color::srgb(0.25f, 0.0f, 0.0f)},         // Black
+                {16.0f / 255, Color::srgb(0.0f, 0.0f, 0.25f)},  // Limited-range black
+                {0.25f, Color::Black},                          // 25%
+                {0.50f, Color::Black},                          // 50%
+                {0.75f, Color::Black},                          // 75%
+                {235.0f / 255, Color::srgb(0.0f, 0.25f, 0.0f)}, // Limited-range white
+                {1.0f, Color::srgb(0.25f, 0.0f, 0.0f)},         // White
         };
         static constexpr int count = sizeof(levels) / sizeof(levels[0]);
 
         int markerW = w / 30;
-        if(markerW < 2) markerW = 2;
+        if (markerW < 2) markerW = 2;
 
-        for(int i = 0; i < count; i++) {
-                int y0 = h * i / count;
-                int y1 = h * (i + 1) / count;
-                int barH = y1 - y0;
+        for (int i = 0; i < count; i++) {
+                int   y0 = h * i / count;
+                int   y1 = h * (i + 1) / count;
+                int   barH = y1 - y0;
                 float lum = levels[i].lum;
-                auto pixel = pe.createPixel(Color::srgb(lum, lum, lum));
+                auto  pixel = pe.createPixel(Color::srgb(lum, lum, lum));
                 pe.fillRect(pixel, Rect<int32_t>(0, y0, w, barH));
                 auto marker = pe.createPixel(levels[i].marker);
                 pe.fillRect(marker, Rect<int32_t>(0, y0, markerW, barH));
@@ -758,37 +742,37 @@ void VideoTestPattern::renderCircularZone(UncompressedVideoPayload &img, double 
         int h = (int)img.desc().size().height();
 
         const PixelMemLayout &ml = img.desc().pixelFormat().memLayout();
-        uint8_t *data = img.data()[0].data();
-        size_t stride = ml.lineStride(0, w);
-        int bpp = ml.bytesPerBlock();
-        int components = ml.compCount();
-        double cx = w / 2.0;
-        double cy = h / 2.0;
-        double freq = 2.0 * M_PI / 8.0;
+        uint8_t              *data = img.data()[0].data();
+        size_t                stride = ml.lineStride(0, w);
+        int                   bpp = ml.bytesPerBlock();
+        int                   components = ml.compCount();
+        double                cx = w / 2.0;
+        double                cy = h / 2.0;
+        double                freq = 2.0 * M_PI / 8.0;
 
-        for(int y = 0; y < h; y++) {
+        for (int y = 0; y < h; y++) {
                 uint8_t *row = data + y * stride;
-                for(int x = 0; x < w; x++) {
-                        double dx = x - cx;
-                        double dy = y - cy;
-                        double r = std::sqrt(dx * dx + dy * dy);
-                        double val = (std::sin(r * freq + phase * 0.1) + 1.0) * 0.5;
-                        uint8_t lum = (uint8_t)(val * 255.0);
+                for (int x = 0; x < w; x++) {
+                        double   dx = x - cx;
+                        double   dy = y - cy;
+                        double   r = std::sqrt(dx * dx + dy * dy);
+                        double   val = (std::sin(r * freq + phase * 0.1) + 1.0) * 0.5;
+                        uint8_t  lum = (uint8_t)(val * 255.0);
                         uint8_t *p = row + x * bpp;
-                        for(int c = 0; c < components && c < 3; c++) {
+                        for (int c = 0; c < components && c < 3; c++) {
                                 p[c] = lum;
                         }
-                        if(components >= 4) p[3] = 255;
+                        if (components >= 4) p[3] = 255;
                 }
         }
 }
 
 void VideoTestPattern::renderAlignment(UncompressedVideoPayload &img) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.desc().size().width();
-        int h = (int)img.desc().size().height();
-        int cx = w / 2;
-        int cy = h / 2;
+        int         w = (int)img.desc().size().width();
+        int         h = (int)img.desc().size().height();
+        int         cx = w / 2;
+        int         cy = h / 2;
 
         auto black = pe.createPixel(Color::Black);
         pe.fill(black);
@@ -812,7 +796,7 @@ void VideoTestPattern::renderAlignment(UncompressedVideoPayload &img) const {
 
         // Corner brackets
         int bLen = w / 20;
-        if(bLen < 4) bLen = 4;
+        if (bLen < 4) bLen = 4;
         pe.drawLine(white, 0, 0, bLen, 0);
         pe.drawLine(white, 0, 0, 0, bLen);
         pe.drawLine(white, w - 1, 0, w - 1 - bLen, 0);
@@ -824,8 +808,8 @@ void VideoTestPattern::renderAlignment(UncompressedVideoPayload &img) const {
 
         // Tick marks along edges every 10%
         int tickLen = h / 40;
-        if(tickLen < 2) tickLen = 2;
-        for(int i = 1; i < 10; i++) {
+        if (tickLen < 2) tickLen = 2;
+        for (int i = 1; i < 10; i++) {
                 int tx = w * i / 10;
                 int ty = h * i / 10;
                 pe.drawLine(white, tx, 0, tx, tickLen);
@@ -836,9 +820,9 @@ void VideoTestPattern::renderAlignment(UncompressedVideoPayload &img) const {
 
         // Rule-of-thirds crosshairs
         int thirdLen = w / 60;
-        if(thirdLen < 2) thirdLen = 2;
-        for(int gy = 1; gy <= 2; gy++) {
-                for(int gx = 1; gx <= 2; gx++) {
+        if (thirdLen < 2) thirdLen = 2;
+        for (int gy = 1; gy <= 2; gy++) {
+                for (int gx = 1; gx <= 2; gx++) {
                         int px = w * gx / 3;
                         int py = h * gy / 3;
                         pe.drawLine(gray, px - thirdLen, py, px + thirdLen, py);
@@ -858,235 +842,244 @@ void VideoTestPattern::renderSDIPathological(UncompressedVideoPayload &img, bool
         const uint16_t w0 = isEQ ? uint16_t(0x300) : uint16_t(0x200);
         const uint16_t w1 = isEQ ? uint16_t(0x198) : uint16_t(0x110);
 
-        const int iw = static_cast<int>(img.desc().size().width());
-        const int ih = static_cast<int>(img.desc().size().height());
+        const int             iw = static_cast<int>(img.desc().size().width());
+        const int             ih = static_cast<int>(img.desc().size().height());
         const PixelMemLayout &ml = img.desc().pixelFormat().memLayout();
-        const auto pfId = ml.id();
+        const auto            pfId = ml.id();
 
         // ---- Interleaved UYVY 8-bit ----
-        if(pfId == PixelMemLayout::I_422_UYVY_3x8) {
-                uint8_t v0 = static_cast<uint8_t>(w0 >> 2);
-                uint8_t v1 = static_cast<uint8_t>(w1 >> 2);
-                uint8_t blockE[4] = { v0, v1, v0, v1 };
-                uint8_t blockO[4] = { v1, v0, v1, v0 };
+        if (pfId == PixelMemLayout::I_422_UYVY_3x8) {
+                uint8_t  v0 = static_cast<uint8_t>(w0 >> 2);
+                uint8_t  v1 = static_cast<uint8_t>(w1 >> 2);
+                uint8_t  blockE[4] = {v0, v1, v0, v1};
+                uint8_t  blockO[4] = {v1, v0, v1, v0};
                 uint8_t *buf = img.data()[0].data();
-                size_t stride = ml.lineStride(0, iw);
-                size_t lineBytes = static_cast<size_t>(iw / 2) * 4;
-                for(int y = 0; y < ih; y++)
-                        sdiPathRepeatBlock(buf + y * stride, lineBytes,
-                                           (y & 1) ? blockO : blockE, 4);
+                size_t   stride = ml.lineStride(0, iw);
+                size_t   lineBytes = static_cast<size_t>(iw / 2) * 4;
+                for (int y = 0; y < ih; y++)
+                        sdiPathRepeatBlock(buf + y * stride, lineBytes, (y & 1) ? blockO : blockE, 4);
                 return;
         }
 
         // ---- Interleaved UYVY 10/12/16-bit (LE and BE) ----
-        if(pfId == PixelMemLayout::I_422_UYVY_3x10_LE || pfId == PixelMemLayout::I_422_UYVY_3x10_BE ||
-           pfId == PixelMemLayout::I_422_UYVY_3x12_LE || pfId == PixelMemLayout::I_422_UYVY_3x12_BE ||
-           pfId == PixelMemLayout::I_422_UYVY_3x16_LE || pfId == PixelMemLayout::I_422_UYVY_3x16_BE) {
-                int shift = 0;
+        if (pfId == PixelMemLayout::I_422_UYVY_3x10_LE || pfId == PixelMemLayout::I_422_UYVY_3x10_BE ||
+            pfId == PixelMemLayout::I_422_UYVY_3x12_LE || pfId == PixelMemLayout::I_422_UYVY_3x12_BE ||
+            pfId == PixelMemLayout::I_422_UYVY_3x16_LE || pfId == PixelMemLayout::I_422_UYVY_3x16_BE) {
+                int  shift = 0;
                 bool be = false;
-                if(pfId == PixelMemLayout::I_422_UYVY_3x10_BE)      be = true;
-                else if(pfId == PixelMemLayout::I_422_UYVY_3x12_LE) shift = 2;
-                else if(pfId == PixelMemLayout::I_422_UYVY_3x12_BE) { shift = 2; be = true; }
-                else if(pfId == PixelMemLayout::I_422_UYVY_3x16_LE) shift = 6;
-                else if(pfId == PixelMemLayout::I_422_UYVY_3x16_BE) { shift = 6; be = true; }
+                if (pfId == PixelMemLayout::I_422_UYVY_3x10_BE)
+                        be = true;
+                else if (pfId == PixelMemLayout::I_422_UYVY_3x12_LE)
+                        shift = 2;
+                else if (pfId == PixelMemLayout::I_422_UYVY_3x12_BE) {
+                        shift = 2;
+                        be = true;
+                } else if (pfId == PixelMemLayout::I_422_UYVY_3x16_LE)
+                        shift = 6;
+                else if (pfId == PixelMemLayout::I_422_UYVY_3x16_BE) {
+                        shift = 6;
+                        be = true;
+                }
                 uint16_t v0 = static_cast<uint16_t>(w0 << shift);
                 uint16_t v1 = static_cast<uint16_t>(w1 << shift);
-                uint8_t blockE[8], blockO[8];
-                sdiPathStore16(blockE + 0, v0, be); sdiPathStore16(blockE + 2, v1, be);
-                sdiPathStore16(blockE + 4, v0, be); sdiPathStore16(blockE + 6, v1, be);
-                sdiPathStore16(blockO + 0, v1, be); sdiPathStore16(blockO + 2, v0, be);
-                sdiPathStore16(blockO + 4, v1, be); sdiPathStore16(blockO + 6, v0, be);
+                uint8_t  blockE[8], blockO[8];
+                sdiPathStore16(blockE + 0, v0, be);
+                sdiPathStore16(blockE + 2, v1, be);
+                sdiPathStore16(blockE + 4, v0, be);
+                sdiPathStore16(blockE + 6, v1, be);
+                sdiPathStore16(blockO + 0, v1, be);
+                sdiPathStore16(blockO + 2, v0, be);
+                sdiPathStore16(blockO + 4, v1, be);
+                sdiPathStore16(blockO + 6, v0, be);
                 uint8_t *buf = img.data()[0].data();
-                size_t stride = ml.lineStride(0, iw);
-                size_t lineBytes = static_cast<size_t>(iw / 2) * 8;
-                for(int y = 0; y < ih; y++)
-                        sdiPathRepeatBlock(buf + y * stride, lineBytes,
-                                           (y & 1) ? blockO : blockE, 8);
+                size_t   stride = ml.lineStride(0, iw);
+                size_t   lineBytes = static_cast<size_t>(iw / 2) * 8;
+                for (int y = 0; y < ih; y++)
+                        sdiPathRepeatBlock(buf + y * stride, lineBytes, (y & 1) ? blockO : blockE, 8);
                 return;
         }
 
         // ---- Interleaved YUYV 8-bit ----
-        if(pfId == PixelMemLayout::I_422_3x8) {
-                uint8_t v0 = static_cast<uint8_t>(w0 >> 2);
-                uint8_t v1 = static_cast<uint8_t>(w1 >> 2);
-                uint8_t blockE[4] = { v1, v0, v1, v0 };
-                uint8_t blockO[4] = { v0, v1, v0, v1 };
+        if (pfId == PixelMemLayout::I_422_3x8) {
+                uint8_t  v0 = static_cast<uint8_t>(w0 >> 2);
+                uint8_t  v1 = static_cast<uint8_t>(w1 >> 2);
+                uint8_t  blockE[4] = {v1, v0, v1, v0};
+                uint8_t  blockO[4] = {v0, v1, v0, v1};
                 uint8_t *buf = img.data()[0].data();
-                size_t stride = ml.lineStride(0, iw);
-                size_t lineBytes = static_cast<size_t>(iw / 2) * 4;
-                for(int y = 0; y < ih; y++)
-                        sdiPathRepeatBlock(buf + y * stride, lineBytes,
-                                           (y & 1) ? blockO : blockE, 4);
+                size_t   stride = ml.lineStride(0, iw);
+                size_t   lineBytes = static_cast<size_t>(iw / 2) * 4;
+                for (int y = 0; y < ih; y++)
+                        sdiPathRepeatBlock(buf + y * stride, lineBytes, (y & 1) ? blockO : blockE, 4);
                 return;
         }
 
         // ---- Interleaved YUYV 10-bit (LE) ----
-        if(pfId == PixelMemLayout::I_422_3x10) {
+        if (pfId == PixelMemLayout::I_422_3x10) {
                 uint8_t blockE[8], blockO[8];
-                sdiPathStore16(blockE + 0, w1, false); sdiPathStore16(blockE + 2, w0, false);
-                sdiPathStore16(blockE + 4, w1, false); sdiPathStore16(blockE + 6, w0, false);
-                sdiPathStore16(blockO + 0, w0, false); sdiPathStore16(blockO + 2, w1, false);
-                sdiPathStore16(blockO + 4, w0, false); sdiPathStore16(blockO + 6, w1, false);
+                sdiPathStore16(blockE + 0, w1, false);
+                sdiPathStore16(blockE + 2, w0, false);
+                sdiPathStore16(blockE + 4, w1, false);
+                sdiPathStore16(blockE + 6, w0, false);
+                sdiPathStore16(blockO + 0, w0, false);
+                sdiPathStore16(blockO + 2, w1, false);
+                sdiPathStore16(blockO + 4, w0, false);
+                sdiPathStore16(blockO + 6, w1, false);
                 uint8_t *buf = img.data()[0].data();
-                size_t stride = ml.lineStride(0, iw);
-                size_t lineBytes = static_cast<size_t>(iw / 2) * 8;
-                for(int y = 0; y < ih; y++)
-                        sdiPathRepeatBlock(buf + y * stride, lineBytes,
-                                           (y & 1) ? blockO : blockE, 8);
+                size_t   stride = ml.lineStride(0, iw);
+                size_t   lineBytes = static_cast<size_t>(iw / 2) * 8;
+                for (int y = 0; y < ih; y++)
+                        sdiPathRepeatBlock(buf + y * stride, lineBytes, (y & 1) ? blockO : blockE, 8);
                 return;
         }
 
         // ---- v210 packed ----
-        if(pfId == PixelMemLayout::I_422_v210) {
+        if (pfId == PixelMemLayout::I_422_v210) {
                 // v210 word layout (each 32-bit LE word holds 3 x 10-bit values):
                 //   Word 0: Cb0[9:0]  Y0[19:10] Cr0[29:20]
                 //   Word 1: Y1[9:0]   Cb1[19:10] Y2[29:20]
                 // Pattern repeats every 2 words (8 bytes) because all Y,
                 // Cb, Cr values are uniform within each line.
-                uint32_t wordA = (w0 & 0x3FFu)
-                               | ((w1 & 0x3FFu) << 10)
-                               | ((w0 & 0x3FFu) << 20);
-                uint32_t wordB = (w1 & 0x3FFu)
-                               | ((w0 & 0x3FFu) << 10)
-                               | ((w1 & 0x3FFu) << 20);
-                uint32_t blockE[2] = { wordA, wordB };
-                uint32_t blockO[2] = { wordB, wordA };
+                uint32_t wordA = (w0 & 0x3FFu) | ((w1 & 0x3FFu) << 10) | ((w0 & 0x3FFu) << 20);
+                uint32_t wordB = (w1 & 0x3FFu) | ((w0 & 0x3FFu) << 10) | ((w1 & 0x3FFu) << 20);
+                uint32_t blockE[2] = {wordA, wordB};
+                uint32_t blockO[2] = {wordB, wordA};
                 uint8_t *buf = img.data()[0].data();
-                size_t stride = ml.lineStride(0, iw);
-                for(int y = 0; y < ih; y++)
-                        sdiPathRepeatBlock(buf + y * stride, stride,
-                                           (y & 1) ? blockO : blockE, 8);
+                size_t   stride = ml.lineStride(0, iw);
+                for (int y = 0; y < ih; y++) sdiPathRepeatBlock(buf + y * stride, stride, (y & 1) ? blockO : blockE, 8);
                 return;
         }
 
         // ---- Planar 422 8-bit ----
-        if(pfId == PixelMemLayout::P_422_3x8) {
+        if (pfId == PixelMemLayout::P_422_3x8) {
                 uint8_t v0 = static_cast<uint8_t>(w0 >> 2);
                 uint8_t v1 = static_cast<uint8_t>(w1 >> 2);
-                int chromaW = iw / 2;
-                for(int p = 0; p < 3; p++) {
+                int     chromaW = iw / 2;
+                for (int p = 0; p < 3; p++) {
                         uint8_t *buf = img.data()[p].data();
-                        size_t stride = ml.lineStride(p, iw);
-                        int pw = (p == 0) ? iw : chromaW;
-                        uint8_t evenVal = (p == 0) ? v1 : v0;
-                        uint8_t oddVal  = (p == 0) ? v0 : v1;
-                        for(int y = 0; y < ih; y++)
-                                std::memset(buf + y * stride,
-                                            (y & 1) ? oddVal : evenVal, pw);
+                        size_t   stride = ml.lineStride(p, iw);
+                        int      pw = (p == 0) ? iw : chromaW;
+                        uint8_t  evenVal = (p == 0) ? v1 : v0;
+                        uint8_t  oddVal = (p == 0) ? v0 : v1;
+                        for (int y = 0; y < ih; y++) std::memset(buf + y * stride, (y & 1) ? oddVal : evenVal, pw);
                 }
                 return;
         }
 
         // ---- Planar 422 10/12/16-bit (LE and BE) ----
-        if(pfId == PixelMemLayout::P_422_3x10_LE || pfId == PixelMemLayout::P_422_3x10_BE ||
-           pfId == PixelMemLayout::P_422_3x12_LE || pfId == PixelMemLayout::P_422_3x12_BE ||
-           pfId == PixelMemLayout::P_422_3x16_LE || pfId == PixelMemLayout::P_422_3x16_BE) {
-                int shift = 0;
+        if (pfId == PixelMemLayout::P_422_3x10_LE || pfId == PixelMemLayout::P_422_3x10_BE ||
+            pfId == PixelMemLayout::P_422_3x12_LE || pfId == PixelMemLayout::P_422_3x12_BE ||
+            pfId == PixelMemLayout::P_422_3x16_LE || pfId == PixelMemLayout::P_422_3x16_BE) {
+                int  shift = 0;
                 bool be = false;
-                if(pfId == PixelMemLayout::P_422_3x10_BE)      be = true;
-                else if(pfId == PixelMemLayout::P_422_3x12_LE) shift = 2;
-                else if(pfId == PixelMemLayout::P_422_3x12_BE) { shift = 2; be = true; }
-                else if(pfId == PixelMemLayout::P_422_3x16_LE) shift = 6;
-                else if(pfId == PixelMemLayout::P_422_3x16_BE) { shift = 6; be = true; }
+                if (pfId == PixelMemLayout::P_422_3x10_BE)
+                        be = true;
+                else if (pfId == PixelMemLayout::P_422_3x12_LE)
+                        shift = 2;
+                else if (pfId == PixelMemLayout::P_422_3x12_BE) {
+                        shift = 2;
+                        be = true;
+                } else if (pfId == PixelMemLayout::P_422_3x16_LE)
+                        shift = 6;
+                else if (pfId == PixelMemLayout::P_422_3x16_BE) {
+                        shift = 6;
+                        be = true;
+                }
                 uint16_t v0 = static_cast<uint16_t>(w0 << shift);
                 uint16_t v1 = static_cast<uint16_t>(w1 << shift);
-                uint8_t pat0[2], pat1[2];
+                uint8_t  pat0[2], pat1[2];
                 sdiPathStore16(pat0, v0, be);
                 sdiPathStore16(pat1, v1, be);
                 int chromaW = iw / 2;
-                for(int p = 0; p < 3; p++) {
-                        uint8_t *buf = img.data()[p].data();
-                        size_t stride = ml.lineStride(p, iw);
-                        int pw = (p == 0) ? iw : chromaW;
+                for (int p = 0; p < 3; p++) {
+                        uint8_t       *buf = img.data()[p].data();
+                        size_t         stride = ml.lineStride(p, iw);
+                        int            pw = (p == 0) ? iw : chromaW;
                         const uint8_t *evenPat = (p == 0) ? pat1 : pat0;
-                        const uint8_t *oddPat  = (p == 0) ? pat0 : pat1;
-                        for(int y = 0; y < ih; y++)
-                                sdiPathRepeatBlock(buf + y * stride,
-                                                   static_cast<size_t>(pw) * 2,
+                        const uint8_t *oddPat = (p == 0) ? pat0 : pat1;
+                        for (int y = 0; y < ih; y++)
+                                sdiPathRepeatBlock(buf + y * stride, static_cast<size_t>(pw) * 2,
                                                    (y & 1) ? oddPat : evenPat, 2);
                 }
                 return;
         }
 
         // ---- Semi-planar 422 8-bit ----
-        if(pfId == PixelMemLayout::SP_422_8) {
+        if (pfId == PixelMemLayout::SP_422_8) {
                 uint8_t v0 = static_cast<uint8_t>(w0 >> 2);
                 uint8_t v1 = static_cast<uint8_t>(w1 >> 2);
-                int chromaW = iw / 2;
+                int     chromaW = iw / 2;
                 {
                         uint8_t *buf = img.data()[0].data();
-                        size_t stride = ml.lineStride(0, iw);
-                        for(int y = 0; y < ih; y++)
-                                std::memset(buf + y * stride,
-                                            (y & 1) ? v0 : v1, iw);
+                        size_t   stride = ml.lineStride(0, iw);
+                        for (int y = 0; y < ih; y++) std::memset(buf + y * stride, (y & 1) ? v0 : v1, iw);
                 }
                 {
                         uint8_t *buf = img.data()[1].data();
-                        size_t stride = ml.lineStride(1, iw);
-                        uint8_t blockE[2] = { v0, v0 };
-                        uint8_t blockO[2] = { v1, v1 };
-                        for(int y = 0; y < ih; y++)
-                                sdiPathRepeatBlock(buf + y * stride,
-                                                   static_cast<size_t>(chromaW) * 2,
+                        size_t   stride = ml.lineStride(1, iw);
+                        uint8_t  blockE[2] = {v0, v0};
+                        uint8_t  blockO[2] = {v1, v1};
+                        for (int y = 0; y < ih; y++)
+                                sdiPathRepeatBlock(buf + y * stride, static_cast<size_t>(chromaW) * 2,
                                                    (y & 1) ? blockO : blockE, 2);
                 }
                 return;
         }
 
         // ---- Semi-planar 422 10/12-bit (LE and BE) ----
-        if(pfId == PixelMemLayout::SP_422_10_LE || pfId == PixelMemLayout::SP_422_10_BE ||
-           pfId == PixelMemLayout::SP_422_12_LE || pfId == PixelMemLayout::SP_422_12_BE) {
-                int shift = 0;
+        if (pfId == PixelMemLayout::SP_422_10_LE || pfId == PixelMemLayout::SP_422_10_BE ||
+            pfId == PixelMemLayout::SP_422_12_LE || pfId == PixelMemLayout::SP_422_12_BE) {
+                int  shift = 0;
                 bool be = false;
-                if(pfId == PixelMemLayout::SP_422_10_BE)      be = true;
-                else if(pfId == PixelMemLayout::SP_422_12_LE) shift = 2;
-                else if(pfId == PixelMemLayout::SP_422_12_BE) { shift = 2; be = true; }
+                if (pfId == PixelMemLayout::SP_422_10_BE)
+                        be = true;
+                else if (pfId == PixelMemLayout::SP_422_12_LE)
+                        shift = 2;
+                else if (pfId == PixelMemLayout::SP_422_12_BE) {
+                        shift = 2;
+                        be = true;
+                }
                 uint16_t v0 = static_cast<uint16_t>(w0 << shift);
                 uint16_t v1 = static_cast<uint16_t>(w1 << shift);
-                int chromaW = iw / 2;
+                int      chromaW = iw / 2;
                 {
                         uint8_t *buf = img.data()[0].data();
-                        size_t stride = ml.lineStride(0, iw);
-                        uint8_t pat0[2], pat1[2];
+                        size_t   stride = ml.lineStride(0, iw);
+                        uint8_t  pat0[2], pat1[2];
                         sdiPathStore16(pat0, v0, be);
                         sdiPathStore16(pat1, v1, be);
-                        for(int y = 0; y < ih; y++)
-                                sdiPathRepeatBlock(buf + y * stride,
-                                                   static_cast<size_t>(iw) * 2,
-                                                   (y & 1) ? pat0 : pat1, 2);
+                        for (int y = 0; y < ih; y++)
+                                sdiPathRepeatBlock(buf + y * stride, static_cast<size_t>(iw) * 2, (y & 1) ? pat0 : pat1,
+                                                   2);
                 }
                 {
                         uint8_t *buf = img.data()[1].data();
-                        size_t stride = ml.lineStride(1, iw);
-                        uint8_t blockE[4], blockO[4];
+                        size_t   stride = ml.lineStride(1, iw);
+                        uint8_t  blockE[4], blockO[4];
                         sdiPathStore16(blockE + 0, v0, be);
                         sdiPathStore16(blockE + 2, v0, be);
                         sdiPathStore16(blockO + 0, v1, be);
                         sdiPathStore16(blockO + 2, v1, be);
-                        for(int y = 0; y < ih; y++)
-                                sdiPathRepeatBlock(buf + y * stride,
-                                                   static_cast<size_t>(chromaW) * 4,
+                        for (int y = 0; y < ih; y++)
+                                sdiPathRepeatBlock(buf + y * stride, static_cast<size_t>(chromaW) * 4,
                                                    (y & 1) ? blockO : blockE, 4);
                 }
                 return;
         }
 
         // ---- Fallback: approximate visual via PaintEngine ----
-        if(!img.desc().pixelFormat().hasPaintEngine()) return;
+        if (!img.desc().pixelFormat().hasPaintEngine()) return;
         PaintEngine pe = img.createPaintEngine();
-        Color evenColor, oddColor;
-        if(isEQ) {
+        Color       evenColor, oddColor;
+        if (isEQ) {
                 evenColor = Color::srgb(1.0f, 0.02f, 1.0f);
-                oddColor  = Color::srgb(0.44f, 0.96f, 0.37f);
+                oddColor = Color::srgb(0.44f, 0.96f, 0.37f);
         } else {
                 evenColor = Color::srgb(0.24f, 0.24f, 0.24f);
-                oddColor  = Color::srgb(0.0f, 0.86f, 0.0f);
+                oddColor = Color::srgb(0.0f, 0.86f, 0.0f);
         }
         auto evenPixel = pe.createPixel(evenColor);
-        auto oddPixel  = pe.createPixel(oddColor);
-        for(int y = 0; y < ih; y++)
-                pe.fillRect((y & 1) ? oddPixel : evenPixel,
-                            Rect<int32_t>(0, y, iw, 1));
+        auto oddPixel = pe.createPixel(oddColor);
+        for (int y = 0; y < ih; y++) pe.fillRect((y & 1) ? oddPixel : evenPixel, Rect<int32_t>(0, y, iw, 1));
 }
 
 PROMEKI_NAMESPACE_END

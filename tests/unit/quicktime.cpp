@@ -20,15 +20,15 @@ using namespace promeki;
 
 namespace {
 
-/**
+        /**
  * @brief Build an absolute path to a fixture under testdata/quicktime/.
  *
  * Uses the PROMEKI_SOURCE_DIR compile definition (set by CMake) so the
  * tests run from any working directory.
  */
-String fixturePath(const char *name) {
-        return String(PROMEKI_SOURCE_DIR) + "/tests/data/quicktime/" + name;
-}
+        String fixturePath(const char *name) {
+                return String(PROMEKI_SOURCE_DIR) + "/tests/data/quicktime/" + name;
+        }
 
 } // namespace
 
@@ -53,7 +53,7 @@ TEST_CASE("QuickTime: createReader returns Reader operation") {
 TEST_CASE("QuickTime: createWriter returns Writer operation") {
         // Use a path under /tmp; the file is created and immediately removed.
         const String tmp = "/tmp/qt_writer_op_check.mov";
-        QuickTime qt = QuickTime::createWriter(tmp);
+        QuickTime    qt = QuickTime::createWriter(tmp);
         CHECK(qt.isValid());
         CHECK(qt.operation() == QuickTime::Writer);
         // open() should succeed and create the file.
@@ -64,7 +64,7 @@ TEST_CASE("QuickTime: createWriter returns Writer operation") {
 
 TEST_CASE("QuickTime: open of nonexistent file returns an error") {
         QuickTime qt = QuickTime::createReader("/no/such/path/at_all.mov");
-        Error err = qt.open();
+        Error     err = qt.open();
         CHECK(err.isError());
         CHECK_FALSE(qt.isOpen());
 }
@@ -147,9 +147,9 @@ TEST_CASE("QuickTime: open H.264 + PCM .mov fixture") {
         // Find the video and audio tracks (their order is container-dependent).
         const QuickTime::Track *video = nullptr;
         const QuickTime::Track *audio = nullptr;
-        for(const QuickTime::Track &t : tracks) {
-                if(t.type() == QuickTime::Video && video == nullptr) video = &t;
-                if(t.type() == QuickTime::Audio && audio == nullptr) audio = &t;
+        for (const QuickTime::Track &t : tracks) {
+                if (t.type() == QuickTime::Video && video == nullptr) video = &t;
+                if (t.type() == QuickTime::Audio && audio == nullptr) audio = &t;
         }
         REQUIRE(video != nullptr);
         REQUIRE(audio != nullptr);
@@ -189,25 +189,25 @@ TEST_CASE("QuickTime: mediaDesc reflects the discovered tracks") {
 
 namespace {
 
-/** Reads @p size bytes from @p filename starting at @p offset. */
-List<uint8_t> readFileRange(const String &filename, int64_t offset, int64_t size) {
-        List<uint8_t> out;
-        FILE *fp = std::fopen(filename.cstr(), "rb");
-        if(fp == nullptr) return out;
-        if(std::fseek(fp, offset, SEEK_SET) == 0) {
-                out.resize(static_cast<size_t>(size));
-                size_t got = std::fread(out.data(), 1, static_cast<size_t>(size), fp);
-                out.resize(got);
+        /** Reads @p size bytes from @p filename starting at @p offset. */
+        List<uint8_t> readFileRange(const String &filename, int64_t offset, int64_t size) {
+                List<uint8_t> out;
+                FILE         *fp = std::fopen(filename.cstr(), "rb");
+                if (fp == nullptr) return out;
+                if (std::fseek(fp, offset, SEEK_SET) == 0) {
+                        out.resize(static_cast<size_t>(size));
+                        size_t got = std::fread(out.data(), 1, static_cast<size_t>(size), fp);
+                        out.resize(got);
+                }
+                std::fclose(fp);
+                return out;
         }
-        std::fclose(fp);
-        return out;
-}
 
 } // namespace
 
 TEST_CASE("QuickTime: readSample on uncompressed UYVY returns expected size") {
         const String fname = fixturePath("tiny_uyvy_24p.mov");
-        QuickTime qt = QuickTime::createReader(fname);
+        QuickTime    qt = QuickTime::createReader(fname);
         REQUIRE(qt.open() == Error::Ok);
 
         REQUIRE(qt.tracks().size() >= 1);
@@ -232,7 +232,7 @@ TEST_CASE("QuickTime: readSample on uncompressed UYVY returns expected size") {
 
 TEST_CASE("QuickTime: readSample bytes match a direct file read at the computed offset") {
         const String fname = fixturePath("tiny_prores_proxy_25p.mov");
-        QuickTime qt = QuickTime::createReader(fname);
+        QuickTime    qt = QuickTime::createReader(fname);
         REQUIRE(qt.open() == Error::Ok);
         REQUIRE(qt.tracks().size() >= 1);
 
@@ -249,7 +249,7 @@ TEST_CASE("QuickTime: readSample bytes match a direct file read at the computed 
         QuickTime::Sample s2;
         REQUIRE(qt.readSample(0, 0, s2) == Error::Ok);
         REQUIRE(s2.data->size() == s.data->size());
-        for(size_t i = 0; i < s.data->size(); ++i) {
+        for (size_t i = 0; i < s.data->size(); ++i) {
                 REQUIRE(static_cast<const uint8_t *>(s.data->data())[i] ==
                         static_cast<const uint8_t *>(s2.data->data())[i]);
         }
@@ -262,9 +262,9 @@ TEST_CASE("QuickTime: H.264 + PCM sample reads expose video, audio, keyframe fla
         // Find the video and audio tracks.
         size_t videoIdx = SIZE_MAX;
         size_t audioIdx = SIZE_MAX;
-        for(size_t i = 0; i < qt.tracks().size(); ++i) {
-                if(qt.tracks()[i].type() == QuickTime::Video && videoIdx == SIZE_MAX) videoIdx = i;
-                if(qt.tracks()[i].type() == QuickTime::Audio && audioIdx == SIZE_MAX) audioIdx = i;
+        for (size_t i = 0; i < qt.tracks().size(); ++i) {
+                if (qt.tracks()[i].type() == QuickTime::Video && videoIdx == SIZE_MAX) videoIdx = i;
+                if (qt.tracks()[i].type() == QuickTime::Audio && audioIdx == SIZE_MAX) audioIdx = i;
         }
         REQUIRE(videoIdx != SIZE_MAX);
         REQUIRE(audioIdx != SIZE_MAX);
@@ -289,7 +289,7 @@ TEST_CASE("QuickTime: out-of-range sample index returns OutOfRange") {
         QuickTime qt = QuickTime::createReader(fixturePath("tiny_uyvy_24p.mov"));
         REQUIRE(qt.open() == Error::Ok);
         QuickTime::Sample s;
-        Error err = qt.readSample(0, 9999, s);
+        Error             err = qt.readSample(0, 9999, s);
         CHECK(err == Error::OutOfRange);
 }
 
@@ -324,9 +324,9 @@ TEST_CASE("QuickTime: fragmented MP4 sample reads return non-empty payloads") {
         REQUIRE(qt.open() == Error::Ok);
         REQUIRE(qt.tracks().size() >= 1);
 
-        for(uint64_t i = 0; i < qt.tracks()[0].sampleCount(); ++i) {
+        for (uint64_t i = 0; i < qt.tracks()[0].sampleCount(); ++i) {
                 QuickTime::Sample s;
-                Error err = qt.readSample(0, i, s);
+                Error             err = qt.readSample(0, i, s);
                 REQUIRE(err == Error::Ok);
                 REQUIRE(s.data.isValid());
                 CHECK(s.data->size() > 0);
@@ -342,7 +342,7 @@ TEST_CASE("QuickTime: fragmented MP4 dts is monotonically increasing") {
         REQUIRE(qt.tracks().size() >= 1);
 
         int64_t prev = -1;
-        for(uint64_t i = 0; i < qt.tracks()[0].sampleCount(); ++i) {
+        for (uint64_t i = 0; i < qt.tracks()[0].sampleCount(); ++i) {
                 QuickTime::Sample s;
                 REQUIRE(qt.readSample(0, i, s) == Error::Ok);
                 CHECK(s.dts > prev);
@@ -356,13 +356,13 @@ TEST_CASE("QuickTime: fragmented MP4 dts is monotonically increasing") {
 
 namespace {
 
-/** @brief Allocates a Buffer::Ptr filled with @p byte and sized to @p size. */
-Buffer::Ptr makeFilledBuffer(size_t size, uint8_t byte) {
-        Buffer b(size);
-        std::memset(b.data(), byte, size);
-        b.setSize(size);
-        return Buffer::Ptr::create(std::move(b));
-}
+        /** @brief Allocates a Buffer::Ptr filled with @p byte and sized to @p size. */
+        Buffer::Ptr makeFilledBuffer(size_t size, uint8_t byte) {
+                Buffer b(size);
+                std::memset(b.data(), byte, size);
+                b.setSize(size);
+                return Buffer::Ptr::create(std::move(b));
+        }
 
 } // namespace
 
@@ -376,13 +376,11 @@ TEST_CASE("QuickTimeWriter: round-trip uncompressed UYVY video") {
                 REQUIRE(qt.open() == Error::Ok);
 
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
-                                         Size2Du32(16, 16),
-                                         FrameRate(FrameRate::RationalType(24, 1)),
-                                         &vid) == Error::Ok);
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), Size2Du32(16, 16),
+                                         FrameRate(FrameRate::RationalType(24, 1)), &vid) == Error::Ok);
                 CHECK(vid != 0);
 
-                for(int f = 0; f < 4; ++f) {
+                for (int f = 0; f < 4; ++f) {
                         QuickTime::Sample s;
                         s.data = makeFilledBuffer(512, static_cast<uint8_t>(0x10 + f));
                         s.duration = 1;
@@ -406,13 +404,13 @@ TEST_CASE("QuickTimeWriter: round-trip uncompressed UYVY video") {
                 REQUIRE(v.frameRate().isValid());
                 CHECK(v.frameRate().rational().toDouble() == doctest::Approx(24.0));
 
-                for(uint64_t i = 0; i < 4; ++i) {
+                for (uint64_t i = 0; i < 4; ++i) {
                         QuickTime::Sample s;
                         REQUIRE(qt.readSample(0, i, s) == Error::Ok);
                         REQUIRE(s.data.isValid());
                         CHECK(s.data->size() == 512);
                         const uint8_t *bytes = static_cast<const uint8_t *>(s.data->data());
-                        for(size_t k = 0; k < 512; ++k) {
+                        for (size_t k = 0; k < 512; ++k) {
                                 REQUIRE(bytes[k] == 0x10 + i);
                         }
                 }
@@ -431,13 +429,11 @@ TEST_CASE("QuickTimeWriter: round-trip ProRes pass-through video") {
                 REQUIRE(qt.open() == Error::Ok);
 
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::ProRes_422_HQ),
-                                         Size2Du32(64, 64),
-                                         FrameRate(FrameRate::RationalType(25, 1)),
-                                         &vid) == Error::Ok);
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::ProRes_422_HQ), Size2Du32(64, 64),
+                                         FrameRate(FrameRate::RationalType(25, 1)), &vid) == Error::Ok);
 
                 // Synthetic "ProRes payload" — opaque bytes, distinct per frame.
-                for(int f = 0; f < 3; ++f) {
+                for (int f = 0; f < 3; ++f) {
                         QuickTime::Sample s;
                         s.data = makeFilledBuffer(1024 + f * 32, static_cast<uint8_t>(0xA0 + f));
                         s.duration = 1;
@@ -459,14 +455,14 @@ TEST_CASE("QuickTimeWriter: round-trip ProRes pass-through video") {
                 CHECK(v.size().height() == 64);
                 CHECK(v.sampleCount() == 3);
 
-                static const size_t expectedSizes[] = { 1024, 1056, 1088 };
-                for(uint64_t i = 0; i < 3; ++i) {
+                static const size_t expectedSizes[] = {1024, 1056, 1088};
+                for (uint64_t i = 0; i < 3; ++i) {
                         QuickTime::Sample s;
                         REQUIRE(qt.readSample(0, i, s) == Error::Ok);
                         REQUIRE(s.data.isValid());
                         CHECK(s.data->size() == expectedSizes[i]);
                         const uint8_t *bytes = static_cast<const uint8_t *>(s.data->data());
-                        for(size_t k = 0; k < s.data->size(); ++k) {
+                        for (size_t k = 0; k < s.data->size(); ++k) {
                                 REQUIRE(bytes[k] == 0xA0 + i);
                         }
                 }
@@ -485,13 +481,11 @@ TEST_CASE("QuickTimeWriter: variable-duration sample table is preserved") {
                 QuickTime qt = QuickTime::createWriter(tmp);
                 REQUIRE(qt.open() == Error::Ok);
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
-                                         Size2Du32(16, 16),
-                                         FrameRate(FrameRate::RationalType(24, 1)),
-                                         &vid) == Error::Ok);
-                static const uint32_t durs[] = { 1, 1, 2, 2, 1, 3 };
-                int64_t dts = 0;
-                for(uint32_t d : durs) {
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), Size2Du32(16, 16),
+                                         FrameRate(FrameRate::RationalType(24, 1)), &vid) == Error::Ok);
+                static const uint32_t durs[] = {1, 1, 2, 2, 1, 3};
+                int64_t               dts = 0;
+                for (uint32_t d : durs) {
                         QuickTime::Sample s;
                         s.data = makeFilledBuffer(512, 0x55);
                         s.duration = d;
@@ -509,9 +503,9 @@ TEST_CASE("QuickTimeWriter: variable-duration sample table is preserved") {
                 REQUIRE(qt.open() == Error::Ok);
                 REQUIRE(qt.tracks().size() == 1);
                 CHECK(qt.tracks()[0].sampleCount() == 6);
-                static const uint32_t expected[] = { 1, 1, 2, 2, 1, 3 };
-                int64_t expectedDts = 0;
-                for(uint64_t i = 0; i < 6; ++i) {
+                static const uint32_t expected[] = {1, 1, 2, 2, 1, 3};
+                int64_t               expectedDts = 0;
+                for (uint64_t i = 0; i < 6; ++i) {
                         QuickTime::Sample s;
                         REQUIRE(qt.readSample(0, i, s) == Error::Ok);
                         CHECK(s.duration == expected[i]);
@@ -536,11 +530,9 @@ TEST_CASE("QuickTimeWriter: keyframe flags survive round trip via stss") {
                 // we're exercising the stss plumbing, not codec-specific
                 // bitstream handling, and the writer's H.264/HEVC paths
                 // insist on well-formed Annex-B input.
-                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::JPEG_YUV8_422_Rec709),
-                                         Size2Du32(32, 32),
-                                         FrameRate(FrameRate::RationalType(24, 1)),
-                                         &vid) == Error::Ok);
-                for(int i = 0; i < 7; ++i) {
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::JPEG_YUV8_422_Rec709), Size2Du32(32, 32),
+                                         FrameRate(FrameRate::RationalType(24, 1)), &vid) == Error::Ok);
+                for (int i = 0; i < 7; ++i) {
                         QuickTime::Sample s;
                         s.data = makeFilledBuffer(64 + i, static_cast<uint8_t>(i));
                         s.duration = 1;
@@ -555,7 +547,7 @@ TEST_CASE("QuickTimeWriter: keyframe flags survive round trip via stss") {
                 REQUIRE(qt.open() == Error::Ok);
                 REQUIRE(qt.tracks().size() == 1);
                 CHECK(qt.tracks()[0].sampleCount() == 7);
-                for(uint64_t i = 0; i < 7; ++i) {
+                for (uint64_t i = 0; i < 7; ++i) {
                         QuickTime::Sample s;
                         REQUIRE(qt.readSample(0, i, s) == Error::Ok);
                         bool expected = (i % 3 == 0);
@@ -582,18 +574,16 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video only)") {
                 REQUIRE(qt.open() == Error::Ok);
 
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
-                                         Size2Du32(16, 16),
-                                         FrameRate(FrameRate::RationalType(24, 1)),
-                                         &vid) == Error::Ok);
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), Size2Du32(16, 16),
+                                         FrameRate(FrameRate::RationalType(24, 1)), &vid) == Error::Ok);
 
-                for(int f = 0; f < 10; ++f) {
+                for (int f = 0; f < 10; ++f) {
                         QuickTime::Sample s;
                         s.data = makeFilledBuffer(512, static_cast<uint8_t>(0x30 + f));
                         s.duration = 1;
                         s.keyframe = true;
                         REQUIRE(qt.writeSample(vid, s) == Error::Ok);
-                        if(f == 3 || f == 7) {
+                        if (f == 3 || f == 7) {
                                 REQUIRE(qt.flush() == Error::Ok);
                         }
                 }
@@ -608,14 +598,13 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video only)") {
                 CHECK(qt.tracks()[0].sampleCount() == 10);
                 CHECK(qt.tracks()[0].pixelFormat().id() == PixelFormat::YUV8_422_UYVY_Rec709);
 
-                for(uint64_t i = 0; i < 10; ++i) {
+                for (uint64_t i = 0; i < 10; ++i) {
                         QuickTime::Sample s;
                         REQUIRE(qt.readSample(0, i, s) == Error::Ok);
                         REQUIRE(s.data.isValid());
                         CHECK(s.data->size() == 512);
-                        const uint8_t *bytes =
-                                static_cast<const uint8_t *>(s.data->data());
-                        for(size_t k = 0; k < 512; ++k) {
+                        const uint8_t *bytes = static_cast<const uint8_t *>(s.data->data());
+                        for (size_t k = 0; k < 512; ++k) {
                                 REQUIRE(bytes[k] == 0x30 + i);
                         }
                 }
@@ -629,8 +618,8 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video + audio)") {
         std::remove(tmp.cstr());
 
         const AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
-        const size_t samplesPerFrame = 2000;  // 24 fps × 2000 = 48000/s
-        const size_t audioBytesPerFrame = samplesPerFrame * 4;
+        const size_t    samplesPerFrame = 2000; // 24 fps × 2000 = 48000/s
+        const size_t    audioBytesPerFrame = samplesPerFrame * 4;
 
         {
                 QuickTime qt = QuickTime::createWriter(tmp);
@@ -638,13 +627,11 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video + audio)") {
                 REQUIRE(qt.open() == Error::Ok);
 
                 uint32_t vid = 0, aid = 0;
-                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
-                                         Size2Du32(16, 16),
-                                         FrameRate(FrameRate::RationalType(24, 1)),
-                                         &vid) == Error::Ok);
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), Size2Du32(16, 16),
+                                         FrameRate(FrameRate::RationalType(24, 1)), &vid) == Error::Ok);
                 REQUIRE(qt.addAudioTrack(adesc, &aid) == Error::Ok);
 
-                for(int f = 0; f < 5; ++f) {
+                for (int f = 0; f < 5; ++f) {
                         // Video sample
                         QuickTime::Sample vs;
                         vs.data = makeFilledBuffer(512, static_cast<uint8_t>(0x40 + f));
@@ -655,13 +642,12 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video + audio)") {
                         // Audio sample: one chunk of 2000 stereo s16 frames
                         // filled with distinct per-frame byte.
                         QuickTime::Sample as;
-                        as.data = makeFilledBuffer(audioBytesPerFrame,
-                                                   static_cast<uint8_t>(0x80 + f));
-                        as.duration = 0;  // writer derives
+                        as.data = makeFilledBuffer(audioBytesPerFrame, static_cast<uint8_t>(0x80 + f));
+                        as.duration = 0; // writer derives
                         as.keyframe = true;
                         REQUIRE(qt.writeSample(aid, as) == Error::Ok);
 
-                        if(f == 2) REQUIRE(qt.flush() == Error::Ok);
+                        if (f == 2) REQUIRE(qt.flush() == Error::Ok);
                 }
                 REQUIRE(qt.finalize() == Error::Ok);
         }
@@ -672,9 +658,9 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video + audio)") {
                 REQUIRE(qt.tracks().size() == 2);
 
                 size_t videoIdx = SIZE_MAX, audioIdx = SIZE_MAX;
-                for(size_t i = 0; i < qt.tracks().size(); ++i) {
-                        if(qt.tracks()[i].type() == QuickTime::Video) videoIdx = i;
-                        if(qt.tracks()[i].type() == QuickTime::Audio) audioIdx = i;
+                for (size_t i = 0; i < qt.tracks().size(); ++i) {
+                        if (qt.tracks()[i].type() == QuickTime::Video) videoIdx = i;
+                        if (qt.tracks()[i].type() == QuickTime::Audio) audioIdx = i;
                 }
                 REQUIRE(videoIdx != SIZE_MAX);
                 REQUIRE(audioIdx != SIZE_MAX);
@@ -684,7 +670,7 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video + audio)") {
                 CHECK(qt.tracks()[audioIdx].sampleCount() == 5 * samplesPerFrame);
 
                 // Verify video bytes round-trip
-                for(uint64_t i = 0; i < 5; ++i) {
+                for (uint64_t i = 0; i < 5; ++i) {
                         QuickTime::Sample s;
                         REQUIRE(qt.readSample(videoIdx, i, s) == Error::Ok);
                         REQUIRE(s.data.isValid());
@@ -695,10 +681,9 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video + audio)") {
                 }
 
                 // Verify audio bytes round-trip via range read (the fast path).
-                for(uint64_t i = 0; i < 5; ++i) {
+                for (uint64_t i = 0; i < 5; ++i) {
                         QuickTime::Sample range;
-                        REQUIRE(qt.readSampleRange(audioIdx, i * samplesPerFrame,
-                                                   samplesPerFrame, range) == Error::Ok);
+                        REQUIRE(qt.readSampleRange(audioIdx, i * samplesPerFrame, samplesPerFrame, range) == Error::Ok);
                         REQUIRE(range.data.isValid());
                         CHECK(range.data->size() == audioBytesPerFrame);
                         const uint8_t *b = static_cast<const uint8_t *>(range.data->data());
@@ -724,13 +709,11 @@ TEST_CASE("QuickTimeWriter: fragmented file is playable after simulated crash") 
                 REQUIRE(qt.setLayout(QuickTime::LayoutFragmented) == Error::Ok);
                 REQUIRE(qt.open() == Error::Ok);
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
-                                         Size2Du32(16, 16),
-                                         FrameRate(FrameRate::RationalType(24, 1)),
-                                         &vid) == Error::Ok);
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), Size2Du32(16, 16),
+                                         FrameRate(FrameRate::RationalType(24, 1)), &vid) == Error::Ok);
 
                 // Two complete fragments of 3 frames each.
-                for(int f = 0; f < 3; ++f) {
+                for (int f = 0; f < 3; ++f) {
                         QuickTime::Sample s;
                         s.data = makeFilledBuffer(512, static_cast<uint8_t>(0x50 + f));
                         s.duration = 1;
@@ -739,7 +722,7 @@ TEST_CASE("QuickTimeWriter: fragmented file is playable after simulated crash") 
                 }
                 REQUIRE(qt.flush() == Error::Ok);
 
-                for(int f = 3; f < 6; ++f) {
+                for (int f = 3; f < 6; ++f) {
                         QuickTime::Sample s;
                         s.data = makeFilledBuffer(512, static_cast<uint8_t>(0x50 + f));
                         s.duration = 1;
@@ -773,10 +756,9 @@ TEST_CASE("QuickTimeWriter: fragmented file is playable after simulated crash") 
                 // Write garbage that looks like the start of a moof but
                 // with an invalid truncated payload.
                 static const uint8_t partial[] = {
-                        0x00, 0x00, 0x10, 0x00,  // size = 4096 (lies — only a few bytes follow)
-                        'm', 'o', 'o', 'f',
-                        0x00, 0x00, 0x00, 0x10,  // mfhd size
-                        'm', 'f', 'h', 'd'
+                        0x00, 0x00, 0x10, 0x00,                         // size = 4096 (lies — only a few bytes follow)
+                        'm',  'o',  'o',  'f',  0x00, 0x00, 0x00, 0x10, // mfhd size
+                        'm',  'f',  'h',  'd'
                         // truncated!
                 };
                 std::fwrite(partial, 1, sizeof(partial), fp);
@@ -793,7 +775,7 @@ TEST_CASE("QuickTimeWriter: fragmented file is playable after simulated crash") 
                 REQUIRE(qt.tracks().size() == 1);
                 // Six samples (two complete fragments of 3) must survive.
                 CHECK(qt.tracks()[0].sampleCount() == 6);
-                for(uint64_t i = 0; i < 6; ++i) {
+                for (uint64_t i = 0; i < 6; ++i) {
                         QuickTime::Sample s;
                         REQUIRE(qt.readSample(0, i, s) == Error::Ok);
                         REQUIRE(s.data.isValid());
@@ -816,8 +798,8 @@ TEST_CASE("QuickTime: tmcd track yields anchor timecode 01:00:00:00 at 24 fps") 
 
         // The fixture has both a video track and a timecode track.
         bool hasTc = false;
-        for(const QuickTime::Track &t : qt.tracks()) {
-                if(t.type() == QuickTime::TimecodeTrack) hasTc = true;
+        for (const QuickTime::Track &t : qt.tracks()) {
+                if (t.type() == QuickTime::TimecodeTrack) hasTc = true;
         }
         CHECK(hasTc);
 
@@ -835,54 +817,52 @@ TEST_CASE("QuickTime: tmcd track yields anchor timecode 01:00:00:00 at 24 fps") 
 
 namespace {
 
-Metadata makeUdtaFixture() {
-        Metadata m;
-        m.set(Metadata::Title,               String("Round-Trip Title"));
-        m.set(Metadata::Comment,             String("QT udta round-trip test"));
-        m.set(Metadata::Date,                String("2026-04-08"));
-        m.set(Metadata::Artist,              String("Test Artist"));
-        m.set(Metadata::Copyright,           String("(c) libpromeki"));
-        m.set(Metadata::Software,            String("libpromeki test"));
-        m.set(Metadata::Album,               String("Test Album"));
-        m.set(Metadata::Genre,               String("Test Genre"));
-        m.set(Metadata::Description,         String("Test Description"));
-        m.set(Metadata::Originator,          String("libpromeki howardlogic.com"));
-        m.set(Metadata::OriginatorReference, String("01921f83-7a41-7e5a-9c9d-3a3f0d5e1b2c"));
-        m.set(Metadata::OriginationDateTime, String("2026-04-08T12:34:56"));
-        return m;
-}
+        Metadata makeUdtaFixture() {
+                Metadata m;
+                m.set(Metadata::Title, String("Round-Trip Title"));
+                m.set(Metadata::Comment, String("QT udta round-trip test"));
+                m.set(Metadata::Date, String("2026-04-08"));
+                m.set(Metadata::Artist, String("Test Artist"));
+                m.set(Metadata::Copyright, String("(c) libpromeki"));
+                m.set(Metadata::Software, String("libpromeki test"));
+                m.set(Metadata::Album, String("Test Album"));
+                m.set(Metadata::Genre, String("Test Genre"));
+                m.set(Metadata::Description, String("Test Description"));
+                m.set(Metadata::Originator, String("libpromeki howardlogic.com"));
+                m.set(Metadata::OriginatorReference, String("01921f83-7a41-7e5a-9c9d-3a3f0d5e1b2c"));
+                m.set(Metadata::OriginationDateTime, String("2026-04-08T12:34:56"));
+                return m;
+        }
 
-void writeSingleFrameWithMeta(const String &path, const Metadata &meta) {
-        QuickTime qt = QuickTime::createWriter(path);
-        REQUIRE(qt.open() == Error::Ok);
-        qt.setContainerMetadata(meta);
-        uint32_t vid = 0;
-        REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
-                                 Size2Du32(16, 16),
-                                 FrameRate(FrameRate::RationalType(24, 1)),
-                                 &vid) == Error::Ok);
-        QuickTime::Sample s;
-        s.data = makeFilledBuffer(512, 0x42);
-        s.duration = 1;
-        s.keyframe = true;
-        REQUIRE(qt.writeSample(vid, s) == Error::Ok);
-        REQUIRE(qt.finalize() == Error::Ok);
-}
+        void writeSingleFrameWithMeta(const String &path, const Metadata &meta) {
+                QuickTime qt = QuickTime::createWriter(path);
+                REQUIRE(qt.open() == Error::Ok);
+                qt.setContainerMetadata(meta);
+                uint32_t vid = 0;
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), Size2Du32(16, 16),
+                                         FrameRate(FrameRate::RationalType(24, 1)), &vid) == Error::Ok);
+                QuickTime::Sample s;
+                s.data = makeFilledBuffer(512, 0x42);
+                s.duration = 1;
+                s.keyframe = true;
+                REQUIRE(qt.writeSample(vid, s) == Error::Ok);
+                REQUIRE(qt.finalize() == Error::Ok);
+        }
 
-void checkStandardFields(const Metadata &meta) {
-        CHECK(meta.get(Metadata::Title).get<String>()               == "Round-Trip Title");
-        CHECK(meta.get(Metadata::Comment).get<String>()             == "QT udta round-trip test");
-        CHECK(meta.get(Metadata::Date).get<String>()                == "2026-04-08");
-        CHECK(meta.get(Metadata::Artist).get<String>()              == "Test Artist");
-        CHECK(meta.get(Metadata::Copyright).get<String>()           == "(c) libpromeki");
-        CHECK(meta.get(Metadata::Software).get<String>()            == "libpromeki test");
-        CHECK(meta.get(Metadata::Album).get<String>()               == "Test Album");
-        CHECK(meta.get(Metadata::Genre).get<String>()               == "Test Genre");
-        CHECK(meta.get(Metadata::Description).get<String>()         == "Test Description");
-        CHECK(meta.get(Metadata::Originator).get<String>()          == "libpromeki howardlogic.com");
-        CHECK(meta.get(Metadata::OriginatorReference).get<String>() == "01921f83-7a41-7e5a-9c9d-3a3f0d5e1b2c");
-        CHECK(meta.get(Metadata::OriginationDateTime).get<String>() == "2026-04-08T12:34:56");
-}
+        void checkStandardFields(const Metadata &meta) {
+                CHECK(meta.get(Metadata::Title).get<String>() == "Round-Trip Title");
+                CHECK(meta.get(Metadata::Comment).get<String>() == "QT udta round-trip test");
+                CHECK(meta.get(Metadata::Date).get<String>() == "2026-04-08");
+                CHECK(meta.get(Metadata::Artist).get<String>() == "Test Artist");
+                CHECK(meta.get(Metadata::Copyright).get<String>() == "(c) libpromeki");
+                CHECK(meta.get(Metadata::Software).get<String>() == "libpromeki test");
+                CHECK(meta.get(Metadata::Album).get<String>() == "Test Album");
+                CHECK(meta.get(Metadata::Genre).get<String>() == "Test Genre");
+                CHECK(meta.get(Metadata::Description).get<String>() == "Test Description");
+                CHECK(meta.get(Metadata::Originator).get<String>() == "libpromeki howardlogic.com");
+                CHECK(meta.get(Metadata::OriginatorReference).get<String>() == "01921f83-7a41-7e5a-9c9d-3a3f0d5e1b2c");
+                CHECK(meta.get(Metadata::OriginationDateTime).get<String>() == "2026-04-08T12:34:56");
+        }
 
 } // namespace
 
@@ -912,10 +892,10 @@ TEST_CASE("QuickTimeWriter: BWF fields are emitted as an XMP packet") {
         std::remove(tmp.cstr());
 
         Metadata in;
-        in.set(Metadata::Originator,          String("libpromeki howardlogic.com"));
+        in.set(Metadata::Originator, String("libpromeki howardlogic.com"));
         in.set(Metadata::OriginatorReference, String("ref-123"));
         in.set(Metadata::OriginationDateTime, String("2026-04-08T12:34:56"));
-        in.set(Metadata::UMID,                UMID::generate(UMID::Extended));
+        in.set(Metadata::UMID, UMID::generate(UMID::Extended));
 
         writeSingleFrameWithMeta(tmp, in);
 
@@ -932,9 +912,9 @@ TEST_CASE("QuickTimeWriter: BWF fields are emitted as an XMP packet") {
 
         auto containsBytes = [&](const char *needle) {
                 size_t nlen = std::strlen(needle);
-                if(nlen == 0 || bytes.size() < nlen) return false;
-                for(size_t i = 0; i + nlen <= bytes.size(); ++i) {
-                        if(std::memcmp(bytes.data() + i, needle, nlen) == 0) return true;
+                if (nlen == 0 || bytes.size() < nlen) return false;
+                for (size_t i = 0; i + nlen <= bytes.size(); ++i) {
+                        if (std::memcmp(bytes.data() + i, needle, nlen) == 0) return true;
                 }
                 return false;
         };
@@ -998,10 +978,8 @@ TEST_CASE("QuickTimeWriter: empty container metadata omits udta") {
         QuickTime qt = QuickTime::createWriter(tmp);
         REQUIRE(qt.open() == Error::Ok);
         uint32_t vid = 0;
-        REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
-                                 Size2Du32(16, 16),
-                                 FrameRate(FrameRate::RationalType(24, 1)),
-                                 &vid) == Error::Ok);
+        REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), Size2Du32(16, 16),
+                                 FrameRate(FrameRate::RationalType(24, 1)), &vid) == Error::Ok);
         QuickTime::Sample s;
         s.data = makeFilledBuffer(512, 0x20);
         s.duration = 1;
@@ -1029,9 +1007,9 @@ TEST_CASE("QuickTimeWriter: fragmented layout emits udta in the init moov") {
         std::remove(tmp.cstr());
 
         Metadata in;
-        in.set(Metadata::Software,   String("libpromeki fragmented test"));
+        in.set(Metadata::Software, String("libpromeki fragmented test"));
         in.set(Metadata::Originator, String("libpromeki howardlogic.com"));
-        in.set(Metadata::Title,      String("Fragmented Title"));
+        in.set(Metadata::Title, String("Fragmented Title"));
 
         {
                 QuickTime qt = QuickTime::createWriter(tmp);
@@ -1039,11 +1017,9 @@ TEST_CASE("QuickTimeWriter: fragmented layout emits udta in the init moov") {
                 REQUIRE(qt.open() == Error::Ok);
                 qt.setContainerMetadata(in);
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
-                                         Size2Du32(16, 16),
-                                         FrameRate(FrameRate::RationalType(24, 1)),
-                                         &vid) == Error::Ok);
-                for(int f = 0; f < 4; ++f) {
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), Size2Du32(16, 16),
+                                         FrameRate(FrameRate::RationalType(24, 1)), &vid) == Error::Ok);
+                for (int f = 0; f < 4; ++f) {
                         QuickTime::Sample s;
                         s.data = makeFilledBuffer(512, static_cast<uint8_t>(0x30 + f));
                         s.duration = 1;
@@ -1056,9 +1032,9 @@ TEST_CASE("QuickTimeWriter: fragmented layout emits udta in the init moov") {
         QuickTime reader = QuickTime::createReader(tmp);
         REQUIRE(reader.open() == Error::Ok);
         const Metadata &out = reader.containerMetadata();
-        CHECK(out.get(Metadata::Software).get<String>()   == "libpromeki fragmented test");
+        CHECK(out.get(Metadata::Software).get<String>() == "libpromeki fragmented test");
         CHECK(out.get(Metadata::Originator).get<String>() == "libpromeki howardlogic.com");
-        CHECK(out.get(Metadata::Title).get<String>()      == "Fragmented Title");
+        CHECK(out.get(Metadata::Title).get<String>() == "Fragmented Title");
 
         std::remove(tmp.cstr());
 }
@@ -1069,7 +1045,7 @@ TEST_CASE("QuickTimeWriter: fragmented layout emits udta in the init moov") {
 
 namespace {
 
-/**
+        /**
  * @brief Build an Annex-B access unit containing SPS + PPS + IDR with
  *        known bytes.
  *
@@ -1080,53 +1056,53 @@ namespace {
  * split, AVCC conversion, avcC extraction and emission) exercises
  * every code path we care about.
  */
-std::vector<uint8_t> buildCannedH264AccessUnit() {
-        // SPS: NAL header 0x67 (type 7), profile=0x42 (Baseline),
-        // compat=0xe0, level=0x1e, + trailing byte.
-        const std::vector<uint8_t> sps = { 0x67, 0x42, 0xe0, 0x1e, 0xa0 };
-        const std::vector<uint8_t> pps = { 0x68, 0xce, 0x3c, 0x80 };
-        const std::vector<uint8_t> idr = { 0x65, 0x88, 0x84, 0x11, 0x22, 0x33 };
-        std::vector<uint8_t> au;
-        au.insert(au.end(), { 0x00, 0x00, 0x00, 0x01 });
-        au.insert(au.end(), sps.begin(), sps.end());
-        au.insert(au.end(), { 0x00, 0x00, 0x00, 0x01 });
-        au.insert(au.end(), pps.begin(), pps.end());
-        au.insert(au.end(), { 0x00, 0x00, 0x00, 0x01 });
-        au.insert(au.end(), idr.begin(), idr.end());
-        return au;
-}
-
-/** @brief Wrap a vector of bytes as a shared Buffer::Ptr. */
-Buffer::Ptr bufferFromBytes(const std::vector<uint8_t> &bytes) {
-        Buffer b(bytes.size());
-        std::memcpy(b.data(), bytes.data(), bytes.size());
-        b.setSize(bytes.size());
-        return Buffer::Ptr::create(std::move(b));
-}
-
-/** @brief Returns the full file contents of @p path as a byte vector. */
-std::vector<uint8_t> readAllBytes(const String &path) {
-        std::vector<uint8_t> out;
-        FILE *fp = std::fopen(path.cstr(), "rb");
-        if(!fp) return out;
-        std::fseek(fp, 0, SEEK_END);
-        long sz = std::ftell(fp);
-        std::fseek(fp, 0, SEEK_SET);
-        out.resize(static_cast<size_t>(sz));
-        size_t nread = std::fread(out.data(), 1, static_cast<size_t>(sz), fp);
-        std::fclose(fp);
-        out.resize(nread);
-        return out;
-}
-
-/** @brief Scan @p buf for the 4-byte sequence @p needle.  Returns SIZE_MAX if missing. */
-size_t findBytes(const std::vector<uint8_t> &buf, const uint8_t *needle, size_t nlen) {
-        if(buf.size() < nlen) return SIZE_MAX;
-        for(size_t i = 0; i + nlen <= buf.size(); ++i) {
-                if(std::memcmp(buf.data() + i, needle, nlen) == 0) return i;
+        std::vector<uint8_t> buildCannedH264AccessUnit() {
+                // SPS: NAL header 0x67 (type 7), profile=0x42 (Baseline),
+                // compat=0xe0, level=0x1e, + trailing byte.
+                const std::vector<uint8_t> sps = {0x67, 0x42, 0xe0, 0x1e, 0xa0};
+                const std::vector<uint8_t> pps = {0x68, 0xce, 0x3c, 0x80};
+                const std::vector<uint8_t> idr = {0x65, 0x88, 0x84, 0x11, 0x22, 0x33};
+                std::vector<uint8_t>       au;
+                au.insert(au.end(), {0x00, 0x00, 0x00, 0x01});
+                au.insert(au.end(), sps.begin(), sps.end());
+                au.insert(au.end(), {0x00, 0x00, 0x00, 0x01});
+                au.insert(au.end(), pps.begin(), pps.end());
+                au.insert(au.end(), {0x00, 0x00, 0x00, 0x01});
+                au.insert(au.end(), idr.begin(), idr.end());
+                return au;
         }
-        return SIZE_MAX;
-}
+
+        /** @brief Wrap a vector of bytes as a shared Buffer::Ptr. */
+        Buffer::Ptr bufferFromBytes(const std::vector<uint8_t> &bytes) {
+                Buffer b(bytes.size());
+                std::memcpy(b.data(), bytes.data(), bytes.size());
+                b.setSize(bytes.size());
+                return Buffer::Ptr::create(std::move(b));
+        }
+
+        /** @brief Returns the full file contents of @p path as a byte vector. */
+        std::vector<uint8_t> readAllBytes(const String &path) {
+                std::vector<uint8_t> out;
+                FILE                *fp = std::fopen(path.cstr(), "rb");
+                if (!fp) return out;
+                std::fseek(fp, 0, SEEK_END);
+                long sz = std::ftell(fp);
+                std::fseek(fp, 0, SEEK_SET);
+                out.resize(static_cast<size_t>(sz));
+                size_t nread = std::fread(out.data(), 1, static_cast<size_t>(sz), fp);
+                std::fclose(fp);
+                out.resize(nread);
+                return out;
+        }
+
+        /** @brief Scan @p buf for the 4-byte sequence @p needle.  Returns SIZE_MAX if missing. */
+        size_t findBytes(const std::vector<uint8_t> &buf, const uint8_t *needle, size_t nlen) {
+                if (buf.size() < nlen) return SIZE_MAX;
+                for (size_t i = 0; i + nlen <= buf.size(); ++i) {
+                        if (std::memcmp(buf.data() + i, needle, nlen) == 0) return i;
+                }
+                return SIZE_MAX;
+        }
 
 } // namespace
 
@@ -1140,12 +1116,10 @@ TEST_CASE("QuickTimeWriter: H.264 Annex-B input is stored as AVCC with avcC box"
                 QuickTime qt = QuickTime::createWriter(tmp);
                 REQUIRE(qt.open() == Error::Ok);
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::H264),
-                                         Size2Du32(16, 16),
-                                         FrameRate(FrameRate::RationalType(24, 1)),
-                                         &vid) == Error::Ok);
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::H264), Size2Du32(16, 16),
+                                         FrameRate(FrameRate::RationalType(24, 1)), &vid) == Error::Ok);
                 QuickTime::Sample s;
-                s.data     = bufferFromBytes(au);
+                s.data = bufferFromBytes(au);
                 s.duration = 1;
                 s.keyframe = true;
                 REQUIRE(qt.writeSample(vid, s) == Error::Ok);
@@ -1156,18 +1130,18 @@ TEST_CASE("QuickTimeWriter: H.264 Annex-B input is stored as AVCC with avcC box"
                 const std::vector<uint8_t> file = readAllBytes(tmp);
                 REQUIRE(file.size() > 0);
 
-                const uint8_t avc1[4] = { 'a', 'v', 'c', '1' };
-                const uint8_t avcC[4] = { 'a', 'v', 'c', 'C' };
+                const uint8_t avc1[4] = {'a', 'v', 'c', '1'};
+                const uint8_t avcC[4] = {'a', 'v', 'c', 'C'};
                 CHECK(findBytes(file, avc1, 4) != SIZE_MAX);
                 size_t avcCOffset = findBytes(file, avcC, 4);
                 REQUIRE(avcCOffset != SIZE_MAX);
                 // avcC box is preceded by its 4-byte size + 4-byte type.
                 // Payload starts at avcCOffset+4; byte 0 = configurationVersion.
                 REQUIRE(avcCOffset + 9 <= file.size());
-                CHECK(file[avcCOffset + 4] == 0x01);         // configurationVersion
-                CHECK(file[avcCOffset + 4 + 1] == 0x42);     // profile_idc (Baseline)
-                CHECK(file[avcCOffset + 4 + 2] == 0xe0);     // profile_compatibility
-                CHECK(file[avcCOffset + 4 + 3] == 0x1e);     // level_idc
+                CHECK(file[avcCOffset + 4] == 0x01);     // configurationVersion
+                CHECK(file[avcCOffset + 4 + 1] == 0x42); // profile_idc (Baseline)
+                CHECK(file[avcCOffset + 4 + 2] == 0xe0); // profile_compatibility
+                CHECK(file[avcCOffset + 4 + 3] == 0x1e); // level_idc
                 // Byte 4 of the record: top 6 bits reserved = 111111, low 2 bits =
                 // lengthSizeMinusOne = 3 → 0xff.
                 CHECK(file[avcCOffset + 4 + 4] == 0xff);
@@ -1193,11 +1167,11 @@ TEST_CASE("QuickTimeWriter: H.264 Annex-B input is stored as AVCC with avcC box"
                 const Buffer::Ptr &cfg = v.codecConfig();
                 REQUIRE(cfg->size() >= 5);
                 const uint8_t *p = static_cast<const uint8_t *>(cfg->data());
-                CHECK(p[0] == 0x01);       // configurationVersion
-                CHECK(p[1] == 0x42);       // profile_idc (Baseline)
-                CHECK(p[2] == 0xe0);       // profile_compatibility
-                CHECK(p[3] == 0x1e);       // level_idc
-                CHECK(p[4] == 0xff);       // lengthSizeMinusOne byte
+                CHECK(p[0] == 0x01); // configurationVersion
+                CHECK(p[1] == 0x42); // profile_idc (Baseline)
+                CHECK(p[2] == 0xe0); // profile_compatibility
+                CHECK(p[3] == 0x1e); // level_idc
+                CHECK(p[4] == 0xff); // lengthSizeMinusOne byte
         }
 
         SUBCASE("written sample payload is length-prefixed, not Annex-B") {
@@ -1212,10 +1186,8 @@ TEST_CASE("QuickTimeWriter: H.264 Annex-B input is stored as AVCC with avcC box"
                 REQUIRE(s.data->size() >= 4);
                 const uint8_t *p = static_cast<const uint8_t *>(s.data->data());
                 // First 4 bytes must be a sensible length (< total size).
-                uint32_t firstLen = (static_cast<uint32_t>(p[0]) << 24) |
-                                    (static_cast<uint32_t>(p[1]) << 16) |
-                                    (static_cast<uint32_t>(p[2]) <<  8) |
-                                    (static_cast<uint32_t>(p[3]));
+                uint32_t firstLen = (static_cast<uint32_t>(p[0]) << 24) | (static_cast<uint32_t>(p[1]) << 16) |
+                                    (static_cast<uint32_t>(p[2]) << 8) | (static_cast<uint32_t>(p[3]));
                 CHECK(firstLen < s.data->size());
                 CHECK(firstLen > 0);
                 // And must not be a start code: the first NAL byte that
@@ -1228,4 +1200,3 @@ TEST_CASE("QuickTimeWriter: H.264 Annex-B input is stored as AVCC with avcC box"
 
         std::remove(tmp.cstr());
 }
-

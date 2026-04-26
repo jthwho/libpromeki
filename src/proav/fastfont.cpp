@@ -16,9 +16,7 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-FastFont::FastFont(const PaintEngine &pe) : Font(pe) {
-
-}
+FastFont::FastFont(const PaintEngine &pe) : Font(pe) {}
 
 FastFont::~FastFont() {
         invalidateAll();
@@ -35,7 +33,7 @@ void FastFont::invalidateGlyphs() {
 
 void FastFont::invalidateFont() {
         invalidateGlyphs();
-        if(_ftFace != nullptr) {
+        if (_ftFace != nullptr) {
                 FT_Done_Face(static_cast<FT_Face>(_ftFace));
                 _ftFace = nullptr;
         }
@@ -50,18 +48,18 @@ void FastFont::invalidateFont() {
 
 void FastFont::invalidateAll() {
         invalidateFont();
-        if(_ftLibrary != nullptr) {
+        if (_ftLibrary != nullptr) {
                 FT_Done_FreeType(static_cast<FT_Library>(_ftLibrary));
                 _ftLibrary = nullptr;
         }
 }
 
 bool FastFont::ensureFontLoaded() {
-        if(_ftFace != nullptr) return true;
+        if (_ftFace != nullptr) return true;
 
-        if(_ftLibrary == nullptr) {
+        if (_ftLibrary == nullptr) {
                 FT_Library ft;
-                if(FT_Init_FreeType(&ft)) {
+                if (FT_Init_FreeType(&ft)) {
                         promekiErr("Could not init FreeType library");
                         return false;
                 }
@@ -75,26 +73,23 @@ bool FastFont::ensureFontLoaded() {
         // held on the FastFont so it outlives the FT_Face that
         // borrows it.
         const String path = effectiveFilename();
-        File f(path);
-        Error openErr = f.open(File::ReadOnly);
-        if(openErr.isError()) {
-                promekiErr("Could not open font '%s': %s",
-                        path.cstr(), openErr.name().cstr());
+        File         f(path);
+        Error        openErr = f.open(File::ReadOnly);
+        if (openErr.isError()) {
+                promekiErr("Could not open font '%s': %s", path.cstr(), openErr.name().cstr());
                 return false;
         }
         _fontData = f.readAll();
         f.close();
-        if(!_fontData.isValid() || _fontData.size() == 0) {
+        if (!_fontData.isValid() || _fontData.size() == 0) {
                 promekiErr("Font '%s' is empty", path.cstr());
                 return false;
         }
 
         FT_Library ft = static_cast<FT_Library>(_ftLibrary);
-        FT_Face face;
-        if(FT_New_Memory_Face(ft,
-                              static_cast<const FT_Byte *>(_fontData.data()),
-                              static_cast<FT_Long>(_fontData.size()),
-                              0, &face)) {
+        FT_Face    face;
+        if (FT_New_Memory_Face(ft, static_cast<const FT_Byte *>(_fontData.data()),
+                               static_cast<FT_Long>(_fontData.size()), 0, &face)) {
                 promekiErr("Could not parse font '%s'", path.cstr());
                 return false;
         }
@@ -111,7 +106,7 @@ bool FastFont::ensureFontLoaded() {
 }
 
 void FastFont::ensurePixels() {
-        if(!_pixelsDirty) return;
+        if (!_pixelsDirty) return;
         _fgPixel = _paintEngine.createPixel(_fg);
         _bgPixel = _paintEngine.createPixel(_bg);
         _pixelsDirty = false;
@@ -119,19 +114,19 @@ void FastFont::ensurePixels() {
 
 const FastFont::CachedGlyph *FastFont::getGlyph(uint32_t codepoint) {
         auto it = _glyphCache.find(codepoint);
-        if(it != _glyphCache.end()) return &it->second;
+        if (it != _glyphCache.end()) return &it->second;
 
         FT_Face face = static_cast<FT_Face>(_ftFace);
-        if(FT_Load_Char(face, codepoint, FT_LOAD_RENDER)) {
-                promekiWarn("Could not load character 0x%X in '%s'",
-                        (unsigned int)codepoint, effectiveFilename().cstr());
+        if (FT_Load_Char(face, codepoint, FT_LOAD_RENDER)) {
+                promekiWarn("Could not load character 0x%X in '%s'", (unsigned int)codepoint,
+                            effectiveFilename().cstr());
                 return nullptr;
         }
 
         FT_Bitmap *bitmap = &face->glyph->bitmap;
-        int bitmapLeft = face->glyph->bitmap_left;
-        int bitmapTop = face->glyph->bitmap_top;
-        int advanceX = face->glyph->advance.x >> 6;
+        int        bitmapLeft = face->glyph->bitmap_left;
+        int        bitmapTop = face->glyph->bitmap_top;
+        int        advanceX = face->glyph->advance.x >> 6;
 
         // Create a temporary UncompressedVideoPayload for this glyph
         // cell and render into it using the PaintEngine, which handles
@@ -140,11 +135,11 @@ const FastFont::CachedGlyph *FastFont::getGlyph(uint32_t codepoint) {
         // allocation that the paint engine would dereference out of
         // bounds.
         int cellWidth = advanceX;
-        if(cellWidth <= 0) cellWidth = 1;
+        if (cellWidth <= 0) cellWidth = 1;
         PixelFormat pd = _paintEngine.pixelFormat();
-        ImageDesc cellDesc(Size2Du32(cellWidth, _lineHeight), pd);
-        auto glyphPayload = UncompressedVideoPayload::allocate(cellDesc);
-        if(!glyphPayload.isValid()) return nullptr;
+        ImageDesc   cellDesc(Size2Du32(cellWidth, _lineHeight), pd);
+        auto        glyphPayload = UncompressedVideoPayload::allocate(cellDesc);
+        if (!glyphPayload.isValid()) return nullptr;
 
         PaintEngine pe = glyphPayload->createPaintEngine();
 
@@ -157,17 +152,17 @@ const FastFont::CachedGlyph *FastFont::getGlyph(uint32_t codepoint) {
         int originY = _ascender - bitmapTop;
 
         List<Point2Di32> points;
-        List<float> alphas;
+        List<float>      alphas;
 
-        for(unsigned int row = 0; row < bitmap->rows; ++row) {
+        for (unsigned int row = 0; row < bitmap->rows; ++row) {
                 int cellY = originY + row;
-                if(cellY < 0 || cellY >= _lineHeight) continue;
-                for(unsigned int col = 0; col < bitmap->width; ++col) {
+                if (cellY < 0 || cellY >= _lineHeight) continue;
+                for (unsigned int col = 0; col < bitmap->width; ++col) {
                         int cellX = originX + col;
-                        if(cellX < 0 || cellX >= cellWidth) continue;
+                        if (cellX < 0 || cellX >= cellWidth) continue;
 
                         uint8_t alpha = bitmap->buffer[row * bitmap->pitch + col];
-                        if(alpha == 0) continue;
+                        if (alpha == 0) continue;
 
                         points += Point2Di32(cellX, cellY);
                         alphas += static_cast<float>(alpha) / 255.0f;
@@ -178,7 +173,7 @@ const FastFont::CachedGlyph *FastFont::getGlyph(uint32_t codepoint) {
 
         // Cache the rendered glyph payload.
         CachedGlyph glyph;
-        glyph.payload  = glyphPayload;
+        glyph.payload = glyphPayload;
         glyph.advanceX = advanceX;
 
         _glyphCache.insert(codepoint, glyph);
@@ -186,7 +181,7 @@ const FastFont::CachedGlyph *FastFont::getGlyph(uint32_t codepoint) {
 }
 
 bool FastFont::drawText(const String &text, int x, int y) {
-        if(!ensureFontLoaded()) return false;
+        if (!ensureFontLoaded()) return false;
         ensurePixels();
 
         // y is baseline; top of cell is at y - ascender
@@ -194,14 +189,14 @@ bool FastFont::drawText(const String &text, int x, int y) {
         int penX = x;
 
         FT_Face face = _kerning ? static_cast<FT_Face>(_ftFace) : nullptr;
-        bool hasKerning = face != nullptr && FT_HAS_KERNING(face);
+        bool    hasKerning = face != nullptr && FT_HAS_KERNING(face);
         FT_UInt prevIndex = 0;
 
-        for(Char c : text) {
+        for (Char c : text) {
                 FT_UInt glyphIndex = 0;
-                if(hasKerning) {
+                if (hasKerning) {
                         glyphIndex = FT_Get_Char_Index(face, c.codepoint());
-                        if(prevIndex != 0 && glyphIndex != 0) {
+                        if (prevIndex != 0 && glyphIndex != 0) {
                                 FT_Vector delta;
                                 FT_Get_Kerning(face, prevIndex, glyphIndex, FT_KERNING_DEFAULT, &delta);
                                 penX += delta.x >> 6;
@@ -209,35 +204,34 @@ bool FastFont::drawText(const String &text, int x, int y) {
                 }
 
                 const CachedGlyph *glyph = getGlyph(c.codepoint());
-                if(glyph == nullptr) continue;
+                if (glyph == nullptr) continue;
 
-                if(glyph->payload.isValid()) {
-                        _paintEngine.blit(Point2Di32(penX, cellTop),
-                                          *glyph->payload);
+                if (glyph->payload.isValid()) {
+                        _paintEngine.blit(Point2Di32(penX, cellTop), *glyph->payload);
                 }
                 penX += glyph->advanceX;
 
-                if(hasKerning) prevIndex = glyphIndex;
+                if (hasKerning) prevIndex = glyphIndex;
         }
 
         return true;
 }
 
 int FastFont::measureText(const String &text) {
-        if(!ensureFontLoaded()) return 0;
+        if (!ensureFontLoaded()) return 0;
         ensurePixels();
 
         int width = 0;
 
         FT_Face face = _kerning ? static_cast<FT_Face>(_ftFace) : nullptr;
-        bool hasKerning = face != nullptr && FT_HAS_KERNING(face);
+        bool    hasKerning = face != nullptr && FT_HAS_KERNING(face);
         FT_UInt prevIndex = 0;
 
-        for(Char c : text) {
+        for (Char c : text) {
                 FT_UInt glyphIndex = 0;
-                if(hasKerning) {
+                if (hasKerning) {
                         glyphIndex = FT_Get_Char_Index(face, c.codepoint());
-                        if(prevIndex != 0 && glyphIndex != 0) {
+                        if (prevIndex != 0 && glyphIndex != 0) {
                                 FT_Vector delta;
                                 FT_Get_Kerning(face, prevIndex, glyphIndex, FT_KERNING_DEFAULT, &delta);
                                 width += delta.x >> 6;
@@ -245,10 +239,10 @@ int FastFont::measureText(const String &text) {
                 }
 
                 const CachedGlyph *glyph = getGlyph(c.codepoint());
-                if(glyph == nullptr) continue;
+                if (glyph == nullptr) continue;
                 width += glyph->advanceX;
 
-                if(hasKerning) prevIndex = glyphIndex;
+                if (hasKerning) prevIndex = glyphIndex;
         }
         return width;
 }

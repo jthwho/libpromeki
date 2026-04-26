@@ -21,7 +21,7 @@ PROMEKI_NAMESPACE_BEGIN
  * Thread-affine — see @ref TuiWidget.
  */
 class TuiButton : public TuiWidget {
-        PROMEKI_OBJECT(TuiButton, TuiWidget)
+                PROMEKI_OBJECT(TuiButton, TuiWidget)
         public:
                 TuiButton(const String &text = String(), ObjectBase *parent = nullptr);
                 ~TuiButton() override;

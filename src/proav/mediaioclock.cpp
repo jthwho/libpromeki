@@ -11,17 +11,13 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-MediaIOClock::MediaIOClock(MediaIO *owner)
-        : Clock(ClockDomain(ClockDomain::Synthetic)),
-          _owner(owner)
-{
-}
+MediaIOClock::MediaIOClock(MediaIO *owner) : Clock(ClockDomain(ClockDomain::Synthetic)), _owner(owner) {}
 
 int64_t MediaIOClock::framePeriodNs() const {
         const MediaIO *io = _owner.data();
-        if(io == nullptr) return 0;
+        if (io == nullptr) return 0;
         const FrameRate &fps = io->frameRate();
-        if(!fps.isValid()) return 0;
+        if (!fps.isValid()) return 0;
         return fps.frameDuration().nanoseconds();
 }
 
@@ -36,27 +32,24 @@ ClockJitter MediaIOClock::jitter() const {
         // "between" frames we have no information.
         int64_t period = framePeriodNs();
         int64_t half = period / 2;
-        return ClockJitter{
-                Duration::fromNanoseconds(-half),
-                Duration::fromNanoseconds( half)
-        };
+        return ClockJitter{Duration::fromNanoseconds(-half), Duration::fromNanoseconds(half)};
 }
 
 Result<int64_t> MediaIOClock::raw() const {
         const MediaIO *io = _owner.data();
-        if(io == nullptr) {
+        if (io == nullptr) {
                 return makeError<int64_t>(Error::ObjectGone);
         }
         const FrameRate &fps = io->frameRate();
-        if(!fps.isValid()) {
+        if (!fps.isValid()) {
                 // No frame rate — report zero rather than erroring
                 // so pipelines that haven't fully opened yet can
                 // query the clock without a hard failure.
                 return makeResult<int64_t>(0);
         }
-        int64_t period = fps.frameDuration().nanoseconds();
+        int64_t     period = fps.frameDuration().nanoseconds();
         FrameNumber frame = io->currentFrame();
-        int64_t v = frame.isValid() ? frame.value() : 0;
+        int64_t     v = frame.isValid() ? frame.value() : 0;
         return makeResult<int64_t>(v * period);
 }
 

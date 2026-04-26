@@ -29,7 +29,7 @@ TEST_CASE("FilePath: construction from const char*") {
 
 TEST_CASE("FilePath: construction from std::filesystem::path") {
         std::filesystem::path sp("/var/log/syslog");
-        FilePath p(sp);
+        FilePath              p(sp);
         CHECK(p.toString() == "/var/log/syslog");
 }
 
@@ -157,15 +157,15 @@ TEST_CASE("FilePath: root path parent") {
 }
 
 TEST_CASE("FilePath: toStdPath") {
-        FilePath p("/tmp/test");
+        FilePath                     p("/tmp/test");
         const std::filesystem::path &sp = p.toStdPath();
         CHECK(sp == std::filesystem::path("/tmp/test"));
 }
 
 TEST_CASE("FilePath: relativeTo — sibling directory") {
         // /a/b relative to /a/c == ../b
-        FilePath target("/a/b");
-        FilePath base("/a/c");
+        FilePath         target("/a/b");
+        FilePath         base("/a/c");
         Result<FilePath> rel = target.relativeTo(base);
         REQUIRE(rel.second().isOk());
         CHECK(rel.first().isRelative());
@@ -173,8 +173,8 @@ TEST_CASE("FilePath: relativeTo — sibling directory") {
 }
 
 TEST_CASE("FilePath: relativeTo — same directory returns dot") {
-        FilePath target("/a/b");
-        FilePath base("/a/b");
+        FilePath         target("/a/b");
+        FilePath         base("/a/b");
         Result<FilePath> rel = target.relativeTo(base);
         // std::filesystem::relative of /a/b from /a/b is "."
         REQUIRE(rel.second().isOk());
@@ -183,8 +183,8 @@ TEST_CASE("FilePath: relativeTo — same directory returns dot") {
 
 TEST_CASE("FilePath: relativeTo — nested path") {
         // /a/b/c/d relative to /a/b == c/d
-        FilePath target("/a/b/c/d");
-        FilePath base("/a/b");
+        FilePath         target("/a/b/c/d");
+        FilePath         base("/a/b");
         Result<FilePath> rel = target.relativeTo(base);
         REQUIRE(rel.second().isOk());
         CHECK(rel.first().isRelative());
@@ -193,8 +193,8 @@ TEST_CASE("FilePath: relativeTo — nested path") {
 
 TEST_CASE("FilePath: relativeTo — parent path") {
         // /a relative to /a/b/c == ../..
-        FilePath target("/a");
-        FilePath base("/a/b/c");
+        FilePath         target("/a");
+        FilePath         base("/a/b/c");
         Result<FilePath> rel = target.relativeTo(base);
         REQUIRE(rel.second().isOk());
         CHECK(rel.first().isRelative());

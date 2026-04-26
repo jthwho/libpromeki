@@ -109,19 +109,19 @@ class Color {
                  * Controls how a Color is serialized to a string.
                  */
                 enum StringFormat {
-                        ModelFormat,    ///< Lossless: "ModelName(c0,c1,c2,c3)" (default).
-                        HexFormat,      ///< sRGB: "#RRGGBB" or "#RRGGBBAA".
-                        CSVFormat,      ///< sRGB: "128,64,32" or "128,64,32,200".
-                        FloatFormat,    ///< sRGB: "rgb(0.502,0.251,0.125)" or "rgba(...)".
+                        ModelFormat, ///< Lossless: "ModelName(c0,c1,c2,c3)" (default).
+                        HexFormat,   ///< sRGB: "#RRGGBB" or "#RRGGBBAA".
+                        CSVFormat,   ///< sRGB: "128,64,32" or "128,64,32,200".
+                        FloatFormat, ///< sRGB: "rgb(0.502,0.251,0.125)" or "rgba(...)".
                 };
 
                 /**
                  * @brief Alpha-channel inclusion policy for toString().
                  */
                 enum AlphaMode {
-                        AlphaAuto,      ///< Include alpha only when it differs from 1.0.
-                        AlphaAlways,    ///< Always include alpha.
-                        AlphaNever,     ///< Never include alpha.
+                        AlphaAuto,   ///< Include alpha only when it differs from 1.0.
+                        AlphaAlways, ///< Always include alpha.
+                        AlphaNever,  ///< Never include alpha.
                 };
 
                 /// @name Named color constants (sRGB)
@@ -234,7 +234,7 @@ class Color {
                  * @param c3    Fourth component (alpha, default 1.0).
                  */
                 Color(const ColorModel &model, float c0, float c1, float c2, float c3 = 1.0f)
-                        : _c{c0, c1, c2, c3}, _model(model) {}
+                    : _c{c0, c1, c2, c3}, _model(model) {}
 
                 /**
                  * @brief Disambiguation guard: constructs a color from a ColorModel::ID.
@@ -245,7 +245,7 @@ class Color {
                  * See @ref tr_disambiguation "ID Disambiguation Guards".
                  */
                 Color(ColorModel::ID id, float c0, float c1, float c2, float c3 = 1.0f)
-                        : _c{c0, c1, c2, c3}, _model(id) {}
+                    : _c{c0, c1, c2, c3}, _model(id) {}
 
                 /**
                  * @brief Constructs an sRGB color from 8-bit RGBA components.
@@ -253,8 +253,7 @@ class Color {
                  * Provided for backward compatibility. Components are divided by 255.
                  */
                 Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255)
-                        : _c{r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f},
-                          _model(ColorModel::sRGB) {}
+                    : _c{r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f}, _model(ColorModel::sRGB) {}
 
                 // --- State ---
 
@@ -270,7 +269,9 @@ class Color {
                 float comp(size_t index) const { return index < 4 ? _c[index] : 0.0f; }
 
                 /** @brief Sets component at the given index (0-3). */
-                void setComp(size_t index, float val) { if(index < 4) _c[index] = val; }
+                void setComp(size_t index, float val) {
+                        if (index < 4) _c[index] = val;
+                }
 
                 /** @brief Returns the alpha component. */
                 float alpha() const { return _c[3]; }
@@ -454,19 +455,16 @@ class Color {
 
                 /** @brief Equality operator. Exact float comparison, same model. */
                 bool operator==(const Color &other) const {
-                        return _model == other._model &&
-                               _c[0] == other._c[0] && _c[1] == other._c[1] &&
+                        return _model == other._model && _c[0] == other._c[0] && _c[1] == other._c[1] &&
                                _c[2] == other._c[2] && _c[3] == other._c[3];
                 }
 
                 /** @brief Inequality operator. */
-                bool operator!=(const Color &other) const {
-                        return !(*this == other);
-                }
+                bool operator!=(const Color &other) const { return !(*this == other); }
 
         private:
-                float              _c[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-                ColorModel         _model;
+                float      _c[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+                ColorModel _model;
 
                 // Helper: get sRGB version of this color (for string/hex output)
                 Color ensureSRGB() const;

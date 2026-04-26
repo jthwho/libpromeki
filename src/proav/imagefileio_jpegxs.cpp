@@ -41,63 +41,58 @@ PROMEKI_DEBUG(JPEGXS)
 
 namespace {
 
-static PixelFormat::ID probeJpegXsHeader(const void *data, size_t size,
-                                       size_t &widthOut, size_t &heightOut) {
-        // JPEG XS codestreams begin with SOC marker 0xFF10.  Reject
-        // obviously non-JPEG-XS data before touching SVT.
-        if(size < 4) return PixelFormat::Invalid;
-        const uint8_t *p = static_cast<const uint8_t *>(data);
-        if(p[0] != 0xFF || p[1] != 0x10) return PixelFormat::Invalid;
+        static PixelFormat::ID probeJpegXsHeader(const void *data, size_t size, size_t &widthOut, size_t &heightOut) {
+                // JPEG XS codestreams begin with SOC marker 0xFF10.  Reject
+                // obviously non-JPEG-XS data before touching SVT.
+                if (size < 4) return PixelFormat::Invalid;
+                const uint8_t *p = static_cast<const uint8_t *>(data);
+                if (p[0] != 0xFF || p[1] != 0x10) return PixelFormat::Invalid;
 
-        svt_jpeg_xs_decoder_api_t dec = {};
-        dec.use_cpu_flags      = CPU_FLAGS_ALL;
-        dec.verbose            = VERBOSE_NONE;
-        dec.threads_num        = 0;
-        dec.packetization_mode = 0;
-        dec.proxy_mode         = proxy_mode_full;
+                svt_jpeg_xs_decoder_api_t dec = {};
+                dec.use_cpu_flags = CPU_FLAGS_ALL;
+                dec.verbose = VERBOSE_NONE;
+                dec.threads_num = 0;
+                dec.packetization_mode = 0;
+                dec.proxy_mode = proxy_mode_full;
 
-        svt_jpeg_xs_image_config_t cfg = {};
-        SvtJxsErrorType_t err = svt_jpeg_xs_decoder_init(
-                SVT_JPEGXS_API_VER_MAJOR, SVT_JPEGXS_API_VER_MINOR,
-                &dec,
-                static_cast<const uint8_t *>(data),
-                size,
-                &cfg);
-        if(err != SvtJxsErrorNone) {
-                return PixelFormat::Invalid;
-        }
-
-        widthOut  = cfg.width;
-        heightOut = cfg.height;
-
-        PixelFormat::ID id = PixelFormat::Invalid;
-        const bool is422 = (cfg.format == COLOUR_FORMAT_PLANAR_YUV422);
-        const bool is420 = (cfg.format == COLOUR_FORMAT_PLANAR_YUV420);
-
-        if(is422) {
-                switch(cfg.bit_depth) {
-                        case 8:  id = PixelFormat::JPEG_XS_YUV8_422_Rec709;  break;
-                        case 10: id = PixelFormat::JPEG_XS_YUV10_422_Rec709; break;
-                        case 12: id = PixelFormat::JPEG_XS_YUV12_422_Rec709; break;
-                        default: break;
+                svt_jpeg_xs_image_config_t cfg = {};
+                SvtJxsErrorType_t err = svt_jpeg_xs_decoder_init(SVT_JPEGXS_API_VER_MAJOR, SVT_JPEGXS_API_VER_MINOR,
+                                                                 &dec, static_cast<const uint8_t *>(data), size, &cfg);
+                if (err != SvtJxsErrorNone) {
+                        return PixelFormat::Invalid;
                 }
-        } else if(is420) {
-                switch(cfg.bit_depth) {
-                        case 8:  id = PixelFormat::JPEG_XS_YUV8_420_Rec709;  break;
-                        case 10: id = PixelFormat::JPEG_XS_YUV10_420_Rec709; break;
-                        case 12: id = PixelFormat::JPEG_XS_YUV12_420_Rec709; break;
-                        default: break;
-                }
-        } else if(cfg.format == COLOUR_FORMAT_PLANAR_YUV444_OR_RGB) {
-                // The decoder reports 4:4:4/RGB streams as planar.  We
-                // only have an 8-bit RGB PixelFormat today; 10/12-bit
-                // would need new entries.
-                if(cfg.bit_depth == 8) id = PixelFormat::JPEG_XS_RGB8_sRGB;
-        }
 
-        svt_jpeg_xs_decoder_close(&dec);
-        return id;
-}
+                widthOut = cfg.width;
+                heightOut = cfg.height;
+
+                PixelFormat::ID id = PixelFormat::Invalid;
+                const bool      is422 = (cfg.format == COLOUR_FORMAT_PLANAR_YUV422);
+                const bool      is420 = (cfg.format == COLOUR_FORMAT_PLANAR_YUV420);
+
+                if (is422) {
+                        switch (cfg.bit_depth) {
+                                case 8: id = PixelFormat::JPEG_XS_YUV8_422_Rec709; break;
+                                case 10: id = PixelFormat::JPEG_XS_YUV10_422_Rec709; break;
+                                case 12: id = PixelFormat::JPEG_XS_YUV12_422_Rec709; break;
+                                default: break;
+                        }
+                } else if (is420) {
+                        switch (cfg.bit_depth) {
+                                case 8: id = PixelFormat::JPEG_XS_YUV8_420_Rec709; break;
+                                case 10: id = PixelFormat::JPEG_XS_YUV10_420_Rec709; break;
+                                case 12: id = PixelFormat::JPEG_XS_YUV12_420_Rec709; break;
+                                default: break;
+                        }
+                } else if (cfg.format == COLOUR_FORMAT_PLANAR_YUV444_OR_RGB) {
+                        // The decoder reports 4:4:4/RGB streams as planar.  We
+                        // only have an 8-bit RGB PixelFormat today; 10/12-bit
+                        // would need new entries.
+                        if (cfg.bit_depth == 8) id = PixelFormat::JPEG_XS_RGB8_sRGB;
+                }
+
+                svt_jpeg_xs_decoder_close(&dec);
+                return id;
+        }
 
 } // namespace
 
@@ -108,12 +103,12 @@ static PixelFormat::ID probeJpegXsHeader(const void *data, size_t size,
 class ImageFileIO_JpegXS : public ImageFileIO {
         public:
                 ImageFileIO_JpegXS() {
-                        _id      = ImageFile::JpegXS;
+                        _id = ImageFile::JpegXS;
                         _canLoad = true;
                         _canSave = true;
-                        _name    = "JPEG XS";
+                        _name = "JPEG XS";
                         _description = "JPEG XS (ISO/IEC 21122) image sequence";
-                        _extensions = { "jxs" };
+                        _extensions = {"jxs"};
                         _mediaIoName = "ImgSeqJpegXS";
                 }
 
@@ -137,23 +132,22 @@ Error ImageFileIO_JpegXS::load(ImageFile &imageFile, const MediaConfig &config) 
         (void)config;
         const String &filename = imageFile.filename();
 
-        File file(filename);
+        File  file(filename);
         Error err = file.open(File::ReadOnly);
-        if(err.isError()) {
+        if (err.isError()) {
                 promekiErr("JPEG XS load '%s': %s", filename.cstr(), err.name().cstr());
                 return err;
         }
 
         auto sizeResult = file.size();
-        if(!isOk(sizeResult)) {
+        if (!isOk(sizeResult)) {
                 file.close();
                 return error(sizeResult);
         }
         const int64_t fileSize = value(sizeResult);
-        if(fileSize < 4) {
+        if (fileSize < 4) {
                 file.close();
-                promekiErr("JPEG XS load '%s': file too small (%lld bytes)",
-                           filename.cstr(), (long long)fileSize);
+                promekiErr("JPEG XS load '%s': file too small (%lld bytes)", filename.cstr(), (long long)fileSize);
                 return Error::CorruptData;
         }
 
@@ -161,36 +155,31 @@ Error ImageFileIO_JpegXS::load(ImageFile &imageFile, const MediaConfig &config) 
         // transfer internally.  Buffer::DefaultAlign is page-sized,
         // which satisfies every common filesystem's O_DIRECT
         // requirement.
-        auto alignResult = file.directIOAlignment();
-        const size_t bufAlign = isOk(alignResult) ? value(alignResult)
-                                                  : Buffer::DefaultAlign;
-        Buffer::Ptr fileBuf = Buffer::Ptr::create(
-                static_cast<size_t>(fileSize) + bufAlign, bufAlign);
+        auto         alignResult = file.directIOAlignment();
+        const size_t bufAlign = isOk(alignResult) ? value(alignResult) : Buffer::DefaultAlign;
+        Buffer::Ptr  fileBuf = Buffer::Ptr::create(static_cast<size_t>(fileSize) + bufAlign, bufAlign);
         err = file.readBulk(*fileBuf.modify(), fileSize);
         file.close();
-        if(err.isError()) {
-                promekiErr("JPEG XS load '%s': read failed: %s",
-                           filename.cstr(), err.name().cstr());
+        if (err.isError()) {
+                promekiErr("JPEG XS load '%s': read failed: %s", filename.cstr(), err.name().cstr());
                 return err;
         }
-        if(fileBuf->size() < 4) {
-                promekiErr("JPEG XS load '%s': short read (%zu bytes)",
-                           filename.cstr(), fileBuf->size());
+        if (fileBuf->size() < 4) {
+                promekiErr("JPEG XS load '%s': short read (%zu bytes)", filename.cstr(), fileBuf->size());
                 return Error::CorruptData;
         }
 
-        size_t width = 0;
-        size_t height = 0;
-        PixelFormat::ID pdId = probeJpegXsHeader(fileBuf->data(), fileBuf->size(),
-                                               width, height);
-        if(pdId == PixelFormat::Invalid) {
+        size_t          width = 0;
+        size_t          height = 0;
+        PixelFormat::ID pdId = probeJpegXsHeader(fileBuf->data(), fileBuf->size(), width, height);
+        if (pdId == PixelFormat::Invalid) {
                 promekiErr("JPEG XS load '%s': header probe failed", filename.cstr());
                 return Error::CorruptData;
         }
 
         ImageDesc cdesc(Size2Du32(width, height), PixelFormat(pdId));
-        auto payload = CompressedVideoPayload::Ptr::create(cdesc, fileBuf);
-        if(!payload->isValid()) {
+        auto      payload = CompressedVideoPayload::Ptr::create(cdesc, fileBuf);
+        if (!payload->isValid()) {
                 promekiErr("JPEG XS load '%s': compressed payload build failed", filename.cstr());
                 return Error::Invalid;
         }
@@ -231,54 +220,47 @@ Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) 
         const String &filename = imageFile.filename();
 
         VideoPayload::PtrList vps = imageFile.frame().videoPayloads();
-        if(vps.isEmpty() || !vps[0].isValid()) {
+        if (vps.isEmpty() || !vps[0].isValid()) {
                 promekiErr("JPEG XS save '%s': no video payload", filename.cstr());
                 return Error::Invalid;
         }
 
         // Pass-through: keep the existing JPEG XS bitstream exactly.
-        if(const auto *cvp = vps[0]->as<CompressedVideoPayload>()) {
-                if(cvp->desc().pixelFormat().videoCodec().id() != VideoCodec::JPEG_XS) {
-                        promekiErr("JPEG XS save '%s': unsupported compressed input codec '%s'",
-                                   filename.cstr(),
+        if (const auto *cvp = vps[0]->as<CompressedVideoPayload>()) {
+                if (cvp->desc().pixelFormat().videoCodec().id() != VideoCodec::JPEG_XS) {
+                        promekiErr("JPEG XS save '%s': unsupported compressed input codec '%s'", filename.cstr(),
                                    cvp->desc().pixelFormat().videoCodec().name().cstr());
                         return Error::NotSupported;
                 }
-                if(cvp->planeCount() == 0) {
-                        promekiErr("JPEG XS save '%s': empty compressed payload",
-                                   filename.cstr());
+                if (cvp->planeCount() == 0) {
+                        promekiErr("JPEG XS save '%s': empty compressed payload", filename.cstr());
                         return Error::Invalid;
                 }
-                auto cview = cvp->plane(0);
+                auto         cview = cvp->plane(0);
                 const size_t payloadSize = cview.size();
-                if(payloadSize == 0) {
-                        promekiErr("JPEG XS save '%s': empty compressed payload",
-                                   filename.cstr());
+                if (payloadSize == 0) {
+                        promekiErr("JPEG XS save '%s': empty compressed payload", filename.cstr());
                         return Error::Invalid;
                 }
 
-                File file(filename);
-                Error err = file.open(File::WriteOnly,
-                                      File::Create | File::Truncate);
-                if(err.isError()) {
-                        promekiErr("JPEG XS save '%s': %s",
-                                   filename.cstr(), err.name().cstr());
+                File  file(filename);
+                Error err = file.open(File::WriteOnly, File::Create | File::Truncate);
+                if (err.isError()) {
+                        promekiErr("JPEG XS save '%s': %s", filename.cstr(), err.name().cstr());
                         return err;
                 }
-                const int64_t written = file.writeBulk(cview.data(),
-                                                       static_cast<int64_t>(payloadSize));
+                const int64_t written = file.writeBulk(cview.data(), static_cast<int64_t>(payloadSize));
                 file.close();
-                if(written != static_cast<int64_t>(payloadSize)) {
-                        promekiErr("JPEG XS save '%s': short write (%lld of %zu)",
-                                   filename.cstr(),
-                                   (long long)written, payloadSize);
+                if (written != static_cast<int64_t>(payloadSize)) {
+                        promekiErr("JPEG XS save '%s': short write (%lld of %zu)", filename.cstr(), (long long)written,
+                                   payloadSize);
                         return Error::IOError;
                 }
                 return Error::Ok;
         }
 
         const auto *uvp = vps[0]->as<UncompressedVideoPayload>();
-        if(uvp == nullptr || !uvp->desc().isValid() || uvp->planeCount() == 0) {
+        if (uvp == nullptr || !uvp->desc().isValid() || uvp->planeCount() == 0) {
                 promekiErr("JPEG XS save '%s': input payload not valid", filename.cstr());
                 return Error::Invalid;
         }
@@ -286,48 +268,30 @@ Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) 
         // Pick a JPEG XS subtype that matches the input's bit depth
         // and subsampling to avoid an extra CSC hop where possible.
         PixelFormat::ID targetId = PixelFormat::JPEG_XS_YUV8_422_Rec709;
-        switch(uvp->desc().pixelFormat().id()) {
+        switch (uvp->desc().pixelFormat().id()) {
                 // 4:2:2 planar inputs — match bit depth directly.
-                case PixelFormat::YUV8_422_Planar_Rec709:
-                        targetId = PixelFormat::JPEG_XS_YUV8_422_Rec709;
-                        break;
-                case PixelFormat::YUV10_422_Planar_LE_Rec709:
-                        targetId = PixelFormat::JPEG_XS_YUV10_422_Rec709;
-                        break;
-                case PixelFormat::YUV12_422_Planar_LE_Rec709:
-                        targetId = PixelFormat::JPEG_XS_YUV12_422_Rec709;
-                        break;
+                case PixelFormat::YUV8_422_Planar_Rec709: targetId = PixelFormat::JPEG_XS_YUV8_422_Rec709; break;
+                case PixelFormat::YUV10_422_Planar_LE_Rec709: targetId = PixelFormat::JPEG_XS_YUV10_422_Rec709; break;
+                case PixelFormat::YUV12_422_Planar_LE_Rec709: targetId = PixelFormat::JPEG_XS_YUV12_422_Rec709; break;
                 // 4:2:0 planar inputs — match bit depth directly.
-                case PixelFormat::YUV8_420_Planar_Rec709:
-                        targetId = PixelFormat::JPEG_XS_YUV8_420_Rec709;
-                        break;
-                case PixelFormat::YUV10_420_Planar_LE_Rec709:
-                        targetId = PixelFormat::JPEG_XS_YUV10_420_Rec709;
-                        break;
-                case PixelFormat::YUV12_420_Planar_LE_Rec709:
-                        targetId = PixelFormat::JPEG_XS_YUV12_420_Rec709;
-                        break;
+                case PixelFormat::YUV8_420_Planar_Rec709: targetId = PixelFormat::JPEG_XS_YUV8_420_Rec709; break;
+                case PixelFormat::YUV10_420_Planar_LE_Rec709: targetId = PixelFormat::JPEG_XS_YUV10_420_Rec709; break;
+                case PixelFormat::YUV12_420_Planar_LE_Rec709: targetId = PixelFormat::JPEG_XS_YUV12_420_Rec709; break;
                 // Interleaved 4:2:2 — encode as 8-bit 4:2:2.
                 case PixelFormat::YUV8_422_Rec709:
-                case PixelFormat::YUV8_422_UYVY_Rec709:
-                        targetId = PixelFormat::JPEG_XS_YUV8_422_Rec709;
-                        break;
+                case PixelFormat::YUV8_422_UYVY_Rec709: targetId = PixelFormat::JPEG_XS_YUV8_422_Rec709; break;
                 // 4:2:0 semi-planar — encode as 8-bit 4:2:0.
-                case PixelFormat::YUV8_420_SemiPlanar_Rec709:
-                        targetId = PixelFormat::JPEG_XS_YUV8_420_Rec709;
-                        break;
+                case PixelFormat::YUV8_420_SemiPlanar_Rec709: targetId = PixelFormat::JPEG_XS_YUV8_420_Rec709; break;
                 // RGB inputs — encode as packed RGB directly.  The SVT
                 // encoder deinterleaves to planar internally with
                 // AVX2/AVX512 fast paths.
                 case PixelFormat::RGB8_sRGB:
-                case PixelFormat::RGB8_Planar_sRGB:
-                        targetId = PixelFormat::JPEG_XS_RGB8_sRGB;
-                        break;
+                case PixelFormat::RGB8_Planar_sRGB: targetId = PixelFormat::JPEG_XS_RGB8_sRGB; break;
                 default:
                         // RGBA, mono, and anything else: fall back to
                         // JPEG XS RGB when the input is an RGB-family
                         // format, otherwise YUV 4:2:2.
-                        if(uvp->desc().pixelFormat().colorModel().id() == ColorModel::sRGB)
+                        if (uvp->desc().pixelFormat().colorModel().id() == ColorModel::sRGB)
                                 targetId = PixelFormat::JPEG_XS_RGB8_sRGB;
                         else
                                 targetId = PixelFormat::JPEG_XS_YUV8_422_Rec709;
@@ -340,71 +304,69 @@ Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) 
         MediaConfig encCfg = config;
         encCfg.set(MediaConfig::OutputPixelFormat, PixelFormat(targetId));
         auto encResult = VideoCodec(VideoCodec::JPEG_XS).createEncoder(&encCfg);
-        if(error(encResult).isError()) {
-                promekiErr("JPEG XS save '%s': createEncoder failed: %s",
-                           filename.cstr(), error(encResult).name().cstr());
+        if (error(encResult).isError()) {
+                promekiErr("JPEG XS save '%s': createEncoder failed: %s", filename.cstr(),
+                           error(encResult).name().cstr());
                 return Error::NotSupported;
         }
         VideoEncoder *enc = value(encResult);
 
-        UncompressedVideoPayload::Ptr inPayload =
-                sharedPointerCast<UncompressedVideoPayload>(vps[0]);
-        const auto &sources = PixelFormat(targetId).encodeSources();
-        bool sourceOk = sources.isEmpty();
-        for(PixelFormat::ID s : sources) {
-                if(uvp->desc().pixelFormat().id() == s) { sourceOk = true; break; }
+        UncompressedVideoPayload::Ptr inPayload = sharedPointerCast<UncompressedVideoPayload>(vps[0]);
+        const auto                   &sources = PixelFormat(targetId).encodeSources();
+        bool                          sourceOk = sources.isEmpty();
+        for (PixelFormat::ID s : sources) {
+                if (uvp->desc().pixelFormat().id() == s) {
+                        sourceOk = true;
+                        break;
+                }
         }
-        if(!sourceOk && !sources.isEmpty()) {
-                inPayload = uvp->convert(PixelFormat(sources[0]),
-                                         uvp->desc().metadata(), config);
-                if(!inPayload.isValid()) {
+        if (!sourceOk && !sources.isEmpty()) {
+                inPayload = uvp->convert(PixelFormat(sources[0]), uvp->desc().metadata(), config);
+                if (!inPayload.isValid()) {
                         delete enc;
-                        promekiErr("JPEG XS save '%s': prep CSC %s -> %s failed",
-                                   filename.cstr(),
-                                   uvp->desc().pixelFormat().name().cstr(),
-                                   PixelFormat(sources[0]).name().cstr());
+                        promekiErr("JPEG XS save '%s': prep CSC %s -> %s failed", filename.cstr(),
+                                   uvp->desc().pixelFormat().name().cstr(), PixelFormat(sources[0]).name().cstr());
                         return Error::ConversionFailed;
                 }
         }
 
-        if(!inPayload.isValid()) {
+        if (!inPayload.isValid()) {
                 delete enc;
                 promekiErr("JPEG XS save '%s': payload build failed", filename.cstr());
                 return Error::ConversionFailed;
         }
-        if(Error e = enc->submitPayload(inPayload); e.isError()) {
+        if (Error e = enc->submitPayload(inPayload); e.isError()) {
                 String msg = enc->lastErrorMessage();
                 delete enc;
-                promekiErr("JPEG XS save '%s': encode failed: %s",
-                           filename.cstr(), msg.isEmpty() ? e.name().cstr() : msg.cstr());
+                promekiErr("JPEG XS save '%s': encode failed: %s", filename.cstr(),
+                           msg.isEmpty() ? e.name().cstr() : msg.cstr());
                 return e;
         }
         CompressedVideoPayload::Ptr outPayload = enc->receiveCompressedPayload();
         delete enc;
-        if(!outPayload.isValid()) {
-                promekiErr("JPEG XS save '%s': encoder produced no payload",
-                           filename.cstr());
+        if (!outPayload.isValid()) {
+                promekiErr("JPEG XS save '%s': encoder produced no payload", filename.cstr());
                 return Error::EncodeFailed;
         }
-        auto encView = outPayload->plane(0);
-        const void *payload = encView.data();
+        auto         encView = outPayload->plane(0);
+        const void  *payload = encView.data();
         const size_t payloadSize = encView.size();
-        if(payload == nullptr || payloadSize == 0) {
+        if (payload == nullptr || payloadSize == 0) {
                 promekiErr("JPEG XS save '%s': empty encoded payload", filename.cstr());
                 return Error::EncodeFailed;
         }
 
-        File file(filename);
+        File  file(filename);
         Error err = file.open(File::WriteOnly, File::Create | File::Truncate);
-        if(err.isError()) {
+        if (err.isError()) {
                 promekiErr("JPEG XS save '%s': %s", filename.cstr(), err.name().cstr());
                 return err;
         }
         const int64_t written = file.writeBulk(payload, static_cast<int64_t>(payloadSize));
         file.close();
-        if(written != static_cast<int64_t>(payloadSize)) {
-                promekiErr("JPEG XS save '%s': short write (%lld of %zu)",
-                           filename.cstr(), (long long)written, payloadSize);
+        if (written != static_cast<int64_t>(payloadSize)) {
+                promekiErr("JPEG XS save '%s': short write (%lld of %zu)", filename.cstr(), (long long)written,
+                           payloadSize);
                 return Error::IOError;
         }
         return Error::Ok;

@@ -24,35 +24,33 @@ using namespace promeki;
 // ============================================================================
 
 TEST_CASE("KlvFrame: round-trip one frame through a buffer") {
-        Buffer store(1024);
+        Buffer         store(1024);
         BufferIODevice dev(&store);
         REQUIRE(dev.open(IODevice::ReadWrite).isOk());
 
-        const uint8_t payload[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x02 };
+        const uint8_t payload[] = {0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x02};
         {
                 KlvWriter w(&dev);
-                CHECK(w.writeFrame(FourCC("HELO"), payload, sizeof(payload))
-                        .isOk());
+                CHECK(w.writeFrame(FourCC("HELO"), payload, sizeof(payload)).isOk());
         }
         dev.seek(0);
         {
                 KlvReader r(&dev);
-                KlvFrame frame;
+                KlvFrame  frame;
                 CHECK(r.readFrame(frame).isOk());
                 CHECK(frame.key == FourCC("HELO"));
                 CHECK(frame.value.size() == sizeof(payload));
-                CHECK(std::memcmp(frame.value.data(), payload,
-                                  sizeof(payload)) == 0);
+                CHECK(std::memcmp(frame.value.data(), payload, sizeof(payload)) == 0);
         }
 }
 
 TEST_CASE("KlvFrame: round-trip multiple frames, mixed sizes") {
-        Buffer store(1024);
+        Buffer         store(1024);
         BufferIODevice dev(&store);
         REQUIRE(dev.open(IODevice::ReadWrite).isOk());
         {
                 KlvWriter w(&dev);
-                CHECK(w.writeFrame(FourCC("ONE ")).isOk());   // zero-length
+                CHECK(w.writeFrame(FourCC("ONE ")).isOk()); // zero-length
                 CHECK(w.writeFrame(FourCC("TWO "), "xy", 2).isOk());
                 const char *msg = "hello world";
                 CHECK(w.writeFrame(FourCC("THRE"), msg, 11).isOk());
@@ -60,7 +58,7 @@ TEST_CASE("KlvFrame: round-trip multiple frames, mixed sizes") {
         dev.seek(0);
         {
                 KlvReader r(&dev);
-                KlvFrame f;
+                KlvFrame  f;
                 CHECK(r.readFrame(f).isOk());
                 CHECK(f.key == FourCC("ONE "));
                 CHECK(f.value.size() == 0);
@@ -81,24 +79,31 @@ TEST_CASE("KlvFrame: round-trip multiple frames, mixed sizes") {
 }
 
 TEST_CASE("KlvFrame: wire layout is Key|Length|Value, Length big-endian") {
-        Buffer store(64);
+        Buffer         store(64);
         BufferIODevice dev(&store);
         REQUIRE(dev.open(IODevice::ReadWrite).isOk());
         {
-                KlvWriter w(&dev);
+                KlvWriter   w(&dev);
                 const char *payload = "ABC";
                 CHECK(w.writeFrame(FourCC("TICK"), payload, 3).isOk());
         }
-        REQUIRE(dev.pos() == 11);  // 4 + 4 + 3
+        REQUIRE(dev.pos() == 11); // 4 + 4 + 3
         const uint8_t *raw = static_cast<const uint8_t *>(store.data());
-        CHECK(raw[0] == 'T'); CHECK(raw[1] == 'I'); CHECK(raw[2] == 'C'); CHECK(raw[3] == 'K');
-        CHECK(raw[4] == 0x00); CHECK(raw[5] == 0x00);
-        CHECK(raw[6] == 0x00); CHECK(raw[7] == 0x03);  // Length = 3 BE
-        CHECK(raw[8] == 'A'); CHECK(raw[9] == 'B'); CHECK(raw[10] == 'C');
+        CHECK(raw[0] == 'T');
+        CHECK(raw[1] == 'I');
+        CHECK(raw[2] == 'C');
+        CHECK(raw[3] == 'K');
+        CHECK(raw[4] == 0x00);
+        CHECK(raw[5] == 0x00);
+        CHECK(raw[6] == 0x00);
+        CHECK(raw[7] == 0x03); // Length = 3 BE
+        CHECK(raw[8] == 'A');
+        CHECK(raw[9] == 'B');
+        CHECK(raw[10] == 'C');
 }
 
 TEST_CASE("KlvFrame: skipValue lets a reader forward past unknown frames") {
-        Buffer store(1024);
+        Buffer         store(1024);
         BufferIODevice dev(&store);
         REQUIRE(dev.open(IODevice::ReadWrite).isOk());
         {
@@ -110,8 +115,8 @@ TEST_CASE("KlvFrame: skipValue lets a reader forward past unknown frames") {
         dev.seek(0);
         {
                 KlvReader r(&dev);
-                FourCC key(0,0,0,0);
-                uint32_t sz = 0;
+                FourCC    key(0, 0, 0, 0);
+                uint32_t  sz = 0;
 
                 // 1: known, read it
                 CHECK(r.readHeader(key, sz).isOk());
@@ -140,7 +145,7 @@ TEST_CASE("KlvFrame: skipValue lets a reader forward past unknown frames") {
 }
 
 TEST_CASE("KlvFrame: readFrame rejects oversize payload") {
-        Buffer store(64);
+        Buffer         store(64);
         BufferIODevice dev(&store);
         REQUIRE(dev.open(IODevice::ReadWrite).isOk());
         {
@@ -150,7 +155,7 @@ TEST_CASE("KlvFrame: readFrame rejects oversize payload") {
         dev.seek(0);
         {
                 KlvReader r(&dev);
-                KlvFrame f;
+                KlvFrame  f;
                 CHECK(r.readFrame(f, /*maxValueBytes=*/4) == Error::TooLarge);
                 CHECK(f.key == FourCC("BIG "));
         }
@@ -159,30 +164,30 @@ TEST_CASE("KlvFrame: readFrame rejects oversize payload") {
 TEST_CASE("KlvFrame: EOF mid-header is reported as IOError, mid-value too") {
         // Header truncated — only 3 bytes written where 8 are required.
         {
-                Buffer store(4);
+                Buffer         store(4);
                 BufferIODevice dev(&store);
                 REQUIRE(dev.open(IODevice::ReadWrite).isOk());
-                const uint8_t partial[3] = { 'H', 'E', 'L' };
+                const uint8_t partial[3] = {'H', 'E', 'L'};
                 dev.write(partial, 3);
                 dev.seek(0);
 
                 KlvReader r(&dev);
-                FourCC key(0,0,0,0);
-                uint32_t sz = 0;
+                FourCC    key(0, 0, 0, 0);
+                uint32_t  sz = 0;
                 CHECK(r.readHeader(key, sz) == Error::IOError);
         }
         // Value truncated — header claims 16 bytes but only 4 follow.
         {
-                Buffer store(32);
+                Buffer         store(32);
                 BufferIODevice dev(&store);
                 REQUIRE(dev.open(IODevice::ReadWrite).isOk());
-                uint8_t hdr[8] = { 'T','I','C','K', 0,0,0,16 };
+                uint8_t hdr[8] = {'T', 'I', 'C', 'K', 0, 0, 0, 16};
                 dev.write(hdr, sizeof(hdr));
                 dev.write("abcd", 4);
                 dev.seek(0);
 
                 KlvReader r(&dev);
-                KlvFrame f;
+                KlvFrame  f;
                 CHECK(r.readFrame(f) == Error::IOError);
         }
 }
@@ -192,14 +197,15 @@ TEST_CASE("KlvFrame: EOF mid-header is reported as IOError, mid-value too") {
 // ============================================================================
 
 static String uniqueSocketPath(const char *tag) {
-        return Dir::temp().path()
-                .join(String("promeki-test-klv-") + String(tag) + String("-") +
-                      UUID::generateV4().toString() + String(".sock"))
+        return Dir::temp()
+                .path()
+                .join(String("promeki-test-klv-") + String(tag) + String("-") + UUID::generateV4().toString() +
+                      String(".sock"))
                 .toString();
 }
 
 TEST_CASE("KlvFrame: DataStream value over LocalSocket") {
-        if(!LocalServer::isSupported()) return;
+        if (!LocalServer::isSupported()) return;
         String path = uniqueSocketPath("ds");
 
         LocalServer server;
@@ -212,7 +218,7 @@ TEST_CASE("KlvFrame: DataStream value over LocalSocket") {
         REQUIRE(ss != nullptr);
 
         // Build a DataStream-encoded blob and send as one KLV frame.
-        Buffer blob(128);
+        Buffer         blob(128);
         BufferIODevice blobDev(&blob);
         REQUIRE(blobDev.open(IODevice::ReadWrite).isOk());
         DataStream ws = DataStream::createWriter(&blobDev);
@@ -226,18 +232,18 @@ TEST_CASE("KlvFrame: DataStream value over LocalSocket") {
 
         // Receiver side.
         KlvReader r(ss);
-        KlvFrame frame;
+        KlvFrame  frame;
         CHECK(r.readFrame(frame).isOk());
         CHECK(frame.key == FourCC("HELO"));
         REQUIRE(frame.value.size() == blobSize);
 
         // Decode via DataStream over the received buffer.
-        Buffer rxCopy = frame.value;
+        Buffer         rxCopy = frame.value;
         BufferIODevice rxDev(&rxCopy);
         REQUIRE(rxDev.open(IODevice::ReadWrite).isOk());
         DataStream rs = DataStream::createReader(&rxDev);
-        String s;
-        int32_t n = 0;
+        String     s;
+        int32_t    n = 0;
         rs >> s >> n;
         CHECK(rs.status() == DataStream::Ok);
         CHECK(s == String("hello"));

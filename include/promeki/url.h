@@ -179,8 +179,7 @@ class Url {
                  * @param key          The query parameter name.
                  * @param defaultValue Fallback when the key is absent.
                  */
-                String queryValue(const String &key,
-                                  const String &defaultValue = String()) const {
+                String queryValue(const String &key, const String &defaultValue = String()) const {
                         return _query.value(key, defaultValue);
                 }
 
@@ -189,9 +188,7 @@ class Url {
                  *
                  * Lookup is case-sensitive; see @ref queryValue.
                  */
-                bool hasQueryValue(const String &key) const {
-                        return _query.contains(key);
-                }
+                bool hasQueryValue(const String &key) const { return _query.contains(key); }
 
                 /** @brief Fragment component without the leading @c #. */
                 const String &fragment() const { return _fragment; }
@@ -211,7 +208,10 @@ class Url {
                 Url &setScheme(const String &s);
 
                 /** @brief Replaces the userinfo component. */
-                Url &setUserInfo(const String &s) { _userInfo = s; return *this; }
+                Url &setUserInfo(const String &s) {
+                        _userInfo = s;
+                        return *this;
+                }
 
                 /**
                  * @brief Replaces the host.
@@ -222,13 +222,22 @@ class Url {
                 Url &setHost(const String &s);
 
                 /** @brief Replaces the port (pass @ref PortUnset to clear). */
-                Url &setPort(int p) { _port = p; return *this; }
+                Url &setPort(int p) {
+                        _port = p;
+                        return *this;
+                }
 
                 /** @brief Replaces the path. */
-                Url &setPath(const String &s) { _path = s; return *this; }
+                Url &setPath(const String &s) {
+                        _path = s;
+                        return *this;
+                }
 
                 /** @brief Replaces the entire query map. */
-                Url &setQuery(const Map<String, String> &q) { _query = q; return *this; }
+                Url &setQuery(const Map<String, String> &q) {
+                        _query = q;
+                        return *this;
+                }
 
                 /** @brief Inserts or overwrites a single query key. */
                 Url &setQueryValue(const String &key, const String &value) {
@@ -243,7 +252,10 @@ class Url {
                 }
 
                 /** @brief Replaces the fragment component. */
-                Url &setFragment(const String &s) { _fragment = s; return *this; }
+                Url &setFragment(const String &s) {
+                        _fragment = s;
+                        return *this;
+                }
 
                 /**
                  * @brief Selects authority vs opaque serialization form.
@@ -254,7 +266,10 @@ class Url {
                  * first path character would otherwise be mistaken for
                  * authority.
                  */
-                Url &setHasAuthority(bool v) { _hasAuthority = v; return *this; }
+                Url &setHasAuthority(bool v) {
+                        _hasAuthority = v;
+                        return *this;
+                }
 
                 /**
                  * @brief Serializes back to the canonical URI form.
@@ -273,14 +288,14 @@ class Url {
                 bool operator!=(const Url &other) const { return !(*this == other); }
 
         private:
-                String _scheme;
-                String _userInfo;
-                String _host;
-                int _port = PortUnset;
-                String _path;
+                String              _scheme;
+                String              _userInfo;
+                String              _host;
+                int                 _port = PortUnset;
+                String              _path;
                 Map<String, String> _query;
-                String _fragment;
-                bool _hasAuthority = false;
+                String              _fragment;
+                bool                _hasAuthority = false;
 };
 
 PROMEKI_NAMESPACE_END

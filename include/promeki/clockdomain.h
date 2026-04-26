@@ -108,8 +108,7 @@ class ClockDomain {
                  * @param epoch       Epoch behaviour (default: Correlated).
                  * @return The ID for the registered domain.
                  */
-                static ID registerDomain(const String &name,
-                                         const String &description,
+                static ID registerDomain(const String &name, const String &description,
                                          const ClockEpoch &epoch = ClockEpoch::Correlated);
 
                 /**
@@ -120,8 +119,7 @@ class ClockDomain {
                  * @param id       The domain to update.
                  * @param metadata The new metadata.
                  */
-                static void setDomainMetadata(const ID &id,
-                                              const Metadata &metadata);
+                static void setDomainMetadata(const ID &id, const Metadata &metadata);
 
                 /**
                  * @brief Returns the IDs of all registered clock domains.
@@ -228,7 +226,7 @@ class ClockDomain {
                 bool operator!=(const ClockDomain &other) const { return d != other.d; }
 
         private:
-                const Data *d = nullptr;
+                const Data        *d = nullptr;
                 static const Data *lookupData(const ID &id);
 };
 

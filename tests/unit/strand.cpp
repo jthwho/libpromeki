@@ -25,8 +25,8 @@ namespace {
 
 TEST_CASE("Strand_SubmitAndGet") {
         ThreadPool pool(4);
-        Strand strand(pool);
-        auto f = strand.submit([] { return 42; });
+        Strand     strand(pool);
+        auto       f = strand.submit([] { return 42; });
         auto [val, err] = f.result();
         CHECK(err == Error::Ok);
         CHECK(val == 42);
@@ -35,12 +35,12 @@ TEST_CASE("Strand_SubmitAndGet") {
 TEST_CASE("Strand_SerialOrder") {
         // Tasks must execute in submission order, not concurrently.
         ThreadPool pool(4);
-        Strand strand(pool);
-        List<int> order;
-        Mutex orderMutex;
-        const int count = 100;
+        Strand     strand(pool);
+        List<int>  order;
+        Mutex      orderMutex;
+        const int  count = 100;
 
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
                 strand.submit([i, &order, &orderMutex] {
                         // Force overlap if serialization is broken
                         sleepUs(50);
@@ -51,24 +51,24 @@ TEST_CASE("Strand_SerialOrder") {
         strand.waitForIdle();
 
         REQUIRE((int)order.size() == count);
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
                 CHECK(order[i] == i);
         }
 }
 
 TEST_CASE("Strand_NoOverlap") {
         // No two strand tasks should run concurrently.
-        ThreadPool pool(4);
-        Strand strand(pool);
+        ThreadPool  pool(4);
+        Strand      strand(pool);
         Atomic<int> active{0};
         Atomic<int> maxActive{0};
-        const int count = 50;
+        const int   count = 50;
 
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
                 strand.submit([&active, &maxActive] {
                         int now = active.fetchAndAdd(1) + 1;
                         int prev = maxActive.value();
-                        while(now > prev && !maxActive.compareAndSwap(prev, now)) {}
+                        while (now > prev && !maxActive.compareAndSwap(prev, now)) {}
                         sleepUs(100);
                         active.fetchAndSub(1);
                 });
@@ -79,10 +79,10 @@ TEST_CASE("Strand_NoOverlap") {
 }
 
 TEST_CASE("Strand_VoidTask") {
-        ThreadPool pool(2);
-        Strand strand(pool);
+        ThreadPool  pool(2);
+        Strand      strand(pool);
         Atomic<int> counter{0};
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
                 strand.submit([&counter] { counter.fetchAndAdd(1); });
         }
         strand.waitForIdle();
@@ -92,13 +92,13 @@ TEST_CASE("Strand_VoidTask") {
 TEST_CASE("Strand_MultipleStrandsConcurrent") {
         // Independent strands should be able to run concurrently.
         ThreadPool pool(4);
-        Strand strandA(pool);
-        Strand strandB(pool);
+        Strand     strandA(pool);
+        Strand     strandB(pool);
 
         Atomic<int> counterA{0};
         Atomic<int> counterB{0};
 
-        for(int i = 0; i < 50; i++) {
+        for (int i = 0; i < 50; i++) {
                 strandA.submit([&counterA] { counterA.fetchAndAdd(1); });
                 strandB.submit([&counterB] { counterB.fetchAndAdd(1); });
         }
@@ -111,11 +111,9 @@ TEST_CASE("Strand_MultipleStrandsConcurrent") {
 
 TEST_CASE("Strand_IsBusy") {
         ThreadPool pool(2);
-        Strand strand(pool);
+        Strand     strand(pool);
         CHECK_FALSE(strand.isBusy());
-        strand.submit([] {
-                TimeStamp::sleep(std::chrono::milliseconds(50));
-        });
+        strand.submit([] { TimeStamp::sleep(std::chrono::milliseconds(50)); });
         // Busy may be true immediately after submit; either is acceptable
         // depending on scheduling.  Just make sure waitForIdle clears it.
         strand.waitForIdle();
@@ -123,11 +121,11 @@ TEST_CASE("Strand_IsBusy") {
 }
 
 TEST_CASE("Strand_DestructorWaitsForIdle") {
-        ThreadPool pool(2);
+        ThreadPool  pool(2);
         Atomic<int> counter{0};
         {
                 Strand strand(pool);
-                for(int i = 0; i < 20; i++) {
+                for (int i = 0; i < 20; i++) {
                         strand.submit([&counter] {
                                 sleepUs(100);
                                 counter.fetchAndAdd(1);
@@ -144,7 +142,7 @@ TEST_CASE("Strand_PendingCountReflectsQueuedTasks") {
         // backlog depth as a stat; needs to be monotone w.r.t. the
         // visible queue depth.
         ThreadPool pool(2);
-        Strand strand(pool);
+        Strand     strand(pool);
 
         CHECK(strand.pendingCount() == 0);
 
@@ -154,18 +152,18 @@ TEST_CASE("Strand_PendingCountReflectsQueuedTasks") {
         Atomic<bool> firstUnblock{false};
         strand.submit([&] {
                 firstStarted.setValue(true);
-                while(!firstUnblock.value()) {
+                while (!firstUnblock.value()) {
                         sleepUs(50);
                 }
         });
-        while(!firstStarted.value()) {
+        while (!firstStarted.value()) {
                 sleepUs(50);
         }
         // The in-flight task is not "pending".
         CHECK(strand.pendingCount() == 0);
 
         // Queue five more — they're all pending.
-        for(int i = 0; i < 5; i++) {
+        for (int i = 0; i < 5; i++) {
                 strand.submit([] {});
         }
         CHECK(strand.pendingCount() == 5);
@@ -179,29 +177,38 @@ TEST_CASE("Strand_PendingCountReflectsQueuedTasks") {
 TEST_CASE("Strand_CancelPending") {
         // Cancelling drains queued tasks; their futures resolve with Cancelled.
         ThreadPool pool(2);
-        Strand strand(pool);
+        Strand     strand(pool);
 
         // Submit a task that holds the strand busy long enough that
         // subsequent submissions queue up behind it.
         Atomic<bool> firstStarted{false};
         Atomic<bool> firstUnblock{false};
-        auto firstFuture = strand.submit([&]() -> Error {
+        auto         firstFuture = strand.submit([&]() -> Error {
                 firstStarted.setValue(true);
-                while(!firstUnblock.value()) {
+                while (!firstUnblock.value()) {
                         sleepUs(50);
                 }
                 return Error::Ok;
         });
 
         // Wait for the first task to actually start so the next ones queue.
-        while(!firstStarted.value()) {
+        while (!firstStarted.value()) {
                 sleepUs(50);
         }
 
-        Atomic<int> ranCount{0};
-        Future<Error> queued1 = strand.submit([&]() -> Error { ranCount.fetchAndAdd(1); return Error::Ok; });
-        Future<Error> queued2 = strand.submit([&]() -> Error { ranCount.fetchAndAdd(1); return Error::Ok; });
-        Future<Error> queued3 = strand.submit([&]() -> Error { ranCount.fetchAndAdd(1); return Error::Ok; });
+        Atomic<int>   ranCount{0};
+        Future<Error> queued1 = strand.submit([&]() -> Error {
+                ranCount.fetchAndAdd(1);
+                return Error::Ok;
+        });
+        Future<Error> queued2 = strand.submit([&]() -> Error {
+                ranCount.fetchAndAdd(1);
+                return Error::Ok;
+        });
+        Future<Error> queued3 = strand.submit([&]() -> Error {
+                ranCount.fetchAndAdd(1);
+                return Error::Ok;
+        });
 
         size_t cancelled = strand.cancelPending();
         CHECK(cancelled == 3);
@@ -221,7 +228,7 @@ TEST_CASE("Strand_CancelPending") {
 
 TEST_CASE("Strand_CancelEmptyQueue") {
         ThreadPool pool(2);
-        Strand strand(pool);
+        Strand     strand(pool);
         CHECK(strand.cancelPending() == 0);
 }
 
@@ -229,27 +236,27 @@ TEST_CASE("Strand_SubmitUrgentJumpsQueue") {
         // An urgent submission must run before any pending (not-yet-started)
         // tasks, but must still wait for the currently-running task.
         ThreadPool pool(4);
-        Strand strand(pool);
+        Strand     strand(pool);
 
         // Block the strand with a long-running task so everything else
         // queues behind it.
         Atomic<bool> firstStarted{false};
         Atomic<bool> firstUnblock{false};
-        auto firstFuture = strand.submit([&]() -> int {
+        auto         firstFuture = strand.submit([&]() -> int {
                 firstStarted.setValue(true);
-                while(!firstUnblock.value()) {
+                while (!firstUnblock.value()) {
                         sleepUs(50);
                 }
                 return 0;
         });
-        while(!firstStarted.value()) {
+        while (!firstStarted.value()) {
                 sleepUs(50);
         }
 
         // Queue up several normal tasks behind the in-flight one.
         List<int> order;
-        Mutex orderMutex;
-        auto appender = [&](int id) {
+        Mutex     orderMutex;
+        auto      appender = [&](int id) {
                 return [id, &order, &orderMutex] {
                         Mutex::Locker lock(orderMutex);
                         order.pushToBack(id);
@@ -277,21 +284,21 @@ TEST_CASE("Strand_SubmitUrgentJumpsQueue") {
 TEST_CASE("Strand_SubmitUrgentStillSerial") {
         // Urgent submissions must still run under the strand's serial
         // guarantee — never concurrently with another task.
-        ThreadPool pool(4);
-        Strand strand(pool);
+        ThreadPool  pool(4);
+        Strand      strand(pool);
         Atomic<int> active{0};
         Atomic<int> maxActive{0};
 
         auto body = [&] {
                 int now = active.fetchAndAdd(1) + 1;
                 int prev = maxActive.value();
-                while(now > prev && !maxActive.compareAndSwap(prev, now)) {}
+                while (now > prev && !maxActive.compareAndSwap(prev, now)) {}
                 sleepUs(100);
                 active.fetchAndSub(1);
         };
 
-        for(int i = 0; i < 30; i++) {
-                if(i % 3 == 0) {
+        for (int i = 0; i < 30; i++) {
+                if (i % 3 == 0) {
                         strand.submitUrgent(body);
                 } else {
                         strand.submit(body);
@@ -310,23 +317,23 @@ TEST_CASE("Strand_SubmitUrgentCancelledByCancelPending") {
         // stats call resolves with Cancelled and the caller simply
         // polls again on the next tick.
         ThreadPool pool(2);
-        Strand strand(pool);
+        Strand     strand(pool);
 
         Atomic<bool> firstStarted{false};
         Atomic<bool> firstUnblock{false};
-        auto firstFuture = strand.submit([&]() -> Error {
+        auto         firstFuture = strand.submit([&]() -> Error {
                 firstStarted.setValue(true);
-                while(!firstUnblock.value()) {
+                while (!firstUnblock.value()) {
                         sleepUs(50);
                 }
                 return Error::Ok;
         });
-        while(!firstStarted.value()) {
+        while (!firstStarted.value()) {
                 sleepUs(50);
         }
 
         Atomic<int> ranCount{0};
-        auto urgentFuture = strand.submitUrgent([&]() -> Error {
+        auto        urgentFuture = strand.submitUrgent([&]() -> Error {
                 ranCount.fetchAndAdd(1);
                 return Error::Ok;
         });
@@ -343,27 +350,25 @@ TEST_CASE("Strand_SubmitUrgentCancelledByCancelPending") {
 TEST_CASE("Strand_CancelHookRuns") {
         // The optional cancel hook fires when a task is cancelled.
         ThreadPool pool(2);
-        Strand strand(pool);
+        Strand     strand(pool);
 
         // Block the strand with a long task.
         Atomic<bool> unblock{false};
         Atomic<bool> firstStarted{false};
         strand.submit([&] {
                 firstStarted.setValue(true);
-                while(!unblock.value()) {
+                while (!unblock.value()) {
                         sleepUs(50);
                 }
         });
-        while(!firstStarted.value()) {
+        while (!firstStarted.value()) {
                 sleepUs(50);
         }
 
         Atomic<int> cancelHookCount{0};
         Atomic<int> ranCount{0};
-        for(int i = 0; i < 5; i++) {
-                strand.submit(
-                        [&] { ranCount.fetchAndAdd(1); },
-                        [&] { cancelHookCount.fetchAndAdd(1); });
+        for (int i = 0; i < 5; i++) {
+                strand.submit([&] { ranCount.fetchAndAdd(1); }, [&] { cancelHookCount.fetchAndAdd(1); });
         }
 
         size_t cancelled = strand.cancelPending();

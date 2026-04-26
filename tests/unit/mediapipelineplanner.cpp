@@ -48,172 +48,165 @@ using namespace promeki;
 
 namespace {
 
-// Helper IDs in the MediaConfig registry — picked from the user-
-// defined band so they don't collide with shipped keys.
-const MediaConfig::ID PlannerProducedDesc("PlannerProducedDesc");
-const MediaConfig::ID PlannerAcceptedDesc("PlannerAcceptedDesc");
-const MediaConfig::ID PlannerProducedRate("PlannerProducedRate");
-const MediaConfig::ID PlannerAcceptedRate("PlannerAcceptedRate");
+        // Helper IDs in the MediaConfig registry — picked from the user-
+        // defined band so they don't collide with shipped keys.
+        const MediaConfig::ID PlannerProducedDesc("PlannerProducedDesc");
+        const MediaConfig::ID PlannerAcceptedDesc("PlannerAcceptedDesc");
+        const MediaConfig::ID PlannerProducedRate("PlannerProducedRate");
+        const MediaConfig::ID PlannerAcceptedRate("PlannerAcceptedRate");
 
-MediaDesc syntheticDesc(PixelFormat::ID id,
-                        FrameRate rate = FrameRate(FrameRate::FPS_30)) {
-        MediaDesc md;
-        md.setFrameRate(rate);
-        md.imageList().pushToBack(
-                ImageDesc(Size2Du32(1920, 1080), PixelFormat(id)));
-        return md;
-}
-
-PixelFormat::ID readDescId(const MediaIO::Config &cfg, MediaConfig::ID key,
-                         PixelFormat::ID fallback) {
-        if(!cfg.contains(key)) return fallback;
-        const PixelFormat pd = cfg.getAs<PixelFormat>(key);
-        return pd.isValid() ? pd.id() : fallback;
-}
-
-FrameRate readRate(const MediaIO::Config &cfg, MediaConfig::ID key,
-                   FrameRate fallback) {
-        if(!cfg.contains(key)) return fallback;
-        const FrameRate fr = cfg.getAs<FrameRate>(key);
-        return fr.isValid() ? fr : fallback;
-}
-
-class PlannerSyntheticSrcTask : public MediaIOTask {
-public:
-        static MediaIO::FormatDesc formatDesc() {
-                MediaIO::FormatDesc d;
-                d.name           = "PlannerSyntheticSrc";
-                d.description    = "Synthetic source emitting a configurable PixelFormat.";
-                d.canBeSource    = true;
-                d.canBeSink      = false;
-                d.canBeTransform = false;
-                d.create         = []() -> MediaIOTask * {
-                        return new PlannerSyntheticSrcTask();
-                };
-                d.configSpecs    = []() {
-                        MediaIO::Config::SpecMap m;
-                        m.insert(PlannerProducedDesc,
-                                VariantSpec().setType(Variant::TypePixelFormat)
-                                        .setDefault(PixelFormat(PixelFormat::RGBA8_sRGB)));
-                        m.insert(PlannerProducedRate,
-                                VariantSpec().setType(Variant::TypeFrameRate)
-                                        .setDefault(FrameRate(FrameRate::FPS_30)));
-                        return m;
-                };
-                return d;
+        MediaDesc syntheticDesc(PixelFormat::ID id, FrameRate rate = FrameRate(FrameRate::FPS_30)) {
+                MediaDesc md;
+                md.setFrameRate(rate);
+                md.imageList().pushToBack(ImageDesc(Size2Du32(1920, 1080), PixelFormat(id)));
+                return md;
         }
 
-private:
-        Error describe(MediaIODescription *out) const override {
-                if(out == nullptr) return Error::Invalid;
-                const MediaIO *io = mediaIo();
-                const MediaIO::Config &cfg = (io != nullptr) ? io->config()
-                                                             : MediaIO::Config();
-                const PixelFormat::ID id = readDescId(cfg, PlannerProducedDesc,
-                                                    PixelFormat::RGBA8_sRGB);
-                const FrameRate rate = readRate(cfg, PlannerProducedRate,
-                                                FrameRate(FrameRate::FPS_30));
-                out->setPreferredFormat(syntheticDesc(id, rate));
-                out->producibleFormats().pushToBack(syntheticDesc(id, rate));
-                return Error::Ok;
-        }
-};
-
-class PlannerSyntheticSinkTask : public MediaIOTask {
-public:
-        static MediaIO::FormatDesc formatDesc() {
-                MediaIO::FormatDesc d;
-                d.name           = "PlannerSyntheticSink";
-                d.description    = "Synthetic sink demanding a configurable PixelFormat.";
-                d.canBeSource    = false;
-                d.canBeSink      = true;
-                d.canBeTransform = false;
-                d.create         = []() -> MediaIOTask * {
-                        return new PlannerSyntheticSinkTask();
-                };
-                d.configSpecs    = []() {
-                        MediaIO::Config::SpecMap m;
-                        m.insert(PlannerAcceptedDesc,
-                                VariantSpec().setType(Variant::TypePixelFormat)
-                                        .setDefault(PixelFormat(PixelFormat::RGBA8_sRGB)));
-                        m.insert(PlannerAcceptedRate,
-                                VariantSpec().setType(Variant::TypeFrameRate)
-                                        .setDefault(FrameRate(FrameRate::FPS_30)));
-                        return m;
-                };
-                return d;
+        PixelFormat::ID readDescId(const MediaIO::Config &cfg, MediaConfig::ID key, PixelFormat::ID fallback) {
+                if (!cfg.contains(key)) return fallback;
+                const PixelFormat pd = cfg.getAs<PixelFormat>(key);
+                return pd.isValid() ? pd.id() : fallback;
         }
 
-private:
-        Error describe(MediaIODescription *out) const override {
-                if(out == nullptr) return Error::Invalid;
-                const MediaIO *io = mediaIo();
-                const MediaIO::Config &cfg = (io != nullptr) ? io->config()
-                                                             : MediaIO::Config();
-                const PixelFormat::ID id = readDescId(cfg, PlannerAcceptedDesc,
-                                                    PixelFormat::RGBA8_sRGB);
-                const FrameRate rate = readRate(cfg, PlannerAcceptedRate,
-                                                FrameRate(FrameRate::FPS_30));
-                out->acceptableFormats().pushToBack(syntheticDesc(id, rate));
-                out->setPreferredFormat(syntheticDesc(id, rate));
-                return Error::Ok;
+        FrameRate readRate(const MediaIO::Config &cfg, MediaConfig::ID key, FrameRate fallback) {
+                if (!cfg.contains(key)) return fallback;
+                const FrameRate fr = cfg.getAs<FrameRate>(key);
+                return fr.isValid() ? fr : fallback;
         }
 
-        Error proposeInput(const MediaDesc &offered,
-                           MediaDesc *preferred) const override {
-                if(preferred == nullptr) return Error::Invalid;
-                if(offered.imageList().isEmpty()) return Error::NotSupported;
+        class PlannerSyntheticSrcTask : public MediaIOTask {
+                public:
+                        static MediaIO::FormatDesc formatDesc() {
+                                MediaIO::FormatDesc d;
+                                d.name = "PlannerSyntheticSrc";
+                                d.description = "Synthetic source emitting a configurable PixelFormat.";
+                                d.canBeSource = true;
+                                d.canBeSink = false;
+                                d.canBeTransform = false;
+                                d.create = []() -> MediaIOTask * {
+                                        return new PlannerSyntheticSrcTask();
+                                };
+                                d.configSpecs = []() {
+                                        MediaIO::Config::SpecMap m;
+                                        m.insert(PlannerProducedDesc,
+                                                 VariantSpec()
+                                                         .setType(Variant::TypePixelFormat)
+                                                         .setDefault(PixelFormat(PixelFormat::RGBA8_sRGB)));
+                                        m.insert(PlannerProducedRate,
+                                                 VariantSpec()
+                                                         .setType(Variant::TypeFrameRate)
+                                                         .setDefault(FrameRate(FrameRate::FPS_30)));
+                                        return m;
+                                };
+                                return d;
+                        }
 
-                const MediaIO *io = mediaIo();
-                const MediaIO::Config &cfg = (io != nullptr) ? io->config()
-                                                             : MediaIO::Config();
-                const PixelFormat::ID id = readDescId(cfg, PlannerAcceptedDesc,
-                                                    PixelFormat::RGBA8_sRGB);
-                const FrameRate rate = readRate(cfg, PlannerAcceptedRate,
-                                                FrameRate(FrameRate::FPS_30));
-                const bool pixelMatches = offered.imageList()[0].pixelFormat().id() == id;
-                const bool rateMatches  = offered.frameRate() == rate;
-                if(pixelMatches && rateMatches) {
-                        *preferred = offered;
-                        return Error::Ok;
-                }
-                MediaDesc want = offered;
-                if(!pixelMatches) want.imageList()[0].setPixelFormat(PixelFormat(id));
-                if(!rateMatches)  want.setFrameRate(rate);
-                *preferred = want;
-                return Error::Ok;
+                private:
+                        Error describe(MediaIODescription *out) const override {
+                                if (out == nullptr) return Error::Invalid;
+                                const MediaIO         *io = mediaIo();
+                                const MediaIO::Config &cfg = (io != nullptr) ? io->config() : MediaIO::Config();
+                                const PixelFormat::ID  id =
+                                        readDescId(cfg, PlannerProducedDesc, PixelFormat::RGBA8_sRGB);
+                                const FrameRate rate = readRate(cfg, PlannerProducedRate, FrameRate(FrameRate::FPS_30));
+                                out->setPreferredFormat(syntheticDesc(id, rate));
+                                out->producibleFormats().pushToBack(syntheticDesc(id, rate));
+                                return Error::Ok;
+                        }
+        };
+
+        class PlannerSyntheticSinkTask : public MediaIOTask {
+                public:
+                        static MediaIO::FormatDesc formatDesc() {
+                                MediaIO::FormatDesc d;
+                                d.name = "PlannerSyntheticSink";
+                                d.description = "Synthetic sink demanding a configurable PixelFormat.";
+                                d.canBeSource = false;
+                                d.canBeSink = true;
+                                d.canBeTransform = false;
+                                d.create = []() -> MediaIOTask * {
+                                        return new PlannerSyntheticSinkTask();
+                                };
+                                d.configSpecs = []() {
+                                        MediaIO::Config::SpecMap m;
+                                        m.insert(PlannerAcceptedDesc,
+                                                 VariantSpec()
+                                                         .setType(Variant::TypePixelFormat)
+                                                         .setDefault(PixelFormat(PixelFormat::RGBA8_sRGB)));
+                                        m.insert(PlannerAcceptedRate,
+                                                 VariantSpec()
+                                                         .setType(Variant::TypeFrameRate)
+                                                         .setDefault(FrameRate(FrameRate::FPS_30)));
+                                        return m;
+                                };
+                                return d;
+                        }
+
+                private:
+                        Error describe(MediaIODescription *out) const override {
+                                if (out == nullptr) return Error::Invalid;
+                                const MediaIO         *io = mediaIo();
+                                const MediaIO::Config &cfg = (io != nullptr) ? io->config() : MediaIO::Config();
+                                const PixelFormat::ID  id =
+                                        readDescId(cfg, PlannerAcceptedDesc, PixelFormat::RGBA8_sRGB);
+                                const FrameRate rate = readRate(cfg, PlannerAcceptedRate, FrameRate(FrameRate::FPS_30));
+                                out->acceptableFormats().pushToBack(syntheticDesc(id, rate));
+                                out->setPreferredFormat(syntheticDesc(id, rate));
+                                return Error::Ok;
+                        }
+
+                        Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override {
+                                if (preferred == nullptr) return Error::Invalid;
+                                if (offered.imageList().isEmpty()) return Error::NotSupported;
+
+                                const MediaIO         *io = mediaIo();
+                                const MediaIO::Config &cfg = (io != nullptr) ? io->config() : MediaIO::Config();
+                                const PixelFormat::ID  id =
+                                        readDescId(cfg, PlannerAcceptedDesc, PixelFormat::RGBA8_sRGB);
+                                const FrameRate rate = readRate(cfg, PlannerAcceptedRate, FrameRate(FrameRate::FPS_30));
+                                const bool      pixelMatches = offered.imageList()[0].pixelFormat().id() == id;
+                                const bool      rateMatches = offered.frameRate() == rate;
+                                if (pixelMatches && rateMatches) {
+                                        *preferred = offered;
+                                        return Error::Ok;
+                                }
+                                MediaDesc want = offered;
+                                if (!pixelMatches) want.imageList()[0].setPixelFormat(PixelFormat(id));
+                                if (!rateMatches) want.setFrameRate(rate);
+                                *preferred = want;
+                                return Error::Ok;
+                        }
+        };
+
+        PROMEKI_REGISTER_MEDIAIO(PlannerSyntheticSrcTask)
+        PROMEKI_REGISTER_MEDIAIO(PlannerSyntheticSinkTask)
+
+        // ----- helpers -----
+
+        MediaPipelineConfig makeSrcSinkConfig(PixelFormat::ID srcId, PixelFormat::ID sinkId) {
+                MediaPipelineConfig cfg;
+
+                MediaPipelineConfig::Stage src;
+                src.name = "src";
+                src.type = "PlannerSyntheticSrc";
+                src.mode = MediaIO::Source;
+                src.config.set(PlannerProducedDesc, PixelFormat(srcId));
+                cfg.addStage(src);
+
+                MediaPipelineConfig::Stage sink;
+                sink.name = "sink";
+                sink.type = "PlannerSyntheticSink";
+                sink.mode = MediaIO::Sink;
+                sink.config.set(PlannerAcceptedDesc, PixelFormat(sinkId));
+                cfg.addStage(sink);
+
+                cfg.addRoute("src", "sink");
+                return cfg;
         }
-};
 
-PROMEKI_REGISTER_MEDIAIO(PlannerSyntheticSrcTask)
-PROMEKI_REGISTER_MEDIAIO(PlannerSyntheticSinkTask)
-
-// ----- helpers -----
-
-MediaPipelineConfig makeSrcSinkConfig(PixelFormat::ID srcId, PixelFormat::ID sinkId) {
-        MediaPipelineConfig cfg;
-
-        MediaPipelineConfig::Stage src;
-        src.name = "src";
-        src.type = "PlannerSyntheticSrc";
-        src.mode = MediaIO::Source;
-        src.config.set(PlannerProducedDesc, PixelFormat(srcId));
-        cfg.addStage(src);
-
-        MediaPipelineConfig::Stage sink;
-        sink.name = "sink";
-        sink.type = "PlannerSyntheticSink";
-        sink.mode = MediaIO::Sink;
-        sink.config.set(PlannerAcceptedDesc, PixelFormat(sinkId));
-        cfg.addStage(sink);
-
-        cfg.addRoute("src", "sink");
-        return cfg;
-}
-
-bool stageTypeAt(const MediaPipelineConfig &cfg, size_t i, const char *typeName) {
-        return i < cfg.stages().size() && cfg.stages()[i].type == typeName;
-}
+        bool stageTypeAt(const MediaPipelineConfig &cfg, size_t i, const char *typeName) {
+                return i < cfg.stages().size() && cfg.stages()[i].type == typeName;
+        }
 
 } // namespace
 
@@ -225,23 +218,21 @@ TEST_CASE("MediaPipelinePlanner_Identity_NoBridgesInserted") {
         // Source produces RGBA8, sink also accepts RGBA8 — there's no
         // gap, so the resolved config must be route-equivalent to the
         // input.
-        const MediaPipelineConfig in = makeSrcSinkConfig(PixelFormat::RGBA8_sRGB,
-                                                         PixelFormat::RGBA8_sRGB);
+        const MediaPipelineConfig in = makeSrcSinkConfig(PixelFormat::RGBA8_sRGB, PixelFormat::RGBA8_sRGB);
 
         MediaPipelineConfig out;
-        String diag;
+        String              diag;
         REQUIRE(MediaPipelinePlanner::plan(in, &out, {}, &diag) == Error::Ok);
         CHECK(diag.isEmpty());
         CHECK(out.stages().size() == 2);
         CHECK(out.routes().size() == 1);
         CHECK(out.routes()[0].from == "src");
-        CHECK(out.routes()[0].to   == "sink");
+        CHECK(out.routes()[0].to == "sink");
 }
 
 TEST_CASE("MediaPipelineConfig_isResolved_ReturnsTrueWhenDirect") {
-        const MediaPipelineConfig cfg = makeSrcSinkConfig(PixelFormat::RGBA8_sRGB,
-                                                          PixelFormat::RGBA8_sRGB);
-        String diag;
+        const MediaPipelineConfig cfg = makeSrcSinkConfig(PixelFormat::RGBA8_sRGB, PixelFormat::RGBA8_sRGB);
+        String                    diag;
         CHECK(cfg.isResolved(&diag));
         CHECK(diag.isEmpty());
 }
@@ -253,12 +244,11 @@ TEST_CASE("MediaPipelineConfig_isResolved_ReturnsTrueWhenDirect") {
 TEST_CASE("MediaPipelinePlanner_PixelGap_InsertsCSC") {
         // Source produces RGBA8 but sink demands NV12 (4:2:0 YUV) —
         // CSC must be spliced into the route.
-        const MediaPipelineConfig in = makeSrcSinkConfig(
-                PixelFormat::RGBA8_sRGB,
-                PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        const MediaPipelineConfig in =
+                makeSrcSinkConfig(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
         MediaPipelineConfig out;
-        String diag;
+        String              diag;
         REQUIRE(MediaPipelinePlanner::plan(in, &out, {}, &diag) == Error::Ok);
         CHECK(diag.isEmpty());
 
@@ -276,9 +266,9 @@ TEST_CASE("MediaPipelinePlanner_PixelGap_InsertsCSC") {
 
         // Routes flow through the bridge.
         CHECK(out.routes()[0].from == "src");
-        CHECK(out.routes()[0].to   == "br0_src_sink");
+        CHECK(out.routes()[0].to == "br0_src_sink");
         CHECK(out.routes()[1].from == "br0_src_sink");
-        CHECK(out.routes()[1].to   == "sink");
+        CHECK(out.routes()[1].to == "sink");
 
         // The bridge stage carries the right OutputPixelFormat so the
         // runtime CSC actually converts to the sink's preferred form.
@@ -288,9 +278,8 @@ TEST_CASE("MediaPipelinePlanner_PixelGap_InsertsCSC") {
 }
 
 TEST_CASE("MediaPipelineConfig_isResolved_ReturnsFalseOnGap") {
-        const MediaPipelineConfig cfg = makeSrcSinkConfig(
-                PixelFormat::RGBA8_sRGB,
-                PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        const MediaPipelineConfig cfg =
+                makeSrcSinkConfig(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         String diag;
         CHECK_FALSE(cfg.isResolved(&diag));
         CHECK(diag.contains("src"));
@@ -305,16 +294,15 @@ TEST_CASE("MediaPipelinePlanner_ExcludedBridges_BlockInsertion") {
         // Same setup as the CSC-insertion test, but block CSC via
         // policy.  No other bridge can satisfy the gap, so the
         // planner must fail with NotSupported.
-        const MediaPipelineConfig in = makeSrcSinkConfig(
-                PixelFormat::RGBA8_sRGB,
-                PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        const MediaPipelineConfig in =
+                makeSrcSinkConfig(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
         MediaPipelinePlanner::Policy policy;
         policy.excludedBridges.pushToBack("CSC");
 
         MediaPipelineConfig out;
-        String diag;
-        Error err = MediaPipelinePlanner::plan(in, &out, policy, &diag);
+        String              diag;
+        Error               err = MediaPipelinePlanner::plan(in, &out, policy, &diag);
         CHECK(err == Error::NotSupported);
         CHECK(out.stages().isEmpty());
         CHECK(diag.contains("src"));
@@ -335,17 +323,15 @@ TEST_CASE("MediaPipelinePlanner_FailureDiagnostic_HasShapeAndTrace") {
         // both endpoints and each bridge's verdict — the explicit
         // contract that mediaplay relies on for end-user-visible
         // failure logs.
-        const MediaPipelineConfig in = makeSrcSinkConfig(
-                PixelFormat::RGBA8_sRGB,
-                PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        const MediaPipelineConfig in =
+                makeSrcSinkConfig(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
         MediaPipelinePlanner::Policy policy;
         policy.quality = MediaPipelinePlanner::Quality::ZeroCopyOnly;
 
         MediaPipelineConfig out;
-        String diag;
-        REQUIRE(MediaPipelinePlanner::plan(in, &out, policy, &diag) ==
-                Error::NotSupported);
+        String              diag;
+        REQUIRE(MediaPipelinePlanner::plan(in, &out, policy, &diag) == Error::NotSupported);
 
         // Diagnostic is multi-line — split on '\n' so we can assert
         // on individual rows rather than a brittle substring test.
@@ -361,9 +347,8 @@ TEST_CASE("MediaPipelinePlanner_FailureDiagnostic_HasShapeAndTrace") {
 // ============================================================================
 
 TEST_CASE("MediaPipelinePlanner_ReplanIsIdempotent") {
-        const MediaPipelineConfig in = makeSrcSinkConfig(
-                PixelFormat::RGBA8_sRGB,
-                PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        const MediaPipelineConfig in =
+                makeSrcSinkConfig(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
         MediaPipelineConfig once;
         REQUIRE(MediaPipelinePlanner::plan(in, &once) == Error::Ok);
@@ -381,54 +366,44 @@ TEST_CASE("MediaPipelinePlanner_ReplanIsIdempotent") {
 
 TEST_CASE("MediaPipelinePlanner_QualityBias_Highest") {
         // Highest never modifies the raw cost.
-        CHECK(MediaPipelinePlanner::adjustCostForQuality(50,
-                MediaPipelinePlanner::Quality::Highest) == 50);
-        CHECK(MediaPipelinePlanner::adjustCostForQuality(5000,
-                MediaPipelinePlanner::Quality::Highest) == 5000);
+        CHECK(MediaPipelinePlanner::adjustCostForQuality(50, MediaPipelinePlanner::Quality::Highest) == 50);
+        CHECK(MediaPipelinePlanner::adjustCostForQuality(5000, MediaPipelinePlanner::Quality::Highest) == 5000);
 }
 
 TEST_CASE("MediaPipelinePlanner_QualityBias_Balanced") {
         // Balanced penalises heavy bridges (cost > 1000) by 25 %.
-        CHECK(MediaPipelinePlanner::adjustCostForQuality(50,
-                MediaPipelinePlanner::Quality::Balanced) == 50);
-        CHECK(MediaPipelinePlanner::adjustCostForQuality(5000,
-                MediaPipelinePlanner::Quality::Balanced) == 6250);
+        CHECK(MediaPipelinePlanner::adjustCostForQuality(50, MediaPipelinePlanner::Quality::Balanced) == 50);
+        CHECK(MediaPipelinePlanner::adjustCostForQuality(5000, MediaPipelinePlanner::Quality::Balanced) == 6250);
 }
 
 TEST_CASE("MediaPipelinePlanner_QualityBias_Fastest") {
         // Fastest penalises bounded-error band 50 % and heavy band 200 %.
-        CHECK(MediaPipelinePlanner::adjustCostForQuality(50,
-                MediaPipelinePlanner::Quality::Fastest) == 50);
-        CHECK(MediaPipelinePlanner::adjustCostForQuality(500,
-                MediaPipelinePlanner::Quality::Fastest) == 750);
-        CHECK(MediaPipelinePlanner::adjustCostForQuality(5000,
-                MediaPipelinePlanner::Quality::Fastest) == 15000);
+        CHECK(MediaPipelinePlanner::adjustCostForQuality(50, MediaPipelinePlanner::Quality::Fastest) == 50);
+        CHECK(MediaPipelinePlanner::adjustCostForQuality(500, MediaPipelinePlanner::Quality::Fastest) == 750);
+        CHECK(MediaPipelinePlanner::adjustCostForQuality(5000, MediaPipelinePlanner::Quality::Fastest) == 15000);
 }
 
 TEST_CASE("MediaPipelinePlanner_QualityBias_ZeroCopyOnly_RejectsHeavyBridges") {
         // ZeroCopyOnly returns the raw cost (the rejection happens
         // inside findSingleBridge), but the test confirms the
         // pass-through arithmetic.
-        CHECK(MediaPipelinePlanner::adjustCostForQuality(50,
-                MediaPipelinePlanner::Quality::ZeroCopyOnly) == 50);
-        CHECK(MediaPipelinePlanner::adjustCostForQuality(5000,
-                MediaPipelinePlanner::Quality::ZeroCopyOnly) == 5000);
+        CHECK(MediaPipelinePlanner::adjustCostForQuality(50, MediaPipelinePlanner::Quality::ZeroCopyOnly) == 50);
+        CHECK(MediaPipelinePlanner::adjustCostForQuality(5000, MediaPipelinePlanner::Quality::ZeroCopyOnly) == 5000);
 }
 
 TEST_CASE("MediaPipelinePlanner_ZeroCopyOnly_BlocksLossyBridges") {
         // RGBA8 → NV12 has a CSC cost > 100 (chroma subsampling).
         // ZeroCopyOnly should reject the CSC and the planner has no
         // alternative — so it fails with NotSupported.
-        const MediaPipelineConfig in = makeSrcSinkConfig(
-                PixelFormat::RGBA8_sRGB,
-                PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        const MediaPipelineConfig in =
+                makeSrcSinkConfig(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
         MediaPipelinePlanner::Policy policy;
         policy.quality = MediaPipelinePlanner::Quality::ZeroCopyOnly;
 
         MediaPipelineConfig out;
-        String diag;
-        Error err = MediaPipelinePlanner::plan(in, &out, policy, &diag);
+        String              diag;
+        Error               err = MediaPipelinePlanner::plan(in, &out, policy, &diag);
         CHECK(err == Error::NotSupported);
         CHECK(out.stages().isEmpty());
 }
@@ -440,17 +415,16 @@ TEST_CASE("MediaPipelinePlanner_ZeroCopyOnly_BlocksLossyBridges") {
 TEST_CASE("MediaPipelinePlanner_InvalidInput_FailsValidation") {
         MediaPipelineConfig empty;
         MediaPipelineConfig out;
-        String diag;
-        Error err = MediaPipelinePlanner::plan(empty, &out, {}, &diag);
+        String              diag;
+        Error               err = MediaPipelinePlanner::plan(empty, &out, {}, &diag);
         CHECK(err.isError());
         CHECK(out.stages().isEmpty());
         CHECK(!diag.isEmpty());
 }
 
 TEST_CASE("MediaPipelinePlanner_NullOutPointer_ReturnsInvalid") {
-        const MediaPipelineConfig in = makeSrcSinkConfig(PixelFormat::RGBA8_sRGB,
-                                                         PixelFormat::RGBA8_sRGB);
-        Error err = MediaPipelinePlanner::plan(in, nullptr);
+        const MediaPipelineConfig in = makeSrcSinkConfig(PixelFormat::RGBA8_sRGB, PixelFormat::RGBA8_sRGB);
+        Error                     err = MediaPipelinePlanner::plan(in, nullptr);
         CHECK(err == Error::Invalid);
 }
 
@@ -459,11 +433,10 @@ TEST_CASE("MediaPipelinePlanner_NullOutPointer_ReturnsInvalid") {
 // ============================================================================
 
 TEST_CASE("MediaPipelineConfig_resolved_DelegatesToPlanner") {
-        const MediaPipelineConfig in = makeSrcSinkConfig(
-                PixelFormat::RGBA8_sRGB,
-                PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        const MediaPipelineConfig in =
+                makeSrcSinkConfig(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
-        Error err;
+        Error               err;
         MediaPipelineConfig resolvedCfg = in.resolved(&err);
         CHECK(err.isOk());
         CHECK(resolvedCfg.stages().size() == 3);
@@ -474,7 +447,7 @@ TEST_CASE("MediaPipelineConfig_resolved_PropagatesPlannerError") {
         // Empty config — planner returns Invalid and resolved()
         // surfaces it through the err out-param.
         MediaPipelineConfig empty;
-        Error err;
+        Error               err;
         MediaPipelineConfig resolvedCfg = empty.resolved(&err);
         CHECK(err.isError());
         CHECK(resolvedCfg.stages().isEmpty());
@@ -505,16 +478,15 @@ TEST_CASE("MediaPipelinePlanner_SimultaneousPixelAndRateGap_FailsWithHint") {
         sink.name = "sink";
         sink.type = "PlannerSyntheticSink";
         sink.mode = MediaIO::Sink;
-        sink.config.set(PlannerAcceptedDesc,
-                PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
+        sink.config.set(PlannerAcceptedDesc, PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
         sink.config.set(PlannerAcceptedRate, FrameRate(FrameRate::FPS_24));
         cfg.addStage(sink);
 
         cfg.addRoute("src", "sink");
 
         MediaPipelineConfig out;
-        String diag;
-        Error err = MediaPipelinePlanner::plan(cfg, &out, {}, &diag);
+        String              diag;
+        Error               err = MediaPipelinePlanner::plan(cfg, &out, {}, &diag);
         CHECK(err == Error::NotSupported);
         CHECK(out.stages().isEmpty());
 
@@ -544,18 +516,17 @@ TEST_CASE("MediaPipelinePlanner_CodecTransitive_InsertsDecoderEncoderPair") {
         // gap and the test is skipped.
         const VideoCodec h264 = value(VideoCodec::lookup("H264"));
         const VideoCodec hevc = value(VideoCodec::lookup("HEVC"));
-        if(!h264.canDecode() || !hevc.canEncode()) {
+        if (!h264.canDecode() || !hevc.canEncode()) {
                 INFO("H264 decoder or HEVC encoder not registered in "
                      "this build; skipping.");
                 return;
         }
 
-        const MediaPipelineConfig in = makeSrcSinkConfig(PixelFormat::H264,
-                                                         PixelFormat::HEVC);
+        const MediaPipelineConfig in = makeSrcSinkConfig(PixelFormat::H264, PixelFormat::HEVC);
 
         MediaPipelineConfig out;
-        String diag;
-        Error err = MediaPipelinePlanner::plan(in, &out, {}, &diag);
+        String              diag;
+        Error               err = MediaPipelinePlanner::plan(in, &out, {}, &diag);
         REQUIRE(err.isOk());
         CHECK(diag.isEmpty());
 
@@ -573,9 +544,9 @@ TEST_CASE("MediaPipelinePlanner_CodecTransitive_InsertsDecoderEncoderPair") {
 
         // Routes flow src → decoder → encoder → sink.
         CHECK(out.routes()[0].from == "src");
-        CHECK(out.routes()[0].to   == out.stages()[2].name);
+        CHECK(out.routes()[0].to == out.stages()[2].name);
         CHECK(out.routes()[1].from == out.stages()[2].name);
-        CHECK(out.routes()[1].to   == out.stages()[3].name);
+        CHECK(out.routes()[1].to == out.stages()[3].name);
         CHECK(out.routes()[2].from == out.stages()[3].name);
-        CHECK(out.routes()[2].to   == "sink");
+        CHECK(out.routes()[2].to == "sink");
 }

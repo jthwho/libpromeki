@@ -87,6 +87,7 @@ class BufferView {
                  */
                 class Entry {
                                 friend class BufferView;
+
                         public:
                                 /** @brief Default-constructs a null Entry. */
                                 Entry() = default;
@@ -128,10 +129,9 @@ class BufferView {
 
                         private:
                                 const BufferView *_list = nullptr;
-                                size_t            _idx  = 0;
+                                size_t            _idx = 0;
 
-                                Entry(const BufferView *list, size_t idx)
-                                        : _list(list), _idx(idx) { }
+                                Entry(const BufferView *list, size_t idx) : _list(list), _idx(idx) {}
                 };
 
                 // ---- Iteration -----------------------------------
@@ -142,22 +142,27 @@ class BufferView {
                  */
                 class Iterator {
                                 friend class BufferView;
+
                         public:
                                 Iterator() = default;
-                                Entry operator*() const { return Entry(_list, _idx); }
-                                Iterator &operator++() { ++_idx; return *this; }
-                                Iterator  operator++(int) { Iterator t(*this); ++_idx; return t; }
-                                bool operator==(const Iterator &o) const {
-                                        return _list == o._list && _idx == o._idx;
+                                Entry     operator*() const { return Entry(_list, _idx); }
+                                Iterator &operator++() {
+                                        ++_idx;
+                                        return *this;
                                 }
+                                Iterator operator++(int) {
+                                        Iterator t(*this);
+                                        ++_idx;
+                                        return t;
+                                }
+                                bool operator==(const Iterator &o) const { return _list == o._list && _idx == o._idx; }
                                 bool operator!=(const Iterator &o) const { return !(*this == o); }
 
                         private:
                                 const BufferView *_list = nullptr;
-                                size_t            _idx  = 0;
+                                size_t            _idx = 0;
 
-                                Iterator(const BufferView *list, size_t idx)
-                                        : _list(list), _idx(idx) { }
+                                Iterator(const BufferView *list, size_t idx) : _list(list), _idx(idx) {}
                 };
 
                 // ---- Construction --------------------------------
@@ -202,7 +207,7 @@ class BufferView {
                 Entry operator[](size_t i) const { return Entry(this, i); }
 
                 Iterator begin() const { return Iterator(this, 0); }
-                Iterator end()   const { return Iterator(this, _views.size()); }
+                Iterator end() const { return Iterator(this, _views.size()); }
 
                 // ---- Single-slice convenience accessors ----------
                 //
@@ -290,13 +295,13 @@ class BufferView {
 
         private:
                 struct View {
-                        size_t bufferIdx = 0;
-                        size_t offset    = 0;
-                        size_t size      = 0;
+                                size_t bufferIdx = 0;
+                                size_t offset = 0;
+                                size_t size = 0;
                 };
 
-                Buffer::PtrList         _buffers;
-                List<View>              _views;
+                Buffer::PtrList _buffers;
+                List<View>      _views;
 
                 // Returns the index of @p buf in @c _buffers, inserting if not found.
                 // When @p buf is null, returns the largest representable size_t

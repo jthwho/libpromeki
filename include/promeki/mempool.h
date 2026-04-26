@@ -33,11 +33,11 @@ class MemPool {
                  * @brief Statistics about the current state of the memory pool.
                  */
                 struct Stats {
-                        size_t totalFree;           ///< Total bytes available for allocation.
-                        size_t totalUsed;            ///< Total bytes currently allocated.
-                        size_t numFreeBlocks;        ///< Number of free block regions.
-                        size_t numAllocatedBlocks;   ///< Number of allocated block regions.
-                        size_t largestFreeBlock;     ///< Size in bytes of the largest free block.
+                                size_t totalFree;          ///< Total bytes available for allocation.
+                                size_t totalUsed;          ///< Total bytes currently allocated.
+                                size_t numFreeBlocks;      ///< Number of free block regions.
+                                size_t numAllocatedBlocks; ///< Number of allocated block regions.
+                                size_t largestFreeBlock;   ///< Size in bytes of the largest free block.
                 };
 
                 /**
@@ -45,15 +45,13 @@ class MemPool {
                  */
                 class Block {
                         public:
-                                bool            allocated = false;   ///< true if this block is allocated.
-                                intptr_t        address = 0;         ///< Starting address of the block.
-                                size_t          size = 0;            ///< Size in bytes.
-                                size_t          alignment = 1;       ///< Alignment requirement.
+                                bool     allocated = false; ///< true if this block is allocated.
+                                intptr_t address = 0;       ///< Starting address of the block.
+                                size_t   size = 0;          ///< Size in bytes.
+                                size_t   alignment = 1;     ///< Alignment requirement.
 
                                 /** @brief Orders blocks by address for sorted storage. */
-                                bool operator<(const Block &other) const {
-                                        return address < other.address;
-                                }
+                                bool operator<(const Block &other) const { return address < other.address; }
 
                                 /**
                                  * @brief Returns the address aligned to the given alignment.
@@ -69,9 +67,7 @@ class MemPool {
                                  * @brief Returns the address aligned to this block's alignment.
                                  * @return The aligned address.
                                  */
-                                uintptr_t alignedAddress() const {
-                                        return alignedAddress(alignment);
-                                }
+                                uintptr_t alignedAddress() const { return alignedAddress(alignment); }
 
                                 /**
                                  * @brief Returns padding bytes needed to reach the given alignment.
@@ -86,31 +82,24 @@ class MemPool {
                                  * @brief Returns padding bytes needed for this block's alignment.
                                  * @return Number of padding bytes.
                                  */
-                                size_t padding() const {
-                                        return padding(alignment);
-                                }
+                                size_t padding() const { return padding(alignment); }
 
                                 /**
                                  * @brief Returns true if this block immediately follows another.
                                  * @param block The preceding block to check adjacency against.
                                  * @return true if this block starts where the other ends.
                                  */
-                                bool follows(const Block &block) const {
-                                        return block.address + block.size == address;
-                                }
-
-                        };
+                                bool follows(const Block &block) const { return block.address + block.size == address; }
+                };
 
                 /**
                  * @brief Returns true if the given value is a valid alignment (power of two).
                  * @param val The alignment value to test.
                  * @return true if val is a non-zero power of two.
                  */
-                static bool isValidAlignment(size_t val) {
-                        return (val > 0) && !(val & (val - 1));
-                }
+                static bool isValidAlignment(size_t val) { return (val > 0) && !(val & (val - 1)); }
 
-                using BlockSet = Set<Block>;        ///< Sorted set of blocks ordered by address.
+                using BlockSet = Set<Block>;            ///< Sorted set of blocks ordered by address.
                 using BlockMap = Map<uintptr_t, Block>; ///< Map from aligned address to allocated block.
 
                 /** @brief Constructs an empty memory pool with a default hex name. */
@@ -175,14 +164,13 @@ class MemPool {
                  *
                  * @param ptr The pointer returned by allocate(). Passing nullptr is a no-op.
                  */
-                void free(void* ptr);
+                void free(void *ptr);
 
-       private:
-                String                  _name;
-                mutable Mutex           _mutex;
-                BlockSet                _freeBlocks;
-                BlockMap                _allocatedBlocks;
+        private:
+                String        _name;
+                mutable Mutex _mutex;
+                BlockSet      _freeBlocks;
+                BlockMap      _allocatedBlocks;
 };
 
 PROMEKI_NAMESPACE_END
-

@@ -15,22 +15,23 @@ using namespace promeki;
 TEST_CASE("Base64 - round-trips RFC 4648 vectors") {
         // Vectors from RFC 4648 §10 — the canonical reference set
         // every implementation tests against.
-        const struct { const char *plain; const char *encoded; } vectors[] = {
-                { "",        ""         },
-                { "f",       "Zg=="     },
-                { "fo",      "Zm8="     },
-                { "foo",     "Zm9v"     },
-                { "foob",    "Zm9vYg==" },
-                { "fooba",   "Zm9vYmE=" },
-                { "foobar",  "Zm9vYmFy" }
-        };
-        for(const auto &v : vectors) {
+        const struct {
+                        const char *plain;
+                        const char *encoded;
+        } vectors[] = {{"", ""},
+                       {"f", "Zg=="},
+                       {"fo", "Zm8="},
+                       {"foo", "Zm9v"},
+                       {"foob", "Zm9vYg=="},
+                       {"fooba", "Zm9vYmE="},
+                       {"foobar", "Zm9vYmFy"}};
+        for (const auto &v : vectors) {
                 String enc = Base64::encode(v.plain, std::strlen(v.plain));
                 CHECK(enc == String(v.encoded));
-                Error err;
+                Error  err;
                 Buffer dec = Base64::decode(String(v.encoded), &err);
                 CHECK(err.isOk());
-                if(std::strlen(v.plain) == 0) {
+                if (std::strlen(v.plain) == 0) {
                         CHECK(dec.size() == 0);
                 } else {
                         REQUIRE(dec.size() == std::strlen(v.plain));
@@ -42,15 +43,11 @@ TEST_CASE("Base64 - round-trips RFC 4648 vectors") {
 TEST_CASE("Base64 - encode handles binary bytes") {
         // 16 bytes covering 0..255 selectively — a likely WebSocket
         // Sec-WebSocket-Key payload.
-        const uint8_t bytes[16] = {
-                0x00, 0xFF, 0x10, 0x80,
-                0x7F, 0xC3, 0x55, 0xAA,
-                0x01, 0x02, 0x03, 0x04,
-                0xFE, 0xFD, 0xFC, 0xFB
-        };
-        String enc = Base64::encode(bytes, sizeof(bytes));
-        CHECK(enc.byteCount() == 24);   // 16 bytes -> 24 chars exactly
-        Error err;
+        const uint8_t bytes[16] = {0x00, 0xFF, 0x10, 0x80, 0x7F, 0xC3, 0x55, 0xAA,
+                                   0x01, 0x02, 0x03, 0x04, 0xFE, 0xFD, 0xFC, 0xFB};
+        String        enc = Base64::encode(bytes, sizeof(bytes));
+        CHECK(enc.byteCount() == 24); // 16 bytes -> 24 chars exactly
+        Error  err;
         Buffer dec = Base64::decode(enc, &err);
         REQUIRE(err.isOk());
         REQUIRE(dec.size() == sizeof(bytes));
@@ -60,8 +57,8 @@ TEST_CASE("Base64 - encode handles binary bytes") {
 TEST_CASE("Base64 - decode tolerates whitespace") {
         // PEM-style line wrapping must round-trip transparently.
         const String pem = "Zm9v\nYmFy\n";
-        Error err;
-        Buffer dec = Base64::decode(pem, &err);
+        Error        err;
+        Buffer       dec = Base64::decode(pem, &err);
         REQUIRE(err.isOk());
         REQUIRE(dec.size() == 6);
         CHECK(std::memcmp(dec.data(), "foobar", 6) == 0);

@@ -34,7 +34,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @tparam NumValues Number of elements (fixed at compile time).
  */
 template <typename T, size_t NumValues> class Array {
-        PROMEKI_SHARED_FINAL(Array)
+                PROMEKI_SHARED_FINAL(Array)
         public:
                 /** @brief Shared pointer type for Array. */
                 using Ptr = SharedPtr<Array>;
@@ -71,10 +71,8 @@ template <typename T, size_t NumValues> class Array {
                  * @tparam Args Argument types (must be convertible to T).
                  * @param args Values used to initialize each element.
                  */
-                template<typename... Args,
-                         typename = std::enable_if_t<
-                                 sizeof...(Args) == NumValues &&
-                                 (std::is_convertible_v<Args, T> && ...)>>
+                template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == NumValues &&
+                                                                        (std::is_convertible_v<Args, T> && ...)>>
                 Array(Args... args) : d{static_cast<T>(args)...} {}
 
                 /** @brief Destructor. */
@@ -97,10 +95,10 @@ template <typename T, size_t NumValues> class Array {
                  * @tparam OtherNumValues Source array size.
                  * @param other The source array to copy from.
                  */
-                template <typename U, size_t OtherNumValues> Array(const Array<U, OtherNumValues>& other) {
+                template <typename U, size_t OtherNumValues> Array(const Array<U, OtherNumValues> &other) {
                         static_assert(std::is_convertible_v<T, T>, "Incompatible types");
                         static_assert(OtherNumValues <= NumValues, "Incompatible sizes");
-                        for(size_t i = 0; i < NumValues; ++i) {
+                        for (size_t i = 0; i < NumValues; ++i) {
                                 d[i] = i < OtherNumValues ? other[i] : T{};
                         }
                 }
@@ -114,8 +112,8 @@ template <typename T, size_t NumValues> class Array {
                  * @param other The source array to assign from.
                  * @return Reference to this array.
                  */
-                template <typename U> Array<T, NumValues>& operator=(const Array<U, NumValues>& other) {
-                        static_assert(std::is_assignable_v<T&, U>, "Incompatible types");
+                template <typename U> Array<T, NumValues> &operator=(const Array<U, NumValues> &other) {
+                        static_assert(std::is_assignable_v<T &, U>, "Incompatible types");
                         for (size_t i = 0; i < NumValues; ++i) {
                                 d[i] = static_cast<T>(other[i]);
                         }
@@ -134,8 +132,9 @@ template <typename T, size_t NumValues> class Array {
                  * @param other The source array to assign from.
                  * @return Reference to this array.
                  */
-                template <typename U, size_t OtherNumValues> Array<T, NumValues>& operator=(const Array<U, OtherNumValues>& other) {
-                        static_assert(std::is_assignable_v<T&, U>, "Incompatible types");
+                template <typename U, size_t OtherNumValues>
+                Array<T, NumValues> &operator=(const Array<U, OtherNumValues> &other) {
+                        static_assert(std::is_assignable_v<T &, U>, "Incompatible types");
                         static_assert(OtherNumValues <= NumValues, "Incompatible sizes");
                         for (size_t i = 0; i < NumValues; ++i) {
                                 d[i] = i < OtherNumValues ? static_cast<T>(other[i]) : T{};
@@ -152,8 +151,8 @@ template <typename T, size_t NumValues> class Array {
                  * @param value The value to assign to every element.
                  * @return Reference to this array.
                  */
-                template <typename U> Array<T, NumValues>& operator=(U value) {
-                        static_assert(std::is_assignable_v<T&, U>, "Incompatible types");
+                template <typename U> Array<T, NumValues> &operator=(U value) {
+                        static_assert(std::is_assignable_v<T &, U>, "Incompatible types");
                         for (size_t i = 0; i < NumValues; ++i) {
                                 d[i] = static_cast<T>(value);
                         }
@@ -168,9 +167,7 @@ template <typename T, size_t NumValues> class Array {
                  * @param index Zero-based element index.
                  * @return Reference to the element.
                  */
-                T& operator[](size_t index) {
-                        return d[index];
-                }
+                T &operator[](size_t index) { return d[index]; }
 
                 /**
                  * @brief Returns a const reference to the element at @p index.
@@ -180,16 +177,14 @@ template <typename T, size_t NumValues> class Array {
                  * @param index Zero-based element index.
                  * @return Const reference to the element.
                  */
-                const T& operator[](size_t index) const {
-                        return d[index];
-                }
+                const T &operator[](size_t index) const { return d[index]; }
 
                 /**
                  * @brief Adds another array element-wise to this one.
                  * @param other The array to add.
                  * @return Reference to this array.
                  */
-                Array<T, NumValues>& operator+=(const Array<T, NumValues> &other) {
+                Array<T, NumValues> &operator+=(const Array<T, NumValues> &other) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] += other[i];
                         return *this;
                 }
@@ -199,7 +194,7 @@ template <typename T, size_t NumValues> class Array {
                  * @param other The array to subtract.
                  * @return Reference to this array.
                  */
-                 Array<T, NumValues>& operator-=(const Array<T, NumValues> &other) {
+                Array<T, NumValues> &operator-=(const Array<T, NumValues> &other) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] -= other[i];
                         return *this;
                 }
@@ -209,7 +204,7 @@ template <typename T, size_t NumValues> class Array {
                  * @param other The array to multiply by.
                  * @return Reference to this array.
                  */
-                 Array<T, NumValues>& operator*=(const Array<T, NumValues> &other) {
+                Array<T, NumValues> &operator*=(const Array<T, NumValues> &other) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] *= other[i];
                         return *this;
                 }
@@ -219,7 +214,7 @@ template <typename T, size_t NumValues> class Array {
                  * @param other The array to divide by.
                  * @return Reference to this array.
                  */
-                 Array<T, NumValues>& operator/=(const Array<T, NumValues> &other) {
+                Array<T, NumValues> &operator/=(const Array<T, NumValues> &other) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] /= other[i];
                         return *this;
                 }
@@ -229,7 +224,7 @@ template <typename T, size_t NumValues> class Array {
                  * @param scalar The value to add.
                  * @return Reference to this array.
                  */
-                 Array<T, NumValues>& operator+=(const T &scalar) {
+                Array<T, NumValues> &operator+=(const T &scalar) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] += scalar;
                         return *this;
                 }
@@ -239,7 +234,7 @@ template <typename T, size_t NumValues> class Array {
                  * @param scalar The value to subtract.
                  * @return Reference to this array.
                  */
-                 Array<T, NumValues>& operator-=(const T &scalar) {
+                Array<T, NumValues> &operator-=(const T &scalar) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] -= scalar;
                         return *this;
                 }
@@ -249,7 +244,7 @@ template <typename T, size_t NumValues> class Array {
                  * @param scalar The value to multiply by.
                  * @return Reference to this array.
                  */
-                Array<T, NumValues>& operator*=(const T &scalar) {
+                Array<T, NumValues> &operator*=(const T &scalar) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] *= scalar;
                         return *this;
                 }
@@ -259,7 +254,7 @@ template <typename T, size_t NumValues> class Array {
                  * @param scalar The value to divide by.
                  * @return Reference to this array.
                  */
-                Array<T, NumValues>& operator/=(const T &scalar) {
+                Array<T, NumValues> &operator/=(const T &scalar) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] /= scalar;
                         return *this;
                 }
@@ -270,7 +265,7 @@ template <typename T, size_t NumValues> class Array {
                  */
                 T sum() const {
                         T ret{};
-                        for(size_t i = 0; i < NumValues; ++i) ret += d[i];
+                        for (size_t i = 0; i < NumValues; ++i) ret += d[i];
                         return ret;
                 }
 
@@ -280,7 +275,7 @@ template <typename T, size_t NumValues> class Array {
                  */
                 double mean() const {
                         double val = 0.0;
-                        for(size_t i = 0; i < NumValues; ++i) val += static_cast<double>(d[i]);
+                        for (size_t i = 0; i < NumValues; ++i) val += static_cast<double>(d[i]);
                         val /= static_cast<double>(NumValues);
                         return val;
                 }
@@ -289,17 +284,13 @@ template <typename T, size_t NumValues> class Array {
                  * @brief Returns a mutable pointer to the underlying contiguous storage.
                  * @return Pointer to the first element.
                  */
-                T *data() {
-                        return d.data();
-                }
+                T *data() { return d.data(); }
 
                 /**
                  * @brief Returns a const pointer to the underlying contiguous storage.
                  * @return Const pointer to the first element.
                  */
-                const T *data() const {
-                        return d.data();
-                }
+                const T *data() const { return d.data(); }
 
                 /**
                  * @brief Returns true if all elements compare equal to a value-initialized T.
@@ -308,8 +299,8 @@ template <typename T, size_t NumValues> class Array {
                  */
                 bool isZero() const {
                         const T zero{};
-                        for(size_t i = 0; i < NumValues; i++) {
-                                if(d[i] != zero) return false;
+                        for (size_t i = 0; i < NumValues; i++) {
+                                if (d[i] != zero) return false;
                         }
                         return true;
                 }
@@ -322,7 +313,7 @@ template <typename T, size_t NumValues> class Array {
                  */
                 Array<T, NumValues> lerp(const Array<T, NumValues> &other, double v) const {
                         Array<T, NumValues> ret;
-                        for(size_t i = 0; i < d.size(); ++i) ret[i] = ((1.0 - v) * d[i]) + (v * other.d[i]);
+                        for (size_t i = 0; i < d.size(); ++i) ret[i] = ((1.0 - v) * d[i]) + (v * other.d[i]);
                         return ret;
                 }
 
@@ -334,10 +325,13 @@ template <typename T, size_t NumValues> class Array {
                  */
                 Array<T, NumValues> clamp(const Array<T, NumValues> &min, const Array<T, NumValues> &max) const {
                         Array<T, NumValues> ret;
-                        for(size_t i = 0; i < d.size(); ++i) {
-                                if(d[i] < min[i]) ret[i] = min[i];
-                                else if(d[i] > max[i]) ret[i] = max[i];
-                                else ret[i] = d[i];
+                        for (size_t i = 0; i < d.size(); ++i) {
+                                if (d[i] < min[i])
+                                        ret[i] = min[i];
+                                else if (d[i] > max[i])
+                                        ret[i] = max[i];
+                                else
+                                        ret[i] = d[i];
                         }
                         return ret;
                 }
@@ -349,8 +343,8 @@ template <typename T, size_t NumValues> class Array {
                  * @return True if every element is between the corresponding min and max.
                  */
                 bool isBetween(const Array<T, NumValues> &min, const Array<T, NumValues> &max) const {
-                        for(size_t i = 0; i < d.size(); ++i) {
-                                if(d[i] < min[i] || d[i] > max[i]) return false;
+                        for (size_t i = 0; i < d.size(); ++i) {
+                                if (d[i] < min[i] || d[i] > max[i]) return false;
                         }
                         return true;
                 }
@@ -405,12 +399,13 @@ template <typename T, size_t NumValues> class Array {
 
                 /** @brief Returns true if all elements of both arrays are equal. */
                 friend bool operator==(const Array<T, NumValues> &lhs, const Array<T, NumValues> &rhs) {
-                        for(size_t i = 0; i < NumValues; ++i) if(lhs[i] != rhs[i]) return false;
+                        for (size_t i = 0; i < NumValues; ++i)
+                                if (lhs[i] != rhs[i]) return false;
                         return true;
                 }
 
                 /** @brief Returns true if any element differs between the two arrays. */
-                friend bool operator!=(const Array<T, NumValues>& lhs, const Array<T, NumValues>& rhs) {
+                friend bool operator!=(const Array<T, NumValues> &lhs, const Array<T, NumValues> &rhs) {
                         return !(lhs == rhs);
                 }
 
@@ -419,4 +414,3 @@ template <typename T, size_t NumValues> class Array {
 };
 
 PROMEKI_NAMESPACE_END
-

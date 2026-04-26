@@ -78,9 +78,7 @@ class CIEPoint {
                  * @param val The wavelength in nanometers.
                  * @return True if @p val is between MinWavelength and MaxWavelength inclusive.
                  */
-                static bool isValidWavelength(double val) {
-                        return val >= MinWavelength && val <= MaxWavelength;
-                }
+                static bool isValidWavelength(double val) { return val >= MinWavelength && val <= MaxWavelength; }
 
                 /**
                  * @brief Converts a wavelength of visible light to a CIE XYZ color.
@@ -133,16 +131,14 @@ class CIEPoint {
                 static CIEPoint colorTempToWhitePoint(double cct) {
                         // from http://www.brucelindbloom.com/index.html?Eqn_T_to_xy.html
                         double x, y;
-                        if(cct < 4000) {
+                        if (cct < 4000) {
                                 return CIEPoint(); // Invalid.
-                        } else if(cct <= 7000.0) {
-                                x = (-4.6070e9  / std::pow(cct, 3)) +
-                                    ( 2.9678e6  / std::pow(cct, 2)) +
-                                    ( 0.09911e3 / cct) + 0.244063;
-                        } else if(cct <= 25000) {
-                                x = (-2.0064e9  / std::pow(cct, 3)) +
-                                    ( 1.9108e6  / std::pow(cct, 2)) +
-                                    ( 0.24748e3 / cct) + 0.237040;
+                        } else if (cct <= 7000.0) {
+                                x = (-4.6070e9 / std::pow(cct, 3)) + (2.9678e6 / std::pow(cct, 2)) + (0.09911e3 / cct) +
+                                    0.244063;
+                        } else if (cct <= 25000) {
+                                x = (-2.0064e9 / std::pow(cct, 3)) + (1.9108e6 / std::pow(cct, 2)) + (0.24748e3 / cct) +
+                                    0.237040;
                         } else {
                                 return CIEPoint(); // Invalid
                         }
@@ -155,13 +151,13 @@ class CIEPoint {
                  * @param x The x chromaticity coordinate (default -1.0, indicating invalid).
                  * @param y The y chromaticity coordinate (default -1.0, indicating invalid).
                  */
-                CIEPoint(double x = -1.0, double y = -1.0) : d(x, y) { }
+                CIEPoint(double x = -1.0, double y = -1.0) : d(x, y) {}
 
                 /**
                  * @brief Constructs a CIEPoint from raw coordinate data.
                  * @param other The coordinate array to copy from.
                  */
-                CIEPoint(const DataType &other) : d(other) { }
+                CIEPoint(const DataType &other) : d(other) {}
 
                 /** @brief Returns the x chromaticity coordinate. */
                 double x() const { return d[0]; }
@@ -176,9 +172,7 @@ class CIEPoint {
                  * @brief Checks whether this point lies within valid chromaticity bounds.
                  * @return True if both coordinates are within the valid CIE xy range.
                  */
-                bool isValid() const {
-                        return d.isBetween(DataType(0.0, 0.0), DataType(0.8, 0.9));
-                }
+                bool isValid() const { return d.isBetween(DataType(0.0, 0.0), DataType(0.8, 0.9)); }
 
                 /**
                  * @brief Linearly interpolates between this point and another.
@@ -186,9 +180,7 @@ class CIEPoint {
                  * @param t     Interpolation factor (0.0 = this, 1.0 = other).
                  * @return The interpolated CIEPoint.
                  */
-                CIEPoint lerp(const CIEPoint &other, double t) const {
-                        return d.lerp(other.d, t);
-                }
+                CIEPoint lerp(const CIEPoint &other, double t) const { return d.lerp(other.d, t); }
 #if 0
                 XYZ toXYZ(double Y = 1.0) const {
                         double X = (x() * Y) / y();
@@ -213,7 +205,6 @@ class CIEPoint {
 #endif
         private:
                 DataType d;
-
 };
 
 PROMEKI_NAMESPACE_END

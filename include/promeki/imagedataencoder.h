@@ -123,13 +123,13 @@ class ImageDataEncoder {
                 static constexpr size_t PrimerCount = 3;
 
                 /** @brief Number of sync bits at the start of every cell row. */
-                static constexpr uint32_t SyncBits      = 4;
+                static constexpr uint32_t SyncBits = 4;
                 /** @brief Number of payload bits in every cell row. */
-                static constexpr uint32_t PayloadBits   = 64;
+                static constexpr uint32_t PayloadBits = 64;
                 /** @brief Number of CRC bits in every cell row. */
-                static constexpr uint32_t CrcBits       = 8;
+                static constexpr uint32_t CrcBits = 8;
                 /** @brief Total bits per cell row (sync + payload + CRC). */
-                static constexpr uint32_t BitsPerRow    = SyncBits + PayloadBits + CrcBits;
+                static constexpr uint32_t BitsPerRow = SyncBits + PayloadBits + CrcBits;
 
                 /**
                  * @brief Sync nibble bit pattern @c 1010 (white / black /
@@ -154,9 +154,9 @@ class ImageDataEncoder {
                  * "Alignment" note in @ref imagedataencoder.
                  */
                 struct Item {
-                        uint32_t firstLine;   ///< First (luma) scan line to stamp.
-                        uint32_t lineCount;   ///< Number of (luma) scan lines covered.
-                        uint64_t payload;     ///< Opaque 64-bit payload to encode.
+                                uint32_t firstLine; ///< First (luma) scan line to stamp.
+                                uint32_t lineCount; ///< Number of (luma) scan lines covered.
+                                uint64_t payload;   ///< Opaque 64-bit payload to encode.
                 };
 
                 /** @brief Constructs an invalid encoder. */
@@ -207,47 +207,38 @@ class ImageDataEncoder {
                  *         descriptor does not match, or an item
                  *         references scan lines outside the payload.
                  */
-                Error encode(UncompressedVideoPayload &inout,
-                             const List<Item> &items) const;
+                Error encode(UncompressedVideoPayload &inout, const List<Item> &items) const;
 
                 /** @brief Convenience overload taking a single Item. */
-                Error encode(UncompressedVideoPayload &inout,
-                             const Item &item) const;
+                Error encode(UncompressedVideoPayload &inout, const Item &item) const;
 
         private:
                 struct PlaneInfo {
-                        size_t              lineStride   = 0;     ///< Full-image plane line stride in bytes.
-                        size_t              hSubsampling = 1;
-                        size_t              vSubsampling = 1;
-                        size_t              cellBytes    = 0;     ///< Bytes per bit cell (this plane).
-                        size_t              padBytes     = 0;     ///< Bytes for the trailing pad region (this plane).
-                        Buffer              oneCell;              ///< White-bit primer (cellBytes bytes).
-                        Buffer              zeroCell;             ///< Black-bit primer (cellBytes bytes).
-                        Buffer              padBuf;               ///< Pad / neutral buffer (padBytes bytes).
+                                size_t lineStride = 0; ///< Full-image plane line stride in bytes.
+                                size_t hSubsampling = 1;
+                                size_t vSubsampling = 1;
+                                size_t cellBytes = 0; ///< Bytes per bit cell (this plane).
+                                size_t padBytes = 0;  ///< Bytes for the trailing pad region (this plane).
+                                Buffer oneCell;       ///< White-bit primer (cellBytes bytes).
+                                Buffer zeroCell;      ///< Black-bit primer (cellBytes bytes).
+                                Buffer padBuf;        ///< Pad / neutral buffer (padBytes bytes).
                 };
 
-                ImageDesc                       _desc;
-                uint32_t                        _bitWidth   = 0;
-                uint32_t                        _padWidth   = 0;
-                size_t                          _planeCount = 0;
-                Array<PlaneInfo, MaxPlanes>     _planes{};
-                bool                            _valid      = false;
+                ImageDesc                   _desc;
+                uint32_t                    _bitWidth = 0;
+                uint32_t                    _padWidth = 0;
+                size_t                      _planeCount = 0;
+                Array<PlaneInfo, MaxPlanes> _planes{};
+                bool                        _valid = false;
 
                 bool buildPrimers();
-                void writeOneScanline(uint8_t *planeBase, size_t planeIndex,
-                                      size_t lineInPlane,
-                                      uint8_t syncBits,
-                                      uint64_t payload,
-                                      uint8_t crcBits) const;
+                void writeOneScanline(uint8_t *planeBase, size_t planeIndex, size_t lineInPlane, uint8_t syncBits,
+                                      uint64_t payload, uint8_t crcBits) const;
 
         public:
                 /** @internal Stamps one item across one plane; used by encode(). */
-                void writeScanlineBase(uint8_t *planeBase,
-                                       size_t planeIndex,
-                                       const Item &item,
-                                       uint64_t lastEx,
-                                       uint8_t syncBits,
-                                       uint8_t crcVal) const;
+                void writeScanlineBase(uint8_t *planeBase, size_t planeIndex, const Item &item, uint64_t lastEx,
+                                       uint8_t syncBits, uint8_t crcVal) const;
 };
 
 PROMEKI_NAMESPACE_END

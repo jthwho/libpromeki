@@ -45,19 +45,19 @@ PROMEKI_NAMESPACE_BEGIN
  */
 template <typename T, size_t NumValues> class Point {
         public:
-               /**
+                /**
                 * @brief Parses a comma-separated string into a Point.
                 * @param val The string to parse.
                 * @param d The Point to populate with parsed values.
                 * @return Error::Ok on success, Error::Invalid on failure.
                 */
-               static Error fromString(const String &val, Point &d) {
+                static Error fromString(const String &val, Point &d) {
                         StringList parts = val.split(",");
-                        if(parts.size() != NumValues) return Error::Invalid;
-                        for(size_t i = 0; i < NumValues; ++i) {
+                        if (parts.size() != NumValues) return Error::Invalid;
+                        for (size_t i = 0; i < NumValues; ++i) {
                                 Error err;
                                 d[i] = static_cast<T>(parts[i].trim().toDouble(&err));
-                                if(err.isError()) return Error::Invalid;
+                                if (err.isError()) return Error::Invalid;
                         }
                         return Error::Ok;
                 }
@@ -70,8 +70,8 @@ template <typename T, size_t NumValues> class Point {
                  */
                 static Point fromString(const String &str, Error *err = nullptr) {
                         Array<T, NumValues> d;
-                        Error e = fromString(str, d);
-                        if(err != nullptr) *err = e;
+                        Error               e = fromString(str, d);
+                        if (err != nullptr) *err = e;
                         return e.isOk() ? d : Point();
                 }
 
@@ -89,34 +89,24 @@ template <typename T, size_t NumValues> class Point {
                  * template silently shadows the copy/move constructors and
                  * the @c Array overload for one-argument calls.
                  */
-                template<typename... Args,
-                         typename = std::enable_if_t<
-                                 sizeof...(Args) == NumValues &&
-                                 (std::is_convertible_v<Args, T> && ...)>>
+                template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == NumValues &&
+                                                                        (std::is_convertible_v<Args, T> && ...)>>
                 Point(Args... args) : d{static_cast<T>(args)...} {}
 
                 /** @brief Destructor.  Non-virtual: Point is a Simple value type. */
-                ~Point() { }
- 
+                ~Point() {}
+
                 /** @brief Converts the Point to a comma-separated String. */
-                operator String() const {
-                        return toString();
-                }
+                operator String() const { return toString(); }
 
                 /** @brief Converts the Point to a const Array reference. */
-                operator const Array<T, NumValues>&() const {
-                        return d;
-                }
+                operator const Array<T, NumValues> &() const { return d; }
 
                 /** @brief Returns true if this Point equals the given Array. */
-                bool operator==(const Array<T, NumValues> &val) const {
-                        return d == val;
-                }
+                bool operator==(const Array<T, NumValues> &val) const { return d == val; }
 
                 /** @brief Returns true if this Point does not equal the given Array. */
-                bool operator!=(const Array<T, NumValues> &val) const {
-                        return d != val;
-                }
+                bool operator!=(const Array<T, NumValues> &val) const { return d != val; }
 
                 /** @brief Adds the given Array component-wise to this Point. */
                 Point &operator+=(const Array<T, NumValues> &val) {
@@ -141,51 +131,45 @@ template <typename T, size_t NumValues> class Point {
                         d /= val;
                         return *this;
                 }
-                
+
                 /** @brief Returns a const reference to the X component. */
-                template<size_t N = NumValues, typename std::enable_if_t<N >= 1, int> = 0> const T &x() const {
+                template <size_t N = NumValues, typename std::enable_if_t<N >= 1, int> = 0> const T &x() const {
                         return d[0];
                 }
 
                 /** @brief Returns a mutable reference to the X component. */
-                template<size_t N = NumValues, typename std::enable_if_t<N >= 1, int> = 0> T &x() {
-                        return d[0];
-                }
+                template <size_t N = NumValues, typename std::enable_if_t<N >= 1, int> = 0> T &x() { return d[0]; }
 
                 /** @brief Sets the X component to the given value. */
-                template<size_t N = NumValues, typename std::enable_if_t<N >= 1, int> = 0> void setX(const T &val) {
+                template <size_t N = NumValues, typename std::enable_if_t<N >= 1, int> = 0> void setX(const T &val) {
                         d[0] = val;
                         return;
                 }
 
                 /** @brief Returns a const reference to the Y component. */
-                template<size_t N = NumValues, typename std::enable_if_t<N >= 2, int> = 0> const T &y() const {
+                template <size_t N = NumValues, typename std::enable_if_t<N >= 2, int> = 0> const T &y() const {
                         return d[1];
                 }
 
                 /** @brief Returns a mutable reference to the Y component. */
-                template<size_t N = NumValues, typename std::enable_if_t<N >= 2, int> = 0> T &y() {
-                        return d[1];
-                }
+                template <size_t N = NumValues, typename std::enable_if_t<N >= 2, int> = 0> T &y() { return d[1]; }
 
                 /** @brief Sets the Y component to the given value. */
-                template<size_t N = NumValues, typename std::enable_if_t<N >= 2, int> = 0> void setY(const T &val) {
+                template <size_t N = NumValues, typename std::enable_if_t<N >= 2, int> = 0> void setY(const T &val) {
                         d[1] = val;
                         return;
                 }
 
                 /** @brief Returns a const reference to the Z component. */
-                template<size_t N = NumValues, typename std::enable_if_t<N >= 3, int> = 0> const T &z() const {
+                template <size_t N = NumValues, typename std::enable_if_t<N >= 3, int> = 0> const T &z() const {
                         return d[2];
                 }
 
                 /** @brief Returns a mutable reference to the Z component. */
-                template<size_t N = NumValues, typename std::enable_if_t<N >= 3, int> = 0> T &z() {
-                        return d[2];
-                }
+                template <size_t N = NumValues, typename std::enable_if_t<N >= 3, int> = 0> T &z() { return d[2]; }
 
                 /** @brief Sets the Z component to the given value. */
-                template<size_t N = NumValues, typename std::enable_if_t<N >= 3, int> = 0> void setZ(const T &val) {
+                template <size_t N = NumValues, typename std::enable_if_t<N >= 3, int> = 0> void setZ(const T &val) {
                         d[2] = val;
                         return;
                 }
@@ -193,8 +177,8 @@ template <typename T, size_t NumValues> class Point {
                 /** @brief Returns a comma-separated string representation of the Point. */
                 String toString() const {
                         String result;
-                        for(size_t i = 0; i < NumValues; ++i) {
-                                if(i > 0) result += ", ";
+                        for (size_t i = 0; i < NumValues; ++i) {
+                                if (i > 0) result += ", ";
                                 if constexpr (std::is_floating_point_v<T>) {
                                         result += String::number(static_cast<double>(d[i]));
                                 } else {
@@ -203,21 +187,21 @@ template <typename T, size_t NumValues> class Point {
                         }
                         return result;
                 }
-               
+
                 /**
                  * @brief Computes the Euclidean distance to another Point.
                  * @param other The other Point to measure distance to.
                  * @return The Euclidean distance as a double.
                  */
-                template <typename U> double distanceTo(const Point<U, NumValues>& other) const {
+                template <typename U> double distanceTo(const Point<U, NumValues> &other) const {
                         double sum = 0;
-                        for(size_t i = 0; i < NumValues; ++i) {
+                        for (size_t i = 0; i < NumValues; ++i) {
                                 double diff = static_cast<double>(d[i]) - static_cast<double>(other.d[i]);
                                 sum += diff * diff;
                         }
                         return std::sqrt(sum);
                 }
-                
+
                 /**
                  * @brief Linearly interpolates between this Point and another.
                  * @param other The target Point to interpolate towards.
@@ -232,11 +216,10 @@ template <typename T, size_t NumValues> class Point {
                  * @param maxVal The maximum bounds per component.
                  * @return A new Point with each component clamped to the specified range.
                  */
-                template <typename U> Point<T, NumValues> clamp(
-                                const Point<U, NumValues>& minVal,
-                                const Point<U, NumValues>& maxVal) const {
+                template <typename U>
+                Point<T, NumValues> clamp(const Point<U, NumValues> &minVal, const Point<U, NumValues> &maxVal) const {
                         Point<T, NumValues> result;
-                        for(size_t i = 0; i < NumValues; ++i) {
+                        for (size_t i = 0; i < NumValues; ++i) {
                                 T val = d[i];
                                 if (val < static_cast<T>(minVal.d[i])) val = static_cast<T>(minVal.d[i]);
                                 if (val > static_cast<T>(maxVal.d[i])) val = static_cast<T>(maxVal.d[i]);
@@ -251,7 +234,7 @@ template <typename T, size_t NumValues> class Point {
                  * @param max The maximum bounds per component.
                  * @return True if every component is within the specified range.
                  */
-                bool isWithinBounds(const Point<T, NumValues>& min, const Point<T, NumValues>& max) const {
+                bool isWithinBounds(const Point<T, NumValues> &min, const Point<T, NumValues> &max) const {
                         for (size_t i = 0; i < NumValues; ++i) {
                                 if (d[i] < min.d[i] || d[i] > max.d[i]) {
                                         return false;
@@ -259,7 +242,7 @@ template <typename T, size_t NumValues> class Point {
                         }
                         return true;
                 }
-                
+
                 /** @brief Returns the component-wise sum of two Arrays as a Point. */
                 friend Point operator+(const Array<T, NumValues> &lh, const Array<T, NumValues> &rh) {
                         return Point(lh + rh);
@@ -281,7 +264,7 @@ template <typename T, size_t NumValues> class Point {
                 }
 
         private:
-                Array<T, NumValues>     d;
+                Array<T, NumValues> d;
 };
 
 /** @brief 2D point with int32_t components. */
@@ -314,6 +297,4 @@ PROMEKI_NAMESPACE_END
  * specifiers (width, fill, alignment) work automatically.
  */
 template <typename T, std::size_t NumValues>
-struct std::formatter<promeki::Point<T, NumValues>>
-        : promeki::ToStringFormatter<promeki::Point<T, NumValues>> {};
-
+struct std::formatter<promeki::Point<T, NumValues>> : promeki::ToStringFormatter<promeki::Point<T, NumValues>> {};

@@ -25,8 +25,8 @@ TEST_CASE("TuiSplitter: construction with orientation") {
 
 TEST_CASE("TuiSplitter: setFirstWidget and setSecondWidget") {
         TuiSplitter splitter;
-        TuiWidget *w1 = new TuiWidget(&splitter);
-        TuiWidget *w2 = new TuiWidget(&splitter);
+        TuiWidget  *w1 = new TuiWidget(&splitter);
+        TuiWidget  *w2 = new TuiWidget(&splitter);
 
         splitter.setFirstWidget(w1);
         splitter.setSecondWidget(w2);
@@ -55,8 +55,8 @@ TEST_CASE("TuiSplitter: split ratio clamping") {
 
 TEST_CASE("TuiSplitter: horizontal layout distributes geometry") {
         TuiSplitter splitter(TuiSplitter::Horizontal);
-        TuiWidget *w1 = new TuiWidget(&splitter);
-        TuiWidget *w2 = new TuiWidget(&splitter);
+        TuiWidget  *w1 = new TuiWidget(&splitter);
+        TuiWidget  *w2 = new TuiWidget(&splitter);
 
         splitter.setFirstWidget(w1);
         splitter.setSecondWidget(w2);
@@ -70,8 +70,8 @@ TEST_CASE("TuiSplitter: horizontal layout distributes geometry") {
 
 TEST_CASE("TuiSplitter: vertical layout distributes geometry") {
         TuiSplitter splitter(TuiSplitter::Vertical);
-        TuiWidget *w1 = new TuiWidget(&splitter);
-        TuiWidget *w2 = new TuiWidget(&splitter);
+        TuiWidget  *w1 = new TuiWidget(&splitter);
+        TuiWidget  *w2 = new TuiWidget(&splitter);
 
         splitter.setFirstWidget(w1);
         splitter.setSecondWidget(w2);
@@ -85,7 +85,7 @@ TEST_CASE("TuiSplitter: vertical layout distributes geometry") {
 
 TEST_CASE("TuiSplitter: sizeHint") {
         TuiSplitter splitter;
-        Size2Di32 hint = splitter.sizeHint();
+        Size2Di32   hint = splitter.sizeHint();
         CHECK(hint.width() >= 0);
         CHECK(hint.height() >= 0);
 }

@@ -41,62 +41,50 @@ PROMEKI_NAMESPACE_BEGIN
  * String s = hd.toString();  // "1920x1080"
  * @endcode
  */
-template<typename T> class Size2DTemplate {
+template <typename T> class Size2DTemplate {
         public:
                 /** @brief Constructs a 2D size with the given width and height, defaulting to 0x0. */
-                Size2DTemplate(const T & width = 0, const T & height = 0) : _width(width), _height(height) {}
+                Size2DTemplate(const T &width = 0, const T &height = 0) : _width(width), _height(height) {}
 
                 /** @brief Destructor. */
                 ~Size2DTemplate() {}
 
                 /** @brief Returns true if both width and height are greater than zero. */
-                bool isValid() const {
-                        return (_width > 0) && (_height > 0);
-                }
+                bool isValid() const { return (_width > 0) && (_height > 0); }
 
                 /** @brief Sets both width and height. */
-                void set(const T & w, const T & h) {
-                        _width  = w;
+                void set(const T &w, const T &h) {
+                        _width = w;
                         _height = h;
                         return;
                 }
 
                 /** @brief Sets the width. */
-                void setWidth(const T & val) {
+                void setWidth(const T &val) {
                         _width = val;
                         return;
                 }
 
                 /** @brief Returns the width. */
-                const T &width() const {
-                        return _width;
-                }
+                const T &width() const { return _width; }
 
                 /** @brief Sets the height. */
-                void setHeight(const T & val) {
+                void setHeight(const T &val) {
                         _height = val;
                         return;
                 }
 
                 /** @brief Returns the height. */
-                const T &height() const {
-                        return _height;
-                }
+                const T &height() const { return _height; }
 
                 /** @brief Returns the area (width * height). */
-                T area() const {
-                        return _width * _height;
-                }
+                T area() const { return _width * _height; }
 
                 /** @brief Returns the size as a string in "WxH" format. */
-                String toString() const {
-                        return std::to_string(_width) + "x" + std::to_string(_height);
-                }
+                String toString() const { return std::to_string(_width) + "x" + std::to_string(_height); }
 
                 /** @brief Converts to a String using toString(). */
-                operator String() const {
-                        return toString();
-                }
+                operator String() const { return toString(); }
 
                 /**
                  * @brief Parses a size from a "WxH" string.
@@ -112,23 +100,23 @@ template<typename T> class Size2DTemplate {
                  */
                 static Result<Size2DTemplate<T>> fromString(const String &str) {
                         const char *s = str.cstr();
-                        if(s == nullptr || *s == '\0') {
+                        if (s == nullptr || *s == '\0') {
                                 return makeError<Size2DTemplate<T>>(Error::Invalid);
                         }
-                        T w{};
+                        T           w{};
                         const char *end = nullptr;
-                        if(!parseDim(s, w, end)) {
+                        if (!parseDim(s, w, end)) {
                                 return makeError<Size2DTemplate<T>>(Error::Invalid);
                         }
-                        if(*end != 'x' && *end != 'X') {
+                        if (*end != 'x' && *end != 'X') {
                                 return makeError<Size2DTemplate<T>>(Error::Invalid);
                         }
                         const char *rest = end + 1;
-                        if(*rest == '\0') {
+                        if (*rest == '\0') {
                                 return makeError<Size2DTemplate<T>>(Error::Invalid);
                         }
                         T h{};
-                        if(!parseDim(rest, h, end) || *end != '\0') {
+                        if (!parseDim(rest, h, end) || *end != '\0') {
                                 return makeError<Size2DTemplate<T>>(Error::Invalid);
                         }
                         return makeResult(Size2DTemplate<T>(w, h));
@@ -140,20 +128,15 @@ template<typename T> class Size2DTemplate {
                 }
 
                 /** @brief Returns true if the sizes differ. */
-                bool operator!=(const Size2DTemplate &other) const {
-                        return !(*this == other);
-                }
+                bool operator!=(const Size2DTemplate &other) const { return !(*this == other); }
 
                 /** @brief Returns true if the given 2D point lies within the size bounds. */
                 template <typename N> bool pointIsInside(const Point<N, 2> &p) const {
-                        return p.x() >= 0 && 
-                               p.x() < _width &&
-                               p.y() >= 0 &&
-                               p.y() < _height;
+                        return p.x() >= 0 && p.x() < _width && p.y() >= 0 && p.y() < _height;
                 }
 
         private:
-                T _width  = 0;
+                T _width = 0;
                 T _height = 0;
 
                 // Parses one width or height token from @p s, dispatching to
@@ -168,7 +151,7 @@ template<typename T> class Size2DTemplate {
                         if constexpr (std::is_integral_v<T> && std::is_signed_v<T>) {
                                 long long v = std::strtoll(s, &parseEnd, 10);
                                 end = parseEnd;
-                                if(parseEnd == s || errno != 0) return false;
+                                if (parseEnd == s || errno != 0) return false;
                                 out = static_cast<T>(v);
                                 return true;
                         } else if constexpr (std::is_integral_v<T>) {
@@ -177,17 +160,17 @@ template<typename T> class Size2DTemplate {
                                 // front so an unsigned size cannot be parsed
                                 // from a negative-looking input.
                                 const char *p = s;
-                                while(*p == ' ' || *p == '\t') ++p;
-                                if(*p == '-') return false;
+                                while (*p == ' ' || *p == '\t') ++p;
+                                if (*p == '-') return false;
                                 unsigned long long v = std::strtoull(s, &parseEnd, 10);
                                 end = parseEnd;
-                                if(parseEnd == s || errno != 0) return false;
+                                if (parseEnd == s || errno != 0) return false;
                                 out = static_cast<T>(v);
                                 return true;
                         } else {
                                 double v = std::strtod(s, &parseEnd);
                                 end = parseEnd;
-                                if(parseEnd == s || errno != 0) return false;
+                                if (parseEnd == s || errno != 0) return false;
                                 out = static_cast<T>(v);
                                 return true;
                         }
@@ -214,6 +197,4 @@ PROMEKI_NAMESPACE_END
  * specifiers (width, fill, alignment) work automatically.
  */
 template <typename T>
-struct std::formatter<promeki::Size2DTemplate<T>>
-        : promeki::ToStringFormatter<promeki::Size2DTemplate<T>> {};
-
+struct std::formatter<promeki::Size2DTemplate<T>> : promeki::ToStringFormatter<promeki::Size2DTemplate<T>> {};

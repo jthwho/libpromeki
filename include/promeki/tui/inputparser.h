@@ -30,16 +30,20 @@ class TuiInputParser {
         public:
                 /** @brief Parsed event variant. */
                 struct ParsedEvent {
-                        enum Type { None, Key, Mouse };
-                        Type            type = None;
-                        KeyEvent::Key   key = KeyEvent::Key_Unknown;
-                        uint8_t         modifiers = 0;
-                        String          text;
-                        // Mouse fields
-                        Point2Di32         mousePos;
-                        MouseEvent::Button      mouseButton = MouseEvent::NoButton;
-                        MouseEvent::Action      mouseAction = MouseEvent::Press;
-                        uint8_t                 mouseButtons = 0; ///< Bitmask of all held buttons.
+                                enum Type {
+                                        None,
+                                        Key,
+                                        Mouse
+                                };
+                                Type          type = None;
+                                KeyEvent::Key key = KeyEvent::Key_Unknown;
+                                uint8_t       modifiers = 0;
+                                String        text;
+                                // Mouse fields
+                                Point2Di32         mousePos;
+                                MouseEvent::Button mouseButton = MouseEvent::NoButton;
+                                MouseEvent::Action mouseAction = MouseEvent::Press;
+                                uint8_t            mouseButtons = 0; ///< Bitmask of all held buttons.
                 };
 
                 TuiInputParser();
@@ -62,13 +66,13 @@ class TuiInputParser {
                         MouseSGR
                 };
 
-                State           _state = Normal;
-                String          _buf;
-                uint8_t         _buttonState = 0; ///< Accumulated button press state.
+                State   _state = Normal;
+                String  _buf;
+                uint8_t _buttonState = 0; ///< Accumulated button press state.
 
-                void parseCSI(const String &seq, List<ParsedEvent> &events);
-                void parseSS3(char ch, List<ParsedEvent> &events);
-                void parseMouseSGR(const String &seq, List<ParsedEvent> &events);
+                void                 parseCSI(const String &seq, List<ParsedEvent> &events);
+                void                 parseSS3(char ch, List<ParsedEvent> &events);
+                void                 parseMouseSGR(const String &seq, List<ParsedEvent> &events);
                 static KeyEvent::Key csiToKey(int code, int modifier);
 };
 

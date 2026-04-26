@@ -80,7 +80,8 @@ class XYZColor {
                  * the -1.0 sentinel (from default construction) is considered invalid.
                  */
                 bool isValid() const {
-                        for(size_t i = 0; i < d.size(); ++i) if(d[i] < 0.0) return false;
+                        for (size_t i = 0; i < d.size(); ++i)
+                                if (d[i] < 0.0) return false;
                         return true;
                 }
 
@@ -95,7 +96,7 @@ class XYZColor {
                 /** @brief Returns the Z component. */
                 double z() { return d[2]; }
                 /** @brief Sets all three XYZ components. */
-                void set(double x, double y, double z) { d = { x, y, z }; }
+                void set(double x, double y, double z) { d = {x, y, z}; }
                 /** @brief Sets the X component. */
                 void setX(double val) { d[0] = val; }
                 /** @brief Sets the Y component. */
@@ -115,9 +116,7 @@ class XYZColor {
                 operator String() { return toString(); }
 
                 /** @brief Returns a string representation of the XYZ color. */
-                String toString() const {
-                        return String::sprintf("XYZ(%g, %g, %g)", d[0], d[1], d[2]);
-                }
+                String toString() const { return String::sprintf("XYZ(%g, %g, %g)", d[0], d[1], d[2]); }
 
         private:
                 DataType d;

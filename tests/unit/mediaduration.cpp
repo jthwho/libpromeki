@@ -66,7 +66,7 @@ TEST_CASE("MediaDuration::FrameRange basics") {
 TEST_CASE("MediaDuration::end and toFrameRange") {
         SUBCASE("end = start + length - 1") {
                 MediaDuration d(FrameNumber(10), FrameCount(5));
-                FrameNumber e = d.end();
+                FrameNumber   e = d.end();
                 CHECK(e.isValid());
                 CHECK(e.value() == 14);
         }
@@ -102,7 +102,7 @@ TEST_CASE("MediaDuration::end and toFrameRange") {
         }
         SUBCASE("Round-trip via FrameRange") {
                 MediaDuration::FrameRange r(FrameNumber(10), FrameNumber(19));
-                MediaDuration d = MediaDuration::fromFrameRange(r);
+                MediaDuration             d = MediaDuration::fromFrameRange(r);
                 CHECK(d.start().value() == 10);
                 CHECK(d.length().value() == 10);
                 auto [r2, err] = d.toFrameRange();
@@ -127,7 +127,7 @@ TEST_CASE("MediaDuration mutation helpers") {
         SUBCASE("setEnd derives length from inclusive end") {
                 MediaDuration d(FrameNumber(10), FrameCount(5));
                 d.setEnd(FrameNumber(19));
-                CHECK(d.length().value() == 10);  // 10..19 inclusive = 10 frames
+                CHECK(d.length().value() == 10); // 10..19 inclusive = 10 frames
         }
         SUBCASE("setEnd before start poisons length to Unknown") {
                 MediaDuration d(FrameNumber(10), FrameCount(5));
@@ -159,7 +159,7 @@ TEST_CASE("MediaDuration mutation helpers") {
 }
 
 TEST_CASE("MediaDuration::contains") {
-        MediaDuration d(FrameNumber(10), FrameCount(5));  // covers 10..14
+        MediaDuration d(FrameNumber(10), FrameCount(5)); // covers 10..14
         CHECK(d.contains(FrameNumber(10)));
         CHECK(d.contains(FrameNumber(12)));
         CHECK(d.contains(FrameNumber(14)));
@@ -202,20 +202,20 @@ TEST_CASE("MediaDuration::FrameRange::contains and iteration") {
                 CHECK_FALSE(r2.contains(FrameNumber(7)));
         }
         SUBCASE("Range-for over four frames") {
-                FrameRange r(FrameNumber(2), FrameNumber(5));  // 2,3,4,5
-                int64_t sum = 0;
-                int64_t count = 0;
-                for(FrameNumber n : r) {
+                FrameRange r(FrameNumber(2), FrameNumber(5)); // 2,3,4,5
+                int64_t    sum = 0;
+                int64_t    count = 0;
+                for (FrameNumber n : r) {
                         sum += n.value();
                         ++count;
                 }
                 CHECK(count == 4);
-                CHECK(sum == 14);  // 2+3+4+5
+                CHECK(sum == 14); // 2+3+4+5
         }
         SUBCASE("Range-for over single frame") {
                 FrameRange r(FrameNumber(7), FrameNumber(7));
-                int64_t count = 0;
-                for(FrameNumber n : r) {
+                int64_t    count = 0;
+                for (FrameNumber n : r) {
                         CHECK(n.value() == 7);
                         ++count;
                 }
@@ -223,8 +223,8 @@ TEST_CASE("MediaDuration::FrameRange::contains and iteration") {
         }
         SUBCASE("Range-for over invalid range yields nothing") {
                 FrameRange r;
-                int64_t count = 0;
-                for(FrameNumber n : r) {
+                int64_t    count = 0;
+                for (FrameNumber n : r) {
                         (void)n;
                         ++count;
                 }
@@ -244,49 +244,49 @@ TEST_CASE("MediaDuration toString and fromString") {
                 CHECK(d.toString() == String("+"));
         }
         SUBCASE("Round-trip canonical form") {
-                Error err;
+                Error         err;
                 MediaDuration d = MediaDuration::fromString(String("0+50f"), &err);
                 CHECK(err.isOk());
                 CHECK(d.start().value() == 0);
                 CHECK(d.length().value() == 50);
         }
         SUBCASE("Round-trip with whitespace") {
-                Error err;
+                Error         err;
                 MediaDuration d = MediaDuration::fromString(String("  0 + 50f  "), &err);
                 CHECK(err.isOk());
                 CHECK(d.start().value() == 0);
                 CHECK(d.length().value() == 50);
         }
         SUBCASE("Range form '<start>-<end>' is inclusive") {
-                Error err;
+                Error         err;
                 MediaDuration d = MediaDuration::fromString(String("0-9"), &err);
                 CHECK(err.isOk());
                 CHECK(d.start().value() == 0);
                 CHECK(d.length().value() == 10);
         }
         SUBCASE("Range form with whitespace") {
-                Error err;
+                Error         err;
                 MediaDuration d = MediaDuration::fromString(String("10 - 19"), &err);
                 CHECK(err.isOk());
                 CHECK(d.start().value() == 10);
                 CHECK(d.length().value() == 10);
         }
         SUBCASE("Empty input is default Unknown") {
-                Error err;
+                Error         err;
                 MediaDuration d = MediaDuration::fromString(String(), &err);
                 CHECK(err.isOk());
                 CHECK(d.isUnknown());
         }
         SUBCASE("Garbage parses as ParseFailed") {
-                Error err;
+                Error         err;
                 MediaDuration d = MediaDuration::fromString(String("not a duration"), &err);
                 CHECK(err == Error::ParseFailed);
         }
         SUBCASE("Infinite length round-trips through string") {
                 MediaDuration d(FrameNumber(5), FrameCount::infinity());
-                String s = d.toString();
+                String        s = d.toString();
                 CHECK(s == String("5+inf"));
-                Error err;
+                Error         err;
                 MediaDuration d2 = MediaDuration::fromString(s, &err);
                 CHECK(err.isOk());
                 CHECK(d2.start().value() == 5);
@@ -305,7 +305,7 @@ TEST_CASE("MediaDuration Variant integration") {
         SUBCASE("Convertible to/from String via Variant") {
                 Variant v(MediaDuration(FrameNumber(10), FrameCount(20)));
                 CHECK(v.get<String>() == String("10+20f"));
-                Variant s(String("10+20f"));
+                Variant       s(String("10+20f"));
                 MediaDuration d = s.get<MediaDuration>();
                 CHECK(d.start().value() == 10);
                 CHECK(d.length().value() == 20);
@@ -314,32 +314,26 @@ TEST_CASE("MediaDuration Variant integration") {
 
 TEST_CASE("MediaDuration equality") {
         CHECK(MediaDuration() == MediaDuration());
-        CHECK(MediaDuration(FrameNumber(0), FrameCount(50))
-              == MediaDuration(FrameNumber(0), FrameCount(50)));
-        CHECK(MediaDuration(FrameNumber(0), FrameCount(50))
-              != MediaDuration(FrameNumber(0), FrameCount(51)));
-        CHECK(MediaDuration(FrameNumber(0), FrameCount(50))
-              != MediaDuration(FrameNumber(1), FrameCount(50)));
+        CHECK(MediaDuration(FrameNumber(0), FrameCount(50)) == MediaDuration(FrameNumber(0), FrameCount(50)));
+        CHECK(MediaDuration(FrameNumber(0), FrameCount(50)) != MediaDuration(FrameNumber(0), FrameCount(51)));
+        CHECK(MediaDuration(FrameNumber(0), FrameCount(50)) != MediaDuration(FrameNumber(1), FrameCount(50)));
 }
 
 TEST_CASE("MediaDuration ordering (lexicographic)") {
         // Sort by start, then by length.
-        CHECK(MediaDuration(FrameNumber(0), FrameCount(10))
-              < MediaDuration(FrameNumber(1), FrameCount(5)));
-        CHECK(MediaDuration(FrameNumber(5), FrameCount(10))
-              < MediaDuration(FrameNumber(5), FrameCount(20)));
-        CHECK_FALSE(MediaDuration(FrameNumber(5), FrameCount(10))
-                    < MediaDuration(FrameNumber(5), FrameCount(10)));
+        CHECK(MediaDuration(FrameNumber(0), FrameCount(10)) < MediaDuration(FrameNumber(1), FrameCount(5)));
+        CHECK(MediaDuration(FrameNumber(5), FrameCount(10)) < MediaDuration(FrameNumber(5), FrameCount(20)));
+        CHECK_FALSE(MediaDuration(FrameNumber(5), FrameCount(10)) < MediaDuration(FrameNumber(5), FrameCount(10)));
 }
 
 TEST_CASE("MediaDuration ordering is NaN-like when Unknown is involved") {
-        const MediaDuration u;  // both fields Unknown
+        const MediaDuration u; // both fields Unknown
         const MediaDuration finite(FrameNumber(0), FrameCount(10));
         // Equality on Unknown fields still holds (storage compare).
         CHECK(u == MediaDuration());
         // But every ordering relation against an Unknown operand is false.
-        CHECK_FALSE(u <  finite);
-        CHECK_FALSE(finite <  u);
+        CHECK_FALSE(u < finite);
+        CHECK_FALSE(finite < u);
         CHECK_FALSE(u <= u);
         CHECK_FALSE(u >= u);
         CHECK_FALSE(u <= finite);
@@ -349,10 +343,10 @@ TEST_CASE("MediaDuration ordering is NaN-like when Unknown is involved") {
 }
 
 TEST_CASE("MediaDuration::contains(MediaDuration)") {
-        MediaDuration outer(FrameNumber(10), FrameCount(20));   // 10..29
+        MediaDuration outer(FrameNumber(10), FrameCount(20)); // 10..29
         SUBCASE("Strict containment") {
                 CHECK(outer.contains(MediaDuration(FrameNumber(15), FrameCount(5))));
-                CHECK(outer.contains(MediaDuration(FrameNumber(10), FrameCount(20))));  // exact
+                CHECK(outer.contains(MediaDuration(FrameNumber(10), FrameCount(20)))); // exact
         }
         SUBCASE("Boundary cases") {
                 CHECK_FALSE(outer.contains(MediaDuration(FrameNumber(9), FrameCount(5))));   // start before
@@ -381,24 +375,24 @@ TEST_CASE("MediaDuration::contains(MediaDuration)") {
 }
 
 TEST_CASE("MediaDuration::overlaps") {
-        MediaDuration a(FrameNumber(10), FrameCount(10));   // 10..19
-        CHECK(a.overlaps(MediaDuration(FrameNumber(15), FrameCount(10))));  // 15..24
-        CHECK(a.overlaps(MediaDuration(FrameNumber(0),  FrameCount(15))));  // 0..14
+        MediaDuration a(FrameNumber(10), FrameCount(10));                  // 10..19
+        CHECK(a.overlaps(MediaDuration(FrameNumber(15), FrameCount(10)))); // 15..24
+        CHECK(a.overlaps(MediaDuration(FrameNumber(0), FrameCount(15))));  // 0..14
         CHECK(a.overlaps(a));
-        CHECK_FALSE(a.overlaps(MediaDuration(FrameNumber(20), FrameCount(5))));  // 20..24 (adjacent, not overlapping)
+        CHECK_FALSE(a.overlaps(MediaDuration(FrameNumber(20), FrameCount(5)))); // 20..24 (adjacent, not overlapping)
         CHECK_FALSE(a.overlaps(MediaDuration()));
 }
 
 TEST_CASE("MediaDuration::intersect") {
-        MediaDuration a(FrameNumber(10), FrameCount(10));   // 10..19
+        MediaDuration a(FrameNumber(10), FrameCount(10)); // 10..19
         SUBCASE("Partial overlap") {
-                MediaDuration b(FrameNumber(15), FrameCount(10));   // 15..24
+                MediaDuration b(FrameNumber(15), FrameCount(10)); // 15..24
                 MediaDuration r = a.intersect(b);
                 CHECK(r.start().value() == 15);
-                CHECK(r.length().value() == 5);                     // 15..19
+                CHECK(r.length().value() == 5); // 15..19
         }
         SUBCASE("Full containment returns the inner") {
-                MediaDuration b(FrameNumber(12), FrameCount(3));    // 12..14
+                MediaDuration b(FrameNumber(12), FrameCount(3)); // 12..14
                 MediaDuration r = a.intersect(b);
                 CHECK(r == b);
         }
@@ -411,7 +405,7 @@ TEST_CASE("MediaDuration::intersect") {
                 MediaDuration inf(FrameNumber(15), FrameCount::infinity());
                 MediaDuration r = a.intersect(inf);
                 CHECK(r.start().value() == 15);
-                CHECK(r.length().value() == 5);                     // 15..19
+                CHECK(r.length().value() == 5); // 15..19
         }
         SUBCASE("Intersect of two infinites is infinite") {
                 MediaDuration inf1(FrameNumber(10), FrameCount::infinity());
@@ -423,19 +417,19 @@ TEST_CASE("MediaDuration::intersect") {
 }
 
 TEST_CASE("MediaDuration::canAppend / append") {
-        MediaDuration base(FrameNumber(10), FrameCount(5));   // 10..14
+        MediaDuration base(FrameNumber(10), FrameCount(5)); // 10..14
         SUBCASE("Adjacent finite append") {
                 MediaDuration tail(FrameNumber(15), FrameCount(3));
                 CHECK(base.canAppend(tail));
                 CHECK(base.append(tail) == Error::Ok);
                 CHECK(base.start().value() == 10);
-                CHECK(base.length().value() == 8);                   // 10..17
+                CHECK(base.length().value() == 8); // 10..17
         }
         SUBCASE("Non-adjacent fails") {
                 MediaDuration gap(FrameNumber(20), FrameCount(3));
                 CHECK_FALSE(base.canAppend(gap));
                 CHECK(base.append(gap) == Error::NotAdjacent);
-                CHECK(base.length().value() == 5);                   // unchanged
+                CHECK(base.length().value() == 5); // unchanged
         }
         SUBCASE("Overlapping fails") {
                 MediaDuration over(FrameNumber(12), FrameCount(3));
@@ -467,19 +461,19 @@ TEST_CASE("MediaDuration::canAppend / append") {
 }
 
 TEST_CASE("MediaDuration::canPrepend / prepend") {
-        MediaDuration base(FrameNumber(10), FrameCount(5));   // 10..14
+        MediaDuration base(FrameNumber(10), FrameCount(5)); // 10..14
         SUBCASE("Adjacent finite prepend") {
-                MediaDuration head(FrameNumber(5), FrameCount(5));   // 5..9
+                MediaDuration head(FrameNumber(5), FrameCount(5)); // 5..9
                 CHECK(base.canPrepend(head));
                 CHECK(base.prepend(head) == Error::Ok);
                 CHECK(base.start().value() == 5);
-                CHECK(base.length().value() == 10);                  // 5..14
+                CHECK(base.length().value() == 10); // 5..14
         }
         SUBCASE("Non-adjacent fails") {
                 MediaDuration gap(FrameNumber(0), FrameCount(3));
                 CHECK_FALSE(base.canPrepend(gap));
                 CHECK(base.prepend(gap) == Error::NotAdjacent);
-                CHECK(base.start().value() == 10);                   // unchanged
+                CHECK(base.start().value() == 10); // unchanged
         }
         SUBCASE("Prepend before infinite tail works") {
                 MediaDuration inf(FrameNumber(10), FrameCount::infinity());
@@ -502,7 +496,7 @@ TEST_CASE("FrameRange::shift") {
                 r.shift(10);
                 CHECK(r.start.value() == 15);
                 CHECK(r.end.value() == 19);
-                CHECK(r.count().value() == 5);   // count preserved
+                CHECK(r.count().value() == 5); // count preserved
         }
         SUBCASE("shift backward") {
                 r.shift(-3);
@@ -519,7 +513,7 @@ TEST_CASE("FrameRange::shift") {
         }
         SUBCASE("Free + and - return new ranges") {
                 FrameRange r2 = r + int64_t(5);
-                CHECK(r.start.value() == 5);     // original unchanged
+                CHECK(r.start.value() == 5); // original unchanged
                 CHECK(r2.start.value() == 10);
         }
 }
@@ -528,7 +522,7 @@ TEST_CASE("Hash support for FrameNumber/FrameCount/MediaDuration") {
         std::unordered_set<FrameNumber> fns;
         fns.insert(FrameNumber(1));
         fns.insert(FrameNumber(2));
-        fns.insert(FrameNumber(1));     // duplicate
+        fns.insert(FrameNumber(1)); // duplicate
         CHECK(fns.size() == 2);
         CHECK(fns.contains(FrameNumber(1)));
         CHECK_FALSE(fns.contains(FrameNumber(3)));
@@ -541,7 +535,7 @@ TEST_CASE("Hash support for FrameNumber/FrameCount/MediaDuration") {
 
         std::unordered_set<MediaDuration> mds;
         mds.insert(MediaDuration(FrameNumber(0), FrameCount(50)));
-        mds.insert(MediaDuration(FrameNumber(0), FrameCount(50)));   // duplicate
+        mds.insert(MediaDuration(FrameNumber(0), FrameCount(50))); // duplicate
         mds.insert(MediaDuration(FrameNumber(0), FrameCount(51)));
         CHECK(mds.size() == 2);
 
@@ -551,4 +545,3 @@ TEST_CASE("Hash support for FrameNumber/FrameCount/MediaDuration") {
         rs.insert(MediaDuration::FrameRange(FrameNumber(10), FrameNumber(19)));
         CHECK(rs.size() == 2);
 }
-

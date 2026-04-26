@@ -22,7 +22,7 @@
 using namespace promeki;
 
 class EventTestWidget : public TuiWidget {
-        PROMEKI_OBJECT(EventTestWidget, TuiWidget)
+                PROMEKI_OBJECT(EventTestWidget, TuiWidget)
         public:
                 EventTestWidget(ObjectBase *parent = nullptr) : TuiWidget(parent) {
                         setFocusPolicy(StrongFocus);
@@ -126,19 +126,19 @@ class EventTestWidget : public TuiWidget {
         protected:
                 void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
-                        if(!app) return;
-                        Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
-                        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
-                        TuiPainter painter(app->screen(), clipRect);
+                        if (!app) return;
+                        Point2Di32        screenPos = mapToGlobal(Point2Di32(0, 0));
+                        Rect2Di32         clipRect(screenPos.x(), screenPos.y(), width(), height());
+                        TuiPainter        painter(app->screen(), clipRect);
                         const TuiPalette &pal = app->palette();
-                        TuiStyle s = pal.style(TuiPalette::WindowText, false, isEnabled())
-                                        .merged(pal.style(TuiPalette::Window, false, isEnabled()));
+                        TuiStyle          s = pal.style(TuiPalette::WindowText, false, isEnabled())
+                                             .merged(pal.style(TuiPalette::Window, false, isEnabled()));
                         painter.setStyle(s);
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
                 void resizeEvent(ResizeEvent *) override {
-                        if(_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
+                        if (_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
                 }
 
                 void keyPressEvent(KeyEvent *e) override {
@@ -148,9 +148,10 @@ class EventTestWidget : public TuiWidget {
                         _keyTextLabel->setText(String("Text: \"") + e->text() + "\"");
                         _keyCodeLabel->setText(String("Code: ") + String::number(static_cast<int>(e->key())));
 
-                        if(_logKeysCb->isChecked()) {
-                                String logEntry = "KEY " + KeyEvent::modifierString(e->modifiers()) + KeyEvent::keyName(e->key());
-                                if(!e->text().isEmpty()) {
+                        if (_logKeysCb->isChecked()) {
+                                String logEntry =
+                                        "KEY " + KeyEvent::modifierString(e->modifiers()) + KeyEvent::keyName(e->key());
+                                if (!e->text().isEmpty()) {
                                         logEntry += " (\"" + e->text() + "\")";
                                 }
                                 addLog(logEntry);
@@ -160,28 +161,20 @@ class EventTestWidget : public TuiWidget {
                 }
 
                 void mouseEvent(MouseEvent *e) override {
-                        _mousePosLabel->setText(
-                                String("Position: ") +
-                                String::number(e->x()) + ", " +
-                                String::number(e->y()));
-                        _mouseButtonLabel->setText(
-                                String("Button: ") + MouseEvent::buttonName(e->button()));
-                        _mouseActionLabel->setText(
-                                String("Action: ") + MouseEvent::actionName(e->action()));
+                        _mousePosLabel->setText(String("Position: ") + String::number(e->x()) + ", " +
+                                                String::number(e->y()));
+                        _mouseButtonLabel->setText(String("Button: ") + MouseEvent::buttonName(e->button()));
+                        _mouseActionLabel->setText(String("Action: ") + MouseEvent::actionName(e->action()));
                         String mods = KeyEvent::modifierString(e->modifiers());
-                        _mouseModLabel->setText(
-                                String("Modifiers: ") + (mods.isEmpty() ? "None" : mods));
-                        _mouseButtonsLabel->setText(
-                                String("Buttons: ") + MouseEvent::buttonsString(e->buttons()));
+                        _mouseModLabel->setText(String("Modifiers: ") + (mods.isEmpty() ? "None" : mods));
+                        _mouseButtonsLabel->setText(String("Buttons: ") + MouseEvent::buttonsString(e->buttons()));
 
                         // Only log presses, releases, and scrolls (not every move)
-                        if(_logMouseCb->isChecked() && e->action() != MouseEvent::Move) {
-                                String logEntry = "MOUSE " +
-                                        MouseEvent::actionName(e->action()) + " " +
-                                        MouseEvent::buttonName(e->button()) +
-                                        " at (" + String::number(e->x()) +
-                                        "," + String::number(e->y()) + ")";
-                                if(e->modifiers() != MouseEvent::NoModifier) {
+                        if (_logMouseCb->isChecked() && e->action() != MouseEvent::Move) {
+                                String logEntry = "MOUSE " + MouseEvent::actionName(e->action()) + " " +
+                                                  MouseEvent::buttonName(e->button()) + " at (" +
+                                                  String::number(e->x()) + "," + String::number(e->y()) + ")";
+                                if (e->modifiers() != MouseEvent::NoModifier) {
                                         logEntry += " " + KeyEvent::modifierString(e->modifiers());
                                 }
                                 addLog(logEntry);
@@ -192,51 +185,50 @@ class EventTestWidget : public TuiWidget {
 
                 void timerEvent(TimerEvent *e) override {
                         _tickCount++;
-                        _statusBar->setPermanentMessage(
-                                String("Tick: ") + String::number(_tickCount) +
-                                " | Events: " + String::number(_logList->count()) +
-                                " | Ctrl+Q: quit | Scroll: wheel/PgUp/PgDn");
+                        _statusBar->setPermanentMessage(String("Tick: ") + String::number(_tickCount) +
+                                                        " | Events: " + String::number(_logList->count()) +
+                                                        " | Ctrl+Q: quit | Scroll: wheel/PgUp/PgDn");
                         TuiWidget::timerEvent(e);
                 }
 
         private:
-                TuiVBoxLayout   *_layout = nullptr;
-                TuiLabel        *_titleLabel = nullptr;
+                TuiVBoxLayout *_layout = nullptr;
+                TuiLabel      *_titleLabel = nullptr;
 
-                TuiHBoxLayout   *_infoRow = nullptr;
-                TuiWidget       *_infoContainer = nullptr;
+                TuiHBoxLayout *_infoRow = nullptr;
+                TuiWidget     *_infoContainer = nullptr;
 
-                TuiFrame        *_keyFrame = nullptr;
-                TuiLabel        *_keyNameLabel = nullptr;
-                TuiLabel        *_keyModLabel = nullptr;
-                TuiLabel        *_keyTextLabel = nullptr;
-                TuiLabel        *_keyCodeLabel = nullptr;
+                TuiFrame *_keyFrame = nullptr;
+                TuiLabel *_keyNameLabel = nullptr;
+                TuiLabel *_keyModLabel = nullptr;
+                TuiLabel *_keyTextLabel = nullptr;
+                TuiLabel *_keyCodeLabel = nullptr;
 
-                TuiFrame        *_mouseFrame = nullptr;
-                TuiLabel        *_mousePosLabel = nullptr;
-                TuiLabel        *_mouseButtonLabel = nullptr;
-                TuiLabel        *_mouseActionLabel = nullptr;
-                TuiLabel        *_mouseModLabel = nullptr;
-                TuiLabel        *_mouseButtonsLabel = nullptr;
+                TuiFrame *_mouseFrame = nullptr;
+                TuiLabel *_mousePosLabel = nullptr;
+                TuiLabel *_mouseButtonLabel = nullptr;
+                TuiLabel *_mouseActionLabel = nullptr;
+                TuiLabel *_mouseModLabel = nullptr;
+                TuiLabel *_mouseButtonsLabel = nullptr;
 
-                TuiHBoxLayout   *_filterRow = nullptr;
-                TuiWidget       *_filterContainer = nullptr;
-                TuiCheckBox     *_logKeysCb = nullptr;
-                TuiCheckBox     *_logMouseCb = nullptr;
+                TuiHBoxLayout *_filterRow = nullptr;
+                TuiWidget     *_filterContainer = nullptr;
+                TuiCheckBox   *_logKeysCb = nullptr;
+                TuiCheckBox   *_logMouseCb = nullptr;
 
-                TuiFrame        *_logFrame = nullptr;
-                TuiListView     *_logList = nullptr;
+                TuiFrame    *_logFrame = nullptr;
+                TuiListView *_logList = nullptr;
 
-                TuiStatusBar    *_statusBar = nullptr;
+                TuiStatusBar *_statusBar = nullptr;
 
-                int             _tickTimerId = -1;
-                int             _tickCount = 0;
-                bool            _autoScroll = true;
+                int  _tickTimerId = -1;
+                int  _tickCount = 0;
+                bool _autoScroll = true;
 
                 void addLog(const String &entry) {
                         String timestamped = DateTime::now().toString("%T.3") + " " + entry;
                         _logList->insertItem(0, timestamped);
-                        if(_autoScroll) {
+                        if (_autoScroll) {
                                 _logList->ensureVisible(0);
                         }
                 }

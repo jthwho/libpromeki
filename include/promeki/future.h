@@ -25,8 +25,8 @@ PROMEKI_NAMESPACE_BEGIN
  * code rather than an unhandled exception.
  */
 struct PromiseError {
-        Error error;
-        explicit PromiseError(Error e) : error(e) {}
+                Error error;
+                explicit PromiseError(Error e) : error(e) {}
 };
 
 /**
@@ -58,8 +58,7 @@ struct PromiseError {
  * int result = future.get();  // 42
  * @endcode
  */
-template <typename T>
-class Future {
+template <typename T> class Future {
         public:
                 /** @brief Constructs an invalid (empty) Future. */
                 Future() = default;
@@ -99,20 +98,20 @@ class Future {
                  *         or another error set via Promise::setError).
                  */
                 Result<T> result(unsigned int timeoutMs = 0) {
-                        if(!_future.valid()) return Result<T>(T{}, Error::Invalid);
-                        if(timeoutMs != 0) {
-                                if(_future.wait_for(std::chrono::milliseconds(timeoutMs)) !=
-                                        std::future_status::ready) {
+                        if (!_future.valid()) return Result<T>(T{}, Error::Invalid);
+                        if (timeoutMs != 0) {
+                                if (_future.wait_for(std::chrono::milliseconds(timeoutMs)) !=
+                                    std::future_status::ready) {
                                         return Result<T>(T{}, Error::Timeout);
                                 }
                         }
                         try {
                                 return Result<T>(_future.get(), Error::Ok);
-                        } catch(const PromiseError &pe) {
+                        } catch (const PromiseError &pe) {
                                 return Result<T>(T{}, pe.error);
-                        } catch(const std::future_error &) {
+                        } catch (const std::future_error &) {
                                 return Result<T>(T{}, Error::Invalid);
-                        } catch(...) {
+                        } catch (...) {
                                 return Result<T>(T{}, Error::LibraryFailure);
                         }
                 }
@@ -121,7 +120,7 @@ class Future {
                  * @brief Blocks until the result is ready.
                  */
                 void waitForFinished() {
-                        if(_future.valid()) _future.wait();
+                        if (_future.valid()) _future.wait();
                 }
 
                 /**
@@ -130,9 +129,8 @@ class Future {
                  * @return Error::Ok if finished, Error::Timeout if the timeout elapsed.
                  */
                 Error waitForFinished(unsigned int timeoutMs) {
-                        if(!_future.valid()) return Error::Invalid;
-                        if(_future.wait_for(std::chrono::milliseconds(timeoutMs)) ==
-                                std::future_status::ready) {
+                        if (!_future.valid()) return Error::Invalid;
+                        if (_future.wait_for(std::chrono::milliseconds(timeoutMs)) == std::future_status::ready) {
                                 return Error::Ok;
                         }
                         return Error::Timeout;
@@ -142,9 +140,7 @@ class Future {
                  * @brief Returns whether this Future holds a valid shared state.
                  * @return True if a result can be retrieved.
                  */
-                bool isValid() const {
-                        return _future.valid();
-                }
+                bool isValid() const { return _future.valid(); }
 
         private:
                 mutable std::future<T> _future;
@@ -155,8 +151,7 @@ class Future {
  *
  * Provides the same interface but result() returns just an Error.
  */
-template <>
-class Future<void> {
+template <> class Future<void> {
         public:
                 /** @brief Constructs an invalid (empty) Future. */
                 Future() = default;
@@ -189,21 +184,21 @@ class Future<void> {
                  *         Invalid, Cancelled, or one set via setError).
                  */
                 Error result(unsigned int timeoutMs = 0) {
-                        if(!_future.valid()) return Error::Invalid;
-                        if(timeoutMs != 0) {
-                                if(_future.wait_for(std::chrono::milliseconds(timeoutMs)) !=
-                                        std::future_status::ready) {
+                        if (!_future.valid()) return Error::Invalid;
+                        if (timeoutMs != 0) {
+                                if (_future.wait_for(std::chrono::milliseconds(timeoutMs)) !=
+                                    std::future_status::ready) {
                                         return Error::Timeout;
                                 }
                         }
                         try {
                                 _future.get();
                                 return Error::Ok;
-                        } catch(const PromiseError &pe) {
+                        } catch (const PromiseError &pe) {
                                 return pe.error;
-                        } catch(const std::future_error &) {
+                        } catch (const std::future_error &) {
                                 return Error::Invalid;
-                        } catch(...) {
+                        } catch (...) {
                                 return Error::LibraryFailure;
                         }
                 }
@@ -212,7 +207,7 @@ class Future<void> {
                  * @brief Blocks until the result is ready.
                  */
                 void waitForFinished() {
-                        if(_future.valid()) _future.wait();
+                        if (_future.valid()) _future.wait();
                 }
 
                 /**
@@ -221,9 +216,8 @@ class Future<void> {
                  * @return Error::Ok if finished, Error::Timeout if the timeout elapsed.
                  */
                 Error waitForFinished(unsigned int timeoutMs) {
-                        if(!_future.valid()) return Error::Invalid;
-                        if(_future.wait_for(std::chrono::milliseconds(timeoutMs)) ==
-                                std::future_status::ready) {
+                        if (!_future.valid()) return Error::Invalid;
+                        if (_future.wait_for(std::chrono::milliseconds(timeoutMs)) == std::future_status::ready) {
                                 return Error::Ok;
                         }
                         return Error::Timeout;
@@ -233,9 +227,7 @@ class Future<void> {
                  * @brief Returns whether this Future holds a valid shared state.
                  * @return True if a result can be retrieved.
                  */
-                bool isValid() const {
-                        return _future.valid();
-                }
+                bool isValid() const { return _future.valid(); }
 
         private:
                 mutable std::future<void> _future;

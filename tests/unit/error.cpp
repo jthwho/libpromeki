@@ -206,24 +206,24 @@ TEST_CASE("Error: syserr(std::error_code) with no error returns Ok") {
 
 TEST_CASE("Error: syserr(std::error_code) with generic_category") {
         std::error_code ec = std::make_error_code(std::errc::invalid_argument);
-        Error e = Error::syserr(ec);
+        Error           e = Error::syserr(ec);
         CHECK(e.code() == Error::Invalid);
 
         std::error_code ec2 = std::make_error_code(std::errc::no_such_file_or_directory);
-        Error e2 = Error::syserr(ec2);
+        Error           e2 = Error::syserr(ec2);
         CHECK(e2.code() == Error::NotExist);
 
         std::error_code ec3 = std::make_error_code(std::errc::permission_denied);
-        Error e3 = Error::syserr(ec3);
+        Error           e3 = Error::syserr(ec3);
         CHECK(e3.code() == Error::PermissionDenied);
 }
 
 TEST_CASE("Error: syserr(std::error_code) with system_category") {
         std::error_code ec(EINVAL, std::system_category());
-        Error e = Error::syserr(ec);
+        Error           e = Error::syserr(ec);
         CHECK(e.code() == Error::Invalid);
 
         std::error_code ec2(EIO, std::system_category());
-        Error e2 = Error::syserr(ec2);
+        Error           e2 = Error::syserr(ec2);
         CHECK(e2.code() == Error::IOError);
 }

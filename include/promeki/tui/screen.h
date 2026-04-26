@@ -31,17 +31,13 @@ PROMEKI_NAMESPACE_BEGIN
  * share it across threads.
  */
 struct TuiCell {
-        Char            ch = Char(U' ');        ///< The Unicode character in this cell.
-        TuiStyle        style = TuiStyle(Color::White, Color::Black); ///< Visual style (colors and attributes).
+                Char     ch = Char(U' ');                              ///< The Unicode character in this cell.
+                TuiStyle style = TuiStyle(Color::White, Color::Black); ///< Visual style (colors and attributes).
 
-        /** @brief Returns true if both character and style match. */
-        bool operator==(const TuiCell &other) const {
-                return ch == other.ch && style == other.style;
-        }
-        /** @brief Returns true if character or style differ. */
-        bool operator!=(const TuiCell &other) const {
-                return !(*this == other);
-        }
+                /** @brief Returns true if both character and style match. */
+                bool operator==(const TuiCell &other) const { return ch == other.ch && style == other.style; }
+                /** @brief Returns true if character or style differ. */
+                bool operator!=(const TuiCell &other) const { return !(*this == other); }
 };
 
 /**
@@ -143,20 +139,17 @@ class TuiScreen {
                 Terminal::ColorSupport colorMode() const { return _colorMode; }
 
         private:
-                int                     _cols = 0;
-                int                     _rows = 0;
-                List<TuiCell>           _front;
-                List<TuiCell>           _back;
-                bool                    _fullRedraw = true;
-                Terminal::ColorSupport  _colorMode = Terminal::TrueColor;
+                int                    _cols = 0;
+                int                    _rows = 0;
+                List<TuiCell>          _front;
+                List<TuiCell>          _back;
+                bool                   _fullRedraw = true;
+                Terminal::ColorSupport _colorMode = Terminal::TrueColor;
 
-                int index(int x, int y) const { return y * _cols + x; }
-                bool inBounds(int x, int y) const {
-                        return x >= 0 && x < _cols && y >= 0 && y < _rows;
-                }
+                int  index(int x, int y) const { return y * _cols + x; }
+                bool inBounds(int x, int y) const { return x >= 0 && x < _cols && y >= 0 && y < _rows; }
 
-                void emitCell(AnsiStream &stream, const TuiCell &cell,
-                              int &cursorX, int &cursorY, int x, int y,
+                void emitCell(AnsiStream &stream, const TuiCell &cell, int &cursorX, int &cursorY, int x, int y,
                               Color &lastFg, Color &lastBg, uint8_t &lastStyle);
 };
 

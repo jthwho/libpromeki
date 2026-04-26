@@ -121,19 +121,19 @@ class SdlSubsystem {
                 void setFocusedWidget(Widget *widget) { _focusedWidget = widget; }
 
         private:
-                static SdlSubsystem    *_instance;
+                static SdlSubsystem *_instance;
 
-                EventLoop              *_eventLoop = nullptr;
-                SDLEventPump            _eventPump;
-                Widget                 *_focusedWidget = nullptr;
+                EventLoop   *_eventLoop = nullptr;
+                SDLEventPump _eventPump;
+                Widget      *_focusedWidget = nullptr;
 
                 // Self-pipe used as the SDL → EventLoop bridge.
                 // SDL_AddEventWatch writes one byte to the write end
                 // from whatever thread pushed the event; the read
                 // end is registered as an EventLoop IoSource whose
                 // callback drains the pipe and pumps SDL's queue.
-                SelfPipe                _sdlPipe;
-                int                     _sdlSourceHandle = -1;
+                SelfPipe _sdlPipe;
+                int      _sdlSourceHandle = -1;
 
                 // Periodic kick that calls @c SDL_PumpEvents so OS
                 // input (keyboard, window close, mouse) gets pulled
@@ -145,7 +145,7 @@ class SdlSubsystem {
                 // @c SDL_PushEvent or a pump pulls a new event
                 // in, so the watch → pipe → IoSource → pump chain
                 // deadlocks without an external driver.
-                int                     _pumpTimerId = -1;
+                int _pumpTimerId = -1;
 
                 static bool sdlEventWatch(void *userdata, SDL_Event *event);
 };

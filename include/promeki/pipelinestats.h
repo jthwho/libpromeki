@@ -50,9 +50,10 @@ class PipelineStats : public VariantDatabase<"PipelineStats"> {
                  *        pipeline started draining.
                  */
                 PROMEKI_DECLARE_ID(FramesProduced,
-                        VariantSpec().setType(Variant::TypeFrameCount).setDefault(FrameCount(0))
-                                .setDescription(
-                                        "Total frames dispatched from sources to sinks."));
+                                   VariantSpec()
+                                           .setType(Variant::TypeFrameCount)
+                                           .setDefault(FrameCount(0))
+                                           .setDescription("Total frames dispatched from sources to sinks."));
 
                 /**
                  * @brief int64_t — total times a non-blocking
@@ -61,30 +62,32 @@ class PipelineStats : public VariantDatabase<"PipelineStats"> {
                  *        the frame for retry on the next drain.
                  */
                 PROMEKI_DECLARE_ID(WriteRetries,
-                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
-                                .setMin(int64_t(0))
-                                .setDescription(
-                                        "Non-blocking writeFrame TryAgain events held for retry."));
+                                   VariantSpec()
+                                           .setType(Variant::TypeS64)
+                                           .setDefault(int64_t(0))
+                                           .setMin(int64_t(0))
+                                           .setDescription("Non-blocking writeFrame TryAgain events held for retry."));
 
                 /**
                  * @brief int64_t — count of @c pipelineErrorSignal
                  *        emissions since the pipeline started.
                  */
                 PROMEKI_DECLARE_ID(PipelineErrors,
-                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
-                                .setMin(int64_t(0))
-                                .setDescription(
-                                        "Number of errors surfaced via pipelineError."));
+                                   VariantSpec()
+                                           .setType(Variant::TypeS64)
+                                           .setDefault(int64_t(0))
+                                           .setMin(int64_t(0))
+                                           .setDescription("Number of errors surfaced via pipelineError."));
 
                 /**
                  * @brief int64_t — current number of source stages that
                  *        have reported @c Error::EndOfFile.
                  */
-                PROMEKI_DECLARE_ID(SourcesAtEof,
-                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
-                                .setMin(int64_t(0))
-                                .setDescription(
-                                        "Number of sources that have reached EOF."));
+                PROMEKI_DECLARE_ID(SourcesAtEof, VariantSpec()
+                                                         .setType(Variant::TypeS64)
+                                                         .setDefault(int64_t(0))
+                                                         .setMin(int64_t(0))
+                                                         .setDescription("Number of sources that have reached EOF."));
 
                 /**
                  * @brief int64_t — current number of outgoing edges
@@ -92,29 +95,32 @@ class PipelineStats : public VariantDatabase<"PipelineStats"> {
                  *        consumer to free capacity.
                  */
                 PROMEKI_DECLARE_ID(PausedEdges,
-                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
-                                .setMin(int64_t(0))
-                                .setDescription(
-                                        "Number of edges currently paused on back-pressure."));
+                                   VariantSpec()
+                                           .setType(Variant::TypeS64)
+                                           .setDefault(int64_t(0))
+                                           .setMin(int64_t(0))
+                                           .setDescription("Number of edges currently paused on back-pressure."));
 
                 /**
                  * @brief String — human-readable pipeline lifecycle
                  *        state (@c "Empty", @c "Built", @c "Open",
                  *        @c "Running", @c "Stopped", @c "Closed").
                  */
-                PROMEKI_DECLARE_ID(State,
-                        VariantSpec().setType(Variant::TypeString).setDefault(String())
-                                .setDescription("Pipeline lifecycle state."));
+                PROMEKI_DECLARE_ID(State, VariantSpec()
+                                                  .setType(Variant::TypeString)
+                                                  .setDefault(String())
+                                                  .setDescription("Pipeline lifecycle state."));
 
                 /**
                  * @brief int64_t — wall-clock uptime in milliseconds
                  *        since @ref MediaPipeline::start.
                  */
                 PROMEKI_DECLARE_ID(UptimeMs,
-                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
-                                .setMin(int64_t(0))
-                                .setDescription(
-                                        "Wall-clock uptime since start, in milliseconds."));
+                                   VariantSpec()
+                                           .setType(Variant::TypeS64)
+                                           .setDefault(int64_t(0))
+                                           .setMin(int64_t(0))
+                                           .setDescription("Wall-clock uptime since start, in milliseconds."));
 
                 /**
                  * @brief Renders the pipeline-layer counters as a

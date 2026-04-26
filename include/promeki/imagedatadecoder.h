@@ -98,15 +98,15 @@ class UncompressedVideoPayload;
 class ImageDataDecoder {
         public:
                 /** @copydoc ImageDataEncoder::SyncBits */
-                static constexpr uint32_t SyncBits    = ImageDataEncoder::SyncBits;
+                static constexpr uint32_t SyncBits = ImageDataEncoder::SyncBits;
                 /** @copydoc ImageDataEncoder::PayloadBits */
                 static constexpr uint32_t PayloadBits = ImageDataEncoder::PayloadBits;
                 /** @copydoc ImageDataEncoder::CrcBits */
-                static constexpr uint32_t CrcBits     = ImageDataEncoder::CrcBits;
+                static constexpr uint32_t CrcBits = ImageDataEncoder::CrcBits;
                 /** @copydoc ImageDataEncoder::BitsPerRow */
-                static constexpr uint32_t BitsPerRow  = ImageDataEncoder::BitsPerRow;
+                static constexpr uint32_t BitsPerRow = ImageDataEncoder::BitsPerRow;
                 /** @copydoc ImageDataEncoder::SyncNibble */
-                static constexpr uint8_t  SyncNibble  = ImageDataEncoder::SyncNibble;
+                static constexpr uint8_t SyncNibble = ImageDataEncoder::SyncNibble;
 
                 /**
                  * @brief How the decoder samples the image rows in a band.
@@ -131,8 +131,8 @@ class ImageDataDecoder {
                  * what the encoder wrote.
                  */
                 struct Band {
-                        uint32_t firstLine;   ///< First (luma) scan line of the band.
-                        uint32_t lineCount;   ///< Number of (luma) scan lines covered.
+                                uint32_t firstLine; ///< First (luma) scan line of the band.
+                                uint32_t lineCount; ///< Number of (luma) scan lines covered.
                 };
 
                 /**
@@ -146,13 +146,15 @@ class ImageDataDecoder {
                  * step failed (e.g. CRC mismatch).
                  */
                 struct DecodedItem {
-                        uint64_t payload      = 0;        ///< Decoded 64-bit payload.
-                        double   bitWidth     = 0;        ///< Sub-pixel-accurate bit cell width discovered from the sync nibble.
-                        uint32_t syncStartCol = 0;        ///< Column where the sync nibble began.
-                        uint8_t  decodedSync  = 0;        ///< Sync nibble actually read from the image (must match @ref SyncNibble).
-                        uint8_t  decodedCrc   = 0;        ///< CRC byte read from the image.
-                        uint8_t  expectedCrc  = 0;        ///< CRC recomputed locally over the decoded payload.
-                        Error    error        = Error::Ok;///< @c Error::Ok on success.
+                                uint64_t payload = 0; ///< Decoded 64-bit payload.
+                                double   bitWidth =
+                                        0; ///< Sub-pixel-accurate bit cell width discovered from the sync nibble.
+                                uint32_t syncStartCol = 0; ///< Column where the sync nibble began.
+                                uint8_t  decodedSync =
+                                        0; ///< Sync nibble actually read from the image (must match @ref SyncNibble).
+                                uint8_t decodedCrc = 0;    ///< CRC byte read from the image.
+                                uint8_t expectedCrc = 0;   ///< CRC recomputed locally over the decoded payload.
+                                Error   error = Error::Ok; ///< @c Error::Ok on success.
                 };
 
                 /** @brief List of decoded items, one per supplied band. */
@@ -213,27 +215,24 @@ class ImageDataDecoder {
                  *         an error code if the payload descriptor does
                  *         not match the decoder.
                  */
-                Error decode(const UncompressedVideoPayload &payload,
-                             const List<Band> &bands, DecodedList &out) const;
+                Error decode(const UncompressedVideoPayload &payload, const List<Band> &bands, DecodedList &out) const;
 
                 /**
                  * @brief Convenience overload — decodes one band and
                  *        returns its DecodedItem directly.
                  */
-                DecodedItem decode(const UncompressedVideoPayload &payload,
-                                   const Band &band) const;
+                DecodedItem decode(const UncompressedVideoPayload &payload, const Band &band) const;
 
         private:
-                ImageDesc       _desc;
-                uint32_t        _expectedBitWidth = 0;
-                uint32_t        _bitWidthMin      = 0;
-                uint32_t        _bitWidthMax      = 0;
-                size_t          _maxVSubsampling  = 1;
-                SampleMode      _sampleMode       = SampleMode::AverageBand;
-                bool            _valid            = false;
+                ImageDesc  _desc;
+                uint32_t   _expectedBitWidth = 0;
+                uint32_t   _bitWidthMin = 0;
+                uint32_t   _bitWidthMax = 0;
+                size_t     _maxVSubsampling = 1;
+                SampleMode _sampleMode = SampleMode::AverageBand;
+                bool       _valid = false;
 
-                DecodedItem decodeOne(const UncompressedVideoPayload &payload,
-                                      const Band &band) const;
+                DecodedItem decodeOne(const UncompressedVideoPayload &payload, const Band &band) const;
 };
 
 PROMEKI_NAMESPACE_END

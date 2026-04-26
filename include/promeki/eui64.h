@@ -85,22 +85,19 @@ class EUI64 {
                 static EUI64 fromMacAddress(const MacAddress &mac);
 
                 /** @brief Default constructor.  Creates a null (all-zero) identifier. */
-                EUI64() : _addr{} { }
+                EUI64() : _addr{} {}
 
                 /**
                  * @brief Constructs from raw 8-byte data.
                  * @param bytes The 8 bytes of the identifier.
                  */
-                explicit EUI64(const DataFormat &bytes) : _addr(bytes) { }
+                explicit EUI64(const DataFormat &bytes) : _addr(bytes) {}
 
                 /**
                  * @brief Constructs from eight individual octets.
                  */
-                EUI64(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
-                      uint8_t e, uint8_t f, uint8_t g, uint8_t h) :
-                        _addr{DataFormat{std::array<uint8_t, 8>{a, b, c, d, e, f, g, h}}}
-                {
-                }
+                EUI64(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint8_t e, uint8_t f, uint8_t g, uint8_t h)
+                    : _addr{DataFormat{std::array<uint8_t, 8>{a, b, c, d, e, f, g, h}}} {}
 
                 /** @brief Returns true if all bytes are zero. */
                 bool isNull() const { return _addr.isZero(); }
@@ -123,7 +120,7 @@ class EUI64 {
                  * @return The octet value, or 0 if index is out of range.
                  */
                 uint8_t octet(int index) const {
-                        if(index < 0 || index > 7) return 0;
+                        if (index < 0 || index > 7) return 0;
                         return _addr[index];
                 }
 
@@ -134,9 +131,7 @@ class EUI64 {
                  *
                  * @return True if convertible back to MacAddress.
                  */
-                bool hasMacAddress() const {
-                        return _addr[3] == 0xFF && _addr[4] == 0xFE;
-                }
+                bool hasMacAddress() const { return _addr[3] == 0xFF && _addr[4] == 0xFE; }
 
                 /**
                  * @brief Extracts the original 48-bit MAC address.
@@ -196,25 +191,29 @@ PROMEKI_NAMESPACE_END
  * String::format("{:v}", eui);  // "021a:2bff:fe3c:4d5e"
  * @endcode
  */
-template <>
-struct std::formatter<promeki::EUI64> {
-        int _spec = 0; // 0=hyphen, 1=colon, 2=ipv6
+template <> struct std::formatter<promeki::EUI64> {
+                int _spec = 0; // 0=hyphen, 1=colon, 2=ipv6
 
-        constexpr auto parse(std::format_parse_context &ctx) {
-                auto it = ctx.begin();
-                if(it != ctx.end() && *it != '}') {
-                        if(*it == 'h')      { _spec = 0; ++it; }
-                        else if(*it == 'o') { _spec = 1; ++it; }
-                        else if(*it == 'v') { _spec = 2; ++it; }
+                constexpr auto parse(std::format_parse_context &ctx) {
+                        auto it = ctx.begin();
+                        if (it != ctx.end() && *it != '}') {
+                                if (*it == 'h') {
+                                        _spec = 0;
+                                        ++it;
+                                } else if (*it == 'o') {
+                                        _spec = 1;
+                                        ++it;
+                                } else if (*it == 'v') {
+                                        _spec = 2;
+                                        ++it;
+                                }
+                        }
+                        return it;
                 }
-                return it;
-        }
 
-        template <typename FormatContext>
-        auto format(const promeki::EUI64 &v, FormatContext &ctx) const {
-                promeki::EUI64Format fmt(_spec);
-                promeki::String s = v.toString(fmt);
-                return std::format_to(ctx.out(), "{}",
-                        std::string_view(s.cstr(), s.byteCount()));
-        }
+                template <typename FormatContext> auto format(const promeki::EUI64 &v, FormatContext &ctx) const {
+                        promeki::EUI64Format fmt(_spec);
+                        promeki::String      s = v.toString(fmt);
+                        return std::format_to(ctx.out(), "{}", std::string_view(s.cstr(), s.byteCount()));
+                }
 };

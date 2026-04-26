@@ -16,9 +16,7 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-BasicFont::BasicFont(const PaintEngine &pe) : Font(pe) {
-
-}
+BasicFont::BasicFont(const PaintEngine &pe) : Font(pe) {}
 
 BasicFont::~BasicFont() {
         releaseFont();
@@ -29,11 +27,11 @@ void BasicFont::onStateChanged() {
 }
 
 void BasicFont::releaseFont() {
-        if(_ftFace != nullptr) {
+        if (_ftFace != nullptr) {
                 FT_Done_Face(static_cast<FT_Face>(_ftFace));
                 _ftFace = nullptr;
         }
-        if(_ftLibrary != nullptr) {
+        if (_ftLibrary != nullptr) {
                 FT_Done_FreeType(static_cast<FT_Library>(_ftLibrary));
                 _ftLibrary = nullptr;
         }
@@ -47,7 +45,7 @@ void BasicFont::releaseFont() {
 }
 
 bool BasicFont::ensureFontLoaded() {
-        if(!_fontDirty && _ftFace != nullptr) return true;
+        if (!_fontDirty && _ftFace != nullptr) return true;
 
         releaseFont();
 
@@ -58,32 +56,29 @@ bool BasicFont::ensureFontLoaded() {
         // effectiveFilename(). The Buffer is stored on the BasicFont
         // and outlives the FT_Face it backs.
         const String path = effectiveFilename();
-        File f(path);
-        Error openErr = f.open(File::ReadOnly);
-        if(openErr.isError()) {
-                promekiErr("Could not open font '%s': %s",
-                        path.cstr(), openErr.name().cstr());
+        File         f(path);
+        Error        openErr = f.open(File::ReadOnly);
+        if (openErr.isError()) {
+                promekiErr("Could not open font '%s': %s", path.cstr(), openErr.name().cstr());
                 return false;
         }
         _fontData = f.readAll();
         f.close();
-        if(!_fontData.isValid() || _fontData.size() == 0) {
+        if (!_fontData.isValid() || _fontData.size() == 0) {
                 promekiErr("Font '%s' is empty", path.cstr());
                 return false;
         }
 
         FT_Library ft;
-        if(FT_Init_FreeType(&ft)) {
+        if (FT_Init_FreeType(&ft)) {
                 promekiErr("Could not init FreeType library");
                 return false;
         }
         _ftLibrary = ft;
 
         FT_Face face;
-        if(FT_New_Memory_Face(ft,
-                              static_cast<const FT_Byte *>(_fontData.data()),
-                              static_cast<FT_Long>(_fontData.size()),
-                              0, &face)) {
+        if (FT_New_Memory_Face(ft, static_cast<const FT_Byte *>(_fontData.data()),
+                               static_cast<FT_Long>(_fontData.size()), 0, &face)) {
                 promekiErr("Could not parse font '%s'", path.cstr());
                 return false;
         }
@@ -101,45 +96,44 @@ bool BasicFont::ensureFontLoaded() {
 }
 
 bool BasicFont::drawText(const String &text, int x, int y) {
-        if(!ensureFontLoaded()) return false;
+        if (!ensureFontLoaded()) return false;
 
-        FT_Face face = static_cast<FT_Face>(_ftFace);
-        int penX = x;
-        int penY = y;
+        FT_Face          face = static_cast<FT_Face>(_ftFace);
+        int              penX = x;
+        int              penY = y;
         List<Point2Di32> points;
-        List<float> alphas;
+        List<float>      alphas;
 
-        bool hasKerning = _kerning && FT_HAS_KERNING(face);
+        bool    hasKerning = _kerning && FT_HAS_KERNING(face);
         FT_UInt prevIndex = 0;
 
-        for(Char c : text) {
+        for (Char c : text) {
                 FT_UInt glyphIndex = 0;
-                if(hasKerning) {
+                if (hasKerning) {
                         glyphIndex = FT_Get_Char_Index(face, c.codepoint());
-                        if(prevIndex != 0 && glyphIndex != 0) {
+                        if (prevIndex != 0 && glyphIndex != 0) {
                                 FT_Vector delta;
                                 FT_Get_Kerning(face, prevIndex, glyphIndex, FT_KERNING_DEFAULT, &delta);
                                 penX += delta.x >> 6;
                         }
                 }
 
-                if(FT_Load_Char(face, c.codepoint(), FT_LOAD_RENDER)) {
-                        promekiWarn("Could not load character 0x%X in '%s'",
-                                (unsigned int)c.codepoint(),
-                                effectiveFilename().cstr());
+                if (FT_Load_Char(face, c.codepoint(), FT_LOAD_RENDER)) {
+                        promekiWarn("Could not load character 0x%X in '%s'", (unsigned int)c.codepoint(),
+                                    effectiveFilename().cstr());
                         continue;
                 }
 
                 FT_Bitmap *bitmap = &face->glyph->bitmap;
-                FT_Int bitmapLeft = face->glyph->bitmap_left;
-                FT_Int bitmapTop = face->glyph->bitmap_top;
+                FT_Int     bitmapLeft = face->glyph->bitmap_left;
+                FT_Int     bitmapTop = face->glyph->bitmap_top;
 
-                for(unsigned int row = 0; row < bitmap->rows; ++row) {
-                        for(unsigned int col = 0; col < bitmap->width; ++col) {
-                                int xPixel = penX + bitmapLeft + col;
-                                int yPixel = penY - bitmapTop + row;
+                for (unsigned int row = 0; row < bitmap->rows; ++row) {
+                        for (unsigned int col = 0; col < bitmap->width; ++col) {
+                                int     xPixel = penX + bitmapLeft + col;
+                                int     yPixel = penY - bitmapTop + row;
                                 uint8_t alpha = bitmap->buffer[row * bitmap->pitch + col];
-                                if(alpha > 0) {
+                                if (alpha > 0) {
                                         points += Point2Di32(xPixel, yPixel);
                                         alphas += static_cast<float>(alpha) / 255.0f;
                                 }
@@ -148,7 +142,7 @@ bool BasicFont::drawText(const String &text, int x, int y) {
                 penX += face->glyph->advance.x >> 6;
                 penY += face->glyph->advance.y >> 6;
 
-                if(hasKerning) prevIndex = glyphIndex;
+                if (hasKerning) prevIndex = glyphIndex;
         }
 
         PaintEngine::Pixel pix = _paintEngine.createPixel(_fg);
@@ -158,28 +152,28 @@ bool BasicFont::drawText(const String &text, int x, int y) {
 }
 
 int BasicFont::measureText(const String &text) {
-        if(!ensureFontLoaded()) return 0;
+        if (!ensureFontLoaded()) return 0;
 
         FT_Face face = static_cast<FT_Face>(_ftFace);
-        bool hasKerning = _kerning && FT_HAS_KERNING(face);
+        bool    hasKerning = _kerning && FT_HAS_KERNING(face);
         FT_UInt prevIndex = 0;
 
         int width = 0;
-        for(Char c : text) {
+        for (Char c : text) {
                 FT_UInt glyphIndex = 0;
-                if(hasKerning) {
+                if (hasKerning) {
                         glyphIndex = FT_Get_Char_Index(face, c.codepoint());
-                        if(prevIndex != 0 && glyphIndex != 0) {
+                        if (prevIndex != 0 && glyphIndex != 0) {
                                 FT_Vector delta;
                                 FT_Get_Kerning(face, prevIndex, glyphIndex, FT_KERNING_DEFAULT, &delta);
                                 width += delta.x >> 6;
                         }
                 }
 
-                if(FT_Load_Char(face, c.codepoint(), FT_LOAD_DEFAULT)) continue;
+                if (FT_Load_Char(face, c.codepoint(), FT_LOAD_DEFAULT)) continue;
                 width += face->glyph->advance.x >> 6;
 
-                if(hasKerning) prevIndex = glyphIndex;
+                if (hasKerning) prevIndex = glyphIndex;
         }
 
         return width;

@@ -23,22 +23,22 @@ PROMEKI_NAMESPACE_BEGIN
 
 VideoPayload::PtrList Frame::videoPayloads() const {
         VideoPayload::PtrList out;
-        for(const MediaPayload::Ptr &p : _payloads) {
-                if(!p.isValid()) continue;
-                if(p->kind() != MediaPayloadKind::Video) continue;
+        for (const MediaPayload::Ptr &p : _payloads) {
+                if (!p.isValid()) continue;
+                if (p->kind() != MediaPayloadKind::Video) continue;
                 VideoPayload::Ptr vp = sharedPointerCast<VideoPayload>(p);
-                if(vp.isValid()) out.pushToBack(std::move(vp));
+                if (vp.isValid()) out.pushToBack(std::move(vp));
         }
         return out;
 }
 
 AudioPayload::PtrList Frame::audioPayloads() const {
         AudioPayload::PtrList out;
-        for(const MediaPayload::Ptr &p : _payloads) {
-                if(!p.isValid()) continue;
-                if(p->kind() != MediaPayloadKind::Audio) continue;
+        for (const MediaPayload::Ptr &p : _payloads) {
+                if (!p.isValid()) continue;
+                if (p->kind() != MediaPayloadKind::Audio) continue;
                 AudioPayload::Ptr ap = sharedPointerCast<AudioPayload>(p);
-                if(ap.isValid()) out.pushToBack(std::move(ap));
+                if (ap.isValid()) out.pushToBack(std::move(ap));
         }
         return out;
 }
@@ -46,14 +46,14 @@ AudioPayload::PtrList Frame::audioPayloads() const {
 bool Frame::isSafeCutPoint(CutPointScope scope) const {
         const bool wantVideo = (scope == CutPointVideoOnly || scope == CutPointAudioVideo);
         const bool wantAudio = (scope == CutPointAudioOnly || scope == CutPointAudioVideo);
-        for(size_t i = 0; i < _payloads.size(); ++i) {
+        for (size_t i = 0; i < _payloads.size(); ++i) {
                 const MediaPayload::Ptr &p = _payloads[i];
-                if(!p.isValid()) continue;
+                if (!p.isValid()) continue;
                 const MediaPayloadKind &k = p->kind();
-                if(k == MediaPayloadKind::Video && wantVideo) {
-                        if(!p->isSafeCutPoint()) return false;
-                } else if(k == MediaPayloadKind::Audio && wantAudio) {
-                        if(!p->isSafeCutPoint()) return false;
+                if (k == MediaPayloadKind::Video && wantVideo) {
+                        if (!p->isSafeCutPoint()) return false;
+                } else if (k == MediaPayloadKind::Audio && wantAudio) {
+                        if (!p->isSafeCutPoint()) return false;
                 }
         }
         return true;
@@ -61,16 +61,17 @@ bool Frame::isSafeCutPoint(CutPointScope scope) const {
 
 VideoFormat Frame::videoFormat(size_t index) const {
         size_t videoIdx = 0;
-        for(const MediaPayload::Ptr &p : _payloads) {
-                if(!p.isValid()) continue;
-                if(p->kind() != MediaPayloadKind::Video) continue;
-                if(videoIdx != index) { ++videoIdx; continue; }
+        for (const MediaPayload::Ptr &p : _payloads) {
+                if (!p.isValid()) continue;
+                if (p->kind() != MediaPayloadKind::Video) continue;
+                if (videoIdx != index) {
+                        ++videoIdx;
+                        continue;
+                }
                 const auto *vp = p->as<VideoPayload>();
-                if(vp == nullptr) return VideoFormat();
+                if (vp == nullptr) return VideoFormat();
                 const ImageDesc &d = vp->desc();
-                return VideoFormat(d.size(),
-                                   _metadata.getAs<FrameRate>(Metadata::FrameRate),
-                                   d.videoScanMode());
+                return VideoFormat(d.size(), _metadata.getAs<FrameRate>(Metadata::FrameRate), d.videoScanMode());
         }
         return VideoFormat();
 }
@@ -78,11 +79,11 @@ VideoFormat Frame::videoFormat(size_t index) const {
 MediaDesc Frame::mediaDesc() const {
         MediaDesc md;
         md.setFrameRate(_metadata.getAs<FrameRate>(Metadata::FrameRate));
-        for(const MediaPayload::Ptr &p : _payloads) {
-                if(!p.isValid()) continue;
-                if(const auto *vp = p->as<VideoPayload>()) {
+        for (const MediaPayload::Ptr &p : _payloads) {
+                if (!p.isValid()) continue;
+                if (const auto *vp = p->as<VideoPayload>()) {
                         md.imageList().pushToBack(vp->desc());
-                } else if(const auto *ap = p->as<AudioPayload>()) {
+                } else if (const auto *ap = p->as<AudioPayload>()) {
                         md.audioList().pushToBack(ap->desc());
                 }
         }
@@ -94,19 +95,19 @@ StringList Frame::dump(const String &indent) const {
         StringList out;
         VariantLookup<Frame>::forEachScalar([this, &out, &indent](const String &name) {
                 auto v = VariantLookup<Frame>::resolve(*this, name);
-                if(v.has_value()) {
+                if (v.has_value()) {
                         out += indent + name + " [" + v->typeName() + "]: " + v->format(String());
                 }
         });
 
         StringList mdLines = _metadata.dump();
-        if(!mdLines.isEmpty()) {
+        if (!mdLines.isEmpty()) {
                 out += indent + "Meta:";
                 String sub = indent + "  ";
-                for(const String &ln : mdLines) out += sub + ln;
+                for (const String &ln : mdLines) out += sub + ln;
         }
 
-        if(!_configUpdate.isEmpty()) {
+        if (!_configUpdate.isEmpty()) {
                 out += indent + "ConfigUpdate:";
                 String sub = indent + "  ";
                 _configUpdate.forEach([&out, &sub](MediaConfig::ID id, const Variant &value) {
@@ -125,17 +126,17 @@ StringList Frame::dump(const String &indent) const {
         // database, and any codec-specific composites).  Works the
         // same way for Video, Audio, and any future payload kind so
         // we never silently skip a payload section again.
-        const String sub = indent + "  ";
+        const String     sub = indent + "  ";
         Map<int, size_t> kindIdx;
-        for(const MediaPayload::Ptr &p : _payloads) {
-                if(!p.isValid()) {
+        for (const MediaPayload::Ptr &p : _payloads) {
+                if (!p.isValid()) {
                         out += indent + "<null payload>";
                         continue;
                 }
                 const MediaPayloadKind &kind = p->kind();
-                size_t idx = 0;
-                auto it = kindIdx.find(kind.value());
-                if(it != kindIdx.end()) {
+                size_t                  idx = 0;
+                auto                    it = kindIdx.find(kind.value());
+                if (it != kindIdx.end()) {
                         idx = it->second;
                         it->second = idx + 1;
                 } else {
@@ -149,7 +150,7 @@ StringList Frame::dump(const String &indent) const {
                 const String label(kind.valueName());
                 out += indent + String::sprintf("%s[%zu]:", label.cstr(), idx);
                 StringList lines = p->variantLookupDump(sub);
-                for(const String &l : lines) out += l;
+                for (const String &l : lines) out += l;
         }
         return out;
 }
@@ -168,19 +169,14 @@ PROMEKI_LOOKUP_REGISTER(Frame)
                         return Variant(static_cast<uint64_t>(f.audioPayloads().size()));
                 })
         .scalar("HasBenchmark",
-                [](const Frame &f) -> std::optional<Variant> {
-                        return Variant(f.benchmark().isValid());
-                })
-        .scalar("VideoFormat",
-                [](const Frame &f) -> std::optional<Variant> {
-                        return Variant(f.videoFormat(0));
-                })
+                [](const Frame &f) -> std::optional<Variant> { return Variant(f.benchmark().isValid()); })
+        .scalar("VideoFormat", [](const Frame &f) -> std::optional<Variant> { return Variant(f.videoFormat(0)); })
         .indexedScalar("VideoFormat",
-                [](const Frame &f, size_t i) -> std::optional<Variant> {
-                        auto vf = f.videoFormat(i);
-                        if(!vf.isValid()) return std::nullopt;
-                        return Variant(vf);
-                })
+                       [](const Frame &f, size_t i) -> std::optional<Variant> {
+                               auto vf = f.videoFormat(i);
+                               if (!vf.isValid()) return std::nullopt;
+                               return Variant(vf);
+                       })
         // indexedChild lambdas return @c VideoPayload* /
         // @c AudioPayload* that point directly into @c f.payloadList.
         // We cannot go through @ref Frame::videoPayloads — it returns
@@ -195,54 +191,48 @@ PROMEKI_LOOKUP_REGISTER(Frame)
         // the Frame context the payload layer is implicit, and the
         // short form matches the @ref Frame::dump header so query
         // strings and dump output use one vocabulary.
-        .indexedChild<VideoPayload>("Video",
+        .indexedChild<VideoPayload>(
+                "Video",
                 [](const Frame &f, size_t i) -> const VideoPayload * {
                         size_t idx = 0;
-                        for(const MediaPayload::Ptr &p : f.payloadList()) {
-                                if(!p.isValid() ||
-                                   p->kind() != MediaPayloadKind::Video) continue;
-                                if(idx++ != i) continue;
+                        for (const MediaPayload::Ptr &p : f.payloadList()) {
+                                if (!p.isValid() || p->kind() != MediaPayloadKind::Video) continue;
+                                if (idx++ != i) continue;
                                 return p->as<VideoPayload>();
                         }
                         return nullptr;
                 },
                 [](Frame &f, size_t i) -> VideoPayload * {
                         size_t idx = 0;
-                        for(MediaPayload::Ptr &p : f.payloadList()) {
-                                if(!p.isValid() ||
-                                   p->kind() != MediaPayloadKind::Video) continue;
-                                if(idx++ != i) continue;
+                        for (MediaPayload::Ptr &p : f.payloadList()) {
+                                if (!p.isValid() || p->kind() != MediaPayloadKind::Video) continue;
+                                if (idx++ != i) continue;
                                 return p.modify()->as<VideoPayload>();
                         }
                         return nullptr;
                 })
-        .indexedChild<AudioPayload>("Audio",
+        .indexedChild<AudioPayload>(
+                "Audio",
                 [](const Frame &f, size_t i) -> const AudioPayload * {
                         size_t idx = 0;
-                        for(const MediaPayload::Ptr &p : f.payloadList()) {
-                                if(!p.isValid() ||
-                                   p->kind() != MediaPayloadKind::Audio) continue;
-                                if(idx++ != i) continue;
+                        for (const MediaPayload::Ptr &p : f.payloadList()) {
+                                if (!p.isValid() || p->kind() != MediaPayloadKind::Audio) continue;
+                                if (idx++ != i) continue;
                                 return p->as<AudioPayload>();
                         }
                         return nullptr;
                 },
                 [](Frame &f, size_t i) -> AudioPayload * {
                         size_t idx = 0;
-                        for(MediaPayload::Ptr &p : f.payloadList()) {
-                                if(!p.isValid() ||
-                                   p->kind() != MediaPayloadKind::Audio) continue;
-                                if(idx++ != i) continue;
+                        for (MediaPayload::Ptr &p : f.payloadList()) {
+                                if (!p.isValid() || p->kind() != MediaPayloadKind::Audio) continue;
+                                if (idx++ != i) continue;
                                 return p.modify()->as<AudioPayload>();
                         }
                         return nullptr;
                 })
-        .database<"Metadata">("Meta",
-                [](const Frame &f) -> const VariantDatabase<"Metadata"> * {
-                        return &f.metadata();
-                },
-                [](Frame &f) -> VariantDatabase<"Metadata"> * {
-                        return &f.metadata();
-                });
+        .database<"Metadata">(
+                "Meta", [](const Frame &f) -> const VariantDatabase<"Metadata"> * { return &f.metadata(); },
+                [](Frame &f) -> VariantDatabase<"Metadata"> * { return &f.metadata(); });
 
 PROMEKI_NAMESPACE_END

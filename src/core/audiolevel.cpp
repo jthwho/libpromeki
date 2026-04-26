@@ -12,7 +12,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 String AudioLevel::toString() const {
-        if(isSilence()) return String("-inf dBFS");
+        if (isSilence()) return String("-inf dBFS");
         char buf[32];
         snprintf(buf, sizeof(buf), "%.1f dBFS", _dbfs);
         return String(buf);

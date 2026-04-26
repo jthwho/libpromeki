@@ -71,22 +71,19 @@ class BenchmarkState {
                  */
                 class Iterator {
                         public:
-                                Iterator(BenchmarkState *state, uint64_t pos)
-                                        : _state(state), _pos(pos) {}
+                                Iterator(BenchmarkState *state, uint64_t pos) : _state(state), _pos(pos) {}
 
                                 uint64_t operator*() const { return _pos; }
 
                                 Iterator &operator++() {
                                         ++_pos;
-                                        if(_state != nullptr && _pos >= _state->_iterations) {
+                                        if (_state != nullptr && _pos >= _state->_iterations) {
                                                 _state->finishTiming();
                                         }
                                         return *this;
                                 }
 
-                                bool operator!=(const Iterator &other) const {
-                                        return _pos != other._pos;
-                                }
+                                bool operator!=(const Iterator &other) const { return _pos != other._pos; }
 
                         private:
                                 BenchmarkState *_state;
@@ -94,8 +91,7 @@ class BenchmarkState {
                 };
 
                 /** @brief Constructs a state object bound to the given iteration count. */
-                explicit BenchmarkState(uint64_t iterations)
-                        : _iterations(iterations) {}
+                explicit BenchmarkState(uint64_t iterations) : _iterations(iterations) {}
 
                 /** @brief Number of iterations the runner chose for this invocation. */
                 uint64_t iterations() const { return _iterations; }
@@ -110,9 +106,7 @@ class BenchmarkState {
                 }
 
                 /** @brief Range-for end; returns an iterator at the iteration count. */
-                Iterator end() {
-                        return Iterator(this, _iterations);
-                }
+                Iterator end() { return Iterator(this, _iterations); }
 
                 /**
                  * @brief Imperative iteration primitive equivalent to the range-for loop.
@@ -125,8 +119,8 @@ class BenchmarkState {
                  * @return True while the case should continue running.
                  */
                 bool keepRunning() {
-                        if(_counter == 0) ensureTimerStarted();
-                        if(_counter >= _iterations) {
+                        if (_counter == 0) ensureTimerStarted();
+                        if (_counter >= _iterations) {
                                 finishTiming();
                                 return false;
                         }
@@ -142,7 +136,7 @@ class BenchmarkState {
                  * before the timer has been started (no-op in that case).
                  */
                 void pauseTiming() {
-                        if(!_timerStarted || _paused) return;
+                        if (!_timerStarted || _paused) return;
                         _paused = true;
                         _pauseStartNs = _timer.elapsedNs();
                         return;
@@ -150,7 +144,7 @@ class BenchmarkState {
 
                 /** @brief Resumes the measured-time window after a pauseTiming() call. */
                 void resumeTiming() {
-                        if(!_paused) return;
+                        if (!_paused) return;
                         _paused = false;
                         _pausedNs += _timer.elapsedNs() - _pauseStartNs;
                         return;
@@ -242,21 +236,21 @@ class BenchmarkState {
                 friend class BenchmarkRunner;
 
                 void ensureTimerStarted() {
-                        if(_timerStarted) return;
+                        if (_timerStarted) return;
                         _timerStarted = true;
                         _timer.start();
                 }
 
                 void finishTiming() {
-                        if(_completed) return;
+                        if (_completed) return;
                         _completed = true;
-                        if(_paused) {
+                        if (_paused) {
                                 _pausedNs += _timer.elapsedNs() - _pauseStartNs;
                                 _paused = false;
                         }
                         _wallNs = _timer.elapsedNs();
                         _effectiveNs = _wallNs - _pausedNs;
-                        if(_effectiveNs < 0) _effectiveNs = 0;
+                        if (_effectiveNs < 0) _effectiveNs = 0;
                         return;
                 }
 
@@ -264,8 +258,8 @@ class BenchmarkState {
                 void captureIfUnfinished() {
                         // If the case used range-for, iteration exits without
                         // calling keepRunning(), so finishTiming() hasn't run.
-                        if(_completed) return;
-                        if(_timerStarted) {
+                        if (_completed) return;
+                        if (_timerStarted) {
                                 finishTiming();
                         } else {
                                 // Case never touched the state at all — leave
@@ -273,19 +267,19 @@ class BenchmarkState {
                         }
                 }
 
-                uint64_t        _iterations      = 0;
-                uint64_t        _counter         = 0;
-                bool            _timerStarted    = false;
-                bool            _paused          = false;
-                bool            _completed       = false;
-                ElapsedTimer    _timer;
-                int64_t         _pauseStartNs    = 0;
-                int64_t         _pausedNs        = 0;
-                int64_t         _wallNs          = 0;
-                int64_t         _effectiveNs     = 0;
-                uint64_t        _itemsProcessed  = 0;
-                uint64_t        _bytesProcessed  = 0;
-                String          _label;
+                uint64_t            _iterations = 0;
+                uint64_t            _counter = 0;
+                bool                _timerStarted = false;
+                bool                _paused = false;
+                bool                _completed = false;
+                ElapsedTimer        _timer;
+                int64_t             _pauseStartNs = 0;
+                int64_t             _pausedNs = 0;
+                int64_t             _wallNs = 0;
+                int64_t             _effectiveNs = 0;
+                uint64_t            _itemsProcessed = 0;
+                uint64_t            _bytesProcessed = 0;
+                String              _label;
                 Map<String, double> _counters;
 };
 
@@ -301,35 +295,35 @@ class BenchmarkState {
 class BenchmarkResult {
         public:
                 /// @brief Name of the suite this result belongs to.
-                String   suite;
+                String suite;
                 /// @brief Case name within the suite.
-                String   name;
+                String name;
                 /// @brief Optional per-run label set by the case.
-                String   label;
+                String label;
                 /// @brief Optional free-form description set at registration.
-                String   description;
+                String description;
                 /// @brief Iteration count used for each measurement.
                 uint64_t iterations = 0;
                 /// @brief Number of repeats used to compute stddev.
                 uint64_t repeats = 0;
                 /// @brief Mean nanoseconds per iteration across repeats.
-                double   avgNsPerIter = 0.0;
+                double avgNsPerIter = 0.0;
                 /// @brief Minimum observed nanoseconds per iteration across repeats.
-                double   minNsPerIter = 0.0;
+                double minNsPerIter = 0.0;
                 /// @brief Maximum observed nanoseconds per iteration across repeats.
-                double   maxNsPerIter = 0.0;
+                double maxNsPerIter = 0.0;
                 /// @brief Sample stddev of nanoseconds per iteration across repeats.
-                double   stddevNsPerIter = 0.0;
+                double stddevNsPerIter = 0.0;
                 /// @brief Derived items-per-second when the case reported itemsProcessed; 0 otherwise.
-                double   itemsPerSecond = 0.0;
+                double itemsPerSecond = 0.0;
                 /// @brief Derived bytes-per-second when the case reported bytesProcessed; 0 otherwise.
-                double   bytesPerSecond = 0.0;
+                double bytesPerSecond = 0.0;
                 /// @brief Case-specific custom metrics.
                 Map<String, double> custom;
                 /// @brief True if the case completed normally; false if it errored or never iterated.
-                bool     succeeded = true;
+                bool succeeded = true;
                 /// @brief Error message when the case failed; empty otherwise.
-                String   errorMessage;
+                String errorMessage;
 
                 /** @brief Serializes this result into its JSON representation. */
                 JsonObject toJson() const;
@@ -364,12 +358,8 @@ class BenchmarkCase {
                  * @param description Optional free-form description shown with `--list`.
                  * @param fn          The case function.
                  */
-                BenchmarkCase(const String &suite,
-                              const String &name,
-                              const String &description,
-                              Function fn)
-                        : _suite(suite), _name(name),
-                          _description(description), _fn(std::move(fn)) {}
+                BenchmarkCase(const String &suite, const String &name, const String &description, Function fn)
+                    : _suite(suite), _name(name), _description(description), _fn(std::move(fn)) {}
 
                 /** @brief Returns the suite name. */
                 const String &suite() const { return _suite; }
@@ -617,28 +607,26 @@ class BenchmarkRunner {
 
         private:
                 BenchmarkResult measureCase(const BenchmarkCase &theCase);
-                uint64_t calibrateIterations(const BenchmarkCase &theCase);
-                void runOne(const BenchmarkCase &theCase,
-                            uint64_t iterations,
-                            BenchmarkState &state);
+                uint64_t        calibrateIterations(const BenchmarkCase &theCase);
+                void            runOne(const BenchmarkCase &theCase, uint64_t iterations, BenchmarkState &state);
                 /** @brief Returns true if @p theCase passes the active filter. */
                 bool matchesFilter(const BenchmarkCase &theCase) const;
 
-                unsigned int           _minTimeMs      = 500;
-                unsigned int           _warmupMs       = 100;
-                uint64_t               _minIterations  = 1;
-                uint64_t               _maxIterations  = 1000000000ULL;
-                unsigned int           _repeats        = 1;
-                String                 _filterPattern;
-                bool                   _verbose        = false;
+                unsigned int _minTimeMs = 500;
+                unsigned int _warmupMs = 100;
+                uint64_t     _minIterations = 1;
+                uint64_t     _maxIterations = 1000000000ULL;
+                unsigned int _repeats = 1;
+                String       _filterPattern;
+                bool         _verbose = false;
                 // Column width used for the "running" progress line so
                 // each case's result lines up in the same place on
                 // screen; computed by runAll() from the filtered case
                 // set and read by measureCase() when printing the case
                 // name.  0 means "no padding" — measureCase falls back
                 // to plain width when called outside a runAll() sweep.
-                size_t                 _progressNameWidth = 0;
-                List<BenchmarkResult>  _results;
+                size_t                _progressNameWidth = 0;
+                List<BenchmarkResult> _results;
 };
 
 /**
@@ -660,9 +648,8 @@ class BenchmarkRunner {
  * @param Description Short description (string literal or C string).
  * @param Fn          Case function with signature `void(BenchmarkState &)`.
  */
-#define PROMEKI_REGISTER_BENCHMARK(Suite, Name, Description, Fn)                          \
-        [[maybe_unused]] static int PROMEKI_CONCAT(__promeki_benchmark_, PROMEKI_UNIQUE_ID) = \
-                promeki::BenchmarkRunner::registerCase(                                   \
-                        promeki::BenchmarkCase((Suite), (Name), (Description), (Fn)));
+#define PROMEKI_REGISTER_BENCHMARK(Suite, Name, Description, Fn)                                                       \
+        [[maybe_unused]] static int PROMEKI_CONCAT(__promeki_benchmark_, PROMEKI_UNIQUE_ID) =                          \
+                promeki::BenchmarkRunner::registerCase(promeki::BenchmarkCase((Suite), (Name), (Description), (Fn)));
 
 PROMEKI_NAMESPACE_END

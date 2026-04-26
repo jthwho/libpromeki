@@ -91,7 +91,7 @@ TEST_CASE("MacAddress") {
         SUBCASE("broadcast") {
                 MacAddress bcast = MacAddress::broadcast();
                 CHECK(bcast.isBroadcast());
-                CHECK(bcast.isMulticast()); // broadcast is also multicast (I/G bit set)
+                CHECK(bcast.isMulticast());            // broadcast is also multicast (I/G bit set)
                 CHECK_FALSE(bcast.isGroupMulticast()); // but not "group multicast" (excludes broadcast)
                 CHECK_FALSE(bcast.isUnicast());
                 CHECK_FALSE(bcast.isIpv4Multicast());
@@ -148,13 +148,13 @@ TEST_CASE("MacAddress") {
         SUBCASE("fromIpv4Multicast") {
                 // 224.0.0.1 → 01:00:5e:00:00:01
                 Ipv4Address mcast(224, 0, 0, 1);
-                MacAddress mac = MacAddress::fromIpv4Multicast(mcast);
+                MacAddress  mac = MacAddress::fromIpv4Multicast(mcast);
                 CHECK(mac == MacAddress(0x01, 0x00, 0x5E, 0x00, 0x00, 0x01));
                 CHECK(mac.isIpv4Multicast());
 
                 // 239.255.255.250 (SSDP) → 01:00:5e:7f:ff:fa
                 Ipv4Address ssdp(239, 255, 255, 250);
-                MacAddress ssdpMac = MacAddress::fromIpv4Multicast(ssdp);
+                MacAddress  ssdpMac = MacAddress::fromIpv4Multicast(ssdp);
                 CHECK(ssdpMac == MacAddress(0x01, 0x00, 0x5E, 0x7F, 0xFF, 0xFA));
 
                 // Only low 23 bits used: 224.128.0.1 and 225.0.0.1 share the same MAC
@@ -165,7 +165,7 @@ TEST_CASE("MacAddress") {
 
                 // Non-multicast returns null
                 Ipv4Address unicast(192, 168, 1, 1);
-                MacAddress nullMac = MacAddress::fromIpv4Multicast(unicast);
+                MacAddress  nullMac = MacAddress::fromIpv4Multicast(unicast);
                 CHECK(nullMac.isNull());
         }
 
@@ -194,7 +194,7 @@ TEST_CASE("MacAddress") {
                 // These two multicast IPs differ only in bit 24 (which is masked out)
                 // so they map to the same MAC address
                 Ipv4Address a(224, 1, 2, 3);
-                Ipv4Address b(225, 1, 2, 3);  // differs in top 5 bits, same low 23
+                Ipv4Address b(225, 1, 2, 3); // differs in top 5 bits, same low 23
                 CHECK(a.multicastMac() == b.multicastMac());
 
                 // These differ in the low 23 bits, so different MACs
@@ -222,7 +222,7 @@ TEST_CASE("MacAddress") {
         }
 
         SUBCASE("data access") {
-                MacAddress mac(0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE);
+                MacAddress     mac(0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE);
                 const uint8_t *raw = mac.raw();
                 CHECK(raw[0] == 0xDE);
                 CHECK(raw[5] == 0xFE);
@@ -231,7 +231,7 @@ TEST_CASE("MacAddress") {
 
         SUBCASE("DataFormat constructor") {
                 MacAddress::DataFormat bytes{std::array<uint8_t, 6>{0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE}};
-                MacAddress mac(bytes);
+                MacAddress             mac(bytes);
                 CHECK_FALSE(mac.isNull());
                 CHECK(mac.octet(0) == 0xDE);
                 CHECK(mac.octet(5) == 0xFE);
@@ -240,7 +240,7 @@ TEST_CASE("MacAddress") {
 
         SUBCASE("TextStream operator<<") {
                 MacAddress mac(0x01, 0x23, 0x45, 0x67, 0x89, 0xAB);
-                String str;
+                String     str;
                 {
                         TextStream ts(&str);
                         ts << mac;
@@ -250,7 +250,7 @@ TEST_CASE("MacAddress") {
 
         SUBCASE("Variant round-trip") {
                 MacAddress original(0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF);
-                Variant v = original;
+                Variant    v = original;
                 CHECK(v.type() == Variant::TypeMacAddress);
 
                 MacAddress retrieved = v.get<MacAddress>();
@@ -263,7 +263,7 @@ TEST_CASE("MacAddress") {
         SUBCASE("DataStream round-trip") {
                 MacAddress original(0x01, 0x23, 0x45, 0x67, 0x89, 0xAB);
 
-                Buffer buf(4096);
+                Buffer         buf(4096);
                 BufferIODevice dev(&buf);
                 dev.open(IODevice::ReadWrite);
 

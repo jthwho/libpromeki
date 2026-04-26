@@ -40,9 +40,7 @@ class AudioLevel {
                  * @param dbfs Level in dBFS (0.0 = full scale).
                  * @return An AudioLevel at the specified dBFS value.
                  */
-                static AudioLevel fromDbfs(double dbfs) {
-                        return AudioLevel(dbfs);
-                }
+                static AudioLevel fromDbfs(double dbfs) { return AudioLevel(dbfs); }
 
                 /**
                  * @brief Creates an AudioLevel from a linear amplitude.
@@ -50,18 +48,18 @@ class AudioLevel {
                  * @return An AudioLevel converted from the linear value.
                  */
                 static AudioLevel fromLinear(double linear) {
-                        if(linear <= 0.0) return AudioLevel(-std::numeric_limits<double>::infinity());
+                        if (linear <= 0.0) return AudioLevel(-std::numeric_limits<double>::infinity());
                         return AudioLevel(20.0 * std::log10(linear));
                 }
 
                 /** @brief Default constructor. Creates silence (-inf dBFS). */
-                AudioLevel() : _dbfs(-std::numeric_limits<double>::infinity()) { }
+                AudioLevel() : _dbfs(-std::numeric_limits<double>::infinity()) {}
 
                 /**
                  * @brief Constructs from a dBFS value.
                  * @param dbfs Level in dBFS.
                  */
-                explicit AudioLevel(double dbfs) : _dbfs(dbfs) { }
+                explicit AudioLevel(double dbfs) : _dbfs(dbfs) {}
 
                 /** @brief Returns the level in dBFS. */
                 double dbfs() const { return _dbfs; }
@@ -71,7 +69,7 @@ class AudioLevel {
                  * @return Linear amplitude (0.0 for silence, 1.0 for 0 dBFS).
                  */
                 double toLinear() const {
-                        if(std::isinf(_dbfs) && _dbfs < 0) return 0.0;
+                        if (std::isinf(_dbfs) && _dbfs < 0) return 0.0;
                         return std::pow(10.0, _dbfs / 20.0);
                 }
 

@@ -48,18 +48,27 @@ class KeyEvent : public Event {
                         Key_Left,
                         Key_Right,
                         // Function keys
-                        Key_F1, Key_F2, Key_F3, Key_F4,
-                        Key_F5, Key_F6, Key_F7, Key_F8,
-                        Key_F9, Key_F10, Key_F11, Key_F12
+                        Key_F1,
+                        Key_F2,
+                        Key_F3,
+                        Key_F4,
+                        Key_F5,
+                        Key_F6,
+                        Key_F7,
+                        Key_F8,
+                        Key_F9,
+                        Key_F10,
+                        Key_F11,
+                        Key_F12
                 };
 
                 /** @brief Modifier flags. */
                 enum Modifier : uint8_t {
-                        NoModifier    = 0x00,
+                        NoModifier = 0x00,
                         ShiftModifier = 0x01,
-                        CtrlModifier  = 0x02,
-                        AltModifier   = 0x04,
-                        MetaModifier  = 0x08
+                        CtrlModifier = 0x02,
+                        AltModifier = 0x04,
+                        MetaModifier = 0x08
                 };
 
                 /**
@@ -69,9 +78,8 @@ class KeyEvent : public Event {
                  * @param modifiers The modifier flags.
                  * @param text      The printable text for this key.
                  */
-                KeyEvent(Type type, Key key, uint8_t modifiers = NoModifier,
-                         const String &text = String())
-                        : Event(type), _key(key), _modifiers(modifiers), _text(text) {}
+                KeyEvent(Type type, Key key, uint8_t modifiers = NoModifier, const String &text = String())
+                    : Event(type), _key(key), _modifiers(modifiers), _text(text) {}
 
                 /** @brief Returns the key code. */
                 Key key() const { return _key; }
@@ -101,9 +109,9 @@ class KeyEvent : public Event {
                 static String modifierString(uint8_t modifiers);
 
         private:
-                Key             _key;
-                uint8_t         _modifiers;
-                String          _text;
+                Key     _key;
+                uint8_t _modifiers;
+                String  _text;
 };
 
 PROMEKI_NAMESPACE_END

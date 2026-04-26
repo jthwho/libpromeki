@@ -90,8 +90,12 @@ class RegEx {
                  * @param flags   Syntax option flags (default: DefaultFlags).
                  */
                 RegEx(const String &pattern, Flag flags = DefaultFlags) : p(pattern) {
-                        try { d.assign(pattern.cstr(), flags); _valid = true; }
-                        catch(const std::regex_error &) { _valid = false; }
+                        try {
+                                d.assign(pattern.cstr(), flags);
+                                _valid = true;
+                        } catch (const std::regex_error &) {
+                                _valid = false;
+                        }
                 }
 
                 /**
@@ -105,8 +109,12 @@ class RegEx {
                  * @param flags   Syntax option flags (default: DefaultFlags).
                  */
                 RegEx(const char *pattern, Flag flags = DefaultFlags) : p(pattern) {
-                        try { d.assign(pattern, flags); _valid = true; }
-                        catch(const std::regex_error &) { _valid = false; }
+                        try {
+                                d.assign(pattern, flags);
+                                _valid = true;
+                        } catch (const std::regex_error &) {
+                                _valid = false;
+                        }
                 }
 
                 /**
@@ -123,7 +131,7 @@ class RegEx {
                                 re.d.assign(pattern.cstr(), flags);
                                 re._valid = true;
                                 re.p = pattern;
-                        } catch(const std::regex_error &) {
+                        } catch (const std::regex_error &) {
                                 return makeError<RegEx>(Error::Invalid);
                         }
                         return makeResult(std::move(re));
@@ -140,8 +148,12 @@ class RegEx {
                  */
                 RegEx &operator=(const String &pattern) {
                         p = pattern;
-                        try { d.assign(pattern.cstr()); _valid = true; }
-                        catch(const std::regex_error &) { _valid = false; }
+                        try {
+                                d.assign(pattern.cstr());
+                                _valid = true;
+                        } catch (const std::regex_error &) {
+                                _valid = false;
+                        }
                         return *this;
                 }
 
@@ -152,9 +164,7 @@ class RegEx {
                  * @brief Returns the current pattern string.
                  * @return The regular expression pattern.
                  */
-                String pattern() const {
-                        return p;
-                }
+                String pattern() const { return p; }
 
                 /**
                  * @brief Tests whether the entire string matches the pattern.
@@ -163,7 +173,7 @@ class RegEx {
                  *         always false when @c isValid() is false.
                  */
                 bool match(const String &str) const {
-                        if(!_valid) return false;
+                        if (!_valid) return false;
                         std::smatch m;
                         return std::regex_match(str.str(), m, d);
                 }
@@ -175,7 +185,7 @@ class RegEx {
                  *         always false when @c isValid() is false.
                  */
                 bool search(const String &str) const {
-                        if(!_valid) return false;
+                        if (!_valid) return false;
                         return std::regex_search(str.str(), d);
                 }
 
@@ -185,13 +195,13 @@ class RegEx {
                  * @return A StringList containing every matching substring;
                  *         empty when @c isValid() is false.
                  */
-                StringList matches(const String& str) const {
+                StringList matches(const String &str) const {
                         StringList matches;
-                        if(!_valid) return matches;
-                        std::smatch match;
+                        if (!_valid) return matches;
+                        std::smatch        match;
                         const std::string &s = str.str();
-                        auto pos = s.cbegin();
-                        while(std::regex_search(pos, s.cend(), match, d)) {
+                        auto               pos = s.cbegin();
+                        while (std::regex_search(pos, s.cend(), match, d)) {
                                 matches += match.str();
                                 pos = match.suffix().first;
                         }
@@ -199,10 +209,9 @@ class RegEx {
                 }
 
         private:
-                std::regex      d;
-                String          p;
-                bool            _valid = false;
+                std::regex d;
+                String     p;
+                bool       _valid = false;
 };
 
 PROMEKI_NAMESPACE_END
-

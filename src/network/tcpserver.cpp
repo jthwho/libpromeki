@@ -12,44 +12,43 @@
 #if !defined(PROMEKI_PLATFORM_EMSCRIPTEN)
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
-#       include <winsock2.h>
-#       include <ws2tcpip.h>
-#       define SOCK_CLOSE(fd) closesocket(fd)
-        using socklen_t = int;
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#define SOCK_CLOSE(fd) closesocket(fd)
+using socklen_t = int;
 #else
-#       include <unistd.h>
-#       include <sys/socket.h>
-#       include <netinet/in.h>
-#       include <poll.h>
-#       include <fcntl.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <poll.h>
+#include <fcntl.h>
 #endif
 
 PROMEKI_NAMESPACE_BEGIN
 
-TcpServer::TcpServer(ObjectBase *parent) : ObjectBase(parent) {
-}
+TcpServer::TcpServer(ObjectBase *parent) : ObjectBase(parent) {}
 
 TcpServer::~TcpServer() {
-        if(_listening) close();
+        if (_listening) close();
 }
 
 Error TcpServer::listen(const SocketAddress &address, int backlog) {
-        if(_listening) return Error::AlreadyOpen;
+        if (_listening) return Error::AlreadyOpen;
 
         // Determine address family
         int domain = AF_INET;
-        if(address.isIPv6()) domain = AF_INET6;
+        if (address.isIPv6()) domain = AF_INET6;
 
         _fd = ::socket(domain, SOCK_STREAM, 0);
-        if(_fd < 0) return Error::syserr();
+        if (_fd < 0) return Error::syserr();
 
         // Enable SO_REUSEADDR
         int reuse = 1;
         ::setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
         struct sockaddr_storage storage;
-        size_t addrLen = address.toSockAddr(&storage);
-        if(addrLen == 0) {
+        size_t                  addrLen = address.toSockAddr(&storage);
+        if (addrLen == 0) {
 #if defined(PROMEKI_PLATFORM_WINDOWS)
                 SOCK_CLOSE(_fd);
 #else
@@ -59,8 +58,7 @@ Error TcpServer::listen(const SocketAddress &address, int backlog) {
                 return Error::Invalid;
         }
 
-        if(::bind(_fd, reinterpret_cast<struct sockaddr *>(&storage),
-                  static_cast<socklen_t>(addrLen)) < 0) {
+        if (::bind(_fd, reinterpret_cast<struct sockaddr *>(&storage), static_cast<socklen_t>(addrLen)) < 0) {
                 Error err = Error::syserr();
 #if defined(PROMEKI_PLATFORM_WINDOWS)
                 SOCK_CLOSE(_fd);
@@ -71,7 +69,7 @@ Error TcpServer::listen(const SocketAddress &address, int backlog) {
                 return err;
         }
 
-        if(::listen(_fd, backlog) < 0) {
+        if (::listen(_fd, backlog) < 0) {
                 Error err = Error::syserr();
 #if defined(PROMEKI_PLATFORM_WINDOWS)
                 SOCK_CLOSE(_fd);
@@ -84,10 +82,9 @@ Error TcpServer::listen(const SocketAddress &address, int backlog) {
 
         // Capture the actual bound address (port may have been 0)
         socklen_t slen = sizeof(storage);
-        if(::getsockname(_fd, reinterpret_cast<struct sockaddr *>(&storage), &slen) == 0) {
-                auto [addr, err] = SocketAddress::fromSockAddr(
-                        reinterpret_cast<struct sockaddr *>(&storage), slen);
-                if(err.isOk()) _address = addr;
+        if (::getsockname(_fd, reinterpret_cast<struct sockaddr *>(&storage), &slen) == 0) {
+                auto [addr, err] = SocketAddress::fromSockAddr(reinterpret_cast<struct sockaddr *>(&storage), slen);
+                if (err.isOk()) _address = addr;
         }
 
         _listening = true;
@@ -95,7 +92,7 @@ Error TcpServer::listen(const SocketAddress &address, int backlog) {
 }
 
 void TcpServer::close() {
-        if(_fd >= 0) {
+        if (_fd >= 0) {
 #if defined(PROMEKI_PLATFORM_WINDOWS)
                 SOCK_CLOSE(_fd);
 #else
@@ -109,23 +106,22 @@ void TcpServer::close() {
 
 TcpSocket *TcpServer::nextPendingConnection() {
         const int fd = nextPendingDescriptor();
-        if(fd < 0) return nullptr;
+        if (fd < 0) return nullptr;
         TcpSocket *sock = new TcpSocket();
         sock->setSocketDescriptor(fd);
         return sock;
 }
 
 int TcpServer::nextPendingDescriptor() {
-        if(_fd < 0) return -1;
+        if (_fd < 0) return -1;
         struct sockaddr_storage storage;
-        socklen_t addrLen = sizeof(storage);
-        const int clientFd = ::accept(_fd,
-                reinterpret_cast<struct sockaddr *>(&storage), &addrLen);
+        socklen_t               addrLen = sizeof(storage);
+        const int               clientFd = ::accept(_fd, reinterpret_cast<struct sockaddr *>(&storage), &addrLen);
         return clientFd;
 }
 
 bool TcpServer::hasPendingConnections() const {
-        if(_fd < 0) return false;
+        if (_fd < 0) return false;
         struct pollfd pfd;
         pfd.fd = _fd;
         pfd.events = POLLIN;
@@ -133,30 +129,32 @@ bool TcpServer::hasPendingConnections() const {
 }
 
 Error TcpServer::setNonBlocking(bool enable) {
-        if(_fd < 0) return Error::NotOpen;
+        if (_fd < 0) return Error::NotOpen;
 #if defined(PROMEKI_PLATFORM_WINDOWS)
         u_long mode = enable ? 1 : 0;
-        if(::ioctlsocket(_fd, FIONBIO, &mode) != 0) return Error::syserr();
+        if (::ioctlsocket(_fd, FIONBIO, &mode) != 0) return Error::syserr();
         return Error::Ok;
 #else
         int flags = ::fcntl(_fd, F_GETFL, 0);
-        if(flags < 0) return Error::syserr();
-        if(enable) flags |= O_NONBLOCK;
-        else       flags &= ~O_NONBLOCK;
-        if(::fcntl(_fd, F_SETFL, flags) < 0) return Error::syserr();
+        if (flags < 0) return Error::syserr();
+        if (enable)
+                flags |= O_NONBLOCK;
+        else
+                flags &= ~O_NONBLOCK;
+        if (::fcntl(_fd, F_SETFL, flags) < 0) return Error::syserr();
         return Error::Ok;
 #endif
 }
 
 Error TcpServer::waitForNewConnection(unsigned int timeoutMs) {
-        if(_fd < 0) return Error::NotOpen;
+        if (_fd < 0) return Error::NotOpen;
         struct pollfd pfd;
         pfd.fd = _fd;
         pfd.events = POLLIN;
         int timeout = (timeoutMs == 0) ? -1 : static_cast<int>(timeoutMs);
         int ret = ::poll(&pfd, 1, timeout);
-        if(ret < 0) return Error::syserr();
-        if(ret == 0) return Error::Timeout;
+        if (ret < 0) return Error::syserr();
+        if (ret == 0) return Error::Timeout;
         newConnectionSignal.emit();
         return Error::Ok;
 }

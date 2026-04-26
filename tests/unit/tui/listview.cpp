@@ -36,7 +36,7 @@ TEST_CASE("TuiListView: insertItem") {
 
 TEST_CASE("TuiListView: setItems") {
         TuiListView list;
-        StringList items;
+        StringList  items;
         items += "A";
         items += "B";
         items += "C";
@@ -76,7 +76,7 @@ TEST_CASE("TuiListView: currentItem empty list") {
 TEST_CASE("TuiListView: scrollBy moves viewport without changing selection") {
         TuiListView list;
         list.setGeometry(Rect2Di32(0, 0, 20, 10));
-        for(int i = 0; i < 20; i++) {
+        for (int i = 0; i < 20; i++) {
                 list.addItem(String::number(i));
         }
 
@@ -97,7 +97,7 @@ TEST_CASE("TuiListView: scrollBy moves viewport without changing selection") {
 TEST_CASE("TuiListView: scrollBy clamps to bounds") {
         TuiListView list;
         list.setGeometry(Rect2Di32(0, 0, 20, 10));
-        for(int i = 0; i < 20; i++) {
+        for (int i = 0; i < 20; i++) {
                 list.addItem(String::number(i));
         }
 
@@ -111,7 +111,7 @@ TEST_CASE("TuiListView: scrollBy clamps to bounds") {
 TEST_CASE("TuiListView: ensureVisible adjusts scroll offset") {
         TuiListView list;
         list.setGeometry(Rect2Di32(0, 0, 20, 5));
-        for(int i = 0; i < 20; i++) {
+        for (int i = 0; i < 20; i++) {
                 list.addItem(String::number(i));
         }
 

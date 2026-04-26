@@ -15,14 +15,13 @@ using namespace promeki;
 
 namespace {
 
-UncompressedVideoPayload::Ptr makePayload(size_t w, size_t h, PixelFormat::ID id) {
-        return UncompressedVideoPayload::allocate(
-                ImageDesc(w, h, PixelFormat(id)));
-}
+        UncompressedVideoPayload::Ptr makePayload(size_t w, size_t h, PixelFormat::ID id) {
+                return UncompressedVideoPayload::allocate(ImageDesc(w, h, PixelFormat(id)));
+        }
 
-size_t stride0(const UncompressedVideoPayload &p) {
-        return p.desc().pixelFormat().memLayout().lineStride(0, p.desc().width());
-}
+        size_t stride0(const UncompressedVideoPayload &p) {
+                return p.desc().pixelFormat().memLayout().lineStride(0, p.desc().width());
+        }
 
 } // namespace
 
@@ -34,7 +33,7 @@ TEST_CASE("PaintEngine: default construction") {
 TEST_CASE("PaintEngine: plotLine horizontal line") {
         auto pts = PaintEngine::plotLine(0, 0, 5, 0);
         CHECK(pts.size() == 5);
-        for(size_t i = 0; i < pts.size(); i++) {
+        for (size_t i = 0; i < pts.size(); i++) {
                 CHECK(pts[i].x() == (int)i);
                 CHECK(pts[i].y() == 0);
         }
@@ -43,7 +42,7 @@ TEST_CASE("PaintEngine: plotLine horizontal line") {
 TEST_CASE("PaintEngine: plotLine vertical line") {
         auto pts = PaintEngine::plotLine(0, 0, 0, 5);
         CHECK(pts.size() == 5);
-        for(size_t i = 0; i < pts.size(); i++) {
+        for (size_t i = 0; i < pts.size(); i++) {
                 CHECK(pts[i].x() == 0);
                 CHECK(pts[i].y() == (int)i);
         }
@@ -52,7 +51,7 @@ TEST_CASE("PaintEngine: plotLine vertical line") {
 TEST_CASE("PaintEngine: plotLine diagonal line") {
         auto pts = PaintEngine::plotLine(0, 0, 5, 5);
         CHECK(pts.size() == 5);
-        for(size_t i = 0; i < pts.size(); i++) {
+        for (size_t i = 0; i < pts.size(); i++) {
                 CHECK(pts[i].x() == (int)i);
                 CHECK(pts[i].y() == (int)i);
         }
@@ -86,17 +85,17 @@ TEST_CASE("PaintEngine: plotLine negative direction vertical") {
 // ============================================================================
 
 TEST_CASE("PaintEngine: fillRect") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto black = pe.createPixel(0, 0, 0);
+        auto        black = pe.createPixel(0, 0, 0);
         pe.fill(black);
 
-        auto white = pe.createPixel(65535, 65535, 65535);
+        auto   white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.fillRect(white, Rect<int32_t>(10, 10, 20, 15));
         CHECK(drawn == 20 * 15);
 
         const uint8_t *buf = img->plane(0).data();
-        size_t stride = stride0(*img);
+        size_t         stride = stride0(*img);
         const uint8_t *p = buf + stride * 15 + 15 * 3;
         CHECK(p[0] == 255);
         CHECK(p[1] == 255);
@@ -109,17 +108,17 @@ TEST_CASE("PaintEngine: fillRect") {
 }
 
 TEST_CASE("PaintEngine: drawRect") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto black = pe.createPixel(0, 0, 0);
+        auto        black = pe.createPixel(0, 0, 0);
         pe.fill(black);
 
-        auto red = pe.createPixel(65535, 0, 0);
+        auto   red = pe.createPixel(65535, 0, 0);
         size_t drawn = pe.drawRect(red, Rect<int32_t>(10, 10, 20, 15));
         CHECK(drawn > 0);
 
         const uint8_t *buf = img->plane(0).data();
-        size_t stride = stride0(*img);
+        size_t         stride = stride0(*img);
         const uint8_t *edge = buf + stride * 10 + 15 * 3;
         CHECK(edge[0] == 255);
         CHECK(edge[1] == 0);
@@ -130,17 +129,17 @@ TEST_CASE("PaintEngine: drawRect") {
 }
 
 TEST_CASE("PaintEngine: fillCircle") {
-        auto img = makePayload(128, 128, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(128, 128, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto black = pe.createPixel(0, 0, 0);
+        auto        black = pe.createPixel(0, 0, 0);
         pe.fill(black);
 
-        auto green = pe.createPixel(0, 65535, 0);
+        auto   green = pe.createPixel(0, 65535, 0);
         size_t drawn = pe.fillCircle(green, Point2Di32(64, 64), 20);
         CHECK(drawn > 0);
 
         const uint8_t *buf = img->plane(0).data();
-        size_t stride = stride0(*img);
+        size_t         stride = stride0(*img);
         const uint8_t *center = buf + stride * 64 + 64 * 3;
         CHECK(center[0] == 0);
         CHECK(center[1] == 255);
@@ -148,17 +147,17 @@ TEST_CASE("PaintEngine: fillCircle") {
 }
 
 TEST_CASE("PaintEngine: drawCircle") {
-        auto img = makePayload(128, 128, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(128, 128, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto black = pe.createPixel(0, 0, 0);
+        auto        black = pe.createPixel(0, 0, 0);
         pe.fill(black);
 
-        auto blue = pe.createPixel(0, 0, 65535);
+        auto   blue = pe.createPixel(0, 0, 65535);
         size_t drawn = pe.drawCircle(blue, Point2Di32(64, 64), 30);
         CHECK(drawn > 0);
 
         const uint8_t *buf = img->plane(0).data();
-        size_t stride = stride0(*img);
+        size_t         stride = stride0(*img);
         const uint8_t *center = buf + stride * 64 + 64 * 3;
         CHECK(center[0] == 0);
         CHECK(center[1] == 0);
@@ -166,17 +165,17 @@ TEST_CASE("PaintEngine: drawCircle") {
 }
 
 TEST_CASE("PaintEngine: fillEllipse") {
-        auto img = makePayload(128, 128, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(128, 128, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto black = pe.createPixel(0, 0, 0);
+        auto        black = pe.createPixel(0, 0, 0);
         pe.fill(black);
 
-        auto yellow = pe.createPixel(65535, 65535, 0);
+        auto   yellow = pe.createPixel(65535, 65535, 0);
         size_t drawn = pe.fillEllipse(yellow, Point2Di32(64, 64), Size2Du32(30, 15));
         CHECK(drawn > 0);
 
         const uint8_t *buf = img->plane(0).data();
-        size_t stride = stride0(*img);
+        size_t         stride = stride0(*img);
         const uint8_t *center = buf + stride * 64 + 64 * 3;
         CHECK(center[0] == 255);
         CHECK(center[1] == 255);
@@ -184,17 +183,17 @@ TEST_CASE("PaintEngine: fillEllipse") {
 }
 
 TEST_CASE("PaintEngine: drawEllipse") {
-        auto img = makePayload(128, 128, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(128, 128, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto black = pe.createPixel(0, 0, 0);
+        auto        black = pe.createPixel(0, 0, 0);
         pe.fill(black);
 
-        auto white = pe.createPixel(65535, 65535, 65535);
+        auto   white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.drawEllipse(white, Point2Di32(64, 64), Size2Du32(30, 15));
         CHECK(drawn > 0);
 
         const uint8_t *buf = img->plane(0).data();
-        size_t stride = stride0(*img);
+        size_t         stride = stride0(*img);
         const uint8_t *center = buf + stride * 64 + 64 * 3;
         CHECK(center[0] == 0);
 }
@@ -204,95 +203,95 @@ TEST_CASE("PaintEngine: drawEllipse") {
 // ============================================================================
 
 TEST_CASE("PaintEngine: fillRect zero width") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto white = pe.createPixel(65535, 65535, 65535);
-        size_t drawn = pe.fillRect(white, Rect<int32_t>(10, 10, 0, 10));
+        auto        white = pe.createPixel(65535, 65535, 65535);
+        size_t      drawn = pe.fillRect(white, Rect<int32_t>(10, 10, 0, 10));
         CHECK(drawn == 0);
 }
 
 TEST_CASE("PaintEngine: fillRect zero height") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto white = pe.createPixel(65535, 65535, 65535);
-        size_t drawn = pe.fillRect(white, Rect<int32_t>(10, 10, 10, 0));
+        auto        white = pe.createPixel(65535, 65535, 65535);
+        size_t      drawn = pe.fillRect(white, Rect<int32_t>(10, 10, 10, 0));
         CHECK(drawn == 0);
 }
 
 TEST_CASE("PaintEngine: drawRect zero width") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto white = pe.createPixel(65535, 65535, 65535);
-        size_t drawn = pe.drawRect(white, Rect<int32_t>(10, 10, 0, 10));
+        auto        white = pe.createPixel(65535, 65535, 65535);
+        size_t      drawn = pe.drawRect(white, Rect<int32_t>(10, 10, 0, 10));
         CHECK(drawn == 0);
 }
 
 TEST_CASE("PaintEngine: drawRect zero height") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto white = pe.createPixel(65535, 65535, 65535);
-        size_t drawn = pe.drawRect(white, Rect<int32_t>(10, 10, 10, 0));
+        auto        white = pe.createPixel(65535, 65535, 65535);
+        size_t      drawn = pe.drawRect(white, Rect<int32_t>(10, 10, 10, 0));
         CHECK(drawn == 0);
 }
 
 TEST_CASE("PaintEngine: drawCircle zero radius") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto white = pe.createPixel(65535, 65535, 65535);
-        size_t drawn = pe.drawCircle(white, Point2Di32(32, 32), 0);
+        auto        white = pe.createPixel(65535, 65535, 65535);
+        size_t      drawn = pe.drawCircle(white, Point2Di32(32, 32), 0);
         CHECK(drawn >= 0);
 }
 
 TEST_CASE("PaintEngine: fillCircle zero radius") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto white = pe.createPixel(65535, 65535, 65535);
-        size_t drawn = pe.fillCircle(white, Point2Di32(32, 32), 0);
+        auto        white = pe.createPixel(65535, 65535, 65535);
+        size_t      drawn = pe.fillCircle(white, Point2Di32(32, 32), 0);
         CHECK(drawn >= 0);
 }
 
 TEST_CASE("PaintEngine: drawEllipse zero radii") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto white = pe.createPixel(65535, 65535, 65535);
-        size_t drawn = pe.drawEllipse(white, Point2Di32(32, 32), Size2Du32(0, 0));
+        auto        white = pe.createPixel(65535, 65535, 65535);
+        size_t      drawn = pe.drawEllipse(white, Point2Di32(32, 32), Size2Du32(0, 0));
         CHECK(drawn == 0);
 }
 
 TEST_CASE("PaintEngine: fillEllipse zero radii") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto white = pe.createPixel(65535, 65535, 65535);
-        size_t drawn = pe.fillEllipse(white, Point2Di32(32, 32), Size2Du32(0, 0));
+        auto        white = pe.createPixel(65535, 65535, 65535);
+        size_t      drawn = pe.fillEllipse(white, Point2Di32(32, 32), Size2Du32(0, 0));
         CHECK(drawn == 0);
 }
 
 TEST_CASE("PaintEngine: drawRect exact point count") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto white = pe.createPixel(65535, 65535, 65535);
-        size_t drawn = pe.drawRect(white, Rect<int32_t>(5, 5, 10, 10));
+        auto        white = pe.createPixel(65535, 65535, 65535);
+        size_t      drawn = pe.drawRect(white, Rect<int32_t>(5, 5, 10, 10));
         CHECK(drawn == 36);
 }
 
 TEST_CASE("PaintEngine: fillRect 1x1") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto white = pe.createPixel(65535, 65535, 65535);
-        size_t drawn = pe.fillRect(white, Rect<int32_t>(10, 10, 1, 1));
+        auto        white = pe.createPixel(65535, 65535, 65535);
+        size_t      drawn = pe.fillRect(white, Rect<int32_t>(10, 10, 1, 1));
         CHECK(drawn == 1);
 }
 
 TEST_CASE("PaintEngine: drawRect 1x1") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
-        auto white = pe.createPixel(65535, 65535, 65535);
-        size_t drawn = pe.drawRect(white, Rect<int32_t>(10, 10, 1, 1));
+        auto        white = pe.createPixel(65535, 65535, 65535);
+        size_t      drawn = pe.drawRect(white, Rect<int32_t>(10, 10, 1, 1));
         CHECK(drawn > 0);
 }
 
 TEST_CASE("PaintEngine: createPixel scales uint16 to uint8") {
-        auto img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
 
         auto white = pe.createPixel(65535, 65535, 65535);
@@ -322,7 +321,7 @@ TEST_CASE("PaintEngine: createPixel scales uint16 to uint8") {
 }
 
 TEST_CASE("PaintEngine: createPixel scales uint16 to uint8 RGBA") {
-        auto img = makePayload(16, 16, PixelFormat::RGBA8_sRGB);
+        auto        img = makePayload(16, 16, PixelFormat::RGBA8_sRGB);
         PaintEngine pe = img->createPaintEngine();
 
         auto pixel = pe.createPixel(65535, 0, 32768);
@@ -335,7 +334,7 @@ TEST_CASE("PaintEngine: createPixel scales uint16 to uint8 RGBA") {
 }
 
 TEST_CASE("PaintEngine: createPixel RGBA8 with explicit alpha") {
-        auto img = makePayload(16, 16, PixelFormat::RGBA8_sRGB);
+        auto        img = makePayload(16, 16, PixelFormat::RGBA8_sRGB);
         PaintEngine pe = img->createPaintEngine();
 
         auto pixel = pe.createPixel(65535, 32768, 0, 32768);
@@ -353,7 +352,7 @@ TEST_CASE("PaintEngine: createPixel RGBA8 with explicit alpha") {
 }
 
 TEST_CASE("PaintEngine: createPixel monochrome (1-component) RGB8") {
-        auto img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
 
         auto gray = pe.createPixel(32768);
@@ -377,7 +376,7 @@ TEST_CASE("PaintEngine: createPixel monochrome (1-component) RGB8") {
 }
 
 TEST_CASE("PaintEngine: createPixel monochrome (1-component) RGBA8") {
-        auto img = makePayload(16, 16, PixelFormat::RGBA8_sRGB);
+        auto        img = makePayload(16, 16, PixelFormat::RGBA8_sRGB);
         PaintEngine pe = img->createPaintEngine();
 
         auto gray = pe.createPixel(65535);
@@ -390,7 +389,7 @@ TEST_CASE("PaintEngine: createPixel monochrome (1-component) RGBA8") {
 }
 
 TEST_CASE("PaintEngine: createPixel 2-component returns empty") {
-        auto img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
 
         auto pixel = pe.createPixel(65535, 32768);
@@ -402,7 +401,7 @@ TEST_CASE("PaintEngine: createPixel 2-component returns empty") {
 // ============================================================================
 
 TEST_CASE("PaintEngine: createPixel from Color RGB8") {
-        auto img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
 
         auto pixel = pe.createPixel(Color::White);
@@ -416,7 +415,7 @@ TEST_CASE("PaintEngine: createPixel from Color RGB8") {
 }
 
 TEST_CASE("PaintEngine: createPixel from Color red") {
-        auto img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
 
         auto pixel = pe.createPixel(Color::Red);
@@ -428,11 +427,11 @@ TEST_CASE("PaintEngine: createPixel from Color red") {
 }
 
 TEST_CASE("PaintEngine: createPixel from Color mid-values") {
-        auto img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
 
         Color c(128, 64, 32);
-        auto pixel = pe.createPixel(c);
+        auto  pixel = pe.createPixel(c);
         pe.fill(pixel);
         const uint8_t *buf = img->plane(0).data();
         CHECK(buf[0] == 128);
@@ -441,11 +440,11 @@ TEST_CASE("PaintEngine: createPixel from Color mid-values") {
 }
 
 TEST_CASE("PaintEngine: createPixel from Color RGBA8") {
-        auto img = makePayload(16, 16, PixelFormat::RGBA8_sRGB);
+        auto        img = makePayload(16, 16, PixelFormat::RGBA8_sRGB);
         PaintEngine pe = img->createPaintEngine();
 
         Color c(200, 100, 50, 128);
-        auto pixel = pe.createPixel(c);
+        auto  pixel = pe.createPixel(c);
         pe.fill(pixel);
         const uint8_t *buf = img->plane(0).data();
         CHECK(buf[0] == 200);
@@ -455,7 +454,7 @@ TEST_CASE("PaintEngine: createPixel from Color RGBA8") {
 }
 
 TEST_CASE("PaintEngine: createPixel from Color black") {
-        auto img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
 
         auto pixel = pe.createPixel(Color::Black);
@@ -471,11 +470,11 @@ TEST_CASE("PaintEngine: createPixel from Color black") {
 // ============================================================================
 
 TEST_CASE("PaintEngine: blit full image") {
-        auto src = makePayload(8, 8, PixelFormat::RGB8_sRGB);
+        auto        src = makePayload(8, 8, PixelFormat::RGB8_sRGB);
         PaintEngine srcPe = src->createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Red));
 
-        auto dst = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto        dst = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine dstPe = dst->createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -483,7 +482,7 @@ TEST_CASE("PaintEngine: blit full image") {
         CHECK(ok);
 
         const uint8_t *buf = dst->plane(0).data();
-        size_t stride = stride0(*dst);
+        size_t         stride = stride0(*dst);
 
         const uint8_t *p = buf + stride * 6 + 6 * 3;
         CHECK(p[0] == 255);
@@ -497,11 +496,11 @@ TEST_CASE("PaintEngine: blit full image") {
 }
 
 TEST_CASE("PaintEngine: blit clipped at right/bottom edge") {
-        auto src = makePayload(8, 8, PixelFormat::RGB8_sRGB);
+        auto        src = makePayload(8, 8, PixelFormat::RGB8_sRGB);
         PaintEngine srcPe = src->createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Green));
 
-        auto dst = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto        dst = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine dstPe = dst->createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -509,7 +508,7 @@ TEST_CASE("PaintEngine: blit clipped at right/bottom edge") {
         CHECK(ok);
 
         const uint8_t *buf = dst->plane(0).data();
-        size_t stride = stride0(*dst);
+        size_t         stride = stride0(*dst);
 
         const uint8_t *p = buf + stride * 13 + 13 * 3;
         CHECK(p[0] == 0);
@@ -523,11 +522,11 @@ TEST_CASE("PaintEngine: blit clipped at right/bottom edge") {
 }
 
 TEST_CASE("PaintEngine: blit completely outside returns true") {
-        auto src = makePayload(8, 8, PixelFormat::RGB8_sRGB);
+        auto        src = makePayload(8, 8, PixelFormat::RGB8_sRGB);
         PaintEngine srcPe = src->createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Red));
 
-        auto dst = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto        dst = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine dstPe = dst->createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -535,18 +534,18 @@ TEST_CASE("PaintEngine: blit completely outside returns true") {
         CHECK(ok);
 
         const uint8_t *buf = dst->plane(0).data();
-        size_t total = dst->plane(0).size();
-        uint64_t sum = 0;
-        for(size_t i = 0; i < total; i++) sum += buf[i];
+        size_t         total = dst->plane(0).size();
+        uint64_t       sum = 0;
+        for (size_t i = 0; i < total; i++) sum += buf[i];
         CHECK(sum == 0);
 }
 
 TEST_CASE("PaintEngine: blit with negative dest clips left/top") {
-        auto src = makePayload(8, 8, PixelFormat::RGB8_sRGB);
+        auto        src = makePayload(8, 8, PixelFormat::RGB8_sRGB);
         PaintEngine srcPe = src->createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Blue));
 
-        auto dst = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto        dst = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine dstPe = dst->createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -554,7 +553,7 @@ TEST_CASE("PaintEngine: blit with negative dest clips left/top") {
         CHECK(ok);
 
         const uint8_t *buf = dst->plane(0).data();
-        size_t stride = stride0(*dst);
+        size_t         stride = stride0(*dst);
 
         const uint8_t *p = buf;
         CHECK(p[0] == 0);
@@ -573,12 +572,12 @@ TEST_CASE("PaintEngine: blit with negative dest clips left/top") {
 }
 
 TEST_CASE("PaintEngine: blit sub-region of source") {
-        auto src = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto        src = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine srcPe = src->createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Red));
         srcPe.fillRect(srcPe.createPixel(Color::Green), Rect<int32_t>(4, 4, 4, 4));
 
-        auto dst = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto        dst = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine dstPe = dst->createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -596,11 +595,11 @@ TEST_CASE("PaintEngine: blit sub-region of source") {
 }
 
 TEST_CASE("PaintEngine: blit mismatched pixel format returns false") {
-        auto src = makePayload(8, 8, PixelFormat::RGBA8_sRGB);
+        auto        src = makePayload(8, 8, PixelFormat::RGBA8_sRGB);
         PaintEngine srcPe = src->createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Red));
 
-        auto dst = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto        dst = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine dstPe = dst->createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -608,18 +607,18 @@ TEST_CASE("PaintEngine: blit mismatched pixel format returns false") {
         CHECK_FALSE(ok);
 
         const uint8_t *buf = dst->plane(0).data();
-        size_t total = dst->plane(0).size();
-        uint64_t sum = 0;
-        for(size_t i = 0; i < total; i++) sum += buf[i];
+        size_t         total = dst->plane(0).size();
+        uint64_t       sum = 0;
+        for (size_t i = 0; i < total; i++) sum += buf[i];
         CHECK(sum == 0);
 }
 
 TEST_CASE("PaintEngine: blit mismatched RGBA dst from RGB src returns false") {
-        auto src = makePayload(8, 8, PixelFormat::RGB8_sRGB);
+        auto        src = makePayload(8, 8, PixelFormat::RGB8_sRGB);
         PaintEngine srcPe = src->createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Red));
 
-        auto dst = makePayload(16, 16, PixelFormat::RGBA8_sRGB);
+        auto        dst = makePayload(16, 16, PixelFormat::RGBA8_sRGB);
         PaintEngine dstPe = dst->createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -632,11 +631,11 @@ TEST_CASE("PaintEngine: blit mismatched RGBA dst from RGB src returns false") {
 // ============================================================================
 
 TEST_CASE("PaintEngine: RGBA8 blit full image") {
-        auto src = makePayload(8, 8, PixelFormat::RGBA8_sRGB);
+        auto        src = makePayload(8, 8, PixelFormat::RGBA8_sRGB);
         PaintEngine srcPe = src->createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Red));
 
-        auto dst = makePayload(16, 16, PixelFormat::RGBA8_sRGB);
+        auto        dst = makePayload(16, 16, PixelFormat::RGBA8_sRGB);
         PaintEngine dstPe = dst->createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -644,7 +643,7 @@ TEST_CASE("PaintEngine: RGBA8 blit full image") {
         CHECK(ok);
 
         const uint8_t *buf = dst->plane(0).data();
-        size_t stride = stride0(*dst);
+        size_t         stride = stride0(*dst);
 
         const uint8_t *p = buf + stride * 6 + 6 * 4;
         CHECK(p[0] == 255);
@@ -659,11 +658,11 @@ TEST_CASE("PaintEngine: RGBA8 blit full image") {
 }
 
 TEST_CASE("PaintEngine: RGBA8 blit at high Y coordinate") {
-        auto src = makePayload(4, 4, PixelFormat::RGBA8_sRGB);
+        auto        src = makePayload(4, 4, PixelFormat::RGBA8_sRGB);
         PaintEngine srcPe = src->createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Red));
 
-        auto dst = makePayload(32, 1080, PixelFormat::RGBA8_sRGB);
+        auto        dst = makePayload(32, 1080, PixelFormat::RGBA8_sRGB);
         PaintEngine dstPe = dst->createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -671,7 +670,7 @@ TEST_CASE("PaintEngine: RGBA8 blit at high Y coordinate") {
         CHECK(ok);
 
         const uint8_t *buf = dst->plane(0).data();
-        size_t stride = stride0(*dst);
+        size_t         stride = stride0(*dst);
 
         const uint8_t *p = buf + stride * 1001 + 1 * 4;
         CHECK(p[0] == 255);
@@ -680,11 +679,11 @@ TEST_CASE("PaintEngine: RGBA8 blit at high Y coordinate") {
 }
 
 TEST_CASE("PaintEngine: RGBA8 blit at lower half of large image") {
-        auto src = makePayload(10, 60, PixelFormat::RGBA8_sRGB);
+        auto        src = makePayload(10, 60, PixelFormat::RGBA8_sRGB);
         PaintEngine srcPe = src->createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Green));
 
-        auto dst = makePayload(1920, 1080, PixelFormat::RGBA8_sRGB);
+        auto        dst = makePayload(1920, 1080, PixelFormat::RGBA8_sRGB);
         PaintEngine dstPe = dst->createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -692,7 +691,7 @@ TEST_CASE("PaintEngine: RGBA8 blit at lower half of large image") {
         CHECK(ok);
 
         const uint8_t *buf = dst->plane(0).data();
-        size_t stride = stride0(*dst);
+        size_t         stride = stride0(*dst);
 
         const uint8_t *p = buf + stride * 1020 + 800 * 4;
         CHECK(p[0] == 0);
@@ -706,11 +705,11 @@ TEST_CASE("PaintEngine: RGBA8 blit at lower half of large image") {
 }
 
 TEST_CASE("PaintEngine: RGBA8 blit clipped at right/bottom edge") {
-        auto src = makePayload(8, 8, PixelFormat::RGBA8_sRGB);
+        auto        src = makePayload(8, 8, PixelFormat::RGBA8_sRGB);
         PaintEngine srcPe = src->createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Blue));
 
-        auto dst = makePayload(16, 16, PixelFormat::RGBA8_sRGB);
+        auto        dst = makePayload(16, 16, PixelFormat::RGBA8_sRGB);
         PaintEngine dstPe = dst->createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -718,7 +717,7 @@ TEST_CASE("PaintEngine: RGBA8 blit clipped at right/bottom edge") {
         CHECK(ok);
 
         const uint8_t *buf = dst->plane(0).data();
-        size_t stride = stride0(*dst);
+        size_t         stride = stride0(*dst);
 
         const uint8_t *p = buf + stride * 13 + 13 * 4;
         CHECK(p[0] == 0);

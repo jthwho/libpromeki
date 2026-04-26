@@ -76,14 +76,13 @@ class MediaIOTask_RawBitstream : public MediaIOTask {
                 Error executeCmd(MediaIOCommandStats &cmd) override;
 
                 Error describe(MediaIODescription *out) const override;
-                Error proposeInput(const MediaDesc &offered,
-                                   MediaDesc *preferred) const override;
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
 
-                File      _file;
-                String    _filename;
-                int64_t   _packetsWritten = 0;
-                int64_t   _bytesWritten = 0;
-                bool      _warnedNoPackets = false;
+                File    _file;
+                String  _filename;
+                int64_t _packetsWritten = 0;
+                int64_t _bytesWritten = 0;
+                bool    _warnedNoPackets = false;
 };
 
 PROMEKI_NAMESPACE_END

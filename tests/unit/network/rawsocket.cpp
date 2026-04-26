@@ -35,7 +35,7 @@ TEST_CASE("RawSocket") {
                 sock.setProtocol(0x0800);
                 Error err = sock.open(IODevice::ReadWrite);
                 // Either it succeeds (root) or fails with PermissionDenied
-                if(err.isError()) {
+                if (err.isError()) {
                         CHECK(err == Error::PermissionDenied);
                 } else {
                         CHECK(sock.isOpen());
@@ -45,7 +45,7 @@ TEST_CASE("RawSocket") {
 
         SUBCASE("read and write on closed socket") {
                 RawSocket sock;
-                char buf[16];
+                char      buf[16];
                 CHECK(sock.read(buf, sizeof(buf)) == -1);
                 CHECK(sock.write("test", 4) == -1);
         }
@@ -67,7 +67,7 @@ TEST_CASE("RawSocket") {
 
         SUBCASE("close on already closed socket is safe") {
                 RawSocket sock;
-                Error err = sock.close();
+                Error     err = sock.close();
                 CHECK(err.isOk());
         }
 

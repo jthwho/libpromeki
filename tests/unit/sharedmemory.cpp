@@ -22,8 +22,7 @@ using namespace promeki;
 // ============================================================================
 
 static String uniqueShmName(const char *tag) {
-        return String("/promeki-test-") + String(tag) + String("-") +
-               UUID::generateV4().toString();
+        return String("/promeki-test-") + String(tag) + String("-") + UUID::generateV4().toString();
 }
 
 TEST_CASE("SharedMemory: isSupported is true on POSIX") {
@@ -35,9 +34,9 @@ TEST_CASE("SharedMemory: isSupported is true on POSIX") {
 }
 
 TEST_CASE("SharedMemory: create maps a writable region") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         SharedMemory shm;
-        Error err = shm.create(uniqueShmName("create"), 4096);
+        Error        err = shm.create(uniqueShmName("create"), 4096);
         REQUIRE(err.isOk());
         CHECK(shm.isValid());
         CHECK(shm.isOwner());
@@ -54,16 +53,16 @@ TEST_CASE("SharedMemory: create maps a writable region") {
 }
 
 TEST_CASE("SharedMemory: open sees owner's writes") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         String name = uniqueShmName("rw");
 
         SharedMemory owner;
         REQUIRE(owner.create(name, 256).isOk());
         auto *op = static_cast<uint32_t *>(owner.data());
-        for(size_t i = 0; i < 64; ++i) op[i] = static_cast<uint32_t>(i * 17 + 3);
+        for (size_t i = 0; i < 64; ++i) op[i] = static_cast<uint32_t>(i * 17 + 3);
 
         SharedMemory reader;
-        Error err = reader.open(name, SharedMemory::ReadOnly);
+        Error        err = reader.open(name, SharedMemory::ReadOnly);
         REQUIRE(err.isOk());
         CHECK(reader.isValid());
         CHECK_FALSE(reader.isOwner());
@@ -72,61 +71,60 @@ TEST_CASE("SharedMemory: open sees owner's writes") {
         REQUIRE(reader.data() != nullptr);
 
         const auto *rp = static_cast<const uint32_t *>(reader.data());
-        for(size_t i = 0; i < 64; ++i) {
+        for (size_t i = 0; i < 64; ++i) {
                 CHECK(rp[i] == static_cast<uint32_t>(i * 17 + 3));
         }
 }
 
 TEST_CASE("SharedMemory: second create with the same name fails with Exists") {
-        if(!SharedMemory::isSupported()) return;
-        String name = uniqueShmName("collide");
+        if (!SharedMemory::isSupported()) return;
+        String       name = uniqueShmName("collide");
         SharedMemory a;
         REQUIRE(a.create(name, 4096).isOk());
 
         SharedMemory b;
-        Error err = b.create(name, 4096);
+        Error        err = b.create(name, 4096);
         CHECK(err == Error::Exists);
         CHECK_FALSE(b.isValid());
 }
 
 TEST_CASE("SharedMemory: open on a missing name fails with NotExist") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         SharedMemory shm;
-        Error err = shm.open(uniqueShmName("missing"));
+        Error        err = shm.open(uniqueShmName("missing"));
         CHECK(err == Error::NotExist);
         CHECK_FALSE(shm.isValid());
 }
 
 TEST_CASE("SharedMemory: create rejects embedded slash") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         SharedMemory shm;
-        Error err = shm.create(String("/bad/name"), 4096);
+        Error        err = shm.create(String("/bad/name"), 4096);
         CHECK(err == Error::Invalid);
         CHECK_FALSE(shm.isValid());
 }
 
 TEST_CASE("SharedMemory: create rejects empty name") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         SharedMemory shm;
-        Error err = shm.create(String(), 4096);
+        Error        err = shm.create(String(), 4096);
         CHECK(err == Error::Invalid);
         CHECK_FALSE(shm.isValid());
 }
 
 TEST_CASE("SharedMemory: create rejects zero size") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         SharedMemory shm;
-        Error err = shm.create(uniqueShmName("zero"), 0);
+        Error        err = shm.create(uniqueShmName("zero"), 0);
         CHECK(err == Error::Invalid);
         CHECK_FALSE(shm.isValid());
 }
 
 TEST_CASE("SharedMemory: leading slash is added if missing") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         // Pass a name without leading slash; open should find it with or
         // without the prefix.
-        String bare = String("promeki-test-noslash-") +
-                      UUID::generateV4().toString();
+        String       bare = String("promeki-test-noslash-") + UUID::generateV4().toString();
         SharedMemory owner;
         REQUIRE(owner.create(bare, 64).isOk());
         CHECK(owner.name() == String("/") + bare);
@@ -138,7 +136,7 @@ TEST_CASE("SharedMemory: leading slash is added if missing") {
 }
 
 TEST_CASE("SharedMemory: close on owner unlinks the name") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         String name = uniqueShmName("unlink");
 
         {
@@ -149,12 +147,12 @@ TEST_CASE("SharedMemory: close on owner unlinks the name") {
         }
         // After owner close + dtor, open must fail.
         SharedMemory reader;
-        Error err = reader.open(name);
+        Error        err = reader.open(name);
         CHECK(err == Error::NotExist);
 }
 
 TEST_CASE("SharedMemory: non-owner close leaves the name intact") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         String name = uniqueShmName("nonowner-close");
 
         SharedMemory owner;
@@ -171,13 +169,13 @@ TEST_CASE("SharedMemory: non-owner close leaves the name intact") {
 
         // Owner is still alive and a second opener should still succeed.
         SharedMemory reader2;
-        Error err = reader2.open(name);
+        Error        err = reader2.open(name);
         REQUIRE(err.isOk());
         CHECK(static_cast<const uint8_t *>(reader2.data())[0] == 0x42);
 }
 
 TEST_CASE("SharedMemory: destructor cleans up without explicit close") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         String name = uniqueShmName("dtor");
         {
                 SharedMemory owner;
@@ -189,7 +187,7 @@ TEST_CASE("SharedMemory: destructor cleans up without explicit close") {
 }
 
 TEST_CASE("SharedMemory: move construction transfers ownership") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         String name = uniqueShmName("move-ctor");
 
         SharedMemory src;
@@ -214,7 +212,7 @@ TEST_CASE("SharedMemory: move construction transfers ownership") {
 }
 
 TEST_CASE("SharedMemory: move assignment closes target and transfers") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         String aName = uniqueShmName("move-a");
         String bName = uniqueShmName("move-b");
 
@@ -238,7 +236,7 @@ TEST_CASE("SharedMemory: move assignment closes target and transfers") {
 }
 
 TEST_CASE("SharedMemory: open fails after creator close even with a stale consumer") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         String name = uniqueShmName("stale");
 
         SharedMemory owner;
@@ -256,7 +254,7 @@ TEST_CASE("SharedMemory: open fails after creator close even with a stale consum
 }
 
 TEST_CASE("SharedMemory: opening same region twice creates two independent maps") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         String name = uniqueShmName("two-readers");
 
         SharedMemory owner;
@@ -267,7 +265,7 @@ TEST_CASE("SharedMemory: opening same region twice creates two independent maps"
         REQUIRE(r1.open(name).isOk());
         REQUIRE(r2.open(name).isOk());
 
-        CHECK(r1.data() != r2.data());                  // distinct mappings
+        CHECK(r1.data() != r2.data()); // distinct mappings
         CHECK(static_cast<const uint8_t *>(r1.data())[0] == 0x11);
         CHECK(static_cast<const uint8_t *>(r2.data())[0] == 0x11);
 
@@ -278,7 +276,7 @@ TEST_CASE("SharedMemory: opening same region twice creates two independent maps"
 }
 
 TEST_CASE("SharedMemory: AlreadyOpen when reusing an open instance") {
-        if(!SharedMemory::isSupported()) return;
+        if (!SharedMemory::isSupported()) return;
         SharedMemory shm;
         REQUIRE(shm.create(uniqueShmName("reuse"), 64).isOk());
         Error err = shm.create(uniqueShmName("reuse2"), 64);

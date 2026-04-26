@@ -49,7 +49,7 @@ template <typename T = int> class Rational {
                  * @param d Denominator.
                  */
                 Rational(T n = 0, T d = 1) : _num(n), _den(d) {
-                        if(_den != 0) simplify();
+                        if (_den != 0) simplify();
                 }
 
                 /** @brief Returns true if the denominator is non-zero. */
@@ -61,7 +61,7 @@ template <typename T = int> class Rational {
                  * @return Sum, or invalid Rational if either operand is invalid.
                  */
                 Rational operator+(const Rational &rhs) const {
-                        if(!isValid() || !rhs.isValid()) return Rational(0, 0);
+                        if (!isValid() || !rhs.isValid()) return Rational(0, 0);
                         T lcm = std::lcm(_den, rhs._den);
                         T num = _num * (lcm / _den) + rhs._num * (lcm / rhs._den);
                         return Rational(num, lcm);
@@ -73,7 +73,7 @@ template <typename T = int> class Rational {
                  * @return Difference, or invalid Rational if either operand is invalid.
                  */
                 Rational operator-(const Rational &rhs) const {
-                        if(!isValid() || !rhs.isValid()) return Rational(0, 0);
+                        if (!isValid() || !rhs.isValid()) return Rational(0, 0);
                         T lcm = std::lcm(_den, rhs._den);
                         T num = _num * (lcm / _den) - rhs._num * (lcm / rhs._den);
                         return Rational(num, lcm);
@@ -85,7 +85,7 @@ template <typename T = int> class Rational {
                  * @return Product, or invalid Rational if either operand is invalid.
                  */
                 Rational operator*(const Rational &rhs) const {
-                        if(!isValid() || !rhs.isValid()) return Rational(0, 0);
+                        if (!isValid() || !rhs.isValid()) return Rational(0, 0);
                         T num = _num * rhs._num;
                         T den = _den * rhs._den;
                         return Rational(num, den);
@@ -97,21 +97,17 @@ template <typename T = int> class Rational {
                  * @return Quotient, or invalid Rational if rhs is zero or either is invalid.
                  */
                 Rational operator/(const Rational &rhs) const {
-                        if(!isValid() || !rhs.isValid() || rhs._num == 0) return Rational(0, 0);
+                        if (!isValid() || !rhs.isValid() || rhs._num == 0) return Rational(0, 0);
                         T num = _num * rhs._den;
                         T den = _den * rhs._num;
                         return Rational(num, den);
                 }
 
                 /** @brief Equality comparison. */
-                bool operator==(const Rational &rhs) const {
-                        return _num == rhs._num && _den == rhs._den;
-                }
+                bool operator==(const Rational &rhs) const { return _num == rhs._num && _den == rhs._den; }
 
                 /** @brief Inequality comparison. */
-                bool operator!=(const Rational &rhs) const {
-                        return !(*this == rhs);
-                }
+                bool operator!=(const Rational &rhs) const { return !(*this == rhs); }
 
                 /** @brief Returns the numerator. */
                 T numerator() const { return _num; }
@@ -124,19 +120,15 @@ template <typename T = int> class Rational {
                  * @return The rational as a floating-point value, or 0.0 if invalid.
                  */
                 double toDouble() const {
-                        if(!isValid()) return 0.0;
+                        if (!isValid()) return 0.0;
                         return static_cast<double>(_num) / static_cast<double>(_den);
                 }
 
                 /** @brief Converts to a String in "num/den" format. */
-                String toString() const {
-                        return String::dec(_num) + "/" + String::dec(_den);
-                }
+                String toString() const { return String::dec(_num) + "/" + String::dec(_den); }
 
                 /** @brief Implicit conversion to String. */
-                operator String() const {
-                        return toString();
-                }
+                operator String() const { return toString(); }
 
         private:
                 T _num;
@@ -160,6 +152,4 @@ PROMEKI_NAMESPACE_END
  * types).  Inherits from @ref promeki::ToStringFormatter so the standard
  * string format specifiers (width, fill, alignment) work automatically.
  */
-template <typename T>
-struct std::formatter<promeki::Rational<T>>
-        : promeki::ToStringFormatter<promeki::Rational<T>> {};
+template <typename T> struct std::formatter<promeki::Rational<T>> : promeki::ToStringFormatter<promeki::Rational<T>> {};

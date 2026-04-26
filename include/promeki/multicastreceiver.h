@@ -95,7 +95,7 @@ PROMEKI_NAMESPACE_BEGIN
  * state it touches.
  */
 class MulticastReceiver : public Thread {
-        PROMEKI_OBJECT(MulticastReceiver, Thread)
+                PROMEKI_OBJECT(MulticastReceiver, Thread)
         public:
                 /**
                  * @brief Signature of the user callback invoked for each datagram.
@@ -107,8 +107,7 @@ class MulticastReceiver : public Thread {
                  *               pointer or copy the data out.
                  * @param sender The sender's address and port.
                  */
-                using DatagramCallback = std::function<
-                        void(Buffer::Ptr data, const SocketAddress &sender)>;
+                using DatagramCallback = std::function<void(Buffer::Ptr data, const SocketAddress &sender)>;
 
                 /**
                  * @brief Describes one group membership request.
@@ -119,12 +118,12 @@ class MulticastReceiver : public Thread {
                  * @ref addSourceGroup and applied when @ref start runs.
                  */
                 struct GroupEntry {
-                        /** @brief The multicast group address. */
-                        SocketAddress   group;
-                        /** @brief SSM source; null for ASM. */
-                        SocketAddress   source;
-                        /** @brief True if this entry is Source-Specific Multicast. */
-                        bool            isSSM = false;
+                                /** @brief The multicast group address. */
+                                SocketAddress group;
+                                /** @brief SSM source; null for ASM. */
+                                SocketAddress source;
+                                /** @brief True if this entry is Source-Specific Multicast. */
+                                bool isSSM = false;
                 };
 
                 /** @brief List of configured group memberships. */
@@ -246,8 +245,7 @@ class MulticastReceiver : public Thread {
                  * @return Error::Ok on success, Error::Invalid if either
                  *         address is malformed.
                  */
-                Error addSourceGroup(const SocketAddress &group,
-                                     const SocketAddress &source);
+                Error addSourceGroup(const SocketAddress &group, const SocketAddress &source);
 
                 /** @brief Returns the list of configured group memberships. */
                 const GroupList &groups() const { return _groups; }
@@ -329,20 +327,20 @@ class MulticastReceiver : public Thread {
                 Error openAndJoin();
                 void  closeAndLeave();
 
-                UdpSocket::UPtr         _socket;
-                MulticastManager        _multicastManager;
-                SocketAddress           _localAddress;
-                String                  _interfaceName;
-                String                  _threadName;
-                size_t                  _maxPacketSize   = DefaultMaxPacketSize;
-                unsigned int            _receiveTimeoutMs = DefaultReceiveTimeoutMs;
-                DatagramCallback        _callback;
-                GroupList               _groups;
+                UdpSocket::UPtr  _socket;
+                MulticastManager _multicastManager;
+                SocketAddress    _localAddress;
+                String           _interfaceName;
+                String           _threadName;
+                size_t           _maxPacketSize = DefaultMaxPacketSize;
+                unsigned int     _receiveTimeoutMs = DefaultReceiveTimeoutMs;
+                DatagramCallback _callback;
+                GroupList        _groups;
 
-                Atomic<bool>            _active;
-                Atomic<bool>            _stopRequested;
-                Atomic<uint64_t>        _datagramCount;
-                Atomic<uint64_t>        _byteCount;
+                Atomic<bool>     _active;
+                Atomic<bool>     _stopRequested;
+                Atomic<uint64_t> _datagramCount;
+                Atomic<uint64_t> _byteCount;
 };
 
 PROMEKI_NAMESPACE_END

@@ -73,9 +73,7 @@ class RtpPayload {
                  *
                  * @return Maximum payload bytes per packet.
                  */
-                virtual size_t maxPayloadSize() const {
-                        return _maxPayloadSize;
-                }
+                virtual size_t maxPayloadSize() const { return _maxPayloadSize; }
 
                 /**
                  * @brief Overrides the maximum payload size per packet.
@@ -87,9 +85,7 @@ class RtpPayload {
                  *
                  * @param bytes Maximum payload bytes per packet (0 = default).
                  */
-                void setMaxPayloadSize(size_t bytes) {
-                        _maxPayloadSize = (bytes == 0) ? 1200 : bytes;
-                }
+                void setMaxPayloadSize(size_t bytes) { _maxPayloadSize = (bytes == 0) ? 1200 : bytes; }
 
         protected:
                 /** @brief Default constructor (protected; use a concrete subclass). */
@@ -237,8 +233,7 @@ class RtpPayloadRawVideo : public RtpPayload {
                  *        is inferred as bitsPerPixel/8 (correct for formats
                  *        where one pixel equals one pgroup).
                  */
-                RtpPayloadRawVideo(int width, int height, int bitsPerPixel,
-                                   int pgroupBytes = 0);
+                RtpPayloadRawVideo(int width, int height, int bitsPerPixel, int pgroupBytes = 0);
 
                 /** @copydoc RtpPayload::payloadType() */
                 uint8_t payloadType() const override { return _payloadType; }
@@ -265,11 +260,11 @@ class RtpPayloadRawVideo : public RtpPayload {
                 int pgroupBytes() const { return _pgroupBytes; }
 
         private:
-                int      _width;
-                int      _height;
-                int      _bitsPerPixel;
-                int      _pgroupBytes;
-                uint8_t  _payloadType = 96;
+                int     _width;
+                int     _height;
+                int     _bitsPerPixel;
+                int     _pgroupBytes;
+                uint8_t _payloadType = 96;
 };
 
 /**
@@ -489,10 +484,10 @@ class RtpPayloadJpegXs : public RtpPayload {
                 void resetFrameCounter() { _frameCounter = 0; }
 
         private:
-                int      _width;
-                int      _height;
-                uint8_t  _payloadType;
-                uint8_t  _frameCounter = 0;
+                int     _width;
+                int     _height;
+                uint8_t _payloadType;
+                uint8_t _frameCounter = 0;
 };
 
 PROMEKI_NAMESPACE_END

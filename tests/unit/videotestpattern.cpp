@@ -39,32 +39,17 @@ TEST_CASE("VideoTestPattern_Defaults") {
 
 TEST_CASE("VideoTestPattern_CreateAllPatterns") {
         VideoTestPattern gen;
-        ImageDesc desc = testDesc();
+        ImageDesc        desc = testDesc();
 
-        VideoPattern patterns[] = {
-                VideoPattern::ColorBars,
-                VideoPattern::ColorBars75,
-                VideoPattern::Ramp,
-                VideoPattern::Grid,
-                VideoPattern::Crosshatch,
-                VideoPattern::Checkerboard,
-                VideoPattern::SolidColor,
-                VideoPattern::White,
-                VideoPattern::Black,
-                VideoPattern::Noise,
-                VideoPattern::ZonePlate,
-                VideoPattern::ColorChecker,
-                VideoPattern::SMPTE219,
-                VideoPattern::AvSync,
-                VideoPattern::MultiBurst,
-                VideoPattern::LimitRange,
-                VideoPattern::CircularZone,
-                VideoPattern::Alignment,
-                VideoPattern::SDIPathEQ,
-                VideoPattern::SDIPathPLL
-        };
+        VideoPattern patterns[] = {VideoPattern::ColorBars,  VideoPattern::ColorBars75,  VideoPattern::Ramp,
+                                   VideoPattern::Grid,       VideoPattern::Crosshatch,   VideoPattern::Checkerboard,
+                                   VideoPattern::SolidColor, VideoPattern::White,        VideoPattern::Black,
+                                   VideoPattern::Noise,      VideoPattern::ZonePlate,    VideoPattern::ColorChecker,
+                                   VideoPattern::SMPTE219,   VideoPattern::AvSync,       VideoPattern::MultiBurst,
+                                   VideoPattern::LimitRange, VideoPattern::CircularZone, VideoPattern::Alignment,
+                                   VideoPattern::SDIPathEQ,  VideoPattern::SDIPathPLL};
 
-        for(auto pat : patterns) {
+        for (auto pat : patterns) {
                 gen.setPattern(pat);
                 auto img = gen.createPayload(desc, 0.0);
                 REQUIRE(img.isValid());
@@ -82,7 +67,7 @@ TEST_CASE("VideoTestPattern_RenderIntoExisting") {
         gen.setPattern(VideoPattern::White);
 
         ImageDesc desc = testDesc(64, 64);
-        auto img = gen.createPayload(desc, 0.0);
+        auto      img = gen.createPayload(desc, 0.0);
         REQUIRE(img.isValid());
 
         const uint8_t *data = img->plane(0).data();
@@ -100,17 +85,20 @@ TEST_CASE("VideoTestPattern_MotionOffset") {
         gen.setPattern(VideoPattern::ColorBars);
 
         ImageDesc desc = testDesc(64, 64);
-        auto img1 = gen.createPayload(desc, 0.0);
-        auto img2 = gen.createPayload(desc, 10.0);
+        auto      img1 = gen.createPayload(desc, 0.0);
+        auto      img2 = gen.createPayload(desc, 10.0);
 
         REQUIRE(img1.isValid());
         REQUIRE(img2.isValid());
 
         const uint8_t *d1 = img1->plane(0).data();
         const uint8_t *d2 = img2->plane(0).data();
-        bool differ = false;
-        for(size_t i = 0; i < 64 * 3; i++) {
-                if(d1[i] != d2[i]) { differ = true; break; }
+        bool           differ = false;
+        for (size_t i = 0; i < 64 * 3; i++) {
+                if (d1[i] != d2[i]) {
+                        differ = true;
+                        break;
+                }
         }
         CHECK(differ);
 }
@@ -125,7 +113,7 @@ TEST_CASE("VideoTestPattern_SolidColor") {
         gen.setSolidColor(Color::Red);
 
         ImageDesc desc = testDesc(8, 8);
-        auto img = gen.createPayload(desc, 0.0);
+        auto      img = gen.createPayload(desc, 0.0);
         REQUIRE(img.isValid());
 
         const uint8_t *data = img->plane(0).data();
@@ -143,7 +131,7 @@ TEST_CASE("VideoTestPattern_RGBA8") {
         gen.setPattern(VideoPattern::White);
 
         ImageDesc desc = testDesc(16, 16, PixelFormat::RGBA8_sRGB);
-        auto img = gen.createPayload(desc, 0.0);
+        auto      img = gen.createPayload(desc, 0.0);
         REQUIRE(img.isValid());
         CHECK(img->desc().pixelFormat().id() == PixelFormat::RGBA8_sRGB);
 }
@@ -153,30 +141,15 @@ TEST_CASE("VideoTestPattern_RGBA8") {
 // ============================================================================
 
 TEST_CASE("VideoTestPattern_StringRoundTrip") {
-        VideoPattern patterns[] = {
-                VideoPattern::ColorBars,
-                VideoPattern::ColorBars75,
-                VideoPattern::Ramp,
-                VideoPattern::Grid,
-                VideoPattern::Crosshatch,
-                VideoPattern::Checkerboard,
-                VideoPattern::SolidColor,
-                VideoPattern::White,
-                VideoPattern::Black,
-                VideoPattern::Noise,
-                VideoPattern::ZonePlate,
-                VideoPattern::ColorChecker,
-                VideoPattern::SMPTE219,
-                VideoPattern::AvSync,
-                VideoPattern::MultiBurst,
-                VideoPattern::LimitRange,
-                VideoPattern::CircularZone,
-                VideoPattern::Alignment,
-                VideoPattern::SDIPathEQ,
-                VideoPattern::SDIPathPLL
-        };
+        VideoPattern patterns[] = {VideoPattern::ColorBars,  VideoPattern::ColorBars75,  VideoPattern::Ramp,
+                                   VideoPattern::Grid,       VideoPattern::Crosshatch,   VideoPattern::Checkerboard,
+                                   VideoPattern::SolidColor, VideoPattern::White,        VideoPattern::Black,
+                                   VideoPattern::Noise,      VideoPattern::ZonePlate,    VideoPattern::ColorChecker,
+                                   VideoPattern::SMPTE219,   VideoPattern::AvSync,       VideoPattern::MultiBurst,
+                                   VideoPattern::LimitRange, VideoPattern::CircularZone, VideoPattern::Alignment,
+                                   VideoPattern::SDIPathEQ,  VideoPattern::SDIPathPLL};
 
-        for(auto pat : patterns) {
+        for (auto pat : patterns) {
                 String name = Enum::nameOf(VideoPattern::Type, pat.value());
                 CHECK_FALSE(name.isEmpty());
                 VideoPattern parsed(name);
@@ -195,18 +168,21 @@ TEST_CASE("VideoTestPattern_FromStringInvalid") {
 // ============================================================================
 
 TEST_CASE("VideoTestPattern_BurnPositionRoundTrip") {
-        struct Case { BurnPosition pos; const char *name; };
+        struct Case {
+                        BurnPosition pos;
+                        const char  *name;
+        };
         Case cases[] = {
-                { BurnPosition::TopLeft,      "TopLeft"      },
-                { BurnPosition::TopCenter,    "TopCenter"    },
-                { BurnPosition::TopRight,     "TopRight"     },
-                { BurnPosition::BottomLeft,   "BottomLeft"   },
-                { BurnPosition::BottomCenter, "BottomCenter" },
-                { BurnPosition::BottomRight,  "BottomRight"  },
-                { BurnPosition::Center,       "Center"       },
+                {BurnPosition::TopLeft, "TopLeft"},
+                {BurnPosition::TopCenter, "TopCenter"},
+                {BurnPosition::TopRight, "TopRight"},
+                {BurnPosition::BottomLeft, "BottomLeft"},
+                {BurnPosition::BottomCenter, "BottomCenter"},
+                {BurnPosition::BottomRight, "BottomRight"},
+                {BurnPosition::Center, "Center"},
         };
 
-        for(auto &c : cases) {
+        for (auto &c : cases) {
                 String name = Enum::nameOf(BurnPosition::Type, c.pos.value());
                 CHECK(name == String(c.name));
 
@@ -277,7 +253,7 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_UYVY8") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathEQ);
         ImageDesc desc(64, 4, PixelFormat::YUV8_422_UYVY_Rec709);
-        auto img = gen.createPayload(desc, 0.0);
+        auto      img = gen.createPayload(desc, 0.0);
         REQUIRE(img.isValid());
 
         const uint8_t *row0 = img->plane(0).data();
@@ -288,7 +264,7 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_UYVY8") {
         CHECK(row0[124] == 0xC0);
         CHECK(row0[125] == 0x66);
 
-        size_t stride = stride0(*img);
+        size_t         stride = stride0(*img);
         const uint8_t *row1 = row0 + stride;
         CHECK(row1[0] == 0x66);
         CHECK(row1[1] == 0xC0);
@@ -300,7 +276,7 @@ TEST_CASE("VideoTestPattern_SDIPathPLL_UYVY8") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathPLL);
         ImageDesc desc(64, 4, PixelFormat::YUV8_422_UYVY_Rec709);
-        auto img = gen.createPayload(desc, 0.0);
+        auto      img = gen.createPayload(desc, 0.0);
         REQUIRE(img.isValid());
 
         const uint8_t *row0 = img->plane(0).data();
@@ -309,7 +285,7 @@ TEST_CASE("VideoTestPattern_SDIPathPLL_UYVY8") {
         CHECK(row0[2] == 0x80);
         CHECK(row0[3] == 0x44);
 
-        size_t stride = stride0(*img);
+        size_t         stride = stride0(*img);
         const uint8_t *row1 = row0 + stride;
         CHECK(row1[0] == 0x44);
         CHECK(row1[1] == 0x80);
@@ -321,7 +297,7 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_UYVY10LE") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathEQ);
         ImageDesc desc(64, 4, PixelFormat::YUV10_422_UYVY_LE_Rec709);
-        auto img = gen.createPayload(desc, 0.0);
+        auto      img = gen.createPayload(desc, 0.0);
         REQUIRE(img.isValid());
 
         const uint16_t *row0 = reinterpret_cast<const uint16_t *>(img->plane(0).data());
@@ -330,9 +306,8 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_UYVY10LE") {
         CHECK(row0[2] == 0x0300);
         CHECK(row0[3] == 0x0198);
 
-        size_t stride = stride0(*img);
-        const uint16_t *row1 = reinterpret_cast<const uint16_t *>(
-                img->plane(0).data() + stride);
+        size_t          stride = stride0(*img);
+        const uint16_t *row1 = reinterpret_cast<const uint16_t *>(img->plane(0).data() + stride);
         CHECK(row1[0] == 0x0198);
         CHECK(row1[1] == 0x0300);
         CHECK(row1[2] == 0x0198);
@@ -343,7 +318,7 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_YUYV8") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathEQ);
         ImageDesc desc(64, 4, PixelFormat::YUV8_422_Rec709);
-        auto img = gen.createPayload(desc, 0.0);
+        auto      img = gen.createPayload(desc, 0.0);
         REQUIRE(img.isValid());
 
         const uint8_t *row0 = img->plane(0).data();
@@ -352,7 +327,7 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_YUYV8") {
         CHECK(row0[2] == 0x66);
         CHECK(row0[3] == 0xC0);
 
-        size_t stride = stride0(*img);
+        size_t         stride = stride0(*img);
         const uint8_t *row1 = row0 + stride;
         CHECK(row1[0] == 0xC0);
         CHECK(row1[1] == 0x66);
@@ -364,7 +339,7 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_v210") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathEQ);
         ImageDesc desc(64, 4, PixelFormat::YUV10_422_v210_Rec709);
-        auto img = gen.createPayload(desc, 0.0);
+        auto      img = gen.createPayload(desc, 0.0);
         REQUIRE(img.isValid());
 
         const uint32_t *row0 = reinterpret_cast<const uint32_t *>(img->plane(0).data());
@@ -373,9 +348,8 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_v210") {
         CHECK((row0[2] & 0x3FFFFFFFu) == 0x30066300u);
         CHECK((row0[3] & 0x3FFFFFFFu) == 0x198C0198u);
 
-        size_t stride = stride0(*img);
-        const uint32_t *row1 = reinterpret_cast<const uint32_t *>(
-                img->plane(0).data() + stride);
+        size_t          stride = stride0(*img);
+        const uint32_t *row1 = reinterpret_cast<const uint32_t *>(img->plane(0).data() + stride);
         CHECK((row1[0] & 0x3FFFFFFFu) == 0x198C0198u);
         CHECK((row1[1] & 0x3FFFFFFFu) == 0x30066300u);
 }
@@ -384,7 +358,7 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_Planar8") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathEQ);
         ImageDesc desc(64, 4, PixelFormat::YUV8_422_Planar_Rec709);
-        auto img = gen.createPayload(desc, 0.0);
+        auto      img = gen.createPayload(desc, 0.0);
         REQUIRE(img.isValid());
 
         const uint8_t *yRow0 = img->plane(0).data();
@@ -408,7 +382,7 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_SemiPlanar8") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathEQ);
         ImageDesc desc(64, 4, PixelFormat::YUV8_422_SemiPlanar_Rec709);
-        auto img = gen.createPayload(desc, 0.0);
+        auto      img = gen.createPayload(desc, 0.0);
         REQUIRE(img.isValid());
 
         const uint8_t *yRow0 = img->plane(0).data();
@@ -454,11 +428,14 @@ TEST_CASE("VideoTestPattern_SDIPath_RGBFallback") {
         REQUIRE(img.isValid());
 
         const uint8_t *row0 = img->plane(0).data();
-        size_t stride = stride0(*img);
+        size_t         stride = stride0(*img);
         const uint8_t *row1 = row0 + stride;
-        bool linesDiffer = false;
-        for(int i = 0; i < 3; i++) {
-                if(row0[i] != row1[i]) { linesDiffer = true; break; }
+        bool           linesDiffer = false;
+        for (int i = 0; i < 3; i++) {
+                if (row0[i] != row1[i]) {
+                        linesDiffer = true;
+                        break;
+                }
         }
         CHECK(linesDiffer);
 }

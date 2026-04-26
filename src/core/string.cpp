@@ -27,28 +27,23 @@ PROMEKI_NAMESPACE_BEGIN
 
 static const char *digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-template <typename T>
-std::string floatToString(T value, int precision) {
+template <typename T> std::string floatToString(T value, int precision) {
         char buf[64];
-        int len = std::snprintf(buf, sizeof(buf), "%.*f", precision, static_cast<double>(value));
-        if(len < 0) return "0";
+        int  len = std::snprintf(buf, sizeof(buf), "%.*f", precision, static_cast<double>(value));
+        if (len < 0) return "0";
         return std::string(buf, static_cast<size_t>(len));
 }
 
 template <typename T>
-static String num(T val,
-              int base = 10,
-              int padding = 0,
-              char padchar = ' ',
-              bool addPrefix = false) {
-        if(base < 2 || base > 36) return String();
+static String num(T val, int base = 10, int padding = 0, char padchar = ' ', bool addPrefix = false) {
+        if (base < 2 || base > 36) return String();
 
         std::string ret;
         ret.resize(128);
 
         char *buf = ret.data();
-        bool isNegative = false;
-        bool isPaddingNegative = false;
+        bool  isNegative = false;
+        bool  isPaddingNegative = false;
 
         // Compute the absolute value in the corresponding unsigned type.
         // Naively doing "val = -val" is UB for INT_MIN of the signed type
@@ -56,7 +51,7 @@ static String num(T val,
         using UT = std::make_unsigned_t<T>;
         UT uval;
         if constexpr (std::is_signed_v<T>) {
-                if(val < 0) {
+                if (val < 0) {
                         isNegative = true;
                         uval = static_cast<UT>(0) - static_cast<UT>(val);
                 } else {
@@ -66,17 +61,17 @@ static String num(T val,
                 uval = val;
         }
 
-        if(padding < 0) {
+        if (padding < 0) {
                 isPaddingNegative = true;
                 padding = -padding;
         }
 
         int index = 0;
-        if(uval == 0) {
+        if (uval == 0) {
                 buf[index++] = '0';
         } else {
                 UT ubase = static_cast<UT>(base);
-                while(uval > 0) {
+                while (uval > 0) {
                         UT r = uval % ubase;
                         buf[index++] = digits[r];
                         uval /= ubase;
@@ -85,52 +80,61 @@ static String num(T val,
         // Emit the minus sign for negatives.  Digits are being built in
         // reverse order, so appending here places the '-' at the start of
         // the final string after the reversal step below.
-        if(isNegative) {
+        if (isNegative) {
                 buf[index++] = '-';
         }
         int digitEnd = index;
 
-        if(addPrefix) {
-                switch(base) {
-                        case 2:  buf[index++] = 'b'; buf[index++] = '0'; break;
-                        case 8:  buf[index++] = 'o'; buf[index++] = '0'; break;
-                        case 16: buf[index++] = 'x'; buf[index++] = '0'; break;
+        if (addPrefix) {
+                switch (base) {
+                        case 2:
+                                buf[index++] = 'b';
+                                buf[index++] = '0';
+                                break;
+                        case 8:
+                                buf[index++] = 'o';
+                                buf[index++] = '0';
+                                break;
+                        case 16:
+                                buf[index++] = 'x';
+                                buf[index++] = '0';
+                                break;
                         case 10: break;
                         default:
                                 buf[index++] = ':';
                                 buf[index++] = digits[base % 10];
-                                if(base / 10) buf[index++] = digits[base / 10];
+                                if (base / 10) buf[index++] = digits[base / 10];
                                 buf[index++] = 'b';
                                 break;
                 }
         }
         int remaining = ret.size() - index - 1;
         padding -= index;
-        if(padding < 0) {
+        if (padding < 0) {
                 padding = 0;
                 isPaddingNegative = false;
         }
-        if(padding > remaining) padding = remaining;
+        if (padding > remaining) padding = remaining;
 
-        if(addPrefix && padchar == '0') {
+        if (addPrefix && padchar == '0') {
                 // Insert zero-padding between digits and prefix (so it appears
                 // between prefix and digits after reversal, e.g. 0x0042)
                 int prefixLen = index - digitEnd;
                 // Shift prefix chars right by padding amount
-                for(int i = index - 1; i >= digitEnd; i--) {
+                for (int i = index - 1; i >= digitEnd; i--) {
                         buf[i + padding] = buf[i];
                 }
-                for(int i = 0; i < padding; i++) buf[digitEnd + i] = padchar;
+                for (int i = 0; i < padding; i++) buf[digitEnd + i] = padchar;
                 index += padding;
         } else {
-                for(int i = 0; i < padding; i++) buf[index++] = padchar;
+                for (int i = 0; i < padding; i++) buf[index++] = padchar;
         }
         buf[index] = 0;
 
         int lastPos = index - 1;
-        if(isPaddingNegative) lastPos -= padding;
+        if (isPaddingNegative) lastPos -= padding;
 
-        for(int i = 0, j = lastPos; i < j; i++, j--) {
+        for (int i = 0, j = lastPos; i < j; i++, j--) {
                 char temp = buf[i];
                 buf[i] = buf[j];
                 buf[j] = temp;
@@ -150,8 +154,8 @@ String String::sprintf(const char *fmt, ...) {
         va_start(args, fmt);
         int length = std::vsnprintf(ret.data(), ret.size() + 1, fmt, args);
         va_end(args);
-        if(length < 0) return String();
-        if(static_cast<size_t>(length) > ret.size()) {
+        if (length < 0) return String();
+        if (static_cast<size_t>(length) > ret.size()) {
                 ret.resize(length);
                 va_start(args, fmt);
                 std::vsnprintf(ret.data(), ret.size() + 1, fmt, args);
@@ -208,23 +212,23 @@ String String::number(double val, int precision) {
 
 String &String::arg(const String &str) {
         const std::string &s = d->str();
-        int minValue = std::numeric_limits<int>::max();
-        size_t minPos = std::string::npos;
-        std::string placeholderToReplace;
-        for(size_t i = 0; i < s.size(); ++i) {
-            if(s[i] == '%' && i + 1 < s.size() && std::isdigit(s[i + 1])) {
-                size_t j = i + 1;
-                while(j < s.size() && std::isdigit(s[j])) ++j;
-                std::string placeholder = s.substr(i, j - i);
-                int value = std::stoi(placeholder.substr(1));
-                if(value < minValue) {
-                    minValue = value;
-                    minPos = i;
-                    placeholderToReplace = placeholder;
+        int                minValue = std::numeric_limits<int>::max();
+        size_t             minPos = std::string::npos;
+        std::string        placeholderToReplace;
+        for (size_t i = 0; i < s.size(); ++i) {
+                if (s[i] == '%' && i + 1 < s.size() && std::isdigit(s[i + 1])) {
+                        size_t j = i + 1;
+                        while (j < s.size() && std::isdigit(s[j])) ++j;
+                        std::string placeholder = s.substr(i, j - i);
+                        int         value = std::stoi(placeholder.substr(1));
+                        if (value < minValue) {
+                                minValue = value;
+                                minPos = i;
+                                placeholderToReplace = placeholder;
+                        }
                 }
-            }
         }
-        if(minPos != std::string::npos) {
+        if (minPos != std::string::npos) {
                 std::string result = s;
                 result.replace(minPos, placeholderToReplace.length(), str.d->str());
                 *this = std::move(result);
@@ -242,9 +246,9 @@ String &String::arg(const String &str) {
 
 String String::stripNumericSeparators(const char *s) {
         String result;
-        while(*s) {
+        while (*s) {
                 char c = *s++;
-                if(c == '\'' || c == '_' || c == ',') continue;
+                if (c == '\'' || c == '_' || c == ',') continue;
                 result += c;
         }
         return result;
@@ -256,31 +260,34 @@ String String::prepareIntParse(const char *s, int *base) {
         const char *p = s;
 
         // Preserve leading whitespace (strtoll skips it anyway).
-        while(*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') {
+        while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') {
                 result += *p++;
         }
 
         // Preserve optional sign.
-        if(*p == '+' || *p == '-') {
+        if (*p == '+' || *p == '-') {
                 result += *p++;
         }
 
         // Detect and consume base prefix.
-        if(*p == '0' && p[1] != '\0') {
+        if (*p == '0' && p[1] != '\0') {
                 char next = p[1];
-                if(next == 'x' || next == 'X') {
-                        *base = 16; p += 2;
-                } else if(next == 'b' || next == 'B') {
-                        *base = 2; p += 2;
-                } else if(next == 'o' || next == 'O') {
-                        *base = 8; p += 2;
+                if (next == 'x' || next == 'X') {
+                        *base = 16;
+                        p += 2;
+                } else if (next == 'b' || next == 'B') {
+                        *base = 2;
+                        p += 2;
+                } else if (next == 'o' || next == 'O') {
+                        *base = 8;
+                        p += 2;
                 }
         }
 
         // Copy remaining characters, stripping separators.
-        while(*p) {
+        while (*p) {
                 char c = *p++;
-                if(c == '\'' || c == '_' || c == ',') continue;
+                if (c == '\'' || c == '_' || c == ',') continue;
                 result += c;
         }
 
@@ -292,130 +299,128 @@ String String::prepareIntParse(const char *s, int *base) {
 // ----------------------------------------------------------------------------
 
 bool String::toBool(Error *e) const {
-        Error err;
-        bool ret = false;
+        Error              err;
+        bool               ret = false;
         const std::string &s = d->str();
-        if(s == "1") {
+        if (s == "1") {
                 ret = true;
-        } else if(s == "0") {
+        } else if (s == "0") {
                 ret = false;
         } else {
                 String lower = toLower();
-                if(lower == "true") {
+                if (lower == "true") {
                         ret = true;
-                } else if(lower == "false") {
+                } else if (lower == "false") {
                         ret = false;
                 } else {
                         err = Error::Invalid;
                 }
         }
-        if(e != nullptr) *e = err;
+        if (e != nullptr) *e = err;
         return ret;
 }
 
 int String::toInt(Error *e) const {
-        int base = 10;
-        String cleaned = prepareIntParse(cstr(), &base);
-        char *end = nullptr;
+        int         base = 10;
+        String      cleaned = prepareIntParse(cstr(), &base);
+        char       *end = nullptr;
         const char *s = cleaned.cstr();
         errno = 0;
         long long v = std::strtoll(s, &end, base);
-        if(end == s || *end != '\0') {
-                if(e != nullptr) *e = Error::Invalid;
+        if (end == s || *end != '\0') {
+                if (e != nullptr) *e = Error::Invalid;
                 return 0;
         }
-        if(errno == ERANGE ||
-           v > std::numeric_limits<int>::max() ||
-           v < std::numeric_limits<int>::min()) {
-                if(e != nullptr) *e = Error::OutOfRange;
+        if (errno == ERANGE || v > std::numeric_limits<int>::max() || v < std::numeric_limits<int>::min()) {
+                if (e != nullptr) *e = Error::OutOfRange;
                 return 0;
         }
-        if(e != nullptr) *e = Error::Ok;
+        if (e != nullptr) *e = Error::Ok;
         return static_cast<int>(v);
 }
 
 unsigned int String::toUInt(Error *e) const {
-        int base = 10;
-        String cleaned = prepareIntParse(cstr(), &base);
-        char *end = nullptr;
+        int         base = 10;
+        String      cleaned = prepareIntParse(cstr(), &base);
+        char       *end = nullptr;
         const char *s = cleaned.cstr();
         errno = 0;
         unsigned long long v = std::strtoull(s, &end, base);
-        if(end == s || *end != '\0') {
-                if(e != nullptr) *e = Error::Invalid;
+        if (end == s || *end != '\0') {
+                if (e != nullptr) *e = Error::Invalid;
                 return 0;
         }
-        if(errno == ERANGE || v > std::numeric_limits<unsigned int>::max()) {
-                if(e != nullptr) *e = Error::OutOfRange;
+        if (errno == ERANGE || v > std::numeric_limits<unsigned int>::max()) {
+                if (e != nullptr) *e = Error::OutOfRange;
                 return 0;
         }
-        if(e != nullptr) *e = Error::Ok;
+        if (e != nullptr) *e = Error::Ok;
         return static_cast<unsigned int>(v);
 }
 
 double String::toDouble(Error *e) const {
-        String cleaned = stripNumericSeparators(cstr());
-        char *end = nullptr;
+        String      cleaned = stripNumericSeparators(cstr());
+        char       *end = nullptr;
         const char *s = cleaned.cstr();
         errno = 0;
         double v = std::strtod(s, &end);
-        if(end == s || *end != '\0') {
-                if(e != nullptr) *e = Error::Invalid;
+        if (end == s || *end != '\0') {
+                if (e != nullptr) *e = Error::Invalid;
                 return 0.0;
         }
-        if(errno == ERANGE) {
-                if(e != nullptr) *e = Error::OutOfRange;
+        if (errno == ERANGE) {
+                if (e != nullptr) *e = Error::OutOfRange;
                 return 0.0;
         }
-        if(e != nullptr) *e = Error::Ok;
+        if (e != nullptr) *e = Error::Ok;
         return v;
 }
 
 int64_t String::parseNumberWords(Error *err) const {
         static const std::map<std::string, int64_t> numberWords = {
-                {"zero", 0}, {"one", 1}, {"two", 2}, {"three", 3}, {"four", 4},
-                {"five", 5}, {"six", 6}, {"seven", 7}, {"eight", 8}, {"nine", 9},
-                {"ten", 10}, {"eleven", 11}, {"twelve", 12}, {"thirteen", 13},
-                {"fourteen", 14}, {"fifteen", 15}, {"sixteen", 16}, {"seventeen", 17},
-                {"eighteen", 18}, {"nineteen", 19}, {"twenty", 20}, {"thirty", 30},
-                {"forty", 40}, {"fifty", 50}, {"sixty", 60}, {"seventy", 70},
-                {"eighty", 80}, {"ninety", 90}, {"hundred", 100}, {"thousand", 1000},
-                {"million", 1000000}, {"billion", 1000000000}
-        };
+                {"zero", 0},      {"one", 1},         {"two", 2},           {"three", 3},
+                {"four", 4},      {"five", 5},        {"six", 6},           {"seven", 7},
+                {"eight", 8},     {"nine", 9},        {"ten", 10},          {"eleven", 11},
+                {"twelve", 12},   {"thirteen", 13},   {"fourteen", 14},     {"fifteen", 15},
+                {"sixteen", 16},  {"seventeen", 17},  {"eighteen", 18},     {"nineteen", 19},
+                {"twenty", 20},   {"thirty", 30},     {"forty", 40},        {"fifty", 50},
+                {"sixty", 60},    {"seventy", 70},    {"eighty", 80},       {"ninety", 90},
+                {"hundred", 100}, {"thousand", 1000}, {"million", 1000000}, {"billion", 1000000000}};
 
         std::string copy = d->str();
-        for(char &c : copy) if(!std::isalpha(c)) c = ' ';
+        for (char &c : copy)
+                if (!std::isalpha(c)) c = ' ';
         // Tokenize by whitespace
         StringList tokens = String(copy).split(" ");
-        int64_t value = 0;
-        int64_t current = 0;
-        bool found = false;
+        int64_t    value = 0;
+        int64_t    current = 0;
+        bool       found = false;
 
-        for(size_t ti = 0; ti < tokens.size(); ++ti) {
+        for (size_t ti = 0; ti < tokens.size(); ++ti) {
                 std::string token = tokens[ti].str();
-                for(char &c : token) c = std::tolower(static_cast<unsigned char>(c));
+                for (char &c : token) c = std::tolower(static_cast<unsigned char>(c));
                 auto it = numberWords.find(token);
-                if(it != numberWords.end()) {
+                if (it != numberWords.end()) {
                         found = true;
                         int64_t wordval = it->second;
-                        if(wordval >= 1000) {
-                                if(!current) current = 1;
+                        if (wordval >= 1000) {
+                                if (!current) current = 1;
                                 value += current * wordval;
                                 current = 0;
-                        } else if(wordval >= 100) {
-                                if(!current) current = 1;
+                        } else if (wordval >= 100) {
+                                if (!current) current = 1;
                                 current *= wordval;
                         } else {
                                 current += wordval;
                         }
-                } else if(token == "and") {
+                } else if (token == "and") {
                         continue;
                 } else {
                         break;
                 }
         }
         value += current;
-        if(err != nullptr) *err = found ? Error::Ok : Error::Invalid;
+        if (err != nullptr) *err = found ? Error::Ok : Error::Invalid;
         return value;
 }
 
@@ -424,17 +429,17 @@ int64_t String::parseNumberWords(Error *err) const {
 // ============================================================================
 
 String String::replace(const String &find, const String &replacement) const {
-        if(find.isEmpty()) return *this;
+        if (find.isEmpty()) return *this;
         String result;
         size_t start = 0;
         size_t pos;
-        while((pos = this->find(find, start)) != npos) {
-                if(pos > start) result += substr(start, pos - start);
+        while ((pos = this->find(find, start)) != npos) {
+                if (pos > start) result += substr(start, pos - start);
                 result += replacement;
                 start = pos + find.length();
         }
-        if(start == 0) return *this;
-        if(start < length()) result += substr(start);
+        if (start == 0) return *this;
+        if (start < length()) result += substr(start);
         return result;
 }
 
@@ -442,18 +447,18 @@ String String::replace(const String &find, const String &replacement) const {
 // Split
 // ============================================================================
 
-StringList String::split(const std::string& delimiter) const {
-        StringList result;
+StringList String::split(const std::string &delimiter) const {
+        StringList         result;
         const std::string &s = d->str();
-        size_t start = 0;
-        size_t pos;
-        while((pos = s.find(delimiter, start)) != std::string::npos) {
+        size_t             start = 0;
+        size_t             pos;
+        while ((pos = s.find(delimiter, start)) != std::string::npos) {
                 std::string token = s.substr(start, pos - start);
-                if(!token.empty()) result += String(token);
+                if (!token.empty()) result += String(token);
                 start = pos + delimiter.length();
         }
         std::string last = s.substr(start);
-        if(!last.empty()) result += String(last);
+        if (!last.empty()) result += String(last);
         return result;
 }
 

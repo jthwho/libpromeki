@@ -35,8 +35,7 @@ template <typename T, size_t N> class Array;
  *
  * @tparam T Element type.
  */
-template <typename T>
-class Span {
+template <typename T> class Span {
         public:
                 /** @brief Mutable forward iterator. */
                 using Iterator = typename std::span<T>::iterator;
@@ -71,16 +70,14 @@ class Span {
                  * @tparam N Array size.
                  * @param arr The C array to view.
                  */
-                template <size_t N>
-                Span(T (&arr)[N]) : d(arr, N) {}
+                template <size_t N> Span(T (&arr)[N]) : d(arr, N) {}
 
                 /**
                  * @brief Constructs a span from an Array.
                  * @tparam N Array size.
                  * @param arr The Array to view.
                  */
-                template <size_t N>
-                Span(Array<T, N> &arr) : d(arr.data(), N) {}
+                template <size_t N> Span(Array<T, N> &arr) : d(arr.data(), N) {}
 
                 /** @brief Copy constructor. */
                 Span(const Span &other) = default;
@@ -96,8 +93,7 @@ class Span {
                  * @tparam U Source element type (must satisfy U* convertible to T*).
                  * @param other The source span.
                  */
-                template <typename U,
-                          typename = std::enable_if_t<std::is_convertible_v<U (*)[], T (*)[]>>>
+                template <typename U, typename = std::enable_if_t<std::is_convertible_v<U (*)[], T (*)[]>>>
                 Span(const Span<U> &other) : d(other.data(), other.size()) {}
 
                 // -- Iterators --
@@ -193,27 +189,21 @@ class Span {
                  * @param count Number of elements.
                  * @return A new Span viewing the sub-range.
                  */
-                Span subspan(size_t offset, size_t count) const {
-                        return Span(d.data() + offset, count);
-                }
+                Span subspan(size_t offset, size_t count) const { return Span(d.data() + offset, count); }
 
                 /**
                  * @brief Returns a span of the first @p count elements.
                  * @param count Number of elements.
                  * @return A new Span viewing the first elements.
                  */
-                Span first(size_t count) const {
-                        return Span(d.data(), count);
-                }
+                Span first(size_t count) const { return Span(d.data(), count); }
 
                 /**
                  * @brief Returns a span of the last @p count elements.
                  * @param count Number of elements.
                  * @return A new Span viewing the last elements.
                  */
-                Span last(size_t count) const {
-                        return Span(d.data() + d.size() - count, count);
-                }
+                Span last(size_t count) const { return Span(d.data() + d.size() - count, count); }
 
                 // -- Convenience --
 
@@ -222,9 +212,8 @@ class Span {
                  * @tparam Func Callable with signature void(const T &).
                  * @param func The function to invoke.
                  */
-                template <typename Func>
-                void forEach(Func &&func) const {
-                        for(size_t i = 0; i < d.size(); ++i) func(d[i]);
+                template <typename Func> void forEach(Func &&func) const {
+                        for (size_t i = 0; i < d.size(); ++i) func(d[i]);
                         return;
                 }
 

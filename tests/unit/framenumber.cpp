@@ -129,20 +129,20 @@ TEST_CASE("FrameNumber comparisons") {
 TEST_CASE("FrameNumber toString and fromString") {
         SUBCASE("Unknown round-trips through empty string") {
                 CHECK(FrameNumber::unknown().toString() == String());
-                Error err;
+                Error       err;
                 FrameNumber fn = FrameNumber::fromString(String(), &err);
                 CHECK(err.isOk());
                 CHECK(fn.isUnknown());
         }
         SUBCASE("Valid round-trip") {
                 CHECK(FrameNumber(42).toString() == String("42"));
-                Error err;
+                Error       err;
                 FrameNumber fn = FrameNumber::fromString(String("42"), &err);
                 CHECK(err.isOk());
                 CHECK(fn.value() == 42);
         }
         SUBCASE("Lenient parse: surrounding whitespace") {
-                Error err;
+                Error       err;
                 FrameNumber fn = FrameNumber::fromString(String("   100  "), &err);
                 CHECK(err.isOk());
                 CHECK(fn.value() == 100);
@@ -153,13 +153,13 @@ TEST_CASE("FrameNumber toString and fromString") {
                 CHECK(FrameNumber::fromString(String("?")).isUnknown());
         }
         SUBCASE("Negative numeric input is OutOfRange") {
-                Error err;
+                Error       err;
                 FrameNumber fn = FrameNumber::fromString(String("-5"), &err);
                 CHECK(err == Error::OutOfRange);
                 CHECK(fn.isUnknown());
         }
         SUBCASE("Garbage parses as ParseFailed") {
-                Error err;
+                Error       err;
                 FrameNumber fn = FrameNumber::fromString(String("abc"), &err);
                 CHECK(err == Error::ParseFailed);
                 CHECK(fn.isUnknown());
@@ -176,7 +176,7 @@ TEST_CASE("FrameNumber Variant integration") {
         SUBCASE("Convertible to/from String via Variant") {
                 Variant v(FrameNumber(42));
                 CHECK(v.get<String>() == String("42"));
-                Variant s(String("17"));
+                Variant     s(String("17"));
                 FrameNumber fn = s.get<FrameNumber>();
                 CHECK(fn.value() == 17);
         }
@@ -190,4 +190,3 @@ TEST_CASE("FrameNumber Variant integration") {
                 CHECK(a == b);
         }
 }
-

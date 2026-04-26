@@ -90,13 +90,13 @@ class MacAddress {
                 static MacAddress fromIpv6Multicast(const Ipv6Address &addr);
 
                 /** @brief Default constructor. Creates a null (00:00:00:00:00:00) address. */
-                MacAddress() : _addr{} { }
+                MacAddress() : _addr{} {}
 
                 /**
                  * @brief Constructs from raw 6-byte data.
                  * @param bytes The 6 bytes of the MAC address.
                  */
-                explicit MacAddress(const DataFormat &bytes) : _addr(bytes) { }
+                explicit MacAddress(const DataFormat &bytes) : _addr(bytes) {}
 
                 /**
                  * @brief Constructs from six individual octets.
@@ -107,10 +107,8 @@ class MacAddress {
                  * @param e Fifth octet.
                  * @param f Sixth octet.
                  */
-                MacAddress(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint8_t e, uint8_t f) :
-                        _addr{DataFormat{std::array<uint8_t, 6>{a, b, c, d, e, f}}}
-                {
-                }
+                MacAddress(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint8_t e, uint8_t f)
+                    : _addr{DataFormat{std::array<uint8_t, 6>{a, b, c, d, e, f}}} {}
 
                 /** @brief Returns true if all bytes are zero. */
                 bool isNull() const { return _addr.isZero(); }
@@ -124,8 +122,8 @@ class MacAddress {
                  * true for the broadcast address.
                  */
                 bool isBroadcast() const {
-                        for(size_t i = 0; i < 6; ++i) {
-                                if(_addr[i] != 0xFF) return false;
+                        for (size_t i = 0; i < 6; ++i) {
+                                if (_addr[i] != 0xFF) return false;
                         }
                         return true;
                 }
@@ -158,8 +156,7 @@ class MacAddress {
                  * through 01:00:5e:7f:ff:ff (RFC 1112).
                  */
                 bool isIpv4Multicast() const {
-                        return _addr[0] == 0x01 && _addr[1] == 0x00 &&
-                               _addr[2] == 0x5E && (_addr[3] & 0x80) == 0;
+                        return _addr[0] == 0x01 && _addr[1] == 0x00 && _addr[2] == 0x5E && (_addr[3] & 0x80) == 0;
                 }
 
                 /**
@@ -168,9 +165,7 @@ class MacAddress {
                  * IPv6 multicast maps to the prefix 33:33 followed by the low-order
                  * 32 bits of the IPv6 address (RFC 2464).
                  */
-                bool isIpv6Multicast() const {
-                        return _addr[0] == 0x33 && _addr[1] == 0x33;
-                }
+                bool isIpv6Multicast() const { return _addr[0] == 0x33 && _addr[1] == 0x33; }
 
                 /**
                  * @brief Returns true if this is a unicast address.
@@ -205,7 +200,7 @@ class MacAddress {
                  * @return The octet value, or 0 if index is out of range.
                  */
                 uint8_t octet(int index) const {
-                        if(index < 0 || index > 5) return 0;
+                        if (index < 0 || index > 5) return 0;
                         return _addr[index];
                 }
 
@@ -232,7 +227,7 @@ class MacAddress {
                 }
 
         private:
-                DataFormat _addr;               ///< Raw 6-byte MAC address.
+                DataFormat _addr; ///< Raw 6-byte MAC address.
 };
 
 /** @brief Writes a colon-separated MAC address to the stream. */

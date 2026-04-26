@@ -18,7 +18,7 @@ TEST_CASE("StringList: default construction") {
 
 TEST_CASE("StringList: construction from C array") {
         const char *args[] = {"hello", "world", "foo"};
-        StringList sl(3, args);
+        StringList  sl(3, args);
         CHECK(sl.size() == 3);
         CHECK(sl[0] == "hello");
         CHECK(sl[1] == "world");
@@ -75,9 +75,7 @@ TEST_CASE("StringList: copy") {
 
 TEST_CASE("StringList: filter") {
         StringList sl = {"apple", "banana", "avocado", "blueberry", "apricot"};
-        StringList filtered = sl.filter([](const String &s) {
-                return s.startsWith('a');
-        });
+        StringList filtered = sl.filter([](const String &s) { return s.startsWith('a'); });
         CHECK(filtered.size() == 3);
         CHECK(filtered[0] == "apple");
         CHECK(filtered[1] == "avocado");
@@ -86,23 +84,19 @@ TEST_CASE("StringList: filter") {
 
 TEST_CASE("StringList: filter no matches") {
         StringList sl = {"apple", "banana"};
-        StringList filtered = sl.filter([](const String &s) {
-                return s.startsWith('z');
-        });
+        StringList filtered = sl.filter([](const String &s) { return s.startsWith('z'); });
         CHECK(filtered.isEmpty());
 }
 
 TEST_CASE("StringList: filter all match") {
         StringList sl = {"a", "ab", "abc"};
-        StringList filtered = sl.filter([](const String &s) {
-                return s.startsWith('a');
-        });
+        StringList filtered = sl.filter([](const String &s) { return s.startsWith('a'); });
         CHECK(filtered.size() == 3);
 }
 
 TEST_CASE("StringList: indexOf found") {
         StringList sl = {"hello", "world", "foo"};
-        auto r0 = sl.indexOf("hello");
+        auto       r0 = sl.indexOf("hello");
         CHECK(r0.second() == Error::Ok);
         CHECK(r0.first() == 0u);
         auto r1 = sl.indexOf("world");
@@ -115,18 +109,18 @@ TEST_CASE("StringList: indexOf found") {
 
 TEST_CASE("StringList: indexOf not found") {
         StringList sl = {"hello", "world"};
-        auto r = sl.indexOf("missing");
+        auto       r = sl.indexOf("missing");
         CHECK(r.second() == Error::NotFound);
 }
 
 TEST_CASE("StringList: indexOf empty list") {
         StringList sl;
-        auto r = sl.indexOf("anything");
+        auto       r = sl.indexOf("anything");
         CHECK(r.second() == Error::NotFound);
 }
 
 TEST_CASE("StringList: split and rejoin roundtrip") {
-        String original = "one:two:three:four";
+        String     original = "one:two:three:four";
         StringList parts = original.split(":");
         CHECK(parts.size() == 4);
         CHECK(parts.join(":") == original);

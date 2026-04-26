@@ -33,7 +33,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @tparam NumBytes Number of bytes (fixed at compile time).
  */
 template <size_t NumBytes> class ByteArray {
-        PROMEKI_SHARED_FINAL(ByteArray)
+                PROMEKI_SHARED_FINAL(ByteArray)
         public:
                 using Ptr = SharedPtr<ByteArray>;
                 using DataType = std::array<uint8_t, NumBytes>;
@@ -48,9 +48,7 @@ template <size_t NumBytes> class ByteArray {
                 ByteArray(DataType &&val) noexcept : d(std::move(val)) {}
 
                 /** @brief Constructs from a raw byte pointer.  Copies NumBytes from src. */
-                explicit ByteArray(const uint8_t *src) {
-                        std::memcpy(d.data(), src, NumBytes);
-                }
+                explicit ByteArray(const uint8_t *src) { std::memcpy(d.data(), src, NumBytes); }
 
                 /** @brief Destructor. */
                 ~ByteArray() {}
@@ -72,21 +70,17 @@ template <size_t NumBytes> class ByteArray {
 
                 /** @brief Returns true if all bytes are zero. */
                 bool isZero() const {
-                        for(size_t i = 0; i < NumBytes; i++) {
-                                if(d[i] != 0) return false;
+                        for (size_t i = 0; i < NumBytes; i++) {
+                                if (d[i] != 0) return false;
                         }
                         return true;
                 }
 
                 /** @brief Returns true if both arrays contain identical bytes. */
-                friend bool operator==(const ByteArray &lhs, const ByteArray &rhs) {
-                        return lhs.d == rhs.d;
-                }
+                friend bool operator==(const ByteArray &lhs, const ByteArray &rhs) { return lhs.d == rhs.d; }
 
                 /** @brief Returns true if the arrays differ. */
-                friend bool operator!=(const ByteArray &lhs, const ByteArray &rhs) {
-                        return lhs.d != rhs.d;
-                }
+                friend bool operator!=(const ByteArray &lhs, const ByteArray &rhs) { return lhs.d != rhs.d; }
 
                 /**
                  * @brief Converts the byte array to a lowercase hexadecimal string.
@@ -94,9 +88,9 @@ template <size_t NumBytes> class ByteArray {
                  */
                 String toHexString() const {
                         static const char digits[] = "0123456789abcdef";
-                        std::string ret;
+                        std::string       ret;
                         ret.reserve(NumBytes * 2);
-                        for(size_t i = 0; i < NumBytes; i++) {
+                        for (size_t i = 0; i < NumBytes; i++) {
                                 ret += digits[d[i] >> 4];
                                 ret += digits[d[i] & 0x0F];
                         }
@@ -111,20 +105,20 @@ template <size_t NumBytes> class ByteArray {
                  */
                 static ByteArray fromHexString(const char *str, Error *err = nullptr) {
                         ByteArray ret;
-                        if(str == nullptr) {
-                                if(err != nullptr) *err = Error::Invalid;
+                        if (str == nullptr) {
+                                if (err != nullptr) *err = Error::Invalid;
                                 return ret;
                         }
-                        for(size_t i = 0; i < NumBytes; i++) {
+                        for (size_t i = 0; i < NumBytes; i++) {
                                 int hi = hexCharToVal(str[i * 2]);
                                 int lo = hexCharToVal(str[i * 2 + 1]);
-                                if(hi < 0 || lo < 0) {
-                                        if(err != nullptr) *err = Error::Invalid;
+                                if (hi < 0 || lo < 0) {
+                                        if (err != nullptr) *err = Error::Invalid;
                                         return ByteArray();
                                 }
                                 ret.d[i] = static_cast<uint8_t>((hi << 4) | lo);
                         }
-                        if(err != nullptr) *err = Error::Ok;
+                        if (err != nullptr) *err = Error::Ok;
                         return ret;
                 }
 
@@ -142,9 +136,9 @@ template <size_t NumBytes> class ByteArray {
                 DataType d;
 
                 static int hexCharToVal(char c) {
-                        if(c >= '0' && c <= '9') return c - '0';
-                        if(c >= 'a' && c <= 'f') return c - 'a' + 10;
-                        if(c >= 'A' && c <= 'F') return c - 'A' + 10;
+                        if (c >= '0' && c <= '9') return c - '0';
+                        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+                        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
                         return -1;
                 }
 };

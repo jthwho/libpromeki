@@ -103,8 +103,7 @@ class CompressedVideoPayload : public VideoPayload {
                  * @brief Constructs a compressed video payload with a
                  *        descriptor.  Plane list left empty.
                  */
-                explicit CompressedVideoPayload(const ImageDesc &desc) :
-                        VideoPayload(desc) { }
+                explicit CompressedVideoPayload(const ImageDesc &desc) : VideoPayload(desc) {}
 
                 /**
                  * @brief Constructs a compressed video payload with a
@@ -114,18 +113,14 @@ class CompressedVideoPayload : public VideoPayload {
                  * constructed by passing @c BufferView(buf, offset,
                  * size) directly.
                  */
-                CompressedVideoPayload(const ImageDesc &desc,
-                                       const BufferView &data) :
-                        VideoPayload(desc, data) { }
+                CompressedVideoPayload(const ImageDesc &desc, const BufferView &data) : VideoPayload(desc, data) {}
 
                 /**
                  * @brief Constructs a compressed video payload that owns
                  *        a whole buffer as its single-plane payload.
                  */
-                CompressedVideoPayload(const ImageDesc &desc, Buffer::Ptr buffer) :
-                        VideoPayload(desc,
-                                buffer ? BufferView(buffer, 0, buffer->size())
-                                       : BufferView()) { }
+                CompressedVideoPayload(const ImageDesc &desc, Buffer::Ptr buffer)
+                    : VideoPayload(desc, buffer ? BufferView(buffer, 0, buffer->size()) : BufferView()) {}
 
                 /**
                  * @brief Always returns @c true — this class only models
@@ -138,9 +133,8 @@ class CompressedVideoPayload : public VideoPayload {
                  *        pixel format on the descriptor.
                  */
                 bool isValid() const override {
-                        return MediaPayload::isValid()
-                            && desc().pixelFormat().isValid()
-                            && desc().pixelFormat().isCompressed();
+                        return MediaPayload::isValid() && desc().pixelFormat().isValid() &&
+                               desc().pixelFormat().isCompressed();
                 }
 
                 /**
@@ -155,7 +149,7 @@ class CompressedVideoPayload : public VideoPayload {
                  * @ref FrameType::Unknown otherwise.
                  */
                 virtual const FrameType &frameType() const {
-                        if(_frameType.isValid() && _frameType != FrameType::Unknown) {
+                        if (_frameType.isValid() && _frameType != FrameType::Unknown) {
                                 return _frameType;
                         }
                         return hasFlag(Keyframe) ? FrameType::IDR : FrameType::Unknown;
@@ -179,22 +173,22 @@ class CompressedVideoPayload : public VideoPayload {
                  *   no evidence the stream can be truncated here.
                  */
                 bool isSafeCutPoint() const override {
-                        if(!isValid()) return false;
+                        if (!isValid()) return false;
                         const VideoCodec &codec = desc().pixelFormat().videoCodec();
-                        if(!codec.isValid()) return false;
-                        if(codec.codingType() != VideoCodec::CodingTemporal) return true;
+                        if (!codec.isValid()) return false;
+                        if (codec.codingType() != VideoCodec::CodingTemporal) return true;
                         return isKeyframe();
                 }
 
                 /** @brief Returns true when the @c ParameterSet flag is set. */
-                bool isParameterSet() const {
-                        return (flags() & ParameterSet) != 0;
-                }
+                bool isParameterSet() const { return (flags() & ParameterSet) != 0; }
 
                 /** @brief Sets the @c ParameterSet flag. */
                 void markParameterSet(bool v = true) {
-                        if(v) setFlags(flags() | ParameterSet);
-                        else  setFlags(flags() & ~ParameterSet);
+                        if (v)
+                                setFlags(flags() | ParameterSet);
+                        else
+                                setFlags(flags() & ~ParameterSet);
                 }
 
                 /**
@@ -209,9 +203,7 @@ class CompressedVideoPayload : public VideoPayload {
                 const Buffer::Ptr &inBandCodecData() const { return _inBandCodecData; }
 
                 /** @brief Replaces the per-payload codec-private data buffer. */
-                void setInBandCodecData(Buffer::Ptr b) {
-                        _inBandCodecData = std::move(b);
-                }
+                void setInBandCodecData(Buffer::Ptr b) { _inBandCodecData = std::move(b); }
 
         protected:
                 /**
@@ -225,8 +217,7 @@ class CompressedVideoPayload : public VideoPayload {
                  * exclusive.
                  */
                 bool isExclusiveExtras() const override {
-                        return !_inBandCodecData.isValid() ||
-                                _inBandCodecData.referenceCount() <= 1;
+                        return !_inBandCodecData.isValid() || _inBandCodecData.referenceCount() <= 1;
                 }
 
                 /**
@@ -234,19 +225,16 @@ class CompressedVideoPayload : public VideoPayload {
                  *        the plane buffers.
                  */
                 void ensureExclusiveExtras() override {
-                        if(_inBandCodecData.isValid() &&
-                           _inBandCodecData.referenceCount() > 1) {
+                        if (_inBandCodecData.isValid() && _inBandCodecData.referenceCount() > 1) {
                                 _inBandCodecData.modify();
                         }
                 }
 
         public:
                 /** @brief Stable FourCC for DataStream serialisation. */
-                static constexpr FourCC kSubclassFourCC{'C','V','d','p'};
+                static constexpr FourCC kSubclassFourCC{'C', 'V', 'd', 'p'};
 
-                uint32_t subclassFourCC() const override {
-                        return kSubclassFourCC.value();
-                }
+                uint32_t subclassFourCC() const override { return kSubclassFourCC.value(); }
 
                 /** @copydoc MediaPayload::serialisePayload */
                 void serialisePayload(DataStream &s) const override;

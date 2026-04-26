@@ -24,7 +24,7 @@ TEST_CASE("SHA1: 'abc'") {
 
 TEST_CASE("SHA1: 'abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq'") {
         const char *msg = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
-        SHA1Digest d = sha1(msg, std::strlen(msg));
+        SHA1Digest  d = sha1(msg, std::strlen(msg));
         CHECK(d.toHexString() == "84983e441c3bd26ebaae4aa1f95129e5e54670f1");
 }
 
@@ -35,13 +35,13 @@ TEST_CASE("SHA1: 'a'") {
 
 TEST_CASE("SHA1: deterministic") {
         const char *msg = "hello world";
-        SHA1Digest d1 = sha1(msg, std::strlen(msg));
-        SHA1Digest d2 = sha1(msg, std::strlen(msg));
+        SHA1Digest  d1 = sha1(msg, std::strlen(msg));
+        SHA1Digest  d2 = sha1(msg, std::strlen(msg));
         CHECK(d1 == d2);
 }
 
 TEST_CASE("SHA1: known hash for 'hello world'") {
         const char *msg = "hello world";
-        SHA1Digest d = sha1(msg, std::strlen(msg));
+        SHA1Digest  d = sha1(msg, std::strlen(msg));
         CHECK(d.toHexString() == "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed");
 }

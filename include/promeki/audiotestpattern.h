@@ -303,8 +303,8 @@ class AudioTestPattern {
                  *                degrade to silence on those channels.
                  * @return A new payload, or a null Ptr on failure.
                  */
-                SharedPtr<PcmAudioPayload, true, PcmAudioPayload>
-                createPayload(size_t samples, const Timecode &tc) const;
+                SharedPtr<PcmAudioPayload, true, PcmAudioPayload> createPayload(size_t          samples,
+                                                                                const Timecode &tc) const;
 
                 /**
                  * @brief Payload-native counterpart to @ref createPayload(samples, tc).
@@ -312,8 +312,7 @@ class AudioTestPattern {
                  * Equivalent to @c createPayload(samples, Timecode()) —
                  * LTC and AvSync channels degrade to silence.
                  */
-                SharedPtr<PcmAudioPayload, true, PcmAudioPayload>
-                createPayload(size_t samples) const {
+                SharedPtr<PcmAudioPayload, true, PcmAudioPayload> createPayload(size_t samples) const {
                         return createPayload(samples, Timecode());
                 }
 
@@ -329,9 +328,7 @@ class AudioTestPattern {
                  * @param stepFreq     Per-channel step frequency (Hz).
                  * @return `baseFreq + channelIndex * stepFreq`.
                  */
-                static double channelIdFrequency(size_t channelIndex,
-                                                 double baseFreq,
-                                                 double stepFreq) {
+                static double channelIdFrequency(size_t channelIndex, double baseFreq, double stepFreq) {
                         return baseFreq + static_cast<double>(channelIndex) * stepFreq;
                 }
 
@@ -357,10 +354,8 @@ class AudioTestPattern {
                 ///        + parity).  Channels shorter than this carry
                 ///        a truncated frame; the decoder is expected to
                 ///        resynchronise.
-                static constexpr size_t kPcmMarkerFrameSamples =
-                        kPcmMarkerPreambleSamples +
-                        kPcmMarkerStartSamples +
-                        kPcmMarkerPayloadBits + 1;  // +1 trailing parity bit
+                static constexpr size_t kPcmMarkerFrameSamples = kPcmMarkerPreambleSamples + kPcmMarkerStartSamples +
+                                                                 kPcmMarkerPayloadBits + 1; // +1 trailing parity bit
 
                 /// @brief Default SteppedTone frequency list (low / mid / high).
                 static const List<double> kDefaultSteppedToneFreqs;
@@ -387,36 +382,36 @@ class AudioTestPattern {
                 static constexpr size_t kIec60958SamplesPerBit = 4;
 
         private:
-                AudioDesc       _desc;
-                EnumList        _channelModes;
-                double          _toneFreq        = 1000.0;
-                AudioLevel      _toneLevel       = AudioLevel::fromDbfs(-20.0);
-                AudioLevel      _ltcLevel        = AudioLevel::fromDbfs(-20.0);
-                double          _chanIdBaseFreq  = 1000.0;
-                double          _chanIdStepFreq  = 100.0;
+                AudioDesc  _desc;
+                EnumList   _channelModes;
+                double     _toneFreq = 1000.0;
+                AudioLevel _toneLevel = AudioLevel::fromDbfs(-20.0);
+                AudioLevel _ltcLevel = AudioLevel::fromDbfs(-20.0);
+                double     _chanIdBaseFreq = 1000.0;
+                double     _chanIdStepFreq = 100.0;
 
-                double          _chirpStartFreq   = 20.0;
-                double          _chirpEndFreq     = 20000.0;
-                double          _chirpDurationSec = 1.0;
+                double _chirpStartFreq = 20.0;
+                double _chirpEndFreq = 20000.0;
+                double _chirpDurationSec = 1.0;
 
-                double          _dualToneFreq1 = 60.0;
-                double          _dualToneFreq2 = 7000.0;
-                double          _dualToneRatio = 0.25;
+                double _dualToneFreq1 = 60.0;
+                double _dualToneFreq2 = 7000.0;
+                double _dualToneRatio = 0.25;
 
-                double          _sweepStartFreq   = 20.0;
-                double          _sweepEndFreq     = 20000.0;
-                double          _sweepDurationSec = 1.0;
+                double _sweepStartFreq = 20.0;
+                double _sweepEndFreq = 20000.0;
+                double _sweepDurationSec = 1.0;
 
-                double          _polarityPulseHz       = 1.0;
-                double          _polarityPulseWidthSec = 0.001;
+                double _polarityPulseHz = 1.0;
+                double _polarityPulseWidthSec = 0.001;
 
-                List<double>    _steppedToneFreqs;
-                double          _steppedToneStepSec = 1.0;
+                List<double> _steppedToneFreqs;
+                double       _steppedToneStepSec = 1.0;
 
-                AudioLevel      _dialnormLevel = AudioLevel::fromDbfs(-24.0);
+                AudioLevel _dialnormLevel = AudioLevel::fromDbfs(-24.0);
 
-                double          _noiseBufferSeconds = 10.0;
-                uint32_t        _noiseSeed          = 0x505244A4u; // 'PRDA' — TPG test seed
+                double   _noiseBufferSeconds = 10.0;
+                uint32_t _noiseSeed = 0x505244A4u; // 'PRDA' — TPG test seed
 
                 // Per-channel generators built in configure().  A nullptr
                 // entry means the channel is silenced (either because
@@ -442,8 +437,8 @@ class AudioTestPattern {
                 // the same underlying samples.  Generated at most once
                 // per configure() call; empty until a noise channel
                 // requests them.
-                List<float>     _whiteNoiseBuffer;
-                List<float>     _pinkNoiseBuffer;
+                List<float> _whiteNoiseBuffer;
+                List<float> _pinkNoiseBuffer;
 
                 // Continuous-sweep cursor/phase for the Chirp
                 // generator.  The cursor is the sample position inside
@@ -455,16 +450,16 @@ class AudioTestPattern {
                 // continuous across both chunk boundaries and period
                 // wraps (the closed form resets to 0 at each period
                 // wrap, which causes an audible click).
-                mutable double  _chirpSampleCursor = 0.0;
-                mutable double  _chirpPhase        = 0.0;
+                mutable double _chirpSampleCursor = 0.0;
+                mutable double _chirpPhase = 0.0;
 
                 // Per-tone phase accumulators for the DualTone
                 // generator.  Tracking these across create() calls is
                 // the only way to avoid a once-per-chunk phase-reset
                 // click; a 30 fps pipeline restarts the pattern 30
                 // times a second otherwise, which is plainly audible.
-                mutable double  _dualTonePhase1 = 0.0;
-                mutable double  _dualTonePhase2 = 0.0;
+                mutable double _dualTonePhase1 = 0.0;
+                mutable double _dualTonePhase2 = 0.0;
 
                 // Cumulative sample cursor for the cached noise
                 // buffers.  Advanced once per create() call so
@@ -482,24 +477,24 @@ class AudioTestPattern {
                 // timecode.  Incremented on every create() call.
                 mutable uint64_t _pcmMarkerCounter = 0;
 
-                mutable double  _sweepSampleCursor = 0.0;
-                mutable double  _sweepPhase        = 0.0;
+                mutable double _sweepSampleCursor = 0.0;
+                mutable double _sweepPhase = 0.0;
 
-                mutable double  _polarityCursor = 0.0;
+                mutable double _polarityCursor = 0.0;
 
-                mutable double  _steppedToneSampleCursor = 0.0;
-                mutable double  _steppedTonePhase        = 0.0;
+                mutable double _steppedToneSampleCursor = 0.0;
+                mutable double _steppedTonePhase = 0.0;
 
-                mutable size_t  _blitsSampleCursor = 0;
-                mutable double  _blitsPhase        = 0.0;
+                mutable size_t _blitsSampleCursor = 0;
+                mutable double _blitsPhase = 0.0;
 
-                mutable size_t  _ebuLineupSampleCursor = 0;
-                mutable double  _ebuLineupPhase        = 0.0;
+                mutable size_t _ebuLineupSampleCursor = 0;
+                mutable double _ebuLineupPhase = 0.0;
 
-                mutable size_t  _iec60958SampleCursor = 0;
+                mutable size_t _iec60958SampleCursor = 0;
 
-                void clearGenerators();
-                AudioPattern modeForChannel(size_t channelIndex) const;
+                void               clearGenerators();
+                AudioPattern       modeForChannel(size_t channelIndex) const;
                 const List<float> &avSyncBurst(size_t samples) const;
 
                 // Shared inner loop: writes @p samples samples per
@@ -507,34 +502,24 @@ class AudioTestPattern {
                 // advancing all phase and cursor state.  Used by both
                 // @ref create (Audio allocation) and @ref createPayload
                 // (PcmAudioPayload allocation).
-                void writePattern(float *out, size_t samples,
-                                  const Timecode &tc) const;
+                void writePattern(float *out, size_t samples, const Timecode &tc) const;
                 void buildWhiteNoiseBuffer();
                 void buildPinkNoiseBuffer();
 
-                void writeNoiseChannel(float *out, size_t channel, size_t channels,
-                                       size_t samples,
+                void writeNoiseChannel(float *out, size_t channel, size_t channels, size_t samples,
                                        const List<float> &buffer) const;
-                void writeChirpChannel(float *out, size_t channel, size_t channels,
+                void writeChirpChannel(float *out, size_t channel, size_t channels, size_t samples) const;
+                void writeDualToneChannel(float *out, size_t channel, size_t channels, size_t samples) const;
+                void writePcmMarkerChannel(float *out, size_t channel, size_t channels, size_t samples,
+                                           uint64_t payload) const;
+                void writeSweepChannel(float *out, size_t channel, size_t channels, size_t samples) const;
+                void writePolarityChannel(float *out, size_t channel, size_t channels, size_t samples) const;
+                void writeSteppedToneChannel(float *out, size_t channel, size_t channels, size_t samples) const;
+                void writeBlitsChannel(float *out, size_t channel, size_t channels, size_t totalChannels,
                                        size_t samples) const;
-                void writeDualToneChannel(float *out, size_t channel, size_t channels,
-                                          size_t samples) const;
-                void writePcmMarkerChannel(float *out, size_t channel, size_t channels,
-                                           size_t samples, uint64_t payload) const;
-                void writeSweepChannel(float *out, size_t channel, size_t channels,
-                                       size_t samples) const;
-                void writePolarityChannel(float *out, size_t channel, size_t channels,
-                                          size_t samples) const;
-                void writeSteppedToneChannel(float *out, size_t channel, size_t channels,
-                                             size_t samples) const;
-                void writeBlitsChannel(float *out, size_t channel, size_t channels,
-                                       size_t totalChannels, size_t samples) const;
-                void writeEbuLineupChannel(float *out, size_t channel, size_t channels,
-                                           size_t samples) const;
-                void writeDialnormChannel(float *out, size_t channel, size_t channels,
-                                          size_t samples) const;
-                void writeIec60958Channel(float *out, size_t channel, size_t channels,
-                                          size_t samples) const;
+                void writeEbuLineupChannel(float *out, size_t channel, size_t channels, size_t samples) const;
+                void writeDialnormChannel(float *out, size_t channel, size_t channels, size_t samples) const;
+                void writeIec60958Channel(float *out, size_t channel, size_t channels, size_t samples) const;
 };
 
 PROMEKI_NAMESPACE_END

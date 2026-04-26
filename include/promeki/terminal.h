@@ -60,13 +60,13 @@ class Terminal {
                  * @see TuiPalette
                  */
                 enum ColorSupport {
-                        NoColor,        ///< No color support (e.g. dumb terminal).
-                        Grayscale16,    ///< Grayscale via the 4 gray entries in the 16-color palette (NO_COLOR + Basic).
-                        Grayscale256,   ///< Grayscale via the 24-entry grayscale ramp in the 256-color palette (NO_COLOR + 256).
-                        GrayscaleTrue,  ///< Grayscale via 24-bit RGB with equal R=G=B (NO_COLOR + TrueColor).
-                        Basic,          ///< Basic 8/16 color support (standard ANSI).
-                        Color256,       ///< 256 color support (xterm-256color and similar).
-                        TrueColor       ///< 24-bit true color support.
+                        NoColor,     ///< No color support (e.g. dumb terminal).
+                        Grayscale16, ///< Grayscale via the 4 gray entries in the 16-color palette (NO_COLOR + Basic).
+                        Grayscale256, ///< Grayscale via the 24-entry grayscale ramp in the 256-color palette (NO_COLOR + 256).
+                        GrayscaleTrue, ///< Grayscale via 24-bit RGB with equal R=G=B (NO_COLOR + TrueColor).
+                        Basic,         ///< Basic 8/16 color support (standard ANSI).
+                        Color256,      ///< 256 color support (xterm-256color and similar).
+                        TrueColor      ///< 24-bit true color support.
                 };
 
                 /** @brief Constructs a Terminal using stdin/stdout. */
@@ -211,17 +211,17 @@ class Terminal {
         private:
                 void init();
 
-                int             _inputFd;
-                int             _outputFd;
-                bool            _rawMode = false;
-                bool            _mouseTracking = false;
-                bool            _bracketedPaste = false;
-                bool            _alternateScreen = false;
-                ResizeCallback  _resizeCallback;
+                int            _inputFd;
+                int            _outputFd;
+                bool           _rawMode = false;
+                bool           _mouseTracking = false;
+                bool           _bracketedPaste = false;
+                bool           _alternateScreen = false;
+                ResizeCallback _resizeCallback;
 
                 // Opaque storage for platform-specific terminal state.
                 // On POSIX this holds a struct termios.
-                void            *_origState = nullptr;
+                void *_origState = nullptr;
 };
 
 PROMEKI_NAMESPACE_END

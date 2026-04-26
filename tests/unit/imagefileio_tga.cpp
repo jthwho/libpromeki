@@ -25,12 +25,11 @@ TEST_CASE("ImageFileIO TGA: handler is registered") {
 
 TEST_CASE("ImageFileIO TGA: RGBA8 round-trip") {
         const char *fn = "/tmp/promeki_tga_rgba8.tga";
-        auto src = UncompressedVideoPayload::allocate(
-                ImageDesc(64, 48, PixelFormat(PixelFormat::RGBA8_sRGB)));
+        auto        src = UncompressedVideoPayload::allocate(ImageDesc(64, 48, PixelFormat(PixelFormat::RGBA8_sRGB)));
         REQUIRE(src.isValid());
         uint8_t *data = src.modify()->data()[0].data();
-        size_t bytes = src->plane(0).size();
-        for(size_t i = 0; i < bytes; ++i) data[i] = static_cast<uint8_t>((i * 11) & 0xFF);
+        size_t   bytes = src->plane(0).size();
+        for (size_t i = 0; i < bytes; ++i) data[i] = static_cast<uint8_t>((i * 11) & 0xFF);
 
         ImageFile sf(ImageFile::TGA);
         sf.setFilename(fn);
@@ -58,7 +57,7 @@ TEST_CASE("ImageFileIO TGA: load nonexistent file returns error") {
 
 TEST_CASE("ImageFileIO TGA: load invalid file returns error") {
         const char *fn = "/tmp/promeki_tga_bad.tga";
-        FILE *fp = std::fopen(fn, "wb");
+        FILE       *fp = std::fopen(fn, "wb");
         REQUIRE(fp);
         const char garbage[] = "Not a TGA file";
         std::fwrite(garbage, 1, sizeof(garbage), fp);

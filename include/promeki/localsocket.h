@@ -44,7 +44,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  */
 class LocalSocket : public IODevice {
-        PROMEKI_OBJECT(LocalSocket, IODevice)
+                PROMEKI_OBJECT(LocalSocket, IODevice)
         public:
                 /** @brief Unique-ownership pointer to a LocalSocket. */
                 using UPtr = UniquePtr<LocalSocket>;
@@ -161,9 +161,9 @@ class LocalSocket : public IODevice {
                 PROMEKI_SIGNAL(disconnected);
 
         private:
-                int     _fd        = -1;
-                bool    _connected = false;
-                String  _peerPath;
+                int    _fd = -1;
+                bool   _connected = false;
+                String _peerPath;
 };
 
 PROMEKI_NAMESPACE_END

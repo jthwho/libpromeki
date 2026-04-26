@@ -20,21 +20,25 @@ using namespace promeki;
 // where possible and exercise the API surface.
 
 struct EnvGuard {
-        const char *name;
-        String      orig;
-        bool        wasSet;
+                const char *name;
+                String      orig;
+                bool        wasSet;
 
-        EnvGuard(const char *n, const char *val) : name(n) {
-                wasSet = Env::isSet(name);
-                if(wasSet) orig = Env::get(name);
-                if(val) Env::set(name, val);
-                else    Env::unset(name);
-        }
+                EnvGuard(const char *n, const char *val) : name(n) {
+                        wasSet = Env::isSet(name);
+                        if (wasSet) orig = Env::get(name);
+                        if (val)
+                                Env::set(name, val);
+                        else
+                                Env::unset(name);
+                }
 
-        ~EnvGuard() {
-                if(wasSet) Env::set(name, orig);
-                else       Env::unset(name);
-        }
+                ~EnvGuard() {
+                        if (wasSet)
+                                Env::set(name, orig);
+                        else
+                                Env::unset(name);
+                }
 };
 
 static int nullFd() {
@@ -43,12 +47,12 @@ static int nullFd() {
 }
 
 TEST_CASE("Terminal: ColorSupport enum values are ordered") {
-        CHECK(Terminal::NoColor       < Terminal::Grayscale16);
-        CHECK(Terminal::Grayscale16   < Terminal::Grayscale256);
-        CHECK(Terminal::Grayscale256  < Terminal::GrayscaleTrue);
+        CHECK(Terminal::NoColor < Terminal::Grayscale16);
+        CHECK(Terminal::Grayscale16 < Terminal::Grayscale256);
+        CHECK(Terminal::Grayscale256 < Terminal::GrayscaleTrue);
         CHECK(Terminal::GrayscaleTrue < Terminal::Basic);
-        CHECK(Terminal::Basic         < Terminal::Color256);
-        CHECK(Terminal::Color256      < Terminal::TrueColor);
+        CHECK(Terminal::Basic < Terminal::Color256);
+        CHECK(Terminal::Color256 < Terminal::TrueColor);
 }
 
 TEST_CASE("Terminal: colorSupport returns a valid enum value") {
@@ -70,7 +74,7 @@ TEST_CASE("Terminal: construction and destruction") {
 }
 
 TEST_CASE("Terminal: custom fd construction") {
-        int fd = nullFd();
+        int      fd = nullFd();
         Terminal t(fd, fd);
         CHECK(t.inputFd() == fd);
         CHECK(t.outputFd() == fd);
@@ -86,16 +90,16 @@ TEST_CASE("Terminal: default fd values") {
 
 TEST_CASE("Terminal: size returns non-negative dimensions") {
         Terminal t;
-        auto sz = t.size();
+        auto     sz = t.size();
         CHECK(sz.width() >= 0);
         CHECK(sz.height() >= 0);
 }
 
 TEST_CASE("Terminal: windowSize outputs non-negative values") {
         Terminal t;
-        int cols = -1, rows = -1;
-        Error err = t.windowSize(cols, rows);
-        if(err.isOk()) {
+        int      cols = -1, rows = -1;
+        Error    err = t.windowSize(cols, rows);
+        if (err.isOk()) {
                 CHECK(cols > 0);
                 CHECK(rows > 0);
         } else {
@@ -104,7 +108,7 @@ TEST_CASE("Terminal: windowSize outputs non-negative values") {
 }
 
 TEST_CASE("Terminal: writeOutput succeeds for valid data") {
-        Terminal t(nullFd(), nullFd());
+        Terminal    t(nullFd(), nullFd());
         const char *data = "test";
         auto [n, err] = t.writeOutput(data, 4);
         CHECK(err.isOk());
@@ -120,8 +124,8 @@ TEST_CASE("Terminal: writeOutput with zero length") {
 
 TEST_CASE("Terminal: enableRawMode on non-TTY returns error") {
         Terminal t(nullFd(), nullFd());
-        Error err = t.enableRawMode();
-        if(err.isOk()) {
+        Error    err = t.enableRawMode();
+        if (err.isOk()) {
                 CHECK(t.isRawMode());
                 Error err2 = t.disableRawMode();
                 CHECK(err2.isOk());
@@ -133,15 +137,15 @@ TEST_CASE("Terminal: enableRawMode on non-TTY returns error") {
 
 TEST_CASE("Terminal: disableRawMode when not in raw mode is no-op") {
         Terminal t(nullFd(), nullFd());
-        Error err = t.disableRawMode();
+        Error    err = t.disableRawMode();
         CHECK(err.isOk());
         CHECK_FALSE(t.isRawMode());
 }
 
 TEST_CASE("Terminal: enableRawMode idempotent") {
         Terminal t;
-        Error err1 = t.enableRawMode();
-        if(err1.isOk()) {
+        Error    err1 = t.enableRawMode();
+        if (err1.isOk()) {
                 Error err2 = t.enableRawMode();
                 CHECK(err2.isOk());
                 CHECK(t.isRawMode());
@@ -218,9 +222,9 @@ TEST_CASE("Terminal: installSignalHandlers does not crash") {
 
 TEST_CASE("Terminal: readInput on non-TTY") {
         Terminal t(nullFd(), nullFd());
-        char buf[16];
+        char     buf[16];
         auto [n, err] = t.readInput(buf, sizeof(buf));
-        if(err.isOk()) {
+        if (err.isOk()) {
                 CHECK(n >= 0);
         }
 }

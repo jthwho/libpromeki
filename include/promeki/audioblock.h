@@ -43,8 +43,9 @@ class AudioDesc;
  * through @ref ObjectBase signal/slot dispatch.
  */
 class AudioBlock : public ObjectBase {
-        PROMEKI_OBJECT(AudioBlock, ObjectBase);
-        public: 
+                PROMEKI_OBJECT(AudioBlock, ObjectBase);
+
+        public:
                 /**
                  * @brief Config used by the derived class to configure AudioBlock
                  * This config is passed in by the derived class to configure the
@@ -56,12 +57,12 @@ class AudioBlock : public ObjectBase {
                                  * @brief Number of channels this block can source
                                  * Should be set to zero if this block can not source any channels
                                  */
-                                size_t  sourceChannels = 0;
+                                size_t sourceChannels = 0;
                                 /**
                                  * @brief Number of channels this block can sink
                                  * Should be set to zero if this block can not sink any channels
                                  */
-                                 size_t  sinkChannels = 0;
+                                size_t sinkChannels = 0;
                 };
 
                 /**
@@ -85,7 +86,7 @@ class AudioBlock : public ObjectBase {
                  * @return true if the index is within the source channel range.
                  */
                 bool isSourceValid(size_t val) const { return val < _blockConfig.sourceChannels; }
-                
+
                 /**
                  * @brief Returns the number of channels this object can source
                  */
@@ -195,11 +196,9 @@ class AudioBlock : public ObjectBase {
                 PROMEKI_SIGNAL(sinkReadyForSamples, AudioBlock *, size_t);
 
         private:
-                Config          _blockConfig;
-                StringList      _sourceNameList;
-                StringList      _sinkNameList;
-
+                Config     _blockConfig;
+                StringList _sourceNameList;
+                StringList _sinkNameList;
 };
 
 PROMEKI_NAMESPACE_END
-

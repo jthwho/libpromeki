@@ -71,5 +71,4 @@ TEST_SUITE("SDLVideoWidget") {
                         CHECK(SDLVideoWidget::mapPixelFormat(PixelFormat::Invalid) == 0);
                 }
         }
-
 }

@@ -17,11 +17,9 @@
 using namespace promeki;
 
 // Helper: allocate a zeroed payload of the given size / format.
-static UncompressedVideoPayload::Ptr makePayload(size_t w, size_t h,
-                                                 PixelFormat::ID id) {
-        auto p = UncompressedVideoPayload::allocate(
-                ImageDesc(w, h, PixelFormat(id)));
-        for(size_t i = 0; i < p->planeCount(); ++i) {
+static UncompressedVideoPayload::Ptr makePayload(size_t w, size_t h, PixelFormat::ID id) {
+        auto p = UncompressedVideoPayload::allocate(ImageDesc(w, h, PixelFormat(id)));
+        for (size_t i = 0; i < p->planeCount(); ++i) {
                 std::memset(p.modify()->data()[i].data(), 0, p->plane(i).size());
         }
         return p;
@@ -30,14 +28,14 @@ static UncompressedVideoPayload::Ptr makePayload(size_t w, size_t h,
 // Sum all bytes of plane 0 across the full payload extent.
 static uint64_t planeSum(const UncompressedVideoPayload &p) {
         const uint8_t *data = p.plane(0).data();
-        size_t total = p.plane(0).size();
-        uint64_t sum = 0;
-        for(size_t i = 0; i < total; i++) sum += data[i];
+        size_t         total = p.plane(0).size();
+        uint64_t       sum = 0;
+        for (size_t i = 0; i < total; i++) sum += data[i];
         return sum;
 }
 
 static bool fontAvailable() {
-        auto img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
+        auto      img = makePayload(16, 16, PixelFormat::RGB8_sRGB);
         BasicFont probe(img->createPaintEngine());
         probe.setFontSize(12);
         return probe.measureText("A") > 0;
@@ -53,7 +51,7 @@ TEST_CASE("BasicFont: construction with default PaintEngine") {
         CHECK(bf.fontSize() == 12);
         CHECK_FALSE(bf.kerningEnabled());
         CHECK_FALSE(bf.isValid());
-        if(fontAvailable()) {
+        if (fontAvailable()) {
                 CHECK(bf.lineHeight() > 0);
                 CHECK(bf.ascender() > 0);
                 CHECK(bf.descender() > 0);
@@ -61,7 +59,7 @@ TEST_CASE("BasicFont: construction with default PaintEngine") {
 }
 
 TEST_CASE("BasicFont: construction with real PaintEngine") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto      img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         BasicFont bf(img->createPaintEngine());
         CHECK(bf.fontFilename().isEmpty());
         CHECK(bf.isValid());
@@ -100,9 +98,9 @@ TEST_CASE("BasicFont: setKerningEnabled") {
 // ============================================================================
 
 TEST_CASE("BasicFont: drawText works without explicit filename") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
-        auto img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
+        auto      img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
         BasicFont bf(img->createPaintEngine());
         bf.setFontSize(24);
         bf.setForegroundColor(Color::White);
@@ -112,9 +110,9 @@ TEST_CASE("BasicFont: drawText works without explicit filename") {
 }
 
 TEST_CASE("BasicFont: measureText works without explicit filename") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto      img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         BasicFont bf(img->createPaintEngine());
         bf.setFontSize(24);
         CHECK(bf.measureText("A") > 0);
@@ -125,7 +123,7 @@ TEST_CASE("BasicFont: measureText works without explicit filename") {
 // ============================================================================
 
 TEST_CASE("BasicFont: drawText fails with bad font path") {
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto      img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         BasicFont bf(img->createPaintEngine());
         bf.setFontFilename("/nonexistent/font.ttf");
         CHECK_FALSE(bf.drawText("test", 0, 0));
@@ -136,9 +134,9 @@ TEST_CASE("BasicFont: drawText fails with bad font path") {
 // ============================================================================
 
 TEST_CASE("BasicFont: font metrics after loading") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto      img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         BasicFont bf(img->createPaintEngine());
         bf.setFontSize(24);
 
@@ -155,9 +153,9 @@ TEST_CASE("BasicFont: font metrics after loading") {
 // ============================================================================
 
 TEST_CASE("BasicFont: measureText empty string") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto      img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         BasicFont bf(img->createPaintEngine());
         bf.setFontSize(24);
 
@@ -165,9 +163,9 @@ TEST_CASE("BasicFont: measureText empty string") {
 }
 
 TEST_CASE("BasicFont: measureText longer string is wider") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
-        auto img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
+        auto      img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
         BasicFont bf(img->createPaintEngine());
         bf.setFontSize(24);
 
@@ -181,9 +179,9 @@ TEST_CASE("BasicFont: measureText longer string is wider") {
 // ============================================================================
 
 TEST_CASE("BasicFont: drawText renders pixels") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
-        auto img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
+        auto      img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
         BasicFont bf(img->createPaintEngine());
         bf.setFontSize(24);
         bf.setForegroundColor(Color::White);
@@ -194,10 +192,10 @@ TEST_CASE("BasicFont: drawText renders pixels") {
 }
 
 TEST_CASE("BasicFont: drawText uses foreground color") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
         auto renderAndSum = [](Color fg) -> uint64_t {
-                auto img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
+                auto      img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
                 BasicFont bf(img->createPaintEngine());
                 bf.setFontSize(24);
                 bf.setForegroundColor(fg);
@@ -213,9 +211,9 @@ TEST_CASE("BasicFont: drawText uses foreground color") {
 }
 
 TEST_CASE("BasicFont: drawText on RGBA8") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
-        auto img = makePayload(256, 64, PixelFormat::RGBA8_sRGB);
+        auto      img = makePayload(256, 64, PixelFormat::RGBA8_sRGB);
         BasicFont bf(img->createPaintEngine());
         bf.setFontSize(24);
         bf.setForegroundColor(Color::White);
@@ -230,9 +228,9 @@ TEST_CASE("BasicFont: drawText on RGBA8") {
 // ============================================================================
 
 TEST_CASE("BasicFont: changing font size works") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
-        auto img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
+        auto      img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
         BasicFont bf(img->createPaintEngine());
         bf.setFontSize(12);
 
@@ -247,9 +245,9 @@ TEST_CASE("BasicFont: changing font size works") {
 }
 
 TEST_CASE("BasicFont: changing font filename works") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
-        auto img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
+        auto      img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
         BasicFont bf(img->createPaintEngine());
         bf.setFontSize(24);
 
@@ -266,7 +264,7 @@ TEST_CASE("BasicFont: changing font filename works") {
 // ============================================================================
 
 TEST_CASE("BasicFont: deferred PaintEngine on RGB8") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
         auto img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
 
@@ -281,7 +279,7 @@ TEST_CASE("BasicFont: deferred PaintEngine on RGB8") {
 }
 
 TEST_CASE("BasicFont: deferred PaintEngine on RGBA8") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
         auto img = makePayload(256, 64, PixelFormat::RGBA8_sRGB);
 
@@ -300,9 +298,9 @@ TEST_CASE("BasicFont: deferred PaintEngine on RGBA8") {
 // ============================================================================
 
 TEST_CASE("BasicFont: drawText at bottom of large RGBA8 image") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
-        auto img = makePayload(1920, 1080, PixelFormat::RGBA8_sRGB);
+        auto      img = makePayload(1920, 1080, PixelFormat::RGBA8_sRGB);
         BasicFont bf(img->createPaintEngine());
         bf.setFontSize(48);
         bf.setForegroundColor(Color::White);
@@ -313,9 +311,9 @@ TEST_CASE("BasicFont: drawText at bottom of large RGBA8 image") {
 }
 
 TEST_CASE("BasicFont: drawText at bottom of large RGB8 image") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
-        auto img = makePayload(1920, 1080, PixelFormat::RGB8_sRGB);
+        auto      img = makePayload(1920, 1080, PixelFormat::RGB8_sRGB);
         BasicFont bf(img->createPaintEngine());
         bf.setFontSize(48);
         bf.setForegroundColor(Color::White);
@@ -330,9 +328,9 @@ TEST_CASE("BasicFont: drawText at bottom of large RGB8 image") {
 // ============================================================================
 
 TEST_CASE("BasicFont: lineHeight equals ascender plus descender") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto      img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         BasicFont bf(img->createPaintEngine());
         bf.setFontSize(48);
 
@@ -342,9 +340,9 @@ TEST_CASE("BasicFont: lineHeight equals ascender plus descender") {
 }
 
 TEST_CASE("BasicFont: metrics match FastFont for same font and size") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
-        auto img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
 
         FastFont ff(pe);
@@ -361,9 +359,9 @@ TEST_CASE("BasicFont: metrics match FastFont for same font and size") {
 }
 
 TEST_CASE("BasicFont: measureText matches FastFont") {
-        if(!fontAvailable()) return;
+        if (!fontAvailable()) return;
 
-        auto img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
+        auto        img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img->createPaintEngine();
 
         FastFont ff(pe);

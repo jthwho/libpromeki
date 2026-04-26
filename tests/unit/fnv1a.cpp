@@ -19,8 +19,8 @@ TEST_CASE("FNV-1a: empty string") {
 
 TEST_CASE("FNV-1a: known test vectors") {
         // Well-known FNV-1a 64-bit test vectors.
-        CHECK(fnv1a("a")           == 0xaf63dc4c8601ec8cULL);
-        CHECK(fnv1a("foobar")      == 0x85944171f73967e8ULL);
+        CHECK(fnv1a("a") == 0xaf63dc4c8601ec8cULL);
+        CHECK(fnv1a("foobar") == 0x85944171f73967e8ULL);
 }
 
 TEST_CASE("FNV-1a: deterministic") {
@@ -44,7 +44,7 @@ TEST_CASE("FNV-1a: compile-time evaluation") {
 
 TEST_CASE("FNV-1a: fnv1aData") {
         const char *msg = "hello";
-        size_t len = std::strlen(msg);
+        size_t      len = std::strlen(msg);
         // fnv1a stops before the null byte, so fnv1aData with the
         // same length should produce the same hash.
         uint64_t h1 = fnv1a(msg);

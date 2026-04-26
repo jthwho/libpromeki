@@ -222,12 +222,12 @@ class Font {
                  */
                 String effectiveFilename() const;
 
-                String          _fontFilename;
-                int             _fontSize = 12;
-                Color           _fg = Color::White;
-                Color           _bg = Color::Black;
-                PaintEngine     _paintEngine;
-                bool            _kerning = false;
+                String      _fontFilename;
+                int         _fontSize = 12;
+                Color       _fg = Color::White;
+                Color       _bg = Color::Black;
+                PaintEngine _paintEngine;
+                bool        _kerning = false;
 };
 
 PROMEKI_NAMESPACE_END

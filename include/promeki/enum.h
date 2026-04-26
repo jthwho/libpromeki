@@ -119,8 +119,8 @@ class Enum {
                  * used by well-known enums in @c include/promeki/enums.h.
                  */
                 struct Entry {
-                        const char *name;
-                        int         value;
+                                const char *name;
+                                int         value;
                 };
 
                 /**
@@ -150,13 +150,13 @@ class Enum {
                  * registration time.
                  */
                 struct Definition {
-                        const char   *name         = nullptr;      ///< Human-readable type name.
-                        const Entry  *entries      = nullptr;      ///< Pointer to the Entry table.
-                        size_t        entryCount   = 0;            ///< Number of entries in the table.
-                        int           defaultValue = InvalidValue; ///< Default integer value.
-                        mutable uint32_t typeIndex = 0;            ///< Monotonic id; set by the registry.
+                                const char      *name = nullptr;              ///< Human-readable type name.
+                                const Entry     *entries = nullptr;           ///< Pointer to the Entry table.
+                                size_t           entryCount = 0;              ///< Number of entries in the table.
+                                int              defaultValue = InvalidValue; ///< Default integer value.
+                                mutable uint32_t typeIndex = 0;               ///< Monotonic id; set by the registry.
 
-                        /**
+                                /**
                          * @brief Literal-backed @ref String cache for the type name.
                          *
                          * Populated by the registry at registration time.  Accessors
@@ -166,18 +166,18 @@ class Enum {
                          * path) or in the registry's leaked heap block (dynamic path)
                          * is reused on every call.
                          */
-                        mutable StringLiteralData *nameLit = nullptr;
+                                mutable StringLiteralData *nameLit = nullptr;
 
-                        /**
+                                /**
                          * @brief Parallel array of literal-backed @ref String caches,
                          *        one per entry, with @c entryCount elements.
                          *
                          * Populated by the registry; same zero-copy story as
                          * @ref nameLit.  Indexed in lock-step with @ref entries.
                          */
-                        mutable StringLiteralData *entryNameLits = nullptr;
+                                mutable StringLiteralData *entryNameLits = nullptr;
 
-                        /**
+                                /**
                          * @brief Parallel array of fully-qualified literal-backed
                          *        @ref String caches — `"TypeName::EntryName"`,
                          *        one per entry, with @c entryCount elements,
@@ -196,12 +196,12 @@ class Enum {
                          * so @ref String equality short-circuits on pointer
                          * match.
                          */
-                        mutable StringLiteralData *entryQualifiedLits = nullptr;
+                                mutable StringLiteralData *entryQualifiedLits = nullptr;
 
-                        /// @brief Linear-search lookup of an entry by name.
-                        const Entry *findByName(const String &n) const;
-                        /// @brief Linear-search lookup of an entry by integer value.
-                        const Entry *findByValue(int v) const;
+                                /// @brief Linear-search lookup of an entry by name.
+                                const Entry *findByName(const String &n) const;
+                                /// @brief Linear-search lookup of an entry by integer value.
+                                const Entry *findByValue(int v) const;
                 };
 
                 /**
@@ -316,9 +316,7 @@ class Enum {
                  *                     match one of the entries in @p values.
                  * @return The registered Type handle.
                  */
-                static Type registerType(const String &typeName,
-                                         const ValueList &values,
-                                         int defaultValue);
+                static Type registerType(const String &typeName, const ValueList &values, int defaultValue);
 
                 /**
                  * @brief Looks up an enum type by name without registering anything.
@@ -476,14 +474,12 @@ class Enum {
                 bool hasListedValue() const;
 
                 /// @brief Equality: same type (by identity) and same integer value.
-                bool operator==(const Enum &o) const {
-                        return _def == o._def && _value == o._value;
-                }
+                bool operator==(const Enum &o) const { return _def == o._def && _value == o._value; }
                 bool operator!=(const Enum &o) const { return !(*this == o); }
 
         private:
-                const Definition *_def   = nullptr;           ///< Direct pointer to the registered Definition.
-                int               _value = InvalidValue;      ///< Integer value within that type.
+                const Definition *_def = nullptr;        ///< Direct pointer to the registered Definition.
+                int               _value = InvalidValue; ///< Integer value within that type.
 };
 
 /**
@@ -535,8 +531,7 @@ class Enum {
  * @tparam Derived The concrete class inheriting from this template;
  *                 must expose a @c static @ref Enum::Type @c Type.
  */
-template <typename Derived>
-class TypedEnum : public Enum {
+template <typename Derived> class TypedEnum : public Enum {
         public:
                 /**
                  * @brief Default-constructs with the registered default value.
@@ -568,34 +563,34 @@ class TypedEnum : public Enum {
 
 namespace detail {
 
-/// @brief Null-terminated-string equality, usable in constant expressions.
-constexpr bool enumStrEqual(const char *a, const char *b) {
-        while(*a != '\0' && *b != '\0') {
-                if(*a != *b) return false;
-                ++a;
-                ++b;
-        }
-        return *a == *b;
-}
-
-/// @brief Returns true if no two entries share a name or an integer value.
-consteval bool enumEntriesUnique(const Enum::Entry *entries, size_t count) {
-        for(size_t i = 0; i < count; ++i) {
-                for(size_t j = i + 1; j < count; ++j) {
-                        if(enumStrEqual(entries[i].name, entries[j].name)) return false;
-                        if(entries[i].value == entries[j].value) return false;
+        /// @brief Null-terminated-string equality, usable in constant expressions.
+        constexpr bool enumStrEqual(const char *a, const char *b) {
+                while (*a != '\0' && *b != '\0') {
+                        if (*a != *b) return false;
+                        ++a;
+                        ++b;
                 }
+                return *a == *b;
         }
-        return true;
-}
 
-/// @brief Returns true if @p def matches the value of some entry.
-consteval bool enumHasDefault(const Enum::Entry *entries, size_t count, int def) {
-        for(size_t i = 0; i < count; ++i) {
-                if(entries[i].value == def) return true;
+        /// @brief Returns true if no two entries share a name or an integer value.
+        consteval bool enumEntriesUnique(const Enum::Entry *entries, size_t count) {
+                for (size_t i = 0; i < count; ++i) {
+                        for (size_t j = i + 1; j < count; ++j) {
+                                if (enumStrEqual(entries[i].name, entries[j].name)) return false;
+                                if (entries[i].value == entries[j].value) return false;
+                        }
+                }
+                return true;
         }
-        return false;
-}
+
+        /// @brief Returns true if @p def matches the value of some entry.
+        consteval bool enumHasDefault(const Enum::Entry *entries, size_t count, int def) {
+                for (size_t i = 0; i < count; ++i) {
+                        if (entries[i].value == def) return true;
+                }
+                return false;
+        }
 
 } // namespace detail
 
@@ -642,34 +637,24 @@ PROMEKI_NAMESPACE_END
  * };
  * @endcode
  */
-#define PROMEKI_REGISTER_ENUM_TYPE(TypeName, Default, ...)                      \
-        static constexpr ::promeki::Enum::Entry _promeki_enum_entries_[] = {    \
-                __VA_ARGS__                                                     \
-        };                                                                      \
-        static_assert(sizeof(_promeki_enum_entries_) /                          \
-                              sizeof(_promeki_enum_entries_[0]) > 0,            \
-                "Enum type '" TypeName "' has no entries");                     \
-        static_assert(::promeki::detail::enumEntriesUnique(                     \
-                _promeki_enum_entries_,                                         \
-                sizeof(_promeki_enum_entries_) /                                \
-                        sizeof(_promeki_enum_entries_[0])),                     \
-                "Enum type '" TypeName "' has duplicate name or value");       \
-        static_assert(::promeki::detail::enumHasDefault(                        \
-                _promeki_enum_entries_,                                         \
-                sizeof(_promeki_enum_entries_) /                                \
-                        sizeof(_promeki_enum_entries_[0]),                      \
-                (Default)),                                                     \
-                "Enum type '" TypeName "' default value not in entry table"); \
-        static inline ::promeki::Enum::Definition _promeki_enum_def_{           \
-                .name         = TypeName,                                       \
-                .entries      = _promeki_enum_entries_,                         \
-                .entryCount   = sizeof(_promeki_enum_entries_) /                \
-                                sizeof(_promeki_enum_entries_[0]),              \
-                .defaultValue = (Default),                                      \
-                .typeIndex    = 0                                               \
-        };                                                                      \
-        static inline const ::promeki::Enum::Type Type =                        \
-                ::promeki::Enum::registerDefinition(&_promeki_enum_def_)
+#define PROMEKI_REGISTER_ENUM_TYPE(TypeName, Default, ...)                                                             \
+        static constexpr ::promeki::Enum::Entry _promeki_enum_entries_[] = {__VA_ARGS__};                              \
+        static_assert(sizeof(_promeki_enum_entries_) / sizeof(_promeki_enum_entries_[0]) > 0,                          \
+                      "Enum type '" TypeName "' has no entries");                                                      \
+        static_assert(::promeki::detail::enumEntriesUnique(_promeki_enum_entries_,                                     \
+                                                           sizeof(_promeki_enum_entries_) /                            \
+                                                                   sizeof(_promeki_enum_entries_[0])),                 \
+                      "Enum type '" TypeName "' has duplicate name or value");                                         \
+        static_assert(::promeki::detail::enumHasDefault(                                                               \
+                              _promeki_enum_entries_,                                                                  \
+                              sizeof(_promeki_enum_entries_) / sizeof(_promeki_enum_entries_[0]), (Default)),          \
+                      "Enum type '" TypeName "' default value not in entry table");                                    \
+        static inline ::promeki::Enum::Definition _promeki_enum_def_{.name = TypeName,                                 \
+                                                                     .entries = _promeki_enum_entries_,                \
+                                                                     .entryCount = sizeof(_promeki_enum_entries_) /    \
+                                                                                   sizeof(_promeki_enum_entries_[0]),  \
+                                                                     .defaultValue = (Default),                        \
+                                                                     .typeIndex = 0};                                  \
+        static inline const ::promeki::Enum::Type Type = ::promeki::Enum::registerDefinition(&_promeki_enum_def_)
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::Enum);
-

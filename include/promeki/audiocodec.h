@@ -89,13 +89,13 @@ class AudioCodec {
                  * @c UserDefined.
                  */
                 enum ID {
-                        Invalid         = 0,    ///< Invalid or uninitialised.
-                        AAC             = 1,    ///< Advanced Audio Coding (ISO/IEC 14496-3).
-                        Opus            = 2,    ///< Opus (RFC 6716).
-                        FLAC            = 3,    ///< Free Lossless Audio Codec.
-                        MP3             = 4,    ///< MPEG-1 Audio Layer III.
-                        AC3             = 5,    ///< Dolby Digital (AC-3).
-                        UserDefined     = 1024  ///< First ID available for user-registered codecs.
+                        Invalid = 0,       ///< Invalid or uninitialised.
+                        AAC = 1,           ///< Advanced Audio Coding (ISO/IEC 14496-3).
+                        Opus = 2,          ///< Opus (RFC 6716).
+                        FLAC = 3,          ///< Free Lossless Audio Codec.
+                        MP3 = 4,           ///< MPEG-1 Audio Layer III.
+                        AC3 = 5,           ///< Dolby Digital (AC-3).
+                        UserDefined = 1024 ///< First ID available for user-registered codecs.
                 };
 
                 /** @brief List of AudioCodec IDs. */
@@ -105,9 +105,9 @@ class AudioCodec {
                  * @brief Classifies the codec's lossy-vs-lossless behaviour.
                  */
                 enum CompressionType {
-                        CompressionInvalid  = 0,    ///< Unknown / not classified.
-                        CompressionLossless = 1,    ///< Bit-exact reconstruction (FLAC, ALAC).
-                        CompressionLossy    = 2     ///< Psychoacoustic compression (AAC, Opus, MP3, AC-3).
+                        CompressionInvalid = 0,  ///< Unknown / not classified.
+                        CompressionLossless = 1, ///< Bit-exact reconstruction (FLAC, ALAC).
+                        CompressionLossy = 2     ///< Psychoacoustic compression (AAC, Opus, MP3, AC-3).
                 };
 
                 /**
@@ -117,10 +117,12 @@ class AudioCodec {
                  * tolerance, and streaming friendliness.
                  */
                 enum PacketIndependence {
-                        PacketIndependenceInvalid = 0,  ///< Unknown / not classified.
-                        PacketIndependenceEvery   = 1,  ///< Every packet decodes standalone (Opus, PCM-in-container).
-                        PacketIndependenceKeyframe = 2, ///< Only keyframe packets decode standalone (uncommon for audio).
-                        PacketIndependenceInter   = 3   ///< Packets require prior-packet state (MP3 bit reservoir, AAC-LTP).
+                        PacketIndependenceInvalid = 0, ///< Unknown / not classified.
+                        PacketIndependenceEvery = 1,   ///< Every packet decodes standalone (Opus, PCM-in-container).
+                        PacketIndependenceKeyframe =
+                                2, ///< Only keyframe packets decode standalone (uncommon for audio).
+                        PacketIndependenceInter =
+                                3 ///< Packets require prior-packet state (MP3 bit reservoir, AAC-LTP).
                 };
 
                 /**
@@ -143,13 +145,9 @@ class AudioCodec {
 
                                 constexpr uint64_t id() const { return _id; }
 
-                                String name() const {
-                                        return AudioCodecBackendRegistry::instance().name(_id);
-                                }
+                                String name() const { return AudioCodecBackendRegistry::instance().name(_id); }
 
-                                constexpr bool isValid() const {
-                                        return _id != AudioCodecBackendRegistry::InvalidID;
-                                }
+                                constexpr bool isValid() const { return _id != AudioCodecBackendRegistry::InvalidID; }
 
                                 constexpr bool operator==(const Backend &o) const { return _id == o._id; }
                                 constexpr bool operator!=(const Backend &o) const { return _id != o._id; }
@@ -173,24 +171,28 @@ class AudioCodec {
                  * @ref AudioDecoder backend records.
                  */
                 struct Data {
-                        ID                 id = Invalid;                                        ///< Unique codec identifier.
-                        String             name;                                                ///< Short name; must be a valid C identifier (e.g. @c "Opus").
-                        String             desc;                                                ///< Human-readable description.
-                        FourCC::List         fourccList;                                          ///< Associated FourCC codes.
-                        CompressionType    compressionType      = CompressionInvalid;           ///< Lossless vs lossy.
-                        /**
+                                ID              id = Invalid; ///< Unique codec identifier.
+                                String          name; ///< Short name; must be a valid C identifier (e.g. @c "Opus").
+                                String          desc; ///< Human-readable description.
+                                FourCC::List    fourccList;                           ///< Associated FourCC codes.
+                                CompressionType compressionType = CompressionInvalid; ///< Lossless vs lossy.
+                                /**
                          * @brief Rate-control modes the codec can be driven in.
                          *
                          * Same shape as @ref VideoCodec::Data::rateControlModes.
                          * Empty means "constant-quality / fixed codec"
                          * (PCM-in-container, FLAC, etc.).
                          */
-                        List<RateControlMode> rateControlModes;
-                        PacketIndependence packetIndependence   = PacketIndependenceInvalid;    ///< Inter-packet dependencies.
-                        bool               isStreamable         = false;                        ///< Friendly to streaming (packet-independent / low startup latency).
-                        bool               supportsDRC          = false;                        ///< Bitstream natively carries dynamic-range control metadata (AC-3 yes).
-                        bool               hasBuiltInSilence    = false;                        ///< Codec has first-class silence / DTX frames (Opus yes).
-                        /**
+                                List<RateControlMode> rateControlModes;
+                                PacketIndependence    packetIndependence =
+                                        PacketIndependenceInvalid; ///< Inter-packet dependencies.
+                                bool isStreamable =
+                                        false; ///< Friendly to streaming (packet-independent / low startup latency).
+                                bool supportsDRC =
+                                        false; ///< Bitstream natively carries dynamic-range control metadata (AC-3 yes).
+                                bool hasBuiltInSilence =
+                                        false; ///< Codec has first-class silence / DTX frames (Opus yes).
+                                /**
                          * @brief Uncompressed @ref AudioFormat IDs the codec accepts / produces.
                          *
                          * Stored as @c int for header-layering reasons
@@ -200,24 +202,24 @@ class AudioCodec {
                          * at use time.  Empty means "no spec-level
                          * constraint on sample format."
                          */
-                        List<int>          supportedSampleFormats;
-                        /**
+                                List<int> supportedSampleFormats;
+                                /**
                          * @brief Sample rates the codec spec permits, in Hz.
                          *
                          * Populated only when the codec spec actually
                          * restricts its input (Opus: 8000/12000/16000/
                          * 24000/48000).  Empty means "any rate".
                          */
-                        List<float>        supportedSampleRates;
-                        /**
+                                List<float> supportedSampleRates;
+                                /**
                          * @brief Channel counts the codec spec permits.
                          *
                          * Populated only when the codec spec restricts
                          * channel count.  Empty means "any count".
                          */
-                        List<int>          supportedChannelCounts;
-                        int                maxChannels          = 0;                            ///< 0 = unlimited.
-                        /**
+                                List<int> supportedChannelCounts;
+                                int       maxChannels = 0; ///< 0 = unlimited.
+                                /**
                          * @brief Frame sizes the codec accepts, in samples.
                          *
                          * Populated when the codec has discrete frame
@@ -225,7 +227,7 @@ class AudioCodec {
                          * 120/240/480/960/1920/2880).  Empty means
                          * "any size the backend can accumulate".
                          */
-                        List<int>          frameSizeSamples;
+                                List<int> frameSizeSamples;
                 };
 
                 /** @brief Allocates and returns a unique ID for a user-defined codec. */
@@ -389,9 +391,7 @@ class AudioCodec {
                 String toString() const;
 
                 /** @brief Equality by (underlying Data, pinned backend). */
-                bool operator==(const AudioCodec &o) const {
-                        return d == o.d && _backend == o._backend;
-                }
+                bool operator==(const AudioCodec &o) const { return d == o.d && _backend == o._backend; }
 
                 bool operator!=(const AudioCodec &o) const { return !(*this == o); }
 
@@ -399,12 +399,11 @@ class AudioCodec {
                 const Data *data() const { return d; }
 
         private:
-                const Data *d        = nullptr;
-                Backend     _backend;
+                const Data        *d = nullptr;
+                Backend            _backend;
                 static const Data *lookupData(ID id);
 };
 
-inline AudioCodec::AudioCodec(ID id, Backend backend)
-        : d(lookupData(id)), _backend(backend) {}
+inline AudioCodec::AudioCodec(ID id, Backend backend) : d(lookupData(id)), _backend(backend) {}
 
 PROMEKI_NAMESPACE_END

@@ -164,10 +164,10 @@ TEST_CASE("RtpPacket") {
                 pkt.setExtension(true);
                 // Extension header at byte 12: profile (2 bytes) + length (2 bytes)
                 uint8_t *ext = pkt.data() + 12;
-                ext[0] = 0xBE;  // profile high byte
-                ext[1] = 0xDE;  // profile low byte
-                ext[2] = 0x00;  // length high byte
-                ext[3] = 0x02;  // length = 2 (32-bit words = 8 bytes)
+                ext[0] = 0xBE; // profile high byte
+                ext[1] = 0xDE; // profile low byte
+                ext[2] = 0x00; // length high byte
+                ext[3] = 0x02; // length = 2 (32-bit words = 8 bytes)
 
                 CHECK(pkt.extension() == true);
                 CHECK(pkt.extensionProfile() == 0xBEDE);
@@ -203,11 +203,18 @@ TEST_CASE("RtpPacket") {
                 uint8_t *d = static_cast<uint8_t *>(buf->data());
 
                 // Manually construct: V=2, P=0, X=0, CC=0, M=1, PT=97
-                d[0] = 0x80;           // V=2
-                d[1] = 0x80 | 97;      // M=1, PT=97
-                d[2] = 0x00; d[3] = 42; // seq=42
-                d[4] = 0x00; d[5] = 0x01; d[6] = 0x51; d[7] = 0x80; // ts=86400
-                d[8] = 0x11; d[9] = 0x22; d[10] = 0x33; d[11] = 0x44; // SSRC
+                d[0] = 0x80;      // V=2
+                d[1] = 0x80 | 97; // M=1, PT=97
+                d[2] = 0x00;
+                d[3] = 42; // seq=42
+                d[4] = 0x00;
+                d[5] = 0x01;
+                d[6] = 0x51;
+                d[7] = 0x80; // ts=86400
+                d[8] = 0x11;
+                d[9] = 0x22;
+                d[10] = 0x33;
+                d[11] = 0x44; // SSRC
 
                 RtpPacket pkt(buf, 0, RtpPacket::HeaderSize);
                 CHECK(pkt.version() == 2);
@@ -248,12 +255,12 @@ TEST_CASE("RtpPacket") {
                 CHECK(pkts.size() == 10);
 
                 // All share the same buffer
-                for(size_t i = 1; i < pkts.size(); ++i) {
+                for (size_t i = 1; i < pkts.size(); ++i) {
                         CHECK(pkts[i].buffer().ptr() == pkts[0].buffer().ptr());
                 }
 
                 // Each packet is independent and pre-initialized
-                for(size_t i = 0; i < pkts.size(); ++i) {
+                for (size_t i = 0; i < pkts.size(); ++i) {
                         CHECK(pkts[i].size() == 1400);
                         CHECK(pkts[i].version() == 2);
                         CHECK(pkts[i].offset() == i * 1400);
@@ -261,7 +268,7 @@ TEST_CASE("RtpPacket") {
                 }
 
                 // Verify writes didn't clobber neighbors
-                for(size_t i = 0; i < pkts.size(); ++i) {
+                for (size_t i = 0; i < pkts.size(); ++i) {
                         CHECK(pkts[i].sequenceNumber() == static_cast<uint16_t>(i));
                 }
         }
@@ -282,7 +289,7 @@ TEST_CASE("RtpPacket") {
                 CHECK(pkts.size() == 4);
 
                 // All share the same buffer
-                for(size_t i = 1; i < pkts.size(); ++i) {
+                for (size_t i = 1; i < pkts.size(); ++i) {
                         CHECK(pkts[i].buffer().ptr() == pkts[0].buffer().ptr());
                 }
 
@@ -297,23 +304,23 @@ TEST_CASE("RtpPacket") {
                 CHECK(pkts[3].offset() == 1700);
 
                 // All are valid V=2 packets
-                for(size_t i = 0; i < pkts.size(); ++i) {
+                for (size_t i = 0; i < pkts.size(); ++i) {
                         CHECK(pkts[i].isValid());
                         CHECK(pkts[i].version() == 2);
                 }
 
                 // Writes to one packet don't clobber neighbors
-                for(size_t i = 0; i < pkts.size(); ++i) {
+                for (size_t i = 0; i < pkts.size(); ++i) {
                         pkts[i].setSequenceNumber(static_cast<uint16_t>(i * 100));
                 }
-                for(size_t i = 0; i < pkts.size(); ++i) {
+                for (size_t i = 0; i < pkts.size(); ++i) {
                         CHECK(pkts[i].sequenceNumber() == static_cast<uint16_t>(i * 100));
                 }
         }
 
         SUBCASE("createList with empty sizes list") {
                 RtpPacket::SizeList sizes;
-                auto pkts = RtpPacket::createList(sizes);
+                auto                pkts = RtpPacket::createList(sizes);
                 CHECK(pkts.size() == 0);
         }
 
@@ -368,7 +375,7 @@ TEST_CASE("RtpPacket") {
 
         SUBCASE("createList varying sizes with undersized entry") {
                 RtpPacket::SizeList sizes;
-                sizes.pushToBack(8);   // Too small for RTP header
+                sizes.pushToBack(8); // Too small for RTP header
                 sizes.pushToBack(100);
                 auto pkts = RtpPacket::createList(sizes);
                 CHECK(pkts.size() == 2);

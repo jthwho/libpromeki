@@ -13,19 +13,20 @@ PROMEKI_NAMESPACE_BEGIN
 PROMEKI_DEBUG(SecureMem)
 
 Error secureLock(void *ptr, size_t size) {
-        if(ptr == nullptr || size == 0) return Error::Ok;
+        if (ptr == nullptr || size == 0) return Error::Ok;
 #if defined(PROMEKI_PLATFORM_WINDOWS)
-        if(VirtualLock(ptr, size) == 0) return Error::syserr();
+        if (VirtualLock(ptr, size) == 0) return Error::syserr();
         return Error::Ok;
 #elif defined(PROMEKI_PLATFORM_POSIX)
-        if(mlock(ptr, size) != 0) return Error::syserr();
-#       if defined(PROMEKI_PLATFORM_LINUX)
-        if(madvise(ptr, size, MADV_DONTDUMP) != 0) {
+        if (mlock(ptr, size) != 0) return Error::syserr();
+#if defined(PROMEKI_PLATFORM_LINUX)
+        if (madvise(ptr, size, MADV_DONTDUMP) != 0) {
                 Error err = Error::syserr();
-                promekiWarn("secureLock(%p, %zu): madvise(MADV_DONTDUMP) failed (%s); region is locked but may appear in core dumps",
-                        ptr, size, err.desc().cstr());
+                promekiWarn("secureLock(%p, %zu): madvise(MADV_DONTDUMP) failed (%s); region is locked but may appear "
+                            "in core dumps",
+                            ptr, size, err.desc().cstr());
         }
-#       endif
+#endif
         return Error::Ok;
 #else
         return Error::NotSupported;
@@ -33,19 +34,20 @@ Error secureLock(void *ptr, size_t size) {
 }
 
 Error secureUnlock(void *ptr, size_t size) {
-        if(ptr == nullptr || size == 0) return Error::Ok;
+        if (ptr == nullptr || size == 0) return Error::Ok;
 #if defined(PROMEKI_PLATFORM_WINDOWS)
-        if(VirtualUnlock(ptr, size) == 0) return Error::syserr();
+        if (VirtualUnlock(ptr, size) == 0) return Error::syserr();
         return Error::Ok;
 #elif defined(PROMEKI_PLATFORM_POSIX)
-#       if defined(PROMEKI_PLATFORM_LINUX)
-        if(madvise(ptr, size, MADV_DODUMP) != 0) {
+#if defined(PROMEKI_PLATFORM_LINUX)
+        if (madvise(ptr, size, MADV_DODUMP) != 0) {
                 Error err = Error::syserr();
-                promekiWarn("secureUnlock(%p, %zu): madvise(MADV_DODUMP) failed (%s); region remains excluded from core dumps",
-                        ptr, size, err.desc().cstr());
+                promekiWarn("secureUnlock(%p, %zu): madvise(MADV_DODUMP) failed (%s); region remains excluded from "
+                            "core dumps",
+                            ptr, size, err.desc().cstr());
         }
-#       endif
-        if(munlock(ptr, size) != 0) return Error::syserr();
+#endif
+        if (munlock(ptr, size) != 0) return Error::syserr();
         return Error::Ok;
 #else
         return Error::NotSupported;
