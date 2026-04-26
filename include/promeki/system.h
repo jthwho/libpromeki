@@ -13,6 +13,7 @@
 #include <type_traits>
 #include <cstdint>
 #include <promeki/namespace.h>
+#include <promeki/platform.h>
 #include <promeki/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -59,7 +60,7 @@ class System {
                         constexpr size_t size = sizeof(T);
                         if constexpr (size == 1) return;
                         unsigned char *data = reinterpret_cast<unsigned char *>(&value);
-#pragma unroll
+                        PROMEKI_UNROLL
                         for (size_t i = 0; i < size / 2; ++i) {
                                 std::swap(data[i], data[size - i - 1]);
                         }

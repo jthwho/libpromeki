@@ -154,11 +154,12 @@ nlohmann/json, libvtc, Highway, cirf, doctest.
 |--------|---------|-------------|
 | `PROMEKI_BUILD_TUI` | `ON` | Build the `promeki-tui` library |
 | `PROMEKI_BUILD_SDL` | auto | Build the `promeki-sdl` library (auto-enabled when SDL3 is found) |
-| `PROMEKI_BUILD_TESTS` | `ON` | Build the unit-test executables |
+| `PROMEKI_BUILD_TESTS` | `ON` | Configure unit-test targets (excluded from the default `all` build — see [Running Tests](#building_tests)) |
 | `PROMEKI_BUILD_UTILS` | `ON` | Build the utility applications (`promeki-info`, `mediaplay`, `imgtest`, ...) |
 | `PROMEKI_BUILD_DEMOS` | `ON` | Build the demonstration applications |
 | `PROMEKI_BUILD_BENCHMARKS` | `ON` | Build the `promeki-bench` driver |
 | `PROMEKI_BUILD_DOCS` | `OFF` | Add the generated documentation to the `all` target |
+| `PROMEKI_WARNINGS_AS_ERRORS` | `OFF` | Treat compile warnings as errors (`-Werror`) for our targets — flipped on by `scripts/precommit.sh` |
 
 Three test executables are produced: `unittest-promeki`,
 `unittest-tui`, and `unittest-sdl`. See [Running Tests](#building_tests).
@@ -250,23 +251,87 @@ cmake --build build --target clean
 
 ## Running Tests {#building_tests}
 
-Three test executables are produced, one per shared library:
+Unit-test executables are configured but **not** part of the default
+`cmake --build build` run — this keeps incremental rebuilds fast when
+you're iterating on something unrelated to tests.  Two umbrella
+targets give you the test build + run flow:
 
 ```sh
-cd build
-ctest --output-on-failure
+# Build all three test executables, no run:
+cmake --build build --target tests
+
+# Build them and execute the full ctest suite serially:
+cmake --build build --target check
 ```
 
-Or run them individually:
+Equivalently, with the repo's `build` helper:
 
 ```sh
-./build/unittest-promeki
-./build/unittest-tui
-./build/unittest-sdl
+build tests   # build only
+build check   # build + run
+```
+
+Or run them individually after building:
+
+```sh
+./build/bin/unittest-promeki
+./build/bin/unittest-tui
+./build/bin/unittest-sdl
 ```
 
 All three are built on doctest. Per-test filtering is available via
-doctest's `--test-case=` filter.
+doctest's `--test-case=` filter, e.g.
+`./build/bin/unittest-promeki --test-case=String*`.
+
+---
+
+## Code Formatting {#building_format}
+
+Every owned source file under `src/`, `include/promeki/`,
+`tests/{unit,func}/`, `demos/`, and `utils/` is formatted with
+`clang-format` against the `.clang-format` rules at the repo root.
+Two CMake targets cover the lifecycle:
+
+```sh
+cmake --build build --target format-tree         # rewrite in place
+cmake --build build --target format-check-tree   # dry-run, errors on diff
+```
+
+`format-check-tree` is the gate run by `scripts/precommit.sh`.  The
+`-tree` suffix distinguishes these from the vendored libvtc / cirf
+submodules, which expose their own `format` targets that cover only
+their own subdirectories.  Vendored code under `thirdparty/` is
+intentionally not reformatted by these targets.
+
+---
+
+## Pre-commit Verification {#building_precommit}
+
+`scripts/precommit.sh` runs the full set of checks every commit
+should pass before going in: format conformance, a fresh
+configure-from-scratch with all auto-detected modules and
+warnings-as-errors, the full default build, the unit-test suite, and
+(when Doxygen is on `PATH`) a Doxygen build.  By default the build
+directory is `build-precommit-<timestamp>` at the repo root, and it
+is cleaned up on success.
+
+```sh
+scripts/precommit.sh                 # run all checks
+scripts/precommit.sh --keep          # keep the build dir on success
+scripts/precommit.sh --no-docs       # skip the Doxygen step
+scripts/precommit.sh --build-dir DIR # use DIR instead of the default
+```
+
+Template-heavy C++ TUs in this codebase budget at roughly 1.5 GB of
+resident memory per job, so the safe ceiling is `mem_avail / 1.5 GB`
+parallel jobs and two simultaneous precommit runs will usually
+overshoot that.  The script holds a non-blocking flock on
+`.precommit.lock` at the repo root, so a second precommit invocation
+while one is running exits immediately with a clear error rather
+than queueing up.  The script exits non-zero on the first failed
+step and prints a clear summary at the end.  See
+[CONTRIBUTING.md](../CONTRIBUTING.md) for the full development
+workflow.
 
 ---
 

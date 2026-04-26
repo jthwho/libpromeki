@@ -187,24 +187,6 @@ TEST_CASE("QuickTime: mediaDesc reflects the discovered tracks") {
 // Sample reads (Phase 2): byte-for-byte verification via direct file compare
 // ============================================================================
 
-namespace {
-
-        /** Reads @p size bytes from @p filename starting at @p offset. */
-        List<uint8_t> readFileRange(const String &filename, int64_t offset, int64_t size) {
-                List<uint8_t> out;
-                FILE         *fp = std::fopen(filename.cstr(), "rb");
-                if (fp == nullptr) return out;
-                if (std::fseek(fp, offset, SEEK_SET) == 0) {
-                        out.resize(static_cast<size_t>(size));
-                        size_t got = std::fread(out.data(), 1, static_cast<size_t>(size), fp);
-                        out.resize(got);
-                }
-                std::fclose(fp);
-                return out;
-        }
-
-} // namespace
-
 TEST_CASE("QuickTime: readSample on uncompressed UYVY returns expected size") {
         const String fname = fixturePath("tiny_uyvy_24p.mov");
         QuickTime    qt = QuickTime::createReader(fname);

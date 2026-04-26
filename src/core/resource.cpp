@@ -81,14 +81,6 @@ namespace {
                 return nullptr;
         }
 
-        /// Joins two virtual path components with a single slash, skipping
-        /// the separator when either side is empty.
-        String joinVirtual(const String &a, const String &b) {
-                if (a.isEmpty()) return b;
-                if (b.isEmpty()) return a;
-                return a + "/" + b;
-        }
-
         /// Builds the full ":/<dirPath>/<name>" path for an entry inside a
         /// directory listing.
         FilePath makeChildPath(const String &resourceDirPath, const char *childName) {

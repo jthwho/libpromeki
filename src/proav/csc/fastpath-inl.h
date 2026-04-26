@@ -48,7 +48,6 @@ namespace promeki {
                                 const uint8_t *src = static_cast<const uint8_t *>(srcPlanes[0]);
                                 uint8_t       *dst = static_cast<uint8_t *>(dstPlanes[0]);
 
-                                const hn::ScalableTag<uint8_t>                    du8;
                                 const hn::Rebind<uint8_t, hn::ScalableTag<float>> du8q;
                                 const size_t                                      Nq = hn::Lanes(du8q);
 

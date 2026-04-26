@@ -485,7 +485,7 @@ Error MediaIOTask_QuickTime::readVideoFrame(const FrameNumber &frameIndex, Frame
                         const uint8_t *src = static_cast<const uint8_t *>(s.data->data());
                         size_t         off = 0;
                         bool           ok = true;
-                        for (int p = 0; p < samplePd.planeCount(); ++p) {
+                        for (size_t p = 0; p < samplePd.planeCount(); ++p) {
                                 const size_t psz = samplePd.planeSize(p, idesc);
                                 if (off + psz > s.data->size()) {
                                         ok = false;

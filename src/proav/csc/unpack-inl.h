@@ -27,19 +27,13 @@ namespace promeki {
 
                         // Unpack interleaved RGBA (4 components, 8 bits, 1 pixel per block)
                         static void unpackI4x8(const uint8_t *src, float *const *buffers, size_t width) {
-                                const hn::ScalableTag<float>   df;
-                                const hn::ScalableTag<uint8_t> du8;
-                                const size_t                   Nf = hn::Lanes(df);
-                                // Number of u8 lanes is 4x the float lanes (u8 is 4x narrower)
-                                const size_t N8 = hn::Lanes(du8);
-                                // We process Nf pixels at a time (each pixel = 4 bytes)
-                                // But LoadInterleaved4 loads N8 elements per channel,
-                                // and we need to promote u8->float in chunks of Nf.
-                                // Use a quarter-width u8 tag that matches float lane count.
-                                const hn::Rebind<uint8_t, decltype(df)>  du8q;  // Nf u8 lanes
-                                const hn::Rebind<uint16_t, decltype(df)> du16q; // Nf/2 u16 lanes -- wrong
-                                // Actually: promote chain is u8[Nf] -> u16[Nf] (via PromoteTo with wider tag)
-                                // Highway PromoteTo: Rebind<u16, df> has Nf lanes of u16
+                                const hn::ScalableTag<float> df;
+                                const size_t                 Nf = hn::Lanes(df);
+                                // Process Nf pixels at a time (each pixel = 4 bytes).  Use a
+                                // quarter-width u8 tag that matches the float lane count so
+                                // LoadInterleaved4 loads exactly Nf u8 values per component.
+                                // Promote chain is u8[Nf] -> u16[Nf] -> i32[Nf] -> f32[Nf].
+                                const hn::Rebind<uint8_t, decltype(df)> du8q; // Nf u8 lanes
                                 const hn::Rebind<int32_t, decltype(df)> di32;
 
                                 size_t x = 0;

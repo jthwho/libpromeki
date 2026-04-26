@@ -67,6 +67,30 @@
 #define PROMEKI_COMPILER_GCC_COMPAT 1
 #endif
 
+// NVIDIA's nvcc is a driver around a host compiler (typically GCC or Clang),
+// so this is set in addition to one of the host-compiler macros above when
+// the current TU is being processed by nvcc.  Use it to gate CUDA-only
+// constructs (`#pragma unroll`, `__device__`, etc.).
+#if defined(__CUDACC__)
+#define PROMEKI_COMPILER_NVCC 1
+#endif
+
+// ============================================================================
+// Compiler feature macros
+// ============================================================================
+
+// PROMEKI_UNROLL — request loop unrolling on the immediately-following loop.
+// Clang and nvcc honour `#pragma unroll`; GCC ignores it (and warns under
+// -Wunknown-pragmas, which we treat as an error in precommit).  Falls back
+// to a no-op everywhere else — at -O3, GCC will already unroll loops with
+// constant trip counts on its own, so dropping the hint costs nothing in
+// practice.
+#if defined(PROMEKI_COMPILER_CLANG) || defined(PROMEKI_COMPILER_NVCC)
+#define PROMEKI_UNROLL _Pragma("unroll")
+#else
+#define PROMEKI_UNROLL
+#endif
+
 // ============================================================================
 // C library detection
 // ============================================================================

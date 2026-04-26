@@ -7,6 +7,7 @@
  */
 
 #include <doctest/doctest.h>
+#include <promeki/platform.h>
 #include <promeki/uniqueptr.h>
 #include <promeki/logger.h>
 
@@ -166,7 +167,15 @@ TEST_CASE("UniquePtr_SelfMoveAssign") {
         auto ptr = UniquePtr<Base>::create(5);
         CHECK(objectsAlive == 1);
 
+        // Intentional self-move to verify the operator handles it gracefully.
+#if defined(PROMEKI_COMPILER_GCC) || defined(PROMEKI_COMPILER_CLANG)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wself-move"
+#endif
         ptr = std::move(ptr); // should be a no-op
+#if defined(PROMEKI_COMPILER_GCC) || defined(PROMEKI_COMPILER_CLANG)
+#pragma GCC diagnostic pop
+#endif
         CHECK(ptr.isValid());
         CHECK(ptr->value == 5);
         CHECK(objectsAlive == 1);

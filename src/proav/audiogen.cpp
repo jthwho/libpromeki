@@ -34,7 +34,7 @@ void AudioGen::genSine(size_t chan, float *data, size_t samples) const {
 }
 
 AudioGen::AudioGen(const AudioDesc &desc) : _desc(desc) {
-        for (int i = 0; i < _desc.channels(); i++) {
+        for (unsigned int i = 0; i < _desc.channels(); i++) {
                 _chanConfig += {Silence, 0.0, AudioLevel(), 0.0, 0.0, 0.0};
         }
 }

@@ -120,10 +120,6 @@ namespace {
                 buf.setSize(usedSize);
         }
 
-        static void bufAppendByte(Buffer &buf, size_t &usedSize, uint8_t b) {
-                bufAppend(buf, usedSize, &b, 1);
-        }
-
         // Synchronous IPv4 hostname resolution (matches HttpClient).  Async
         // DNS is out of scope for v1.
         static Error resolveHost(const String &host, uint32_t &outIPv4) {

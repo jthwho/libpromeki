@@ -113,14 +113,16 @@ String CmdLineParser::optionFullName(bool shortName, const Option &option) {
                 case Option::ArgInt: ret += " <int>"; break;
                 case Option::ArgDouble: ret += " <float>"; break;
                 case Option::ArgString: ret += " <string>"; break;
+                case Option::ArgNone:
+                case Option::ArgUnknown: break;
         }
         return ret;
 }
 
 StringList CmdLineParser::generateUsage() const {
         StringList list;
-        int        shortSpace = 0;
-        int        longSpace = 0;
+        size_t     shortSpace = 0;
+        size_t     longSpace = 0;
         // First, walk through all the items and get the largest strings
         // so we'll know how to format everything
         for (const auto &item : _options) {
@@ -129,7 +131,7 @@ StringList CmdLineParser::generateUsage() const {
                 if (shortName.size() > shortSpace) shortSpace = shortName.size();
                 if (longName.size() > longSpace) longSpace = longName.size();
         }
-        int totalSpace = shortSpace + longSpace;
+        size_t totalSpace = shortSpace + longSpace;
         if (shortSpace && longSpace) totalSpace += 2; // the ", " between long and short items.
 
         // Now, assemble the list

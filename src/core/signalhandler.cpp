@@ -274,6 +274,11 @@ namespace {
         // read end stays blocking (we want the watcher to block), the write
         // end goes non-blocking so the signal handler never stalls the
         // interrupted thread on a full pipe.
+        //
+        // Only needed on POSIX platforms that lack pipe2() (which Linux uses
+        // below for atomic CLOEXEC creation).  Guarded so the unused-function
+        // warning doesn't fire when pipe2() satisfies the same need.
+#if !defined(PROMEKI_PLATFORM_LINUX)
         void setFdFlags(int fd, bool nonblocking) {
                 int flags = fcntl(fd, F_GETFD);
                 if (flags >= 0) fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
@@ -284,6 +289,7 @@ namespace {
                         }
                 }
         }
+#endif
 
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
 

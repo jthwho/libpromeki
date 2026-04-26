@@ -131,8 +131,8 @@ TEST_CASE("DateTime: fromString with known format") {
 }
 
 TEST_CASE("DateTime: fromString with bad input") {
-        Error    err;
-        DateTime dt = DateTime::fromString("not-a-date", DateTime::DefaultFormat, &err);
+        Error err;
+        (void)DateTime::fromString("not-a-date", DateTime::DefaultFormat, &err);
         CHECK(err.isError());
 }
 

@@ -119,7 +119,6 @@ static String num(T val, int base = 10, int padding = 0, char padchar = ' ', boo
         if (addPrefix && padchar == '0') {
                 // Insert zero-padding between digits and prefix (so it appears
                 // between prefix and digits after reversal, e.g. 0x0042)
-                int prefixLen = index - digitEnd;
                 // Shift prefix chars right by padding amount
                 for (int i = index - 1; i >= digitEnd; i--) {
                         buf[i + padding] = buf[i];

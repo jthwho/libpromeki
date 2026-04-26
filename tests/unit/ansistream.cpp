@@ -637,6 +637,28 @@ TEST_CASE("AnsiStream: getCursorPosition returns false when disabled") {
         CHECK_FALSE(as.getCursorPosition(&dev, row, col));
 }
 
+TEST_CASE("AnsiStream: getCursorPosition returns false on truncated response") {
+        // Simulate a VT100 cursor-report response that never contains 'R',
+        // which is the terminator the function expects.  Before the fix in
+        // ansistream.cpp, the function would fall through to the parse block
+        // on garbage data; after the fix it returns false immediately.
+        String         writeStr;
+        StringIODevice outDev(&writeStr);
+        outDev.open(IODevice::WriteOnly);
+        AnsiStream as(&outDev);
+
+        // Build a 20-byte input stream with no 'R' — just garbage chars.
+        String         truncated("\033[10;20X\033[10;20X\033");  // 20 chars, no R
+        StringIODevice inDev(&truncated);
+        inDev.open(IODevice::ReadOnly);
+
+        int row = -1, col = -1;
+        CHECK_FALSE(as.getCursorPosition(&inDev, row, col));
+        // Verify row/col were not set to garbage values
+        CHECK(row == -1);
+        CHECK(col == -1);
+}
+
 // ── stdoutWindowSize test ───────────────────────────────────────────
 
 TEST_CASE("AnsiStream: stdoutWindowSize does not crash") {

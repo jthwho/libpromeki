@@ -783,14 +783,14 @@ Error MediaIOTask_V4L2::openVideo(const MediaIO::Config &cfg) {
 
 Error MediaIOTask_V4L2::startStreaming() {
         // Queue all buffers
-        for (int i = 0; i < _buffers.size(); i++) {
+        for (size_t i = 0; i < _buffers.size(); i++) {
                 struct v4l2_buffer buf;
                 std::memset(&buf, 0, sizeof(buf));
                 buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 buf.memory = V4L2_MEMORY_MMAP;
                 buf.index = static_cast<uint32_t>(i);
                 if (xioctl(_fd, VIDIOC_QBUF, &buf) < 0) {
-                        promekiErr("MediaIOTask_V4L2: VIDIOC_QBUF failed for buffer %d: %s", i, std::strerror(errno));
+                        promekiErr("MediaIOTask_V4L2: VIDIOC_QBUF failed for buffer %zu: %s", i, std::strerror(errno));
                         return Error::DeviceError;
                 }
         }
@@ -821,7 +821,7 @@ void MediaIOTask_V4L2::closeVideo() {
                              static_cast<long long>(_frameCount.value()));
         }
         stopStreaming();
-        for (int i = 0; i < _buffers.size(); i++) {
+        for (size_t i = 0; i < _buffers.size(); i++) {
                 if (_buffers[i].start != nullptr) {
                         munmap(_buffers[i].start, _buffers[i].length);
                 }

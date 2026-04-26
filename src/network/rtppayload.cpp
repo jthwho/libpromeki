@@ -787,10 +787,9 @@ Buffer RtpPayloadJpeg::unpack(const RtpPacket::List &packets) {
 // ============================================================================
 
 // Pack the RFC 9134 4-byte payload header into network byte order.
-// See the bit diagram in rtppayload.h — this is the inverse of
-// readJxsHeader below.  Individual fields are clamped / masked to
-// their documented widths so a caller that passes e.g. frameCounter
-// >= 32 still produces a well-formed header.
+// See the bit diagram in rtppayload.h.  Individual fields are clamped
+// / masked to their documented widths so a caller that passes e.g.
+// frameCounter >= 32 still produces a well-formed header.
 static void writeJxsHeader(uint8_t *hdr, bool T, bool K, bool L, uint8_t I, uint8_t frameCounter, uint16_t sepCounter,
                            uint16_t packetCounter) {
         const uint8_t  f = frameCounter & 0x1F;    // 5-bit
@@ -801,20 +800,6 @@ static void writeJxsHeader(uint8_t *hdr, bool T, bool K, bool L, uint8_t I, uint
         hdr[1] = (uint8_t)(((f & 0x03) << 6) | ((se >> 5) & 0x3F));
         hdr[2] = (uint8_t)(((se & 0x1F) << 3) | ((pc >> 8) & 0x07));
         hdr[3] = (uint8_t)(pc & 0xFF);
-}
-
-// Inverse of writeJxsHeader — extract the seven fields from a
-// 4-byte RFC 9134 header.  Used by unpack() to walk incoming
-// packets and by the unit test to verify bit layout.
-static void readJxsHeader(const uint8_t *hdr, bool &T, bool &K, bool &L, uint8_t &I, uint8_t &frameCounter,
-                          uint16_t &sepCounter, uint16_t &packetCounter) {
-        T = ((hdr[0] >> 7) & 0x01) != 0;
-        K = ((hdr[0] >> 6) & 0x01) != 0;
-        L = ((hdr[0] >> 5) & 0x01) != 0;
-        I = (uint8_t)((hdr[0] >> 3) & 0x03);
-        frameCounter = (uint8_t)(((hdr[0] & 0x07) << 2) | ((hdr[1] >> 6) & 0x03));
-        sepCounter = (uint16_t)(((uint16_t)(hdr[1] & 0x3F) << 5) | ((hdr[2] >> 3) & 0x1F));
-        packetCounter = (uint16_t)(((uint16_t)(hdr[2] & 0x07) << 8) | hdr[3]);
 }
 
 RtpPayloadJpegXs::RtpPayloadJpegXs(int width, int height, uint8_t payloadType)

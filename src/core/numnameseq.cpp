@@ -29,8 +29,8 @@ NumNameSeq::List NumNameSeq::parseList(StringList &list) {
                         auto &n = i->_name;
                         if (name.isInSequence(n)) {
                                 if ((name.isPadded() && !n.isPadded()) || (name.digits() > n.digits())) n = name;
-                                if (value < i->_head) i->_head = value;
-                                if (value > i->_tail) i->_tail = value;
+                                if (static_cast<size_t>(value) < i->_head) i->_head = static_cast<size_t>(value);
+                                if (static_cast<size_t>(value) > i->_tail) i->_tail = static_cast<size_t>(value);
                                 item = list.remove(item);
                                 found = true;
                                 break;

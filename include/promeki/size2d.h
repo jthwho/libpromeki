@@ -132,7 +132,11 @@ template <typename T> class Size2DTemplate {
 
                 /** @brief Returns true if the given 2D point lies within the size bounds. */
                 template <typename N> bool pointIsInside(const Point<N, 2> &p) const {
-                        return p.x() >= 0 && p.x() < _width && p.y() >= 0 && p.y() < _height;
+                        // First gate the >=0 check so a signed point coordinate paired with
+                        // an unsigned size dimension doesn't trip -Wsign-compare on the
+                        // upper bound: after p.x() >= 0 the cast to T is always safe.
+                        if (p.x() < N{0} || p.y() < N{0}) return false;
+                        return static_cast<T>(p.x()) < _width && static_cast<T>(p.y()) < _height;
                 }
 
         private:

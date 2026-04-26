@@ -34,34 +34,6 @@ namespace {
         // Variant::Type → JSON Schema mapping helpers.
         // ----------------------------------------------------------------
 
-        // Returns true when @p type collapses to a JSON-native scalar/array
-        // and therefore does NOT need a $ref entry in components.schemas.
-        bool variantTypeIsNative(Variant::Type type) {
-                switch (type) {
-                        case Variant::TypeBool:
-                        case Variant::TypeU8:
-                        case Variant::TypeS8:
-                        case Variant::TypeU16:
-                        case Variant::TypeS16:
-                        case Variant::TypeU32:
-                        case Variant::TypeS32:
-                        case Variant::TypeU64:
-                        case Variant::TypeS64:
-                        case Variant::TypeFloat:
-                        case Variant::TypeDouble:
-                        case Variant::TypeString:
-                        case Variant::TypeStringList:
-                        case Variant::TypeDateTime:
-                        case Variant::TypeUUID:
-                        case Variant::TypeUrl:
-                        case Variant::TypeFrameNumber:
-                        case Variant::TypeFrameCount:
-                        case Variant::TypeEnum:
-                        case Variant::TypeEnumList: return true;
-                        default: return false;
-                }
-        }
-
         // Returns the JSON Schema fragment for a single Variant::Type.  The
         // `componentsOut` parameter, when non-null, receives any complex-type
         // schema definitions emitted along the way (so a single document can

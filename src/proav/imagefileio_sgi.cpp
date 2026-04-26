@@ -161,37 +161,6 @@ static void expandRow8(uint8_t *dst, const uint8_t *src, size_t maxDst) {
         }
 }
 
-static size_t compressRow8(uint8_t *dst, const uint8_t *src, size_t width) {
-        uint8_t       *dstStart = dst;
-        const uint8_t *srcEnd = src + width;
-
-        while (src < srcEnd) {
-                // Look for a run of identical pixels
-                const uint8_t *runStart = src;
-                while (src + 1 < srcEnd && *src == *(src + 1) && (src - runStart) < 126) ++src;
-
-                if (src > runStart) {
-                        // We found a run of at least 2 identical pixels
-                        ++src; // include the last matching pixel
-                        int count = static_cast<int>(src - runStart);
-                        *dst++ = static_cast<uint8_t>(count); // Repeat: no 0x80 bit
-                        *dst++ = *runStart;
-                } else {
-                        // Literal run: collect non-repeating pixels
-                        const uint8_t *litStart = src;
-                        while (src < srcEnd && (src + 1 >= srcEnd || *src != *(src + 1)) && (src - litStart) < 126)
-                                ++src;
-                        if (src < srcEnd && (src - litStart) < 126) ++src; // include the non-matching pixel
-                        int count = static_cast<int>(src - litStart);
-                        *dst++ = static_cast<uint8_t>(count | 0x80); // Literal: 0x80 bit set
-                        std::memcpy(dst, litStart, count);
-                        dst += count;
-                }
-        }
-        *dst++ = 0; // End of scanline
-        return static_cast<size_t>(dst - dstStart);
-}
-
 // ===========================================================================
 // RLE codec (16-bit)
 // ===========================================================================
@@ -365,7 +334,6 @@ Error ImageFileIO_SGI::load(ImageFile &imageFile, const MediaConfig &config) con
                 }
 
                 // Parse offset table
-                size_t          tableEntries = h * z;
                 const uint32_t *offsets = static_cast<const uint32_t *>(dataBuf.data());
                 bool            le = isLittleEndian();
 

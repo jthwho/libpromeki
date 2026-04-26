@@ -278,8 +278,8 @@ TEST_CASE("MediaDuration toString and fromString") {
                 CHECK(d.isUnknown());
         }
         SUBCASE("Garbage parses as ParseFailed") {
-                Error         err;
-                MediaDuration d = MediaDuration::fromString(String("not a duration"), &err);
+                Error err;
+                (void)MediaDuration::fromString(String("not a duration"), &err);
                 CHECK(err == Error::ParseFailed);
         }
         SUBCASE("Infinite length round-trips through string") {

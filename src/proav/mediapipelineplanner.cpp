@@ -55,15 +55,6 @@ namespace {
                 return nullptr;
         }
 
-        void destroyStages(promeki::Map<String, MediaIO *> &stages) {
-                for (auto it = stages.begin(); it != stages.end(); ++it) {
-                        MediaIO *io = it->second;
-                        if (io == nullptr) continue;
-                        if (io->isOpen()) (void)io->close();
-                        delete io;
-                }
-                stages.clear();
-        }
 
         // ----------------------------------------------------------------
         // Topological sort (Kahn) — duplicated locally to avoid coupling

@@ -378,7 +378,6 @@ TEST_CASE("RtpPayloadJpeg") {
                 data[pos++] = 0x3F;
                 data[pos++] = 0x00; // Ss, Se, Ah/Al
                 // Entropy-coded data
-                size_t ecsStart = pos;
                 for (int i = 0; i < 20; i++) data[pos++] = static_cast<uint8_t>(0xA0 + i);
 
                 auto packets = payload.pack(data, pos);

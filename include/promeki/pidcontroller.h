@@ -45,7 +45,7 @@ template <typename ValueType = double, typename TimeType = double> class PIDCont
       * @param currentTimeFunc  Callback returning the current time.
       */
                 PIDController(CurrentValueFunc currentValueFunc, CurrentTimeFunc currentTimeFunc)
-                    : _gainP(1), _gainI(0), _gainD(0), _setPoint(0), _integral(0), _prevError(0),
+                    : _gainP(1), _gainI(0), _gainD(0), _integral(0), _prevError(0), _setPoint(0),
                       _currentValue(currentValueFunc), _currentTime(currentTimeFunc), _prevUpdate(_currentTime()) {}
 
                 /** @brief Returns the proportional gain. */

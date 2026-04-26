@@ -194,6 +194,10 @@ class GridLayout : public Layout {
         public:
                 GridLayout(ObjectBase *parent = nullptr);
 
+                // Bring the base-class single-arg addWidget(Widget*) back into
+                // scope so the row/col overload below doesn't hide it.
+                using Layout::addWidget;
+
                 /**
                  * @brief Adds a widget at the given row/column with optional span.
                  */

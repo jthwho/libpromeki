@@ -211,16 +211,21 @@ namespace {
                 const PixelFormat    &pd = idesc.pixelFormat();
                 const PixelMemLayout &ml = pd.memLayout();
 
+                if (setjmp(jerr.jmpBuf)) {
+                        jpeg_abort_compress(&cinfo);
+                        return CompressedVideoPayload::Ptr();
+                }
+
+                // Pixel-format-derived state is set up *after* the setjmp so
+                // GCC's -Wclobbered analysis doesn't flag it as potentially
+                // clobbered by the longjmp path (it isn't — the longjmp path
+                // returns before reading these — but moving the init below
+                // setjmp avoids the warning without resorting to volatile).
                 J_COLOR_SPACE colorSpace = JCS_RGB;
                 int           numComponents = 3;
                 if (pd.id() == PixelFormat::RGBA8_sRGB) {
                         colorSpace = JCS_EXT_RGBA;
                         numComponents = 4;
-                }
-
-                if (setjmp(jerr.jmpBuf)) {
-                        jpeg_abort_compress(&cinfo);
-                        return CompressedVideoPayload::Ptr();
                 }
 
                 unsigned char *outBuffer = nullptr;

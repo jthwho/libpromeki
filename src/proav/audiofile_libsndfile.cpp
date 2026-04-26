@@ -12,6 +12,7 @@
 #include <promeki/iodevice.h>
 #include <promeki/file.h>
 #include <promeki/logger.h>
+#include <promeki/platform.h>
 #include <promeki/util.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -173,6 +174,14 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                         bcinfo.time_reference_low = timeref & 0xFFFFFFFF;
                         bcinfo.time_reference_high = timeref >> 32;
                         bcinfo.coding_history_size = codingHistory.size();
+                        // BWF SF_BROADCAST_INFO fields are documented as fixed-width,
+                        // not-necessarily-null-terminated character arrays.  Truncation at
+                        // the field boundary is the intended behaviour, so silence GCC's
+                        // -Wstringop-truncation for this block.
+#if defined(PROMEKI_COMPILER_GCC)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
+#endif
                         strncpy(bcinfo.coding_history, codingHistory.cstr(), sizeof(bcinfo.coding_history));
                         strncpy(bcinfo.originator, originator.cstr(), sizeof(bcinfo.originator));
                         strncpy(bcinfo.originator_reference, originatorReference.cstr(),
@@ -180,6 +189,9 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                         strncpy(bcinfo.description, description.cstr(), sizeof(bcinfo.description));
                         strncpy(bcinfo.origination_date, date.cstr(), sizeof(bcinfo.origination_date));
                         strncpy(bcinfo.origination_time, time.cstr(), sizeof(bcinfo.origination_time));
+#if defined(PROMEKI_COMPILER_GCC)
+#pragma GCC diagnostic pop
+#endif
                         int ret = sf_command(_file, SFC_SET_BROADCAST_INFO, &bcinfo, sizeof(bcinfo));
                         if (ret != SF_TRUE) {
                                 promekiWarn("writeBroadcastInfo: failed to write broadcast info");

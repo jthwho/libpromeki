@@ -10,7 +10,7 @@
  * generic: filter, output, baseline, measurement window, warmup,
  * repeat count, and a single `-p/--param key[=value|+=value]` that
  * lets suites consume whatever knobs they need from a shared
- * `BenchParams` bag.  Suites live under `cases/*.cpp` and register
+ * `BenchParams` bag.  Suites live under `cases/<name>.cpp` and register
  * themselves through a per-suite hook declared in `cases/cases.h`.
  *
  * To add a new suite:

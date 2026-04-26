@@ -238,8 +238,13 @@ libsndfile, nlohmann/json, libvtc, SVT-JPEG-XS, Highway, CIRF.
 git clone --recurse-submodules https://github.com/jthwho/libpromeki.git
 cd libpromeki
 cmake -B build
-cmake --build build -j$(nproc)
+cmake --build build -j$(nproc)            # libraries + demos + utils
+cmake --build build --target check        # unit tests (build + run)
 ```
+
+The default `all` build excludes the unit-test executables to keep
+incremental rebuilds fast — use the `check` target (build + run) or
+`tests` (build only) when you need them.
 
 For the complete build, install, and downstream-integration guide —
 including every CMake feature flag, vendored-vs-system dependency
@@ -251,6 +256,12 @@ guide:
 - Hosted Doxygen: <https://jthwho.github.io/libpromeki/main/building.html>
 - Local Doxygen: `build/doxygen/html/building.html` after
   `cmake -B build -DPROMEKI_BUILD_DOCS=ON && cmake --build build --target docs`
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow,
+including the `scripts/precommit.sh` gate that every commit should
+pass.
 
 ## Debugging
 

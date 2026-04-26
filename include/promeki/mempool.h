@@ -89,7 +89,10 @@ class MemPool {
                                  * @param block The preceding block to check adjacency against.
                                  * @return true if this block starts where the other ends.
                                  */
-                                bool follows(const Block &block) const { return block.address + block.size == address; }
+                                bool follows(const Block &block) const {
+                                        return static_cast<uintptr_t>(block.address) + block.size ==
+                                               static_cast<uintptr_t>(address);
+                                }
                 };
 
                 /**

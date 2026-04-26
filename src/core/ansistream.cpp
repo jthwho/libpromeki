@@ -474,6 +474,9 @@ bool AnsiStream::getCursorPosition(IODevice *input, int &row, int &col) {
                 }
                 response += ch;
         }
+        // Loop exited without seeing the 'R' terminator: response is
+        // truncated and unsafe to parse.
+        if (!success) return false;
 
         // Parse the response to extract the row and column values
         if (response.length() >= 4 && response[0] == '\033' && response[1] == '[') {

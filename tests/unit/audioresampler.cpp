@@ -16,10 +16,6 @@ using namespace promeki;
 
 namespace {
 
-        AudioDesc nativeDesc(float rate, unsigned int ch) {
-                return AudioDesc(AudioFormat::NativeFloat, rate, ch);
-        }
-
         // Fills an interleaved float buffer with a sine wave.
         void fillSine(float *buf, size_t samples, unsigned int ch, float freq, float rate) {
                 for (size_t i = 0; i < samples; ++i) {

@@ -389,8 +389,6 @@ TEST_CASE("CSC L6: cross-format consistency") {
         auto refImg = src->convert(PixelFormat::YUV8_422_Rec709, src->desc().metadata());
         REQUIRE(refImg.isValid());
 
-        int barWidth = 160 / 8;
-
         for (auto targetID : targets) {
                 PixelFormat target(targetID);
                 if (target.id() == PixelFormat::YUV8_422_Rec709) continue;
@@ -513,10 +511,6 @@ TEST_CASE("CSC L8: range boundaries 10-bit") {
 }
 
 TEST_CASE("CSC L8: range boundaries 12-bit") {
-        auto make12 = [](uint16_t r, uint16_t g, uint16_t b) {
-                return makeUniformRGBA10LE(r, g, b); // reuse; PixelFormat handles bit depth
-        };
-
         SUBCASE("black 12-bit UYVY Rec.709") {
                 auto src = makeUniformRGBA10LE(0, 0, 0); // 10-bit zeros = 12-bit zeros when upconverted
                 auto src12 = src->convert(PixelFormat::RGBA12_LE_sRGB, Metadata(), scalarConfig());

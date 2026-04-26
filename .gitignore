@@ -2,5 +2,6 @@ build/
 build-*/
 .cache/
 .claude/
+.precommit.lock
 COMMIT_MSG
 

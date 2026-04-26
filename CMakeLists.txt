@@ -44,6 +44,39 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(ExternalProject)
 
+# Warning interface library ####################################################
+#
+# `promeki::warnings` is the single attachment point for our compiler-warning
+# policy.  Every target *we* build (libraries, demos, utilities, tests) links
+# it PRIVATE; vendored third-party targets do not, so their builds stay quiet.
+#
+# `-Wall -Wextra` always; `-Werror` only when PROMEKI_WARNINGS_AS_ERRORS is on
+# (off by default, flipped on by scripts/precommit.sh).  `-Wno-unused-parameter`
+# is intentional — the codebase has many virtual-method overrides that ignore
+# inherited parameters and we don't want to litter casts or `[[maybe_unused]]`
+# everywhere.
+add_library(promeki_warnings INTERFACE)
+add_library(promeki::warnings ALIAS promeki_warnings)
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(promeki_warnings INTERFACE
+        $<$<COMPILE_LANGUAGE:C,CXX>:-Wall>
+        $<$<COMPILE_LANGUAGE:C,CXX>:-Wextra>
+        $<$<COMPILE_LANGUAGE:C,CXX>:-Wno-unused-parameter>
+        # -Wmaybe-uninitialized is a known-noisy GCC interprocedural pass
+        # whose value-flow tracking through std::variant union storage and
+        # heavily-inlined templates produces false positives on this code
+        # base.  Disable just the "maybe" variant; -Wuninitialized (the
+        # reliable intra-function form) stays on via -Wall.
+        $<$<COMPILE_LANGUAGE:C,CXX>:-Wno-maybe-uninitialized>
+        # Designated-initializer struct literals (`FormatDesc{.create = ...,
+        # .configSpecs = ...}`) intentionally omit fields that should
+        # value-initialize.  -Wmissing-field-initializers fires on every
+        # such site even when the elided fields are well-defined defaults.
+        $<$<COMPILE_LANGUAGE:C,CXX>:-Wno-missing-field-initializers>
+        $<$<AND:$<BOOL:${PROMEKI_WARNINGS_AS_ERRORS}>,$<COMPILE_LANGUAGE:C,CXX>>:-Werror>
+    )
+endif()
+
 # Build options ################################################################
 
 option(PROMEKI_BUILD_TUI        "Build the promeki-tui library"    ON)
@@ -52,10 +85,14 @@ find_package(SDL3 QUIET)
 option(PROMEKI_BUILD_SDL        "Build the promeki-sdl library"    ${SDL3_FOUND})
 option(PROMEKI_BUILD_UTILS      "Build utility applications"       ON)
 option(PROMEKI_BUILD_DEMOS      "Build demonstration applications" ON)
-option(PROMEKI_BUILD_TESTS      "Build unit tests"                 ON)
-option(PROMEKI_RUN_TESTS_AFTER_BUILD
-    "Run each unit test as a POST_BUILD step after its exec is linked" ON)
+option(PROMEKI_BUILD_TESTS      "Configure unit-test targets (excluded from the default `all` build; use the `check` target to build + run, or `tests` to just build)" ON)
 option(PROMEKI_BUILD_DOCS       "Build documentation"              OFF)
+# Warning policy: -Wall -Wextra is always applied to our targets (not to
+# vendored third-party).  Promoting warnings to errors is opt-in so a new
+# compiler version's freshly-introduced warning category cannot break a
+# clean local build out of the blue.  scripts/precommit.sh flips this ON
+# so the gating build is strict.
+option(PROMEKI_WARNINGS_AS_ERRORS "Treat warnings as errors when compiling our targets (-Werror)" OFF)
 option(PROMEKI_BUILD_BENCHMARKS "Build the promeki-bench utility"  ON)
 # Per-TU build statistics: wraps every compile with /usr/bin/time -v so
 # peak RSS + wall/user/sys time land in ${CMAKE_BINARY_DIR}/build-stats.log
@@ -1485,6 +1522,7 @@ endif()
 
 add_library(promeki SHARED ${PROMEKI_SOURCES})
 add_library(promeki::promeki ALIAS promeki)
+target_link_libraries(promeki PRIVATE promeki::warnings)
 set_target_properties(promeki PROPERTIES
     VERSION ${APP_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
@@ -1774,6 +1812,7 @@ if(PROMEKI_BUILD_TUI)
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
     target_link_libraries(promeki-tui PUBLIC promeki)
+    target_link_libraries(promeki-tui PRIVATE promeki::warnings)
     target_compile_definitions(promeki-tui PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)
 endif()
 
@@ -1817,6 +1856,7 @@ if(PROMEKI_BUILD_SDL)
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
     target_link_libraries(promeki-sdl PUBLIC promeki SDL3::SDL3)
+    target_link_libraries(promeki-sdl PRIVATE promeki::warnings)
     target_compile_definitions(promeki-sdl PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)
 endif()
 
@@ -2280,13 +2320,13 @@ if(PROMEKI_BUILD_TESTS)
         )
     endif()
 
-    add_executable(unittest-promeki ${UNITTEST_SOURCES})
+    add_executable(unittest-promeki EXCLUDE_FROM_ALL ${UNITTEST_SOURCES})
     target_compile_definitions(unittest-promeki PRIVATE
         $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>
         PROMEKI_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
     )
     target_include_directories(unittest-promeki PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
-    target_link_libraries(unittest-promeki PRIVATE promeki)
+    target_link_libraries(unittest-promeki PRIVATE promeki promeki::warnings)
     if(PROMEKI_BUILD_DEMOS AND PROMEKI_ENABLE_NETWORK AND PROMEKI_ENABLE_PROAV)
         target_link_libraries(unittest-promeki PRIVATE promeki-pipeline-core)
     endif()
@@ -2317,10 +2357,10 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/tui/tuisubsystem.cpp
             tests/unit/tui/widget.cpp
         )
-        add_executable(unittest-tui ${UNITTEST_TUI_SOURCES})
+        add_executable(unittest-tui EXCLUDE_FROM_ALL ${UNITTEST_TUI_SOURCES})
         target_compile_definitions(unittest-tui PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)
         target_include_directories(unittest-tui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
-        target_link_libraries(unittest-tui PRIVATE promeki-tui)
+        target_link_libraries(unittest-tui PRIVATE promeki-tui promeki::warnings)
         add_test(NAME unittest-tui COMMAND unittest-tui)
         set_tests_properties(unittest-tui PROPERTIES TIMEOUT 60)
     endif()
@@ -2332,40 +2372,40 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/sdl/sdlrenderer.cpp
             tests/unit/sdl/sdlsubsystem.cpp
         )
-        add_executable(unittest-sdl ${UNITTEST_SDL_SOURCES})
+        add_executable(unittest-sdl EXCLUDE_FROM_ALL ${UNITTEST_SDL_SOURCES})
         target_compile_definitions(unittest-sdl PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)
         target_include_directories(unittest-sdl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
-        target_link_libraries(unittest-sdl PRIVATE promeki-sdl)
+        target_link_libraries(unittest-sdl PRIVATE promeki-sdl promeki::warnings)
         add_test(NAME unittest-sdl COMMAND unittest-sdl)
         set_tests_properties(unittest-sdl PROPERTIES TIMEOUT 60)
     endif()
 
-    # Run all unit tests sequentially after every test exec is built.
-    # The stamp-file pattern lets `add_custom_command(OUTPUT ...)` skip
-    # the ctest invocation when no test exec was relinked since the
-    # last run.  --parallel 1 is explicit so ctest stays serial even
-    # if CTEST_PARALLEL_LEVEL is set in the environment.
-    if(PROMEKI_RUN_TESTS_AFTER_BUILD)
-        set(PROMEKI_TEST_TARGETS unittest-promeki)
-        if(PROMEKI_BUILD_TUI)
-            list(APPEND PROMEKI_TEST_TARGETS unittest-tui)
-        endif()
-        if(PROMEKI_BUILD_SDL)
-            list(APPEND PROMEKI_TEST_TARGETS unittest-sdl)
-        endif()
-
-        set(PROMEKI_TESTS_STAMP ${CMAKE_BINARY_DIR}/CMakeFiles/run-tests.stamp)
-        add_custom_command(
-            OUTPUT ${PROMEKI_TESTS_STAMP}
-            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --parallel 1
-            COMMAND ${CMAKE_COMMAND} -E touch ${PROMEKI_TESTS_STAMP}
-            DEPENDS ${PROMEKI_TEST_TARGETS}
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            COMMENT "Running unit tests"
-            VERBATIM
-        )
-        add_custom_target(run-tests ALL DEPENDS ${PROMEKI_TESTS_STAMP})
+    # Umbrella targets so test executables (which are EXCLUDE_FROM_ALL,
+    # i.e. not part of the default `cmake --build` run) can be built and
+    # run with one command:
+    #
+    #   cmake --build <dir> --target tests   # build all unit-test execs
+    #   cmake --build <dir> --target check   # build them, then ctest
+    #
+    # `check` runs ctest serially (--parallel 1) — many tests reach for
+    # network / FS / thread state that misbehaves under parallel ctest.
+    set(PROMEKI_TEST_TARGETS unittest-promeki)
+    if(PROMEKI_BUILD_TUI)
+        list(APPEND PROMEKI_TEST_TARGETS unittest-tui)
     endif()
+    if(PROMEKI_BUILD_SDL)
+        list(APPEND PROMEKI_TEST_TARGETS unittest-sdl)
+    endif()
+
+    add_custom_target(tests DEPENDS ${PROMEKI_TEST_TARGETS})
+
+    add_custom_target(check
+        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --parallel 1
+        DEPENDS ${PROMEKI_TEST_TARGETS}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Running unit tests"
+        VERBATIM
+    )
 endif()
 
 # Custom Clean Targets #########################################################
@@ -2382,8 +2422,6 @@ if(PROMEKI_BUILD_TESTS)
     list(APPEND PROMEKI_CLEAN_DIRS
         ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-promeki.dir
         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-promeki
-        ${CMAKE_BINARY_DIR}/CMakeFiles/run-tests.dir
-        ${CMAKE_BINARY_DIR}/CMakeFiles/run-tests.stamp
     )
 endif()
 
@@ -2429,6 +2467,56 @@ add_custom_target(libclean
     COMMAND ${CMAKE_COMMAND} -E rm -rf ${PROMEKI_CLEAN_DIRS}
     COMMENT "Cleaning promeki objects (preserving third-party builds)"
 )
+
+# Code Formatting ##############################################################
+#
+# `format-tree` rewrites the source tree in place; `format-check-tree`
+# is the read-only gate (used by scripts/precommit.sh).  Both run a
+# single clang-format invocation across every owned .h / .cpp under
+# src/, include/promeki/, tests/{unit,func}/, demos/, utils/.  Vendored
+# code under thirdparty/ is intentionally excluded.
+#
+# Naming note: the bare names `format` / `format-check` are already
+# claimed by the vendored libvtc and cirf submodules' CMakeLists, which
+# format only their own subdirs.  The `-tree` suffix makes clear this
+# variant covers the whole project source tree and dodges the collision.
+#
+# CONFIGURE_DEPENDS makes the glob refresh on each build invocation,
+# so new files are picked up without an explicit reconfigure.  The
+# style itself is governed by .clang-format at the repo root.
+
+find_program(PROMEKI_CLANG_FORMAT NAMES clang-format)
+if(PROMEKI_CLANG_FORMAT)
+    file(GLOB_RECURSE PROMEKI_FORMAT_FILES CONFIGURE_DEPENDS
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/promeki/*.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/*.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/func/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/func/*.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/demos/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/demos/*.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils/*.h
+    )
+
+    add_custom_target(format-tree
+        COMMAND ${PROMEKI_CLANG_FORMAT} -i ${PROMEKI_FORMAT_FILES}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Reformatting source tree (clang-format -i)"
+        VERBATIM
+    )
+
+    add_custom_target(format-check-tree
+        COMMAND ${PROMEKI_CLANG_FORMAT} --dry-run --Werror ${PROMEKI_FORMAT_FILES}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Checking source tree formatting (clang-format --dry-run --Werror)"
+        VERBATIM
+    )
+else()
+    message(STATUS "clang-format not found on PATH; `format-tree` / `format-check-tree` targets disabled")
+endif()
 
 # Documentation ################################################################
 

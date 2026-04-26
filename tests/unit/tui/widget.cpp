@@ -35,9 +35,8 @@ TEST_CASE("TuiWidget: visibility") {
         TuiWidget w;
         CHECK(w.isVisible());
 
-        bool changed = false;
-        // Can't easily test signal without full ObjectBase setup,
-        // but verify show/hide work
+        // Can't easily test the visibilityChanged signal here without a full
+        // ObjectBase setup; just verify show/hide flip the visibility flag.
         w.hide();
         CHECK_FALSE(w.isVisible());
 

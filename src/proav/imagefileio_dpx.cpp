@@ -343,10 +343,6 @@ static void swapABGRtoRGBA(uint8_t *data, size_t pixelCount) {
         }
 }
 
-static void swapRGBAtoABGR(uint8_t *data, size_t pixelCount) {
-        swapABGRtoRGBA(data, pixelCount); // symmetric swap
-}
-
 static void swapARGBtoRGBA(uint8_t *data, size_t pixelCount) {
         for (size_t i = 0; i < pixelCount; ++i) {
                 uint8_t *p = data + i * 4;
@@ -355,17 +351,6 @@ static void swapARGBtoRGBA(uint8_t *data, size_t pixelCount) {
                 p[1] = g;
                 p[2] = b;
                 p[3] = a;
-        }
-}
-
-static void swapRGBAtoARGB(uint8_t *data, size_t pixelCount) {
-        for (size_t i = 0; i < pixelCount; ++i) {
-                uint8_t *p = data + i * 4;
-                uint8_t  r = p[0], g = p[1], b = p[2], a = p[3];
-                p[0] = a;
-                p[1] = r;
-                p[2] = g;
-                p[3] = b;
         }
 }
 

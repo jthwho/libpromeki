@@ -33,6 +33,13 @@ if(NOT TARGET promeki::promeki)
     find_package(promeki REQUIRED)
 endif()
 
+# Inherit the project's warning policy when built in-tree.  Standalone
+# builds (find_package) skip this — the warnings interface lib is not
+# part of the installed/exported promeki target set.
+if(TARGET promeki::warnings)
+    link_libraries(promeki::warnings)
+endif()
+
 # Whether SDL-based functional tests can be built.  In-tree this
 # tracks the parent project's PROMEKI_BUILD_SDL; standalone we probe
 # for SDL3 directly.
