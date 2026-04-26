@@ -102,19 +102,27 @@ TEST_CASE("StringList: filter all match") {
 
 TEST_CASE("StringList: indexOf found") {
         StringList sl = {"hello", "world", "foo"};
-        CHECK(sl.indexOf("hello") == 0);
-        CHECK(sl.indexOf("world") == 1);
-        CHECK(sl.indexOf("foo") == 2);
+        auto r0 = sl.indexOf("hello");
+        CHECK(r0.second() == Error::Ok);
+        CHECK(r0.first() == 0u);
+        auto r1 = sl.indexOf("world");
+        CHECK(r1.second() == Error::Ok);
+        CHECK(r1.first() == 1u);
+        auto r2 = sl.indexOf("foo");
+        CHECK(r2.second() == Error::Ok);
+        CHECK(r2.first() == 2u);
 }
 
 TEST_CASE("StringList: indexOf not found") {
         StringList sl = {"hello", "world"};
-        CHECK(sl.indexOf("missing") == -1);
+        auto r = sl.indexOf("missing");
+        CHECK(r.second() == Error::NotFound);
 }
 
 TEST_CASE("StringList: indexOf empty list") {
         StringList sl;
-        CHECK(sl.indexOf("anything") == -1);
+        auto r = sl.indexOf("anything");
+        CHECK(r.second() == Error::NotFound);
 }
 
 TEST_CASE("StringList: split and rejoin roundtrip") {
@@ -122,4 +130,23 @@ TEST_CASE("StringList: split and rejoin roundtrip") {
         StringList parts = original.split(":");
         CHECK(parts.size() == 4);
         CHECK(parts.join(":") == original);
+}
+
+TEST_CASE("StringList: SharedPtr modify retains StringList type after CoW") {
+        StringList::Ptr a = StringList::Ptr::create();
+        a.modify()->pushToBack("hello");
+        a.modify()->pushToBack("world");
+        StringList::Ptr b = a;
+        CHECK(b.referenceCount() == 2);
+        b.modify()->pushToBack("foo");
+        CHECK(a.referenceCount() == 1);
+        CHECK(b.referenceCount() == 1);
+        CHECK(a->size() == 2);
+        CHECK(b->size() == 3);
+        CHECK(a->join(",") == "hello,world");
+        CHECK(b->join(",") == "hello,world,foo");
+}
+
+TEST_CASE("StringList: Ptr alias is SharedPtr<StringList> not SharedPtr<List<String>>") {
+        static_assert(std::is_same_v<StringList::Ptr, SharedPtr<StringList>>);
 }

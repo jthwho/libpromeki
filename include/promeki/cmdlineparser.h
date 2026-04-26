@@ -23,6 +23,14 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Supports short (-x) and long (--name) options with typed arguments.
  * Each option is associated with a callback that is invoked when the option
+ * is encountered during parsing. Non-option arguments are collected and
+ * accessible after parsing completes.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently.  A single instance is intended to be used from
+ * @c main on a single thread; concurrent use requires external
+ * synchronization.
  *
  * @par Example
  * @code
@@ -38,8 +46,6 @@ PROMEKI_NAMESPACE_BEGIN
  * parser.parseMain(argc, argv);
  * // Non-option args: parser.arg(0), parser.arg(1), ...
  * @endcode
- * is encountered during parsing. Non-option arguments are collected and
- * accessible after parsing completes.
  */
 class CmdLineParser {
         public:

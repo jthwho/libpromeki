@@ -89,6 +89,10 @@ class UncompressedVideoPayload;
  * }
  * @endcode
  *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ *
  * @see ImageDataEncoder, @ref imagedataencoder
  */
 class ImageDataDecoder {

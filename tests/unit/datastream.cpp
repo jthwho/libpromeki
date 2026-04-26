@@ -2788,7 +2788,7 @@ TEST_CASE("DataStream: round-trip Variant ContentLightLevel") {
 
 TEST_CASE("DataStream: round-trip Variant Url") {
         WriterFixture f;
-        Url u = Url::fromString("pmfb://bridge?FrameBridgeRingDepth=4&FrameBridgeSyncMode=false");
+        Url u = Url::fromString("pmfb://bridge?FrameBridgeRingDepth=4&FrameBridgeSyncMode=false").first();
         REQUIRE(u.isValid());
         Variant v(u);
         REQUIRE(v.type() == Variant::TypeUrl);

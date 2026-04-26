@@ -29,6 +29,10 @@ class SDLWindow;
  *
  * This is not an ObjectBase — it is infrastructure owned by
  * SdlSubsystem (similar to TuiScreen or TuiInputParser).
+ *
+ * @par Thread Safety
+ * Thread-affine.  Must only be used on the SDL event thread (the thread
+ * that owns the bound @ref SdlSubsystem).
  */
 class SDLEventPump {
         public:

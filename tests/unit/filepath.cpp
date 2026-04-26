@@ -166,33 +166,37 @@ TEST_CASE("FilePath: relativeTo — sibling directory") {
         // /a/b relative to /a/c == ../b
         FilePath target("/a/b");
         FilePath base("/a/c");
-        FilePath rel = target.relativeTo(base);
-        CHECK(rel.isRelative());
-        CHECK(rel.toString() == "../b");
+        Result<FilePath> rel = target.relativeTo(base);
+        REQUIRE(rel.second().isOk());
+        CHECK(rel.first().isRelative());
+        CHECK(rel.first().toString() == "../b");
 }
 
 TEST_CASE("FilePath: relativeTo — same directory returns dot") {
         FilePath target("/a/b");
         FilePath base("/a/b");
-        FilePath rel = target.relativeTo(base);
+        Result<FilePath> rel = target.relativeTo(base);
         // std::filesystem::relative of /a/b from /a/b is "."
-        CHECK(rel.toString() == ".");
+        REQUIRE(rel.second().isOk());
+        CHECK(rel.first().toString() == ".");
 }
 
 TEST_CASE("FilePath: relativeTo — nested path") {
         // /a/b/c/d relative to /a/b == c/d
         FilePath target("/a/b/c/d");
         FilePath base("/a/b");
-        FilePath rel = target.relativeTo(base);
-        CHECK(rel.isRelative());
-        CHECK(rel.toString() == "c/d");
+        Result<FilePath> rel = target.relativeTo(base);
+        REQUIRE(rel.second().isOk());
+        CHECK(rel.first().isRelative());
+        CHECK(rel.first().toString() == "c/d");
 }
 
 TEST_CASE("FilePath: relativeTo — parent path") {
         // /a relative to /a/b/c == ../..
         FilePath target("/a");
         FilePath base("/a/b/c");
-        FilePath rel = target.relativeTo(base);
-        CHECK(rel.isRelative());
-        CHECK(rel.toString() == "../..");
+        Result<FilePath> rel = target.relativeTo(base);
+        REQUIRE(rel.second().isOk());
+        CHECK(rel.first().isRelative());
+        CHECK(rel.first().toString() == "../..");
 }

@@ -112,6 +112,9 @@ class ImageFileIO;
  * | @ref MediaConfig::SidecarAudioEnabled | bool   | true | Enable automatic sidecar Broadcast WAV (read + write). |
  * | @ref MediaConfig::SidecarAudioPath  | String   | — | Override path for the sidecar audio file (empty = auto-derive from pattern). |
  * | @ref MediaConfig::AudioSource       | Enum @ref AudioSourceHint | Sidecar | Preferred audio source when reading (sidecar vs. embedded). |
+ *
+ * @par Thread Safety
+ * Strand-affine — see @ref MediaIOTask.
  */
 class MediaIOTask_ImageFile : public MediaIOTask {
         public:

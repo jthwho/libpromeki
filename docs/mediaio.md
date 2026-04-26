@@ -509,8 +509,7 @@ class MediaIOTask_VideoDevice : public MediaIOTask {
         auto *self = static_cast<MediaIOTask_VideoDevice *>(ctx);
         // If the queue is full, drop the oldest frame and count it.
         if(self->_captureQueue.size() >= 4) {
-            Frame::Ptr drop;
-            if(self->_captureQueue.popOrFail(drop)) self->_dropped.fetchAndAdd(1);
+            if(self->_captureQueue.tryPop().second().isOk()) self->_dropped.fetchAndAdd(1);
         }
         self->_captureQueue.push(frame);
     }
@@ -533,8 +532,7 @@ class MediaIOTask_VideoDevice : public MediaIOTask {
             _device = DeviceHandle();
         }
         // Drain any queued frames left over.
-        Frame::Ptr drop;
-        while(_captureQueue.popOrFail(drop)) {}
+        while(_captureQueue.tryPop().second().isOk()) {}
         _dropped.setValue(0);
         return Error::Ok;
     }

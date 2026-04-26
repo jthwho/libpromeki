@@ -160,6 +160,35 @@ TEST_CASE("Array: isBetween") {
         CHECK_FALSE(val.isBetween(min, oob));
 }
 
+TEST_CASE("Array: clamp") {
+        Array<int, 4> val(-5, 5, 50, 100);
+        Array<int, 4> min(0, 0, 0, 0);
+        Array<int, 4> max(10, 10, 10, 10);
+        auto out = val.clamp(min, max);
+        CHECK(out[0] == 0);
+        CHECK(out[1] == 5);
+        CHECK(out[2] == 10);
+        CHECK(out[3] == 10);
+}
+
+TEST_CASE("Array: clamp with per-element ranges") {
+        Array<int, 3> val(50, 50, 50);
+        Array<int, 3> min(0, 60, 40);
+        Array<int, 3> max(40, 100, 100);
+        auto out = val.clamp(min, max);
+        CHECK(out[0] == 40);
+        CHECK(out[1] == 60);
+        CHECK(out[2] == 50);
+}
+
+TEST_CASE("Array: std::array rvalue construction") {
+        std::array<int, 3> sa = {1, 2, 3};
+        Array<int, 3> a(std::move(sa));
+        CHECK(a[0] == 1);
+        CHECK(a[1] == 2);
+        CHECK(a[2] == 3);
+}
+
 TEST_CASE("Array: cross-size construction") {
         Array<int, 2> small(1, 2);
         Array<int, 4> large(small);

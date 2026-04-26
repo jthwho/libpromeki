@@ -40,6 +40,9 @@ PROMEKI_NAMESPACE_BEGIN
  * | @ref MediaConfig::JpegSubsampling   | Enum @ref ChromaSubsampling | YUV422  | Chroma subsampling for RGB encode paths. |
  * | @ref MediaConfig::OutputPixelFormat | PixelFormat                 | Invalid | Optional override of the encoder's reported @ref outputPixelFormat. |
  * | @ref MediaConfig::Capacity          | int                         | 8       | Output FIFO depth before a one-shot warning is logged. |
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref VideoEncoder.
  */
 class JpegVideoEncoder : public VideoEncoder {
         public:
@@ -99,6 +102,9 @@ class JpegVideoEncoder : public VideoEncoder {
  * declared decode target for the input JPEG sub-format is used.
  *
  * Registered against @ref VideoCodec::JPEG.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref VideoDecoder.
  */
 class JpegVideoDecoder : public VideoDecoder {
         public:

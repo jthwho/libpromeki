@@ -1106,6 +1106,7 @@ set(PROMEKI_SOURCES
     src/core/selfpipe.cpp
     src/core/set.cpp
     src/core/sha1.cpp
+    src/core/securemem.cpp
     src/core/sharedmemory.cpp
     src/core/sharedptr.cpp
     src/core/signal.cpp

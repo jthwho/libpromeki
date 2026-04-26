@@ -22,6 +22,13 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Dir is a simple utility class (not ObjectBase) that wraps
  * std::filesystem directory operations with the promeki API
+ * conventions.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized.  Static helpers (@c temp, @c home,
+ * @c current, etc.) are safe to call from any thread.
  *
  * @par Example
  * @code
@@ -30,7 +37,6 @@ PROMEKI_NAMESPACE_BEGIN
  * StringList files = dir.entryList();
  * for(const String &f : files) { ... }
  * @endcode
- * conventions.
  */
 class Dir {
         public:

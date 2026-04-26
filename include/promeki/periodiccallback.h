@@ -23,6 +23,12 @@ PROMEKI_NAMESPACE_BEGIN
  * configured interval has elapsed since the last invocation,
  * service() calls the stored function and resets the clock.
  *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent calls to @c service / setters on a
+ * single instance must be externally synchronized — typically by
+ * confining the instance to one driver thread.
+ *
  * @par Example
  * @code
  * PeriodicCallback pc(1.0, []{ promekiDebug("tick"); });

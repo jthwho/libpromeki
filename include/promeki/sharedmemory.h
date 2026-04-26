@@ -51,6 +51,14 @@ PROMEKI_NAMESPACE_BEGIN
  * system reboots.  Holders that map the orphaned region continue to
  * see a valid mapping until they unmap it.
  *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance — including any combination of
+ * @c create() / @c open() / @c close() / @c data() — must be externally
+ * synchronized.  Once a region is created or opened, the underlying mapped
+ * memory may be accessed concurrently from any thread, with the usual
+ * caveats about producer/consumer synchronization on the contents.
+ *
  * @par Example
  * @code
  * // Producer side.
@@ -128,7 +136,10 @@ class SharedMemory {
                  *
                  * @param name       Region name (leading @c "/" added if missing).
                  * @param size       Region size in bytes (must be > 0).
-                 * @param mode       POSIX file mode for the object.
+                 * @param mode       POSIX file mode for the object.  Ignored on
+                 *                   non-POSIX platforms (e.g. Windows), where
+                 *                   the underlying API does not surface a
+                 *                   numeric file mode.
                  * @param groupName  Optional group to @c chown the object to (empty = skip).
                  * @return @c Error::Ok on success, or an error.
                  */

@@ -41,8 +41,10 @@ class TextStream;
  * unresolved hostname. DNS resolution is not performed automatically;
  * use DnsResolver to resolve hostname addresses.
  *
- * This class is not thread-safe. Concurrent access to a single
- * instance requires external synchronization.
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized.
  *
  * @par Example
  * @code

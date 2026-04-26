@@ -42,6 +42,13 @@ class EventLoopWakeFd;
  *
  * exec() is simply a loop calling processEvents(WaitForMore).
  *
+ * @par Thread Safety
+ * Mixed.  @c postCallable, @c postEvent, @c quit, @c startTimer,
+ * @c stopTimer, @c addIoSource, @c removeIoSource are fully
+ * thread-safe — the whole point is to post work onto another
+ * thread's loop.  @c exec / @c processEvents must run on the
+ * EventLoop's owning thread (the thread on which it was
+ * constructed).  @c current() returns the calling thread's loop.
  *
  * @par Example
  * @code
@@ -222,12 +229,20 @@ class EventLoop {
                  */
                 unsigned int nextTimerTimeout() const;
 
-                /** @brief Bitmask values for @ref addIoSource. */
-                enum IoEvent : uint32_t {
-                        IoRead  = 0x01,  ///< fd is readable
-                        IoWrite = 0x02,  ///< fd is writable
-                        IoError = 0x04   ///< error / hangup (always reported; mask is informational)
-                };
+                /**
+                 * @name I/O event bitmask constants
+                 *
+                 * Bitmask values for @ref addIoSource and the @ref IoCallback
+                 * @c events parameter.  Defined as @c static @c constexpr
+                 * @c uint32_t (rather than as an unscoped @c enum) so the
+                 * public API takes a plain @c uint32_t mask without an
+                 * implicit integer-conversion footgun.
+                 * @{
+                 */
+                static constexpr uint32_t IoRead  = 0x01;  ///< fd is readable
+                static constexpr uint32_t IoWrite = 0x02;  ///< fd is writable
+                static constexpr uint32_t IoError = 0x04;  ///< error / hangup (always reported; mask is informational)
+                /** @} */
 
                 /**
                  * @brief Callback invoked when a registered I/O source becomes ready.

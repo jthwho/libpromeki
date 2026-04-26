@@ -104,6 +104,12 @@ using VideoCodecBackendRegistry = StringRegistry<"VideoCodecBackend">;
  *         printf("%s — %s\n", vc.name().cstr(), vc.description().cstr());
  * }
  * @endcode
+ *
+ * @par Thread Safety
+ * Fully thread-safe.  The @c VideoCodec handle wraps an integer ID and
+ * is safe to share by value across threads.  Registrations are expected
+ * at static-init time and the registry is internally synchronized;
+ * thereafter @c lookup is lock-free.
  */
 class VideoCodec {
         public:
@@ -229,7 +235,7 @@ class VideoCodec {
                         ID              id = Invalid;           ///< Unique codec identifier.
                         String          name;                   ///< Short name, must be a valid C identifier (e.g. @c "H264").
                         String          desc;                   ///< Human-readable description.
-                        FourCCList      fourccList;             ///< Associated FourCC codes.
+                        FourCC::List      fourccList;             ///< Associated FourCC codes.
                         /**
                          * @brief Compressed @ref PixelFormat IDs this codec produces / consumes.
                          *
@@ -400,7 +406,7 @@ class VideoCodec {
                 const String &description() const { return d->desc; }
 
                 /** @brief Returns the list of FourCCs associated with this codec. */
-                const FourCCList &fourccList() const { return d->fourccList; }
+                const FourCC::List &fourccList() const { return d->fourccList; }
 
                 /** @brief Returns the list of compressed @ref PixelFormat values this codec covers. */
                 List<PixelFormat> compressedPixelFormats() const;

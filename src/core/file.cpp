@@ -158,7 +158,15 @@ Error File::setNonBlocking(bool enable) {
 #else // POSIX
 
 static int buildPosixFlags(IODevice::OpenMode mode, int fileFlags) {
+        // O_LARGEFILE is a Linux glibc extension; POSIX.1-2008 dropped it
+        // and macOS/FreeBSD don't define it (they default to LFS-aware
+        // off_t).  Treat it as a no-op when the macro isn't defined so
+        // this file builds on every POSIX target.
+#ifdef O_LARGEFILE
         int ret = O_LARGEFILE;
+#else
+        int ret = 0;
+#endif
         if(mode == IODevice::ReadWrite) {
                 ret |= O_RDWR;
         } else if(mode == IODevice::ReadOnly) {
@@ -427,6 +435,13 @@ Error File::readBulk(Buffer &buf, int64_t size) {
         if(!isOpen() || !isReadable()) return Error(Error::NotOpen);
         if(size <= 0) return Error(Error::InvalidArgument);
         if(!buf.isHostAccessible()) return Error(Error::NotHostAccessible);
+        // The DIO read loop treats EAGAIN as a hard error and may already
+        // have advanced the file position before failing — combining that
+        // with a non-blocking fd silently corrupts the transfer.  Refuse
+        // up front rather than handing back partial data.  Lifting this
+        // restriction requires reworking the loop to retry on EAGAIN
+        // (likely with a poll() / event-loop integration).
+        if(_nonBlocking) return Error(Error::NotSupported);
 
         // Resource-mode reads have no fd, no alignment requirement,
         // and the bytes are already in RAM. Drop straight into a

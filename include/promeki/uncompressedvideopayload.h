@@ -49,6 +49,9 @@ class PaintEngine;
  * auto payload = UncompressedVideoPayload::Ptr::create(
  *         desc, plane0);
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref VideoPayload.
  */
 class UncompressedVideoPayload : public VideoPayload {
         public:

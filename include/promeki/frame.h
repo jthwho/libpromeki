@@ -41,6 +41,14 @@ class MediaDesc;
  * Compressed bitstream access units travel as
  * @ref CompressedVideoPayload or @ref CompressedAudioPayload entries
  * in the same list.
+ *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently — Frame is a
+ * value-with-COW container (PROMEKI_SHARED_FINAL) and copies
+ * share underlying payloads via atomic refcount.  A single
+ * instance is conditionally thread-safe: const accessors are
+ * safe; mutators (@c addPayload, @c setMetadata, ...) require
+ * external synchronization.
  */
 class Frame {
         PROMEKI_SHARED_FINAL(Frame)

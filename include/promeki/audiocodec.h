@@ -72,6 +72,12 @@ using AudioCodecBackendRegistry = StringRegistry<"AudioCodecBackend">;
  * suitability before instantiating a session.  Per-backend limits
  * live on the backend record and are reachable via
  * @ref supportedSampleFormats / @ref encoderSupportedInputs.
+ *
+ * @par Thread Safety
+ * Fully thread-safe — same contract as @ref VideoCodec.  The codec
+ * handle wraps an integer ID and is safe to share by value across
+ * threads.  Registrations are expected at static-init time; thereafter
+ * @c lookup is lock-free.
  */
 class AudioCodec {
         public:
@@ -170,7 +176,7 @@ class AudioCodec {
                         ID                 id = Invalid;                                        ///< Unique codec identifier.
                         String             name;                                                ///< Short name; must be a valid C identifier (e.g. @c "Opus").
                         String             desc;                                                ///< Human-readable description.
-                        FourCCList         fourccList;                                          ///< Associated FourCC codes.
+                        FourCC::List         fourccList;                                          ///< Associated FourCC codes.
                         CompressionType    compressionType      = CompressionInvalid;           ///< Lossless vs lossy.
                         /**
                          * @brief Rate-control modes the codec can be driven in.
@@ -297,7 +303,7 @@ class AudioCodec {
                 const String &description() const { return d->desc; }
 
                 /** @brief Returns the list of FourCCs associated with this codec. */
-                const FourCCList &fourccList() const { return d->fourccList; }
+                const FourCC::List &fourccList() const { return d->fourccList; }
 
                 /** @brief Returns the codec's compression classification. */
                 CompressionType compressionType() const { return d->compressionType; }

@@ -44,6 +44,15 @@ enum class SchedulePolicy {
  * 2. **Adopted thread** — wraps an already-running thread (e.g. main).
  *    No std::thread is owned.  start() is a no-op.  Created by
  *    adoptCurrentThread().
+ *
+ * @par Thread Safety
+ * The Thread object itself is thread-affine to its owning thread
+ * (typically the creator).  @c start, @c quit, @c wait, @c setName,
+ * @c setPriority etc. should be invoked from the owner.  The
+ * @c threadEventLoop() pointer is safe to use cross-thread because
+ * @ref EventLoop's @c postCallable / @c postEvent are themselves
+ * thread-safe.  Static helpers (@c current, @c osThreadId,
+ * @c hardwareConcurrency) may be called from any thread.
  */
 class Thread : public ObjectBase {
         PROMEKI_OBJECT(Thread, ObjectBase)

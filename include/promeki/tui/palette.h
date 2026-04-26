@@ -31,6 +31,12 @@ PROMEKI_NAMESPACE_BEGIN
  * that are distinct under the target mode (e.g. high-contrast values
  * for Basic 16-color, or well-separated grays for grayscale modes)
  * produces significantly better results.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * In typical use a palette is built up at startup and read freely
+ * thereafter from the TUI thread.
  */
 class TuiPalette {
         public:

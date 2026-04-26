@@ -47,6 +47,12 @@ class Metadata;
  * details (PTP grandmaster ID, domain number, GPS lock status, etc.).
  * Include @c promeki/metadata.h to use the returned reference.
  *
+ * @par Thread Safety
+ * Distinct ClockDomain instances may be used concurrently — each is
+ * just a small handle.  The static registry (@c registerDomain,
+ * @c lookup, well-known IDs) is internally synchronized and safe
+ * to call from any thread.
+ *
  * @par Example
  * @code
  * // Well-known domains

@@ -21,6 +21,13 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup util
  *
  * Generates and manipulates RFC 4122 / RFC 9562 UUIDs.
+ * Supports versions 1 (stub), 3, 4, 5, and 7.
+ *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance is
+ * conditionally thread-safe: const operations (toString, comparisons,
+ * accessors) may be called from multiple threads, but any mutation
+ * must be externally synchronized.
  *
  * @par Example
  * @code
@@ -29,7 +36,6 @@ PROMEKI_NAMESPACE_BEGIN
  * UUID parsed = UUID::fromString(str); // round-trip
  * bool valid = id.isValid();
  * @endcode
- * Supports versions 1 (stub), 3, 4, 5, and 7.
  */
 class UUID {
         public:
@@ -50,7 +56,13 @@ class UUID {
 
                 /**
                  * @brief Generates a version 1 (timestamp + MAC) UUID.
-                 * @note Not implemented. Calling this will trigger an assertion failure.
+                 *
+                 * @warning Not yet implemented.  Calling this currently logs
+                 *          a warning and returns an invalid (all-zero) UUID.
+                 *          Use @ref generateV4 or @ref generateV7 for unique
+                 *          IDs in the meantime.
+                 *
+                 * @return An invalid UUID until v1 is implemented.
                  */
                 static UUID generateV1();
 
@@ -92,6 +104,16 @@ class UUID {
                  */
                 static UUID fromString(const char *string, Error *err = nullptr);
 
+                /**
+                 * @brief Parses a UUID from a String.
+                 * @param string The UUID string (e.g. "550e8400-e29b-41d4-a716-446655440000").
+                 * @param err    Optional error output.
+                 * @return The parsed UUID, or an invalid UUID on failure.
+                 */
+                static UUID fromString(const String &string, Error *err = nullptr) {
+                        return fromString(string.cstr(), err);
+                }
+
                 /** @brief Constructs an invalid (all-zero) UUID. */
                 UUID() : d{} { }
 
@@ -99,19 +121,13 @@ class UUID {
                 UUID(const UUID &u) : d(u.d) { }
 
                 /** @brief Move constructor. */
-                UUID(const UUID &&u) : d(std::move(u.d)) { }
+                UUID(UUID &&u) noexcept : d(std::move(u.d)) { }
 
                 /** @brief Constructs a UUID from raw 16-byte data. */
                 UUID(const DataFormat &val) : d(val) { }
 
                 /** @brief Move-constructs a UUID from raw 16-byte data. */
-                UUID(const DataFormat &&val) : d(std::move(val)) { }
-
-                /** @brief Constructs a UUID by parsing a C-string. */
-                explicit UUID(const char *str) : d(fromString(str).data()) { }
-
-                /** @brief Constructs a UUID by parsing a String. */
-                explicit UUID(const String &str) : d(fromString(str.cstr()).data()) { }
+                UUID(DataFormat &&val) noexcept : d(std::move(val)) { }
 
                 /** @brief Copy assignment operator. */
                 UUID &operator=(const UUID &val) {
@@ -120,7 +136,7 @@ class UUID {
                 }
 
                 /** @brief Move assignment operator. */
-                UUID &operator=(const UUID &&val) {
+                UUID &operator=(UUID &&val) noexcept {
                         d = std::move(val.d);
                         return *this;
                 }
@@ -132,7 +148,7 @@ class UUID {
                 }
 
                 /** @brief Move-assigns from raw 16-byte data. */
-                UUID &operator=(const DataFormat &&val) {
+                UUID &operator=(DataFormat &&val) noexcept {
                         d = std::move(val);
                         return *this;
                 }

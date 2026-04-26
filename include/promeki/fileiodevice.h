@@ -43,6 +43,10 @@ PROMEKI_NAMESPACE_BEGIN
  * isSequential() returns true. For seekable files, seek() and pos()
  * delegate to fseek/ftell and will succeed if the underlying FILE
  * supports it.
+ *
+ * @par Thread Safety
+ * Inherits @ref IODevice: thread-affine.  A single instance must
+ * only be used from the thread that created it.
  */
 class FileIODevice : public IODevice {
         PROMEKI_OBJECT(FileIODevice, IODevice)

@@ -47,6 +47,12 @@ PROMEKI_NAMESPACE_BEGIN
  * SocketAddress from;
  * ssize_t n = rx.receivePacket(buf, sizeof(buf), &from);
  * @endcode
+ *
+ * @par Thread Safety
+ * Inherits @ref PacketTransport: the send and receive sides may
+ * safely run on separate threads (the internal FIFO is mutex-
+ * guarded), but multiple concurrent senders or multiple concurrent
+ * receivers on the same instance must be externally synchronized.
  */
 class LoopbackTransport : public PacketTransport {
         public:

@@ -18,10 +18,29 @@ class String;
 class AudioDesc;
 
 /**
- * @brief Base class for an audio processing block
- * This object defines an interface for composing an audio processing chain.
+ * @brief Base class for an audio processing block.
  * @ingroup proav
  *
+ * Defines the interface for an audio processing graph node.  Each
+ * @c AudioBlock exposes a fixed number of named source and sink
+ * channels (counts supplied via @ref Config) and is intended to be
+ * composed with other blocks into a processing chain.
+ *
+ * @par Relationship to @ref AudioBuffer
+ *
+ * @c AudioBlock and @ref AudioBuffer occupy different layers and
+ * are not interchangeable.  @c AudioBlock is a @b pipeline @b node
+ * (an @ref ObjectBase with sources/sinks, signals, and graph
+ * identity); @ref AudioBuffer is a @b data @b container (a
+ * thread-safe PCM sample FIFO with format conversion).  An
+ * @c AudioBlock typically @em uses one or more @ref AudioBuffer
+ * instances internally to bridge its producer and consumer
+ * threads, but the two classes should not be unified.
+ *
+ * @par Thread Safety
+ * Thread-affine via @ref ObjectBase.  An @c AudioBlock instance must be
+ * used on the thread that created it; cross-thread interaction goes
+ * through @ref ObjectBase signal/slot dispatch.
  */
 class AudioBlock : public ObjectBase {
         PROMEKI_OBJECT(AudioBlock, ObjectBase);

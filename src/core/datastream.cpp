@@ -1335,15 +1335,14 @@ DataStream &DataStream::operator>>(Url &val) {
         if(!readTag(TypeUrl)) { val = Url(); return *this; }
         String s = readStringData();
         if(_status != Ok) { val = Url(); return *this; }
-        Error pe;
-        Url u = Url::fromString(s, &pe);
-        if(pe.isError() || !u.isValid()) {
+        Result<Url> r = Url::fromString(s);
+        if(r.second().isError() || !r.first().isValid()) {
                 setError(ReadCorruptData,
                         String::sprintf("Failed to parse Url from '%s'", s.cstr()));
                 val = Url();
                 return *this;
         }
-        val = u;
+        val = r.first();
         return *this;
 }
 
@@ -1544,16 +1543,15 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                 case TypeUrl: {
                         String s = readStringData();
                         if(_status != Ok) { val = Variant(); break; }
-                        Error pe;
-                        Url u = Url::fromString(s, &pe);
-                        if(pe.isError() || !u.isValid()) {
+                        Result<Url> r = Url::fromString(s);
+                        if(r.second().isError() || !r.first().isValid()) {
                                 setError(ReadCorruptData,
                                         String::sprintf("Failed to parse Url from '%s'",
                                                 s.cstr()));
                                 val = Variant();
                                 break;
                         }
-                        val = u;
+                        val = r.first();
                         break;
                 }
                 case TypeVideoCodec: {

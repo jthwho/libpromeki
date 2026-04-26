@@ -25,6 +25,14 @@ PROMEKI_NAMESPACE_BEGIN
  * Built-in event types (Timer, DeferredCall, Signal, Quit) are registered
  * as file-scope statics in event.cpp.  User-defined types should be
  * registered with Event::registerType().
+ *
+ * @par Thread Safety
+ * @c Event::registerType is fully thread-safe (atomic counter).
+ * A single Event instance is intended to be posted to one EventLoop
+ * and consumed there; once posted, ownership transfers to the loop
+ * and the producer must not touch it.  @c accept / @c ignore /
+ * @c isAccepted are intended for use only on the dispatching
+ * thread inside an event handler.
  */
 class Event {
         public:

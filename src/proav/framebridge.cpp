@@ -271,7 +271,7 @@ struct FrameBridge::Impl {
         }
 
         Error readConfigBlob(const uint8_t *at, size_t size) {
-                Buffer wrapper(const_cast<uint8_t *>(at), size, 0, false);
+                Buffer wrapper = Buffer::wrap(const_cast<uint8_t *>(at), size, 0);
                 wrapper.setSize(size);
                 BufferIODevice dev(&wrapper);
                 dev.open(IODevice::ReadOnly);
@@ -662,10 +662,11 @@ struct FrameBridge::Impl {
                         // Metadata
                         Metadata meta;
                         if(metaSize > 0) {
-                                Buffer tmp(static_cast<uint8_t *>(
-                                                const_cast<uint8_t *>(
-                                                        base + slotOff.metadataOff)),
-                                           metaSize, 0, false);
+                                Buffer tmp = Buffer::wrap(
+                                                static_cast<uint8_t *>(
+                                                        const_cast<uint8_t *>(
+                                                                base + slotOff.metadataOff)),
+                                                metaSize, 0);
                                 tmp.setSize(metaSize);
                                 BufferIODevice dev(&tmp);
                                 dev.open(IODevice::ReadOnly);

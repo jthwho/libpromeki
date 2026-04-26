@@ -308,18 +308,11 @@ int Enum::defaultValue(Type type) {
         return type._def->defaultValue;
 }
 
-int Enum::valueOf(Type type, const String &name, Error *err) {
-        if(type._def == nullptr) {
-                if(err != nullptr) *err = Error::IdNotFound;
-                return InvalidValue;
-        }
+Result<int> Enum::valueOf(Type type, const String &name) {
+        if(type._def == nullptr) return makeError<int>(Error::IdNotFound);
         const Entry *entry = type._def->findByName(name);
-        if(entry == nullptr) {
-                if(err != nullptr) *err = Error::IdNotFound;
-                return InvalidValue;
-        }
-        if(err != nullptr) *err = Error::Ok;
-        return entry->value;
+        if(entry == nullptr) return makeError<int>(Error::IdNotFound);
+        return makeResult(entry->value);
 }
 
 String Enum::nameOf(Type type, int value, Error *err) {
@@ -355,11 +348,10 @@ Enum Enum::lookup(const String &text, Error *err) {
                 return Enum();
         }
         // First try to look up the value segment as a registered name.
-        Error nameErr;
-        int v = valueOf(t, valueName, &nameErr);
-        if(nameErr.isOk()) {
+        auto nameLookup = valueOf(t, valueName);
+        if(nameLookup.second().isOk()) {
                 if(err != nullptr) *err = Error::Ok;
-                return Enum(t, v);
+                return Enum(t, nameLookup.first());
         }
         // Fall back to a signed decimal parse so that out-of-list values
         // produced by toString() ("Codec::100") round-trip cleanly.

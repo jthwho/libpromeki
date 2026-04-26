@@ -57,6 +57,9 @@ PROMEKI_NAMESPACE_BEGIN
  * pkt.modify()->setPts(pts);
  * // Duration is derived: 960 / 48000 = 20 ms.
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref AudioPayload.
  */
 class CompressedAudioPayload : public AudioPayload {
         public:

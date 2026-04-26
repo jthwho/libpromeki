@@ -22,15 +22,6 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup containers
  *
  * All public methods are safe to call concurrently from multiple threads.
- *
- * @par Example
- * @code
- * Queue<String> q;
- * q.emplace("first");
- * q.emplace("second");
- * String val = q.dequeue();  // "first"
- * bool empty = q.isEmpty();  // false
- * @endcode
  * Internally synchronized with a Mutex and WaitCondition.  Blocking
  * methods (pop(), peek(), waitForEmpty()) will sleep until their condition
  * is met rather than spinning or polling.
@@ -41,12 +32,21 @@ PROMEKI_NAMESPACE_BEGIN
  * such as a promise/future handshake.
  *
  * @tparam T The element type stored in the queue.
+ *
+ * @par Example
+ * @code
+ * Queue<String> q;
+ * q.emplace("first");
+ * q.emplace("second");
+ * String val = q.dequeue();  // "first"
+ * bool empty = q.isEmpty();  // false
+ * @endcode
  */
 template <typename T>
 class Queue {
         public:
-                Queue() { };
-                ~Queue() { };
+                Queue() = default;
+                ~Queue() = default;
 
                 /**
                  * @brief Pushes a copy of @p val onto the back of the queue.
@@ -115,16 +115,17 @@ class Queue {
 
                 /**
                  * @brief Tries to pop the front element without blocking.
-                 * @param[out] val Receives the dequeued element on success.
-                 * @return @c true if an element was dequeued, @c false if the queue was empty.
+                 * @return A @ref Result holding the dequeued element on success,
+                 *         or a default-constructed value with @c Error::Empty
+                 *         if the queue had no elements.
                  */
-                bool popOrFail(T &val) {
+                Result<T> tryPop() {
                         Mutex::Locker locker(_mutex);
-                        if(_queue.empty()) return false;
-                        val = std::move(_queue.front());
+                        if(_queue.empty()) return Result<T>(T{}, Error::Empty);
+                        T ret = std::move(_queue.front());
                         _queue.pop();
                         if(_queue.empty()) _cv.wakeAll();
-                        return true;
+                        return makeResult(std::move(ret));
                 }
 
                 /**
@@ -146,14 +147,14 @@ class Queue {
 
                 /**
                  * @brief Tries to copy the front element without blocking or removing it.
-                 * @param[out] val Receives a copy of the front element on success.
-                 * @return @c true if an element was available, @c false if the queue was empty.
+                 * @return A @ref Result holding a copy of the front element on
+                 *         success, or a default-constructed value with
+                 *         @c Error::Empty if the queue was empty.
                  */
-                bool peekOrFail(T &val) {
+                Result<T> tryPeek() {
                         Mutex::Locker locker(_mutex);
-                        if(_queue.empty()) return false;
-                        val = _queue.front();
-                        return true;
+                        if(_queue.empty()) return Result<T>(T{}, Error::Empty);
+                        return makeResult(T(_queue.front()));
                 }
 
                 /**

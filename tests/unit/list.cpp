@@ -147,13 +147,13 @@ TEST_CASE("List_At") {
         List<int> list = {10, 20, 30};
         CHECK(list.at(0) == 10);
         CHECK(list.at(2) == 30);
-        CHECK_THROWS_AS(list.at(5), std::out_of_range);
+        CHECK_THROWS_AS(list.at(5), std::logic_error);
 }
 
 TEST_CASE("List_ConstAt") {
         const List<int> list = {10, 20, 30};
         CHECK(list.at(1) == 20);
-        CHECK_THROWS_AS(list.at(5), std::out_of_range);
+        CHECK_THROWS_AS(list.at(5), std::logic_error);
 }
 
 TEST_CASE("List_Subscript") {
@@ -573,16 +573,26 @@ TEST_CASE("List: forEach") {
 
 TEST_CASE("List: indexOf") {
         List<int> l = {10, 20, 30, 20, 40};
-        CHECK(l.indexOf(20) == 1);
-        CHECK(l.indexOf(40) == 4);
-        CHECK(l.indexOf(99) == -1);
+        auto r1 = l.indexOf(20);
+        CHECK(r1.second() == Error::Ok);
+        CHECK(r1.first() == 1u);
+        auto r2 = l.indexOf(40);
+        CHECK(r2.second() == Error::Ok);
+        CHECK(r2.first() == 4u);
+        auto r3 = l.indexOf(99);
+        CHECK(r3.second() == Error::NotFound);
 }
 
 TEST_CASE("List: lastIndexOf") {
         List<int> l = {10, 20, 30, 20, 40};
-        CHECK(l.lastIndexOf(20) == 3);
-        CHECK(l.lastIndexOf(10) == 0);
-        CHECK(l.lastIndexOf(99) == -1);
+        auto r1 = l.lastIndexOf(20);
+        CHECK(r1.second() == Error::Ok);
+        CHECK(r1.first() == 3u);
+        auto r2 = l.lastIndexOf(10);
+        CHECK(r2.second() == Error::Ok);
+        CHECK(r2.first() == 0u);
+        auto r3 = l.lastIndexOf(99);
+        CHECK(r3.second() == Error::NotFound);
 }
 
 TEST_CASE("List: count") {

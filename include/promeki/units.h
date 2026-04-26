@@ -25,6 +25,10 @@ PROMEKI_NAMESPACE_BEGIN
  * Every static method picks the scale factor and unit suffix
  * automatically so the caller only provides a raw numeric value.
  *
+ * @par Thread Safety
+ * Fully thread-safe.  Units exposes only static formatter
+ * functions over caller-provided values; no shared state.
+ *
  * @par Example
  * @code
  * Units::fromByteCount(1500000);                     // "1.5 MB"

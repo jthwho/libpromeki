@@ -28,8 +28,9 @@ PROMEKI_NAMESPACE_BEGIN
  * usable with @ref DataStream, @ref BufferIODevice, and anything
  * else that takes an @c IODevice *.
  *
- * This class must only be used from the thread that created it (or
- * moved to via @ref moveToThread).
+ * @par Thread Safety
+ * Inherits @ref IODevice: thread-affine.  A single LocalSocket
+ * must only be used from the thread that created it.
  *
  * @par Example
  * @code

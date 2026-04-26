@@ -139,11 +139,11 @@ Buffer Resource::data(const String &path, Error *err) {
                 if(err != nullptr) *err = Error(Error::NotExist);
                 return Buffer();
         }
-        // Non-owning view over the .rodata bytes. Buffer's pointer
-        // constructor leaves _size at 0 — we set it explicitly to the
-        // resource size so callers can read size() directly.
-        Buffer buf(const_cast<unsigned char *>(file->data),
-                   file->size, /*align*/ 0, /*own*/ false);
+        // Non-owning view over the .rodata bytes. Buffer::wrap leaves
+        // _size at 0 — we set it explicitly to the resource size so
+        // callers can read size() directly.
+        Buffer buf = Buffer::wrap(const_cast<unsigned char *>(file->data),
+                                  file->size, /*align*/ 0);
         buf.setSize(file->size);
         if(err != nullptr) *err = Error(Error::Ok);
         return buf;

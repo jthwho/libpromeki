@@ -20,6 +20,14 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Represents an exact fraction.  Automatically simplifies on
  * construction.  A zero denominator produces an invalid Rational
+ * that can be detected with isValid().
+ *
+ * @par Thread Safety
+ * Trivially thread-safe.  Rational is a value-type wrapper around
+ * two integers; distinct instances may be used concurrently and a
+ * single instance carries no mutable shared state.
+ *
+ * @tparam T Underlying integer type (default: int).
  *
  * @par Example
  * @code
@@ -29,9 +37,6 @@ PROMEKI_NAMESPACE_BEGIN
  * Rational<int> half(1, 2);
  * auto sum = fps + half;
  * @endcode
- * that can be detected with isValid().
- *
- * @tparam T Underlying integer type (default: int).
  */
 template <typename T = int> class Rational {
         public:

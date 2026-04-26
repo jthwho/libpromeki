@@ -24,6 +24,16 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * A generic point class that stores NumValues components of type T, backed by
  * an Array. Named accessors (x, y, z) are conditionally available depending
+ * on the number of dimensions. Supports parsing from and formatting to
+ * comma-separated strings.
+ *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — const operations are safe, but
+ * concurrent mutation requires external synchronization.
+ *
+ * @tparam T         The component value type (e.g. int, float, double).
+ * @tparam NumValues The number of dimensions.
  *
  * @par Example
  * @code
@@ -32,11 +42,6 @@ PROMEKI_NAMESPACE_BEGIN
  * auto c = a + b;          // (4.0, 6.0)
  * float dist = a.dist(b);  // distance between a and b
  * @endcode
- * on the number of dimensions. Supports parsing from and formatting to
- * comma-separated strings.
- *
- * @tparam T         The component value type (e.g. int, float, double).
- * @tparam NumValues The number of dimensions.
  */
 template <typename T, size_t NumValues> class Point {
         public:
@@ -76,14 +81,22 @@ template <typename T, size_t NumValues> class Point {
                 /** @brief Constructs a Point from an Array. */
                 Point(const Array<T, NumValues> &val) : d(val) {}
 
-                /** @brief Constructs a Point from individual component values. */
-                template<typename... Args> Point(Args... args) : d{static_cast<T>(args)...} {}
+                /**
+                 * @brief Constructs a Point from individual component values.
+                 *
+                 * Constrained to exactly @c NumValues arguments, all of which
+                 * must be convertible to @c T — without the constraint this
+                 * template silently shadows the copy/move constructors and
+                 * the @c Array overload for one-argument calls.
+                 */
+                template<typename... Args,
+                         typename = std::enable_if_t<
+                                 sizeof...(Args) == NumValues &&
+                                 (std::is_convertible_v<Args, T> && ...)>>
+                Point(Args... args) : d{static_cast<T>(args)...} {}
 
-                /** @brief Constructs a Point by parsing a comma-separated string. */
-                Point(const String &str) : d(fromString(str)) { }
-
-                /** @brief Destructor. */
-                virtual ~Point() { }
+                /** @brief Destructor.  Non-virtual: Point is a Simple value type. */
+                ~Point() { }
  
                 /** @brief Converts the Point to a comma-separated String. */
                 operator String() const {

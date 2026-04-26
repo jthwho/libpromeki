@@ -1254,8 +1254,7 @@ void MediaIOTask_V4L2::videoCaptureLoop() {
 
                 // Drop oldest if queue is over depth to keep latency low
                 while(_videoQueue.size() >= static_cast<size_t>(VideoQueueDepth)) {
-                        VideoPayload::Ptr discard;
-                        if(!_videoQueue.popOrFail(discard)) break;
+                        if(_videoQueue.tryPop().second().isError()) break;
                         noteFrameDropped();
                 }
                 _videoQueue.push(std::move(payload));

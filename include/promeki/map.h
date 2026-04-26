@@ -22,6 +22,13 @@ PROMEKI_NAMESPACE_BEGIN
  * Provides a Qt-inspired API over std::map with consistent naming
  * conventions matching the rest of libpromeki.
  *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized.
+ *
+ * @tparam K Key type.
+ * @tparam V Value type.
  *
  * @par Example
  * @code
@@ -31,8 +38,6 @@ PROMEKI_NAMESPACE_BEGIN
  * bool found = ages.contains("Dave");  // false
  * ages.forEach([](const String &k, int v) { ... });
  * @endcode
- * @tparam K Key type.
- * @tparam V Value type.
  */
 template <typename K, typename V>
 class Map {
@@ -195,6 +200,14 @@ class Map {
 
                 /**
                  * @brief Inserts or assigns a key-value pair.
+                 *
+                 * @note Unlike @c std::map::insert (which is no-op when the
+                 *       key is already present), this calls
+                 *       @c insert_or_assign — an existing entry is
+                 *       overwritten.  This matches Qt's @c QMap::insert
+                 *       semantics and is almost always what callers want;
+                 *       use @ref insertNew when no-overwrite is required.
+                 *
                  * @param key The key.
                  * @param val The value.
                  */
@@ -211,6 +224,22 @@ class Map {
                 void insert(const K &key, V &&val) {
                         d.insert_or_assign(key, std::move(val));
                         return;
+                }
+
+                /**
+                 * @brief Inserts a key-value pair only if @p key is absent.
+                 *
+                 * Matches @c std::map::insert semantics: when the key is
+                 * already present the existing value is left unchanged
+                 * and the call returns @c false.  Use this when overwrite
+                 * is a logic error you want to detect rather than tolerate.
+                 *
+                 * @param key The key.
+                 * @param val The value.
+                 * @return True if inserted, false if @p key already existed.
+                 */
+                bool insertNew(const K &key, const V &val) {
+                        return d.emplace(key, val).second;
                 }
 
                 /**

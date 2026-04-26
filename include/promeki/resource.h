@@ -65,6 +65,16 @@ PROMEKI_NAMESPACE_BEGIN
  * lifetime of the program. Pointers returned by @c findFile() /
  * @c findFolder() and @c Buffer views returned by @c data() are
  * non-owning and never need freeing.
+ *
+ * @par Thread Safety
+ * All public methods are static and operate against a global
+ * registry that is mutated only at static-init time (via
+ * @c PROMEKI_REGISTER_RESOURCES) or via explicit @c registerRoot
+ * calls.  Lookups (@c findFile, @c findFolder, @c data) are safe
+ * to call concurrently from any thread once registration is done.
+ * Calling @c registerRoot at runtime requires external
+ * synchronization — typical usage registers all roots before
+ * worker threads start.
  */
 class Resource {
         public:

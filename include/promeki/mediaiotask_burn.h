@@ -82,6 +82,9 @@ PROMEKI_NAMESPACE_BEGIN
  * io->close();
  * delete io;
  * @endcode
+ *
+ * @par Thread Safety
+ * Strand-affine — see @ref MediaIOTask.
  */
 class MediaIOTask_Burn : public MediaIOTask {
         public:

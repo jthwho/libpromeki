@@ -25,6 +25,9 @@ class String;
  *
  * Static utility class for querying host information, byte-order helpers,
  * and C++ symbol demangling.
+ *
+ * @par Thread Safety
+ * Fully thread-safe.  All public methods are static and reentrant.
  */
 class System {
         public:

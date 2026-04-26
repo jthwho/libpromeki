@@ -26,6 +26,14 @@ PROMEKI_NAMESPACE_BEGIN
  * All methods return promeki::String for consistent integration with the
  * rest of the library.
  *
+ * @par Thread Safety
+ * The static read accessors (@c get, @c contains) are safe to call
+ * from any thread.  @c set / @c unset modify the process
+ * environment via @c setenv / @c unsetenv, which on POSIX is not
+ * thread-safe with respect to other threads reading the
+ * environment — synchronize externally if mutating the environment
+ * after worker threads have started.
+ *
  * @par Example
  * @code
  * String home = Env::get("HOME");

@@ -396,9 +396,9 @@ static const MediaIO::FormatDesc *tryResolveAsUrl(const String &maybeUrl,
                                                   Url *outUrl) {
         // Fast path: a string with no ':' can never be a URL.
         if(maybeUrl.find(':') == String::npos) return nullptr;
-        Error parseErr = Error::Ok;
-        Url url = Url::fromString(maybeUrl, &parseErr);
-        if(parseErr.isError() || !url.isValid()) return nullptr;
+        Result<Url> parsed = Url::fromString(maybeUrl);
+        if(parsed.second().isError() || !parsed.first().isValid()) return nullptr;
+        Url url = parsed.first();
         const MediaIO::FormatDesc *desc =
                 MediaIO::findFormatByScheme(url.scheme());
         if(desc == nullptr) return nullptr;
@@ -473,14 +473,13 @@ MediaIO *MediaIO::createFromUrl(const Url &url, ObjectBase *parent) {
 }
 
 MediaIO *MediaIO::createFromUrl(const String &url, ObjectBase *parent) {
-        Error err = Error::Ok;
-        Url parsed = Url::fromString(url, &err);
-        if(err.isError() || !parsed.isValid()) {
+        Result<Url> parsed = Url::fromString(url);
+        if(parsed.second().isError() || !parsed.first().isValid()) {
                 promekiWarn("MediaIO::createFromUrl: failed to parse '%s'",
                             url.cstr());
                 return nullptr;
         }
-        return createFromUrl(parsed, parent);
+        return createFromUrl(parsed.first(), parent);
 }
 
 MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) {
@@ -1087,10 +1086,7 @@ Error MediaIO::open(Mode mode) {
         // unconsumed trailing EOS left behind when an async close
         // completed without the consumer draining).  Guarantees the
         // new session starts with an empty queue.
-        {
-                MediaIOCommand::Ptr drop;
-                while(_readResultQueue.popOrFail(drop)) {}
-        }
+        while(_readResultQueue.tryPop().second().isOk()) {}
 
         // Resolve the Name / Uuid / EnableBenchmark defaults before
         // building the open command so the backend sees the final
@@ -1233,8 +1229,7 @@ Error MediaIO::close(bool block) {
         // @ref readyReads reports zero — matching the pre-refactor
         // contract.  Signal-driven async consumers don't need this;
         // they walk the queue themselves on @c frameReady.
-        MediaIOCommand::Ptr drop;
-        while(_readResultQueue.popOrFail(drop)) {}
+        while(_readResultQueue.tryPop().second().isOk()) {}
         if(r.second().isError()) return r.second();
         return r.first();
 }
@@ -1392,8 +1387,9 @@ Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
         // before the signal slot runs on the consumer's event loop).
         // Stale entries from a prior session cannot leak here because
         // @ref open clears the queue.
-        MediaIOCommand::Ptr resultCmd;
-        bool gotResult = _readResultQueue.popOrFail(resultCmd);
+        auto popped = _readResultQueue.tryPop();
+        bool gotResult = popped.second().isOk();
+        MediaIOCommand::Ptr resultCmd = gotResult ? popped.first() : MediaIOCommand::Ptr();
         if(!gotResult) {
                 if(!isOpen()) return Error::NotOpen;
                 // readFrame() pulls a frame out of the MediaIO — the
@@ -1481,8 +1477,7 @@ Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
                 // signalling EOF (the backend has said it's done).
                 _atEnd = true;
                 _strand.cancelPending();
-                MediaIOCommand::Ptr drop;
-                while(_readResultQueue.popOrFail(drop)) {}
+                while(_readResultQueue.tryPop().second().isOk()) {}
         }
         return cmdRead->result;
 }
@@ -1500,8 +1495,7 @@ size_t MediaIO::cancelPending() {
         // readFrame() submits fresh work.
         size_t cancelled = _strand.cancelPending();
         size_t dropped = 0;
-        MediaIOCommand::Ptr drop;
-        while(_readResultQueue.popOrFail(drop)) dropped++;
+        while(_readResultQueue.tryPop().second().isOk()) dropped++;
         return cancelled + dropped;
 }
 
@@ -1731,8 +1725,7 @@ void MediaIO::setStep(int val) {
         // (e.g. flipping from forward-EOF to reverse).
         if(isOpen()) {
                 _strand.cancelPending();
-                MediaIOCommand::Ptr drop;
-                while(_readResultQueue.popOrFail(drop)) {}
+                while(_readResultQueue.tryPop().second().isOk()) {}
                 _atEnd = false;
         }
         _step = val;
@@ -1746,8 +1739,7 @@ Error MediaIO::seekToFrame(const FrameNumber &frameNumber, SeekMode mode) {
         // submitting the seek.  Otherwise the next read would return
         // a stale frame from the pre-seek queue.
         _strand.cancelPending();
-        MediaIOCommand::Ptr drop;
-        while(_readResultQueue.popOrFail(drop)) {}
+        while(_readResultQueue.tryPop().second().isOk()) {}
         // Seeking past EOF clears the EOF latch — the new position may
         // be re-readable.
         _atEnd = false;

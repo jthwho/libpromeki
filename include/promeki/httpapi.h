@@ -53,10 +53,11 @@ class HttpServer;
  *                                      importable into Swagger UI / Redoc /
  *                                      Postman / openapi-generator).
  *
- * @par Threading model
- * Construction captures the @ref HttpServer reference; both objects must
- * share a single @ref EventLoop (typically the main loop).  Endpoints
- * registered after @ref mount are visible immediately — the catalog is
+ * @par Thread Safety
+ * Inherits @ref ObjectBase: thread-affine.  Construction captures
+ * the @ref HttpServer reference; both objects must share a single
+ * @ref EventLoop (typically the main loop).  Endpoints registered
+ * after @ref mount are visible immediately — the catalog is
  * generated on demand on each request.
  *
  * @par Decoupling from HttpServer

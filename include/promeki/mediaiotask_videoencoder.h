@@ -92,6 +92,9 @@ PROMEKI_NAMESPACE_BEGIN
  * // carrying the H.264 bitstream.
  * enc->close();
  * @endcode
+ *
+ * @par Thread Safety
+ * Strand-affine — see @ref MediaIOTask.
  */
 class MediaIOTask_VideoEncoder : public MediaIOTask {
         public:

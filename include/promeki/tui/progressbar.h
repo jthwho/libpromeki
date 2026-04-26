@@ -16,6 +16,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Horizontal progress indicator.
  * @ingroup tui_widgets
  *
+ * @par Thread Safety
+ * Thread-affine — see @ref TuiWidget.
  */
 class TuiProgressBar : public TuiWidget {
         PROMEKI_OBJECT(TuiProgressBar, TuiWidget)
@@ -33,7 +35,7 @@ class TuiProgressBar : public TuiWidget {
                 Size2Di32 sizeHint() const override;
 
         protected:
-                void paintEvent(TuiPaintEvent *e) override;
+                void paintEvent(PaintEvent *e) override;
 
         private:
                 int _value = 0;

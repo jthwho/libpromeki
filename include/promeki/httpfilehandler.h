@@ -53,6 +53,13 @@ PROMEKI_NAMESPACE_BEGIN
  * prefix into the @c "path" path-param, which the handler resolves
  * relative to its root.  When mounted with no @c "{path}" param,
  * the handler treats the entire request path as the relative key.
+ *
+ * @par Thread Safety
+ * Inherits @ref HttpHandler.  @c serve is intended to be called
+ * from the @ref HttpServer's owning EventLoop thread.  The MIME
+ * registry and root path are conceptually mutable but should be
+ * configured at startup; runtime mutation requires external
+ * synchronization.
  */
 class HttpFileHandler : public HttpHandler {
         PROMEKI_SHARED_DERIVED(HttpHandler, HttpFileHandler)

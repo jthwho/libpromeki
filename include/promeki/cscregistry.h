@@ -23,6 +23,11 @@ class CSCContext;
  * fast paths at static-init time; they are discovered automatically
  * by CSCPipeline during compilation.
  *
+ * @par Thread Safety
+ * Fully thread-safe.  Registrations are expected at static-init time
+ * and the registry is internally synchronized; thereafter @c lookup is
+ * lock-free.
+ *
  * @see CSCPipeline
  */
 class CSCRegistry {

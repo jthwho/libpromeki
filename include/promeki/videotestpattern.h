@@ -82,6 +82,10 @@ class UncompressedVideoPayload;
  * a.ensureExclusive();
  * gen.applyBurn(a, "01:00:00:00\nmediaplay");
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
  */
 class VideoTestPattern {
         public:

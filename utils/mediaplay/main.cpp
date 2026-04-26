@@ -147,8 +147,7 @@ int runProbe(const Options &opts) {
                 // uses) so --probe works against pmfb://, pmdf:, etc.
                 // without the caller having to convert back to a
                 // fake filename.
-                Error urlErr = Error::Ok;
-                Url parsed = Url::fromString(opts.source.path, &urlErr);
+                auto [parsed, urlErr] = Url::fromString(opts.source.path);
                 const MediaIO::FormatDesc *urlDesc = nullptr;
                 if(urlErr.isOk() && parsed.isValid()) {
                         urlDesc = MediaIO::findFormatByScheme(parsed.scheme());

@@ -61,15 +61,15 @@ TEST_CASE("UdpSocket") {
                 // Send data
                 const char *msg = "hello UDP";
                 SocketAddress dest(Ipv4Address::loopback(), port);
-                ssize_t sent = sender.writeDatagram(msg, std::strlen(msg), dest);
-                CHECK(sent == static_cast<ssize_t>(std::strlen(msg)));
+                int64_t sent = sender.writeDatagram(msg, std::strlen(msg), dest);
+                CHECK(sent == static_cast<int64_t>(std::strlen(msg)));
 
                 // Receive data
                 char buf[256];
                 SocketAddress from;
-                ssize_t received = receiver.readDatagram(buf, sizeof(buf), &from);
+                int64_t received = receiver.readDatagram(buf, sizeof(buf), &from);
                 REQUIRE(received > 0);
-                CHECK(received == static_cast<ssize_t>(std::strlen(msg)));
+                CHECK(received == static_cast<int64_t>(std::strlen(msg)));
                 CHECK(std::memcmp(buf, msg, received) == 0);
                 CHECK(from.isLoopback());
         }
@@ -122,7 +122,7 @@ TEST_CASE("UdpSocket") {
                 // Receive all
                 for(int i = 0; i < 5; i++) {
                         char buf[256];
-                        ssize_t n = receiver.readDatagram(buf, sizeof(buf));
+                        int64_t n = receiver.readDatagram(buf, sizeof(buf));
                         REQUIRE(n > 0);
                         char expected[32];
                         int elen = std::snprintf(expected, sizeof(expected), "packet %d", i);
@@ -187,7 +187,7 @@ TEST_CASE("UdpSocket") {
 
                 // Receive
                 char buf[256];
-                ssize_t n = receiver.readDatagram(buf, sizeof(buf));
+                int64_t n = receiver.readDatagram(buf, sizeof(buf));
                 CHECK(n > 0);
                 if(n > 0) {
                         CHECK(std::memcmp(buf, msg, n) == 0);
@@ -243,11 +243,11 @@ TEST_CASE("UdpSocket") {
                 buf.setSize(msgLen);
                 std::memcpy(buf.data(), msg, msgLen);
                 SocketAddress dest(Ipv4Address::loopback(), port);
-                ssize_t sent = sender.writeDatagram(buf, dest);
-                CHECK(sent == static_cast<ssize_t>(std::strlen(msg)));
+                int64_t sent = sender.writeDatagram(buf, dest);
+                CHECK(sent == static_cast<int64_t>(std::strlen(msg)));
 
                 char rbuf[256];
-                ssize_t received = receiver.readDatagram(rbuf, sizeof(rbuf));
+                int64_t received = receiver.readDatagram(rbuf, sizeof(rbuf));
                 REQUIRE(received > 0);
                 CHECK(std::memcmp(rbuf, msg, received) == 0);
         }
@@ -268,8 +268,8 @@ TEST_CASE("UdpSocket") {
 
                 // Give kernel a moment to deliver
                 usleep(10000);
-                ssize_t sz = receiver.pendingDatagramSize();
-                CHECK(sz == static_cast<ssize_t>(std::strlen(msg)));
+                int64_t sz = receiver.pendingDatagramSize();
+                CHECK(sz == static_cast<int64_t>(std::strlen(msg)));
 
                 // Now drain the datagram
                 char buf[256];
@@ -405,7 +405,7 @@ TEST_CASE("UdpSocket") {
                 // Receive all five and verify content.
                 for(int i = 0; i < 5; i++) {
                         char buf[64];
-                        ssize_t n = receiver.readDatagram(buf, sizeof(buf));
+                        int64_t n = receiver.readDatagram(buf, sizeof(buf));
                         REQUIRE(n > 0);
                         char expected[32];
                         int elen = std::snprintf(expected, sizeof(expected), "batch %d", i);

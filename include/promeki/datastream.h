@@ -163,6 +163,12 @@ class SdpSession;
  * See @ref VariantDatabase for a non-trivial example that uses this
  * pattern for a whole key-value store.
  *
+ * @par Thread Safety
+ * DataStream inherits the thread-affinity of its underlying
+ * IODevice — concurrent use of one stream from multiple threads
+ * requires external synchronization.  Distinct streams over
+ * separate devices may be used concurrently.
+ *
  * @par Basic usage example
  * @code
  * // Write to a buffer

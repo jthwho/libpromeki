@@ -16,6 +16,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Container that scrolls content larger than its viewport.
  * @ingroup tui_widgets
  *
+ * @par Thread Safety
+ * Thread-affine — see @ref TuiWidget.
  */
 class TuiScrollArea : public TuiWidget {
         PROMEKI_OBJECT(TuiScrollArea, TuiWidget)
@@ -36,9 +38,9 @@ class TuiScrollArea : public TuiWidget {
                 Size2Di32 sizeHint() const override;
 
         protected:
-                void paintEvent(TuiPaintEvent *e) override;
+                void paintEvent(PaintEvent *e) override;
                 void keyPressEvent(KeyEvent *e) override;
-                void resizeEvent(TuiResizeEvent *e) override;
+                void resizeEvent(ResizeEvent *e) override;
 
         private:
                 TuiWidget       *_contentWidget = nullptr;

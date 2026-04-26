@@ -39,6 +39,10 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @note Setting DSCP values may require elevated permissions
  *       (CAP_NET_ADMIN on Linux) depending on the platform.
+ *
+ * @par Thread Safety
+ * Inherits @ref UdpSocket: thread-affine.  A single PrioritySocket
+ * must only be used from the thread that created it.
  */
 class PrioritySocket : public UdpSocket {
         PROMEKI_OBJECT(PrioritySocket, UdpSocket)

@@ -12,6 +12,7 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
+#include <promeki/duration.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -20,8 +21,16 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup time
  *
  * Wraps a system_clock time_point and provides construction from strings,
- * time_t, and std::tm values.  Supports arithmetic with other DateTime
- * instances and with floating-point second offsets.  Output formatting
+ * time_t, and std::tm values.  Supports arithmetic with @ref Duration and
+ * with floating-point second offsets.  Output formatting uses
+ * strftime-style format strings.
+ *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — const operations are safe, but
+ * concurrent mutation requires external synchronization.  Static
+ * helpers (@c now, @c fromString, @c strftime) are fully
+ * thread-safe.
  *
  * @par Example
  * @code
@@ -34,7 +43,6 @@ PROMEKI_NAMESPACE_BEGIN
  * // Arithmetic with seconds
  * DateTime later = now + 3600.0;  // one hour later
  * @endcode
- * uses strftime-style format strings.
  */
 class DateTime {
         public:
@@ -104,25 +112,57 @@ class DateTime {
                  */
                 DateTime(time_t val) : _value(std::chrono::system_clock::from_time_t(val)) { }
 
-                /** @brief Returns the sum of two DateTime time points. */
-                DateTime operator+(const DateTime &other) const {
-                        return DateTime(_value + other._value.time_since_epoch());
+                /**
+                 * @brief Returns the time elapsed from @p other to this DateTime.
+                 *
+                 * Equivalent to chrono's @c time_point - time_point yielding
+                 * a duration.  A positive Duration means @c this is later
+                 * than @p other.
+                 *
+                 * @param other The reference instant to subtract.
+                 * @return The difference as a @ref Duration.
+                 */
+                Duration operator-(const DateTime &other) const {
+                        return Duration::fromNanoseconds(
+                                std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                        _value - other._value).count());
                 }
 
-                /** @brief Returns the difference of two DateTime time points. */
-                DateTime operator-(const DateTime &other) const {
-                        return DateTime(_value - other._value.time_since_epoch());
+                /**
+                 * @brief Returns this DateTime offset forward by @p d.
+                 * @param d The Duration to add.
+                 * @return The shifted DateTime.
+                 */
+                DateTime operator+(const Duration &d) const {
+                        return DateTime(_value + std::chrono::nanoseconds(d.nanoseconds()));
                 }
 
-                /** @brief Adds another DateTime's duration to this one. */
-                DateTime &operator+=(const DateTime &other) {
-                        _value += other._value.time_since_epoch();
+                /**
+                 * @brief Returns this DateTime offset backward by @p d.
+                 * @param d The Duration to subtract.
+                 * @return The shifted DateTime.
+                 */
+                DateTime operator-(const Duration &d) const {
+                        return DateTime(_value - std::chrono::nanoseconds(d.nanoseconds()));
+                }
+
+                /**
+                 * @brief Advances this DateTime forward by @p d.
+                 * @param d The Duration to add.
+                 * @return Reference to this DateTime.
+                 */
+                DateTime &operator+=(const Duration &d) {
+                        _value += std::chrono::nanoseconds(d.nanoseconds());
                         return *this;
                 }
 
-                /** @brief Subtracts another DateTime's duration from this one. */
-                DateTime &operator-=(const DateTime &other) {
-                        _value -= other._value.time_since_epoch();
+                /**
+                 * @brief Reverses this DateTime backward by @p d.
+                 * @param d The Duration to subtract.
+                 * @return Reference to this DateTime.
+                 */
+                DateTime &operator-=(const Duration &d) {
+                        _value -= std::chrono::nanoseconds(d.nanoseconds());
                         return *this;
                 }
 

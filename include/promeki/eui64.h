@@ -34,6 +34,11 @@ class TextStream;
  * MacAddress via the modified EUI-64 transform (FF:FE insertion
  * with U/L bit inversion) defined by IEEE and used in IPv6 / PTP.
  *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance is
+ * conditionally thread-safe: const operations may be called from
+ * multiple threads, but any mutation must be externally synchronized.
+ *
  * @par Example
  * @code
  * auto [eui, err] = EUI64::fromString("02-1a-2b-ff-fe-3c-4d-5e");

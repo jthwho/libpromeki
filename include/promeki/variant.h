@@ -197,6 +197,14 @@ namespace detail {
  * VariantImpl is a thin wrapper around `std::variant` that adds a Type enum,
  * human-readable type names, and automatic type-conversion logic via the
  * templated get() method.  It is not intended to be used directly; instead use
+ * the @ref Variant type alias which is instantiated with the concrete type
+ * list.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance — including any combination of
+ * @c set() / @c get() / @c reset() — must be externally synchronized.  The
+ * underlying @c std::variant is not internally synchronized.
  *
  * @par Example
  * @code
@@ -206,7 +214,6 @@ namespace detail {
  * bool valid = v.isValid();    // true
  * Variant::Type t = v.type();  // Variant::TypeString
  * @endcode
- * the `Variant` type alias which is instantiated with the concrete type list.
  *
  * @tparam Types  The set of types the variant can hold (generated from PROMEKI_VARIANT_TYPES).
  */
@@ -276,10 +283,20 @@ template <typename... Types> class VariantImpl {
 
                 /**
                  * @brief Constructs a variant holding a copy of @p value.
+                 *
+                 * Constrained so the converting constructor only participates
+                 * in overload resolution when @c T is exactly one of the
+                 * variant's alternatives — otherwise an unrelated single-arg
+                 * call would shadow the copy/move constructors and fail with
+                 * an opaque @c std::variant template error deep in the call.
+                 *
                  * @tparam T  The type of the value; must be one of the supported variant types.
                  * @param value  The value to store.
                  */
-                template <typename T> VariantImpl(const T& value) : v(value) { }
+                template <typename T,
+                          typename = std::enable_if_t<
+                                  std::disjunction_v<std::is_convertible<const T &, Types>...>>>
+                VariantImpl(const T& value) : v(value) { }
 
                 /** @brief Returns true if the variant holds a value other than std::monostate. */
                 bool isValid() const {
@@ -288,10 +305,18 @@ template <typename... Types> class VariantImpl {
 
                 /**
                  * @brief Replaces the currently held value with @p value.
+                 *
+                 * Constrained the same way as the converting constructor —
+                 * unrelated single-arg @c set calls otherwise produce an
+                 * opaque @c std::variant assignment error.
+                 *
                  * @tparam T  The type of the new value; must be one of the supported variant types.
                  * @param value  The value to store.
                  */
-                template <typename T> void set(const T &value) { v = value; }
+                template <typename T,
+                          typename = std::enable_if_t<
+                                  std::disjunction_v<std::is_convertible<const T &, Types>...>>>
+                void set(const T &value) { v = value; }
 
                 /**
                  * @brief Converts the stored value to the requested type @p To.
@@ -324,52 +349,27 @@ template <typename... Types> class VariantImpl {
                 /**
                  * @brief Converts complex types to their String representation, leaving simple types unchanged.
                  *
-                 * Types such as String, DateTime, TimeStamp, Size2Du32, UUID, UMID, Timecode,
-                 * Rational, and StringList are converted to String via `get<String>()`.
-                 * All other types (numeric, bool, invalid) are returned as-is.
+                 * Numeric types (integers, floating point, bool) and the
+                 * Invalid alternative are returned as-is.  Every other
+                 * Variant alternative is converted to String via
+                 * `get<String>()`.  This is driven by a type trait so
+                 * new alternatives added to PROMEKI_VARIANT_TYPES are
+                 * picked up automatically without editing this method.
                  *
                  * @return A new VariantImpl containing either the original value or its
                  *         String representation.
                  */
                 VariantImpl toStandardType() const {
-                        switch(type()) {
-                                case TypeString:
-                                case TypeDateTime:
-                                case TypeTimeStamp:
-                                case TypeMediaTimeStamp:
-                                case TypeFrameNumber:
-                                case TypeFrameCount:
-                                case TypeMediaDuration:
-                                case TypeDuration:
-                                case TypeSize2D:
-                                case TypeUUID:
-                                case TypeUMID:
-                                case TypeTimecode:
-                                case TypeRational:
-                                case TypeFrameRate:
-                                case TypeVideoFormat:
-                                case TypeStringList:
-                                case TypeColor:
-                                case TypeColorModel:
-                                case TypeMemSpace:
-                                case TypePixelMemLayout:
-                                case TypePixelFormat:
-                                case TypeVideoCodec:
-                                case TypeAudioCodec:
-                                case TypeAudioFormat:
-                                case TypeEnum:
-                                case TypeEnumList:
-                                case TypeUrl:
-#if PROMEKI_ENABLE_NETWORK
-                                case TypeSocketAddress:
-                                case TypeSdpSession:
-                                case TypeMacAddress:
-                                case TypeEUI64:
-#endif
+                        return std::visit([this](const auto &val) -> VariantImpl {
+                                using T = std::decay_t<decltype(val)>;
+                                if constexpr (std::is_same_v<T, std::monostate> ||
+                                              std::is_same_v<T, detail::VariantEnd> ||
+                                              std::is_arithmetic_v<T>) {
+                                        return *this;
+                                } else {
                                         return get<String>();
-                                        break;
-                        }
-                        return *this;
+                                }
+                        }, v);
                 }
 
                 /**
@@ -602,6 +602,9 @@ template <typename... Types> class VariantImpl {
  * so that @c variant_fwd.h can declare @ref Variant as an incomplete
  * class and break header fan-out.  All behaviour is inherited
  * unchanged from @ref VariantImpl.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref VariantImpl.
  */
 class Variant : public VariantImpl< PROMEKI_VARIANT_TYPES detail::VariantEnd > {
         public:

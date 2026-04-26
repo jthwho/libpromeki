@@ -23,8 +23,9 @@ PROMEKI_NAMESPACE_BEGIN
  * capability. The open() method returns Error::PermissionDenied if
  * insufficient permissions are available.
  *
- * This class must only be used from the thread that created it
- * (or moved to via moveToThread()).
+ * @par Thread Safety
+ * Inherits @ref IODevice: thread-affine.  A single RawSocket
+ * must only be used from the thread that created it.
  *
  * @par Example
  * @code

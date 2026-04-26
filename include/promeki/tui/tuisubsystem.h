@@ -45,6 +45,14 @@ class TuiWidget;
  * constructor argument is needed.  The constructor puts the terminal
  * into raw mode, enables the alternate screen, and installs signal
  * handlers and event sources; the destructor reverses all of that.
+ *
+ * @par Thread Safety
+ * Thread-affine.  @ref TuiSubsystem must be constructed, used, and
+ * destroyed on the thread that owns the bound @ref EventLoop (typically
+ * the main thread).  All TUI widgets and their input/paint callbacks are
+ * dispatched on the same thread.  Cross-thread interaction is supported
+ * only through @ref EventLoop::postCallable / @ref ObjectBase signal/slot
+ * dispatch.
  */
 class TuiSubsystem {
         public:

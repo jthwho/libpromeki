@@ -124,7 +124,7 @@ class EventTestWidget : public TuiWidget {
                 }
 
         protected:
-                void paintEvent(TuiPaintEvent *) override {
+                void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
@@ -137,7 +137,7 @@ class EventTestWidget : public TuiWidget {
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
-                void resizeEvent(TuiResizeEvent *) override {
+                void resizeEvent(ResizeEvent *) override {
                         if(_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
                 }
 

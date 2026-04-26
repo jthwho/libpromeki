@@ -23,6 +23,12 @@ PROMEKI_NAMESPACE_BEGIN
  * Provides a Qt-inspired API over std::set with consistent naming
  * conventions matching the rest of libpromeki.
  *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized.
+ *
+ * @tparam T Element type (must support operator<).
  *
  * @par Example
  * @code
@@ -32,7 +38,6 @@ PROMEKI_NAMESPACE_BEGIN
  * tags.remove("beta");
  * List<String> sorted = tags.toList();
  * @endcode
- * @tparam T Element type (must support operator<).
  */
 template <typename T>
 class Set {

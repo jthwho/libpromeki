@@ -21,6 +21,13 @@ PROMEKI_NAMESPACE_BEGIN
  * Used to set a result that will be retrieved via the associated
  * Future\<T\>.  Move-only (non-copyable).
  *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single Promise
+ * is intended to be set exactly once from a producer thread; the
+ * matching @ref Future is observed from a consumer thread.  The
+ * underlying @c std::promise/@c std::future synchronization makes
+ * the producer→consumer handoff safe.
+ *
  * @tparam T The result type.
  */
 template <typename T>

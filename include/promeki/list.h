@@ -11,7 +11,9 @@
 #include <initializer_list>
 #include <functional>
 #include <algorithm>
+#include <stdexcept>
 #include <promeki/namespace.h>
+#include <promeki/result.h>
 #include <promeki/sharedptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -23,6 +25,13 @@ PROMEKI_NAMESPACE_BEGIN
  * Provides a Qt-inspired API over std::vector with consistent naming
  * conventions matching the rest of libpromeki.
  *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance — including
+ * any combination of mutators and iteration — must be externally
+ * synchronized.  This matches the @c std::vector contract.
+ *
+ * @tparam T Element type.
  *
  * @par Example
  * @code
@@ -34,7 +43,6 @@ PROMEKI_NAMESPACE_BEGIN
  * // Shared ownership
  * List<String>::Ptr shared = List<String>::Ptr::create();
  * @endcode
- * @tparam T Element type.
  */
 template <typename T>
 class List {
@@ -237,15 +245,20 @@ class List {
                 /**
                  * @brief Returns a reference to the element at @p index with bounds checking.
                  * @param index Zero-based element index.
+                 * @pre @p index is less than @c size(); otherwise throws
+                 *      @c std::logic_error (mirroring the contract used by
+                 *      @c Deque::popFromFront and friends).
                  * @return Reference to the element.
                  */
                 T &at(size_t index) {
-                        return d.at(index);
+                        if(index >= d.size()) throw std::logic_error("List::at index out of range");
+                        return d[index];
                 }
 
                 /// @copydoc at()
                 const T &at(size_t index) const {
-                        return d.at(index);
+                        if(index >= d.size()) throw std::logic_error("List::at index out of range");
+                        return d[index];
                 }
 
                 /**
@@ -568,7 +581,7 @@ class List {
                  * @brief Returns a list of all the unique items in this list.
                  * @return A new sorted list with duplicate elements removed.
                  */
-                List<T> unique() {
+                List<T> unique() const {
                         auto ret = sort();
                         ret.d.erase(std::unique(ret.begin(), ret.end()), ret.end());
                         return ret;
@@ -600,25 +613,28 @@ class List {
                 /**
                  * @brief Returns the index of the first occurrence of @p value.
                  * @param value The value to search for.
-                 * @return The index, or -1 if not found.
+                 * @return A Result holding the index on success, or
+                 *         @c Error::NotFound if @p value is not present.
                  */
-                ssize_t indexOf(const T &value) const {
+                Result<size_t> indexOf(const T &value) const {
                         for(size_t i = 0; i < d.size(); ++i) {
-                                if(d[i] == value) return static_cast<ssize_t>(i);
+                                if(d[i] == value) return makeResult<size_t>(i);
                         }
-                        return -1;
+                        return makeError<size_t>(Error::NotFound);
                 }
 
                 /**
                  * @brief Returns the index of the last occurrence of @p value.
                  * @param value The value to search for.
-                 * @return The index, or -1 if not found.
+                 * @return A Result holding the index on success, or
+                 *         @c Error::NotFound if @p value is not present.
                  */
-                ssize_t lastIndexOf(const T &value) const {
-                        for(ssize_t i = static_cast<ssize_t>(d.size()) - 1; i >= 0; --i) {
-                                if(d[static_cast<size_t>(i)] == value) return i;
+                Result<size_t> lastIndexOf(const T &value) const {
+                        for(size_t i = d.size(); i > 0; --i) {
+                                size_t idx = i - 1;
+                                if(d[idx] == value) return makeResult<size_t>(idx);
                         }
-                        return -1;
+                        return makeError<size_t>(Error::NotFound);
                 }
 
                 /**

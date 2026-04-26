@@ -15,6 +15,7 @@
 #include <cerrno>
 #include <cstring>
 #include <format>
+#include <limits>
 #include <utility>
 #include <promeki/namespace.h>
 #include <promeki/util.h>
@@ -52,6 +53,13 @@ class StringList;
  * @endcode
  * @c sprintf and @c arg are not deprecated yet, but expect them to be
  * phased out as call sites are migrated.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently — the underlying refcount on the shared StringData
+ * is atomic, so copying a String across threads is safe even when
+ * the source instance is in use elsewhere.  Concurrent mutation
+ * of a single instance must be externally synchronized.
  */
 class String {
         public:
@@ -1093,6 +1101,11 @@ class String {
                                         if(err != nullptr) *err = Error::OutOfRange;
                                         return OutputType{};
                                 }
+                                if(v < static_cast<long long>(std::numeric_limits<OutputType>::min()) ||
+                                   v > static_cast<long long>(std::numeric_limits<OutputType>::max())) {
+                                        if(err != nullptr) *err = Error::OutOfRange;
+                                        return OutputType{};
+                                }
                                 if(err != nullptr) *err = Error::Ok;
                                 return static_cast<OutputType>(v);
                         } else if constexpr (std::is_integral_v<OutputType> && std::is_unsigned_v<OutputType>) {
@@ -1107,6 +1120,10 @@ class String {
                                         return OutputType{};
                                 }
                                 if(errno == ERANGE) {
+                                        if(err != nullptr) *err = Error::OutOfRange;
+                                        return OutputType{};
+                                }
+                                if(v > static_cast<unsigned long long>(std::numeric_limits<OutputType>::max())) {
                                         if(err != nullptr) *err = Error::OutOfRange;
                                         return OutputType{};
                                 }
@@ -1125,6 +1142,16 @@ class String {
                                 if(errno == ERANGE) {
                                         if(err != nullptr) *err = Error::OutOfRange;
                                         return OutputType{};
+                                }
+                                // Range-check narrowing conversions (e.g. double -> float):
+                                // strtod accepts values that exceed the OutputType's range and
+                                // a static_cast would silently produce ±inf.
+                                if constexpr (!std::is_same_v<OutputType, double> && !std::is_same_v<OutputType, long double>) {
+                                        const double absv = v < 0 ? -v : v;
+                                        if(absv > static_cast<double>(std::numeric_limits<OutputType>::max())) {
+                                                if(err != nullptr) *err = Error::OutOfRange;
+                                                return OutputType{};
+                                        }
                                 }
                                 if(err != nullptr) *err = Error::Ok;
                                 return static_cast<OutputType>(v);

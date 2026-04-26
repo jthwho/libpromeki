@@ -61,6 +61,9 @@ PROMEKI_NAMESPACE_BEGIN
  * pkt.modify()->addFlag(MediaPayload::Keyframe);
  * pkt.modify()->setFrameType(FrameType::IDR);
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref VideoPayload.
  */
 class CompressedVideoPayload : public VideoPayload {
         public:

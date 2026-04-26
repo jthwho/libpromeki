@@ -24,7 +24,11 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * BenchmarkReporter collects completed Benchmark traces (one per frame)
  * and maintains running statistics for every consecutive ID pair observed.
- * Thread-safe: multiple nodes may call submit() concurrently.
+ *
+ * @par Thread Safety
+ * Fully thread-safe.  Multiple nodes may call @c submit
+ * concurrently, and the read accessors (@c summaryReport,
+ * @c stepsForPair) serialize on an internal mutex.
  *
  * @par Example
  * @code

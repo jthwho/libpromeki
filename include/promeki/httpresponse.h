@@ -45,6 +45,13 @@ class TcpSocket;
  * Convenience factories (@ref ok, @ref notFound, @ref badRequest,
  * @ref internalError) cover the common quick-reply paths.
  *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently — copies share the
+ * underlying body @ref Buffer via atomic refcount.  A single
+ * instance is conditionally thread-safe: const accessors are
+ * safe, mutators (@c setStatus, @c setBody, @c setHeader, ...)
+ * require external synchronization.
+ *
  * @par Example
  * @code
  * HttpResponse res = HttpResponse::ok(makeJsonObject());

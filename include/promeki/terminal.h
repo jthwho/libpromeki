@@ -24,6 +24,14 @@ PROMEKI_NAMESPACE_BEGIN
  * mouse tracking, alternate screen buffer management, and color capability
  * detection.  Platform-specific implementations use termios on POSIX and
  * Console API on Windows.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  The terminal is a process-wide
+ * resource; mutating its mode (raw / canonical) or screen buffer
+ * from multiple threads concurrently produces undefined behavior.
+ * Read-only queries (@c size, @c colorCapability) are safe.
+ * Typical usage confines all Terminal calls to a single
+ * input/render thread.
  */
 class Terminal {
         public:

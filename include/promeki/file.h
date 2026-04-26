@@ -42,6 +42,10 @@ PROMEKI_NAMESPACE_BEGIN
  * When direct I/O is enabled, unbuffered mode is automatically forced.
  * The previous unbuffered state is saved and restored when direct I/O
  * is disabled.
+ *
+ * @par Thread Safety
+ * Inherits @ref IODevice: thread-affine.  A single instance must
+ * only be used from the thread that created it.
  */
 class File : public BufferedIODevice {
         PROMEKI_OBJECT(File, BufferedIODevice)
@@ -309,13 +313,14 @@ class File : public BufferedIODevice {
                  * succeeds and buf.size() reflects the actual number of bytes
                  * read (which will be less than @p size).
                  *
-                 * @note This method is not safe for use with non-blocking file
-                 * descriptors. The underlying read loop treats EAGAIN as a
-                 * hard error, which means a non-blocking fd that would block
-                 * will cause readBulk to fail — and may lose already-read data
-                 * from earlier portions of the transfer. If non-blocking bulk
-                 * reads are needed, this will require a rework of the internal
-                 * read loop.
+                 * @note Not supported on non-blocking file descriptors.
+                 * @c readBulk() returns @c Error::NotSupported immediately
+                 * when the @c File is in non-blocking mode rather than
+                 * risking partial transfers — the underlying loop treats
+                 * EAGAIN as a hard error and would lose already-read data
+                 * from earlier portions of the transfer.  Lifting this
+                 * restriction requires reworking the internal read loop to
+                 * retry on EAGAIN (likely via a poll/event-loop integration).
                  *
                  * @param buf  Destination buffer (must be host-accessible).
                  * @param size Number of bytes to read.

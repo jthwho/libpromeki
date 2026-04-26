@@ -86,11 +86,11 @@ TEST_CASE("PrioritySocket") {
 
                 const char *msg = "priority test";
                 SocketAddress dest(Ipv4Address::loopback(), port);
-                ssize_t sent = sender.writeDatagram(msg, std::strlen(msg), dest);
-                CHECK(sent == static_cast<ssize_t>(std::strlen(msg)));
+                int64_t sent = sender.writeDatagram(msg, std::strlen(msg), dest);
+                CHECK(sent == static_cast<int64_t>(std::strlen(msg)));
 
                 char buf[256];
-                ssize_t received = receiver.readDatagram(buf, sizeof(buf));
+                int64_t received = receiver.readDatagram(buf, sizeof(buf));
                 REQUIRE(received > 0);
                 CHECK(std::memcmp(buf, msg, received) == 0);
         }

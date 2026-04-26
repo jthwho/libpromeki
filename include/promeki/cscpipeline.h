@@ -31,6 +31,12 @@ class UncompressedVideoPayload;
  * concurrently from multiple threads (each caller must provide its own
  * CSCContext for scratch storage).
  *
+ * @par Thread Safety
+ * Fully thread-safe after construction.  A compiled @c CSCPipeline is
+ * immutable; @c processLine and the higher-level conversion entry points
+ * may be called concurrently from any number of threads, provided each
+ * caller supplies its own @ref CSCContext for scratch storage.
+ *
  * The general conversion pipeline for one scanline is:
  *
  * 1. **Unpack** source memory layout into float SoA buffers

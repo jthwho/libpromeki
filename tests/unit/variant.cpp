@@ -898,7 +898,7 @@ TEST_CASE("Variant_Format_String_Width") {
 
 TEST_CASE("Variant_Format_NoFormatter_FallsBack") {
         // UUID has no std::formatter — spec is applied to its String form.
-        Variant v(UUID(String("12345678-1234-1234-1234-1234567890ab")));
+        Variant v(UUID::fromString(String("12345678-1234-1234-1234-1234567890ab")));
         String full = v.format(String());
         // Width spec on a non-formattable type reuses the String form.
         String widened = v.format(">40");
@@ -924,7 +924,7 @@ TEST_CASE("Variant_Format_Invalid_Variant_Empty") {
 // ============================================================================
 
 TEST_CASE("Variant_Url_RoundTrip") {
-        Url u = Url::fromString("pmfb://studio-a?FrameBridgeRingDepth=4");
+        Url u = Url::fromString("pmfb://studio-a?FrameBridgeRingDepth=4").first();
         Variant v(u);
         CHECK(v.isValid());
         CHECK(v.type() == Variant::TypeUrl);
@@ -933,7 +933,7 @@ TEST_CASE("Variant_Url_RoundTrip") {
 }
 
 TEST_CASE("Variant_Url_ToString") {
-        Url u = Url::fromString("pmfb://studio-a");
+        Url u = Url::fromString("pmfb://studio-a").first();
         Variant v(u);
         CHECK(v.get<String>() == "pmfb://studio-a");
 }

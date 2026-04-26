@@ -33,6 +33,13 @@ PROMEKI_NAMESPACE_BEGIN
  * Multiple Strand instances backed by the same ThreadPool run
  * independently and may execute concurrently on different pool threads.
  *
+ * @par Thread Safety
+ * Fully thread-safe.  @c submit, @c submitFront, @c cancel,
+ * @c waitForIdle, and the introspection accessors may be called
+ * concurrently from any thread.  Submitted callables themselves
+ * run serialized — that is the contract — so they need no
+ * additional synchronization with each other.
+ *
  * @par Example
  * @code
  * ThreadPool pool;

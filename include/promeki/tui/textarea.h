@@ -18,6 +18,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Multi-line text editing/display widget.
  * @ingroup tui_widgets
  *
+ * @par Thread Safety
+ * Thread-affine — see @ref TuiWidget.
  */
 class TuiTextArea : public TuiWidget {
         PROMEKI_OBJECT(TuiTextArea, TuiWidget)
@@ -38,7 +40,7 @@ class TuiTextArea : public TuiWidget {
                 PROMEKI_SIGNAL(textChanged)
 
         protected:
-                void paintEvent(TuiPaintEvent *e) override;
+                void paintEvent(PaintEvent *e) override;
                 void keyPressEvent(KeyEvent *e) override;
 
         private:

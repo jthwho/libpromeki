@@ -74,6 +74,13 @@ using HttpMiddlewareList = List<HttpMiddleware>;
  * @ref HttpFileHandler and the auto-mounted reflection adapters
  * (@c HttpServer::exposeDatabase, @c HttpServer::exposeLookup) are the
  * primary consumers in-tree.
+ *
+ * @par Thread Safety
+ * Handlers are typically invoked on the @ref HttpServer's owning
+ * EventLoop thread.  Concurrent invocation of @c serve on the
+ * same handler instance is only safe if the concrete subclass
+ * documents that it is — most handlers can assume single-threaded
+ * dispatch.
  */
 class HttpHandler {
         public:

@@ -25,6 +25,11 @@ PROMEKI_NAMESPACE_BEGIN
  * A specialization of fixed-size array for uint8_t data, providing
  * conversion to and from hexadecimal strings.
  *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized.
+ *
  * @tparam NumBytes Number of bytes (fixed at compile time).
  */
 template <size_t NumBytes> class ByteArray {
@@ -40,7 +45,7 @@ template <size_t NumBytes> class ByteArray {
                 ByteArray(const DataType &val) : d(val) {}
 
                 /** @brief Move-constructs from a std::array. */
-                ByteArray(const DataType &&val) : d(std::move(val)) {}
+                ByteArray(DataType &&val) noexcept : d(std::move(val)) {}
 
                 /** @brief Constructs from a raw byte pointer.  Copies NumBytes from src. */
                 explicit ByteArray(const uint8_t *src) {

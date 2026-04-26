@@ -125,6 +125,12 @@ PROMEKI_NAMESPACE_BEGIN
  * @see XYZColor for the connection space through which all conversions pass.
  * @see CIEPoint for chromaticity coordinates used to define primaries.
  * @see @ref typeregistry "TypeRegistry Pattern" for the design pattern.
+ *
+ * @par Thread Safety
+ * Distinct ColorModel instances may be used concurrently — each is
+ * just a small handle to an immutable registry entry.  The static
+ * registry (registerType / registerData / type lookup) is
+ * internally synchronized and safe to call from any thread.
  */
 class ColorModel {
         public:

@@ -19,8 +19,9 @@ PROMEKI_NAMESPACE_BEGIN
  * communication over TCP. Uses the IODevice read()/write()
  * interface for data transfer after a connection is established.
  *
- * This class must only be used from the thread that created it
- * (or moved to via moveToThread()).
+ * @par Thread Safety
+ * Inherits @ref IODevice: thread-affine.  A single TcpSocket
+ * must only be used from the thread that created it.
  *
  * @par Example
  * @code

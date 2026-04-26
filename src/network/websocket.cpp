@@ -185,9 +185,9 @@ void WebSocket::setRequestHeader(const String &name, const String &value) {
 
 Error WebSocket::connectToUrl(const String &urlStr) {
         if(_state != Disconnected) return Error::AlreadyOpen;
-        Error parseErr;
-        Url u = Url::fromString(urlStr, &parseErr);
-        if(parseErr.isError() || !u.isValid()) return Error::Invalid;
+        Result<Url> parsed = Url::fromString(urlStr);
+        if(parsed.second().isError() || !parsed.first().isValid()) return Error::Invalid;
+        Url u = parsed.first();
         if(u.host().isEmpty())                 return Error::Invalid;
 
         _useTls = false;

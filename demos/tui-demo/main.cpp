@@ -146,7 +146,7 @@ class BasicWidgetsTab : public TuiWidget {
                         advanceProgress();
                 }
 
-                void paintEvent(TuiPaintEvent *) override {
+                void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
@@ -158,7 +158,7 @@ class BasicWidgetsTab : public TuiWidget {
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
-                void resizeEvent(TuiResizeEvent *) override {
+                void resizeEvent(ResizeEvent *) override {
                         if(_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
                 }
 
@@ -260,7 +260,7 @@ class TextInputTab : public TuiWidget {
                 PROMEKI_SLOT(lineEditReturn);
 
         protected:
-                void paintEvent(TuiPaintEvent *) override {
+                void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
@@ -272,7 +272,7 @@ class TextInputTab : public TuiWidget {
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
-                void resizeEvent(TuiResizeEvent *) override {
+                void resizeEvent(ResizeEvent *) override {
                         if(_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
                 }
 
@@ -362,7 +362,7 @@ class ListViewTab : public TuiWidget {
                 PROMEKI_SLOT(itemActivated, int);
 
         protected:
-                void paintEvent(TuiPaintEvent *) override {
+                void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
@@ -374,7 +374,7 @@ class ListViewTab : public TuiWidget {
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
-                void resizeEvent(TuiResizeEvent *) override {
+                void resizeEvent(ResizeEvent *) override {
                         if(_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
                 }
 
@@ -428,7 +428,7 @@ class SplitterTab : public TuiWidget {
                 }
 
         protected:
-                void paintEvent(TuiPaintEvent *) override {
+                void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
@@ -440,7 +440,7 @@ class SplitterTab : public TuiWidget {
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
-                void resizeEvent(TuiResizeEvent *) override {
+                void resizeEvent(ResizeEvent *) override {
                         if(_splitter) {
                                 _splitter->setGeometry(Rect2Di32(0, 0, width(), height()));
                         }
@@ -460,7 +460,7 @@ class ColorsTab : public TuiWidget {
                 ColorsTab(ObjectBase *parent = nullptr) : TuiWidget(parent) {}
 
         protected:
-                void paintEvent(TuiPaintEvent *) override {
+                void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
@@ -641,7 +641,7 @@ class DemoWidget : public TuiWidget {
                 }
 
         protected:
-                void paintEvent(TuiPaintEvent *) override {
+                void paintEvent(PaintEvent *) override {
                         TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
@@ -653,7 +653,7 @@ class DemoWidget : public TuiWidget {
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
-                void resizeEvent(TuiResizeEvent *) override {
+                void resizeEvent(ResizeEvent *) override {
                         if(_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
                         updateStatusInfo();
                 }

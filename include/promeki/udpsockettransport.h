@@ -48,6 +48,11 @@ PROMEKI_NAMESPACE_BEGIN
  * batch.pushToBack(d);
  * transport.sendPackets(batch);
  * @endcode
+ *
+ * @par Thread Safety
+ * Inherits @ref PacketTransport: a single instance must only be
+ * used from one thread at a time.  The underlying @ref UdpSocket
+ * is itself thread-affine.
  */
 class UdpSocketTransport : public PacketTransport {
         public:

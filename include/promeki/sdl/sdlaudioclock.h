@@ -90,6 +90,14 @@ class SDLAudioOutput;
  *
  * The clock does not own the SDLAudioOutput.  The caller must keep
  * the output alive for the clock's lifetime.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  @ref nowNs and @ref sleepUntilNs are
+ * expected to be driven from a single thread (the consumer that the
+ * clock is pacing).  Distinct instances may be used concurrently;
+ * readers that call @ref stats / @ref jitter from a different thread
+ * may see a slightly inconsistent snapshot — see the @ref Stats
+ * documentation.
  */
 class SDLAudioClock : public Clock {
         public:

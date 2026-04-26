@@ -19,6 +19,11 @@ PROMEKI_NAMESPACE_BEGIN
  * Allows multiple concurrent readers or a single exclusive writer.
  * Provides nested RAII ReadLocker and WriteLocker types.
  * Non-copyable and non-movable.
+ *
+ * @par Thread Safety
+ * Fully thread-safe by construction.  All public methods may be
+ * invoked concurrently from any thread on a single instance —
+ * that is the entire purpose of the type.
  */
 class ReadWriteLock {
         public:

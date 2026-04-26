@@ -20,6 +20,9 @@ PROMEKI_NAMESPACE_BEGIN
  * Displays as `[x] Text` when checked or `[ ] Text` when unchecked.
  * Supports keyboard activation (Enter/Space) and mouse click to toggle.
  * Emits the toggled signal when the checked state changes.
+ *
+ * @par Thread Safety
+ * Thread-affine — see @ref TuiWidget.
  */
 class TuiCheckBox : public TuiWidget {
         PROMEKI_OBJECT(TuiCheckBox, TuiWidget)
@@ -40,7 +43,7 @@ class TuiCheckBox : public TuiWidget {
                 PROMEKI_SIGNAL(toggled, bool)
 
         protected:
-                void paintEvent(TuiPaintEvent *e) override;
+                void paintEvent(PaintEvent *e) override;
                 void keyPressEvent(KeyEvent *e) override;
                 void mouseEvent(MouseEvent *e) override;
                 void focusInEvent(Event *e) override;

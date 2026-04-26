@@ -110,27 +110,26 @@ TEST_CASE("Queue_PopTimeoutSuccess") {
 }
 
 // ============================================================================
-// popOrFail
+// tryPop
 // ============================================================================
 
-TEST_CASE("Queue_PopOrFailEmpty") {
+TEST_CASE("Queue_TryPopEmpty") {
     Queue<int> q;
-    int val = -1;
-    CHECK(q.popOrFail(val) == false);
-    CHECK(val == -1);
+    auto [val, err] = q.tryPop();
+    CHECK(err == Error::Empty);
 }
 
-TEST_CASE("Queue_PopOrFailNonEmpty") {
+TEST_CASE("Queue_TryPopNonEmpty") {
     Queue<int> q;
     q.push(99);
-    int val = -1;
-    CHECK(q.popOrFail(val) == true);
+    auto [val, err] = q.tryPop();
+    CHECK(err.isOk());
     CHECK(val == 99);
     CHECK(q.size() == 0);
 }
 
 // ============================================================================
-// peek and peekOrFail
+// peek and tryPeek
 // ============================================================================
 
 TEST_CASE("Queue_Peek") {
@@ -149,18 +148,17 @@ TEST_CASE("Queue_PeekTimeout") {
     CHECK(err == Error::Timeout);
 }
 
-TEST_CASE("Queue_PeekOrFailEmpty") {
+TEST_CASE("Queue_TryPeekEmpty") {
     Queue<int> q;
-    int val = -1;
-    CHECK(q.peekOrFail(val) == false);
-    CHECK(val == -1);
+    auto [val, err] = q.tryPeek();
+    CHECK(err == Error::Empty);
 }
 
-TEST_CASE("Queue_PeekOrFailNonEmpty") {
+TEST_CASE("Queue_TryPeekNonEmpty") {
     Queue<int> q;
     q.push(55);
-    int val = -1;
-    CHECK(q.peekOrFail(val) == true);
+    auto [val, err] = q.tryPeek();
+    CHECK(err.isOk());
     CHECK(val == 55);
     // Should not remove the item
     CHECK(q.size() == 1);
@@ -317,11 +315,11 @@ TEST_CASE("Queue_MoveOnPop") {
     CHECK(*val == 42);
 }
 
-TEST_CASE("Queue_MoveOnPopOrFail") {
+TEST_CASE("Queue_MoveOnTryPop") {
     Queue<UniquePtr<int>> q;
     q.push(UniquePtr<int>::create(99));
-    UniquePtr<int> val;
-    CHECK(q.popOrFail(val) == true);
+    auto [val, err] = q.tryPop();
+    CHECK(err.isOk());
     CHECK(val != nullptr);
     CHECK(*val == 99);
 }

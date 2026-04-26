@@ -20,7 +20,16 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup containers
  *
  * Provides a Qt-inspired API over std::unordered_map with consistent naming
- *  *
+ * conventions matching the rest of libpromeki.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized.
+ *
+ * @tparam K Key type (must be hashable).
+ * @tparam V Value type.
+ *
  * @par Example
  * @code
  * HashMap<String, int> cache;
@@ -28,10 +37,6 @@ PROMEKI_NAMESPACE_BEGIN
  * cache.insert("height", 1080);
  * int w = cache.value("width", 0);  // 1920
  * @endcode
-conventions matching the rest of libpromeki.
- *
- * @tparam K Key type (must be hashable).
- * @tparam V Value type.
  */
 template <typename K, typename V>
 class HashMap {

@@ -104,7 +104,7 @@ int64_t UdpSocket::bytesAvailable() const {
 #endif
 }
 
-ssize_t UdpSocket::writeDatagram(const void *data, size_t size, const SocketAddress &dest) {
+int64_t UdpSocket::writeDatagram(const void *data, size_t size, const SocketAddress &dest) {
         if(_fd < 0) return -1;
         struct sockaddr_storage storage;
         size_t addrLen = dest.toSockAddr(&storage);
@@ -114,7 +114,7 @@ ssize_t UdpSocket::writeDatagram(const void *data, size_t size, const SocketAddr
                         static_cast<socklen_t>(addrLen));
 }
 
-ssize_t UdpSocket::writeDatagram(const Buffer &data, const SocketAddress &dest) {
+int64_t UdpSocket::writeDatagram(const Buffer &data, const SocketAddress &dest) {
         return writeDatagram(data.data(), data.size(), dest);
 }
 
@@ -188,7 +188,7 @@ int UdpSocket::writeDatagrams(const DatagramList &datagrams) {
         int sent = 0;
         for(size_t i = 0; i < datagrams.size(); i++) {
                 const Datagram &d = datagrams[i];
-                ssize_t n = writeDatagram(d.data, d.size, d.dest);
+                int64_t n = writeDatagram(d.data, d.size, d.dest);
                 if(n < 0) {
                         return sent > 0 ? sent : -1;
                 }
@@ -246,7 +246,7 @@ Error UdpSocket::setTxTime(bool enable, int clockId) {
 #endif
 }
 
-ssize_t UdpSocket::readDatagram(void *data, size_t maxSize, SocketAddress *sender) {
+int64_t UdpSocket::readDatagram(void *data, size_t maxSize, SocketAddress *sender) {
         if(_fd < 0) return -1;
         struct sockaddr_storage storage;
         socklen_t addrLen = sizeof(storage);
@@ -259,18 +259,18 @@ ssize_t UdpSocket::readDatagram(void *data, size_t maxSize, SocketAddress *sende
                         reinterpret_cast<struct sockaddr *>(&storage), addrLen);
                 if(err.isOk()) *sender = addr;
         }
-        return ret;
+        return static_cast<int64_t>(ret);
 }
 
 bool UdpSocket::hasPendingDatagrams() const {
         return bytesAvailable() > 0;
 }
 
-ssize_t UdpSocket::pendingDatagramSize() const {
+int64_t UdpSocket::pendingDatagramSize() const {
         if(_fd < 0) return -1;
         char buf;
         ssize_t ret = ::recv(_fd, &buf, 1, MSG_PEEK | MSG_TRUNC);
-        return ret;
+        return static_cast<int64_t>(ret);
 }
 
 Error UdpSocket::joinMulticastGroup(const SocketAddress &group) {

@@ -17,6 +17,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Container widget with a border and optional title.
  * @ingroup tui_widgets
  *
+ * @par Thread Safety
+ * Thread-affine — see @ref TuiWidget.
  */
 class TuiFrame : public TuiWidget {
         PROMEKI_OBJECT(TuiFrame, TuiWidget)
@@ -35,8 +37,8 @@ class TuiFrame : public TuiWidget {
                 Size2Di32 sizeHint() const override;
 
         protected:
-                void paintEvent(TuiPaintEvent *e) override;
-                void resizeEvent(TuiResizeEvent *e) override;
+                void paintEvent(PaintEvent *e) override;
+                void resizeEvent(ResizeEvent *e) override;
 
         private:
                 String _title;

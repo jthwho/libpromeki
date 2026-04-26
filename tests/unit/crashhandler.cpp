@@ -133,8 +133,8 @@ MemSpace::ID registerTestMemSpace(const char *name) {
         ops.isHostAccessible = [](const MemAllocation &) -> bool { return true; };
         ops.alloc = [](MemAllocation &) {};
         ops.release = [](MemAllocation &) {};
-        ops.copy = [](const MemAllocation &, const MemAllocation &, size_t) -> bool {
-                return false;
+        ops.copy = [](const MemAllocation &, const MemAllocation &, size_t) -> Error {
+                return Error::NotSupported;
         };
         ops.fill = [](void *, size_t, char) -> Error { return Error::Ok; };
         MemSpace::registerData(std::move(ops));

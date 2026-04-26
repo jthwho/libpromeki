@@ -21,9 +21,17 @@ PROMEKI_NAMESPACE_BEGIN
  * big-endian order. Commonly used to identify codecs, pixel formats,
  * and container formats in multimedia applications. All operations
  * are constexpr and suitable for use as compile-time constants.
+ *
+ * @par Thread Safety
+ * Trivially thread-safe.  FourCC is a value-type wrapper around a
+ * @c uint32_t with constexpr operations only; distinct instances may
+ * be used concurrently and a single instance carries no mutable state.
  */
 class FourCC {
         public:
+                /** @brief Plain-value list type for @c FourCC. */
+                using List = promeki::List<FourCC>;
+
                 /**
                  * @brief Constructs a FourCC from four individual characters.
                  * @param c0 First (most significant) character.
@@ -86,9 +94,6 @@ class FourCC {
         private:
                 uint32_t d; ///< The packed 32-bit FourCC value.
 };
-
-/** @brief A list of FourCC values. */
-using FourCCList = List<FourCC>;
 
 PROMEKI_NAMESPACE_END
 

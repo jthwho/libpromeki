@@ -331,9 +331,9 @@ int HttpConnection::cbHeadersComplete(void *parser) {
         // origin-form ("/path?q") or absolute-form ("http://host/...").
         // Try the absolute form first; fall back to building a Url
         // from path + Host header.
-        Error urlErr;
-        Url u = Url::fromString(self->_urlBuf, &urlErr);
-        if(urlErr.isError() || u.scheme().isEmpty()) {
+        Result<Url> urlResult = Url::fromString(self->_urlBuf);
+        Url u = urlResult.first();
+        if(urlResult.second().isError() || u.scheme().isEmpty()) {
                 u = Url();
                 u.setScheme("http");
                 const String host = self->_pendingRequest.header("Host");
@@ -346,7 +346,7 @@ int HttpConnection::cbHeadersComplete(void *parser) {
                         u.setPath(self->_urlBuf.left(q));
                         // Parse the query string into the Url's map.
                         const String qs = self->_urlBuf.mid(q + 1);
-                        Url qsUrl = Url::fromString(String("x:?") + qs);
+                        Url qsUrl = Url::fromString(String("x:?") + qs).first();
                         u.setQuery(qsUrl.query());
                 }
         }

@@ -20,6 +20,12 @@ PROMEKI_NAMESPACE_BEGIN
  * arithmetic for integral types, and compare-and-swap.
  * Non-copyable and non-movable.
  *
+ * @par Thread Safety
+ * Fully thread-safe by construction.  All public methods may be
+ * invoked concurrently from any thread on a single instance — that
+ * is the entire purpose of the type.  No external synchronization
+ * is required for any operation listed below.
+ *
  * @tparam T The value type.  Must satisfy std::atomic requirements.
  */
 template <typename T>

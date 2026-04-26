@@ -123,3 +123,13 @@ TEST_CASE("Deque: range-based for") {
         for(const auto &v : d) sum += v;
         CHECK(sum == 60);
 }
+
+TEST_CASE("Deque: popFromFront on empty asserts") {
+        Deque<int> d;
+        CHECK_THROWS(d.popFromFront());
+}
+
+TEST_CASE("Deque: popFromBack on empty asserts") {
+        Deque<int> d;
+        CHECK_THROWS(d.popFromBack());
+}

@@ -77,6 +77,13 @@ class SyntheticClock;
  *
  * The supplied clock is not owned by the FrameSync.  The caller
  * must keep it alive for the sync's lifetime.
+ *
+ * @par Thread Safety
+ * Mixed.  @c pushFrame() (producer side) and @c pullFrame() (consumer
+ * side) are designed to be called from different threads concurrently —
+ * the input queue is internally synchronized.  Configuration and
+ * lifecycle calls are not synchronized; they should be quiesced before
+ * other threads interact with the instance.
  */
 class FrameSync {
         public:

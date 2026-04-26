@@ -54,7 +54,7 @@ Size2Di32 TuiFrame::sizeHint() const {
                 static_cast<int>(_title.length()) + 4, 4);
 }
 
-void TuiFrame::paintEvent(TuiPaintEvent *) {
+void TuiFrame::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 
@@ -86,7 +86,7 @@ void TuiFrame::paintEvent(TuiPaintEvent *) {
         }
 }
 
-void TuiFrame::resizeEvent(TuiResizeEvent *) {
+void TuiFrame::resizeEvent(ResizeEvent *) {
         if(layout()) {
                 layout()->calculateLayout(contentRect());
         }

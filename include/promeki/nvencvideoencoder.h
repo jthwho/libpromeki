@@ -67,6 +67,9 @@ PROMEKI_NAMESPACE_BEGIN
  * while(auto pkt = enc->receivePacket()) { sink.write(pkt); }
  * delete enc;
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref VideoEncoder.
  */
 class NvencVideoEncoder : public VideoEncoder {
         public:

@@ -41,6 +41,13 @@ PROMEKI_NAMESPACE_BEGIN
  * matches the request path.  Handlers consume them via
  * @ref pathParam.
  *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently — copies share the
+ * underlying body @ref Buffer via atomic refcount.  A single
+ * instance is conditionally thread-safe: const accessors are
+ * safe, mutators (@c setUrl, @c setBody, @c headers().set, ...)
+ * require external synchronization.
+ *
  * @par Example
  * @code
  * void serveItem(const HttpRequest &req, HttpResponse &res) {

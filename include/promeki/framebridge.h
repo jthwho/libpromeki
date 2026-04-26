@@ -84,6 +84,11 @@ PROMEKI_NAMESPACE_BEGIN
  * and a @c Config::groupName that both ends share.  The underlying
  * shm object and socket file are @c chmod'd and @c chown'd at
  * @ref openOutput time.
+ *
+ * @par Thread Safety
+ * Thread-affine via @ref ObjectBase.  An instance must be used on the
+ * thread that created it; cross-thread interaction goes through
+ * @ref ObjectBase signal/slot dispatch.
  */
 class FrameBridge : public ObjectBase {
         PROMEKI_OBJECT(FrameBridge, ObjectBase)

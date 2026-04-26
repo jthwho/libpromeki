@@ -43,7 +43,7 @@ Size2Di32 TuiCheckBox::sizeHint() const {
         return Size2Di32(static_cast<int>(_text.length()) + 4, 1);
 }
 
-void TuiCheckBox::paintEvent(TuiPaintEvent *) {
+void TuiCheckBox::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 

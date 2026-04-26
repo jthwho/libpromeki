@@ -32,6 +32,14 @@ PROMEKI_NAMESPACE_BEGIN
  * (Queued, BeginProcess, EndProcess) automatically.  Individual nodes may
  * add custom stamps for finer-grained profiling.
  *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently — one Benchmark typically follows one frame
+ * through the pipeline.  Concurrent @c stamp / read access on a
+ * single instance must be externally synchronized.  The static
+ * StringRegistry behind @c Benchmark::Id is internally
+ * synchronized.
+ *
  * @par Example
  * @code
  * Benchmark bm;

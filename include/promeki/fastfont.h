@@ -51,6 +51,10 @@ PROMEKI_NAMESPACE_BEGIN
  * ff.drawText("01:02:03:04", 100, 200);
  * @endcode
  *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref Font.  The internal
+ * glyph cache is not synchronized.
+ *
  * @see Font, BasicFont
  * @see @ref fonts "Font Rendering"
  */

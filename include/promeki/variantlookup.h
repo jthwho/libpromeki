@@ -272,8 +272,15 @@ inline bool parseLeadingSegment(const String &key,
  *    or a read-only traversal.
  *  - @c Error::ConversionFailed — setter rejected the supplied value.
  *
- * @note Registrations are thread-safe but are expected at static-init
- *       time; the lookup path uses a shared read lock.
+ * @par Thread Safety
+ * Fully thread-safe.  The per-type registry is internally guarded by a
+ * @c ReadWriteLock: registrations take the write lock, lookups take a
+ * shared read lock.  Registrations are expected at static-init time;
+ * thereafter @c resolve / @c assign / @c specFor may be called concurrently
+ * from any thread, on any number of instances of @c T, without external
+ * synchronization (the @c T instance itself is borrowed by reference, so
+ * the caller is still responsible for synchronizing accesses to that
+ * object's mutable state).
  *
  * @todo FIXME(compiled-path) — @ref resolve currently re-parses and
  *       re-hashes every segment on every call.  A @c VariantLookup::Path

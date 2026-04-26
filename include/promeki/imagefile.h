@@ -27,6 +27,10 @@ class ImageFileIO;
  * The file format is determined by the ID passed at construction,
  * which selects the corresponding ImageFileIO backend. Internally
  * holds a Frame which can carry images, audio, and metadata.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
  */
 class ImageFile {
         public:

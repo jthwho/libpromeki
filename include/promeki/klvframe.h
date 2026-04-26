@@ -50,6 +50,10 @@ class IODevice;
  * 4-byte big-endian length — smaller overhead, plenty of namespace
  * for internal protocols, and a single debuggable ASCII key that
  * shows up in packet captures.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
  */
 class KlvFrame {
         public:
@@ -80,6 +84,11 @@ class KlvFrame {
  * Reads KLV frames from any @ref IODevice.  Typical use is over a
  * @ref LocalSocket, @ref TcpSocket, or a @ref BufferIODevice for
  * in-memory testing.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * Thread-safety of the underlying @ref IODevice also applies.
  */
 class KlvReader {
         public:
@@ -148,6 +157,11 @@ class KlvReader {
 /**
  * @brief Binary-stream writer for @ref KlvFrame framing.
  * @ingroup network
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * Thread-safety of the underlying @ref IODevice also applies.
  */
 class KlvWriter {
         public:

@@ -34,6 +34,26 @@ PROMEKI_NAMESPACE_BEGIN
  *   String value = PROMEKI_OBFUSCATE("my_secret");
  * @endcode
  *
+ * @warning This is *defense-in-depth* obfuscation, not cryptographic
+ *          protection.  An attacker with access to the binary can run
+ *          @c strings on it and recover nothing useful, but a motivated
+ *          reverser who knows the algorithm and has access to the build
+ *          inputs (the per-site seed is derived from @c __FILE__,
+ *          @c __LINE__ and the build's @c __DATE__ / @c __TIME__) can
+ *          recreate the keystream and decode any embedded literal.
+ *          Do not use this to store cryptographic keys, credentials, or
+ *          anything whose secrecy must survive a determined adversary.
+ *          It is intended only to raise the bar against trivial inspection
+ *          and grep-style discovery.
+ *
+ * @par Thread Safety
+ * Fully thread-safe.  Each call site instantiates a distinct
+ * @c static @c constexpr value built entirely at compile time, so the
+ * encoded data is read-only at runtime.  @c decode() reads the encoded
+ * bytes and produces a new @ref String per call; multiple threads may
+ * call @c decode() concurrently on the same instance without
+ * synchronization.
+ *
  * @tparam N    Size of the string literal (including the null terminator).
  * @tparam Seed Unique per-site seed derived from file, line, and build time.
  */

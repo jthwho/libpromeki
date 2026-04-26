@@ -31,8 +31,10 @@ class TextStream;
  * This class is purely computational and requires no platform-specific
  * headers or system calls.
  *
- * This class is not thread-safe. Concurrent access to a single
- * instance requires external synchronization.
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance is
+ * conditionally thread-safe: const operations may be called from
+ * multiple threads, but any mutation must be externally synchronized.
  *
  * @par Example
  * @code

@@ -11,6 +11,7 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
+#include <promeki/result.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -19,6 +20,13 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup strings
  *
  * Provides a simplified interface for pattern matching, searching, and
+ * extracting matches from strings using standard C++ regular expressions.
+ *
+ * @par Thread Safety
+ * A compiled RegEx is safe to share across threads for read-only
+ * operations (@c match, @c search, @c replace) — the underlying
+ * @c std::regex is internally const-safe.  Recompiling (assigning
+ * a new pattern) requires external synchronization.
  *
  * @par Example
  * @code
@@ -29,7 +37,6 @@ PROMEKI_NAMESPACE_BEGIN
  *     String h = match.captured(2);  // "1080"
  * }
  * @endcode
- * extracting matches from strings using standard C++ regular expressions.
  */
 class RegEx {
         public:
@@ -69,30 +76,77 @@ class RegEx {
                 /** @brief Default flags: ECMAScript grammar with optimization enabled. */
                 static constexpr Flag DefaultFlags = ECMAScript | Optimize;
 
-                /**
-                 * @brief Constructs a RegEx from a String pattern.
-                 * @param pattern The regular expression pattern.
-                 * @param flags   Syntax option flags (default: DefaultFlags).
-                 */
-                RegEx(const String &pattern, Flag flags = DefaultFlags) : d(pattern.cstr(), flags), p(pattern) {}
+                /** @brief Default constructor — produces an invalid empty RegEx. */
+                RegEx() : _valid(false) {}
 
                 /**
-                 * @brief Constructs a RegEx from a C string pattern.
+                 * @brief Constructs a RegEx from a String pattern.
+                 *
+                 * On invalid pattern the resulting RegEx is left @em invalid
+                 * (see @c isValid()) rather than throwing.  Use
+                 * @c RegEx::compile() to receive an explicit @ref Error.
+                 *
                  * @param pattern The regular expression pattern.
                  * @param flags   Syntax option flags (default: DefaultFlags).
                  */
-                RegEx(const char *pattern, Flag flags = DefaultFlags) : d(pattern, flags), p(pattern) {}
+                RegEx(const String &pattern, Flag flags = DefaultFlags) : p(pattern) {
+                        try { d.assign(pattern.cstr(), flags); _valid = true; }
+                        catch(const std::regex_error &) { _valid = false; }
+                }
+
+                /**
+                 * @brief Constructs a RegEx from a C-string pattern.
+                 *
+                 * On invalid pattern the resulting RegEx is left @em invalid
+                 * (see @c isValid()) rather than throwing.  Use
+                 * @c RegEx::compile() to receive an explicit @ref Error.
+                 *
+                 * @param pattern The regular expression pattern.
+                 * @param flags   Syntax option flags (default: DefaultFlags).
+                 */
+                RegEx(const char *pattern, Flag flags = DefaultFlags) : p(pattern) {
+                        try { d.assign(pattern, flags); _valid = true; }
+                        catch(const std::regex_error &) { _valid = false; }
+                }
+
+                /**
+                 * @brief Compiles a pattern, returning a Result so callers can
+                 *        observe parse failures explicitly.
+                 * @param pattern The regular expression pattern.
+                 * @param flags   Syntax option flags (default: DefaultFlags).
+                 * @return @c Result holding the compiled RegEx on success, or
+                 *         @c Error::Invalid on a malformed pattern.
+                 */
+                static Result<RegEx> compile(const String &pattern, Flag flags = DefaultFlags) {
+                        RegEx re;
+                        try {
+                                re.d.assign(pattern.cstr(), flags);
+                                re._valid = true;
+                                re.p = pattern;
+                        } catch(const std::regex_error &) {
+                                return makeError<RegEx>(Error::Invalid);
+                        }
+                        return makeResult(std::move(re));
+                }
 
                 /**
                  * @brief Assigns a new pattern to this regex.
+                 *
+                 * On invalid pattern the RegEx is left @em invalid; the
+                 * previous pattern is replaced regardless.
+                 *
                  * @param pattern The new regular expression pattern.
                  * @return Reference to this RegEx.
                  */
                 RegEx &operator=(const String &pattern) {
-                        d = pattern.cstr();
                         p = pattern;
+                        try { d.assign(pattern.cstr()); _valid = true; }
+                        catch(const std::regex_error &) { _valid = false; }
                         return *this;
                 }
+
+                /** @brief Returns true if the regex was compiled successfully. */
+                bool isValid() const { return _valid; }
 
                 /**
                  * @brief Returns the current pattern string.
@@ -105,9 +159,11 @@ class RegEx {
                 /**
                  * @brief Tests whether the entire string matches the pattern.
                  * @param str The string to test.
-                 * @return True if the full string matches the regular expression.
+                 * @return True if the full string matches the regular expression;
+                 *         always false when @c isValid() is false.
                  */
                 bool match(const String &str) const {
+                        if(!_valid) return false;
                         std::smatch m;
                         return std::regex_match(str.str(), m, d);
                 }
@@ -115,19 +171,23 @@ class RegEx {
                 /**
                  * @brief Searches for the first occurrence of the pattern within the string.
                  * @param str The string to search in.
-                 * @return True if any substring matches the regular expression.
+                 * @return True if any substring matches the regular expression;
+                 *         always false when @c isValid() is false.
                  */
                 bool search(const String &str) const {
+                        if(!_valid) return false;
                         return std::regex_search(str.str(), d);
                 }
 
                 /**
                  * @brief Returns all non-overlapping matches of the pattern in the string.
                  * @param str The string to search in.
-                 * @return A StringList containing every matching substring.
+                 * @return A StringList containing every matching substring;
+                 *         empty when @c isValid() is false.
                  */
                 StringList matches(const String& str) const {
                         StringList matches;
+                        if(!_valid) return matches;
                         std::smatch match;
                         const std::string &s = str.str();
                         auto pos = s.cbegin();
@@ -141,6 +201,7 @@ class RegEx {
         private:
                 std::regex      d;
                 String          p;
+                bool            _valid = false;
 };
 
 PROMEKI_NAMESPACE_END

@@ -131,23 +131,20 @@ static String toLowerAscii(const String &s) {
 // class is used for library-local URIs like pmfb:// where strict
 // conformance buys nothing.
 
-Url Url::fromString(const String &s, Error *err) {
+Result<Url> Url::fromString(const String &s) {
         Url url;
         if(s.isEmpty()) {
-                if(err != nullptr) *err = Error::Invalid;
-                return url;
+                return Result<Url>(url, Error::Invalid);
         }
 
         // scheme
         size_t colon = s.find(':');
         if(colon == String::npos || colon == 0) {
-                if(err != nullptr) *err = Error::Invalid;
-                return url;
+                return Result<Url>(url, Error::Invalid);
         }
         String scheme = s.left(colon);
         if(!isValidScheme(scheme)) {
-                if(err != nullptr) *err = Error::Invalid;
-                return url;
+                return Result<Url>(url, Error::Invalid);
         }
         url._scheme = toLowerAscii(scheme);
 
@@ -196,8 +193,7 @@ Url Url::fromString(const String &s, Error *err) {
                 if(!authority.isEmpty() && authority.cstr()[0] == '[') {
                         size_t closeBracket = authority.find(']');
                         if(closeBracket == String::npos) {
-                                if(err != nullptr) *err = Error::Invalid;
-                                return url;
+                                return Result<Url>(url, Error::Invalid);
                         }
                         url._host = authority.mid(1, closeBracket - 1);
                         String afterBracket = authority.mid(closeBracket + 1);
@@ -205,8 +201,7 @@ Url Url::fromString(const String &s, Error *err) {
                                 Error perr = Error::Ok;
                                 int p = afterBracket.mid(1).toInt(&perr);
                                 if(perr.isError()) {
-                                        if(err != nullptr) *err = Error::Invalid;
-                                        return url;
+                                        return Result<Url>(url, Error::Invalid);
                                 }
                                 url._port = p;
                         }
@@ -217,8 +212,7 @@ Url Url::fromString(const String &s, Error *err) {
                                 Error perr = Error::Ok;
                                 int p = authority.mid(portColon + 1).toInt(&perr);
                                 if(perr.isError()) {
-                                        if(err != nullptr) *err = Error::Invalid;
-                                        return url;
+                                        return Result<Url>(url, Error::Invalid);
                                 }
                                 url._port = p;
                         } else {
@@ -251,7 +245,7 @@ Url Url::fromString(const String &s, Error *err) {
                         if(!key.isEmpty()) url._query.insert(key, value);
                 }
         }
-        return url;
+        return Result<Url>(url, Error::Ok);
 }
 
 // ============================================================================

@@ -29,6 +29,11 @@ class UdpSocket;
  * their memberships. MulticastManager does not take ownership
  * of socket pointers.
  *
+ * @par Thread Safety
+ * Inherits @ref ObjectBase: thread-affine.  A single
+ * MulticastManager must only be used from the thread that
+ * created it.
+ *
  * @par Example
  * @code
  * MulticastManager mgr;

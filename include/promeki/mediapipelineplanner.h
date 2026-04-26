@@ -88,6 +88,13 @@ class MediaDesc;
  * config and registry state the planner always returns the same
  * resolved config.  The resolved config round-trips through JSON and
  * @ref DataStream the same as any hand-authored config.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * The planner is typically used briefly at pipeline-build time on the
+ * caller's thread.  The static @ref MediaIO registry it queries is itself
+ * thread-safe.
  */
 class MediaPipelinePlanner {
         public:

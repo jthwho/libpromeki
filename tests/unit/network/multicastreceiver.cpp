@@ -182,9 +182,9 @@ TEST_CASE("MulticastReceiver") {
                 tx.setMulticastLoopback(true);
                 tx.setMulticastTTL(1);
                 const uint8_t payload[] = {0xAB, 0xCD, 0xEF, 0x01, 0x02, 0x03};
-                ssize_t sent = tx.writeDatagram(
+                int64_t sent = tx.writeDatagram(
                         payload, sizeof(payload), group);
-                CHECK(sent == static_cast<ssize_t>(sizeof(payload)));
+                CHECK(sent == static_cast<int64_t>(sizeof(payload)));
 
                 // Wait up to 500 ms for the datagram to arrive on
                 // the receive thread.  The loopback path is fast

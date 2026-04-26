@@ -9,6 +9,7 @@
 
 #include <cstdlib>
 #include <cerrno>
+#include <type_traits>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/point.h>
@@ -23,6 +24,14 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * A simple value type representing a 2D extent. Supports validity checks,
  * area computation, point containment tests, and string serialization in
+ * "WxH" format.
+ *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — const operations are safe, but
+ * concurrent mutation requires external synchronization.
+ *
+ * @tparam T The component type (e.g. size_t, float, double).
  *
  * @par Example
  * @code
@@ -31,9 +40,6 @@ PROMEKI_NAMESPACE_BEGIN
  * uint32_t h = hd.height();  // 1080
  * String s = hd.toString();  // "1920x1080"
  * @endcode
- * "WxH" format.
- *
- * @tparam T The component type (e.g. size_t, float, double).
  */
 template<typename T> class Size2DTemplate {
         public:
@@ -109,10 +115,9 @@ template<typename T> class Size2DTemplate {
                         if(s == nullptr || *s == '\0') {
                                 return makeError<Size2DTemplate<T>>(Error::Invalid);
                         }
-                        char *end = nullptr;
-                        errno = 0;
-                        unsigned long long w = std::strtoull(s, &end, 10);
-                        if(end == s || errno != 0) {
+                        T w{};
+                        const char *end = nullptr;
+                        if(!parseDim(s, w, end)) {
                                 return makeError<Size2DTemplate<T>>(Error::Invalid);
                         }
                         if(*end != 'x' && *end != 'X') {
@@ -122,13 +127,11 @@ template<typename T> class Size2DTemplate {
                         if(*rest == '\0') {
                                 return makeError<Size2DTemplate<T>>(Error::Invalid);
                         }
-                        errno = 0;
-                        unsigned long long h = std::strtoull(rest, &end, 10);
-                        if(end == rest || errno != 0 || *end != '\0') {
+                        T h{};
+                        if(!parseDim(rest, h, end) || *end != '\0') {
                                 return makeError<Size2DTemplate<T>>(Error::Invalid);
                         }
-                        return makeResult(Size2DTemplate<T>(static_cast<T>(w),
-                                                            static_cast<T>(h)));
+                        return makeResult(Size2DTemplate<T>(w, h));
                 }
 
                 /** @brief Returns true if both sizes have equal width and height. */
@@ -152,6 +155,43 @@ template<typename T> class Size2DTemplate {
         private:
                 T _width  = 0;
                 T _height = 0;
+
+                // Parses one width or height token from @p s, dispatching to
+                // strtoll for signed T and strtoull for unsigned T so that
+                // negative inputs are accepted by signed templates and
+                // rejected by unsigned templates.  On success returns true,
+                // sets @p out, and points @p end at the first unparsed
+                // character.  On parse failure returns false.
+                static bool parseDim(const char *s, T &out, const char *&end) {
+                        char *parseEnd = nullptr;
+                        errno = 0;
+                        if constexpr (std::is_integral_v<T> && std::is_signed_v<T>) {
+                                long long v = std::strtoll(s, &parseEnd, 10);
+                                end = parseEnd;
+                                if(parseEnd == s || errno != 0) return false;
+                                out = static_cast<T>(v);
+                                return true;
+                        } else if constexpr (std::is_integral_v<T>) {
+                                // strtoull silently accepts a leading '-' and
+                                // returns the negation as unsigned.  Reject up
+                                // front so an unsigned size cannot be parsed
+                                // from a negative-looking input.
+                                const char *p = s;
+                                while(*p == ' ' || *p == '\t') ++p;
+                                if(*p == '-') return false;
+                                unsigned long long v = std::strtoull(s, &parseEnd, 10);
+                                end = parseEnd;
+                                if(parseEnd == s || errno != 0) return false;
+                                out = static_cast<T>(v);
+                                return true;
+                        } else {
+                                double v = std::strtod(s, &parseEnd);
+                                end = parseEnd;
+                                if(parseEnd == s || errno != 0) return false;
+                                out = static_cast<T>(v);
+                                return true;
+                        }
+                }
 };
 
 /** @brief 2D size with int32_t components. */

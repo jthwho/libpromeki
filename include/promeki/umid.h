@@ -44,6 +44,11 @@ PROMEKI_NAMESPACE_BEGIN
  * library writes, independent of any caller-set Software or
  * Originator metadata.
  *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance is
+ * conditionally thread-safe: const operations may be called from
+ * multiple threads, but any mutation must be externally synchronized.
+ *
  * @par Example
  * @code
  * UMID id = UMID::generate();            // Extended UMID with random material.

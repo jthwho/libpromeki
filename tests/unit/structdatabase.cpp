@@ -59,16 +59,21 @@ TEST_CASE("StructDatabase: lookupKeyByName") {
                 {1, "First",  10},
                 {2, "Second", 20}
         });
-        CHECK(db.lookupKeyByName("First") == 1);
-        CHECK(db.lookupKeyByName("Second") == 2);
+        Result<int> first = db.lookupKeyByName("First");
+        CHECK(first.second().isOk());
+        CHECK(first.first() == 1);
+        Result<int> second = db.lookupKeyByName("Second");
+        CHECK(second.second().isOk());
+        CHECK(second.first() == 2);
 }
 
-TEST_CASE("StructDatabase: lookupKeyByName unknown returns 0") {
+TEST_CASE("StructDatabase: lookupKeyByName unknown returns NotFound") {
         StructDatabase<int, TestEntry> db({
                 {0, "Unknown", 0},
                 {1, "First",  10}
         });
-        CHECK(db.lookupKeyByName("NonExistent") == 0);
+        Result<int> r = db.lookupKeyByName("NonExistent");
+        CHECK(r.second() == Error::NotFound);
 }
 
 TEST_CASE("StructDatabase: add entry") {

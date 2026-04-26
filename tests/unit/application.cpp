@@ -52,7 +52,7 @@ TEST_CASE("Application: setAppName and appName roundtrip") {
 }
 
 TEST_CASE("Application: setAppUUID and appUUID roundtrip") {
-        UUID id("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID id = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
         Application::setAppUUID(id);
         CHECK(Application::appUUID() == id);
         CHECK(Application::appUUID().isValid());

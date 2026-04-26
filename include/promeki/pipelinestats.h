@@ -31,6 +31,11 @@ PROMEKI_NAMESPACE_BEGIN
  * @ref MediaIOStats so every counter round-trips through JSON,
  * DataStream, and TextStream for free, and new counters can be added
  * later without re-plumbing serialization.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref VariantDatabase.
+ * Distinct instances may be used concurrently; concurrent access to a
+ * single instance must be externally synchronized.
  */
 class PipelineStats : public VariantDatabase<"PipelineStats"> {
         public:

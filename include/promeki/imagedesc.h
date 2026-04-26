@@ -33,6 +33,12 @@ class SdpMediaDescription;
  * size_t stride = desc.pixelFormat().lineStride(0, desc);
  * int planes = desc.planeCount();
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * @c ImageDesc::Ptr uses an atomic refcount and is safe to share across
+ * threads.
  */
 class ImageDesc {
         PROMEKI_SHARED_FINAL(ImageDesc)

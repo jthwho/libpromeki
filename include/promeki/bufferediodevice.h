@@ -26,6 +26,10 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * When unbuffered mode is enabled via setUnbuffered(), all reads
  * bypass the internal buffer and go directly to readFromDevice().
+ *
+ * @par Thread Safety
+ * Inherits @ref IODevice: thread-affine.  A single instance must
+ * only be used from the thread that created it.
  */
 class BufferedIODevice : public IODevice {
         PROMEKI_OBJECT(BufferedIODevice, IODevice)

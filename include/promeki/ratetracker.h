@@ -45,10 +45,11 @@ PROMEKI_NAMESPACE_BEGIN
  * when the elapsed time crosses the full window boundary — so repeated
  * queries inside a window see a stable value.
  *
- * @par Thread safety
- *
- * @ref record is safe to call from any thread without coordination.
- * Query functions are also safe but serialize on an internal mutex.
+ * @par Thread Safety
+ * Mostly thread-safe.  @ref record uses atomic counters and is
+ * safe to call from any thread without coordination.  The query
+ * functions (@ref bytesPerSecond, @ref framesPerSecond) serialize
+ * on an internal mutex but may also be called from any thread.
  * @ref reset must not race with in-flight @ref record calls.
  */
 class RateTracker {

@@ -41,6 +41,10 @@ PROMEKI_NAMESPACE_BEGIN
  * When a caller provides an IODevice, that device must outlive the
  * AudioFile. Caller-provided devices are non-owning (not deleted on
  * close). Internally-created devices are owned and deleted on close.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
  */
 class AudioFile {
         public:

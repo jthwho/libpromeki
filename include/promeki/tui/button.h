@@ -17,6 +17,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Clickable button with text label.
  * @ingroup tui_widgets
  *
+ * @par Thread Safety
+ * Thread-affine — see @ref TuiWidget.
  */
 class TuiButton : public TuiWidget {
         PROMEKI_OBJECT(TuiButton, TuiWidget)
@@ -37,7 +39,7 @@ class TuiButton : public TuiWidget {
                 PROMEKI_SIGNAL(clicked)
 
         protected:
-                void paintEvent(TuiPaintEvent *e) override;
+                void paintEvent(PaintEvent *e) override;
                 void keyPressEvent(KeyEvent *e) override;
                 void mouseEvent(MouseEvent *e) override;
                 void focusInEvent(Event *e) override;

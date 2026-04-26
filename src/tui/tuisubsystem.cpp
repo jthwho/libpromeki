@@ -358,7 +358,7 @@ void TuiSubsystem::paintWidget(TuiWidget *widget) {
                         widget->width(), widget->height());
 
         TuiPainter painter(_screen, clipRect);
-        TuiPaintEvent ev;
+        PaintEvent ev;
         widget->paintEvent(&ev);
 
         for(auto child : widget->childList()) {

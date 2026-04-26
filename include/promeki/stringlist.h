@@ -13,16 +13,38 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-/** 
- * @brief Manages a list of strings
+/**
+ * @brief Manages a list of strings.
  * @ingroup strings
  *
+ * Derives from @c List<String> and adds string-specific helpers such as
+ * @c join() and @c filter().  Overrides the base @c _promeki_clone() and
+ * the @c Ptr alias so @c SharedPtr<StringList> behaves correctly under
+ * copy-on-write — without these, copy-on-write would slice the StringList
+ * back to a plain @c List<String> at the next @c modify() call.
+ *
+ * @par Thread Safety
+ * Inherits @ref List: distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally
+ * synchronized.
  */
 class StringList : public List<String> {
         public:
                 using List::List;
                 using List::operator+=;
                 using List::operator=;
+
+                /** @brief Shared pointer type for StringList (overrides the base alias). */
+                using Ptr = SharedPtr<StringList>;
+
+                /**
+                 * @brief Copy-on-write clone hook for StringList.
+                 *
+                 * Hides the base @c List<String>::_promeki_clone() so a
+                 * @c SharedPtr<StringList>::modify() detaches into a real
+                 * @c StringList, preserving the derived API and type identity.
+                 */
+                StringList *_promeki_clone() const { return new StringList(*this); }
 
                 /**
                  * @brief Constructs a StringList from a C-style string array.
@@ -59,18 +81,6 @@ class StringList : public List<String> {
                                 if(func(item)) result.pushToBack(item);
                         }
                         return result;
-                }
-
-                /**
-                 * @brief Returns the index of the first occurrence of a string, or -1 if not found.
-                 * @param val The string to search for.
-                 * @return The zero-based index, or -1 if not found.
-                 */
-                int indexOf(const String &val) const {
-                        for(size_t i = 0; i < size(); ++i) {
-                                if((*this)[i] == val) return static_cast<int>(i);
-                        }
-                        return -1;
                 }
 
 };

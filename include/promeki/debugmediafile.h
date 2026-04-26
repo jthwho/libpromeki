@@ -77,6 +77,11 @@ class File;
  * old readers via the 16-byte-header size field.  Per-buffer
  * @c flags words reserve space for future optional compression
  * (zstd, lz4, ...).
+ *
+ * @par Thread Safety
+ * Thread-affine via @ref ObjectBase.  An instance must be used on the
+ * thread that created it; cross-thread interaction goes through
+ * @ref ObjectBase signal/slot dispatch.
  */
 class DebugMediaFile : public ObjectBase {
         PROMEKI_OBJECT(DebugMediaFile, ObjectBase)

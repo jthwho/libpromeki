@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <span>
+#include <type_traits>
 #include <promeki/namespace.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -24,6 +25,13 @@ template <typename T, size_t N> class Array;
  * Provides a Qt-inspired API over std::span with consistent naming
  * conventions matching the rest of libpromeki. Non-owning view —
  * no PROMEKI_SHARED_FINAL.
+ *
+ * @par Thread Safety
+ * Distinct Span instances may be used concurrently.  A Span itself
+ * is just (pointer, size); its const operations are thread-safe.
+ * Concurrent access to the underlying storage that the Span views
+ * follows the storage's own thread-safety contract — Span does not
+ * provide synchronization for the data it points at.
  *
  * @tparam T Element type.
  */
@@ -79,6 +87,18 @@ class Span {
 
                 /** @brief Copy assignment operator. */
                 Span &operator=(const Span &other) = default;
+
+                /**
+                 * @brief Implicit conversion from Span<U> to Span<T> when U* is convertible to T*.
+                 *
+                 * Enables passing a mutable Span<X> where a Span<const X> is expected.
+                 *
+                 * @tparam U Source element type (must satisfy U* convertible to T*).
+                 * @param other The source span.
+                 */
+                template <typename U,
+                          typename = std::enable_if_t<std::is_convertible_v<U (*)[], T (*)[]>>>
+                Span(const Span<U> &other) : d(other.data(), other.size()) {}
 
                 // -- Iterators --
 
@@ -173,7 +193,7 @@ class Span {
                  * @param count Number of elements.
                  * @return A new Span viewing the sub-range.
                  */
-                Span subspan(size_t offset, size_t count) {
+                Span subspan(size_t offset, size_t count) const {
                         return Span(d.data() + offset, count);
                 }
 
@@ -182,7 +202,7 @@ class Span {
                  * @param count Number of elements.
                  * @return A new Span viewing the first elements.
                  */
-                Span first(size_t count) {
+                Span first(size_t count) const {
                         return Span(d.data(), count);
                 }
 
@@ -191,7 +211,7 @@ class Span {
                  * @param count Number of elements.
                  * @return A new Span viewing the last elements.
                  */
-                Span last(size_t count) {
+                Span last(size_t count) const {
                         return Span(d.data() + d.size() - count, count);
                 }
 

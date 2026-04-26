@@ -1545,8 +1545,7 @@ void MediaIOTask_Rtp::pushReaderFrame(Frame::Ptr frame) {
         // safer failure mode for live streams.
         if(_readerMaxDepth > 0 &&
            static_cast<int>(_readerQueue.size()) >= _readerMaxDepth) {
-                Frame::Ptr discarded;
-                (void)_readerQueue.popOrFail(discarded);
+                (void)_readerQueue.tryPop();
                 noteFrameDropped();
         }
         _readerQueue.push(std::move(frame));

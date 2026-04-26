@@ -16,6 +16,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Resizable split between two child widgets.
  * @ingroup tui_widgets
  *
+ * @par Thread Safety
+ * Thread-affine — see @ref TuiWidget.
  */
 class TuiSplitter : public TuiWidget {
         PROMEKI_OBJECT(TuiSplitter, TuiWidget)
@@ -41,8 +43,8 @@ class TuiSplitter : public TuiWidget {
                 Size2Di32 sizeHint() const override;
 
         protected:
-                void paintEvent(TuiPaintEvent *e) override;
-                void resizeEvent(TuiResizeEvent *e) override;
+                void paintEvent(PaintEvent *e) override;
+                void resizeEvent(ResizeEvent *e) override;
                 void keyPressEvent(KeyEvent *e) override;
                 void mouseEvent(MouseEvent *e) override;
 

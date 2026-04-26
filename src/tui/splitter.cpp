@@ -59,7 +59,7 @@ void TuiSplitter::updateChildGeometry() {
         }
 }
 
-void TuiSplitter::paintEvent(TuiPaintEvent *) {
+void TuiSplitter::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 
@@ -86,7 +86,7 @@ void TuiSplitter::paintEvent(TuiPaintEvent *) {
         }
 }
 
-void TuiSplitter::resizeEvent(TuiResizeEvent *) {
+void TuiSplitter::resizeEvent(ResizeEvent *) {
         updateChildGeometry();
 }
 

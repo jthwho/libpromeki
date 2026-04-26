@@ -147,7 +147,7 @@ TEST_CASE("RtpSession") {
 
                 // Receive and verify RTP header
                 uint8_t buf[256];
-                ssize_t n = receiver.readDatagram(buf, sizeof(buf));
+                int64_t n = receiver.readDatagram(buf, sizeof(buf));
                 REQUIRE(n > 12);
 
                 // Version = 2
@@ -198,7 +198,7 @@ TEST_CASE("RtpSession") {
                 // Verify sequence numbers in received packets
                 for(int i = 0; i < 3; i++) {
                         uint8_t buf[256];
-                        ssize_t n = receiver.readDatagram(buf, sizeof(buf));
+                        int64_t n = receiver.readDatagram(buf, sizeof(buf));
                         REQUIRE(n > 12);
                         uint16_t seq = (static_cast<uint16_t>(buf[2]) << 8) | buf[3];
                         CHECK(seq == static_cast<uint16_t>(i));
@@ -234,7 +234,7 @@ TEST_CASE("RtpSession") {
 
                 // Receive and verify
                 uint8_t buf[2048];
-                ssize_t n = receiver.readDatagram(buf, sizeof(buf));
+                int64_t n = receiver.readDatagram(buf, sizeof(buf));
                 REQUIRE(n > 12);
 
                 // Check RTP header was filled in
@@ -278,7 +278,7 @@ TEST_CASE("RtpSession") {
                 // Receive all packets and check marker bits
                 for(size_t i = 0; i < packets.size(); i++) {
                         uint8_t buf[2048];
-                        ssize_t n = receiver.readDatagram(buf, sizeof(buf));
+                        int64_t n = receiver.readDatagram(buf, sizeof(buf));
                         REQUIRE(n > 12);
                         bool marker = (buf[1] & 0x80) != 0;
                         if(i == packets.size() - 1) {

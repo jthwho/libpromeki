@@ -81,3 +81,45 @@ TEST_CASE("RegEx: email-like pattern") {
         CHECK(re.match("test@example.com"));
         CHECK_FALSE(re.match("not-an-email"));
 }
+
+TEST_CASE("RegEx: invalid pattern leaves regex invalid (no throw)") {
+        // Unbalanced bracket: [ with no ].
+        RegEx re("[abc");
+        CHECK_FALSE(re.isValid());
+        CHECK_FALSE(re.match("abc"));
+        CHECK_FALSE(re.search("xabcy"));
+        CHECK(re.matches("abcabc").isEmpty());
+}
+
+TEST_CASE("RegEx: valid pattern reports valid") {
+        RegEx re("[abc]");
+        CHECK(re.isValid());
+        CHECK(re.match("a"));
+}
+
+TEST_CASE("RegEx: default-constructed regex is invalid") {
+        RegEx re;
+        CHECK_FALSE(re.isValid());
+        CHECK_FALSE(re.match("anything"));
+}
+
+TEST_CASE("RegEx: compile() reports OK on valid pattern") {
+        auto [re, err] = RegEx::compile("[0-9]+");
+        CHECK(err.isOk());
+        CHECK(re.isValid());
+        CHECK(re.match("12345"));
+}
+
+TEST_CASE("RegEx: compile() reports Invalid on bad pattern") {
+        auto [re, err] = RegEx::compile("[bad");
+        CHECK(err == Error::Invalid);
+        CHECK_FALSE(re.isValid());
+}
+
+TEST_CASE("RegEx: assignment to bad pattern leaves invalid (no throw)") {
+        RegEx re("ok");
+        CHECK(re.isValid());
+        re = String("(unbalanced");
+        CHECK_FALSE(re.isValid());
+        CHECK_FALSE(re.match("ok"));
+}

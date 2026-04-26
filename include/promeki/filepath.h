@@ -10,6 +10,8 @@
 #include <filesystem>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
+#include <promeki/result.h>
+#include <promeki/error.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -21,8 +23,10 @@ PROMEKI_NAMESPACE_BEGIN
  * and filesystem queries. This is a simple data object — always
  * copied by value, no shared ownership.
  *
- * This class is not thread-safe. Concurrent access to a single
- * instance requires external synchronization.
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized.
  */
 class FilePath {
         public:
@@ -175,18 +179,21 @@ class FilePath {
                 /**
                  * @brief Returns this path expressed relative to @p base.
                  *
-                 * Wraps @c std::filesystem::relative.  If the computation
-                 * fails (different roots, permission error, etc.) the
-                 * original path is returned unchanged.
+                 * Wraps @c std::filesystem::relative.  Returns
+                 * @c Error::Invalid when the computation fails (different
+                 * roots, permission error, etc.) or yields an empty path,
+                 * with the failed @c FilePath value carried in the
+                 * Result's first slot for callers that want a fallback.
                  *
                  * @param base The directory to compute a relative path from.
-                 * @return A relative FilePath, or this path on failure.
+                 * @return The relative FilePath on success, or
+                 *         @c Error::Invalid with the original path on failure.
                  */
-                FilePath relativeTo(const FilePath &base) const {
+                Result<FilePath> relativeTo(const FilePath &base) const {
                         std::error_code ec;
                         auto r = std::filesystem::relative(_path, base._path, ec);
-                        if(ec || r.empty()) return *this;
-                        return FilePath(r);
+                        if(ec || r.empty()) return Result<FilePath>(*this, Error::Invalid);
+                        return Result<FilePath>(FilePath(r), Error::Ok);
                 }
 
                 /**

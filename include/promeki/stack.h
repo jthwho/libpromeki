@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <stack>
+#include <stdexcept>
 #include <promeki/namespace.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -20,6 +21,12 @@ PROMEKI_NAMESPACE_BEGIN
  * Provides a Qt-inspired API over std::stack with consistent naming
  * conventions matching the rest of libpromeki. Simple value type —
  * no PROMEKI_SHARED_FINAL (not typically shared or iterable).
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized.  See @ref Queue for a thread-safe
+ * FIFO alternative.
  *
  * @tparam T Element type.
  */
@@ -91,9 +98,11 @@ class Stack {
 
                 /**
                  * @brief Removes and returns the top element.
+                 * @pre @c isEmpty() is false; otherwise throws @c std::logic_error.
                  * @return The removed element.
                  */
                 T pop() {
+                        if(d.empty()) throw std::logic_error("Stack::pop on empty stack");
                         T val = std::move(d.top());
                         d.pop();
                         return val;

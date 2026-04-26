@@ -13,6 +13,7 @@
 #include <promeki/filepath.h>
 #include <promeki/error.h>
 #include <promeki/sharedptr.h>
+#include <promeki/uniqueptr.h>
 #include <promeki/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -32,12 +33,14 @@ PROMEKI_NAMESPACE_BEGIN
  * pImpl is heap-allocated lazily so simply default-constructing an
  * @ref SslContext does not pull in mbedTLS state.
  *
- * @par Threading
- * Configuration calls (@ref setCertificate, @ref setPrivateKey,
- * @ref setCaCertificates, etc.) must be made before the context is
- * handed to any @ref SslSocket.  After that it is read-only and may
- * be shared across threads — mbedTLS's @c mbedtls_ssl_config is
- * documented as safe to share across handshakes once initialized.
+ * @par Thread Safety
+ * Mixed.  Configuration calls (@ref setCertificate,
+ * @ref setPrivateKey, @ref setCaCertificates, etc.) must be made
+ * before the context is handed to any @ref SslSocket — the
+ * configuration phase is single-threaded.  After that the context
+ * is read-only and may be shared across threads; mbedTLS's
+ * @c mbedtls_ssl_config is documented as safe to share across
+ * handshakes once initialized.
  *
  * @par Example
  * @code
@@ -172,7 +175,8 @@ class SslContext {
 
         private:
                 struct Impl;
-                Impl *_d = nullptr;
+                using ImplPtr = UniquePtr<Impl>;
+                ImplPtr _d;
 };
 
 PROMEKI_NAMESPACE_END

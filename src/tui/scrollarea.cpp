@@ -62,7 +62,7 @@ Size2Di32 TuiScrollArea::sizeHint() const {
         return Size2Di32(20, 10);
 }
 
-void TuiScrollArea::paintEvent(TuiPaintEvent *) {
+void TuiScrollArea::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 
@@ -97,7 +97,7 @@ void TuiScrollArea::keyPressEvent(KeyEvent *e) {
         }
 }
 
-void TuiScrollArea::resizeEvent(TuiResizeEvent *) {
+void TuiScrollArea::resizeEvent(ResizeEvent *) {
         clampScroll();
 }
 

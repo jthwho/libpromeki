@@ -178,3 +178,20 @@ TEST_CASE("Size2Di32: fromString works the same way") {
         REQUIRE(e.isOk());
         CHECK(s == Size2Di32(640, 480));
 }
+
+TEST_CASE("Size2Di32: fromString accepts negative components on signed type") {
+        auto [s, e] = Size2Di32::fromString("-1x-1");
+        REQUIRE(e.isOk());
+        CHECK(s == Size2Di32(-1, -1));
+}
+
+TEST_CASE("Size2Di32: fromString mixed sign") {
+        auto [s, e] = Size2Di32::fromString("-7x42");
+        REQUIRE(e.isOk());
+        CHECK(s == Size2Di32(-7, 42));
+}
+
+TEST_CASE("Size2Du32: fromString rejects negative components on unsigned type") {
+        CHECK(Size2Du32::fromString("-1x100").second().isError());
+        CHECK(Size2Du32::fromString("100x-1").second().isError());
+}

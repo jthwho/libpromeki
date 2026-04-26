@@ -17,6 +17,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Bottom-of-screen status line.
  * @ingroup tui_widgets
  *
+ * @par Thread Safety
+ * Thread-affine — see @ref TuiWidget.
  */
 class TuiStatusBar : public TuiWidget {
         PROMEKI_OBJECT(TuiStatusBar, TuiWidget)
@@ -35,7 +37,7 @@ class TuiStatusBar : public TuiWidget {
                 Size2Di32 sizeHint() const override;
 
         protected:
-                void paintEvent(TuiPaintEvent *e) override;
+                void paintEvent(PaintEvent *e) override;
                 void timerEvent(TimerEvent *e) override;
 
         private:

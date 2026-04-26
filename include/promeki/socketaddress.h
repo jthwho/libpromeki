@@ -34,8 +34,10 @@ class TextStream;
  * with a 16-bit port number. This is the address type used by all
  * socket classes for bind, connect, and send/receive operations.
  *
- * This class is not thread-safe. Concurrent access to a single
- * instance requires external synchronization.
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized.
  *
  * @par Example
  * @code

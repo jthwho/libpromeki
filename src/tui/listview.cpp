@@ -115,7 +115,7 @@ void TuiListView::ensureVisible(int index) {
         if(_scrollOffset != oldOffset) update();
 }
 
-void TuiListView::paintEvent(TuiPaintEvent *) {
+void TuiListView::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 

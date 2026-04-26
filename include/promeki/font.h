@@ -29,6 +29,12 @@ PROMEKI_NAMESPACE_BEGIN
  * onStateChanged() hook, which they can override to invalidate caches
  * or reload resources.
  *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * Subclass implementations may maintain internal glyph caches that are
+ * not synchronized.
+ *
  * @see FastFont, BasicFont
  * @see @ref fonts "Font Rendering"
  */

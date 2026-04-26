@@ -53,6 +53,11 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @see XYZColor for the full 3D color including luminance.
  * @see ColorModel for how primaries and white points define a color space.
+ *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — const operations are safe, but
+ * concurrent mutation requires external synchronization.
  */
 class CIEPoint {
         public:

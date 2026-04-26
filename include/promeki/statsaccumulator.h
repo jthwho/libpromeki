@@ -28,6 +28,13 @@ PROMEKI_NAMESPACE_BEGIN
  * merging (`merge()`) so that per-thread accumulators can be combined at
  * shutdown without locking.
  *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently — typical usage gives each thread its own
+ * accumulator and merges them via @ref merge at the end.
+ * Concurrent access to a single instance must be externally
+ * synchronized.
+ *
  * @par Example
  * @code
  * StatsAccumulator acc;

@@ -27,8 +27,9 @@ PROMEKI_NAMESPACE_BEGIN
  * operation, use writeDatagram()/readDatagram() with explicit
  * destination/source addresses.
  *
- * This class must only be used from the thread that created it
- * (or moved to via moveToThread()).
+ * @par Thread Safety
+ * Inherits @ref IODevice: thread-affine.  A single UdpSocket
+ * must only be used from the thread that created it.
  *
  * @par Example
  * @code
@@ -43,7 +44,7 @@ PROMEKI_NAMESPACE_BEGIN
  * // Receive a datagram
  * char buf[1500];
  * SocketAddress sender;
- * ssize_t n = sock.readDatagram(buf, sizeof(buf), &sender);
+ * int64_t n = sock.readDatagram(buf, sizeof(buf), &sender);
  * @endcode
  */
 class UdpSocket : public AbstractSocket {
@@ -150,7 +151,7 @@ class UdpSocket : public AbstractSocket {
                  * @param dest The destination address and port.
                  * @return Bytes sent, or -1 on error.
                  */
-                ssize_t writeDatagram(const void *data, size_t size, const SocketAddress &dest);
+                int64_t writeDatagram(const void *data, size_t size, const SocketAddress &dest);
 
                 /**
                  * @brief Sends a Buffer as a datagram.
@@ -158,7 +159,7 @@ class UdpSocket : public AbstractSocket {
                  * @param dest The destination address and port.
                  * @return Bytes sent, or -1 on error.
                  */
-                ssize_t writeDatagram(const Buffer &data, const SocketAddress &dest);
+                int64_t writeDatagram(const Buffer &data, const SocketAddress &dest);
 
                 /**
                  * @brief Sends a batch of datagrams in one syscall.
@@ -248,7 +249,7 @@ class UdpSocket : public AbstractSocket {
                  * @param[out] sender If not null, receives the sender's address.
                  * @return Bytes received, or -1 on error.
                  */
-                ssize_t readDatagram(void *data, size_t maxSize, SocketAddress *sender = nullptr);
+                int64_t readDatagram(void *data, size_t maxSize, SocketAddress *sender = nullptr);
 
                 /**
                  * @brief Returns true if there are pending datagrams to read.
@@ -260,7 +261,7 @@ class UdpSocket : public AbstractSocket {
                  * @brief Returns the size of the next pending datagram.
                  * @return The datagram size in bytes, or -1 if no datagram.
                  */
-                ssize_t pendingDatagramSize() const;
+                int64_t pendingDatagramSize() const;
 
                 /**
                  * @brief Joins a multicast group.

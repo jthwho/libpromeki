@@ -47,6 +47,13 @@ PROMEKI_NAMESPACE_BEGIN
  * insertion of bridging stages (CSC, decoder, frame-rate sync,
  * etc.) when a route's source and sink are not directly
  * format-compatible.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * @c MediaIODescription::Ptr uses an atomic refcount and is safe to share
+ * across threads — handing a snapshot to a UI or planner thread is
+ * supported by design.
  */
 class MediaIODescription {
         PROMEKI_SHARED_FINAL(MediaIODescription)

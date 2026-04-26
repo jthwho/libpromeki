@@ -48,10 +48,11 @@ PROMEKI_NAMESPACE_BEGIN
  * pointer does not own it; the caller is responsible for keeping it
  * alive until the session is stopped.
  *
- * @par Thread safety
- *
- * Like the underlying sockets, transports are not thread-safe.  A
- * single instance must only be used from one thread at a time.
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct transport instances may be
+ * used concurrently.  A single instance must only be used from one
+ * thread at a time — like the underlying socket, no internal
+ * locking is performed on send / receive paths.
  *
  * @par Buffer lifetime
  *

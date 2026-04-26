@@ -50,6 +50,15 @@ class Clock;
  *   @ref FrameSync::InputOverflowPolicy::Block mode.
  * - Audio drift correction is real — the audio clock's rate ratio
  *   feeds FrameSync's audio resampler.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  The strand worker, pull thread, and SDL
+ * event thread each touch a different subset of state, coordinated via
+ * @ref FrameSync (lock-free queue), atomics on the clock state, and the
+ * SDL event-thread bounce for widget calls.  Clients interact with the
+ * task via the owning @ref MediaIO sink, which marshals
+ * @c writeFrame() calls onto the strand worker — clients themselves
+ * may call from any thread.
  */
 class SDLPlayerTask : public MediaIOTask {
         friend class SDLPlayerWidget;

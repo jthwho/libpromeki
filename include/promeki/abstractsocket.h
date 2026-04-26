@@ -25,8 +25,10 @@ PROMEKI_NAMESPACE_BEGIN
  * their specific protocol. The socket descriptor is created by
  * open() and closed by close().
  *
- * This class must only be used from the thread that created it
- * (or moved to via moveToThread()).
+ * @par Thread Safety
+ * Inherits @ref IODevice: thread-affine.  A single AbstractSocket
+ * instance must only be used from the thread that created it (or
+ * moved to via @c moveToThread()).
  *
  * @par Example
  * @code

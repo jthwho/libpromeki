@@ -44,6 +44,9 @@ PROMEKI_NAMESPACE_BEGIN
  * bf.drawText("Hello, World!", 100, 200);
  * @endcode
  *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref Font.
+ *
  * @see Font, FastFont
  * @see @ref fonts "Font Rendering"
  */

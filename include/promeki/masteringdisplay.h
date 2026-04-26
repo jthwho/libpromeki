@@ -36,6 +36,11 @@ PROMEKI_NAMESPACE_BEGIN
  * A default-constructed MasteringDisplay is invalid
  * (@ref isValid returns false).
  *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — const operations are safe, but
+ * concurrent mutation requires external synchronization.
+ *
  * @par Example
  * @code
  * MasteringDisplay md;

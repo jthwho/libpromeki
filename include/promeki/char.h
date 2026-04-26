@@ -19,6 +19,11 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Stores a char32_t codepoint and provides character classification,
  * case conversion, and UTF-8 encoding/decoding.
+ *
+ * @par Thread Safety
+ * Trivially thread-safe.  Char is a value-type wrapper around a
+ * single @c char32_t; distinct instances may be used concurrently
+ * and a single instance carries no mutable shared state.
  */
 class Char {
         public:

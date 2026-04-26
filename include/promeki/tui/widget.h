@@ -13,13 +13,6 @@ PROMEKI_NAMESPACE_BEGIN
 
 class TuiSubsystem;
 
-// Backward-compatible type aliases so existing TUI code compiles
-// unchanged.  The actual types now live in core/widget.h.
-using TuiPaintEvent = PaintEvent;
-using TuiResizeEvent = ResizeEvent;
-using TuiFocusPolicy = FocusPolicy;
-using TuiSizePolicy = SizePolicy;
-
 /**
  * @brief TUI-specific widget base class.
  * @ingroup tui_core
@@ -30,6 +23,12 @@ using TuiSizePolicy = SizePolicy;
  *
  * All geometry, visibility, focus, size policy, layout, and
  * event dispatch functionality is inherited from Widget.
+ *
+ * @par Thread Safety
+ * Thread-affine via @ref ObjectBase.  All TUI widgets must be created and
+ * accessed from the thread that owns the TUI @ref EventLoop (typically the
+ * thread that drives @ref TuiSubsystem).  Cross-thread interaction is
+ * supported only through @ref ObjectBase signal/slot dispatch.
  */
 class TuiWidget : public Widget {
         PROMEKI_OBJECT(TuiWidget, Widget)

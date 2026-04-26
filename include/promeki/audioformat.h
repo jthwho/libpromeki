@@ -187,7 +187,7 @@ class AudioFormat {
                         bool       isBigEndian    = false;     ///< True for big-endian multi-byte samples.
                         bool       compressed     = false;     ///< True for compressed bitstream formats.
                         AudioCodec audioCodec;                 ///< Codec identity for compressed formats.
-                        FourCCList fourccList;                 ///< Associated FourCC codes (if any).
+                        FourCC::List fourccList;                 ///< Associated FourCC codes (if any).
                         /**
                          * @brief Converts samples from this format to normalized floats in [-1, 1].
                          * @param out     Destination float buffer.
@@ -311,7 +311,7 @@ class AudioFormat {
                 const AudioCodec &audioCodec() const { return d->audioCodec; }
 
                 /** @brief Returns the list of associated FourCC codes. */
-                const FourCCList &fourccList() const { return d->fourccList; }
+                const FourCC::List &fourccList() const { return d->fourccList; }
 
                 /**
                  * @brief Converts samples in this format to normalized floats.

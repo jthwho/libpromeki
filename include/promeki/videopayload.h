@@ -46,6 +46,12 @@ class DataStream;
  * specializations (a future @c NALBitstreamPayload for H.264 / HEVC
  * access units, or a @c ProResPayload carrying frame-type-A/B
  * metadata) is an intentional extension point.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref MediaPayload.
+ * @c VideoPayload::Ptr is safe to hand off across threads (atomic
+ * refcount); concurrent mutation of a single instance must be
+ * externally synchronized.
  */
 class VideoPayload : public MediaPayload {
         PROMEKI_SHARED_ABSTRACT(VideoPayload)

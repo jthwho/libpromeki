@@ -29,6 +29,12 @@ class UncompressedVideoPayload;
  * PaintEngine provides a pixel-description-aware interface for drawing points,
  * lines, filling surfaces, and blitting images.  It delegates to a
  * polymorphic Impl that is specific to the underlying pixel description.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance — including any combination of
+ * drawing operations on the same target image — must be externally
+ * synchronized.
  */
 class PaintEngine {
 	public:

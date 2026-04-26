@@ -42,6 +42,9 @@ PROMEKI_NAMESPACE_BEGIN
  * auto payload = PcmAudioPayload::Ptr::create(
  *         desc, samples, plane0);
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref AudioPayload.
  */
 class PcmAudioPayload : public AudioPayload {
         public:

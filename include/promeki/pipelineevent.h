@@ -73,6 +73,13 @@ PROMEKI_NAMESPACE_BEGIN
  * assert(err.isOk());
  * assert(round.kind() == PipelineEvent::Kind::StateChanged);
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * @c PipelineEvent::Ptr uses an atomic refcount and is safe to share
+ * across threads — events are typically published by @ref MediaPipeline
+ * to subscribers on different threads via shared pointer.
  */
 class PipelineEvent {
         PROMEKI_SHARED_FINAL(PipelineEvent)

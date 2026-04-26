@@ -25,6 +25,9 @@ class TuiPalette;
  * and mouse (click to select, double-click to activate). Mouse wheel and
  * scrollbar interaction scroll the viewport independently of the selection.
  * The Enter key activates the current item via the itemActivated signal.
+ *
+ * @par Thread Safety
+ * Thread-affine — see @ref TuiWidget.
  */
 class TuiListView : public TuiWidget {
         PROMEKI_OBJECT(TuiListView, TuiWidget)
@@ -70,7 +73,7 @@ class TuiListView : public TuiWidget {
                 PROMEKI_SIGNAL(itemActivated, int)
 
         protected:
-                void paintEvent(TuiPaintEvent *e) override;
+                void paintEvent(PaintEvent *e) override;
                 void keyPressEvent(KeyEvent *e) override;
                 void mouseEvent(MouseEvent *e) override;
 

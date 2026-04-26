@@ -70,7 +70,7 @@ Size2Di32 TuiMenu::sizeHint() const {
         return Size2Di32(maxWidth + 4, static_cast<int>(_actions.size()) + 2);
 }
 
-void TuiMenu::paintEvent(TuiPaintEvent *) {
+void TuiMenu::paintEvent(PaintEvent *) {
         if(!_open) return;
 
         TuiSubsystem *app = TuiSubsystem::instance();
@@ -169,7 +169,7 @@ Size2Di32 TuiMenuBar::sizeHint() const {
         return Size2Di32(40, 1);
 }
 
-void TuiMenuBar::paintEvent(TuiPaintEvent *) {
+void TuiMenuBar::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 

@@ -42,6 +42,12 @@ PROMEKI_NAMESPACE_BEGIN
  * @ref validate performs both structural checks (route endpoints
  * exist, no cycles, no orphans) and per-stage @ref VariantSpec
  * checks against the backend's registered config specs.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * @c MediaPipelineConfig::Ptr uses an atomic refcount and is safe to share
+ * across threads.
  */
 class MediaPipelineConfig {
         PROMEKI_SHARED_FINAL(MediaPipelineConfig)

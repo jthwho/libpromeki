@@ -86,6 +86,17 @@ class VariantSpec;
  *     ...
  * }
  * @endcode
+ *
+ * @par Thread Safety
+ * @ref MediaPayload::Ptr is atomically refcounted, so handing a
+ * payload between pipeline stages running on different threads is
+ * safe.  A single MediaPayload instance is conditionally
+ * thread-safe: const accessors (descriptor, kind, metadata read)
+ * are safe; mutators require external synchronization.  The
+ * intended pipeline pattern is "produce on stage A, hand off to
+ * stage B by Ptr, then mutate copy-on-write from B" — this is
+ * race-free as long as no thread keeps a non-Ptr pointer to a
+ * payload it has handed off.
  */
 class MediaPayload {
         public:

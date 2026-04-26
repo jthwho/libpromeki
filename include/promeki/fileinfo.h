@@ -8,12 +8,15 @@
 #pragma once
 
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/filepath.h>
 #include <promeki/datetime.h>
+#include <promeki/error.h>
+#include <promeki/result.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -23,6 +26,13 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Wraps std::filesystem to query file metadata such as existence, type,
  * size, permissions, and path components. The file status is lazily
+ * cached and can be force-refreshed.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized — the lazy status cache is mutated by
+ * read-only-looking accessors.
  *
  * @par Example
  * @code
@@ -32,7 +42,6 @@ PROMEKI_NAMESPACE_BEGIN
  * String name = info.fileName();   // "video.mxf"
  * String ext = info.extension();   // "mxf"
  * @endcode
- * cached and can be force-refreshed.
  */
 class FileInfo {
         public:
@@ -160,40 +169,57 @@ class FileInfo {
 
                 /**
                  * @brief Returns the file size in bytes.
-                 * @return The size of the file, or 0 if the path is not a regular file.
+                 *
+                 * Returns @c Error::NotExist when the path does not refer to
+                 * a regular file (so callers can distinguish a genuinely empty
+                 * file from a missing / non-regular path), and @c Error::syserr
+                 * if @c std::filesystem::file_size itself fails.
+                 *
+                 * @return Result holding the size on success, or an Error on failure.
                  */
-                std::uintmax_t size() const {
-                        return isFile() ? std::filesystem::file_size(_path) : 0;
+                Result<int64_t> size() const {
+                        if(!isFile()) return makeError<int64_t>(Error::NotExist);
+                        std::error_code ec;
+                        auto sz = std::filesystem::file_size(_path, ec);
+                        if(ec) return makeError<int64_t>(Error::syserr(ec));
+                        return makeResult(static_cast<int64_t>(sz));
                 }
 
                 /**
                  * @brief Returns true if the file is readable by the owner.
+                 *
+                 * Returns @c false both when the owner-read permission is not
+                 * set and when @c std::filesystem::status fails (path missing,
+                 * permission denied during stat, etc.) — the two are not
+                 * distinguishable through this API.  Use @ref FileInfo::exists
+                 * first to disambiguate.
+                 *
                  * @return true if the owner-read permission is set.
                  */
                 bool isReadable() const {
-                        std::error_code ec;
-                        auto perms = std::filesystem::status(_path, ec).permissions();
-                        return (perms & std::filesystem::perms::owner_read) != std::filesystem::perms::none;
+                        return ownerHasPerm(std::filesystem::perms::owner_read);
                 }
 
                 /**
                  * @brief Returns true if the file is writable by the owner.
+                 *
+                 * See @ref isReadable for the not-present vs not-allowed caveat.
+                 *
                  * @return true if the owner-write permission is set.
                  */
                 bool isWritable() const {
-                        std::error_code ec;
-                        auto perms = std::filesystem::status(_path, ec).permissions();
-                        return (perms & std::filesystem::perms::owner_write) != std::filesystem::perms::none;
+                        return ownerHasPerm(std::filesystem::perms::owner_write);
                 }
 
                 /**
                  * @brief Returns true if the file is executable by the owner.
+                 *
+                 * See @ref isReadable for the not-present vs not-allowed caveat.
+                 *
                  * @return true if the owner-exec permission is set.
                  */
                 bool isExecutable() const {
-                        std::error_code ec;
-                        auto perms = std::filesystem::status(_path, ec).permissions();
-                        return (perms & std::filesystem::perms::owner_exec) != std::filesystem::perms::none;
+                        return ownerHasPerm(std::filesystem::perms::owner_exec);
                 }
 
                 /**
@@ -232,6 +258,13 @@ class FileInfo {
         private:
                 std::filesystem::path           _path;
                 mutable std::optional<Status>   _status;
+
+                bool ownerHasPerm(std::filesystem::perms bit) const {
+                        std::error_code ec;
+                        auto perms = std::filesystem::status(_path, ec).permissions();
+                        if(ec) return false;
+                        return (perms & bit) != std::filesystem::perms::none;
+                }
 
 };
 

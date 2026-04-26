@@ -30,8 +30,10 @@ PROMEKI_NAMESPACE_BEGIN
  * @ref PcmAudioPayload::convert or @ref AudioDesc::samplesToFloat
  * to convert before feeding data in.
  *
- * The resampler is not internally thread-safe; the caller must
- * synchronize if process() is called from multiple threads.
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * The wrapped libsamplerate state is not internally synchronized.
  *
  * @par Example
  * @code

@@ -65,7 +65,9 @@ TEST_CASE("FileInfo: suffix on compound extension") {
 
 TEST_CASE("FileInfo: size of non-existent file") {
         FileInfo fi("/nonexistent/file.txt");
-        CHECK(fi.size() == 0);
+        auto [sz, err] = fi.size();
+        CHECK(err == Error::NotExist);
+        CHECK(sz == 0);
 }
 
 TEST_CASE("FileInfo: FilePath constructor") {

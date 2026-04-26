@@ -37,6 +37,14 @@ class Error;
  * every call. This is suitable for cryptographic seeds, UUIDs, nonces,
  * and key generation. It is slower than PRNG output and should not be
  * used for bulk data generation.
+ *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — concurrent @c next / @c reseed
+ * calls require external synchronization.  @ref global returns a
+ * thread-local instance, so callers using @c global() do not need
+ * to synchronize.  @ref trueRandom is safe to call from any thread
+ * (each call constructs its own @c std::random_device).
  */
 class Random {
         public:

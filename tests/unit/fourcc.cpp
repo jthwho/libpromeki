@@ -65,8 +65,8 @@ TEST_CASE("FourCC: byte order is big-endian") {
         CHECK(f.value() == expected);
 }
 
-TEST_CASE("FourCCList: basic usage") {
-        FourCCList list;
+TEST_CASE("FourCC::List: basic usage") {
+        FourCC::List list;
         list.pushToBack(FourCC("ABCD"));
         list.pushToBack(FourCC("EFGH"));
         CHECK(list.size() == 2);

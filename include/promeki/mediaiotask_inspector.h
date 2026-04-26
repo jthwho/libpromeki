@@ -362,6 +362,9 @@ struct InspectorSnapshot {
  * @c true).  This is what makes it usable as the terminal stage of a
  * pipeline.  Disabling the drop is currently a no-op since there is
  * no downstream — the option exists for future tee-style wrappers.
+ *
+ * @par Thread Safety
+ * Strand-affine — see @ref MediaIOTask.
  */
 class MediaIOTask_Inspector : public MediaIOTask {
         public:

@@ -34,6 +34,17 @@ struct PromiseError {
  * @ingroup concurrency
  *
  * Returned by Promise\<T\>::%future() and ThreadPool::submit().
+ * Move-only (non-copyable).
+ *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single Future is
+ * intended to be observed from one consumer thread while its
+ * matching @ref Promise is set from a producer thread; the
+ * underlying @c std::future synchronization makes this handoff
+ * safe.  Calling @c get / @c wait / @c isReady on the same Future
+ * from multiple threads requires external synchronization.
+ *
+ * @tparam T The result type.
  *
  * @par Example
  * @code
@@ -46,9 +57,6 @@ struct PromiseError {
  * // In the waiting thread:
  * int result = future.get();  // 42
  * @endcode
- * Move-only (non-copyable).
- *
- * @tparam T The result type.
  */
 template <typename T>
 class Future {

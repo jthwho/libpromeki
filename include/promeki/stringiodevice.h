@@ -29,6 +29,10 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Write growth
  * When opened for writing, writes append to or overwrite the String
  * content at the current position. The String grows as needed.
+ *
+ * @par Thread Safety
+ * Inherits @ref IODevice: thread-affine.  A single instance must
+ * only be used from the thread that created it.
  */
 class StringIODevice : public IODevice {
         PROMEKI_OBJECT(StringIODevice, IODevice)

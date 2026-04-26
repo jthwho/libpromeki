@@ -57,179 +57,179 @@ PROMEKI_NAMESPACE_BEGIN
  */
 template<typename T>
 class UniquePtr {
-    public:
-        // All UniquePtr instantiations are friends of each other so the
-        // upcast/downcast helpers can reach the private _ptr across
-        // type boundaries.
-        template<typename U> friend class UniquePtr;
+        public:
+                // All UniquePtr instantiations are friends of each other so the
+                // upcast/downcast helpers can reach the private _ptr across
+                // type boundaries.
+                template<typename U> friend class UniquePtr;
 
-        /** @brief Constructs a null UniquePtr. */
-        UniquePtr() = default;
+                /** @brief Constructs a null UniquePtr. */
+                UniquePtr() = default;
 
-        /** @brief Constructs a null UniquePtr from nullptr. */
-        UniquePtr(std::nullptr_t) noexcept {}
+                /** @brief Constructs a null UniquePtr from nullptr. */
+                UniquePtr(std::nullptr_t) noexcept {}
 
-        /** @brief UniquePtr is not copyable. */
-        UniquePtr(const UniquePtr &) = delete;
+                /** @brief UniquePtr is not copyable. */
+                UniquePtr(const UniquePtr &) = delete;
 
-        /** @brief UniquePtr is not copyable. */
-        UniquePtr &operator=(const UniquePtr &) = delete;
+                /** @brief UniquePtr is not copyable. */
+                UniquePtr &operator=(const UniquePtr &) = delete;
 
-        /** @brief Move-constructs from another UniquePtr, leaving the source null. */
-        UniquePtr(UniquePtr &&o) noexcept : _ptr(o._ptr) { o._ptr = nullptr; }
+                /** @brief Move-constructs from another UniquePtr, leaving the source null. */
+                UniquePtr(UniquePtr &&o) noexcept : _ptr(o._ptr) { o._ptr = nullptr; }
 
-        /**
-         * @brief Implicit move-construct from a UniquePtr of a derived type.
-         *
-         * Only participates in overload resolution when @c U publicly
-         * derives from @c T and @c U != @c T.  The base class should
-         * have a virtual destructor; otherwise deleting through the
-         * base pointer is undefined behavior.
-         */
-        template<typename U,
-                 typename = std::enable_if_t<
-                     std::is_base_of_v<T, U> &&
-                     !std::is_same_v<T, U>>>
-        UniquePtr(UniquePtr<U> &&o) noexcept : _ptr(o._ptr) {
-            o._ptr = nullptr;
-        }
+                /**
+                 * @brief Implicit move-construct from a UniquePtr of a derived type.
+                 *
+                 * Only participates in overload resolution when @c U publicly
+                 * derives from @c T and @c U != @c T.  The base class should
+                 * have a virtual destructor; otherwise deleting through the
+                 * base pointer is undefined behavior.
+                 */
+                template<typename U,
+                                 typename = std::enable_if_t<
+                                         std::is_base_of_v<T, U> &&
+                                         !std::is_same_v<T, U>>>
+                UniquePtr(UniquePtr<U> &&o) noexcept : _ptr(o._ptr) {
+                        o._ptr = nullptr;
+                }
 
-        ~UniquePtr() { clear(); }
+                ~UniquePtr() { clear(); }
 
-        /** @brief Move-assigns from another UniquePtr, releasing any prior object. */
-        UniquePtr &operator=(UniquePtr &&o) noexcept {
-            if(&o == this) return *this;
-            clear();
-            _ptr = o._ptr;
-            o._ptr = nullptr;
-            return *this;
-        }
+                /** @brief Move-assigns from another UniquePtr, releasing any prior object. */
+                UniquePtr &operator=(UniquePtr &&o) noexcept {
+                        if(&o == this) return *this;
+                        clear();
+                        _ptr = o._ptr;
+                        o._ptr = nullptr;
+                        return *this;
+                }
 
-        /**
-         * @brief Move-assign from a UniquePtr of a derived type.
-         *
-         * Releases any currently owned object, then takes ownership of
-         * the derived pointer, leaving the source null.
-         */
-        template<typename U,
-                 typename = std::enable_if_t<
-                     std::is_base_of_v<T, U> &&
-                     !std::is_same_v<T, U>>>
-        UniquePtr &operator=(UniquePtr<U> &&o) noexcept {
-            clear();
-            _ptr = o._ptr;
-            o._ptr = nullptr;
-            return *this;
-        }
+                /**
+                 * @brief Move-assign from a UniquePtr of a derived type.
+                 *
+                 * Releases any currently owned object, then takes ownership of
+                 * the derived pointer, leaving the source null.
+                 */
+                template<typename U,
+                                 typename = std::enable_if_t<
+                                         std::is_base_of_v<T, U> &&
+                                         !std::is_same_v<T, U>>>
+                UniquePtr &operator=(UniquePtr<U> &&o) noexcept {
+                        clear();
+                        _ptr = o._ptr;
+                        o._ptr = nullptr;
+                        return *this;
+                }
 
-        /**
-         * @brief Constructs a new T in-place and returns a UniquePtr owning it.
-         * @param args Arguments forwarded to T's constructor.
-         */
-        template<typename... Args>
-        static UniquePtr create(Args&&... args) {
-            UniquePtr up;
-            up._ptr = new T(std::forward<Args>(args)...);
-            return up;
-        }
+                /**
+                 * @brief Constructs a new T in-place and returns a UniquePtr owning it.
+                 * @param args Arguments forwarded to T's constructor.
+                 */
+                template<typename... Args>
+                static UniquePtr create(Args&&... args) {
+                        UniquePtr up;
+                        up._ptr = new T(std::forward<Args>(args)...);
+                        return up;
+                }
 
-        /**
-         * @brief Takes exclusive ownership of an existing raw pointer.
-         * @param obj The raw pointer to adopt.  May be null.
-         *
-         * After this call, the UniquePtr is responsible for deleting
-         * @p obj.  The caller must not retain any other owning pointer
-         * to the same object.
-         */
-        static UniquePtr takeOwnership(T *obj) {
-            UniquePtr up;
-            up._ptr = obj;
-            return up;
-        }
+                /**
+                 * @brief Takes exclusive ownership of an existing raw pointer.
+                 * @param obj The raw pointer to adopt.  May be null.
+                 *
+                 * After this call, the UniquePtr is responsible for deleting
+                 * @p obj.  The caller must not retain any other owning pointer
+                 * to the same object.
+                 */
+                static UniquePtr takeOwnership(T *obj) {
+                        UniquePtr up;
+                        up._ptr = obj;
+                        return up;
+                }
 
-        /** @brief Deletes the owned object (if any) and becomes null. */
-        void clear() {
-            if(_ptr == nullptr) return;
-            delete _ptr;
-            _ptr = nullptr;
-            return;
-        }
+                /** @brief Deletes the owned object (if any) and becomes null. */
+                void clear() {
+                        if(_ptr == nullptr) return;
+                        delete _ptr;
+                        _ptr = nullptr;
+                        return;
+                }
 
-        /**
-         * @brief Releases ownership and returns the raw pointer.
-         * @return The previously owned pointer, or null if this was null.
-         *
-         * After this call, the UniquePtr is null and no longer
-         * responsible for deletion.  The caller takes ownership of the
-         * returned pointer and is responsible for deleting it.
-         */
-        T *release() {
-            T *p = _ptr;
-            _ptr = nullptr;
-            return p;
-        }
+                /**
+                 * @brief Releases ownership and returns the raw pointer.
+                 * @return The previously owned pointer, or null if this was null.
+                 *
+                 * After this call, the UniquePtr is null and no longer
+                 * responsible for deletion.  The caller takes ownership of the
+                 * returned pointer and is responsible for deleting it.
+                 */
+                T *release() {
+                        T *p = _ptr;
+                        _ptr = nullptr;
+                        return p;
+                }
 
-        /**
-         * @brief Replaces the owned object with a new one.
-         * @param obj The new pointer to adopt.  Defaults to null.
-         *
-         * The previously owned object, if any, is deleted.  Passing the
-         * already-owned pointer is a no-op.
-         */
-        void reset(T *obj = nullptr) {
-            if(_ptr == obj) return;
-            delete _ptr;
-            _ptr = obj;
-            return;
-        }
+                /**
+                 * @brief Replaces the owned object with a new one.
+                 * @param obj The new pointer to adopt.  Defaults to null.
+                 *
+                 * The previously owned object, if any, is deleted.  Passing the
+                 * already-owned pointer is a no-op.
+                 */
+                void reset(T *obj = nullptr) {
+                        if(_ptr == obj) return;
+                        delete _ptr;
+                        _ptr = obj;
+                        return;
+                }
 
-        /** @brief Swaps the managed pointer with @p other. */
-        void swap(UniquePtr &other) noexcept {
-            std::swap(_ptr, other._ptr);
-        }
+                /** @brief Swaps the managed pointer with @p other. */
+                void swap(UniquePtr &other) noexcept {
+                        std::swap(_ptr, other._ptr);
+                }
 
-        /** @brief Returns true if this UniquePtr owns no object. */
-        bool isNull() const { return _ptr == nullptr; }
+                /** @brief Returns true if this UniquePtr owns no object. */
+                bool isNull() const { return _ptr == nullptr; }
 
-        /** @brief Returns true if this UniquePtr owns an object. */
-        bool isValid() const { return _ptr != nullptr; }
+                /** @brief Returns true if this UniquePtr owns an object. */
+                bool isValid() const { return _ptr != nullptr; }
 
-        /** @brief Returns true if this UniquePtr owns an object. */
-        explicit operator bool() const { return _ptr != nullptr; }
+                /** @brief Returns true if this UniquePtr owns an object. */
+                explicit operator bool() const { return _ptr != nullptr; }
 
-        bool operator==(const UniquePtr &other) const { return _ptr == other._ptr; }
-        bool operator!=(const UniquePtr &other) const { return _ptr != other._ptr; }
-        bool operator==(std::nullptr_t) const { return _ptr == nullptr; }
-        bool operator!=(std::nullptr_t) const { return _ptr != nullptr; }
+                bool operator==(const UniquePtr &other) const { return _ptr == other._ptr; }
+                bool operator!=(const UniquePtr &other) const { return _ptr != other._ptr; }
+                bool operator==(std::nullptr_t) const { return _ptr == nullptr; }
+                bool operator!=(std::nullptr_t) const { return _ptr != nullptr; }
 
-        /**
-         * @brief Returns the raw pointer to the owned object.
-         *
-         * Asserts that the UniquePtr is non-null.  Use @ref isNull
-         * first if the caller cannot guarantee ownership, or use
-         * @ref get to obtain a possibly-null raw pointer.
-         */
-        T *ptr() const {
-            assert(_ptr != nullptr);
-            return _ptr;
-        }
+                /**
+                 * @brief Returns the raw pointer to the owned object.
+                 *
+                 * Asserts that the UniquePtr is non-null.  Use @ref isNull
+                 * first if the caller cannot guarantee ownership, or use
+                 * @ref get to obtain a possibly-null raw pointer.
+                 */
+                T *ptr() const {
+                        assert(_ptr != nullptr);
+                        return _ptr;
+                }
 
-        /**
-         * @brief Returns the raw pointer without asserting non-null.
-         *
-         * Returns @c nullptr when the UniquePtr owns no object.
-         * Useful for exposing the owned pointer through an accessor
-         * that may legitimately return null.
-         */
-        T *get() const {
-            return _ptr;
-        }
+                /**
+                 * @brief Returns the raw pointer without asserting non-null.
+                 *
+                 * Returns @c nullptr when the UniquePtr owns no object.
+                 * Useful for exposing the owned pointer through an accessor
+                 * that may legitimately return null.
+                 */
+                T *get() const {
+                        return _ptr;
+                }
 
-        T *operator->() const { return ptr(); }
-        T &operator*() const { return *ptr(); }
+                T *operator->() const { return ptr(); }
+                T &operator*() const { return *ptr(); }
 
-    private:
-        T *_ptr = nullptr;
+        private:
+                T *_ptr = nullptr;
 };
 
 /** @brief Non-member swap for UniquePtr. */

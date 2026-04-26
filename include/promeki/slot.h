@@ -26,6 +26,11 @@ PROMEKI_NAMESPACE_BEGIN
  * well as deferred invocation from a VariantList, enabling type-erased
  * signal/slot communication.
  *
+ * @par Thread Safety
+ * Thread-affine — a Slot belongs to its owning ObjectBase and
+ * should be invoked from that thread.  @ref Signal handles the
+ * cross-thread routing for connections that need it.
+ *
  * @tparam Args The argument types that the slot's callable accepts.
  */
 template <typename... Args>

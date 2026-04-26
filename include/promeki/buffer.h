@@ -65,6 +65,16 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Shared ownership
  * When shared ownership is needed, use Buffer::Ptr (SharedPtr\<Buffer\>).
  * This is the recommended approach for large buffers or buffers in
+ * non-host-accessible memory spaces, as it avoids deep copies.
+ *
+ * @par Thread Safety
+ * Distinct Buffer instances may be used concurrently — the
+ * underlying refcount on Buffer::Ptr is atomic, so copying a
+ * Buffer::Ptr across threads is safe even when the source is in
+ * use elsewhere.  Concurrent mutation of a single instance
+ * (write, setSize, shiftData, fill, copyFrom) must be externally
+ * synchronized.  The MemSpace operations themselves are
+ * thread-safe per the MemSpace contract.
  *
  * @par Example
  * @code
@@ -80,7 +90,6 @@ PROMEKI_NAMESPACE_BEGIN
  * const char *src = "hello";
  * buf.copyFrom(src, 5);
  * @endcode
- * non-host-accessible memory spaces, as it avoids deep copies.
  */
 class Buffer {
         PROMEKI_SHARED_FINAL(Buffer)
@@ -122,23 +131,34 @@ class Buffer {
                 }
 
                 /**
-                 * @brief Wraps an existing memory pointer as a buffer.
-                 * @param p   Pointer to existing memory.
+                 * @brief Wraps an existing memory pointer as a non-owning Buffer view.
+                 *
+                 * The returned Buffer references @p p but never frees it; the
+                 * caller retains responsibility for the lifetime of the
+                 * underlying allocation. Use this to expose external memory
+                 * (mmap regions, hardware DMA staging buffers, stack arrays)
+                 * through the Buffer API without copying.
+                 *
+                 * The logical content @c size() is initialized to 0; call
+                 * @c setSize() if the wrapped region already holds meaningful
+                 * data.
+                 *
+                 * @param p   Pointer to existing memory. Must remain valid for
+                 *            the lifetime of the returned Buffer.
                  * @param sz  Size of the memory region in bytes.
                  * @param an  Alignment of the pointer (0 if unknown).
-                 * @param own If true, the buffer takes ownership and will free the memory on destruction.
                  * @param ms  Memory space the pointer belongs to.
-                 *
-                 * @note This wraps existing memory but does not set the logical
-                 * size (it is initialized to 0).
+                 * @return A non-owning Buffer view of @p p.
                  */
-                Buffer(void *p, size_t sz, size_t an = 0, bool own = false, const MemSpace &ms = MemSpace::Default) :
-                        _data(p), _owned(own)
-                {
-                        _alloc.ptr = p;
-                        _alloc.size = sz;
-                        _alloc.align = an;
-                        _alloc.ms = ms;
+                static Buffer wrap(void *p, size_t sz, size_t an = 0, const MemSpace &ms = MemSpace::Default) {
+                        Buffer b;
+                        b._alloc.ptr = p;
+                        b._alloc.size = sz;
+                        b._alloc.align = an;
+                        b._alloc.ms = ms;
+                        b._data = p;
+                        b._owned = false;
+                        return b;
                 }
 
                 /**
@@ -319,15 +339,6 @@ class Buffer {
                  * @return True for system memory, false for device or remote memory.
                  */
                 bool isHostAccessible() const { return _alloc.ms.isHostAccessible(_alloc); }
-
-                /**
-                 * @brief Enables or disables ownership of the underlying memory.
-                 * @param val If true, the buffer will free memory on destruction; if false, it will not.
-                 */
-                void setOwnershipEnabled(bool val) {
-                        _owned = val;
-                        return;
-                }
 
                 /**
                  * @brief Fills the entire buffer with the given byte value.

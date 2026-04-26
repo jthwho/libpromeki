@@ -25,6 +25,12 @@ PROMEKI_NAMESPACE_BEGIN
  * An ignored color is represented by Color::Ignored (an invalid Color).
  * Attributes use a separate mask: bits set in the mask are defined by
  * this style; bits not in the mask are inherited during merging.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * @c TuiStyle is a small value type (a few bytes); copying is the
+ * recommended way to share it across threads.
  */
 class TuiStyle {
         public:
@@ -120,6 +126,9 @@ class TuiStyle {
  *
  * Encapsulates all state that can influence which palette style is
  * returned.  Adding new fields here does not break existing callers.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref TuiStyle.
  */
 class TuiStyleState {
         public:

@@ -25,6 +25,12 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @tparam ValueType The numeric type for gains, set point, and control output (default: double).
  * @tparam TimeType  The numeric type for time values (default: double).
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently.  A single PIDController instance must be driven
+ * from one thread (the control loop); concurrent mutation of
+ * gains or set point requires external synchronization.
  */
 template <typename ValueType = double, typename TimeType = double>
 class PIDController {

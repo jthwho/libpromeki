@@ -268,13 +268,12 @@ To VariantImpl<Types...>::get(Error *err) const {
 
                 } else if constexpr (std::is_same_v<To, Url>) {
                         if constexpr (std::is_same_v<From, String>) {
-                                Error e;
-                                Url u = Url::fromString(arg, &e);
-                                if(e.isError() || !u.isValid()) {
+                                Result<Url> r = Url::fromString(arg);
+                                if(r.second().isError() || !r.first().isValid()) {
                                         if(err != nullptr) *err = Error::Invalid;
                                         return Url();
                                 }
-                                return u;
+                                return r.first();
                         }
 
                 } else if constexpr (std::is_same_v<To, String>) {

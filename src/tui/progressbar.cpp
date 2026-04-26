@@ -38,7 +38,7 @@ Size2Di32 TuiProgressBar::sizeHint() const {
         return Size2Di32(20, 1);
 }
 
-void TuiProgressBar::paintEvent(TuiPaintEvent *) {
+void TuiProgressBar::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 

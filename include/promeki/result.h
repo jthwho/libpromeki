@@ -19,6 +19,12 @@ PROMEKI_NAMESPACE_BEGIN
  * Wraps a value and an Error in a Pair. Structured bindings work
  * naturally: `auto [val, err] = someFactory();`
  *
+ * @par Thread Safety
+ * Inherits @ref Pair: distinct instances may be used concurrently;
+ * a single instance is thread-safe only as far as @c T is.  Result
+ * is most often a transient return value, so concurrent access is
+ * rarely meaningful.
+ *
  * @tparam T The value type.
  */
 template <typename T>

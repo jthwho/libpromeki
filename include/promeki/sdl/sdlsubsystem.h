@@ -42,6 +42,15 @@ class Widget;
  * TUI can construct a @ref TuiSubsystem alongside this one and
  * both will install their I/O sources on the same
  * @c Application main @ref EventLoop.
+ *
+ * @par Thread Safety
+ * Thread-affine.  @c SdlSubsystem must be constructed, used, and destroyed
+ * on the thread that owns the bound @ref EventLoop (typically the main
+ * thread).  SDL's video subsystem itself requires that windows and
+ * renderers be created and operated from the same thread that initialised
+ * SDL — this class enforces that contract by binding to that thread at
+ * construction.  Cross-thread interaction is supported only through
+ * @ref EventLoop::postCallable / @ref ObjectBase signal/slot dispatch.
  */
 class SdlSubsystem {
         public:

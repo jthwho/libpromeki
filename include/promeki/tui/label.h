@@ -26,6 +26,9 @@ enum TuiAlignment {
 
 /**
  * @brief Displays text (single or multi-line).
+ *
+ * @par Thread Safety
+ * Thread-affine — see @ref TuiWidget.
  */
 class TuiLabel : public TuiWidget {
         PROMEKI_OBJECT(TuiLabel, TuiWidget)
@@ -54,7 +57,7 @@ class TuiLabel : public TuiWidget {
                 Size2Di32 sizeHint() const override;
 
         protected:
-                void paintEvent(TuiPaintEvent *e) override;
+                void paintEvent(PaintEvent *e) override;
 
         private:
                 String          _text;

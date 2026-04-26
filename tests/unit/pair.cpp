@@ -8,6 +8,8 @@
 #include <doctest/doctest.h>
 #include <promeki/pair.h>
 #include <promeki/string.h>
+#include <promeki/streamstring.h>
+#include <promeki/textstream.h>
 
 using namespace promeki;
 
@@ -109,4 +111,11 @@ TEST_CASE("Pair: move") {
         Pair<int, String> p2 = std::move(p1);
         CHECK(p2.first() == 42);
         CHECK(p2.second() == "hello");
+}
+
+TEST_CASE("Pair: TextStream operator") {
+        Pair<int, String> p(42, "hello");
+        StreamString out;
+        out.stream() << p << promeki::flush;
+        CHECK(out.line() == "(42, hello)");
 }

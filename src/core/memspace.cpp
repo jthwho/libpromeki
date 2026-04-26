@@ -143,17 +143,17 @@ struct MemSpaceRegistry {
                                 //promekiDebug("%p: system free", a.ptr);
                                 std::free(a.ptr);
                         },
-                        .copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> bool {
+                        .copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
                                 // Wrapper guarantees: src.ptr and dst.ptr are non-null.
                                 PROMEKI_ASSERT(src.ptr != nullptr && dst.ptr != nullptr);
                                 MemSpace::ID did = dst.ms.id();
                                 if(did == MemSpace::System || did == MemSpace::SystemSecure) {
                                         std::memcpy(dst.ptr, src.ptr, bytes);
-                                        return true;
+                                        return Error::Ok;
                                 }
                                 promekiErr("(%p -> %p, %llu bytes) Copy from System to memspace %d not supported",
                                         src.ptr, dst.ptr, (unsigned long long)bytes, dst.ms.id());
-                                return false;
+                                return Error::NotSupported;
                         },
                         .fill = [](void *ptr, size_t bytes, char value) -> Error {
                                 // Wrapper guarantees: ptr != nullptr.
@@ -192,17 +192,17 @@ struct MemSpaceRegistry {
                                 }
                                 std::free(a.ptr);
                         },
-                        .copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> bool {
+                        .copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
                                 // Wrapper guarantees: src.ptr and dst.ptr are non-null.
                                 PROMEKI_ASSERT(src.ptr != nullptr && dst.ptr != nullptr);
                                 MemSpace::ID did = dst.ms.id();
                                 if(did == MemSpace::System || did == MemSpace::SystemSecure) {
                                         std::memcpy(dst.ptr, src.ptr, bytes);
-                                        return true;
+                                        return Error::Ok;
                                 }
                                 promekiErr("(%p -> %p, %llu bytes) Copy from SystemSecure to memspace %d not supported",
                                         src.ptr, dst.ptr, (unsigned long long)bytes, dst.ms.id());
-                                return false;
+                                return Error::NotSupported;
                         },
                         .fill = [](void *ptr, size_t bytes, char value) -> Error {
                                 // Wrapper guarantees: ptr != nullptr.

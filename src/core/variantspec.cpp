@@ -281,10 +281,9 @@ Variant parseAsType(Variant::Type type, Enum::Type enumType,
                 case Variant::TypeStringList:
                         return Variant(str.split(","));
                 case Variant::TypeUrl: {
-                        Error urlErr;
-                        Url u = Url::fromString(str, &urlErr);
-                        if(urlErr.isError() || !u.isValid()) break;
-                        return Variant(u);
+                        Result<Url> r = Url::fromString(str);
+                        if(r.second().isError() || !r.first().isValid()) break;
+                        return Variant(r.first());
                 }
 #if PROMEKI_ENABLE_NETWORK
                 case Variant::TypeSocketAddress: {

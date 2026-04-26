@@ -51,10 +51,11 @@ class WebSocket;
  * receive a request and write into a response object that the
  * connection serializes to the wire when the handler returns.
  *
- * @par Threading model
- * Construction captures @ref EventLoop::current as the *owning loop*.
- * If the server is constructed inside a worker @ref Thread, the
- * server uses that thread's loop; otherwise it falls back to
+ * @par Thread Safety
+ * Inherits @ref ObjectBase: thread-affine.  Construction captures
+ * @ref EventLoop::current as the *owning loop*.  If the server is
+ * constructed inside a worker @ref Thread, the server uses that
+ * thread's loop; otherwise it falls back to
  * @ref Application::mainEventLoop.  Cross-thread handlers should
  * accept the request, snapshot what they need, do their work on a
  * worker, and call @ref HttpConnection::postResponse from the

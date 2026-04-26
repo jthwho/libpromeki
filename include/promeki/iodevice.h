@@ -25,8 +25,13 @@ PROMEKI_NAMESPACE_BEGIN
  * to devices such as files, sockets, pipes, and in-memory buffers.
  * All I/O device classes in promeki derive from this class.
  *
- * This class must only be used from the thread that created it
- * (or moved to via moveToThread()).
+ * @par Thread Safety
+ * Thread-affine.  An IODevice instance must only be used from the
+ * thread that created it (or moved to via @c moveToThread()).
+ * Subclasses inherit this contract; consult the concrete class
+ * for any additional thread-safe accessors (e.g. @ref Queue is
+ * thread-safe by design, @ref AsyncBufferQueue's enqueue is safe
+ * to call cross-thread by intent).
  */
 class IODevice : public ObjectBase {
         PROMEKI_OBJECT(IODevice, ObjectBase)

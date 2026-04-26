@@ -43,6 +43,12 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * The snapshot round-trips through JSON (for logging / REST endpoints)
  * and @ref DataStream (for IPC).
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * @c MediaPipelineStats::Ptr uses an atomic refcount and is safe to share
+ * across threads.
  */
 class MediaPipelineStats {
         PROMEKI_SHARED_FINAL(MediaPipelineStats)

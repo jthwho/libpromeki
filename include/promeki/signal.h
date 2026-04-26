@@ -9,6 +9,7 @@
 
 #include <tuple>
 #include <functional>
+#include <atomic>
 #include <promeki/namespace.h>
 #include <promeki/list.h>
 #include <promeki/variant_fwd.h>
@@ -24,6 +25,14 @@ class ObjectBase;
  * Allows connecting callable slots (lambdas or member functions) that are
  * invoked when the signal is emitted. Template parameters define the
  * argument types passed through the signal.
+ *
+ * @par Thread Safety
+ * Thread-affine.  @c connect, @c disconnect, and @c emit on the
+ * same Signal instance must be called from the owner's thread.
+ * Cross-thread delivery is supported by the @c connect(Function,
+ * ObjectBase *) overload, which routes invocations through the
+ * receiving ObjectBase's EventLoop via @c postCallable; that
+ * routing is thread-safe at delivery time.
  *
  * @tparam Args The argument types carried by the signal.
  */
@@ -87,11 +96,13 @@ template <typename... Args> class Signal {
                  * @param slot The callable to invoke when the signal is emitted.
                  * @param ptr  Optional pointer associated with this connection,
                  *             used for later disconnection by object.
-                 * @return The slot connection ID.
+                 * @return The stable slot connection ID; pass to @c disconnect()
+                 *         to remove this specific slot.  IDs are monotonic and
+                 *         remain valid across other disconnects.
                  */
                 size_t connect(Function slot, void *ptr = nullptr) {
-                        size_t slotID = _slots.size();
-                        _slots += Info(slot, ptr);
+                        size_t slotID = nextSlotId();
+                        _slots += Info(slotID, slot, ptr);
                         return slotID;
                 }
 
@@ -144,11 +155,12 @@ template <typename... Args> class Signal {
                  * @return The slot connection ID.
                  */
                 template <typename T> size_t connect(T *obj, void (T::*memberFunction)(Args...)) {
-                        size_t slotID = _slots.size();
+                        size_t slotID = nextSlotId();
                         _slots += Info(
+                                slotID,
                                 ([obj, memberFunction](Args... args) {
                                          (obj->*memberFunction)(args...);
-                                }), 
+                                }),
                                 obj
                         );
                         return slotID;
@@ -157,13 +169,15 @@ template <typename... Args> class Signal {
                 /**
                  * @brief Disconnects a slot by its connection ID.
                  *
-                 * Use the ID returned by connect() to disconnect that slot
-                 * from this signal.
+                 * Use the ID returned by @c connect() to disconnect that
+                 * slot from this signal.  IDs are stable across other
+                 * disconnects.  No-op if @p slotID is not currently
+                 * connected.
                  *
                  * @param slotID The connection ID returned by connect().
                  */
                 void disconnect(size_t slotID) {
-                        _slots.remove(slotID);
+                        _slots.removeIf([slotID](const Info &info) { return info.id == slotID; });
                         return;
                 }
 
@@ -212,17 +226,28 @@ template <typename... Args> class Signal {
 
 
         private:
-                class Info {
-                        public:
-                                Function        func;
-                                const void      *object = nullptr;
+                struct Info {
+                        size_t          id = 0;
+                        Function        func;
+                        const void      *object = nullptr;
 
-                                Info(Function f, const void *obj = nullptr) : func(f), object(obj) {}
+                        Info(size_t id, Function f, const void *obj = nullptr)
+                                : id(id), func(f), object(obj) {}
                 };
 
                 void            *_owner = nullptr;
                 const char      *_prototype = nullptr;
                 List<Info>      _slots;
+
+                // Process-wide monotonic ID source.  Kept as a function-local
+                // static (rather than a member) so that adding it does not
+                // change Signal's class layout or ABI — important because
+                // Signal is embedded in every ObjectBase-derived type via
+                // the @c PROMEKI_SIGNAL macro.
+                static size_t nextSlotId() {
+                        static std::atomic<size_t> counter{0};
+                        return ++counter;
+                }
 };
 
 PROMEKI_NAMESPACE_END

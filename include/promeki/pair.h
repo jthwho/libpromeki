@@ -25,6 +25,12 @@ PROMEKI_NAMESPACE_BEGIN
  * Supports structured bindings via std::tuple_size/std::%tuple_element
  * specializations.
  *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * inherits the thread-safety of @c A and @c B — concurrent access
+ * to the same Pair must be externally synchronized unless both
+ * element types document their own thread safety.
+ *
  * @tparam A First element type.
  * @tparam B Second element type.
  */

@@ -100,7 +100,10 @@ int64_t AsyncBufferQueue::write(const void *data, int64_t maxSize) {
         (void)maxSize;
         // The whole point of the queue is to share Buffer::Ptr by
         // reference; a generic write() would force a copy.  Producers
-        // must use enqueue().
+        // must use enqueue().  Set the device error state so a caller
+        // that forgot to check the -1 return can still observe the
+        // failure on the IODevice — matches the docstring.
+        setError(Error::NotSupported);
         return -1;
 }
 
@@ -115,7 +118,13 @@ bool AsyncBufferQueue::isSequential() const {
 
 Error AsyncBufferQueue::seek(int64_t pos) {
         (void)pos;
-        return Error(Error::NotSupported);
+        // Mirror the IODevice convention: the return value is the
+        // immediate error, but the device's error state should also
+        // reflect it so observers polling error() see the latest
+        // failure.
+        Error err(Error::NotSupported);
+        setError(err);
+        return err;
 }
 
 int64_t AsyncBufferQueue::pos() const {

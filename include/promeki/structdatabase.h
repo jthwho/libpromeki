@@ -10,6 +10,8 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/map.h>
+#include <promeki/result.h>
+#include <promeki/error.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -22,6 +24,14 @@ PROMEKI_NAMESPACE_BEGIN
  * `id` and `name`.  The `id` is used as the key in the map.  The ID 0 must exist as it
  * will be returned as the fallback when an id is not found.  The `name` must be a unique
  * name for each struct entry.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  The typical pattern is to populate the database
+ * once at static-init or program startup and treat it as read-only thereafter;
+ * once populated, concurrent calls to @c lookup() and @c lookupKeyByName() are
+ * safe.  Concurrent calls to @c add() / @c load() (or @c add() concurrent with
+ * any reader) must be externally synchronized — the underlying @c Map is not
+ * internally synchronized.
  *
  * @tparam KeyType    The type used as the lookup key (must be convertible from 0 for the fallback).
  * @tparam StructType The struct type stored in the database; must have `id` and `name` members.
@@ -37,14 +47,14 @@ class StructDatabase {
 
                 /** @brief Constructs a database and populates it from an initializer list.
                  *  @param list Initializer list of StructType entries to load. */
-                StructDatabase(const std::initializer_list<StructType> &&list) {
-                        load(std::move(list));
+                StructDatabase(std::initializer_list<StructType> list) {
+                        load(list);
                 }
 
                 /** @brief Adds a single entry to the database.
                  *  @param val The struct entry to add (keyed by val.id). */
-                void add(const StructType &&val) {
-                        _db[val.id] = std::move(val);
+                void add(const StructType &val) {
+                        _db[val.id] = val;
                         _nameDb[val.name] = val.id;
                         return;
                 }
@@ -63,18 +73,18 @@ class StructDatabase {
 
                 /** @brief Looks up a key by the entry's name.
                  *  @param name The unique name to search for.
-                 *  @return The corresponding key, or KeyType(0) if not found. */
-                KeyType lookupKeyByName(const String &name) const {
+                 *  @return The corresponding key on success, or
+                 *          @c Error::NotFound when @p name is not registered. */
+                Result<KeyType> lookupKeyByName(const String &name) const {
                         auto it = _nameDb.find(name);
-                        return (it != _nameDb.end()) ?
-                            it->second :
-                            static_cast<KeyType>(0);
+                        if(it == _nameDb.end()) return Result<KeyType>(KeyType{}, Error::NotFound);
+                        return Result<KeyType>(it->second, Error::Ok);
                 }
                         
                 /** @brief Loads all entries from an initializer list.
                  *  @param list The initializer list of entries to add. */
-                void load(const std::initializer_list<StructType> &&list) {
-                        for(auto &&item : list) add(std::move(item));
+                void load(std::initializer_list<StructType> list) {
+                        for(const auto &item : list) add(item);
                         return;
                 }
 

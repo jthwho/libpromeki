@@ -31,8 +31,9 @@ class LocalSocket;
  * silently remove it before rebinding; this is safe because
  * filesystem sockets have no inode reuse issues of their own.
  *
- * This class must only be used from the thread that created it (or
- * moved to via @ref moveToThread).
+ * @par Thread Safety
+ * Inherits @ref ObjectBase: thread-affine.  A single LocalServer
+ * must only be used from the thread that created it.
  *
  * @par Example
  * @code

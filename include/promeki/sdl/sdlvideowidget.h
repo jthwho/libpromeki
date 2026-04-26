@@ -53,6 +53,13 @@ PROMEKI_NAMESPACE_BEGIN
  * video->setPayload(myPayload);
  * window.show();
  * @endcode
+ *
+ * @par Thread Safety
+ * Thread-affine via @ref ObjectBase / SDL.  Must be created, used, and
+ * destroyed on the SDL event thread.  @c setPayload() is thread-affine;
+ * use @ref ObjectBase signal/slot dispatch (or
+ * @ref EventLoop::postCallable) to deliver payloads from a producer
+ * thread.
  */
 class SDLVideoWidget : public Widget {
         PROMEKI_OBJECT(SDLVideoWidget, Widget)

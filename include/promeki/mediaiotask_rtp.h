@@ -291,6 +291,9 @@ class Thread;
  * io->close();
  * delete io;
  * @endcode
+ *
+ * @par Thread Safety
+ * Strand-affine — see @ref MediaIOTask.
  */
 class MediaIOTask_Rtp : public MediaIOTask {
         public:

@@ -164,8 +164,11 @@ struct SslContext::Impl {
 // Public surface
 // ============================================================
 
-SslContext::SslContext() : _d(new Impl()) {}
-SslContext::~SslContext() { delete _d; _d = nullptr; }
+SslContext::SslContext() : _d(ImplPtr::create()) {}
+// Out-of-line destructor: required because Impl is incomplete in the
+// header, so the compiler-generated UniquePtr<Impl> destructor cannot
+// be emitted there.
+SslContext::~SslContext() = default;
 
 void SslContext::setProtocol(SslProtocol protocol) {
         _d->protocol = protocol;
@@ -190,10 +193,9 @@ bool SslContext::hasCaCertificates() const  { return _d->hasCaChain; }
 void *SslContext::nativeConfig() const {
         // ensureConfig is the lazy-init point: callers that drive
         // mbedtls_ssl_setup against this config need it populated.
-        // Const-cast is safe — Impl mutability is the very point
-        // of the lazy init: external callers haven't started using
-        // the config yet.
-        const_cast<Impl *>(_d)->ensureConfig();
+        // UniquePtr<Impl>::operator-> returns a mutable Impl * even
+        // from a const context, so no const_cast is required.
+        _d->ensureConfig();
         return &_d->conf;
 }
 

@@ -140,6 +140,15 @@ enum class ClockPauseMode {
  * - @ref SyntheticClock — frame-count driven, for offline pipelines.
  * - @c SDLAudioClock — derived from an SDL audio device's drain rate.
  * - @c MediaIOClock — derived from a MediaIO's frame position.
+ *
+ * @par Thread Safety
+ * @c now / @c domain / @c offset / @c isPaused / @c isMonotonic
+ * are intended to be safe to call from any thread; subclass @c raw
+ * implementations must respect that contract.  Mutators
+ * (@c setOffset, @c pause, @c resume, @c setFilter) require
+ * external synchronization unless the concrete subclass documents
+ * otherwise.  The reference-counted @c Ptr makes lifetime safe to
+ * share across threads.
  */
 class Clock {
         public:

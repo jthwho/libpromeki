@@ -234,7 +234,7 @@ static AudioFormat::Data planarFrom(const AudioFormat::Data &src,
 
 static AudioFormat::Data makeCompressed(AudioFormat::ID id, const char *name,
                                         const char *desc, AudioCodec::ID codec,
-                                        FourCCList fourccs = {}) {
+                                        FourCC::List fourccs = {}) {
         AudioFormat::Data d;
         d.id         = id;
         d.name       = name;

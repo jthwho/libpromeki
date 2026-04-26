@@ -110,6 +110,47 @@ TEST_CASE("Signal_DisconnectByID") {
     CHECK(count == 1); // Should not have changed
 }
 
+TEST_CASE("Signal_DisconnectByID_StableAcrossOtherDisconnects") {
+    Signal<int> sig;
+    int countA = 0, countB = 0, countC = 0;
+    size_t idA = sig.connect([&](int) { countA++; });
+    size_t idB = sig.connect([&](int) { countB++; });
+    size_t idC = sig.connect([&](int) { countC++; });
+    sig.emit(0);
+    CHECK(countA == 1);
+    CHECK(countB == 1);
+    CHECK(countC == 1);
+    // Disconnect the middle slot.  Previously this shifted indices and
+    // made idC point at nothing while idC-1 (formerly the middle) was
+    // wrongly removed by a second disconnect.
+    sig.disconnect(idB);
+    sig.emit(0);
+    CHECK(countA == 2);
+    CHECK(countB == 1);
+    CHECK(countC == 2);
+    // Disconnecting by the originally-issued idC must still hit slot C,
+    // not slot A.
+    sig.disconnect(idC);
+    sig.emit(0);
+    CHECK(countA == 3);
+    CHECK(countB == 1);
+    CHECK(countC == 2);
+    sig.disconnect(idA);
+    sig.emit(0);
+    CHECK(countA == 3);
+    CHECK(countB == 1);
+    CHECK(countC == 2);
+}
+
+TEST_CASE("Signal_DisconnectByID_UnknownIDIsNoOp") {
+    Signal<int> sig;
+    int count = 0;
+    sig.connect([&](int) { count++; });
+    sig.disconnect(9999); // never issued
+    sig.emit(0);
+    CHECK(count == 1);
+}
+
 // ============================================================================
 // Connect and disconnect with object pointer
 // ============================================================================

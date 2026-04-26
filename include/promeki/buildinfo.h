@@ -16,6 +16,12 @@ PROMEKI_NAMESPACE_BEGIN
 /**
  * @brief Holds compile-time build information for the library.
  * @ingroup util
+ *
+ * @par Thread Safety
+ * Trivially thread-safe.  The BuildInfo struct is populated at
+ * compile time and is immutable; the free helpers are pure
+ * formatters that read only that immutable state.  All accessors
+ * are safe to call from any thread.
  */
 typedef struct {
     const char * name;        ///< Project name.

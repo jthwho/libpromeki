@@ -234,7 +234,7 @@ void MulticastReceiver::run() {
 
         while(!_stopRequested.value()) {
                 SocketAddress sender;
-                ssize_t n = _socket->readDatagram(
+                int64_t n = _socket->readDatagram(
                         scratch.data(), scratch.size(), &sender);
                 if(n <= 0) {
                         // Negative return = timeout (EAGAIN) or

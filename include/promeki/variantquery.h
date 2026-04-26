@@ -167,6 +167,14 @@ bool evalVariantQuery(const VariantQueryNode *root, const VariantQueryContext &c
  * VariantQuery<AudioPayload>::parse("Channels == 2 && SampleRate >= 48000");
  * @endcode
  *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently.
+ * After @c parse() returns, the resulting compiled query is effectively
+ * immutable — concurrent calls to @c match() / @c isValid() / @c errorDetail()
+ * on a single parsed query are safe.  Calling @c parse() on an instance
+ * while another thread is reading or matching against it must be externally
+ * synchronized.
+ *
  * @tparam T The target type.  Must have @c VariantLookup<T>
  *           registrations for the keys the query references.
  *           Explicit template instantiations are provided for

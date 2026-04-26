@@ -140,8 +140,9 @@ EventLoop::EventLoop() {
 
 EventLoop::~EventLoop() {
         // Drain any remaining items to free owned Event pointers.
-        Item item;
-        while(_queue.popOrFail(item)) {
+        for(;;) {
+                auto [item, err] = _queue.tryPop();
+                if(err.isError()) break;
                 if(std::holds_alternative<EventItem>(item)) {
                         delete std::get<EventItem>(item).event;
                 }
@@ -184,8 +185,9 @@ void EventLoop::processEvents(uint32_t flags, unsigned int timeoutMs) {
 
         // Process posted items unless excluded
         if(!(flags & ExcludePosted)) {
-                Item item;
-                while(_queue.popOrFail(item)) {
+                for(;;) {
+                        auto [item, err] = _queue.tryPop();
+                        if(err.isError()) break;
                         if(dispatchItem(item)) return;
                 }
         }
@@ -493,8 +495,9 @@ void EventLoop::waitOnSources(unsigned int waitMs) {
         // Drain posted items now so any quit/callable queued during
         // the poll is processed immediately — matches the semantics
         // of the previous Queue::pop(waitMs) path.
-        Item item;
-        while(_queue.popOrFail(item)) {
+        for(;;) {
+                auto [item, err] = _queue.tryPop();
+                if(err.isError()) break;
                 if(dispatchItem(item)) {
                         // Quit seen; no point dispatching further.
                         return;

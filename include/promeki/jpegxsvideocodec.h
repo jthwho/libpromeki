@@ -51,6 +51,9 @@ PROMEKI_NAMESPACE_BEGIN
  * | @ref MediaConfig::JpegXsDecomposition | int         | 5       | Horizontal decomposition depth (0-5). |
  * | @ref MediaConfig::OutputPixelFormat   | PixelFormat | Invalid | Optional override of the encoder's reported @ref outputPixelFormat. |
  * | @ref MediaConfig::Capacity            | int         | 8       | Output FIFO depth before a one-shot warning is logged. |
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref VideoEncoder.
  */
 class JpegXsVideoEncoder : public VideoEncoder {
         public:
@@ -116,6 +119,9 @@ class JpegXsVideoEncoder : public VideoEncoder {
  * @ref PixelFormat is set via @ref MediaConfig::OutputPixelFormat;
  * when unset, the natural planar target matching the incoming
  * bitstream (bit depth × subsampling) is produced.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref VideoDecoder.
  */
 class JpegXsVideoDecoder : public VideoDecoder {
         public:

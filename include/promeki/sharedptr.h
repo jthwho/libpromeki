@@ -190,59 +190,59 @@ PROMEKI_NAMESPACE_BEGIN
  * syncronize data between threads.
  */
 class RefCount {
-    public:
-        /** @brief Threshold at or above which the refcount is considered immortal. */
-        static constexpr int Immortal = 0x40000000;
+        public:
+                /** @brief Threshold at or above which the refcount is considered immortal. */
+                static constexpr int Immortal = 0x40000000;
 
-        /** @brief Constructs a reference count initialized to 1. */
-        RefCount() : v(1) {}
+                /** @brief Constructs a reference count initialized to 1. */
+                RefCount() : v(1) {}
 
-        /** @brief Copy constructor resets the reference count to 1 for the new object. */
-        RefCount(const RefCount &o) : v(1) {}
+                /** @brief Copy constructor resets the reference count to 1 for the new object. */
+                RefCount(const RefCount &o) : v(1) {}
 
-        /** @brief Copy assignment resets the reference count to 1. */
-        RefCount &operator=(const RefCount &) { v.store(1, std::memory_order_relaxed); return *this; }
+                /** @brief Copy assignment resets the reference count to 1. */
+                RefCount &operator=(const RefCount &) { v.store(1, std::memory_order_relaxed); return *this; }
 
-        /**
-         * @brief Atomically increments the reference count.
-         *
-         * No-op for immortal objects. Uses relaxed memory ordering since only
-         * the atomic increment itself needs to be consistent.
-         */
-        void inc() {
-            if(v.load(std::memory_order_relaxed) >= Immortal) return;
-            v.fetch_add(1, std::memory_order_relaxed);
-            return;
-        }
+                /**
+                 * @brief Atomically increments the reference count.
+                 *
+                 * No-op for immortal objects. Uses relaxed memory ordering since only
+                 * the atomic increment itself needs to be consistent.
+                 */
+                void inc() {
+                        if(v.load(std::memory_order_relaxed) >= Immortal) return;
+                        v.fetch_add(1, std::memory_order_relaxed);
+                        return;
+                }
 
-        /**
-         * @brief Atomically decrements the reference count.
-         * @return True if the count has reached zero (caller should delete the object).
-         *
-         * Returns false for immortal objects (never deleted).
-         */
-        bool dec() {
-            if(v.load(std::memory_order_relaxed) >= Immortal) return false;
-            return v.fetch_sub(1, std::memory_order_acq_rel) == 1;
-        }
+                /**
+                 * @brief Atomically decrements the reference count.
+                 * @return True if the count has reached zero (caller should delete the object).
+                 *
+                 * Returns false for immortal objects (never deleted).
+                 */
+                bool dec() {
+                        if(v.load(std::memory_order_relaxed) >= Immortal) return false;
+                        return v.fetch_sub(1, std::memory_order_acq_rel) == 1;
+                }
 
-        /** @brief Returns the current reference count value. */
-        int value() const {
-            return v.load(std::memory_order_relaxed);
-        }
+                /** @brief Returns the current reference count value. */
+                int value() const {
+                        return v.load(std::memory_order_relaxed);
+                }
 
-        /** @brief Returns true if this refcount is immortal (will never reach zero). */
-        bool isImmortal() const {
-            return v.load(std::memory_order_relaxed) >= Immortal;
-        }
+                /** @brief Returns true if this refcount is immortal (will never reach zero). */
+                bool isImmortal() const {
+                        return v.load(std::memory_order_relaxed) >= Immortal;
+                }
 
-        /** @brief Marks this refcount as immortal. inc/dec become no-ops. */
-        void setImmortal() {
-            v.store(Immortal, std::memory_order_relaxed);
-        }
+                /** @brief Marks this refcount as immortal. inc/dec become no-ops. */
+                void setImmortal() {
+                        v.store(Immortal, std::memory_order_relaxed);
+                }
 
-    private:
-        std::atomic<int>    v;
+        private:
+                std::atomic<int>    v;
 };
 
 /**
@@ -263,20 +263,20 @@ class RefCount {
   */
 template<typename T>
 class SharedPtrProxy {
-    public:
-        RefCount    _promeki_refct;
+        public:
+                RefCount    _promeki_refct;
 
-        SharedPtrProxy(T *o) : _object(o) {}
-        ~SharedPtrProxy() { delete _object; }
-        T *_promeki_clone() const {
-            // When using a proxy data type, i.e. not a "native" shared object,
-            // there's no way to make a copy from a derived object work.
-            assert(typeid(*_object) == typeid(T));
-            return new T(*_object);
-        }
-        T *object() const { return _object; }
-    private:
-        T *_object = nullptr;
+                SharedPtrProxy(T *o) : _object(o) {}
+                ~SharedPtrProxy() { delete _object; }
+                T *_promeki_clone() const {
+                        // When using a proxy data type, i.e. not a "native" shared object,
+                        // there's no way to make a copy from a derived object work.
+                        assert(typeid(*_object) == typeid(T));
+                        return new T(*_object);
+                }
+                T *object() const { return _object; }
+        private:
+                T *_object = nullptr;
 };
 
 template<typename T, typename = void> struct IsSharedObject : std::false_type {};
@@ -341,199 +341,199 @@ template<typename T> struct IsSharedObject<T, std::void_t<decltype(&T::_promeki_
   */
 template<typename T, bool CopyOnWrite = true, typename ST = std::conditional_t<IsSharedObject<T>::value, T, SharedPtrProxy<T>>>
 class SharedPtr {
-    public:
-        // All SharedPtr instantiations are friends of each other so the
-        // upcast/downcast helpers can reach the private _data pointer
-        // across type boundaries.
-        template<typename OT, bool OCoW, typename OST> friend class SharedPtr;
+        public:
+                // All SharedPtr instantiations are friends of each other so the
+                // upcast/downcast helpers can reach the private _data pointer
+                // across type boundaries.
+                template<typename OT, bool OCoW, typename OST> friend class SharedPtr;
 
-        // sharedPointerCast needs access to _data for the dynamic_cast
-        // round-trip; befriend every instantiation of the free function.
-        template<typename DerivedT, typename BaseT, bool CoWT, typename STT>
-        friend SharedPtr<DerivedT, CoWT, DerivedT>
-        sharedPointerCast(const SharedPtr<BaseT, CoWT, STT> &sp);
+                // sharedPointerCast needs access to _data for the dynamic_cast
+                // round-trip; befriend every instantiation of the free function.
+                template<typename DerivedT, typename BaseT, bool CoWT, typename STT>
+                friend SharedPtr<DerivedT, CoWT, DerivedT>
+                sharedPointerCast(const SharedPtr<BaseT, CoWT, STT> &sp);
 
-        static constexpr bool isNative = IsSharedObject<T>::value;
+                static constexpr bool isNative = IsSharedObject<T>::value;
 
-        // Any attempt to modify the object when it's shared (i.e. a reference
-        // count > 1), the object will be copied first and that new object
-        // will be the one that's modified.
-        static constexpr bool isCopyOnWrite = CopyOnWrite;
+                // Any attempt to modify the object when it's shared (i.e. a reference
+                // count > 1), the object will be copied first and that new object
+                // will be the one that's modified.
+                static constexpr bool isCopyOnWrite = CopyOnWrite;
 
-        SharedPtr() = default;
+                SharedPtr() = default;
 
-        SharedPtr(const SharedPtr &sp) : _data(sp._data) { acquire(); }
-        SharedPtr(SharedPtr &&sp) noexcept : _data(sp._data) { sp._data = nullptr; }
+                SharedPtr(const SharedPtr &sp) : _data(sp._data) { acquire(); }
+                SharedPtr(SharedPtr &&sp) noexcept : _data(sp._data) { sp._data = nullptr; }
 
-        /**
-         * @brief Implicit upcast from SharedPtr of a derived native type.
-         *
-         * Only participates in overload resolution when @c U publicly
-         * derives from @c T, @c U != @c T, both types are native shared
-         * objects, and both use the default storage type (storage = the
-         * object itself).  This lets a @c SharedPtr<CompressedVideoPayload>
-         * convert to a @c SharedPtr<MediaPayload> without cloning, with
-         * the refcount sitting on the shared base's @c _promeki_refct.
-         */
-        template<typename U, bool UCoW, typename UST,
-                 typename = std::enable_if_t<
-                     std::is_base_of_v<T, U> &&
-                     !std::is_same_v<T, U> &&
-                     IsSharedObject<T>::value &&
-                     IsSharedObject<U>::value &&
-                     std::is_same_v<UST, U>>>
-        SharedPtr(const SharedPtr<U, UCoW, UST> &sp) : _data(sp._data) {
-            acquire();
-        }
+                /**
+                 * @brief Implicit upcast from SharedPtr of a derived native type.
+                 *
+                 * Only participates in overload resolution when @c U publicly
+                 * derives from @c T, @c U != @c T, both types are native shared
+                 * objects, and both use the default storage type (storage = the
+                 * object itself).  This lets a @c SharedPtr<CompressedVideoPayload>
+                 * convert to a @c SharedPtr<MediaPayload> without cloning, with
+                 * the refcount sitting on the shared base's @c _promeki_refct.
+                 */
+                template<typename U, bool UCoW, typename UST,
+                                 typename = std::enable_if_t<
+                                         std::is_base_of_v<T, U> &&
+                                         !std::is_same_v<T, U> &&
+                                         IsSharedObject<T>::value &&
+                                         IsSharedObject<U>::value &&
+                                         std::is_same_v<UST, U>>>
+                SharedPtr(const SharedPtr<U, UCoW, UST> &sp) : _data(sp._data) {
+                        acquire();
+                }
 
-        template<typename U, bool UCoW, typename UST,
-                 typename = std::enable_if_t<
-                     std::is_base_of_v<T, U> &&
-                     !std::is_same_v<T, U> &&
-                     IsSharedObject<T>::value &&
-                     IsSharedObject<U>::value &&
-                     std::is_same_v<UST, U>>>
-        SharedPtr(SharedPtr<U, UCoW, UST> &&sp) noexcept : _data(sp._data) {
-            sp._data = nullptr;
-        }
+                template<typename U, bool UCoW, typename UST,
+                                 typename = std::enable_if_t<
+                                         std::is_base_of_v<T, U> &&
+                                         !std::is_same_v<T, U> &&
+                                         IsSharedObject<T>::value &&
+                                         IsSharedObject<U>::value &&
+                                         std::is_same_v<UST, U>>>
+                SharedPtr(SharedPtr<U, UCoW, UST> &&sp) noexcept : _data(sp._data) {
+                        sp._data = nullptr;
+                }
 
-        ~SharedPtr() { release(); }
+                ~SharedPtr() { release(); }
 
-        template<typename... Args>
-        static SharedPtr create(Args&&... args) {
-            SharedPtr sp;
-            sp.setData(new T(std::forward<Args>(args)...));
-            return sp;
-        }
+                template<typename... Args>
+                static SharedPtr create(Args&&... args) {
+                        SharedPtr sp;
+                        sp.setData(new T(std::forward<Args>(args)...));
+                        return sp;
+                }
 
-        static SharedPtr takeOwnership(T *obj) {
-            SharedPtr sp;
-            if(obj != nullptr) sp.setData(obj);
-            return sp;
-        }
+                static SharedPtr takeOwnership(T *obj) {
+                        SharedPtr sp;
+                        if(obj != nullptr) sp.setData(obj);
+                        return sp;
+                }
 
-        SharedPtr &operator=(const SharedPtr &sp) {
-            if(&sp == this) return *this; // we're setting to ourself, nothing changes.
-            release();
-            _data = sp._data;
-            acquire();
-            return *this;
-        }
+                SharedPtr &operator=(const SharedPtr &sp) {
+                        if(&sp == this) return *this; // we're setting to ourself, nothing changes.
+                        release();
+                        _data = sp._data;
+                        acquire();
+                        return *this;
+                }
 
-        SharedPtr &operator=(SharedPtr &&sp) noexcept {
-            if(&sp == this) return *this;
-            release();
-            _data = sp._data;
-            sp._data = nullptr;
-            return *this;
-        }
+                SharedPtr &operator=(SharedPtr &&sp) noexcept {
+                        if(&sp == this) return *this;
+                        release();
+                        _data = sp._data;
+                        sp._data = nullptr;
+                        return *this;
+                }
 
-        void swap(SharedPtr &other) noexcept {
-            std::swap(_data, other._data);
-        }
+                void swap(SharedPtr &other) noexcept {
+                        std::swap(_data, other._data);
+                }
 
-        void clear() {
-            release();
-            _data = nullptr;
-            return;
-        }
+                void clear() {
+                        release();
+                        _data = nullptr;
+                        return;
+                }
 
-        void detach() {
-            // We only detach if not null and ref count > 1
-            if(_data == nullptr || _data->_promeki_refct.value() < 2) return;
-            T *copy = _data->_promeki_clone();
-            release();
-            setData(copy);
-            // No need to acquire, since new Data object will have a refct of 1
-            return;
-        }
+                void detach() {
+                        // We only detach if not null and ref count > 1
+                        if(_data == nullptr || _data->_promeki_refct.value() < 2) return;
+                        T *copy = _data->_promeki_clone();
+                        release();
+                        setData(copy);
+                        // No need to acquire, since new Data object will have a refct of 1
+                        return;
+                }
 
-        bool isNull() const {
-            return _data == nullptr;
-        }
+                bool isNull() const {
+                        return _data == nullptr;
+                }
 
-        bool isValid() const {
-            return _data != nullptr;
-        }
+                bool isValid() const {
+                        return _data != nullptr;
+                }
 
-        explicit operator bool() const {
-            return _data != nullptr;
-        }
+                explicit operator bool() const {
+                        return _data != nullptr;
+                }
 
-        bool operator==(const SharedPtr &other) const {
-            return _data == other._data;
-        }
+                bool operator==(const SharedPtr &other) const {
+                        return _data == other._data;
+                }
 
-        bool operator!=(const SharedPtr &other) const {
-            return _data != other._data;
-        }
+                bool operator!=(const SharedPtr &other) const {
+                        return _data != other._data;
+                }
 
-        bool operator==(std::nullptr_t) const {
-            return _data == nullptr;
-        }
+                bool operator==(std::nullptr_t) const {
+                        return _data == nullptr;
+                }
 
-        bool operator!=(std::nullptr_t) const {
-            return _data != nullptr;
-        }
+                bool operator!=(std::nullptr_t) const {
+                        return _data != nullptr;
+                }
 
-        int referenceCount() const {
-            return _data == nullptr ? 0 : _data->_promeki_refct.value();
-        }
+                int referenceCount() const {
+                        return _data == nullptr ? 0 : _data->_promeki_refct.value();
+                }
 
-        const T *ptr() const {
-            assert(_data != nullptr);
-            if constexpr (IsSharedObject<T>::value) {
-                return _data;
-            } else {
-                return _data->object();
-            }
-        }
+                const T *ptr() const {
+                        assert(_data != nullptr);
+                        if constexpr (IsSharedObject<T>::value) {
+                                return _data;
+                        } else {
+                                return _data->object();
+                        }
+                }
 
-        T *modify() {
-            assert(_data != nullptr);
-            if constexpr (CopyOnWrite) detach();
-            if constexpr (IsSharedObject<T>::value) {
-                return _data;
-            } else {
-                return _data->object();
-            }
-        }
+                T *modify() {
+                        assert(_data != nullptr);
+                        if constexpr (CopyOnWrite) detach();
+                        if constexpr (IsSharedObject<T>::value) {
+                                return _data;
+                        } else {
+                                return _data->object();
+                        }
+                }
 
-        const T *operator->() const {
-            return ptr();
-        }
+                const T *operator->() const {
+                        return ptr();
+                }
 
-        const T &operator*() const {
-            return *ptr();
-        }
+                const T &operator*() const {
+                        return *ptr();
+                }
 
-    private:
-        ST *_data = nullptr;
+        private:
+                ST *_data = nullptr;
 
-        // This function assumes you've already assigned _data to the Data you'd like to acquire
-        void acquire() {
-            if(_data == nullptr) return;
-            _data->_promeki_refct.inc();
-            return;
-        }
+                // This function assumes you've already assigned _data to the Data you'd like to acquire
+                void acquire() {
+                        if(_data == nullptr) return;
+                        _data->_promeki_refct.inc();
+                        return;
+                }
 
-        // This function releases _data, and if the reference count has dropped to zero, deletes it
-        // however it does not change _data so it will be stale after calling this function.
-        // This assumes you know this and are about to change _data (i.e. in a swap situation)
-        void release() {
-            if(_data == nullptr) return;
-            if(_data->_promeki_refct.dec()) delete _data;
-            return;
-        }
+                // This function releases _data, and if the reference count has dropped to zero, deletes it
+                // however it does not change _data so it will be stale after calling this function.
+                // This assumes you know this and are about to change _data (i.e. in a swap situation)
+                void release() {
+                        if(_data == nullptr) return;
+                        if(_data->_promeki_refct.dec()) delete _data;
+                        return;
+                }
 
-        constexpr void setData(T *obj) {
-            if constexpr (IsSharedObject<T>::value) {
-                _data = obj;
-            } else {
-                _data = new ST(obj);
-            }
-            return;
-        }
+                constexpr void setData(T *obj) {
+                        if constexpr (IsSharedObject<T>::value) {
+                                _data = obj;
+                        } else {
+                                _data = new ST(obj);
+                        }
+                        return;
+                }
 
 };
 

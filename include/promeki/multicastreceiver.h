@@ -86,6 +86,13 @@ PROMEKI_NAMESPACE_BEGIN
  * set before @ref start().  Once running, @ref stop() is the only
  * legal mutator; reconfiguration requires a stop / reconfigure /
  * start cycle.  The destructor calls @ref stop automatically.
+ *
+ * @par Thread Safety
+ * Configuration setters and @ref start / @ref stop are intended to
+ * be called from the receiver's owning thread.  The user callback
+ * is invoked on the dedicated receive thread spawned internally —
+ * the callback's body must be thread-safe with respect to whatever
+ * state it touches.
  */
 class MulticastReceiver : public Thread {
         PROMEKI_OBJECT(MulticastReceiver, Thread)

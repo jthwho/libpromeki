@@ -58,6 +58,12 @@ class EventLoop;
  *       code should use @ref HttpServer; the connection is exposed
  *       as a public type only so out-of-tree integrations and tests
  *       can drive it directly when needed.
+ *
+ * @par Thread Safety
+ * Inherits @ref ObjectBase: thread-affine.  All connection state
+ * mutates on the EventLoop thread that owns the underlying
+ * @ref TcpSocket.  Cross-thread interaction goes through the
+ * loop's @c postCallable.
  */
 class HttpConnection : public ObjectBase {
         PROMEKI_OBJECT(HttpConnection, ObjectBase)

@@ -81,6 +81,10 @@ class Timecode;
  *
  * Audio audio = gen.create(samplesPerFrame, currentTimecode);
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
  */
 class AudioTestPattern {
         public:

@@ -49,6 +49,15 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * If no instance is created, the static accessors operate on
  * default-constructed internal state.
+ *
+ * @par Thread Safety
+ * The static accessors are intended to be set once at startup
+ * (typically in @c main before worker threads spawn) and read
+ * thereafter from any thread.  Mutating setters
+ * (@c setAppName, @c setAppUuid, @c setAppArguments) without
+ * external synchronization is unsafe once worker threads exist.
+ * @c mainThread / @c mainEventLoop are safe to call from any
+ * thread.
  */
 class Application {
         public:

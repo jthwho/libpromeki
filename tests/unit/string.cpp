@@ -735,7 +735,7 @@ TEST_CASE("String_Format_UnicodeContent") {
 TEST_CASE("String_Format_LibraryTypes") {
         // Library types with no-arg toString() returning a String can be
         // passed to format() directly via PROMEKI_FORMAT_VIA_TOSTRING.
-        UUID id("00112233-4455-6677-8899-aabbccddeeff");
+        UUID id = UUID::fromString("00112233-4455-6677-8899-aabbccddeeff");
         String s = String::format("id = {}", id);
         CHECK(s == "id = 00112233-4455-6677-8899-aabbccddeeff");
 
@@ -846,7 +846,7 @@ TEST_CASE("String_Format_Variant") {
         CHECK(String::format("v = {}", v) == "v = hello");
 
         // UUID.
-        UUID id("00112233-4455-6677-8899-aabbccddeeff");
+        UUID id = UUID::fromString("00112233-4455-6677-8899-aabbccddeeff");
         v.set(id);
         CHECK(String::format("v = {}", v)
               == "v = 00112233-4455-6677-8899-aabbccddeeff");
@@ -926,6 +926,58 @@ TEST_CASE("String_NumericConversions_EdgeCases") {
         double d = String("").to<double>(&err4);
         CHECK(err4.isError());
         CHECK(d == 0.0);
+}
+
+TEST_CASE("String_To_NarrowingOverflowReportsOutOfRange") {
+        // Signed narrowing overflow.
+        Error err;
+        int8_t v8 = String("300").to<int8_t>(&err);
+        CHECK(err == Error::OutOfRange);
+        CHECK(v8 == 0);
+
+        Error err2;
+        int8_t vneg = String("-200").to<int8_t>(&err2);
+        CHECK(err2 == Error::OutOfRange);
+        CHECK(vneg == 0);
+
+        // Boundary values still parse OK.
+        Error err3;
+        int8_t vmax = String("127").to<int8_t>(&err3);
+        CHECK(err3.isOk());
+        CHECK(vmax == 127);
+
+        Error err4;
+        int8_t vmin = String("-128").to<int8_t>(&err4);
+        CHECK(err4.isOk());
+        CHECK(vmin == -128);
+
+        // Unsigned narrowing overflow.
+        Error err5;
+        uint8_t u8 = String("300").to<uint8_t>(&err5);
+        CHECK(err5 == Error::OutOfRange);
+        CHECK(u8 == 0);
+
+        Error err6;
+        uint8_t u8max = String("255").to<uint8_t>(&err6);
+        CHECK(err6.isOk());
+        CHECK(u8max == 255);
+
+        // Float overflow from a value that fits a double.
+        Error err7;
+        float f = String("1e100").to<float>(&err7);
+        CHECK(err7 == Error::OutOfRange);
+        CHECK(f == 0.0f);
+
+        Error err8;
+        float fneg = String("-1e100").to<float>(&err8);
+        CHECK(err8 == Error::OutOfRange);
+        CHECK(fneg == 0.0f);
+
+        // Reasonable float values still parse.
+        Error err9;
+        float fok = String("3.14").to<float>(&err9);
+        CHECK(err9.isOk());
+        CHECK(fok == doctest::Approx(3.14f));
 }
 
 TEST_CASE("String_NumericConversions_BasePrefixes") {

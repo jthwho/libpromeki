@@ -414,7 +414,11 @@ void HttpFileHandler::serve(const HttpRequest &request,
                 return;
         }
 
-        const int64_t fileSize    = static_cast<int64_t>(info.size());
+        auto [fileSize, fileSizeErr] = info.size();
+        if(fileSizeErr != Error::Ok) {
+                response = HttpResponse::notFound();
+                return;
+        }
         const int64_t mtimeEpoch  = info.lastModified().toTimeT();
         const String  etag        = etagFor(fileSize, mtimeEpoch);
         const String  lastMod     = httpDateFor(mtimeEpoch);

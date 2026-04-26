@@ -58,6 +58,13 @@ PROMEKI_NAMESPACE_BEGIN
  *     .setTypes({Variant::TypeString, Variant::TypeSdpSession})
  *     .setDescription("SDP input: file path or session object");
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance — including any combination of
+ * the fluent setters with @c validate() / @c defaultValue() — must be
+ * externally synchronized.  In typical usage a spec is built once at
+ * registration time and read freely thereafter.
  */
 class VariantSpec {
         public:

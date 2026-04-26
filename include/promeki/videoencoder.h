@@ -88,9 +88,10 @@ class MediaConfig;
  *      @c MediaPayload::Flags::EndOfStream flag is set.
  *   6. Destroy the encoder.
  *
- * Implementations are not required to be thread-safe.  Each pipeline
- * thread should own its own encoder instance; typical use is one
- * encoder per stream.
+ * @par Thread Safety
+ * Conditionally thread-safe.  Each pipeline thread should own its own
+ * encoder instance; concurrent access to a single instance is
+ * unsupported.  Typical use is one encoder per stream.
  */
 class VideoEncoder {
         public:

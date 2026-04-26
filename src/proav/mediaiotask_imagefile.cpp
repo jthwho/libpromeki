@@ -1051,10 +1051,14 @@ Error MediaIOTask_ImageFile::writeImgSeqSidecar() {
         if(absolute) {
                 seq.setDir(imageDir.absolutePath());
         } else {
-                FilePath rel = imageDir.absolutePath().relativeTo(sidecarDir.absolutePath());
-                // Only emit dir when it differs from the sidecar location.
-                if(rel.toString() != ".") {
-                        seq.setDir(rel);
+                Result<FilePath> rel = imageDir.absolutePath().relativeTo(sidecarDir.absolutePath());
+                // Only emit dir when the computation succeeded and the
+                // result differs from the sidecar location.  On failure
+                // (different roots, permission error) Result::first()
+                // carries the original path; we don't want to write that
+                // into the sidecar when it's not actually relative.
+                if(rel.second().isOk() && rel.first().toString() != ".") {
+                        seq.setDir(rel.first());
                 }
         }
 

@@ -24,6 +24,12 @@ PROMEKI_NAMESPACE_BEGIN
  * bitstreams such as JPEG, H.264, or HEVC. It identifies the codec,
  * the source image format the data was encoded from, and an optional
  * quality parameter.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * @c EncodedDesc::Ptr uses an atomic refcount and is safe to share across
+ * threads.
  */
 class EncodedDesc {
         PROMEKI_SHARED_FINAL(EncodedDesc)

@@ -158,7 +158,7 @@ TEST_CASE("MulticastManager") {
                         SocketAddress(Ipv4Address(239, 255, 0, 30), port));
 
                 char buf[256];
-                ssize_t n = receiver.readDatagram(buf, sizeof(buf));
+                int64_t n = receiver.readDatagram(buf, sizeof(buf));
                 CHECK(n > 0);
                 if(n > 0) {
                         CHECK(std::memcmp(buf, msg, n) == 0);

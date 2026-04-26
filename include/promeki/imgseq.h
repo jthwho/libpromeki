@@ -73,6 +73,10 @@ class JsonObject;
  * sequence can use it directly; the image-file MediaIO task uses it
  * as a convenient container when reading @c .imgseq files and when a
  * user chooses to write one out after producing a sequence.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
  */
 class ImgSeq {
         public:

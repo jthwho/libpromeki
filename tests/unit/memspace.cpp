@@ -70,7 +70,7 @@ TEST_CASE("MemSpace: copy") {
         REQUIRE(src.isValid());
         REQUIRE(dst.isValid());
         CHECK(ms.fill(src.ptr, 128, 0x42).isOk());
-        CHECK(ms.copy(src, dst, 128));
+        CHECK(ms.copy(src, dst, 128).isOk());
         unsigned char *d = static_cast<unsigned char *>(dst.ptr);
         CHECK(d[0] == 0x42);
         CHECK(d[127] == 0x42);
@@ -78,13 +78,13 @@ TEST_CASE("MemSpace: copy") {
         ms.release(dst);
 }
 
-TEST_CASE("MemSpace: copy with nullptr returns false") {
+TEST_CASE("MemSpace: copy with nullptr returns Error::Invalid") {
         MemSpace ms;
         MemAllocation a = ms.alloc(64, 16);
         MemAllocation empty;
         REQUIRE(a.isValid());
-        CHECK_FALSE(ms.copy(empty, a, 64));
-        CHECK_FALSE(ms.copy(a, empty, 64));
+        CHECK(ms.copy(empty, a, 64) == Error::Invalid);
+        CHECK(ms.copy(a, empty, 64) == Error::Invalid);
         ms.release(a);
 }
 
@@ -129,9 +129,9 @@ TEST_CASE("MemSpace::Stats: alloc and release update counters") {
                 a.ptr = std::aligned_alloc(a.align, allocSize);
         };
         ops.release = [](MemAllocation &a) { std::free(a.ptr); a.ptr = nullptr; };
-        ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> bool {
+        ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
                 std::memcpy(dst.ptr, src.ptr, bytes);
-                return true;
+                return Error::Ok;
         };
         ops.fill = [](void *ptr, size_t bytes, char value) -> Error {
                 std::memset(ptr, value, bytes);
@@ -184,9 +184,9 @@ TEST_CASE("MemSpace::Stats: peak tracks high-water mark") {
                 a.ptr = std::aligned_alloc(a.align, allocSize);
         };
         ops.release = [](MemAllocation &a) { std::free(a.ptr); a.ptr = nullptr; };
-        ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> bool {
+        ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
                 std::memcpy(dst.ptr, src.ptr, bytes);
-                return true;
+                return Error::Ok;
         };
         ops.fill = [](void *ptr, size_t bytes, char value) -> Error {
                 std::memset(ptr, value, bytes);
@@ -241,9 +241,9 @@ TEST_CASE("MemSpace::Stats: copy and fill update counters") {
                 a.ptr = std::aligned_alloc(a.align, allocSize);
         };
         ops.release = [](MemAllocation &a) { std::free(a.ptr); a.ptr = nullptr; };
-        ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> bool {
+        ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
                 std::memcpy(dst.ptr, src.ptr, bytes);
-                return true;
+                return Error::Ok;
         };
         ops.fill = [](void *ptr, size_t bytes, char value) -> Error {
                 std::memset(ptr, value, bytes);
@@ -259,7 +259,7 @@ TEST_CASE("MemSpace::Stats: copy and fill update counters") {
 
         CHECK(ms.fill(src.ptr, 256, 0x11).isOk());
         CHECK(ms.fill(dst.ptr, 128, 0x22).isOk());
-        CHECK(ms.copy(src, dst, 256));
+        CHECK(ms.copy(src, dst, 256).isOk());
 
         MemSpace::Stats::Snapshot s = ms.statsSnapshot();
         CHECK(s.fillCount == 2);
@@ -283,9 +283,9 @@ TEST_CASE("MemSpace::Stats: reset zeroes every counter") {
                 a.ptr = std::aligned_alloc(a.align, allocSize);
         };
         ops.release = [](MemAllocation &a) { std::free(a.ptr); a.ptr = nullptr; };
-        ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> bool {
+        ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
                 std::memcpy(dst.ptr, src.ptr, bytes);
-                return true;
+                return Error::Ok;
         };
         ops.fill = [](void *ptr, size_t bytes, char value) -> Error {
                 std::memset(ptr, value, bytes);
@@ -360,9 +360,9 @@ TEST_CASE("MemSpace: registerData and construction from custom ID") {
                 std::free(a.ptr);
                 a.ptr = nullptr;
         };
-        ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> bool {
+        ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
                 std::memcpy(dst.ptr, src.ptr, bytes);
-                return true;
+                return Error::Ok;
         };
         ops.fill = [](void *ptr, size_t bytes, char value) -> Error {
                 std::memset(ptr, value, bytes);

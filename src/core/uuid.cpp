@@ -57,15 +57,13 @@ UUID UUID::generate(int version) {
                 }
                 case 7: return generateV7();
                 default:
-                        promekiErr("UUID::generate: unsupported version %d", version);
-                        PROMEKI_ASSERT(false);
+                        promekiWarn("UUID::generate: unsupported version %d, returning invalid UUID", version);
                         return UUID();
         }
 }
 
 UUID UUID::generateV1() {
-        promekiErr("UUID::generateV1: not implemented");
-        PROMEKI_ASSERT(false);
+        promekiWarn("UUID::generateV1: not implemented, returning invalid UUID");
         return UUID();
 }
 

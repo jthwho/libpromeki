@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <array>
+#include <type_traits>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 
@@ -57,14 +58,24 @@ template <typename T, size_t NumValues> class Array {
                  * @brief Constructs from a std::array rvalue reference.
                  * @param val The std::array to move from.
                  */
-                Array(const DataType &&val) : d(std::move(val)) {}
+                Array(DataType &&val) : d(std::move(val)) {}
 
                 /**
                  * @brief Constructs from a variadic argument list.
+                 *
+                 * Constrained to exactly @c NumValues arguments, all of which
+                 * must be convertible to @c T.  Without the constraint this
+                 * template would silently shadow the copy/move constructors
+                 * for any unrelated single-argument call.
+                 *
                  * @tparam Args Argument types (must be convertible to T).
                  * @param args Values used to initialize each element.
                  */
-                template<typename... Args> Array(Args... args) : d{static_cast<T>(args)...} {}
+                template<typename... Args,
+                         typename = std::enable_if_t<
+                                 sizeof...(Args) == NumValues &&
+                                 (std::is_convertible_v<Args, T> && ...)>>
+                Array(Args... args) : d{static_cast<T>(args)...} {}
 
                 /** @brief Destructor. */
                 ~Array() {}
@@ -291,12 +302,14 @@ template <typename T, size_t NumValues> class Array {
                 }
 
                 /**
-                 * @brief Returns true if all elements are zero.
-                 * @return True if every element compares equal to zero.
+                 * @brief Returns true if all elements compare equal to a value-initialized T.
+                 * @return True if every element equals @c T{} (zero for arithmetic types,
+                 *         the empty/default state for value types).
                  */
                 bool isZero() const {
+                        const T zero{};
                         for(size_t i = 0; i < NumValues; i++) {
-                                if(d[i] != 0) return false;
+                                if(d[i] != zero) return false;
                         }
                         return true;
                 }
@@ -322,8 +335,8 @@ template <typename T, size_t NumValues> class Array {
                 Array<T, NumValues> clamp(const Array<T, NumValues> &min, const Array<T, NumValues> &max) const {
                         Array<T, NumValues> ret;
                         for(size_t i = 0; i < d.size(); ++i) {
-                                if(d[i] < min[d]) ret[i] = min[d];
-                                else if(d[i] > max[d]) ret[i] = max[d];
+                                if(d[i] < min[i]) ret[i] = min[i];
+                                else if(d[i] > max[i]) ret[i] = max[i];
                                 else ret[i] = d[i];
                         }
                         return ret;
@@ -336,7 +349,6 @@ template <typename T, size_t NumValues> class Array {
                  * @return True if every element is between the corresponding min and max.
                  */
                 bool isBetween(const Array<T, NumValues> &min, const Array<T, NumValues> &max) const {
-                        Array<T, NumValues> ret;
                         for(size_t i = 0; i < d.size(); ++i) {
                                 if(d[i] < min[i] || d[i] > max[i]) return false;
                         }

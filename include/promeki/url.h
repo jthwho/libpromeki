@@ -12,6 +12,7 @@
 #include <promeki/stringlist.h>
 #include <promeki/map.h>
 #include <promeki/error.h>
+#include <promeki/result.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -47,9 +48,15 @@ PROMEKI_NAMESPACE_BEGIN
  *    tradeoff that prevents near-miss spellings from resolving to
  *    the wrong key.
  *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — const operations are safe, but
+ * concurrent mutation (setScheme, setHost, setQuery, etc.) must
+ * be externally synchronized.
+ *
  * @par Example
  * @code
- * Url u = Url::fromString("pmfb://studio-a?FrameBridgeRingDepth=4");
+ * Url u = Url::fromString("pmfb://studio-a?FrameBridgeRingDepth=4").first();
  * u.scheme();                               // "pmfb"
  * u.host();                                 // "studio-a"
  * u.queryValue("FrameBridgeRingDepth");     // "4"
@@ -64,11 +71,20 @@ class Url {
 
                 /**
                  * @brief Parses a URL/URI string.
-                 * @param s   The input string.
-                 * @param err Optional error output.
-                 * @return The parsed Url, or an invalid Url on failure.
+                 *
+                 * The parser is forgiving for the kinds of things libpromeki
+                 * URLs need — see the class-level docs.  Any structural
+                 * failure (missing scheme, malformed authority, bad port,
+                 * unbracketed IPv6) yields @c Error::Invalid; the partially
+                 * built Url is still returned in @c Result::first() so
+                 * callers can inspect it for diagnostics.
+                 *
+                 * @param s The input string.
+                 * @return The parsed Url on success, or @c Error::Invalid
+                 *         (with the partially-built Url in @c first()) on
+                 *         a parse failure.
                  */
-                static Url fromString(const String &s, Error *err = nullptr);
+                static Result<Url> fromString(const String &s);
 
                 /**
                  * @brief Percent-encodes a string per RFC 3986.
@@ -100,12 +116,18 @@ class Url {
 
                 /**
                  * @brief Convenience constructor equivalent to @ref fromString.
+                 *
+                 * Discards any parse error — the resulting object will
+                 * report @c isValid() == false on a malformed input.
+                 * Prefer @ref fromString when you need to distinguish
+                 * "invalid input" from "empty Url".
+                 *
                  * @param s The URL/URI string.
                  */
-                explicit Url(const String &s) : Url(fromString(s)) {}
+                explicit Url(const String &s) : Url(fromString(s).first()) {}
 
                 /** @brief Convenience constructor from a C-string. */
-                explicit Url(const char *s) : Url(fromString(String(s))) {}
+                explicit Url(const char *s) : Url(fromString(String(s)).first()) {}
 
                 /**
                  * @brief A Url is valid if it has a non-empty scheme.

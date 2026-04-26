@@ -25,6 +25,12 @@ class String;
  * Simple value type wrapping std::chrono::nanoseconds. Provides
  * static factories for construction and accessors for various
  * time units. No PROMEKI_SHARED_FINAL.
+ *
+ * @par Thread Safety
+ * Trivially thread-safe.  Duration is a value-type wrapper around
+ * a single @c std::chrono::nanoseconds; distinct instances may be
+ * used concurrently and a single instance carries no mutable
+ * shared state.
  */
 class Duration {
         public:

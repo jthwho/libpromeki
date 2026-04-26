@@ -58,6 +58,13 @@ PROMEKI_NAMESPACE_BEGIN
  * single stage is not supported in this implementation (the first
  * stage that would receive frames from more than one producer is
  * rejected at @ref build time).
+ *
+ * @par Thread Safety
+ * Inherits @ref ObjectBase: thread-affine.  Pipeline lifecycle
+ * (@c build, @c open, @c start, @c stop, @c close) is driven from
+ * the owning EventLoop's thread.  Per-stage execution happens on
+ * the strand worker that the stage's MediaIO uses; the pipeline
+ * coordinates them via signal-driven notifications.
  */
 class MediaPipeline : public ObjectBase {
         PROMEKI_OBJECT(MediaPipeline, ObjectBase)

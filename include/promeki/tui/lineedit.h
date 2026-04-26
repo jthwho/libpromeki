@@ -17,6 +17,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Single-line text input widget.
  * @ingroup tui_widgets
  *
+ * @par Thread Safety
+ * Thread-affine — see @ref TuiWidget.
  */
 class TuiLineEdit : public TuiWidget {
         PROMEKI_OBJECT(TuiLineEdit, TuiWidget)
@@ -36,7 +38,7 @@ class TuiLineEdit : public TuiWidget {
                 PROMEKI_SIGNAL(returnPressed)
 
         protected:
-                void paintEvent(TuiPaintEvent *e) override;
+                void paintEvent(PaintEvent *e) override;
                 void keyPressEvent(KeyEvent *e) override;
                 void focusInEvent(Event *e) override;
                 void focusOutEvent(Event *e) override;

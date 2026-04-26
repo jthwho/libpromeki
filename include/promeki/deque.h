@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <deque>
 #include <initializer_list>
+#include <stdexcept>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 
@@ -20,7 +21,15 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup containers
  *
  * Provides a Qt-inspired API over std::deque with consistent naming
- *  *
+ * conventions matching the rest of libpromeki.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized.
+ *
+ * @tparam T Element type.
+ *
  * @par Example
  * @code
  * Deque<int> dq;
@@ -29,9 +38,6 @@ PROMEKI_NAMESPACE_BEGIN
  * int first = dq.front();  // 0
  * dq.popFromFront();
  * @endcode
-conventions matching the rest of libpromeki.
- *
- * @tparam T Element type.
  */
 template <typename T>
 class Deque {
@@ -220,9 +226,11 @@ class Deque {
 
                 /**
                  * @brief Removes and returns the first element.
+                 * @pre @c isEmpty() is false; otherwise throws @c std::logic_error.
                  * @return The removed element.
                  */
                 T popFromFront() {
+                        if(d.empty()) throw std::logic_error("Deque::popFromFront on empty deque");
                         T val = std::move(d.front());
                         d.pop_front();
                         return val;
@@ -230,9 +238,11 @@ class Deque {
 
                 /**
                  * @brief Removes and returns the last element.
+                 * @pre @c isEmpty() is false; otherwise throws @c std::logic_error.
                  * @return The removed element.
                  */
                 T popFromBack() {
+                        if(d.empty()) throw std::logic_error("Deque::popFromBack on empty deque");
                         T val = std::move(d.back());
                         d.pop_back();
                         return val;

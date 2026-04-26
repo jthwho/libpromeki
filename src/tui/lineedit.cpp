@@ -32,7 +32,7 @@ Size2Di32 TuiLineEdit::sizeHint() const {
         return Size2Di32(20, 1);
 }
 
-void TuiLineEdit::paintEvent(TuiPaintEvent *) {
+void TuiLineEdit::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 

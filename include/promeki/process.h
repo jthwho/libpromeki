@@ -32,6 +32,13 @@ PROMEKI_NAMESPACE_BEGIN
  * On unsupported platforms (e.g. WASM/Emscripten), start() returns
  * Error::NotSupported.
  *
+ * @par Thread Safety
+ * Inherits @ref ObjectBase: thread-affine.  A Process instance
+ * must only be used from the thread that created it (typically
+ * its owning EventLoop's thread).  The pipe I/O accessors
+ * (@c readAllStdout, @c writeToStdin, etc.) follow the same
+ * affinity.
+ *
  * @code
  * Process proc;
  * proc.setProgram("/usr/bin/echo");

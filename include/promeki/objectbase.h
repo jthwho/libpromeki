@@ -137,19 +137,29 @@ template <typename T>
 ObjectBasePtr(T *) -> ObjectBasePtr<T>;
 
 
-/** 
+/**
  * @brief Base object for promeki.
  *
  * This object is used by promeki to provide certain objects with a base level of
- * funtionality which include:
+ * functionality which include:
  *
  * - Signals and slots
  * - Some level of meta type and reflection
  *
- * The object was modeled from the Qt QObject, although isn't quite as versitle
+ * The object was modeled from the Qt QObject, although isn't quite as versatile
  * but it trades off that versatility for not needing an external meta object
  * compiler.
- * 
+ *
+ * @par Thread Safety
+ * Thread-affine: an ObjectBase instance belongs to the EventLoop
+ * captured at construction time and must only be used from that
+ * loop's thread.  Use @ref moveToThread to migrate ownership.
+ * Cross-thread interaction goes through @ref Signal connections
+ * (which marshal arguments via VariantList and dispatch through
+ * the receiver's EventLoop) or via @c eventLoop()->postCallable.
+ * The @ref ObjectBasePtr tracker is internally synchronized with
+ * a Mutex so it's safe to invalidate from a foreign thread when
+ * the tracked object is destroyed.
  */
 class ObjectBase {
         template <typename U> friend class ObjectBasePtr;

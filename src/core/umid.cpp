@@ -61,7 +61,11 @@ static void fillSourcePackTimeDate(uint8_t *out) {
         auto now = std::chrono::system_clock::now();
         std::time_t t = std::chrono::system_clock::to_time_t(now);
         std::tm tm{};
+#if defined(PROMEKI_PLATFORM_WINDOWS)
+        gmtime_s(&tm, &t);
+#else
         gmtime_r(&t, &tm);
+#endif
         int year = tm.tm_year + 1900;
         out[0] = static_cast<uint8_t>((year >> 8) & 0xFF);
         out[1] = static_cast<uint8_t>(year & 0xFF);

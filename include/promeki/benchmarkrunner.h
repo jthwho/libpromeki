@@ -53,6 +53,12 @@ class BenchmarkRunner;
  * loop is excluded automatically.  Call `pauseTiming()` /
  * `resumeTiming()` around any block of code inside the loop that should
  * not count against the measured time.
+ *
+ * @par Thread Safety
+ * Not thread-safe.  A BenchmarkState is owned by the single
+ * thread that runs the benchmark case; it must not be shared
+ * across threads.  The owning @ref BenchmarkRunner schedules
+ * cases serially.
  */
 class BenchmarkState {
         public:

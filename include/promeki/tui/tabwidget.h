@@ -18,6 +18,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Tabbed container with keyboard-switchable tabs.
  * @ingroup tui_widgets
  *
+ * @par Thread Safety
+ * Thread-affine — see @ref TuiWidget.
  */
 class TuiTabWidget : public TuiWidget {
         PROMEKI_OBJECT(TuiTabWidget, TuiWidget)
@@ -39,10 +41,10 @@ class TuiTabWidget : public TuiWidget {
                 PROMEKI_SIGNAL(currentChanged, int)
 
         protected:
-                void paintEvent(TuiPaintEvent *e) override;
+                void paintEvent(PaintEvent *e) override;
                 void keyPressEvent(KeyEvent *e) override;
                 void mouseEvent(MouseEvent *e) override;
-                void resizeEvent(TuiResizeEvent *e) override;
+                void resizeEvent(ResizeEvent *e) override;
                 void focusInEvent(Event *e) override;
                 void focusOutEvent(Event *e) override;
 

@@ -38,6 +38,11 @@ class SDLEventPump;
  * window.resize(1280, 720);
  * window.show();
  * @endcode
+ *
+ * @par Thread Safety
+ * Thread-affine via @ref ObjectBase / SDL.  Must be created, used, and
+ * destroyed on the thread that owns the bound @ref SdlSubsystem (the SDL
+ * event thread, typically the main thread).
  */
 class SDLWindow : public Widget {
         PROMEKI_OBJECT(SDLWindow, Widget)

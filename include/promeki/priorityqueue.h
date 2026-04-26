@@ -11,6 +11,7 @@
 #include <queue>
 #include <vector>
 #include <functional>
+#include <stdexcept>
 #include <promeki/namespace.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -20,8 +21,14 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup containers
  *
  * Provides a Qt-inspired API over std::priority_queue with consistent naming
- * conventions matching the rest of libpromeki. Not thread-safe; for use
- * inside synchronized contexts. Simple value type — no PROMEKI_SHARED_FINAL.
+ * conventions matching the rest of libpromeki. Simple value type —
+ * no PROMEKI_SHARED_FINAL.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized — typically by sharing the same Mutex
+ * with the producer-consumer surrounding it.
  *
  * @tparam T Element type.
  * @tparam Compare Comparison function type (default: std::less<T>, which
@@ -89,9 +96,11 @@ class PriorityQueue {
 
                 /**
                  * @brief Removes and returns the highest-priority element.
+                 * @pre @c isEmpty() is false; otherwise throws @c std::logic_error.
                  * @return The removed element.
                  */
                 T pop() {
+                        if(d.empty()) throw std::logic_error("PriorityQueue::pop on empty queue");
                         T val = d.top();
                         d.pop();
                         return val;

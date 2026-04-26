@@ -106,7 +106,9 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(NotAdjacent, NONE, "MediaDurations are not frame-adjacent and cannot be joined"),
         DEFINE_ERROR(PipelineBuildFailed, NONE, "MediaPipeline build failed to resolve the requested pipeline"),
         DEFINE_ERROR(PipelineRuntimeError, NONE, "MediaPipeline stage reported a runtime error"),
-        DEFINE_ERROR(InspectorDiscontinuityDetected, NONE, "Inspector observed at least one discontinuity")
+        DEFINE_ERROR(InspectorDiscontinuityDetected, NONE, "Inspector observed at least one discontinuity"),
+        DEFINE_ERROR(Empty, NONE, "Container or queue is empty"),
+        DEFINE_ERROR(NotFound, NONE, "Requested element or value was not found")
 };
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {

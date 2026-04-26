@@ -52,6 +52,14 @@ PROMEKI_NAMESPACE_BEGIN
  * // From any thread:
  * output.pushAudio(audioPtr);
  * @endcode
+ *
+ * @par Thread Safety
+ * Mixed.  @ref pushAudio() is fully thread-safe and may be called from
+ * any thread (e.g. a MediaIO Strand worker) — it pushes into the SDL
+ * audio stream which is internally synchronised.  Lifecycle calls
+ * (@ref configure / @ref open / @ref close, signal/slot connections,
+ * destruction) are thread-affine via @ref ObjectBase and must run on
+ * the thread that owns the bound @ref SdlSubsystem.
  */
 class SDLAudioOutput : public ObjectBase {
         PROMEKI_OBJECT(SDLAudioOutput, ObjectBase)

@@ -18,6 +18,17 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Generic fixed-size matrix with compile-time dimensions.
  * @ingroup math
  *
+ * Provides standard matrix operations including arithmetic, transposition,
+ * determinant, inverse, LU decomposition, and element-wise operations.
+ *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — const operations are safe, but
+ * concurrent mutation requires external synchronization.
+ *
+ * @tparam T Element type (e.g. float, double).
+ * @tparam W Number of columns (width).
+ * @tparam H Number of rows (height).
  *
  * @par Example
  * @code
@@ -25,12 +36,6 @@ PROMEKI_NAMESPACE_BEGIN
  * m.translate(1.0f, 2.0f, 3.0f);
  * auto inv = m.inverted();
  * @endcode
- * Provides standard matrix operations including arithmetic, transposition,
- * determinant, inverse, LU decomposition, and element-wise operations.
- *
- * @tparam T Element type (e.g. float, double).
- * @tparam W Number of columns (width).
- * @tparam H Number of rows (height).
  */
 template <typename T, size_t W, size_t H>
 class Matrix {

@@ -111,16 +111,13 @@ TEST_CASE("Enum: Enum(Type, name) with an unknown name yields InvalidValue") {
         CHECK(e.valueName().isEmpty());
 }
 
-TEST_CASE("Enum: valueOf sets err on miss, leaves it Ok on hit") {
-        Error err;
-        int v = Enum::valueOf(TestCodec::Type, "H265", &err);
-        CHECK(err.isOk());
-        CHECK(v == 2);
+TEST_CASE("Enum: valueOf returns Result with value on hit, IdNotFound on miss") {
+        auto hit = Enum::valueOf(TestCodec::Type, "H265");
+        CHECK(hit.second().isOk());
+        CHECK(hit.first() == 2);
 
-        err = Error::Ok;
-        v = Enum::valueOf(TestCodec::Type, "DoesNotExist", &err);
-        CHECK(err == Error::IdNotFound);
-        CHECK(v == Enum::InvalidValue);
+        auto miss = Enum::valueOf(TestCodec::Type, "DoesNotExist");
+        CHECK(miss.second() == Error::IdNotFound);
 }
 
 TEST_CASE("Enum: nameOf sets err on miss, leaves it Ok on hit") {
@@ -135,18 +132,17 @@ TEST_CASE("Enum: nameOf sets err on miss, leaves it Ok on hit") {
         CHECK(n.isEmpty());
 }
 
-TEST_CASE("Enum: -1 is a valid registered value, distinguishable via err") {
+TEST_CASE("Enum: -1 is a valid registered value, distinguishable via Result") {
         // The InvalidValue sentinel is -1, but -1 must still work as a
-        // legitimate registered value when the err pointer says "Ok".
+        // legitimate registered value via the Result return.
         Enum debug(TestSeverity::Type, "Debug");
         CHECK(debug.isValid());
         CHECK(debug.hasListedValue());
         CHECK(debug.value() == -1);
 
-        Error err;
-        int v = Enum::valueOf(TestSeverity::Type, "Debug", &err);
-        CHECK(err.isOk());
-        CHECK(v == -1);
+        auto r = Enum::valueOf(TestSeverity::Type, "Debug");
+        CHECK(r.second().isOk());
+        CHECK(r.first() == -1);
 }
 
 TEST_CASE("Enum: defaultValue returns the registered default") {

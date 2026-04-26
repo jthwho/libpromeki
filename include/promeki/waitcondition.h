@@ -22,6 +22,11 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Used with Mutex to allow threads to wait for a condition to become
  * true.  Non-copyable and non-movable.
+ *
+ * @par Thread Safety
+ * Fully thread-safe by construction.  @c wait must hold the
+ * caller-supplied Mutex; @c wakeOne / @c wakeAll may be called from
+ * any thread without external synchronization.
  */
 class WaitCondition {
         public:

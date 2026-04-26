@@ -62,6 +62,13 @@ class MediaDesc;
  * overriding @c executeCmd(MediaIOCommandParams &).  Dispatch on
  * @c cmd.name and read @c cmd.params; populate @c cmd.result for
  * the caller.  Return @c Error::NotSupported for unrecognized names.
+ *
+ * @par Thread Safety
+ * Strand-affine.  All @c executeCmd virtuals run on the @ref MediaIO
+ * worker strand; backends may assume single-threaded callbacks and do
+ * not need to synchronize their own state against the strand.
+ * Cross-thread interaction with the task's internal state must go
+ * through @ref MediaIO commands posted to the strand.
  */
 class MediaIOTask {
         friend class MediaIO;

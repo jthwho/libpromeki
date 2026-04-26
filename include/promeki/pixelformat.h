@@ -435,7 +435,7 @@ class PixelFormat {
                         VideoCodec      videoCodec;                       ///< Codec identity for compressed formats (e.g. @c VideoCodec::H264).
                         List<ID>        encodeSources;                    ///< Uncompressed PixelFormats the codec can encode from.
                         List<ID>        decodeTargets;                    ///< Uncompressed PixelFormats the codec can decode to.
-                        FourCCList      fourccList;                       ///< Associated FourCC codes.
+                        FourCC::List      fourccList;                       ///< Associated FourCC codes.
                         CompSemantic    compSemantics[MaxComps] = {};     ///< Per-component semantics.
                         VideoRange      videoRange;                       ///< Y'CbCr / RGB quantization range.  Left at VideoRange::Unknown by default; @ref registerData auto-derives from @c compSemantics[0] when possible.
 
@@ -591,7 +591,7 @@ class PixelFormat {
                 const List<ID> &decodeTargets() const { return d->decodeTargets; }
 
                 /** @brief Returns the list of associated FourCC codes. */
-                const FourCCList &fourccList() const { return d->fourccList; }
+                const FourCC::List &fourccList() const { return d->fourccList; }
 
                 /** @brief Returns the number of components. */
                 size_t compCount() const { return d->memLayout.compCount(); }

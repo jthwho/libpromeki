@@ -55,6 +55,7 @@ All media work happens in the `MediaIO` framework and its backends. The legacy `
 | [core_ownership_migration.md](core_ownership_migration.md) | cross-cutting | Phase C heap-ownership migration (raw pointers → `UniquePtr`): SharedPtr+CoW conflict, ObjectBase parent/child overlap, singleton self-delete, factory cleanup patterns |
 | [fixme.md](fixme.md) | ongoing | Existing FIXME comments tracked across the tree |
 | [valgrind_cleanup.md](valgrind_cleanup.md) | cross-cutting | Memcheck findings from `unittest-promeki-valgrind.log` grouped into real bugs, likely false positives, and leak stacks to chase |
+| [audit_20260425.md](audit_20260425.md) | cross-cutting | Full library audit (standards compliance, ergonomics, bugs) of `include/` and `src/`; 27 phases complete, 186 findings filed; **R1 remediation complete** (92 fixed, 90 open) |
 | [ideas.md](ideas.md) | backlog | Exploratory ideas that need further design |
 
 ## Dependency Graph

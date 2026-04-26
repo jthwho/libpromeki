@@ -44,6 +44,12 @@ class MediaIO;
  * is no wall-clock to wait for.  Callers that need real-time pacing
  * should use a @ref WallClock or the device-supplied clock from a
  * task backend.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * The clock reads its driving frame counter from the owning @ref MediaIO
+ * and inherits that object's threading contract.
  */
 class MediaIOClock : public Clock {
         public:

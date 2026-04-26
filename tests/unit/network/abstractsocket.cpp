@@ -200,7 +200,7 @@ TEST_CASE("AbstractSocket") {
 
                 char buf[64];
                 ElapsedTimer timer;
-                ssize_t ret = sock.readDatagram(buf, sizeof(buf));
+                int64_t ret = sock.readDatagram(buf, sizeof(buf));
                 int64_t elapsed = timer.elapsed();
 
                 CHECK(ret == -1);

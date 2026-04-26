@@ -92,6 +92,13 @@ PROMEKI_NAMESPACE_BEGIN
  * specified" for style inheritance. The static constant Color::Ignored
  * is an alias for this state.
  *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — const operations are safe, but
+ * concurrent mutation requires external synchronization.  The
+ * referenced @ref ColorModel data is immutable and shared from a
+ * thread-safe registry.
+ *
  * @see ColorModel for the definition of supported color models.
  */
 class Color {

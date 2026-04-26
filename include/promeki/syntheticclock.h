@@ -41,6 +41,13 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * The base-class sleep is a no-op here — the counter is authoritative
  * and only @ref advance / @ref setCurrentFrame move time forward.
+ *
+ * @par Thread Safety
+ * Inherits @ref Clock: read accessors (now, raw, jitter,
+ * rateRatio) are safe to call from any thread once the clock is
+ * configured.  @c advance / @c setCurrentFrame / @c setFrameRate /
+ * @c reset must be externally synchronized — typically only the
+ * pipeline driver advances the counter.
  */
 class SyntheticClock : public Clock {
         public:

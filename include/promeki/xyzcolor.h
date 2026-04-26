@@ -45,6 +45,11 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @see CIEPoint for the 2D chromaticity projection of this space.
  * @see ColorModel for converting between XYZ and other color models.
+ *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — const operations are safe, but
+ * concurrent mutation requires external synchronization.
  */
 class XYZColor {
         public:

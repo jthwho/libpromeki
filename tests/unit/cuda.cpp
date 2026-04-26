@@ -113,9 +113,9 @@ TEST_CASE("CudaHost + CudaDevice: round-trip at the MemSpace level") {
 
         // Upload host -> device, zero the host side, then download
         // back so the verified bytes had to travel through the GPU.
-        CHECK(hostSpace.copy(hostAlloc, devAlloc, kBytes));
+        CHECK(hostSpace.copy(hostAlloc, devAlloc, kBytes).isOk());
         REQUIRE(hostSpace.fill(hostAlloc.ptr, kBytes, 0x00).isOk());
-        CHECK(devSpace.copy(devAlloc, hostAlloc, kBytes));
+        CHECK(devSpace.copy(devAlloc, hostAlloc, kBytes).isOk());
 
         const auto *bytes = static_cast<const uint8_t *>(hostAlloc.ptr);
         for(size_t i = 0; i < kBytes; ++i) {
@@ -145,7 +145,7 @@ TEST_CASE("CudaDevice fill: cudaMemset honours the value byte") {
 
         REQUIRE(devSpace.fill(devAlloc.ptr, kBytes, 0x55).isOk());
         REQUIRE(hostSpace.fill(hostAlloc.ptr, kBytes, 0x00).isOk());
-        CHECK(devSpace.copy(devAlloc, hostAlloc, kBytes));
+        CHECK(devSpace.copy(devAlloc, hostAlloc, kBytes).isOk());
 
         const auto *bytes = static_cast<const uint8_t *>(hostAlloc.ptr);
         for(size_t i = 0; i < kBytes; ++i) {

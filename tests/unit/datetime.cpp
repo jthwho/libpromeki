@@ -79,6 +79,37 @@ TEST_CASE("DateTime: operator-= seconds") {
         CHECK(dt.toTimeT() == doctest::Approx(900).epsilon(1));
 }
 
+TEST_CASE("DateTime: operator-(DateTime) returns Duration") {
+        DateTime later((time_t)1500);
+        DateTime earlier((time_t)1000);
+        Duration d = later - earlier;
+        CHECK(d.seconds() == 500);
+}
+
+TEST_CASE("DateTime: operator+(Duration) shifts forward") {
+        DateTime dt((time_t)1000);
+        DateTime later = dt + Duration::fromSeconds(250);
+        CHECK(later.toTimeT() == doctest::Approx(1250).epsilon(1));
+}
+
+TEST_CASE("DateTime: operator-(Duration) shifts backward") {
+        DateTime dt((time_t)1000);
+        DateTime earlier = dt - Duration::fromSeconds(250);
+        CHECK(earlier.toTimeT() == doctest::Approx(750).epsilon(1));
+}
+
+TEST_CASE("DateTime: operator+= Duration") {
+        DateTime dt((time_t)1000);
+        dt += Duration::fromSeconds(50);
+        CHECK(dt.toTimeT() == doctest::Approx(1050).epsilon(1));
+}
+
+TEST_CASE("DateTime: operator-= Duration") {
+        DateTime dt((time_t)1000);
+        dt -= Duration::fromSeconds(50);
+        CHECK(dt.toTimeT() == doctest::Approx(950).epsilon(1));
+}
+
 TEST_CASE("DateTime: toString") {
         DateTime dt((time_t)0);
         String s = dt.toString();

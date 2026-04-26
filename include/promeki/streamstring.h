@@ -132,6 +132,12 @@ class StreamStringIODevice : public IODevice {
  *   });
  *   ss.stream() << "Hello " << 42 << promeki::endl;
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized.  The optional new-line callback runs
+ * on the same thread that performs the streaming write.
  */
 class StreamString {
         public:

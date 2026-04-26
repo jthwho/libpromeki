@@ -25,6 +25,14 @@ class JsonArray;
  * @ingroup util
  *
  * Provides a type-safe interface for building and querying JSON objects.
+ * Values can be accessed by key with typed getters that perform safe
+ * conversions.  Supports nesting via JsonObject and JsonArray values.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized.  The parse / toString static helpers
+ * are reentrant.
  *
  * @par Example
  * @code
@@ -40,8 +48,6 @@ class JsonArray;
  * String name = parsed.getString("name");
  * int w = parsed.getInt("width");
  * @endcode
- * Values can be accessed by key with typed getters that perform safe
- * conversions.  Supports nesting via JsonObject and JsonArray values.
  */
 class JsonObject {
     PROMEKI_SHARED_FINAL(JsonObject)

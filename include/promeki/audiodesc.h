@@ -35,6 +35,12 @@ class SdpMediaDescription;
  * assert(desc.bytesPerSample() == 2);
  * assert(desc.bufferSize(1024) == 4096);
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * @c AudioDesc::Ptr uses an atomic refcount and is safe to share across
+ * threads.
  */
 class AudioDesc {
         PROMEKI_SHARED_FINAL(AudioDesc)

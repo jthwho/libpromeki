@@ -20,6 +20,11 @@ PROMEKI_NAMESPACE_BEGIN
  * Provides standard linear algebra operations including addition, subtraction,
  * multiplication, transpose, inverse, and determinant. Element-wise operations
  * and vector transforms are also supported. Uses SSE intrinsics where beneficial.
+ *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — const operations are safe, but
+ * concurrent mutation requires external synchronization.
  */
 class Matrix3x3 {
         public:

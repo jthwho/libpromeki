@@ -50,6 +50,12 @@ class Buffer;
  * floating-point precision/notation are all configurable. Manipulator
  * functions (endl, flush, hex, dec, etc.) provide a convenient
  * chaining syntax.
+ *
+ * @par Thread Safety
+ * TextStream inherits the thread-affinity of its underlying
+ * IODevice — concurrent use of one stream from multiple threads
+ * requires external synchronization.  Distinct streams over
+ * separate devices may be used concurrently.
  */
 class TextStream {
         public:
@@ -456,6 +462,72 @@ inline TextStream &right(TextStream &s) {
 /** @brief Sets field alignment to Center. */
 inline TextStream &center(TextStream &s) {
         s.setFieldAlignment(TextStream::Center);
+        return s;
+}
+
+// ============================================================================
+// Stream operators for foundational generic types
+//
+// These templated operators live here (rather than alongside their
+// respective class definitions) so the @ref TextStream definition is
+// fully visible at template-parse time.  The corresponding class
+// header (atomic.h, pair.h, span.h) is forward-declared below — actual
+// usage requires both the class header and this header to be included.
+// ============================================================================
+
+template <typename T> class Atomic;
+template <typename A, typename B> class Pair;
+template <typename T> class Span;
+
+/**
+ * @brief Streams the current value of an Atomic to a TextStream.
+ *
+ * Reads via @ref Atomic::value() (acquire load) and forwards the result
+ * to @p s using whatever @c operator<< overload @p T provides.
+ *
+ * @param s Output text stream.
+ * @param a Atomic to read from.
+ * @return  @p s for chaining.
+ */
+template <typename T>
+inline TextStream &operator<<(TextStream &s, const Atomic<T> &a) {
+        s << a.value();
+        return s;
+}
+
+/**
+ * @brief Streams a Pair as @c "(first, second)".
+ *
+ * Each element is forwarded via its own @c operator<< overload.
+ *
+ * @param s Output text stream.
+ * @param p Pair to write.
+ * @return  @p s for chaining.
+ */
+template <typename A, typename B>
+inline TextStream &operator<<(TextStream &s, const Pair<A, B> &p) {
+        s << "(" << p.first() << ", " << p.second() << ")";
+        return s;
+}
+
+/**
+ * @brief Streams a Span as @c "[a, b, c]".
+ *
+ * Each element is forwarded via its own @c operator<< overload.
+ * Empty spans render as @c "[]".
+ *
+ * @param s    Output text stream.
+ * @param span Span to write.
+ * @return     @p s for chaining.
+ */
+template <typename T>
+inline TextStream &operator<<(TextStream &s, const Span<T> &span) {
+        s << "[";
+        for(size_t i = 0; i < span.size(); ++i) {
+                if(i != 0) s << ", ";
+                s << span[i];
+        }
+        s << "]";
         return s;
 }
 

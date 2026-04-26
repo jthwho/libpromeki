@@ -9,6 +9,8 @@
 #include <promeki/span.h>
 #include <promeki/list.h>
 #include <promeki/array.h>
+#include <promeki/streamstring.h>
+#include <promeki/textstream.h>
 
 using namespace promeki;
 
@@ -134,4 +136,49 @@ TEST_CASE("Span: empty span operations") {
         CHECK(s.size() == 0);
         CHECK(s.sizeBytes() == 0);
         CHECK(s.data() == nullptr);
+}
+
+TEST_CASE("Span: const-Span subspan/first/last") {
+        int arr[] = {10, 20, 30, 40, 50};
+        const Span<int> s(arr, 5);
+        auto sub = s.subspan(1, 3);
+        CHECK(sub.size() == 3);
+        CHECK(sub[0] == 20);
+        auto f = s.first(2);
+        CHECK(f.size() == 2);
+        CHECK(f[0] == 10);
+        auto l = s.last(2);
+        CHECK(l.size() == 2);
+        CHECK(l[0] == 40);
+}
+
+TEST_CASE("Span: converting constructor from Span<T> to Span<const T>") {
+        int arr[] = {1, 2, 3};
+        Span<int> mut(arr, 3);
+        Span<const int> ro(mut);
+        CHECK(ro.size() == 3);
+        CHECK(ro[0] == 1);
+        CHECK(ro[1] == 2);
+        CHECK(ro[2] == 3);
+        CHECK(ro.data() == arr);
+}
+
+TEST_CASE("Span: const Span front/back") {
+        int arr[] = {7, 8, 9};
+        const Span<int> s(arr, 3);
+        CHECK(s.front() == 7);
+        CHECK(s.back() == 9);
+}
+
+TEST_CASE("Span: TextStream operator") {
+        int arr[] = {1, 2, 3};
+        Span<int> s(arr, 3);
+        StreamString out;
+        out.stream() << s << promeki::flush;
+        CHECK(out.line() == "[1, 2, 3]");
+
+        Span<int> empty;
+        StreamString out2;
+        out2.stream() << empty << promeki::flush;
+        CHECK(out2.line() == "[]");
 }

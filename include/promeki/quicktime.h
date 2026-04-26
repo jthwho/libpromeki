@@ -56,6 +56,10 @@ PROMEKI_NAMESPACE_BEGIN
  *     }
  * }
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
  */
 class QuickTime {
         public:

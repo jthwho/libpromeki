@@ -38,11 +38,14 @@ class EventLoop;
  * error) is delivered when the EventLoop has had a chance to drive
  * the request to completion.
  *
- * Callers that block-wait on the @ref Future must be running on a
- * different thread than the one driving the EventLoop, otherwise the
- * loop will never get a chance to advance the request — the
- * canonical pattern is "client lives on the main loop, worker
- * threads issue requests and block on their Futures".
+ * @par Thread Safety
+ * Inherits @ref ObjectBase: thread-affine.  All state mutates on
+ * the client's owning EventLoop thread.  Callers that block-wait
+ * on the @ref Future must be running on a different thread than
+ * the one driving the EventLoop, otherwise the loop will never
+ * get a chance to advance the request — the canonical pattern is
+ * "client lives on the main loop, worker threads issue requests
+ * and block on their Futures".
  *
  * @par Lifetime model
  * The client owns no persistent connection state — every request

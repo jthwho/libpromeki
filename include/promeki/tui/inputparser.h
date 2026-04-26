@@ -20,6 +20,11 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Handles CSI sequences (arrows, function keys, mouse), SS3 sequences,
  * UTF-8 multi-byte input, and ambiguous Escape timing.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * Typically owned by the TUI thread that drives @ref TuiSubsystem.
  */
 class TuiInputParser {
         public:

@@ -77,7 +77,7 @@ static void cudaDeviceRelease(MemAllocation &a) {
 // System/SystemSecure/CudaHost (host-side) and CudaDevice (device-side)
 // on either end.  We inspect src/dst MemSpace IDs to pick the right
 // cudaMemcpyKind.
-static bool cudaKindCopy(const MemAllocation &src, const MemAllocation &dst, size_t bytes) {
+static Error cudaKindCopy(const MemAllocation &src, const MemAllocation &dst, size_t bytes) {
         const MemSpace::ID sid = src.ms.id();
         const MemSpace::ID did = dst.ms.id();
         const bool srcDev = (sid == MemSpace::CudaDevice);
@@ -90,9 +90,9 @@ static bool cudaKindCopy(const MemAllocation &src, const MemAllocation &dst, siz
         cudaError_t e = cudaMemcpy(dst.ptr, src.ptr, bytes, kind);
         if(e != cudaSuccess) {
                 logCudaError("cudaMemcpy", e);
-                return false;
+                return mapCudaError(e);
         }
-        return true;
+        return Error::Ok;
 }
 
 static Error cudaDeviceFill(void *ptr, size_t bytes, char value) {

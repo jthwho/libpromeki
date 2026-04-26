@@ -55,6 +55,9 @@ PROMEKI_NAMESPACE_BEGIN
  * | @ref MediaConfig::QuickTimeLayout         | Enum (QuickTimeLayout) | Fragmented | Writer on-disk layout. |
  * | @ref MediaConfig::QuickTimeFragmentFrames | int                    | 30 | Video frames per fragment (Fragmented layout only). |
  * | @ref MediaConfig::QuickTimeFlushSync      | bool                   | false | fdatasync after every flush. |
+ *
+ * @par Thread Safety
+ * Strand-affine — see @ref MediaIOTask.
  */
 class MediaIOTask_QuickTime : public MediaIOTask {
         public:

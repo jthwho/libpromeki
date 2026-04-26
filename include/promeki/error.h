@@ -20,7 +20,12 @@ class String;
  * @ingroup util
  *
  * Encapsulates an error code from the Code enumeration and provides
- * comparison operators, human-readable names, descriptions, and
+ * comparison operators, human-readable names, descriptions, and a mapping
+ * to the corresponding POSIX errno value when applicable.
+ *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently. The class holds a single
+ * integer code; copying, assignment, and comparison are all trivially safe.
  *
  * @par Example
  * @code
@@ -34,7 +39,6 @@ class String;
  * // Direct comparison
  * if(err == Error::NotExist) { ... }
  * @endcode
- * a mapping to the corresponding POSIX errno value when applicable.
  */
 class Error {
         public:
@@ -111,7 +115,9 @@ class Error {
                         NotAdjacent,             ///< Two MediaDurations are not frame-adjacent and cannot be joined.
                         PipelineBuildFailed,     ///< MediaPipeline build step (including planner) could not resolve the requested pipeline.
                         PipelineRuntimeError,    ///< A stage emitted a runtime error (pipelineErrorSignal) after start().
-                        InspectorDiscontinuityDetected  ///< Inspector observed at least one discontinuity during its run.
+                        InspectorDiscontinuityDetected,  ///< Inspector observed at least one discontinuity during its run.
+                        Empty,                   ///< Container or queue has no element to return.
+                        NotFound                 ///< Requested element or value was not present in the searched container.
                 };
 
                 /**

@@ -25,9 +25,11 @@ PROMEKI_NAMESPACE_BEGIN
  * that repeatedly need a scratch buffer of the same shape — e.g. a
  * video reader pulling one uncompressed frame per vsync.
  *
- * The pool is single-threaded — callers are responsible for ensuring
- * acquire/release happen from the same thread (or are externally
- * synchronized).
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently.  A single BufferPool is single-threaded — callers
+ * must ensure @c acquire / @c release happen from the same thread
+ * (or be externally synchronized).
  *
  * @par Design notes
  *

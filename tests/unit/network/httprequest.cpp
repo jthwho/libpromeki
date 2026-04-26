@@ -46,7 +46,7 @@ TEST_CASE("HttpRequest") {
 
         SUBCASE("path / queryValue forward to the URL") {
                 HttpRequest r;
-                Url u = Url::fromString("http://example/foo/bar?id=42&q=cat");
+                Url u = Url::fromString("http://example/foo/bar?id=42&q=cat").first();
                 r.setUrl(u);
                 CHECK(r.path() == "/foo/bar");
                 CHECK(r.queryValue("id") == "42");
@@ -65,7 +65,7 @@ TEST_CASE("HttpRequest") {
         SUBCASE("equality reflects every relevant field") {
                 HttpRequest a, b;
                 a.setMethod(HttpMethod::Post);
-                a.setUrl(Url::fromString("http://h/x"));
+                a.setUrl(Url::fromString("http://h/x").first());
                 a.headers().set("Content-Type", "text/plain");
                 a.setBody(String("hi"));
 

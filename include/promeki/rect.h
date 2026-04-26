@@ -20,6 +20,14 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * A simple value type combining a Point<T,2> origin (top-left corner)
  * with a Size2DTemplate<T> extent.  Provides intersection, union,
+ * containment, and coordinate transformation operations.
+ *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — const operations are safe, but
+ * concurrent mutation requires external synchronization.
+ *
+ * @tparam T The component type (e.g. int, float, double).
  *
  * @par Example
  * @code
@@ -27,9 +35,6 @@ PROMEKI_NAMESPACE_BEGIN
  * bool hit = r.contains(15, 25); // true
  * auto moved = r.translated(5, 5);
  * @endcode
- * containment, and coordinate transformation operations.
- *
- * @tparam T The component type (e.g. int, float, double).
  */
 template <typename T> class Rect {
         public:

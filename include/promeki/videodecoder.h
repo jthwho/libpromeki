@@ -55,7 +55,10 @@ class MediaConfig;
  *   5. Call @ref flush when the input stream ends, then drain again.
  *   6. Destroy the decoder.
  *
- * Implementations are not required to be thread-safe.
+ * @par Thread Safety
+ * Conditionally thread-safe.  Each pipeline thread should own its own
+ * decoder instance; concurrent access to a single instance is
+ * unsupported.
  */
 class VideoDecoder {
         public:

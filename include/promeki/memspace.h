@@ -35,6 +35,14 @@ struct MemAllocation;
  * SystemSecure performs page locking on allocation and secure zeroing on release
  * without exposing those details through the MemSpace API.
  *
+ * @par Thread Safety
+ * Fully thread-safe.  The MemSpace handle is a lightweight wrapper around an
+ * immutable Ops record and an integer ID and is safe to share by value across
+ * threads.  Registered backends are required to be thread-safe (the registry
+ * is built once at startup and read freely thereafter, guarded by a
+ * @c ReadWriteLock).  Per-space @ref Stats counters use atomic operations and
+ * may be read or updated concurrently from any thread.
+ *
  * @see @ref typeregistry "TypeRegistry Pattern" for the design pattern.
  */
 class MemSpace {
@@ -45,6 +53,18 @@ class MemSpace {
                  * Well-known spaces have named enumerators.  User-defined
                  * spaces obtain IDs from registerType().  The atomic counter
                  * starts at UserDefined.
+                 *
+                 * @note @c ID is an unscoped @c enum that converts implicitly
+                 *       to @c int, but @c MemSpace's public API takes
+                 *       @c "const MemSpace &" rather than @c ID, so call sites
+                 *       always pass a wrapper.  The single-arg @c ID
+                 *       constructor is the only place an integer literal can
+                 *       turn into a @c MemSpace; do not add any @c MemSpace
+                 *       overloads that take @c int / @c size_t / @c uint32_t
+                 *       parameters or call sites of the form
+                 *       @code MemSpace ms = 0; @endcode (instead of
+                 *       @code MemSpace ms = MemSpace::System; @endcode) will
+                 *       compile silently.
                  */
                 enum ID {
                         System       = 0,    ///< System (CPU) memory.
@@ -165,7 +185,7 @@ class MemSpace {
                         bool (*isHostAccessible)(const MemAllocation &alloc);                ///< Returns true if the allocation is directly accessible from the host CPU.
                         void (*alloc)(MemAllocation &alloc);                                ///< Allocate memory. Size and align are pre-filled; size > 0 guaranteed.
                         void (*release)(MemAllocation &alloc);                              ///< Release previously allocated memory. Called only when ptr != nullptr.
-                        bool (*copy)(const MemAllocation &src, const MemAllocation &dst, size_t bytes); ///< Copy bytes from this space to another. Both pointers non-null.
+                        Error (*copy)(const MemAllocation &src, const MemAllocation &dst, size_t bytes); ///< Copy bytes from this space to another. Both pointers non-null. Returns Error::Ok on success or a specific error describing the failure.
                         Error (*fill)(void *ptr, size_t bytes, char value);                 ///< Fill memory with a byte value. Called only when ptr != nullptr.
                         Stats *stats = nullptr;                                             ///< Runtime counters; owned by the registry, auto-created by registerData() if null.
                 };
@@ -287,9 +307,12 @@ class MemSpace {
                  * @param src   The source allocation.
                  * @param dst   The destination allocation.
                  * @param bytes Number of bytes to copy.
-                 * @return True on success, false if either pointer is nullptr.
+                 * @return Error::Ok on success, or a specific error describing
+                 *         the failure (e.g. Error::Invalid for null pointers,
+                 *         Error::NotSupported when no path exists between the
+                 *         two memory spaces).
                  */
-                inline bool copy(const MemAllocation &src, const MemAllocation &dst, size_t bytes) const;
+                inline Error copy(const MemAllocation &src, const MemAllocation &dst, size_t bytes) const;
 
                 /**
                  * @brief Fills memory with a byte value.
@@ -401,16 +424,19 @@ struct MemAllocation {
 
 inline MemSpace::MemSpace(ID id) : d(lookup(id)) {}
 
-inline bool MemSpace::copy(const MemAllocation &src, const MemAllocation &dst, size_t bytes) const {
-        if(src.ptr == nullptr || dst.ptr == nullptr) return false;
-        bool ok = d->copy(src, dst, bytes);
-        if(ok) {
+inline Error MemSpace::copy(const MemAllocation &src, const MemAllocation &dst, size_t bytes) const {
+        if(src.ptr == nullptr || dst.ptr == nullptr) {
+                d->stats->copyFailCount.fetchAndAdd(1);
+                return Error::Invalid;
+        }
+        Error err = d->copy(src, dst, bytes);
+        if(err.isOk()) {
                 d->stats->copyCount.fetchAndAdd(1);
                 d->stats->copyBytes.fetchAndAdd(bytes);
         } else {
                 d->stats->copyFailCount.fetchAndAdd(1);
         }
-        return ok;
+        return err;
 }
 
 inline MemAllocation MemSpace::alloc(size_t bytes, size_t align) const {

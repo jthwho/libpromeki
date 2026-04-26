@@ -42,13 +42,12 @@ bool EnumList::append(const String &name, Error *err) {
                 if(err) *err = Error::InvalidArgument;
                 return false;
         }
-        Error lookErr;
-        int v = Enum::valueOf(_type, name, &lookErr);
-        if(lookErr.isError()) {
-                if(err) *err = lookErr;
+        auto lookup = Enum::valueOf(_type, name);
+        if(lookup.second().isError()) {
+                if(err) *err = lookup.second();
                 return false;
         }
-        _values.pushToBack(v);
+        _values.pushToBack(lookup.first());
         if(err) *err = Error::Ok;
         return true;
 }
@@ -117,9 +116,11 @@ EnumList EnumList::fromString(Enum::Type type, const String &text, Error *err) {
                 // Try the registered name first; fall back to integer
                 // parsing so out-of-list decimal values round-trip
                 // through toString() / fromString() cleanly.
-                Error lookErr;
-                int v = Enum::valueOf(type, entry, &lookErr);
-                if(lookErr.isError()) {
+                auto lookup = Enum::valueOf(type, entry);
+                int v = 0;
+                if(lookup.second().isOk()) {
+                        v = lookup.first();
+                } else {
                         Error intErr;
                         int parsed = entry.to<int>(&intErr);
                         if(intErr.isError()) {

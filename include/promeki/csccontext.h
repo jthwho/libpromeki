@@ -21,8 +21,10 @@ PROMEKI_NAMESPACE_BEGIN
  * intermediate storage by CSCPipeline stages. Each buffer holds one
  * component's worth of float data for a single scanline.
  *
- * CSCContext is not thread-safe. Each thread executing a conversion
- * should have its own CSCContext instance.
+ * @par Thread Safety
+ * Conditionally thread-safe.  Each thread executing a conversion should
+ * have its own @c CSCContext instance; concurrent access to a single
+ * instance is unsupported.
  *
  * @par Example
  * @code

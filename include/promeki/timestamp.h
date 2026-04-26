@@ -21,6 +21,13 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Provides high-resolution time measurement, elapsed time queries, and
  * thread sleep utilities. Uses steady_clock to guarantee monotonic
+ * progression regardless of system clock adjustments.
+ *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — const operations are safe, but
+ * concurrent mutation requires external synchronization.  Static
+ * helpers (@c now, @c sleep, etc.) are fully thread-safe.
  *
  * @par Example
  * @code
@@ -28,7 +35,6 @@ PROMEKI_NAMESPACE_BEGIN
  * // ... do work ...
  * double elapsed = start.elapsedSeconds();
  * @endcode
- * progression regardless of system clock adjustments.
  */
 class TimeStamp {
         public:

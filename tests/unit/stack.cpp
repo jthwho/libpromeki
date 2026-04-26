@@ -109,3 +109,8 @@ TEST_CASE("Stack: equality") {
         CHECK(a == b);
         CHECK(a != c);
 }
+
+TEST_CASE("Stack: pop on empty asserts") {
+        Stack<int> s;
+        CHECK_THROWS(s.pop());
+}

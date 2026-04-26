@@ -22,8 +22,9 @@ class TcpSocket;
  * TcpServer binds to a local address and listens for incoming TCP
  * connections. Accepted connections are returned as TcpSocket objects.
  *
- * This class must only be used from the thread that created it
- * (or moved to via moveToThread()).
+ * @par Thread Safety
+ * Inherits @ref ObjectBase: thread-affine.  A single TcpServer
+ * must only be used from the thread that created it.
  *
  * @par Example
  * @code

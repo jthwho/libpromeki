@@ -80,3 +80,8 @@ TEST_CASE("PriorityQueue: move") {
         CHECK(pq2.size() == 1);
         CHECK(pq2.top() == 42);
 }
+
+TEST_CASE("PriorityQueue: pop on empty asserts") {
+        PriorityQueue<int> pq;
+        CHECK_THROWS(pq.pop());
+}

@@ -66,7 +66,7 @@ TEST_CASE("UdpSocketTransport") {
                 CHECK(sent == static_cast<ssize_t>(std::strlen(msg)));
 
                 char buf[64];
-                ssize_t n = receiver.readDatagram(buf, sizeof(buf));
+                int64_t n = receiver.readDatagram(buf, sizeof(buf));
                 REQUIRE(n > 0);
                 CHECK(std::memcmp(buf, msg, n) == 0);
         }
@@ -100,7 +100,7 @@ TEST_CASE("UdpSocketTransport") {
 
                 for(int i = 0; i < 3; i++) {
                         char buf[64];
-                        ssize_t n = receiver.readDatagram(buf, sizeof(buf));
+                        int64_t n = receiver.readDatagram(buf, sizeof(buf));
                         REQUIRE(n > 0);
                         char expected[32];
                         std::snprintf(expected, sizeof(expected), "ptbatch %d", i);

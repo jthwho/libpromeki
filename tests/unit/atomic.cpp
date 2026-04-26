@@ -8,6 +8,8 @@
 #include <thread>
 #include <doctest/doctest.h>
 #include <promeki/atomic.h>
+#include <promeki/streamstring.h>
+#include <promeki/textstream.h>
 
 using namespace promeki;
 
@@ -80,4 +82,11 @@ TEST_CASE("Atomic_ConcurrentFetchAndAdd") {
         t1.join();
         t2.join();
         CHECK(a.value() == iterations * 2);
+}
+
+TEST_CASE("Atomic_TextStreamOperator") {
+        Atomic<int> a(7);
+        StreamString out;
+        out.stream() << a << promeki::flush;
+        CHECK(out.line() == "7");
 }

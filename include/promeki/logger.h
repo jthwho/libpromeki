@@ -89,6 +89,14 @@ bool promekiRegisterDebug(bool *enabler, const char *name, const char *file, int
  * @ingroup util
  *
  * All log messages are enqueued and written by a dedicated worker thread.
+ * Supports multiple log levels, optional console output, and file logging.
+ *
+ * @par Thread Safety
+ * Fully thread-safe.  @c log, the convenience macros
+ * (@c promekiInfo, @c promekiWarn, @c promekiErr, @c promekiDebug),
+ * @c setLogFile, @c setLogLevel, and the listener / history APIs
+ * may all be called concurrently from any thread.  The asynchronous
+ * design means log calls do not block on I/O.
  *
  * @par Example
  * @code
@@ -101,7 +109,6 @@ bool promekiRegisterDebug(bool *enabler, const char *name, const char *file, int
  * Logger::defaultLogger().setLogFile("/tmp/app.log");
  * Logger::defaultLogger().setLogLevel(Logger::Debug);
  * @endcode
- * Supports multiple log levels, optional console output, and file logging.
  */
 class Logger {
         public:

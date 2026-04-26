@@ -31,6 +31,11 @@ PROMEKI_NAMESPACE_BEGIN
  * float samples[4800 * 2];
  * gen.generate(samples, 4800);
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance — including any combination of
+ * @c setConfig() / @c generate() — must be externally synchronized.
  */
 class AudioGen {
         public:

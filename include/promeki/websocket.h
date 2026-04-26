@@ -39,15 +39,15 @@ class HttpResponse;
  * @ref HttpServer::routeWebSocket once the @c HTTP/1.1 101
  * @c Switching Protocols handshake has completed.
  *
- * @par Threading model
- * Inherits @ref HttpServer / @ref HttpClient's loop-affinity
- * model: every WebSocket lives on exactly one @ref EventLoop —
- * the loop that's @ref EventLoop::current at construction time.
- * All frame parsing, signal emission, and write pumping happens
- * on that loop's thread.  Cross-thread callers should connect to
- * the @ref textMessageReceived / @ref binaryMessageReceived
- * signals; the standard signal-dispatch machinery moves the call
- * to the receiver's loop.
+ * @par Thread Safety
+ * Inherits @ref ObjectBase: thread-affine.  Every WebSocket lives
+ * on exactly one @ref EventLoop — the loop that's
+ * @ref EventLoop::current at construction time.  All frame
+ * parsing, signal emission, and write pumping happens on that
+ * loop's thread.  Cross-thread callers should connect to the
+ * @ref textMessageReceived / @ref binaryMessageReceived signals;
+ * the standard signal-dispatch machinery moves the call to the
+ * receiver's loop.
  *
  * @par Usage (client)
  * @code

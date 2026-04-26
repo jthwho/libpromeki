@@ -32,8 +32,7 @@ PROMEKI_NAMESPACE_BEGIN
  * Running min, max, count, and sum are tracked separately so the
  * exact mean is also available without a second pass over the buckets.
  *
- * @par Threading
- *
+ * @par Thread Safety
  * Single-writer, multiple-reader.  @ref addSample is intentionally
  * not internally synchronised — the intended usage is "one writer
  * thread per Histogram instance" (e.g. one Histogram per RTP stream

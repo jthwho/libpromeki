@@ -48,6 +48,13 @@ PROMEKI_NAMESPACE_BEGIN
  * the same clone, instead of cloning N times and splitting the
  * slices across N unrelated buffers.
  *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — concurrent mutation (pushToBack,
+ * ensureExclusive, clear) must be externally synchronized.  The
+ * underlying @ref Buffer::Ptr refcounts are atomic so passing a
+ * BufferView by copy across threads is safe.
+ *
  * @par Example
  * @code
  * // Single-slice view over a buffer:

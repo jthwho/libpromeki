@@ -38,7 +38,7 @@ Size2Di32 TuiButton::minimumSizeHint() const {
         return sizeHint();
 }
 
-void TuiButton::paintEvent(TuiPaintEvent *) {
+void TuiButton::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 

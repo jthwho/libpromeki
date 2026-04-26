@@ -19,6 +19,13 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * The timer starts automatically on construction. Call start() or restart()
  * to reset. The timer can be invalidated to indicate "not running".
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent @c start / @c restart / @c invalidate
+ * on a single instance must be externally synchronized.  Read
+ * accessors (@c elapsedMs / @c elapsedSeconds / @c isValid) are
+ * safe alongside other reads.
  */
 class ElapsedTimer {
         public:

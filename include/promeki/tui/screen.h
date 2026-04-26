@@ -23,6 +23,12 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Each cell holds a character and a TuiStyle describing its visual
  * properties (foreground, background, text attributes).
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * @c TuiCell is a small value type; copying is the recommended way to
+ * share it across threads.
  */
 struct TuiCell {
         Char            ch = Char(U' ');        ///< The Unicode character in this cell.
@@ -56,6 +62,12 @@ struct TuiCell {
  * active color mode.
  *
  * NOT an ObjectBase -- this is infrastructure.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance — including any combination of
+ * @c setCell() / @c flush() / @c resize() — must be externally synchronized.
+ * In typical use a screen is owned and driven by a single TUI thread.
  */
 class TuiScreen {
         public:

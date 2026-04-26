@@ -19,6 +19,11 @@ PROMEKI_NAMESPACE_BEGIN
  * A simple value type representing a line segment between two Points of the
  * same dimensionality and component type.
  *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — const operations are safe, but
+ * concurrent mutation requires external synchronization.
+ *
  * @tparam T The component value type (e.g. int, float, double).
  * @tparam N The number of dimensions.
  */

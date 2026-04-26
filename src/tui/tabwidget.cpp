@@ -69,7 +69,7 @@ void TuiTabWidget::updateTabGeometry() {
         }
 }
 
-void TuiTabWidget::paintEvent(TuiPaintEvent *) {
+void TuiTabWidget::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 
@@ -182,7 +182,7 @@ void TuiTabWidget::mouseEvent(MouseEvent *e) {
         }
 }
 
-void TuiTabWidget::resizeEvent(TuiResizeEvent *) {
+void TuiTabWidget::resizeEvent(ResizeEvent *) {
         updateTabGeometry();
 }
 

@@ -31,6 +31,11 @@ PROMEKI_NAMESPACE_BEGIN
  * A default-constructed ContentLightLevel has both fields at zero,
  * which means "unspecified" per CTA-861.3.
  *
+ * @par Thread Safety
+ * Distinct instances may be used concurrently.  A single instance
+ * is conditionally thread-safe — const operations are safe, but
+ * concurrent mutation requires external synchronization.
+ *
  * @par Example
  * @code
  * ContentLightLevel cll(1000, 400);

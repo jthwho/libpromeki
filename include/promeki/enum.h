@@ -14,6 +14,7 @@
 #include <promeki/list.h>
 #include <promeki/pair.h>
 #include <promeki/error.h>
+#include <promeki/result.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -348,15 +349,18 @@ class Enum {
 
                 /**
                  * @brief Looks up the integer value associated with @p name in @p type.
+                 *
+                 * Returns a @ref Result so the failure case (unknown type or
+                 * unregistered name) is unambiguous, since a registered value
+                 * can legitimately be any int — including @c -1.
+                 *
                  * @param type  Registered enum type.
                  * @param name  Value name to look up.
-                 * @param err   Optional error pointer; set to Error::IdNotFound on miss.
-                 * @return The integer value, or InvalidValue (-1) if @p name is
-                 *         not registered.  Note that -1 may itself be a
-                 *         legitimate registered value; use @p err to
-                 *         disambiguate.
+                 * @return A Result holding the integer value on success, or
+                 *         @c Error::IdNotFound when @p type is invalid or
+                 *         @p name is not registered.
                  */
-                static int valueOf(Type type, const String &name, Error *err = nullptr);
+                static Result<int> valueOf(Type type, const String &name);
 
                 /**
                  * @brief Looks up the name associated with @p value in @p type.

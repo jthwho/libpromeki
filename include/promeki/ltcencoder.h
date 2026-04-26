@@ -33,6 +33,10 @@ PROMEKI_NAMESPACE_BEGIN
  * List<int8_t> samples = enc.encode(tc);
  * // samples contains ~2000 int8_t samples of LTC for this frame
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
  */
 class LtcEncoder {
         public:

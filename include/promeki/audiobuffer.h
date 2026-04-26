@@ -35,6 +35,23 @@ PROMEKI_NAMESPACE_BEGIN
  * wants a different framing or format (e.g. a container writer that
  * writes fixed-size chunks of s16 little-endian).
  *
+ * @par Relationship to @ref AudioBlock
+ *
+ * @c AudioBuffer is a @b data @b container — a value-type FIFO of
+ * sample bytes plus an internal @ref AudioResampler.  It has no
+ * graph identity, no parent, no signals, and is not part of the
+ * @ref ObjectBase hierarchy.  Use it whenever you need a
+ * thread-safe handoff of PCM samples between a producer and a
+ * consumer that may run on different clocks or in different formats.
+ *
+ * @ref AudioBlock, in contrast, is a @b pipeline @b node — an
+ * @ref ObjectBase-derived processing element that exposes named
+ * source and sink channels for connecting into an audio graph.
+ * The two classes are not redundant: an @ref AudioBlock typically
+ * owns one or more @ref AudioBuffer instances internally to hand
+ * samples between its own threads, but they sit at different
+ * conceptual layers and should not be unified.
+ *
  * @par Format conversion
  *
  * When @c inputFormat() differs from @c format() only in @c DataType
@@ -89,13 +106,13 @@ PROMEKI_NAMESPACE_BEGIN
  * differ, the nominal ratio handles the fixed conversion and the
  * drift adjustment rides on top.
  *
- * @par Thread safety
+ * @par Thread Safety
  *
- * All push, pop, and query methods are internally synchronized via
- * a Mutex.  Push methods wake any thread blocked in @c popWait()
- * after writing.  This allows a producer thread and a consumer
- * thread to operate on the same AudioBuffer without external
- * locking.
+ * Fully thread-safe.  All push, pop, and query methods are
+ * internally synchronized via a Mutex.  Push methods wake any
+ * thread blocked in @c popWait() after writing.  This allows a
+ * producer thread and a consumer thread to operate on the same
+ * AudioBuffer without external locking.
  *
  * @par Capacity and ownership
  *

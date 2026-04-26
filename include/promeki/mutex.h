@@ -18,7 +18,13 @@ class WaitCondition;
  * @brief Mutual exclusion lock wrapping std::mutex.
  * @ingroup concurrency
  *
- * Provides a simple mutex with lock/unlock/tryLock and a nested RAII
+ * Provides a simple mutex with lock/unlock/tryLock and a nested
+ * RAII Locker type for scoped locking.  Non-copyable and non-movable.
+ *
+ * @par Thread Safety
+ * Fully thread-safe by construction.  All public methods may be
+ * invoked concurrently from any thread on a single instance —
+ * that is the entire purpose of the type.
  *
  * @par Example
  * @code
@@ -28,7 +34,6 @@ class WaitCondition;
  *     // ... critical section ...
  * }
  * @endcode
- * Locker type for scoped locking.  Non-copyable and non-movable.
  */
 class Mutex {
         public:

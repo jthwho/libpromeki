@@ -42,6 +42,9 @@ PROMEKI_NAMESPACE_BEGIN
  * instance.  Additionally sets @ref Metadata::FrameBridgeTimeStamp
  * to the publisher's queue timestamp so downstream stages can
  * measure cross-process transport latency.
+ *
+ * @par Thread Safety
+ * Strand-affine — see @ref MediaIOTask.
  */
 class MediaIOTask_FrameBridge : public MediaIOTask {
         public:

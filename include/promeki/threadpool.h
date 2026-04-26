@@ -43,9 +43,14 @@ PROMEKI_NAMESPACE_BEGIN
  * queue.  When the thread count is set to 0, tasks run inline on the
  * calling thread (useful for WASM graceful degradation).
  *
- * All public methods are thread-safe.
- *
  * Non-copyable and non-movable.
+ *
+ * @par Thread Safety
+ * Fully thread-safe.  @c submit, @c setThreadCount,
+ * @c setThreadNamePrefix, and the introspection accessors may be
+ * called concurrently from any thread.  Submitted callables run on
+ * worker threads; their interaction with shared state is the
+ * caller's responsibility.
  */
 class ThreadPool {
         public:

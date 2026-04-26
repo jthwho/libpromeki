@@ -49,6 +49,13 @@ PROMEKI_NAMESPACE_BEGIN
  * it must invoke (synchronously) to continue the chain — short-circuit
  * by simply returning without calling @c next.
  *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently.  A single router is intended to be configured at
+ * startup and then used read-only by @ref HttpServer's owning
+ * EventLoop thread; concurrent route mutation alongside
+ * @c dispatch requires external synchronization.
+ *
  * @par Example
  * @code
  * HttpRouter mux;

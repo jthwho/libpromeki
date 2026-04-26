@@ -22,6 +22,13 @@ PROMEKI_NAMESPACE_BEGIN
  * Draws to a TuiScreen within a clipped region corresponding to the
  * widget's visible area.  Coordinates are relative to the clip region
  * origin (the widget's top-left corner in screen coordinates).
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance — including any combination of
+ * draw calls — must be externally synchronized.  In typical TUI use a
+ * @c TuiPainter is short-lived and used only on the TUI thread for the
+ * duration of a single paint event.
  */
 class TuiPainter {
         public:

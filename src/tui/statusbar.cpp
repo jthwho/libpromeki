@@ -49,7 +49,7 @@ Size2Di32 TuiStatusBar::sizeHint() const {
         return Size2Di32(40, 1);
 }
 
-void TuiStatusBar::paintEvent(TuiPaintEvent *) {
+void TuiStatusBar::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 

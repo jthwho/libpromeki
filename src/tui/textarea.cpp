@@ -53,7 +53,7 @@ Size2Di32 TuiTextArea::sizeHint() const {
         return Size2Di32(40, 10);
 }
 
-void TuiTextArea::paintEvent(TuiPaintEvent *) {
+void TuiTextArea::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 

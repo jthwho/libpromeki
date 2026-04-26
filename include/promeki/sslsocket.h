@@ -36,12 +36,12 @@ PROMEKI_NAMESPACE_BEGIN
  *  - @ref read / @ref write proxy through @c mbedtls_ssl_read /
  *    @c mbedtls_ssl_write transparently.
  *
- * @par Lifetime / threading
- * Same constraints as @ref TcpSocket: bind to one EventLoop's
- * thread for the duration of its life.  The attached
- * @ref SslContext may be shared across many SslSocket instances on
- * many threads — its mutable lifecycle ends before the first
- * handshake.
+ * @par Thread Safety
+ * Inherits @ref TcpSocket / @ref IODevice: thread-affine.  An
+ * SslSocket binds to one EventLoop's thread for the duration of
+ * its life.  The attached @ref SslContext may be shared across
+ * many SslSocket instances on many threads — its mutable
+ * lifecycle ends before the first handshake.
  *
  * @par TLS framing vs TCP byte stream
  * @ref bytesAvailable reports the number of plaintext bytes that

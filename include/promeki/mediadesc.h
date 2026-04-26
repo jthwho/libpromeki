@@ -29,6 +29,12 @@ class SdpSession;
  * audio channel groups (AudioDesc), and container-level metadata.
  * A valid MediaDesc has a valid frame rate and at least one image or
  * audio description.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used concurrently;
+ * concurrent access to a single instance must be externally synchronized.
+ * @c MediaDesc::Ptr uses an atomic refcount and is safe to share across
+ * threads.
  */
 class MediaDesc {
     PROMEKI_SHARED_FINAL(MediaDesc)

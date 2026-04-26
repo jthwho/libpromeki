@@ -145,7 +145,13 @@ Error ImageFileIO_RawYUV::load(ImageFile &imageFile, const MediaConfig &config) 
                 if(pdId == PixelFormat::Invalid) pdId = hint->desc().pixelFormat().id();
         } else {
                 FileInfo fi(filename);
-                size_t fileSize = fi.size();
+                auto [fileSizeI64, fileSizeErr] = fi.size();
+                if(fileSizeErr != Error::Ok) {
+                        promekiErr("RawYUV load '%s': cannot determine file size: %s",
+                                   filename.cstr(), fileSizeErr.name().cstr());
+                        return fileSizeErr;
+                }
+                size_t fileSize = static_cast<size_t>(fileSizeI64);
 
                 if(pdId != PixelFormat::Invalid) {
                         // Extension gave us a specific format — guess dimensions

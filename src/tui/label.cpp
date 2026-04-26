@@ -29,7 +29,7 @@ Size2Di32 TuiLabel::sizeHint() const {
         return Size2Di32(static_cast<int>(_text.length()), 1);
 }
 
-void TuiLabel::paintEvent(TuiPaintEvent *) {
+void TuiLabel::paintEvent(PaintEvent *) {
         TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 

@@ -571,7 +571,7 @@ Future<HttpResponse> HttpClient::send(const HttpRequest &request) {
 Future<HttpResponse> HttpClient::get(const String &url) {
         HttpRequest r;
         r.setMethod(HttpMethod::Get);
-        r.setUrl(Url::fromString(url));
+        r.setUrl(Url::fromString(url).first());
         return send(r);
 }
 
@@ -579,7 +579,7 @@ Future<HttpResponse> HttpClient::post(const String &url, const Buffer &body,
                                       const String &contentType) {
         HttpRequest r;
         r.setMethod(HttpMethod::Post);
-        r.setUrl(Url::fromString(url));
+        r.setUrl(Url::fromString(url).first());
         r.setBody(body);
         if(!contentType.isEmpty()) r.headers().set("Content-Type", contentType);
         return send(r);
@@ -589,7 +589,7 @@ Future<HttpResponse> HttpClient::put(const String &url, const Buffer &body,
                                      const String &contentType) {
         HttpRequest r;
         r.setMethod(HttpMethod::Put);
-        r.setUrl(Url::fromString(url));
+        r.setUrl(Url::fromString(url).first());
         r.setBody(body);
         if(!contentType.isEmpty()) r.headers().set("Content-Type", contentType);
         return send(r);
@@ -598,7 +598,7 @@ Future<HttpResponse> HttpClient::put(const String &url, const Buffer &body,
 Future<HttpResponse> HttpClient::del(const String &url) {
         HttpRequest r;
         r.setMethod(HttpMethod::Delete);
-        r.setUrl(Url::fromString(url));
+        r.setUrl(Url::fromString(url).first());
         return send(r);
 }
 

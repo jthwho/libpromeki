@@ -71,6 +71,17 @@ enum class SpecValidation {
  *          path that never fails.  Serialization formats continue
  *          to carry the name, not the ID.
  *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently.  A single instance is not thread-safe; concurrent
+ * access by multiple threads to the same instance (including any
+ * combination of @ref set, @ref get, @ref remove, @ref clear,
+ * iteration, or serialization) must be externally synchronized.
+ * The static spec registry (populated via @ref declareID and read
+ * via @ref spec / @ref specFor / @ref registeredSpecs) is internally
+ * synchronized with a @c ReadWriteLock and is safe to call from any
+ * thread.
+ *
  * @par Example
  * @code
  * using Config = VariantDatabase<"Config">;

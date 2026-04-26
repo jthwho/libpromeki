@@ -60,6 +60,12 @@ class KeyEvent;
  * sink->open(MediaIO::Sink);
  * // ... write frames via sink->writeFrame(...) ...
  * @endcode
+ *
+ * @par Thread Safety
+ * Thread-affine — see @ref SDLVideoWidget.  Frames may be delivered from
+ * any thread via the owned @ref MediaIO sink (which marshals onto its
+ * own task threads); only the widget API itself (focus, geometry,
+ * lifecycle) is restricted to the SDL event thread.
  */
 class SDLPlayerWidget : public SDLVideoWidget {
         PROMEKI_OBJECT(SDLPlayerWidget, SDLVideoWidget)

@@ -61,6 +61,9 @@ PROMEKI_NAMESPACE_BEGIN
  * while(Image img = dec->receiveFrame()) { sink.render(img); }
  * delete dec;
  * @endcode
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref VideoDecoder.
  */
 class NvdecVideoDecoder : public VideoDecoder {
         public:

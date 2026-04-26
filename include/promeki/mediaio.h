@@ -475,17 +475,19 @@ class MediaIOCommandStats : public MediaIOCommand {
  * returns Error::TryAgain immediately.  Use frameAvailable() to poll
  * for ready frames and isIdle() to check whether the strand is busy.
  *
- * @par Threading model
+ * @par Thread Safety
  *
- * MediaIO is intended to be driven from a single user thread.
- * Public methods (open/close/readFrame/writeFrame/seekToFrame/setStep
- * etc.) are not safe to call concurrently from multiple threads.
- * The cached state (mediaDesc, frameCount, currentFrame, ...) is
- * read and written only from the user thread; backend execution
- * happens on the strand worker thread.  Cross-thread notifications
- * use signals (@c frameAvailable, @c frameWanted, @c writeError),
- * which the signal/slot system marshals via the receiver's
- * EventLoop.
+ * Inherits @ref ObjectBase: thread-affine.  MediaIO is intended
+ * to be driven from a single user thread.  Public methods
+ * (@c open / @c close / @c readFrame / @c writeFrame /
+ * @c seekToFrame / @c setStep etc.) are not safe to call
+ * concurrently from multiple threads.  The cached state
+ * (@c mediaDesc, @c frameCount, @c currentFrame, ...) is read
+ * and written only from the user thread; backend execution
+ * happens on the strand worker thread.  Cross-thread
+ * notifications use signals (@c frameAvailable, @c frameWanted,
+ * @c writeError), which the signal/slot system marshals via the
+ * receiver's EventLoop.
  */
 class MediaIO : public ObjectBase {
         PROMEKI_OBJECT(MediaIO, ObjectBase)

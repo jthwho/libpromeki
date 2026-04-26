@@ -18,6 +18,9 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief A menu action item.
  * @ingroup tui_widgets
  *
+ * @par Thread Safety
+ * Thread-affine via @ref ObjectBase — must be created and used on the thread
+ * that owns the parent menu.
  */
 class TuiAction : public ObjectBase {
         PROMEKI_OBJECT(TuiAction, ObjectBase)
@@ -40,6 +43,9 @@ class TuiAction : public ObjectBase {
 
 /**
  * @brief Dropdown menu.
+ *
+ * @par Thread Safety
+ * Thread-affine — see @ref TuiWidget.
  */
 class TuiMenu : public TuiWidget {
         PROMEKI_OBJECT(TuiMenu, TuiWidget)
@@ -65,7 +71,7 @@ class TuiMenu : public TuiWidget {
                 Size2Di32 sizeHint() const override;
 
         protected:
-                void paintEvent(TuiPaintEvent *e) override;
+                void paintEvent(PaintEvent *e) override;
                 void keyPressEvent(KeyEvent *e) override;
 
         private:
@@ -78,6 +84,9 @@ class TuiMenu : public TuiWidget {
 
 /**
  * @brief Top-of-screen menu bar with dropdown menus.
+ *
+ * @par Thread Safety
+ * Thread-affine — see @ref TuiWidget.
  */
 class TuiMenuBar : public TuiWidget {
         PROMEKI_OBJECT(TuiMenuBar, TuiWidget)
@@ -93,7 +102,7 @@ class TuiMenuBar : public TuiWidget {
                 Size2Di32 sizeHint() const override;
 
         protected:
-                void paintEvent(TuiPaintEvent *e) override;
+                void paintEvent(PaintEvent *e) override;
                 void keyPressEvent(KeyEvent *e) override;
 
         private:

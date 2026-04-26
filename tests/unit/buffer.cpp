@@ -53,7 +53,7 @@ TEST_CASE("Buffer_AllocateWithAlign") {
 
 TEST_CASE("Buffer_External") {
     char mem[256];
-    Buffer b(mem, sizeof(mem), 1, false);
+    Buffer b = Buffer::wrap(mem, sizeof(mem), 1);
     CHECK(b.isValid());
     CHECK(b.data() == mem);
     CHECK(b.size() == 0);
@@ -219,14 +219,16 @@ TEST_CASE("Buffer_IsHostAccessible") {
 }
 
 // ============================================================================
-// SetOwnershipEnabled
+// Buffer::wrap (non-owning view of external memory)
 // ============================================================================
 
-TEST_CASE("Buffer_SetOwnership") {
+TEST_CASE("Buffer_Wrap") {
     char mem[64];
-    Buffer b(mem, sizeof(mem), 1, true);
-    b.setOwnershipEnabled(false);
-    // Buffer destructor should not try to free stack memory
+    Buffer b = Buffer::wrap(mem, sizeof(mem), 1);
+    CHECK(b.isValid());
+    CHECK(b.data() == mem);
+    CHECK(b.allocSize() == sizeof(mem));
+    // Buffer destructor must not try to free stack memory.
 }
 
 // ============================================================================

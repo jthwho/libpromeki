@@ -50,6 +50,12 @@ PROMEKI_NAMESPACE_BEGIN
  * remain pure-virtual so the concrete leaves must supply a
  * covariant clone.  Subclassing concrete leaves for codec-specific
  * specializations is an intentional extension point.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref MediaPayload.
+ * @c AudioPayload::Ptr is safe to hand off across threads (atomic
+ * refcount); concurrent mutation of a single instance must be
+ * externally synchronized.
  */
 class AudioPayload : public MediaPayload {
         PROMEKI_SHARED_ABSTRACT(AudioPayload)
