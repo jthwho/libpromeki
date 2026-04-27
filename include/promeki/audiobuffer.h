@@ -10,10 +10,12 @@
 #include <promeki/namespace.h>
 #include <promeki/config.h>
 #include <promeki/audiodesc.h>
+#include <promeki/audiometer.h>
 #include <promeki/buffer.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
 #include <promeki/enums.h>
+#include <promeki/list.h>
 #include <promeki/mutex.h>
 #include <promeki/waitcondition.h>
 #if PROMEKI_ENABLE_SRC
@@ -167,8 +169,30 @@ class AudioBuffer {
                 /** @brief Returns true if a valid storage format is set. */
                 bool isValid() const { return _format.isValid(); }
 
-                /** @brief Returns the storage (output) format. */
-                const AudioDesc &format() const { return _format; }
+                /**
+                 * @brief Returns a snapshot of the storage (output) format.
+                 *
+                 * The audio format, sample rate, and channel count are
+                 * fixed at construction (or by @ref setFormat /
+                 * @ref setChannels), but the descriptor's
+                 * @ref AudioChannelMap is refreshed on every push that
+                 * delivers a different stream/role assignment than the
+                 * one currently cached.  Each successful push copies
+                 * the input's per-channel @c (stream, role) pairs into
+                 * the output map according to the active channel
+                 * remap; @ref format only re-publishes the descriptor
+                 * when that copy actually changes the cached map, so
+                 * steady-state callers observe a stable snapshot
+                 * almost all the time.
+                 *
+                 * Returned by value under the buffer's mutex so reads
+                 * are safe to make from any thread, including
+                 * concurrently with a producer's @ref push.
+                 */
+                AudioDesc format() const {
+                        Mutex::Locker lock(_mutex);
+                        return _format;
+                }
 
                 /**
                  * @brief Sets the storage format. Clears any buffered samples.
@@ -310,6 +334,77 @@ class AudioBuffer {
                 void clear();
 
                 /**
+                 * @brief Sets per-output-channel linear gains.
+                 *
+                 * @p gains.size() must equal @c format().channels().
+                 * Pass an empty list to disable (gain = 1.0 on every
+                 * channel).
+                 *
+                 * Gains are applied in the float domain after channel
+                 * remap and before metering.  Any non-1.0 gain forces
+                 * the via-float push path even when a direct integer
+                 * fastpath would otherwise be available.
+                 *
+                 * @param gains One linear gain per output channel.
+                 * @return @c Error::Ok or @c Error::InvalidArgument
+                 *         on length mismatch.
+                 */
+                Error setChannelGains(const List<float> &gains);
+
+                /** @brief Returns the active per-channel gains (empty when all 1.0). */
+                List<float> channelGains() const;
+
+                /**
+                 * @brief Sets a per-output-channel source-channel remap.
+                 *
+                 * @p remap.size() must equal @c format().channels().
+                 * Each entry is the input channel index feeding that
+                 * output channel, or @c -1 to fill the output with
+                 * silence.  Pass an empty list to disable (identity
+                 * mapping: output[i] comes from input[i]).
+                 *
+                 * Activating a remap also forces the via-float path on
+                 * push, and lifts the requirement that the push input
+                 * channel count match the buffer's output count — the
+                 * remap explains the mapping.
+                 *
+                 * The remap operates in the float domain.  It does
+                 * @b not change @c format().channels() or the output's
+                 * @ref AudioChannelMap; call
+                 * @c format().setChannelMap() separately if the new
+                 * channel order should also be reflected in the
+                 * descriptor returned by @ref format().
+                 *
+                 * @param remap Source channel index per output channel.
+                 * @return @c Error::Ok or @c Error::InvalidArgument
+                 *         on length mismatch.
+                 */
+                Error setChannelRemap(const List<int> &remap);
+
+                /** @brief Returns the active channel remap (empty when identity). */
+                List<int> channelRemap() const;
+
+                /**
+                 * @brief Installs (or clears) the metering callback.
+                 *
+                 * The meter receives every sample on the via-float
+                 * processing path — i.e. every push that goes through
+                 * remap, gain, or sample-rate conversion.  Activating
+                 * a meter forces the via-float path even when an
+                 * integer fastpath would otherwise be available, so
+                 * the meter sees a consistent stream of post-processing
+                 * float samples.
+                 *
+                 * Pass @c nullptr to remove the current meter.
+                 *
+                 * @param meter Pluggable meter, or @c nullptr.
+                 */
+                void setMeter(AudioMeter::Ptr meter);
+
+                /** @brief Returns the active meter, or null if none is installed. */
+                AudioMeter::Ptr meter() const;
+
+                /**
                  * @brief Pushes interleaved raw samples into the buffer.
                  *
                  * @param data       Pointer to @p samples x bytes-per-sample bytes.
@@ -372,13 +467,19 @@ class AudioBuffer {
                 mutable Mutex _mutex;
                 WaitCondition _cv;
 
-                AudioDesc _format;
-                AudioDesc _inputFormat;
-                Buffer    _storage;
-                size_t    _capacity = 0;
-                size_t    _head = 0;  ///< Next sample index to pop (mod _capacity).
-                size_t    _tail = 0;  ///< Next sample index to push (mod _capacity).
-                size_t    _count = 0; ///< Currently buffered samples.
+                AudioDesc       _format;
+                AudioDesc       _inputFormat;
+                Buffer          _storage;
+                size_t          _capacity = 0;
+                size_t          _head = 0;  ///< Next sample index to pop (mod _capacity).
+                size_t          _tail = 0;  ///< Next sample index to push (mod _capacity).
+                size_t          _count = 0; ///< Currently buffered samples.
+                List<float>     _gains;     ///< Per-output-channel linear gain (empty = all 1.0).
+                List<int>       _remap;     ///< Per-output-channel source-channel index (empty = identity).
+                AudioMeter::Ptr _meter;     ///< Optional metering observer.
+
+                /** @brief Returns true when remap, gain, or meter forces the via-float path. */
+                bool needsFloatProcessing() const { return !_remap.isEmpty() || !_gains.isEmpty() || _meter.isValid(); }
 
 #if PROMEKI_ENABLE_SRC
                 SrcQuality     _resamplerQuality;

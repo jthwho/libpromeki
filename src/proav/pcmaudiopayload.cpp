@@ -2,7 +2,7 @@
  * @file      pcmaudiopayload.cpp
  * @copyright Howard Logic. All rights reserved.
  *
- * See LICENSE file in the project root folder.
+ * See LICENSE file in the project root folder for license information.
  */
 
 #include <cstring>
@@ -52,8 +52,16 @@ PcmAudioPayload::Ptr PcmAudioPayload::convert(const AudioFormat &dstFormat) cons
         const uint8_t *srcBytes = static_cast<const uint8_t *>(srcView.data());
         uint8_t       *dstBytesPtr = static_cast<uint8_t *>(dstBuf.modify()->data());
 
+        // Fast path: registered direct converter for the (src, dst) pair
+        // skips the via-float trip entirely.  This is the only path that
+        // preserves non-PCM payloads (SMPTE 337M, AES3 user bits, …)
+        // riding inside an integer audio buffer; the via-float fallback
+        // below mangles those bits.
+        if (auto fn = AudioFormat::directConverter(srcDesc.format().id(), dstFormat.id())) {
+                fn(dstBytesPtr, srcBytes, totalSamples);
+        }
         // Fast path: source is native float — direct floatToSamples.
-        if (srcDesc.format().id() == AudioFormat::NativeFloat) {
+        else if (srcDesc.format().id() == AudioFormat::NativeFloat) {
                 const float *floatData = reinterpret_cast<const float *>(srcBytes);
                 dstFormat.floatToSamples(dstBytesPtr, floatData, totalSamples);
         }

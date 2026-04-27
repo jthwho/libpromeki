@@ -1816,6 +1816,47 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                         val = value(r);
                         break;
                 }
+                case TypeAudioStreamDesc: {
+                        String s = readStringData();
+                        if (_status != Ok) {
+                                val = Variant();
+                                break;
+                        }
+                        auto r = AudioStreamDesc::fromString(s);
+                        if (error(r).isError()) {
+                                setError(ReadCorruptData,
+                                         String::sprintf("Failed to parse AudioStreamDesc from '%s'", s.cstr()));
+                                val = Variant();
+                                break;
+                        }
+                        val = value(r);
+                        break;
+                }
+                case TypeAudioChannelMap: {
+                        // Outer tag already consumed; the per-entry payload
+                        // is a uint32 count followed by N (streamName, role)
+                        // pairs — the same shape produced by
+                        // operator<<(DataStream&, const AudioChannelMap&).
+                        uint32_t count = 0;
+                        *this >> count;
+                        AudioChannelMap::EntryList entries;
+                        entries.reserve(count);
+                        for (uint32_t i = 0; i < count && _status == Ok; ++i) {
+                                String  streamName;
+                                int32_t roleValue = 0;
+                                *this >> streamName >> roleValue;
+                                AudioStreamDesc s = (streamName.isEmpty() || streamName == "Undefined")
+                                                            ? AudioStreamDesc()
+                                                            : AudioStreamDesc(streamName);
+                                entries.pushToBack(AudioChannelMap::Entry(s, ChannelRole(roleValue)));
+                        }
+                        if (_status != Ok) {
+                                val = Variant();
+                                break;
+                        }
+                        val = AudioChannelMap(std::move(entries));
+                        break;
+                }
 #if PROMEKI_ENABLE_NETWORK
                 case TypeSocketAddress: {
                         String s = readStringData();
@@ -1965,6 +2006,10 @@ namespace {
         template <> struct has_free_read<MasteringDisplay> : std::true_type {};
         template <> struct has_free_write<ContentLightLevel> : std::true_type {};
         template <> struct has_free_read<ContentLightLevel> : std::true_type {};
+        template <> struct has_free_write<AudioStreamDesc> : std::true_type {};
+        template <> struct has_free_read<AudioStreamDesc> : std::true_type {};
+        template <> struct has_free_write<AudioChannelMap> : std::true_type {};
+        template <> struct has_free_read<AudioChannelMap> : std::true_type {};
 
         template <typename T>
         inline constexpr bool has_datastream_write_v = has_member_write<T>::value || has_free_write<T>::value;

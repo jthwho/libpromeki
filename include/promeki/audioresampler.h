@@ -63,8 +63,12 @@ class AudioResampler {
 
                 AudioResampler(const AudioResampler &) = delete;
                 AudioResampler &operator=(const AudioResampler &) = delete;
-                AudioResampler(AudioResampler &&) = delete;
-                AudioResampler &operator=(AudioResampler &&) = delete;
+
+                /** @brief Move constructor.  Transfers ownership of the libsamplerate state. */
+                AudioResampler(AudioResampler &&) noexcept;
+
+                /** @brief Move assignment.  Transfers ownership of the libsamplerate state. */
+                AudioResampler &operator=(AudioResampler &&) noexcept;
 
                 /**
                  * @brief Returns true if the resampler has been successfully set up.

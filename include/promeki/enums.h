@@ -1391,6 +1391,142 @@ class NullPacingMode : public TypedEnum<NullPacingMode> {
 inline const NullPacingMode NullPacingMode::Wallclock{0};
 inline const NullPacingMode NullPacingMode::Free{1};
 
+/**
+ * @brief Well-known Enum type for the role a single audio channel plays.
+ *
+ * Each entry names a position in a multi-channel layout — the
+ * "what does channel N carry?" answer that lets routers, downmixers,
+ * and meters speak about specific channels independently of their
+ * physical index.  Roles are deliberately pre-coordinated with the
+ * standard SMPTE / Dolby / DTS / WAVEFORMATEXTENSIBLE naming so an
+ * @ref AudioChannelMap can interoperate with foreign tooling.
+ *
+ * The integer values are the library's own and are @b not the
+ * WAVEFORMATEXTENSIBLE @c dwChannelMask bit positions; map between
+ * them at the wire-format boundary if needed.
+ *
+ *  - @c Unused    — reserved / unassigned channel.  Used as the
+ *                   default for newly constructed maps so callers
+ *                   must opt in to declaring a role.
+ *  - @c Mono      — single-channel program audio (1.0 layout).
+ *  - @c FrontLeft / @c FrontRight — front-pair stereo (2.0 / L/R).
+ *  - @c FrontCenter — center channel (3.0+ layouts).
+ *  - @c LFE       — low-frequency effects ("subwoofer").
+ *  - @c BackLeft / @c BackRight — surround pair behind the listener
+ *                   (5.1 SMPTE order, 7.1 rears).
+ *  - @c BackCenter — single rear surround (6.1).
+ *  - @c SideLeft / @c SideRight — side surround pair (7.1 sides).
+ *  - @c FrontLeftOfCenter / @c FrontRightOfCenter — wide front pair
+ *                   used in some film mixes between the L/R and center.
+ *  - @c TopFrontLeft / @c TopFrontRight / @c TopFrontCenter
+ *                  — overhead front (Atmos / Auro-3D heights).
+ *  - @c TopBackLeft / @c TopBackRight / @c TopBackCenter
+ *                  — overhead rear.
+ *  - @c TopCenter — single top-of-room speaker (less common).
+ *  - @c AmbisonicW / @c AmbisonicX / @c AmbisonicY / @c AmbisonicZ
+ *                  — first-order ambisonic (FOA) channels in ACN
+ *                   order: W is the omnidirectional component, XYZ
+ *                   are the first-order spherical harmonics.
+ *  - @c Aux0 … @c Aux7 — generic auxiliary channels for
+ *                   non-positional or program-specific data
+ *                   (commentary, descriptive audio, embedded SMPTE
+ *                   337M data carriers, …).
+ *
+ * Default value is @c Unused.
+ */
+class ChannelRole : public TypedEnum<ChannelRole> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("ChannelRole", 0, {"Unused", 0}, {"Mono", 1}, {"FrontLeft", 2},
+                                           {"FrontRight", 3}, {"FrontCenter", 4}, {"LFE", 5}, {"BackLeft", 6},
+                                           {"BackRight", 7}, {"BackCenter", 8}, {"SideLeft", 9}, {"SideRight", 10},
+                                           {"FrontLeftOfCenter", 11}, {"FrontRightOfCenter", 12}, {"TopFrontLeft", 13},
+                                           {"TopFrontCenter", 14}, {"TopFrontRight", 15}, {"TopBackLeft", 16},
+                                           {"TopBackCenter", 17}, {"TopBackRight", 18}, {"TopCenter", 19},
+                                           {"AmbisonicW", 20}, {"AmbisonicX", 21}, {"AmbisonicY", 22},
+                                           {"AmbisonicZ", 23}, {"Aux0", 24}, {"Aux1", 25}, {"Aux2", 26}, {"Aux3", 27},
+                                           {"Aux4", 28}, {"Aux5", 29}, {"Aux6", 30}, {"Aux7", 31});
+
+                using TypedEnum<ChannelRole>::TypedEnum;
+
+                static const ChannelRole Unused;
+                static const ChannelRole Mono;
+                static const ChannelRole FrontLeft;
+                static const ChannelRole FrontRight;
+                static const ChannelRole FrontCenter;
+                static const ChannelRole LFE;
+                static const ChannelRole BackLeft;
+                static const ChannelRole BackRight;
+                static const ChannelRole BackCenter;
+                static const ChannelRole SideLeft;
+                static const ChannelRole SideRight;
+                static const ChannelRole FrontLeftOfCenter;
+                static const ChannelRole FrontRightOfCenter;
+                static const ChannelRole TopFrontLeft;
+                static const ChannelRole TopFrontCenter;
+                static const ChannelRole TopFrontRight;
+                static const ChannelRole TopBackLeft;
+                static const ChannelRole TopBackCenter;
+                static const ChannelRole TopBackRight;
+                static const ChannelRole TopCenter;
+                static const ChannelRole AmbisonicW;
+                static const ChannelRole AmbisonicX;
+                static const ChannelRole AmbisonicY;
+                static const ChannelRole AmbisonicZ;
+                static const ChannelRole Aux0;
+                static const ChannelRole Aux1;
+                static const ChannelRole Aux2;
+                static const ChannelRole Aux3;
+                static const ChannelRole Aux4;
+                static const ChannelRole Aux5;
+                static const ChannelRole Aux6;
+                static const ChannelRole Aux7;
+};
+
+inline const ChannelRole ChannelRole::Unused{0};
+inline const ChannelRole ChannelRole::Mono{1};
+inline const ChannelRole ChannelRole::FrontLeft{2};
+inline const ChannelRole ChannelRole::FrontRight{3};
+inline const ChannelRole ChannelRole::FrontCenter{4};
+inline const ChannelRole ChannelRole::LFE{5};
+inline const ChannelRole ChannelRole::BackLeft{6};
+inline const ChannelRole ChannelRole::BackRight{7};
+inline const ChannelRole ChannelRole::BackCenter{8};
+inline const ChannelRole ChannelRole::SideLeft{9};
+inline const ChannelRole ChannelRole::SideRight{10};
+inline const ChannelRole ChannelRole::FrontLeftOfCenter{11};
+inline const ChannelRole ChannelRole::FrontRightOfCenter{12};
+inline const ChannelRole ChannelRole::TopFrontLeft{13};
+inline const ChannelRole ChannelRole::TopFrontCenter{14};
+inline const ChannelRole ChannelRole::TopFrontRight{15};
+inline const ChannelRole ChannelRole::TopBackLeft{16};
+inline const ChannelRole ChannelRole::TopBackCenter{17};
+inline const ChannelRole ChannelRole::TopBackRight{18};
+inline const ChannelRole ChannelRole::TopCenter{19};
+inline const ChannelRole ChannelRole::AmbisonicW{20};
+inline const ChannelRole ChannelRole::AmbisonicX{21};
+inline const ChannelRole ChannelRole::AmbisonicY{22};
+inline const ChannelRole ChannelRole::AmbisonicZ{23};
+inline const ChannelRole ChannelRole::Aux0{24};
+inline const ChannelRole ChannelRole::Aux1{25};
+inline const ChannelRole ChannelRole::Aux2{26};
+inline const ChannelRole ChannelRole::Aux3{27};
+inline const ChannelRole ChannelRole::Aux4{28};
+inline const ChannelRole ChannelRole::Aux5{29};
+inline const ChannelRole ChannelRole::Aux6{30};
+inline const ChannelRole ChannelRole::Aux7{31};
+
 /** @} */
 
 PROMEKI_NAMESPACE_END
+
+/**
+ * @brief Hash specialization for @ref promeki::ChannelRole.
+ *
+ * The role's compile-time-fixed @c Type means the integer value
+ * uniquely identifies the role within its space, so hashing the
+ * value directly is sufficient and well-distributed for typical
+ * role tables (small, dense integer ranges).
+ */
+template <> struct std::hash<promeki::ChannelRole> {
+                size_t operator()(const promeki::ChannelRole &v) const noexcept { return std::hash<int>()(v.value()); }
+};

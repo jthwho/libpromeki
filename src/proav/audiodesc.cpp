@@ -70,8 +70,22 @@ AudioDesc AudioDesc::fromJson(const JsonObject &json, Error *err) {
                 if (err) *err = Error::Invalid;
                 return AudioDesc();
         }
+        AudioDesc out(fmt, sampleRate, chans);
+        // Restore an explicit channel map when present; otherwise leave the
+        // default mapping that the constructor installed.
+        if (json.contains("ChannelMap")) {
+                auto mapResult = AudioChannelMap::fromString(json.getString("ChannelMap"));
+                if (isOk(mapResult) && value(mapResult).channels() == chans) {
+                        out.setChannelMap(value(mapResult));
+                }
+        }
+        if (json.contains("Metadata")) {
+                Error    metaErr;
+                Metadata meta = Metadata::fromJson(json.getObject("Metadata"), &metaErr);
+                if (metaErr.isOk()) out.metadata() = std::move(meta);
+        }
         if (err) *err = Error::Ok;
-        return AudioDesc(fmt, sampleRate, chans);
+        return out;
 }
 
 // ============================================================================
@@ -100,6 +114,8 @@ PROMEKI_LOOKUP_REGISTER(AudioDesc)
         .scalar("IsValid", [](const AudioDesc &d) -> std::optional<Variant> { return Variant(d.isValid()); })
         .scalar("IsCompressed", [](const AudioDesc &d) -> std::optional<Variant> { return Variant(d.isCompressed()); })
         .scalar("IsNative", [](const AudioDesc &d) -> std::optional<Variant> { return Variant(d.isNative()); })
+        .scalar("ChannelMap",
+                [](const AudioDesc &d) -> std::optional<Variant> { return Variant(d.channelMap().toString()); })
         .database<"Metadata">(
                 "Meta", [](const AudioDesc &d) -> const VariantDatabase<"Metadata"> * { return &d.metadata(); },
                 [](AudioDesc &d) -> VariantDatabase<"Metadata"> * { return &d.metadata(); });

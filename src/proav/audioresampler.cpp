@@ -26,6 +26,15 @@ struct AudioResampler::Impl {
 
 AudioResampler::AudioResampler() = default;
 
+AudioResampler::AudioResampler(AudioResampler &&) noexcept = default;
+
+AudioResampler &AudioResampler::operator=(AudioResampler &&other) noexcept {
+        if (this == &other) return *this;
+        if (_impl.isValid() && _impl->state != nullptr) src_delete(_impl->state);
+        _impl = std::move(other._impl);
+        return *this;
+}
+
 AudioResampler::~AudioResampler() {
         if (_impl.isValid() && _impl->state != nullptr) src_delete(_impl->state);
 }

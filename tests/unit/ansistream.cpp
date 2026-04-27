@@ -648,7 +648,7 @@ TEST_CASE("AnsiStream: getCursorPosition returns false on truncated response") {
         AnsiStream as(&outDev);
 
         // Build a 20-byte input stream with no 'R' — just garbage chars.
-        String         truncated("\033[10;20X\033[10;20X\033");  // 20 chars, no R
+        String         truncated("\033[10;20X\033[10;20X\033"); // 20 chars, no R
         StringIODevice inDev(&truncated);
         inDev.open(IODevice::ReadOnly);
 

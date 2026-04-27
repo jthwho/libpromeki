@@ -122,6 +122,19 @@ class AudioFormat {
                         PCMI_U32LE = 14,    ///< Interleaved unsigned 32-bit, little-endian.
                         PCMI_S32BE = 15,    ///< Interleaved signed 32-bit, big-endian.
                         PCMI_U32BE = 16,    ///< Interleaved unsigned 32-bit, big-endian.
+                        // 24-bit data carried in a 32-bit container.  HB32 = data
+                        // occupies the high 3 bytes of the word (low byte is 0);
+                        // LB32 = data occupies the low 3 bytes (high byte is 0).
+                        // Endianness applies to the 32-bit word as a whole, not
+                        // the 24-bit data subset.
+                        PCMI_S24LE_HB32 = 17, ///< Interleaved signed 24-bit in high 3 bytes of LE 32-bit word.
+                        PCMI_S24LE_LB32 = 18, ///< Interleaved signed 24-bit in low 3 bytes of LE 32-bit word.
+                        PCMI_S24BE_HB32 = 19, ///< Interleaved signed 24-bit in high 3 bytes of BE 32-bit word.
+                        PCMI_S24BE_LB32 = 20, ///< Interleaved signed 24-bit in low 3 bytes of BE 32-bit word.
+                        PCMI_U24LE_HB32 = 21, ///< Interleaved unsigned 24-bit in high 3 bytes of LE 32-bit word.
+                        PCMI_U24LE_LB32 = 22, ///< Interleaved unsigned 24-bit in low 3 bytes of LE 32-bit word.
+                        PCMI_U24BE_HB32 = 23, ///< Interleaved unsigned 24-bit in high 3 bytes of BE 32-bit word.
+                        PCMI_U24BE_LB32 = 24, ///< Interleaved unsigned 24-bit in low 3 bytes of BE 32-bit word.
 
                         // -- Planar PCM ------------------------------------
                         PCMP_Float32LE = 32, ///< Planar 32-bit IEEE 754 float, little-endian.
@@ -140,6 +153,16 @@ class AudioFormat {
                         PCMP_U32LE = 45,     ///< Planar unsigned 32-bit, little-endian.
                         PCMP_S32BE = 46,     ///< Planar signed 32-bit, big-endian.
                         PCMP_U32BE = 47,     ///< Planar unsigned 32-bit, big-endian.
+                        // Planar 24-bit-in-32-bit container variants, mirroring
+                        // the interleaved set above.
+                        PCMP_S24LE_HB32 = 48, ///< Planar signed 24-bit in high 3 bytes of LE 32-bit word.
+                        PCMP_S24LE_LB32 = 49, ///< Planar signed 24-bit in low 3 bytes of LE 32-bit word.
+                        PCMP_S24BE_HB32 = 50, ///< Planar signed 24-bit in high 3 bytes of BE 32-bit word.
+                        PCMP_S24BE_LB32 = 51, ///< Planar signed 24-bit in low 3 bytes of BE 32-bit word.
+                        PCMP_U24LE_HB32 = 52, ///< Planar unsigned 24-bit in high 3 bytes of LE 32-bit word.
+                        PCMP_U24LE_LB32 = 53, ///< Planar unsigned 24-bit in low 3 bytes of LE 32-bit word.
+                        PCMP_U24BE_HB32 = 54, ///< Planar unsigned 24-bit in high 3 bytes of BE 32-bit word.
+                        PCMP_U24BE_LB32 = 55, ///< Planar unsigned 24-bit in low 3 bytes of BE 32-bit word.
 
                         // -- Compressed ------------------------------------
                         Opus = 64, ///< Opus compressed bitstream (RFC 6716).
@@ -332,6 +355,103 @@ class AudioFormat {
                 void floatToSamples(uint8_t *out, const float *in, size_t samples) const {
                         if (d->floatToSamples != nullptr) d->floatToSamples(out, in, samples);
                 }
+
+                // -- Direct (no-float) format-to-format conversion --------
+                //
+                // The library tracks a per-(src,dst) registry of "direct"
+                // converters that bypass the via-float intermediate step.
+                // Direct converters are faster (one memory pass) and
+                // additionally permit @ref isBitAccurateTo, which matters
+                // when audio buffers carry non-PCM payloads (SMPTE 337M
+                // data bursts, AES3 user bits, …) — those bytes survive
+                // a direct integer-to-integer transform but are scrambled
+                // by an int → float → int round-trip.
+
+                /**
+                 * @brief Function signature for a registered direct converter.
+                 *
+                 * Operates on a contiguous run of samples (interleaved
+                 * formats: total samples; planar formats: per-channel
+                 * run, with the caller walking channels itself).
+                 */
+                using DirectConvertFn = void (*)(void *out, const void *in, size_t samples);
+
+                /**
+                 * @brief Returns the registered direct converter from @p src to @p dst.
+                 *
+                 * @return The function pointer, or @c nullptr when no
+                 *         direct converter is registered.
+                 */
+                static DirectConvertFn directConverter(ID src, ID dst);
+
+                /**
+                 * @brief Returns true if a registered (src, dst) path is bit-accurate.
+                 *
+                 * A converter is bit-accurate when the destination sample
+                 * pattern preserves every input bit, allowing trivial
+                 * reversible repositioning (endian byte swap, signed↔unsigned
+                 * sign flip, lossless upcast with zero-fill of unused
+                 * lower bits).  Bit-accurate paths are the only ones safe
+                 * for non-PCM data carried in audio payloads.
+                 *
+                 * Returns false if no direct converter is registered for
+                 * the pair, or if the registered converter is not flagged
+                 * bit-accurate.
+                 */
+                static bool isBitAccurate(ID src, ID dst);
+
+                /**
+                 * @brief Registers a direct converter for a @p src → @p dst pair.
+                 *
+                 * Used at static-init time by the library's built-in PCM
+                 * paths and at run time by applications adding custom
+                 * direct converters between user-registered formats.
+                 *
+                 * @param src         Source format ID.
+                 * @param dst         Destination format ID.
+                 * @param fn          Converter function.
+                 * @param bitAccurate True if the converter preserves every
+                 *                    input bit losslessly.
+                 */
+                static void registerDirectConverter(ID src, ID dst, DirectConvertFn fn, bool bitAccurate);
+
+                /** @brief Returns true if a direct converter is registered for this → @p dst. */
+                bool hasDirectConverterTo(const AudioFormat &dst) const {
+                        return directConverter(id(), dst.id()) != nullptr;
+                }
+
+                /** @brief Returns true if this → @p dst has a registered bit-accurate path. */
+                bool isBitAccurateTo(const AudioFormat &dst) const { return isBitAccurate(id(), dst.id()); }
+
+                /**
+                 * @brief Converts samples from this format to @p dst.
+                 *
+                 * Uses the registered direct converter when one exists
+                 * for the (this, dst) pair, otherwise falls back to a
+                 * via-float trip through @ref samplesToFloat /
+                 * @ref floatToSamples using the supplied @p scratch
+                 * buffer (must hold @p samples float values).  When the
+                 * fastpath hits, @p scratch is unused and may be
+                 * @c nullptr.
+                 *
+                 * Both buffers must be sized for @p samples in their
+                 * respective formats (interleaved: total samples;
+                 * planar: per-channel run).
+                 *
+                 * @param dst     Destination format.
+                 * @param out     Destination bytes.
+                 * @param in      Source bytes.
+                 * @param samples Number of samples to convert.
+                 * @param scratch Float scratch buffer (samples floats);
+                 *                ignored on the direct path.
+                 * @return @c Error::Ok on success, @c Error::NotSupported
+                 *         when no direct converter exists and at least
+                 *         one side is compressed (no via-float possible),
+                 *         @c Error::InvalidArgument when @p scratch is
+                 *         null but the via-float fallback is required.
+                 */
+                Error convertTo(const AudioFormat &dst, void *out, const void *in, size_t samples,
+                                float *scratch = nullptr) const;
 
                 /** @brief Equality compares the underlying Data pointer. */
                 bool operator==(const AudioFormat &o) const { return d == o.d; }

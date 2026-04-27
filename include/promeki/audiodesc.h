@@ -10,6 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/audioformat.h>
+#include <promeki/audiochannelmap.h>
 #include <promeki/metadata.h>
 #include <promeki/string.h>
 #include <promeki/json.h>
@@ -100,18 +101,41 @@ class AudioDesc {
                  * factory like @c AudioDesc::nativeFloat(sr, ch).
                  */
                 AudioDesc(float sr, unsigned int ch)
-                    : _format(AudioFormat::NativeFloat), _sampleRate(sr), _channels(ch) {
+                    : _format(AudioFormat::NativeFloat), _sampleRate(sr), _channels(ch),
+                      _channelMap(AudioChannelMap::defaultForChannels(ch)) {
                         if (!validParams()) reset();
                 }
 
                 /**
                  * @brief Constructs an audio description with the given format, sample rate, and channels.
+                 *
+                 * The channel map defaults to @ref AudioChannelMap::defaultForChannels for @p ch
+                 * (e.g. 2 → Stereo, 6 → 5.1, 8 → 7.1).  Use @ref setChannelMap to install an
+                 * explicit assignment.
+                 *
                  * @param fmt Audio format (sample layout / codec identity).
                  * @param sr  Sample rate in Hz.
                  * @param ch  Number of audio channels.
                  */
                 AudioDesc(const AudioFormat &fmt, float sr, unsigned int ch)
-                    : _format(fmt), _sampleRate(sr), _channels(ch) {
+                    : _format(fmt), _sampleRate(sr), _channels(ch),
+                      _channelMap(AudioChannelMap::defaultForChannels(ch)) {
+                        if (!validParams()) reset();
+                }
+
+                /**
+                 * @brief Constructs an audio description with explicit channel map.
+                 *
+                 * The channel count is derived from @p map; @ref channels and the
+                 * map stay in lockstep.
+                 *
+                 * @param fmt Audio format.
+                 * @param sr  Sample rate in Hz.
+                 * @param map Channel role assignment.  Must be valid (non-empty).
+                 */
+                AudioDesc(const AudioFormat &fmt, float sr, AudioChannelMap map)
+                    : _format(fmt), _sampleRate(sr), _channels(static_cast<unsigned int>(map.channels())),
+                      _channelMap(std::move(map)) {
                         if (!validParams()) reset();
                 }
 
@@ -135,13 +159,13 @@ class AudioDesc {
                 SdpMediaDescription toSdp(uint8_t payloadType) const;
 
                 /**
-                 * @brief Returns true if the format, rate, and channels match.
+                 * @brief Returns true if the format, rate, channels, and channel map match.
                  * @param other The AudioDesc to compare against.
                  * @return true if the audio format matches, ignoring metadata.
                  */
                 bool formatEquals(const AudioDesc &other) const {
                         return _format == other._format && _sampleRate == other._sampleRate &&
-                               _channels == other._channels;
+                               _channels == other._channels && _channelMap == other._channelMap;
                 }
 
                 /**
@@ -182,7 +206,9 @@ class AudioDesc {
                 /**
                  * @brief Serializes this audio description to a JSON object.
                  * @return A JsonObject containing @c "Format",
-                 *         @c "SampleRate", @c "Channels", and optional
+                 *         @c "SampleRate", @c "Channels", optional
+                 *         @c "ChannelMap" (omitted when it matches the
+                 *         default for @c Channels), and optional
                  *         @c "Metadata".
                  */
                 JsonObject toJson() const {
@@ -190,6 +216,11 @@ class AudioDesc {
                         ret.set("Format", _format.name());
                         ret.set("SampleRate", _sampleRate);
                         ret.set("Channels", _channels);
+                        // Only emit the channel map when it differs from the default
+                        // mapping for this channel count — keeps simple descriptors clean.
+                        if (_channelMap != AudioChannelMap::defaultForChannels(_channels)) {
+                                ret.set("ChannelMap", _channelMap.toString());
+                        }
                         if (!_metadata.isEmpty()) ret.set("Metadata", _metadata.toJson());
                         return ret;
                 }
@@ -209,8 +240,32 @@ class AudioDesc {
                 /** @brief Returns the number of audio channels. */
                 unsigned int channels() const { return _channels; }
 
-                /** @brief Sets the number of audio channels. */
-                void setChannels(unsigned int val) { _channels = val; }
+                /**
+                 * @brief Sets the number of audio channels.
+                 *
+                 * Resets the channel map to @ref AudioChannelMap::defaultForChannels
+                 * for the new count so the descriptor stays internally consistent.
+                 * Use @ref setChannelMap afterwards to install a different mapping.
+                 */
+                void setChannels(unsigned int val) {
+                        _channels = val;
+                        _channelMap = AudioChannelMap::defaultForChannels(val);
+                }
+
+                /** @brief Returns the channel role map. */
+                const AudioChannelMap &channelMap() const { return _channelMap; }
+
+                /**
+                 * @brief Replaces the channel role map.
+                 *
+                 * The new map's channel count must equal @ref channels;
+                 * a length mismatch leaves the descriptor unchanged.
+                 *
+                 * @param map The new channel map.
+                 */
+                void setChannelMap(const AudioChannelMap &map) {
+                        if (map.channels() == _channels) _channelMap = map;
+                }
 
                 /** @brief Returns a const reference to the metadata. */
                 const Metadata &metadata() const { return _metadata; }
@@ -277,10 +332,11 @@ class AudioDesc {
                 }
 
         private:
-                AudioFormat  _format;
-                float        _sampleRate = 0.0f;
-                unsigned int _channels = 0;
-                Metadata     _metadata;
+                AudioFormat     _format;
+                float           _sampleRate = 0.0f;
+                unsigned int    _channels = 0;
+                AudioChannelMap _channelMap;
+                Metadata        _metadata;
 
                 bool validParams() const { return _format.isValid() && _sampleRate > 0.0f && _channels > 0; }
 
@@ -288,17 +344,19 @@ class AudioDesc {
                         _format = AudioFormat();
                         _sampleRate = 0.0f;
                         _channels = 0;
+                        _channelMap = AudioChannelMap();
                 }
 };
 
 /**
- * @brief Writes an AudioDesc as tag + format (by name) + sample rate + channels + metadata.
+ * @brief Writes an AudioDesc as tag + format + sample rate + channels + channel map + metadata.
  */
 inline DataStream &operator<<(DataStream &stream, const AudioDesc &desc) {
         stream.writeTag(DataStream::TypeAudioDesc);
         stream << desc.format();
         stream << desc.sampleRate();
         stream << static_cast<uint32_t>(desc.channels());
+        stream << desc.channelMap();
         stream << desc.metadata();
         return stream;
 }
@@ -311,16 +369,20 @@ inline DataStream &operator>>(DataStream &stream, AudioDesc &desc) {
                 desc = AudioDesc();
                 return stream;
         }
-        AudioFormat fmt;
-        float       sr = 0.0f;
-        uint32_t    ch = 0;
-        Metadata    meta;
-        stream >> fmt >> sr >> ch >> meta;
+        AudioFormat     fmt;
+        float           sr = 0.0f;
+        uint32_t        ch = 0;
+        AudioChannelMap map;
+        Metadata        meta;
+        stream >> fmt >> sr >> ch >> map >> meta;
         if (stream.status() != DataStream::Ok) {
                 desc = AudioDesc();
                 return stream;
         }
         desc = AudioDesc(fmt, sr, ch);
+        // Restore the explicit channel map if it parsed validly; otherwise keep
+        // the default that the (fmt, sr, ch) constructor installs.
+        if (map.channels() == ch) desc.setChannelMap(map);
         desc.metadata() = std::move(meta);
         return stream;
 }

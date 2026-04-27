@@ -193,9 +193,38 @@ To VariantImpl<Types...>::get(Error *err) const {
                 } else if constexpr (std::is_same_v<To, AudioFormat>) {
                         if constexpr (std::is_same_v<From, String>) {
                                 auto r = AudioFormat::fromString(arg);
-                                return error(r).isError() ? AudioFormat() : value(r);
+                                if (error(r).isError()) {
+                                        if (err != nullptr) *err = Error::Invalid;
+                                        return AudioFormat();
+                                }
+                                return value(r);
                         }
                         if constexpr (std::is_integral<From>::value) return AudioFormat(static_cast<AudioFormat::ID>(arg));
+
+                } else if constexpr (std::is_same_v<To, AudioStreamDesc>) {
+                        // String -> AudioStreamDesc.  Empty / "Undefined"
+                        // accept as the Undefined sentinel; reserved
+                        // delimiters surface as Error::Invalid.
+                        if constexpr (std::is_same_v<From, String>) {
+                                auto r = AudioStreamDesc::fromString(arg);
+                                if (error(r).isError()) {
+                                        if (err != nullptr) *err = Error::Invalid;
+                                        return AudioStreamDesc();
+                                }
+                                return value(r);
+                        }
+                        if constexpr (std::is_integral<From>::value)
+                                return AudioStreamDesc(static_cast<AudioStreamDesc::ID>(arg));
+
+                } else if constexpr (std::is_same_v<To, AudioChannelMap>) {
+                        if constexpr (std::is_same_v<From, String>) {
+                                auto r = AudioChannelMap::fromString(arg);
+                                if (error(r).isError()) {
+                                        if (err != nullptr) *err = Error::Invalid;
+                                        return AudioChannelMap();
+                                }
+                                return value(r);
+                        }
 
                 } else if constexpr (std::is_same_v<To, Enum>) {
                         // Only String->Enum is supported; integer->Enum is intentionally
@@ -312,6 +341,12 @@ To VariantImpl<Types...>::get(Error *err) const {
                         // toString().
                         if constexpr (std::is_same_v<From, VideoCodec>) return arg.toString();
                         if constexpr (std::is_same_v<From, AudioCodec>) return arg.toString();
+                        // AudioStreamDesc / AudioChannelMap have native toString
+                        // forms that round-trip through fromString — bypass the
+                        // is_type_registry branch since AudioStreamDesc isn't a
+                        // TypeRegistry-wrapped class.
+                        if constexpr (std::is_same_v<From, AudioStreamDesc>) return arg.toString();
+                        if constexpr (std::is_same_v<From, AudioChannelMap>) return arg.toString();
                         if constexpr (detail::is_type_registry_v<From>) return arg.name();
                         if constexpr (std::is_same_v<From, Enum>) return arg.toString();
                         if constexpr (std::is_same_v<From, EnumList>) return arg.toString();

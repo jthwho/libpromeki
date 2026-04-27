@@ -314,7 +314,10 @@ class DataStream {
                         TypeSocketAddress = 0x4A, ///< @brief SocketAddress (length-prefixed string round-trip)
                         TypeSdpSession = 0x4B,    ///< @brief SdpSession (length-prefixed string round-trip, RFC 4566)
                         TypeVideoCodec = 0x4C,    ///< @brief VideoCodec (length-prefixed "Codec[:Backend]" round-trip)
-                        TypeAudioCodec = 0x4D     ///< @brief AudioCodec (length-prefixed "Codec[:Backend]" round-trip)
+                        TypeAudioCodec = 0x4D,    ///< @brief AudioCodec (length-prefixed "Codec[:Backend]" round-trip)
+                        TypeAudioChannelMap =
+                                0x4E, ///< @brief AudioChannelMap (tagged uint32 count + N (streamName, role) pairs)
+                        TypeAudioStreamDesc = 0x4F ///< @brief AudioStreamDesc (length-prefixed registered name)
                 };
 
                 /**

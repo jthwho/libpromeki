@@ -8,7 +8,10 @@
 
 #include <doctest/doctest.h>
 #include <promeki/audiodesc.h>
+#include <promeki/audiochannelmap.h>
 #include <promeki/audioformat.h>
+#include <promeki/datastream.h>
+#include <promeki/bufferiodevice.h>
 #include <promeki/sdpsession.h>
 
 using namespace promeki;
@@ -352,4 +355,86 @@ TEST_CASE("AudioDesc_Uncompressed_IsNotCompressed") {
         AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         CHECK(desc.isValid());
         CHECK_FALSE(desc.isCompressed());
+}
+
+// ============================================================================
+// Channel map (default and explicit)
+// ============================================================================
+
+TEST_CASE("AudioDesc: default constructor installs default channel map") {
+        AudioDesc d(AudioFormat::PCMI_S16LE, 48000.0f, 2);
+        CHECK(d.channelMap().channels() == 2);
+        CHECK(d.channelMap().wellKnownName() == "Stereo");
+}
+
+TEST_CASE("AudioDesc: 6 channels defaults to 5.1 layout") {
+        AudioDesc d(AudioFormat::PCMI_S16LE, 48000.0f, 6);
+        CHECK(d.channelMap().wellKnownName() == "5.1");
+}
+
+TEST_CASE("AudioDesc: explicit channel-map constructor sets channels from map") {
+        AudioChannelMap map = value(AudioChannelMap::fromString("7.1"));
+        AudioDesc       d(AudioFormat::PCMI_S16LE, 48000.0f, std::move(map));
+        CHECK(d.channels() == 8);
+        CHECK(d.channelMap().wellKnownName() == "7.1");
+}
+
+TEST_CASE("AudioDesc: setChannels resets the channel map to the new default") {
+        AudioDesc d(AudioFormat::PCMI_S16LE, 48000.0f, 2);
+        d.setChannels(6);
+        CHECK(d.channelMap().wellKnownName() == "5.1");
+}
+
+TEST_CASE("AudioDesc: setChannelMap rejects mismatched length") {
+        AudioDesc       d(AudioFormat::PCMI_S16LE, 48000.0f, 2);
+        AudioChannelMap fiveOne = value(AudioChannelMap::fromString("5.1"));
+        d.setChannelMap(fiveOne);
+        // 6-channel map on a 2-channel desc — refuse, leave the default in place.
+        CHECK(d.channelMap().wellKnownName() == "Stereo");
+}
+
+TEST_CASE("AudioDesc: formatEquals compares the channel map") {
+        AudioDesc a(AudioFormat::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc b(AudioFormat::PCMI_S16LE, 48000.0f, 2);
+        CHECK(a.formatEquals(b));
+        // Reorder the stereo map and the descriptors no longer match.
+        b.setChannelMap(AudioChannelMap{ChannelRole::FrontRight, ChannelRole::FrontLeft});
+        CHECK_FALSE(a.formatEquals(b));
+}
+
+TEST_CASE("AudioDesc: JSON omits ChannelMap when default") {
+        AudioDesc  d(AudioFormat::PCMI_S16LE, 48000.0f, 2);
+        JsonObject j = d.toJson();
+        CHECK_FALSE(j.contains("ChannelMap"));
+}
+
+TEST_CASE("AudioDesc: JSON includes ChannelMap when non-default") {
+        AudioDesc d(AudioFormat::PCMI_S16LE, 48000.0f, 2);
+        d.setChannelMap(AudioChannelMap{ChannelRole::FrontRight, ChannelRole::FrontLeft});
+        JsonObject j = d.toJson();
+        CHECK(j.contains("ChannelMap"));
+        AudioDesc back = AudioDesc::fromJson(j);
+        CHECK(back.channelMap() == d.channelMap());
+}
+
+TEST_CASE("AudioDesc: DataStream round-trip preserves explicit channel map") {
+        AudioDesc d(AudioFormat::PCMI_S16LE, 48000.0f, 6);
+        d.setChannelMap(AudioChannelMap{ChannelRole::FrontLeft, ChannelRole::FrontCenter, ChannelRole::FrontRight,
+                                        ChannelRole::SideLeft, ChannelRole::SideRight, ChannelRole::LFE});
+
+        Buffer         buf(1024);
+        BufferIODevice dev(&buf);
+        REQUIRE(dev.open(IODevice::ReadWrite).isOk());
+        {
+                DataStream ws = DataStream::createWriter(&dev);
+                ws << d;
+        }
+        dev.seek(0);
+        DataStream rs = DataStream::createReader(&dev);
+        AudioDesc  back;
+        rs >> back;
+        CHECK(back == d);
+        CHECK(back.channelMap() == d.channelMap());
+        // Confirm the non-canonical 5.1 ordering survived (not promoted to "5.1").
+        CHECK(back.channelMap().wellKnownName().isEmpty());
 }

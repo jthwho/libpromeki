@@ -35,8 +35,10 @@
 #include <promeki/color.h>
 #include <promeki/list.h>
 #include <promeki/map.h>
+#include <promeki/audiochannelmap.h>
 #include <promeki/audiocodec.h>
 #include <promeki/audioformat.h>
+#include <promeki/audiostreamdesc.h>
 #include <promeki/colormodel.h>
 #include <promeki/memspace.h>
 #include <promeki/pixelmemlayout.h>
@@ -106,6 +108,8 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeVideoCodec | `VideoCodec`       |
  * | TypeAudioCodec | `AudioCodec`       |
  * | TypeAudioFormat | `AudioFormat`     |
+ * | TypeAudioStreamDesc | `AudioStreamDesc` |
+ * | TypeAudioChannelMap | `AudioChannelMap` |
  * | TypeEnum      | `Enum`              |
  * | TypeEnumList  | `EnumList`          |
  *
@@ -165,6 +169,8 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeVideoCodec, VideoCodec)                                                                                  \
         X(TypeAudioCodec, AudioCodec)                                                                                  \
         X(TypeAudioFormat, AudioFormat)                                                                                \
+        X(TypeAudioStreamDesc, AudioStreamDesc)                                                                        \
+        X(TypeAudioChannelMap, AudioChannelMap)                                                                        \
         X(TypeEnum, Enum)                                                                                              \
         X(TypeEnumList, EnumList)                                                                                      \
         X(TypeMasteringDisplay, MasteringDisplay)                                                                      \

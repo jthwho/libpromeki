@@ -947,8 +947,10 @@ set(PROMEKI_HEADERS
     include/promeki/char.h
     include/promeki/ciepoint.h
     include/promeki/ciewavelengthtable.h
+    include/promeki/audiochannelmap.h
     include/promeki/audiocodec.h
     include/promeki/audioformat.h
+    include/promeki/audiostreamdesc.h
     include/promeki/backendweight.h
     include/promeki/base64.h
     include/promeki/cmdlineparser.h
@@ -1080,6 +1082,7 @@ set(PROMEKI_SOURCES
     src/core/colormodel.cpp
     src/core/contentlightlevel.cpp
     src/core/masteringdisplay.cpp
+    src/core/audiochannelmap.cpp
     src/core/audiocodec.cpp
     src/core/audioformat.cpp
     src/core/base64.cpp
@@ -1288,6 +1291,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/audiobuffer.h
         include/promeki/audiodecoder.h
         include/promeki/audiodesc.h
+        include/promeki/audiometer.h
         include/promeki/audioencoder.h
         include/promeki/audiofile.h
         include/promeki/audiofilefactory.h
@@ -2201,6 +2205,7 @@ if(PROMEKI_BUILD_TESTS)
         list(APPEND UNITTEST_SOURCES
             tests/unit/audioblock.cpp
             tests/unit/audiobuffer.cpp
+            tests/unit/audiochannelmap.cpp
             tests/unit/audiodesc.cpp
             tests/unit/audioencoder.cpp
             tests/unit/audiofilefactory.cpp

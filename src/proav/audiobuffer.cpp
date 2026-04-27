@@ -7,7 +7,6 @@
 
 #include <cstdint>
 #include <cstring>
-#include <cstdlib>
 #include <promeki/config.h>
 #include <promeki/audiobuffer.h>
 #include <promeki/logger.h>
@@ -26,11 +25,26 @@ AudioBuffer::AudioBuffer(const AudioDesc &format, size_t capacity) : _format(for
 
 AudioBuffer::AudioBuffer(AudioBuffer &&other) noexcept
     : _format(other._format), _inputFormat(other._inputFormat), _storage(std::move(other._storage)),
-      _capacity(other._capacity), _head(other._head), _tail(other._tail), _count(other._count) {
+      _capacity(other._capacity), _head(other._head), _tail(other._tail), _count(other._count),
+      _gains(std::move(other._gains)), _remap(std::move(other._remap)), _meter(std::move(other._meter))
+#if PROMEKI_ENABLE_SRC
+      ,
+      _resamplerQuality(other._resamplerQuality), _resampler(std::move(other._resampler)),
+      _driftEnabled(other._driftEnabled), _driftTarget(other._driftTarget), _driftGain(other._driftGain),
+      _driftRatio(other._driftRatio), _driftIntegral(other._driftIntegral)
+#endif
+{
         other._capacity = 0;
         other._head = 0;
         other._tail = 0;
         other._count = 0;
+#if PROMEKI_ENABLE_SRC
+        other._driftEnabled = false;
+        other._driftTarget = 0;
+        other._driftGain = 0.001;
+        other._driftRatio = 1.0;
+        other._driftIntegral = 0.0;
+#endif
 }
 
 AudioBuffer &AudioBuffer::operator=(AudioBuffer &&other) noexcept {
@@ -42,6 +56,23 @@ AudioBuffer &AudioBuffer::operator=(AudioBuffer &&other) noexcept {
         _head = other._head;
         _tail = other._tail;
         _count = other._count;
+        _gains = std::move(other._gains);
+        _remap = std::move(other._remap);
+        _meter = std::move(other._meter);
+#if PROMEKI_ENABLE_SRC
+        _resamplerQuality = other._resamplerQuality;
+        _resampler = std::move(other._resampler);
+        _driftEnabled = other._driftEnabled;
+        _driftTarget = other._driftTarget;
+        _driftGain = other._driftGain;
+        _driftRatio = other._driftRatio;
+        _driftIntegral = other._driftIntegral;
+        other._driftEnabled = false;
+        other._driftTarget = 0;
+        other._driftGain = 0.001;
+        other._driftRatio = 1.0;
+        other._driftIntegral = 0.0;
+#endif
         other._capacity = 0;
         other._head = 0;
         other._tail = 0;
@@ -166,6 +197,52 @@ size_t AudioBuffer::bytesPerSample() const {
         return _format.bytesPerSampleStride();
 }
 
+// ---------------------------------------------------------------------------
+// Remap / gain / meter configuration
+// ---------------------------------------------------------------------------
+
+Error AudioBuffer::setChannelGains(const List<float> &gains) {
+        Mutex::Locker lock(_mutex);
+        if (gains.isEmpty()) {
+                _gains.clear();
+                return Error::Ok;
+        }
+        if (gains.size() != _format.channels()) return Error::InvalidArgument;
+        _gains = gains;
+        return Error::Ok;
+}
+
+List<float> AudioBuffer::channelGains() const {
+        Mutex::Locker lock(_mutex);
+        return _gains;
+}
+
+Error AudioBuffer::setChannelRemap(const List<int> &remap) {
+        Mutex::Locker lock(_mutex);
+        if (remap.isEmpty()) {
+                _remap.clear();
+                return Error::Ok;
+        }
+        if (remap.size() != _format.channels()) return Error::InvalidArgument;
+        _remap = remap;
+        return Error::Ok;
+}
+
+List<int> AudioBuffer::channelRemap() const {
+        Mutex::Locker lock(_mutex);
+        return _remap;
+}
+
+void AudioBuffer::setMeter(AudioMeter::Ptr meter) {
+        Mutex::Locker lock(_mutex);
+        _meter = std::move(meter);
+}
+
+AudioMeter::Ptr AudioBuffer::meter() const {
+        Mutex::Locker lock(_mutex);
+        return _meter;
+}
+
 Error AudioBuffer::reserve(size_t samples) {
         Mutex::Locker lock(_mutex);
         if (!_format.isValid()) return Error::InvalidArgument;
@@ -261,28 +338,22 @@ Error AudioBuffer::resampleAndPush(const float *nativeData, size_t samples) {
         const size_t kStackFloats = 4096;
         float        stackBuf[kStackFloats];
         float       *scratch = stackBuf;
-        float       *heapScratch = nullptr;
+        Buffer       heapScratch;
         if (totalFloats > kStackFloats) {
-                heapScratch = static_cast<float *>(std::malloc(totalFloats * sizeof(float)));
-                if (heapScratch == nullptr) return Error::NoMem;
-                scratch = heapScratch;
+                heapScratch = Buffer(totalFloats * sizeof(float));
+                if (!heapScratch.isValid()) return Error::NoMem;
+                scratch = static_cast<float *>(heapScratch.data());
         }
 
         long inputUsed = 0;
         long outputGen = 0;
         err = _resampler.process(nativeData, static_cast<long>(samples), scratch, static_cast<long>(estOutput),
                                  inputUsed, outputGen, false);
-        if (err.isError()) {
-                if (heapScratch != nullptr) std::free(heapScratch);
-                return err;
-        }
+        if (err.isError()) return err;
 
         size_t outSamples = static_cast<size_t>(outputGen);
         if (outSamples > 0) {
-                if (_capacity - _count < outSamples) {
-                        if (heapScratch != nullptr) std::free(heapScratch);
-                        return Error::NoSpace;
-                }
+                if (_capacity - _count < outSamples) return Error::NoSpace;
 
                 if (_format.isNative()) {
                         // Direct write: resampled float -> ring.
@@ -307,7 +378,6 @@ Error AudioBuffer::resampleAndPush(const float *nativeData, size_t samples) {
                 }
         }
 
-        if (heapScratch != nullptr) std::free(heapScratch);
         return Error::Ok;
 }
 #endif
@@ -317,11 +387,44 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
         if (data == nullptr && samples > 0) return Error::InvalidArgument;
         if (samples == 0) return Error::Ok;
 
-        if (srcFormat.channels() != _format.channels()) {
+        // A channel-count mismatch is fine when a remap is installed —
+        // the remap explains how the input maps into the output.
+        // Without a remap, the legacy contract still applies.
+        if (srcFormat.channels() != _format.channels() && _remap.isEmpty()) {
                 promekiWarn("AudioBuffer: channel count mismatch (%u -> %u) "
-                            "-- channel-map not yet implemented",
+                            "-- install a channel remap to handle this",
                             srcFormat.channels(), _format.channels());
                 return Error::NotSupported;
+        }
+
+        // Refresh the output channel map from the input map.  The
+        // buffer is opaque to stream/role semantics — it just copies
+        // each output channel's (stream, role) pair from the source
+        // channel indicated by the remap (or 1-to-1 when no remap is
+        // installed).  Out-of-range remap entries (-1 or pointing past
+        // the source) yield (Undefined, Unused).  Done here, before
+        // the resampler / fastpath branches, so every successful push
+        // path keeps the output descriptor in sync.  The candidate map
+        // is compared against the current one and only assigned when
+        // it actually differs, so steady-state pushes don't churn the
+        // descriptor and most reads through @ref format() see a
+        // stable snapshot.
+        {
+                const AudioChannelMap            &srcMap = srcFormat.channelMap();
+                const AudioChannelMap::EntryList &srcEntries = srcMap.entries();
+                const size_t                      outCh = _format.channels();
+                AudioChannelMap::EntryList        outEntries;
+                outEntries.reserve(outCh);
+                for (size_t c = 0; c < outCh; ++c) {
+                        int srcIdx = _remap.isEmpty() ? static_cast<int>(c) : _remap[c];
+                        if (srcIdx < 0 || static_cast<size_t>(srcIdx) >= srcEntries.size()) {
+                                outEntries.pushToBack(AudioChannelMap::Entry(AudioStreamDesc(), ChannelRole::Unused));
+                        } else {
+                                outEntries.pushToBack(srcEntries[srcIdx]);
+                        }
+                }
+                AudioChannelMap candidate(std::move(outEntries));
+                if (candidate != _format.channelMap()) _format.setChannelMap(candidate);
         }
 
 #if PROMEKI_ENABLE_SRC
@@ -330,19 +433,18 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
         if (needsResampler(srcFormat)) {
                 // Convert input to native float, then resample.
                 const float *nativeData;
-                float       *heapFloat = nullptr;
+                Buffer       nativeScratch;
                 if (srcFormat.isNative()) {
                         nativeData = static_cast<const float *>(data);
                 } else {
                         size_t totalFloats = samples * srcFormat.channels();
-                        heapFloat = static_cast<float *>(std::malloc(totalFloats * sizeof(float)));
-                        if (heapFloat == nullptr) return Error::NoMem;
+                        nativeScratch = Buffer(totalFloats * sizeof(float));
+                        if (!nativeScratch.isValid()) return Error::NoMem;
+                        float *heapFloat = static_cast<float *>(nativeScratch.data());
                         srcFormat.samplesToFloat(heapFloat, static_cast<const uint8_t *>(data), samples);
                         nativeData = heapFloat;
                 }
-                Error err = resampleAndPush(nativeData, samples);
-                if (heapFloat != nullptr) std::free(heapFloat);
-                return err;
+                return resampleAndPush(nativeData, samples);
         }
 #else
         if (srcFormat.sampleRate() != _format.sampleRate()) {
@@ -355,28 +457,109 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
 
         if (_capacity - _count < samples) return Error::NoSpace;
 
-        // Fast path: formats match -> direct memcpy.
-        if (srcFormat.format().id() == _format.format().id()) {
+        const bool processing = needsFloatProcessing();
+
+        // Fast path: formats match and no float-domain processing is
+        // active -> direct memcpy.  Skipped when remap, gain, or meter
+        // are configured because they all expect to see post-process
+        // float samples.
+        if (!processing && srcFormat.format().id() == _format.format().id()) {
                 writeBytesAtTail(static_cast<const uint8_t *>(data), samples);
                 return Error::Ok;
         }
 
-        // Conversion path: src -> native float -> dst.
-        size_t       totalFloats = samples * _format.channels();
+        // Fast path: a registered direct converter for the (src, dst)
+        // pair skips the via-float trip — one memory pass instead of
+        // two and bit-accurate for non-PCM payloads.  Restricted to
+        // interleaved-on-both-sides because every entry in the built-in
+        // direct table assumes matching planarness.  Bypassed entirely
+        // when float-domain processing is requested so the meter sees a
+        // consistent stream.
+        if (!processing && !srcFormat.format().isPlanar() && !_format.format().isPlanar()) {
+                if (auto fn = AudioFormat::directConverter(srcFormat.format().id(), _format.format().id())) {
+                        const uint8_t *src = static_cast<const uint8_t *>(data);
+                        uint8_t       *base = static_cast<uint8_t *>(_storage.data());
+                        const size_t   channels = _format.channels();
+                        const size_t   srcBpf = srcFormat.format().bytesPerSample() * channels;
+                        const size_t   dstBpf = _format.format().bytesPerSample() * channels;
+
+                        size_t firstChunk = samples;
+                        if (_tail + samples > _capacity) firstChunk = _capacity - _tail;
+                        size_t remainder = samples - firstChunk;
+
+                        if (firstChunk > 0) {
+                                fn(base + _tail * dstBpf, src, firstChunk * channels);
+                        }
+                        if (remainder > 0) {
+                                fn(base, src + firstChunk * srcBpf, remainder * channels);
+                        }
+                        _tail = (_tail + samples) % _capacity;
+                        _count += samples;
+                        return Error::Ok;
+                }
+        }
+
+        // Conversion path: src -> native float -> (remap+gain+meter) -> dst.
+        const size_t inChannels = srcFormat.channels();
+        const size_t outChannels = _format.channels();
+        const size_t inFloatCount = samples * inChannels;
+        const size_t outFloatCount = samples * outChannels;
+
+        // When no remap is active, in and out share a single buffer; otherwise
+        // we need separate buffers because channel counts may differ and the
+        // remap may scatter input across output positions.
+        const bool   sharesBuffer = _remap.isEmpty();
+        const size_t scratchFloats = sharesBuffer ? outFloatCount : (inFloatCount + outFloatCount);
+
         const size_t kStackFloats = 4096;
         float        stackBuf[kStackFloats];
         float       *scratch = stackBuf;
-        float       *heapScratch = nullptr;
-        if (totalFloats > kStackFloats) {
-                heapScratch = static_cast<float *>(std::malloc(totalFloats * sizeof(float)));
-                if (heapScratch == nullptr) return Error::NoMem;
-                scratch = heapScratch;
+        Buffer       heapScratch;
+        if (scratchFloats > kStackFloats) {
+                heapScratch = Buffer(scratchFloats * sizeof(float));
+                if (!heapScratch.isValid()) return Error::NoMem;
+                scratch = static_cast<float *>(heapScratch.data());
         }
 
-        // Step 1: srcFormat bytes -> native float.
-        srcFormat.samplesToFloat(scratch, static_cast<const uint8_t *>(data), samples);
+        float *inFloat = scratch;
+        float *outFloat = sharesBuffer ? scratch : (scratch + inFloatCount);
 
-        // Step 2: native float -> destination format bytes.
+        // Step 1: srcFormat bytes -> native float.
+        srcFormat.samplesToFloat(inFloat, static_cast<const uint8_t *>(data), samples);
+
+        // Step 2 (optional): remap input channels into output channels.
+        if (!_remap.isEmpty()) {
+                for (size_t f = 0; f < samples; ++f) {
+                        const float *inFrame = inFloat + f * inChannels;
+                        float       *outFrame = outFloat + f * outChannels;
+                        for (size_t c = 0; c < outChannels; ++c) {
+                                int srcCh = _remap[c];
+                                if (srcCh < 0 || static_cast<size_t>(srcCh) >= inChannels) {
+                                        outFrame[c] = 0.0f;
+                                } else {
+                                        outFrame[c] = inFrame[srcCh];
+                                }
+                        }
+                }
+        }
+
+        // Step 3 (optional): apply per-channel linear gain in-place.
+        if (!_gains.isEmpty()) {
+                for (size_t f = 0; f < samples; ++f) {
+                        float *frame = outFloat + f * outChannels;
+                        for (size_t c = 0; c < outChannels; ++c) frame[c] *= _gains[c];
+                }
+        }
+
+        // Step 4 (optional): meter the post-gain output.  Use modify()
+        // since process() mutates the meter's internal atomics; with
+        // CopyOnWrite disabled (AudioMeter::Ptr) modify() is a no-op
+        // detach.
+        if (_meter.isValid()) {
+                _meter.modify()->process(outFloat, samples, outChannels);
+        }
+
+        // Step 5: native float -> destination format bytes, handling ring wrap.
         size_t   bps = bytesPerSample();
         uint8_t *base = static_cast<uint8_t *>(_storage.data());
 
@@ -385,16 +568,15 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
         size_t remainderSamples = samples - firstChunkSamples;
 
         if (firstChunkSamples > 0) {
-                _format.floatToSamples(base + _tail * bps, scratch, firstChunkSamples);
+                _format.floatToSamples(base + _tail * bps, outFloat, firstChunkSamples);
         }
         if (remainderSamples > 0) {
-                _format.floatToSamples(base, scratch + firstChunkSamples * _format.channels(), remainderSamples);
+                _format.floatToSamples(base, outFloat + firstChunkSamples * outChannels, remainderSamples);
         }
 
         _tail = (_tail + samples) % _capacity;
         _count += samples;
 
-        if (heapScratch != nullptr) std::free(heapScratch);
         return Error::Ok;
 }
 
