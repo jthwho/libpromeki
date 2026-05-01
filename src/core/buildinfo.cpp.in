@@ -9,6 +9,10 @@
 #include <promeki/config.h>
 #include <promeki/platform.h>
 #include <promeki/logger.h>
+#include <promeki/error.h>
+#include <promeki/buildident.h>
+#include <cstring>
+#include <cstdlib>
 #include <thread>
 #if defined(PROMEKI_PLATFORM_POSIX)
 #include <unistd.h>
@@ -35,40 +39,109 @@ static const BuildInfo _buildInfo = {
     "@BUILD_INFO_NAME@",
     "@BUILD_INFO_VERSION@",
     "@BUILD_INFO_REPOIDENT@",
+    "@BUILD_INFO_REF@",
     "@BUILD_INFO_DATE@",
     "@BUILD_INFO_TIME@",
     "@BUILD_INFO_HOSTNAME@",
     _buildType(),
-    @BUILD_INFO_VERSION_BETA@,
-    @BUILD_INFO_VERSION_RC@
+    @BUILD_INFO_VERSION_MAJOR@,
+    @BUILD_INFO_VERSION_MINOR@,
+    @BUILD_INFO_VERSION_PATCH@,
+    @BUILD_INFO_VERSION_BUILD@,
+    @BUILD_INFO_VERSION_STAGE@,
+    @BUILD_INFO_VERSION_STAGE_NUM@,
+    "@BUILD_INFO_IDENT@"
 };
 
 const BuildInfo *getBuildInfo() {
     return &_buildInfo;
 }
 
+const char *buildStageName(BuildStage stage) {
+        switch (stage) {
+                case BuildStage::Alpha:   return "alpha";
+                case BuildStage::Beta:    return "beta";
+                case BuildStage::RC:      return "rc";
+                case BuildStage::Release: return "release";
+        }
+        return "unknown";
+}
+
+// Compose the pre-release suffix the same way CMake composes it for the
+// build ident: "-alpha"/"-beta" omit the "1" when stageNum==1, "-rcN"
+// always carries its number, and Release contributes nothing.
+static String _stageSuffix(const BuildInfo &bi) {
+        if (bi.stage == BuildStage::Release) return String();
+        String out = "-";
+        out += buildStageName(bi.stage);
+        const bool numbered = (bi.stage == BuildStage::RC) || bi.stageNum > 1;
+        if (numbered) out += String::number(bi.stageNum);
+        return out;
+}
+
+String formatBuildInfo(const String &fmt, const BuildInfo *bi) {
+        if (bi == nullptr) bi = &_buildInfo;
+        String      out;
+        const char *p   = fmt.cstr();
+        const char *end = p + fmt.size();
+        while (p < end) {
+                // "}}" → literal "}"
+                if (*p == '}' && p + 1 < end && p[1] == '}') {
+                        out += '}';
+                        p += 2;
+                        continue;
+                }
+                if (*p != '{') {
+                        out += *p++;
+                        continue;
+                }
+                // "{{" → literal "{"
+                if (p + 1 < end && p[1] == '{') {
+                        out += '{';
+                        p += 2;
+                        continue;
+                }
+                const char *close = static_cast<const char *>(std::memchr(p + 1, '}', end - (p + 1)));
+                if (close == nullptr) {
+                        // Unbalanced brace — emit the rest verbatim and stop.
+                        out += String(p, end - p);
+                        break;
+                }
+                String token(p + 1, close - p - 1);
+                if      (token == "name")      out += bi->name      ? bi->name      : "";
+                else if (token == "version")   out += bi->version   ? bi->version   : "";
+                else if (token == "major")     out += String::number(bi->major);
+                else if (token == "minor")     out += String::number(bi->minor);
+                else if (token == "patch")     out += String::number(bi->patch);
+                else if (token == "build")     out += String::number(bi->build);
+                else if (token == "stage")     out += buildStageName(bi->stage);
+                else if (token == "stageNum")  out += String::number(bi->stageNum);
+                else if (token == "extra")     out += _stageSuffix(*bi);
+                else if (token == "date")      out += bi->date      ? bi->date      : "";
+                else if (token == "time")      out += bi->time      ? bi->time      : "";
+                else if (token == "type")      out += bi->type      ? bi->type      : "";
+                else if (token == "hostname")  out += bi->hostname  ? bi->hostname  : "";
+                else if (token == "repoident") out += bi->repoident ? bi->repoident : "";
+                else if (token == "ref")       out += bi->ref       ? bi->ref       : "";
+                else if (token == "ident")     out += bi->ident     ? bi->ident     : "";
+                else {
+                        // Unknown token — emit verbatim as a debugging aid.
+                        out += '{';
+                        out += token;
+                        out += '}';
+                }
+                p = close + 1;
+        }
+        return out;
+}
+
 void logBuildInfo() {
-        promekiInfo("%s v%s {%s} [%s] (Built %s %s by %s)",
-                _buildInfo.name,
-                _buildInfo.version,
-                _buildInfo.repoident,
-                _buildInfo.type,
-                _buildInfo.date,
-                _buildInfo.time,
-                _buildInfo.hostname
-        );
-        return;
+        // Match the format used by buildInfoString() so log + banner agree.
+        promekiInfo("%s", buildInfoString().cstr());
 }
 
 String buildInfoString() {
-        return String::sprintf("%s v%s {%s} [%s] (Built %s %s by %s)",
-                _buildInfo.name,
-                _buildInfo.version,
-                _buildInfo.repoident,
-                _buildInfo.type,
-                _buildInfo.date,
-                _buildInfo.time,
-                _buildInfo.hostname);
+        return formatBuildInfo("{name} v{version}{extra} {{{repoident} on {ref}}} [{type}] (Built {date} {time} by {hostname})");
 }
 
 String buildPlatformString() {
@@ -177,6 +250,27 @@ StringList buildInfoStrings() {
                 runtimeInfoString(),
                 debugStatusString()
         };
+}
+
+bool verifyBuildIdent(const char *expected, Error *err) {
+        const char *actual = _buildInfo.ident;
+        if (expected != nullptr && actual != nullptr && std::strcmp(expected, actual) == 0) {
+                if (err) *err = Error::Ok;
+                return true;
+        }
+        promekiErr("Build identity mismatch — caller is stale against libpromeki. "
+                   "expected=\"%s\" actual=\"%s\"",
+                   expected ? expected : "(null)",
+                   actual   ? actual   : "(null)");
+        if (err) *err = Error::BuildIdentMismatch;
+        return false;
+}
+
+void verifyBuildIdentOrAbort(const char *expected) {
+        if (verifyBuildIdent(expected, nullptr)) return;
+        // Flush log queue before abort so the diagnostic actually reaches the console / log.
+        promekiLogSync();
+        std::abort();
 }
 
 PROMEKI_NAMESPACE_END

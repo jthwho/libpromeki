@@ -14,7 +14,6 @@
 #include <promeki/mediaiodescription.h>
 #include <promeki/metadata.h>
 #include <promeki/pixelformat.h>
-#include <promeki/uuid.h>
 
 using namespace promeki;
 
@@ -37,8 +36,6 @@ namespace {
                 d.setBackendName("TPG");
                 d.setBackendDescription("Synthetic test pattern generator");
                 d.setName("tpg-1");
-                d.setUuid(UUID::generate(4));
-                d.setLocalId(7);
                 d.setCanBeSource(true);
                 d.setCanBeSink(false);
                 d.setCanBeTransform(false);
@@ -67,8 +64,6 @@ TEST_CASE("MediaIODescription_Default") {
         CHECK(d.backendName().isEmpty());
         CHECK(d.backendDescription().isEmpty());
         CHECK(d.name().isEmpty());
-        CHECK_FALSE(d.uuid().isValid());
-        CHECK(d.localId() == -1);
         CHECK_FALSE(d.canBeSource());
         CHECK_FALSE(d.canBeSink());
         CHECK_FALSE(d.canBeTransform());
@@ -88,9 +83,6 @@ TEST_CASE("MediaIODescription_Setters") {
         d.setBackendName("V4L2");
         d.setBackendDescription("Video4Linux2 device");
         d.setName("video0");
-        UUID u = UUID::generate(4);
-        d.setUuid(u);
-        d.setLocalId(3);
         d.setCanBeSource(true);
         d.setCanBeTransform(true);
         d.setCanSeek(true);
@@ -100,8 +92,6 @@ TEST_CASE("MediaIODescription_Setters") {
         CHECK(d.backendName() == "V4L2");
         CHECK(d.backendDescription() == "Video4Linux2 device");
         CHECK(d.name() == "video0");
-        CHECK(d.uuid() == u);
-        CHECK(d.localId() == 3);
         CHECK(d.canBeSource());
         CHECK_FALSE(d.canBeSink());
         CHECK(d.canBeTransform());
@@ -114,10 +104,6 @@ TEST_CASE("MediaIODescription_Equality") {
         MediaIODescription a = makeSample();
         MediaIODescription b = makeSample();
 
-        // The sample uses UUID::generate, so two fresh samples differ
-        // in their UUID — explicitly equalize before comparing.
-        b.setUuid(a.uuid());
-
         CHECK(a == b);
         CHECK_FALSE(a != b);
 
@@ -126,12 +112,10 @@ TEST_CASE("MediaIODescription_Equality") {
         CHECK_FALSE(a == b);
 
         b = makeSample();
-        b.setUuid(a.uuid());
         b.setProbeStatus(Error::Invalid);
         CHECK(a != b);
 
         b = makeSample();
-        b.setUuid(a.uuid());
         b.acceptableFormats().pushToBack(makeUncompressedDesc(640, 480, PixelFormat(PixelFormat::RGBA8_sRGB)));
         CHECK(a != b);
 }
@@ -194,7 +178,6 @@ TEST_CASE("MediaIODescription_JsonShape") {
         // Identity fields surface verbatim.
         CHECK(j.getString("backendName") == "TPG");
         CHECK(j.getString("name") == "tpg-1");
-        CHECK(j.getInt("localId") == 7);
 
         // Role flags appear as a string array.
         REQUIRE(j.valueIsArray("roles"));
@@ -226,8 +209,6 @@ TEST_CASE("MediaIODescription_JsonElidesDefaults") {
 
         CHECK(j.getString("backendName") == "Empty");
         CHECK_FALSE(j.contains("name"));
-        CHECK_FALSE(j.contains("uuid"));
-        CHECK_FALSE(j.contains("localId"));
         CHECK_FALSE(j.contains("roles"));
         CHECK_FALSE(j.contains("producibleFormats"));
         CHECK_FALSE(j.contains("acceptableFormats"));
@@ -252,8 +233,6 @@ TEST_CASE("MediaIODescription_JsonScalarRoundTrip") {
         CHECK(round.backendName() == orig.backendName());
         CHECK(round.backendDescription() == orig.backendDescription());
         CHECK(round.name() == orig.name());
-        CHECK(round.uuid() == orig.uuid());
-        CHECK(round.localId() == orig.localId());
         CHECK(round.canBeSource() == orig.canBeSource());
         CHECK(round.canBeSink() == orig.canBeSink());
         CHECK(round.canBeTransform() == orig.canBeTransform());

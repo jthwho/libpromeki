@@ -317,7 +317,11 @@ class DataStream {
                         TypeAudioCodec = 0x4D,    ///< @brief AudioCodec (length-prefixed "Codec[:Backend]" round-trip)
                         TypeAudioChannelMap =
                                 0x4E, ///< @brief AudioChannelMap (tagged uint32 count + N (streamName, role) pairs)
-                        TypeAudioStreamDesc = 0x4F ///< @brief AudioStreamDesc (length-prefixed registered name)
+                        TypeAudioStreamDesc = 0x4F, ///< @brief AudioStreamDesc (length-prefixed registered name)
+                        TypeWindowedStat =
+                                0x50, ///< @brief WindowedStat (uint32 capacity + uint32 count + N tagged doubles)
+                        TypeWindowedStatsBundle =
+                                0x51 ///< @brief WindowedStatsBundle (uint32 count + N (String name, WindowedStat) pairs)
                 };
 
                 /**

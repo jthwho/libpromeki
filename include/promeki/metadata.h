@@ -289,7 +289,7 @@ class Metadata : public VariantDatabase<"Metadata"> {
                 /// The moment the publisher placed this frame in the
                 /// @ref FrameBridge output queue, expressed in the
                 /// @ref ClockDomain::SystemMonotonic domain.  Set by
-                /// @ref MediaIOTask_FrameBridge on every consumer-side
+                /// @ref FrameBridgeMediaIO on every consumer-side
                 /// frame so downstream stages can measure cross-process
                 /// transport latency and correlate with other
                 /// @ref MediaTimeStamp fields.

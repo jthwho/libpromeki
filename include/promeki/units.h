@@ -112,6 +112,28 @@ class Units {
                 static String fromDurationNs(double ns, int precision = 2);
 
                 /**
+                 * @brief Formats a duration given in milliseconds.
+                 *
+                 * Auto-scales to ns, us, ms, s, m, or h via the same
+                 * table @ref fromDurationNs uses.  Provided so callers
+                 * holding ms values (latency telemetry, timer
+                 * intervals) don't have to scale up to ns at the
+                 * call site.
+                 *
+                 * @par Example
+                 * @code
+                 * Units::fromDurationMs(0.05);    // "50 us"
+                 * Units::fromDurationMs(4.2);     // "4.2 ms"
+                 * Units::fromDurationMs(1500.0);  // "1.5 s"
+                 * @endcode
+                 *
+                 * @param ms        Duration value in milliseconds.
+                 * @param precision Number of significant decimal digits.
+                 * @return Formatted string with unit suffix.
+                 */
+                static String fromDurationMs(double ms, int precision = 2);
+
+                /**
                  * @brief Formats a frequency in Hz.
                  *
                  * Auto-scales to Hz, kHz, MHz, or GHz.
@@ -200,6 +222,47 @@ class Units {
                  * @return Formatted string with suffix (no space before suffix).
                  */
                 static String fromItemsPerSec(double ips, int precision = 1);
+
+                /**
+                 * @brief Formats a raw count (frames, items, queue depth) with metric prefixes.
+                 *
+                 * Auto-scales with k/M/G/T suffixes (1000-based).  Unlike
+                 * @ref fromItemsPerSec this never returns the @c "-"
+                 * placeholder — zero counts render as @c "0" — so it is
+                 * suitable for telemetry rows where every stat slot is
+                 * always populated.
+                 *
+                 * @par Example
+                 * @code
+                 * Units::fromCount(0);            // "0"
+                 * Units::fromCount(127);          // "127"
+                 * Units::fromCount(1500);         // "1.5k"
+                 * Units::fromCount(2340000ULL);   // "2.34M"
+                 * @endcode
+                 *
+                 * @param count     The raw count.
+                 * @param precision Maximum fractional digits (trailing zeros trimmed).
+                 * @return Formatted string with suffix (no space before suffix).
+                 */
+                static String fromCount(uint64_t count, int precision = 2);
+
+                /**
+                 * @brief Formats a frame rate as @c "29.97 fps".
+                 *
+                 * The suffix is fixed; the magnitude is rendered with
+                 * @p precision fractional digits (trailing zeros trimmed).
+                 *
+                 * @par Example
+                 * @code
+                 * Units::fromFramesPerSec(30.0);    // "30 fps"
+                 * Units::fromFramesPerSec(29.97);   // "29.97 fps"
+                 * @endcode
+                 *
+                 * @param fps       Frame rate in frames per second.
+                 * @param precision Number of significant decimal digits.
+                 * @return Formatted string with @c "fps" suffix.
+                 */
+                static String fromFramesPerSec(double fps, int precision = 2);
 };
 
 PROMEKI_NAMESPACE_END

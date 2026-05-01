@@ -991,7 +991,7 @@ TEST_CASE("ImageFileIO JpegXS: RGBA8 input encodes as RGB") {
 
 // ============================================================================
 // CompressedVideoPayload emission — ImageFile::load emits a
-// CompressedVideoPayload so a downstream MediaIOTask_VideoDecoder
+// CompressedVideoPayload so a downstream VideoDecoderMediaIO
 // stage can submit it directly.
 // ============================================================================
 

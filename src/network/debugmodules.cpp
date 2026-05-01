@@ -76,9 +76,10 @@ namespace {
                 ep.summary = "Compiled-in build identification, runtime info, "
                              "feature flags, and the human-readable banner.";
                 ep.tags = {"promeki/debug"};
-                ep.response = VariantSpec().setDescription("Object with name/version/repoIdent/date/time/hostname/"
-                                                           "type/betaVersion/rcVersion/platform/features/runtime/"
-                                                           "debug/lines fields.");
+                ep.response = VariantSpec().setDescription("Object with name/version/major/minor/patch/build/"
+                                                           "stage/stageNum/repoIdent/ref/ident/date/time/"
+                                                           "hostname/type/platform/features/runtime/debug/lines "
+                                                           "fields.");
 
                 api.route(ep, [](const HttpRequest &, HttpResponse &res) {
                         const BuildInfo *info = getBuildInfo();
@@ -86,13 +87,19 @@ namespace {
                         if (info != nullptr) {
                                 body.set("name", info->name);
                                 body.set("version", info->version);
+                                body.set("major", info->major);
+                                body.set("minor", info->minor);
+                                body.set("patch", info->patch);
+                                body.set("build", info->build);
+                                body.set("stage", buildStageName(info->stage));
+                                body.set("stageNum", info->stageNum);
                                 body.set("repoIdent", info->repoident);
+                                body.set("ref", info->ref);
+                                body.set("ident", info->ident);
                                 body.set("date", info->date);
                                 body.set("time", info->time);
                                 body.set("hostname", info->hostname);
                                 body.set("type", info->type);
-                                body.set("betaVersion", info->betaVersion);
-                                body.set("rcVersion", info->rcVersion);
                         }
                         body.set("platform", buildPlatformString());
                         body.set("features", buildFeatureString());

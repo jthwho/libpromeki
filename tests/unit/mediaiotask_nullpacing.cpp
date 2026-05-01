@@ -19,7 +19,12 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
-#include <promeki/mediaiotask_nullpacing.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mediaiocommand.h>
+#include <promeki/mediaiorequest.h>
+#include <promeki/mediaiosink.h>
+#include <promeki/mediaiosource.h>
+#include <promeki/nullpacingmediaio.h>
 #include <promeki/pixelformat.h>
 #include <promeki/rational.h>
 #include <promeki/timestamp.h>
@@ -35,20 +40,18 @@ namespace {
         // the destructor, including a close() pass to make sure any strand
         // activity is fully drained before the task is freed.
         struct NullPacingRig {
-                        MediaIO                *tpg = nullptr;
-                        MediaIO                *sinkIo = nullptr;
-                        MediaIOTask_NullPacing *sink = nullptr;
+                        MediaIO            *tpg = nullptr;
+                        NullPacingMediaIO  *sinkIo = nullptr;
 
                         ~NullPacingRig() {
                                 if (tpg) {
-                                        tpg->close();
+                                        tpg->close().wait();
                                         delete tpg;
                                 }
                                 if (sinkIo) {
-                                        sinkIo->close();
+                                        sinkIo->close().wait();
                                         delete sinkIo;
                                 }
-                                // sink is owned by sinkIo and freed when sinkIo is.
                         }
         };
 
@@ -60,26 +63,36 @@ namespace {
         void buildRig(NullPacingRig &rig, VideoFormat::WellKnownFormat sourceFormat, promeki::NullPacingMode mode,
                       const Rational<int> &targetFps, bool burnTimings = false) {
                 // ---- TPG source ----
-                MediaIO::Config tpgCfg = MediaIO::defaultConfig("TPG");
+                MediaIO::Config tpgCfg = MediaIOFactory::defaultConfig("TPG");
                 tpgCfg.set(MediaConfig::VideoFormat, VideoFormat(sourceFormat));
                 tpgCfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
                 tpgCfg.set(MediaConfig::VideoEnabled, true);
                 tpgCfg.set(MediaConfig::AudioEnabled, false);
                 rig.tpg = MediaIO::create(tpgCfg);
                 REQUIRE(rig.tpg != nullptr);
-                REQUIRE(rig.tpg->open(MediaIO::Source).isOk());
+                REQUIRE(rig.tpg->open().wait().isOk());
+
+                // Reconstruct the source desc explicitly — the multi-port
+                // refactor leaves @c io->mediaDesc() empty after open()
+                // for backends that haven't been ported to populate
+                // @c cmd.mediaDesc yet (TPG is one of them).  Until that
+                // lands, build the upstream-shape hint from the same
+                // VideoFormat the rig configured the TPG with.
+                const VideoFormat vfmt(sourceFormat);
+                MediaDesc         srcDesc;
+                srcDesc.setFrameRate(vfmt.frameRate());
+                srcDesc.imageList().pushToBack(ImageDesc(vfmt.raster(), PixelFormat(PixelFormat::RGBA8_sRGB)));
 
                 // ---- NullPacing sink ----
-                rig.sink = new MediaIOTask_NullPacing();
-                rig.sinkIo = new MediaIO();
-                MediaIO::Config sinkCfg = MediaIO::defaultConfig("NullPacing");
+                rig.sinkIo = new NullPacingMediaIO();
+                MediaIO::Config sinkCfg = MediaIOFactory::defaultConfig("NullPacing");
                 sinkCfg.set(MediaConfig::NullPacingMode, mode);
                 sinkCfg.set(MediaConfig::NullPacingTargetFps, targetFps);
                 sinkCfg.set(MediaConfig::NullPacingBurnTimings, burnTimings);
+                sinkCfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
                 rig.sinkIo->setConfig(sinkCfg);
-                REQUIRE(rig.sinkIo->setExpectedDesc(rig.tpg->mediaDesc()).isOk());
-                REQUIRE(rig.sinkIo->adoptTask(rig.sink).isOk());
-                REQUIRE(rig.sinkIo->open(MediaIO::Sink).isOk());
+                REQUIRE(rig.sinkIo->setPendingMediaDesc(srcDesc).isOk());
+                REQUIRE(rig.sinkIo->open().wait().isOk());
         }
 
         // Pulls one frame from TPG and pushes it through the sink.
@@ -88,11 +101,15 @@ namespace {
         // in lockstep with the test thread — this keeps the timing math
         // inside the tests deterministic.
         Error pumpOne(NullPacingRig &rig) {
-                Frame::Ptr frame;
-                Error      rerr = rig.tpg->readFrame(frame);
+                MediaIORequest readReq = rig.tpg->source(0)->readFrame();
+                Error          rerr = readReq.wait();
                 if (rerr.isError()) return rerr;
+                Frame::Ptr frame;
+                if (const auto *cr = readReq.commandAs<MediaIOCommandRead>()) {
+                        frame = cr->frame;
+                }
                 REQUIRE(frame.isValid());
-                return rig.sinkIo->writeFrame(frame);
+                return rig.sinkIo->sink(0)->writeFrame(frame).wait();
         }
 
         // Pumps frames into the sink for the specified wall-clock duration.
@@ -117,25 +134,27 @@ namespace {
 // Format descriptor / registration plumbing
 // ============================================================================
 
-TEST_CASE("MediaIOTask_NullPacing_FormatDescIsRegistered") {
-        const auto desc = MediaIOTask_NullPacing::formatDesc();
-        CHECK(desc.name == String("NullPacing"));
-        CHECK(desc.canBeSink);
-        CHECK_FALSE(desc.canBeSource);
-        CHECK_FALSE(desc.canBeTransform);
+TEST_CASE("NullPacingMediaIO_FactoryIsRegistered") {
+        const MediaIOFactory *factory = MediaIOFactory::findByName(String("NullPacing"));
+        REQUIRE(factory != nullptr);
+        CHECK(factory->name() == String("NullPacing"));
+        CHECK(factory->canBeSink());
+        CHECK_FALSE(factory->canBeSource());
+        CHECK_FALSE(factory->canBeTransform());
 
         // Factory path: the registry should know the type and build
         // a default-config sink that opens cleanly.
-        MediaIO::Config cfg = MediaIO::defaultConfig("NullPacing");
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("NullPacing");
         // Registry default for TargetFps is 0/1 ("follow source"),
         // which fails open() without an upstream desc — set a real
         // target here so this round-trip stays meaningful.
         cfg.set(MediaConfig::NullPacingTargetFps, Rational<int>(30, 1));
+        cfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Sink).isOk());
+        REQUIRE(io->open().wait().isOk());
         CHECK(io->isOpen());
-        CHECK(io->close().isOk());
+        CHECK(io->close().wait().isOk());
         delete io;
 }
 
@@ -143,7 +162,7 @@ TEST_CASE("MediaIOTask_NullPacing_FormatDescIsRegistered") {
 // Wallclock mode pacing
 // ============================================================================
 
-TEST_CASE("MediaIOTask_NullPacing_WallclockDropsFramesBetweenTicks") {
+TEST_CASE("NullPacingMediaIO_WallclockDropsFramesBetweenTicks") {
         // TPG @ 60 fps → NullPacing @ 24 fps.  Over ~500 ms wall time
         // the sink should consume on the order of 12 frames (24 fps
         // × 0.5 s).  Drops should account for everything else the
@@ -153,7 +172,7 @@ TEST_CASE("MediaIOTask_NullPacing_WallclockDropsFramesBetweenTicks") {
 
         pumpForMs(rig, 500);
 
-        const NullPacingSnapshot snap = rig.sink->snapshot();
+        const NullPacingSnapshot snap = rig.sinkIo->snapshot();
         // Every frame upstream produced was either consumed or
         // dropped — there's no other terminal state for a frame in
         // the sink.
@@ -177,7 +196,7 @@ TEST_CASE("MediaIOTask_NullPacing_WallclockDropsFramesBetweenTicks") {
 // Free mode (no pacing, never drops)
 // ============================================================================
 
-TEST_CASE("MediaIOTask_NullPacing_FreeModeAcceptsEveryFrame") {
+TEST_CASE("NullPacingMediaIO_FreeModeAcceptsEveryFrame") {
         // In Free mode the sink ignores TargetFps entirely; every
         // frame the upstream feeds should be consumed and the drop
         // counter should stay at zero.
@@ -189,7 +208,7 @@ TEST_CASE("MediaIOTask_NullPacing_FreeModeAcceptsEveryFrame") {
                 CHECK(pumpOne(rig).isOk());
         }
 
-        const NullPacingSnapshot snap = rig.sink->snapshot();
+        const NullPacingSnapshot snap = rig.sinkIo->snapshot();
         CHECK(snap.framesConsumed == frames);
         CHECK(snap.framesDropped == 0);
         CHECK(snap.latencySamples == frames);
@@ -199,7 +218,7 @@ TEST_CASE("MediaIOTask_NullPacing_FreeModeAcceptsEveryFrame") {
 // TargetFps = 0/1 → follow upstream MediaDesc
 // ============================================================================
 
-TEST_CASE("MediaIOTask_NullPacing_TargetFpsZeroFollowsSourceDesc") {
+TEST_CASE("NullPacingMediaIO_TargetFpsZeroFollowsSourceDesc") {
         // Configure the sink with NullPacingTargetFps = 0/1; the
         // upstream is TPG @ 30 fps.  The sink should latch 30 fps
         // from the descriptor at open() time and pace at that rate
@@ -213,7 +232,7 @@ TEST_CASE("MediaIOTask_NullPacing_TargetFpsZeroFollowsSourceDesc") {
 
         pumpForMs(rig, 500);
 
-        const NullPacingSnapshot snap = rig.sink->snapshot();
+        const NullPacingSnapshot snap = rig.sinkIo->snapshot();
         // 30 fps × 0.5 s = 15 consumed frames; allow ±25% slack.
         CHECK(snap.framesConsumed >= 11);
         CHECK(snap.framesConsumed <= 22);
@@ -226,7 +245,7 @@ TEST_CASE("MediaIOTask_NullPacing_TargetFpsZeroFollowsSourceDesc") {
 // BurnTimings = true: confirms log path is wired without crashing
 // ============================================================================
 
-TEST_CASE("MediaIOTask_NullPacing_BurnTimingsRunsCleanly") {
+TEST_CASE("NullPacingMediaIO_BurnTimingsRunsCleanly") {
         // BurnTimings is intentionally noisy in real use (one
         // promekiDebug per frame), but we don't depend on log
         // content — we just confirm the option doesn't crash the
@@ -239,7 +258,7 @@ TEST_CASE("MediaIOTask_NullPacing_BurnTimingsRunsCleanly") {
                 CHECK(pumpOne(rig).isOk());
         }
 
-        const NullPacingSnapshot snap = rig.sink->snapshot();
+        const NullPacingSnapshot snap = rig.sinkIo->snapshot();
         CHECK(snap.latencySamples == 6);
         CHECK(snap.framesConsumed >= 1);
 }
@@ -249,15 +268,15 @@ TEST_CASE("MediaIOTask_NullPacing_BurnTimingsRunsCleanly") {
 // must reject open() rather than silently dividing by zero.
 // ============================================================================
 
-TEST_CASE("MediaIOTask_NullPacing_WallclockWithoutRateRejectsOpen") {
-        MediaIO         io;
-        MediaIO::Config cfg = MediaIO::defaultConfig("NullPacing");
+TEST_CASE("NullPacingMediaIO_WallclockWithoutRateRejectsOpen") {
+        NullPacingMediaIO io;
+        MediaIO::Config   cfg = MediaIOFactory::defaultConfig("NullPacing");
         cfg.set(MediaConfig::NullPacingMode, promeki::NullPacingMode::Wallclock);
         cfg.set(MediaConfig::NullPacingTargetFps, Rational<int>(0, 1));
+        cfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
         io.setConfig(cfg);
-        REQUIRE(io.adoptTask(new MediaIOTask_NullPacing()).isOk());
 
-        // No setExpectedDesc → no upstream rate → no resolved rate.
-        const Error err = io.open(MediaIO::Sink);
+        // No setPendingMediaDesc → no upstream rate → no resolved rate.
+        const Error err = io.open().wait();
         CHECK(err == Error::InvalidArgument);
 }

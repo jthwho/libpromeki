@@ -12,7 +12,6 @@
 #include <type_traits>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
-#include <promeki/benchmark.h>
 #include <promeki/mediapayload.h>
 #include <promeki/videopayload.h>
 #include <promeki/audiopayload.h>
@@ -159,31 +158,10 @@ class Frame {
                 MediaDesc mediaDesc() const;
 
                 /**
-                 * @brief Returns a const reference to the frame benchmark.
-                 * @return The benchmark pointer (may be null if benchmarking is disabled).
-                 */
-                const Benchmark::Ptr &benchmark() const { return _benchmark; }
-
-                /**
-                 * @brief Returns a mutable reference to the frame benchmark.
-                 * @return The benchmark pointer.
-                 */
-                Benchmark::Ptr &benchmark() { return _benchmark; }
-
-                /**
-                 * @brief Sets the frame benchmark.
-                 * @param bm The benchmark to attach.
-                 */
-                void setBenchmark(Benchmark::Ptr bm) {
-                        _benchmark = std::move(bm);
-                        return;
-                }
-
-                /**
                  * @brief Returns a const reference to the config update delta.
                  *
                  * When non-empty, the config update is applied by the
-                 * receiving @ref MediaIOTask before the frame is
+                 * receiving @ref MediaIO before the frame is
                  * processed.  This gives frame-level synchronisation
                  * for dynamic parameter changes (bitrate, quality,
                  * etc.) — the update travels with the write command
@@ -242,7 +220,7 @@ class Frame {
                  *
                  * Emits the scalar-key block registered with
                  * @c VariantLookup<Frame> (@c VideoCount,
-                 * @c AudioCount, @c HasBenchmark, @c PayloadCount,
+                 * @c AudioCount, @c PayloadCount,
                  * @c VideoFormat), the frame's metadata via
                  * @ref Metadata::dump, the @ref configUpdate delta
                  * when non-empty, and then a subdump of each payload
@@ -267,7 +245,6 @@ class Frame {
         private:
                 MediaPayload::PtrList _payloads;
                 Metadata              _metadata;
-                Benchmark::Ptr        _benchmark;
                 MediaConfig           _configUpdate;
 };
 

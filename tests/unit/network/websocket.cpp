@@ -14,6 +14,7 @@
 #include <promeki/tcpsocket.h>
 #include <promeki/buffer.h>
 #include <promeki/string.h>
+#include <promeki/atomic.h>
 #include <chrono>
 #include <thread>
 #include <atomic>
@@ -38,10 +39,15 @@ namespace {
 
                         WsServerFixture() {
                                 thread.start();
-                                thread.threadEventLoop()->postCallable([this]() { server = new HttpServer(); });
-                                for (int i = 0; i < 200 && server == nullptr; ++i) {
+                                Atomic<bool> ready(false);
+                                thread.threadEventLoop()->postCallable([this, &ready]() {
+                                        server = new HttpServer();
+                                        ready.setValue(true);
+                                });
+                                for (int i = 0; i < 200 && !ready.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(2));
                                 }
+                                REQUIRE(ready.value());
                                 REQUIRE(server != nullptr);
                         }
 
@@ -60,7 +66,7 @@ namespace {
                         }
 
                         void listenWithRoute(const String &pattern, std::function<void(WebSocket *)> handler) {
-                                bool done = false;
+                                Atomic<bool> done(false);
                                 onAccepted = std::move(handler);
                                 thread.threadEventLoop()->postCallable([this, pattern, &done]() {
                                         server->routeWebSocket(pattern, [this](WebSocket *ws, const HttpRequest &) {
@@ -70,12 +76,12 @@ namespace {
                                         Error err = server->listen(SocketAddress::localhost(0));
                                         REQUIRE(err.isOk());
                                         port = server->serverAddress().port();
-                                        done = true;
+                                        done.setValue(true);
                                 });
-                                for (int i = 0; i < 500 && !done; ++i) {
+                                for (int i = 0; i < 500 && !done.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                                 }
-                                REQUIRE(done);
+                                REQUIRE(done.value());
                                 REQUIRE(port != 0);
                         }
         };
@@ -88,10 +94,15 @@ namespace {
 
                         WsClientFixture() {
                                 thread.start();
-                                thread.threadEventLoop()->postCallable([this]() { ws = new WebSocket(); });
-                                for (int i = 0; i < 200 && ws == nullptr; ++i) {
+                                Atomic<bool> ready(false);
+                                thread.threadEventLoop()->postCallable([this, &ready]() {
+                                        ws = new WebSocket();
+                                        ready.setValue(true);
+                                });
+                                for (int i = 0; i < 200 && !ready.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(2));
                                 }
+                                REQUIRE(ready.value());
                                 REQUIRE(ws != nullptr);
                         }
 
@@ -108,30 +119,30 @@ namespace {
                         }
 
                         Error connect(const String &url) {
-                                Error result = Error::Invalid;
-                                bool  done = false;
+                                Error        result = Error::Invalid;
+                                Atomic<bool> done(false);
                                 thread.threadEventLoop()->postCallable([&]() {
                                         result = ws->connectToUrl(url);
-                                        done = true;
+                                        done.setValue(true);
                                 });
-                                for (int i = 0; i < 500 && !done; ++i) {
+                                for (int i = 0; i < 500 && !done.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                                 }
-                                REQUIRE(done);
+                                REQUIRE(done.value());
                                 return result;
                         }
 
                         // Run a callable on the client's event loop.
                         void run(std::function<void()> fn) {
-                                bool done = false;
+                                Atomic<bool> done(false);
                                 thread.threadEventLoop()->postCallable([&]() {
                                         fn();
-                                        done = true;
+                                        done.setValue(true);
                                 });
-                                for (int i = 0; i < 500 && !done; ++i) {
+                                for (int i = 0; i < 500 && !done.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                                 }
-                                REQUIRE(done);
+                                REQUIRE(done.value());
                         }
         };
 

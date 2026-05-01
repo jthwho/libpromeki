@@ -43,7 +43,7 @@ class MediaConfig;
  *
  * The session contract is intentionally identical to @ref VideoEncoder
  * (configure, submit/receive, flush, reset) so pipeline glue
- * (MediaIOTask, QuickTime muxer, RTP packetiser, …) can treat audio
+ * (MediaIO, QuickTime muxer, RTP packetiser, …) can treat audio
  * and video encoders symmetrically.
  *
  * @par Backend registration

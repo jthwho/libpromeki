@@ -10,6 +10,7 @@
 #include <atomic>
 #include <doctest/doctest.h>
 #include <promeki/application.h>
+#include <promeki/atomic.h>
 #include <promeki/debugserver.h>
 #include <promeki/httpserver.h>
 #include <promeki/httprequest.h>
@@ -449,14 +450,15 @@ namespace {
 
                         WsClient() {
                                 thread.start();
-                                bool ready = false;
+                                Atomic<bool> ready(false);
                                 thread.threadEventLoop()->postCallable([this, &ready]() {
                                         ws = new WebSocket();
-                                        ready = true;
+                                        ready.setValue(true);
                                 });
-                                for (int i = 0; i < 200 && !ready; ++i) {
+                                for (int i = 0; i < 200 && !ready.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(2));
                                 }
+                                REQUIRE(ready.value());
                                 REQUIRE(ws != nullptr);
                         }
 
@@ -473,29 +475,29 @@ namespace {
                         }
 
                         Error connect(const String &url) {
-                                Error result = Error::Invalid;
-                                bool  done = false;
+                                Error        result = Error::Invalid;
+                                Atomic<bool> done(false);
                                 thread.threadEventLoop()->postCallable([&]() {
                                         result = ws->connectToUrl(url);
-                                        done = true;
+                                        done.setValue(true);
                                 });
-                                for (int i = 0; i < 500 && !done; ++i) {
+                                for (int i = 0; i < 500 && !done.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                                 }
-                                REQUIRE(done);
+                                REQUIRE(done.value());
                                 return result;
                         }
 
                         template <typename Fn> void run(Fn fn) {
-                                bool done = false;
+                                Atomic<bool> done(false);
                                 thread.threadEventLoop()->postCallable([&]() {
                                         fn();
-                                        done = true;
+                                        done.setValue(true);
                                 });
-                                for (int i = 0; i < 500 && !done; ++i) {
+                                for (int i = 0; i < 500 && !done.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                                 }
-                                REQUIRE(done);
+                                REQUIRE(done.value());
                         }
         };
 

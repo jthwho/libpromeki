@@ -66,7 +66,7 @@ class JsonObject;
  * its extension.  A directory may contain multiple @c .imgseq files
  * for different sequences.
  *
- * @par Separation from MediaIOTask_ImageFile
+ * @par Separation from ImageFileMediaIO
  *
  * @c ImgSeq is a standalone data class with no dependency on the
  * MediaIO framework.  Code that wants to describe or persist a

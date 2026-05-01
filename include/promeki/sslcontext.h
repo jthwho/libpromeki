@@ -67,6 +67,23 @@ class SslContext {
                         SecureProtocols ///< TLS 1.2 + TLS 1.3 (the secure modern set).
                 };
 
+                /**
+                 * @brief Reports whether this build can actually speak TLS.
+                 *
+                 * Single source of truth for the @c PROMEKI_ENABLE_TLS
+                 * feature flag: when @c false every @ref SslContext
+                 * mutator (other than the trivial protocol /
+                 * verifyPeer / verifyDepth setters) returns
+                 * @ref Error::NotSupported and @ref nativeConfig
+                 * returns @c nullptr, so consumers can check this
+                 * once instead of inspecting build macros.
+                 *
+                 * @ref HttpClient::hasTlsSupport,
+                 * @ref HttpServer::hasTlsSupport, and
+                 * @ref WebSocket::hasTlsSupport delegate here.
+                 */
+                static bool hasTlsSupport();
+
                 /** @brief Constructs an empty context with @ref SecureProtocols. */
                 SslContext();
 

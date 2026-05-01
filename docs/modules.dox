@@ -141,14 +141,48 @@
  */
 
 /**
- * @defgroup pipeline Pipeline
- * @brief MediaIO-based media pipeline and its backends.
+ * @defgroup mediaio_user MediaIO — User Surface
+ * @brief Public API consumed by application authors.
  *
- * @ref MediaIO controller, @ref MediaIOTask backends, and the
- * per-instance @ref Strand executor that moves frames between
- * stages.  Concrete backends include @ref MediaIOTask_TPG,
- * @ref MediaIOTask_ImageFile, @ref MediaIOTask_AudioFile,
- * @ref MediaIOTask_QuickTime, and @ref MediaIOTask_CSC.
+ * The always-async MediaIO surface — @ref promeki::MediaIO,
+ * @ref promeki::MediaIORequest, ports
+ * (@ref promeki::MediaIOSource, @ref promeki::MediaIOSink,
+ * @ref promeki::MediaIOPortGroup), transfer wiring
+ * (@ref promeki::MediaIOPortConnection), the factory entry
+ * points (@ref promeki::MediaIOFactory), descriptors
+ * (@ref promeki::MediaIODescription, @ref promeki::MediaConfig,
+ * @ref promeki::MediaIOStats, @ref promeki::MediaIOParams).
+ *
+ * See the @ref mediaio_user_guide "MediaIO User Guide" for the
+ * usage walk-through.
+ */
+
+/**
+ * @defgroup mediaio_backend MediaIO — Backend Surface
+ * @brief Implementer-facing classes for backend authors.
+ *
+ * The strategy class hierarchy
+ * (@ref promeki::CommandMediaIO, @ref promeki::InlineMediaIO,
+ * @ref promeki::SharedThreadMediaIO,
+ * @ref promeki::DedicatedThreadMediaIO), the
+ * @ref promeki::MediaIOCommand hierarchy and concrete subclasses
+ * (Open / Close / Read / Write / Seek / Params / Stats), and the
+ * @ref promeki::MediaIOReadCache used by sources.
+ *
+ * See the @ref mediaio_backend_guide "MediaIO Backend Author
+ * Guide" for the implementer walk-through.
+ */
+
+/**
+ * @defgroup pipeline Pipeline
+ * @brief MediaPipeline composition layer over MediaIO.
+ *
+ * @ref promeki::MediaPipeline composes one or more
+ * @ref promeki::MediaIO instances and the
+ * @ref promeki::MediaIOPortConnection objects between them under
+ * a single lifecycle (run / pause / close).
+ * @ref promeki::MediaPipelinePlanner handles auto-bridge insertion
+ * for format-mismatched stages.
  */
 
 /**

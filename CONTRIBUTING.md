@@ -133,8 +133,7 @@ A small set of well-known noisy warnings are project-wide disabled:
   templates.  `-Wuninitialized` (the reliable intra-function form)
   stays on via `-Wall`.
 - `-Wno-missing-field-initializers` — designated-initializer struct
-  literals (`FormatDesc{.create = ..., .configSpecs = ...}`)
-  intentionally elide fields that should value-initialize.
+  literals intentionally elide fields that should value-initialize.
 
 If you find a warning category that's noisy without surfacing real
 bugs, add a `-Wno-...` (with a comment explaining why) to

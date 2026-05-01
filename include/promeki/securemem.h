@@ -17,6 +17,7 @@
 #include <memoryapi.h>
 #elif defined(PROMEKI_PLATFORM_POSIX)
 #include <sys/mman.h>
+#include <string.h> // explicit_bzero
 #endif
 
 PROMEKI_NAMESPACE_BEGIN

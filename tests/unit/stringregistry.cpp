@@ -6,8 +6,11 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/stringregistry.h>
+#include <functional>
+#include <unordered_map>
 #include <promeki/fnv1a.h>
+#include <promeki/hashmap.h>
+#include <promeki/stringregistry.h>
 
 using namespace promeki;
 
@@ -157,4 +160,91 @@ TEST_CASE("StringRegistry::Item: runtime + literal roundtrip") {
         TestItem runtime("item.literal.roundtrip");
         CHECK(TestItem::literal("item.literal.roundtrip").id() == runtime.id());
         CHECK(runtime.name() == "item.literal.roundtrip");
+}
+
+// ============================================================================
+// std::hash specialization on StringRegistryItem<Name>.
+//
+// The specialization makes registry IDs usable as keys in HashMap and
+// std::unordered_map without each consumer having to provide its own
+// hasher.  The specialization is partial-on-Name: every distinct
+// VariantDatabase / StringRegistry instantiation gets it for free.
+// ============================================================================
+
+TEST_CASE("StringRegistry::Item: std::hash returns the underlying ID unchanged") {
+        // Items already wrap a 64-bit FNV-1a hash, so the hash
+        // specialization should not double-hash — verifying this both
+        // documents intent and guards against accidental rehashing
+        // future maintainers might introduce.
+        TestItem            item("item.std.hash.identity");
+        std::hash<TestItem> hasher;
+        CHECK(hasher(item) == static_cast<std::size_t>(item.id()));
+}
+
+TEST_CASE("StringRegistry::Item: equal items produce equal hashes") {
+        TestItem a("item.std.hash.equal");
+        TestItem b("item.std.hash.equal");
+        REQUIRE(a == b);
+        std::hash<TestItem> hasher;
+        CHECK(hasher(a) == hasher(b));
+}
+
+TEST_CASE("StringRegistry::Item: distinct items produce distinct hashes") {
+        // FNV-1a hashes of distinct names will only collide
+        // astronomically rarely — these two are picked from working
+        // unit tests and known not to collide.
+        TestItem a("item.std.hash.distinct.a");
+        TestItem b("item.std.hash.distinct.b");
+        REQUIRE(a != b);
+        std::hash<TestItem> hasher;
+        CHECK(hasher(a) != hasher(b));
+}
+
+TEST_CASE("StringRegistry::Item: usable as a HashMap key") {
+        // The whole point of the std::hash specialization is so that
+        // promeki::HashMap can key on registry IDs directly without a
+        // custom hasher — verify the round-trip insert / lookup /
+        // contains / remove path works.
+        HashMap<TestItem, int> m;
+        TestItem               width("item.hashmap.width");
+        TestItem               height("item.hashmap.height");
+        m.insert(width, 1920);
+        m.insert(height, 1080);
+        CHECK(m.size() == 2);
+        CHECK(m.contains(width));
+        CHECK(m.contains(height));
+        CHECK(m.value(width, 0) == 1920);
+        CHECK(m.value(height, 0) == 1080);
+        CHECK(m.remove(width));
+        CHECK_FALSE(m.contains(width));
+        CHECK(m.contains(height));
+}
+
+TEST_CASE("StringRegistry::Item: usable as a std::unordered_map key") {
+        // Standard-library containers should pick up the std::hash
+        // specialization just as readily as promeki::HashMap.
+        std::unordered_map<TestItem, int> m;
+        TestItem                          a("item.unordered.a");
+        TestItem                          b("item.unordered.b");
+        m[a] = 1;
+        m[b] = 2;
+        CHECK(m.size() == 2);
+        CHECK(m.at(a) == 1);
+        CHECK(m.at(b) == 2);
+}
+
+// ============================================================================
+// StringRegistryItem<Name> top-level type alias.
+//
+// The class was hoisted out of StringRegistry so that the std::hash
+// partial specialization could resolve it; verify that
+// StringRegistry<Name>::Item still aliases the top-level template.
+// ============================================================================
+
+TEST_CASE("StringRegistry::Item: type alias matches StringRegistryItem<Name>") {
+        static_assert(std::is_same_v<TestRegistry::Item, StringRegistryItem<"TestRegistry">>,
+                      "StringRegistry<Name>::Item must alias StringRegistryItem<Name>");
+        // Runtime CHECK exists so doctest counts the case as run; the
+        // real assertion is the static_assert above.
+        CHECK(true);
 }

@@ -8,8 +8,13 @@
 #include <doctest/doctest.h>
 #include <atomic>
 #include <vector>
-#include <promeki/mediaiotask_inspector.h>
+#include <promeki/inspectormediaio.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mediaiocommand.h>
+#include <promeki/mediaiorequest.h>
+#include <promeki/mediaiosink.h>
+#include <promeki/mediaiosource.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/frame.h>
 #include <promeki/timecode.h>
@@ -27,35 +32,52 @@ using namespace promeki;
 
 namespace {
 
+        // Synchronous read shim — wraps the always-async readFrame()
+        // surface for tests that pump frames serially.  Failure
+        // propagates as the wait() result; on success the frame is
+        // pulled off the resolved CmdRead's typed payload.
+        Error syncRead(MediaIOSource *src, Frame::Ptr &out) {
+                MediaIORequest req = src->readFrame();
+                Error          err = req.wait();
+                if (err.isOk()) {
+                        if (const auto *cr = req.commandAs<MediaIOCommandRead>()) {
+                                out = cr->frame;
+                        }
+                }
+                return err;
+        }
+
         // Helper: build a TPG MediaIO + Inspector pair, run @p frameCount
         // frames through the pair, and return ownership of both.  The caller
         // gets a snapshot at the end (via inspector->snapshot()) plus access
         // to any per-frame events captured by the supplied callback.
         struct InspectorRig {
-                        MediaIO               *tpg = nullptr;
-                        MediaIO               *inspectorIo = nullptr;
-                        MediaIOTask_Inspector *inspector = nullptr;
+                        MediaIO          *tpg = nullptr;
+                        InspectorMediaIO *inspectorIo = nullptr;
+                        // Backwards-compat alias used by the test bodies; same
+                        // pointer as inspectorIo since the native MediaIO IS
+                        // the inspector now (no separate task object).
+                        InspectorMediaIO *inspector = nullptr;
                         ~InspectorRig() {
                                 if (tpg) {
-                                        tpg->close();
+                                        tpg->close().wait();
                                         delete tpg;
                                 }
                                 if (inspectorIo) {
-                                        inspectorIo->close();
+                                        inspectorIo->close().wait();
                                         delete inspectorIo;
                                 }
-                                // inspector deleted by inspectorIo
                         }
         };
 
-        void buildRig(InspectorRig &rig, uint32_t streamId, MediaIOTask_Inspector::EventCallback cb = {},
+        void buildRig(InspectorRig &rig, uint32_t streamId, InspectorMediaIO::EventCallback cb = {},
                       bool audioEnabled = true, const EnumList &audioChannelModes = EnumList(), int audioChannels = 0) {
                 // Source: a default-config TPG with the StreamID overridden
                 // and a fixed frame rate so the test math is reproducible.
                 // The default channel-mode list puts LTC on ch0 and an AvSync
                 // click on ch1 — that's how the inspector gets both the click
                 // marker and the LTC stream to verify.
-                MediaIO::Config tpgCfg = MediaIO::defaultConfig("TPG");
+                MediaIO::Config tpgCfg = MediaIOFactory::defaultConfig("TPG");
                 tpgCfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
                 tpgCfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
                 tpgCfg.set(MediaConfig::TimecodeStart, String("01:00:00:00"));
@@ -69,29 +91,29 @@ namespace {
                 }
                 rig.tpg = MediaIO::create(tpgCfg);
                 REQUIRE(rig.tpg != nullptr);
-                REQUIRE(rig.tpg->open(MediaIO::Source).isOk());
+                REQUIRE(rig.tpg->open().wait().isOk());
 
                 // Sink: Inspector with the default ("full checks") config.
-                // We construct the task directly + adoptTask so we can
-                // register the callback before open() (the standard create()
-                // factory hides the task).
-                rig.inspector = new MediaIOTask_Inspector();
-                if (cb) rig.inspector->setEventCallback(cb);
+                // Construct the InspectorMediaIO directly so we can
+                // register the callback before open() (the standard
+                // create() factory doesn't expose a setEventCallback hook).
+                rig.inspectorIo = new InspectorMediaIO();
+                rig.inspector = rig.inspectorIo;
+                if (cb) rig.inspectorIo->setEventCallback(cb);
 
-                rig.inspectorIo = new MediaIO();
-                MediaIO::Config insCfg = MediaIO::defaultConfig("Inspector");
+                MediaIO::Config insCfg = MediaIOFactory::defaultConfig("Inspector");
                 insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.0); // disable periodic log in tests
+                insCfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
                 rig.inspectorIo->setConfig(insCfg);
-                REQUIRE(rig.inspectorIo->adoptTask(rig.inspector).isOk());
-                REQUIRE(rig.inspectorIo->open(MediaIO::Sink).isOk());
+                REQUIRE(rig.inspectorIo->open().wait().isOk());
         }
 
         void pumpFrames(InspectorRig &rig, int frameCount) {
                 for (int i = 0; i < frameCount; i++) {
                         Frame::Ptr frame;
-                        REQUIRE(rig.tpg->readFrame(frame).isOk());
+                        REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
                         REQUIRE(frame.isValid());
-                        REQUIRE(rig.inspectorIo->writeFrame(frame).isOk());
+                        REQUIRE(rig.inspectorIo->sink(0)->writeFrame(frame).wait().isOk());
                 }
         }
 
@@ -185,9 +207,9 @@ TEST_CASE("Inspector flags a frame-number jump as a discontinuity") {
 
         for (int i = 0; i < 10; i++) {
                 Frame::Ptr frame;
-                REQUIRE(rig.tpg->readFrame(frame).isOk());
+                REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
                 if (i == 4) continue; // skip frame 4 — TPG advances anyway
-                REQUIRE(rig.inspectorIo->writeFrame(frame).isOk());
+                REQUIRE(rig.inspectorIo->sink(0)->writeFrame(frame).wait().isOk());
         }
 
         InspectorSnapshot snap = rig.inspector->snapshot();
@@ -241,8 +263,8 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         // The inspector should flag this as a SyncOffsetChange.
         for (int i = 0; i < 10; i++) {
                 Frame::Ptr frame;
-                REQUIRE(rig.tpg->readFrame(frame).isOk());
-                REQUIRE(rig.inspectorIo->writeFrame(frame).isOk());
+                REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
+                REQUIRE(rig.inspectorIo->sink(0)->writeFrame(frame).wait().isOk());
         }
 
         // Read frame 11, then mutate its audio in place to shift the
@@ -250,7 +272,7 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         // by the TPG so we own the only reference and can write into
         // its audio buffer directly.
         Frame::Ptr shifted;
-        REQUIRE(rig.tpg->readFrame(shifted).isOk());
+        REQUIRE(syncRead(rig.tpg->source(0), shifted).isOk());
         REQUIRE(shifted.isValid());
         auto auds = shifted->audioPayloads();
         REQUIRE(auds.size() == 1);
@@ -282,7 +304,7 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
                 }
         }
 
-        REQUIRE(rig.inspectorIo->writeFrame(shifted).isOk());
+        REQUIRE(rig.inspectorIo->sink(0)->writeFrame(shifted).wait().isOk());
 
         // Inspect the captured events: at least one SyncOffsetChange
         // should be present, with previous and current values that
@@ -330,16 +352,17 @@ TEST_CASE("Inspector periodic log fires when interval elapses") {
         // Re-open the inspector IO with a custom log interval.  We
         // can't tweak the live config after open(), so we close and
         // re-set + re-open.
-        rig.inspectorIo->close();
-        MediaIO::Config insCfg = MediaIO::defaultConfig("Inspector");
+        rig.inspectorIo->close().wait();
+        MediaIO::Config insCfg = MediaIOFactory::defaultConfig("Inspector");
         insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.01); // 10 ms
+        insCfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
         rig.inspectorIo->setConfig(insCfg);
-        REQUIRE(rig.inspectorIo->open(MediaIO::Sink).isOk());
+        REQUIRE(rig.inspectorIo->open().wait().isOk());
 
         for (int i = 0; i < 10; i++) {
                 Frame::Ptr frame;
-                REQUIRE(rig.tpg->readFrame(frame).isOk());
-                REQUIRE(rig.inspectorIo->writeFrame(frame).isOk());
+                REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
+                REQUIRE(rig.inspectorIo->sink(0)->writeFrame(frame).wait().isOk());
         }
         InspectorSnapshot snap = rig.inspector->snapshot();
         CHECK(snap.framesProcessed == 10);

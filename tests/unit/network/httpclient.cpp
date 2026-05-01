@@ -11,6 +11,7 @@
 #include <promeki/thread.h>
 #include <promeki/eventloop.h>
 #include <promeki/socketaddress.h>
+#include <promeki/atomic.h>
 #include <atomic>
 #include <chrono>
 #include <thread>
@@ -34,39 +35,50 @@ namespace {
                                 serverThread.start();
                                 clientThread.start();
 
-                                serverThread.threadEventLoop()->postCallable([this]() { server = new HttpServer(); });
-                                clientThread.threadEventLoop()->postCallable([this]() { client = new HttpClient(); });
-                                for (int i = 0; i < 200 && (server == nullptr || client == nullptr); ++i) {
+                                Atomic<bool> serverReady(false);
+                                Atomic<bool> clientReady(false);
+                                serverThread.threadEventLoop()->postCallable([this, &serverReady]() {
+                                        server = new HttpServer();
+                                        serverReady.setValue(true);
+                                });
+                                clientThread.threadEventLoop()->postCallable([this, &clientReady]() {
+                                        client = new HttpClient();
+                                        clientReady.setValue(true);
+                                });
+                                for (int i = 0; i < 200 && (!serverReady.value() || !clientReady.value()); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(2));
                                 }
+                                REQUIRE(serverReady.value());
+                                REQUIRE(clientReady.value());
                                 REQUIRE(server != nullptr);
                                 REQUIRE(client != nullptr);
                         }
 
                         // Configure the server on its loop thread; blocks until done.
                         void configure(std::function<void(HttpServer &)> cfg) {
-                                std::atomic<bool> done{false};
+                                Atomic<bool> done(false);
                                 serverThread.threadEventLoop()->postCallable([&]() {
                                         cfg(*server);
-                                        done = true;
+                                        done.setValue(true);
                                 });
-                                for (int i = 0; i < 500 && !done; ++i) {
+                                for (int i = 0; i < 500 && !done.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(2));
                                 }
-                                REQUIRE(done);
+                                REQUIRE(done.value());
                         }
 
                         void listenOnAnyPort() {
-                                std::atomic<bool> done{false};
+                                Atomic<bool> done(false);
                                 serverThread.threadEventLoop()->postCallable([&]() {
                                         Error err = server->listen(SocketAddress::localhost(0));
                                         REQUIRE(err.isOk());
                                         port = server->serverAddress().port();
-                                        done = true;
+                                        done.setValue(true);
                                 });
-                                for (int i = 0; i < 500 && !done; ++i) {
+                                for (int i = 0; i < 500 && !done.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(2));
                                 }
+                                REQUIRE(done.value());
                                 REQUIRE(port != 0);
                         }
 
@@ -84,14 +96,20 @@ namespace {
                         }
 
                         ~ClientFixture() {
-                                clientThread.threadEventLoop()->postCallable([this]() {
-                                        delete client;
+                                // deleteLater + quit: the EventLoop drains
+                                // remaining queued items (including any cleanup
+                                // callables ~HttpClient / ~HttpServer post back
+                                // to the same loop) before exiting, so this
+                                // sequence cannot race the way a manual
+                                // post-then-quit would.
+                                if (client != nullptr) {
+                                        client->deleteLater();
                                         client = nullptr;
-                                });
-                                serverThread.threadEventLoop()->postCallable([this]() {
-                                        delete server;
+                                }
+                                if (server != nullptr) {
+                                        server->deleteLater();
                                         server = nullptr;
-                                });
+                                }
                                 clientThread.quit();
                                 serverThread.quit();
                                 clientThread.wait(2000);

@@ -254,7 +254,7 @@ namespace mediaplay {
  * pseudo-backend's schema for @c SDL stages), applies every
  * @c --sc/@c --cc/@c --dc override via @ref applyStageConfig, applies
  * every @c --sm/@c --cm/@c --dm override via @ref applyStageMetadata,
- * and fills @p out with the resolved (@c type, @c path, @c mode,
+ * and fills @p out with the resolved (@c type, @c path, @c role,
  * @c config, @c metadata) tuple suitable for
  * @c MediaPipelineConfig::addStage.  File-path stages are emitted with
  * an empty @c type so the pipeline resolves the real backend via
@@ -262,15 +262,15 @@ namespace mediaplay {
  * at @c build() time.
  *
  * @param rawSpec     CLI-parsed stage spec (type / path / rawKeyValues).
- * @param mode        Desired open mode (@ref MediaIO::Source /
- *                    @c Input / @c InputAndOutput).
+ * @param role        Stage role (@ref MediaPipelineConfig::StageRole::Source /
+ *                    @c Sink / @c Transform).
  * @param stageName   Unique stage name for route targeting and errors.
  * @param scopeLabel  Label for @ref applyStageConfig diagnostics
  *                    (e.g. @c "--sc[TPG]").
  * @param out         Output — populated on success.
  * @return @c Error::Ok on success, or the first parsing error.
  */
-        promeki::Error resolveStagePlan(const StageSpec &rawSpec, promeki::MediaIO::Mode mode,
+        promeki::Error resolveStagePlan(const StageSpec &rawSpec, promeki::MediaPipelineConfig::StageRole role,
                                         const promeki::String &stageName, const promeki::String &scopeLabel,
                                         promeki::MediaPipelineConfig::Stage &out);
 

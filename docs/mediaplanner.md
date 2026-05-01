@@ -9,7 +9,7 @@ partial pipeline config — one in which some routes carry a format
 gap between their source's output and their sink's accepted input
 — and returns a new config in which every route is directly
 format-compatible. The planner does this by walking the registered
-`MediaIO::FormatDesc::bridge` callbacks and choosing the
+`MediaIOFactory::bridge` callbacks and choosing the
 cheapest applicable bridge for each gap.
 
 ## When the planner runs {#mediaplanner_when}
@@ -35,18 +35,18 @@ For each route `A → B` in topological order:
    1. cached `MediaIO::mediaDesc` on an already-open stage,
    2. `MediaIO::describe`'s `preferredFormat`,
    3. the pre-open hint from `MediaIO::setExpectedDesc`,
-   4. as a last resort, briefly `MediaIO::open` the source in
-      `MediaIO::Source` mode to read its `mediaDesc`, then close.
+   4. as a last resort, briefly `MediaIO::open` the source to
+      read its `mediaDesc`, then close.
 2. Ask `B` via `MediaIO::proposeInput` what shape it actually
    wants. If the answer matches `A`'s produced desc, the route
    is direct — the planner emits it unchanged.
-3. Otherwise, the planner walks every registered backend whose
-   `MediaIO::FormatDesc::bridge` callback is non-null and asks
+3. Otherwise, the planner walks every registered factory whose
+   `MediaIOFactory::bridge` returns true for the gap and asks
    each "can you convert from `A`'s desc to `B`'s preferred?"
    The cheapest acceptable bridge wins.
 4. If no single bridge fits and both sides are compressed pixel
    formats, the planner tries the codec-transitive two-hop pattern
-   `MediaIOTask_VideoDecoder → MediaIOTask_VideoEncoder`
+   `VideoDecoderMediaIO → VideoEncoderMediaIO`
    against an intermediate uncompressed shape.
 5. Inserted stages are appended to the output config with stable
    generated names of the form `"<from>__bridge<N>__<to>"`,
@@ -59,8 +59,8 @@ config. Re-planning a resolved config is a no-op.
 
 ## Cost scale {#mediaplanner_costs}
 
-Bridge backends report a unitless integer cost via the `outCost`
-out-parameter of `MediaIO::FormatDesc::BridgeFunc`. The
+Bridge backends report a unitless cost via the `outCost`
+out-parameter of `MediaIOFactory::bridge`. The
 planner picks the cheapest applicable bridge. Costs follow this
 fixed scale:
 
@@ -93,15 +93,15 @@ fixed scale:
 
 ## Authoring a new bridge backend {#mediaplanner_authoring}
 
-Any `MediaIOTask` backend can become a planner-insertable bridge
-by setting `MediaIO::FormatDesc::bridge` in its `formatDesc`
-registration. The callback signature is:
+Any transform backend can become a planner-insertable bridge by
+overriding `MediaIOFactory::bridge` on the backend's factory
+class. The callback signature is:
 
 ```cpp
 bool bridge(const MediaDesc &from,
             const MediaDesc &to,
             MediaIO::Config *outConfig,
-            int *outCost);
+            double *outCost) const;
 ```
 
 Return `true` only when the bridge is applicable to the `from` /
@@ -110,17 +110,18 @@ Return `true` only when the bridge is applicable to the `from` /
 - Populate `outConfig` with the `MediaConfig` that the
   planner should hand to `MediaIO::create` when instantiating
   this bridge stage. Always start from
-  `MediaIO::defaultConfig(name)` so spec defaults flow through.
+  `MediaIOFactory::defaultConfig(name)` so spec defaults flow
+  through.
 - Populate `outCost` using the bands above. Higher numbers mean
   lower quality — the planner picks the smallest.
 
-The transform's own `MediaIOTask::proposeInput` should accept
-the `from` shape (otherwise the bridge will be inserted but fail
-at open time), and its `MediaIOTask::proposeOutput` should
-return the `to` shape via `MediaIOTask::applyOutputOverrides`
-so the planner can compute downstream descs. Following this
-pattern keeps every transform symmetrically usable from either the
-planner or hand-authored configs.
+The transform's own `MediaIO::proposeInput` should accept the
+`from` shape (otherwise the bridge will be inserted but fail at
+open time), and its `MediaIO::proposeOutput` should return the
+`to` shape via `MediaIO::applyOutputOverrides` so the planner can
+compute downstream descs. Following this pattern keeps every
+transform symmetrically usable from either the planner or
+hand-authored configs.
 
 ## Diagnostic output {#mediaplanner_diagnostics}
 
@@ -182,8 +183,8 @@ stages and rewrites the route accordingly.
   when no `describe` / `expectedDesc` data is available. This
   has side effects for live capture sources (RTP, V4L2) — they
   bind sockets / lock device handles. Backends that implement
-  `MediaIOTask::describe` avoid the cost.
-- Per-sink `MediaIOTask::proposeInput` overrides are not yet
+  `MediaIO::describe` avoid the cost.
+- Per-sink `MediaIO::proposeInput` overrides are not yet
   implemented for every sink. Sinks that fall back to the
   accept-anything default cause the planner to leave compatible-
   looking gaps unbridged. Add a `proposeInput` override to any

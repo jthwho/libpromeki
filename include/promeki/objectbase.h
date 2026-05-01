@@ -25,6 +25,7 @@ PROMEKI_NAMESPACE_BEGIN
 class EventLoop;
 class Event;
 class TimerEvent;
+class Thread;
 
 #define PROMEKI_OBJECT(ObjectName, ParentObjectName)                                                                   \
 public:                                                                                                                \
@@ -283,16 +284,21 @@ class ObjectBase {
 
                 /**
                  * @brief Sets the parent of this object.
-                 * If the object already has a parent, it will be removed as
-                 * a child from the old parent and added as a child to the
-                 * new one.
+                 *
+                 * If the object already has a parent, it will be removed
+                 * as a child from the old parent and added as a child to
+                 * the new one.
+                 *
+                 * @par Thread affinity
+                 * @c setParent is thread-affine: @c this and @p p must
+                 * share the same owning @ref Thread (or both have no
+                 * Thread set).  Cross-thread parenting is rejected at
+                 * runtime via @c PROMEKI_ASSERT.  Use
+                 * @ref deleteLater for the common cross-thread teardown
+                 * pattern; for migrations of an entire subtree, call
+                 * @ref moveToThread on the root.
                  */
-                void setParent(ObjectBase *p) {
-                        if (_parent != nullptr) _parent->removeChild(this);
-                        _parent = p;
-                        if (_parent != nullptr) _parent->addChild(this);
-                        return;
-                }
+                void setParent(ObjectBase *p);
 
                 /**
                  * @brief Returns a list of children of this object
@@ -330,15 +336,31 @@ class ObjectBase {
                 EventLoop *eventLoop() const { return _eventLoop; }
 
                 /**
-                 * @brief Changes the EventLoop affinity of this object.
+                 * @brief Returns the @ref Thread this object is affiliated with.
                  *
-                 * Must be called from the object's current thread.  The object
-                 * must have no parent.  Children are moved recursively.
-                 * Asserts on violation of either constraint.
+                 * Captured at construction time from
+                 * @ref Thread::currentThread.  May be @c nullptr if the
+                 * object was created on a thread that has no
+                 * @ref Thread wrapper (e.g. before
+                 * @ref Application::Application has run, or in a bare
+                 * @c std::thread that never adopted itself).
                  *
-                 * @param loop The new EventLoop to affiliate with.
+                 * @return The owning Thread, or nullptr.
                  */
-                void moveToThread(EventLoop *loop);
+                Thread *thread() const { return _thread; }
+
+                /**
+                 * @brief Changes the @ref Thread affinity of this object.
+                 *
+                 * Must be called from the object's current thread.  The
+                 * object must have no parent.  Children are moved
+                 * recursively so the whole subtree ends up on @p t and
+                 * its @ref EventLoop.  Asserts on violation of either
+                 * constraint.
+                 *
+                 * @param t The new Thread to affiliate with.
+                 */
+                void moveToThread(Thread *t);
 
                 /**
                  * @brief Starts a timer on this object's EventLoop.
@@ -357,6 +379,69 @@ class ObjectBase {
                  * @param timerId The timer ID returned by startTimer().
                  */
                 void stopTimer(int timerId);
+
+                /**
+                 * @brief Schedules @c delete this for the next iteration of
+                 *        this object's @ref EventLoop.
+                 *
+                 * Idiomatic Qt-style cross-thread teardown.  Posts a
+                 * callable to the object's @c eventLoop() that performs
+                 * the actual @c delete, so the destructor always runs
+                 * on the object's affinity thread regardless of where
+                 * @c deleteLater is invoked from.  Safe to call from
+                 * any thread.
+                 *
+                 * Typical use: a worker-thread object that needs to be
+                 * torn down by the owning thread.  Calling
+                 * @c worker->deleteLater() then @c thread->quit()
+                 * works correctly because @ref EventLoop drains every
+                 * remaining queued item — including any cleanup
+                 * callables posted from inside the destructor — before
+                 * exiting.
+                 *
+                 * Detaches the object from its parent before posting
+                 * the delete-callable.  Ownership transfers from the
+                 * parent-child chain to the queued callable the moment
+                 * @c deleteLater is invoked, so a parent that dies
+                 * between now and the dispatch cannot double-delete
+                 * the child via @ref destroyChildren.
+                 *
+                 * Falls back to a synchronous @c delete @c this when
+                 * the object has no associated EventLoop.  Always run
+                 * the call as the @em last action that touches the
+                 * object on the calling thread; nothing further may
+                 * dereference @c this once the post lands on the
+                 * target loop.
+                 */
+                void deleteLater();
+
+                /** @brief Cleanup-handler signature: receives @c this on invocation. */
+                using CleanupHandler = std::function<void(ObjectBase *)>;
+
+                /**
+                 * @brief Registers a function to run during this object's
+                 *        destruction.
+                 *
+                 * Cleanup handlers fire from the destructor (after
+                 * @ref aboutToDestroy emits, after children are
+                 * destroyed) and receive @c this as their argument.
+                 * Each handler is gated by an @ref ObjectBasePtr to
+                 * @p target — if @p target has already been destroyed
+                 * by the time the handler would run, the framework
+                 * skips it.  Pass a non-null @p target when the
+                 * handler dereferences a foreign object that may
+                 * outlive @c this in the other direction; pass
+                 * @c nullptr to register a handler that always runs.
+                 *
+                 * Used internally to wire automatic
+                 * signal/slot disconnect on receiver destruction —
+                 * see @ref Signal::connect(Function, ObjectBase *).
+                 *
+                 * @param target Foreign object the handler depends on
+                 *               (may be @c nullptr).
+                 * @param fn     Cleanup handler — must be non-empty.
+                 */
+                void registerCleanup(ObjectBase *target, CleanupHandler fn);
 
         protected:
                 /** @brief Returns the ObjectBase that emitted the signal currently being handled. */
@@ -384,7 +469,7 @@ class ObjectBase {
 
 
         private:
-                using CleanupFunc = std::function<void(ObjectBase *)>;
+                using CleanupFunc = CleanupHandler;
 
                 struct SlotItem {
                                 int         id;
@@ -398,16 +483,29 @@ class ObjectBase {
 
                 ObjectBase    *_parent = nullptr;
                 ObjectBase    *_signalSender = nullptr;
+                Thread        *_thread = nullptr;
                 EventLoop     *_eventLoop = nullptr;
                 ObjectBaseList _childList;
                 List<SlotItem> _slotList;
-                mutable Mutex  _pointerMapMutex; ///< Guards _pointerMap for cross-thread ObjectBasePtr invalidation.
                 Map<std::atomic<ObjectBase *> *,
                     std::atomic<ObjectBase *> *>
                         _pointerMap; ///< Keys are &ObjectBasePtr::p; stored as a type-erased handle so runCleanup() can null every tracker without knowing its @c T.
                 List<Cleanup> _cleanupList;
 
-                void setEventLoopRecursive(EventLoop *loop);
+                // A single process-wide mutex serializes ObjectBasePtr
+                // link/unlink with ObjectBase::runCleanup.  A per-object
+                // mutex is unsafe here because unlink reads the obj
+                // pointer via the atomic and *then* needs to take a
+                // lock to manipulate the map — if we put that lock on
+                // the object itself, the object can be destroyed in
+                // between, leaving us with a use-after-free on the
+                // mutex member.  Serializing through one global mutex
+                // closes that window: an unlink that observes obj
+                // != nullptr is guaranteed that runCleanup hasn't run
+                // yet (and won't until we release).
+                static Mutex &objectBasePtrMutex();
+
+                void setOwnerThreadRecursive(Thread *t, EventLoop *loop);
 
                 void addChild(ObjectBase *c) {
                         _childList += c;
@@ -430,10 +528,11 @@ class ObjectBase {
 
                 void runCleanup() {
                         // Null out any ObjectBasePtr's that are currently pointing
-                        // to this object.  Hold the mutex so concurrent unlink()
-                        // on another thread won't modify _pointerMap mid-iteration.
+                        // to this object.  Hold the global mutex so concurrent
+                        // unlink()/link() on another thread can't observe a
+                        // half-destroyed object.
                         {
-                                Mutex::Locker lock(_pointerMapMutex);
+                                Mutex::Locker lock(objectBasePtrMutex());
                                 for (auto item : _pointerMap) {
                                         item.first->store(nullptr, std::memory_order_release);
                                 }
@@ -451,19 +550,26 @@ class ObjectBase {
 };
 
 template <typename T> inline void ObjectBasePtr<T>::link() {
-        ObjectBase *obj = p.load(std::memory_order_relaxed);
+        // Lock first, then load: a concurrent runCleanup will null
+        // the atomic before clearing the map, so once we hold the
+        // mutex either obj is alive (we add to the map) or it has
+        // already been nulled (we no-op).
+        Mutex::Locker lock(ObjectBase::objectBasePtrMutex());
+        ObjectBase   *obj = p.load(std::memory_order_relaxed);
         if (obj != nullptr) {
-                Mutex::Locker lock(obj->_pointerMapMutex);
                 obj->_pointerMap[&p] = &p;
         }
         return;
 }
 
 template <typename T> inline void ObjectBasePtr<T>::unlink() {
-        ObjectBase *obj = p.exchange(nullptr, std::memory_order_acq_rel);
+        // Same ordering as link(): acquire the global mutex first so
+        // we can't race ObjectBase::runCleanup, which holds the same
+        // lock while it walks _pointerMap and frees the trackers.
+        Mutex::Locker lock(ObjectBase::objectBasePtrMutex());
+        ObjectBase   *obj = p.exchange(nullptr, std::memory_order_acq_rel);
         if (obj != nullptr) {
-                Mutex::Locker lock(obj->_pointerMapMutex);
-                auto          it = obj->_pointerMap.find(&p);
+                auto it = obj->_pointerMap.find(&p);
                 if (it != obj->_pointerMap.end()) {
                         obj->_pointerMap.remove(it);
                 }

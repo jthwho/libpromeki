@@ -195,7 +195,7 @@ TEST_CASE("AudioTestPattern_AvSync") {
         AudioDesc        desc(48000.0f, 2);
         AudioTestPattern gen(desc);
         // LTC on ch0, AvSync click on ch1 — matches the default TPG
-        // configuration from MediaIOTask_TPG::formatDesc().
+        // configuration from TpgMediaIO::formatDesc().
         gen.setChannelModes(makeModes({AudioPattern::LTC, AudioPattern::AvSync}));
         gen.setToneFrequency(1000.0);
         gen.setToneLevel(AudioLevel::fromDbfs(-20.0));

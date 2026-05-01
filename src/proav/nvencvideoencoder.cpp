@@ -1205,7 +1205,7 @@ class NvencVideoEncoder::Impl {
                         // bits-per-frame target, HRD buffer math) and
                         // for SPS/VUI timing info in H.264 / HEVC.  The
                         // library hook is MediaConfig::FrameRate; the
-                        // MediaIOTask_VideoEncoder stamps it from the
+                        // VideoEncoderMediaIO stamps it from the
                         // pending MediaDesc before calling configure().
                         const FrameRate fallback(FrameRate::RationalType(30, 1));
                         FrameRate       fr = _cfg.getAs<FrameRate>(MediaConfig::FrameRate, fallback);

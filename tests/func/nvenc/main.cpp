@@ -424,7 +424,7 @@ namespace {
                                 if (i == forceAt) {
                                         // The VideoEncoder API uses requestKeyframe()
                                         // directly.  Metadata::ForceKeyframe is the
-                                        // higher-level hook that MediaIOTask_VideoEncoder
+                                        // higher-level hook that VideoEncoderMediaIO
                                         // translates into requestKeyframe(); setting
                                         // both here just documents the intent.
                                         frame.modify()->metadata().set(Metadata::ForceKeyframe, true);

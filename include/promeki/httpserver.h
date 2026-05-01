@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/config.h> // PROMEKI_ENABLE_TLS
 #include <promeki/namespace.h>
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
@@ -24,9 +25,7 @@
 #include <promeki/variantspec.h>
 #include <promeki/json.h>
 #include <promeki/stringlist.h>
-#if PROMEKI_ENABLE_TLS
 #include <promeki/sslcontext.h>
-#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -248,7 +247,6 @@ class HttpServer : public ObjectBase {
                  */
                 int connectionCount() const;
 
-#if PROMEKI_ENABLE_TLS
                 /**
                  * @brief Attaches an @ref SslContext for TLS termination.
                  *
@@ -260,12 +258,23 @@ class HttpServer : public ObjectBase {
                  * certificate + private key.
                  *
                  * Pass an empty pointer to disable TLS again.
+                 *
+                 * Always available regardless of @c PROMEKI_ENABLE_TLS;
+                 * in a TLS-disabled build the context is stored but
+                 * its operations are inert (see @ref SslContext) and
+                 * the server simply does not start a TLS handshake.
                  */
                 void setSslContext(SslContext::Ptr ctx) { _sslContext = std::move(ctx); }
 
                 /** @brief Returns the attached SslContext, or null. */
                 SslContext::Ptr sslContext() const { return _sslContext; }
-#endif
+
+                /**
+                 * @brief Reports whether this build can speak TLS.
+                 *
+                 * Forwards to @ref SslContext::hasTlsSupport.
+                 */
+                static bool hasTlsSupport() { return SslContext::hasTlsSupport(); }
 
                 /** @brief Emitted when a request finishes parsing. @signal */
                 PROMEKI_SIGNAL(requestReceived, HttpRequest);
@@ -287,11 +296,9 @@ class HttpServer : public ObjectBase {
                 HttpRouter           _router;
                 HttpConnection::List _connections;
 
-                unsigned int _idleTimeoutMs = HttpConnection::DefaultIdleTimeoutMs;
-                int64_t      _maxBodyBytes = HttpConnection::DefaultMaxBodyBytes;
-#if PROMEKI_ENABLE_TLS
+                unsigned int    _idleTimeoutMs = HttpConnection::DefaultIdleTimeoutMs;
+                int64_t         _maxBodyBytes = HttpConnection::DefaultMaxBodyBytes;
                 SslContext::Ptr _sslContext;
-#endif
 
                 // Helpers for the reflection adapters; non-template
                 // because the per-key plumbing doesn't depend on the

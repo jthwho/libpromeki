@@ -12,6 +12,7 @@
 #include <promeki/list.h>
 #include <promeki/logger.h>
 #include <promeki/map.h>
+#include <promeki/mediaiofactory.h>
 #include <promeki/mediapipelineplanner.h>
 #include <promeki/set.h>
 #include <promeki/variantspec.h>
@@ -23,32 +24,32 @@ PROMEKI_NAMESPACE_BEGIN
 // ============================================================================
 
 bool MediaPipelineConfig::Stage::operator==(const Stage &other) const {
-        return name == other.name && type == other.type && path == other.path && mode == other.mode &&
+        return name == other.name && type == other.type && path == other.path && role == other.role &&
                config == other.config && metadata == other.metadata;
 }
 
 // ============================================================================
-// Mode name round-trip
+// Role name round-trip
 // ============================================================================
 
-String MediaPipelineConfig::modeName(MediaIO::Mode mode) {
-        switch (mode) {
-                case MediaIO::Source: return String("Source");
-                case MediaIO::Sink: return String("Sink");
-                case MediaIO::Transform: return String("Transform");
-                case MediaIO::NotOpen:
+String MediaPipelineConfig::roleName(StageRole role) {
+        switch (role) {
+                case StageRole::Source: return String("Source");
+                case StageRole::Sink: return String("Sink");
+                case StageRole::Transform: return String("Transform");
+                case StageRole::NotOpen:
                 default: return String("NotOpen");
         }
 }
 
-MediaIO::Mode MediaPipelineConfig::modeFromName(const String &name, Error *err) {
+MediaPipelineConfig::StageRole MediaPipelineConfig::roleFromName(const String &name, Error *err) {
         if (err) *err = Error::Ok;
-        if (name == "Source") return MediaIO::Source;
-        if (name == "Sink") return MediaIO::Sink;
-        if (name == "Transform") return MediaIO::Transform;
-        if (name == "NotOpen" || name.isEmpty()) return MediaIO::NotOpen;
+        if (name == "Source") return StageRole::Source;
+        if (name == "Sink") return StageRole::Sink;
+        if (name == "Transform") return StageRole::Transform;
+        if (name == "NotOpen" || name.isEmpty()) return StageRole::NotOpen;
         if (err) *err = Error::Invalid;
-        return MediaIO::NotOpen;
+        return StageRole::NotOpen;
 }
 
 // ============================================================================
@@ -77,7 +78,7 @@ void MediaPipelineConfig::addRoute(const String &from, const String &to) {
 
 bool MediaPipelineConfig::operator==(const MediaPipelineConfig &other) const {
         return _stages == other._stages && _routes == other._routes && _pipelineMetadata == other._pipelineMetadata &&
-               _frameCount == other._frameCount;
+               _frameCount == other._frameCount && _statsWindowSize == other._statsWindowSize;
 }
 
 // ============================================================================
@@ -93,6 +94,11 @@ JsonObject MediaPipelineConfig::toJson() const {
         if (_frameCount.isFinite() && !_frameCount.isEmpty()) {
                 j.set("frameCount", _frameCount.value());
         }
+        // Only emit when it differs from the registered default — keeps
+        // hand-edited JSON files terse for the common case.
+        if (_statsWindowSize != 256) {
+                j.set("statsWindowSize", static_cast<int64_t>(_statsWindowSize));
+        }
 
         JsonArray stageArr;
         for (size_t i = 0; i < _stages.size(); ++i) {
@@ -101,7 +107,7 @@ JsonObject MediaPipelineConfig::toJson() const {
                 sj.set("name", s.name);
                 if (!s.type.isEmpty()) sj.set("type", s.type);
                 if (!s.path.isEmpty()) sj.set("path", s.path);
-                sj.set("mode", modeName(s.mode));
+                sj.set("mode", roleName(s.role));
                 sj.set("config", s.config.toJson());
                 if (!s.metadata.isEmpty()) sj.set("metadata", s.metadata.toJson());
                 stageArr.add(sj);
@@ -147,6 +153,18 @@ MediaPipelineConfig MediaPipelineConfig::fromJson(const JsonObject &obj, Error *
                 }
         }
 
+        if (obj.contains("statsWindowSize")) {
+                Error   wsErr;
+                int64_t ws = obj.getInt("statsWindowSize", &wsErr);
+                if (wsErr.isOk() && ws >= 0) {
+                        cfg._statsWindowSize = static_cast<int>(ws);
+                } else {
+                        promekiWarn(
+                                "MediaPipelineConfig::fromJson: statsWindowSize must be a non-negative integer.");
+                        good = false;
+                }
+        }
+
         if (obj.valueIsArray("stages")) {
                 JsonArray stages = obj.getArray("stages");
                 for (int i = 0; i < stages.size(); ++i) {
@@ -163,7 +181,7 @@ MediaPipelineConfig MediaPipelineConfig::fromJson(const JsonObject &obj, Error *
                         const String modeStr = sj.getString("mode");
                         if (!modeStr.isEmpty()) {
                                 Error mErr;
-                                s.mode = modeFromName(modeStr, &mErr);
+                                s.role = roleFromName(modeStr, &mErr);
                                 if (mErr.isError()) {
                                         promekiWarn("MediaPipelineConfig::fromJson: stage '%s' unknown mode '%s'.",
                                                     s.name.cstr(), modeStr.cstr());
@@ -288,8 +306,8 @@ namespace {
         Error validateStageConfig(const MediaPipelineConfig::Stage &stage) {
                 MediaConfig::SpecMap backendSpecs;
                 if (!stage.type.isEmpty()) {
-                        backendSpecs = MediaIO::configSpecs(stage.type);
-                        const StringList unknown = MediaIO::unknownConfigKeys(stage.type, stage.config);
+                        backendSpecs = MediaIOFactory::configSpecs(stage.type);
+                        const StringList unknown = MediaIOFactory::unknownConfigKeys(stage.type, stage.config);
                         for (size_t i = 0; i < unknown.size(); ++i) {
                                 promekiWarn("MediaPipelineConfig: stage '%s' has unrecognized config key '%s'.",
                                             stage.name.cstr(), unknown[i].cstr());
@@ -393,8 +411,8 @@ Error MediaPipelineConfig::validate() const {
                                    s.name.cstr());
                         return Error::InvalidArgument;
                 }
-                if (s.mode != MediaIO::Source && s.mode != MediaIO::Sink && s.mode != MediaIO::Transform) {
-                        promekiErr("MediaPipelineConfig::validate: stage '%s' has invalid mode.", s.name.cstr());
+                if (s.role != StageRole::Source && s.role != StageRole::Sink && s.role != StageRole::Transform) {
+                        promekiErr("MediaPipelineConfig::validate: stage '%s' has invalid role.", s.name.cstr());
                         return Error::InvalidArgument;
                 }
                 Error cfgErr = validateStageConfig(s);
@@ -496,7 +514,7 @@ StringList MediaPipelineConfig::describe() const {
                         hdr += "<unspecified>";
                 }
                 hdr += ", ";
-                hdr += modeName(s.mode);
+                hdr += roleName(s.role);
                 hdr += "]";
                 if (!s.type.isEmpty() && !s.path.isEmpty()) {
                         hdr += "  path=";
@@ -550,7 +568,7 @@ DataStream &operator<<(DataStream &stream, const MediaPipelineConfig::Stage &s) 
         stream << s.name;
         stream << s.type;
         stream << s.path;
-        stream << static_cast<int32_t>(s.mode);
+        stream << static_cast<int32_t>(s.role);
         stream << s.config;
         stream << s.metadata;
         return stream;
@@ -566,7 +584,7 @@ DataStream &operator>>(DataStream &stream, MediaPipelineConfig::Stage &s) {
         stream >> s.type;
         stream >> s.path;
         stream >> m;
-        s.mode = static_cast<MediaIO::Mode>(m);
+        s.role = static_cast<MediaPipelineConfig::StageRole>(m);
         stream >> s.config;
         stream >> s.metadata;
         return stream;
@@ -599,6 +617,7 @@ DataStream &operator<<(DataStream &stream, const MediaPipelineConfig &c) {
         stream << c.stages();
         stream << c.routes();
         stream << c.frameCount();
+        stream << static_cast<int32_t>(c.statsWindowSize());
         return stream;
 }
 
@@ -611,14 +630,17 @@ DataStream &operator>>(DataStream &stream, MediaPipelineConfig &c) {
         MediaPipelineConfig::StageList stageList;
         MediaPipelineConfig::RouteList routeList;
         FrameCount                     frameCount;
+        int32_t                        statsWindow = 256;
         stream >> meta;
         stream >> stageList;
         stream >> routeList;
         stream >> frameCount;
+        stream >> statsWindow;
         c.setPipelineMetadata(meta);
         c.stages() = std::move(stageList);
         c.routes() = std::move(routeList);
         c.setFrameCount(frameCount);
+        c.setStatsWindowSize(static_cast<int>(statsWindow));
         return stream;
 }
 

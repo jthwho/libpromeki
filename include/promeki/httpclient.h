@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <promeki/config.h> // PROMEKI_ENABLE_TLS
 #include <promeki/namespace.h>
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
@@ -19,9 +20,7 @@
 #include <promeki/httprequest.h>
 #include <promeki/httpresponse.h>
 #include <promeki/httpheaders.h>
-#if PROMEKI_ENABLE_TLS
 #include <promeki/sslcontext.h>
-#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -166,7 +165,6 @@ class HttpClient : public ObjectBase {
                 /** @brief Sets the upper bound on a response body. */
                 void setMaxBodyBytes(int64_t bytes) { _maxBodyBytes = bytes; }
 
-#if PROMEKI_ENABLE_TLS
                 /**
                  * @brief Attaches the @ref SslContext used for @c https:// requests.
                  *
@@ -177,12 +175,26 @@ class HttpClient : public ObjectBase {
                  * proper context (with @ref SslContext::setSystemCaCertificates
                  * for the system trust store, for example) before
                  * making @c https:// requests.
+                 *
+                 * Always available regardless of @c PROMEKI_ENABLE_TLS;
+                 * in a TLS-disabled build the supplied context is
+                 * stored but its operations are inert (see
+                 * @ref SslContext) and an actual @c https request is
+                 * later rejected with @ref Error::NotSupported.
                  */
                 void setSslContext(SslContext::Ptr ctx) { _sslContext = std::move(ctx); }
 
                 /** @brief Returns the attached SslContext, or null. */
                 SslContext::Ptr sslContext() const { return _sslContext; }
-#endif
+
+                /**
+                 * @brief Reports whether this build can speak TLS.
+                 *
+                 * Forwards to @ref SslContext::hasTlsSupport — the single
+                 * source of truth for the @c PROMEKI_ENABLE_TLS feature
+                 * flag.
+                 */
+                static bool hasTlsSupport() { return SslContext::hasTlsSupport(); }
 
                 /** @brief Emitted when a request has finished (success or error). @signal */
                 PROMEKI_SIGNAL(requestFinished, HttpRequest, HttpResponse);
@@ -200,9 +212,7 @@ class HttpClient : public ObjectBase {
                 unsigned int     _timeoutMs = DefaultTimeoutMs;
                 int64_t          _maxBodyBytes = DefaultMaxBodyBytes;
                 List<PendingPtr> _active;
-#if PROMEKI_ENABLE_TLS
-                SslContext::Ptr _sslContext;
-#endif
+                SslContext::Ptr  _sslContext;
 
                 Future<HttpResponse> dispatch(HttpRequest request);
                 void                 resolveTargetUrl(HttpRequest &request) const;

@@ -37,7 +37,7 @@ PROMEKI_NAMESPACE_BEGIN
  * timecode tracks, and metadata — but does not encode or decode any
  * sample payloads. Compressed sample bytes flow through verbatim in
  * Sample::data buffers, and downstream consumers (or
- * MediaIOTask_QuickTime, which wraps compressed samples as
+ * QuickTimeMediaIO, which wraps compressed samples as
  * @ref CompressedVideoPayload) are responsible for running any codec.
  *
  * Tracks are exposed as a plain list; each Track carries its codec

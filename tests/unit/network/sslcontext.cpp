@@ -83,6 +83,25 @@ namespace {
 
 } // anonymous namespace
 
+TEST_CASE("SslContext - hasTlsSupport reflects build configuration") {
+        // This translation unit only compiles into unittest-promeki
+        // when @c PROMEKI_ENABLE_TLS is on (see CMakeLists), so the
+        // contract under test is that @c hasTlsSupport reports @c true
+        // and the context's @ref nativeConfig is populated.  The
+        // disabled-build branch lives in the same source file but is
+        // covered indirectly: the only way to reach the @c false
+        // return path is to build without TLS, in which case this
+        // test is excluded from the binary by design.
+        CHECK(SslContext::hasTlsSupport());
+
+        SslContext ctx;
+        CHECK(ctx.nativeConfig() != nullptr);
+
+        // Static method must be callable without an instance and
+        // remain stable across multiple calls.
+        CHECK(SslContext::hasTlsSupport() == SslContext::hasTlsSupport());
+}
+
 TEST_CASE("SslContext - default state") {
         SslContext ctx;
         CHECK(ctx.protocol() == SslContext::SecureProtocols);

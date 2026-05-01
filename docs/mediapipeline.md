@@ -217,14 +217,14 @@ MediaPipelineConfig cfg;
 MediaPipelineConfig::Stage src;
 src.name = "src";
 src.type = "TPG";
-src.mode = MediaIO::Source;
+src.role = MediaPipelineConfig::StageRole::Source;
 src.config.set(MediaConfig::VideoEnabled, true);
 cfg.addStage(src);
 
 MediaPipelineConfig::Stage csc;
 csc.name = "csc";
 csc.type = "CSC";
-csc.mode = MediaIO::Transform;
+csc.role = MediaPipelineConfig::StageRole::Transform;
 csc.config.set(MediaConfig::OutputPixelFormat,
                PixelFormat(PixelFormat::RGBA8_sRGB));
 cfg.addStage(csc);
@@ -232,7 +232,7 @@ cfg.addStage(csc);
 MediaPipelineConfig::Stage sink;
 sink.name = "mov";
 sink.path = "/tmp/out.mov";           // file sink, type auto-detected
-sink.mode = MediaIO::Sink;
+sink.role = MediaPipelineConfig::StageRole::Sink;
 cfg.addStage(sink);
 
 cfg.addRoute("src", "csc");

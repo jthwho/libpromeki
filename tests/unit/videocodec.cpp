@@ -11,7 +11,7 @@
  * plumbing, registry, flush/EOS handling, and @ref MediaConfig
  * forwarding all work before any real codec (NVENC, x264, etc.) is
  * plugged in.  Also registers the "Passthrough" codec + backend so the
- * generic MediaIOTask_VideoEncoder / MediaIOTask_VideoDecoder tests
+ * generic VideoEncoderMediaIO / VideoDecoderMediaIO tests
  * (and anyone else who wants a GPU-free smoke codec) can reach it.
  */
 
@@ -119,7 +119,7 @@ namespace {
         class PassthroughVideoDecoder : public VideoDecoder {
                 public:
                         // Reads the output geometry + format from MediaConfig —
-                        // the MediaIOTask_VideoDecoder pathway forwards the
+                        // the VideoDecoderMediaIO pathway forwards the
                         // whole MediaIO config to configure(), so the generic
                         // backend tests can drive this decoder without having
                         // to reach in and call setOutput() themselves.
@@ -186,7 +186,7 @@ namespace {
                                 d.desc = "Passthrough (test) codec";
                                 // The Passthrough encoder stamps every CompressedVideoPayload
                                 // with PixelFormat::H264 so tests can round-trip through
-                                // the generic MediaIOTask_VideoEncoder output-desc path.
+                                // the generic VideoEncoderMediaIO output-desc path.
                                 d.compressedPixelFormats = {
                                         static_cast<int>(PixelFormat::H264),
                                 };

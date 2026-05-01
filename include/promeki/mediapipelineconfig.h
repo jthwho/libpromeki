@@ -62,6 +62,23 @@ class MediaPipelineConfig {
                 using PtrList = promeki::List<Ptr>;
 
                 /**
+                 * @brief Per-stage role classification.
+                 *
+                 * Replaces the old @c MediaIO::Mode that was removed when
+                 * MediaIO was split into MediaIOSource / MediaIOSink /
+                 * MediaIOPortGroup.  The role still has to round-trip
+                 * through JSON / DataStream because file-only stages
+                 * (path-only with no registered backend) need to know
+                 * whether to be opened for read or for write.
+                 */
+                enum class StageRole {
+                        NotOpen = 0, ///< @brief No role assigned yet.
+                        Source,      ///< @brief Stage produces frames (file read, capture, TPG).
+                        Sink,        ///< @brief Stage consumes frames (file write, display).
+                        Transform    ///< @brief Stage both consumes and produces (CSC, FrameSync).
+                };
+
+                /**
                  * @brief Declarative description of one @ref MediaIO stage.
                  *
                  * A stage is either a registered backend (identified by
@@ -80,8 +97,8 @@ class MediaPipelineConfig {
                                 String type;
                                 /** @brief Filesystem path for file-based stages. */
                                 String path;
-                                /** @brief Direction: @ref MediaIO::Source, @c Sink, or @c Transform. */
-                                MediaIO::Mode mode = MediaIO::NotOpen;
+                                /** @brief Direction: @ref StageRole::Source, @c Sink, or @c Transform. */
+                                StageRole role = StageRole::NotOpen;
                                 /** @brief Per-stage configuration. */
                                 MediaConfig config;
                                 /** @brief Per-stage metadata overrides (empty == accept backend defaults). */
@@ -218,6 +235,25 @@ class MediaPipelineConfig {
                 void setFrameCount(const FrameCount &count) { _frameCount = count; }
 
                 // ------------------------------------------------------------
+                // Stats window
+                // ------------------------------------------------------------
+
+                /**
+                 * @brief Returns the per-stage @ref WindowedStat ring capacity.
+                 *
+                 * Propagated to each stage's @ref MediaConfig::StatsWindowSize
+                 * during @ref MediaPipeline::build / @ref MediaPipeline::injectStage,
+                 * so a single pipeline-wide knob controls the size of every
+                 * MediaIO's per-command telemetry window.  Stages that
+                 * explicitly set @ref MediaConfig::StatsWindowSize override
+                 * the pipeline default.  A value of zero disables tracking.
+                 */
+                int statsWindowSize() const { return _statsWindowSize; }
+
+                /** @brief Sets the per-stage @ref WindowedStat ring capacity. */
+                void setStatsWindowSize(int n) { _statsWindowSize = n < 0 ? 0 : n; }
+
+                // ------------------------------------------------------------
                 // Operations
                 // ------------------------------------------------------------
 
@@ -270,7 +306,7 @@ class MediaPipelineConfig {
                  *  - Every stage participates in at least one route
                  *    (except single-stage configs).
                  *  - Each stage's @ref MediaConfig keys are recognized
-                 *    (via @ref MediaIO::unknownConfigKeys) and each set
+                 *    (via @ref MediaIOFactory::unknownConfigKeys) and each set
                  *    value passes its registered @ref VariantSpec.
                  *
                  * Findings are logged at warning level; the return value
@@ -340,26 +376,27 @@ class MediaPipelineConfig {
                 bool operator!=(const MediaPipelineConfig &other) const { return !(*this == other); }
 
                 /**
-                 * @brief Renders a @ref MediaIO::Mode as a stable name.
+                 * @brief Renders a @ref StageRole as a stable name.
                  *
                  * Used by JSON round-trip.  Unknown values produce
                  * @c "NotOpen".
                  */
-                static String modeName(MediaIO::Mode mode);
+                static String roleName(StageRole role);
 
                 /**
-                 * @brief Parses a mode name produced by @ref modeName.
-                 * @param name The mode string.
+                 * @brief Parses a role name produced by @ref roleName.
+                 * @param name The role string.
                  * @param err  Optional error — @c Error::Invalid on unknown name.
-                 * @return The parsed mode.
+                 * @return The parsed role.
                  */
-                static MediaIO::Mode modeFromName(const String &name, Error *err = nullptr);
+                static StageRole roleFromName(const String &name, Error *err = nullptr);
 
         private:
                 StageList  _stages;
                 RouteList  _routes;
                 Metadata   _pipelineMetadata;
                 FrameCount _frameCount;
+                int        _statsWindowSize = 256;
 };
 
 // ============================================================================

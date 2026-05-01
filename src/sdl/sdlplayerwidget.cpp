@@ -11,6 +11,8 @@
 #include <promeki/sdl/sdlwindow.h>
 #include <promeki/keyevent.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaioportgroup.h>
+#include <promeki/mediaiorequest.h>
 #include <promeki/logger.h>
 
 #include <SDL3/SDL.h>
@@ -29,25 +31,13 @@ SDLPlayerWidget::SDLPlayerWidget(SDLAudioOutput *audio, bool useAudioClock, Obje
         setFocusPolicy(StrongFocus);
         _renderScheduled.setValue(false);
 
-        // SDLPlayerTask's constructor is private; friendship lets this
-        // TU construct it directly, but UniquePtr::create cannot reach it,
-        // so wrap via takeOwnership from a raw allocation instead.
-        auto task = SDLPlayerTask::UPtr::takeOwnership(new SDLPlayerTask(this, audio, useAudioClock));
-        _mediaIO = MediaIO::UPtr::create(nullptr);
-        SDLPlayerTask *taskRaw = task.ptr();
-        Error          err = _mediaIO->adoptTask(taskRaw);
-        if (err.isError()) {
-                promekiErr("SDLPlayerWidget: adoptTask failed: %s", err.name().cstr());
-                _task = nullptr;
-                _mediaIO.clear();
-                // task UniquePtr falls out of scope and deletes on failure.
-        } else {
-                // On success the MediaIO owns the task; disarm the local
-                // UniquePtr and keep a non-owning observer pointer for
-                // the widget's own use.
-                (void)task.release();
-                _task = taskRaw;
-        }
+        // SDLPlayerMediaIO's constructor is private; friendship lets
+        // this TU construct it directly with the SDL handles —
+        // SDLPlayerMediaIO IS the MediaIO, so there's no separate
+        // wrapper to wire up.
+        SDLPlayerMediaIO *raw = new SDLPlayerMediaIO(this, audio, useAudioClock);
+        _mediaIO = UniquePtr<SDLPlayerMediaIO>::takeOwnership(raw);
+        _task = raw;
 }
 
 SDLPlayerWidget::~SDLPlayerWidget() {
@@ -85,9 +75,10 @@ void SDLPlayerWidget::presentVideo(const UncompressedVideoPayload::Ptr &payload)
                 if (_pendingPayload.isValid() && _task != nullptr) {
                         // Previous payload hasn't been picked up —
                         // this replacement is a drop at the display
-                        // stage.  Bill it to the task's lifetime
-                        // counter so MediaIO stats report it.
-                        _task->noteFrameDropped();
+                        // stage.  Bill it to the backend's first port
+                        // group so MediaIO stats report it.
+                        MediaIOPortGroup *grp = _task->portGroup(0);
+                        if (grp != nullptr) _task->noteFrameDropped(grp);
                 }
                 _pendingPayload = payload;
         }

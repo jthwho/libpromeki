@@ -33,7 +33,7 @@ PROMEKI_NAMESPACE_BEGIN
  * every arriving datagram to a user callback.
  *
  * Downstream consumers currently targeted:
- *  - @ref MediaIOTask_Rtp reader mode (one receiver per video / audio
+ *  - @ref MediaIO_Rtp reader mode (one receiver per video / audio
  *    / data RTP stream whose destination happens to be a multicast
  *    group).
  *  - SAP / SDP announcement listener (joins @c 224.2.127.254:9875

@@ -10,8 +10,10 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include <promeki/mediaiotask_imagefile.h>
+#include <promeki/imagefilemediaio.h>
 #include <promeki/audiocodec.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/enums.h>
 #include <promeki/pixelformat.h>
 #include <promeki/set.h>
 #include <promeki/size2d.h>
@@ -77,17 +79,19 @@ namespace mediaplay {
 
         void listMediaIOBackendsAndExit() {
                 fprintf(stdout, "Registered MediaIO backends:\n");
-                for (const auto &desc : MediaIO::registeredFormats()) {
+                for (const MediaIOFactory *desc : MediaIOFactory::registeredFactories()) {
+                        if (desc == nullptr) continue;
                         String caps;
-                        if (desc.canBeSink) caps += "I";
-                        if (desc.canBeSource) caps += "O";
-                        if (desc.canBeTransform && caps.isEmpty()) caps = "IO";
-                        fprintf(stdout, "  %-16s [%-3s]  %s\n", desc.name.cstr(), caps.cstr(), desc.description.cstr());
+                        if (desc->canBeSink()) caps += "I";
+                        if (desc->canBeSource()) caps += "O";
+                        if (desc->canBeTransform() && caps.isEmpty()) caps = "IO";
+                        fprintf(stdout, "  %-16s [%-3s]  %s\n", desc->name().cstr(), caps.cstr(),
+                                desc->description().cstr());
                 }
                 // SDL is a mediaplay-local pseudo-backend (see the note in
-                // stage.h) — it isn't in MediaIO::registeredFormats() but it
-                // accepts the same -d / --dc CLI surface, so list it here too
-                // to keep the --help picture honest.
+                // stage.h) — it isn't in MediaIOFactory::registeredFactories()
+                // but it accepts the same -d / --dc CLI surface, so list it
+                // here too to keep the --help picture honest.
                 fprintf(stdout, "  %-16s [%-3s]  %s\n", kStageSdl, "I", sdlDescription());
                 std::exit(0);
         }
@@ -238,7 +242,7 @@ namespace mediaplay {
                 if (stage.type == kStageSdl) {
                         specs = sdlConfigSpecs();
                 } else if (stage.type != kStageFile) {
-                        specs = MediaIO::configSpecs(stage.type);
+                        specs = MediaIOFactory::configSpecs(stage.type);
                 }
 
                 for (const auto &kv : stage.rawKeyValues) {
@@ -381,11 +385,9 @@ namespace mediaplay {
                         return Error::Ok;
                 }
                 // Registered backend?
-                for (const auto &desc : MediaIO::registeredFormats()) {
-                        if (desc.name == arg) {
-                                stage.type = arg;
-                                return Error::Ok;
-                        }
+                if (MediaIOFactory::findByName(arg) != nullptr) {
+                        stage.type = arg;
+                        return Error::Ok;
                 }
                 // Fall back to "filesystem path".
                 stage.type = kStageFile;
@@ -413,7 +415,7 @@ namespace mediaplay {
                         }
                         resolvedType = io->config().getAs<String>(MediaConfig::Type);
                 } else {
-                        MediaIO::Config cfg = MediaIO::defaultConfig(working.type);
+                        MediaIO::Config cfg = MediaIOFactory::defaultConfig(working.type);
                         cfg.set(MediaConfig::Type, working.type);
                         working.config = cfg;
                         io = MediaIO::create(working.config);
@@ -441,7 +443,7 @@ namespace mediaplay {
                         return nullptr;
                 }
                 if (!applyStage.metadata.isEmpty()) {
-                        io->setExpectedMetadata(applyStage.metadata);
+                        io->setPendingMetadata(applyStage.metadata);
                 }
                 return io;
         }
@@ -452,7 +454,7 @@ namespace mediaplay {
                         fprintf(stderr, "Error: intermediate stage has no backend name\n");
                         return nullptr;
                 }
-                MediaIO::Config cfg = MediaIO::defaultConfig(typeName);
+                MediaIO::Config cfg = MediaIOFactory::defaultConfig(typeName);
                 cfg.set(MediaConfig::Type, typeName);
                 StageSpec applyStage;
                 applyStage.type = typeName;
@@ -472,7 +474,7 @@ namespace mediaplay {
                         return nullptr;
                 }
                 if (!applyStage.metadata.isEmpty()) {
-                        io->setExpectedMetadata(applyStage.metadata);
+                        io->setPendingMetadata(applyStage.metadata);
                 }
                 return io;
         }
@@ -497,7 +499,7 @@ namespace mediaplay {
                         labelOut = String("file:") + spec.path;
                         resolvedType = io->config().getAs<String>(MediaConfig::Type);
                 } else {
-                        MediaIO::Config cfg = MediaIO::defaultConfig(spec.type);
+                        MediaIO::Config cfg = MediaIOFactory::defaultConfig(spec.type);
                         cfg.set(MediaConfig::Type, spec.type);
                         io = MediaIO::create(cfg);
                         if (io == nullptr) {
@@ -529,8 +531,8 @@ namespace mediaplay {
                 }
                 io->setConfig(applyStage.config);
 
-                io->setExpectedDesc(srcDesc);
-                if (srcAudioDesc.isValid()) io->setExpectedAudioDesc(srcAudioDesc);
+                io->setPendingMediaDesc(srcDesc);
+                if (srcAudioDesc.isValid()) io->setPendingAudioDesc(srcAudioDesc);
 
                 // Metadata precedence: start from the upstream's metadata so
                 // the sink inherits everything the source produced, then
@@ -544,7 +546,7 @@ namespace mediaplay {
                 if (!applyStage.metadata.isEmpty()) {
                         merged.merge(applyStage.metadata);
                 }
-                if (!merged.isEmpty()) io->setExpectedMetadata(merged);
+                if (!merged.isEmpty()) io->setPendingMetadata(merged);
                 return io;
         }
 
@@ -552,7 +554,7 @@ namespace mediaplay {
         // CLI → MediaPipelineConfig::Stage resolver
         // --------------------------------------------------------------------------
 
-        Error resolveStagePlan(const StageSpec &rawSpec, MediaIO::Mode mode, const String &stageName,
+        Error resolveStagePlan(const StageSpec &rawSpec, MediaPipelineConfig::StageRole role, const String &stageName,
                                const String &scopeLabel, MediaPipelineConfig::Stage &out) {
                 StageSpec working = rawSpec;
 
@@ -568,7 +570,7 @@ namespace mediaplay {
                 } else if (working.type == kStageSdl) {
                         working.config = sdlDefaultConfig();
                 } else {
-                        MediaIO::Config cfg = MediaIO::defaultConfig(working.type);
+                        MediaIO::Config cfg = MediaIOFactory::defaultConfig(working.type);
                         cfg.set(MediaConfig::Type, working.type);
                         working.config = cfg;
                 }
@@ -586,7 +588,15 @@ namespace mediaplay {
                 out.name = stageName;
                 out.type = (working.type == kStageFile) ? String() : working.type;
                 out.path = working.path;
-                out.mode = mode;
+                out.role = role;
+                // Sinks need OpenMode::Write in the config so file-based
+                // backends (ImageFile, AudioFile, QuickTime, ...) open for
+                // writing.  Source mode is the registered default, so
+                // there's no need to set it explicitly for Source / Transform
+                // stages.
+                if (role == MediaPipelineConfig::StageRole::Sink) {
+                        working.config.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
+                }
                 out.config = working.config;
                 out.metadata = working.metadata;
                 return Error::Ok;

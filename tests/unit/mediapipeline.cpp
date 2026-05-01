@@ -19,9 +19,9 @@
 #include <promeki/mediapipelineconfig.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaiofactory.h>
 #include <promeki/objectbase.tpp>
 #include <promeki/pipelineevent.h>
-#include <promeki/pipelinestats.h>
 #include <promeki/thread.h>
 #include <promeki/videoformat.h>
 
@@ -39,7 +39,7 @@ namespace {
                 MediaPipelineConfig::Stage src;
                 src.name = "src";
                 src.type = "TPG";
-                src.mode = MediaIO::Source;
+                src.role = MediaPipelineConfig::StageRole::Source;
                 src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
                 src.config.set(MediaConfig::VideoEnabled, true);
                 src.config.set(MediaConfig::AudioEnabled, false);
@@ -48,7 +48,7 @@ namespace {
                 MediaPipelineConfig::Stage csc;
                 csc.name = "csc";
                 csc.type = "CSC";
-                csc.mode = MediaIO::Transform;
+                csc.role = MediaPipelineConfig::StageRole::Transform;
                 cfg.addStage(csc);
 
                 cfg.addRoute("src", "csc");
@@ -79,7 +79,7 @@ TEST_CASE("MediaPipeline_BuildRejectsFanIn") {
         MediaPipelineConfig::Stage extraSrc;
         extraSrc.name = "src2";
         extraSrc.type = "TPG";
-        extraSrc.mode = MediaIO::Source;
+        extraSrc.role = MediaPipelineConfig::StageRole::Source;
         cfg.addStage(extraSrc);
         cfg.addRoute("src2", "csc"); // csc now has two incoming routes
 
@@ -104,6 +104,29 @@ TEST_CASE("MediaPipeline_BuildSucceedsAndInstantiatesStages") {
         CHECK(p.stage("ghost") == nullptr);
 }
 
+TEST_CASE("MediaPipeline_StageNameSeedsMediaIOName") {
+        // The pipeline must always seed MediaConfig::Name to the stage
+        // name so logs, stats, and downstream tooling key off the same
+        // identifier the pipeline graph uses, even when the stage
+        // config supplies a different (or no) Name.
+        EventLoop           loop;
+        MediaPipeline       p;
+        MediaPipelineConfig cfg = makeTpgToCsc();
+        // Deliberately stamp a different Name on the stage config —
+        // the pipeline must override it with the stage name.
+        cfg.stages()[0].config.set(MediaConfig::Name, String("not-the-stage-name"));
+        REQUIRE(p.build(cfg).isOk());
+
+        MediaIO *src = p.stage("src");
+        REQUIRE(src != nullptr);
+        CHECK(src->name() == "src");
+        CHECK(src->config().getAs<String>(MediaConfig::Name) == "src");
+
+        MediaIO *csc = p.stage("csc");
+        REQUIRE(csc != nullptr);
+        CHECK(csc->name() == "csc");
+}
+
 TEST_CASE("MediaPipeline_OpenAndClose") {
         EventLoop     loop;
         MediaPipeline p;
@@ -126,8 +149,12 @@ TEST_CASE("MediaPipeline_StatsAfterOpen") {
         MediaPipelineStats snapshot = p.stats();
         CHECK(snapshot.containsStage("src"));
         CHECK(snapshot.containsStage("csc"));
-        // Aggregate should be populated (even if counters are zero).
-        CHECK(snapshot.aggregate().contains(MediaIOStats::FramesDropped));
+        // The cumulative aggregate should be populated (even if
+        // counters are zero) — populateStandardStats overlays it on
+        // every Stats command.
+        const MediaPipelineStageStats *src = snapshot.findStage("src");
+        REQUIRE(src != nullptr);
+        CHECK(src->cumulative.contains(MediaIOStats::FramesDropped));
 
         (void)p.close();
 }
@@ -163,57 +190,6 @@ TEST_CASE("MediaPipeline_BuildFromJsonRoundTrip") {
         CHECK(p.stageNames().size() == 2);
         CHECK(p.stage("src") != nullptr);
         CHECK(p.stage("csc") != nullptr);
-}
-
-TEST_CASE("MediaPipeline_StatsContainPipelineBucket") {
-        EventLoop     loop;
-        MediaPipeline p;
-        REQUIRE(p.build(makeTpgToCsc()).isOk());
-        REQUIRE(p.open().isOk());
-
-        MediaPipelineStats   snap = p.stats();
-        const PipelineStats &pp = snap.pipeline();
-        // Counters are registered even before start(), so the state
-        // is reported and the counters sit at their zero defaults.
-        CHECK(pp.contains(PipelineStats::State));
-        CHECK(pp.get(PipelineStats::State).get<String>() == "Open");
-        CHECK(pp.get(PipelineStats::FramesProduced).get<int64_t>() == 0);
-        CHECK(pp.get(PipelineStats::WriteRetries).get<int64_t>() == 0);
-        CHECK(pp.get(PipelineStats::PipelineErrors).get<int64_t>() == 0);
-        CHECK(pp.get(PipelineStats::SourcesAtEof).get<int64_t>() == 0);
-        CHECK(pp.get(PipelineStats::PausedEdges).get<int64_t>() == 0);
-
-        (void)p.close();
-}
-
-TEST_CASE("MediaPipeline_FramesProducedCounterAdvances") {
-        EventLoop     loop;
-        MediaPipeline p;
-        REQUIRE(p.build(makeTpgToCsc()).isOk());
-        REQUIRE(p.open().isOk());
-        REQUIRE(p.start().isOk());
-
-        // Pump the loop, spinning until the drain has produced at
-        // least one frame or we hit a generous timeout.  TPG is a
-        // real strand-driven backend so we need to give it real time
-        // to emit @c frameReady; processEvents() alone doesn't yield
-        // to that thread.
-        const int64_t deadlineMs = 1000;
-        ElapsedTimer  t;
-        t.start();
-        int64_t produced = 0;
-        while (t.elapsed() < deadlineMs) {
-                loop.processEvents();
-                produced = p.stats().pipeline().get(PipelineStats::FramesProduced).get<int64_t>();
-                if (produced > 0) break;
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        }
-
-        CHECK(produced > 0);
-        CHECK(p.stats().pipeline().get(PipelineStats::State).get<String>() == "Running");
-
-        CHECK(p.stop().isOk());
-        CHECK(p.close().isOk());
 }
 
 TEST_CASE("MediaPipeline_StartDrainsFramesThroughChain") {
@@ -343,7 +319,7 @@ TEST_CASE("MediaPipeline_InjectStageSkipsFactory") {
         // fabricated "External" type name — without injection the
         // factory would fail because "External" is not a registered
         // backend.
-        MediaIO::Config cfg = MediaIO::defaultConfig("CSC");
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("CSC");
         cfg.set(MediaConfig::Type, String("CSC"));
         MediaIO *external = MediaIO::create(cfg);
         REQUIRE(external != nullptr);
@@ -352,7 +328,7 @@ TEST_CASE("MediaPipeline_InjectStageSkipsFactory") {
         MediaPipelineConfig::Stage src;
         src.name = "src";
         src.type = "TPG";
-        src.mode = MediaIO::Source;
+        src.role = MediaPipelineConfig::StageRole::Source;
         src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
         src.config.set(MediaConfig::VideoEnabled, true);
         src.config.set(MediaConfig::AudioEnabled, false);
@@ -361,13 +337,14 @@ TEST_CASE("MediaPipeline_InjectStageSkipsFactory") {
         MediaPipelineConfig::Stage ext;
         ext.name = "xtr";
         ext.type = "External"; // not registered — must be injected
-        ext.mode = MediaIO::Transform;
+        ext.role = MediaPipelineConfig::StageRole::Transform;
         mpc.addStage(ext);
 
         mpc.addRoute("src", "xtr");
 
         MediaPipeline p;
-        CHECK(p.injectStage("xtr", external).isOk());
+        external->setName(String("xtr"));
+        CHECK(p.injectStage(external).isOk());
         REQUIRE(p.build(mpc).isOk());
         CHECK(p.stage("xtr") == external);
 
@@ -375,6 +352,73 @@ TEST_CASE("MediaPipeline_InjectStageSkipsFactory") {
         // deleting it here after close confirms it's still alive.
         CHECK(p.close().isOk());
         delete external;
+}
+
+TEST_CASE("MediaPipeline_InjectStageAdoptsIONameWhenSet") {
+        EventLoop       loop;
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("CSC");
+        cfg.set(MediaConfig::Type, String("CSC"));
+        cfg.set(MediaConfig::Name, String("my-csc"));
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        MediaPipeline p;
+        CHECK(p.injectStage(io).isOk());
+        // Name unchanged because it was unique.
+        CHECK(io->name() == "my-csc");
+        delete io;
+}
+
+TEST_CASE("MediaPipeline_InjectStageRenamesOnCollision") {
+        EventLoop loop;
+
+        MediaIO::Config c1 = MediaIOFactory::defaultConfig("CSC");
+        c1.set(MediaConfig::Type, String("CSC"));
+        c1.set(MediaConfig::Name, String("bridge"));
+        MediaIO *io1 = MediaIO::create(c1);
+        REQUIRE(io1 != nullptr);
+
+        MediaIO::Config c2 = MediaIOFactory::defaultConfig("CSC");
+        c2.set(MediaConfig::Type, String("CSC"));
+        c2.set(MediaConfig::Name, String("bridge"));
+        MediaIO *io2 = MediaIO::create(c2);
+        REQUIRE(io2 != nullptr);
+
+        MediaPipeline p;
+        CHECK(p.injectStage(io1).isOk());
+        CHECK(io1->name() == "bridge");
+
+        // Same name → collision; must be renamed and the IO updated.
+        CHECK(p.injectStage(io2).isOk());
+        CHECK(io2->name() == "bridge2");
+
+        delete io1;
+        delete io2;
+}
+
+TEST_CASE("MediaPipeline_InjectStageAutoNamesByRole") {
+        EventLoop loop;
+
+        // Inspector advertises canBeSink=true via its factory, so the
+        // unnamed inject path must produce "sink<N>" auto-names.
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("Inspector");
+        cfg.set(MediaConfig::Type, String("Inspector"));
+        // Leave MediaConfig::Name unset so the auto-name path runs.
+        MediaIO *a = MediaIO::create(cfg);
+        REQUIRE(a != nullptr);
+        REQUIRE(a->name().isEmpty());
+
+        MediaIO *b = MediaIO::create(cfg);
+        REQUIRE(b != nullptr);
+
+        MediaPipeline p;
+        CHECK(p.injectStage(a).isOk());
+        CHECK(a->name() == "sink1");
+        CHECK(p.injectStage(b).isOk());
+        CHECK(b->name() == "sink2");
+
+        delete a;
+        delete b;
 }
 
 // ============================================================================
@@ -385,7 +429,13 @@ namespace {
 
         // Pumps the EventLoop until @p pred returns true, or @p timeoutMs elapses.
         // Returns true if the predicate fired, false on timeout.
-        template <typename Pred> bool pumpUntil(EventLoop &loop, Pred pred, int64_t timeoutMs = 2000) {
+        //
+        // The 10s default accommodates cold-start latency: when these
+        // tests run early in a fresh process the SharedThread pool's
+        // first worker spawn + the close cascade across two strand-
+        // backed stages can take several seconds.  Subsequent runs see
+        // the pool warm and complete in tens of milliseconds.
+        template <typename Pred> bool pumpUntil(EventLoop &loop, Pred pred, int64_t timeoutMs = 10000) {
                 ElapsedTimer t;
                 t.start();
                 while (t.elapsed() < timeoutMs) {

@@ -19,18 +19,120 @@
 #include <promeki/sharedptr.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
-#include <promeki/uuid.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
+ * @brief Snapshot of a single @ref MediaIOPort's identity and format landscape.
+ * @ingroup mediaio_user
+ *
+ * One per source / sink on a multi-port @ref MediaIO.  Carried in
+ * @ref MediaIODescription's @c sources / @c sinks lists.  The
+ * per-port preferred / producible / acceptable format fields drive
+ * the pipeline planner's bridge-insertion decisions.
+ */
+struct MediaIOPortDescription {
+                /** @brief Role of this port (Source or Sink). */
+                enum Role {
+                        Source = 0, ///< @brief Port produces frames (corresponds to @ref MediaIOSource).
+                        Sink        ///< @brief Port accepts frames (corresponds to @ref MediaIOSink).
+                };
+
+                /** @brief List alias. */
+                using List = promeki::List<MediaIOPortDescription>;
+
+                /** @brief Human-readable port name (e.g. @c "video", @c "src0"). */
+                String name;
+
+                /** @brief Per-type port index (sources and sinks are indexed independently). */
+                int index = -1;
+
+                /** @brief Source vs sink role. */
+                Role role = Source;
+
+                /**
+                 * @brief Index of the @ref MediaIOPortGroup this port belongs to.
+                 *
+                 * Refers into @ref MediaIODescription::portGroups; lets
+                 * planners identify ports that share timing, frame
+                 * count, and seek state.
+                 */
+                int portGroupIndex = -1;
+
+                /**
+                 * @brief Format shapes a source port can produce directly.
+                 *
+                 * Source-side counterpart to @ref acceptableFormats.
+                 * Empty for @ref Sink ports and for sources whose
+                 * backend has nothing to advertise.  The pipeline
+                 * planner consults this when matching upstream outputs
+                 * to downstream inputs and deciding where to splice in
+                 * a CSC / decoder bridge.
+                 */
+                MediaDesc::List producibleFormats;
+
+                /**
+                 * @brief Format shapes a sink port can accept directly.
+                 *
+                 * Sink-side counterpart to @ref producibleFormats.
+                 * Empty for @ref Source ports and for sinks whose
+                 * backend has nothing to advertise.  The pipeline
+                 * planner uses this together with the upstream
+                 * @ref producibleFormats to decide whether direct
+                 * delivery is possible or a bridge stage is required.
+                 */
+                MediaDesc::List acceptableFormats;
+
+                /** @brief The default / preferred format for this port. */
+                MediaDesc preferredFormat;
+};
+
+/**
+ * @brief Snapshot of a single @ref MediaIOPortGroup's timing / position state.
+ * @ingroup mediaio_user
+ *
+ * One per @ref MediaIOPortGroup on a multi-port @ref MediaIO.
+ * Multi-port groups (paired audio + video, bidirectional bridges)
+ * advance against a single timing reference; group descriptions are
+ * the natural place for shared frame rate, frame count, seekability,
+ * and clock-domain information.
+ */
+struct MediaIOPortGroupDescription {
+                /** @brief List alias. */
+                using List = promeki::List<MediaIOPortGroupDescription>;
+
+                /** @brief Human-readable group name. */
+                String name;
+
+                /** @brief The shared frame rate for ports in this group. */
+                FrameRate frameRate;
+
+                /** @brief Total frame count, or @c FrameCount::unknown / @c FrameCount::infinity. */
+                FrameCount frameCount;
+
+                /** @brief True when the group's underlying stream supports seeking. */
+                bool canSeek = false;
+
+                /**
+                 * @brief Description string for the group's clock.
+                 *
+                 * Carries the human-readable clock-domain summary
+                 * (e.g. @c "Synthetic", @c "AudioDeviceOut",
+                 * @c "Wallclock") so consumers can route timing
+                 * decisions without depending on a live @ref Clock
+                 * pointer.
+                 */
+                String clockDescription;
+};
+
+/**
  * @brief Self-contained snapshot of a MediaIO's identity, role, and
  *        format landscape.
- * @ingroup proav
+ * @ingroup mediaio_user
  *
  * @ref MediaIODescription captures everything you can know about a
  * @ref MediaIO instance without using it for I/O — the backend
- * identity, the user-visible name and UUID, which roles
+ * identity, the user-visible name, which roles
  * (source / sink / transform) the backend supports, the lists of
  * @ref MediaDesc shapes it can produce or accept, navigation
  * capabilities (seekable, frame count), and any container metadata
@@ -106,18 +208,6 @@ class MediaIODescription {
 
                 /** @brief Sets the instance name. */
                 void setName(const String &val) { _name = val; }
-
-                /** @brief Returns the instance UUID. */
-                const UUID &uuid() const { return _uuid; }
-
-                /** @brief Sets the instance UUID. */
-                void setUuid(const UUID &val) { _uuid = val; }
-
-                /** @brief Returns the process-local monotonic instance ID (or -1). */
-                int localId() const { return _localId; }
-
-                /** @brief Sets the process-local instance ID. */
-                void setLocalId(int val) { _localId = val; }
 
                 // ------------------------------------------------------------
                 // Role flags
@@ -239,7 +329,7 @@ class MediaIODescription {
                  * (device offline, file missing, header malformed) —
                  * the populated fields then reflect whatever was known
                  * before the probe (typically just backend identity
-                 * and role flags from @ref MediaIO::FormatDesc).
+                 * and role flags from @ref MediaIOFactory).
                  */
                 Error probeStatus() const { return _probeStatus; }
 
@@ -251,6 +341,37 @@ class MediaIODescription {
 
                 /** @brief Sets the human-readable probe note. */
                 void setProbeMessage(const String &val) { _probeMessage = val; }
+
+                // ------------------------------------------------------------
+                // Per-port snapshots (multi-port refactor, Phase 6)
+                // ------------------------------------------------------------
+
+                /** @brief Per-source-port snapshots in per-type-index order. */
+                const MediaIOPortDescription::List &sources() const { return _sources; }
+
+                /** @brief Mutable accessor for @ref sources. */
+                MediaIOPortDescription::List &sources() { return _sources; }
+
+                /** @brief Replaces the source-port snapshot list. */
+                void setSources(const MediaIOPortDescription::List &val) { _sources = val; }
+
+                /** @brief Per-sink-port snapshots in per-type-index order. */
+                const MediaIOPortDescription::List &sinks() const { return _sinks; }
+
+                /** @brief Mutable accessor for @ref sinks. */
+                MediaIOPortDescription::List &sinks() { return _sinks; }
+
+                /** @brief Replaces the sink-port snapshot list. */
+                void setSinks(const MediaIOPortDescription::List &val) { _sinks = val; }
+
+                /** @brief Per-port-group snapshots in declaration order. */
+                const MediaIOPortGroupDescription::List &portGroups() const { return _portGroups; }
+
+                /** @brief Mutable accessor for @ref portGroups. */
+                MediaIOPortGroupDescription::List &portGroups() { return _portGroups; }
+
+                /** @brief Replaces the port-group snapshot list. */
+                void setPortGroups(const MediaIOPortGroupDescription::List &val) { _portGroups = val; }
 
                 // ------------------------------------------------------------
                 // Convenience
@@ -318,8 +439,6 @@ class MediaIODescription {
                 String _backendDescription;
 
                 String _name;
-                UUID   _uuid;
-                int    _localId = -1;
 
                 bool _canBeSource = false;
                 bool _canBeSink = false;
@@ -336,6 +455,10 @@ class MediaIODescription {
 
                 Error  _probeStatus = Error::Ok;
                 String _probeMessage;
+
+                MediaIOPortDescription::List      _sources;
+                MediaIOPortDescription::List      _sinks;
+                MediaIOPortGroupDescription::List _portGroups;
 };
 
 /** @brief Writes a MediaIODescription to a DataStream. */

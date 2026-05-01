@@ -476,9 +476,11 @@ TEST_CASE("Logger_MultipleListenersAllReceiveEntries") {
 // ============================================================================
 
 TEST_CASE("Logger_DebugRegistration") {
-        // Register a debug channel and verify it doesn't crash
-        bool enabled = false;
-        bool ret = promekiRegisterDebug(&enabled, "TestChannel", PROMEKI_SOURCE_FILE, __LINE__);
+        // The registry stores the enabler pointer for the life of the
+        // process, so it must outlive this test frame.  PROMEKI_DEBUG
+        // uses a file-scope static; we mirror that here.
+        static bool enabled = false;
+        bool        ret = promekiRegisterDebug(&enabled, "TestChannel", PROMEKI_SOURCE_FILE, __LINE__);
         // Without PROMEKI_DEBUG env var set to include "TestChannel", should be false
         CHECK(ret == false);
 

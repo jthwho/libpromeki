@@ -45,7 +45,7 @@ namespace {
  *        AudioFormat::ID.
  *
  * Returns Invalid for non-PCM or unknown FourCCs — the reader surfaces
- * this via an invalid AudioDesc so the MediaIOTask layer can decide
+ * this via an invalid AudioDesc so the MediaIO layer can decide
  * whether to refuse the track.
  */
         AudioFormat::ID pcmDataTypeForFourCC(FourCC code, uint16_t bitsPerSample) {
@@ -487,7 +487,7 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
                                                 // codec (AAC mp4a, Opus, AC-3 ac-3, MP3, etc.).
                                                 // Map the FourCC to the matching compressed
                                                 // AudioFormat entry; if we don't know it, fall
-                                                // back to an invalid AudioDesc.  The MediaIOTask
+                                                // back to an invalid AudioDesc.  The MediaIO
                                                 // layer surfaces compressed audio as a
                                                 // CompressedAudioPayload so consumers can decode
                                                 // through their own codec subsystem.
@@ -1001,7 +1001,7 @@ Error QuickTimeReader::parseVideoSampleEntry(quicktime_atom::ReadStream &stream,
         // out-of-band decoder configuration record that a decoder
         // needs before it can ingest the length-prefixed VCL NALs
         // stored in @c mdat — capture it onto the Track so the
-        // MediaIOTask layer can hand it to a decoder without
+        // MediaIO layer can hand it to a decoder without
         // re-reading the container.
         while (stream.pos() < entryPayloadEnd && !stream.isError()) {
                 Box   childBox;
@@ -1716,7 +1716,7 @@ void QuickTimeReader::buildMediaDesc() {
 
         if (!rateSet) {
                 // Audio-only: leave the frame rate defaulted. The
-                // MediaIOTask layer is expected to supply a synthetic
+                // MediaIO layer is expected to supply a synthetic
                 // rate for audio-only tracks (Phase 5).
         }
 

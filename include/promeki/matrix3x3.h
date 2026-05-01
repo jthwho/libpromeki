@@ -167,7 +167,7 @@ class Matrix3x3 {
                 /** @brief Sets all matrix elements to zero. */
                 void zero() {
                         for (int i = 0; i < 3; ++i) {
-                                for (int j = 0; j < 3; ++j) {
+                                for (int j = 0; j < 4; ++j) {
                                         data[i][j] = 0.0f;
                                 }
                         }
@@ -183,6 +183,7 @@ class Matrix3x3 {
                                 for (int j = 0; j < 3; ++j) {
                                         data[i][j] = val[i][j];
                                 }
+                                data[i][3] = 0.0f;
                         }
                         return;
                 }
@@ -371,7 +372,9 @@ class Matrix3x3 {
                 }
 
         private:
-                float data[3][3];
+                // Padded to 4 columns so SSE _mm_loadu_ps/_mm_storeu_ps never
+                // reads or writes past the row.  Column 3 is always zero.
+                float data[3][4];
 };
 
 

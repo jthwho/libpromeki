@@ -27,7 +27,7 @@ PROMEKI_NAMESPACE_BEGIN
  * decoder presentation surface is always NV12 in 8-bit (10-bit
  * P010 support is a follow-up); callers that want a different
  * uncompressed target should run the decoder's output through an
- * @ref MediaIOTask_CSC.
+ * @ref CscMediaIO.
  *
  * @par Runtime requirements
  * Like @ref NvencVideoEncoder, this backend is lazily bound.  The
@@ -41,7 +41,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @par First-cut limitations
  *
  * - Annex-B byte stream only (what NVENC emits; what
- *   @ref MediaIOTask_RawBitstream writes).  AVCC length-prefixed
+ *   @ref RawBitstreamMediaIO writes).  AVCC length-prefixed
  *   input can be added later via a small adapter.
  * - NV12 output (8-bit, 4:2:0 semi-planar, Rec.709 assumed).
  * - System-memory output: each decoded frame is copied off the

@@ -8,15 +8,14 @@
 #pragma once
 
 #include <functional>
-#include <promeki/atomic.h>
 #include <promeki/duration.h>
-#include <promeki/elapsedtimer.h>
 #include <promeki/error.h>
 #include <promeki/frame.h>
 #include <promeki/list.h>
 #include <promeki/logger.h>
 #include <promeki/map.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaioportconnection.h>
 #include <promeki/mediapipelineconfig.h>
 #include <promeki/mediapipelinestats.h>
 #include <promeki/mutex.h>
@@ -28,6 +27,8 @@
 #include <promeki/stringlist.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class MediaIOStatsCollector;
 
 /**
  * @brief Data-driven builder and runtime for a DAG of @ref MediaIO stages.
@@ -136,16 +137,36 @@ class MediaPipeline : public ObjectBase {
                  * stays with the caller.
                  *
                  * Must be called while the pipeline is @ref State::Empty
-                 * or @ref State::Closed.  When @ref build sees the
-                 * stage's name in the injection map it skips
-                 * construction and uses the registered pointer instead.
+                 * or @ref State::Closed.  When @ref build sees a stage
+                 * whose name matches an injected entry it skips
+                 * factory construction and uses the registered pointer
+                 * instead.
                  *
-                 * @param name The stage name declared in the config.
-                 * @param io   The external MediaIO (must outlive the pipeline).
+                 * @par Name resolution
+                 * Picks the stage name in the following order, then
+                 * stamps it onto the IO via @ref MediaIO::setName so
+                 * @c io->name() reports the resolved name on return:
+                 *  -# If @c io->name() is non-empty and does not
+                 *     collide with an already-injected stage, use it
+                 *     verbatim.
+                 *  -# If @c io->name() is non-empty and collides,
+                 *     append an incrementing suffix (e.g. @c "sdl",
+                 *     @c "sdl2", @c "sdl3", ...).
+                 *  -# If @c io->name() is empty, generate a
+                 *     role-based default: @c "src&lt;N&gt;",
+                 *     @c "sink&lt;N&gt;", or @c "xfm&lt;N&gt;" when the
+                 *     role is determinable from @ref MediaIO::isSource
+                 *     / @ref MediaIO::isSink (post-open) or the
+                 *     @ref MediaIO::describe probe (pre-open via the
+                 *     registered factory's role flags).  Falls back to
+                 *     @c "stage&lt;N&gt;" when the role is unknown.
+                 *
+                 * @param io The external MediaIO (must outlive the pipeline).
                  * @return @c Error::Ok or @c Error::Busy when the
-                 *         pipeline is not in a settable state.
+                 *         pipeline is not in a settable state, or
+                 *         @c Error::InvalidArgument when @p io is null.
                  */
-                Error injectStage(const String &name, MediaIO *io);
+                Error injectStage(MediaIO *io);
 
                 /**
                  * @brief Opens every stage.
@@ -284,10 +305,31 @@ class MediaPipeline : public ObjectBase {
                 /**
                  * @brief Collects a stats snapshot from every live stage.
                  *
-                 * Queries each stage via @ref MediaIO::stats and rolls the
-                 * result up into the snapshot's aggregate.
+                 * For each stage the snapshot contains:
+                 *  - the cumulative aggregate returned by
+                 *    @ref MediaIO::stats (instance-wide standard keys
+                 *    plus any backend-specific cumulative keys); and
+                 *  - the per-@ref MediaIOCommand::Kind windowed
+                 *    breakdown sourced from the stage's
+                 *    @ref MediaIOStatsCollector when stats collection
+                 *    is enabled (see
+                 *    @ref MediaPipelineConfig::statsWindowSize).
+                 *
+                 * Stages whose underlying @ref MediaIO is not open
+                 * appear as records with a default-constructed
+                 * @c cumulative and an empty @c windowed map.
                  */
                 MediaPipelineStats stats();
+
+                /**
+                 * @brief Collects a stats snapshot for a single stage by name.
+                 *
+                 * Returns the per-stage record directly (no need to
+                 * unwrap a single-entry @ref MediaPipelineStats).  An
+                 * unknown @p name yields a default-constructed
+                 * @ref MediaPipelineStageStats.
+                 */
+                MediaPipelineStageStats stageStats(const String &name);
 
                 // ------------------------------------------------------------
                 // Signals
@@ -434,37 +476,31 @@ class MediaPipeline : public ObjectBase {
                 Duration statsInterval() const { return _statsInterval; }
 
         private:
-                // One record per outgoing route.  Back-pressure is
-                // driven entirely by @ref MediaIO::writesAccepted
-                // checked before each pull from the source — under
-                // the documented single-threaded driving contract,
-                // a non-blocking @ref MediaIO::writeFrame can never
-                // refuse a frame we just confirmed there was room
-                // for.  Async write failures arrive on
-                // @c writeErrorSignal.
-                //
-                // @c framesWritten counts frames successfully submitted to
-                // this edge's sink for the pipeline-wide frame-count
-                // cap (@ref MediaPipelineConfig::frameCount).  @c isSinkEdge
-                // is cached at build time so drainSource doesn't re-walk
-                // the route table on the hot path.  @c doneByLimit flips
-                // once the cap has been honoured for this edge — drainSource
-                // then skips it so no further writes (or NotOpen errors)
-                // reach the freshly-closed sink.
+                // One record per outgoing route.  Back-pressure,
+                // per-sink frame-count caps, and the actual frame
+                // dispatch all live on the @ref MediaIOPortConnection
+                // that owns this edge's source — the pipeline only
+                // tracks enough state per edge to drive the cascade
+                // close when the source EOFs, mark the cap as
+                // observed, and look up the sink's stage name for
+                // error reporting.
                 struct EdgeState {
-                                String   toName;
-                                MediaIO *to = nullptr;
-                                int64_t  framesWritten = 0;
-                                bool     isSinkEdge = false;
-                                bool     doneByLimit = false;
+                                String       toName;
+                                MediaIO     *to = nullptr;
+                                MediaIOSink *toSink = nullptr;
+                                bool         isSinkEdge = false;
+                                bool         capReached = false;
                 };
 
                 // Each source-or-transit stage owns one SourceState entry.
                 // Stages with no outgoing routes (pure sinks) do not appear
-                // here; they participate only as write-error / frameWanted
-                // observers.
+                // here — they participate only as a sink end of some
+                // upstream stage's connection.  The @c connection field is
+                // owned by the pipeline and lives from @ref start until
+                // @ref close.
                 struct SourceState {
                                 MediaIO                 *from = nullptr;
+                                MediaIOPortConnection   *connection = nullptr;
                                 promeki::List<EdgeState> edges;
                                 bool                     upstreamDone = false;
                 };
@@ -478,6 +514,20 @@ class MediaPipeline : public ObjectBase {
                 Error    destroyStages();
                 Error    topologicallySort(promeki::List<String> &order) const;
                 MediaIO *instantiateStage(const MediaPipelineConfig::Stage &s);
+
+                /**
+                 * @brief Wires the @ref MediaIOPortConnection graph edges
+                 *        whose endpoints have just become live.
+                 *
+                 * Called from @ref open immediately after each stage's
+                 * @c MediaIO::open returns.  Lazily creates a
+                 * connection on the stage's source port (if it has
+                 * one), and binds the stage's sink port onto every
+                 * upstream connection that has a route landing here.
+                 * Topological order guarantees the upstream's
+                 * connection already exists by the time we look it up.
+                 */
+                void wireConnectionsForOpenedStage(const String &name);
 
                 /**
                  * @brief Stamps @p ev with the current timestamp (when missing)
@@ -517,18 +567,41 @@ class MediaPipeline : public ObjectBase {
                 /** @brief Emits a stats snapshot (signal + PipelineEvent). */
                 void emitStatsSnapshot();
 
-                void drainSource(const String &srcName);
-                void onWriteError(const String &stageName, Error err);
+                /**
+                 * @brief Routes a connection's @c upstreamDone signal
+                 *        into the cascade-close path.
+                 *
+                 * Latches the source's @c upstreamDone flag, calls
+                 * @ref initiateClose with @c clean=true, then closes
+                 * every direct downstream MediaIO so each transform /
+                 * sink stage flushes its in-flight buffer and emits
+                 * its own EOS.
+                 */
+                void onUpstreamDone(const String &srcName);
 
                 /**
-                 * @brief Returns true when every sink-terminating edge in
-                 *        the pipeline has reached the frame-count cap.
-                 *
-                 * Used by @ref drainSource to decide when to initiate
-                 * the graceful close cascade: once every sink edge is
-                 * marked @c doneByLimit there's nothing left to drive.
+                 * @brief Routes a connection's @c errorOccurred signal
+                 *        (source-side fatal error) into the pipeline
+                 *        error counter and triggers a non-clean close.
                  */
-                bool allSinkEdgesDoneByLimit() const;
+                void onSourceConnectionError(const String &srcName, Error err);
+
+                /**
+                 * @brief Routes a connection's @c sinkError signal into
+                 *        the pipeline error counter and triggers a
+                 *        non-clean close.
+                 */
+                void onSinkConnectionError(const String &srcName, MediaIOSink *sink, Error err);
+
+                /**
+                 * @brief Routes a connection's @c sinkLimitReached
+                 *        signal into the pipeline-wide cap accounting.
+                 *
+                 * Decrements @ref _terminalSinksRemaining; once the
+                 * counter reaches zero (and a cap was configured) the
+                 * pipeline triggers a clean close.
+                 */
+                void onSinkLimitReached(const String &srcName, MediaIOSink *sink);
 
                 /**
                  * @brief Common entry point for every close trigger
@@ -583,12 +656,45 @@ class MediaPipeline : public ObjectBase {
                  */
                 void finalizeClose();
 
-                MediaPipelineConfig               _config;
-                State                             _state = State::Empty;
-                promeki::Map<String, MediaIO *>   _stages;
-                promeki::Map<String, MediaIO *>   _injected;
-                promeki::Map<String, SourceState> _sources;
-                promeki::List<String>             _topoOrder;
+                /**
+                 * @brief Wires a @ref MediaIOStatsCollector onto @p io
+                 *        when stats collection is enabled.
+                 *
+                 * Invoked from @ref build for every stage (factory-
+                 * constructed and injected) once it has been
+                 * registered in @ref _stages.  When the config's
+                 * @ref MediaPipelineConfig::statsWindowSize is zero
+                 * the call is a no-op so stats-disabled pipelines pay
+                 * no per-command observer cost.
+                 */
+                void attachStatsCollector(const String &name, MediaIO *io);
+
+                /**
+                 * @brief Tears down every stats collector created by
+                 *        @ref attachStatsCollector.
+                 *
+                 * Called from @ref destroyStages alongside the rest of
+                 * the per-build state so the next @ref build cycle
+                 * starts with a clean slate.
+                 */
+                void clearStatsCollectors();
+
+                /**
+                 * @brief Builds a single @ref MediaPipelineStageStats
+                 *        record by querying the live MediaIO for its
+                 *        cumulative aggregate and folding the per-stage
+                 *        @ref MediaIOStatsCollector windows into the
+                 *        per-command breakdown.
+                 */
+                MediaPipelineStageStats buildStageStats(const String &name, MediaIO *io);
+
+                MediaPipelineConfig                                  _config;
+                State                                                _state = State::Empty;
+                promeki::Map<String, MediaIO *>                      _stages;
+                promeki::Map<String, MediaIO *>                      _injected;
+                promeki::Map<String, MediaIOStatsCollector *>        _statsCollectors;
+                promeki::Map<String, SourceState>                    _sources;
+                promeki::List<String>                                _topoOrder;
 
                 // Close-cascade bookkeeping.  Latched by
                 // @ref initiateClose and unwound in
@@ -608,24 +714,18 @@ class MediaPipeline : public ObjectBase {
                 unsigned int _closeTimeoutMs = DefaultCloseTimeoutMs;
                 int          _closeWatchdogTimerId = -1;
 
-                // Pipeline-layer telemetry counters surfaced via
-                // PipelineStats on every @ref stats() call.  Atomic
-                // so stats() called from the stats-thread context
-                // (see mediaplay's --stats worker) doesn't race the
-                // drain that runs on the owner's EventLoop.
-                Atomic<int64_t> _framesProduced{0};
-                Atomic<int64_t> _writeRetries{0};
-                Atomic<int64_t> _pipelineErrors{0};
-                ElapsedTimer    _uptime;
-                bool            _uptimeStarted = false;
-
                 // Pipeline-wide frame-count cap, cached at build time
                 // from @ref MediaPipelineConfig::frameCount.  Zero means
                 // "no cap" (matches the @ref FrameCount::isFinite() gate).
-                // Non-zero values cause drainSource to count frames per
-                // outgoing sink edge and close each sink once its count
-                // crosses the cap at the next safe cut point.
+                // Non-zero values are passed as the per-sink frame
+                // limit to @ref MediaIOPortConnection::addSink for every
+                // terminal-sink edge; the connection enforces the cap at
+                // safe-cut-point boundaries and emits @c sinkLimitReached
+                // when each sink hits it.  @ref _terminalSinksRemaining
+                // counts the still-pending capped sinks; when it reaches
+                // zero the pipeline initiates a clean close.
                 int64_t _frameCountLimit = 0;
+                int     _terminalSinksRemaining = 0;
 
                 // Event subscription bookkeeping.  _subsMutex guards
                 // _subscribers and the logger-listener handle so

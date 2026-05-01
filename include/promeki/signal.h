@@ -12,6 +12,7 @@
 #include <atomic>
 #include <promeki/namespace.h>
 #include <promeki/list.h>
+#include <promeki/mutex.h>
 #include <promeki/variant_fwd.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -27,8 +28,18 @@ class ObjectBase;
  * argument types passed through the signal.
  *
  * @par Thread Safety
- * Thread-affine.  @c connect, @c disconnect, and @c emit on the
- * same Signal instance must be called from the owner's thread.
+ * Thread-safe.  @c connect, @c disconnect, @c disconnectFromObject
+ * and @c emit may be invoked concurrently from any thread; an
+ * internal @ref Mutex serializes mutations of the slot list, and
+ * @c emit takes a snapshot of the slot list under that lock then
+ * iterates the snapshot outside the lock.  This means slots fired
+ * from a given @c emit reflect the connections that existed when
+ * the snapshot was taken — a slot connected from another thread
+ * mid-emit is not invoked by that emit, and a slot disconnected
+ * mid-emit is invoked exactly once if it was present in the
+ * snapshot.  Reentrant @c connect / @c disconnect from inside a
+ * slot is safe because the iteration runs against the local
+ * snapshot, not the live list.
  * Cross-thread delivery is supported by the @c connect(Function,
  * ObjectBase *) overload, which routes invocations through the
  * receiving ObjectBase's EventLoop via @c postCallable; that
@@ -101,6 +112,7 @@ template <typename... Args> class Signal {
                  */
                 size_t connect(Function slot, void *ptr = nullptr) {
                         size_t slotID = nextSlotId();
+                        Mutex::Locker lock(_slotsMutex);
                         _slots += Info(slotID, slot, ptr);
                         return slotID;
                 }
@@ -129,10 +141,37 @@ template <typename... Args> class Signal {
                  * unpacked after the post, so argument types must be
                  * copy-constructible.
                  *
+                 * @par Receiver-liveness guarantees
+                 * The bridge holds an @ref ObjectBasePtr to @p owner
+                 * (not a raw pointer) and registers an auto-disconnect
+                 * cleanup on @p owner via
+                 * @ref ObjectBase::registerCleanup, so:
+                 *  -# Once @c ~ObjectBase starts on @p owner, no new
+                 *     slot invocations are queued — the slot is
+                 *     removed from this signal's slot list before
+                 *     destruction completes.
+                 *  -# Cross-thread callables that were already
+                 *     queued on @p owner's EventLoop before the
+                 *     destruction also short-circuit at dispatch
+                 *     time once @p owner's tracker map clears, so a
+                 *     callable that was posted just before the delete
+                 *     becomes a no-op rather than a use-after-free.
+                 *
+                 * The framework therefore guarantees the user @p slot
+                 * is not invoked once @p owner has finished
+                 * destructing.  That covers the common
+                 * "lambda captures @c this" case.  User slots that
+                 * capture additional raw pointers must still ensure
+                 * those remain valid for the slot's lifetime —
+                 * capture an @ref ObjectBasePtr (or any other
+                 * tracker) and re-check inside the slot when in
+                 * doubt.
+                 *
                  * @param slot  The callable to invoke.
                  * @param owner ObjectBase context whose EventLoop
                  *              governs dispatch.  Also used for
-                 *              disconnect-by-object lookup.
+                 *              disconnect-by-object lookup and for
+                 *              the receiver-liveness gate.
                  * @return The slot connection ID.
                  */
                 size_t connect(Function slot, ObjectBase *owner);
@@ -155,6 +194,7 @@ template <typename... Args> class Signal {
                  */
                 template <typename T> size_t connect(T *obj, void (T::*memberFunction)(Args...)) {
                         size_t slotID = nextSlotId();
+                        Mutex::Locker lock(_slotsMutex);
                         _slots += Info(slotID,
                                        ([obj, memberFunction](Args... args) { (obj->*memberFunction)(args...); }), obj);
                         return slotID;
@@ -171,6 +211,7 @@ template <typename... Args> class Signal {
                  * @param slotID The connection ID returned by connect().
                  */
                 void disconnect(size_t slotID) {
+                        Mutex::Locker lock(_slotsMutex);
                         _slots.removeIf([slotID](const Info &info) { return info.id == slotID; });
                         return;
                 }
@@ -188,6 +229,7 @@ template <typename... Args> class Signal {
                  * @param memberFunction Pointer to the member function to disconnect.
                  */
                 template <typename T> void disconnect(const T *object, void (T::*memberFunction)(Args...)) {
+                        Mutex::Locker lock(_slotsMutex);
                         _slots.removeIf([object, memberFunction](const Info &info) {
                                 return static_cast<const T *>(info.object) == object && info.func == memberFunction;
                         });
@@ -201,6 +243,7 @@ template <typename... Args> class Signal {
                  * @param object Pointer to the object whose slots should be removed.
                  */
                 template <typename T> void disconnectFromObject(const T *object) {
+                        Mutex::Locker lock(_slotsMutex);
                         _slots.removeIf(
                                 [object](const Info &info) { return static_cast<const T *>(info.object) == object; });
                         return;
@@ -215,7 +258,19 @@ template <typename... Args> class Signal {
                  * @param args The arguments to forward to each slot.
                  */
                 void emit(Args... args) const {
-                        for (const auto &slot : _slots) slot.func(args...);
+                        // Snapshot under the lock so iteration runs
+                        // against a stable copy.  Concurrent
+                        // connect / disconnect calls only mutate the
+                        // live @c _slots — the snapshot is unaffected,
+                        // which keeps reentrant connect / disconnect
+                        // from a slot safe and matches Boost.Signals2
+                        // semantics.
+                        List<Info> snapshot;
+                        {
+                                Mutex::Locker lock(_slotsMutex);
+                                snapshot = _slots;
+                        }
+                        for (const auto &slot : snapshot) slot.func(args...);
                         return;
                 }
 
@@ -229,9 +284,10 @@ template <typename... Args> class Signal {
                                 Info(size_t id, Function f, const void *obj = nullptr) : id(id), func(f), object(obj) {}
                 };
 
-                void       *_owner = nullptr;
-                const char *_prototype = nullptr;
-                List<Info>  _slots;
+                void         *_owner = nullptr;
+                const char   *_prototype = nullptr;
+                List<Info>    _slots;
+                mutable Mutex _slotsMutex;
 
                 // Process-wide monotonic ID source.  Kept as a function-local
                 // static (rather than a member) so that adding it does not

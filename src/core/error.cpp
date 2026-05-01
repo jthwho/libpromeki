@@ -106,7 +106,9 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(PipelineRuntimeError, NONE, "MediaPipeline stage reported a runtime error"),
         DEFINE_ERROR(InspectorDiscontinuityDetected, NONE, "Inspector observed at least one discontinuity"),
         DEFINE_ERROR(Empty, NONE, "Container or queue is empty"),
-        DEFINE_ERROR(NotFound, NONE, "Requested element or value was not found")};
+        DEFINE_ERROR(NotFound, NONE, "Requested element or value was not found"),
+        DEFINE_ERROR(BuildIdentMismatch, NONE,
+                     "Library build identity does not match caller's compile-time identity (stale binary)")};
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {
         static StructDatabase<int, Error::Code> sysdb = []() {

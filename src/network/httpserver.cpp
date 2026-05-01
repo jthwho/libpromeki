@@ -312,9 +312,14 @@ void HttpServer::reapClosedConnection(HttpConnection *conn) {
                         // Schedule deletion onto the loop rather than
                         // delete inline — the closed signal we're
                         // responding to was emitted from inside the
-                        // connection's own machinery.
+                        // connection's own machinery.  @c deleteLater
+                        // also detaches @p conn from its parent so the
+                        // deferred delete cannot race with
+                        // @c ObjectBase::destroyChildren when
+                        // @c ~HttpServer runs before the callable is
+                        // dispatched.
                         if (_loop != nullptr) {
-                                _loop->postCallable([conn]() { delete conn; });
+                                conn->deleteLater();
                         } else {
                                 delete conn;
                         }

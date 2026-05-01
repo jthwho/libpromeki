@@ -129,6 +129,10 @@ String Units::fromDuration(double seconds, int precision) {
         return fromDurationNs(seconds * 1.0e9, precision);
 }
 
+String Units::fromDurationMs(double ms, int precision) {
+        return fromDurationNs(ms * 1.0e6, precision);
+}
+
 String Units::fromFrequency(double hz, int precision) {
         static const ScaleEntry table[] = {
                 {0.0, 1.0, "Hz"},
@@ -174,6 +178,21 @@ String Units::fromItemsPerSec(double ips, int precision) {
         if (ips < 1.0e9) return trimTrailingZeros(String::number(ips / 1.0e6, precision)) + "M";
         if (ips < 1.0e12) return trimTrailingZeros(String::number(ips / 1.0e9, precision)) + "G";
         return trimTrailingZeros(String::number(ips / 1.0e12, precision)) + "T";
+}
+
+String Units::fromCount(uint64_t count, int precision) {
+        if (count == 0) return String("0");
+        const double v = static_cast<double>(count);
+        if (v < 1.0e3) return String::number(static_cast<int64_t>(count));
+        if (v < 1.0e6) return trimTrailingZeros(String::number(v / 1.0e3, precision)) + "k";
+        if (v < 1.0e9) return trimTrailingZeros(String::number(v / 1.0e6, precision)) + "M";
+        if (v < 1.0e12) return trimTrailingZeros(String::number(v / 1.0e9, precision)) + "G";
+        return trimTrailingZeros(String::number(v / 1.0e12, precision)) + "T";
+}
+
+String Units::fromFramesPerSec(double fps, int precision) {
+        if (!std::isfinite(fps)) return String("-");
+        return trimTrailingZeros(String::number(fps, precision)) + " fps";
 }
 
 PROMEKI_NAMESPACE_END

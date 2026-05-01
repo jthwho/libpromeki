@@ -986,7 +986,7 @@ void FrameBridge::close() {
         // currently blocked on another thread (waiting for a consumer
         // or for a sync ACK) unwind with Error::Cancelled, which in
         // turn lets the caller reach this close() — most commonly via
-        // a MediaIOTask strand that would otherwise be gated behind
+        // a MediaIO worker that would otherwise be gated behind
         // the blocked write.
         _d->abortFlag.store(true, std::memory_order_release);
         if (_d->role == Impl::RoleOutput) {

@@ -11,9 +11,11 @@
 #include <cstring>
 #include <thread>
 
+#include <promeki/atomic.h>
 #include <promeki/buffer.h>
 #include <promeki/duration.h>
 #include <promeki/elapsedtimer.h>
+#include <promeki/enums.h>
 #include <promeki/eventloop.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
@@ -23,7 +25,12 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
-#include <promeki/mediaiotask_mjpegstream.h>
+#include <promeki/mediaiocommand.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mediaiorequest.h>
+#include <promeki/mediaiosink.h>
+#include <promeki/mediaiosource.h>
+#include <promeki/mjpegstreammediaio.h>
 #include <promeki/mutex.h>
 #include <promeki/pixelformat.h>
 #include <promeki/rational.h>
@@ -67,54 +74,65 @@ namespace {
         // it natively.  We pick RGB8 explicitly so the rig doesn't need a
         // CSC stage; the encoder's supportedInputList includes RGB8.
         struct MjpegStreamRig {
-                        MediaIO                 *tpg = nullptr;
-                        MediaIO                 *sinkIo = nullptr;
-                        MediaIOTask_MjpegStream *sink = nullptr;
+                        MediaIO            *tpg = nullptr;
+                        MjpegStreamMediaIO *sink = nullptr;
 
                         ~MjpegStreamRig() {
                                 if (tpg) {
-                                        tpg->close();
+                                        tpg->close().wait();
                                         delete tpg;
                                 }
-                                if (sinkIo) {
-                                        sinkIo->close();
-                                        delete sinkIo;
+                                if (sink) {
+                                        sink->close().wait();
+                                        delete sink;
                                 }
-                                // sink is owned by sinkIo and freed when sinkIo is.
                         }
         };
 
         void buildRig(MjpegStreamRig &rig, VideoFormat::WellKnownFormat sourceFormat, const Rational<int> &maxFps,
                       int quality = 70, int ringDepth = 1) {
                 // ---- TPG source ----
-                MediaIO::Config tpgCfg = MediaIO::defaultConfig("TPG");
+                MediaIO::Config tpgCfg = MediaIOFactory::defaultConfig("TPG");
                 tpgCfg.set(MediaConfig::VideoFormat, VideoFormat(sourceFormat));
                 tpgCfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGB8_sRGB));
                 tpgCfg.set(MediaConfig::VideoEnabled, true);
                 tpgCfg.set(MediaConfig::AudioEnabled, false);
                 rig.tpg = MediaIO::create(tpgCfg);
                 REQUIRE(rig.tpg != nullptr);
-                REQUIRE(rig.tpg->open(MediaIO::Source).isOk());
+                REQUIRE(rig.tpg->open().wait().isOk());
+
+                // Reconstruct the upstream desc explicitly.  TPG hasn't
+                // been ported to populate @c cmd.mediaDesc yet, so
+                // @c io->mediaDesc() is empty after open() and the sink
+                // would reject the empty hint.  Build the desc from the
+                // VideoFormat we used to configure the TPG.
+                const VideoFormat vfmt(sourceFormat);
+                MediaDesc         srcDesc;
+                srcDesc.setFrameRate(vfmt.frameRate());
+                srcDesc.imageList().pushToBack(ImageDesc(vfmt.raster(), PixelFormat(PixelFormat::RGB8_sRGB)));
 
                 // ---- MjpegStream sink ----
-                rig.sink = new MediaIOTask_MjpegStream();
-                rig.sinkIo = new MediaIO();
-                MediaIO::Config sinkCfg = MediaIO::defaultConfig("MjpegStream");
+                rig.sink = new MjpegStreamMediaIO();
+                MediaIO::Config sinkCfg = MediaIOFactory::defaultConfig("MjpegStream");
                 sinkCfg.set(MediaConfig::MjpegMaxFps, maxFps);
                 sinkCfg.set(MediaConfig::MjpegQuality, quality);
                 sinkCfg.set(MediaConfig::MjpegMaxQueueFrames, ringDepth);
-                rig.sinkIo->setConfig(sinkCfg);
-                REQUIRE(rig.sinkIo->setExpectedDesc(rig.tpg->mediaDesc()).isOk());
-                REQUIRE(rig.sinkIo->adoptTask(rig.sink).isOk());
-                REQUIRE(rig.sinkIo->open(MediaIO::Sink).isOk());
+                sinkCfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
+                rig.sink->setConfig(sinkCfg);
+                REQUIRE(rig.sink->setPendingMediaDesc(srcDesc).isOk());
+                REQUIRE(rig.sink->open().wait().isOk());
         }
 
         Error pumpOne(MjpegStreamRig &rig) {
-                Frame::Ptr frame;
-                Error      rerr = rig.tpg->readFrame(frame);
+                MediaIORequest readReq = rig.tpg->source(0)->readFrame();
+                Error          rerr = readReq.wait();
                 if (rerr.isError()) return rerr;
+                Frame::Ptr frame;
+                if (const auto *cr = readReq.commandAs<MediaIOCommandRead>()) {
+                        frame = cr->frame;
+                }
                 REQUIRE(frame.isValid());
-                return rig.sinkIo->writeFrame(frame);
+                return rig.sink->sink(0)->writeFrame(frame).wait();
         }
 
         void pumpForMs(MjpegStreamRig &rig, int64_t durationMs) {
@@ -156,21 +174,22 @@ namespace {
 // Format descriptor / factory plumbing
 // ============================================================================
 
-TEST_CASE("MediaIOTask_MjpegStream_FormatDescIsRegistered") {
-        const auto desc = MediaIOTask_MjpegStream::formatDesc();
-        CHECK(desc.name == String("MjpegStream"));
-        CHECK(desc.canBeSink);
-        CHECK_FALSE(desc.canBeSource);
-        CHECK_FALSE(desc.canBeTransform);
+TEST_CASE("MjpegStreamMediaIO_FactoryIsRegistered") {
+        const MediaIOFactory *factory = MediaIOFactory::findByName(String("MjpegStream"));
+        REQUIRE(factory != nullptr);
+        CHECK(factory->canBeSink());
+        CHECK_FALSE(factory->canBeSource());
+        CHECK_FALSE(factory->canBeTransform());
 
-        MediaIO::Config cfg = MediaIO::defaultConfig("MjpegStream");
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("MjpegStream");
+        cfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
         // Defaults are good for a smoke test — no upstream desc yet so
         // the rate gate stays inactive until the first frame.
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Sink).isOk());
+        REQUIRE(io->open().wait().isOk());
         CHECK(io->isOpen());
-        CHECK(io->close().isOk());
+        CHECK(io->close().wait().isOk());
         delete io;
 }
 
@@ -178,7 +197,7 @@ TEST_CASE("MediaIOTask_MjpegStream_FormatDescIsRegistered") {
 // Subscriber receives JPEG frames at roughly the configured rate
 // ============================================================================
 
-TEST_CASE("MediaIOTask_MjpegStream_SubscriberReceivesValidJpegs") {
+TEST_CASE("MjpegStreamMediaIO_SubscriberReceivesValidJpegs") {
         // Source @ 60 fps, encode gate @ 30 fps; over ~600 ms we
         // expect ~18 encodes (30 fps × 0.6 s).  Allow ±50% slack on
         // the rate to keep CI quiet.
@@ -215,7 +234,7 @@ TEST_CASE("MediaIOTask_MjpegStream_SubscriberReceivesValidJpegs") {
 // Two simultaneous subscribers see the same frames
 // ============================================================================
 
-TEST_CASE("MediaIOTask_MjpegStream_MultipleSubscribersGetSameFrames") {
+TEST_CASE("MjpegStreamMediaIO_MultipleSubscribersGetSameFrames") {
         MjpegStreamRig rig;
         buildRig(rig, VideoFormat::Smpte1080p30, Rational<int>(30, 1));
 
@@ -248,7 +267,7 @@ TEST_CASE("MediaIOTask_MjpegStream_MultipleSubscribersGetSameFrames") {
 // most-recent cached frame inside attachSubscriber.
 // ============================================================================
 
-TEST_CASE("MediaIOTask_MjpegStream_LateAttachReceivesPrimer") {
+TEST_CASE("MjpegStreamMediaIO_LateAttachReceivesPrimer") {
         MjpegStreamRig rig;
         buildRig(rig, VideoFormat::Smpte1080p30, Rational<int>(30, 1),
                  /*quality=*/70,
@@ -278,7 +297,7 @@ TEST_CASE("MediaIOTask_MjpegStream_LateAttachReceivesPrimer") {
 // detachSubscriber stops further callbacks
 // ============================================================================
 
-TEST_CASE("MediaIOTask_MjpegStream_DetachStopsCallbacks") {
+TEST_CASE("MjpegStreamMediaIO_DetachStopsCallbacks") {
         MjpegStreamRig rig;
         buildRig(rig, VideoFormat::Smpte1080p30, Rational<int>(30, 1));
 
@@ -305,7 +324,7 @@ TEST_CASE("MediaIOTask_MjpegStream_DetachStopsCallbacks") {
 // Latest accessors mirror the ring's tail.
 // ============================================================================
 
-TEST_CASE("MediaIOTask_MjpegStream_LatestAccessorsTrackRingTail") {
+TEST_CASE("MjpegStreamMediaIO_LatestAccessorsTrackRingTail") {
         MjpegStreamRig rig;
         buildRig(rig, VideoFormat::Smpte1080p30, Rational<int>(30, 1));
 
@@ -341,37 +360,42 @@ namespace {
 
                         explicit ServerFixture() {
                                 thread.start();
-                                thread.threadEventLoop()->postCallable([this]() { server = new HttpServer(); });
-                                for (int i = 0; i < 200 && server == nullptr; ++i) {
+                                Atomic<bool> ready(false);
+                                thread.threadEventLoop()->postCallable([this, &ready]() {
+                                        server = new HttpServer();
+                                        ready.setValue(true);
+                                });
+                                for (int i = 0; i < 200 && !ready.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(2));
                                 }
+                                REQUIRE(ready.value());
                                 REQUIRE(server != nullptr);
                         }
 
                         void configure(std::function<void(HttpServer &)> cfg) {
-                                bool done = false;
+                                Atomic<bool> done(false);
                                 thread.threadEventLoop()->postCallable([&]() {
                                         cfg(*server);
-                                        done = true;
+                                        done.setValue(true);
                                 });
-                                for (int i = 0; i < 500 && !done; ++i) {
+                                for (int i = 0; i < 500 && !done.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                                 }
-                                REQUIRE(done);
+                                REQUIRE(done.value());
                         }
 
                         void listenOnAnyPort() {
-                                bool done = false;
+                                Atomic<bool> done(false);
                                 thread.threadEventLoop()->postCallable([&]() {
                                         Error err = server->listen(SocketAddress::localhost(0));
                                         REQUIRE(err.isOk());
                                         port = server->serverAddress().port();
-                                        done = true;
+                                        done.setValue(true);
                                 });
-                                for (int i = 0; i < 500 && !done; ++i) {
+                                for (int i = 0; i < 500 && !done.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                                 }
-                                REQUIRE(done);
+                                REQUIRE(done.value());
                                 REQUIRE(port != 0);
                         }
 
@@ -396,10 +420,17 @@ namespace {
                         void start(MjpegStreamRig *rig) {
                                 worker = std::thread([rig, this]() {
                                         while (!stop.load(std::memory_order_relaxed)) {
-                                                Frame::Ptr f;
-                                                Error      rerr = rig->tpg->readFrame(f);
-                                                if (!rerr.isError() && f.isValid()) {
-                                                        rig->sinkIo->writeFrame(f);
+                                                MediaIORequest readReq = rig->tpg->source(0)->readFrame();
+                                                Error          rerr = readReq.wait();
+                                                Frame::Ptr     f;
+                                                if (!rerr.isError()) {
+                                                        if (const auto *cr =
+                                                                    readReq.commandAs<MediaIOCommandRead>()) {
+                                                                f = cr->frame;
+                                                        }
+                                                }
+                                                if (f.isValid()) {
+                                                        rig->sink->sink(0)->writeFrame(f).wait();
                                                 }
                                                 std::this_thread::sleep_for(std::chrono::milliseconds(2));
                                         }
@@ -541,7 +572,7 @@ namespace {
 
 } // namespace
 
-TEST_CASE("MediaIOTask_MjpegStream_HttpRouteStreamsMultipart") {
+TEST_CASE("MjpegStreamMediaIO_HttpRouteStreamsMultipart") {
         // Source 60 fps, encoder gate 30 fps for plenty of frames.
         MjpegStreamRig rig;
         buildRig(rig, VideoFormat::Smpte1080p60, Rational<int>(30, 1));
@@ -608,7 +639,7 @@ TEST_CASE("MediaIOTask_MjpegStream_HttpRouteStreamsMultipart") {
                 if (name.toLower() == "transfer-encoding" && value.toLower().contains("chunked")) chunked = true;
         }
         CHECK(contentType.contains("multipart/x-mixed-replace"));
-        CHECK(contentType.contains(MediaIOTask_MjpegStream::HttpBoundary));
+        CHECK(contentType.contains(MjpegStreamMediaIO::HttpBoundary));
         CHECK(chunked);
 
         // Now drain body bytes.  Decode chunked transfer-encoding,
@@ -651,18 +682,16 @@ TEST_CASE("MediaIOTask_MjpegStream_HttpRouteStreamsMultipart") {
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
 }
 
-TEST_CASE("MediaIOTask_MjpegStream_HttpRouteRefusesWhenSinkNotOpen") {
+TEST_CASE("MjpegStreamMediaIO_HttpRouteRefusesWhenSinkNotOpen") {
         // Build the sink but don't open it.  The route must surface
         // 503 rather than dropping the client into a never-emitting
         // multipart stream.
-        MediaIOTask_MjpegStream *task = new MediaIOTask_MjpegStream();
-        MediaIO                  sinkIo;
-        sinkIo.setConfig(MediaIO::defaultConfig("MjpegStream"));
-        REQUIRE(sinkIo.adoptTask(task).isOk());
+        MjpegStreamMediaIO sink;
+        sink.setConfig(MediaIOFactory::defaultConfig("MjpegStream"));
         // Intentionally NOT calling open() here.
 
         ServerFixture fix;
-        fix.configure([&](HttpServer &s) { task->registerHttpRoute(s, "/preview"); });
+        fix.configure([&](HttpServer &s) { sink.registerHttpRoute(s, "/preview"); });
         fix.listenOnAnyPort();
 
         TcpSocket sock;

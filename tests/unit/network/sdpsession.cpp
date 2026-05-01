@@ -320,7 +320,7 @@ TEST_CASE("SdpSession attribute insertion order in toString") {
 }
 
 TEST_CASE("SdpSession ts-refclk semantic interpretation") {
-        // Simulates the logic MediaIOTask_Rtp::applySdp uses to
+        // Simulates the logic RtpMediaIO::applySdp uses to
         // convert the ts-refclk attribute into a ClockDomain and
         // PTP grandmaster EUI-64.
 

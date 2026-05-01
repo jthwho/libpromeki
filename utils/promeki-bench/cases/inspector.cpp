@@ -4,7 +4,7 @@
  *
  * See LICENSE file in the project root folder for license information.
  *
- * @ref MediaIOTask_Inspector full-pipeline benchmark cases for
+ * @ref InspectorMediaIO full-pipeline benchmark cases for
  * promeki-bench.  Each case wires a default-config @c TPG MediaIO
  * source to a default-config @c Inspector MediaIO sink and pumps
  * frames through the pair, measuring frames-per-second of the
@@ -39,8 +39,15 @@
 #if PROMEKI_ENABLE_PROAV && PROMEKI_ENABLE_CSC
 
 #include <promeki/benchmarkrunner.h>
+#include <promeki/enums.h>
 #include <promeki/mediaio.h>
-#include <promeki/mediaiotask_inspector.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mediaiocommand.h>
+#include <promeki/mediaiorequest.h>
+#include <promeki/mediaiorequest.h>
+#include <promeki/mediaiosink.h>
+#include <promeki/mediaiosource.h>
+#include <promeki/inspectormediaio.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
@@ -129,12 +136,12 @@ namespace benchutil {
                                 // and pixel format under test.  Frame rate is fixed
                                 // to 30 fps so the LTC decoder lock-in time is
                                 // predictable across runs.
-                                MediaIO::Config tpgCfg = MediaIO::defaultConfig("TPG");
+                                MediaIO::Config tpgCfg = MediaIOFactory::defaultConfig("TPG");
                                 tpgCfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(spec.width, spec.height),
                                                                                  FrameRate(FrameRate::FPS_30)));
                                 tpgCfg.set(MediaConfig::VideoPixelFormat, PixelFormat(spec.pd));
                                 MediaIO *tpg = MediaIO::create(tpgCfg);
-                                if (tpg == nullptr || tpg->open(MediaIO::Source).isError()) {
+                                if (tpg == nullptr || tpg->open().wait().isError()) {
                                         if (tpg != nullptr) delete tpg;
                                         state.setCounter(String("invalid"), 1.0);
                                         for (auto _ : state) (void)_;
@@ -144,12 +151,27 @@ namespace benchutil {
                                 // Sink: a default-config Inspector with the periodic
                                 // log disabled so log throughput doesn't influence
                                 // the measurement.
-                                MediaIO::Config insCfg = MediaIO::defaultConfig("Inspector");
+                                MediaIO::Config insCfg = MediaIOFactory::defaultConfig("Inspector");
                                 insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.0);
+                                insCfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
                                 MediaIO *inspector = MediaIO::create(insCfg);
-                                if (inspector == nullptr || inspector->open(MediaIO::Sink).isError()) {
+                                if (inspector == nullptr || inspector->open().wait().isError()) {
                                         if (inspector != nullptr) delete inspector;
-                                        tpg->close();
+                                        tpg->close().wait();
+                                        delete tpg;
+                                        state.setCounter(String("invalid"), 1.0);
+                                        for (auto _ : state) (void)_;
+                                        return;
+                                }
+
+                                MediaIOSource *tpgSrc = tpg->source(0);
+                                MediaIOSink   *inspSink = inspector->sink(0);
+                                if (tpgSrc == nullptr || inspSink == nullptr) {
+                                        if (inspector != nullptr) {
+                                                inspector->close().wait();
+                                                delete inspector;
+                                        }
+                                        tpg->close().wait();
                                         delete tpg;
                                         state.setCounter(String("invalid"), 1.0);
                                         for (auto _ : state) (void)_;
@@ -162,10 +184,22 @@ namespace benchutil {
                                 //   - prime the decoder slice / CSC cache
                                 // 8 frames is comfortably more than the LTC lock-in
                                 // window at 30 fps and keeps the warmup tiny.
+                                auto readSync = [&](Frame::Ptr &out) {
+                                        MediaIORequest req = tpgSrc->readFrame();
+                                        Error          err = req.wait();
+                                        if (err.isOk()) {
+                                                if (const auto *cr =
+                                                            req.commandAs<MediaIOCommandRead>()) {
+                                                        out = cr->frame;
+                                                }
+                                        }
+                                        return err;
+                                };
+
                                 for (int i = 0; i < 8; i++) {
                                         Frame::Ptr frame;
-                                        if (tpg->readFrame(frame).isError()) break;
-                                        inspector->writeFrame(frame);
+                                        if (readSync(frame).isError()) break;
+                                        inspSink->writeFrame(frame).wait();
                                 }
 
                                 // Hot path: one TPG read + one Inspector write per
@@ -173,8 +207,8 @@ namespace benchutil {
                                 for (auto _ : state) {
                                         (void)_;
                                         Frame::Ptr frame;
-                                        tpg->readFrame(frame);
-                                        inspector->writeFrame(frame);
+                                        readSync(frame);
+                                        inspSink->writeFrame(frame).wait();
                                 }
 
                                 state.setItemsProcessed(state.iterations());
@@ -188,8 +222,8 @@ namespace benchutil {
                                 state.setLabel(pipelineSizeLabel(spec) + " " + PixelFormat(spec.pd).name() +
                                                " TPG → Inspector pipeline");
 
-                                tpg->close();
-                                inspector->close();
+                                tpg->close().wait();
+                                inspector->close().wait();
                                 delete tpg;
                                 delete inspector;
                         };

@@ -21,7 +21,8 @@
 #include <promeki/list.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaio.h>
-#include <promeki/mediaiotask_mjpegstream.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mjpegstreammediaio.h>
 #include <promeki/mediapipeline.h>
 #include <promeki/mediapipelineconfig.h>
 #include <promeki/pixelformat.h>
@@ -47,7 +48,8 @@ using promeki::JsonObject;
 using promeki::List;
 using promeki::MediaConfig;
 using promeki::MediaIO;
-using promeki::MediaIOTask_MjpegStream;
+using promeki::MediaIOFactory;
+using promeki::MjpegStreamMediaIO;
 using promeki::MediaPipeline;
 using promeki::MediaPipelineConfig;
 using promeki::PixelFormat;
@@ -239,43 +241,37 @@ namespace promekipipeline {
                 }
 
                 // Map a registered MediaIO backend to the /api/types entry shape.
-                JsonObject typeEntryToJson(const MediaIO::FormatDesc &desc) {
+                JsonObject typeEntryToJson(const MediaIOFactory &desc) {
                         JsonObject obj;
-                        obj.set("name", desc.name);
-                        // Human-readable label.  Backends that didn't set
-                        // FormatDesc::displayName get the canonical @c name as a
+                        const String name = desc.name();
+                        obj.set("name", name);
+                        // Human-readable label.  Backends that didn't override
+                        // displayName() return the canonical @c name as a
                         // fallback so the frontend never has to special-case empty.
-                        obj.set("displayName", desc.displayName.isEmpty() ? desc.name : desc.displayName);
-                        obj.set("description", desc.description);
+                        const String dn = desc.displayName();
+                        obj.set("displayName", dn.isEmpty() ? name : dn);
+                        obj.set("description", desc.description());
 
                         JsonArray modes;
-                        if (desc.canBeSource) modes.add(String("Source"));
-                        if (desc.canBeSink) modes.add(String("Sink"));
-                        if (desc.canBeTransform) modes.add(String("Transform"));
+                        if (desc.canBeSource()) modes.add(String("Source"));
+                        if (desc.canBeSink()) modes.add(String("Sink"));
+                        if (desc.canBeTransform()) modes.add(String("Transform"));
                         obj.set("modes", modes);
 
-                        JsonArray exts;
-                        for (size_t i = 0; i < desc.extensions.size(); ++i) {
-                                exts.add(desc.extensions[i]);
+                        JsonArray         exts;
+                        const StringList &extensions = desc.extensions();
+                        for (size_t i = 0; i < extensions.size(); ++i) {
+                                exts.add(extensions[i]);
                         }
                         obj.set("extensions", exts);
 
-                        JsonArray schemes;
-                        for (size_t i = 0; i < desc.schemes.size(); ++i) {
-                                schemes.add(desc.schemes[i]);
+                        JsonArray         schemes;
+                        const StringList &schemeList = desc.schemes();
+                        for (size_t i = 0; i < schemeList.size(); ++i) {
+                                schemes.add(schemeList[i]);
                         }
                         obj.set("schemes", schemes);
                         return obj;
-                }
-
-                // Pull a registered backend descriptor by name.  Returns nullptr
-                // when the type is unknown.
-                const MediaIO::FormatDesc *findFormat(const String &name) {
-                        const auto &all = MediaIO::registeredFormats();
-                        for (size_t i = 0; i < all.size(); ++i) {
-                                if (all[i].name == name) return &all[i];
-                        }
-                        return nullptr;
                 }
 
                 // True when the underlying pipeline is in a state that allows the
@@ -347,9 +343,9 @@ namespace promekipipeline {
 
                 _server.route("/api/types", HttpMethod::Get, [](const HttpRequest &, HttpResponse &res) {
                         JsonArray   arr;
-                        const auto &all = MediaIO::registeredFormats();
+                        const auto &all = MediaIOFactory::registeredFactories();
                         for (size_t i = 0; i < all.size(); ++i) {
-                                arr.add(typeEntryToJson(all[i]));
+                                if (all[i] != nullptr) arr.add(typeEntryToJson(*all[i]));
                         }
                         res.setJson(arr);
                 });
@@ -357,31 +353,31 @@ namespace promekipipeline {
                 _server.route("/api/types/{name}/schema", HttpMethod::Get,
                               [](const HttpRequest &req, HttpResponse &res) {
                                       const String name = req.pathParam("name");
-                                      if (findFormat(name) == nullptr) {
+                                      if (MediaIOFactory::findByName(name) == nullptr) {
                                               sendError(res, HttpStatus::NotFound, "unknown type", name);
                                               return;
                                       }
-                                      res.setJson(schemaToJson(MediaIO::configSpecs(name)));
+                                      res.setJson(schemaToJson(MediaIOFactory::configSpecs(name)));
                               });
 
                 _server.route("/api/types/{name}/defaults", HttpMethod::Get,
                               [](const HttpRequest &req, HttpResponse &res) {
                                       const String name = req.pathParam("name");
-                                      if (findFormat(name) == nullptr) {
+                                      if (MediaIOFactory::findByName(name) == nullptr) {
                                               sendError(res, HttpStatus::NotFound, "unknown type", name);
                                               return;
                                       }
-                                      res.setJson(MediaIO::defaultConfig(name).toJson());
+                                      res.setJson(MediaIOFactory::defaultConfig(name).toJson());
                               });
 
                 _server.route("/api/types/{name}/metadata", HttpMethod::Get,
                               [](const HttpRequest &req, HttpResponse &res) {
                                       const String name = req.pathParam("name");
-                                      if (findFormat(name) == nullptr) {
+                                      if (MediaIOFactory::findByName(name) == nullptr) {
                                               sendError(res, HttpStatus::NotFound, "unknown type", name);
                                               return;
                                       }
-                                      res.setJson(MediaIO::defaultMetadata(name).toJson());
+                                      res.setJson(MediaIOFactory::defaultMetadata(name).toJson());
                               });
         }
 
@@ -708,19 +704,19 @@ namespace promekipipeline {
                                                         stageName);
                                               return;
                                       }
-                                      auto *mjpeg = static_cast<MediaIOTask_MjpegStream *>(stage->task());
+                                      auto *mjpeg = dynamic_cast<MjpegStreamMediaIO *>(stage);
                                       if (mjpeg == nullptr) {
                                               sendError(res, HttpStatus::ServiceUnavailable,
-                                                        "MjpegStream task missing");
+                                                        "MjpegStream backend missing");
                                               return;
                                       }
                                       // Hand off to the library helper that already
                                       // owns the multipart wire format.  Doing the
                                       // delegation through the helper means both the
                                       // demo's dynamic route and any direct call to
-                                      // MediaIOTask_MjpegStream::registerHttpRoute
+                                      // MjpegStreamMediaIO::registerHttpRoute
                                       // share one streaming implementation.
-                                      MediaIOTask_MjpegStream::buildMultipartHandler(mjpeg)(req, res);
+                                      MjpegStreamMediaIO::buildMultipartHandler(mjpeg)(req, res);
                               });
         }
 

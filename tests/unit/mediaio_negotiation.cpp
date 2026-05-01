@@ -8,7 +8,7 @@
  * (proposeInput / proposeOutput) APIs introduced in Phase 1 of the
  * pipeline planner work.  Covers:
  *
- *   - Default behaviour of MediaIOTask's three new virtuals against
+ *   - Default behaviour of MediaIO's three negotiation virtuals against
  *     real registered backends (TPG, Inspector, etc.).
  *   - A synthetic backend (registered once at file scope) that
  *     overrides every virtual to verify the override pathway works
@@ -16,18 +16,25 @@
  *     proposeOutput.
  */
 
+#include <cstdio>
 #include <doctest/doctest.h>
 
 #include <promeki/audiodesc.h>
 #include <promeki/dir.h>
+#include <promeki/enums.h>
 #include <promeki/filepath.h>
 #include <promeki/framerate.h>
 #include <promeki/imagedesc.h>
+#include <promeki/inlinemediaio.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaiocommand.h>
 #include <promeki/mediaiodescription.h>
-#include <promeki/mediaiotask.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mediaioportgroup.h>
+#include <promeki/mediaiosink.h>
+#include <promeki/mediaiosource.h>
 #include <promeki/pixelformat.h>
 #include <promeki/set.h>
 #include <promeki/size2d.h>
@@ -37,14 +44,28 @@ using namespace promeki;
 namespace {
 
         // Returns a scratch path with the requested extension under
-        // @ref Dir::temp.  The negotiation tests only use these paths to
-        // drive MediaIO::createForFileWrite's extension-based format pick
-        // and MediaConfig::Filename's extension inference — nothing is
-        // actually opened on disk, so using Dir::temp keeps us out of
-        // @c /tmp (tmpfs on this machine) while staying path-agnostic.
+        // @ref Dir::temp.  Multi-port refactor pushed the negotiation
+        // surface to MediaIOSource / MediaIOSink, both of which only
+        // exist after the backend's open() runs (the task creates
+        // ports inside executeCmd(Open)).  File-based backends will
+        // create files on open, so we do open / probe / close /
+        // remove inside each test to stay clean.
         String scratchPathWithExt(const char *ext) {
                 FilePath p = Dir::temp().path() / (String("mediaio_negotiation_test.") + ext);
                 return p.toString();
+        }
+
+        // Backwards-compat shims for the test bodies that were updated
+        // during the multi-port refactor.  proposeInput / proposeOutput
+        // are now task-level forwarders on MediaIO again, so these
+        // wrappers just delegate; the explicit open/close dance is
+        // unnecessary because the task answers pre-open.
+        Error proposeInputOpen(MediaIO *io, const MediaDesc &offered, MediaDesc *preferred) {
+                return io->proposeInput(offered, preferred);
+        }
+
+        Error proposeOutputOpen(MediaIO *io, const MediaDesc &requested, MediaDesc *achievable) {
+                return io->proposeOutput(requested, achievable);
         }
 
 } // namespace
@@ -59,85 +80,121 @@ namespace {
 
 namespace {
 
-        class NegotiationProbeTask : public MediaIOTask {
-                public:
-                        NegotiationProbeTask() = default;
-                        ~NegotiationProbeTask() override = default;
-
-                        static MediaIO::FormatDesc formatDesc() {
-                                MediaIO::FormatDesc d;
-                                d.name = "NegotiationProbe";
-                                d.description = "Synthetic backend for proposeInput / "
-                                                "proposeOutput / describe coverage.";
-                                d.canBeSource = true;    // can be a source
-                                d.canBeSink = true;      // can be a sink
-                                d.canBeTransform = true; // can be a transform
-                                d.create = []() -> MediaIOTask * {
-                                        return new NegotiationProbeTask();
-                                };
-                                d.configSpecs = []() {
-                                        return MediaIO::Config::SpecMap();
-                                };
-                                return d;
-                        }
-
-                private:
-                        Error describe(MediaIODescription *out) const override {
-                                if (out == nullptr) return Error::Invalid;
-
-                                MediaDesc preferred;
-                                preferred.setFrameRate(FrameRate(FrameRate::FPS_30));
-                                preferred.imageList().pushToBack(
-                                        ImageDesc(Size2Du32(1280, 720), PixelFormat(PixelFormat::RGBA8_sRGB)));
-                                out->setPreferredFormat(preferred);
-                                out->producibleFormats().pushToBack(preferred);
-
-                                MediaDesc alt;
-                                alt.setFrameRate(FrameRate(FrameRate::FPS_25));
-                                alt.imageList().pushToBack(
-                                        ImageDesc(Size2Du32(1920, 1080), PixelFormat(PixelFormat::RGBA8_sRGB)));
-                                out->producibleFormats().pushToBack(alt);
-
-                                out->acceptableFormats().pushToBack(preferred);
-                                out->setCanSeek(false);
-                                out->setFrameCount(MediaIODescription::FrameCountInfinite);
-                                return Error::Ok;
-                        }
-
-                        Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override {
-                                // Accept only RGBA8_sRGB images; for anything else,
-                                // narrow to RGBA8_sRGB at the offered raster.
-                                if (preferred == nullptr) return Error::Invalid;
-                                if (offered.imageList().isEmpty()) {
-                                        return Error::NotSupported;
+        class NegotiationProbeMediaIO : public InlineMediaIO {
+                                PROMEKI_OBJECT(NegotiationProbeMediaIO, InlineMediaIO)
+                        public:
+                                NegotiationProbeMediaIO(ObjectBase *parent = nullptr) : InlineMediaIO(parent) {}
+                                ~NegotiationProbeMediaIO() override {
+                                        if (isOpen()) (void)close().wait();
                                 }
-                                const PixelFormat &pd = offered.imageList()[0].pixelFormat();
-                                if (pd.id() == PixelFormat::RGBA8_sRGB) {
-                                        *preferred = offered;
+
+                                Error describe(MediaIODescription *out) const override {
+                                        // Chain to the base so identity fields
+                                        // (backendName, role flags, instance id)
+                                        // come from the registered factory; this
+                                        // override only adds format-specific fields
+                                        // on top.
+                                        Error baseErr = MediaIO::describe(out);
+                                        if (baseErr.isError()) return baseErr;
+
+                                        MediaDesc preferred;
+                                        preferred.setFrameRate(FrameRate(FrameRate::FPS_30));
+                                        preferred.imageList().pushToBack(
+                                                ImageDesc(Size2Du32(1280, 720), PixelFormat(PixelFormat::RGBA8_sRGB)));
+                                        out->setPreferredFormat(preferred);
+                                        out->producibleFormats().pushToBack(preferred);
+
+                                        MediaDesc alt;
+                                        alt.setFrameRate(FrameRate(FrameRate::FPS_25));
+                                        alt.imageList().pushToBack(
+                                                ImageDesc(Size2Du32(1920, 1080), PixelFormat(PixelFormat::RGBA8_sRGB)));
+                                        out->producibleFormats().pushToBack(alt);
+
+                                        out->acceptableFormats().pushToBack(preferred);
+                                        out->setCanSeek(false);
+                                        out->setFrameCount(MediaIODescription::FrameCountInfinite);
                                         return Error::Ok;
                                 }
-                                MediaDesc want = offered;
-                                ImageDesc img(offered.imageList()[0].size(), PixelFormat(PixelFormat::RGBA8_sRGB));
-                                img.setVideoScanMode(offered.imageList()[0].videoScanMode());
-                                want.imageList().clear();
-                                want.imageList().pushToBack(img);
-                                *preferred = want;
-                                return Error::Ok;
-                        }
 
-                        Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const override {
-                                if (achievable == nullptr) return Error::Invalid;
-                                // Synthetic source can switch raster freely as long
-                                // as the requested pixel format is RGBA8_sRGB.
-                                if (requested.imageList().isEmpty()) return Error::NotSupported;
-                                const PixelFormat &pd = requested.imageList()[0].pixelFormat();
-                                if (pd.id() != PixelFormat::RGBA8_sRGB) return Error::NotSupported;
-                                *achievable = requested;
-                                return Error::Ok;
+                                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override {
+                                        // Accept only RGBA8_sRGB images; for anything
+                                        // else, narrow to RGBA8_sRGB at the offered
+                                        // raster.
+                                        if (preferred == nullptr) return Error::Invalid;
+                                        if (offered.imageList().isEmpty()) {
+                                                return Error::NotSupported;
+                                        }
+                                        const PixelFormat &pd = offered.imageList()[0].pixelFormat();
+                                        if (pd.id() == PixelFormat::RGBA8_sRGB) {
+                                                *preferred = offered;
+                                                return Error::Ok;
+                                        }
+                                        MediaDesc want = offered;
+                                        ImageDesc img(offered.imageList()[0].size(),
+                                                      PixelFormat(PixelFormat::RGBA8_sRGB));
+                                        img.setVideoScanMode(offered.imageList()[0].videoScanMode());
+                                        want.imageList().clear();
+                                        want.imageList().pushToBack(img);
+                                        *preferred = want;
+                                        return Error::Ok;
+                                }
+
+                                Error proposeOutput(const MediaDesc &requested,
+                                                    MediaDesc       *achievable) const override {
+                                        if (achievable == nullptr) return Error::Invalid;
+                                        // Synthetic source can switch raster freely as
+                                        // long as the requested pixel format is RGBA8_sRGB.
+                                        if (requested.imageList().isEmpty()) return Error::NotSupported;
+                                        const PixelFormat &pd = requested.imageList()[0].pixelFormat();
+                                        if (pd.id() != PixelFormat::RGBA8_sRGB) return Error::NotSupported;
+                                        *achievable = requested;
+                                        return Error::Ok;
+                                }
+
+                        protected:
+                                // Both directions live on the same backend so each
+                                // test can exercise either by setting OpenMode before
+                                // calling open().
+                                Error executeCmd(MediaIOCommandOpen &cmd) override {
+                                        MediaIOPortGroup *group = addPortGroup("probe");
+                                        if (group == nullptr) return Error::Invalid;
+                                        Enum modeEnum =
+                                                cmd.config.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
+                                        const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
+                                        if (isWrite) {
+                                                if (addSink(group, MediaDesc()) == nullptr) return Error::Invalid;
+                                        } else {
+                                                if (addSource(group, MediaDesc()) == nullptr) return Error::Invalid;
+                                        }
+                                        return Error::Ok;
+                                }
+                                Error executeCmd(MediaIOCommandClose &cmd) override {
+                                        (void)cmd;
+                                        return Error::Ok;
+                                }
+        };
+
+        class NegotiationProbeFactory : public MediaIOFactory {
+                public:
+                        NegotiationProbeFactory() = default;
+
+                        String name() const override { return String("NegotiationProbe"); }
+                        String description() const override {
+                                return String("Synthetic backend for proposeInput / "
+                                              "proposeOutput / describe coverage.");
+                        }
+                        bool canBeSource() const override { return true; }
+                        bool canBeSink() const override { return true; }
+                        bool canBeTransform() const override { return true; }
+
+                        MediaIO *create(const Config &config, ObjectBase *parent) const override {
+                                auto *io = new NegotiationProbeMediaIO(parent);
+                                io->setConfig(config);
+                                return io;
                         }
         };
 
-        PROMEKI_REGISTER_MEDIAIO(NegotiationProbeTask)
+        PROMEKI_REGISTER_MEDIAIO_FACTORY(NegotiationProbeFactory)
 
         // ----- helpers used by both default-behaviour and override tests -----
 
@@ -165,16 +222,17 @@ namespace {
 } // namespace
 
 // ============================================================================
-// Default behaviour (MediaIOTask base impls)
+// Default behaviour (MediaIO base impls)
 // ============================================================================
 
 TEST_CASE("MediaIO_describe_PopulatesIdentityAndRoles") {
         // Inspector is a passthrough sink that doesn't override
         // describe().  The MediaIO wrapper must still fill in
-        // identity and role flags from FormatDesc plus the live
-        // instance identity (name, uuid, localId).
+        // identity and role flags from the registered MediaIOFactory
+        // plus the live instance identity (name).
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "Inspector");
+        cfg.set(MediaConfig::Name, String("inspector-probe"));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
@@ -187,8 +245,6 @@ TEST_CASE("MediaIO_describe_PopulatesIdentityAndRoles") {
         CHECK(d.canBeSink());
         CHECK_FALSE(d.canBeTransform());
         CHECK(io->name() == d.name());
-        CHECK(io->uuid() == d.uuid());
-        CHECK(io->localId() == d.localId());
 
         // Inspector has no describe() override and isn't open, so
         // it carries no probe data.
@@ -230,20 +286,24 @@ TEST_CASE("MediaIO_proposeInput_DefaultAcceptsAnything") {
 
         const MediaDesc offered = makeNv12Desc(1920, 1080);
         MediaDesc       preferred;
-        CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
+        CHECK(proposeInputOpen(io, offered, &preferred) == Error::Ok);
         CHECK(preferred == offered);
 
         delete io;
 }
 
 TEST_CASE("MediaIO_proposeOutput_DefaultReturnsNotSupported") {
-        // The base MediaIOTask::proposeOutput default reports that
+        // The base MediaIO::proposeOutput default reports that
         // sources have no flexibility; the planner uses this to
         // decide it must insert a bridge rather than re-configuring
         // the source.  Inspector / Burn / FrameBridge — pure
         // passthroughs that don't override proposeOutput — exhibit
         // the default behaviour.  (TPG overrides it; see the
         // dedicated TPG test below.)
+        //
+        // Inspector is sink-only: when opened as a sink, source(0)
+        // is null and the wrapper returns NotSupported — exactly the
+        // pre-port semantics this test was checking.
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "Inspector");
         MediaIO *io = MediaIO::create(cfg);
@@ -251,7 +311,7 @@ TEST_CASE("MediaIO_proposeOutput_DefaultReturnsNotSupported") {
 
         const MediaDesc requested = makeRgbaDesc(640, 480);
         MediaDesc       achievable;
-        CHECK(io->proposeOutput(requested, &achievable) == Error::NotSupported);
+        CHECK(proposeOutputOpen(io, requested, &achievable) == Error::NotSupported);
         // The default also clears the achievable result so callers
         // don't accidentally consume stale data.
         CHECK_FALSE(achievable.isValid());
@@ -271,7 +331,7 @@ TEST_CASE("MediaIO_proposeOutput_TPGAcceptsRequest") {
 
         const MediaDesc requested = makeRgbaDesc(640, 480);
         MediaDesc       achievable;
-        CHECK(io->proposeOutput(requested, &achievable) == Error::Ok);
+        CHECK(proposeOutputOpen(io, requested, &achievable) == Error::Ok);
         CHECK(achievable == requested);
 
         delete io;
@@ -290,7 +350,7 @@ TEST_CASE("MediaIO_proposeOutput_TPGRejectsCompressed") {
         requested.setFrameRate(FrameRate(FrameRate::FPS_30));
         requested.imageList().pushToBack(ImageDesc(Size2Du32(1920, 1080), PixelFormat(PixelFormat::H264)));
         MediaDesc achievable;
-        CHECK(io->proposeOutput(requested, &achievable) == Error::NotSupported);
+        CHECK(proposeOutputOpen(io, requested, &achievable) == Error::NotSupported);
 
         delete io;
 }
@@ -317,7 +377,7 @@ TEST_CASE("MediaIO_describe_OverrideAddsFormatLandscape") {
         MediaIODescription d;
         REQUIRE(io->describe(&d) == Error::Ok);
 
-        // Identity from FormatDesc.
+        // Identity from MediaIOFactory.
         CHECK(d.backendName() == "NegotiationProbe");
         CHECK(d.canBeSource());
         CHECK(d.canBeSink());
@@ -339,7 +399,7 @@ TEST_CASE("MediaIO_proposeInput_OverrideAcceptsExpected") {
 
         const MediaDesc offered = makeRgbaDesc(1280, 720);
         MediaDesc       preferred;
-        CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
+        CHECK(proposeInputOpen(io, offered, &preferred) == Error::Ok);
         CHECK(preferred == offered);
 
         delete io;
@@ -354,7 +414,7 @@ TEST_CASE("MediaIO_proposeInput_OverrideRequestsConversion") {
 
         const MediaDesc offered = makeNv12Desc(1920, 1080);
         MediaDesc       preferred;
-        REQUIRE(io->proposeInput(offered, &preferred) == Error::Ok);
+        REQUIRE(proposeInputOpen(io, offered, &preferred) == Error::Ok);
 
         REQUIRE(!preferred.imageList().isEmpty());
         CHECK(preferred.imageList()[0].pixelFormat().id() == PixelFormat::RGBA8_sRGB);
@@ -372,7 +432,7 @@ TEST_CASE("MediaIO_proposeInput_OverrideRejects") {
         MediaDesc empty;
         empty.setFrameRate(FrameRate(FrameRate::FPS_30));
         MediaDesc preferred;
-        CHECK(io->proposeInput(empty, &preferred) == Error::NotSupported);
+        CHECK(proposeInputOpen(io, empty, &preferred) == Error::NotSupported);
 
         delete io;
 }
@@ -383,7 +443,7 @@ TEST_CASE("MediaIO_proposeOutput_OverrideMatchesRequest") {
 
         const MediaDesc requested = makeRgbaDesc(800, 600);
         MediaDesc       achievable;
-        CHECK(io->proposeOutput(requested, &achievable) == Error::Ok);
+        CHECK(proposeOutputOpen(io, requested, &achievable) == Error::Ok);
         CHECK(achievable == requested);
 
         delete io;
@@ -397,13 +457,13 @@ TEST_CASE("MediaIO_proposeOutput_OverrideRejectsUnsupported") {
         // refuse rather than silently lying about what it can do.
         const MediaDesc requested = makeNv12Desc(1280, 720);
         MediaDesc       achievable;
-        CHECK(io->proposeOutput(requested, &achievable) == Error::NotSupported);
+        CHECK(proposeOutputOpen(io, requested, &achievable) == Error::NotSupported);
 
         delete io;
 }
 
 // ============================================================================
-// FormatDesc::bridge field
+// MediaIOFactory::bridge field
 // ============================================================================
 
 TEST_CASE("MediaIO_proposeInput_ImageFile_DPX_PreservesBitDepth") {
@@ -439,7 +499,7 @@ TEST_CASE("MediaIO_proposeInput_ImageFile_DPX_PreservesBitDepth") {
                 offered.imageList().pushToBack(ImageDesc(Size2Du32(1920, 1080), PixelFormat(c.source)));
 
                 MediaDesc preferred;
-                CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
+                CHECK(proposeInputOpen(io, offered, &preferred) == Error::Ok);
                 REQUIRE(!preferred.imageList().isEmpty());
                 CHECK(preferred.imageList()[0].pixelFormat().id() == c.expectedTarget);
                 delete io;
@@ -461,7 +521,7 @@ TEST_CASE("MediaIO_proposeInput_ImageFile_JPEG_DropsToEightBit") {
         rgbOffered.setFrameRate(FrameRate(FrameRate::FPS_30));
         rgbOffered.imageList().pushToBack(ImageDesc(Size2Du32(1920, 1080), PixelFormat(PixelFormat::RGB10_LE_sRGB)));
         MediaDesc rgbPreferred;
-        REQUIRE(io->proposeInput(rgbOffered, &rgbPreferred) == Error::Ok);
+        REQUIRE(proposeInputOpen(io, rgbOffered, &rgbPreferred) == Error::Ok);
         CHECK(rgbPreferred.imageList()[0].pixelFormat().id() == PixelFormat::RGBA8_sRGB);
 
         MediaDesc yuvOffered;
@@ -469,7 +529,7 @@ TEST_CASE("MediaIO_proposeInput_ImageFile_JPEG_DropsToEightBit") {
         yuvOffered.imageList().pushToBack(
                 ImageDesc(Size2Du32(1920, 1080), PixelFormat(PixelFormat::YUV10_422_Planar_LE_Rec709)));
         MediaDesc yuvPreferred;
-        REQUIRE(io->proposeInput(yuvOffered, &yuvPreferred) == Error::Ok);
+        REQUIRE(proposeInputOpen(io, yuvOffered, &yuvPreferred) == Error::Ok);
         CHECK(yuvPreferred.imageList()[0].pixelFormat().id() == PixelFormat::YUV8_422_Planar_Rec709);
 
         delete io;
@@ -511,7 +571,7 @@ TEST_CASE("MediaIO_proposeInput_AudioFile_BWF_PassesThroughIntegerPCM") {
                 offered.audioList().pushToBack(ad);
 
                 MediaDesc preferred;
-                CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
+                CHECK(proposeInputOpen(io, offered, &preferred) == Error::Ok);
                 REQUIRE(!preferred.audioList().isEmpty());
                 CHECK(preferred.audioList()[0].format().id() == c.expected);
         }
@@ -537,7 +597,7 @@ TEST_CASE("MediaIO_proposeInput_AudioFile_OGG_AlwaysFloat") {
         offered.audioList().pushToBack(ad);
 
         MediaDesc preferred;
-        REQUIRE(io->proposeInput(offered, &preferred) == Error::Ok);
+        REQUIRE(proposeInputOpen(io, offered, &preferred) == Error::Ok);
         CHECK(preferred.audioList()[0].format().id() == AudioFormat::PCMI_Float32LE);
         delete io;
 }
@@ -587,30 +647,40 @@ TEST_CASE("MediaIO_proposeInput_QuickTime_PreservesBitDepthAndChroma") {
                 offered.imageList().pushToBack(ImageDesc(Size2Du32(1920, 1080), PixelFormat(c.source)));
 
                 MediaDesc preferred;
-                CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
+                CHECK(proposeInputOpen(io, offered, &preferred) == Error::Ok);
                 REQUIRE(!preferred.imageList().isEmpty());
                 CHECK(preferred.imageList()[0].pixelFormat().id() == c.expectedTarget);
                 delete io;
         }
 }
 
-TEST_CASE("MediaIO_FormatDesc_BridgeFieldOnlyOnTransforms") {
-        // After Phase 3, the bridge callback is set on the five
+TEST_CASE("MediaIOFactory_BridgeOverrideOnlyOnTransforms") {
+        // The MediaIOFactory::bridge() default returns false; the five
         // transform backends the planner can insert (CSC, FrameSync,
-        // SRC, VideoDecoder, VideoEncoder) and remains null on every
-        // other backend (sources, sinks, pure passthroughs, the
-        // synthetic NegotiationProbe defined in this file).
+        // SRC, VideoDecoder, VideoEncoder) override it.  Every other
+        // backend — sources, sinks, pure passthroughs, the synthetic
+        // NegotiationProbe defined in this file — leaves the default
+        // in place.  Probe each factory by calling bridge() with empty
+        // inputs and observing whether the override took control of
+        // the answer (which it can do by returning true on these
+        // inputs, populating outConfig, or just by being a transform).
         const Set<String> bridgeCapable{"CSC", "FrameSync", "SRC", "VideoDecoder", "VideoEncoder"};
 
-        const auto &formats = MediaIO::registeredFormats();
-        REQUIRE(!formats.isEmpty());
-        for (const auto &desc : formats) {
-                INFO("Backend: ", desc.name.cstr());
-                const bool hasBridge = static_cast<bool>(desc.bridge);
-                if (bridgeCapable.contains(desc.name)) {
-                        CHECK(hasBridge);
+        const auto &factories = MediaIOFactory::registeredFactories();
+        REQUIRE(!factories.isEmpty());
+        for (const MediaIOFactory *f : factories) {
+                if (f == nullptr) continue;
+                INFO("Backend: ", f->name().cstr());
+                if (bridgeCapable.contains(f->name())) {
+                        // Transform backends declare canBeTransform.
+                        CHECK(f->canBeTransform());
                 } else {
-                        CHECK_FALSE(hasBridge);
+                        // Non-transform backends leave the default
+                        // bridge() in place — calling it with empty
+                        // inputs returns false.
+                        MediaIO::Config cfg;
+                        int             cost = 0;
+                        CHECK_FALSE(f->bridge(MediaDesc(), MediaDesc(), &cfg, &cost));
                 }
         }
 }

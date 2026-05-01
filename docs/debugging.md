@@ -180,7 +180,7 @@ list of module names:
 PROMEKI_DEBUG=ThreadPool,MediaIO ./myapp
 
 # Enable debug output for everything (if modules are named):
-PROMEKI_DEBUG=ThreadPool,Thread,Logger,MediaIO,MediaIOTask_Rtp ./myapp
+PROMEKI_DEBUG=ThreadPool,Thread,Logger,MediaIO,RtpMediaIO ./myapp
 ```
 
 When enabled, `promekiDebug()` messages appear alongside normal

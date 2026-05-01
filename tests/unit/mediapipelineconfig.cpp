@@ -6,15 +6,16 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/framecount.h>
-#include <promeki/mediapipelineconfig.h>
-#include <promeki/mediaconfig.h>
-#include <promeki/metadata.h>
 #include <promeki/buffer.h>
 #include <promeki/bufferiodevice.h>
 #include <promeki/datastream.h>
 #include <promeki/dir.h>
+#include <promeki/enums.h>
 #include <promeki/filepath.h>
+#include <promeki/framecount.h>
+#include <promeki/mediaconfig.h>
+#include <promeki/mediapipelineconfig.h>
+#include <promeki/metadata.h>
 #include <promeki/size2d.h>
 #include <promeki/videoformat.h>
 
@@ -33,7 +34,7 @@ namespace {
                 MediaPipelineConfig::Stage src;
                 src.name = "src";
                 src.type = "TPG";
-                src.mode = MediaIO::Source;
+                src.role = MediaPipelineConfig::StageRole::Source;
                 src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
                 src.config.set(MediaConfig::VideoEnabled, true);
                 cfg.addStage(src);
@@ -41,7 +42,7 @@ namespace {
                 MediaPipelineConfig::Stage csc;
                 csc.name = "csc";
                 csc.type = "CSC";
-                csc.mode = MediaIO::Transform;
+                csc.role = MediaPipelineConfig::StageRole::Transform;
                 cfg.addStage(csc);
 
                 MediaPipelineConfig::Stage sink;
@@ -52,7 +53,7 @@ namespace {
                 // Dir::temp() rather than hard-coding /tmp to honour the
                 // project-wide scratch-location override.
                 sink.path = (Dir::temp().path() / "mediapipelineconfig_sample.dpx").toString();
-                sink.mode = MediaIO::Sink;
+                sink.role = MediaPipelineConfig::StageRole::Sink;
                 cfg.addStage(sink);
 
                 cfg.addRoute("src", "csc");
@@ -62,24 +63,24 @@ namespace {
 
 } // namespace
 
-TEST_CASE("MediaPipelineConfig_ModeNameRoundTrip") {
-        CHECK(MediaPipelineConfig::modeName(MediaIO::Source) == "Source");
-        CHECK(MediaPipelineConfig::modeName(MediaIO::Sink) == "Sink");
-        CHECK(MediaPipelineConfig::modeName(MediaIO::Transform) == "Transform");
-        CHECK(MediaPipelineConfig::modeName(MediaIO::NotOpen) == "NotOpen");
+TEST_CASE("MediaPipelineConfig_RoleNameRoundTrip") {
+        CHECK(MediaPipelineConfig::roleName(MediaPipelineConfig::StageRole::Source) == "Source");
+        CHECK(MediaPipelineConfig::roleName(MediaPipelineConfig::StageRole::Sink) == "Sink");
+        CHECK(MediaPipelineConfig::roleName(MediaPipelineConfig::StageRole::Transform) == "Transform");
+        CHECK(MediaPipelineConfig::roleName(MediaPipelineConfig::StageRole::NotOpen) == "NotOpen");
 
         Error err;
-        CHECK(MediaPipelineConfig::modeFromName("Source", &err) == MediaIO::Source);
+        CHECK(MediaPipelineConfig::roleFromName("Source", &err) == MediaPipelineConfig::StageRole::Source);
         CHECK(err.isOk());
-        CHECK(MediaPipelineConfig::modeFromName("Sink", &err) == MediaIO::Sink);
+        CHECK(MediaPipelineConfig::roleFromName("Sink", &err) == MediaPipelineConfig::StageRole::Sink);
         CHECK(err.isOk());
-        CHECK(MediaPipelineConfig::modeFromName("Transform", &err) == MediaIO::Transform);
+        CHECK(MediaPipelineConfig::roleFromName("Transform", &err) == MediaPipelineConfig::StageRole::Transform);
         CHECK(err.isOk());
-        CHECK(MediaPipelineConfig::modeFromName("NotOpen", &err) == MediaIO::NotOpen);
+        CHECK(MediaPipelineConfig::roleFromName("NotOpen", &err) == MediaPipelineConfig::StageRole::NotOpen);
         CHECK(err.isOk());
-        CHECK(MediaPipelineConfig::modeFromName("", &err) == MediaIO::NotOpen);
+        CHECK(MediaPipelineConfig::roleFromName("", &err) == MediaPipelineConfig::StageRole::NotOpen);
         CHECK(err.isOk());
-        CHECK(MediaPipelineConfig::modeFromName("Bogus", &err) == MediaIO::NotOpen);
+        CHECK(MediaPipelineConfig::roleFromName("Bogus", &err) == MediaPipelineConfig::StageRole::NotOpen);
         CHECK(err.isError());
 }
 
@@ -96,7 +97,7 @@ TEST_CASE("MediaPipelineConfig_Accessors") {
         const MediaPipelineConfig::Stage *s = cfg.findStage("csc");
         REQUIRE(s != nullptr);
         CHECK(s->type == "CSC");
-        CHECK(s->mode == MediaIO::Transform);
+        CHECK(s->role == MediaPipelineConfig::StageRole::Transform);
 
         StringList names = cfg.stageNames();
         REQUIRE(names.size() == 3);
@@ -258,7 +259,7 @@ TEST_CASE("MediaPipelineConfig_Validate_DuplicateName") {
         MediaPipelineConfig::Stage dup;
         dup.name = "src"; // duplicate
         dup.type = "TPG";
-        dup.mode = MediaIO::Source;
+        dup.role = MediaPipelineConfig::StageRole::Source;
         cfg.addStage(dup);
         CHECK(cfg.validate() == Error::InvalidArgument);
 }
@@ -287,7 +288,7 @@ TEST_CASE("MediaPipelineConfig_Validate_OrphanStage") {
         MediaPipelineConfig::Stage orphan;
         orphan.name = "orphan";
         orphan.type = "TPG";
-        orphan.mode = MediaIO::Source;
+        orphan.role = MediaPipelineConfig::StageRole::Source;
         cfg.addStage(orphan);
         CHECK(cfg.validate() == Error::InvalidArgument);
 }
@@ -296,7 +297,7 @@ TEST_CASE("MediaPipelineConfig_Validate_MissingTypeAndPath") {
         MediaPipelineConfig        cfg;
         MediaPipelineConfig::Stage bad;
         bad.name = "only";
-        bad.mode = MediaIO::Source;
+        bad.role = MediaPipelineConfig::StageRole::Source;
         cfg.addStage(bad);
         CHECK(cfg.validate() == Error::InvalidArgument);
 }
@@ -306,7 +307,7 @@ TEST_CASE("MediaPipelineConfig_Validate_InvalidMode") {
         MediaPipelineConfig::Stage bad;
         bad.name = "only";
         bad.type = "TPG";
-        bad.mode = MediaIO::NotOpen; // not a valid opening mode
+        bad.role = MediaPipelineConfig::StageRole::NotOpen; // not a valid opening mode
         cfg.addStage(bad);
         CHECK(cfg.validate() == Error::InvalidArgument);
 }
@@ -339,7 +340,7 @@ TEST_CASE("MediaPipelineConfig_FrontendCoordsRoundTrip") {
         MediaPipelineConfig::Stage src;
         src.name = "src";
         src.type = "TPG";
-        src.mode = MediaIO::Source;
+        src.role = MediaPipelineConfig::StageRole::Source;
         src.metadata.set(Metadata::FrontendX, 124.5);
         src.metadata.set(Metadata::FrontendY, 64.0);
         cfg.addStage(src);
@@ -347,7 +348,7 @@ TEST_CASE("MediaPipelineConfig_FrontendCoordsRoundTrip") {
         MediaPipelineConfig::Stage sink;
         sink.name = "sink";
         sink.type = "NullPacing";
-        sink.mode = MediaIO::Sink;
+        sink.role = MediaPipelineConfig::StageRole::Sink;
         sink.metadata.set(Metadata::FrontendX, 480.0);
         sink.metadata.set(Metadata::FrontendY, 96.5);
         cfg.addStage(sink);
@@ -441,10 +442,10 @@ TEST_CASE("MediaPipelineConfig_StageRouteEquality") {
         MediaPipelineConfig::Stage a;
         a.name = "n";
         a.type = "TPG";
-        a.mode = MediaIO::Source;
+        a.role = MediaPipelineConfig::StageRole::Source;
         MediaPipelineConfig::Stage b = a;
         CHECK(a == b);
-        b.mode = MediaIO::Sink;
+        b.role = MediaPipelineConfig::StageRole::Sink;
         CHECK(a != b);
 
         MediaPipelineConfig::Route r1{"x", "y", "", ""};

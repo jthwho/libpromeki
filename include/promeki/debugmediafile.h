@@ -38,7 +38,7 @@ class File;
  *
  * The class is usable standalone — open a file for
  * @ref Mode::Write, push frames through @ref writeFrame, and call
- * @ref close on shutdown.  The @ref MediaIOTask_DebugMedia
+ * @ref close on shutdown.  The @ref DebugMediaMediaIO
  * adapter wraps it for the @ref MediaIO framework.
  *
  * @par File layout (current version = 1)

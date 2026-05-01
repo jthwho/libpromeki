@@ -1,0 +1,143 @@
+/**
+ * @file      burnmediaio.h
+ * @copyright Howard Logic. All rights reserved.
+ *
+ * See LICENSE file in the project root folder for license information.
+ */
+
+#pragma once
+
+#include <promeki/namespace.h>
+#include <promeki/sharedthreadmediaio.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/videotestpattern.h>
+#include <promeki/list.h>
+#include <promeki/string.h>
+
+PROMEKI_NAMESPACE_BEGIN
+
+/**
+ * @brief MediaIO backend that burns text overlays onto video frames.
+ * @ingroup proav
+ *
+ * ReadWrite MediaIO that accepts a frame on @c writeFrame(), renders a
+ * text overlay onto each video image, and emits the result on
+ * @c readFrame().  Audio and non-video metadata are forwarded unchanged.
+ *
+ * The burn text is specified as a @ref VariantLookup<Frame>::format template
+ * (via @ref MediaConfig::VideoBurnText), resolved per-frame against
+ * the frame's metadata.  This allows dynamic content such as
+ * @c "{Meta.Timecode:smpte}" or @c "{VideoFormat}" to update on every
+ * frame.
+ *
+ * Font rendering is delegated to @ref VideoTestPattern::applyBurn,
+ * which uses the @ref FastFont glyph cache for efficient repeated
+ * draws.  The image must be in a paintable pixel format
+ * (@c PixelFormat::hasPaintEngine() == true); non-paintable formats
+ * pass through with a one-shot warning.
+ *
+ * @par Mode support
+ *
+ * Only @c MediaIO::Transform is supported.
+ *
+ * @par Back-pressure
+ *
+ * The task maintains an internal output FIFO.  Writes always succeed —
+ * frames are never silently dropped.  When the FIFO exceeds the
+ * configured capacity a one-shot warning is logged.  When the FIFO is
+ * empty, @c readFrame() returns @c Error::TryAgain.  FIFO capacity is
+ * configurable via @ref MediaConfig::Capacity (default 4).
+ *
+ * @par Config keys
+ *
+ * | Key | Type | Default | Description |
+ * |-----|------|---------|-------------|
+ * | @ref MediaConfig::VideoBurnEnabled   | bool                    | true         | Enable text burn-in. |
+ * | @ref MediaConfig::VideoBurnFontPath  | String                  | ""           | TrueType font path.  Empty = bundled default font. |
+ * | @ref MediaConfig::VideoBurnFontSize  | int                     | 0            | Font size in pixels.  0 = auto-scale from image height. |
+ * | @ref MediaConfig::VideoBurnText      | String                  | "{Timecode:smpte}" | @ref VariantLookup<Frame>::format template resolved per-frame. |
+ * | @ref MediaConfig::VideoBurnPosition  | Enum @ref BurnPosition  | BottomCenter | Position preset. |
+ * | @ref MediaConfig::VideoBurnTextColor | Color                   | White        | Burn text foreground color. |
+ * | @ref MediaConfig::VideoBurnBgColor   | Color                   | Black        | Burn text background color. |
+ * | @ref MediaConfig::VideoBurnDrawBg    | bool                    | true         | Draw background rectangle behind burn text. |
+ * | @ref MediaConfig::Capacity           | int                     | 4            | Maximum output FIFO depth. |
+ *
+ * @par Stats keys
+ *
+ * | Key | Type | Description |
+ * |-----|------|-------------|
+ * | FramesBurned  | int64_t | Total frames with burn-in applied. |
+ * | QueueDepth    | int64_t | Current FIFO depth. |
+ * | QueueCapacity | int64_t | Maximum FIFO depth. |
+ *
+ * @par Example
+ * @code
+ * MediaIO::Config cfg;
+ * cfg.set(MediaConfig::Type, "Burn");
+ * cfg.set(MediaConfig::VideoBurnText, "{Timecode:smpte}");
+ * MediaIO *io = MediaIO::create(cfg);
+ * io->open(MediaIO::Transform);
+ * io->writeFrame(inputFrame);
+ * Frame::Ptr outputFrame;
+ * io->readFrame(outputFrame);
+ * io->close();
+ * delete io;
+ * @endcode
+ *
+ * @par Thread Safety
+ * Strand-affine — see @ref CommandMediaIO.
+ */
+class BurnMediaIO : public SharedThreadMediaIO {
+                PROMEKI_OBJECT(BurnMediaIO, SharedThreadMediaIO)
+        public:
+                /** @brief int64_t — total frames with burn-in applied. */
+                static inline const MediaIOStats::ID StatsFramesBurned{"FramesBurned"};
+
+                BurnMediaIO(ObjectBase *parent = nullptr);
+                ~BurnMediaIO() override;
+
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
+                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const override;
+                int   pendingInternalWrites() const override;
+
+        protected:
+                Error executeCmd(MediaIOCommandOpen &cmd) override;
+                Error executeCmd(MediaIOCommandClose &cmd) override;
+                Error executeCmd(MediaIOCommandRead &cmd) override;
+                Error executeCmd(MediaIOCommandWrite &cmd) override;
+                Error executeCmd(MediaIOCommandStats &cmd) override;
+
+        private:
+                Error burnFrame(const Frame::Ptr &input, Frame::Ptr &output);
+
+                VideoTestPattern _pattern;
+                String           _burnTextTemplate;
+                bool             _burnEnabled = false;
+                int              _capacity = 4;
+
+                List<Frame::Ptr> _outputQueue;
+                FrameCount       _frameCount{0};
+                int64_t          _readCount = 0;
+                FrameCount       _framesBurned{0};
+                bool             _capacityWarned = false;
+                bool             _notPaintableWarned = false;
+};
+
+/**
+ * @brief @ref MediaIOFactory for the Burn (text overlay) backend.
+ * @ingroup proav
+ */
+class BurnFactory : public MediaIOFactory {
+        public:
+                BurnFactory() = default;
+
+                String name() const override { return String("Burn"); }
+                String displayName() const override { return String("Burn-in (Timecode / Text)"); }
+                String description() const override { return String("Text burn-in overlay on video frames"); }
+                bool   canBeTransform() const override { return true; }
+
+                Config::SpecMap configSpecs() const override;
+                MediaIO        *create(const Config &config, ObjectBase *parent = nullptr) const override;
+};
+
+PROMEKI_NAMESPACE_END

@@ -22,7 +22,7 @@ class MediaDesc;
 /**
  * @brief Resolves a partial @ref MediaPipelineConfig into one whose
  *        every route is directly format-compatible by splicing in
- *        the bridging stages declared via @ref MediaIO::FormatDesc::bridge.
+ *        the bridging stages declared via @ref MediaIOFactory::bridge.
  * @ingroup pipeline
  *
  * The planner runs offline (no signals, no frame motion).  It walks
@@ -57,7 +57,7 @@ class MediaDesc;
  * @par Bridge solving
  *
  * For each gapped route the planner asks every registered backend
- * with a @ref MediaIO::FormatDesc::bridge callback whether it can
+ * with a @ref MediaIOFactory::bridge callback whether it can
  * convert from the source desc to the sink's preferred desc.  The
  * cheapest applicable bridge wins.  When no single bridge fits, the
  * planner tries the codec-transitive two-hop pattern (VideoDecoder +
@@ -84,7 +84,7 @@ class MediaDesc;
  * @par Determinism
  *
  * Iteration order over the registered bridges is deterministic
- * (matches @ref MediaIO::registeredFormats), so given the same input
+ * (matches @ref MediaIOFactory::registeredFactories), so given the same input
  * config and registry state the planner always returns the same
  * resolved config.  The resolved config round-trips through JSON and
  * @ref DataStream the same as any hand-authored config.

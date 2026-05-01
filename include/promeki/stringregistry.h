@@ -88,115 +88,133 @@ namespace detail {
  * static_assert(Width.id() == MyItem::literal("video.width").id());
  * @endcode
  */
-template <CompiledString Name> class StringRegistry {
+template <CompiledString Name> class StringRegistry;
+
+/**
+ * @brief Lightweight handle identifying a string registered in @ref StringRegistry.
+ *
+ * Item wraps a uint64_t ID and provides access to the underlying
+ * string via the owning registry.  Items are cheap to copy and
+ * can be compared by integer value.
+ *
+ * Hoisted out of @ref StringRegistry so that
+ * @c std::hash<StringRegistryItem<Name>> can be partially specialized
+ * — a hash specialization on a nested type
+ * (@c StringRegistry<Name>::Item) is a non-deduced context and would
+ * never be selected.  @c StringRegistry<Name>::Item is preserved as
+ * a type alias, so existing code that spells the type as a member of
+ * the registry keeps working.
+ */
+template <CompiledString Name> class StringRegistryItem {
         public:
                 /** @brief Sentinel value representing an invalid/unregistered ID. */
                 static constexpr uint64_t InvalidID = UINT64_MAX;
 
+                /** @brief Constructs an invalid Item with no associated name. */
+                constexpr StringRegistryItem() = default;
+
                 /**
-                 * @brief Lightweight handle identifying a registered string.
+                 * @brief Constructs an Item, registering the name if not already known.
                  *
-                 * Item wraps a uint64_t ID and provides access to the underlying
-                 * string via the owning registry.  Items are cheap to copy and
-                 * can be compared by integer value.
+                 * Uses the probing registration path, so a hash collision
+                 * between two distinct dynamic names does not fail — the
+                 * colliding name is stored at the next free slot and
+                 * subsequent lookups follow the same probe.
+                 *
+                 * @param name The string to register.
                  */
-                class Item {
-                        public:
-                                /** @brief Constructs an invalid Item with no associated name. */
-                                constexpr Item() = default;
+                StringRegistryItem(const String &name)
+                    : _id(StringRegistry<Name>::instance().findOrCreateProbe(name)) {}
 
-                                /**
-                                 * @brief Constructs an Item, registering the name if not already known.
-                                 *
-                                 * Uses the probing registration path, so a hash collision
-                                 * between two distinct dynamic names does not fail — the
-                                 * colliding name is stored at the next free slot and
-                                 * subsequent lookups follow the same probe.
-                                 *
-                                 * @param name The string to register.
-                                 */
-                                Item(const String &name) : _id(instance().findOrCreateProbe(name)) {}
+                /**
+                 * @brief Constructs an Item, registering the name if not already known.
+                 * @param name The string to register as a C-string.
+                 */
+                StringRegistryItem(const char *name)
+                    : _id(StringRegistry<Name>::instance().findOrCreateProbe(String(name))) {}
 
-                                /**
-                                 * @brief Constructs an Item, registering the name if not already known.
-                                 * @param name The string to register as a C-string.
-                                 */
-                                Item(const char *name) : _id(instance().findOrCreateProbe(String(name))) {}
+                /**
+                 * @brief Creates a compile-time Item from a name literal.
+                 *
+                 * Returns the pure FNV-1a hash of @p name without touching
+                 * the runtime registry.  Use this for well-known IDs that
+                 * need to participate in `constexpr` machinery (switch
+                 * labels, `static_assert`, template parameters).  The
+                 * resulting ID will match any Item later constructed from
+                 * the same name via @ref VariantDatabase::declareID, provided no hash
+                 * collision was flagged at static-init time.
+                 *
+                 * Note that `literal()` does not register the name for
+                 * reverse lookup; @ref name will return an empty string
+                 * unless the same name was also registered via a runtime
+                 * path.
+                 */
+                static constexpr StringRegistryItem literal(const char *name) {
+                        StringRegistryItem item;
+                        item._id = fnv1a(name);
+                        return item;
+                }
 
-                                /**
-                                 * @brief Creates a compile-time Item from a name literal.
-                                 *
-                                 * Returns the pure FNV-1a hash of @p name without touching
-                                 * the runtime registry.  Use this for well-known IDs that
-                                 * need to participate in `constexpr` machinery (switch
-                                 * labels, `static_assert`, template parameters).  The
-                                 * resulting ID will match any Item later constructed from
-                                 * the same name via @ref VariantDatabase::declareID, provided no hash
-                                 * collision was flagged at static-init time.
-                                 *
-                                 * Note that `literal()` does not register the name for
-                                 * reverse lookup; @ref name will return an empty string
-                                 * unless the same name was also registered via a runtime
-                                 * path.
-                                 */
-                                static constexpr Item literal(const char *name) {
-                                        Item item;
-                                        item._id = fnv1a(name);
-                                        return item;
-                                }
+                /**
+                 * @brief Looks up an Item by name without registering it.
+                 * @param name The string to look up.
+                 * @return The Item if found, or an invalid Item if not registered.
+                 */
+                static StringRegistryItem find(const String &name) {
+                        StringRegistryItem item;
+                        item._id = StringRegistry<Name>::instance().findId(name);
+                        return item;
+                }
 
-                                /**
-                                 * @brief Looks up an Item by name without registering it.
-                                 * @param name The string to look up.
-                                 * @return The Item if found, or an invalid Item if not registered.
-                                 */
-                                static Item find(const String &name) {
-                                        Item item;
-                                        item._id = instance().findId(name);
-                                        return item;
-                                }
+                /**
+                 * @brief Constructs an Item from a raw integer ID.
+                 * @param id The raw ID value.
+                 * @return An Item wrapping the given ID.  No validation is performed.
+                 */
+                static constexpr StringRegistryItem fromId(uint64_t id) {
+                        StringRegistryItem item;
+                        item._id = id;
+                        return item;
+                }
 
-                                /**
-                                 * @brief Constructs an Item from a raw integer ID.
-                                 * @param id The raw ID value.
-                                 * @return An Item wrapping the given ID.  No validation is performed.
-                                 */
-                                static constexpr Item fromId(uint64_t id) {
-                                        Item item;
-                                        item._id = id;
-                                        return item;
-                                }
+                /**
+                 * @brief Returns the integer ID for this item.
+                 * @return The ID, or InvalidID if this item is invalid.
+                 */
+                constexpr uint64_t id() const { return _id; }
 
-                                /**
-                                 * @brief Returns the integer ID for this item.
-                                 * @return The ID, or InvalidID if this item is invalid.
-                                 */
-                                constexpr uint64_t id() const { return _id; }
+                /**
+                 * @brief Returns the name associated with this item.
+                 * @return The string, or an empty String if invalid or unregistered.
+                 */
+                String name() const { return StringRegistry<Name>::instance().name(_id); }
 
-                                /**
-                                 * @brief Returns the name associated with this item.
-                                 * @return The string, or an empty String if invalid or unregistered.
-                                 */
-                                String name() const { return instance().name(_id); }
+                /**
+                 * @brief Returns true if this Item refers to a valid registered name.
+                 * @return True if valid, false otherwise.
+                 */
+                constexpr bool isValid() const { return _id != InvalidID; }
 
-                                /**
-                                 * @brief Returns true if this Item refers to a valid registered name.
-                                 * @return True if valid, false otherwise.
-                                 */
-                                constexpr bool isValid() const { return _id != InvalidID; }
+                /** @brief Equality comparison by ID. */
+                constexpr bool operator==(const StringRegistryItem &other) const { return _id == other._id; }
 
-                                /** @brief Equality comparison by ID. */
-                                constexpr bool operator==(const Item &other) const { return _id == other._id; }
+                /** @brief Inequality comparison by ID. */
+                constexpr bool operator!=(const StringRegistryItem &other) const { return _id != other._id; }
 
-                                /** @brief Inequality comparison by ID. */
-                                constexpr bool operator!=(const Item &other) const { return _id != other._id; }
+                /** @brief Less-than comparison by ID (for use in ordered containers). */
+                constexpr bool operator<(const StringRegistryItem &other) const { return _id < other._id; }
 
-                                /** @brief Less-than comparison by ID (for use in ordered containers). */
-                                constexpr bool operator<(const Item &other) const { return _id < other._id; }
+        private:
+                uint64_t _id = InvalidID;
+};
 
-                        private:
-                                uint64_t _id = InvalidID;
-                };
+template <CompiledString Name> class StringRegistry {
+        public:
+                /** @brief Lightweight handle identifying a registered string. */
+                using Item = StringRegistryItem<Name>;
+
+                /** @brief Sentinel value representing an invalid/unregistered ID. */
+                static constexpr uint64_t InvalidID = StringRegistryItem<Name>::InvalidID;
 
                 /** @brief Returns the singleton registry instance for this Tag type. */
                 static StringRegistry &instance() {
@@ -339,3 +357,19 @@ template <CompiledString Name> class StringRegistry {
 };
 
 PROMEKI_NAMESPACE_END
+
+/**
+ * @brief @c std::hash specialization for @ref promeki::StringRegistryItem.
+ *
+ * Items already wrap a 64-bit hash, so the specialization simply
+ * returns the underlying ID — there is no second hashing step.  This
+ * makes every @c StringRegistry::Item type (including @c MediaIOStats::ID
+ * and any other VariantDatabase ID) usable as a key in
+ * @ref promeki::HashMap and any @c std::unordered_* container without
+ * forcing each consumer to provide its own hasher.
+ */
+template <promeki::CompiledString Name> struct std::hash<promeki::StringRegistryItem<Name>> {
+                std::size_t operator()(const promeki::StringRegistryItem<Name> &item) const noexcept {
+                        return static_cast<std::size_t>(item.id());
+                }
+};

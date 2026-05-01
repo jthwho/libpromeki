@@ -9,6 +9,14 @@
 
 #include <promeki/eventloop.h>
 #include <promeki/logger.h>
+#include <promeki/mediaiocommand.h>
+#include <promeki/mediaiodescription.h>
+#include <promeki/mediaiorequest.h>
+#include <promeki/mediaioportconnection.h>
+#include <promeki/mediaioportgroup.h>
+#include <promeki/mediaiosink.h>
+#include <promeki/mediaiosource.h>
+#include <promeki/mediaiostatscollector.h>
 #include <promeki/mediapipelineplanner.h>
 #include <promeki/objectbase.tpp>
 #include <promeki/set.h>
@@ -96,10 +104,11 @@ MediaIO *MediaPipeline::instantiateStage(const MediaPipelineConfig::Stage &s) {
         if (!s.type.isEmpty()) {
                 MediaConfig cfg = s.config;
                 cfg.set(MediaConfig::Type, s.type);
+                cfg.set(MediaConfig::Name, s.name);
                 if (!s.path.isEmpty()) cfg.set(MediaConfig::Filename, s.path);
                 io = MediaIO::create(cfg, this);
         } else if (!s.path.isEmpty()) {
-                if (s.mode == MediaIO::Source) {
+                if (s.role == MediaPipelineConfig::StageRole::Source) {
                         io = MediaIO::createForFileRead(s.path, this);
                 } else {
                         io = MediaIO::createForFileWrite(s.path, this);
@@ -107,11 +116,16 @@ MediaIO *MediaPipeline::instantiateStage(const MediaPipelineConfig::Stage &s) {
                 if (io != nullptr) {
                         MediaConfig merged = io->config();
                         s.config.forEach([&merged](MediaConfig::ID id, const Variant &val) { merged.set(id, val); });
+                        // Stage name always wins over anything the
+                        // file-shortcut path or stage config supplied,
+                        // so logs and stats key off the same identifier
+                        // the pipeline graph uses.
+                        merged.set(MediaConfig::Name, s.name);
                         io->setConfig(merged);
                 }
         }
         if (io != nullptr && !s.metadata.isEmpty()) {
-                (void)io->setExpectedMetadata(s.metadata);
+                (void)io->setPendingMetadata(s.metadata);
         }
         return io;
 }
@@ -121,16 +135,40 @@ MediaIO *MediaPipeline::instantiateStage(const MediaPipelineConfig::Stage &s) {
 // ============================================================================
 
 Error MediaPipeline::destroyStages() {
+        // Tear down stats collectors before the MediaIOs they observe
+        // disappear.  Collectors disconnect from
+        // commandCompletedSignal in their setTarget(nullptr) path, so
+        // doing this first guarantees no late notification fires
+        // against a half-destroyed observer.
+        clearStatsCollectors();
+
+        // Tear down every connection first so their slot wiring is
+        // disconnected before the underlying ports go away.  Each
+        // connection was constructed with `this` as the ObjectBase
+        // parent, so deleting them explicitly here clears them out of
+        // the parent's child list before the pipeline itself is
+        // destructed.
+        for (auto it = _sources.begin(); it != _sources.end(); ++it) {
+                MediaIOPortConnection *c = it->second.connection;
+                if (c == nullptr) continue;
+                c->stop();
+                delete c;
+                it->second.connection = nullptr;
+        }
         for (auto it = _stages.begin(); it != _stages.end(); ++it) {
                 MediaIO *io = it->second;
                 if (io == nullptr) continue;
                 if (io->isOpen()) {
-                        Error err = io->close();
+                        Error err = io->close().wait();
                         if (err.isError()) {
                                 promekiWarn("MediaPipeline: closing stage '%s' failed: %s", it->first.cstr(),
                                             err.desc().cstr());
                         }
                 }
+        }
+        for (auto it = _stages.begin(); it != _stages.end(); ++it) {
+                MediaIO *io = it->second;
+                if (io == nullptr) continue;
                 // Injected stages are caller-owned; the pipeline only
                 // observes the pointer.  Leave them alive so mediaplay
                 // and any future external-stage user can rebuild /
@@ -142,19 +180,71 @@ Error MediaPipeline::destroyStages() {
         _stages.clear();
         _sources.clear();
         _topoOrder.clear();
+        _terminalSinksRemaining = 0;
         return Error::Ok;
 }
 
-Error MediaPipeline::injectStage(const String &name, MediaIO *io) {
+namespace {
+
+        // Picks the auto-name prefix for an injected MediaIO based on
+        // its role.  Tries the cheap port-count accessors first
+        // (post-open).  Falls back to describe() — the canonical
+        // pre-open probe — when ports haven't been declared yet.
+        // Returns the generic "stage" prefix when the role can't be
+        // determined (e.g. an unregistered backend whose describe()
+        // override doesn't fill the role flags).
+        const char *rolePrefix(MediaIO *io) {
+                bool src = io->isSource();
+                bool snk = io->isSink();
+                if (!src && !snk) {
+                        MediaIODescription d;
+                        if (io->describe(&d).isOk()) {
+                                if (d.canBeTransform()) return "xfm";
+                                src = src || d.canBeSource();
+                                snk = snk || d.canBeSink();
+                        }
+                }
+                if (src && snk) return "xfm";
+                if (src) return "src";
+                if (snk) return "sink";
+                return "stage";
+        }
+
+} // namespace
+
+Error MediaPipeline::injectStage(MediaIO *io) {
         if (_state != State::Empty && _state != State::Closed) {
                 promekiErr("MediaPipeline::injectStage: pipeline is not in Empty/Closed state.");
                 return Error::Busy;
         }
         if (io == nullptr) {
-                promekiErr("MediaPipeline::injectStage: null MediaIO for stage '%s'.", name.cstr());
+                promekiErr("MediaPipeline::injectStage: null MediaIO.");
                 return Error::InvalidArgument;
         }
-        _injected.insert(name, io);
+
+        // Resolve the stage name.  An IO that already carries a name
+        // wins (with a numeric suffix when it collides with another
+        // injected stage); an unnamed IO gets a role-based default.
+        String chosen = io->name();
+        if (chosen.isEmpty()) {
+                const String prefix(rolePrefix(io));
+                int          n = 1;
+                do {
+                        chosen = prefix + String::number(n++);
+                } while (_injected.contains(chosen));
+        } else if (_injected.contains(chosen)) {
+                const String base = chosen;
+                int          n = 2;
+                do {
+                        chosen = base + String::number(n++);
+                } while (_injected.contains(chosen));
+        }
+
+        // Stamp the resolved name back onto the IO so io->name() and
+        // the pipeline's stage key stay in sync (logs, stats, and any
+        // future MediaIODescription snapshot all see the same name).
+        io->setName(chosen);
+        _injected.insert(chosen, io);
         return Error::Ok;
 }
 
@@ -218,7 +308,7 @@ Error MediaPipeline::build(const MediaPipelineConfig &config, bool autoplan) {
         // Instantiate every stage.  Injected stages short-circuit the
         // backend factory so externally-owned MediaIOs (SDL, V4L2
         // device handles, etc.) participate in the drain without
-        // having to be registered in MediaIO::registeredFormats.
+        // having to be registered in MediaIOFactory::registeredFactories.
         for (size_t i = 0; i < _config.stages().size(); ++i) {
                 const MediaPipelineConfig::Stage &s = _config.stages()[i];
                 MediaIO                          *io = nullptr;
@@ -234,9 +324,14 @@ Error MediaPipeline::build(const MediaPipelineConfig &config, bool autoplan) {
                         return Error::OpenFailed;
                 }
                 _stages.insert(s.name, io);
+                attachStatsCollector(s.name, io);
         }
 
-        // Build per-source edge state from the routes.
+        // Build per-source edge state from the routes.  The sink
+        // pointer is resolved later in @ref start once @ref open has
+        // created the port group and its sink ports — at build time
+        // the stages have only been instantiated, so sink(0) returns
+        // null.
         for (size_t i = 0; i < _config.routes().size(); ++i) {
                 const MediaPipelineConfig::Route &r = _config.routes()[i];
                 if (!_sources.contains(r.from)) {
@@ -251,10 +346,10 @@ Error MediaPipeline::build(const MediaPipelineConfig &config, bool autoplan) {
         }
 
         // Mark every edge whose target is not itself a producer (i.e. the
-        // target has no outgoing routes) as a sink edge so drainSource
-        // knows which edges honour the frame-count cap.  The second pass
-        // runs after the first because _sources is only fully populated
-        // once every route has been visited.
+        // target has no outgoing routes) as a sink edge so the
+        // pipeline-wide frame-count cap only applies to terminal sinks.
+        // The second pass runs after the first because _sources is only
+        // fully populated once every route has been visited.
         for (auto it = _sources.begin(); it != _sources.end(); ++it) {
                 SourceState &ss = it->second;
                 for (size_t i = 0; i < ss.edges.size(); ++i) {
@@ -265,8 +360,8 @@ Error MediaPipeline::build(const MediaPipelineConfig &config, bool autoplan) {
 
         // Cache the pipeline-wide frame-count cap (zero == no cap).
         // Unknown / infinite / empty FrameCount states all mean "unlimited"
-        // and collapse to zero here so drainSource's hot-path check is a
-        // single integer compare.
+        // and collapse to zero here so the start-time addSink pass uses
+        // an empty FrameCount on every edge.
         if (_config.frameCount().isFinite() && !_config.frameCount().isEmpty()) {
                 _frameCountLimit = _config.frameCount().value();
         } else {
@@ -318,6 +413,7 @@ Error MediaPipeline::open() {
         }
 
         promeki::List<String> opened;
+        _terminalSinksRemaining = 0;
         for (size_t i = 0; i < _topoOrder.size(); ++i) {
                 const String                     &name = _topoOrder[i];
                 const MediaPipelineConfig::Stage *spec = _config.findStage(name);
@@ -328,39 +424,107 @@ Error MediaPipeline::open() {
                 if (upIt != upstreamOf.end()) {
                         MediaIO *up = _stages[upIt->second];
                         if (up != nullptr && up->isOpen()) {
-                                (void)io->setExpectedDesc(up->mediaDesc());
+                                (void)io->setPendingMediaDesc(up->mediaDesc());
                                 const AudioDesc &ad = up->audioDesc();
-                                if (ad.isValid()) (void)io->setExpectedAudioDesc(ad);
+                                if (ad.isValid()) (void)io->setPendingAudioDesc(ad);
                                 Metadata merged = up->metadata();
                                 if (!spec->metadata.isEmpty()) {
                                         merged.merge(spec->metadata);
                                 }
-                                if (!merged.isEmpty()) (void)io->setExpectedMetadata(merged);
+                                if (!merged.isEmpty()) (void)io->setPendingMetadata(merged);
                         } else if (!spec->metadata.isEmpty()) {
-                                (void)io->setExpectedMetadata(spec->metadata);
+                                (void)io->setPendingMetadata(spec->metadata);
                         }
                 } else if (!spec->metadata.isEmpty()) {
-                        (void)io->setExpectedMetadata(spec->metadata);
+                        (void)io->setPendingMetadata(spec->metadata);
                 }
 
-                Error err = io->open(spec->mode);
+                Error err = io->open().wait();
                 if (err.isError()) {
-                        promekiErr("MediaPipeline::open: stage '%s' open(%d) failed: %s", name.cstr(),
-                                   static_cast<int>(spec->mode), err.desc().cstr());
+                        promekiErr("MediaPipeline::open: stage '%s' open(role=%d) failed: %s", name.cstr(),
+                                   static_cast<int>(spec->role), err.desc().cstr());
                         // Unwind the already-opened stages in reverse order.
                         for (size_t j = opened.size(); j-- > 0;) {
                                 MediaIO *io2 = _stages[opened[j]];
-                                if (io2 != nullptr) (void)io2->close();
+                                if (io2 != nullptr) io2->close().wait();
                         }
                         return err;
                 }
                 opened.pushToBack(name);
                 stageOpenedSignal.emit(name);
                 publishStageState(name, String("Opened"));
+
+                // Now that this stage's ports are live, wire the
+                // pipeline's @ref MediaIOPortConnection graph: any
+                // route whose @c to is this freshly-opened stage can
+                // bind its sink onto the upstream connection, and any
+                // route whose @c from is this stage can lazily create
+                // its connection now that the source port exists.
+                wireConnectionsForOpenedStage(name);
         }
         _state = State::Open;
         publishStateChanged();
         return Error::Ok;
+}
+
+void MediaPipeline::wireConnectionsForOpenedStage(const String &name) {
+        MediaIO *io = _stages[name];
+        if (io == nullptr) return;
+
+        // Outgoing side: this stage is the @c from of any route
+        // emanating from it.  Lazily create the connection on its
+        // source port — the corresponding sinks bind in below as
+        // each downstream stage opens.
+        auto myIt = _sources.find(name);
+        if (myIt != _sources.end() && myIt->second.connection == nullptr && io->sourceCount() > 0) {
+                MediaIOPortConnection *conn = new MediaIOPortConnection(io->source(0), this);
+                myIt->second.connection = conn;
+                const String srcName = name;
+                conn->upstreamDoneSignal.connect([this, srcName]() { onUpstreamDone(srcName); }, this);
+                conn->errorOccurredSignal.connect([this, srcName](Error err) { onSourceConnectionError(srcName, err); },
+                                                  this);
+                conn->sinkErrorSignal.connect(
+                        [this, srcName](MediaIOSink *snk, Error err) { onSinkConnectionError(srcName, snk, err); },
+                        this);
+                conn->sinkLimitReachedSignal.connect(
+                        [this, srcName](MediaIOSink *snk) { onSinkLimitReached(srcName, snk); }, this);
+        }
+
+        // Incoming side: this stage is the @c to of zero or more
+        // routes.  For each one, find the upstream's connection (must
+        // exist by now — topo order opened the upstream first) and
+        // attach this stage's sink port.  The frame-count cap is
+        // honoured only on terminal sink edges.
+        if (io->sinkCount() == 0) return;
+        MediaIOSink                          *mySink = io->sink(0);
+        const MediaPipelineConfig::RouteList &routes = _config.routes();
+        for (size_t i = 0; i < routes.size(); ++i) {
+                if (routes[i].to != name) continue;
+                const String &fromName = routes[i].from;
+                auto          srcIt = _sources.find(fromName);
+                if (srcIt == _sources.end()) continue;
+                SourceState &ss = srcIt->second;
+                if (ss.connection == nullptr) continue;
+
+                FrameCount limit;
+                bool       isTerminal = false;
+                for (size_t e = 0; e < ss.edges.size(); ++e) {
+                        if (ss.edges[e].toName != name) continue;
+                        ss.edges[e].toSink = mySink;
+                        isTerminal = ss.edges[e].isSinkEdge;
+                        break;
+                }
+                if (isTerminal && _frameCountLimit > 0) {
+                        limit = FrameCount(_frameCountLimit);
+                        _terminalSinksRemaining += 1;
+                }
+                Error addErr = ss.connection->addSink(mySink, limit);
+                if (addErr.isError()) {
+                        promekiWarn("MediaPipeline::open: addSink for "
+                                    "edge '%s' -> '%s' failed: %s",
+                                    fromName.cstr(), name.cstr(), addErr.desc().cstr());
+                }
+        }
 }
 
 Error MediaPipeline::start() {
@@ -369,48 +533,31 @@ Error MediaPipeline::start() {
                 return Error::NotOpen;
         }
 
-        // Wire drain handlers for every source and edge.
-        for (auto it = _sources.begin(); it != _sources.end(); ++it) {
-                const String srcName = it->first;
-                MediaIO     *srcIO = it->second.from;
-                srcIO->frameReadySignal.connect([this, srcName]() { drainSource(srcName); }, this);
-                srcIO->writeErrorSignal.connect([this, srcName](Error e) { onWriteError(srcName, e); }, this);
-
-                // Each outgoing edge reopens the drain when the consumer
-                // reports it can accept more.
-                for (size_t i = 0; i < it->second.edges.size(); ++i) {
-                        MediaIO *to = it->second.edges[i].to;
-                        to->frameWantedSignal.connect([this, srcName]() { drainSource(srcName); }, this);
-                }
-                stageStartedSignal.emit(srcName);
-                publishStageState(srcName, String("Started"));
-        }
-
-        // Connect writeError for every stage that isn't a pure source
-        // (we already hooked sources above); pure sinks need it too.
-        for (auto it = _stages.begin(); it != _stages.end(); ++it) {
-                if (_sources.contains(it->first)) continue;
-                const String stageName = it->first;
-                MediaIO     *io = it->second;
-                io->writeErrorSignal.connect([this, stageName](Error e) { onWriteError(stageName, e); }, this);
-                stageStartedSignal.emit(stageName);
-                publishStageState(stageName, String("Started"));
+        // Connections were created and wired during @ref open; here we
+        // just announce the lifecycle transition for every stage and
+        // arm the pumps.
+        for (auto it = _stages.cbegin(); it != _stages.cend(); ++it) {
+                stageStartedSignal.emit(it->first);
+                publishStageState(it->first, String("Started"));
         }
 
         _state = State::Running;
         publishStateChanged();
         startStatsTimerIfNeeded();
         _cleanFinish = false;
-        _framesProduced.setValue(0);
-        _writeRetries.setValue(0);
-        _pipelineErrors.setValue(0);
-        _uptime.start();
-        _uptimeStarted = true;
 
-        // Prime the drain so the first readFrame kicks prefetch on every
-        // source stage.  Subsequent iterations happen off frameReady.
+        // Start every connection now that signals are wired and the
+        // pipeline state has flipped to Running.  start() primes the
+        // pump internally, so the first source read kicks prefetch.
         for (auto it = _sources.begin(); it != _sources.end(); ++it) {
-                drainSource(it->first);
+                MediaIOPortConnection *c = it->second.connection;
+                if (c == nullptr) continue;
+                Error e = c->start();
+                if (e.isError()) {
+                        promekiWarn("MediaPipeline::start: connection for "
+                                    "source '%s' failed to start: %s",
+                                    it->first.cstr(), e.desc().cstr());
+                }
         }
 
         return Error::Ok;
@@ -422,16 +569,24 @@ Error MediaPipeline::stop() {
                 return Error::NotOpen;
         }
 
-        // Signals are connected with @c this as the ObjectBase context;
-        // the ObjectBase destructor disconnects automatically but for an
-        // explicit stop we want to drop connections now.  The signal layer
-        // does not expose bulk disconnect-by-owner at this time, so we
-        // rely on each backend's cancelPending() to drain in-flight work
-        // and simply let subsequent signal emissions be no-ops once
-        // _state leaves Running.
+        // Tear down each connection's signal wiring before cancelling
+        // pending work on its source — once the connection is stopped,
+        // late frameReady / frameWanted emissions become harmless
+        // no-ops.
+        for (auto it = _sources.begin(); it != _sources.end(); ++it) {
+                if (it->second.connection != nullptr) it->second.connection->stop();
+        }
+
         for (auto it = _stages.begin(); it != _stages.end(); ++it) {
-                if (it->second != nullptr) {
-                        (void)it->second->cancelPending();
+                MediaIO *io = it->second;
+                if (io != nullptr) {
+                        // cancelPending lives on the source port now.  Pure
+                        // sinks have no in-flight reads to cancel; backends
+                        // drain their pending writes via close()'s graceful
+                        // path.
+                        if (io->sourceCount() > 0) {
+                                (void)io->source(0)->cancelPending();
+                        }
                         stageStoppedSignal.emit(it->first);
                         publishStageState(it->first, String("Stopped"));
                 }
@@ -540,14 +695,21 @@ void MediaPipeline::initiateClose(bool clean) {
 
         // Kick the live triggers first — they're the ones we genuinely
         // want to stay in the waiting set until their closedSignal
-        // arrives.  If close(false) comes back with an error we treat
-        // the stage as already done so the cascade can still finish.
+        // arrives.  We discard the request handle and wait for the
+        // closedSignal cascade; the request would resolve to the same
+        // error but the signal-driven path is what unwinds the
+        // pipeline.  If close() short-circuits (NotOpen / already
+        // closing) we treat the stage as already done so the cascade
+        // can still finish.
         for (size_t i = 0; i < triggers.size(); ++i) {
                 auto it = _stages.find(triggers[i]);
                 if (it == _stages.end() || it->second == nullptr) continue;
                 promekiDebug("MediaPipeline::initiateClose closing trigger '%s'", triggers[i].cstr());
-                Error err = it->second->close(false);
-                if (err.isError()) onStageClosed(triggers[i], err);
+                auto req = it->second->close();
+                if (req.isReady()) {
+                        Error err = req.wait();
+                        if (err.isError()) onStageClosed(triggers[i], err);
+                }
         }
 
         // Then drain the already-closed stages.  Doing this after
@@ -608,13 +770,18 @@ void MediaPipeline::forceCloseRemaining() {
                 promekiWarn("MediaPipeline: close watchdog escalating "
                             "stage '%s' to forced close",
                             remaining[i].cstr());
-                // close(false) invokes the backend's
+                // close() invokes the backend's
                 // cancelBlockingWork first, so a stuck executeCmd
                 // (e.g. FrameBridge waitForConsumer) unwinds with
                 // Error::Cancelled and the strand can process the
-                // submitted close.
-                Error err = io->close(false);
-                if (err.isError()) onStageClosed(remaining[i], err);
+                // submitted close.  The returned request resolves
+                // asynchronously through closedSignal; we only
+                // interpret a synchronous short-circuit.
+                auto req = io->close();
+                if (req.isReady()) {
+                        Error err = req.wait();
+                        if (err.isError()) onStageClosed(remaining[i], err);
+                }
         }
 }
 
@@ -655,221 +822,90 @@ void MediaPipeline::finalizeClose() {
 }
 
 // ============================================================================
-// Drain
+// Connection-driven handlers
 // ============================================================================
 
-void MediaPipeline::drainSource(const String &srcName) {
-        promekiDebug("MediaPipeline::drainSource[%s] ENTER state=%d closing=%d", srcName.cstr(), (int)_state,
+void MediaPipeline::onUpstreamDone(const String &srcName) {
+        promekiDebug("MediaPipeline::onUpstreamDone[%s] state=%d closing=%d", srcName.cstr(), (int)_state,
                      (int)_closing);
-        // Allow drain to continue during an async close so the synthetic
-        // EOS pushed by each stage's finalize step can propagate through
-        // the graph.  Only stop hard after the pipeline has fully
-        // transitioned to Closed.
         if (_state != State::Running) return;
         auto it = _sources.find(srcName);
         if (it == _sources.end()) return;
         SourceState &ss = it->second;
-        if (ss.from == nullptr) return;
-        // Once this source has latched EOF (natural or synthetic) and
-        // the cascade has fired, any further frameReady kicks are
-        // spurious — e.g., the finalize task emits frameReady after
-        // pushing the EOS, which the first drainSource call already
-        // consumed.  A second invocation would try @c readFrame on a
-        // stage whose @c _mode has flipped to @c NotOpen and surface
-        // that as a spurious pipeline error.
         if (ss.upstreamDone) return;
+        ss.upstreamDone = true;
 
-        while (true) {
-                // During close, skip the back-pressure gate so the
-                // source's synthetic EOS can be read even if every
-                // downstream's write queue is full — otherwise the
-                // cascade deadlocks: source is closed with the EOS
-                // waiting in its read queue, drainSource refuses to
-                // read because downstream is saturated, the sink's
-                // pull thread keeps consuming at nominal rate but
-                // the resulting writesAccepted>0 windows only fire
-                // frameWanted briefly (hard to synchronize with the
-                // EOS arrival), and the close watchdog ends up
-                // resolving the cascade instead of a clean finish.
-                // Frames we can't write during close are dropped;
-                // the stream is terminating anyway.
-                if (!_closing) {
-                        bool blocked = false;
-                        for (size_t i = 0; i < ss.edges.size(); ++i) {
-                                const EdgeState &e = ss.edges[i];
-                                if (e.doneByLimit) continue;
-                                if (e.to == nullptr) return;
-                                if (e.to->writesAccepted() <= 0) {
-                                        blocked = true;
-                                        break;
-                                }
-                        }
-                        if (blocked) return;
-                }
+        // Arm (or join) the pipeline-level close cascade BEFORE
+        // touching downstream — the initiateClose call wires the
+        // per-stage closedSignal listeners that finalize waits on,
+        // so it has to run before any stage's finalize can emit.
+        // initiateClose is idempotent on re-entry.
+        initiateClose(/*clean=*/true);
 
-                Frame::Ptr frame;
-                Error      err = ss.from->readFrame(frame, false);
-                if (err == Error::TryAgain) return;
-                if (err == Error::EndOfFile) {
-                        promekiDebug("MediaPipeline::drainSource[%s] EOF; "
-                                     "cascading close to %zu downstream",
-                                     srcName.cstr(), ss.edges.size());
-                        ss.upstreamDone = true;
-                        // Arm (or join) the pipeline-level close
-                        // cascade BEFORE touching downstream — the
-                        // initiateClose call wires the per-stage
-                        // closedSignal listeners that finalize waits
-                        // on, so it has to run before any stage's
-                        // finalize can emit.  initiateClose is
-                        // idempotent on re-entry, so it's cheap to
-                        // call from either the natural-EOF trigger
-                        // or the explicit @ref close trigger.
-                        initiateClose(/*clean=*/true);
-                        // Cascade: close every direct downstream
-                        // consumer of this source.  Graceful close
-                        // lets their pending input writes complete
-                        // before they push their own synthetic EOS.
-                        for (size_t i = 0; i < ss.edges.size(); ++i) {
-                                MediaIO *to = ss.edges[i].to;
-                                if (to == nullptr) continue;
-                                if (!to->isOpen()) continue;
-                                if (to->isClosing()) continue;
-                                promekiDebug("MediaPipeline::drainSource[%s] "
-                                             "cascading close to '%s'",
-                                             srcName.cstr(), ss.edges[i].toName.cstr());
-                                (void)to->close(false);
-                        }
-                        return;
-                }
-                if (err.isError()) {
-                        if (err != Error::Cancelled) {
-                                _pipelineErrors.fetchAndAdd(1);
-                                pipelineErrorSignal.emit(srcName, err);
-                                PipelineEvent ev;
-                                ev.setKind(PipelineEvent::Kind::StageError);
-                                ev.setStageName(srcName);
-                                ev.setPayload(Variant(err.desc()));
-                                Metadata m;
-                                m.set(Metadata::ID(String("code")), err.name());
-                                ev.setMetadata(m);
-                                publish(ev);
-                        }
-                        initiateClose(/*clean=*/false);
-                        return;
-                }
-
-                _framesProduced.fetchAndAdd(1);
-
-                bool sinkReachedLimit = false;
-                for (size_t i = 0; i < ss.edges.size(); ++i) {
-                        EdgeState &e = ss.edges[i];
-                        if (e.to == nullptr) continue;
-                        // Previously-saturated edges stay dark: the sink
-                        // has been handed its close() and any further
-                        // write would race the backend's NotOpen latch.
-                        if (e.doneByLimit) continue;
-
-                        // Frame-count cutoff.  Honoured only on edges
-                        // terminating at a true sink (no outgoing routes)
-                        // and only when a per-pipeline cap is configured.
-                        // The cap is crossed as soon as framesWritten
-                        // reaches it; we still need to wait for the next
-                        // @ref Frame::isSafeCutPoint to land so the GOP
-                        // containing the cap stays complete.  Honouring
-                        // the cap takes precedence over the normal write,
-                        // so the sink never sees the cut frame.
-                        //
-                        // The sink itself isn't closed here — doing so
-                        // would race the pipeline-level @ref initiateClose
-                        // below (a fast sink can emit closedSignal before
-                        // the pipeline's handler is wired).  Instead the
-                        // EOF cascade triggered via initiateClose + each
-                        // source's synthetic EOS closes every downstream,
-                        // which is exactly the behaviour we want.
-                        if (_frameCountLimit > 0 && e.isSinkEdge && e.framesWritten >= _frameCountLimit &&
-                            frame.isValid() && frame->isSafeCutPoint()) {
-                                if (!e.doneByLimit) {
-                                        promekiDebug("MediaPipeline::drainSource[%s] "
-                                                     "edge '%s' reached frame-count "
-                                                     "cap (%lld).",
-                                                     srcName.cstr(), e.toName.cstr(), (long long)_frameCountLimit);
-                                        sinkReachedLimit = true;
-                                }
-                                e.doneByLimit = true;
-                                continue;
-                        }
-
-                        Error werr = e.to->writeFrame(frame, false);
-                        if (werr.isError()) {
-                                // During close the back-pressure gate
-                                // above is bypassed, so writeFrame may
-                                // legitimately come back @c TryAgain
-                                // (downstream is saturated).  Treat
-                                // that as an expected drop — the goal
-                                // of draining here is to reach the
-                                // source's synthetic EOS, not to
-                                // deliver every frame.
-                                if (werr == Error::TryAgain) {
-                                        if (_closing) continue;
-                                        // writesAccepted said yes; the
-                                        // backend said no.  That's a
-                                        // contract violation worth
-                                        // crashing on rather than
-                                        // silently dropping a frame.
-                                        _writeRetries.fetchAndAdd(1);
-                                        PROMEKI_ASSERT(werr != Error::TryAgain);
-                                }
-                                // Writes during an already-running close
-                                // are expected to come back NotOpen once
-                                // the downstream stage has latched its
-                                // own _closing flag.  Treat those as
-                                // cascade plumbing, not an operational
-                                // error.
-                                if (werr != Error::NotOpen || !_closing) {
-                                        onWriteError(e.toName, werr);
-                                }
-                                return;
-                        }
-                        // Only count edges that actually consume the
-                        // frame for the cap — transforms along the way
-                        // don't participate in the per-sink accounting.
-                        if (e.isSinkEdge) e.framesWritten++;
-                }
-
-                // Once every sink edge has seen its cap, kick the
-                // pipeline close so sources stop reading and any
-                // frames already in flight get dropped on the floor.
-                if (sinkReachedLimit && allSinkEdgesDoneByLimit()) {
-                        promekiDebug("MediaPipeline::drainSource[%s] all sink "
-                                     "edges saturated; initiating close.",
-                                     srcName.cstr());
-                        initiateClose(/*clean=*/true);
-                        return;
-                }
+        // Cascade: close every direct downstream consumer of this
+        // source.  Graceful close lets their pending input writes
+        // complete before they push their own synthetic EOS.
+        for (size_t i = 0; i < ss.edges.size(); ++i) {
+                MediaIO *to = ss.edges[i].to;
+                if (to == nullptr) continue;
+                if (!to->isOpen()) continue;
+                if (to->isClosing()) continue;
+                promekiDebug("MediaPipeline::onUpstreamDone[%s] "
+                             "cascading close to '%s'",
+                             srcName.cstr(), ss.edges[i].toName.cstr());
+                // Fire and forget — the actual close completes
+                // asynchronously and emits closedSignal.
+                to->close();
         }
 }
 
-bool MediaPipeline::allSinkEdgesDoneByLimit() const {
-        bool seenSinkEdge = false;
+void MediaPipeline::onSourceConnectionError(const String &srcName, Error err) {
+        // NotOpen during a close cascade is expected plumbing; the
+        // source has been torn down and any late frameReady that
+        // raced the close emits readFrame == NotOpen.  Filter the
+        // same way the original drainSource guarded against spurious
+        // post-close kicks via @c upstreamDone.
+        if (err == Error::TryAgain || err == Error::EndOfFile) return;
+        if (err == Error::NotOpen && _closing) return;
+        if (err != Error::Cancelled) {
+                pipelineErrorSignal.emit(srcName, err);
+                PipelineEvent ev;
+                ev.setKind(PipelineEvent::Kind::StageError);
+                ev.setStageName(srcName);
+                ev.setPayload(Variant(err.desc()));
+                Metadata m;
+                m.set(Metadata::ID(String("code")), err.name());
+                ev.setMetadata(m);
+                publish(ev);
+        }
+        initiateClose(/*clean=*/false);
+}
+
+void MediaPipeline::onSinkConnectionError(const String &srcName, MediaIOSink *sink, Error err) {
+        // TryAgain is back-pressure noise (filtered inside the
+        // connection too); ignore it.  Writes during an already-
+        // running close are expected to come back NotOpen once the
+        // downstream stage has latched its own _closing flag — those
+        // are cascade plumbing, not operational errors.
+        if (err == Error::TryAgain) return;
+        if (err == Error::NotOpen && _closing) return;
+
+        // Map the sink back to its stage name for the public error
+        // payload.  Falling back to the source name keeps the signal
+        // useful when the lookup fails (e.g. a sink that wasn't
+        // registered through the route table).
+        String stageName = srcName;
         for (auto it = _sources.cbegin(); it != _sources.cend(); ++it) {
                 const SourceState &ss = it->second;
                 for (size_t i = 0; i < ss.edges.size(); ++i) {
-                        const EdgeState &e = ss.edges[i];
-                        if (!e.isSinkEdge) continue;
-                        seenSinkEdge = true;
-                        if (!e.doneByLimit) return false;
+                        if (ss.edges[i].toSink == sink) {
+                                stageName = ss.edges[i].toName;
+                                goto found;
+                        }
                 }
         }
-        // An all-done verdict on a pipeline with no sink edges would
-        // short-circuit the close path on pure-transform graphs; make
-        // the empty case a no-op instead.
-        return seenSinkEdge;
-}
-
-void MediaPipeline::onWriteError(const String &stageName, Error err) {
-        if (err == Error::TryAgain) return;
+found:
         if (err != Error::Cancelled) {
-                _pipelineErrors.fetchAndAdd(1);
                 pipelineErrorSignal.emit(stageName, err);
                 PipelineEvent ev;
                 ev.setKind(PipelineEvent::Kind::StageError);
@@ -881,6 +917,31 @@ void MediaPipeline::onWriteError(const String &stageName, Error err) {
                 publish(ev);
         }
         initiateClose(/*clean=*/false);
+}
+
+void MediaPipeline::onSinkLimitReached(const String &srcName, MediaIOSink *sink) {
+        // Mark the matching edge so future stats reflect the cap and
+        // decrement the global counter.  The connection has already
+        // dropped the sink from its dispatch list; once every capped
+        // sink in the pipeline has fired the pipeline self-closes.
+        auto it = _sources.find(srcName);
+        if (it != _sources.end()) {
+                SourceState &ss = it->second;
+                for (size_t i = 0; i < ss.edges.size(); ++i) {
+                        if (ss.edges[i].toSink == sink) {
+                                if (!ss.edges[i].capReached) {
+                                        ss.edges[i].capReached = true;
+                                        if (_terminalSinksRemaining > 0) _terminalSinksRemaining -= 1;
+                                }
+                                break;
+                        }
+                }
+        }
+        if (_frameCountLimit > 0 && _terminalSinksRemaining == 0) {
+                promekiDebug("MediaPipeline::onSinkLimitReached: all terminal "
+                             "sinks have hit cap; initiating close.");
+                initiateClose(/*clean=*/true);
+        }
 }
 
 
@@ -1103,40 +1164,88 @@ void MediaPipeline::emitStatsSnapshot() {
         publish(ev);
 }
 
+void MediaPipeline::attachStatsCollector(const String &name, MediaIO *io) {
+        if (io == nullptr) return;
+        if (_statsCollectors.contains(name)) return;
+        const int windowSize = _config.statsWindowSize();
+        if (windowSize <= 0) return;
+        auto *collector = new MediaIOStatsCollector(io, this);
+        collector->setWindowSize(windowSize);
+        _statsCollectors.insert(name, collector);
+}
+
+void MediaPipeline::clearStatsCollectors() {
+        // Cross-thread Signal::connect tracks the receiver via an
+        // ObjectBasePtr and auto-registers a disconnect cleanup, so
+        // any commandCompletedSignal callable queued before this
+        // delete becomes a no-op once the collector finishes
+        // destruction (its _pointerMap nulls every captured tracker
+        // in runCleanup).  No deferred-delete dance needed — straight
+        // delete is now safe.
+        for (auto it = _statsCollectors.begin(); it != _statsCollectors.end(); ++it) {
+                delete it->second;
+        }
+        _statsCollectors.clear();
+}
+
+MediaPipelineStageStats MediaPipeline::buildStageStats(const String &name, MediaIO *io) {
+        MediaPipelineStageStats out;
+        out.name = name;
+        if (io == nullptr) return out;
+
+        // FIXME: each MediaIO::stats() round-trips synchronously
+        // through that stage's strand, so an N-stage pipeline pays N
+        // sequential strand turnarounds.  For larger graphs this
+        // serialises stats collection unnecessarily.  Plan: issue all
+        // io->stats() requests up front, then await them in a second
+        // pass so the strand work overlaps.  Tracking under a future
+        // pipeline-stats latency pass.
+        if (io->isOpen()) {
+                MediaIORequest req = io->stats();
+                req.wait();
+                out.cumulative = req.stats();
+        }
+
+        // Fold the per-(kind, stat) windows captured by the
+        // collector into the stage's windowed map.  Each
+        // collector window key is (kind, stat-id); we group by
+        // kind into a per-kind WindowedStatsBundle so callers see
+        // a clean breakdown by command kind.
+        auto cit = _statsCollectors.find(name);
+        if (cit != _statsCollectors.end() && cit->second != nullptr) {
+                const auto &windows = cit->second->windows();
+                for (auto wit = windows.cbegin(); wit != windows.cend(); ++wit) {
+                        out.windowedBundle(wit->first.kind).set(wit->first.id, wit->second);
+                }
+        }
+
+        return out;
+}
+
 MediaPipelineStats MediaPipeline::stats() {
         MediaPipelineStats out;
-        for (auto it = _stages.begin(); it != _stages.end(); ++it) {
-                if (it->second == nullptr) continue;
-                if (!it->second->isOpen()) continue;
-                out.setStageStats(it->first, it->second->stats());
+        // Walk in topological order so consumers see sources before
+        // their downstream stages — matches describe() ordering.
+        for (size_t i = 0; i < _topoOrder.size(); ++i) {
+                const String &name = _topoOrder[i];
+                auto          sit = _stages.find(name);
+                if (sit == _stages.end()) continue;
+                out.addStage(buildStageStats(name, sit->second));
         }
-        out.recomputeAggregate();
-
-        // Pipeline-layer counters.  Derived quantities (SourcesAtEof,
-        // PausedEdges) are computed fresh on every call so callers get
-        // a consistent view of the drain loop's current shape.
-        PipelineStats &pp = out.pipeline();
-        pp.set(PipelineStats::FramesProduced, FrameCount(_framesProduced.value()));
-        pp.set(PipelineStats::WriteRetries, _writeRetries.value());
-        pp.set(PipelineStats::PipelineErrors, _pipelineErrors.value());
-
-        int64_t sourcesAtEof = 0;
-        for (auto it = _sources.cbegin(); it != _sources.cend(); ++it) {
-                if (it->second.upstreamDone) sourcesAtEof++;
-        }
-        pp.set(PipelineStats::SourcesAtEof, sourcesAtEof);
-        // PausedEdges stays at its spec default (0) for now — no edge
-        // can hold a frame under the current single-input drain model.
-        // Reserved for the future fan-in extension that lifts the
-        // current "one incoming route per stage" rule.
-        pp.set(PipelineStats::PausedEdges, int64_t(0));
-
-        pp.set(PipelineStats::State, String(stateName(_state)));
-
-        if (_uptimeStarted) {
-                pp.set(PipelineStats::UptimeMs, _uptime.elapsed());
+        // Stages that aren't in the topo order (e.g. injected stages
+        // that weren't part of the config graph) still deserve a
+        // record — emit them after the topo set.
+        for (auto it = _stages.cbegin(); it != _stages.cend(); ++it) {
+                if (out.containsStage(it->first)) continue;
+                out.addStage(buildStageStats(it->first, it->second));
         }
         return out;
+}
+
+MediaPipelineStageStats MediaPipeline::stageStats(const String &name) {
+        auto it = _stages.find(name);
+        if (it == _stages.end()) return MediaPipelineStageStats();
+        return buildStageStats(name, it->second);
 }
 
 PROMEKI_NAMESPACE_END

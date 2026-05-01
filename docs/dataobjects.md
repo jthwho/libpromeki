@@ -38,8 +38,8 @@ reference counting.
 | `MediaDuration` | Start frame plus a frame count (defines `FrameRange`) |
 | `FrameRate` | Frame rate descriptor |
 | `AudioLevel` | Audio level in dBFS |
-| `InspectorEvent` | Per-frame measurement record produced by `MediaIOTask_Inspector` |
-| `InspectorSnapshot` | Aggregate accumulator state from `MediaIOTask_Inspector` |
+| `InspectorEvent` | Per-frame measurement record produced by `InspectorMediaIO` |
+| `InspectorSnapshot` | Aggregate accumulator state from `InspectorMediaIO` |
 | `InspectorDiscontinuity` | One detected discontinuity in the inspector's frame stream |
 | `ContentLightLevel` | HDR content light level (MaxCLL / MaxFALL, CTA-861.3) |
 | `MasteringDisplay` | HDR mastering display color volume (SMPTE ST 2086) |

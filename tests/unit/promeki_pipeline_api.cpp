@@ -29,6 +29,7 @@
 #include <promeki/list.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaiofactory.h>
 #include <promeki/mediapipelineconfig.h>
 #include <promeki/objectbase.tpp>
 #include <promeki/pixelformat.h>
@@ -185,16 +186,16 @@ namespace {
                 MediaPipelineConfig::Stage src;
                 src.name = "tpg1";
                 src.type = "TPG";
-                src.mode = MediaIO::Source;
-                src.config = MediaIO::defaultConfig("TPG");
+                src.role = MediaPipelineConfig::StageRole::Source;
+                src.config = MediaIOFactory::defaultConfig("TPG");
                 src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte720p60));
                 cfg.addStage(src);
 
                 MediaPipelineConfig::Stage sink;
                 sink.name = "sink1";
                 sink.type = "NullPacing";
-                sink.mode = MediaIO::Sink;
-                sink.config = MediaIO::defaultConfig("NullPacing");
+                sink.role = MediaPipelineConfig::StageRole::Sink;
+                sink.config = MediaIOFactory::defaultConfig("NullPacing");
                 cfg.addStage(sink);
 
                 cfg.addRoute("tpg1", "sink1");
@@ -213,8 +214,8 @@ namespace {
                 MediaPipelineConfig::Stage src;
                 src.name = "tpg1";
                 src.type = "TPG";
-                src.mode = MediaIO::Source;
-                src.config = MediaIO::defaultConfig("TPG");
+                src.role = MediaPipelineConfig::StageRole::Source;
+                src.config = MediaIOFactory::defaultConfig("TPG");
                 src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte720p60));
                 src.config.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::BGRA8_sRGB));
                 cfg.addStage(src);
@@ -222,8 +223,8 @@ namespace {
                 MediaPipelineConfig::Stage sink;
                 sink.name = "preview";
                 sink.type = "MjpegStream";
-                sink.mode = MediaIO::Sink;
-                sink.config = MediaIO::defaultConfig("MjpegStream");
+                sink.role = MediaPipelineConfig::StageRole::Sink;
+                sink.config = MediaIOFactory::defaultConfig("MjpegStream");
                 sink.config.set(MediaConfig::MjpegMaxFps, Rational<int>(30, 1));
                 sink.config.set(MediaConfig::MjpegQuality, int32_t(80));
                 cfg.addStage(sink);
@@ -263,7 +264,7 @@ TEST_CASE("ApiRoutes - GET /api/types lists registered backends") {
         CHECK(sawTpg);
         CHECK(sawNullPacing);
         CHECK(sawMjpeg);
-        // FormatDesc::displayName is now part of the API contract.
+        // MediaIOFactory::displayName is now part of the API contract.
         // Empty falls back to the canonical name on the backend, so
         // the field should always be non-empty for registered types.
         CHECK_FALSE(tpgDisplay.isEmpty());

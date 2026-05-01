@@ -22,13 +22,19 @@
 #include <promeki/enums.h>
 #include <promeki/framerate.h>
 #include <promeki/imagedesc.h>
+#include <promeki/inlinemediaio.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaiocommand.h>
 #include <promeki/mediaiodescription.h>
-#include <promeki/mediaiotask.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mediaioportgroup.h>
+#include <promeki/mediaiosink.h>
+#include <promeki/mediaiosource.h>
 #include <promeki/mediapipelineconfig.h>
 #include <promeki/mediapipelineplanner.h>
+#include <promeki/variantspec.h>
 #include <promeki/pixelformat.h>
 #include <promeki/size2d.h>
 #include <promeki/string.h>
@@ -74,112 +80,169 @@ namespace {
                 return fr.isValid() ? fr : fallback;
         }
 
-        class PlannerSyntheticSrcTask : public MediaIOTask {
-                public:
-                        static MediaIO::FormatDesc formatDesc() {
-                                MediaIO::FormatDesc d;
-                                d.name = "PlannerSyntheticSrc";
-                                d.description = "Synthetic source emitting a configurable PixelFormat.";
-                                d.canBeSource = true;
-                                d.canBeSink = false;
-                                d.canBeTransform = false;
-                                d.create = []() -> MediaIOTask * {
-                                        return new PlannerSyntheticSrcTask();
-                                };
-                                d.configSpecs = []() {
-                                        MediaIO::Config::SpecMap m;
-                                        m.insert(PlannerProducedDesc,
-                                                 VariantSpec()
-                                                         .setType(Variant::TypePixelFormat)
-                                                         .setDefault(PixelFormat(PixelFormat::RGBA8_sRGB)));
-                                        m.insert(PlannerProducedRate,
-                                                 VariantSpec()
-                                                         .setType(Variant::TypeFrameRate)
-                                                         .setDefault(FrameRate(FrameRate::FPS_30)));
-                                        return m;
-                                };
-                                return d;
-                        }
+        class PlannerSyntheticSrcMediaIO : public InlineMediaIO {
+                                PROMEKI_OBJECT(PlannerSyntheticSrcMediaIO, InlineMediaIO)
+                        public:
+                                PlannerSyntheticSrcMediaIO(ObjectBase *parent = nullptr) : InlineMediaIO(parent) {}
+                                ~PlannerSyntheticSrcMediaIO() override {
+                                        if (isOpen()) (void)close().wait();
+                                }
 
-                private:
-                        Error describe(MediaIODescription *out) const override {
-                                if (out == nullptr) return Error::Invalid;
-                                const MediaIO         *io = mediaIo();
-                                const MediaIO::Config &cfg = (io != nullptr) ? io->config() : MediaIO::Config();
-                                const PixelFormat::ID  id =
-                                        readDescId(cfg, PlannerProducedDesc, PixelFormat::RGBA8_sRGB);
-                                const FrameRate rate = readRate(cfg, PlannerProducedRate, FrameRate(FrameRate::FPS_30));
-                                out->setPreferredFormat(syntheticDesc(id, rate));
-                                out->producibleFormats().pushToBack(syntheticDesc(id, rate));
-                                return Error::Ok;
-                        }
-        };
-
-        class PlannerSyntheticSinkTask : public MediaIOTask {
-                public:
-                        static MediaIO::FormatDesc formatDesc() {
-                                MediaIO::FormatDesc d;
-                                d.name = "PlannerSyntheticSink";
-                                d.description = "Synthetic sink demanding a configurable PixelFormat.";
-                                d.canBeSource = false;
-                                d.canBeSink = true;
-                                d.canBeTransform = false;
-                                d.create = []() -> MediaIOTask * {
-                                        return new PlannerSyntheticSinkTask();
-                                };
-                                d.configSpecs = []() {
-                                        MediaIO::Config::SpecMap m;
-                                        m.insert(PlannerAcceptedDesc,
-                                                 VariantSpec()
-                                                         .setType(Variant::TypePixelFormat)
-                                                         .setDefault(PixelFormat(PixelFormat::RGBA8_sRGB)));
-                                        m.insert(PlannerAcceptedRate,
-                                                 VariantSpec()
-                                                         .setType(Variant::TypeFrameRate)
-                                                         .setDefault(FrameRate(FrameRate::FPS_30)));
-                                        return m;
-                                };
-                                return d;
-                        }
-
-                private:
-                        Error describe(MediaIODescription *out) const override {
-                                if (out == nullptr) return Error::Invalid;
-                                const MediaIO         *io = mediaIo();
-                                const MediaIO::Config &cfg = (io != nullptr) ? io->config() : MediaIO::Config();
-                                const PixelFormat::ID  id =
-                                        readDescId(cfg, PlannerAcceptedDesc, PixelFormat::RGBA8_sRGB);
-                                const FrameRate rate = readRate(cfg, PlannerAcceptedRate, FrameRate(FrameRate::FPS_30));
-                                out->acceptableFormats().pushToBack(syntheticDesc(id, rate));
-                                out->setPreferredFormat(syntheticDesc(id, rate));
-                                return Error::Ok;
-                        }
-
-                        Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override {
-                                if (preferred == nullptr) return Error::Invalid;
-                                if (offered.imageList().isEmpty()) return Error::NotSupported;
-
-                                const MediaIO         *io = mediaIo();
-                                const MediaIO::Config &cfg = (io != nullptr) ? io->config() : MediaIO::Config();
-                                const PixelFormat::ID  id =
-                                        readDescId(cfg, PlannerAcceptedDesc, PixelFormat::RGBA8_sRGB);
-                                const FrameRate rate = readRate(cfg, PlannerAcceptedRate, FrameRate(FrameRate::FPS_30));
-                                const bool      pixelMatches = offered.imageList()[0].pixelFormat().id() == id;
-                                const bool      rateMatches = offered.frameRate() == rate;
-                                if (pixelMatches && rateMatches) {
-                                        *preferred = offered;
+                                Error describe(MediaIODescription *out) const override {
+                                        Error baseErr = MediaIO::describe(out);
+                                        if (baseErr.isError()) return baseErr;
+                                        const PixelFormat::ID id =
+                                                readDescId(config(), PlannerProducedDesc, PixelFormat::RGBA8_sRGB);
+                                        const FrameRate rate =
+                                                readRate(config(), PlannerProducedRate, FrameRate(FrameRate::FPS_30));
+                                        out->setPreferredFormat(syntheticDesc(id, rate));
+                                        out->producibleFormats().pushToBack(syntheticDesc(id, rate));
                                         return Error::Ok;
                                 }
-                                MediaDesc want = offered;
-                                if (!pixelMatches) want.imageList()[0].setPixelFormat(PixelFormat(id));
-                                if (!rateMatches) want.setFrameRate(rate);
-                                *preferred = want;
-                                return Error::Ok;
+
+                        protected:
+                                Error executeCmd(MediaIOCommandOpen &cmd) override {
+                                        MediaIOPortGroup *group = addPortGroup("synth-src");
+                                        if (group == nullptr) return Error::Invalid;
+                                        const PixelFormat::ID id =
+                                                readDescId(cmd.config, PlannerProducedDesc, PixelFormat::RGBA8_sRGB);
+                                        const FrameRate rate = readRate(cmd.config, PlannerProducedRate,
+                                                                        FrameRate(FrameRate::FPS_30));
+                                        const MediaDesc desc = syntheticDesc(id, rate);
+                                        // Mirror the desc on the cmd so MediaIO::mediaDesc()
+                                        // (and the planner's discoverSourceDesc strategy 4)
+                                        // can see the produced shape post-open.
+                                        cmd.mediaDesc = desc;
+                                        cmd.frameRate = rate;
+                                        if (addSource(group, desc) == nullptr) return Error::Invalid;
+                                        return Error::Ok;
+                                }
+                                Error executeCmd(MediaIOCommandClose &cmd) override {
+                                        (void)cmd;
+                                        return Error::Ok;
+                                }
+        };
+
+        class PlannerSyntheticSinkMediaIO : public InlineMediaIO {
+                                PROMEKI_OBJECT(PlannerSyntheticSinkMediaIO, InlineMediaIO)
+                        public:
+                                PlannerSyntheticSinkMediaIO(ObjectBase *parent = nullptr) : InlineMediaIO(parent) {}
+                                ~PlannerSyntheticSinkMediaIO() override {
+                                        if (isOpen()) (void)close().wait();
+                                }
+
+                                Error describe(MediaIODescription *out) const override {
+                                        Error baseErr = MediaIO::describe(out);
+                                        if (baseErr.isError()) return baseErr;
+                                        const PixelFormat::ID id =
+                                                readDescId(config(), PlannerAcceptedDesc, PixelFormat::RGBA8_sRGB);
+                                        const FrameRate rate =
+                                                readRate(config(), PlannerAcceptedRate, FrameRate(FrameRate::FPS_30));
+                                        out->acceptableFormats().pushToBack(syntheticDesc(id, rate));
+                                        out->setPreferredFormat(syntheticDesc(id, rate));
+                                        return Error::Ok;
+                                }
+
+                                Error proposeInput(const MediaDesc &offered,
+                                                   MediaDesc       *preferred) const override {
+                                        if (preferred == nullptr) return Error::Invalid;
+                                        if (offered.imageList().isEmpty()) return Error::NotSupported;
+
+                                        const PixelFormat::ID id =
+                                                readDescId(config(), PlannerAcceptedDesc, PixelFormat::RGBA8_sRGB);
+                                        const FrameRate rate =
+                                                readRate(config(), PlannerAcceptedRate, FrameRate(FrameRate::FPS_30));
+                                        const bool pixelMatches = offered.imageList()[0].pixelFormat().id() == id;
+                                        const bool rateMatches = offered.frameRate() == rate;
+                                        if (pixelMatches && rateMatches) {
+                                                *preferred = offered;
+                                                return Error::Ok;
+                                        }
+                                        MediaDesc want = offered;
+                                        if (!pixelMatches) want.imageList()[0].setPixelFormat(PixelFormat(id));
+                                        if (!rateMatches) want.setFrameRate(rate);
+                                        *preferred = want;
+                                        return Error::Ok;
+                                }
+
+                        protected:
+                                Error executeCmd(MediaIOCommandOpen &cmd) override {
+                                        MediaIOPortGroup *group = addPortGroup("synth-sink");
+                                        if (group == nullptr) return Error::Invalid;
+                                        const PixelFormat::ID id =
+                                                readDescId(cmd.config, PlannerAcceptedDesc, PixelFormat::RGBA8_sRGB);
+                                        const FrameRate rate = readRate(cmd.config, PlannerAcceptedRate,
+                                                                        FrameRate(FrameRate::FPS_30));
+                                        const MediaDesc desc = syntheticDesc(id, rate);
+                                        cmd.mediaDesc = desc;
+                                        cmd.frameRate = rate;
+                                        if (addSink(group, desc) == nullptr) return Error::Invalid;
+                                        return Error::Ok;
+                                }
+                                Error executeCmd(MediaIOCommandClose &cmd) override {
+                                        (void)cmd;
+                                        return Error::Ok;
+                                }
+        };
+
+        class PlannerSyntheticSrcFactory : public MediaIOFactory {
+                public:
+                        PlannerSyntheticSrcFactory() = default;
+
+                        String name() const override { return String("PlannerSyntheticSrc"); }
+                        String description() const override {
+                                return String("Synthetic source emitting a configurable PixelFormat.");
+                        }
+                        bool canBeSource() const override { return true; }
+
+                        Config::SpecMap configSpecs() const override {
+                                Config::SpecMap m;
+                                m.insert(PlannerProducedDesc,
+                                         VariantSpec().setType(Variant::TypePixelFormat).setDefault(
+                                                 PixelFormat(PixelFormat::RGBA8_sRGB)));
+                                m.insert(PlannerProducedRate, VariantSpec()
+                                                                      .setType(Variant::TypeFrameRate)
+                                                                      .setDefault(FrameRate(FrameRate::FPS_30)));
+                                return m;
+                        }
+
+                        MediaIO *create(const Config &config, ObjectBase *parent) const override {
+                                auto *io = new PlannerSyntheticSrcMediaIO(parent);
+                                io->setConfig(config);
+                                return io;
                         }
         };
 
-        PROMEKI_REGISTER_MEDIAIO(PlannerSyntheticSrcTask)
-        PROMEKI_REGISTER_MEDIAIO(PlannerSyntheticSinkTask)
+        class PlannerSyntheticSinkFactory : public MediaIOFactory {
+                public:
+                        PlannerSyntheticSinkFactory() = default;
+
+                        String name() const override { return String("PlannerSyntheticSink"); }
+                        String description() const override {
+                                return String("Synthetic sink demanding a configurable PixelFormat.");
+                        }
+                        bool canBeSink() const override { return true; }
+
+                        Config::SpecMap configSpecs() const override {
+                                Config::SpecMap m;
+                                m.insert(PlannerAcceptedDesc,
+                                         VariantSpec().setType(Variant::TypePixelFormat).setDefault(
+                                                 PixelFormat(PixelFormat::RGBA8_sRGB)));
+                                m.insert(PlannerAcceptedRate, VariantSpec()
+                                                                      .setType(Variant::TypeFrameRate)
+                                                                      .setDefault(FrameRate(FrameRate::FPS_30)));
+                                return m;
+                        }
+
+                        MediaIO *create(const Config &config, ObjectBase *parent) const override {
+                                auto *io = new PlannerSyntheticSinkMediaIO(parent);
+                                io->setConfig(config);
+                                return io;
+                        }
+        };
+
+        PROMEKI_REGISTER_MEDIAIO_FACTORY(PlannerSyntheticSrcFactory)
+        PROMEKI_REGISTER_MEDIAIO_FACTORY(PlannerSyntheticSinkFactory)
 
         // ----- helpers -----
 
@@ -189,14 +252,14 @@ namespace {
                 MediaPipelineConfig::Stage src;
                 src.name = "src";
                 src.type = "PlannerSyntheticSrc";
-                src.mode = MediaIO::Source;
+                src.role = MediaPipelineConfig::StageRole::Source;
                 src.config.set(PlannerProducedDesc, PixelFormat(srcId));
                 cfg.addStage(src);
 
                 MediaPipelineConfig::Stage sink;
                 sink.name = "sink";
                 sink.type = "PlannerSyntheticSink";
-                sink.mode = MediaIO::Sink;
+                sink.role = MediaPipelineConfig::StageRole::Sink;
                 sink.config.set(PlannerAcceptedDesc, PixelFormat(sinkId));
                 cfg.addStage(sink);
 
@@ -469,7 +532,7 @@ TEST_CASE("MediaPipelinePlanner_SimultaneousPixelAndRateGap_FailsWithHint") {
         MediaPipelineConfig::Stage src;
         src.name = "src";
         src.type = "PlannerSyntheticSrc";
-        src.mode = MediaIO::Source;
+        src.role = MediaPipelineConfig::StageRole::Source;
         src.config.set(PlannerProducedDesc, PixelFormat(PixelFormat::RGBA8_sRGB));
         src.config.set(PlannerProducedRate, FrameRate(FrameRate::FPS_30));
         cfg.addStage(src);
@@ -477,7 +540,7 @@ TEST_CASE("MediaPipelinePlanner_SimultaneousPixelAndRateGap_FailsWithHint") {
         MediaPipelineConfig::Stage sink;
         sink.name = "sink";
         sink.type = "PlannerSyntheticSink";
-        sink.mode = MediaIO::Sink;
+        sink.role = MediaPipelineConfig::StageRole::Sink;
         sink.config.set(PlannerAcceptedDesc, PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
         sink.config.set(PlannerAcceptedRate, FrameRate(FrameRate::FPS_24));
         cfg.addStage(sink);

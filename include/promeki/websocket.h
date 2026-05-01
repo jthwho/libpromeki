@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/config.h> // PROMEKI_ENABLE_TLS
 #include <promeki/namespace.h>
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
@@ -16,9 +17,7 @@
 #include <promeki/url.h>
 #include <promeki/list.h>
 #include <promeki/uniqueptr.h>
-#if PROMEKI_ENABLE_TLS
 #include <promeki/sslcontext.h>
-#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -159,19 +158,30 @@ class WebSocket : public ObjectBase {
                  */
                 void setRequestHeader(const String &name, const String &value);
 
-#if PROMEKI_ENABLE_TLS
                 /**
                  * @brief Attaches an SslContext used for @c wss:// connects.
                  *
                  * Without one, a default-constructed @ref SslContext
                  * (no CA chain → effectively no peer verification) is
                  * created lazily.  Mirrors @ref HttpClient.
+                 *
+                 * Always available regardless of @c PROMEKI_ENABLE_TLS;
+                 * in a TLS-disabled build the context is stored but
+                 * its operations are inert (see @ref SslContext) and
+                 * an actual @c wss connect is later rejected with
+                 * @ref Error::NotImplemented.
                  */
                 void setSslContext(SslContext::Ptr ctx) { _sslContext = std::move(ctx); }
 
                 /** @brief Returns the attached SslContext, or null. */
                 SslContext::Ptr sslContext() const { return _sslContext; }
-#endif
+
+                /**
+                 * @brief Reports whether this build can speak TLS.
+                 *
+                 * Forwards to @ref SslContext::hasTlsSupport.
+                 */
+                static bool hasTlsSupport() { return SslContext::hasTlsSupport(); }
 
                 // ----------------------------------------------------
                 // Server-side adoption (used by HttpServer::routeWebSocket)
@@ -276,9 +286,7 @@ class WebSocket : public ObjectBase {
                 bool    _useTls = false;
                 bool    _handshakeDone = false; ///< TLS handshake done (wss://)
 
-#if PROMEKI_ENABLE_TLS
                 SslContext::Ptr _sslContext;
-#endif
 
                 void onIoReady(int fd, uint32_t events);
                 void readSome();

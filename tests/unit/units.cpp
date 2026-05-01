@@ -6,6 +6,7 @@
  */
 
 #include <doctest/doctest.h>
+#include <limits>
 #include <promeki/units.h>
 
 using namespace promeki;
@@ -108,6 +109,105 @@ TEST_CASE("Units: fromDurationNs milliseconds") {
 
 TEST_CASE("Units: fromDurationNs seconds") {
         CHECK(Units::fromDurationNs(1500000000) == "1.5 s");
+}
+
+// ============================================================================
+// fromDurationMs
+// ============================================================================
+
+TEST_CASE("Units: fromDurationMs sub-microsecond rounds to ns") {
+        // 0.0005 ms = 500 ns — verifies the ms→ns scale carries
+        // sub-microsecond inputs into the ns bucket of the
+        // fromDurationNs auto-scale table.
+        CHECK(Units::fromDurationMs(0.0005) == "500 ns");
+}
+
+TEST_CASE("Units: fromDurationMs microseconds") {
+        CHECK(Units::fromDurationMs(0.05) == "50 us");
+}
+
+TEST_CASE("Units: fromDurationMs milliseconds") {
+        CHECK(Units::fromDurationMs(4.2) == "4.2 ms");
+}
+
+TEST_CASE("Units: fromDurationMs seconds") {
+        CHECK(Units::fromDurationMs(1500.0) == "1.5 s");
+}
+
+TEST_CASE("Units: fromDurationMs minutes") {
+        // 90 000 ms = 90 s = 1.5 m — exercises the minute crossover.
+        CHECK(Units::fromDurationMs(90000.0) == "1.5 m");
+}
+
+TEST_CASE("Units: fromDurationMs zero is ns") {
+        // Zero falls into the lowest scale bucket (ns) since the
+        // auto-scale table picks the highest entry whose threshold
+        // does not exceed the absolute value.
+        CHECK(Units::fromDurationMs(0.0) == "0 ns");
+}
+
+// ============================================================================
+// fromCount
+// ============================================================================
+
+TEST_CASE("Units: fromCount zero renders as '0'") {
+        // Distinct from fromItemsPerSec which renders zero as "-".
+        // fromCount is intended for rows where every slot is always
+        // populated, so zero must render as a real number.
+        CHECK(Units::fromCount(0) == "0");
+}
+
+TEST_CASE("Units: fromCount sub-kilo renders as integer") {
+        CHECK(Units::fromCount(127) == "127");
+        CHECK(Units::fromCount(999) == "999");
+}
+
+TEST_CASE("Units: fromCount kilo") {
+        CHECK(Units::fromCount(1500) == "1.5k");
+}
+
+TEST_CASE("Units: fromCount mega trims trailing zeros") {
+        // 2 340 000 → "2.34M" — verifies that the trailing-zero
+        // trimmer leaves significant digits intact.
+        CHECK(Units::fromCount(2340000ULL) == "2.34M");
+}
+
+TEST_CASE("Units: fromCount giga") {
+        CHECK(Units::fromCount(2500000000ULL) == "2.5G");
+}
+
+TEST_CASE("Units: fromCount tera") {
+        CHECK(Units::fromCount(1500000000000ULL) == "1.5T");
+}
+
+TEST_CASE("Units: fromCount precision controls fractional digits") {
+        // Default precision (2) would render 1234 as "1.23k"; a
+        // precision of 0 forces no fractional digits.
+        CHECK(Units::fromCount(1234, 0) == "1k");
+}
+
+// ============================================================================
+// fromFramesPerSec
+// ============================================================================
+
+TEST_CASE("Units: fromFramesPerSec integer rate trims fraction") {
+        CHECK(Units::fromFramesPerSec(30.0) == "30 fps");
+}
+
+TEST_CASE("Units: fromFramesPerSec NDF preserves precision") {
+        CHECK(Units::fromFramesPerSec(29.97) == "29.97 fps");
+}
+
+TEST_CASE("Units: fromFramesPerSec custom precision") {
+        // 23.976 with default precision (2) rounds to 23.98; bumping
+        // precision to 3 keeps the full value.
+        CHECK(Units::fromFramesPerSec(23.976, 3) == "23.976 fps");
+}
+
+TEST_CASE("Units: fromFramesPerSec non-finite renders as '-'") {
+        // Telemetry that has not yet observed a frame may pass NaN/inf.
+        CHECK(Units::fromFramesPerSec(std::numeric_limits<double>::quiet_NaN()) == "-");
+        CHECK(Units::fromFramesPerSec(std::numeric_limits<double>::infinity()) == "-");
 }
 
 // ============================================================================

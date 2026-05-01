@@ -136,9 +136,32 @@ Thread::Thread(ObjectBase *parent) : ObjectBase(parent) {
 }
 
 Thread::~Thread() {
-        if (!_adopted && isJoinable()) {
+        if (!_adopted) {
+                // Send a quit unconditionally — no-op if the loop never
+                // came up or has already drained.  Idempotent so callers
+                // do not need to coordinate with an explicit prior
+                // shutdown.
                 quit();
-                joinThread();
+
+                // Block until threadEntry() observably finishes before
+                // unwinding any base-class state.  threadEntry() drops
+                // _running to false *before* it sets _finished, so
+                // isJoinable() can return false while the worker is
+                // still mid-finishedSignal emit / mutex-locked
+                // _finished=true write.  If we joined the OS handle in
+                // that window the join would synchronize on thread
+                // exit, but the destructor body would have already
+                // returned to the base class — vtable sliced — while
+                // the worker was still making virtual calls and
+                // touching *this*.  Waiting on _finished closes that
+                // window without depending on the platform handle's
+                // joinable status.
+                if (isJoinable() || _running.value()) {
+                        _mutex.lock();
+                        while (!_finished) _finishedCv.wait(_mutex);
+                        _mutex.unlock();
+                }
+                if (isJoinable()) joinThread();
         }
         if (_currentThread == this) _currentThread = nullptr;
         return;
@@ -198,6 +221,12 @@ Error Thread::wait(unsigned int timeoutMs) {
 }
 
 EventLoop *Thread::threadEventLoop() const {
+        // Take @c _mutex for every read/write of @c _threadLoop so the
+        // adopted-thread lazy cache write below races neither with
+        // cross-thread readers (e.g. a signal-watcher thread asking
+        // for the main thread's loop) nor with the spawned-thread
+        // teardown path in @c threadEntry.
+        Mutex::Locker locker(_mutex);
         if (_adopted) {
                 // Cache the EventLoop when called from the adopted thread
                 // so that cross-thread callers see the correct pointer.
@@ -207,15 +236,18 @@ EventLoop *Thread::threadEventLoop() const {
                                 const_cast<Thread *>(this)->_threadLoop = loop;
                         }
                 }
-                return _threadLoop;
         }
         return _threadLoop;
 }
 
 void Thread::quit(int returnCode) {
-        EventLoop *loop = threadEventLoop();
-        if (loop != nullptr) {
-                loop->quit(returnCode);
+        // Take @c _mutex so the worker cannot tear down @c _threadLoop
+        // mid-call.  Adopted threads never set or clear @c _threadLoop
+        // through @c threadEntry, so the lock is only relevant for
+        // spawned workers — but it is harmless either way.
+        Mutex::Locker locker(_mutex);
+        if (_threadLoop != nullptr) {
+                _threadLoop->quit(returnCode);
         }
         return;
 }
@@ -404,8 +436,18 @@ void Thread::threadEntry() {
         _currentThread = this;
         _nativeId.setValue(currentNativeId());
         _stdId.setValue(std::this_thread::get_id());
-        EventLoop loop;
-        _threadLoop = &loop;
+
+        // Heap-allocate the worker's EventLoop so its destruction can
+        // be sequenced explicitly under @c _mutex.  A stack EventLoop
+        // is destroyed during natural function unwind — outside any
+        // lock — and that races with external callers of @c quit /
+        // @c threadEventLoop that are dereferencing @c _threadLoop on
+        // another thread.
+        UniquePtr<EventLoop> loop = UniquePtr<EventLoop>::create();
+        {
+                Mutex::Locker locker(_mutex);
+                _threadLoop = loop.get();
+        }
         _running.setValue(true);
         applyOsName();
 
@@ -418,18 +460,26 @@ void Thread::threadEntry() {
 
         startedSignal.emit();
         run();
-        _exitCode.setValue(loop.exitCode());
+        _exitCode.setValue(loop->exitCode());
 
         // Emit finished while the EventLoop is still alive so that
         // cross-thread signal dispatch from this thread still works.
         finishedSignal.emit(_exitCode.value());
 
         _running.setValue(false);
-        _threadLoop = nullptr;
 
-        // Notify any thread blocked in wait()
+        // Hold @c _mutex while clearing @c _threadLoop AND tearing
+        // down the loop.  External callers (e.g. another thread
+        // calling @c Thread::quit) take the same lock and therefore
+        // either observe a non-null @c _threadLoop with the loop
+        // still alive (we are holding them out) or a null pointer
+        // after the loop has been destroyed.  Notify @c _finished
+        // inside the same critical section so a waiter that re-enters
+        // observes both side effects atomically.
         {
                 Mutex::Locker locker(_mutex);
+                _threadLoop = nullptr;
+                loop.clear();
                 _finished = true;
         }
         _finishedCv.wakeAll();

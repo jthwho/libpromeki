@@ -25,6 +25,8 @@
 #include <promeki/mediadesc.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaiodescription.h>
+#include <promeki/mediaioportgroup.h>
+#include <promeki/mediaiorequest.h>
 #include <promeki/logger.h>
 
 #include <cstring>
@@ -40,30 +42,30 @@ PROMEKI_DEBUG(SDLPlayer)
 // startup-underrun feedback loop.
 static constexpr int kAudioPrerollFrames = 3;
 
-SDLPlayerTask::SDLPlayerTask(SDLPlayerWidget *widget, SDLAudioOutput *audio, bool useAudioClock)
-    : _widget(widget), _audioOutput(audio), _useAudioClock(useAudioClock) {
+SDLPlayerMediaIO::SDLPlayerMediaIO(SDLPlayerWidget *widget, SDLAudioOutput *audio, bool useAudioClock)
+    : DedicatedThreadMediaIO(nullptr), _widget(widget), _audioOutput(audio), _useAudioClock(useAudioClock) {
         _sync.setName(String("SDLPlayer"));
         _sync.setInputOverflowPolicy(FrameSync::InputOverflowPolicy::Block);
         _pullRunning.setValue(false);
 }
 
-SDLPlayerTask::~SDLPlayerTask() {
-        // MediaIO guarantees Close has run before delete.  Belt and
-        // suspenders in case of misuse.
+SDLPlayerMediaIO::~SDLPlayerMediaIO() {
+        if (isOpen()) (void)close().wait();
+        // Belt and suspenders in case of misuse.
         if (_pullThread.joinable()) {
                 _sync.interrupt();
                 _pullThread.join();
         }
 }
 
-void SDLPlayerTask::pause() {
+void SDLPlayerMediaIO::pause() {
         Mutex::Locker lock(_clockMutex);
         if (_clock.isNull() || !_clock->canPause()) return;
         if (_clock->isPaused()) return;
 
         Error err = _clock.modify()->setPause(true);
         if (err.isError()) {
-                promekiWarn("SDLPlayerTask: setPause(true) failed: %s", err.name().cstr());
+                promekiWarn("SDLPlayerMediaIO: setPause(true) failed: %s", err.name().cstr());
                 return;
         }
         stopPullThread();
@@ -78,20 +80,20 @@ void SDLPlayerTask::pause() {
         _sync.resetSourceRateEstimator();
 }
 
-void SDLPlayerTask::resume() {
+void SDLPlayerMediaIO::resume() {
         Mutex::Locker lock(_clockMutex);
         if (_clock.isNull() || !_clock->canPause()) return;
         if (!_clock->isPaused()) return;
 
         Error err = _clock.modify()->setPause(false);
         if (err.isError()) {
-                promekiWarn("SDLPlayerTask: setPause(false) failed: %s", err.name().cstr());
+                promekiWarn("SDLPlayerMediaIO: setPause(false) failed: %s", err.name().cstr());
                 return;
         }
         startPullThread();
 }
 
-void SDLPlayerTask::togglePause() {
+void SDLPlayerMediaIO::togglePause() {
         bool paused = false;
         {
                 Mutex::Locker lock(_clockMutex);
@@ -105,13 +107,13 @@ void SDLPlayerTask::togglePause() {
                 pause();
 }
 
-bool SDLPlayerTask::isPaused() const {
+bool SDLPlayerMediaIO::isPaused() const {
         Mutex::Locker lock(_clockMutex);
         if (_clock.isNull()) return false;
         return _clock->isPaused();
 }
 
-void SDLPlayerTask::startPullThread() {
+void SDLPlayerMediaIO::startPullThread() {
         // Caller holds _clockMutex.  Join any leftover std::thread
         // handle first — a paused pull loop exits on its own but
         // leaves the handle joinable; reassigning onto a joinable
@@ -127,8 +129,8 @@ void SDLPlayerTask::startPullThread() {
         _pullThread = std::thread([this] { pullLoop(); });
 }
 
-void SDLPlayerTask::cancelBlockingWork() {
-        promekiDebug("SDLPlayerTask::cancelBlockingWork");
+void SDLPlayerMediaIO::cancelBlockingWork() {
+        promekiDebug("SDLPlayerMediaIO::cancelBlockingWork");
         // Called from outside the strand when close is trying to
         // unwedge a deadlock — typically the strand is parked in
         // FrameSync::pushFrame waiting for queue room while the
@@ -145,7 +147,7 @@ void SDLPlayerTask::cancelBlockingWork() {
         _sync.interrupt();
 }
 
-void SDLPlayerTask::stopPullThread() {
+void SDLPlayerMediaIO::stopPullThread() {
         // Caller holds _clockMutex.  We deliberately do NOT call
         // @c FrameSync::interrupt here — that would also wake any
         // strand thread parked in @c pushFrame waiting for queue
@@ -169,16 +171,11 @@ void SDLPlayerTask::stopPullThread() {
         if (_pullThread.joinable()) _pullThread.join();
 }
 
-Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
-        if (cmd.mode != MediaIO::Sink) {
-                promekiErr("SDLPlayerTask: only Writer mode is supported");
-                return Error::NotSupported;
-        }
-
+Error SDLPlayerMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         const MediaDesc &mdesc = cmd.pendingMediaDesc;
         FrameRate        fps = mdesc.frameRate();
         if (!fps.isValid()) {
-                promekiErr("SDLPlayerTask: pendingMediaDesc has no valid frame rate");
+                promekiErr("SDLPlayerMediaIO: pendingMediaDesc has no valid frame rate");
                 return Error::InvalidArgument;
         }
         _frameRate = fps;
@@ -197,11 +194,11 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
 
         if (_audioOutput != nullptr && adesc.isValid()) {
                 if (!_audioOutput->configure(adesc)) {
-                        promekiErr("SDLPlayerTask: audio configure failed");
+                        promekiErr("SDLPlayerMediaIO: audio configure failed");
                         return Error::Invalid;
                 }
                 if (!_audioOutput->open()) {
-                        promekiErr("SDLPlayerTask: audio open failed");
+                        promekiErr("SDLPlayerMediaIO: audio open failed");
                         return Error::Invalid;
                 }
                 _audioConfigured = true;
@@ -243,7 +240,7 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
                 if (_clock.isNull()) {
                         _clock = Clock::Ptr::takeOwnership(new WallClock());
                         if (_useAudioClock) {
-                                promekiInfo("SDLPlayerTask: audio clock "
+                                promekiInfo("SDLPlayerMediaIO: audio clock "
                                             "requested but no audio available; "
                                             "using wall clock");
                         }
@@ -260,26 +257,21 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
                 startPullThread();
         }
 
-        cmd.mediaDesc = mdesc;
-        cmd.audioDesc = _audioDesc;
-        cmd.frameRate = fps;
-        cmd.canSeek = false;
-        cmd.frameCount = MediaIO::FrameCountInfinite;
-        cmd.defaultStep = 1;
-        cmd.defaultPrefetchDepth = 1;
-
-        // Write depth 2: with FrameSync's Block policy, pushFrame
-        // back-pressures the strand anyway, so a deep write queue
-        // is just extra latency.
-        cmd.defaultWriteDepth = 2;
-        cmd.defaultSeekMode = MediaIO_SeekExact;
-
+        // Build the per-port output via the multi-port API: a single
+        // sink port in a group whose accounting reports infinite
+        // length and no seek capability.
+        MediaIOPortGroup *group = addPortGroup("sdlplayer");
+        if (group == nullptr) return Error::Invalid;
+        group->setFrameRate(fps);
+        group->setCanSeek(false);
+        group->setFrameCount(MediaIO::FrameCountInfinite);
+        if (addSink(group, mdesc) == nullptr) return Error::Invalid;
         return Error::Ok;
 }
 
-Error SDLPlayerTask::executeCmd(MediaIOCommandClose &cmd) {
+Error SDLPlayerMediaIO::executeCmd(MediaIOCommandClose &cmd) {
         (void)cmd;
-        promekiDebug("SDLPlayerTask::executeCmd(Close) ENTER");
+        promekiDebug("SDLPlayerMediaIO::executeCmd(Close) ENTER");
 
         // Pause the clock before joining the pull thread.  The pull
         // thread can be parked deep inside @ref Clock::sleepUntil,
@@ -317,13 +309,12 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandClose &cmd) {
         return Error::Ok;
 }
 
-Error SDLPlayerTask::executeCmd(MediaIOCommandWrite &cmd) {
+Error SDLPlayerMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         const Frame::Ptr &frame = cmd.frame;
         if (!frame.isValid()) return Error::InvalidArgument;
 
         // Work begins now — the framework bills pushFrame back-pressure
         // time to the writer (matches the old pacer semantics).
-        stampWorkBegin();
 
         // Pre-decode compressed images on the strand so the pull
         // thread only deals with display-ready frames.  Any decode
@@ -341,11 +332,10 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandWrite &cmd) {
                         decCfg.set(MediaConfig::OutputPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
                         auto decResult = codec.createDecoder(&decCfg);
                         if (error(decResult).isError()) {
-                                promekiWarn("SDLPlayerTask: createDecoder(%s) failed — "
+                                promekiWarn("SDLPlayerMediaIO: createDecoder(%s) failed — "
                                             "dropping frame",
                                             codec.name().cstr());
-                                noteFrameDropped();
-                                stampWorkEnd();
+                                noteFrameDropped(cmd.group);
                                 cmd.currentFrame++;
                                 cmd.frameCount = MediaIO::FrameCountInfinite;
                                 return Error::Ok;
@@ -354,10 +344,9 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandWrite &cmd) {
                         UncompressedVideoPayload::Ptr decoded;
                         if (Error de = dec->submitPayload(cvp); de.isError()) {
                                 delete dec;
-                                promekiWarn("SDLPlayerTask: submitPayload failed — "
+                                promekiWarn("SDLPlayerMediaIO: submitPayload failed — "
                                             "dropping frame");
-                                noteFrameDropped();
-                                stampWorkEnd();
+                                noteFrameDropped(cmd.group);
                                 cmd.currentFrame++;
                                 cmd.frameCount = MediaIO::FrameCountInfinite;
                                 return Error::Ok;
@@ -365,11 +354,10 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandWrite &cmd) {
                         decoded = dec->receiveVideoPayload();
                         delete dec;
                         if (!decoded.isValid()) {
-                                promekiWarn("SDLPlayerTask: decode of '%s' to "
+                                promekiWarn("SDLPlayerMediaIO: decode of '%s' to "
                                             "RGBA8_sRGB failed — dropping frame",
                                             cvp->desc().pixelFormat().name().cstr());
-                                noteFrameDropped();
-                                stampWorkEnd();
+                                noteFrameDropped(cmd.group);
                                 cmd.currentFrame++;
                                 cmd.frameCount = MediaIO::FrameCountInfinite;
                                 return Error::Ok;
@@ -384,13 +372,12 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandWrite &cmd) {
         }
 
         Error err = _sync.pushFrame(outFrame);
-        stampWorkEnd();
 
         // Interrupt / EndOfFile come through during close and don't
         // indicate a real problem — the close path's cancelBlockingWork
         // intentionally unwinds any pending pushFrame via both signals.
         if (err.isError() && err != Error::Interrupt && err != Error::EndOfFile) {
-                promekiWarn("SDLPlayerTask: pushFrame returned %s", err.name().cstr());
+                promekiWarn("SDLPlayerMediaIO: pushFrame returned %s", err.name().cstr());
         }
 
         cmd.currentFrame++;
@@ -398,7 +385,7 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandWrite &cmd) {
         return Error::Ok;
 }
 
-void SDLPlayerTask::pullLoop() {
+void SDLPlayerMediaIO::pullLoop() {
         while (_pullRunning.value()) {
                 auto result = _sync.pullFrame();
                 if (result.second().isError()) {
@@ -406,7 +393,7 @@ void SDLPlayerTask::pullLoop() {
                         // @ref pause are expected clean exits; any
                         // other error is a real failure.
                         if (result.second() != Error::Interrupt && result.second() != Error::ClockPaused) {
-                                promekiWarn("SDLPlayerTask: pullFrame: %s", result.second().name().cstr());
+                                promekiWarn("SDLPlayerMediaIO: pullFrame: %s", result.second().name().cstr());
                         }
                         break;
                 }
@@ -433,7 +420,7 @@ void SDLPlayerTask::pullLoop() {
 
 // ---- Phase 3 introspection / negotiation overrides ----
 
-PixelFormat SDLPlayerTask::pickNativePixelFormat(const PixelFormat &offered) const {
+PixelFormat SDLPlayerMediaIO::pickNativePixelFormat(const PixelFormat &offered) const {
         // The mapPixelFormat table on SDLVideoWidget is the source of
         // truth for what SDL can ingest directly.  We pick from that
         // set the format closest to @p offered, preferring same
@@ -473,7 +460,7 @@ PixelFormat SDLPlayerTask::pickNativePixelFormat(const PixelFormat &offered) con
         return PixelFormat(PixelFormat::RGBA8_sRGB);
 }
 
-Error SDLPlayerTask::describe(MediaIODescription *out) const {
+Error SDLPlayerMediaIO::describe(MediaIODescription *out) const {
         if (out == nullptr) return Error::Invalid;
 
         // Advertise every PixelFormat the SDL widget natively maps so
@@ -507,7 +494,7 @@ Error SDLPlayerTask::describe(MediaIODescription *out) const {
         return Error::Ok;
 }
 
-Error SDLPlayerTask::proposeInput(const MediaDesc &offered, MediaDesc *preferred) const {
+Error SDLPlayerMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *preferred) const {
         if (preferred == nullptr) return Error::Invalid;
         if (offered.imageList().isEmpty()) {
                 // Audio-only frame (rare for SDL sink) — accept as-is.
@@ -518,7 +505,7 @@ Error SDLPlayerTask::proposeInput(const MediaDesc &offered, MediaDesc *preferred
         const PixelFormat &offeredPd = offered.imageList()[0].pixelFormat();
 
         // Compressed sources go through the planner-inserted
-        // VideoDecoder bridge; SDLPlayerTask only consumes uncompressed.
+        // VideoDecoder bridge; SDLPlayerMediaIO only consumes uncompressed.
         if (offeredPd.isCompressed()) {
                 MediaDesc want = offered;
                 want.imageList()[0].setPixelFormat(pickNativePixelFormat(offeredPd));

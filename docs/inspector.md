@@ -1,11 +1,11 @@
 # Inspector — Frame validation and monitoring {#inspector}
 
-QA-oriented user guide for `MediaIOTask_Inspector` — what
+QA-oriented user guide for `InspectorMediaIO` — what
 each check does, how to consume the results, what the log
 output means, and how to interpret the A/V sync values a
 real production stream will produce.
 
-The Inspector is the inverse of the `MediaIOTask_TPG` Test
+The Inspector is the inverse of the `TpgMediaIO` Test
 Pattern Generator: where the TPG *produces* synthetic frames
 with embedded validation signals, the Inspector *consumes* frames
 and runs a configurable set of checks on each one. It is a
@@ -21,21 +21,23 @@ literally a two-factory-call setup with a frame loop:
 
 ```cpp
 #include <promeki/mediaio.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mediaioportconnection.h>
 
-MediaIO *src  = MediaIO::create(MediaIO::defaultConfig("TPG"));
-MediaIO *sink = MediaIO::create(MediaIO::defaultConfig("Inspector"));
+MediaIO *src  = MediaIO::create(MediaIOFactory::defaultConfig("TPG"));
+MediaIO *sink = MediaIO::create(MediaIOFactory::defaultConfig("Inspector"));
 
-src->open(MediaIO::Source);
-sink->open(MediaIO::Sink);
+(void)src->open().wait();
+(void)sink->open().wait();
 
-for(int i = 0; i < 1000; i++) {
-    Frame::Ptr frame;
-    src->readFrame(frame);
-    sink->writeFrame(frame);
-}
+auto *conn = new MediaIOPortConnection(src->source(0), sink->sink(0));
+conn->start();
 
-src->close();
-sink->close();
+// ... let the pipeline run; consume signals or sleep for a bit ...
+
+(void)src->close().wait();
+(void)sink->close().wait();
+delete conn;
 delete src;
 delete sink;
 ```
@@ -270,7 +272,7 @@ ways. Pick whichever fits your consumer pattern:
 
 ### Per-frame callback {#inspector_callback}
 
-Set via `MediaIOTask_Inspector::setEventCallback` before the
+Set via `InspectorMediaIO::setEventCallback` before the
 inspector is opened. The callback receives a fully-populated
 `InspectorEvent` once per frame and is invoked from the
 MediaIO worker thread, so it must be thread-safe. This is the
@@ -284,7 +286,7 @@ construct the task themselves and adopt it. See
 
 ### Accumulator snapshot {#inspector_snapshot}
 
-`MediaIOTask_Inspector::snapshot` returns a thread-safe value
+`InspectorMediaIO::snapshot` returns a thread-safe value
 copy of the running totals plus the most recent
 `InspectorEvent`. Useful for polled consumers — the test
 suite, a status bar, anything that wants "how is the stream
@@ -326,49 +328,45 @@ Two paths, depending on whether you need the per-frame callback.
 ### Standard factory (no callback) {#inspector_construct_factory}
 
 ```cpp
-MediaIO *io = MediaIO::create(MediaIO::defaultConfig("Inspector"));
-io->open(MediaIO::Sink);
-io->writeFrame(frame);
+MediaIO *io = MediaIO::create(MediaIOFactory::defaultConfig("Inspector"));
+(void)io->open().wait();
+(void)io->sink(0)->writeFrame(frame).wait();
 // ... query io->stats() or rely on the periodic log
-io->close();
+(void)io->close().wait();
 delete io;
 ```
 
-The factory route is the right choice when you only care about the
-periodic log and the `MediaIOTask_Inspector::snapshot` accessor.
-The MediaIO factory hides the underlying task, so there's no
-pointer to set callbacks on.
+The factory route is the right choice when you only care about
+the periodic log and the `InspectorMediaIO::snapshot` accessor.
+`MediaIO *` is an opaque handle from the factory's perspective —
+there's no typed pointer to set callbacks on.
 
-### Adopt-task path (per-frame callback) {#inspector_construct_adopt}
+### Direct-construction path (per-frame callback) {#inspector_construct_direct}
 
 ```cpp
-auto *insp = new MediaIOTask_Inspector();
+auto *insp = new InspectorMediaIO();
+insp->setConfig(MediaIOFactory::defaultConfig("Inspector"));
 insp->setEventCallback([](const InspectorEvent &e) {
     // Runs on the worker thread — be thread-safe.
-    if(e.avSyncValid && std::abs(e.avSyncOffsetSamples) > 100) {
+    if (e.avSyncValid && std::abs(e.avSyncOffsetSamples) > 100) {
         std::printf("WARNING: large sync offset: %lld samples\n",
                     (long long)e.avSyncOffsetSamples);
     }
 });
+(void)insp->open().wait();
 
-MediaIO *io = new MediaIO();
-io->setConfig(MediaIO::defaultConfig("Inspector"));
-io->adoptTask(insp);                  // takes ownership of `insp`
-io->open(MediaIO::Sink);
+(void)insp->sink(0)->writeFrame(frame).wait();
+// ... insp keeps publishing snapshot() / events as long as it's open.
 
-io->writeFrame(frame);
-// ... insp is still valid as long as io is — you keep the typed
-//     pointer for snapshot() / setEventCallback() calls.
-
-io->close();
-delete io;                           // also deletes insp
+(void)insp->close().wait();
+delete insp;
 ```
 
 The callback **must** be installed before `open()` — calling
 `setEventCallback` on a running inspector is a data race. This
-is why the factory path can't expose the callback: by the time
-`create()` returns, the task is already owned and inaccessible
-to user code.
+is why the factory path can't expose the callback: the factory
+returns a `MediaIO *` (the user-surface type), which doesn't
+expose `InspectorMediaIO`-specific accessors.
 
 ## What to look for in CI / QA {#inspector_what_to_look_for}
 
@@ -492,10 +490,10 @@ pull them out separately from the routine info-level traffic.
 
 ## See also {#inspector_see_also}
 
-- `MediaIOTask_Inspector` — the C++ API.
+- `InspectorMediaIO` — the C++ API.
 - `InspectorEvent` / `InspectorSnapshot` /
   `InspectorDiscontinuity` — the result types.
-- `MediaIOTask_TPG` — the producer side designed to pair
+- `TpgMediaIO` — the producer side designed to pair
   with the inspector for end-to-end QA.
 - [Image Data Encoder Wire Format](imagedataencoder.md) — the wire
   format spec for the picture-side data band.

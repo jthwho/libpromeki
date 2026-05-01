@@ -14,8 +14,13 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaiocommand.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mediaiorequest.h>
 #include <promeki/mediaiodescription.h>
-#include <promeki/mediaiotask.h>
+#include <promeki/mediaioportgroup.h>
+#include <promeki/mediaiosink.h>
+#include <promeki/mediaiosource.h>
 #include <promeki/pixelformat.h>
 #include <promeki/set.h>
 #include <promeki/string.h>
@@ -47,7 +52,7 @@ namespace {
                         return MediaIO::create(cfg);
                 }
                 if (!s.path.isEmpty()) {
-                        if (s.mode == MediaIO::Source) {
+                        if (s.role == MediaPipelineConfig::StageRole::Source) {
                                 return MediaIO::createForFileRead(s.path);
                         }
                         return MediaIO::createForFileWrite(s.path);
@@ -118,8 +123,8 @@ namespace {
                 }
 
                 // Strategy 3: caller-provided pre-open hint.
-                if (io->expectedDesc().isValid()) {
-                        return io->expectedDesc();
+                if (io->pendingMediaDesc().isValid()) {
+                        return io->pendingMediaDesc();
                 }
 
                 // Strategy 4: open the source briefly to read its mediaDesc.
@@ -130,14 +135,14 @@ namespace {
                 //
                 // Limitation: only the stage's type and path are forwarded
                 // (those were baked into the MediaIO at makeStage time).
-                // Stage-level metadata and expectedDesc pre-open hints are
+                // Stage-level metadata and pendingMediaDesc pre-open hints are
                 // not re-applied here; backends whose opened mediaDesc
                 // depends on those hints should implement describe() so the
                 // planner never reaches this path.
-                Error err = io->open(MediaIO::Source);
+                Error err = io->open().wait();
                 if (err.isError()) return MediaDesc();
                 MediaDesc desc = io->mediaDesc();
-                (void)io->close();
+                io->close().wait();
                 return desc;
         }
 
@@ -155,6 +160,8 @@ namespace {
         MediaDesc propagateThroughStage(MediaIO *io, const MediaDesc &input) {
                 if (io == nullptr) return input;
                 MediaDesc out;
+                // Use the task-level forwarder so this works pre-open
+                // (the planner queries stages before opening them).
                 if (io->proposeOutput(input, &out).isOk() && out.isValid()) return out;
                 return input;
         }
@@ -185,16 +192,17 @@ namespace {
 
         bool findSingleBridge(const MediaDesc &from, const MediaDesc &to, const MediaPipelinePlanner::Policy &policy,
                               BridgeStep *out, promeki::List<BridgeTraceEntry> *trace = nullptr) {
-                const auto &formats = MediaIO::registeredFormats();
+                const auto &factories = MediaIOFactory::registeredFactories();
                 int         bestCost = INT_MAX;
                 bool        found = false;
-                for (const auto &fd : formats) {
-                        if (!fd.bridge) continue;
+                for (const MediaIOFactory *fd : factories) {
+                        if (fd == nullptr) continue;
+                        const String fdName = fd->name();
 
                         BridgeTraceEntry entry;
-                        entry.name = fd.name;
+                        entry.name = fdName;
 
-                        if (policy.excludedBridges.contains(fd.name)) {
+                        if (policy.excludedBridges.contains(fdName)) {
                                 entry.considered = false;
                                 if (trace != nullptr) trace->pushToBack(entry);
                                 continue;
@@ -203,7 +211,7 @@ namespace {
 
                         MediaConfig cfg;
                         int         rawCost = -1;
-                        if (!fd.bridge(from, to, &cfg, &rawCost)) {
+                        if (!fd->bridge(from, to, &cfg, &rawCost)) {
                                 entry.accepted = false;
                                 if (trace != nullptr) trace->pushToBack(entry);
                                 continue;
@@ -227,7 +235,7 @@ namespace {
                         if (cost < bestCost) {
                                 bestCost = cost;
                                 if (out != nullptr) {
-                                        out->backendName = fd.name;
+                                        out->backendName = fdName;
                                         out->config = cfg;
                                         out->cost = cost;
                                 }
@@ -362,7 +370,10 @@ namespace {
                 // isn't forced into a pointless bridge when the upstream
                 // produces an otherwise identical shape.
                 MediaDesc preferred;
-                Error     pe = toStage->proposeInput(producedDesc, &preferred);
+                // Use the task-level forwarder so this works pre-open
+                // — sinks only exist on a MediaIO once it has been
+                // opened, but the planner queries before opening.
+                Error pe = toStage->proposeInput(producedDesc, &preferred);
                 if (pe == Error::Ok && preferred.formatEquals(producedDesc)) {
                         // Direct route.
                         out->addRoute(route);
@@ -445,7 +456,7 @@ namespace {
                         MediaPipelineConfig::Stage bridgeStage;
                         bridgeStage.name = "br" + String::number(*bridgeCounter) + "_" + route.from + "_" + route.to;
                         bridgeStage.type = chain[i].backendName;
-                        bridgeStage.mode = MediaIO::Transform;
+                        bridgeStage.role = MediaPipelineConfig::StageRole::Transform;
                         bridgeStage.config = chain[i].config;
                         out->addStage(bridgeStage);
 
@@ -530,7 +541,7 @@ namespace {
                         if (!ownedNames.contains(it->first)) continue;
                         MediaIO *io = it->second;
                         if (io == nullptr) continue;
-                        if (io->isOpen()) (void)io->close();
+                        if (io->isOpen()) io->close().wait();
                         delete io;
                 }
                 stages.clear();
@@ -581,8 +592,10 @@ bool MediaPipelinePlanner::isResolved(const MediaPipelineConfig &config, String 
         for (const auto &r : config.routes()) {
                 MediaIO        *to = stages[r.to];
                 const MediaDesc fromDesc = producedBy.contains(r.from) ? producedBy[r.from] : MediaDesc();
-                MediaDesc       preferred;
-                Error           pe = to->proposeInput(fromDesc, &preferred);
+                MediaDesc preferred;
+                // Pre-open task-level forwarder; planner runs before
+                // any stage's sinks have been instantiated.
+                Error pe = to != nullptr ? to->proposeInput(fromDesc, &preferred) : Error::Invalid;
                 if (pe.isError() || !preferred.formatEquals(fromDesc)) {
                         if (diagnostic != nullptr) {
                                 *diagnostic = String("MediaPipelinePlanner: route '") + r.from + "' -> '" + r.to +

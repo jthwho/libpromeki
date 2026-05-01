@@ -40,6 +40,9 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mediaiocommand.h>
+#include <promeki/mediaiorequest.h>
 #include <promeki/string.h>
 
 using namespace promeki;
@@ -136,7 +139,7 @@ int main(int argc, char **argv) {
                 Logger::defaultLogger().setLogLevel(Logger::LogLevel::Debug);
         }
 
-        MediaIO::Config srcCfg = MediaIO::defaultConfig(opts.backend);
+        MediaIO::Config srcCfg = MediaIOFactory::defaultConfig(opts.backend);
         srcCfg.set(MediaConfig::Type, opts.backend);
         MediaIO *source = MediaIO::create(srcCfg);
         if (source == nullptr) {
@@ -197,18 +200,22 @@ int main(int argc, char **argv) {
         // bursts collapse into overflow drops rather than back-pressure.
         std::thread producer([&]() {
                 while (running.load(std::memory_order_relaxed)) {
-                        Frame::Ptr frame;
-                        Error      e = source->readFrame(frame, true);
+                        MediaIORequest readReq = source->readFrame();
+                        Error          e = readReq.wait();
                         if (e == Error::Cancelled || e == Error::EndOfFile) break;
                         // TryAgain is the V4L2 task's 200 ms internal
-                        // timeout reaching us through block=true reads
-                        // — not a real error, just "no frame yet on a
-                        // slow / stalling camera."  Retry silently.
+                        // timeout surfacing through the request — not
+                        // a real error, just "no frame yet on a slow
+                        // / stalling camera."  Retry silently.
                         if (e == Error::TryAgain) continue;
                         if (e.isError()) {
                                 readErrors.fetch_add(1, std::memory_order_relaxed);
                                 std::fprintf(stderr, "Source read error: %s\n", e.name().cstr());
                                 continue;
+                        }
+                        Frame::Ptr frame;
+                        if (const auto *cr = readReq.commandAs<MediaIOCommandRead>()) {
+                                frame = cr->frame;
                         }
                         framesIn.fetch_add(1, std::memory_order_relaxed);
                         Error pe = sync.pushFrame(frame);

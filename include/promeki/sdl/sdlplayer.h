@@ -7,14 +7,14 @@
 
 #pragma once
 
-#include <promeki/namespace.h>
-#include <promeki/mediaiotask.h>
+#include <promeki/atomic.h>
+#include <promeki/audiodesc.h>
+#include <promeki/dedicatedthreadmediaio.h>
+#include <promeki/framerate.h>
+#include <promeki/framesync.h>
 #include <promeki/mediaio.h>
 #include <promeki/mutex.h>
-#include <promeki/atomic.h>
-#include <promeki/framerate.h>
-#include <promeki/audiodesc.h>
-#include <promeki/framesync.h>
+#include <promeki/namespace.h>
 #include <promeki/sdl/sdlaudioclock.h>
 
 #include <thread>
@@ -26,15 +26,15 @@ class SDLAudioOutput;
 class Clock;
 
 /**
- * @brief MediaIOTask writer that plays frames through SDL via FrameSync.
+ * @brief MediaIO sink that plays frames through SDL via FrameSync.
  * @ingroup sdl_core
  *
- * SDLPlayerTask is a write-only MediaIO sink that consumes @c Frame
+ * SDLPlayerMediaIO is a write-only MediaIO sink that consumes @c Frame
  * objects via @c MediaIO::writeFrame().  It is always owned by an
  * @ref SDLPlayerWidget which provides both the render target and the
  * user-facing controls (play/pause, focus routing, etc.) — clients
  * should construct an @ref SDLPlayerWidget rather than instantiating
- * the task directly.
+ * the backend directly.
  *
  * @par Architecture
  *
@@ -52,22 +52,23 @@ class Clock;
  *   feeds FrameSync's audio resampler.
  *
  * @par Thread Safety
- * Conditionally thread-safe.  The strand worker, pull thread, and SDL
- * event thread each touch a different subset of state, coordinated via
- * @ref FrameSync (lock-free queue), atomics on the clock state, and the
- * SDL event-thread bounce for widget calls.  Clients interact with the
- * task via the owning @ref MediaIO sink, which marshals
- * @c writeFrame() calls onto the strand worker — clients themselves
- * may call from any thread.
+ * Conditionally thread-safe.  The dedicated worker thread, pull thread,
+ * and SDL event thread each touch a different subset of state,
+ * coordinated via @ref FrameSync (lock-free queue), atomics on the
+ * clock state, and the SDL event-thread bounce for widget calls.
+ * Clients interact with the backend via the owning @ref MediaIO sink,
+ * which marshals @c writeFrame() calls onto the worker — clients
+ * themselves may call from any thread.
  */
-class SDLPlayerTask : public MediaIOTask {
+class SDLPlayerMediaIO : public DedicatedThreadMediaIO {
+                PROMEKI_OBJECT(SDLPlayerMediaIO, DedicatedThreadMediaIO)
                 friend class SDLPlayerWidget;
 
         public:
-                /** @brief Unique-ownership pointer to an SDLPlayerTask. */
-                using UPtr = UniquePtr<SDLPlayerTask>;
+                /** @brief Unique-ownership pointer to an SDLPlayerMediaIO. */
+                using UPtr = UniquePtr<SDLPlayerMediaIO>;
 
-                ~SDLPlayerTask() override;
+                ~SDLPlayerMediaIO() override;
 
                 /** @brief Returns the widget that owns this task. */
                 SDLPlayerWidget *widget() const { return _widget; }
@@ -108,35 +109,38 @@ class SDLPlayerTask : public MediaIOTask {
                 /** @brief Returns true when the playback clock is paused. */
                 bool isPaused() const;
 
+        public:
+                Error describe(MediaIODescription *out) const override;
+                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
+
+                // MediaIO::close(false) (the watchdog's forced-close
+                // path) calls this from a thread that's NOT the
+                // worker — we're typically deadlocked with the
+                // worker blocked inside FrameSync::pushFrame on
+                // queue backpressure while the submitted CmdClose
+                // sits behind it in the worker queue.  Interrupting
+                // FrameSync unblocks the pending pushFrame so the
+                // worker can drain to CmdClose.
+                void cancelBlockingWork() override;
+
+        protected:
+                Error executeCmd(MediaIOCommandOpen &cmd) override;
+                Error executeCmd(MediaIOCommandClose &cmd) override;
+                Error executeCmd(MediaIOCommandWrite &cmd) override;
+
         private:
                 /**
-                 * @brief Constructs a FrameSync-based player task.
+                 * @brief Constructs a FrameSync-based player backend.
                  *
-                 * Private — only @ref SDLPlayerWidget constructs tasks.
+                 * Private — only @ref SDLPlayerWidget constructs the
+                 * backend directly.
                  *
                  * @param widget        Owning player widget (required).
                  * @param audio         Audio output (may be nullptr).
                  * @param useAudioClock Prefer the audio device as the
                  *                      timing source (default true).
                  */
-                SDLPlayerTask(SDLPlayerWidget *widget, SDLAudioOutput *audio, bool useAudioClock);
-
-                Error executeCmd(MediaIOCommandOpen &cmd) override;
-                Error executeCmd(MediaIOCommandClose &cmd) override;
-                Error executeCmd(MediaIOCommandWrite &cmd) override;
-
-                Error describe(MediaIODescription *out) const override;
-                Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
-
-                // MediaIO::close(false) (the watchdog's forced-close
-                // path) calls this from a thread that's NOT the
-                // strand — we're typically deadlocked with the
-                // strand blocked inside FrameSync::pushFrame on
-                // queue backpressure while the submitted CmdClose
-                // sits behind it in the strand queue.  Interrupting
-                // FrameSync unblocks the pending pushFrame so the
-                // strand can drain to CmdClose.
-                void cancelBlockingWork() override;
+                SDLPlayerMediaIO(SDLPlayerWidget *widget, SDLAudioOutput *audio, bool useAudioClock);
 
                 PixelFormat pickNativePixelFormat(const PixelFormat &offered) const;
 

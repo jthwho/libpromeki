@@ -5,22 +5,27 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/config.h> // PROMEKI_ENABLE_TLS
 #include <promeki/sslcontext.h>
 #include <promeki/file.h>
 #include <promeki/fileinfo.h>
 #include <promeki/logger.h>
+#if PROMEKI_ENABLE_TLS
 #include <psa/crypto.h>
 #include <mbedtls/ssl.h>
 #include <mbedtls/x509_crt.h>
 #include <mbedtls/pk.h>
 #include <mbedtls/psa_util.h>
 #include <mbedtls/error.h>
+#endif
 #include <atomic>
 #include <cstring>
 
 PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_DEBUG(SslContext);
+
+#if PROMEKI_ENABLE_TLS
 
 // ============================================================
 // PSA Crypto initialization
@@ -157,6 +162,10 @@ struct SslContext::Impl {
 // ============================================================
 // Public surface
 // ============================================================
+
+bool SslContext::hasTlsSupport() {
+        return true;
+}
 
 SslContext::SslContext() : _d(ImplPtr::create()) {}
 // Out-of-line destructor: required because Impl is incomplete in the
@@ -361,5 +370,91 @@ Error SslContext::setSystemCaCertificates() {
         }
         return Error::NotExist;
 }
+
+#else // PROMEKI_ENABLE_TLS
+
+// ============================================================
+// TLS-disabled stubs
+//
+// We still ship the @ref SslContext class so consumers' public
+// API stays shape-stable across feature configurations, but
+// every operation that would exercise mbedTLS returns
+// @c Error::NotSupported.  Storage-only state (protocol /
+// verifyPeer / verifyDepth) round-trips through the Impl so
+// callers that build a context but never actually do a
+// handshake see consistent values.
+// ============================================================
+
+struct SslContext::Impl {
+                SslProtocol protocol = SecureProtocols;
+                bool        verifyPeer = true;
+                int         verifyDepth = 9;
+};
+
+bool SslContext::hasTlsSupport() {
+        return false;
+}
+
+SslContext::SslContext() : _d(ImplPtr::create()) {}
+// Out-of-line destructor: required because Impl is incomplete in the
+// header, so the compiler-generated UniquePtr<Impl> destructor cannot
+// be emitted there.
+SslContext::~SslContext() = default;
+
+void SslContext::setProtocol(SslProtocol protocol) {
+        _d->protocol = protocol;
+}
+SslContext::SslProtocol SslContext::protocol() const {
+        return _d->protocol;
+}
+
+void SslContext::setVerifyPeer(bool enable) {
+        _d->verifyPeer = enable;
+}
+bool SslContext::verifyPeer() const {
+        return _d->verifyPeer;
+}
+
+void SslContext::setVerifyDepth(int depth) {
+        _d->verifyDepth = depth;
+}
+int SslContext::verifyDepth() const {
+        return _d->verifyDepth;
+}
+
+bool SslContext::hasCertificate() const {
+        return false;
+}
+bool SslContext::hasCaCertificates() const {
+        return false;
+}
+
+void *SslContext::nativeConfig() const {
+        return nullptr;
+}
+
+Error SslContext::setCertificate(const FilePath &) {
+        return Error::NotSupported;
+}
+Error SslContext::setCertificate(const Buffer &) {
+        return Error::NotSupported;
+}
+Error SslContext::setPrivateKey(const FilePath &, const String &) {
+        return Error::NotSupported;
+}
+Error SslContext::setPrivateKey(const Buffer &, const String &) {
+        return Error::NotSupported;
+}
+Error SslContext::setCaCertificates(const FilePath &) {
+        return Error::NotSupported;
+}
+Error SslContext::setCaCertificates(const Buffer &) {
+        return Error::NotSupported;
+}
+Error SslContext::setSystemCaCertificates() {
+        return Error::NotSupported;
+}
+
+#endif // PROMEKI_ENABLE_TLS
 
 PROMEKI_NAMESPACE_END

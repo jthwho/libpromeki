@@ -13,23 +13,31 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-class MediaIO;
+class MediaIOPortGroup;
 
 /**
- * @brief Default @ref Clock for a @ref MediaIO without a task-supplied clock.
- * @ingroup proav
+ * @brief Default @ref Clock for a @ref MediaIOPortGroup without a backend-supplied clock.
+ * @ingroup mediaio_user
  *
- * MediaIOClock synthesizes raw time from its parent MediaIO's current
- * frame position and frame rate:
+ * MediaIOClock synthesizes raw time from its bound port group's
+ * current frame position and frame rate:
  *
  * @code
- * rawNs = mediaIo->currentFrame() * frameRate->frameDuration().nanoseconds()
+ * rawNs = group->currentFrame() * group->frameRate().frameDuration().nanoseconds()
  * @endcode
  *
- * The parent is tracked via an @ref ObjectBasePtr so that when the
- * owning @ref MediaIO is destroyed, @ref raw returns
+ * The group is tracked via an @ref ObjectBasePtr so that when the
+ * owning @ref MediaIOPortGroup is destroyed, @ref raw returns
  * @ref Error::ObjectGone and the clock's @ref now / @ref nowNs
  * propagate that error to callers.
+ *
+ * @par Late-bind construction
+ * The clock can be constructed with a null group and later bound via
+ * @ref setGroup.  This supports the @ref MediaIO::addPortGroup
+ * helper, which needs a clock to construct the group, and a group
+ * pointer to populate the clock — the helper allocates the clock
+ * with a null group, constructs the group with the clock, then ties
+ * the two together via @ref setGroup.
  *
  * @par Properties
  * - Domain: @ref ClockDomain::Synthetic.
@@ -40,24 +48,36 @@ class MediaIO;
  * - Cannot be paused.
  *
  * @par sleepUntilNs
- * A no-op — @ref currentFrame is the authoritative driver, so there
- * is no wall-clock to wait for.  Callers that need real-time pacing
- * should use a @ref WallClock or the device-supplied clock from a
- * task backend.
+ * A no-op — @ref MediaIOPortGroup::currentFrame is the authoritative
+ * driver, so there is no wall-clock to wait for.  Callers that need
+ * real-time pacing should use a @ref WallClock or the device-supplied
+ * clock from a task backend.
  *
  * @par Thread Safety
  * Conditionally thread-safe.  Distinct instances may be used concurrently;
  * concurrent access to a single instance must be externally synchronized.
- * The clock reads its driving frame counter from the owning @ref MediaIO
- * and inherits that object's threading contract.
+ * The clock reads its driving frame counter from the bound
+ * @ref MediaIOPortGroup and inherits that object's threading contract.
  */
 class MediaIOClock : public Clock {
         public:
                 /**
-                 * @brief Constructs a MediaIOClock bound to @p owner.
-                 * @param owner The MediaIO that drives this clock.
+                 * @brief Constructs a MediaIOClock bound to @p group.
+                 * @param group The port group that drives this clock; may
+                 *              be null and later bound via @ref setGroup.
                  */
-                explicit MediaIOClock(MediaIO *owner);
+                explicit MediaIOClock(MediaIOPortGroup *group = nullptr);
+
+                /**
+                 * @brief Binds this clock to @p group.
+                 *
+                 * Used by @ref MediaIO::addPortGroup to break the
+                 * construction-order chicken-and-egg between the group
+                 * (which requires a clock at construction) and the
+                 * default synthetic clock (which needs the group to
+                 * read @c currentFrame).
+                 */
+                void setGroup(MediaIOPortGroup *group);
 
                 int64_t     resolutionNs() const override;
                 ClockJitter jitter() const override;
@@ -69,7 +89,7 @@ class MediaIOClock : public Clock {
         private:
                 int64_t framePeriodNs() const;
 
-                ObjectBasePtr<MediaIO> _owner;
+                ObjectBasePtr<MediaIOPortGroup> _group;
 };
 
 PROMEKI_NAMESPACE_END

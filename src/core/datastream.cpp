@@ -1857,6 +1857,32 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                         val = AudioChannelMap(std::move(entries));
                         break;
                 }
+                case TypeWindowedStat: {
+                        // Outer tag already consumed; the per-entry payload
+                        // is uint32 capacity + uint32 count + N tagged
+                        // doubles — same shape produced by
+                        // operator<<(DataStream&, const WindowedStat&).
+                        uint32_t capacity = 0;
+                        uint32_t count = 0;
+                        *this >> capacity;
+                        *this >> count;
+                        if (_status != Ok) {
+                                val = Variant();
+                                break;
+                        }
+                        WindowedStat ws(static_cast<int>(capacity));
+                        for (uint32_t i = 0; i < count && _status == Ok; ++i) {
+                                double v = 0.0;
+                                *this >> v;
+                                ws.push(v);
+                        }
+                        if (_status != Ok) {
+                                val = Variant();
+                                break;
+                        }
+                        val = ws;
+                        break;
+                }
 #if PROMEKI_ENABLE_NETWORK
                 case TypeSocketAddress: {
                         String s = readStringData();
@@ -2010,6 +2036,8 @@ namespace {
         template <> struct has_free_read<AudioStreamDesc> : std::true_type {};
         template <> struct has_free_write<AudioChannelMap> : std::true_type {};
         template <> struct has_free_read<AudioChannelMap> : std::true_type {};
+        template <> struct has_free_write<WindowedStat> : std::true_type {};
+        template <> struct has_free_read<WindowedStat> : std::true_type {};
 
         template <typename T>
         inline constexpr bool has_datastream_write_v = has_member_write<T>::value || has_free_write<T>::value;

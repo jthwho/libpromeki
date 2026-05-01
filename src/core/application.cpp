@@ -57,8 +57,8 @@ Application::~Application() {
         delete data().mainThread;
         data().mainThread = nullptr;
         data().arguments.clear();
-        data().exitCode = 0;
-        data().shouldQuit = false;
+        data().exitCode.setValue(0);
+        data().shouldQuit.setValue(false);
         data().quitHandler = nullptr;
         return;
 }
@@ -154,8 +154,8 @@ void Application::quit(int exitCode) {
         if (handler) {
                 if (handler(exitCode)) return;
         }
-        data().exitCode = exitCode;
-        data().shouldQuit = true;
+        data().exitCode.setValue(exitCode);
+        data().shouldQuit.setValue(true);
         // Wake any thread blocked in EventLoop::exec() on the main
         // thread's event loop so it unwinds promptly.  Safe from any
         // thread — EventLoop::quit() is mutex-protected.
@@ -170,11 +170,11 @@ void Application::setQuitRequestHandler(QuitRequestHandler handler) {
 }
 
 bool Application::shouldQuit() {
-        return data().shouldQuit;
+        return data().shouldQuit.value();
 }
 
 int Application::exitCode() {
-        return data().exitCode;
+        return data().exitCode.value();
 }
 
 int Application::exec() {

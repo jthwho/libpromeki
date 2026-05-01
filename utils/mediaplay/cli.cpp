@@ -14,6 +14,7 @@
 #include <promeki/cmdlineparser.h>
 #include <promeki/error.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaiofactory.h>
 #include <promeki/metadata.h>
 #include <promeki/textstream.h>
 #include <promeki/variant.h>
@@ -84,14 +85,13 @@ namespace mediaplay {
                 // transform (canBeTransform only) displays, so the badge
                 // stays consistent regardless of how the backend decomposes
                 // its modes.
-                for (const auto &desc : MediaIO::registeredFormats()) {
+                for (const MediaIOFactory *desc : MediaIOFactory::registeredFactories()) {
+                        if (desc == nullptr) continue;
                         String caps;
-                        if (desc.canBeSink) caps += "I";
-                        if (desc.canBeSource) caps += "O";
-                        if (desc.canBeTransform && caps.isEmpty()) caps = "IO";
-                        MediaIO::Config::SpecMap specs =
-                                desc.configSpecs ? desc.configSpecs() : MediaIO::Config::SpecMap();
-                        dumpBackend(desc.name, caps, desc.description, specs);
+                        if (desc->canBeSink()) caps += "I";
+                        if (desc->canBeSource()) caps += "O";
+                        if (desc->canBeTransform() && caps.isEmpty()) caps = "IO";
+                        dumpBackend(desc->name(), caps, desc->description(), desc->configSpecs());
                 }
 
                 // SDL is a mediaplay-local pseudo-backend — strictly a sink.
@@ -184,11 +184,9 @@ namespace mediaplay {
                                 "  --stats                   Enable live MediaIO telemetry.\n"
                                 "                            Prints a BytesPerSecond /\n"
                                 "                            FramesPerSecond / FramesDropped /\n"
-                                "                            AverageLatencyMs summary for every\n"
-                                "                            stage (source, transform, sinks)\n"
-                                "                            once per second by default.  Auto-\n"
-                                "                            enables EnableBenchmark on every\n"
-                                "                            stage so latency keys populate.\n"
+                                "                            QueueDepth summary for every stage\n"
+                                "                            (source, transform, sinks) once per\n"
+                                "                            second by default.\n"
                                 "  --stats-interval <SEC>    Override the --stats print interval\n"
                                 "                            in seconds (default 1.0).\n"
                                 "  --memstats                Print MemSpace allocation\n"

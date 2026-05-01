@@ -60,7 +60,7 @@ class ImageFileIO {
                  *
                  * Used by callers that need to enumerate all known image
                  * formats — e.g. the MediaIO layer wires up one
-                 * @ref MediaIO::FormatDesc per backend ID.  Iterates the
+                 * @ref MediaIOFactory per backend ID.  Iterates the
                  * live registry, so calling this before every backend
                  * has registered (mid-static-init) returns a partial
                  * list; normal runtime use sees the complete set.
@@ -108,9 +108,10 @@ class ImageFileIO {
                 /**
                  * @brief Returns a short human-readable description of the backend.
                  *
-                 * Drives the @c description field on the MediaIO
-                 * FormatDesc; populated by the backend's constructor
-                 * via the @c _description protected member.
+                 * Drives the @c description field on the
+                 * @ref ImageFileFactory entry; populated by the
+                 * backend's constructor via the @c _description
+                 * protected member.
                  *
                  * @return The backend description (may be empty).
                  */
@@ -133,7 +134,7 @@ class ImageFileIO {
                  * @brief Returns the preferred backend name for MediaIO registration.
                  *
                  * The MediaIO registry exposes one
-                 * @ref MediaIO::FormatDesc per @ref ImageFileIO
+                 * @ref MediaIOFactory per @ref ImageFileIO
                  * backend; each backend carries the string used to
                  * identify it there (@c "ImgSeqDPX", @c "ImgSeqPNG",
                  * @c "ImgSeqCineon", ...).  Defaults to

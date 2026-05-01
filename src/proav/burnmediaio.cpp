@@ -1,0 +1,274 @@
+/**
+ * @file      burnmediaio.cpp
+ * @copyright Howard Logic. All rights reserved.
+ *
+ * See LICENSE file in the project root folder for license information.
+ */
+
+#include <promeki/burnmediaio.h>
+#include <promeki/mediaioportgroup.h>
+#include <promeki/enums.h>
+#include <promeki/imagedesc.h>
+#include <promeki/frame.h>
+#include <promeki/mediadesc.h>
+#include <promeki/mediaconfig.h>
+#include <promeki/metadata.h>
+#include <promeki/pixelformat.h>
+#include <promeki/colormodel.h>
+#include <promeki/logger.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/mediaiorequest.h>
+
+PROMEKI_NAMESPACE_BEGIN
+
+PROMEKI_REGISTER_MEDIAIO_FACTORY(BurnFactory)
+
+MediaIOFactory::Config::SpecMap BurnFactory::configSpecs() const {
+        Config::SpecMap specs;
+        auto            s = [&specs](MediaConfig::ID id, const Variant &def) {
+                const VariantSpec *gs = MediaConfig::spec(id);
+                specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
+        };
+        s(MediaConfig::VideoBurnEnabled, true);
+        s(MediaConfig::VideoBurnFontPath, String());
+        s(MediaConfig::VideoBurnFontSize, int32_t(0));
+        s(MediaConfig::VideoBurnText, String("{Timecode:smpte}"));
+        s(MediaConfig::VideoBurnPosition, BurnPosition::BottomCenter);
+        s(MediaConfig::VideoBurnTextColor, Color::White);
+        s(MediaConfig::VideoBurnBgColor, Color::Black);
+        s(MediaConfig::VideoBurnDrawBg, true);
+        s(MediaConfig::Capacity, int32_t(4));
+        return specs;
+}
+
+MediaIO *BurnFactory::create(const Config &config, ObjectBase *parent) const {
+        auto *io = new BurnMediaIO(parent);
+        io->setConfig(config);
+        return io;
+}
+
+BurnMediaIO::BurnMediaIO(ObjectBase *parent) : SharedThreadMediaIO(parent) {}
+
+BurnMediaIO::~BurnMediaIO() {
+        if (isOpen()) (void)close().wait();
+}
+
+Error BurnMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
+        const MediaIO::Config &cfg = cmd.config;
+
+        _burnEnabled = cfg.getAs<bool>(MediaConfig::VideoBurnEnabled, true);
+        _pattern.setBurnEnabled(_burnEnabled);
+
+        if (_burnEnabled) {
+                _pattern.setBurnFontFilename(cfg.getAs<String>(MediaConfig::VideoBurnFontPath, String()));
+                _pattern.setBurnFontSize(cfg.getAs<int>(MediaConfig::VideoBurnFontSize, 0));
+                _burnTextTemplate = cfg.getAs<String>(MediaConfig::VideoBurnText, String());
+                _pattern.setBurnTextColor(cfg.getAs<Color>(MediaConfig::VideoBurnTextColor, Color::White));
+                _pattern.setBurnBackgroundColor(cfg.getAs<Color>(MediaConfig::VideoBurnBgColor, Color::Black));
+                _pattern.setBurnDrawBackground(cfg.getAs<bool>(MediaConfig::VideoBurnDrawBg, true));
+
+                Error posErr;
+                Enum  posEnum = cfg.get(MediaConfig::VideoBurnPosition).asEnum(BurnPosition::Type, &posErr);
+                if (posErr.isError() || !posEnum.hasListedValue()) {
+                        promekiErr("BurnMediaIO: unknown burn position '%s'",
+                                   cfg.get(MediaConfig::VideoBurnPosition).get<String>().cstr());
+                        return Error::InvalidArgument;
+                }
+                _pattern.setBurnPosition(BurnPosition(posEnum.value()));
+        }
+
+        _capacity = cfg.getAs<int>(MediaConfig::Capacity, 4);
+        if (_capacity < 1) _capacity = 1;
+
+        _frameCount = 0;
+        _readCount = 0;
+        _framesBurned = 0;
+        _outputQueue.clear();
+
+        MediaIOPortGroup *group = addPortGroup("burn");
+        if (group == nullptr) return Error::Invalid;
+        group->setFrameRate(cmd.pendingMediaDesc.frameRate());
+        group->setCanSeek(false);
+        group->setFrameCount(MediaIO::FrameCountInfinite);
+        if (addSink(group, cmd.pendingMediaDesc) == nullptr) return Error::Invalid;
+        // Burn passes the input shape through unchanged (it overlays
+        // text on top); the source has the same desc as the sink.
+        if (addSource(group, cmd.pendingMediaDesc) == nullptr) return Error::Invalid;
+        return Error::Ok;
+}
+
+Error BurnMediaIO::executeCmd(MediaIOCommandClose &cmd) {
+        (void)cmd;
+        _outputQueue.clear();
+        _burnEnabled = false;
+        _burnTextTemplate = String();
+        _pattern.setBurnEnabled(false);
+        _frameCount = 0;
+        _readCount = 0;
+        _framesBurned = 0;
+        _capacityWarned = false;
+        _notPaintableWarned = false;
+        return Error::Ok;
+}
+
+Error BurnMediaIO::burnFrame(const Frame::Ptr &input, Frame::Ptr &output) {
+        if (!input.isValid()) {
+                return Error::Invalid;
+        }
+
+        if (!_burnEnabled || _burnTextTemplate.isEmpty()) {
+                output = input;
+                return Error::Ok;
+        }
+
+        Frame::Ptr outFrame = Frame::Ptr::create();
+        Frame     *outRaw = outFrame.modify();
+        outRaw->metadata() = input->metadata();
+
+        // Pass every payload through by reference; the burn loop below
+        // calls modify() on each UncompressedVideoPayload slot to
+        // CoW-clone before painting, so upstream frames sharing the
+        // same Ptr stay unpainted.
+        for (const MediaPayload::Ptr &srcP : input->payloadList()) {
+                if (srcP.isValid()) outRaw->addPayload(srcP);
+        }
+
+        String burnText = VariantLookup<Frame>::format(*outFrame, _burnTextTemplate);
+        if (!burnText.isEmpty()) {
+                // Burn operates payload-native: walk every
+                // @ref UncompressedVideoPayload slot in the output's
+                // @ref Frame::payloadList.  Mutation goes through the
+                // @ref MediaPayload::Ptr stored in the list via
+                // @c modify() — that CoW-clones when the payload is
+                // shared with upstream frames, so their backing
+                // buffers stay unpainted.  After the clone the
+                // virtual clone hook keeps the payload's type intact
+                // so the @c static_cast below is safe.  No
+                // @ref Image dance, no
+                // @ref Frame::resyncVideoPayloadsFromImageList — the
+                // payload is the canonical representation downstream
+                // stages read.
+                for (MediaPayload::Ptr &payloadPtr : outRaw->payloadList()) {
+                        if (!payloadPtr.isValid()) continue;
+                        if (!payloadPtr->as<UncompressedVideoPayload>()) continue;
+
+                        auto              *uvp = static_cast<UncompressedVideoPayload *>(payloadPtr.modify());
+                        const PixelFormat &pf = uvp->desc().pixelFormat();
+                        if (!pf.hasPaintEngine()) {
+                                if (!_notPaintableWarned) {
+                                        promekiWarn("BurnMediaIO: pixel format %s "
+                                                    "has no paint engine; skipping burn",
+                                                    pf.name().cstr());
+                                        _notPaintableWarned = true;
+                                }
+                                continue;
+                        }
+                        uvp->ensureExclusive();
+                        Error burnErr = _pattern.applyBurn(*uvp, burnText);
+                        if (burnErr.isError()) {
+                                promekiWarn("BurnMediaIO: applyBurn failed: %s", burnErr.name().cstr());
+                        }
+                }
+        }
+
+        output = std::move(outFrame);
+        return Error::Ok;
+}
+
+Error BurnMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
+        if (!cmd.frame.isValid()) {
+                promekiErr("BurnMediaIO: write with null frame");
+                return Error::InvalidArgument;
+        }
+
+        if (static_cast<int>(_outputQueue.size()) >= _capacity && !_capacityWarned) {
+                promekiWarn("BurnMediaIO: output queue exceeded capacity (%d >= %d)",
+                            static_cast<int>(_outputQueue.size()), _capacity);
+                _capacityWarned = true;
+        }
+
+        Frame::Ptr outFrame;
+        Error      err = burnFrame(cmd.frame, outFrame);
+        if (err.isError()) {
+                return err;
+        }
+
+        _outputQueue.pushToBack(std::move(outFrame));
+        _frameCount++;
+        _framesBurned++;
+        cmd.currentFrame = toFrameNumber(_frameCount);
+        cmd.frameCount = _frameCount;
+        return Error::Ok;
+}
+
+Error BurnMediaIO::executeCmd(MediaIOCommandRead &cmd) {
+        if (_outputQueue.isEmpty()) {
+                return Error::TryAgain;
+        }
+
+        Frame::Ptr frame = std::move(_outputQueue.front());
+        _outputQueue.remove(0);
+        _readCount++;
+        cmd.frame = std::move(frame);
+        cmd.currentFrame = _readCount;
+        return Error::Ok;
+}
+
+Error BurnMediaIO::executeCmd(MediaIOCommandStats &cmd) {
+        cmd.stats.set(StatsFramesBurned, _framesBurned);
+        cmd.stats.set(MediaIOStats::QueueDepth, static_cast<int64_t>(_outputQueue.size()));
+        cmd.stats.set(MediaIOStats::QueueCapacity, static_cast<int64_t>(_capacity));
+        return Error::Ok;
+}
+
+int BurnMediaIO::pendingInternalWrites() const {
+        return static_cast<int>(_outputQueue.size());
+}
+
+// ---- Introspection / negotiation ----
+//
+// Burn is a pure passthrough transform — output shape == input shape.
+// The only constraint is that the video PixelFormat must have a paint
+// engine, because the overlay goes through VideoTestPattern::applyBurn
+// which needs one.  We advertise that constraint via proposeInput so
+// the planner splices in a CSC ahead of us when the upstream produces
+// a non-paintable format, instead of hitting the "no paint engine"
+// warning at runtime.
+
+Error BurnMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *preferred) const {
+        if (preferred == nullptr) return Error::Invalid;
+        if (offered.imageList().isEmpty()) {
+                // Audio-only frame: burn has nothing to draw on but is
+                // still a valid passthrough.
+                *preferred = offered;
+                return Error::Ok;
+        }
+        const PixelFormat &pd = offered.imageList()[0].pixelFormat();
+        if (pd.isValid() && !pd.isCompressed() && pd.hasPaintEngine()) {
+                *preferred = offered;
+                return Error::Ok;
+        }
+        // Either compressed (needs a decoder ahead of us) or
+        // uncompressed without a paint engine (needs a CSC).  Ask for
+        // a same-family paintable substitute via the shared helper so
+        // every transform backend picks the same fallback; the planner
+        // chooses the cheapest bridge chain that satisfies the gap.
+        const PixelFormat target = MediaIO::defaultUncompressedPixelFormat(pd);
+        MediaDesc         want = offered;
+        ImageDesc::List  &imgs = want.imageList();
+        for (size_t i = 0; i < imgs.size(); ++i) {
+                imgs[i].setPixelFormat(target);
+        }
+        *preferred = want;
+        return Error::Ok;
+}
+
+Error BurnMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+        if (achievable == nullptr) return Error::Invalid;
+        // Pure passthrough transform: whatever shape comes in is the
+        // shape that goes out.
+        *achievable = requested;
+        return Error::Ok;
+}
+
+PROMEKI_NAMESPACE_END

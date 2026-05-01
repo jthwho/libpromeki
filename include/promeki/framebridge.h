@@ -236,7 +236,7 @@ class FrameBridge : public ObjectBase {
                  * The typical use is a signal / quit handler that
                  * needs to break the producer out of its wait so the
                  * owning pipeline can close cleanly.  See the
-                 * @ref MediaIOTask "MediaIO wrapper"'s
+                 * @ref MediaIO "MediaIO wrapper"'s
                  * @c cancelBlockingWork hook for the framework-level
                  * integration.
                  */

@@ -68,25 +68,15 @@ namespace {
 StringList MediaIODescription::summary() const {
         StringList out;
 
-        // Identity line: "TPG  [name=tpg-1, id=3]"
+        // Identity line: "TPG  [name=tpg-1]"
         String hdr;
         if (!_backendName.isEmpty())
                 hdr += _backendName;
         else
                 hdr += "<unknown backend>";
-        if (!_name.isEmpty() || _localId >= 0) {
-                hdr += "  [";
-                bool first = true;
-                if (!_name.isEmpty()) {
-                        hdr += "name=";
-                        hdr += _name;
-                        first = false;
-                }
-                if (_localId >= 0) {
-                        if (!first) hdr += ", ";
-                        hdr += "id=";
-                        hdr += String::number(_localId);
-                }
+        if (!_name.isEmpty()) {
+                hdr += "  [name=";
+                hdr += _name;
                 hdr += "]";
         }
         out.pushToBack(hdr);
@@ -96,10 +86,6 @@ StringList MediaIODescription::summary() const {
         }
 
         appendRoles(out, *this);
-
-        if (_uuid.isValid()) {
-                out.pushToBack(String("  UUID:         ") + _uuid.toString());
-        }
 
         // Capabilities
         String caps;
@@ -172,8 +158,6 @@ JsonObject MediaIODescription::toJson() const {
         if (!_backendName.isEmpty()) j.set("backendName", _backendName);
         if (!_backendDescription.isEmpty()) j.set("backendDescription", _backendDescription);
         if (!_name.isEmpty()) j.set("name", _name);
-        if (_uuid.isValid()) j.set("uuid", _uuid.toString());
-        if (_localId >= 0) j.set("localId", int64_t(_localId));
 
         // Role flags emitted as an array of role strings; absence
         // = false, presence = true.  Compact and self-describing.
@@ -223,15 +207,6 @@ MediaIODescription MediaIODescription::fromJson(const JsonObject &obj, Error *er
         if (obj.contains("backendName")) d._backendName = obj.getString("backendName");
         if (obj.contains("backendDescription")) d._backendDescription = obj.getString("backendDescription");
         if (obj.contains("name")) d._name = obj.getString("name");
-        if (obj.contains("uuid")) {
-                Error uerr;
-                d._uuid = UUID::fromString(obj.getString("uuid").cstr(), &uerr);
-                if (uerr.isError()) {
-                        promekiWarn("MediaIODescription::fromJson: invalid UUID.");
-                        good = false;
-                }
-        }
-        if (obj.contains("localId")) d._localId = static_cast<int>(obj.getInt("localId"));
 
         if (obj.valueIsArray("roles")) {
                 JsonArray roles = obj.getArray("roles");
@@ -289,8 +264,7 @@ MediaIODescription MediaIODescription::fromJson(const JsonObject &obj, Error *er
 
 bool MediaIODescription::operator==(const MediaIODescription &other) const {
         return _backendName == other._backendName && _backendDescription == other._backendDescription &&
-               _name == other._name && _uuid == other._uuid && _localId == other._localId &&
-               _canBeSource == other._canBeSource && _canBeSink == other._canBeSink &&
+               _name == other._name && _canBeSource == other._canBeSource && _canBeSink == other._canBeSink &&
                _canBeTransform == other._canBeTransform && _producibleFormats == other._producibleFormats &&
                _acceptableFormats == other._acceptableFormats && _preferredFormat == other._preferredFormat &&
                _canSeek == other._canSeek && _frameCount == other._frameCount && _frameRate == other._frameRate &&
@@ -307,8 +281,6 @@ DataStream &operator<<(DataStream &stream, const MediaIODescription &d) {
         stream << d.backendName();
         stream << d.backendDescription();
         stream << d.name();
-        stream << d.uuid();
-        stream << static_cast<int32_t>(d.localId());
         stream << d.canBeSource();
         stream << d.canBeSink();
         stream << d.canBeTransform();
@@ -329,8 +301,6 @@ DataStream &operator>>(DataStream &stream, MediaIODescription &d) {
         if (!stream.readTag(DataStream::TypeMediaIODescription)) return stream;
 
         String          backendName, backendDescription, name, probeMessage;
-        UUID            uuid;
-        int32_t         localId = -1;
         bool            canBeSource = false, canBeSink = false, canBeTransform = false;
         MediaDesc::List producibleFormats, acceptableFormats;
         MediaDesc       preferredFormat;
@@ -343,8 +313,6 @@ DataStream &operator>>(DataStream &stream, MediaIODescription &d) {
         stream >> backendName;
         stream >> backendDescription;
         stream >> name;
-        stream >> uuid;
-        stream >> localId;
         stream >> canBeSource;
         stream >> canBeSink;
         stream >> canBeTransform;
@@ -363,8 +331,6 @@ DataStream &operator>>(DataStream &stream, MediaIODescription &d) {
         d.setBackendName(backendName);
         d.setBackendDescription(backendDescription);
         d.setName(name);
-        d.setUuid(uuid);
-        d.setLocalId(localId);
         d.setCanBeSource(canBeSource);
         d.setCanBeSink(canBeSink);
         d.setCanBeTransform(canBeTransform);

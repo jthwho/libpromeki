@@ -25,7 +25,7 @@
  *                          Image for receiveFrame().
  *
  * All three callbacks fire synchronously on whatever thread called
- * cuvidParseVideoData — for us that's the MediaIOTask worker
+ * cuvidParseVideoData — for us that's the MediaIO worker
  * thread — so we can build Images and append them to a plain
  * std::deque without extra synchronisation.
  */
@@ -345,7 +345,7 @@ namespace {
 
         // RAII wrapper that pushes a CUcontext onto the calling thread's
         // context stack on construction and pops it on destruction.  Needed
-        // because MediaIOTask dispatches commands across a thread pool —
+        // because the SharedThreadMediaIO strand dispatches commands across a thread pool —
         // consecutive executeCmd() calls on the same task may land on
         // different worker threads, each of which has its own independent
         // context stack.  cuvidCreateDecoder / cuvidDecodePicture /
@@ -578,7 +578,7 @@ class NvdecVideoDecoder::Impl {
                                 promekiErr("NVDEC: cuDevicePrimaryCtxRetain returned null ctx");
                                 return Error::LibraryFailure;
                         }
-                        // Don't push the context here — MediaIOTask may
+                        // Don't push the context here — the worker may
                         // dispatch our subsequent executeCmd() calls to
                         // different pool threads.  Each entry point
                         // that needs the context (submitPacket, flush)

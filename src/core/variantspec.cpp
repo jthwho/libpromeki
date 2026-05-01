@@ -22,6 +22,7 @@
 #include <promeki/stringlist.h>
 #include <promeki/timecode.h>
 #include <promeki/url.h>
+#include <promeki/windowedstat.h>
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_NETWORK
 #include <promeki/socketaddress.h>
@@ -102,6 +103,7 @@ namespace {
                                 return "EnumList";
                         }
                         case Variant::TypeUrl: return "Url";
+                        case Variant::TypeWindowedStat: return "WindowedStat";
 #if PROMEKI_ENABLE_NETWORK
                         case Variant::TypeSocketAddress: return "SocketAddress";
                         case Variant::TypeSdpSession: return "SdpSession";
@@ -328,6 +330,11 @@ namespace {
                                 Result<Url> r = Url::fromString(str);
                                 if (r.second().isError() || !r.first().isValid()) break;
                                 return Variant(r.first());
+                        }
+                        case Variant::TypeWindowedStat: {
+                                auto r = WindowedStat::fromString(str);
+                                if (error(r).isError()) break;
+                                return Variant(value(r));
                         }
 #if PROMEKI_ENABLE_NETWORK
                         case Variant::TypeSocketAddress: {

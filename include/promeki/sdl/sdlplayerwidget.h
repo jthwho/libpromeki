@@ -8,25 +8,26 @@
 #pragma once
 
 #include <promeki/namespace.h>
+#include <promeki/sdl/sdlplayer.h>
 #include <promeki/sdl/sdlvideowidget.h>
 #include <promeki/mutex.h>
 #include <promeki/atomic.h>
 #include <promeki/framecount.h>
 #include <promeki/uncompressedvideopayload.h>
+#include <promeki/uniqueptr.h>
 #include <promeki/mediaio.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-class SDLPlayerTask;
 class SDLAudioOutput;
 class KeyEvent;
 
 /**
- * @brief Widget that plays frames through an @ref SDLPlayerTask.
+ * @brief Widget that plays frames through an @ref SDLPlayerMediaIO.
  * @ingroup sdl_core
  *
  * SDLPlayerWidget subclasses @ref SDLVideoWidget so it paints frames
- * directly, and owns the @ref MediaIO / @ref SDLPlayerTask pair that
+ * directly, and owns the @ref MediaIO / @ref SDLPlayerMediaIO pair that
  * consumes frames.  Clients retrieve the sink via @ref mediaIO and
  * write frames as they would with any MediaIO backend.
  *
@@ -56,9 +57,9 @@ class KeyEvent;
  * player.setFocus();
  * window.show();
  *
- * MediaIO *sink = player.mediaIO();
- * sink->open(MediaIO::Sink);
- * // ... write frames via sink->writeFrame(...) ...
+ * MediaIO *mio = player.mediaIO();
+ * mio->open();
+ * // ... write frames via mio->sink(0)->writeFrame(...) ...
  * @endcode
  *
  * @par Thread Safety
@@ -69,13 +70,13 @@ class KeyEvent;
  */
 class SDLPlayerWidget : public SDLVideoWidget {
                 PROMEKI_OBJECT(SDLPlayerWidget, SDLVideoWidget)
-                friend class SDLPlayerTask;
+                friend class SDLPlayerMediaIO;
 
         public:
                 /**
                  * @brief Constructs an SDLPlayerWidget.
                  *
-                 * Creates the owned @ref SDLPlayerTask / @ref MediaIO
+                 * Creates the owned @ref SDLPlayerMediaIO / @ref MediaIO
                  * pair and sets @ref FocusPolicy::StrongFocus on the
                  * widget so the app can @c setFocus on it to receive
                  * key events.
@@ -97,7 +98,7 @@ class SDLPlayerWidget : public SDLVideoWidget {
                 MediaIO *mediaIO() const { return _mediaIO.get(); }
 
                 /** @brief Returns the underlying task (may be useful for tests). */
-                SDLPlayerTask *task() const { return _task; }
+                SDLPlayerMediaIO *task() const { return _task; }
 
                 /** @brief Total frames the widget has presented since construction. */
                 FrameCount framesPresented() const { return FrameCount(_framesPresented.value()); }
@@ -124,7 +125,7 @@ class SDLPlayerWidget : public SDLVideoWidget {
                 void keyPressEvent(KeyEvent *e) override;
 
         private:
-                // Called by the owning @ref SDLPlayerTask on its pull
+                // Called by the owning @ref SDLPlayerMediaIO on its pull
                 // thread when a new video payload is ready for display.
                 // Stashes the payload and wakes the main thread.
                 void presentVideo(const UncompressedVideoPayload::Ptr &payload);
@@ -138,8 +139,8 @@ class SDLPlayerWidget : public SDLVideoWidget {
                 void            wakeMainThread();
                 static uint32_t userEventType();
 
-                MediaIO::UPtr  _mediaIO;        ///< Owned.
-                SDLPlayerTask *_task = nullptr; ///< Non-owning — lifetime tied to @ref _mediaIO.
+                UniquePtr<SDLPlayerMediaIO> _mediaIO;        ///< Owned.
+                SDLPlayerMediaIO           *_task = nullptr; ///< Non-owning convenience alias for @ref _mediaIO.get().
 
                 // Main-thread render stash (written by the pull thread,
                 // drained by the main thread).

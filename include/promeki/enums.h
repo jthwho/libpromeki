@@ -142,6 +142,28 @@ inline const BurnPosition BurnPosition::BottomRight{5};
 inline const BurnPosition BurnPosition::Center{6};
 
 /**
+ * @brief Open direction for backends that can act as either a source or a sink.
+ *
+ * File-based backends (ImageFile, AudioFile, DebugMedia, Quicktime,
+ * etc.) consult @ref MediaConfig::OpenMode during open to decide
+ * whether to register a source or a sink.  Defaults to @c Read so
+ * the common case of opening an existing file for playback needs no
+ * extra config.
+ */
+class MediaIOOpenMode : public TypedEnum<MediaIOOpenMode> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("MediaIOOpenMode", 0, {"Read", 0}, {"Write", 1}); // default: Read
+
+                using TypedEnum<MediaIOOpenMode>::TypedEnum;
+
+                static const MediaIOOpenMode Read;
+                static const MediaIOOpenMode Write;
+};
+
+inline const MediaIOOpenMode MediaIOOpenMode::Read{0};
+inline const MediaIOOpenMode MediaIOOpenMode::Write{1};
+
+/**
  * @brief Well-known Enum type for audio test pattern generator modes.
  *
  * Used as the element type for the @ref MediaConfig::AudioChannelModes
@@ -416,7 +438,7 @@ inline const QuickTimeLayout QuickTimeLayout::Fragmented{1};
  *
  * Selects how the RTP sink stages space packets out over time.
  * Drives the @ref MediaConfig::RtpPacingMode config key and the
- * equivalent runtime path inside @c MediaIOTask_Rtp.
+ * equivalent runtime path inside @c RtpMediaIO.
  *
  * - @c Auto     — pick the best available mechanism at open time.
  *                 On Linux this resolves to @c KernelFq; on other
@@ -463,7 +485,7 @@ inline const RtpPacingMode RtpPacingMode::Auto{4};
 /**
  * @brief Well-known Enum type for the metadata-stream wire format over RTP.
  *
- * Selects how the @c MediaIOTask_Rtp metadata stream serializes
+ * Selects how the @c RtpMediaIO metadata stream serializes
  * per-frame @ref Metadata objects onto the wire.
  *
  * - @c JsonMetadata — serialize the @ref Metadata container via
@@ -990,7 +1012,7 @@ inline const EUI64Format EUI64Format::OctetColon{1};
 inline const EUI64Format EUI64Format::IPv6{2};
 
 /**
- * @brief Well-known Enum type for @c MediaIOTask_Inspector test selection.
+ * @brief Well-known Enum type for @c InspectorMediaIO test selection.
  *
  * Element type for the @ref MediaConfig::InspectorTests EnumList — the
  * inspector consumes a list of tests to run.  An empty list runs the
@@ -1364,7 +1386,7 @@ inline const MatrixCoefficients MatrixCoefficients::BT2020_CL{10};
 inline const MatrixCoefficients MatrixCoefficients::SMPTE2085{11};
 
 /**
- * @brief Well-known Enum type for @ref MediaIOTask_NullPacing pacing strategy.
+ * @brief Well-known Enum type for @ref NullPacingMediaIO pacing strategy.
  *
  * Selects how the null-pacing sink times its frame consumption.
  * Used as the value of @ref MediaConfig::NullPacingMode.

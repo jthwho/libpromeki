@@ -99,11 +99,11 @@ TEST_CASE("PipelineEvent_StageErrorJsonRoundTrip") {
 }
 
 TEST_CASE("PipelineEvent_StatsUpdatedJsonRoundTrip") {
-        MediaPipelineStats stats;
-        MediaIOStats       stage;
-        stage.set(MediaIOStats::FramesDropped, FrameCount(3));
-        stats.setStageStats(String("src"), stage);
-        stats.recomputeAggregate();
+        MediaPipelineStats        stats;
+        MediaPipelineStageStats stage;
+        stage.name = "src";
+        stage.cumulative.set(MediaIOStats::FramesDropped, FrameCount(3));
+        stats.addStage(std::move(stage));
 
         PipelineEvent ev;
         ev.setKind(PipelineEvent::Kind::StatsUpdated);
@@ -127,7 +127,7 @@ TEST_CASE("PipelineEvent_PlanResolvedJsonRoundTrip") {
         MediaPipelineConfig::Stage s;
         s.name = "src";
         s.type = "TPG";
-        s.mode = MediaIO::Source;
+        s.role = MediaPipelineConfig::StageRole::Source;
         cfg.addStage(s);
 
         PipelineEvent ev;

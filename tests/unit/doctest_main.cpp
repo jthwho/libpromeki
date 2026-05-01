@@ -3,6 +3,8 @@
 #include <streambuf>
 #include <cstdlib>
 #include <doctest/doctest.h>
+#include <promeki/buildinfo.h>
+#include <promeki/buildident.h>
 #include <promeki/crashhandler.h>
 #include <promeki/libraryoptions.h>
 #include <promeki/logger.h>
@@ -43,6 +45,13 @@ class LogStreambuf : public std::streambuf {
 };
 
 int main(int argc, char **argv) {
+        // Fail loudly if this test executable was linked against a libpromeki
+        // .so that has since been rebuilt without rebuilding the test exe.
+        // PROMEKI_BUILD_IDENT is captured at the time *this* TU was compiled;
+        // the runtime check compares it against the .so's compiled-in ident.
+        // See <promeki/buildident.h> for the staleness-detection rationale.
+        PROMEKI_VERIFY_BUILD_IDENT_OR_ABORT();
+
         bool   verbose = false;
         bool   useDefaultLogger = false;
         int    filteredArgc = 0;

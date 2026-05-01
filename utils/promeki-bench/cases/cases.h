@@ -53,7 +53,7 @@ namespace benchutil {
         String imageDataParamHelp();
 
         /**
- * @brief Registers MediaIOTask_Inspector full-pipeline cases.
+ * @brief Registers InspectorMediaIO full-pipeline cases.
  *
  * Reads `inspector.format` and `inspector.size` from BenchParams to
  * decide which TPG → Inspector pipeline configurations to register.

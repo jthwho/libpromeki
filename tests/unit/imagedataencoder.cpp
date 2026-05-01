@@ -7,19 +7,23 @@
 
 #include <doctest/doctest.h>
 #include <cstring>
+#include <promeki/crc.h>
+#include <promeki/frame.h>
+#include <promeki/framerate.h>
 #include <promeki/imagedataencoder.h>
 #include <promeki/imagedesc.h>
+#include <promeki/mediaconfig.h>
+#include <promeki/mediaio.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mediaiocommand.h>
+#include <promeki/mediaiorequest.h>
+#include <promeki/mediaiosource.h>
 #include <promeki/pixelformat.h>
 #include <promeki/pixelmemlayout.h>
-#include <promeki/crc.h>
-#include <promeki/mediaio.h>
-#include <promeki/mediaconfig.h>
-#include <promeki/frame.h>
-#include <promeki/timecode.h>
-#include <promeki/framerate.h>
 #include <promeki/size2d.h>
-#include <promeki/videoformat.h>
+#include <promeki/timecode.h>
 #include <promeki/uncompressedvideopayload.h>
+#include <promeki/videoformat.h>
 
 using namespace promeki;
 
@@ -402,7 +406,7 @@ TEST_CASE("ImageDataEncoder end-to-end via TPG MediaIO") {
         // simple "white byte == 255" decoder works without YCbCr math,
         // and a known stream ID so we can match it back.
         const uint32_t  kStreamId = 0xC0FFEEAAu;
-        MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("TPG");
         cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
         cfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
         cfg.set(MediaConfig::TimecodeEnabled, true);
@@ -417,10 +421,13 @@ TEST_CASE("ImageDataEncoder end-to-end via TPG MediaIO") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Source).isOk());
+        REQUIRE(io->open().wait().isOk());
 
-        Frame::Ptr frame;
-        REQUIRE(io->readFrame(frame).isOk());
+        MediaIORequest readReq = io->source(0)->readFrame();
+        REQUIRE(readReq.wait().isOk());
+        const auto *cr = readReq.commandAs<MediaIOCommandRead>();
+        REQUIRE(cr != nullptr);
+        Frame::Ptr frame = cr->frame;
         REQUIRE(frame.isValid());
         auto vids = frame->videoPayloads();
         REQUIRE(vids.size() == 1);
@@ -474,6 +481,6 @@ TEST_CASE("ImageDataEncoder end-to-end via TPG MediaIO") {
         CHECK(decodedTc.sec() == 0);
         CHECK(decodedTc.frame() == 0);
 
-        io->close();
+        io->close().wait();
         delete io;
 }

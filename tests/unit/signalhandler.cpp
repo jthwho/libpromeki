@@ -149,6 +149,16 @@ TEST_CASE("SignalHandler: SIGINT translates to Application::quit and wakes Event
 
         // Restore the double-tap option for subsequent tests.
         LibraryOptions::instance().set(LibraryOptions::SignalDoubleTapExit, savedDoubleTap);
+
+        // Stop the SignalHandler watcher thread *before* mainLoop
+        // goes out of scope — the watcher caches the main thread's
+        // EventLoop pointer via Thread::threadEventLoop and may still
+        // wake it on a stray late-delivered signal.  ~Application
+        // would do this for us, but it runs after mainLoop is already
+        // gone (LIFO destruction of locals).  Manual uninstall here
+        // ensures the watcher is joined while mainLoop is still
+        // alive; ~Application's uninstall becomes a no-op afterwards.
+        SignalHandler::uninstall();
 }
 
 // ============================================================================

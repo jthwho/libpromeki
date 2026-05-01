@@ -53,6 +53,20 @@ enum class SchedulePolicy {
  * @ref EventLoop's @c postCallable / @c postEvent are themselves
  * thread-safe.  Static helpers (@c current, @c osThreadId,
  * @c hardwareConcurrency) may be called from any thread.
+ *
+ * @par Subclassing teardown discipline
+ * Subclasses that override @c run with a loop that does not
+ * immediately observe a quit (e.g. a blocking @c recv loop polling
+ * a stop flag) <b>must</b> call @c requestStop / equivalent and
+ * @c wait() in their own destructor before returning.  C++ updates
+ * the vtable of @c *this from the derived class to @ref Thread at
+ * the boundary between @c ~Derived and @c ~Thread, so any virtual
+ * call the worker makes on @c *this after that point dispatches
+ * through a sliced vtable — undefined behaviour.  @c ~Thread() is
+ * a backstop that joins on its way out, but by then the slice has
+ * already happened.  See @ref MulticastReceiver::stop and
+ * @ref DedicatedThreadMediaIO::~DedicatedThreadMediaIO for
+ * existing examples of the correct shape.
  */
 class Thread : public ObjectBase {
                 PROMEKI_OBJECT(Thread, ObjectBase)

@@ -168,8 +168,6 @@ PROMEKI_LOOKUP_REGISTER(Frame)
                 [](const Frame &f) -> std::optional<Variant> {
                         return Variant(static_cast<uint64_t>(f.audioPayloads().size()));
                 })
-        .scalar("HasBenchmark",
-                [](const Frame &f) -> std::optional<Variant> { return Variant(f.benchmark().isValid()); })
         .scalar("VideoFormat", [](const Frame &f) -> std::optional<Variant> { return Variant(f.videoFormat(0)); })
         .indexedScalar("VideoFormat",
                        [](const Frame &f, size_t i) -> std::optional<Variant> {

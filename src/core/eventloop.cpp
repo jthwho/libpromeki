@@ -192,14 +192,27 @@ void EventLoop::processEvents(uint32_t flags, unsigned int timeoutMs) {
                 processTimers();
         }
 
-        // Process posted items unless excluded
+        bool sawQuit = false;
+
+        // Process posted items unless excluded.  Drain the queue to
+        // empty even after a QuitItem is dispatched: teardown patterns
+        // (@c ObjectBase::deleteLater followed by a quit) post cleanup
+        // callables from inside the destructor that needs to run on
+        // this loop, and bailing on QuitItem leaks them — and worse,
+        // the queue's destructor walks them later and frees lambda
+        // storage that something else might still try to dispatch.
         if (!(flags & ExcludePosted)) {
                 for (;;) {
                         auto [item, err] = _queue.tryPop();
                         if (err.isError()) break;
-                        if (dispatchItem(item)) return;
+                        if (dispatchItem(item)) sawQuit = true;
                 }
         }
+
+        // Don't fall through to WaitForMore once a quit has landed —
+        // that would block indefinitely with the loop already marked
+        // stopped.
+        if (sawQuit) return;
 
         // If WaitForMore, block until something arrives or next timer fires
         if (flags & WaitForMore) {

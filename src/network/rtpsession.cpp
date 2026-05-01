@@ -36,7 +36,20 @@ class RtpSession::ReceiveThread : public Thread {
                         Thread::setName(name);
                 }
 
-                ~ReceiveThread() override { requestStop(); }
+                ~ReceiveThread() override {
+                        requestStop();
+                        // Wait for the worker to fully exit
+                        // threadEntry() before we hit the vtable
+                        // slice from ~ReceiveThread → ~Thread.  The
+                        // worker is still inside the user-overridden
+                        // run() loop until it observes _stopRequested,
+                        // and any access to *this it makes against a
+                        // stale (sliced) vtable is UB.  Skip the wait
+                        // when the destructor is being driven from
+                        // the worker itself (pathological self-delete
+                        // path) — joining ourselves would deadlock.
+                        if (!isCurrentThread()) wait();
+                }
 
                 void requestStop() { _stopRequested.setValue(true); }
 

@@ -1,0 +1,89 @@
+/**
+ * @file      buildident.h.in
+ * @copyright Howard Logic. All rights reserved.
+ *
+ * See LICENSE file in the project root folder for license information.
+ *
+ * THIS FILE IS A CMAKE TEMPLATE. The installed header
+ * `<promeki/buildident.h>` is generated from this template at library
+ * configure/build time. Do not edit the generated header directly.
+ */
+
+#pragma once
+
+/**
+ * @def PROMEKI_BUILD_IDENT
+ * @brief Opaque per-build identity string for libpromeki.
+ * @ingroup util
+ *
+ * @par What this is for
+ * This macro exists *only* to detect that an application or dependent
+ * library is stale against the libpromeki shared object it is linked to.
+ * The library's build system regenerates this header on every library
+ * build, so any translation unit that captures @c PROMEKI_BUILD_IDENT
+ * holds a snapshot of the library's identity *as it was when the TU was
+ * compiled*. At runtime, that captured value is compared against
+ * @c getBuildInfo()->ident (the library's identity as it was when the
+ * .so was built). If the .so was rebuilt without rebuilding the
+ * application, the values diverge and the application can fail loudly
+ * instead of silently running against changed library code.
+ *
+ * @par What this is *not* for
+ * Do not use this macro for normal version queries, feature gating, or
+ * compatibility checks. The string is intentionally opaque and its
+ * format may change at any time. For human-readable build information —
+ * version, date, build type, hostname, etc. — use the BuildInfo
+ * framework: @c getBuildInfo(), @c buildInfoString(),
+ * @c buildPlatformString(), @c buildFeatureString().
+ *
+ * @par Recommended usage
+ * Drop a single call to @c PROMEKI_VERIFY_BUILD_IDENT_OR_ABORT() (defined
+ * in @c <promeki/buildinfo.h>) early in your application's @c main(),
+ * before any significant work. That guarantees a stale binary aborts at
+ * startup with a diagnostic instead of executing against mismatched
+ * library code.
+ *
+ * @par Recompile cost
+ * Including this header costs a recompile of the including translation
+ * unit on every library rebuild (because the macro changes). Confine
+ * the include to a single small TU per binary — typically the file that
+ * defines @c main() — so the rebuild stays cheap.
+ *
+ * @par Format (informational only — do not parse)
+ * @code
+ * <name>/<version>/<short-git-hash>[+dirty]/<build-type>/<date>T<time>/<hostname>
+ * @endcode
+ */
+#define PROMEKI_BUILD_IDENT "@BUILD_INFO_IDENT@"
+
+/**
+ * @def PROMEKI_VERIFY_BUILD_IDENT
+ * @brief Convenience wrapper for @c verifyBuildIdent().
+ * @ingroup util
+ *
+ * Captures @c PROMEKI_BUILD_IDENT — the library identity at *this*
+ * translation unit's compile time — and forwards it to
+ * @c verifyBuildIdent().  Returns the underlying @c bool.
+ *
+ * Reminder: this is *only* for detecting stale binaries.  For build
+ * version, date, host, etc. use the BuildInfo API.
+ */
+#define PROMEKI_VERIFY_BUILD_IDENT() \
+        (::promeki::verifyBuildIdent(PROMEKI_BUILD_IDENT))
+
+/**
+ * @def PROMEKI_VERIFY_BUILD_IDENT_OR_ABORT
+ * @brief Fatal convenience wrapper for @c verifyBuildIdentOrAbort().
+ * @ingroup util
+ *
+ * Aborts the process with a logged diagnostic if the library's
+ * runtime identity does not match the value captured at this
+ * translation unit's compile time.  Recommended at the top of
+ * @c main() for unit-test executables and any binary where running
+ * with stale library code is unacceptable.
+ *
+ * Reminder: this is *only* for detecting stale binaries.
+ */
+#define PROMEKI_VERIFY_BUILD_IDENT_OR_ABORT() \
+        (::promeki::verifyBuildIdentOrAbort(PROMEKI_BUILD_IDENT))
+

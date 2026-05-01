@@ -11,7 +11,6 @@
 #include <promeki/variantdatabase.h>
 #include <promeki/enums.h>
 #include <promeki/enumlist.h>
-#include <promeki/uuid.h>
 #include <promeki/url.h>
 #include <promeki/mediaduration.h>
 #include <promeki/timecode.h>
@@ -103,32 +102,28 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                  .setDefault(String())
                                                  .setDescription("Registered backend type name."));
 
-                /// @brief String — human-readable instance name (used in logs, spawned thread names,
-                /// benchmark stamp IDs). Defaults to `"media<localId>"` when left empty.
+                /// @brief Enum @ref MediaIOOpenMode — Read (open a source) or Write (open a sink).
+                ///
+                /// File-based backends (ImageFile, AudioFile, DebugMedia,
+                /// Quicktime, etc.) consult this key during open to decide
+                /// whether to register a source or a sink.  Backends that
+                /// only support one direction ignore it.  Defaults to
+                /// @c Read so the common case of opening an existing
+                /// file for playback needs no extra config.
+                PROMEKI_DECLARE_ID(OpenMode,
+                                   VariantSpec()
+                                           .setType(Variant::TypeEnum)
+                                           .setEnumType(MediaIOOpenMode::Type)
+                                           .setDefault(MediaIOOpenMode(MediaIOOpenMode::Read))
+                                           .setDescription("Read or Write open direction for file-style backends."));
+
+                /// @brief String — human-readable instance name (used in logs and spawned
+                /// thread names). The pipeline always seeds this to the stage name; standalone
+                /// callers may set it explicitly or leave it empty.
                 PROMEKI_DECLARE_ID(Name, VariantSpec()
                                                  .setType(Variant::TypeString)
                                                  .setDefault(String())
-                                                 .setDescription("Human-readable instance name; defaults to "
-                                                                 "\"media<localId>\" when empty."));
-
-                /// @brief UUID — globally-unique instance identifier used for cross-process
-                /// pipeline correlation. Defaults to a freshly generated UUID when left invalid.
-                PROMEKI_DECLARE_ID(Uuid, VariantSpec()
-                                                 .setType(Variant::TypeUUID)
-                                                 .setDefault(UUID())
-                                                 .setDescription("Globally-unique instance identifier; defaults "
-                                                                 "to a fresh UUID when invalid."));
-
-                /// @brief bool — opt into per-frame Benchmark stamping in the MediaIO base class.
-                /// When true, every frame flowing through this MediaIO receives stamps at
-                /// enqueue / dequeue / taskBegin / taskEnd, aggregated by an attached
-                /// BenchmarkReporter when the stage is a sink.
-                PROMEKI_DECLARE_ID(EnableBenchmark,
-                                   VariantSpec()
-                                           .setType(Variant::TypeBool)
-                                           .setDefault(false)
-                                           .setDescription("Enable per-frame Benchmark stamping in the "
-                                                           "MediaIO base class."));
+                                                 .setDescription("Human-readable instance name; empty by default."));
 
                 /// @brief FrameRate — stream or target frame rate.
                 PROMEKI_DECLARE_ID(FrameRate, VariantSpec()
@@ -488,7 +483,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setDescription("Scan lines per ImageDataEncoder item in TPG."));
 
                 // ============================================================
-                // Inspector sink (MediaIOTask_Inspector)
+                // Inspector sink (InspectorMediaIO)
                 // ============================================================
 
                 /// @brief bool — drop incoming frames after running checks.  When
@@ -605,11 +600,11 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                            "in Dir::temp()."));
 
                 // ============================================================
-                // NullPacing sink (MediaIOTask_NullPacing)
+                // NullPacing sink (NullPacingMediaIO)
                 // ============================================================
 
                 /// @brief Enum @ref NullPacingMode — pacing strategy for the
-                /// @ref MediaIOTask_NullPacing sink.
+                /// @ref NullPacingMediaIO sink.
                 ///
                 /// @c Wallclock (default) consumes one frame per
                 /// @c 1/NullPacingTargetFps wall-clock interval and
@@ -626,7 +621,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                                            "drain at upstream rate)."));
 
                 /// @brief Rational — target sink rate for the
-                /// @ref MediaIOTask_NullPacing sink, in frames per
+                /// @ref NullPacingMediaIO sink, in frames per
                 /// second.  Default @c 0/1 means "follow the source
                 /// descriptor": the sink reads the frame rate from the
                 /// upstream @ref MediaDesc cached at @c open() time.
@@ -638,7 +633,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                                                 "NullPacing sink (frames per second).  "
                                                                                 "0/1 = follow the source descriptor."));
 
-                /// @brief bool — when true, the @ref MediaIOTask_NullPacing
+                /// @brief bool — when true, the @ref NullPacingMediaIO
                 /// sink emits a per-frame debug log entry showing the
                 /// measured period and jitter (interval since the
                 /// previous consumption minus the configured period).
@@ -652,11 +647,11 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                            "period at debug level when true."));
 
                 // ============================================================
-                // MJPEG stream sink (MediaIOTask_MjpegStream)
+                // MJPEG stream sink (MjpegStreamMediaIO)
                 // ============================================================
 
                 /// @brief Rational — maximum encode rate for the
-                /// @ref MediaIOTask_MjpegStream sink, in frames per
+                /// @ref MediaIO_MjpegStream sink, in frames per
                 /// second.  Frames arriving inside @c 1/MjpegMaxFps of
                 /// the previously-encoded frame are dropped before
                 /// JPEG encoding so the sink can throttle a fast
@@ -671,7 +666,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                                         "limit."));
 
                 /// @brief int — JPEG quality (1-100) used by the
-                /// @ref MediaIOTask_MjpegStream sink when encoding
+                /// @ref MediaIO_MjpegStream sink when encoding
                 /// frames.  Default @c 80.  Forwarded verbatim to
                 /// @ref JpegVideoEncoder via @ref MediaConfig::JpegQuality
                 /// at session creation.
@@ -685,7 +680,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
 
                 /// @brief int — depth of the latest-N ring of
                 /// encoded frames retained by the
-                /// @ref MediaIOTask_MjpegStream sink.  Subscribers
+                /// @ref MediaIO_MjpegStream sink.  Subscribers
                 /// always receive the newest frame; the ring keeps
                 /// recent history so freshly-attached subscribers can
                 /// be primed with the latest frame without waiting for
@@ -700,7 +695,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                            "sink (1-16)."));
 
                 // ============================================================
-                // CSC (MediaIOTask_CSC)
+                // CSC (CscMediaIO)
                 // ============================================================
 
                 /// @brief PixelFormat — target pixel description for the converter
@@ -728,7 +723,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                      .setDescription("Internal FIFO capacity in frames."));
 
                 // ============================================================
-                // FrameSync (MediaIOTask_FrameSync)
+                // FrameSync (FrameSyncMediaIO)
                 // ============================================================
 
                 /// @brief FrameRate — output frame rate for the FrameSync task.
@@ -1214,7 +1209,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                                                  "(MaxCLL / MaxFALL)."));
 
                 /// @brief @ref VideoCodec — typed codec identity used by
-                /// the generic video encoder / decoder @ref MediaIOTask
+                /// the generic video encoder / decoder @ref MediaIO subclasses
                 /// backends to look up the concrete @ref VideoEncoder /
                 /// @ref VideoDecoder factory.  Authored on the CLI as
                 /// the codec's registered name (e.g. @c "H264",
@@ -1315,7 +1310,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                     .setDescription("CSC processing path (Optimized or Scalar)."));
 
                 // ============================================================
-                // Image file sequence (MediaIOTask_ImageFile)
+                // Image file sequence (ImageFileMediaIO)
                 // ============================================================
 
                 /// @brief int — explicit @ref ImageFile::ID, bypasses extension probe.
@@ -1404,7 +1399,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setDescription("Preferred audio source for image sequence readers."));
 
                 // ============================================================
-                // QuickTime / ISO-BMFF (MediaIOTask_QuickTime)
+                // QuickTime / ISO-BMFF (QuickTimeMediaIO)
                 // ============================================================
 
                 /// @brief Enum QuickTimeLayout — writer on-disk layout.
@@ -1459,7 +1454,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                            .setDescription("SDL window title bar text."));
 
                 // ============================================================
-                // RTP sink (MediaIOTask_Rtp)
+                // RTP sink (RtpMediaIO)
                 //
                 // Media descriptor keys (VideoSize, VideoPixelFormat,
                 // AudioRate, AudioChannels, FrameRate, etc.) are

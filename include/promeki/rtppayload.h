@@ -273,7 +273,7 @@ class RtpPayloadRawVideo : public RtpPayload {
  *
  * Implements packing/unpacking of arbitrary JSON-serialized
  * messages over RTP.  This is the fallback metadata-stream payload
- * used by @ref MediaIOTask_Rtp when the user wants to ship the
+ * used by @ref MediaIO_Rtp when the user wants to ship the
  * per-frame @ref Metadata object as-is without committing to the
  * SMPTE ST 2110-40 Ancillary Data wire format.  It is deliberately
  * simple: each RTP packet carries a raw fragment of the JSON bytes,

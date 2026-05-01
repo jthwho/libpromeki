@@ -14,6 +14,31 @@
  * Include this file from any TU that calls
  * @c ObjectBase::connect(Signal*, Slot*) or
  * @c Signal<Args...>::connect(Function, ObjectBase *).
+ *
+ * @par Cross-thread receiver liveness
+ *
+ * Both connect overloads automatically tear down their wiring when
+ * the receiving @ref ObjectBase is destroyed and gracefully drop any
+ * cross-thread callable that was already in flight when the receiver
+ * died:
+ *
+ *  -# At connect time the receiver's @c _cleanupList gets a
+ *     @ref ObjectBase::registerCleanup entry (gated by an
+ *     @ref ObjectBasePtr to the signal owner) that calls
+ *     @c Signal::disconnectFromObject — so once @c ~ObjectBase starts
+ *     on the receiver no NEW slot invocations can be posted.
+ *  -# Inside the bridge lambda the captured receiver is held via an
+ *     @ref ObjectBasePtr, not a raw pointer.  Both the same-thread
+ *     fast path and the @c postCallable inner lambda check
+ *     @c isValid() before invoking the user slot, so a callable that
+ *     was queued before the receiver died and dispatched after is a
+ *     no-op instead of a UAF.
+ *
+ * The framework therefore guarantees that the user slot is not called
+ * once the receiver has finished destruction.  That covers the
+ * "captured @c this" case (which is by far the most common); user
+ * slots that capture additional raw pointers must still ensure those
+ * remain valid for the slot's lifetime.
  */
 
 #pragma once
@@ -61,21 +86,26 @@ void ObjectBase::connect(Signal<Args...> *signal, Slot<Args...> *slot) {
                 }
         }, slot->owner());
 
-        // Register a cleanup
+        // Auto-disconnect on slot-owner destruction.  The cleanup is
+        // gated by an ObjectBasePtr to @p signal->owner() so that a
+        // signal-owner-dies-first scenario doesn't dereference into a
+        // freed Signal.
         ObjectBase *signalObject = static_cast<ObjectBase *>(signal->owner());
         ObjectBase *slotObject = static_cast<ObjectBase *>(slot->owner());
-        slotObject->_cleanupList += Cleanup(
+        slotObject->registerCleanup(
                 signalObject,
-                [signal](ObjectBase *ptr){ signal->disconnectFromObject(ptr); }
+                [signal](ObjectBase *ptr) { signal->disconnectFromObject(ptr); }
         );
 }
 
 // Context-aware Signal::connect overload.  Defined here because it
 // needs ObjectBase and EventLoop to be complete — signal.h forward
 // declares ObjectBase and only stores the declaration.  The wrapping
-// bridge lambda captures @p owner and uses its @c eventLoop() at
-// emit time, matching Qt's @c Qt::AutoConnection: direct invocation
-// on the owner's own thread, @c postCallable marshalling otherwise.
+// bridge lambda holds an @ref ObjectBasePtr to @p owner so the
+// dispatch path can short-circuit if the receiver has been destroyed
+// since the call was queued.  Same-thread emits route through the
+// fast path; cross-thread emits go through the owner's
+// EventLoop::postCallable, matching Qt's @c Qt::AutoConnection.
 template <typename... Args>
 size_t Signal<Args...>::connect(Function slot, ObjectBase *owner) {
         // Passing a null @ref ObjectBase context is a programmer error
@@ -85,26 +115,46 @@ size_t Signal<Args...>::connect(Function slot, ObjectBase *owner) {
         // raw, same-thread-only behaviour should use the @c void*
         // overload with @c nullptr instead.
         PROMEKI_ASSERT(owner != nullptr);
-        return connect(
-                [slot = std::move(slot), owner](Args... args) {
-                        EventLoop *ownerLoop   = owner->eventLoop();
+
+        const size_t id = connect(
+                [slot = std::move(slot), ownerPtr = ObjectBasePtr<>(owner)](Args... args) {
+                        // Liveness gate #1: catch the rare same-thread
+                        // case where the receiver has already started
+                        // destruction before the emit reaches us.
+                        const ObjectBase *liveOwner = ownerPtr.data();
+                        if(liveOwner == nullptr) return;
+
+                        EventLoop *ownerLoop   = liveOwner->eventLoop();
                         EventLoop *currentLoop = EventLoop::current();
                         if(ownerLoop == nullptr || ownerLoop == currentLoop) {
                                 slot(args...);
                                 return;
                         }
-                        // Copy args into a tuple, hop to the owner's
-                        // EventLoop, then unpack and invoke.  Requires
-                        // every Args type to be copy-constructible,
-                        // which is the same restriction the Slot-based
-                        // ObjectBase::connect path already carries via
-                        // VariantList packing.
+                        // Cross-thread: copy args into a tuple, hop to
+                        // the owner's EventLoop, then re-check
+                        // liveness inside the post-callable so a
+                        // callable that was queued just before the
+                        // receiver died doesn't fire on dead memory.
                         ownerLoop->postCallable(
-                                [slot, tup = std::make_tuple(std::move(args)...)]() {
+                                [slot, ownerPtr, tup = std::make_tuple(std::move(args)...)]() {
+                                        if(!ownerPtr.isValid()) return;
                                         std::apply(slot, tup);
                                 });
                 },
                 static_cast<void *>(owner));
+
+        // Auto-disconnect on receiver destruction.  Gated on the
+        // signal owner so a signal-owner-dies-first race skips the
+        // disconnect (the Signal is gone by then anyway and the slot
+        // list with it).  When the signal has no ObjectBase owner
+        // (raw Signal not embedded in a PROMEKI_SIGNAL macro) we
+        // skip the auto-disconnect — the void* overload's same-
+        // thread-only contract still applies.
+        ObjectBase *signalOwner = static_cast<ObjectBase *>(this->owner());
+        if(signalOwner != nullptr) {
+                owner->registerCleanup(signalOwner, [this, id](ObjectBase *) { this->disconnect(id); });
+        }
+        return id;
 }
 
 PROMEKI_NAMESPACE_END

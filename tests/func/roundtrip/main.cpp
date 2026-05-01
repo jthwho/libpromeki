@@ -8,17 +8,17 @@
  * QuickTime, ImageFile, and VideoEncoder / VideoDecoder stages.
  *
  * For every supported container format + codec combination the test
- * builds a write pipeline that drives @ref MediaIOTask_TPG into the
+ * builds a write pipeline that drives @ref TpgMediaIO into the
  * file stage (with the @ref ImageDataEncoder and LTC stamp both
  * enabled), runs it for a fixed number of frames, then opens a read
  * pipeline that routes the written file back into
- * @ref MediaIOTask_Inspector.  The inspector's snapshot tells us how
+ * @ref InspectorMediaIO.  The inspector's snapshot tells us how
  * many frames survived the round-trip and how many had recoverable
  * picture-data / LTC stamps.
  *
  * The list of combinations is built programmatically from the library
  * registries:
- *   - @ref MediaIO::registeredFormats gives every file-based backend
+ *   - @ref MediaIOFactory::registeredFactories gives every file-based backend
  *     plus its extensions.
  *   - @ref VideoCodec::registeredIDs filtered by
  *     @ref VideoCodec::canEncode and @ref VideoCodec::canDecode gives
@@ -51,7 +51,10 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
-#include <promeki/mediaiotask_inspector.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mediaiosink.h>
+#include <promeki/mediaiosource.h>
+#include <promeki/inspectormediaio.h>
 #include <promeki/mediapipeline.h>
 #include <promeki/mediapipelineconfig.h>
 #include <promeki/objectbase.tpp>
@@ -198,7 +201,7 @@ namespace {
         // checking whether the backend can round-trip compressed video
         // through the generic VideoEncoder / VideoDecoder pair — today that
         // only applies to QuickTime.  When a second container lands (MXF,
-        // IVF, etc.) it just needs to appear in @ref MediaIO::registeredFormats
+        // IVF, etc.) it just needs to appear in @ref MediaIOFactory::registeredFactories
         // with canBeSource+canBeSink+extensions and return true here.
         static bool backendAcceptsCodecMatrix(const String &name) {
                 return name == String("QuickTime");
@@ -211,7 +214,7 @@ namespace {
         // and would never succeed with a TPG → file → Inspector flow, so
         // skip them here instead of reporting noisy false-failures.
         //
-        // The image-file subsystem registers one @ref MediaIO::FormatDesc
+        // The image-file subsystem registers one @ref MediaIOFactory
         // per underlying format (@c ImgSeqDPX, @c ImgSeqPNG, ...) plus a
         // legacy @c "ImageFile" umbrella that advertises every extension at
         // once.  This test iterates the per-format entries only — the
@@ -270,7 +273,16 @@ namespace {
                         offered.imageList().pushToBack(img);
 
                         MediaDesc preferred;
-                        Error     e = io->proposeInput(offered, &preferred);
+                        // proposeInput is now per-port; sink ports are
+                        // installed during open(), so we route the probe
+                        // through sink(0) when present and skip backends
+                        // that haven't yet exposed a sink.  The probe IO
+                        // is intentionally not opened here — it relies
+                        // on whatever default port population the backend
+                        // performs on construction.
+                        MediaIOSink *sinkPort = io->sink(0);
+                        if (sinkPort == nullptr) continue;
+                        Error e = sinkPort->proposeInput(offered, &preferred);
                         if (e.isError()) continue;
                         if (preferred.imageList().isEmpty()) continue;
                         if (preferred.imageList()[0].pixelFormat() != pd) continue;
@@ -299,7 +311,7 @@ namespace {
                 if (io == nullptr) {
                         // Some backends match on path only via canHandlePath —
                         // create() via registered Type name is a fallback.
-                        MediaIO::Config cfg = MediaIO::defaultConfig(backendName);
+                        MediaIO::Config cfg = MediaIOFactory::defaultConfig(backendName);
                         cfg.set(MediaConfig::Type, backendName);
                         cfg.set(MediaConfig::Filename, probePath);
                         io = MediaIO::create(cfg);
@@ -311,15 +323,18 @@ namespace {
         }
 
         static List<Case> buildCases() {
-                List<Case>                     cases;
-                const MediaIO::FormatDescList &formats = MediaIO::registeredFormats();
-                for (size_t i = 0; i < formats.size(); ++i) {
-                        const MediaIO::FormatDesc &fd = formats[i];
+                List<Case>                                cases;
+                const promeki::List<MediaIOFactory *> &factories = MediaIOFactory::registeredFactories();
+                for (size_t i = 0; i < factories.size(); ++i) {
+                        const MediaIOFactory *fd = factories[i];
+                        if (fd == nullptr) continue;
+                        const StringList extensions = fd->extensions();
+                        const String     name = fd->name();
                         // File-based I/O only — device backends (V4L2, RTP) and
                         // pure transforms have no usable extension list.
-                        if (fd.extensions.isEmpty()) continue;
-                        if (!fd.canBeSource || !fd.canBeSink) continue;
-                        if (!isVideoCapableFileBackend(fd.name)) continue;
+                        if (extensions.isEmpty()) continue;
+                        if (!fd->canBeSource() || !fd->canBeSink()) continue;
+                        if (!isVideoCapableFileBackend(name)) continue;
 
                         // Collapse duplicate extensions — some backends list
                         // upper/lower aliases ("jpg", "JPEG", "jfif") that
@@ -341,13 +356,13 @@ namespace {
                         // backend name alone already identifies the format.
                         // Alias extensions still get a smoke case so the
                         // extension-dispatch path stays covered.
-                        const bool   isContainer = backendAcceptsCodecMatrix(fd.name);
-                        const bool   isImgSeq = isImageSequenceBackend(fd.name);
-                        const String primaryExt = fd.extensions[0].toLower();
+                        const bool   isContainer = backendAcceptsCodecMatrix(name);
+                        const bool   isImgSeq = isImageSequenceBackend(name);
+                        const String primaryExt = extensions[0].toLower();
 
                         StringList seenExts;
-                        for (size_t j = 0; j < fd.extensions.size(); ++j) {
-                                String ext = fd.extensions[j].toLower();
+                        for (size_t j = 0; j < extensions.size(); ++j) {
+                                String ext = extensions[j].toLower();
                                 if (ext == String("imgseq")) continue;
                                 if (isImgSeq && extensionNeedsHeaderlessHints(ext)) continue;
                                 bool dup = false;
@@ -374,15 +389,15 @@ namespace {
                                 // which alias (.mov / .qt / .mp4) was tested.
                                 {
                                         Case c;
-                                        c.backendName = fd.name;
+                                        c.backendName = name;
                                         c.extension = ext;
                                         c.codec = VideoCodec();
                                         c.pixelFormat = PixelFormat();
                                         c.isSequence = isImgSeq;
                                         if (isImgSeq && isPrimary) {
-                                                c.label = fd.name;
+                                                c.label = name;
                                         } else {
-                                                c.label = fd.name + String(":") + ext;
+                                                c.label = name + String(":") + ext;
                                         }
                                         cases.pushToBack(c);
                                 }
@@ -392,19 +407,19 @@ namespace {
                                 // only — aliases would just duplicate rows.
                                 if (!isPrimary) continue;
 
-                                List<PixelFormat> natives = nativePixelFormatsFor(fd.name, ext);
+                                List<PixelFormat> natives = nativePixelFormatsFor(name, ext);
                                 for (size_t k = 0; k < natives.size(); ++k) {
                                         const PixelFormat &pd = natives[k];
                                         Case               c;
-                                        c.backendName = fd.name;
+                                        c.backendName = name;
                                         c.extension = ext;
                                         c.codec = VideoCodec();
                                         c.pixelFormat = pd;
                                         c.isSequence = isImgSeq;
                                         if (isImgSeq) {
-                                                c.label = fd.name + String(":") + pd.name();
+                                                c.label = name + String(":") + pd.name();
                                         } else {
-                                                c.label = fd.name + String(":") + ext + String(":") + pd.name();
+                                                c.label = name + String(":") + ext + String(":") + pd.name();
                                         }
                                         cases.pushToBack(c);
                                 }
@@ -429,12 +444,12 @@ namespace {
                                         // Smoke (codec default) case.
                                         {
                                                 Case c;
-                                                c.backendName = fd.name;
+                                                c.backendName = name;
                                                 c.extension = primaryExt;
                                                 c.codec = vc;
                                                 c.pixelFormat = PixelFormat();
                                                 c.isSequence = false;
-                                                c.label = fd.name + String(":") + primaryExt + String(":") + vc.name();
+                                                c.label = name + String(":") + primaryExt + String(":") + vc.name();
                                                 cases.pushToBack(c);
                                         }
 
@@ -457,12 +472,12 @@ namespace {
                                                 const PixelFormat &pd = variants[k];
                                                 if (!pd.isValid()) continue;
                                                 Case c;
-                                                c.backendName = fd.name;
+                                                c.backendName = name;
                                                 c.extension = primaryExt;
                                                 c.codec = vc;
                                                 c.pixelFormat = pd;
                                                 c.isSequence = false;
-                                                c.label = fd.name + String(":") + primaryExt + String(":") + vc.name() +
+                                                c.label = name + String(":") + primaryExt + String(":") + vc.name() +
                                                           String(":") + pd.name();
                                                 cases.pushToBack(c);
                                         }
@@ -509,7 +524,7 @@ namespace {
                 if (c.isSequence) {
                         // One subdir per case so parallel sequences don't
                         // collide in a shared scan directory.  The '####'
-                        // mask is recognized by MediaIOTask_ImageFile.
+                        // mask is recognized by ImageFileMediaIO.
                         return base + String("/") + tag + String("/frame_####.") + c.extension;
                 }
                 return base + String("/") + tag + String(".") + c.extension;
@@ -544,8 +559,8 @@ namespace {
                 MediaPipelineConfig::Stage s;
                 s.name = String("tpg");
                 s.type = String("TPG");
-                s.mode = MediaIO::Source;
-                s.config = MediaIO::defaultConfig("TPG");
+                s.role = MediaPipelineConfig::StageRole::Source;
+                s.config = MediaIOFactory::defaultConfig("TPG");
                 s.config.set(MediaConfig::Type, String("TPG"));
                 s.config.set(MediaConfig::VideoFormat, opts.videoFormat);
                 s.config.set(MediaConfig::VideoEnabled, true);
@@ -570,8 +585,8 @@ namespace {
                 MediaPipelineConfig::Stage s;
                 s.name = String("enc");
                 s.type = String("VideoEncoder");
-                s.mode = MediaIO::Transform;
-                s.config = MediaIO::defaultConfig("VideoEncoder");
+                s.role = MediaPipelineConfig::StageRole::Transform;
+                s.config = MediaIOFactory::defaultConfig("VideoEncoder");
                 s.config.set(MediaConfig::Type, String("VideoEncoder"));
                 s.config.set(MediaConfig::VideoCodec, codec);
                 // 50 Mbit/s is high enough that H.264/HEVC at 720p keep the
@@ -597,8 +612,8 @@ namespace {
                 MediaPipelineConfig::Stage s;
                 s.name = String("dec");
                 s.type = String("VideoDecoder");
-                s.mode = MediaIO::Transform;
-                s.config = MediaIO::defaultConfig("VideoDecoder");
+                s.role = MediaPipelineConfig::StageRole::Transform;
+                s.config = MediaIOFactory::defaultConfig("VideoDecoder");
                 s.config.set(MediaConfig::Type, String("VideoDecoder"));
                 s.config.set(MediaConfig::VideoCodec, codec);
                 return s;
@@ -608,7 +623,7 @@ namespace {
                 MediaPipelineConfig::Stage s;
                 s.name = String("out");
                 s.path = path; // empty type → pipeline uses createForFileWrite
-                s.mode = MediaIO::Sink;
+                s.role = MediaPipelineConfig::StageRole::Sink;
                 return s;
         }
 
@@ -616,7 +631,7 @@ namespace {
                 MediaPipelineConfig::Stage s;
                 s.name = String("in");
                 s.path = path; // empty type → pipeline uses createForFileRead
-                s.mode = MediaIO::Source;
+                s.role = MediaPipelineConfig::StageRole::Source;
                 return s;
         }
 
@@ -624,8 +639,8 @@ namespace {
                 MediaPipelineConfig::Stage s;
                 s.name = String("insp");
                 s.type = String("Inspector");
-                s.mode = MediaIO::Sink;
-                s.config = MediaIO::defaultConfig("Inspector");
+                s.role = MediaPipelineConfig::StageRole::Sink;
+                s.config = MediaIOFactory::defaultConfig("Inspector");
                 s.config.set(MediaConfig::Type, String("Inspector"));
                 return s;
         }
@@ -780,7 +795,8 @@ namespace {
                         StringList names = pipe.stageNames();
                         for (size_t i = 0; i < names.size(); ++i) {
                                 MediaIO *io = pipe.stage(names[i]);
-                                if (io != nullptr) io->cancelPending();
+                                if (io == nullptr) continue;
+                                if (auto *src = io->source(0)) src->cancelPending();
                         }
                 }
 
@@ -867,33 +883,32 @@ namespace {
                 // ---- Read phase ----
                 // The Inspector needs to be constructed directly so the test
                 // can snapshot its accumulator after the pipeline closes —
-                // the generic MediaIO::create path hides the typed task.  We
-                // build the MediaIO wrapper, adopt the task, inject it into
-                // the pipeline by name, and rely on injectStage to skip the
-                // registry-based construction for that stage.
-                MediaIOTask_Inspector *inspTask = new MediaIOTask_Inspector();
-                MediaIO               *inspIO = new MediaIO();
+                // the generic MediaIO::create path returns a MediaIO* that
+                // would require a dynamic_cast to expose snapshot().  Owning
+                // the typed pointer here is cleaner.  Construct it as the
+                // MediaIO instance directly (the strategy refactor merged
+                // task + wrapper), set its config, and inject by name so
+                // MediaPipeline skips the registry-based construction for
+                // this stage.
+                InspectorMediaIO *insp = new InspectorMediaIO();
                 {
-                        MediaIO::Config inspCfg = MediaIO::defaultConfig("Inspector");
+                        MediaIO::Config inspCfg = MediaIOFactory::defaultConfig("Inspector");
                         inspCfg.set(MediaConfig::Type, String("Inspector"));
-                        inspIO->setConfig(inspCfg);
-                        Error ae = inspIO->adoptTask(inspTask);
-                        if (ae.isError()) {
-                                r.status = RunResult::Fail;
-                                r.message = String("adoptTask: ") + ae.desc();
-                                delete inspIO; // also deletes inspTask
-                                return r;
-                        }
+                        insp->setConfig(inspCfg);
                 }
 
                 {
                         MediaPipelineConfig cfg = buildReadConfig(c, path);
                         MediaPipeline       pipe;
-                        Error               ie = pipe.injectStage(String("insp"), inspIO);
+                        // Stamp the expected stage name onto the IO so
+                        // injectStage adopts the same key the read
+                        // config wires the route to.
+                        insp->setName(String("insp"));
+                        Error ie = pipe.injectStage(insp);
                         if (ie.isError()) {
                                 r.status = RunResult::Fail;
                                 r.message = String("injectStage: ") + ie.desc();
-                                delete inspIO;
+                                delete insp;
                                 return r;
                         }
 
@@ -901,17 +916,16 @@ namespace {
                         // Read side runs until the source produces EOF and the
                         // close cascade completes.
 
-                        // Snapshot the inspector BEFORE deleting the MediaIO
-                        // wrapper, which would destroy the adopted task.
-                        InspectorSnapshot snap = inspTask->snapshot();
+                        // Snapshot the inspector BEFORE deleting it; the
+                        // pipeline does not own injected stages, so deleting
+                        // here is correct.
+                        InspectorSnapshot snap = insp->snapshot();
                         r.framesProcessed = snap.framesProcessed.value();
                         r.framesWithPictureData = snap.framesWithPictureData.value();
                         r.framesWithLtc = snap.framesWithLtc.value();
                         r.totalDiscontinuities = snap.totalDiscontinuities;
 
-                        // Injected stages are not deleted by MediaPipeline,
-                        // so the wrapper still owns the task here.
-                        delete inspIO; // deletes inspTask too
+                        delete insp;
 
                         // Read-path failures come in two flavours:
                         //   - Planner / registry gaps (@c Error::NotSupported on

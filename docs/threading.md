@@ -227,14 +227,19 @@ instead to communicate results back.
 
 ## MediaIO Threading {#thread_pipeline}
 
-Each `MediaIO` instance owns a `Strand` that serializes its
-commands on a shared `ThreadPool`. Backends never manage their
-own threads — the Strand guarantees that every `MediaIOTask`
-callback runs on a single logical worker at a time, while still
-sharing the pool across the whole application.
+`MediaIO` is abstract; concrete backends inherit from one of
+three strategy classes that each pick a thread for command
+execution: `InlineMediaIO` (calling thread), `SharedThreadMediaIO`
+(per-instance `Strand` on a shared `ThreadPool`), or
+`DedicatedThreadMediaIO` (an owned worker thread).
+`SharedThreadMediaIO` is the default for compute backends — its
+strand serializes commands per-instance while the pool keeps the
+process-wide thread count bounded. I/O backends that block on
+syscalls inherit from `DedicatedThreadMediaIO` so a slow backend
+cannot starve the shared pool.
 
-Frames move between `MediaIO` stages via signals. A producer
-emits `frameReady` when a new frame is available; connected
-consumers call `writeFrame()` (non-blocking) on their own Strand.
-Back-pressure is reported through `Error::TryAgain` and a matching
-`frameWanted` signal when the consumer drains again.
+Frames move between `MediaIO` ports via `MediaIOPortConnection`,
+which subscribes to the source's `frameReady` signal and pushes
+each ready result into every connected sink. Sink writes apply
+an always-on capacity gate that returns `Error::TryAgain` when
+the sink is full; consumers wait on `frameWanted` before retrying.

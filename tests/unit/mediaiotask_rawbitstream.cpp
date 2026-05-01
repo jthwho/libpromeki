@@ -4,7 +4,7 @@
  *
  * See LICENSE file in the project root folder.
  *
- * Tests for MediaIOTask_RawBitstream's introspection / negotiation
+ * Tests for RawBitstreamMediaIO's introspection / negotiation
  * path (@c describe and @c proposeInput).  RawBitstream is a "dumb"
  * sink that appends @ref CompressedVideoPayload bytes to a file
  * verbatim — it must advertise the compressed accept set via @c describe
@@ -13,15 +13,23 @@
  * that would hit the "no CompressedVideoPayload" warning at runtime.
  */
 
+#include <cstdio>
 #include <doctest/doctest.h>
 
+#include <promeki/dir.h>
+#include <promeki/enums.h>
+#include <promeki/filepath.h>
 #include <promeki/framerate.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaiocommand.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mediaiorequest.h>
 #include <promeki/mediaiodescription.h>
-#include <promeki/mediaiotask_rawbitstream.h>
+#include <promeki/mediaiosink.h>
+#include <promeki/rawbitstreammediaio.h>
 #include <promeki/pixelformat.h>
 #include <promeki/videocodec.h>
 
@@ -29,9 +37,38 @@ using namespace promeki;
 
 namespace {
 
+        // Returns a scratch path under Dir::temp() so RawBitstream's
+        // open() succeeds and the backend installs its sink port —
+        // proposeInput is now per-port (MediaIOSink::proposeInput) so
+        // we need a live sink(0) to query.  The file is removed by
+        // deleteRawBitstream() so each test cleans up after itself.
+        String scratchPath() {
+                return (Dir::temp().path() / "promeki-rawbitstream-test.h264").toString();
+        }
+
+        // Builds a RawBitstream MediaIO and opens it as a sink so the
+        // sink(0) port exists for proposeInput probes.  The simpler
+        // pre-open create() is no longer enough because the sink port
+        // is populated inside executeCmd(Open).
         MediaIO *makeRawBitstream() {
-                MediaIO::Config cfg = MediaIO::defaultConfig("RawBitstream");
-                return MediaIO::create(cfg);
+                MediaIO::Config cfg = MediaIOFactory::defaultConfig("RawBitstream");
+                cfg.set(MediaConfig::Type, "RawBitstream");
+                cfg.set(MediaConfig::Filename, scratchPath());
+                cfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
+                MediaIO *io = MediaIO::create(cfg);
+                if (io == nullptr) return nullptr;
+                if (io->open().wait().isError()) {
+                        delete io;
+                        return nullptr;
+                }
+                return io;
+        }
+
+        void deleteRawBitstream(MediaIO *io) {
+                if (io == nullptr) return;
+                if (io->isOpen()) (void)io->close().wait();
+                delete io;
+                std::remove(scratchPath().cstr());
         }
 
         MediaDesc makeVideoDesc(uint32_t w, uint32_t h, PixelFormat::ID id) {
@@ -43,34 +80,29 @@ namespace {
 
 } // namespace
 
-TEST_CASE("MediaIOTask_RawBitstream: Registry") {
+TEST_CASE("RawBitstreamMediaIO: Registry") {
         // Sink-only, with the elementary-stream extensions the
         // mediaplay file-path auto-detection uses.
-        bool found = false;
-        for (const auto &d : MediaIO::registeredFormats()) {
-                if (d.name == "RawBitstream") {
-                        CHECK_FALSE(d.canBeSource);
-                        CHECK(d.canBeSink);
-                        CHECK_FALSE(d.canBeTransform);
-                        CHECK(d.extensions.contains(String("h264")));
-                        CHECK(d.extensions.contains(String("h265")));
-                        CHECK(d.extensions.contains(String("hevc")));
-                        CHECK(d.extensions.contains(String("bit")));
-                        found = true;
-                        break;
-                }
-        }
-        CHECK(found);
+        const MediaIOFactory *factory = MediaIOFactory::findByName(String("RawBitstream"));
+        REQUIRE(factory != nullptr);
+        CHECK_FALSE(factory->canBeSource());
+        CHECK(factory->canBeSink());
+        CHECK_FALSE(factory->canBeTransform());
+        const StringList exts = factory->extensions();
+        CHECK(exts.contains(String("h264")));
+        CHECK(exts.contains(String("h265")));
+        CHECK(exts.contains(String("hevc")));
+        CHECK(exts.contains(String("bit")));
 }
 
-TEST_CASE("MediaIOTask_RawBitstream: describe advertises compressed accept set") {
+TEST_CASE("RawBitstreamMediaIO: describe advertises compressed accept set") {
         MediaIO *io = makeRawBitstream();
         REQUIRE(io != nullptr);
 
         MediaIODescription d;
         REQUIRE(io->describe(&d) == Error::Ok);
 
-        // Identity from FormatDesc.
+        // Identity from MediaIOFactory.
         CHECK(d.backendName() == "RawBitstream");
         CHECK(d.canBeSink());
         CHECK_FALSE(d.canBeSource());
@@ -96,10 +128,10 @@ TEST_CASE("MediaIOTask_RawBitstream: describe advertises compressed accept set")
         // produce anything.
         CHECK(d.producibleFormats().isEmpty());
 
-        delete io;
+        deleteRawBitstream(io);
 }
 
-TEST_CASE("MediaIOTask_RawBitstream: describe covers every registered compressed PixelFormat") {
+TEST_CASE("RawBitstreamMediaIO: describe covers every registered compressed PixelFormat") {
         // Every compressed PixelFormat the library knows about — via
         // VideoCodec::compressedPixelFormats — must appear in the
         // acceptable set so the planner can pick any of them when
@@ -129,42 +161,42 @@ TEST_CASE("MediaIOTask_RawBitstream: describe covers every registered compressed
                 }
         }
 
-        delete io;
+        deleteRawBitstream(io);
 }
 
-TEST_CASE("MediaIOTask_RawBitstream: describe rejects null out") {
+TEST_CASE("RawBitstreamMediaIO: describe rejects null out") {
         MediaIO *io = makeRawBitstream();
         REQUIRE(io != nullptr);
         CHECK(io->describe(nullptr) == Error::Invalid);
-        delete io;
+        deleteRawBitstream(io);
 }
 
-TEST_CASE("MediaIOTask_RawBitstream: proposeInput accepts compressed") {
+TEST_CASE("RawBitstreamMediaIO: proposeInput accepts compressed") {
         MediaIO *io = makeRawBitstream();
         REQUIRE(io != nullptr);
 
         const MediaDesc offered = makeVideoDesc(1920, 1080, PixelFormat::H264);
         MediaDesc       preferred;
-        CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
+        CHECK(io->sink(0)->proposeInput(offered, &preferred) == Error::Ok);
         // Compressed in, compressed out — no rewrite.
         CHECK(preferred == offered);
 
-        delete io;
+        deleteRawBitstream(io);
 }
 
-TEST_CASE("MediaIOTask_RawBitstream: proposeInput accepts HEVC") {
+TEST_CASE("RawBitstreamMediaIO: proposeInput accepts HEVC") {
         MediaIO *io = makeRawBitstream();
         REQUIRE(io != nullptr);
 
         const MediaDesc offered = makeVideoDesc(3840, 2160, PixelFormat::HEVC);
         MediaDesc       preferred;
-        CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
+        CHECK(io->sink(0)->proposeInput(offered, &preferred) == Error::Ok);
         CHECK(preferred == offered);
 
-        delete io;
+        deleteRawBitstream(io);
 }
 
-TEST_CASE("MediaIOTask_RawBitstream: proposeInput rejects uncompressed RGBA") {
+TEST_CASE("RawBitstreamMediaIO: proposeInput rejects uncompressed RGBA") {
         // The planner must see "not acceptable" so it inserts a
         // VideoEncoder ahead of us — not silently route raw pixels
         // through that the writer would then discard with the
@@ -174,23 +206,23 @@ TEST_CASE("MediaIOTask_RawBitstream: proposeInput rejects uncompressed RGBA") {
 
         const MediaDesc offered = makeVideoDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
         MediaDesc       preferred;
-        CHECK(io->proposeInput(offered, &preferred) == Error::NotSupported);
+        CHECK(io->sink(0)->proposeInput(offered, &preferred) == Error::NotSupported);
 
-        delete io;
+        deleteRawBitstream(io);
 }
 
-TEST_CASE("MediaIOTask_RawBitstream: proposeInput rejects uncompressed YUV") {
+TEST_CASE("RawBitstreamMediaIO: proposeInput rejects uncompressed YUV") {
         MediaIO *io = makeRawBitstream();
         REQUIRE(io != nullptr);
 
         const MediaDesc offered = makeVideoDesc(1920, 1080, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         MediaDesc       preferred;
-        CHECK(io->proposeInput(offered, &preferred) == Error::NotSupported);
+        CHECK(io->sink(0)->proposeInput(offered, &preferred) == Error::NotSupported);
 
-        delete io;
+        deleteRawBitstream(io);
 }
 
-TEST_CASE("MediaIOTask_RawBitstream: proposeInput rejects empty image list") {
+TEST_CASE("RawBitstreamMediaIO: proposeInput rejects empty image list") {
         // An audio-only MediaDesc has nothing for this sink to write.
         MediaIO *io = makeRawBitstream();
         REQUIRE(io != nullptr);
@@ -198,17 +230,17 @@ TEST_CASE("MediaIOTask_RawBitstream: proposeInput rejects empty image list") {
         MediaDesc offered;
         offered.setFrameRate(FrameRate(FrameRate::FPS_30));
         MediaDesc preferred;
-        CHECK(io->proposeInput(offered, &preferred) == Error::NotSupported);
+        CHECK(io->sink(0)->proposeInput(offered, &preferred) == Error::NotSupported);
 
-        delete io;
+        deleteRawBitstream(io);
 }
 
-TEST_CASE("MediaIOTask_RawBitstream: proposeInput rejects null preferred") {
+TEST_CASE("RawBitstreamMediaIO: proposeInput rejects null preferred") {
         MediaIO *io = makeRawBitstream();
         REQUIRE(io != nullptr);
 
         const MediaDesc offered = makeVideoDesc(1920, 1080, PixelFormat::H264);
-        CHECK(io->proposeInput(offered, nullptr) == Error::Invalid);
+        CHECK(io->sink(0)->proposeInput(offered, nullptr) == Error::Invalid);
 
-        delete io;
+        deleteRawBitstream(io);
 }

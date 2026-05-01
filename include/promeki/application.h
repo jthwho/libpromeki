@@ -11,6 +11,7 @@
 #include <functional>
 
 #include <promeki/namespace.h>
+#include <promeki/atomic.h>
 #include <promeki/eventloop.h>
 #include <promeki/error.h>
 #include <promeki/string.h>
@@ -429,8 +430,12 @@ class Application {
                                 UUID                   appUUID;
                                 String                 appName;
                                 Thread                *mainThread = nullptr;
-                                int                    exitCode = 0;
-                                bool                   shouldQuit = false;
+                                // Atomic so the signal-watcher thread
+                                // can latch a quit request while the
+                                // main thread is polling
+                                // @ref Application::shouldQuit.
+                                Atomic<int>            exitCode{0};
+                                Atomic<bool>           shouldQuit{false};
                                 QuitRequestHandler     quitHandler;
                                 UniquePtr<DebugServer> debugServer;
                 };

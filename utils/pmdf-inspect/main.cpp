@@ -17,9 +17,15 @@
 #include <string>
 #include <vector>
 #include <promeki/debugmediafile.h>
+#include <promeki/enums.h>
 #include <promeki/variantquery.h>
 #include <promeki/frame.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaiocommand.h>
+#include <promeki/mediaiorequest.h>
+#include <promeki/mediaiosink.h>
+#include <promeki/mediaiosource.h>
+#include <promeki/mediaioportgroup.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/metadata.h>
 #include <promeki/string.h>
@@ -368,24 +374,46 @@ namespace {
                         delete src;
                         return 1;
                 }
+                // Mark the destination as a writer — file backends decide
+                // direction from MediaConfig::OpenMode at open time, and
+                // createForFileWrite leaves it at the registered default
+                // (Read).  Source is the default so the source side does
+                // not need to be touched.
+                {
+                        MediaIO::Config dcfg = dst->config();
+                        dcfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
+                        dst->setConfig(dcfg);
+                }
 
-                Error e = src->open(MediaIO::Source);
+                Error e = src->open().wait();
                 if (e.isError()) {
                         std::fprintf(stderr, "open source: %s\n", e.name().cstr());
                         delete src;
                         delete dst;
                         return 1;
                 }
-                e = dst->open(MediaIO::Sink);
+                e = dst->open().wait();
                 if (e.isError()) {
                         std::fprintf(stderr, "open sink: %s\n", e.name().cstr());
-                        src->close();
+                        src->close().wait();
                         delete src;
                         delete dst;
                         return 1;
                 }
 
-                const FrameCount srcCount = src->frameCount();
+                MediaIOSource    *srcPort = src->source(0);
+                MediaIOSink      *dstPort = dst->sink(0);
+                MediaIOPortGroup *srcGroup = src->portGroup(0);
+                if (srcPort == nullptr || dstPort == nullptr) {
+                        std::fprintf(stderr, "extract: source/sink port not available\n");
+                        src->close().wait();
+                        dst->close().wait();
+                        delete src;
+                        delete dst;
+                        return 1;
+                }
+
+                const FrameCount srcCount = (srcGroup != nullptr) ? srcGroup->frameCount() : FrameCount();
                 const int64_t    fc = srcCount.isFinite() ? srcCount.value() : -1;
                 int64_t          start = args.rangeStart;
                 int64_t          end = args.rangeEnd < 0 ? fc : args.rangeEnd;
@@ -398,17 +426,53 @@ namespace {
                         return isImage ? trimForImage(in, imageIdx) : trimForAudio(in, audioIdx);
                 };
 
-                auto [copied, ce] = MediaIO::copyFrames(src, dst, start, count, mutate);
-                src->close();
-                dst->close();
+                // Local equivalent of the now-removed MediaIO::copyFrames.
+                // Walks the source one frame at a time, optionally trims
+                // it through @p mutate (used here to keep just the
+                // requested image / audio payload), and feeds the result
+                // to the destination.  The @p start / @p count window is
+                // applied by the source side: skipped frames are read and
+                // dropped, kept frames feed the sink.  This matches the
+                // semantics of the removed library helper closely enough
+                // that --extract-* output is unchanged.
+                auto copyFrames = [&](MediaIOSource *s, MediaIOSink *d, int64_t skip, int64_t want,
+                                      const auto &fn) -> std::pair<int64_t, Error> {
+                        int64_t copied = 0;
+                        int64_t skipped = 0;
+                        for (;;) {
+                                if (want >= 0 && copied >= want) break;
+                                MediaIORequest readReq = s->readFrame();
+                                Error          rerr = readReq.wait();
+                                if (rerr == Error::EndOfFile) break;
+                                if (rerr.isError()) return {copied, rerr};
+                                Frame::Ptr in;
+                                if (const auto *cr = readReq.commandAs<MediaIOCommandRead>()) {
+                                        in = cr->frame;
+                                }
+                                if (!in.isValid()) continue;
+                                if (skipped < skip) {
+                                        ++skipped;
+                                        continue;
+                                }
+                                Frame::Ptr out = fn(in, copied);
+                                if (!out.isValid()) continue;
+                                Error werr = d->writeFrame(out).wait();
+                                if (werr.isError()) return {copied, werr};
+                                ++copied;
+                        }
+                        return {copied, Error::Ok};
+                };
+
+                auto [copied, ce] = copyFrames(srcPort, dstPort, start, count, mutate);
+                src->close().wait();
+                dst->close().wait();
                 delete src;
                 delete dst;
                 if (ce.isError()) {
                         std::fprintf(stderr, "copyFrames: %s\n", ce.name().cstr());
                         return 1;
                 }
-                const int64_t copiedInt = copied.isFinite() ? copied.value() : 0;
-                std::printf("Wrote %lld frame%s to %s\n", static_cast<long long>(copiedInt), copiedInt == 1 ? "" : "s",
+                std::printf("Wrote %lld frame%s to %s\n", static_cast<long long>(copied), copied == 1 ? "" : "s",
                             args.outputPath.cstr());
                 return 0;
         }

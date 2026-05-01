@@ -49,6 +49,7 @@
 #include <promeki/enum.h>
 #include <promeki/enumlist.h>
 #include <promeki/url.h>
+#include <promeki/windowedstat.h>
 #if PROMEKI_ENABLE_NETWORK
 #include <promeki/socketaddress.h>
 #include <promeki/sdpsession.h>
@@ -112,6 +113,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeAudioChannelMap | `AudioChannelMap` |
  * | TypeEnum      | `Enum`              |
  * | TypeEnumList  | `EnumList`          |
+ * | TypeWindowedStat | `WindowedStat`   |
  *
  * When @c PROMEKI_ENABLE_NETWORK is true, the following types are also available:
  *
@@ -176,6 +178,7 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeMasteringDisplay, MasteringDisplay)                                                                      \
         X(TypeContentLightLevel, ContentLightLevel)                                                                    \
         X(TypeUrl, Url)                                                                                                \
+        X(TypeWindowedStat, WindowedStat)                                                                              \
         PROMEKI_VARIANT_TYPES_NETWORK
 
 namespace detail {

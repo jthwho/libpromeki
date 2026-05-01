@@ -44,7 +44,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Lifetime
  *
  * Transports are owned by the caller.  They are *not* reference
- * counted — an RtpSession or MediaIOTask that takes a transport
+ * counted — an RtpSession or MediaIO backend that takes a transport
  * pointer does not own it; the caller is responsible for keeping it
  * alive until the session is stopped.
  *

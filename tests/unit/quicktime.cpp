@@ -714,7 +714,7 @@ TEST_CASE("QuickTimeWriter: fragmented file is playable after simulated crash") 
                 REQUIRE(qt.flush() == Error::Ok);
 
                 // This is where a "clean crash" boundary is. Record it.
-                // (Note: MediaIOTask stores the underlying File, not the
+                // (Note: the backend stores the underlying File, not the
                 // engine; we pull the current write cursor by finalizing
                 // to a known clean state and using the file size.)
                 REQUIRE(qt.finalize() == Error::Ok);

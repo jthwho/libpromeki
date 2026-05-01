@@ -17,6 +17,7 @@
 #include <promeki/variantdatabase.h>
 #include <promeki/variantspec.h>
 #include <promeki/variantlookup.h>
+#include <promeki/atomic.h>
 #include <cstring>
 
 using namespace promeki;
@@ -104,37 +105,42 @@ namespace {
 
                         explicit ServerFixture() {
                                 thread.start();
-                                thread.threadEventLoop()->postCallable([this]() { server = new HttpServer(); });
-                                for (int i = 0; i < 200 && server == nullptr; ++i) {
+                                Atomic<bool> ready(false);
+                                thread.threadEventLoop()->postCallable([this, &ready]() {
+                                        server = new HttpServer();
+                                        ready.setValue(true);
+                                });
+                                for (int i = 0; i < 200 && !ready.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(2));
                                 }
+                                REQUIRE(ready.value());
                                 REQUIRE(server != nullptr);
                         }
 
                         void configure(std::function<void(HttpServer &)> cfg) {
-                                bool done = false;
+                                Atomic<bool> done(false);
                                 thread.threadEventLoop()->postCallable([&]() {
                                         cfg(*server);
-                                        done = true;
+                                        done.setValue(true);
                                 });
-                                for (int i = 0; i < 500 && !done; ++i) {
+                                for (int i = 0; i < 500 && !done.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                                 }
-                                REQUIRE(done);
+                                REQUIRE(done.value());
                         }
 
                         void listenOnAnyPort() {
-                                bool done = false;
+                                Atomic<bool> done(false);
                                 thread.threadEventLoop()->postCallable([&]() {
                                         Error err = server->listen(SocketAddress::localhost(0));
                                         REQUIRE(err.isOk());
                                         port = server->serverAddress().port();
-                                        done = true;
+                                        done.setValue(true);
                                 });
-                                for (int i = 0; i < 500 && !done; ++i) {
+                                for (int i = 0; i < 500 && !done.value(); ++i) {
                                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                                 }
-                                REQUIRE(done);
+                                REQUIRE(done.value());
                                 REQUIRE(port != 0);
                         }
 

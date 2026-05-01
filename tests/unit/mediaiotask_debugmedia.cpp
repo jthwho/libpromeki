@@ -20,6 +20,10 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mediaiocommand.h>
+#include <promeki/mediaiorequest.h>
+#include <promeki/mediaiosource.h>
 #include <promeki/metadata.h>
 #include <promeki/pixelformat.h>
 #include <promeki/pcmaudiopayload.h>
@@ -69,7 +73,7 @@ namespace {
 
 } // namespace
 
-// Regression: MediaIOTask_DebugMedia::executeCmd(MediaIOCommandOpen)
+// Regression: DebugMediaMediaIO::executeCmd(MediaIOCommandOpen)
 // used to leave @c cmd.mediaDesc / @c cmd.audioDesc default-constructed
 // in Source mode.  That left @ref MediaIO::mediaDesc() invalid after
 // @c open(), which broke @ref MediaPipelinePlanner::discoverSourceDesc
@@ -81,16 +85,16 @@ namespace {
 // @c readFrame() still returns frame 0.  This test pins both halves:
 // the descs must be populated immediately after open, AND the first
 // readFrame must return the frame we wrote (proves the rewind).
-TEST_CASE("MediaIOTask_DebugMedia: source open populates mediaDesc/audioDesc") {
+TEST_CASE("DebugMediaMediaIO: source open populates mediaDesc/audioDesc") {
         const String path = writeSinglePmdf();
 
-        MediaIO::Config cfg = MediaIO::defaultConfig("PMDF");
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("PMDF");
         cfg.set(MediaConfig::Type, "PMDF");
         cfg.set(MediaConfig::Filename, path);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
-        REQUIRE(io->open(MediaIO::Source).isOk());
+        REQUIRE(io->open().wait().isOk());
 
         // The descs must be valid *before* any readFrame — the
         // pipeline planner relies on this to build a plan without
@@ -113,14 +117,17 @@ TEST_CASE("MediaIOTask_DebugMedia: source open populates mediaDesc/audioDesc") {
 
         // Rewind sanity: first readFrame after open must still yield
         // frame 0 — the peek-and-rewind would otherwise eat it.
-        Frame::Ptr first;
-        Error      re = io->readFrame(first);
+        MediaIORequest readReq = io->source(0)->readFrame();
+        Error          re = readReq.wait();
         REQUIRE(re.isOk());
+        const auto *cr = readReq.commandAs<MediaIOCommandRead>();
+        REQUIRE(cr != nullptr);
+        Frame::Ptr first = cr->frame;
         REQUIRE(first.isValid());
         CHECK(first->videoPayloads().size() == 1u);
         CHECK(first->audioPayloads().size() == 1u);
 
-        (void)io->close();
+        (void)io->close().wait();
         delete io;
         std::remove(path.cstr());
 }

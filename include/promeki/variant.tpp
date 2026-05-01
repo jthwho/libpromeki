@@ -305,6 +305,16 @@ To VariantImpl<Types...>::get(Error *err) const {
                                 return r.first();
                         }
 
+                } else if constexpr (std::is_same_v<To, WindowedStat>) {
+                        if constexpr (std::is_same_v<From, String>) {
+                                auto r = WindowedStat::fromString(arg);
+                                if(error(r).isError()) {
+                                        if(err != nullptr) *err = Error::Invalid;
+                                        return WindowedStat();
+                                }
+                                return value(r);
+                        }
+
                 } else if constexpr (std::is_same_v<To, String>) {
                         if constexpr (std::is_same_v<From, bool>) return String::number(arg);
                         if constexpr (std::is_same_v<From, int8_t>) return String::number(arg);
@@ -351,6 +361,13 @@ To VariantImpl<Types...>::get(Error *err) const {
                         if constexpr (std::is_same_v<From, Enum>) return arg.toString();
                         if constexpr (std::is_same_v<From, EnumList>) return arg.toString();
                         if constexpr (std::is_same_v<From, Url>) return arg.toString();
+                        // WindowedStat::toString() now renders the
+                        // human-readable Avg/StdDev/Min/Max/WinSz
+                        // summary, which is one-way; the canonical
+                        // round-trip form is toSerializedString().
+                        // Variant::get<String>() feeds JSON / DataStream
+                        // serialization where round-trip matters.
+                        if constexpr (std::is_same_v<From, WindowedStat>) return arg.toSerializedString();
 #if PROMEKI_ENABLE_NETWORK
                         if constexpr (std::is_same_v<From, SocketAddress>) return arg.toString();
                         if constexpr (std::is_same_v<From, SdpSession>) return arg.toString();

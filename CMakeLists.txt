@@ -6,9 +6,131 @@ set(APP_NAME "promeki")
 set(APP_VENDOR "HOWARDLOGIC")
 set(APP_HUMAN_NAME "libpromeki")
 set(APP_HUMAN_VENDOR "Howard Logic")
-set(APP_VERSION "1.0.0")
-set(APP_VERSION_RC 0) # If this is a release candidate, set this value to the release candidate version (non zero)
-set(APP_VERSION_BETA 0) # If this is a beta, set this value to the beta version (non-zero)
+
+# The `VERSION` file in the repository root is the single source of truth for
+# the project version. The first non-comment line must be a MAJOR.MINOR.PATCH
+# semantic version (project(... VERSION ...) requires that form). Everything
+# downstream — BuildInfo, the build identity string, shared library SOVERSION,
+# and the Doxygen version field — derives from this value.
+#
+# The file name is intentionally upper-case: a lower-case `version` file at
+# the repo root would shadow the C++20 standard header `<version>` on any
+# build that has the project source root on its include path (mbedtls and
+# a few other vendored deps add it).  `VERSION` is the standard Unix
+# convention (Linux kernel, GCC, glibc) and avoids that collision.
+set(_VERSION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
+if(NOT EXISTS "${_VERSION_FILE}")
+    message(FATAL_ERROR "VERSION file not found at ${_VERSION_FILE}")
+endif()
+# Re-run CMake configure when the VERSION file changes so a manual edit
+# propagates without a fresh `cmake` invocation.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_VERSION_FILE}")
+file(STRINGS "${_VERSION_FILE}" _VERSION_LINES)
+set(_VERSION_RAW "")
+foreach(_line IN LISTS _VERSION_LINES)
+    string(STRIP "${_line}" _line)
+    if(_line STREQUAL "" OR _line MATCHES "^#")
+        continue()
+    endif()
+    set(_VERSION_RAW "${_line}")
+    break()
+endforeach()
+# Accepted forms (semver pre-release subset):
+#   MAJOR.MINOR.PATCH               → release (stage=Release, stageNum=0)
+#   MAJOR.MINOR.PATCH-alpha[N]      → alpha   (N optional; missing means N=1)
+#   MAJOR.MINOR.PATCH-beta[N]       → beta    (N optional; missing means N=1)
+#   MAJOR.MINOR.PATCH-rcN           → rc      (N REQUIRED, N >= 1)
+#
+# When a stage number is present it must be 1 or larger with no leading
+# zeros (e.g. -alpha0, -beta01, -rc0 all rejected).  Alpha and beta let
+# you write `-alpha` / `-beta` as shorthand for the first iteration of
+# that stage; the printed forms (in BuildInfo::ident and the {extra}
+# token of formatBuildInfo) reciprocate by omitting the "1".  RC always
+# shows its number — `-rc1`, `-rc2`, … — because release candidates
+# almost always come in numbered series.
+#
+# APP_VERSION holds the bare MAJOR.MINOR.PATCH triple (so
+# project(... VERSION ...) and BuildInfo::version stay clean);
+# APP_VERSION_STAGE_NAME / APP_VERSION_STAGE_NUM carry the pre-release
+# tag separately.  Anything that does not match one of the patterns
+# above is a hard configure-time error.
+if(_VERSION_RAW MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$")
+    set(APP_VERSION "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}")
+    set(APP_VERSION_STAGE_NAME "release")
+    set(APP_VERSION_STAGE_NUM 0)
+elseif(_VERSION_RAW MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)-(alpha|beta)([0-9]*)$")
+    # alpha / beta — number is optional; absent means stageNum = 1.
+    set(APP_VERSION "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}")
+    set(APP_VERSION_STAGE_NAME "${CMAKE_MATCH_4}")
+    set(_stage_num_raw "${CMAKE_MATCH_5}")
+    if(_stage_num_raw STREQUAL "")
+        set(APP_VERSION_STAGE_NUM 1)
+    elseif(_stage_num_raw MATCHES "^[1-9][0-9]*$")
+        set(APP_VERSION_STAGE_NUM "${_stage_num_raw}")
+    else()
+        message(FATAL_ERROR
+            "VERSION file ${_VERSION_FILE}: stage number must be 1 or larger "
+            "with no leading zeros; got '-${APP_VERSION_STAGE_NAME}${_stage_num_raw}'")
+    endif()
+    unset(_stage_num_raw)
+elseif(_VERSION_RAW MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)-rc([0-9]+)$")
+    # rc — number REQUIRED.
+    set(APP_VERSION "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}")
+    set(APP_VERSION_STAGE_NAME "rc")
+    set(APP_VERSION_STAGE_NUM "${CMAKE_MATCH_4}")
+    if(NOT APP_VERSION_STAGE_NUM MATCHES "^[1-9][0-9]*$")
+        message(FATAL_ERROR
+            "VERSION file ${_VERSION_FILE}: rc stage number must be 1 or larger "
+            "with no leading zeros; got '-rc${APP_VERSION_STAGE_NUM}'")
+    endif()
+else()
+    message(FATAL_ERROR
+        "VERSION file ${_VERSION_FILE}: not a recognized version string. "
+        "Expected one of:\n"
+        "    MAJOR.MINOR.PATCH                  (release)\n"
+        "    MAJOR.MINOR.PATCH-alpha[N]         (alpha; N>=1, default 1)\n"
+        "    MAJOR.MINOR.PATCH-beta[N]          (beta;  N>=1, default 1)\n"
+        "    MAJOR.MINOR.PATCH-rcN              (rc;    N>=1, required)\n"
+        "Got '${_VERSION_RAW}'")
+endif()
+unset(_VERSION_FILE)
+unset(_VERSION_LINES)
+unset(_VERSION_RAW)
+
+# CI build number (optional).  Read from a `BUILD` file at the repo root if
+# present.  CI is expected to write a monotonically increasing integer to
+# this file as part of its pipeline; local developer builds typically have
+# no BUILD file and the build number defaults to 0.  The number is exposed
+# on BuildInfo as the integer field `build` and folded into
+# PROMEKI_BUILD_IDENT when non-zero — the human-readable `version` string
+# stays MAJOR.MINOR.PATCH and is unaffected.
+set(_BUILD_FILE "${CMAKE_CURRENT_SOURCE_DIR}/BUILD")
+# Register the BUILD file as a configure dependency unconditionally — even
+# when it does not currently exist — so that creating, modifying, or
+# deleting the file triggers a CMake reconfigure on the next build.
+# Registering only inside `if(EXISTS)` would miss the create-from-absent
+# transition (CI's first run after a clean checkout).
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_BUILD_FILE}")
+set(APP_VERSION_BUILD 0)
+if(EXISTS "${_BUILD_FILE}")
+    file(STRINGS "${_BUILD_FILE}" _BUILD_LINES)
+    foreach(_line IN LISTS _BUILD_LINES)
+        string(STRIP "${_line}" _line)
+        if(_line STREQUAL "" OR _line MATCHES "^#")
+            continue()
+        endif()
+        if(NOT _line MATCHES "^[0-9]+$")
+            message(FATAL_ERROR
+                "BUILD file ${_BUILD_FILE} must contain a non-negative integer "
+                "on its first non-comment line; got '${_line}'")
+        endif()
+        set(APP_VERSION_BUILD "${_line}")
+        break()
+    endforeach()
+    unset(_BUILD_LINES)
+endif()
+unset(_BUILD_FILE)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # DevRelease build type --------------------------------------------------------
@@ -57,6 +179,20 @@ include(ExternalProject)
 # everywhere.
 add_library(promeki_warnings INTERFACE)
 add_library(promeki::warnings ALIAS promeki_warnings)
+
+# Sanitizer wiring: when PROMEKI_SANITIZER is non-empty, apply the flags
+# globally so every target (library, executables, vendored deps) is
+# instrumented and the linker pulls in the runtime once.  We disable
+# PCH and ccache here too: PCH headers built without the sanitizer
+# flag mismatch the consuming TUs and ccache's cache key doesn't
+# include CFLAGS, so a hit would silently return uninstrumented code.
+if(NOT "${PROMEKI_SANITIZER}" STREQUAL "")
+    message(STATUS "Sanitizer enabled: -fsanitize=${PROMEKI_SANITIZER}")
+    add_compile_options(-fsanitize=${PROMEKI_SANITIZER} -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=${PROMEKI_SANITIZER})
+    set(PROMEKI_USE_PCH OFF CACHE BOOL "PCH disabled while sanitizer is on" FORCE)
+    set(PROMEKI_USE_CCACHE OFF CACHE BOOL "ccache disabled while sanitizer is on" FORCE)
+endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(promeki_warnings INTERFACE
         $<$<COMPILE_LANGUAGE:C,CXX>:-Wall>
@@ -112,6 +248,15 @@ option(PROMEKI_USE_PCH          "Use precompiled headers to speed up incremental
 # PROMEKI_BUILD_STATS (stats wrapper times the ccache call, so cache hits
 # log near-zero wall + small RSS).
 option(PROMEKI_USE_CCACHE       "Use ccache as a compiler launcher when available" ON)
+
+# Compiler sanitizer: applied as both compile and link flags to every target
+# the build defines (library + executables).  Empty = none.  Useful values
+# include "address", "address,undefined", "thread", "leak".  ASan and TSan
+# are mutually exclusive; ASan and UBSan compose freely.  Sanitizer runs
+# disable PCH (incompatible with -fsanitize on some toolchains) and ccache
+# (cache key would not include the flag).
+set(PROMEKI_SANITIZER "" CACHE STRING
+    "Build with -fsanitize=<value> (e.g. address, thread, address,undefined)")
 
 # Feature flags for the main promeki library
 # NOTE: When adding a new PROMEKI_ENABLE_* flag, also update
@@ -387,32 +532,204 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+# Human-readable "where this build came from" label — surfaced on
+# BuildInfo::ref and the {ref} token in formatBuildInfo() for user-
+# facing reports.  This is meant to be the most informative git ref
+# label available, falling back through:
+#
+#   1. branch name           — e.g. "main", "mediaio_refactor"
+#                              (preferred; user is on a real branch)
+#   2. exact tag             — e.g. "v1.2.3"
+#                              (detached on a tagged commit, e.g. CI
+#                              cutting a release build from a tag)
+#   3. `git describe`        — e.g. "v1.2.0-15-gabc1234" or short hash
+#                              (detached between tags, or no tags yet)
+#   4. "unknown"             — no git info available at all
+#
+# Step 1 uses `symbolic-ref --short HEAD` rather than `rev-parse
+# --abbrev-ref HEAD`, because the latter returns the literal string
+# "HEAD" on a detached checkout — which is the case we want to
+# *detect* so we can fall through to the tag / describe lookups.
+#
+# The ref is *not* included in PROMEKI_BUILD_IDENT — the git hash
+# already uniquely identifies the source state, and switching
+# branches/tags without rebuilding should not trip the staleness
+# check.
+execute_process(
+    COMMAND "${GIT_EXECUTABLE}" symbolic-ref --short HEAD
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    RESULT_VARIABLE _git_ref_res
+    OUTPUT_VARIABLE BUILD_INFO_REF
+    ERROR_QUIET
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(NOT _git_ref_res EQUAL 0 OR BUILD_INFO_REF STREQUAL "")
+    # Detached HEAD — try exact tag at HEAD.
+    execute_process(
+        COMMAND "${GIT_EXECUTABLE}" describe --tags --exact-match HEAD
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        RESULT_VARIABLE _git_ref_res
+        OUTPUT_VARIABLE BUILD_INFO_REF
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(NOT _git_ref_res EQUAL 0 OR BUILD_INFO_REF STREQUAL "")
+        # Not on a tagged commit — fall back to "closest tag + offset"
+        # or, when the repo has no tags at all, the short hash.
+        # `--always` is what guarantees the short-hash fallback.
+        execute_process(
+            COMMAND "${GIT_EXECUTABLE}" describe --tags --always
+            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+            RESULT_VARIABLE _git_ref_res
+            OUTPUT_VARIABLE BUILD_INFO_REF
+            ERROR_QUIET
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if(NOT _git_ref_res EQUAL 0 OR BUILD_INFO_REF STREQUAL "")
+            set(BUILD_INFO_REF "unknown")
+        endif()
+    endif()
+endif()
+unset(_git_ref_res)
+
+# Re-run configure when HEAD moves to a new ref.  .git/HEAD is the
+# tiny file `git checkout` rewrites with the new ref pointer, so it's
+# the right trigger for branch / tag switches (the existing .git/index
+# entry below covers commit / index changes).
 set_property(GLOBAL APPEND
     PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/.git/index"
+    "${PROJECT_SOURCE_DIR}/.git/HEAD"
 )
 
-if(NOT ${APP_VERSION_RC} EQUAL "0")
-    set(BUILD_INFO_VERSION "${APP_VERSION}-rc${APP_VERSION_RC}")
-elseif(NOT ${APP_VERSION_BETA} EQUAL "0")
-    set(BUILD_INFO_VERSION "${APP_VERSION}-beta${APP_VERSION_BETA}")
+# BuildInfo::version is always the bare MAJOR.MINOR.PATCH triple — it never
+# embeds the pre-release stage tag or the CI build number.  Stage and CI
+# build live in their own integer fields (stage / stageNum / build) and
+# can be re-composed at display time via formatBuildInfo() or by reading
+# the opaque BuildInfo::ident.
+set(BUILD_INFO_VERSION "${APP_VERSION}")
+# Numeric version components — exposed as integer fields on BuildInfo so
+# callers can do arithmetic comparisons without parsing the version string.
+set(BUILD_INFO_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+set(BUILD_INFO_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+set(BUILD_INFO_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+set(BUILD_INFO_VERSION_BUILD "${APP_VERSION_BUILD}")
+# Pre-release stage — translated to the C++ enum identifier so it can be
+# substituted directly into the BuildInfo initializer in buildinfo.cpp.in.
+if(APP_VERSION_STAGE_NAME STREQUAL "alpha")
+    set(BUILD_INFO_VERSION_STAGE "BuildStage::Alpha")
+elseif(APP_VERSION_STAGE_NAME STREQUAL "beta")
+    set(BUILD_INFO_VERSION_STAGE "BuildStage::Beta")
+elseif(APP_VERSION_STAGE_NAME STREQUAL "rc")
+    set(BUILD_INFO_VERSION_STAGE "BuildStage::RC")
 else()
-    set(BUILD_INFO_VERSION "${APP_VERSION}")
+    set(BUILD_INFO_VERSION_STAGE "BuildStage::Release")
 endif()
-set(BUILD_INFO_VERSION_BETA "${APP_VERSION_BETA}")
-set(BUILD_INFO_VERSION_RC "${APP_VERSION_RC}")
+set(BUILD_INFO_VERSION_STAGE_NUM "${APP_VERSION_STAGE_NUM}")
 set(BUILD_INFO_NAME "${APP_HUMAN_NAME}")
 string(TIMESTAMP BUILD_INFO_DATE "%Y-%m-%d")
 string(TIMESTAMP BUILD_INFO_TIME "%H:%M:%S")
 set(BUILD_INFO_TYPE "${CMAKE_BUILD_TYPE}")
 cmake_host_system_information(RESULT BUILD_INFO_HOSTNAME QUERY HOSTNAME)
+
+# Build identity string ###################################################
+#
+# A single fingerprint that uniquely identifies *this particular build* of
+# libpromeki.  It is exposed two ways:
+#
+#   1. As a compile-time #define PROMEKI_BUILD_IDENT in the public header
+#      <promeki/buildident.h> (generated below).  Applications and dependent
+#      libraries capture this value at *their* compile time.
+#
+#   2. As BuildInfo::ident (populated in buildinfo.cpp from the same value).
+#      The library reports its own current ident via getBuildInfo()->ident.
+#
+# At application startup, the captured compile-time value is compared
+# against the library's runtime value (see verifyBuildIdent() in
+# buildinfo.h).  Any divergence means the application binary is stale
+# against the libpromeki .so it is dynamically linked to and must be
+# rebuilt.  This is intentionally a strict equality check — it is *only*
+# meant to detect stale binaries, not to gate version compatibility.
+#
+# The format is unstructured, opaque, and may change at any time.  Do not
+# parse it; use BuildInfo for human-readable build information.
+#
+# Components are chosen so that any meaningful change to the library's
+# ABI or behaviour produces a new ident: short git hash, a +dirty marker
+# when the working tree is dirty, the build type, and the build
+# date+time (which guarantees a clean rebuild without source changes
+# still advances the ident).
+execute_process(
+    COMMAND "${GIT_EXECUTABLE}" status --porcelain
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    OUTPUT_VARIABLE _git_status
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+if(BUILD_INFO_REPOIDENT)
+    string(SUBSTRING "${BUILD_INFO_REPOIDENT}" 0 12 _repoident_short)
+else()
+    set(_repoident_short "unknown")
+endif()
+if(_git_status)
+    set(_repo_dirty "+dirty")
+else()
+    set(_repo_dirty "")
+endif()
+# Compose the version segment of the ident in standard semver order:
+#   MAJOR.MINOR.PATCH[-stage][+buildN]
+# where the stage suffix is:
+#   alpha           when stage=Alpha and stageNum=1
+#   alphaN          when stage=Alpha and stageNum>1
+#   beta            when stage=Beta  and stageNum=1
+#   betaN           when stage=Beta  and stageNum>1
+#   rcN             when stage=RC    (always numbered)
+# Release builds carry no stage suffix.  CI build is folded in only
+# when non-zero, so local developer builds of a release version keep
+# the clean "1.2.3" form.
+if(APP_VERSION_STAGE_NAME STREQUAL "release")
+    set(_version_with_stage "${BUILD_INFO_VERSION}")
+elseif(APP_VERSION_STAGE_NAME STREQUAL "rc")
+    set(_version_with_stage "${BUILD_INFO_VERSION}-rc${APP_VERSION_STAGE_NUM}")
+elseif(APP_VERSION_STAGE_NUM EQUAL 1)
+    # alpha / beta with stageNum=1 print without the trailing "1".
+    set(_version_with_stage "${BUILD_INFO_VERSION}-${APP_VERSION_STAGE_NAME}")
+else()
+    set(_version_with_stage "${BUILD_INFO_VERSION}-${APP_VERSION_STAGE_NAME}${APP_VERSION_STAGE_NUM}")
+endif()
+if(NOT APP_VERSION_BUILD STREQUAL "0")
+    set(_version_full "${_version_with_stage}+${APP_VERSION_BUILD}")
+else()
+    set(_version_full "${_version_with_stage}")
+endif()
+set(BUILD_INFO_IDENT
+    "${APP_NAME}/${_version_full}/${_repoident_short}${_repo_dirty}/${BUILD_INFO_TYPE}/${BUILD_INFO_DATE}T${BUILD_INFO_TIME}/${BUILD_INFO_HOSTNAME}"
+)
+unset(_git_status)
+unset(_repoident_short)
+unset(_repo_dirty)
+unset(_version_with_stage)
+unset(_version_full)
+
 configure_file(src/core/buildinfo.cpp.in buildinfo.cpp)
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/promeki/buildident.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/promeki/buildident.h
+    @ONLY
+)
 
 # Touch the .in file every build so configure_file re-generates buildinfo.cpp
-# with a fresh timestamp and git hash.  The generated file also #includes
-# config.h and platform.h for buildPlatformString(), buildFeatureString(),
-# etc. — if you add a new PROMEKI_ENABLE_* flag or platform macro that
-# should appear in build-info output, update buildinfo.cpp.in as well.
+# (and the generated buildident.h) with a fresh timestamp and git hash.  The
+# touched .in is registered with CMAKE_CONFIGURE_DEPENDS by configure_file(),
+# so cmake reconfigures and regenerates *all* configure_file() outputs in
+# this directory — including buildident.h — with the new timestamp.  This
+# is what makes the build identity advance on every library rebuild even
+# without source changes, which is essential for the staleness check.
+#
+# The generated file also #includes config.h and platform.h for
+# buildPlatformString(), buildFeatureString(), etc. — if you add a new
+# PROMEKI_ENABLE_* flag or platform macro that should appear in build-info
+# output, update buildinfo.cpp.in as well.
 add_custom_target(
     libpromeki_invalidate_build_info
     ALL
@@ -620,6 +937,15 @@ if(PROMEKI_ENABLE_TLS)
         set(USE_STATIC_MBEDTLS_LIBRARY            ON  CACHE BOOL "" FORCE)
         set(USE_SHARED_MBEDTLS_LIBRARY            OFF CACHE BOOL "" FORCE)
         set(DISABLE_PACKAGE_CONFIG_AND_INSTALL    ON  CACHE BOOL "" FORCE)
+        # Append our user-config to both the TLS and the PSA crypto
+        # configs.  Enables MBEDTLS_THREADING_C / MBEDTLS_THREADING_PTHREAD
+        # so the global PSA crypto state (key slots, CTR_DRBG, AES
+        # contexts) is locked when multiple threads use TLS.  Without
+        # this, ThreadSanitizer flags dozens of races inside psa_crypto.c
+        # and friends on any concurrent TLS workload.
+        set(_promeki_mbedtls_user_config "${CMAKE_CURRENT_LIST_DIR}/cmake/promeki_mbedtls_user_config.h")
+        set(MBEDTLS_USER_CONFIG_FILE        "${_promeki_mbedtls_user_config}" CACHE FILEPATH "" FORCE)
+        set(TF_PSA_CRYPTO_USER_CONFIG_FILE  "${_promeki_mbedtls_user_config}" CACHE FILEPATH "" FORCE)
         # mbedTLS 3.6 builds tfpsacrypto by default; preserve that
         # name when we link, with a fallback to the older
         # `mbedcrypto` target name on releases that still ship it.
@@ -943,6 +1269,7 @@ set(PROMEKI_HEADERS
     include/promeki/bufferpool.h
     include/promeki/bufferview.h
     include/promeki/buildinfo.h
+    ${CMAKE_CURRENT_BINARY_DIR}/include/promeki/buildident.h
     include/promeki/bytearray.h
     include/promeki/char.h
     include/promeki/ciepoint.h
@@ -1178,6 +1505,7 @@ set(PROMEKI_SOURCES
     src/core/variantspec.cpp
     src/core/videoformat.cpp
     src/core/widget.cpp
+    src/core/windowedstat.cpp
     src/core/xyzcolor.cpp
 )
 
@@ -1203,6 +1531,7 @@ if(PROMEKI_ENABLE_NETWORK)
         include/promeki/rtpsession.h
         include/promeki/sdpsession.h
         include/promeki/socketaddress.h
+        include/promeki/sslcontext.h
         include/promeki/tcpserver.h
         include/promeki/tcpsocket.h
         include/promeki/udpsocket.h
@@ -1210,6 +1539,7 @@ if(PROMEKI_ENABLE_NETWORK)
     )
     list(APPEND PROMEKI_SOURCES
         src/network/abstractsocket.cpp
+        src/network/sslcontext.cpp
         src/network/ipv4address.cpp
         src/network/ipv6address.cpp
         src/network/eui64.cpp
@@ -1235,14 +1565,17 @@ if(PROMEKI_ENABLE_NETWORK)
     )
 endif()
 
-# TLS sources (subset of network; vendored mbedTLS)
+# TLS sources (subset of network; vendored mbedTLS).  @c sslcontext is
+# always shipped — its header declaration is needed for the public
+# @ref HttpClient / @ref HttpServer / @ref WebSocket API to stay
+# shape-stable across feature configurations.  In a TLS-disabled build
+# the @c .cpp compiles to a stub that returns @c Error::NotSupported.
+# @c sslsocket stays gated since it is purely an internal transport.
 if(PROMEKI_ENABLE_TLS)
     list(APPEND PROMEKI_HEADERS
-        include/promeki/sslcontext.h
         include/promeki/sslsocket.h
     )
     list(APPEND PROMEKI_SOURCES
-        src/network/sslcontext.cpp
         src/network/sslsocket.cpp
     )
 endif()
@@ -1298,7 +1631,6 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/audiogen.h
         include/promeki/audiotestpattern.h
         include/promeki/basicfont.h
-        include/promeki/benchmarkreporter.h
         include/promeki/videoencoder.h
         include/promeki/videodecoder.h
         include/promeki/encodeddesc.h
@@ -1306,7 +1638,6 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/font.h
         include/promeki/frame.h
         include/promeki/framebridge.h
-        include/promeki/mediaiotask_framebridge.h
         include/promeki/imagedesc.h
         include/promeki/imagefile.h
         include/promeki/imagefileio.h
@@ -1315,12 +1646,16 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/ltcdecoder.h
         include/promeki/ltcencoder.h
         include/promeki/mediaio.h
+        include/promeki/mediaioport.h
+        include/promeki/mediaiosink.h
+        include/promeki/mediaiosource.h
+        include/promeki/mediaioportgroup.h
+        include/promeki/mediaioportconnection.h
         include/promeki/mediapipeline.h
         include/promeki/mediapipelineconfig.h
         include/promeki/mediapipelineplanner.h
         include/promeki/mediapipelinestats.h
         include/promeki/pipelineevent.h
-        include/promeki/pipelinestats.h
         include/promeki/mediapayload.h
         include/promeki/videopayload.h
         include/promeki/uncompressedvideopayload.h
@@ -1328,20 +1663,11 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/audiopayload.h
         include/promeki/pcmaudiopayload.h
         include/promeki/compressedaudiopayload.h
-        include/promeki/mediaiotask.h
         include/promeki/nvencvideoencoder.h
         include/promeki/nvdecvideodecoder.h
-        include/promeki/mediaiotask_csc.h
-        include/promeki/mediaiotask_src.h
-        include/promeki/mediaiotask_burn.h
-        include/promeki/mediaiotask_framesync.h
-        include/promeki/mediaiotask_videoencoder.h
-        include/promeki/mediaiotask_videodecoder.h
-        include/promeki/mediaiotask_rawbitstream.h
-        include/promeki/mediaiotask_imagefile.h
-        include/promeki/mediaiotask_quicktime.h
-        include/promeki/mediaiotask_rtp.h
-        include/promeki/mediaiotask_tpg.h
+        include/promeki/imagefilemediaio.h
+        include/promeki/quicktimemediaio.h
+        include/promeki/rtpmediaio.h
         include/promeki/paintengine.h
         include/promeki/quicktime.h
         include/promeki/mediadesc.h
@@ -1358,7 +1684,6 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/audiofilefactory.cpp
         src/proav/audiogen.cpp
         src/proav/audiotestpattern.cpp
-        src/proav/benchmarkreporter.cpp
         src/proav/videoencoder.cpp
         src/proav/videodecoder.cpp
         src/proav/encodeddesc.cpp
@@ -1366,7 +1691,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/framebridge.cpp
         src/proav/framesync.cpp
         src/proav/debugmediafile.cpp
-        src/proav/mediaiotask_debugmedia.cpp
+        src/proav/debugmediamediaio.cpp
         src/proav/imagedataencoder.cpp
         src/proav/imagedatadecoder.cpp
         src/proav/imagedesc.cpp
@@ -1383,33 +1708,46 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/ltcdecoder.cpp
         src/proav/ltcencoder.cpp
         src/proav/mediaio.cpp
+        src/proav/mediaiofactory.cpp
+        src/proav/commandmediaio.cpp
+        src/proav/inlinemediaio.cpp
+        src/proav/sharedthreadmediaio.cpp
+        src/proav/dedicatedthreadmediaio.cpp
+        src/proav/mediaiocommand.cpp
+        src/proav/mediaioreadcache.cpp
+        src/proav/mediaiostats.cpp
+        src/proav/mediaiostatscollector.cpp
         src/proav/mediaioclock.cpp
         src/proav/mediaiodescription.cpp
+        src/proav/mediaioport.cpp
+        src/proav/mediaiosink.cpp
+        src/proav/mediaiosource.cpp
+        src/proav/mediaioportgroup.cpp
+        src/proav/mediaioportconnection.cpp
         src/proav/mediapipeline.cpp
         src/proav/mediapipelineconfig.cpp
         src/proav/mediapipelineplanner.cpp
         src/proav/mediapipelinestats.cpp
+        src/proav/windowedstatsbundle.cpp
         src/proav/pipelineevent.cpp
-        src/proav/pipelinestats.cpp
         src/proav/mediapayload.cpp
         src/proav/uncompressedvideopayload.cpp
         src/proav/pcmaudiopayload.cpp
-        src/proav/mediaiotask.cpp
-        src/proav/mediaiotask_csc.cpp
-        src/proav/mediaiotask_src.cpp
-        src/proav/mediaiotask_burn.cpp
-        src/proav/mediaiotask_framebridge.cpp
-        src/proav/mediaiotask_framesync.cpp
-        src/proav/mediaiotask_videoencoder.cpp
-        src/proav/mediaiotask_videodecoder.cpp
-        src/proav/mediaiotask_rawbitstream.cpp
-        src/proav/mediaiotask_imagefile.cpp
-        src/proav/mediaiotask_inspector.cpp
-        src/proav/mediaiotask_mjpegstream.cpp
-        src/proav/mediaiotask_nullpacing.cpp
-        src/proav/mediaiotask_quicktime.cpp
-        src/proav/mediaiotask_rtp.cpp
-        src/proav/mediaiotask_tpg.cpp
+        src/proav/cscmediaio.cpp
+        src/proav/srcmediaio.cpp
+        src/proav/burnmediaio.cpp
+        src/proav/framebridgemediaio.cpp
+        src/proav/framesyncmediaio.cpp
+        src/proav/videoencodermediaio.cpp
+        src/proav/videodecodermediaio.cpp
+        src/proav/rawbitstreammediaio.cpp
+        src/proav/imagefilemediaio.cpp
+        src/proav/inspectormediaio.cpp
+        src/proav/mjpegstreammediaio.cpp
+        src/proav/nullpacingmediaio.cpp
+        src/proav/quicktimemediaio.cpp
+        src/proav/rtpmediaio.cpp
+        src/proav/tpgmediaio.cpp
         src/proav/paintengine.cpp
         src/proav/paintengine_422.cpp
         src/proav/paintengine_interleaved.cpp
@@ -1472,10 +1810,10 @@ if(PROMEKI_ENABLE_PROAV)
         )
     endif()
     if(PROMEKI_ENABLE_AUDIO)
-        list(APPEND PROMEKI_HEADERS include/promeki/mediaiotask_audiofile.h)
+        list(APPEND PROMEKI_HEADERS include/promeki/audiofilemediaio.h)
         list(APPEND PROMEKI_SOURCES
             src/proav/audiofile_libsndfile.cpp
-            src/proav/mediaiotask_audiofile.cpp
+            src/proav/audiofilemediaio.cpp
         )
     endif()
     if(PROMEKI_ENABLE_SRC)
@@ -1483,8 +1821,8 @@ if(PROMEKI_ENABLE_PROAV)
         list(APPEND PROMEKI_SOURCES src/proav/audioresampler.cpp)
     endif()
     if(PROMEKI_ENABLE_V4L2)
-        list(APPEND PROMEKI_HEADERS include/promeki/mediaiotask_v4l2.h)
-        list(APPEND PROMEKI_SOURCES src/proav/mediaiotask_v4l2.cpp)
+        list(APPEND PROMEKI_HEADERS include/promeki/v4l2mediaio.h)
+        list(APPEND PROMEKI_SOURCES src/proav/v4l2mediaio.cpp)
     endif()
     if(PROMEKI_ENABLE_CSC)
         list(APPEND PROMEKI_HEADERS
@@ -2141,6 +2479,8 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/variantspec.cpp
         tests/unit/videoformat.cpp
         tests/unit/waitcondition.cpp
+        tests/unit/windowedstat.cpp
+        tests/unit/windowedstatsbundle.cpp
         tests/unit/xyzcolor.cpp
     )
 
@@ -2235,12 +2575,17 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediaio.cpp
             tests/unit/mediaioclock.cpp
             tests/unit/mediaiodescription.cpp
+            tests/unit/mediaiorequest.cpp
             tests/unit/mediaio_bridges.cpp
             tests/unit/mediaio_identifiers.cpp
             tests/unit/mediaio_negotiation.cpp
-            tests/unit/mediaiotask_overrides.cpp
+            tests/unit/mediaioportconnection.cpp
+            tests/unit/mediaioreadcache.cpp
+            tests/unit/mediaiosink.cpp
+            tests/unit/mediaiostatscollector.cpp
+            tests/unit/mediaiosource.cpp
+            tests/unit/mediaio_overrides.cpp
             tests/unit/mediapayload.cpp
-            tests/unit/mediaio_stats.cpp
             tests/unit/mediapipelineconfig.cpp
             tests/unit/mediapipelineplanner.cpp
             tests/unit/mediapipelinestats.cpp
@@ -2315,10 +2660,10 @@ if(PROMEKI_BUILD_TESTS)
         )
     endif()
 
-    # The pipeline demo's REST/WS test exercises the static-library
-    # split in demos/promeki-pipeline directly, so it only goes in
-    # when the demo target was actually configured (which itself
-    # requires the network + proav stacks).
+    # The pipeline demo's REST/WS test depends on the static-library
+    # split in demos/promeki-pipeline.  Phase 18 re-enables it after
+    # rooting out the multipart-MJPEG preview symptoms that surfaced
+    # during Phase 14b.
     if(PROMEKI_BUILD_DEMOS AND PROMEKI_ENABLE_NETWORK AND PROMEKI_ENABLE_PROAV)
         list(APPEND UNITTEST_SOURCES
             tests/unit/promeki_pipeline_api.cpp

@@ -7,6 +7,10 @@
 
 #include <doctest/doctest.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaiocommand.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/mediaiorequest.h>
+#include <promeki/mediaiosource.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/variantspec.h>
 #include <promeki/videoformat.h>
@@ -33,17 +37,20 @@ using namespace promeki;
 // ============================================================================
 
 TEST_CASE("MediaIO auto-fills missing native pts and video duration on read") {
-        MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("TPG");
         cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
         cfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
         cfg.set(MediaConfig::AudioEnabled, true);
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Source).isOk());
+        REQUIRE(io->open().wait().isOk());
 
-        Frame::Ptr frame;
-        REQUIRE(io->readFrame(frame).isOk());
+        MediaIORequest readReq = io->source(0)->readFrame();
+        REQUIRE(readReq.wait().isOk());
+        const auto *cr = readReq.commandAs<MediaIOCommandRead>();
+        REQUIRE(cr != nullptr);
+        Frame::Ptr frame = cr->frame;
         REQUIRE(frame.isValid());
 
         auto vids = frame->videoPayloads();
@@ -73,22 +80,25 @@ TEST_CASE("MediaIO auto-fills missing native pts and video duration on read") {
         CHECK(ap.hasDuration());
         CHECK_FALSE(ap.duration().isZero());
 
-        io->close();
+        io->close().wait();
         delete io;
 }
 
 TEST_CASE("MediaIO does not overwrite a producer-supplied pts") {
-        MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("TPG");
         cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
         cfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
         cfg.set(MediaConfig::AudioEnabled, false);
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Source).isOk());
+        REQUIRE(io->open().wait().isOk());
 
-        Frame::Ptr frame;
-        REQUIRE(io->readFrame(frame).isOk());
+        MediaIORequest readReq2 = io->source(0)->readFrame();
+        REQUIRE(readReq2.wait().isOk());
+        const auto *cr2 = readReq2.commandAs<MediaIOCommandRead>();
+        REQUIRE(cr2 != nullptr);
+        Frame::Ptr frame = cr2->frame;
         REQUIRE(frame.isValid());
         auto vids = frame->videoPayloads();
         REQUIRE_FALSE(vids.isEmpty());
@@ -107,7 +117,7 @@ TEST_CASE("MediaIO does not overwrite a producer-supplied pts") {
         vids[0].modify()->setPts(explicitMts);
         CHECK(vids[0]->pts() == explicitMts);
 
-        io->close();
+        io->close().wait();
         delete io;
 }
 
@@ -134,15 +144,17 @@ TEST_CASE("MediaIO does not overwrite a producer-supplied pts") {
 // ============================================================================
 
 TEST_CASE("MediaIO: defaultConfig round-trips losslessly through JSON for every backend") {
-        auto formats = MediaIO::registeredFormats();
-        REQUIRE_FALSE(formats.isEmpty());
-        for (const auto &fd : formats) {
-                CAPTURE(fd.name);
-                if (!fd.configSpecs) continue;
+        const auto &factories = MediaIOFactory::registeredFactories();
+        REQUIRE_FALSE(factories.isEmpty());
+        for (const MediaIOFactory *factory : factories) {
+                if (factory == nullptr) continue;
+                const String name = factory->name();
+                CAPTURE(name);
+                MediaIO::Config::SpecMap specs = factory->configSpecs();
+                if (specs.isEmpty()) continue;
 
-                MediaIO::Config          def = MediaIO::defaultConfig(fd.name);
-                JsonObject               json = def.toJson();
-                MediaIO::Config::SpecMap specs = fd.configSpecs();
+                MediaIO::Config def = MediaIOFactory::defaultConfig(name);
+                JsonObject      json = def.toJson();
 
                 // For each spec'd key the default produced, locate
                 // the JSON-emitted form, re-parse it through the

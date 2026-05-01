@@ -153,8 +153,8 @@ namespace promekipipeline {
                 // disconnect on the abort path, so listening to both gives us
                 // an early-out without double-freeing — dropSubscriber is
                 // idempotent.
-                socket->disconnectedSignal.connect([this, socket]() { dropSubscriber(socket); });
-                socket->errorOccurredSignal.connect([this, socket](promeki::Error) { dropSubscriber(socket); });
+                socket->disconnectedSignal.connect([this, socket]() { dropSubscriber(socket); }, this);
+                socket->errorOccurredSignal.connect([this, socket](promeki::Error) { dropSubscriber(socket); }, this);
                 promekiDebug("EventBroadcaster: subscriber attached%s%s",
                              filter.isEmpty() ? "" : " filter=", filter.cstr());
         }
