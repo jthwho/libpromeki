@@ -108,7 +108,7 @@ namespace {
                         BufferView view(pcm, 0, sz);
                         auto       silence = PcmAudioPayload::Ptr::create(desc, kChunkSamples, view);
                         out->pushAudio(*silence);
-                        std::this_thread::sleep_for(std::chrono::microseconds(kFeedIntervalMicros));
+                        Thread::sleepUs(kFeedIntervalMicros);
                 }
         }
 
@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
                         return isOk(r) ? value(r) : 0;
                 };
                 while (warmupNow() == 0) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                        Thread::sleepMs(10);
                         if ((TimeStamp::now().nanoseconds() - warmupStart) / 1000000LL >= kMaxWarmupMs) {
                                 std::fprintf(stderr, "warmup: clock never advanced past zero — "
                                                      "audio device never started feeding back\n");
@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
         int64_t stallStartWall = startWallNs;
 
         while (true) {
-                std::this_thread::sleep_for(std::chrono::microseconds(kPollIntervalMicros));
+                Thread::sleepUs(kPollIntervalMicros);
                 int64_t wallNs = TimeStamp::now().nanoseconds();
                 if ((wallNs - startWallNs) / 1000000LL >= durationMs) break;
 

@@ -16,6 +16,7 @@
 #include <promeki/logger.h>
 #include <promeki/url.h>
 #include <promeki/mediaiorequest.h>
+#include <promeki/thread.h>
 #include <chrono>
 #include <thread>
 
@@ -150,11 +151,13 @@ Error FrameBridgeMediaIO::executeCmd(MediaIOCommandClose &cmd) {
 Error FrameBridgeMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         // Read from the bridge (we were opened in Input mode).
         if (_isOutput) return Error::NotSupported;
-        // Poll for a fresh TICK with a wide-ish deadline so slow
-        // sources (low frame rates, or paused publishers) don't
-        // bounce the caller with TryAgain every few hundred ms.
-        const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(1000);
-        while (std::chrono::steady_clock::now() < deadline) {
+        // Poll for a fresh TICK without a wall-clock deadline.
+        // Returning Error::TryAgain from a leaf source strands the
+        // pipeline pump (it expects an upstream Write to drive the
+        // next frameReady, which never happens here), so we block
+        // until either a frame arrives or cancelBlockingWork() trips
+        // the bridge's abort flag.
+        for (;;) {
                 Error      rerr;
                 Frame::Ptr f = _bridge->readFrame(&rerr);
                 if (rerr.isError()) return rerr;
@@ -172,9 +175,9 @@ Error FrameBridgeMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                         cmd.currentFrame = f->metadata().getAs<int64_t>(Metadata::FrameNumber, int64_t(0));
                         return Error::Ok;
                 }
-                std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                if (_bridge->isAborted()) return Error::Cancelled;
+                Thread::sleepMs(2);
         }
-        return Error::TryAgain;
 }
 
 void FrameBridgeMediaIO::cancelBlockingWork() {

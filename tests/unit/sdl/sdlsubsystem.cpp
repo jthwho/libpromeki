@@ -12,6 +12,7 @@
 #include <promeki/elapsedtimer.h>
 #include <promeki/widget.h>
 #include <promeki/keyevent.h>
+#include <promeki/thread.h>
 
 #include <chrono>
 #include <thread>
@@ -33,7 +34,7 @@ TEST_CASE("SdlSubsystem: worker-thread quit wakes Application::exec()") {
         REQUIRE(Application::mainEventLoop() != nullptr);
 
         std::thread worker([] {
-                std::this_thread::sleep_for(std::chrono::milliseconds(30));
+                Thread::sleepMs(30);
                 Application::quit(7);
         });
 

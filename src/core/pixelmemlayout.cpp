@@ -1251,6 +1251,25 @@ static PixelMemLayout::Data makeSemiPlanar420_16BE() {
         return d;
 }
 
+static PixelMemLayout::Data makeSemiPlanar422_16LE() {
+        PixelMemLayout::Data d = makeSemiPlanar422_10LE();
+        d.id = PixelMemLayout::SP_422_16_LE;
+        d.name = "SemiPlanar_422_16_LE";
+        d.desc = "2 planes, 16-bit LE, 4:2:2 NV16 (NDI P216 wire format)";
+        d.comps[0].bits = 16;
+        d.comps[1].bits = 16;
+        d.comps[2].bits = 16;
+        return d;
+}
+
+static PixelMemLayout::Data makeSemiPlanar422_16BE() {
+        PixelMemLayout::Data d = makeSemiPlanar422_16LE();
+        d.id = PixelMemLayout::SP_422_16_BE;
+        d.name = "SemiPlanar_422_16_BE";
+        d.desc = "2 planes, 16-bit BE, 4:2:2 NV16";
+        return d;
+}
+
 static PixelMemLayout::Data makeInterleavedUYVY3x16LE() {
         PixelMemLayout::Data d = makeInterleavedUYVY3x12LE();
         d.id = PixelMemLayout::I_422_UYVY_3x16_LE;
@@ -1350,6 +1369,8 @@ struct PixelMemLayoutRegistry {
                         add(makeSemiPlanar422_10BE());
                         add(makeSemiPlanar422_12LE());
                         add(makeSemiPlanar422_12BE());
+                        add(makeSemiPlanar422_16LE());
+                        add(makeSemiPlanar422_16BE());
                         add(makePlanar411_3x8());
                         add(makePlanar422_3x16LE());
                         add(makePlanar422_3x16BE());

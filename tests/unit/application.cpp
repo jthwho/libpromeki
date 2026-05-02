@@ -187,7 +187,7 @@ TEST_CASE("Application: quit from another thread wakes the main EventLoop") {
         Application app(1, argv);
 
         std::thread quitter([]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                Thread::sleepMs(50);
                 Application::quit(7);
         });
 

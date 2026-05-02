@@ -217,6 +217,9 @@ String buildFeatureString() {
 #if PROMEKI_ENABLE_NVDEC
         features += "NVDEC";
 #endif
+#if PROMEKI_ENABLE_NDI
+        features += "NDI";
+#endif
         return String::sprintf("Features: %s",
                 features.isEmpty() ? "(none)" : features.join(" ").cstr());
 }

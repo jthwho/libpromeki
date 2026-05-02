@@ -12,6 +12,7 @@
 #include <promeki/enums.h>
 #include <promeki/enumlist.h>
 #include <promeki/url.h>
+#include <promeki/duration.h>
 #include <promeki/mediaduration.h>
 #include <promeki/timecode.h>
 
@@ -1679,6 +1680,126 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                           .setDefault(MetadataRtpFormat::JsonMetadata)
                                                           .setEnumType(MetadataRtpFormat::Type)
                                                           .setDescription("Wire format for the metadata RTP stream."));
+
+                // ============================================================
+                // NDI (Network Device Interface) — NdiMediaIO
+                //
+                // The NDI MediaIO backend exposes a single
+                // bidirectional stream per instance — sink mode for
+                // sending and source mode for receiving.  Discovery
+                // runs in a process-wide background thread (see
+                // @ref NdiDiscovery) and these keys configure how the
+                // backend interacts with it.
+                // ============================================================
+
+                /// @brief String — canonical NDI source name (`MachineName (Source)`)
+                /// for source mode.  When the MediaIO is opened from an
+                /// `ndi://` URL via @ref MediaIOFactory::createFromUrl, this
+                /// key is populated automatically from the URL parse.
+                PROMEKI_DECLARE_ID(NdiSourceName, VariantSpec()
+                                                          .setType(Variant::TypeString)
+                                                          .setDefault(String())
+                                                          .setDescription("Canonical NDI source name "
+                                                                          "(MachineName (Source)) for source mode."));
+
+                /// @brief String — sender-advertised name in sink mode.  The
+                /// canonical name on the network ends up as
+                /// `<MachineName> (<NdiSendName>)`.
+                PROMEKI_DECLARE_ID(NdiSendName, VariantSpec()
+                                                        .setType(Variant::TypeString)
+                                                        .setDefault(String("promeki"))
+                                                        .setDescription("Name advertised by the NDI sender."));
+
+                /// @brief String — comma-separated NDI groups the sender
+                /// advertises to.  Empty (default) means all groups.  Acts
+                /// as NDI's coarse access-control list — receivers only
+                /// discover senders in groups they're configured to see.
+                PROMEKI_DECLARE_ID(NdiSendGroups, VariantSpec()
+                                                          .setType(Variant::TypeString)
+                                                          .setDefault(String())
+                                                          .setDescription("Comma-separated NDI groups for the sender."));
+
+                /// @brief Enum @ref NdiBandwidth — receive-side bandwidth tier.
+                /// Translates to @c NDIlib_recv_bandwidth_e at @c recv_create_v3 time.
+                PROMEKI_DECLARE_ID(NdiBandwidth, VariantSpec()
+                                                         .setType(Variant::TypeEnum)
+                                                         .setDefault(promeki::NdiBandwidth::Highest)
+                                                         .setEnumType(promeki::NdiBandwidth::Type)
+                                                         .setDescription("NDI receiver bandwidth tier."));
+
+                /// @brief Enum @ref NdiColorFormat — receive-side color-format hint.
+                /// Translates to @c NDIlib_recv_color_format_e.
+                /// Default is @c Fastest (returns the wire format — UYVY for
+                /// 8-bit, P216 for 10/12/16-bit).  @c Best is not the default
+                /// because the NDI Advanced SDK delivers PA16 under that mode,
+                /// which libpromeki does not yet decode.
+                PROMEKI_DECLARE_ID(NdiColorFormat, VariantSpec()
+                                                           .setType(Variant::TypeEnum)
+                                                           .setDefault(promeki::NdiColorFormat::Fastest)
+                                                           .setEnumType(promeki::NdiColorFormat::Type)
+                                                           .setDescription("NDI receiver color-format hint "
+                                                                           "(default: Fastest — returns wire "
+                                                                           "format, avoids PA16 from Advanced SDK)."));
+
+                /// @brief String — comma-separated extra IPs / hostnames for
+                /// non-mDNS discovery (subnets where Bonjour can't reach).
+                /// Honoured by both senders and receivers.
+                PROMEKI_DECLARE_ID(NdiExtraIps, VariantSpec()
+                                                        .setType(Variant::TypeString)
+                                                        .setDefault(String())
+                                                        .setDescription("Comma-separated extra IPs / hostnames for "
+                                                                        "non-mDNS NDI discovery."));
+
+                /// @brief bool — sender's @c clock_video flag.  When true
+                /// (default), the SDK paces video frame submission to the
+                /// declared frame rate, so a producer that pushes frames
+                /// as fast as it can ends up sending at the natural rate
+                /// rather than bursting onto the wire.  Set false only
+                /// when the caller has its own pacing source (e.g. a
+                /// hardware clock driving submission cadence).
+                PROMEKI_DECLARE_ID(NdiSendClockVideo, VariantSpec()
+                                                             .setType(Variant::TypeBool)
+                                                             .setDefault(true)
+                                                             .setDescription("Enable sender-side video clock pacing."));
+
+                /// @brief bool — sender's @c clock_audio flag.  Default
+                /// true (analogue of @ref NdiSendClockVideo for audio).
+                PROMEKI_DECLARE_ID(NdiSendClockAudio, VariantSpec()
+                                                             .setType(Variant::TypeBool)
+                                                             .setDefault(true)
+                                                             .setDescription("Enable sender-side audio clock pacing."));
+
+                /// @brief int — timeout for one @c recv_capture_v3 poll
+                /// inside the receiver's capture thread.  Bounds how
+                /// quickly @c cancelBlockingWork interrupts an in-flight
+                /// blocking receive.
+                PROMEKI_DECLARE_ID(NdiCaptureTimeoutMs, VariantSpec()
+                                                               .setType(Variant::TypeS32)
+                                                               .setDefault(int32_t(100))
+                                                               .setRange(int32_t(10), int32_t(5000))
+                                                               .setDescription("recv_capture_v3 poll timeout in ms."));
+
+                /// @brief Duration — maximum time the receiver waits for
+                /// @ref NdiDiscovery to register the requested source
+                /// before giving up.  Capped at 30 s defensively.  Bare
+                /// numbers passed via the CLI are parsed as seconds, so
+                /// `--dc NdiFindWait:5` means 5 s; pass `5000ms` etc.
+                /// for finer units.
+                PROMEKI_DECLARE_ID(NdiFindWait, VariantSpec()
+                                                        .setType(Variant::TypeDuration)
+                                                        .setDefault(Duration::fromSeconds(3))
+                                                        .setDescription("Max wait for NdiDiscovery to "
+                                                                        "register the requested source."));
+
+                /// @brief Enum @ref NdiReceiveBitDepth — promised bit depth
+                /// for received P216 frames.  See the Enum's documentation
+                /// for the in-band-vs-out-of-band convention.
+                PROMEKI_DECLARE_ID(NdiReceiveBitDepth, VariantSpec()
+                                                              .setType(Variant::TypeEnum)
+                                                              .setDefault(promeki::NdiReceiveBitDepth::Auto)
+                                                              .setEnumType(promeki::NdiReceiveBitDepth::Type)
+                                                              .setDescription("Promised bit depth for received "
+                                                                              "P216 frames (Auto = 16)."));
 
                 // ============================================================
                 // V4L2 capture (Linux)

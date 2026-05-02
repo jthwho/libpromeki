@@ -186,7 +186,7 @@ TEST_CASE("MulticastReceiver") {
                 // but the test still needs to tolerate scheduler
                 // jitter.
                 for (int i = 0; i < 50 && !sawData.load(); i++) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                        Thread::sleepMs(10);
                 }
                 rx.stop();
 

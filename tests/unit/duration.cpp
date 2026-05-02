@@ -7,6 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/duration.h>
+#include <promeki/error.h>
 #include <promeki/string.h>
 
 using namespace promeki;
@@ -208,4 +209,83 @@ TEST_CASE("Duration: format scaled with width") {
         String   s = String::format("{:scaled:>12}", d);
         CHECK(s.size() == 12);
         CHECK(s.contains("42 us"));
+}
+
+TEST_CASE("Duration: fromString unit suffixes") {
+        Error    e;
+        Duration d;
+
+        d = Duration::fromString("3s", &e);
+        CHECK(!e.isError());
+        CHECK(d == Duration::fromSeconds(3));
+
+        d = Duration::fromString("500ms", &e);
+        CHECK(!e.isError());
+        CHECK(d == Duration::fromMilliseconds(500));
+
+        d = Duration::fromString("100us", &e);
+        CHECK(!e.isError());
+        CHECK(d == Duration::fromMicroseconds(100));
+
+        d = Duration::fromString("250ns", &e);
+        CHECK(!e.isError());
+        CHECK(d == Duration::fromNanoseconds(250));
+
+        d = Duration::fromString("2m", &e);
+        CHECK(!e.isError());
+        CHECK(d == Duration::fromMinutes(2));
+
+        d = Duration::fromString("1h", &e);
+        CHECK(!e.isError());
+        CHECK(d == Duration::fromHours(1));
+}
+
+TEST_CASE("Duration: fromString bare number is seconds") {
+        Error    e;
+        Duration d = Duration::fromString("5", &e);
+        CHECK(!e.isError());
+        CHECK(d == Duration::fromSeconds(5));
+}
+
+TEST_CASE("Duration: fromString decimals and whitespace") {
+        Error    e;
+        Duration d;
+
+        d = Duration::fromString("1.5s", &e);
+        CHECK(!e.isError());
+        CHECK(d == Duration::fromMilliseconds(1500));
+
+        d = Duration::fromString("0.25ms", &e);
+        CHECK(!e.isError());
+        CHECK(d == Duration::fromMicroseconds(250));
+
+        d = Duration::fromString("  3 s ", &e);
+        CHECK(!e.isError());
+        CHECK(d == Duration::fromSeconds(3));
+}
+
+TEST_CASE("Duration: fromString rejects garbage") {
+        Error e;
+        Duration::fromString("", &e);
+        CHECK(e.isError());
+
+        e = Error();
+        Duration::fromString("abc", &e);
+        CHECK(e.isError());
+
+        e = Error();
+        Duration::fromString("3 weeks", &e);
+        CHECK(e.isError());
+
+        e = Error();
+        Duration::fromString("ms", &e);  // unit only, no magnitude
+        CHECK(e.isError());
+}
+
+TEST_CASE("Duration: fromString negative values") {
+        Error    e;
+        Duration d = Duration::fromString("-500ms", &e);
+        CHECK(!e.isError());
+        CHECK(d == Duration::fromMilliseconds(-500));
+        CHECK(d.isNegative());
 }

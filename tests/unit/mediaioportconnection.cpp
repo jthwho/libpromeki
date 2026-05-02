@@ -23,9 +23,12 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/elapsedtimer.h>
 #include <promeki/enums.h>
+#include <promeki/dedicatedthreadmediaio.h>
 #include <promeki/dir.h>
 #include <promeki/file.h>
+#include <promeki/framerate.h>
 #include <promeki/pixelformat.h>
+#include <promeki/thread.h>
 #include <promeki/videoformat.h>
 
 #include "mediaio_test_helpers.h"
@@ -41,7 +44,7 @@ template <typename Pred> bool pumpUntil(EventLoop &loop, Pred pred, int64_t time
         while (t.elapsed() < timeoutMs) {
                 loop.processEvents();
                 if (pred()) return true;
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                Thread::sleepMs(5);
         }
         return false;
 }
@@ -545,7 +548,7 @@ TEST_CASE("MediaIOPortConnection unblocks upstream when downstream drains the tr
                         stableCount = 0;
                         lastFrames = now;
                 }
-                std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                Thread::sleepMs(2);
         }
         REQUIRE(stableCount >= plateauPolls);
         const int64_t backpressureFrames = upstream.framesTransferred();
@@ -741,4 +744,130 @@ TEST_CASE("MediaIOPortConnection treats NotOpen mid-flight as upstreamDone") {
         MediaIORequest sinkCloseReq = sink.close();
         sink.processAll();
         (void)sinkCloseReq.wait();
+}
+
+// ============================================================================
+// Leaf-source slow-first-read regression
+//
+// Production V4L2 / RTP / FrameBridge sources block in executeCmd(Read)
+// while the upstream device warms up.  An earlier version of those
+// backends returned Error::TryAgain on a deadline timeout, which the
+// pump (in its transform-stage TryAgain branch) interprets as "wait
+// for the next upstream Write to fire frameReady" — but a leaf source
+// has no upstream Write, so exactly one Read cmd ever ran and the
+// pipeline stalled.  The fix in V4L2/RTP/FrameBridge is to never
+// return TryAgain: block in executeCmd(Read) until either a frame is
+// produced or cancelBlockingWork() unwinds the wait at close time.
+//
+// This test documents that contract by standing up a fake leaf source
+// whose first Read sleeps for an interval significantly longer than
+// any plausible pump timeout, and then asserts that the pump still
+// drives multiple frames end-to-end (not just one).  A regression
+// would surface as the second Read never being submitted.
+// ============================================================================
+
+namespace {
+
+// Arbitrary fake mediaDesc that exists only so the connection has
+// something to bind sink to source against.  No real format is needed
+// because the test sink just counts frames.
+MediaDesc makeFakeMediaDesc() {
+        MediaDesc md;
+        md.setFrameRate(FrameRate(FrameRate::RationalType(30, 1)));
+        return md;
+}
+
+class SlowFirstReadMediaIO : public DedicatedThreadMediaIO {
+                PROMEKI_OBJECT(SlowFirstReadMediaIO, DedicatedThreadMediaIO)
+        public:
+                SlowFirstReadMediaIO(int64_t firstReadDelayMs, ObjectBase *parent = nullptr)
+                    : DedicatedThreadMediaIO(parent), _firstReadDelayMs(firstReadDelayMs) {}
+
+        protected:
+                Error executeCmd(MediaIOCommandOpen &cmd) override {
+                        (void)cmd;
+                        MediaIOPortGroup *group = addPortGroup("slow-src");
+                        if (group == nullptr) return Error::Invalid;
+                        group->setFrameRate(FrameRate(FrameRate::RationalType(30, 1)));
+                        group->setFrameCount(MediaIO::FrameCountInfinite);
+                        if (addSource(group, makeFakeMediaDesc()) == nullptr) return Error::Invalid;
+                        return Error::Ok;
+                }
+                Error executeCmd(MediaIOCommandClose &cmd) override {
+                        (void)cmd;
+                        return Error::Ok;
+                }
+                Error executeCmd(MediaIOCommandRead &cmd) override {
+                        // Simulate the V4L2 startup pause: first Read
+                        // blocks while the "device" warms up.  A bug
+                        // that bails the pump on the first Read shows
+                        // up here as no second Read ever arriving.
+                        if (_firstRead) {
+                                _firstRead = false;
+                                Thread::sleepMs(_firstReadDelayMs);
+                        }
+                        cmd.frame = Frame::Ptr::takeOwnership(new Frame());
+                        cmd.currentFrame = FrameNumber(_frameNum++);
+                        return Error::Ok;
+                }
+
+        private:
+                int64_t _firstReadDelayMs;
+                bool    _firstRead = true;
+                int64_t _frameNum = 1;
+};
+
+class CountingSinkMediaIO : public ::promeki::tests::InlineTestMediaIO {
+                PROMEKI_OBJECT(CountingSinkMediaIO, InlineTestMediaIO)
+        public:
+                CountingSinkMediaIO(ObjectBase *parent = nullptr) : InlineTestMediaIO(parent) {}
+
+                std::atomic<int> writes{0};
+
+        protected:
+                Error executeCmd(MediaIOCommandOpen &cmd) override {
+                        (void)cmd;
+                        MediaIOPortGroup *group = addPortGroup("counting-sink");
+                        if (group == nullptr) return Error::Invalid;
+                        if (addSink(group, makeFakeMediaDesc()) == nullptr) return Error::Invalid;
+                        return Error::Ok;
+                }
+                Error executeCmd(MediaIOCommandWrite &cmd) override {
+                        (void)cmd;
+                        writes.fetch_add(1, std::memory_order_relaxed);
+                        return Error::Ok;
+                }
+};
+
+} // namespace
+
+TEST_CASE("MediaIOPortConnection drives multiple frames past a slow first read") {
+        EventLoop loop;
+
+        // 250 ms is comfortably longer than any historical "is the
+        // device dead?" pump-side timeout (the V4L2 backend's own
+        // pre-fix value was 200 ms) so the bug pattern would always
+        // trip on the first Read if it were still present.
+        SlowFirstReadMediaIO source(/*firstReadDelayMs=*/250);
+        REQUIRE(source.open().wait().isOk());
+        REQUIRE(source.sourceCount() > 0);
+
+        CountingSinkMediaIO sink;
+        REQUIRE(sink.open().wait().isOk());
+        REQUIRE(sink.sinkCount() > 0);
+
+        MediaIOPortConnection conn(source.source(0), sink.sink(0));
+        REQUIRE(conn.start().isOk());
+
+        // 5 s budget covers the 250 ms cold start plus enough wall
+        // time for several follow-up frames at any reasonable cadence.
+        const int kTargetFrames = 5;
+        REQUIRE(pumpUntil(
+                loop, [&]() { return sink.writes.load(std::memory_order_relaxed) >= kTargetFrames; }, 5000));
+        CHECK(sink.writes.load(std::memory_order_relaxed) >= kTargetFrames);
+        CHECK(conn.framesTransferred() >= kTargetFrames);
+
+        conn.stop();
+        (void)source.close().wait();
+        (void)sink.close().wait();
 }

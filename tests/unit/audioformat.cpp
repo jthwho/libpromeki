@@ -584,6 +584,82 @@ TEST_CASE("AudioFormat: convertTo() refuses compressed sides via fallback") {
         CHECK(err == Error::NotSupported);
 }
 
+TEST_CASE("AudioFormat: convertTo() planar→interleaved transposes channels") {
+        AudioFormat src(AudioFormat::PCMP_Float32LE);
+        AudioFormat dst(AudioFormat::PCMI_Float32LE);
+
+        // 3 stereo frames, planar input: [L0, L1, L2, R0, R1, R2].
+        const float in[6] = {1.0f, 2.0f, 3.0f, 10.0f, 20.0f, 30.0f};
+        float       out[6] = {};
+        float       scratch[6] = {};
+        Error       err = src.convertTo(dst, out, in, /*samplesPerChannel=*/3, /*channels=*/2, scratch);
+        CHECK(err.isOk());
+        // Expected interleaved: [L0,R0, L1,R1, L2,R2] = [1,10, 2,20, 3,30].
+        CHECK(out[0] == 1.0f);
+        CHECK(out[1] == 10.0f);
+        CHECK(out[2] == 2.0f);
+        CHECK(out[3] == 20.0f);
+        CHECK(out[4] == 3.0f);
+        CHECK(out[5] == 30.0f);
+}
+
+TEST_CASE("AudioFormat: convertTo() interleaved→planar transposes channels") {
+        AudioFormat src(AudioFormat::PCMI_Float32LE);
+        AudioFormat dst(AudioFormat::PCMP_Float32LE);
+
+        // 3 stereo frames, interleaved input: [L0,R0, L1,R1, L2,R2].
+        const float in[6] = {1.0f, 10.0f, 2.0f, 20.0f, 3.0f, 30.0f};
+        float       out[6] = {};
+        float       scratch[6] = {};
+        Error       err = src.convertTo(dst, out, in, /*samplesPerChannel=*/3, /*channels=*/2, scratch);
+        CHECK(err.isOk());
+        // Expected planar: [L0,L1,L2, R0,R1,R2] = [1,2,3, 10,20,30].
+        CHECK(out[0] == 1.0f);
+        CHECK(out[1] == 2.0f);
+        CHECK(out[2] == 3.0f);
+        CHECK(out[3] == 10.0f);
+        CHECK(out[4] == 20.0f);
+        CHECK(out[5] == 30.0f);
+}
+
+TEST_CASE("AudioFormat: convertTo() channel-aware preserves same-layout fast path") {
+        // Same format both sides — the channel-aware overload should
+        // still hit the registered identity converter without needing
+        // a scratch.
+        AudioFormat fmt(AudioFormat::PCMI_Float32LE);
+        const float in[4]  = {0.5f, -0.25f, 0.0f, 1.0f};
+        float       out[4] = {};
+        Error       err = fmt.convertTo(fmt, out, in, /*samplesPerChannel=*/2, /*channels=*/2,
+                                        /*scratch=*/nullptr);
+        CHECK(err.isOk());
+        CHECK(out[0] == 0.5f);
+        CHECK(out[1] == -0.25f);
+        CHECK(out[2] == 0.0f);
+        CHECK(out[3] == 1.0f);
+}
+
+TEST_CASE("AudioFormat: convertTo() planar→interleaved with width change goes via float") {
+        // PCMP_S16LE → PCMI_Float32LE: cross-layout AND cross-width.
+        // Exercises the via-float trip plus the transpose step.
+        AudioFormat src(AudioFormat::PCMP_S16LE);
+        AudioFormat dst(AudioFormat::PCMI_Float32LE);
+
+        // 2 stereo frames, planar S16 input: ch0=[0x4000, 0x0000], ch1=[0xC000, 0x7FFF].
+        const int16_t in[4] = {0x4000, 0x0000, static_cast<int16_t>(0xC000), 0x7FFF};
+        float         out[4] = {};
+        float         scratch[4] = {};
+        Error         err = src.convertTo(dst, out, in, /*samplesPerChannel=*/2, /*channels=*/2, scratch);
+        CHECK(err.isOk());
+        // After via-float + transpose the interleaved output should
+        // pair channels at each sample:
+        //   sample 0: L=0x4000→~0.5, R=0xC000→~-0.5
+        //   sample 1: L=0x0000→0,    R=0x7FFF→~+1.0
+        CHECK(out[0] == doctest::Approx(0.5f).epsilon(0.001));
+        CHECK(out[1] == doctest::Approx(-0.5f).epsilon(0.001));
+        CHECK(out[2] == doctest::Approx(0.0f).epsilon(0.001));
+        CHECK(out[3] == doctest::Approx(1.0f).epsilon(0.001));
+}
+
 TEST_CASE("AudioFormat: registerDirectConverter installs a custom path") {
         AudioFormat::ID   userSrc = AudioFormat::registerType();
         AudioFormat::ID   userDst = AudioFormat::registerType();

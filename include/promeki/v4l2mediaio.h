@@ -155,6 +155,12 @@ class V4l2MediaIO : public DedicatedThreadMediaIO {
                 Error executeCmd(MediaIOCommandRead &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
 
+                // Wakes the executeCmd(Read) pop-loop so close() can
+                // proceed past an in-flight blocked read.  Sets the
+                // _readCancelled flag — the loop polls it on each
+                // short-timeout pop wakeup.
+                void cancelBlockingWork() override;
+
         private:
 
                 // describe() / proposeOutput overrides intentionally
@@ -202,6 +208,15 @@ class V4l2MediaIO : public DedicatedThreadMediaIO {
                 // -- Capture threads --
                 std::atomic<bool> _stopFlag{false};
                 std::atomic<int>  _deviceError{0}; // errno from device failure (ENODEV etc.)
+                // Set by cancelBlockingWork() when MediaIO::close()
+                // wants to unwind an in-flight Read whose strand
+                // worker is parked in _videoQueue.pop().  The pop
+                // uses a short timeout so the loop notices this
+                // flag (and _deviceError) within one tick of being
+                // raised.  Reset at the start of every Open so a
+                // closed-then-reopened MediaIO doesn't carry the
+                // previous instance's cancellation forward.
+                std::atomic<bool> _readCancelled{false};
                 std::thread       _videoThread;
                 std::thread       _audioThread;
 

@@ -46,7 +46,7 @@ namespace {
                                         clientReady.setValue(true);
                                 });
                                 for (int i = 0; i < 200 && (!serverReady.value() || !clientReady.value()); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                                        Thread::sleepMs(2);
                                 }
                                 REQUIRE(serverReady.value());
                                 REQUIRE(clientReady.value());
@@ -62,7 +62,7 @@ namespace {
                                         done.setValue(true);
                                 });
                                 for (int i = 0; i < 500 && !done.value(); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                                        Thread::sleepMs(2);
                                 }
                                 REQUIRE(done.value());
                         }
@@ -76,7 +76,7 @@ namespace {
                                         done.setValue(true);
                                 });
                                 for (int i = 0; i < 500 && !done.value(); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                                        Thread::sleepMs(2);
                                 }
                                 REQUIRE(done.value());
                                 REQUIRE(port != 0);
@@ -209,7 +209,7 @@ TEST_CASE("HttpClient - default headers applied to every request") {
                 done = true;
         });
         for (int i = 0; i < 200 && !done; ++i) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                Thread::sleepMs(2);
         }
 
         auto [res, err] = f.request([&](HttpClient &c) { return c.get(urlFor(f.port, "/whoami")); });
@@ -231,7 +231,7 @@ TEST_CASE("HttpClient - https request reaches the network layer") {
                 done = true;
         });
         for (int i = 0; i < 200 && !done; ++i) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                Thread::sleepMs(2);
         }
         auto [res, err] = f.request([&](HttpClient &c) { return c.get("https://127.0.0.1:1/"); }, /*timeoutMs=*/2000);
         CHECK(err != Error::NotImplemented);
@@ -274,7 +274,7 @@ TEST_CASE("HttpClient - timeout when server never responds") {
                 done = true;
         });
         for (int i = 0; i < 200 && !done; ++i) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                Thread::sleepMs(2);
         }
 
         auto [res, err] = f.request([&](HttpClient &c) { return c.get("http://127.0.0.1:1/no"); });

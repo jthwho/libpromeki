@@ -9,6 +9,7 @@
 #include <promeki/application.h>
 #include <promeki/eventloop.h>
 #include <promeki/elapsedtimer.h>
+#include <promeki/thread.h>
 
 #include <chrono>
 #include <thread>
@@ -29,7 +30,7 @@ TEST_CASE("Main EventLoop: worker-thread quit wakes exec() promptly") {
         EventLoop   loop;
 
         std::thread worker([&] {
-                std::this_thread::sleep_for(std::chrono::milliseconds(30));
+                Thread::sleepMs(30);
                 loop.quit(42);
         });
 

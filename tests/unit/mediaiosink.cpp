@@ -25,6 +25,7 @@
 #include <promeki/mediadesc.h>
 #include <promeki/objectbase.tpp>
 #include <promeki/pixelformat.h>
+#include <promeki/thread.h>
 #include <promeki/videoformat.h>
 
 using namespace promeki;
@@ -240,7 +241,7 @@ TEST_CASE("MediaIOSink: writesAccepted reflects in-flight count") {
         ElapsedTimer t;
         t.start();
         while (t.elapsed() < 1000 && sink->sink(0)->writesAccepted() < 1) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
         CHECK(sink->sink(0)->writesAccepted() == 1);
 

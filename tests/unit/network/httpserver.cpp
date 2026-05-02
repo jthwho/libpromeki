@@ -111,7 +111,7 @@ namespace {
                                         ready.setValue(true);
                                 });
                                 for (int i = 0; i < 200 && !ready.value(); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                                        Thread::sleepMs(2);
                                 }
                                 REQUIRE(ready.value());
                                 REQUIRE(server != nullptr);
@@ -124,7 +124,7 @@ namespace {
                                         done.setValue(true);
                                 });
                                 for (int i = 0; i < 500 && !done.value(); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                        Thread::sleepMs(1);
                                 }
                                 REQUIRE(done.value());
                         }
@@ -138,7 +138,7 @@ namespace {
                                         done.setValue(true);
                                 });
                                 for (int i = 0; i < 500 && !done.value(); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                        Thread::sleepMs(1);
                                 }
                                 REQUIRE(done.value());
                                 REQUIRE(port != 0);

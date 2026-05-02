@@ -10,6 +10,7 @@
 #include <promeki/color.h>
 #include <promeki/colormodel.h>
 #include <promeki/datetime.h>
+#include <promeki/duration.h>
 #include <promeki/enumlist.h>
 #include <promeki/framerate.h>
 #include <promeki/audiocodec.h>
@@ -80,6 +81,7 @@ namespace {
                         case Variant::TypeFrameNumber: return "FrameNumber";
                         case Variant::TypeFrameCount: return "FrameCount";
                         case Variant::TypeMediaDuration: return "MediaDuration";
+                        case Variant::TypeDuration: return "Duration";
                         case Variant::TypeRational: return "Rational";
                         case Variant::TypeFrameRate: return "FrameRate";
                         case Variant::TypeVideoFormat: return "VideoFormat";
@@ -239,6 +241,12 @@ namespace {
                                 MediaDuration md = MediaDuration::fromString(str, &pe);
                                 if (pe.isError()) break;
                                 return Variant(md);
+                        }
+                        case Variant::TypeDuration: {
+                                Error    pe;
+                                Duration d = Duration::fromString(str, &pe);
+                                if (pe.isError()) break;
+                                return Variant(d);
                         }
                         case Variant::TypeDateTime: {
                                 Error    de;

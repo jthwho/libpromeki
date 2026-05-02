@@ -27,12 +27,17 @@ PcmAudioPayload::Ptr PcmAudioPayload::convert(const AudioFormat &dstFormat) cons
         const AudioDesc &srcDesc = desc();
         if (srcDesc.format() == dstFormat) return Ptr::create(*this);
 
-        // Only single-plane (interleaved) PCM is supported by the sample
-        // kernels right now — planar layouts would need per-channel
-        // conversion which the legacy converter also did not provide.
+        // Single-buffer payloads (the common case) cover both
+        // interleaved layouts and the tightly-packed-planar layouts
+        // that AudioFormat::convertTo's planar↔interleaved transpose
+        // path expects.  Multi-buffer planar (one Buffer per channel)
+        // would need a coalescing step before convertTo can run; no
+        // backend currently produces that, so we reject it explicitly.
         if (planeCount() != 1) {
-                promekiErr("PcmAudioPayload::convert: planar "
-                           "PCM conversion not supported (planeCount=%zu)",
+                promekiErr("PcmAudioPayload::convert: multi-buffer "
+                           "planar PCM not supported (planeCount=%zu) — "
+                           "consolidate into a single tightly-packed "
+                           "buffer first",
                            planeCount());
                 return Ptr();
         }
@@ -42,8 +47,8 @@ PcmAudioPayload::Ptr PcmAudioPayload::convert(const AudioFormat &dstFormat) cons
         AudioDesc dstDesc(dstFormat, srcDesc.sampleRate(), srcDesc.channels());
         if (!dstDesc.isValid()) return Ptr();
 
-        const size_t samples = sampleCount();
-        const size_t totalSamples = samples * srcDesc.channels();
+        const size_t samples  = sampleCount();
+        const size_t channels = srcDesc.channels();
         const size_t dstBytes = dstDesc.bufferSize(samples);
 
         auto dstBuf = Buffer::Ptr::create(dstBytes);
@@ -52,30 +57,20 @@ PcmAudioPayload::Ptr PcmAudioPayload::convert(const AudioFormat &dstFormat) cons
         const uint8_t *srcBytes = static_cast<const uint8_t *>(srcView.data());
         uint8_t       *dstBytesPtr = static_cast<uint8_t *>(dstBuf.modify()->data());
 
-        // Fast path: registered direct converter for the (src, dst) pair
-        // skips the via-float trip entirely.  This is the only path that
-        // preserves non-PCM payloads (SMPTE 337M, AES3 user bits, …)
-        // riding inside an integer audio buffer; the via-float fallback
-        // below mangles those bits.
-        if (auto fn = AudioFormat::directConverter(srcDesc.format().id(), dstFormat.id())) {
-                fn(dstBytesPtr, srcBytes, totalSamples);
-        }
-        // Fast path: source is native float — direct floatToSamples.
-        else if (srcDesc.format().id() == AudioFormat::NativeFloat) {
-                const float *floatData = reinterpret_cast<const float *>(srcBytes);
-                dstFormat.floatToSamples(dstBytesPtr, floatData, totalSamples);
-        }
-        // Fast path: target is native float — direct samplesToFloat.
-        else if (dstFormat.id() == AudioFormat::NativeFloat) {
-                float *floatData = reinterpret_cast<float *>(dstBytesPtr);
-                srcDesc.format().samplesToFloat(floatData, srcBytes, totalSamples);
-        }
-        // General case: source → float → target (two passes).
-        else {
-                auto   tmpBuf = Buffer::Ptr::create(totalSamples * sizeof(float));
-                float *tmp = static_cast<float *>(tmpBuf.modify()->data());
-                srcDesc.format().samplesToFloat(tmp, srcBytes, totalSamples);
-                dstFormat.floatToSamples(dstBytesPtr, tmp, totalSamples);
+        // Hand the whole conversion to AudioFormat — its channel-aware
+        // overload handles direct-table fast paths, via-float for
+        // bit-depth / endian / sign changes, and the planar↔interleaved
+        // transpose when the source and destination disagree on layout.
+        // The scratch buffer covers the worst case (samples × channels
+        // floats); the function leaves it alone on the direct fast path.
+        Buffer scratchBuf(samples * channels * sizeof(float));
+        if (!scratchBuf.isValid()) return Ptr();
+        Error e = srcDesc.format().convertTo(dstFormat, dstBytesPtr, srcBytes, samples, channels,
+                                             static_cast<float *>(scratchBuf.data()));
+        if (e.isError()) {
+                promekiErr("PcmAudioPayload::convert: %s → %s failed (%s)",
+                           srcDesc.format().name().cstr(), dstFormat.name().cstr(), e.name().cstr());
+                return Ptr();
         }
 
         BufferView dstViews;

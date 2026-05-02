@@ -15,6 +15,7 @@
 #include <promeki/loopbacktransport.h>
 #include <promeki/rtppayload.h>
 #include <promeki/duration.h>
+#include <promeki/thread.h>
 #include <promeki/timestamp.h>
 #include <cstring>
 
@@ -488,7 +489,7 @@ TEST_CASE("RtpSession") {
 
                 // Give the receive thread time to install
                 // SO_RCVTIMEO and settle into the loop.
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                Thread::sleepMs(50);
 
                 // Send a single RTP packet.
                 RtpSession txSession;
@@ -507,7 +508,7 @@ TEST_CASE("RtpSession") {
 
                 // Wait up to 500 ms for delivery.
                 for (int i = 0; i < 50 && count.load() == 0; i++) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                        Thread::sleepMs(10);
                 }
 
                 rxSession.stopReceiving();

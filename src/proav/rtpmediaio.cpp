@@ -1480,6 +1480,7 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         Enum modeEnum = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
         const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
         _readerMode = !isWrite;
+        _readCancelled.store(false, std::memory_order_release);
 
         // Transport-global parameters.
         _localAddress = cfg.getAs<SocketAddress>(MediaConfig::RtpLocalAddress, SocketAddress::any(0));
@@ -1823,23 +1824,39 @@ Error RtpMediaIO::executeCmd(MediaIOCommandClose &cmd) {
 Error RtpMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         if (!_readerMode) return Error::NotSupported;
 
-        // Pop a frame from the reader output queue with a bounded
-        // wait.  Timeout translates to TryAgain so the MediaIO
-        // strand can probe the queue periodically without busy-
-        // waiting — a live RTP stream has no "end-of-file", so the
-        // only terminal state is Close.
-        constexpr unsigned int kReadTimeoutMs = 500;
-        Result<Frame::Ptr>     result = _readerQueue.pop(kReadTimeoutMs);
-        if (result.second() == Error::Timeout) {
-                return Error::TryAgain;
+        // Block until a frame is available, the queue surfaces an
+        // error, or cancelBlockingWork() is invoked from MediaIO::close.
+        // RTP is a leaf source — returning Error::TryAgain here would
+        // strand the pipeline pump (which expects an upstream Write to
+        // re-fire the read on the next frameReady, an event that never
+        // happens for a leaf source).  The short pop timeout is just a
+        // polling cadence for _readCancelled; steady-state delivery is
+        // condvar-driven so the cadence does not bound throughput.
+        constexpr unsigned int kReadPollMs = 100;
+        for (;;) {
+                Result<Frame::Ptr> result = _readerQueue.pop(kReadPollMs);
+                if (result.second().isOk()) {
+                        cmd.frame = result.first();
+                        ++_frameCount;
+                        cmd.currentFrame = toFrameNumber(_frameCount);
+                        return Error::Ok;
+                }
+                if (result.second() != Error::Timeout) {
+                        return result.second();
+                }
+                if (_readCancelled.load(std::memory_order_acquire)) {
+                        return Error::Cancelled;
+                }
         }
-        if (result.second().isError()) {
-                return result.second();
-        }
-        cmd.frame = result.first();
-        ++_frameCount;
-        cmd.currentFrame = toFrameNumber(_frameCount);
-        return Error::Ok;
+}
+
+void RtpMediaIO::cancelBlockingWork() {
+        // Tripped from MediaIO::close on the caller's thread, before
+        // the Close cmd is queued.  The strand worker may be parked
+        // inside executeCmd(Read)'s pop loop; raising this flag makes
+        // the next short-timeout wakeup return Cancelled so the strand
+        // can drain the Read and reach the queued Close.
+        _readCancelled.store(true, std::memory_order_release);
 }
 
 // ----- Per-stream send helpers -----

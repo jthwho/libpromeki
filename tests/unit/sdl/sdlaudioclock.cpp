@@ -11,6 +11,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/timestamp.h>
 #include <promeki/string.h>
+#include <promeki/thread.h>
 #include <promeki/uniqueptr.h>
 
 #include <atomic>
@@ -108,7 +109,7 @@ TEST_SUITE("SDLAudioClock") {
                 std::thread       sim([&] {
                         int64_t cbCount = 0;
                         while (running.load(std::memory_order_relaxed)) {
-                                std::this_thread::sleep_for(std::chrono::milliseconds(kCallbackPeriodMs));
+                                Thread::sleepMs(kCallbackPeriodMs);
                                 ++cbCount;
                                 int64_t consumed =
                                         (int64_t)(bytesPerSec * (double)cbCount * ((double)kCallbackPeriodMs / 1000.0));
@@ -120,7 +121,7 @@ TEST_SUITE("SDLAudioClock") {
 
                 // Give the simulator a head start so consumed is non-zero
                 // when the first nowNs() read establishes the checkpoint.
-                std::this_thread::sleep_for(std::chrono::milliseconds(kCallbackPeriodMs * 2));
+                Thread::sleepMs(kCallbackPeriodMs * 2);
 
                 auto clockNow = [&clock]() {
                         auto r = clock.nowNs();
@@ -141,7 +142,7 @@ TEST_SUITE("SDLAudioClock") {
                 int64_t       maxRegressionNs = 0;
 
                 while (true) {
-                        std::this_thread::sleep_for(std::chrono::microseconds(kPollPeriodMicros));
+                        Thread::sleepUs(kPollPeriodMicros);
                         int64_t wallNs = TimeStamp::now().nanoseconds();
                         if ((wallNs - startWallNs) / 1000000LL >= kTestDurationMs) {
                                 break;

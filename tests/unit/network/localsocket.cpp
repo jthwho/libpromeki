@@ -15,6 +15,7 @@
 #include <promeki/string.h>
 #include <promeki/uuid.h>
 #include <promeki/dir.h>
+#include <promeki/thread.h>
 
 using namespace promeki;
 
@@ -180,7 +181,7 @@ TEST_CASE("LocalServer: hasPendingConnections reflects state") {
         REQUIRE(client.connectTo(path).isOk());
         // Give the kernel a moment to materialize the pending connection.
         for (int i = 0; i < 100 && !server.hasPendingConnections(); ++i) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                Thread::sleepMs(5);
         }
         CHECK(server.hasPendingConnections());
 

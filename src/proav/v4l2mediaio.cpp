@@ -1228,6 +1228,7 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _framesCaptured.store(0, std::memory_order_relaxed);
         _alsaOverruns.store(0, std::memory_order_relaxed);
         _deviceError.store(0, std::memory_order_relaxed);
+        _readCancelled.store(false, std::memory_order_release);
         _ringAccum = 0;
         _ringAccumFrames = 0;
         _ringAvgBaseline = 0.0;
@@ -1388,6 +1389,15 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandClose &cmd) {
         return Error::Ok;
 }
 
+void V4l2MediaIO::cancelBlockingWork() {
+        // Tripped from MediaIO::close on the caller's thread, before
+        // the Close cmd is queued.  The strand worker may currently be
+        // parked inside executeCmd(Read)'s pop loop; raising this flag
+        // makes the next poll wakeup return Cancelled so the strand
+        // can drain the Read and reach the queued Close.
+        _readCancelled.store(true, std::memory_order_release);
+}
+
 Error V4l2MediaIO::executeCmd(MediaIOCommandStats &cmd) {
         cmd.stats.set(StatsCaptured, _framesCaptured.load(std::memory_order_relaxed));
         cmd.stats.set(StatsAlsaOverruns, _alsaOverruns.load(std::memory_order_relaxed));
@@ -1404,22 +1414,33 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 return Error::DeviceError;
         }
 
-
-        // Wait for the next captured image from the video thread.
-        // The capture thread delivers frames at the device frame rate,
-        // so this normally returns almost immediately.  The 200ms
-        // timeout guards against device stalls.
-        auto [imgPtr, popErr] = _videoQueue.pop(200);
-        if (popErr != Error::Ok) {
-                // Check again — the timeout may have been caused by
-                // a device failure that happened while we were waiting.
+        // Wait for the next captured frame.  V4L2 is a leaf source —
+        // the pipeline pump bails out on Error::TryAgain assuming the
+        // signal that re-fires it (transform-style frameReady on a
+        // successful upstream Write) will arrive, but no upstream Write
+        // exists here.  Returning TryAgain therefore strands the pump.
+        // Block on the queue instead and rely on cancelBlockingWork()
+        // (called from MediaIO::close on the caller's thread) plus the
+        // capture-thread-set _deviceError to break out of the wait.
+        // The short pop timeout is just a polling cadence for those
+        // two flags — steady-state delivery is condvar-driven so the
+        // poll cadence does not bound throughput.
+        constexpr unsigned int kReadPollMs = 100;
+        VideoPayload::Ptr imgPtr;
+        for (;;) {
+                auto popResult = _videoQueue.pop(kReadPollMs);
+                if (popResult.second().isOk()) {
+                        imgPtr = std::move(popResult.first());
+                        break;
+                }
                 devErr = _deviceError.load(std::memory_order_acquire);
                 if (devErr != 0) {
                         promekiErr("V4l2MediaIO: device error: %s", std::strerror(devErr));
                         return Error::DeviceError;
                 }
-                noteFrameDropped(portGroup(0));
-                return Error::TryAgain;
+                if (_readCancelled.load(std::memory_order_acquire)) {
+                        return Error::Cancelled;
+                }
         }
 
         // Extract the V4L2 capture timestamp and accumulate

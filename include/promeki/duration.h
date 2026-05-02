@@ -16,6 +16,7 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class Error;
 class String;
 
 /**
@@ -200,6 +201,31 @@ class Duration {
                  * @return Formatted string.
                  */
                 String toString() const;
+
+                /**
+                 * @brief Parses a Duration from a unit-suffixed string.
+                 *
+                 * Accepted forms:
+                 *  - `"3s"`, `"500ms"`, `"100us"`, `"100ns"`, `"5m"`, `"2h"`
+                 *  - Decimal magnitudes: `"1.5s"`, `"0.25ms"`
+                 *  - Optional whitespace between number and unit: `"3 s"`
+                 *  - Leading sign: `"-500ms"`, `"+1s"`
+                 *  - Bare numbers (no unit) are interpreted as **seconds** —
+                 *    so `"3"` parses as 3 seconds.  Add a unit suffix when
+                 *    you mean ms / us / ns.
+                 *
+                 * Returns a default-constructed (zero) Duration on parse
+                 * failure and sets @p err.  This intentionally mirrors the
+                 * other `fromString` helpers in the library — callers that
+                 * need to distinguish "explicit zero" from "parse failed"
+                 * should pass a non-null @p err.
+                 *
+                 * @param str Input string.
+                 * @param err Optional error sink.  Set to @c Error::Invalid
+                 *            on a failed parse, untouched otherwise.
+                 * @return Parsed Duration, or zero on error.
+                 */
+                static Duration fromString(const String &str, Error *err = nullptr);
 
                 /**
                  * @brief Returns an auto-scaled representation (e.g. "1.5 ms").

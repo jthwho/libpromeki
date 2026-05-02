@@ -453,6 +453,40 @@ class AudioFormat {
                 Error convertTo(const AudioFormat &dst, void *out, const void *in, size_t samples,
                                 float *scratch = nullptr) const;
 
+                /**
+                 * @brief Channel-aware overload that bridges planar / interleaved layouts.
+                 *
+                 * The @p samplesPerChannel parameter is the per-channel
+                 * frame count (stereo at 1 frame = 2 floats total).
+                 * When @p src and @p dst differ only in `isPlanar()`, the
+                 * converter transposes the float-domain data accordingly:
+                 *
+                 *  - planar → interleaved: per-channel runs `[ch0[0..N), ch1[0..N), ...]`
+                 *    are folded into `L,R,L,R,...` order.
+                 *  - interleaved → planar: vice versa.
+                 *
+                 * The format-level byte conversions (`samplesToFloat` /
+                 * `floatToSamples`) themselves are layout-agnostic — they
+                 * walk a contiguous run of values — so the transpose
+                 * step is the only thing the planar IDs need beyond
+                 * their interleaved siblings.
+                 *
+                 * @param dst                Destination format.
+                 * @param out                Destination bytes.
+                 * @param in                 Source bytes.
+                 * @param samplesPerChannel  Per-channel frame count.
+                 * @param channels           Channel count (≥ 1).
+                 * @param scratch            Float scratch buffer of at
+                 *                           least @p samplesPerChannel × @p channels
+                 *                           floats.  May be @c nullptr only
+                 *                           when a direct converter
+                 *                           handles the (src,dst) pair
+                 *                           and no transpose is required.
+                 * @return @c Error::Ok on success.
+                 */
+                Error convertTo(const AudioFormat &dst, void *out, const void *in, size_t samplesPerChannel,
+                                size_t channels, float *scratch = nullptr) const;
+
                 /** @brief Equality compares the underlying Data pointer. */
                 bool operator==(const AudioFormat &o) const { return d == o.d; }
 

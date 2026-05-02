@@ -441,7 +441,7 @@ namespace {
                 while (t.elapsed() < timeoutMs) {
                         loop.processEvents();
                         if (pred()) return true;
-                        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                        Thread::sleepMs(5);
                 }
                 return false;
         }
@@ -688,7 +688,7 @@ TEST_CASE("MediaPipeline_SetStatsIntervalEmitsTickEvents") {
 
         CHECK(p.stop().isOk());
         loop.processEvents();
-        std::this_thread::sleep_for(std::chrono::milliseconds(150));
+        Thread::sleepMs(150);
         loop.processEvents();
         const int afterStop = counts.statsUpdated.load();
         CHECK(afterStop == duringRun);
@@ -736,7 +736,7 @@ TEST_CASE("MediaPipeline_SubscriberOnAnotherThreadReceivesOnThatThread") {
         ElapsedTimer t;
         t.start();
         while (worker.threadEventLoop() == nullptr && t.elapsed() < 1000) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
         REQUIRE(worker.threadEventLoop() != nullptr);
 
@@ -756,7 +756,7 @@ TEST_CASE("MediaPipeline_SubscriberOnAnotherThreadReceivesOnThatThread") {
         });
         // Spin until the post has executed.
         while (subId.load() < 0) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         REQUIRE(p.build(makeTpgToCsc()).isOk());
@@ -767,7 +767,7 @@ TEST_CASE("MediaPipeline_SubscriberOnAnotherThreadReceivesOnThatThread") {
         t.start();
         while (received.load() < 2 && t.elapsed() < 1500) {
                 loop.processEvents();
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                Thread::sleepMs(5);
         }
         CHECK(received.load() >= 2);
         CHECK(deliveryThread.load() == worker.id());

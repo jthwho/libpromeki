@@ -49,7 +49,7 @@ namespace {
                                         ready.setValue(true);
                                 });
                                 for (int i = 0; i < 200 && !ready.value(); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                                        Thread::sleepMs(2);
                                 }
                                 REQUIRE(ready.value());
                                 REQUIRE(server != nullptr);
@@ -62,7 +62,7 @@ namespace {
                                         done.setValue(true);
                                 });
                                 for (int i = 0; i < 500 && !done.value(); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                        Thread::sleepMs(1);
                                 }
                                 REQUIRE(done.value());
                         }
@@ -76,7 +76,7 @@ namespace {
                                         done.setValue(true);
                                 });
                                 for (int i = 0; i < 500 && !done.value(); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                        Thread::sleepMs(1);
                                 }
                                 REQUIRE(done.value());
                                 REQUIRE(port != 0);
@@ -102,7 +102,7 @@ namespace {
                 size_t appended = 0;
                 while (t.elapsed() < timeoutMs) {
                         if (sock.bytesAvailable() <= 0) {
-                                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                                Thread::sleepMs(5);
                                 continue;
                         }
                         int64_t got = sock.read(buf, sizeof(buf));
@@ -177,13 +177,13 @@ TEST_CASE("HttpConnection_AsyncBodyStreamParksAndResumes") {
                         // connection sees atEnd via the
                         // already-drained queue.
                         plan.pusher = std::thread([q, &plan]() {
-                                std::this_thread::sleep_for(std::chrono::milliseconds(80));
+                                Thread::sleepMs(80);
                                 q->enqueue(makeSegment("first ", 6));
-                                std::this_thread::sleep_for(std::chrono::milliseconds(80));
+                                Thread::sleepMs(80);
                                 q->enqueue(makeSegment("second ", 7));
-                                std::this_thread::sleep_for(std::chrono::milliseconds(80));
+                                Thread::sleepMs(80);
                                 q->enqueue(makeSegment("third", 5));
-                                std::this_thread::sleep_for(std::chrono::milliseconds(40));
+                                Thread::sleepMs(40);
                                 q->closeWriting();
                                 plan.finished.store(true);
                         });

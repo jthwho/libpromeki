@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <promeki/audiobuffer.h>
 #include <promeki/audiodesc.h>
 #include <promeki/clockdomain.h>
@@ -343,6 +344,10 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 Error executeCmd(MediaIOCommandParams &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
 
+                // Wakes the reader-side executeCmd(Read) loop so close()
+                // can drain a strand parked on _readerQueue.pop().
+                void cancelBlockingWork() override;
+
         private:
 
                 // describe() / proposeInput overrides intentionally
@@ -551,6 +556,13 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 int               _readerMaxDepth = 4;
                 int               _readerJitterMs = 50;
                 FrameCount        _readerFramesReceived{0};
+                // Set by cancelBlockingWork() so the executeCmd(Read)
+                // pop loop can break out of its short-timeout polling
+                // when MediaIO::close is unwinding the strand.  Cleared
+                // at every Open so a closed-then-reopened RtpMediaIO
+                // doesn't carry the previous instance's cancellation
+                // forward.
+                std::atomic<bool> _readCancelled{false};
 
                 /**
                  * @brief Reader-side frame aggregator.

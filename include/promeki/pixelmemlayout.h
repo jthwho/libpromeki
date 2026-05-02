@@ -237,6 +237,10 @@ class PixelMemLayout {
                         // -- DPX Method B packed --
                         I_3x10_DPX_B = 80, ///< 3 components, 10 bits, DPX Method B packed (30 bits in 4 bytes).
 
+                        // -- Semi-planar 4:2:2 16-bit (NV16, P216 wire) --
+                        SP_422_16_LE = 82, ///< 2 planes, 16-bit LE, 4:2:2 NV16 (NDI P216 wire format).
+                        SP_422_16_BE = 83, ///< 2 planes, 16-bit BE, 4:2:2 NV16.
+
                         UserDefined = 1024 ///< First ID available for user-registered types.
                 };
 

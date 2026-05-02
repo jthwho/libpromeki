@@ -8,6 +8,7 @@
 #include <doctest/doctest.h>
 #include <promeki/selfpipe.h>
 #include <promeki/platform.h>
+#include <promeki/thread.h>
 
 #include <atomic>
 #include <chrono>
@@ -87,7 +88,7 @@ TEST_CASE("SelfPipe: cross-thread wake") {
         });
 
         // Small delay so the waiter is actually blocked in poll().
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        Thread::sleepMs(20);
         pipe.wake();
 
         waiter.join();

@@ -321,6 +321,8 @@ class PixelFormat {
                         YUV16_420_Planar_BE_Rec709 = 130,     ///< 16-bit YCbCr 4:2:0 planar BE, Rec.709.
                         YUV16_420_SemiPlanar_LE_Rec709 = 131, ///< 16-bit YCbCr 4:2:0 NV12 LE, Rec.709.
                         YUV16_420_SemiPlanar_BE_Rec709 = 132, ///< 16-bit YCbCr 4:2:0 NV12 BE, Rec.709.
+                        YUV16_422_SemiPlanar_LE_Rec709 = 164, ///< 16-bit YCbCr 4:2:2 NV16 LE, Rec.709 (NDI P216 wire format).
+                        YUV16_422_SemiPlanar_BE_Rec709 = 165, ///< 16-bit YCbCr 4:2:2 NV16 BE, Rec.709.
 
                         // -- DPX additional packed formats --
                         RGB10_DPX_LE_sRGB = 133,  ///< 10-bit RGB, DPX packed LE, sRGB, full range.

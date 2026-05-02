@@ -133,7 +133,7 @@ TEST_CASE("SignalHandler: SIGINT translates to Application::quit and wakes Event
         ElapsedTimer timer;
         timer.start();
         while (!Application::shouldQuit() && timer.elapsed() < 1000) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                Thread::sleepMs(5);
         }
 
         CHECK(Application::shouldQuit());
@@ -200,7 +200,7 @@ TEST_CASE("SignalHandler: subscribe dispatches the callback on signal delivery")
         ElapsedTimer timer;
         timer.start();
         while (count.load() < 1 && timer.elapsed() < 1000) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                Thread::sleepMs(5);
         }
         CHECK(count.load() >= 1);
         CHECK(lastSigno.load() == SIGUSR1);
@@ -221,7 +221,7 @@ TEST_CASE("SignalHandler: unsubscribe stops further callbacks") {
         ElapsedTimer timer;
         timer.start();
         while (count.load() < 1 && timer.elapsed() < 1000) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                Thread::sleepMs(5);
         }
         REQUIRE(count.load() >= 1);
 
@@ -232,7 +232,7 @@ TEST_CASE("SignalHandler: unsubscribe stops further callbacks") {
         // now-dead callback.  Give the watcher thread time to drain
         // the pipe — if it had dispatched, count would have grown.
         REQUIRE(::kill(::getpid(), SIGUSR1) == 0);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        Thread::sleepMs(100);
         CHECK(count.load() == before);
 
         if (!wasInstalled) SignalHandler::uninstall();
@@ -254,7 +254,7 @@ TEST_CASE("SignalHandler: multiple subscribers receive the same signal") {
         ElapsedTimer timer;
         timer.start();
         while ((a.load() < 1 || b.load() < 1) && timer.elapsed() < 1000) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                Thread::sleepMs(5);
         }
         CHECK(a.load() >= 1);
         CHECK(b.load() >= 1);

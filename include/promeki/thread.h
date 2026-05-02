@@ -7,12 +7,14 @@
 
 #pragma once
 
+#include <chrono>
 #include <thread>
 #include <promeki/objectbase.h>
 #include <promeki/set.h>
 #include <promeki/mutex.h>
 #include <promeki/waitcondition.h>
 #include <promeki/atomic.h>
+#include <promeki/duration.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -139,6 +141,48 @@ class Thread : public ObjectBase {
                  * @return The number of concurrent threads supported.
                  */
                 static unsigned int idealThreadCount();
+
+                /**
+                 * @brief Sleeps the calling thread for @p ns nanoseconds.
+                 *
+                 * Thin wrapper around @c std::this_thread::sleep_for with
+                 * nanosecond granularity.  Sub-millisecond precision is
+                 * subject to OS scheduling resolution.  Negative or zero
+                 * values return immediately.
+                 *
+                 * @param ns Number of nanoseconds to sleep.
+                 */
+                static void sleepNs(int64_t ns) {
+                        if (ns <= 0) return;
+                        std::this_thread::sleep_for(std::chrono::nanoseconds(ns));
+                }
+
+                /**
+                 * @brief Sleeps the calling thread for @p us microseconds.
+                 * @param us Number of microseconds to sleep.
+                 */
+                static void sleepUs(int64_t us) {
+                        if (us <= 0) return;
+                        std::this_thread::sleep_for(std::chrono::microseconds(us));
+                }
+
+                /**
+                 * @brief Sleeps the calling thread for @p ms milliseconds.
+                 * @param ms Number of milliseconds to sleep.
+                 */
+                static void sleepMs(int64_t ms) {
+                        if (ms <= 0) return;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+                }
+
+                /**
+                 * @brief Sleeps the calling thread for the given @ref Duration.
+                 *
+                 * Negative or zero durations return immediately.
+                 *
+                 * @param d Duration to sleep.
+                 */
+                static void sleep(const Duration &d) { sleepNs(d.nanoseconds()); }
 
                 /**
                  * @brief Constructs a Thread (spawned mode).

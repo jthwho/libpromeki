@@ -113,7 +113,7 @@ namespace {
                         done = true;
                 });
                 for (int i = 0; i < 500 && !done.load(); ++i) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        Thread::sleepMs(1);
                 }
                 REQUIRE(done.load());
         }
@@ -456,7 +456,7 @@ namespace {
                                         ready.setValue(true);
                                 });
                                 for (int i = 0; i < 200 && !ready.value(); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                                        Thread::sleepMs(2);
                                 }
                                 REQUIRE(ready.value());
                                 REQUIRE(ws != nullptr);
@@ -482,7 +482,7 @@ namespace {
                                         done.setValue(true);
                                 });
                                 for (int i = 0; i < 500 && !done.value(); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                        Thread::sleepMs(1);
                                 }
                                 REQUIRE(done.value());
                                 return result;
@@ -495,7 +495,7 @@ namespace {
                                         done.setValue(true);
                                 });
                                 for (int i = 0; i < 500 && !done.value(); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                        Thread::sleepMs(1);
                                 }
                                 REQUIRE(done.value());
                         }
@@ -504,7 +504,7 @@ namespace {
         template <typename Pred> static bool waitForFor(int ms, Pred pred) {
                 for (int i = 0; i < ms; ++i) {
                         if (pred()) return true;
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        Thread::sleepMs(1);
                 }
                 return pred();
         }

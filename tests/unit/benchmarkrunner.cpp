@@ -9,6 +9,7 @@
 #include <promeki/benchmarkrunner.h>
 #include <promeki/json.h>
 #include <promeki/dir.h>
+#include <promeki/thread.h>
 #include <thread>
 #include <chrono>
 #include <atomic>
@@ -71,7 +72,7 @@ namespace {
                 for (auto _ : state) {
                         (void)_;
                         state.pauseTiming();
-                        std::this_thread::sleep_for(std::chrono::microseconds(50));
+                        Thread::sleepUs(50);
                         state.resumeTiming();
                         for (int i = 0; i < 100; i++) sink += i;
                 }

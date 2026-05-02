@@ -366,7 +366,7 @@ namespace {
                                         ready.setValue(true);
                                 });
                                 for (int i = 0; i < 200 && !ready.value(); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                                        Thread::sleepMs(2);
                                 }
                                 REQUIRE(ready.value());
                                 REQUIRE(server != nullptr);
@@ -379,7 +379,7 @@ namespace {
                                         done.setValue(true);
                                 });
                                 for (int i = 0; i < 500 && !done.value(); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                        Thread::sleepMs(1);
                                 }
                                 REQUIRE(done.value());
                         }
@@ -393,7 +393,7 @@ namespace {
                                         done.setValue(true);
                                 });
                                 for (int i = 0; i < 500 && !done.value(); ++i) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                        Thread::sleepMs(1);
                                 }
                                 REQUIRE(done.value());
                                 REQUIRE(port != 0);
@@ -432,7 +432,7 @@ namespace {
                                                 if (f.isValid()) {
                                                         rig->sink->sink(0)->writeFrame(f).wait();
                                                 }
-                                                std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                                                Thread::sleepMs(2);
                                         }
                                 });
                         }
@@ -472,7 +472,7 @@ namespace {
                 size_t appended = 0;
                 while (t.elapsed() < timeoutMs) {
                         if (sock.bytesAvailable() <= 0) {
-                                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                                Thread::sleepMs(5);
                                 continue;
                         }
                         int64_t got = sock.read(buf, sizeof(buf));
@@ -679,7 +679,7 @@ TEST_CASE("MjpegStreamMediaIO_HttpRouteStreamsMultipart") {
         // Give the server time to notice the half-close + reap.  No
         // assertion shape here beyond "no crash" — ASan / UBSan in CI
         // catch any post-close use-after-free.
-        std::this_thread::sleep_for(std::chrono::milliseconds(150));
+        Thread::sleepMs(150);
 }
 
 TEST_CASE("MjpegStreamMediaIO_HttpRouteRefusesWhenSinkNotOpen") {

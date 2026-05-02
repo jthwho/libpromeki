@@ -10,6 +10,7 @@
 #include <doctest/doctest.h>
 #include <promeki/readwritelock.h>
 #include <promeki/atomic.h>
+#include <promeki/thread.h>
 
 using namespace promeki;
 
@@ -40,7 +41,7 @@ TEST_CASE("ReadWriteLock_ConcurrentReads") {
                 int                       val = readersInside.fetchAndAdd(1) + 1;
                 int                       prev = maxConcurrentReaders.value();
                 while (val > prev && !maxConcurrentReaders.compareAndSwap(prev, val));
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                Thread::sleepMs(50);
                 readersInside.fetchAndSub(1);
         };
 

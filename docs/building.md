@@ -109,6 +109,7 @@ consuming code can conditionally compile against a custom build.
 | `PROMEKI_ENABLE_CUDA` | auto | CUDA support (device / pinned-host memspaces; prerequisite for NVENC / NVDEC) |
 | `PROMEKI_ENABLE_NVENC` | auto | NVIDIA NVENC H.264 / HEVC encoder — see [NVENC setup](nvenc.md) |
 | `PROMEKI_ENABLE_NVDEC` | auto | NVIDIA NVDEC H.264 / HEVC decoder — see [NVENC setup](nvenc.md) |
+| `PROMEKI_ENABLE_NDI` | auto | NDI (Network Device Interface) media transport — see [NDI setup](ndi.md) |
 
 Flags marked *auto* default `ON` when their prerequisites are
 detected and `OFF` otherwise. Pass an explicit
@@ -437,3 +438,4 @@ The output directory can be overridden with
   debug-logging / crash-handler reference
 - [NVENC setup](nvenc.md) — NVENC / NVDEC SDK setup and
   `PROMEKI_NVENC_SDK_DIR`
+- [NDI setup](ndi.md) — NDI SDK setup and `PROMEKI_NDI_SDK_DIR`

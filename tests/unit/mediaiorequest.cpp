@@ -20,6 +20,7 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/videoformat.h>
 #include <promeki/pixelformat.h>
+#include <promeki/thread.h>
 
 #include "mediaio_test_helpers.h"
 
@@ -286,7 +287,7 @@ TEST_CASE("MediaIORequest::then marshalls async resolution through the calling E
         t.start();
         while (!fired.load() && t.elapsed() < 5000) {
                 loop.processEvents();
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
         REQUIRE(fired.load());
         CHECK(observed == Error::Ok);

@@ -8,6 +8,7 @@
 #include <promeki/sdl/sdlaudioclock.h>
 #include <promeki/sdl/sdlaudiooutput.h>
 #include <promeki/logger.h>
+#include <promeki/thread.h>
 #include <promeki/timestamp.h>
 
 #include <chrono>
@@ -385,7 +386,7 @@ Error SDLAudioClock::sleepUntilNs(int64_t targetNs) const {
         // overshoot the target; the polling loop covers the rest.
         constexpr int64_t kSleepSafetyMarginNs = 500000; // 500 us
         if (sleepWallNs > kSleepSafetyMarginNs) {
-                std::this_thread::sleep_for(std::chrono::nanoseconds(sleepWallNs - kSleepSafetyMarginNs));
+                Thread::sleepNs(sleepWallNs - kSleepSafetyMarginNs);
         }
 
         // Tight final approach.  100 us poll cadence — kernel sleep
@@ -398,7 +399,7 @@ Error SDLAudioClock::sleepUntilNs(int64_t targetNs) const {
                 auto r = raw();
                 if (isError(r)) return error(r);
                 if (value(r) >= targetNs) break;
-                std::this_thread::sleep_for(std::chrono::microseconds(100));
+                Thread::sleepUs(100);
         }
         return {};
 }

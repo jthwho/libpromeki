@@ -9,6 +9,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
+#include <promeki/duration.h>
 #include <promeki/elapsedtimer.h>
 #include <promeki/eventloop.h>
 #include <promeki/logger.h>
@@ -122,7 +123,7 @@ TEST_CASE("Thread: cross-thread signal/slot delivery") {
 
         // Wait for receiver to be created
         while (!ready.load()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         // Create sender on main thread
@@ -135,7 +136,7 @@ TEST_CASE("Thread: cross-thread signal/slot delivery") {
         sender.makeSomethingHappen();
 
         // Give time for the posted callable to execute on the worker
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        Thread::sleepMs(50);
 
         // Clean up
         t.threadEventLoop()->postCallable([recv] { delete recv; });
@@ -168,7 +169,7 @@ TEST_CASE("Thread: moveToThread changes affinity") {
         });
         // Wait for the move to complete
         while (!moved.load()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
         CHECK(obj.eventLoop() == &mainLoop);
         CHECK(obj.thread() == mainThread);
@@ -203,7 +204,7 @@ TEST_CASE("Thread: moveToThread moves children recursively") {
                 parent.moveToThread(mainThread);
                 moved = true;
         });
-        while (!moved.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        while (!moved.load()) Thread::sleepMs(1);
 
         t.quit();
         t.wait();
@@ -251,7 +252,7 @@ TEST_CASE("Thread: timed wait returns Ok when thread finishes in time") {
         t.start();
         t.quit();
         // Give it time to finish, then wait with a generous timeout
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        Thread::sleepMs(20);
         Error err = t.wait(1000);
         CHECK(err.isOk());
 }
@@ -270,7 +271,7 @@ TEST_CASE("Thread: cross-thread signal delivers correct signalSender") {
                 ready = true;
         });
         while (!ready.load()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         // Create sender on main thread
@@ -282,7 +283,7 @@ TEST_CASE("Thread: cross-thread signal delivers correct signalSender") {
 
         // Wait for the marshalled slot to execute on the worker
         while (recv->callCount.load(std::memory_order_relaxed) == 0) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         // The slot should have received the sender pointer
@@ -668,11 +669,11 @@ TEST_CASE("Thread: cross-thread signalSender is nullptr when sender destroyed") 
                 // the emit callable queued after this one cannot run
                 // until the sender has been destroyed.
                 while (!gate.load(std::memory_order_acquire)) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        Thread::sleepMs(1);
                 }
         });
         while (!ready.load(std::memory_order_acquire)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         {
@@ -691,7 +692,7 @@ TEST_CASE("Thread: cross-thread signalSender is nullptr when sender destroyed") 
 
         // Wait for the marshalled slot to execute
         while (recv->callCount.load(std::memory_order_relaxed) == 0) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         // signalSender() should be nullptr because the sender was
@@ -720,13 +721,13 @@ TEST_CASE("Thread: ObjectBasePtr cross-thread invalidation") {
                 ready.store(true, std::memory_order_release);
                 // Block until the main thread destroys the object
                 while (!gate.load(std::memory_order_acquire)) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        Thread::sleepMs(1);
                 }
                 ptrInvalidAfterDestroy.store(!ptr.isValid(), std::memory_order_relaxed);
         });
 
         while (!ready.load(std::memory_order_acquire)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         // Destroy the object while the worker thread holds an ObjectBasePtr
@@ -755,7 +756,7 @@ TEST_CASE("Thread: ObjectBasePtr multiple cross-thread trackers invalidated") {
                         ObjectBasePtr ptr(obj);
                         readyCount.fetch_add(1, std::memory_order_release);
                         while (!gate.load(std::memory_order_acquire)) {
-                                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                Thread::sleepMs(1);
                         }
                         if (!ptr.isValid()) {
                                 invalidCount.fetch_add(1, std::memory_order_relaxed);
@@ -765,7 +766,7 @@ TEST_CASE("Thread: ObjectBasePtr multiple cross-thread trackers invalidated") {
 
         // Wait for all threads to hold an ObjectBasePtr
         while (readyCount.load(std::memory_order_acquire) < numThreads) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         // Destroy the object — all ObjectBasePtr's should be invalidated
@@ -793,13 +794,13 @@ TEST_CASE("Thread: ObjectBasePtr data() returns nullptr after cross-thread inval
                 ObjectBasePtr ptr(obj);
                 ready.store(true, std::memory_order_release);
                 while (!gate.load(std::memory_order_acquire)) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        Thread::sleepMs(1);
                 }
                 dataIsNull.store(ptr.data() == nullptr, std::memory_order_relaxed);
         });
 
         while (!ready.load(std::memory_order_acquire)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         delete obj;
@@ -855,13 +856,13 @@ TEST_CASE("Thread: ObjectBasePtr copy assignment across threads") {
                 workerPtr = mainPtr;
                 ready.store(true, std::memory_order_release);
                 while (!gate.load(std::memory_order_acquire)) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        Thread::sleepMs(1);
                 }
                 copyValid.store(workerPtr.isValid(), std::memory_order_relaxed);
         });
 
         while (!ready.load(std::memory_order_acquire)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         // Worker copy should still be valid since object is alive
@@ -928,7 +929,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): cross-thread auto-marshal") {
                 created.store(true, std::memory_order_release);
         });
         while (!created.load(std::memory_order_acquire)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         const std::thread::id        mainId = std::this_thread::get_id();
@@ -957,7 +958,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): cross-thread auto-marshal") {
 
         // Wait for the marshalled slot to execute on the worker.
         while (!argReady.load(std::memory_order_acquire)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         CHECK(callCount.load() == 1);
@@ -973,7 +974,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): cross-thread auto-marshal") {
                 cleaned.store(true, std::memory_order_release);
         });
         while (!cleaned.load(std::memory_order_acquire)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
         worker.quit();
         worker.wait();
@@ -996,7 +997,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): serializes concurrent emitter
                 ready.store(true, std::memory_order_release);
         });
         while (!ready.load(std::memory_order_acquire)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         const std::thread::id coordId = coordinator.id();
@@ -1037,7 +1038,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): serializes concurrent emitter
         // Give the coordinator time to drain all posted callables.
         const int expected = kEmittersPerThread * kThreads;
         while (calls.load(std::memory_order_relaxed) < expected) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
         CHECK(calls.load() == expected);
         CHECK(nonCoordDispatches.load() == 0);
@@ -1048,7 +1049,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): serializes concurrent emitter
                 cleaned.store(true, std::memory_order_release);
         });
         while (!cleaned.load(std::memory_order_acquire)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
         coordinator.quit();
         coordinator.wait();
@@ -1105,7 +1106,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase): cross-thread queued callable d
         ElapsedTimer warmup;
         warmup.start();
         while (t.threadEventLoop() == nullptr && warmup.elapsed() < 1000) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
         REQUIRE(t.threadEventLoop() != nullptr);
 
@@ -1117,7 +1118,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase): cross-thread queued callable d
                 receiver = new TestOne();
                 ready = true;
         });
-        while (!ready.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        while (!ready.load()) Thread::sleepMs(1);
 
         std::atomic<int> calls{0};
         TestOne          sender;
@@ -1194,7 +1195,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase): cross-thread queued callable d
         ElapsedTimer waitDeleted;
         waitDeleted.start();
         while (!deleted.load() && waitDeleted.elapsed() < 1000) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
         REQUIRE(deleted.load());
         CHECK_FALSE(tracker.isValid()); // ObjectBasePtr nulled on destruction.
@@ -1208,7 +1209,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase): cross-thread queued callable d
         sender.makeSomethingHappen();
         sender.makeSomethingHappen();
         // Give any cross-thread post a chance to dispatch.
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        Thread::sleepMs(50);
         CHECK(calls.load() == callsAfterDelete);
 
         t.quit();
@@ -1236,4 +1237,47 @@ TEST_CASE("Signal::connect(Function, ObjectBase): same-thread emit drops after r
         // After receiver destruction, emits are no-ops.
         for (int i = 0; i < 5; ++i) sender.makeSomethingHappen();
         CHECK(calls.load() == 1);
+}
+
+TEST_CASE("Thread::sleepMs sleeps at least the requested duration") {
+        ElapsedTimer t;
+        Thread::sleepMs(20);
+        const int64_t elapsedUs = t.elapsedUs();
+        CHECK(elapsedUs >= 20'000);
+        CHECK(elapsedUs < 200'000);
+}
+
+TEST_CASE("Thread::sleepUs sleeps at least the requested duration") {
+        ElapsedTimer t;
+        Thread::sleepUs(5'000);
+        const int64_t elapsedUs = t.elapsedUs();
+        CHECK(elapsedUs >= 5'000);
+        CHECK(elapsedUs < 200'000);
+}
+
+TEST_CASE("Thread::sleepNs sleeps at least the requested duration") {
+        ElapsedTimer t;
+        Thread::sleepNs(2'000'000); // 2 ms
+        const int64_t elapsedNs = t.elapsedNs();
+        CHECK(elapsedNs >= 2'000'000);
+        CHECK(elapsedNs < 200'000'000);
+}
+
+TEST_CASE("Thread::sleep(Duration) sleeps at least the requested duration") {
+        ElapsedTimer t;
+        Thread::sleep(Duration::fromMilliseconds(15));
+        const int64_t elapsedUs = t.elapsedUs();
+        CHECK(elapsedUs >= 15'000);
+        CHECK(elapsedUs < 200'000);
+}
+
+TEST_CASE("Thread::sleep* with zero or negative arguments returns immediately") {
+        ElapsedTimer t;
+        Thread::sleepMs(0);
+        Thread::sleepUs(-100);
+        Thread::sleepNs(-1);
+        Thread::sleep(Duration::fromMilliseconds(-5));
+        Thread::sleep(Duration());
+        // Should be effectively instant; bound generously to avoid flake on a busy CI.
+        CHECK(t.elapsedUs() < 50'000);
 }

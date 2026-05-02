@@ -13,6 +13,7 @@
 #include <promeki/timerevent.h>
 #include <promeki/logger.h>
 #include <promeki/platform.h>
+#include <promeki/thread.h>
 
 #if defined(PROMEKI_PLATFORM_POSIX)
 #include <unistd.h>
@@ -77,7 +78,7 @@ TEST_CASE("EventLoop: quit with default code") {
 TEST_CASE("EventLoop: quit from another thread") {
         EventLoop   loop;
         std::thread t([&loop] {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                Thread::sleepMs(10);
                 loop.quit(7);
         });
         int         code = loop.exec();
@@ -183,7 +184,7 @@ TEST_CASE("EventLoop: ObjectBase timer event delivery") {
                 // Give the timer time to fire, then quit
         });
         // Wait a bit for the timer
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        Thread::sleepMs(20);
         loop.processEvents();
         CHECK(obj.fireCount == 1);
         CHECK(obj.lastTimerId == timerId);
@@ -237,7 +238,7 @@ TEST_CASE("EventLoop: ExcludeTimers flag skips timer processing") {
         int       fireCount = 0;
         loop.startTimer(1, [&fireCount] { fireCount++; }, true);
         // Wait for the timer to be ready to fire
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        Thread::sleepMs(10);
         // Process with ExcludeTimers — timer should not fire
         loop.processEvents(EventLoop::ExcludeTimers);
         CHECK(fireCount == 0);
@@ -288,7 +289,7 @@ TEST_CASE("EventLoop: ObjectBase startTimer and stopTimer") {
         TimerObj  obj;
         int       timerId = obj.startTimer(5, true);
         CHECK(timerId >= 0);
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        Thread::sleepMs(20);
         loop.processEvents();
         CHECK(obj.fireCount == 1);
 
@@ -311,7 +312,7 @@ TEST_CASE("EventLoop: ObjectBase repeating timer via timerEvent") {
         int       timerId = obj.startTimer(5, false);
         // Wait and process several times to let the timer fire repeatedly
         for (int i = 0; i < 5; i++) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                Thread::sleepMs(10);
                 loop.processEvents();
         }
         obj.stopTimer(timerId);
@@ -350,7 +351,7 @@ TEST_CASE("EventLoop: startTimer from another thread wakes the worker") {
 
         // Wait until the worker has constructed its EventLoop.
         while (!workerReady.load()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         // Cross-thread single-shot timer that quits the worker.
@@ -381,19 +382,19 @@ TEST_CASE("EventLoop: stopTimer from another thread removes the timer") {
         });
 
         while (!workerReady.load()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
 
         int timerId = workerLoopPtr->startTimer(5, [&fireCount]() { fireCount.fetch_add(1); });
 
         // Let it fire a few times.
-        std::this_thread::sleep_for(std::chrono::milliseconds(40));
+        Thread::sleepMs(40);
         int countBefore = fireCount.load();
         CHECK(countBefore >= 1);
 
         // Stop cross-thread and give the worker time to observe.
         workerLoopPtr->stopTimer(timerId);
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        Thread::sleepMs(30);
         int countAfterStop = fireCount.load();
 
         // Quit the worker.
@@ -499,7 +500,7 @@ TEST_CASE("EventLoop: IoSource fires on pipe readability") {
         CHECK(h >= 0);
 
         std::thread t([&] {
-                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                Thread::sleepMs(20);
                 pipe.writeByte();
         });
         loop.exec();
@@ -589,7 +590,7 @@ TEST_CASE("EventLoop: IoSource coexists with timers") {
                 false);
 
         std::thread t([&] {
-                std::this_thread::sleep_for(std::chrono::milliseconds(8));
+                Thread::sleepMs(8);
                 pipe.writeByte();
         });
         loop.exec();
@@ -613,7 +614,7 @@ TEST_CASE("EventLoop: addIoSource from another thread wakes the loop") {
         pipe.writeByte();
 
         std::thread t([&] {
-                std::this_thread::sleep_for(std::chrono::milliseconds(30));
+                Thread::sleepMs(30);
                 int h = loop.addIoSource(pipe.read_fd, EventLoop::IoRead, [&](int fd, uint32_t) {
                         char buf[16];
                         while (::read(fd, buf, sizeof(buf)) > 0) {}
@@ -650,7 +651,7 @@ TEST_CASE("EventLoop: multiple IoSources fire independently") {
         });
 
         std::thread t([&] {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                Thread::sleepMs(10);
                 pipe1.writeByte();
                 pipe2.writeByte();
         });

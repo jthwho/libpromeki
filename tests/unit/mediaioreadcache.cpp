@@ -21,6 +21,7 @@
 #include <promeki/mediaiosource.h>
 #include <promeki/objectbase.tpp>
 #include <promeki/pixelformat.h>
+#include <promeki/thread.h>
 #include <promeki/videoformat.h>
 
 using namespace promeki;
@@ -59,7 +60,7 @@ template <typename Pred> bool waitFor(Pred pred, int64_t timeoutMs = 2000) {
         t.start();
         while (t.elapsed() < timeoutMs) {
                 if (pred()) return true;
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
         return pred();
 }
@@ -70,7 +71,7 @@ template <typename Pred> bool pumpUntil(EventLoop &loop, Pred pred, int64_t time
         while (t.elapsed() < timeoutMs) {
                 loop.processEvents();
                 if (pred()) return true;
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                Thread::sleepMs(1);
         }
         return pred();
 }

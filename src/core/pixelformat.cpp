@@ -1559,6 +1559,25 @@ static PixelFormat::Data makeYUV16_420_SemiPlanar_BE() {
                              ycbcrSem16);
 }
 
+static PixelFormat::Data makeYUV16_422_SemiPlanar_LE() {
+        // NDI's P216 wire format: 16-bit container, 16-bit precision, 4:2:2
+        // semi-planar.  Senders carrying 10/12-bit content over NDI use the
+        // narrower YUV10_/YUV12_422_SemiPlanar_LE_Rec709 entries instead, which
+        // share the same wire layout (sample bits in the high bits of each
+        // 16-bit container).  See docs/ndi.md for the bit-depth convention.
+        auto d = makeYCbCrDesc(PixelFormat::YUV16_422_SemiPlanar_LE_Rec709, "YUV16_422_SemiPlanar_LE_Rec709",
+                               "16-bit YCbCr 4:2:2 NV16 LE, Rec.709, limited range",
+                               PixelMemLayout::SP_422_16_LE, ycbcrSem16);
+        d.fourccList = {"P216"};
+        return d;
+}
+
+static PixelFormat::Data makeYUV16_422_SemiPlanar_BE() {
+        return makeYCbCrDesc(PixelFormat::YUV16_422_SemiPlanar_BE_Rec709, "YUV16_422_SemiPlanar_BE_Rec709",
+                             "16-bit YCbCr 4:2:2 NV16 BE, Rec.709, limited range", PixelMemLayout::SP_422_16_BE,
+                             ycbcrSem16);
+}
+
 // ---------------------------------------------------------------------------
 // Video codec compressed formats (QuickTime / MP4 / ISO-BMFF)
 //
@@ -1877,6 +1896,8 @@ struct PixelFormatRegistry {
                         add(makeYUV16_420_Planar_BE());
                         add(makeYUV16_420_SemiPlanar_LE());
                         add(makeYUV16_420_SemiPlanar_BE());
+                        add(makeYUV16_422_SemiPlanar_LE());
+                        add(makeYUV16_422_SemiPlanar_BE());
 
                         // Video codec compressed formats (QuickTime / MP4 / ISO-BMFF)
                         add(makeH264());

@@ -20,6 +20,7 @@
 #include <promeki/mediapipelineplanner.h>
 #include <promeki/objectbase.tpp>
 #include <promeki/set.h>
+#include <promeki/thread.h>
 #include <promeki/timerevent.h>
 #include <promeki/util.h>
 
@@ -615,7 +616,7 @@ Error MediaPipeline::close(bool block) {
                 if (currentEL != nullptr && currentEL == ownerEL) {
                         currentEL->processEvents(EventLoop::WaitForMore, 10);
                 } else {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        Thread::sleepMs(1);
                 }
         }
         return _closeError;

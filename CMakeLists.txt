@@ -358,6 +358,69 @@ if((PROMEKI_ENABLE_CUDA_DEFAULT OR PROMEKI_ENABLE_CUDA) AND PROMEKI_NVENC_INCLUD
     set(PROMEKI_ENABLE_NVDEC_DEFAULT ON)
 endif()
 option(PROMEKI_ENABLE_NVDEC    "Include NVIDIA NVDEC H.264/HEVC hardware decoder (requires CUDA + Video Codec SDK)" ${PROMEKI_ENABLE_NVDEC_DEFAULT})
+# NDI (Network Device Interface) media transport: NewTek / Vizrt's
+# IP video / audio protocol.  The NDI SDK is distributed separately
+# from the library and cannot be vendored — see docs/ndi.md for
+# setup instructions.  Default ON when the SDK is located via
+# PROMEKI_NDI_SDK_DIR (cache var set via -D, or PROMEKI_NDI_SDK_DIR
+# / NDI_SDK_DIR environment variables), silently OFF elsewhere.
+# Requires PROMEKI_ENABLE_PROAV.  The SDK is headers-only at build
+# time; libndi.so / libndi_advanced.so is loaded at runtime via the
+# dynamic-load shim shipped in the SDK headers.  The -D cache value
+# overrides the environment variable since CMake only honours the
+# default on the first configure when the cache is unset.
+set(_promeki_ndi_sdk_dir_default "")
+if(DEFINED ENV{PROMEKI_NDI_SDK_DIR})
+    set(_promeki_ndi_sdk_dir_default "$ENV{PROMEKI_NDI_SDK_DIR}")
+endif()
+set(PROMEKI_NDI_SDK_DIR "${_promeki_ndi_sdk_dir_default}" CACHE PATH
+    "Path to the NDI SDK (the directory containing include/Processing.NDI.Lib.h).")
+set(PROMEKI_ENABLE_NDI_DEFAULT OFF)
+set(_ndi_hints "")
+if(PROMEKI_NDI_SDK_DIR)
+    list(APPEND _ndi_hints "${PROMEKI_NDI_SDK_DIR}/include")
+endif()
+if(DEFINED ENV{NDI_SDK_DIR})
+    list(APPEND _ndi_hints "$ENV{NDI_SDK_DIR}/include")
+endif()
+find_path(PROMEKI_NDI_INCLUDE_DIR Processing.NDI.Lib.h
+    HINTS ${_ndi_hints}
+    PATHS /usr/include /usr/local/include
+)
+if(PROMEKI_NDI_INCLUDE_DIR)
+    set(PROMEKI_ENABLE_NDI_DEFAULT ON)
+    message(STATUS "Found NDI SDK: ${PROMEKI_NDI_INCLUDE_DIR}")
+    if(EXISTS "${PROMEKI_NDI_INCLUDE_DIR}/Processing.NDI.Advanced.h")
+        message(STATUS "  NDI Advanced SDK headers detected")
+    endif()
+    # Probe the SDK's own runtime tree for libndi[_advanced].so.6 so the
+    # bootstrap can dlopen the absolute path before falling back to the
+    # system loader path.  The SDK ships per-arch subdirectories under
+    # lib/ (x86_64-linux-gnu, aarch64-linux-gnu, ...); find_file recurses
+    # through them so we don't have to hard-code the host triple.
+    set(PROMEKI_NDI_RUNTIME_DIR "")
+    if(PROMEKI_NDI_SDK_DIR)
+        find_file(_promeki_ndi_runtime_so
+            NAMES libndi.so.6 libndi_advanced.so.6
+            HINTS "${PROMEKI_NDI_SDK_DIR}/lib"
+            PATH_SUFFIXES x86_64-linux-gnu aarch64-linux-gnu
+                          arm-linux-gnueabihf
+            NO_DEFAULT_PATH
+        )
+        if(_promeki_ndi_runtime_so)
+            get_filename_component(PROMEKI_NDI_RUNTIME_DIR
+                "${_promeki_ndi_runtime_so}" DIRECTORY)
+            message(STATUS "  NDI SDK runtime: ${PROMEKI_NDI_RUNTIME_DIR}")
+        else()
+            message(STATUS
+                "  NDI SDK runtime not found under ${PROMEKI_NDI_SDK_DIR}/lib; "
+                "the loader will fall back to LD_LIBRARY_PATH / system paths")
+        endif()
+    endif()
+else()
+    message(STATUS "NDI SDK not found; set PROMEKI_NDI_SDK_DIR to enable (see docs/ndi.md)")
+endif()
+option(PROMEKI_ENABLE_NDI      "Include NDI (Network Device Interface) media transport (requires PROAV + NDI SDK)" ${PROMEKI_ENABLE_NDI_DEFAULT})
 
 # Vendored vs system dependency options
 option(PROMEKI_USE_SYSTEM_ZLIB          "Use system zlib instead of vendored zlib-ng"   OFF)
@@ -516,6 +579,17 @@ if(PROMEKI_ENABLE_NVDEC)
             "PROMEKI_ENABLE_NVDEC=ON but nvcuvid.h was not found. "
             "Set PROMEKI_NVENC_SDK_DIR to the Video Codec SDK directory "
             "(the one containing Interface/nvcuvid.h + Interface/cuviddec.h).")
+    endif()
+endif()
+if(PROMEKI_ENABLE_NDI)
+    if(NOT PROMEKI_ENABLE_PROAV)
+        message(FATAL_ERROR "PROMEKI_ENABLE_NDI requires PROMEKI_ENABLE_PROAV")
+    endif()
+    if(NOT PROMEKI_NDI_INCLUDE_DIR)
+        message(FATAL_ERROR
+            "PROMEKI_ENABLE_NDI=ON but Processing.NDI.Lib.h was not found. "
+            "Set PROMEKI_NDI_SDK_DIR to the NDI SDK directory "
+            "(the one containing include/Processing.NDI.Lib.h).  See docs/ndi.md.")
     endif()
 endif()
 
@@ -1824,6 +1898,26 @@ if(PROMEKI_ENABLE_PROAV)
         list(APPEND PROMEKI_HEADERS include/promeki/v4l2mediaio.h)
         list(APPEND PROMEKI_SOURCES src/proav/v4l2mediaio.cpp)
     endif()
+    if(PROMEKI_ENABLE_NDI)
+        # NDI MediaIO backend: see docs/ndi.md.  The NDI SDK is loaded
+        # at runtime via the dynamic-load shim in
+        # Processing.NDI.DynamicLoad.h, so the build-time dependency
+        # is headers-only (already wired into the promeki target).
+        list(APPEND PROMEKI_HEADERS
+            include/promeki/ndilib.h
+            include/promeki/ndiformat.h
+            include/promeki/ndidiscovery.h
+            include/promeki/ndiclock.h
+            include/promeki/ndimediaio.h
+        )
+        list(APPEND PROMEKI_SOURCES
+            src/proav/ndilib.cpp
+            src/proav/ndiformat.cpp
+            src/proav/ndidiscovery.cpp
+            src/proav/ndiclock.cpp
+            src/proav/ndimediaio.cpp
+        )
+    endif()
     if(PROMEKI_ENABLE_CSC)
         list(APPEND PROMEKI_HEADERS
             include/promeki/cscpipeline.h
@@ -2061,6 +2155,24 @@ if(PROMEKI_ENABLE_PROAV)
         target_include_directories(promeki PRIVATE ${PROMEKI_NVENC_INCLUDE_DIR})
         target_link_libraries(promeki PRIVATE CUDA::cuda_driver ${CMAKE_DL_LIBS})
         target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_NVDEC)
+    endif()
+    if(PROMEKI_ENABLE_NDI)
+        # NDI ships a dynamic-load shim (Processing.NDI.DynamicLoad.h)
+        # that pulls libndi.so / libndi_advanced.so at runtime, so the
+        # SDK is a headers-only build dependency.  dl is needed for the
+        # dlopen calls inside the shim.
+        target_include_directories(promeki PRIVATE ${PROMEKI_NDI_INCLUDE_DIR})
+        target_link_libraries(promeki PRIVATE ${CMAKE_DL_LIBS})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_NDI)
+        # When the SDK probe found a runtime tree under the SDK dir,
+        # pass the absolute path through so NdiLib::instance() can
+        # dlopen it directly — saves users from having to set
+        # LD_LIBRARY_PATH for dev builds against an extracted SDK
+        # that hasn't been installed system-wide.
+        if(PROMEKI_NDI_RUNTIME_DIR)
+            target_compile_definitions(promeki PRIVATE
+                PROMEKI_NDI_RUNTIME_DIR_STR="${PROMEKI_NDI_RUNTIME_DIR}")
+        endif()
     endif()
     if(PROMEKI_ENABLE_CSC)
         target_link_libraries(promeki PRIVATE ${PROMEKI_HWY_TARGET})
@@ -2424,6 +2536,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/obfuscatedstring.cpp
         tests/unit/objectbase.cpp
         tests/unit/objectbase2.cpp
+        tests/unit/objectbasepointer_race.cpp
         tests/unit/periodiccallback.cpp
         tests/unit/pair.cpp
         tests/unit/pidcontroller.cpp
@@ -2641,6 +2754,15 @@ if(PROMEKI_BUILD_TESTS)
         if(PROMEKI_ENABLE_NVDEC)
             list(APPEND UNITTEST_SOURCES
                 tests/unit/nvdecvideodecoder.cpp
+            )
+        endif()
+        if(PROMEKI_ENABLE_NDI)
+            list(APPEND UNITTEST_SOURCES
+                tests/unit/ndilib.cpp
+                tests/unit/ndiformat.cpp
+                tests/unit/ndidiscovery.cpp
+                tests/unit/ndiclock.cpp
+                tests/unit/ndimediaio.cpp
             )
         endif()
         if(PROMEKI_ENABLE_SRC)

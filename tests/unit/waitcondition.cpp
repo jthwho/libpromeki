@@ -10,6 +10,7 @@
 #include <doctest/doctest.h>
 #include <promeki/mutex.h>
 #include <promeki/waitcondition.h>
+#include <promeki/thread.h>
 
 using namespace promeki;
 
@@ -24,7 +25,7 @@ TEST_CASE("WaitCondition_WakeOne") {
                 m.unlock();
         });
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        Thread::sleepMs(10);
         {
                 Mutex::Locker locker(m);
                 ready = true;
@@ -46,7 +47,7 @@ TEST_CASE("WaitCondition_WakeOneNoPredicate") {
                 m.unlock();
         });
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        Thread::sleepMs(10);
         cv.wakeOne();
         t.join();
         CHECK(woken.load());
@@ -68,7 +69,7 @@ TEST_CASE("WaitCondition_WakeAll") {
         std::thread t1(waiter);
         std::thread t2(waiter);
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        Thread::sleepMs(10);
         {
                 Mutex::Locker locker(m);
                 ready = true;
@@ -114,7 +115,7 @@ TEST_CASE("WaitCondition_IndefinitePredicateWait") {
         bool          ready = false;
 
         std::thread t([&] {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                Thread::sleepMs(10);
                 {
                         Mutex::Locker locker(m);
                         ready = true;

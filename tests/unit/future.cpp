@@ -9,6 +9,7 @@
 #include <doctest/doctest.h>
 #include <promeki/future.h>
 #include <promeki/promise.h>
+#include <promeki/thread.h>
 
 using namespace promeki;
 
@@ -49,7 +50,7 @@ TEST_CASE("Future_WaitForFinished") {
         Future<int>  f = p.future();
 
         std::thread t([&] {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                Thread::sleepMs(10);
                 p.setValue(99);
         });
 
@@ -114,7 +115,7 @@ TEST_CASE("Future_VoidWaitForFinished") {
         Future<void>  f = p.future();
 
         std::thread t([&] {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                Thread::sleepMs(10);
                 p.setValue();
         });
 
@@ -147,7 +148,7 @@ TEST_CASE("Future_ThreadedSetGet") {
         Future<int>  f = p.future();
 
         std::thread t([&] {
-                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                Thread::sleepMs(20);
                 p.setValue(123);
         });
 

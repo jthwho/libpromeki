@@ -21,6 +21,7 @@
 #include <promeki/pcmaudiopayload.h>
 #include <promeki/metadata.h>
 #include <promeki/pixelformat.h>
+#include <promeki/thread.h>
 
 #include <atomic>
 #include <chrono>
@@ -1067,6 +1068,10 @@ void FrameBridge::abort() {
         _d->abortFlag.store(true, std::memory_order_release);
 }
 
+bool FrameBridge::isAborted() const {
+        return _d->abortFlag.load(std::memory_order_acquire);
+}
+
 bool FrameBridge::isSyncInput() const {
         if (_d->role == Impl::RoleInput) return _d->inputSyncMode;
         return true;
@@ -1113,7 +1118,7 @@ Error FrameBridge::writeFrame(const Frame::Ptr &frame) {
                         // another thread.
                         while (_d->role == Impl::RoleOutput && !_d->abortFlag.load(std::memory_order_acquire) &&
                                _d->clients.empty()) {
-                                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                                Thread::sleepMs(10);
                                 _d->acceptPending();
                                 _d->pruneDeadClients();
                         }

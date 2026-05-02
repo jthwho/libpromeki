@@ -8,6 +8,7 @@
 #include <cstring>
 #include <promeki/audioformat.h>
 #include <promeki/atomic.h>
+#include <promeki/buffer.h>
 #include <promeki/map.h>
 #include <promeki/pair.h>
 
@@ -1051,6 +1052,67 @@ Error AudioFormat::convertTo(const AudioFormat &dst, void *out, const void *in, 
 
         samplesToFloat(scratch, static_cast<const uint8_t *>(in), samples);
         dst.floatToSamples(static_cast<uint8_t *>(out), scratch, samples);
+        return Error::Ok;
+}
+
+Error AudioFormat::convertTo(const AudioFormat &dst, void *out, const void *in, size_t samplesPerChannel,
+                              size_t channels, float *scratch) const {
+        if (!isValid() || !dst.isValid()) return Error::InvalidArgument;
+        if (samplesPerChannel == 0 || channels == 0) return Error::Ok;
+
+        const size_t totalFloats = samplesPerChannel * channels;
+        const bool   needsTranspose = (channels > 1) && (isPlanar() != dst.isPlanar());
+
+        // Direct converters are layout-agnostic byte-level translations
+        // (e.g. endian swap, identity copy) — they do not transpose.
+        // We can only use them when the planar/interleaved layout
+        // matches across src and dst.
+        if (!needsTranspose) {
+                if (DirectConvertFn fn = directConverter(id(), dst.id()); fn != nullptr) {
+                        fn(out, in, totalFloats);
+                        return Error::Ok;
+                }
+        }
+
+        if (isCompressed() || dst.isCompressed()) return Error::NotSupported;
+        if (scratch == nullptr) return Error::InvalidArgument;
+
+        // Same-layout via-float trip — no transpose needed.
+        if (!needsTranspose) {
+                samplesToFloat(scratch, static_cast<const uint8_t *>(in), totalFloats);
+                dst.floatToSamples(static_cast<uint8_t *>(out), scratch, totalFloats);
+                return Error::Ok;
+        }
+
+        // Cross-layout: convert src bytes to a contiguous float run in
+        // src's layout, transpose into dst's layout in a second float
+        // buffer, then convert that to dst bytes.  The transpose has
+        // to live in a separate buffer because each output element
+        // pulls from a non-adjacent input slot.
+        samplesToFloat(scratch, static_cast<const uint8_t *>(in), totalFloats);
+        Buffer transposed(totalFloats * sizeof(float));
+        if (!transposed.isValid()) return Error::NoMem;
+        float *t = static_cast<float *>(transposed.data());
+        if (isPlanar()) {
+                // Planar input  [ch0[0..N), ch1[0..N), ...]
+                //   →
+                // Interleaved   [s0c0,s0c1,...,sNc0,sNc1,...]
+                for (size_t c = 0; c < channels; ++c) {
+                        const float *cIn = scratch + c * samplesPerChannel;
+                        for (size_t s = 0; s < samplesPerChannel; ++s) {
+                                t[s * channels + c] = cIn[s];
+                        }
+                }
+        } else {
+                // Interleaved input → planar output.
+                for (size_t s = 0; s < samplesPerChannel; ++s) {
+                        const float *sIn = scratch + s * channels;
+                        for (size_t c = 0; c < channels; ++c) {
+                                t[c * samplesPerChannel + s] = sIn[c];
+                        }
+                }
+        }
+        dst.floatToSamples(static_cast<uint8_t *>(out), t, totalFloats);
         return Error::Ok;
 }
 

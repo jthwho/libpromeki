@@ -975,3 +975,45 @@ TEST_CASE("Variant_Url_FromStringVariant_Malformed") {
         CHECK_FALSE(u.isValid());
         CHECK(err.isError());
 }
+
+TEST_CASE("VariantSpec_Duration_ParseString") {
+        // Exercises the TypeDuration branch in VariantSpec::parseString,
+        // which wires Duration::fromString into the CLI --dc key:value flow.
+        VariantSpec spec = VariantSpec().setType(Variant::TypeDuration);
+        Error       err;
+
+        // Millisecond suffix.
+        {
+                Variant parsed = spec.parseString("1500ms", &err);
+                CHECK_FALSE(err.isError());
+                CHECK(parsed.type() == Variant::TypeDuration);
+                CHECK(parsed.get<Duration>().milliseconds() == 1500);
+        }
+        // Second suffix.
+        {
+                Variant parsed = spec.parseString("3s", &err);
+                CHECK_FALSE(err.isError());
+                CHECK(parsed.get<Duration>() == Duration::fromSeconds(3));
+        }
+        // Bare number defaults to seconds.
+        {
+                Variant parsed = spec.parseString("5", &err);
+                CHECK_FALSE(err.isError());
+                CHECK(parsed.get<Duration>() == Duration::fromSeconds(5));
+        }
+        // Garbage input must produce an error.
+        {
+                err = Error();
+                Variant parsed = spec.parseString("abc", &err);
+                CHECK(err.isError());
+                CHECK_FALSE(parsed.isValid());
+        }
+}
+
+TEST_CASE("VariantSpec_Duration_ParseString_Rejects_Unknown_Unit") {
+        VariantSpec spec = VariantSpec().setType(Variant::TypeDuration);
+        Error       err;
+        Variant     parsed = spec.parseString("3 weeks", &err);
+        CHECK(err.isError());
+        CHECK_FALSE(parsed.isValid());
+}

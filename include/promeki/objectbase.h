@@ -86,10 +86,10 @@ template <typename T = ObjectBase> class ObjectBasePtr {
 
         public:
                 /** @brief Constructs a pointer tracking the given object. */
-                ObjectBasePtr(T *object = nullptr) : p(object) { link(); }
+                ObjectBasePtr(T *object = nullptr) { linkTo(object); }
 
                 /** @brief Copy constructor. Tracks the same object as the source. */
-                ObjectBasePtr(const ObjectBasePtr &other) : p(other.p.load(std::memory_order_relaxed)) { link(); }
+                ObjectBasePtr(const ObjectBasePtr &other) { linkFromSource(other.p); }
 
                 /**
                  * @brief Converting copy-constructor from an ObjectBasePtr
@@ -97,8 +97,8 @@ template <typename T = ObjectBase> class ObjectBasePtr {
                  * @tparam U Source type; must derive from @c T.
                  */
                 template <typename U, typename = std::enable_if_t<std::is_base_of_v<T, U> && !std::is_same_v<T, U>>>
-                ObjectBasePtr(const ObjectBasePtr<U> &other) : p(other.p.load(std::memory_order_relaxed)) {
-                        link();
+                ObjectBasePtr(const ObjectBasePtr<U> &other) {
+                        linkFromSource(other.p);
                 }
 
                 /** @brief Destructor. Unlinks from the tracked object. */
@@ -108,8 +108,7 @@ template <typename T = ObjectBase> class ObjectBasePtr {
                 ObjectBasePtr &operator=(const ObjectBasePtr &other) {
                         if (this == &other) return *this;
                         unlink();
-                        p.store(other.p.load(std::memory_order_relaxed), std::memory_order_relaxed);
-                        link();
+                        linkFromSource(other.p);
                         return *this;
                 }
 
@@ -125,7 +124,24 @@ template <typename T = ObjectBase> class ObjectBasePtr {
         private:
                 std::atomic<ObjectBase *> p{nullptr};
 
-                void link();
+                // Atomically (under @ref ObjectBase::objectBasePtrMutex)
+                // sets @c p to @p obj and registers @c &p in
+                // @c obj->_pointerMap.  Used by every ObjectBasePtr
+                // constructor / assignment so the store of @c p and
+                // the addition to @c _pointerMap happen as a single
+                // critical section — without this fold a concurrent
+                // @ref ObjectBase::runCleanup can null every existing
+                // tracker, release the mutex, and let a later @c link
+                // write to freed memory while leaving the new tracker
+                // dangling-but-non-null.
+                void linkTo(ObjectBase *obj);
+
+                // Like @ref linkTo but reads the source pointer from
+                // another ObjectBasePtr's atomic under the same lock,
+                // so a concurrent destruction of the tracked object
+                // cannot slip between the read and the registration.
+                void linkFromSource(const std::atomic<ObjectBase *> &source);
+
                 void unlink();
 };
 
@@ -492,8 +508,9 @@ class ObjectBase {
                         _pointerMap; ///< Keys are &ObjectBasePtr::p; stored as a type-erased handle so runCleanup() can null every tracker without knowing its @c T.
                 List<Cleanup> _cleanupList;
 
-                // A single process-wide mutex serializes ObjectBasePtr
-                // link/unlink with ObjectBase::runCleanup.  A per-object
+                // A single process-wide mutex serializes every
+                // ObjectBasePtr link / unlink (linkTo, linkFromSource,
+                // unlink) with ObjectBase::runCleanup.  A per-object
                 // mutex is unsafe here because unlink reads the obj
                 // pointer via the atomic and *then* needs to take a
                 // lock to manipulate the map — if we put that lock on
@@ -502,7 +519,12 @@ class ObjectBase {
                 // mutex member.  Serializing through one global mutex
                 // closes that window: an unlink that observes obj
                 // != nullptr is guaranteed that runCleanup hasn't run
-                // yet (and won't until we release).
+                // yet (and won't until we release).  The link path
+                // folds the source-pointer load and the @c _pointerMap
+                // registration into the same critical section so a
+                // newly constructed tracker is either fully registered
+                // before runCleanup nulls it, or never observes a
+                // doomed pointer at all.
                 static Mutex &objectBasePtrMutex();
 
                 void setOwnerThreadRecursive(Thread *t, EventLoop *loop);
@@ -528,9 +550,9 @@ class ObjectBase {
 
                 void runCleanup() {
                         // Null out any ObjectBasePtr's that are currently pointing
-                        // to this object.  Hold the global mutex so concurrent
-                        // unlink()/link() on another thread can't observe a
-                        // half-destroyed object.
+                        // to this object.  Hold the global mutex so a concurrent
+                        // ObjectBasePtr link / unlink on another thread can't
+                        // observe a half-destroyed object.
                         {
                                 Mutex::Locker lock(objectBasePtrMutex());
                                 for (auto item : _pointerMap) {
@@ -549,13 +571,50 @@ class ObjectBase {
                 }
 };
 
-template <typename T> inline void ObjectBasePtr<T>::link() {
-        // Lock first, then load: a concurrent runCleanup will null
-        // the atomic before clearing the map, so once we hold the
-        // mutex either obj is alive (we add to the map) or it has
-        // already been nulled (we no-op).
+template <typename T> inline void ObjectBasePtr<T>::linkTo(ObjectBase *obj) {
+        // Single critical section: store @c p and add to the tracked
+        // object's @c _pointerMap atomically.  An interleaved
+        // runCleanup can either run entirely before us (it sees no
+        // entry, then we observe the cleared @c _pointerMap and
+        // implicitly do nothing meaningful — though @c obj is then a
+        // dangling pointer, see note below) or entirely after us (it
+        // observes the new entry and nulls @c p).  Either way the
+        // invariant "non-null @c p implies registered in the tracked
+        // object's @c _pointerMap" holds for the duration of the
+        // tracker's life.
+        //
+        // Note on the dangling-input case: callers of this constructor
+        // pass a raw pointer they own.  If the caller's object is
+        // destroyed before @c linkTo runs, that's a caller-side
+        // lifetime bug, not something this class can plug.  The
+        // mutex-protected variant @ref linkFromSource exists for the
+        // copy paths where the source is itself an ObjectBasePtr and
+        // can be invalidated concurrently — that one re-checks the
+        // atomic under the lock.
         Mutex::Locker lock(ObjectBase::objectBasePtrMutex());
-        ObjectBase   *obj = p.load(std::memory_order_relaxed);
+        p.store(obj, std::memory_order_relaxed);
+        if (obj != nullptr) {
+                obj->_pointerMap[&p] = &p;
+        }
+        return;
+}
+
+template <typename T>
+inline void ObjectBasePtr<T>::linkFromSource(const std::atomic<ObjectBase *> &source) {
+        // Lock first, then load the source: if a concurrent
+        // runCleanup is mid-flight on the tracked object it has
+        // already nulled the source's atomic before releasing the
+        // mutex, so once we hold the lock the source either still
+        // points at a live object (which can't be destroyed until we
+        // release) or has been nulled (we observe nullptr and link to
+        // nothing).  Performing the source load *outside* the lock —
+        // as the previous mem-initializer pattern did — leaves a
+        // window where @c p is set to a doomed pointer, runCleanup
+        // misses us because we're not in @c _pointerMap yet, and the
+        // subsequent registration writes through a freed @c obj.
+        Mutex::Locker lock(ObjectBase::objectBasePtrMutex());
+        ObjectBase   *obj = source.load(std::memory_order_relaxed);
+        p.store(obj, std::memory_order_relaxed);
         if (obj != nullptr) {
                 obj->_pointerMap[&p] = &p;
         }
@@ -563,9 +622,10 @@ template <typename T> inline void ObjectBasePtr<T>::link() {
 }
 
 template <typename T> inline void ObjectBasePtr<T>::unlink() {
-        // Same ordering as link(): acquire the global mutex first so
-        // we can't race ObjectBase::runCleanup, which holds the same
-        // lock while it walks _pointerMap and frees the trackers.
+        // Same ordering as the link path: acquire the global mutex
+        // first so we can't race ObjectBase::runCleanup, which holds
+        // the same lock while it walks _pointerMap and frees the
+        // trackers.
         Mutex::Locker lock(ObjectBase::objectBasePtrMutex());
         ObjectBase   *obj = p.exchange(nullptr, std::memory_order_acq_rel);
         if (obj != nullptr) {

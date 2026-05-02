@@ -500,6 +500,30 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
         }
 
         // Conversion path: src -> native float -> (remap+gain+meter) -> dst.
+        //
+        // FIXME: this path is broken for multi-channel via-float
+        // pushes.
+        //   1. Step 1's @c srcFormat.samplesToFloat call passes
+        //      @p samples (per-channel run) instead of
+        //      @c samples * inChannels — only the first channel's
+        //      worth of floats gets converted, the rest stay
+        //      uninitialised.
+        //   2. Step 5 has the symmetric bug on the
+        //      @c floatToSamples side via @c firstChunkSamples /
+        //      @c remainderSamples (per-channel) instead of
+        //      multiplied by @c outChannels.
+        //   3. Steps 2/3/4 (remap, gain, meter) walk
+        //      @c f * inChannels / @c f * outChannels frames, so
+        //      they implicitly assume interleaved float layout —
+        //      a planar @p srcFormat would silently scramble.
+        //
+        // Today this is masked because every live caller hits the
+        // same-format fast path at the top of pushLocked (e.g. the
+        // NDI receiver pushes interleaved float into an interleaved
+        // float ring).  The fix should route through the new
+        // channel-aware @ref AudioFormat::convertTo overload (which
+        // already handles the planar↔interleaved transpose) and
+        // walk all subsequent steps in their declared layout.
         const size_t inChannels = srcFormat.channels();
         const size_t outChannels = _format.channels();
         const size_t inFloatCount = samples * inChannels;

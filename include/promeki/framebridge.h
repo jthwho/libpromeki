@@ -242,6 +242,18 @@ class FrameBridge : public ObjectBase {
                  */
                 void abort();
 
+                /**
+                 * @brief Returns true if @ref abort has been called on the
+                 *        currently-open bridge instance.
+                 *
+                 * Cleared on @ref openOutput / @ref openInput so a freshly
+                 * opened bridge always reports @c false.  Used by polling
+                 * read paths (e.g. @ref FrameBridgeMediaIO::executeCmd
+                 * for @c MediaIOCommandRead) to break out of their wait
+                 * loops when the owning MediaIO is being closed.
+                 */
+                bool isAborted() const;
+
                 /** @brief Returns true if the bridge is open (either side). */
                 bool isOpen() const;
 
