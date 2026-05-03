@@ -1,0 +1,7 @@
+<map id="promeki::WallClock" name="promeki::WallClock">
+<area shape="rect" id="Node000001" title="Wall&#45;clock implementation of Clock." alt="" coords="5,168,153,193"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1Clock.html" title="Abstract clock interface." alt="" coords="19,93,139,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="82,133,82,168,77,168,77,133"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1RefCount.html" title="An atomic reference count object." alt="" coords="7,5,151,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="82,45,82,93,77,93,77,45"/>
+</map>

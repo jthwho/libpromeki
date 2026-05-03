@@ -1,0 +1,8 @@
+<map id="promeki::ColorPrimaries" name="promeki::ColorPrimaries">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for VUI / container color primaries." alt="" coords="5,237,185,263"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="135,231,162,228,186,230,205,237,212,250,209,258,203,265,181,271,152,271,122,265,123,260,153,266,180,266,200,260,205,256,207,250,201,241,185,235,162,233,136,236"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="16,80,175,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="98,134,98,237,93,237,93,134"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="35,5,156,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="98,44,98,80,93,80,93,44"/>
+</map>

@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -111,20 +109,15 @@ $(document).ready(function(){initNavTree('tui_2layout_8h_source.html',''); initR
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="comment">// Backward-compatible type aliases so existing TUI code compiles</span></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="comment">// unchanged.  The actual types now live in core/layout.h.</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="keyword">using </span><a class="code hl_class" href="classLayout.html">TuiLayout</a> = <a class="code hl_class" href="classLayout.html">Layout</a>;</div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">using </span><a class="code hl_class" href="classBoxLayout.html">TuiBoxLayout</a> = <a class="code hl_class" href="classBoxLayout.html">BoxLayout</a>;</div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="keyword">using </span><a class="code hl_enumeration" href="group__widget.html#ga8603b74945301d755e683a00dd5ab191">TuiBoxDirection</a> = <a class="code hl_enumeration" href="group__widget.html#ga8603b74945301d755e683a00dd5ab191">BoxDirection</a>;</div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">using </span><a class="code hl_class" href="classHBoxLayout.html">TuiHBoxLayout</a> = <a class="code hl_class" href="classHBoxLayout.html">HBoxLayout</a>;</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">using </span><a class="code hl_class" href="classVBoxLayout.html">TuiVBoxLayout</a> = <a class="code hl_class" href="classVBoxLayout.html">VBoxLayout</a>;</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">using </span><a class="code hl_class" href="classGridLayout.html">TuiGridLayout</a> = <a class="code hl_class" href="classGridLayout.html">GridLayout</a>;</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="keyword">using </span>TuiLayout = Layout;</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">using </span>TuiBoxLayout = BoxLayout;</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="keyword">using </span>TuiBoxDirection = <a class="code hl_enumeration" href="group__widget.html#gae822acdb82fd3bcab65b9d05495e0328">BoxDirection</a>;</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">using </span>TuiHBoxLayout = HBoxLayout;</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">using </span>TuiVBoxLayout = VBoxLayout;</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">using </span>TuiGridLayout = GridLayout;</div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
-<div class="ttc" id="aclassBoxLayout_html"><div class="ttname"><a href="classBoxLayout.html">BoxLayout</a></div><div class="ttdoc">Layout that arranges widgets in a horizontal or vertical line.</div><div class="ttdef"><b>Definition</b> layout.h:119</div></div>
-<div class="ttc" id="aclassGridLayout_html"><div class="ttname"><a href="classGridLayout.html">GridLayout</a></div><div class="ttdoc">Grid layout with rows and columns.</div><div class="ttdef"><b>Definition</b> layout.h:190</div></div>
-<div class="ttc" id="aclassHBoxLayout_html"><div class="ttname"><a href="classHBoxLayout.html">HBoxLayout</a></div><div class="ttdoc">Horizontal box layout (left to right).</div><div class="ttdef"><b>Definition</b> layout.h:168</div></div>
-<div class="ttc" id="aclassLayout_html"><div class="ttname"><a href="classLayout.html">Layout</a></div><div class="ttdoc">Abstract base class for layout managers.</div><div class="ttdef"><b>Definition</b> layout.h:31</div></div>
-<div class="ttc" id="aclassVBoxLayout_html"><div class="ttname"><a href="classVBoxLayout.html">VBoxLayout</a></div><div class="ttdoc">Vertical box layout (top to bottom).</div><div class="ttdef"><b>Definition</b> layout.h:179</div></div>
-<div class="ttc" id="agroup__widget_html_ga8603b74945301d755e683a00dd5ab191"><div class="ttname"><a href="group__widget.html#ga8603b74945301d755e683a00dd5ab191">BoxDirection</a></div><div class="ttdeci">BoxDirection</div><div class="ttdoc">Box layout direction.</div><div class="ttdef"><b>Definition</b> layout.h:104</div></div>
+<div class="ttc" id="agroup__widget_html_gae822acdb82fd3bcab65b9d05495e0328"><div class="ttname"><a href="group__widget.html#gae822acdb82fd3bcab65b9d05495e0328">promeki::BoxDirection</a></div><div class="ttdeci">BoxDirection</div><div class="ttdoc">Box layout direction.</div><div class="ttdef"><b>Definition</b> layout.h:104</div></div>
 <div class="ttc" id="alayout_8h_html"><div class="ttname"><a href="layout_8h.html">layout.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:14</div></div>
 <div class="ttc" id="anamespace_8h_html_a9a7eb1268c947a92a8cb60d369b8abf8"><div class="ttname"><a href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_END</div><div class="ttdoc">Ends a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:19</div></div>
@@ -135,7 +128,7 @@ $(document).ready(function(){initNavTree('tui_2layout_8h_source.html',''); initR
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_53b52c957e3055cfb134304189fa5299.html">tui</a></li><li class="navelem"><a class="el" href="tui_2layout_8h.html">layout.h</a></li>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

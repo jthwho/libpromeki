@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -103,8 +101,8 @@ $(document).ready(function(){initNavTree('todo.html',''); initResizable(); });
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><dl class="reflist">
-<dt>Class <a class="el" href="classVariantLookup.html">VariantLookup&lt; T &gt;</a>  </dt>
-<dd><a class="anchor" id="_todo000001"></a>FIXME(compiled-path) — <a class="el" href="classVariantLookup.html#aef2f814a629982675a1da7653cc21817">resolve</a> currently re-parses and re-hashes every segment on every call. A <code>VariantLookup::Path</code> type could pre-resolve a full dotted key such as <code>"Image[0].Meta.Timecode"</code> into a sequence of integer IDs plus kind-transition tags at compile / parse time, so hot evaluators (<a class="el" href="classVariantQuery.html" title="Compiled predicate that matches any VariantLookup-registered type against an expression.">VariantQuery</a>, format templates) do integer-only lookups at run time. The path has to remember its kind transitions (indexedChild → database, …) and each hop's target type, so this is a non-trivial follow-up. </dd>
+<dt>Class <a class="el" href="classpromeki_1_1VariantLookup.html">promeki::VariantLookup&lt; T &gt;</a>  </dt>
+<dd><a class="anchor" id="_todo000001"></a>FIXME(compiled-path) — <a class="el" href="classpromeki_1_1VariantLookup.html#af701dacb0053237576d15cd74d6a7cfc">resolve</a> currently re-parses and re-hashes every segment on every call. A <code>VariantLookup::Path</code> type could pre-resolve a full dotted key such as <code>"Video[0].Meta.Timecode"</code> into a sequence of integer IDs plus kind-transition tags at compile / parse time, so hot evaluators (<a class="el" href="classpromeki_1_1VariantQuery.html" title="Compiled predicate that matches any VariantLookup-registered type against an expression.">VariantQuery</a>, format templates) do integer-only lookups at run time. The path has to remember its kind transitions (indexedChild → database, …) and each hop's target type, so this is a non-trivial follow-up. </dd>
 </dl>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
@@ -113,7 +111,7 @@ $(document).ready(function(){initNavTree('todo.html',''); initResizable(); });
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

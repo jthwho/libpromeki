@@ -1,0 +1,11 @@
+<map id="promeki::FrameBridgeMediaIO" name="promeki::FrameBridgeMediaIO">
+<area shape="rect" id="Node000001" title="MediaIO backend that publishes/consumes frames via FrameBridge." alt="" coords="9,299,230,324"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1SharedThreadMediaIO.html" title="Strategy class that runs commands on a shared&#45;pool strand." alt="" coords="5,225,233,251"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="122,264,122,299,117,299,117,264"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1CommandMediaIO.html" title="Abstract intermediate that owns the per&#45;command dispatch contract for backends that work in terms of ..." alt="" coords="17,152,222,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="122,191,122,225,117,225,117,191"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends." alt="" coords="50,79,189,104"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="122,118,122,152,117,152,117,118"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="40,5,199,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="122,44,122,79,117,79,117,44"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="promeki::RtpPayloadJpeg" name="promeki::RtpPayloadJpeg">
+<area shape="rect" id="Node000001" title="RTP payload handler for RFC 2435 JPEG (Motion JPEG)." alt="" coords="5,79,191,104"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1RtpPayload.html" title="Abstract base class for RTP payload type handlers." alt="" coords="19,5,177,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,44,101,79,95,79,95,44"/>
+</map>

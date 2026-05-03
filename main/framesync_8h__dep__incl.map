@@ -1,7 +1,9 @@
 <map id="include/promeki/framesync.h" name="include/promeki/framesync.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="108,5,320,31"/>
-<area shape="rect" id="Node000002" href="$mediaiotask__framesync_8h.html" title=" " alt="" coords="5,79,217,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,41,138,81,134,76,187,37"/>
-<area shape="rect" id="Node000003" href="$sdlplayer_8h.html" title=" " alt="" coords="241,79,392,119"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="241,37,294,76,290,81,238,41"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="148,5,360,31"/>
+<area shape="rect" id="Node000002" href="$framesyncmediaio_8h.html" title=" " alt="" coords="5,86,271,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,41,157,88,154,84,224,36"/>
+<area shape="rect" id="Node000003" href="$sdlplayer_8h.html" title=" " alt="" coords="295,79,445,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="284,36,344,76,341,81,281,41"/>
+<area shape="rect" id="Node000004" href="$sdlplayerwidget_8h.html" title=" " alt="" coords="295,167,445,207"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="373,133,373,166,367,166,367,133"/>
 </map>

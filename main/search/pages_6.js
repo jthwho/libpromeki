@@ -1,7 +1,4 @@
 var searchData=
 [
-  ['i_20o_20subsystem_0',['Media I/O Subsystem',['../mediaio.html',1,'']]],
-  ['image_20data_20encoder_20wire_20format_1',['Image Data Encoder Wire Format',['../imagedataencoder.html',1,'']]],
-  ['inspector_20—_20frame_20validation_20and_20monitoring_2',['Inspector — Frame validation and monitoring',['../inspector.html',1,'']]],
-  ['installing_20libpromeki_3',['Building and Installing libpromeki',['../building.html',1,'']]]
+  ['guide_0',['guide',['../mediaio_backend_guide.html',1,'MediaIO — Backend Author Guide'],['../mediaio_user_guide.html',1,'MediaIO — User Guide']]]
 ];

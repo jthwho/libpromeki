@@ -1,8 +1,8 @@
 var size2d_8h =
 [
     [ "std::formatter< promeki::Size2DTemplate< T > >", "structstd_1_1formatter_3_01promeki_1_1Size2DTemplate_3_01T_01_4_01_4.html", null ],
-    [ "Size2Dd", "size2d_8h.html#a1b2b333088ab08fe0c9bf23c8635541c", null ],
-    [ "Size2Df", "size2d_8h.html#a8660e7bef2d06082e79d7861b48f3aaa", null ],
-    [ "Size2Di32", "size2d_8h.html#afd30331c873f6ef9c0ee4d8d2671aa22", null ],
-    [ "Size2Du32", "size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a", null ]
+    [ "Size2Dd", "size2d_8h.html#a793f00917d8d63fec2c4bc5c96a653fd", null ],
+    [ "Size2Df", "size2d_8h.html#a89836aac963db66c563beae672b30e24", null ],
+    [ "Size2Di32", "size2d_8h.html#aae8161cbb06e01cdfcbcf9455684bf8e", null ],
+    [ "Size2Du32", "size2d_8h.html#a24a87f6ef1060956cf91e510fa3b7325", null ]
 ];

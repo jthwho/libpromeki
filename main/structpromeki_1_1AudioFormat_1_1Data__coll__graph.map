@@ -1,0 +1,9 @@
+<map id="promeki::AudioFormat::Data" name="promeki::AudioFormat::Data">
+<area shape="rect" id="Node000001" title="Immutable data record for an audio format." alt="" coords="150,108,317,148"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,128,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="97,36,205,105,202,110,95,40"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1AudioCodec.html" title="First&#45;class identifier for an audio codec family." alt="" coords="153,5,314,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="236,45,236,108,231,108,231,45"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1List.html" title=" " alt="" coords="338,5,521,31"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="401,40,321,86,274,110,272,106,319,82,398,36"/>
+</map>

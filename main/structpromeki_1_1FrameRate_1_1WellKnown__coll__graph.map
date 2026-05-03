@@ -1,0 +1,7 @@
+<map id="promeki::FrameRate::WellKnown" name="promeki::FrameRate::WellKnown">
+<area shape="rect" id="Node000001" title="One named entry in FrameRate::wellKnownRates." alt="" coords="71,93,225,133"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,128,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="88,39,133,91,129,95,84,43"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1FrameRate.html" title="Represents a video frame rate as a rational number." alt="" coords="152,5,307,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="212,43,167,95,163,91,208,39"/>
+</map>

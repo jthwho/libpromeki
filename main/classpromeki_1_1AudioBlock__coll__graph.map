@@ -1,0 +1,9 @@
+<map id="promeki::AudioBlock" name="promeki::AudioBlock">
+<area shape="rect" id="Node000001" title="Base class for an audio processing block." alt="" coords="173,225,330,251"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="23,115,181,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="130,146,237,223,234,227,127,151"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,5,199,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="105,59,105,115,99,115,99,59"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="205,108,399,148"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="290,162,259,226,255,224,285,159"/>
+</map>

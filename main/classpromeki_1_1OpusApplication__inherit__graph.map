@@ -1,0 +1,7 @@
+<map id="promeki::OpusApplication" name="promeki::OpusApplication">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for the Opus encoder application mode." alt="" coords="5,167,196,192"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="21,79,180,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="103,132,103,166,98,166,98,132"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="40,5,161,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="103,44,103,79,98,79,98,44"/>
+</map>

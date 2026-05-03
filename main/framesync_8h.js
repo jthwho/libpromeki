@@ -1,4 +1,4 @@
 var framesync_8h =
 [
-    [ "FrameSync::PullResult", "structFrameSync_1_1PullResult.html", "structFrameSync_1_1PullResult" ]
+    [ "promeki::FrameSync::PullResult", "structpromeki_1_1FrameSync_1_1PullResult.html", "structpromeki_1_1FrameSync_1_1PullResult" ]
 ];

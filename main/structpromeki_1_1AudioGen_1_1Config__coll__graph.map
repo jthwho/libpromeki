@@ -1,0 +1,5 @@
+<map id="promeki::AudioGen::Config" name="promeki::AudioGen::Config">
+<area shape="rect" id="Node000001" title="Per&#45;channel configuration for the audio generator." alt="" coords="6,93,161,133"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1AudioLevel.html" title="Audio level in dBFS (decibels relative to full scale)." alt="" coords="5,5,161,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="86,44,86,93,81,93,81,44"/>
+</map>

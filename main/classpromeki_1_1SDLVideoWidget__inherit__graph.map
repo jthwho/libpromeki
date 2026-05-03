@@ -1,0 +1,9 @@
+<map id="promeki::SDLVideoWidget" name="promeki::SDLVideoWidget">
+<area shape="rect" id="Node000001" title="Widget that displays an UncompressedVideoPayload via SDL texture rendering." alt="" coords="8,152,199,177"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1SDLPlayerWidget.html" title="Widget that plays frames through an SDLPlayerMediaIO." alt="" coords="5,225,201,251"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="106,191,106,225,101,225,101,191"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1Widget.html" title="Base class for all widgets across UI backends." alt="" coords="38,79,169,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="106,118,106,152,101,152,101,118"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="24,5,183,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="106,44,106,79,101,79,101,44"/>
+</map>

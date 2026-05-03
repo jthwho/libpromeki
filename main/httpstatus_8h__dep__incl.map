@@ -1,0 +1,29 @@
+<map id="include/promeki/httpstatus.h" name="include/promeki/httpstatus.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="272,5,481,31"/>
+<area shape="rect" id="Node000002" href="$httpresponse_8h.html" title=" " alt="" coords="263,79,491,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="379,44,379,79,374,79,374,44"/>
+<area shape="rect" id="Node000003" href="$httpapi_8h.html" title=" " alt="" coords="650,372,839,397"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="490,103,602,121,722,146,778,162,826,180,865,201,891,224,897,235,899,248,893,276,880,303,864,326,846,342,826,356,785,374,783,370,823,351,843,338,860,322,876,301,888,274,893,248,892,237,887,227,862,205,824,185,776,167,721,152,601,126,489,108"/>
+<area shape="rect" id="Node000005" href="$httpclient_8h.html" title=" " alt="" coords="978,152,1183,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="503,103,978,150,977,156,503,108"/>
+<area shape="rect" id="Node000006" href="$httpconnection_8h.html" title=" " alt="" coords="26,152,266,177"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="327,111,184,154,183,149,326,106"/>
+<area shape="rect" id="Node000007" href="$httpserver_8h.html" title=" " alt="" coords="76,299,285,324"/>
+<area shape="poly" id="edge16_Node000002_Node000007" title=" " alt="" coords="249,99,178,105,109,116,52,132,31,142,16,154,10,165,8,177,17,202,36,227,57,249,99,277,143,296,141,301,97,282,54,253,32,231,12,205,3,177,5,163,12,150,28,137,50,127,108,111,177,100,249,94"/>
+<area shape="rect" id="Node000008" href="$httphandler_8h.html" title=" " alt="" coords="341,152,559,177"/>
+<area shape="poly" id="edge9_Node000002_Node000008" title=" " alt="" coords="400,112,440,150,436,154,397,116"/>
+<area shape="rect" id="Node000010" href="$httprouter_8h.html" title=" " alt="" coords="77,225,284,251"/>
+<area shape="poly" id="edge15_Node000002_Node000010" title=" " alt="" coords="356,116,280,179,203,228,200,223,277,175,353,112"/>
+<area shape="rect" id="Node000004" href="$debugserver_8h.html" title=" " alt="" coords="423,445,645,471"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="699,404,569,448,567,443,697,399"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="110,186,89,199,72,215,63,232,67,250,80,265,97,278,135,296,132,301,94,283,76,269,62,252,58,231,68,212,86,195,107,181"/>
+<area shape="poly" id="edge8_Node000007_Node000003" title=" " alt="" coords="285,323,654,369,654,375,284,328"/>
+<area shape="poly" id="edge7_Node000007_Node000004" title=" " alt="" coords="223,327,507,443,505,448,221,332"/>
+<area shape="poly" id="edge10_Node000008_Node000003" title=" " alt="" coords="573,164,659,168,746,178,820,196,847,208,867,224,878,245,877,267,867,289,851,310,808,347,767,374,764,370,805,343,847,306,863,286,872,266,873,246,863,227,845,213,818,201,745,184,659,174,573,169"/>
+<area shape="rect" id="Node000009" href="$httpfilehandler_8h.html" title=" " alt="" coords="615,225,853,251"/>
+<area shape="poly" id="edge11_Node000008_Node000009" title=" " alt="" coords="509,178,689,223,688,228,508,183"/>
+<area shape="poly" id="edge12_Node000008_Node000010" title=" " alt="" coords="395,183,225,228,224,223,393,178"/>
+<area shape="rect" id="Node000011" href="$mjpegstreammediaio_8h.html" title=" " alt="" coords="309,225,591,251"/>
+<area shape="poly" id="edge14_Node000008_Node000011" title=" " alt="" coords="453,191,453,225,447,225,447,191"/>
+<area shape="poly" id="edge13_Node000010_Node000007" title=" " alt="" coords="183,264,183,299,178,299,178,264"/>
+</map>

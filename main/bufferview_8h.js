@@ -1,5 +1,5 @@
 var bufferview_8h =
 [
-    [ "BufferView::Entry", "classBufferView_1_1Entry.html", "classBufferView_1_1Entry" ],
-    [ "BufferView::Iterator", "classBufferView_1_1Iterator.html", null ]
+    [ "promeki::BufferView::Entry", "classpromeki_1_1BufferView_1_1Entry.html", "classpromeki_1_1BufferView_1_1Entry" ],
+    [ "promeki::BufferView::Iterator", "classpromeki_1_1BufferView_1_1Iterator.html", null ]
 ];

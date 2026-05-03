@@ -1,6 +1,6 @@
 var videocodec_8h =
 [
-    [ "VideoCodec::Backend", "classVideoCodec_1_1Backend.html", "classVideoCodec_1_1Backend" ],
-    [ "VideoCodec::Data", "structVideoCodec_1_1Data.html", "structVideoCodec_1_1Data" ],
-    [ "VideoCodecBackendRegistry", "group__proav.html#ga3b56f86d9f1d2a1dc4e46368b79d4ac0", null ]
+    [ "promeki::VideoCodec::Backend", "classpromeki_1_1VideoCodec_1_1Backend.html", "classpromeki_1_1VideoCodec_1_1Backend" ],
+    [ "promeki::VideoCodec::Data", "structpromeki_1_1VideoCodec_1_1Data.html", "structpromeki_1_1VideoCodec_1_1Data" ],
+    [ "VideoCodecBackendRegistry", "videocodec_8h.html#ga8c0bf20dc1883f3288212d43d8f165ac", null ]
 ];

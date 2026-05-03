@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -116,23 +114,23 @@ Collaboration diagram for CUDA support:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCudaDevice.html">CudaDevice</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight wrapper around a CUDA device ordinal.  <a href="classCudaDevice.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1CudaDevice.html">promeki::CudaDevice</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight wrapper around a CUDA device ordinal.  <a href="classpromeki_1_1CudaDevice.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCudaBootstrap.html">CudaBootstrap</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process-wide CUDA bootstrap.  <a href="classCudaBootstrap.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1CudaBootstrap.html">promeki::CudaBootstrap</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process-wide CUDA bootstrap.  <a href="classpromeki_1_1CudaBootstrap.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<p>The CUDA bindings in libpromeki are intentionally thin: they cover exactly what a GPU-accelerated codec (NVENC, NVDEC, and anything that follows) or a GPU CSC kernel needs from the library — device enumeration, device-memory / pinned-host <a class="el" href="classMemSpace.html">MemSpace</a> backends, and a one-shot bootstrap that wires those backends into the <a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a> registry. Higher-level constructs (streams, events, graphs) are the responsibility of the backend that uses them; libpromeki does not try to be a general-purpose CUDA wrapper.</p>
-<p>The entire CUDA API surface is compiled in only when <code>PROMEKI_ENABLE_CUDA</code> is defined. When it is not, the public declarations below still exist (so conditional callers do not need to guard every call site), but they report no available devices and the bootstrap returns <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a618c5c9abd6638a820400e9948e6e737" title="Feature is not implemented.">Error::NotImplemented</a></code>. This keeps downstream code portable between builds with and without the CUDA toolkit. </p>
+<p>The CUDA bindings in libpromeki are intentionally thin: they cover exactly what a GPU-accelerated codec (NVENC, NVDEC, and anything that follows) or a GPU CSC kernel needs from the library — device enumeration, device-memory / pinned-host <a class="el" href="classpromeki_1_1MemSpace.html">MemSpace</a> backends, and a one-shot bootstrap that wires those backends into the <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a> registry. Higher-level constructs (streams, events, graphs) are the responsibility of the backend that uses them; libpromeki does not try to be a general-purpose CUDA wrapper.</p>
+<p>The entire CUDA API surface is compiled in only when <code>PROMEKI_ENABLE_CUDA</code> is defined. When it is not, the public declarations below still exist (so conditional callers do not need to guard every call site), but they report no available devices and the bootstrap returns <code><a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a6d4fdf7b49de543a95d0a36be72c3f40" title="Feature is not implemented.">Error::NotImplemented</a></code>. This keeps downstream code portable between builds with and without the CUDA toolkit. </p>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

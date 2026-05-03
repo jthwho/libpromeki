@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['well_20known_20enums_0',['Well-known Enums',['../group__wellknownenums.html',1,'']]],
-  ['widget_20framework_1',['SDL Widget Framework',['../group__widget.html',1,'']]],
-  ['widgets_2',['TUI Widgets',['../group__tui__widgets.html',1,'']]]
+  ['user_20surface_0',['MediaIO — User Surface',['../group__mediaio__user.html',1,'']]],
+  ['utilities_1',['utilities',['../group__crypto.html',1,'Cryptographic Utilities'],['../group__util.html',1,'Utilities']]]
 ];

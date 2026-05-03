@@ -1,4 +1,4 @@
 var audioformat_8h =
 [
-    [ "AudioFormat::Data", "structAudioFormat_1_1Data.html", "structAudioFormat_1_1Data" ]
+    [ "promeki::AudioFormat::Data", "structpromeki_1_1AudioFormat_1_1Data.html", "structpromeki_1_1AudioFormat_1_1Data" ]
 ];

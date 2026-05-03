@@ -1,4 +1,4 @@
 var screen_8h =
 [
-    [ "TuiScreen", "classTuiScreen.html", "classTuiScreen" ]
+    [ "promeki::TuiScreen", "classpromeki_1_1TuiScreen.html", "classpromeki_1_1TuiScreen" ]
 ];

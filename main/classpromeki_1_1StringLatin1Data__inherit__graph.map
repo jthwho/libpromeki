@@ -1,0 +1,5 @@
+<map id="promeki::StringLatin1Data" name="promeki::StringLatin1Data">
+<area shape="rect" id="Node000001" title="Latin1 string storage. One byte = one character." alt="" coords="5,79,199,104"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1StringData.html" title="Pure virtual interface for String storage backends." alt="" coords="25,5,179,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,44,105,79,99,79,99,44"/>
+</map>

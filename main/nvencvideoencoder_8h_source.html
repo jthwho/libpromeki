@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -114,48 +112,42 @@ $(document).ready(function(){initNavTree('nvencvideoencoder_8h_source.html','');
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="keyword">class </span><a class="code hl_class" href="classList.html">NvencVideoEncoder</a> : <span class="keyword">public</span> <a class="code hl_class" href="classVideoEncoder.html">VideoEncoder</a> {</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>                <span class="keyword">enum</span> <a class="code hl_class" href="classList.html">Codec</a> {</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>                        <a class="code hl_function" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Codec_H264</a>,   </div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>                        <a class="code hl_function" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Codec_HEVC</a>,   </div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>                        <a class="code hl_class" href="classList.html">Codec_AV1</a>     </div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>                };</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>                <span class="keyword">explicit</span> <a class="code hl_function" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">NvencVideoEncoder</a>(<a class="code hl_class" href="classList.html">Codec</a> codec);</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span> </div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>                <a class="code hl_function" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">~NvencVideoEncoder</a>() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="keyword">class </span>NvencVideoEncoder : <span class="keyword">public</span> VideoEncoder {</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>        <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>                <span class="keyword">enum</span> Codec {</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>                        Codec_H264, </div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>                        Codec_HEVC, </div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>                        Codec_AV1   </div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>                };</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>                <span class="keyword">explicit</span> NvencVideoEncoder(Codec codec);</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                <span class="keyword">static</span> <a class="code hl_class" href="classList.html">List&lt;int&gt;</a> supportedInputList();</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>                <span class="keywordtype">void</span> configure(<span class="keyword">const</span> <a class="code hl_class" href="classMediaConfig.html">MediaConfig</a> &amp;config) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>                <a class="code hl_class" href="classError.html">Error</a> submitPayload(<span class="keyword">const</span> <a class="code hl_class" href="classSharedPtr.html">UncompressedVideoPayload::Ptr</a> &amp;payload) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                <a class="code hl_class" href="classSharedPtr.html">CompressedVideoPayload::Ptr</a> receiveCompressedPayload() <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                <a class="code hl_class" href="classError.html">Error</a> <a class="code hl_function" href="textstream_8h.html#af9d7c2c4afcd27e0017d5654336b4edd">flush</a>() <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                <a class="code hl_class" href="classError.html">Error</a> reset() <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                <span class="keywordtype">void</span> requestKeyframe() <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>        <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>                <span class="keyword">class </span>Impl;</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>                <span class="keyword">using </span>ImplPtr = <a class="code hl_class" href="classList.html">UniquePtr&lt;Impl&gt;</a>;</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>                ImplPtr _impl;</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>                <a class="code hl_class" href="classList.html">Codec</a> _codec;</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                <span class="keywordtype">bool</span>  <a class="code hl_class" href="classList.html">_requestKey</a> = <span class="keyword">false</span>;</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>};</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span> </div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span> </div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span><span class="preprocessor">#endif </span><span class="comment">// PROMEKI_ENABLE_NVENC</span></div>
-<div class="ttc" id="aclassError_html"><div class="ttname"><a href="classError.html">Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:39</div></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassList_html_a708769d50011e6bdadc6bed2a6468aec"><div class="ttname"><a href="classList.html#a708769d50011e6bdadc6bed2a6468aec">List::List</a></div><div class="ttdeci">List()=default</div><div class="ttdoc">Default constructor. Creates an empty list.</div></div>
-<div class="ttc" id="aclassMediaConfig_html"><div class="ttname"><a href="classMediaConfig.html">MediaConfig</a></div><div class="ttdoc">Generic name/value configuration container for the media subsystem.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:57</div></div>
-<div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr&lt; UncompressedVideoPayload, true, UncompressedVideoPayload &gt;</a></div></div>
-<div class="ttc" id="aclassVideoEncoder_html"><div class="ttname"><a href="classVideoEncoder.html">VideoEncoder</a></div><div class="ttdoc">Abstract base class for stateful video encoders.</div><div class="ttdef"><b>Definition</b> videoencoder.h:95</div></div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>                ~NvencVideoEncoder() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>                <span class="keyword">static</span> List&lt;int&gt; supportedInputList();</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span> </div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                <span class="keywordtype">void</span>                        configure(<span class="keyword">const</span> MediaConfig &amp;config) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                Error                       submitPayload(<span class="keyword">const</span> UncompressedVideoPayload::Ptr &amp;payload) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                CompressedVideoPayload::Ptr receiveCompressedPayload() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>                Error                       <a class="code hl_function" href="textstream_8h.html#a0349369f5c5f4ef354f63f02857416d1">flush</a>() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>                Error                       reset() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>                <span class="keywordtype">void</span>                        requestKeyframe() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>        <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>                <span class="keyword">class </span>Impl;</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                <span class="keyword">using </span>ImplPtr = UniquePtr&lt;Impl&gt;;</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>                ImplPtr _impl;</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>                Codec   _codec;</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>                <span class="keywordtype">bool</span>    _requestKey = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>};</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span> </div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span> </div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="preprocessor">#endif </span><span class="comment">// PROMEKI_ENABLE_NVENC</span></div>
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:14</div></div>
 <div class="ttc" id="anamespace_8h_html_a9a7eb1268c947a92a8cb60d369b8abf8"><div class="ttname"><a href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_END</div><div class="ttdoc">Ends a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:19</div></div>
-<div class="ttc" id="atextstream_8h_html_af9d7c2c4afcd27e0017d5654336b4edd"><div class="ttname"><a href="textstream_8h.html#af9d7c2c4afcd27e0017d5654336b4edd">flush</a></div><div class="ttdeci">TextStream &amp; flush(TextStream &amp;s)</div><div class="ttdoc">Flushes the stream.</div><div class="ttdef"><b>Definition</b> textstream.h:403</div></div>
+<div class="ttc" id="atextstream_8h_html_a0349369f5c5f4ef354f63f02857416d1"><div class="ttname"><a href="textstream_8h.html#a0349369f5c5f4ef354f63f02857416d1">promeki::flush</a></div><div class="ttdeci">TextStream &amp; flush(TextStream &amp;s)</div><div class="ttdoc">Flushes the stream.</div><div class="ttdef"><b>Definition</b> textstream.h:409</div></div>
 <div class="ttc" id="auniqueptr_8h_html"><div class="ttname"><a href="uniqueptr_8h.html">uniqueptr.h</a></div></div>
 <div class="ttc" id="avideoencoder_8h_html"><div class="ttname"><a href="videoencoder_8h.html">videoencoder.h</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
@@ -165,7 +157,7 @@ $(document).ready(function(){initNavTree('nvencvideoencoder_8h_source.html','');
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="nvencvideoencoder_8h.html">nvencvideoencoder.h</a></li>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

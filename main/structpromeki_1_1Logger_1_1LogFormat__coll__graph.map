@@ -1,0 +1,10 @@
+<map id="promeki::Logger::LogFormat" name="promeki::Logger::LogFormat">
+<area shape="rect" id="Node000001" title="Context passed to formatters, combining entry data with resolved thread name." alt="" coords="73,181,278,207"/>
+<area shape="rect" id="Node000002" href="$structpromeki_1_1Logger_1_1LogEntry.html" title="A single log entry." alt="" coords="5,93,199,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="123,127,167,179,163,183,119,131"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1DateTime.html" title="Wall&#45;clock date and time based on std::chrono::system_clock." alt="" coords="13,5,161,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="94,44,103,92,97,93,89,45"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="186,5,309,31"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="241,45,212,120,183,182,179,180,208,118,236,43"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="217,40,123,95,120,91,215,35"/>
+</map>

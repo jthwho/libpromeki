@@ -1,0 +1,7 @@
+<map id="promeki::NdiColorFormat" name="promeki::NdiColorFormat">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for the NDI receiver color&#45;format hint." alt="" coords="5,167,192,192"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="19,79,178,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,132,101,166,96,166,96,132"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="38,5,159,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="101,44,101,79,96,79,96,44"/>
+</map>

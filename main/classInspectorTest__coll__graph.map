@@ -1,8 +1,0 @@
-<map id="InspectorTest" name="InspectorTest">
-<area shape="rect" id="Node000001" title="Well&#45;known Enum type for MediaIOTask_Inspector test selection." alt="" coords="58,193,166,219"/>
-<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="159,189,182,193,190,198,193,206,188,216,177,221,145,221,145,216,176,216,184,212,187,206,185,201,180,198,158,195"/>
-<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,219,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,119,115,193,109,193,109,119"/>
-<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="83,5,141,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="115,45,115,80,109,80,109,45"/>
-</map>

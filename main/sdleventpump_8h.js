@@ -1,4 +1,4 @@
 var sdleventpump_8h =
 [
-    [ "SDLEventPump", "classSDLEventPump.html", "classSDLEventPump" ]
+    [ "promeki::SDLEventPump", "classpromeki_1_1SDLEventPump.html", "classpromeki_1_1SDLEventPump" ]
 ];

@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -106,7 +104,7 @@ $(document).ready(function(){initNavTree('debugging.html',''); initResizable(); 
 <p>This page explains the tools libpromeki provides for diagnosing problems at development time and in production. It covers:</p>
 <ul>
 <li><a class="el" href="debugging.html#debug_build_types">Build Types</a> — choosing the right CMake build type</li>
-<li><a class="el" href="debugging.html#debug_logging">The Logger System</a> — the <a class="el" href="classLogger.html" title="Asynchronous thread-safe logging facility.">Logger</a> system and convenience macros</li>
+<li><a class="el" href="debugging.html#debug_logging">The Logger System</a> — the Logger system and convenience macros</li>
 <li><a class="el" href="debugging.html#debug_promekidebug">Per-Module Debug Logging</a> — per-module debug logging with <code>PROMEKI_DEBUG</code></li>
 <li><a class="el" href="debugging.html#debug_crashhandler">Crash Handling</a> — automatic crash reports for fatal signals</li>
 </ul>
@@ -120,9 +118,9 @@ Build Types</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><b>Debug</b>   </td><td class="markdownTableBodyNone"><code>-O0</code>   </td><td class="markdownTableBodyNone">Yes   </td><td class="markdownTableBodyNone">Compiled in   </td><td class="markdownTableBodyNone">Not set   </td><td class="markdownTableBodyNone">Step-through debugging, sanitizers    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><b>DevRelease</b> (default)   </td><td class="markdownTableBodyNone"><code>-O3</code>   </td><td class="markdownTableBodyNone">Yes (<code>-g</code>)   </td><td class="markdownTableBodyNone">Compiled in   </td><td class="markdownTableBodyNone"><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a>   </td><td class="markdownTableBodyNone">Day-to-day development, CI, profiling    </td></tr>
+<td class="markdownTableBodyNone"><b>DevRelease</b> (default)   </td><td class="markdownTableBodyNone"><code>-O3</code>   </td><td class="markdownTableBodyNone">Yes (<code>-g</code>)   </td><td class="markdownTableBodyNone">Compiled in   </td><td class="markdownTableBodyNone">Set   </td><td class="markdownTableBodyNone">Day-to-day development, CI, profiling    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><b>Release</b>   </td><td class="markdownTableBodyNone"><code>-O3</code>   </td><td class="markdownTableBodyNone">No   </td><td class="markdownTableBodyNone">Compiled out   </td><td class="markdownTableBodyNone"><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a>   </td><td class="markdownTableBodyNone">Distribution / final packaging   </td></tr>
+<td class="markdownTableBodyNone"><b>Release</b>   </td><td class="markdownTableBodyNone"><code>-O3</code>   </td><td class="markdownTableBodyNone">No   </td><td class="markdownTableBodyNone">Compiled out   </td><td class="markdownTableBodyNone">Set   </td><td class="markdownTableBodyNone">Distribution / final packaging   </td></tr>
 </table>
 <h2><a class="anchor" id="debug_build_devrelease"></a>
 DevRelease — the recommended default</h2>
@@ -146,10 +144,10 @@ Release</h2>
 </div><!-- fragment --><hr  />
 <h1><a class="anchor" id="debug_logging"></a>
 The Logger System</h1>
-<p>All logging in libpromeki goes through the <code><a class="el" href="classLogger.html" title="Asynchronous thread-safe logging facility.">Logger</a></code> class. The logger is thread-safe and asynchronous — log messages are enqueued and written by a dedicated background thread so the calling thread is never blocked on I/O.</p>
+<p>All logging in libpromeki goes through the <code>Logger</code> class. The logger is thread-safe and asynchronous — log messages are enqueued and written by a dedicated background thread so the calling thread is never blocked on I/O.</p>
 <h2><a class="anchor" id="debug_logging_macros"></a>
 Convenience Macros</h2>
-<p>In practice you will almost always use the convenience macros rather than calling <code><a class="el" href="classLogger.html" title="Asynchronous thread-safe logging facility.">Logger</a></code> methods directly:</p>
+<p>In practice you will almost always use the convenience macros rather than calling <code>Logger</code> methods directly:</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Macro   </th><th class="markdownTableHeadNone">Level   </th><th class="markdownTableHeadNone">When to use    </th></tr>
@@ -163,34 +161,27 @@ Convenience Macros</h2>
 <td class="markdownTableBodyNone"><code>promekiErr(fmt, ...)</code>   </td><td class="markdownTableBodyNone">Err   </td><td class="markdownTableBodyNone">Errors that affect correctness   </td></tr>
 </table>
 <p>All macros accept <code>printf</code>-style format strings:</p>
-<div class="fragment"><div class="line">promekiInfo(<span class="stringliteral">&quot;Opened %s (%d x %d)&quot;</span>, path.cstr(), <a class="code hl_class" href="classList.html">w</a>, h);</div>
-<div class="line">promekiWarn(<span class="stringliteral">&quot;Buffer underrun at %s&quot;</span>, <a class="code hl_class" href="classList.html">tc</a>.toString().first().cstr());</div>
-<div class="line">promekiErr(<span class="stringliteral">&quot;Failed to bind socket: %s&quot;</span>, <a class="code hl_class" href="classList.html">err</a>.desc().cstr());</div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="fragment"><div class="line">promekiInfo(<span class="stringliteral">&quot;Opened %s (%d x %d)&quot;</span>, path.cstr(), w, h);</div>
+<div class="line">promekiWarn(<span class="stringliteral">&quot;Buffer underrun at %s&quot;</span>, tc.toString().first().cstr());</div>
+<div class="line">promekiErr(<span class="stringliteral">&quot;Failed to bind socket: %s&quot;</span>, err.desc().cstr());</div>
 </div><!-- fragment --><p>Every log line automatically includes a timestamp, source file and line number, log level, and the name of the calling thread.</p>
 <h2><a class="anchor" id="debug_logging_config"></a>
 Configuring the Logger</h2>
 <p>The default logger writes to the console (stderr). You can also direct output to a file and adjust the minimum log level:</p>
 <div class="fragment"><div class="line"><span class="comment">// Send log output to a file (in addition to the console)</span></div>
-<div class="line"><a class="code hl_function" href="classLogger.html#a2915ff1fbb7e11fdc5258e534451398a">Logger::defaultLogger</a>().setLogFile(<span class="stringliteral">&quot;/tmp/myapp.log&quot;</span>);</div>
+<div class="line">Logger::defaultLogger().setLogFile(<span class="stringliteral">&quot;/tmp/myapp.log&quot;</span>);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Only show warnings and errors on the console</span></div>
-<div class="line"><a class="code hl_function" href="classLogger.html#a2915ff1fbb7e11fdc5258e534451398a">Logger::defaultLogger</a>().setLogLevel(<a class="code hl_enumvalue" href="classLogger.html#ac744681e23720966b5f430ec2060da36ab4e32104cbc6d28791887cc5683bd882">Logger::Warn</a>);</div>
+<div class="line">Logger::defaultLogger().setLogLevel(Logger::Warn);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Disable console output entirely (file-only logging)</span></div>
-<div class="line"><a class="code hl_function" href="classLogger.html#a2915ff1fbb7e11fdc5258e534451398a">Logger::defaultLogger</a>().setConsoleLoggingEnabled(<span class="keyword">false</span>);</div>
-<div class="ttc" id="aclassLogger_html_a2915ff1fbb7e11fdc5258e534451398a"><div class="ttname"><a href="classLogger.html#a2915ff1fbb7e11fdc5258e534451398a">Logger::defaultLogger</a></div><div class="ttdeci">static Logger &amp; defaultLogger()</div><div class="ttdoc">Returns the singleton default Logger instance.</div></div>
-<div class="ttc" id="aclassLogger_html_ac744681e23720966b5f430ec2060da36ab4e32104cbc6d28791887cc5683bd882"><div class="ttname"><a href="classLogger.html#ac744681e23720966b5f430ec2060da36ab4e32104cbc6d28791887cc5683bd882">Logger::Warn</a></div><div class="ttdeci">@ Warn</div><div class="ttdoc">Warning messages.</div><div class="ttdef"><b>Definition</b> logger.h:111</div></div>
+<div class="line">Logger::defaultLogger().setConsoleLoggingEnabled(<span class="keyword">false</span>);</div>
 </div><!-- fragment --><p>You can also install custom formatters for file and console output:</p>
-<div class="fragment"><div class="line"><a class="code hl_function" href="classLogger.html#a2915ff1fbb7e11fdc5258e534451398a">Logger::defaultLogger</a>().setFileFormatter([](<span class="keyword">const</span> <a class="code hl_struct" href="structLogger_1_1LogFormat.html">Logger::LogFormat</a> &amp;<a class="code hl_class" href="classList.html">fmt</a>) -&gt; <a class="code hl_class" href="classString.html">String</a> {</div>
-<div class="line">        <span class="keywordflow">return</span> <a class="code hl_function" href="classString.html#a5deff0f28cdedb981f63457592900d86">String::sprintf</a>(<span class="stringliteral">&quot;[%c] %s&quot;</span>,</div>
-<div class="line">                <a class="code hl_function" href="classLogger.html#a75dfb8f416885a79a6e8790a7ad7033b">Logger::levelToChar</a>(<a class="code hl_class" href="classList.html">fmt</a>.entry-&gt;level),</div>
-<div class="line">                <a class="code hl_class" href="classList.html">fmt</a>.entry-&gt;msg.cstr());</div>
+<div class="fragment"><div class="line">Logger::defaultLogger().setFileFormatter([](<span class="keyword">const</span> Logger::LogFormat &amp;fmt) -&gt; String {</div>
+<div class="line">        <span class="keywordflow">return</span> String::sprintf(<span class="stringliteral">&quot;[%c] %s&quot;</span>,</div>
+<div class="line">                Logger::levelToChar(fmt.entry-&gt;level),</div>
+<div class="line">                fmt.entry-&gt;msg.cstr());</div>
 <div class="line">});</div>
-<div class="ttc" id="aclassLogger_html_a75dfb8f416885a79a6e8790a7ad7033b"><div class="ttname"><a href="classLogger.html#a75dfb8f416885a79a6e8790a7ad7033b">Logger::levelToChar</a></div><div class="ttdeci">static char levelToChar(LogLevel level)</div><div class="ttdoc">Converts a LogLevel to its single character representation.</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
-<div class="ttc" id="aclassString_html_a5deff0f28cdedb981f63457592900d86"><div class="ttname"><a href="classString.html#a5deff0f28cdedb981f63457592900d86">String::sprintf</a></div><div class="ttdeci">static String sprintf(const char *fmt,...)</div><div class="ttdoc">Creates a formatted string using printf-style syntax.</div></div>
-<div class="ttc" id="astructLogger_1_1LogFormat_html"><div class="ttname"><a href="structLogger_1_1LogFormat.html">Logger::LogFormat</a></div><div class="ttdoc">Context passed to formatters, combining entry data with resolved thread name.</div><div class="ttdef"><b>Definition</b> logger.h:126</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="debug_logging_sync"></a>
 Flushing Log Output</h2>
 <p>Because logging is asynchronous, the log queue may contain unwritten messages when your program exits or when you need to inspect a log file mid-run. Use <code>sync()</code> to block until the queue is drained:</p>
@@ -208,23 +199,22 @@ How It Works</h2>
 <div class="line"> </div>
 <div class="line"><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"> </div>
-<div class="line">PROMEKI_DEBUG(<a class="code hl_class" href="classList.html">MyClass</a>)</div>
+<div class="line">PROMEKI_DEBUG(MyClass)</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_function" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">MyClass::MyClass</a>() {</div>
+<div class="line">MyClass::MyClass() {</div>
 <div class="line">        promekiDebug(<span class="stringliteral">&quot;MyClass(%p): created, size %d&quot;</span>, (<span class="keywordtype">void</span> *)<span class="keyword">this</span>, _size);</div>
 <div class="line">}</div>
-<div class="ttc" id="aclassList_html_a708769d50011e6bdadc6bed2a6468aec"><div class="ttname"><a href="classList.html#a708769d50011e6bdadc6bed2a6468aec">List::List</a></div><div class="ttdeci">List()=default</div><div class="ttdoc">Default constructor. Creates an empty list.</div></div>
 <div class="ttc" id="alogger_8h_html"><div class="ttname"><a href="logger_8h.html">logger.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:14</div></div>
 </div><!-- fragment --><p>The <code>PROMEKI_DEBUG(Name)</code> macro registers the module name with the debug database. At startup, the library checks the <code>PROMEKI_DEBUG</code> environment variable and enables logging for any module whose name appears in the comma-separated list.</p>
 <h2><a class="anchor" id="debug_promekidebug_activate"></a>
 Activating Debug Output</h2>
-<p><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> the <code>PROMEKI_DEBUG</code> environment variable to a comma-separated list of module names:</p>
+<p>Set the <code>PROMEKI_DEBUG</code> environment variable to a comma-separated list of module names:</p>
 <div class="fragment"><div class="line"># Enable debug output for ThreadPool and MediaIO:</div>
 <div class="line">PROMEKI_DEBUG=ThreadPool,MediaIO ./myapp</div>
 <div class="line"> </div>
 <div class="line"># Enable debug output for everything (if modules are named):</div>
-<div class="line">PROMEKI_DEBUG=ThreadPool,Thread,Logger,MediaIO,MediaIOTask_Rtp ./myapp</div>
+<div class="line">PROMEKI_DEBUG=ThreadPool,Thread,Logger,MediaIO,RtpMediaIO ./myapp</div>
 </div><!-- fragment --><p>When enabled, <code>promekiDebug()</code> messages appear alongside normal log output at the <code>Debug</code> level. When disabled, the module's <code>promekiDebug()</code> calls skip the logging call entirely — just a branch on a local <code>bool</code>.</p>
 <h2><a class="anchor" id="debug_promekidebug_compiled_out"></a>
 What Happens in Release Builds?</h2>
@@ -235,98 +225,89 @@ What Happens in Release Builds?</h2>
 </div><!-- fragment --><h2><a class="anchor" id="debug_promekidebug_benchmarks"></a>
 Benchmarking with PROMEKI_BENCHMARK</h2>
 <p>Two companion macros let you time sections of code, gated on the same per-module enable flag:</p>
-<div class="fragment"><div class="line"><span class="keywordtype">void</span> <a class="code hl_function" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">MyClass::processFrame</a>(<span class="keyword">const</span> <a class="code hl_class" href="classFrame.html">Frame</a> &amp;frame) {</div>
-<div class="line">        PROMEKI_BENCHMARK_BEGIN(<a class="code hl_class" href="classList.html">processFrame</a>)</div>
+<div class="fragment"><div class="line"><span class="keywordtype">void</span> MyClass::processFrame(<span class="keyword">const</span> Frame &amp;frame) {</div>
+<div class="line">        PROMEKI_BENCHMARK_BEGIN(processFrame)</div>
 <div class="line">        <span class="comment">// ... expensive work ...</span></div>
-<div class="line">        PROMEKI_BENCHMARK_END(<a class="code hl_class" href="classList.html">processFrame</a>)</div>
+<div class="line">        PROMEKI_BENCHMARK_END(processFrame)</div>
 <div class="line">        <span class="comment">// prints: &quot;[MyClass] processFrame took 0.003217000 sec&quot;</span></div>
 <div class="line">}</div>
-<div class="ttc" id="aclassFrame_html"><div class="ttname"><a href="classFrame.html">Frame</a></div><div class="ttdoc">A media frame containing payloads and metadata.</div><div class="ttdef"><b>Definition</b> frame.h:45</div></div>
 </div><!-- fragment --><p>Like <code>promekiDebug()</code>, these are compiled out in Release builds and only run when the module's debug flag is enabled.</p>
 <hr  />
 <h1><a class="anchor" id="debug_crashhandler"></a>
 Crash Handling</h1>
-<p>The <code><a class="el" href="classCrashHandler.html" title="Installs signal handlers for fatal crash signals.">CrashHandler</a></code> class installs signal handlers for five fatal POSIX signals: <code>SIGSEGV</code>, <code>SIGABRT</code>, <code>SIGBUS</code>, <code>SIGFPE</code>, and <code>SIGILL</code>. When a crash occurs, it writes a detailed report to stderr and to a log file, then re-raises the signal so the OS can generate a core dump.</p>
+<p>The <code>CrashHandler</code> class installs signal handlers for five fatal POSIX signals: <code>SIGSEGV</code>, <code>SIGABRT</code>, <code>SIGBUS</code>, <code>SIGFPE</code>, and <code>SIGILL</code>. When a crash occurs, it writes a detailed report to stderr and to a log file, then re-raises the signal so the OS can generate a core dump.</p>
 <h2><a class="anchor" id="debug_crash_report"></a>
 What the Crash Report Contains</h2>
 <ul>
-<li><a class="el" href="classSignal.html" title="Type-safe signal/slot mechanism for decoupled event notification.">Signal</a> name and number (e.g. <code>SIGSEGV</code>)</li>
+<li>Signal name and number (e.g. <code>SIGSEGV</code>)</li>
 <li>Fault address and signal code</li>
-<li><a class="el" href="classProcess.html" title="Subprocess execution with pipe-based I/O.">Process</a> ID and ISO 8601 UTC timestamp</li>
+<li>Process ID and ISO 8601 UTC timestamp</li>
 <li>Crashing thread's TID and name</li>
-<li><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of all threads with TIDs and names</li>
+<li>List of all threads with TIDs and names</li>
 <li>Demangled C++ stack trace</li>
 <li>OS info (kernel version, architecture)</li>
 <li>Memory usage and resource limits</li>
 <li>Memory map (<code>/proc/self/maps</code> on Linux)</li>
 <li>Environment snapshot (if enabled)</li>
-<li>Registered <code><a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a></code> allocation counters</li>
+<li>Registered <code>MemSpace</code> allocation counters</li>
 </ul>
 <p>The crash log is written to:</p>
 <div class="fragment"><div class="line">&lt;tempdir&gt;/promeki-crash-&lt;appname&gt;-&lt;pid&gt;.log</div>
 </div><!-- fragment --><p>The directory can be overridden via <code>LibraryOptions::CrashLogDir</code> or the <code>PROMEKI_OPT_CrashLogDir</code> environment variable.</p>
 <h2><a class="anchor" id="debug_crash_auto"></a>
 Automatic Installation via Application</h2>
-<p>If your program uses the <code><a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a></code> class, crash handlers are installed automatically. No extra code is needed:</p>
+<p>If your program uses the <code>Application</code> class, crash handlers are installed automatically. No extra code is needed:</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="application_8h.html">promeki/application.h</a>&gt;</span></div>
 <div class="line"> </div>
-<div class="line"><span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">main</a>(<span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">argc</a>, <span class="keywordtype">char</span> **<a class="code hl_class" href="classList.html">argv</a>) {</div>
-<div class="line">        <a class="code hl_class" href="classApplication.html">Application</a> <a class="code hl_class" href="classList.html">app</a>(<a class="code hl_class" href="classList.html">argc</a>, <a class="code hl_class" href="classList.html">argv</a>);</div>
+<div class="line"><span class="keywordtype">int</span> main(<span class="keywordtype">int</span> argc, <span class="keywordtype">char</span> **argv) {</div>
+<div class="line">        Application app(argc, argv);</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Crash handlers are now active.</span></div>
 <div class="line">        <span class="comment">// If the process crashes, a report is written automatically.</span></div>
 <div class="line"> </div>
-<div class="line">        <span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">app</a>.exec();</div>
+<div class="line">        <span class="keywordflow">return</span> app.exec();</div>
 <div class="line">}</div>
 <div class="ttc" id="aapplication_8h_html"><div class="ttname"><a href="application_8h.html">application.h</a></div></div>
-<div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:49</div></div>
-</div><!-- fragment --><p>The <code><a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a></code> constructor checks <code>LibraryOptions::CrashHandler</code> (default <code>true</code>). To disable it, set the option before constructing <code><a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a></code> or via the environment:</p>
+</div><!-- fragment --><p>The <code>Application</code> constructor checks <code>LibraryOptions::CrashHandler</code> (default <code>true</code>). To disable it, set the option before constructing <code>Application</code> or via the environment:</p>
 <div class="fragment"><div class="line"><span class="comment">// Programmatically</span></div>
-<div class="line"><a class="code hl_function" href="classLibraryOptions.html#aefa2e033a8c07bc49e854d060a5aab1b">LibraryOptions::instance</a>().<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(LibraryOptions::CrashHandler, <span class="keyword">false</span>);</div>
-<div class="line"><a class="code hl_class" href="classApplication.html">Application</a> <a class="code hl_class" href="classList.html">app</a>(<a class="code hl_class" href="classList.html">argc</a>, <a class="code hl_class" href="classList.html">argv</a>);</div>
+<div class="line">LibraryOptions::instance().set(LibraryOptions::CrashHandler, <span class="keyword">false</span>);</div>
+<div class="line">Application app(argc, argv);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Or via environment</span></div>
 <div class="line"><span class="comment">// export PROMEKI_OPT_CrashHandler=false</span></div>
-<div class="ttc" id="aclassLibraryOptions_html_aefa2e033a8c07bc49e854d060a5aab1b"><div class="ttname"><a href="classLibraryOptions.html#aefa2e033a8c07bc49e854d060a5aab1b">LibraryOptions::instance</a></div><div class="ttdeci">static LibraryOptions &amp; instance()</div><div class="ttdoc">Returns the global LibraryOptions singleton.</div></div>
-<div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="debug_crash_manual"></a>
 Manual Installation</h2>
-<p>If your program does not use <code><a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a></code> (e.g. a library consumer that has its own main loop), you can install the crash handler directly:</p>
+<p>If your program does not use <code>Application</code> (e.g. a library consumer that has its own main loop), you can install the crash handler directly:</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="crashhandler_8h.html">promeki/crashhandler.h</a>&gt;</span></div>
 <div class="line"> </div>
-<div class="line"><span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">main</a>(<span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">argc</a>, <span class="keywordtype">char</span> **<a class="code hl_class" href="classList.html">argv</a>) {</div>
+<div class="line"><span class="keywordtype">int</span> main(<span class="keywordtype">int</span> argc, <span class="keywordtype">char</span> **argv) {</div>
 <div class="line">        <span class="comment">// Install crash handlers as early as possible</span></div>
-<div class="line">        <a class="code hl_function" href="classCrashHandler.html#af403ee814cecb7911fbd0e61d4c0bd7d">CrashHandler::install</a>();</div>
+<div class="line">        CrashHandler::install();</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// ... your application code ...</span></div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Optional: remove handlers before exit</span></div>
-<div class="line">        <a class="code hl_function" href="classCrashHandler.html#a6dbc57ba03436501be877e90a62e57f1">CrashHandler::uninstall</a>();</div>
+<div class="line">        CrashHandler::uninstall();</div>
 <div class="line">        <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
-<div class="ttc" id="aclassCrashHandler_html_a6dbc57ba03436501be877e90a62e57f1"><div class="ttname"><a href="classCrashHandler.html#a6dbc57ba03436501be877e90a62e57f1">CrashHandler::uninstall</a></div><div class="ttdeci">static void uninstall()</div><div class="ttdoc">Restores default signal dispositions.</div></div>
-<div class="ttc" id="aclassCrashHandler_html_af403ee814cecb7911fbd0e61d4c0bd7d"><div class="ttname"><a href="classCrashHandler.html#af403ee814cecb7911fbd0e61d4c0bd7d">CrashHandler::install</a></div><div class="ttdeci">static void install()</div><div class="ttdoc">Installs crash signal handlers.</div></div>
 <div class="ttc" id="acrashhandler_8h_html"><div class="ttname"><a href="crashhandler_8h.html">crashhandler.h</a></div></div>
-</div><!-- fragment --><p><code>install()</code> is safe to call multiple times — subsequent calls refresh the snapshotted process state (hostname, thread list, <a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a> entries, etc.) without stacking signal handlers.</p>
+</div><!-- fragment --><p><code>install()</code> is safe to call multiple times — subsequent calls refresh the snapshotted process state (hostname, thread list, MemSpace entries, etc.) without stacking signal handlers.</p>
 <h2><a class="anchor" id="debug_crash_refresh"></a>
 Refreshing the Snapshot</h2>
-<p>The crash handler snapshots process state at <code>install()</code> time so it can write the report from inside a signal handler without calling non-signal-safe functions. If your application registers new <code><a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a></code> entries or changes the app name after startup, call <code><a class="el" href="classApplication.html#a46a7dba540b4678f04872cc1c275ce9e" title="Re-snapshots the crash handler&#39;s install-time state.">Application::refreshCrashHandler()</a></code> (or just call <code><a class="el" href="classCrashHandler.html#af403ee814cecb7911fbd0e61d4c0bd7d" title="Installs crash signal handlers.">CrashHandler::install()</a></code> again) to update the snapshot:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classApplication.html">Application</a> <a class="code hl_class" href="classList.html">app</a>(<a class="code hl_class" href="classList.html">argc</a>, <a class="code hl_class" href="classList.html">argv</a>);</div>
-<div class="line"><a class="code hl_class" href="classList.html">app</a>.setAppName(<span class="stringliteral">&quot;my-tool&quot;</span>);   <span class="comment">// automatically refreshes</span></div>
+<p>The crash handler snapshots process state at <code>install()</code> time so it can write the report from inside a signal handler without calling non-signal-safe functions. If your application registers new <code>MemSpace</code> entries or changes the app name after startup, call <code>Application::refreshCrashHandler()</code> (or just call <code>CrashHandler::install()</code> again) to update the snapshot:</p>
+<div class="fragment"><div class="line">Application app(argc, argv);</div>
+<div class="line">app.setAppName(<span class="stringliteral">&quot;my-tool&quot;</span>);   <span class="comment">// automatically refreshes</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// If you register MemSpaces later:</span></div>
-<div class="line"><a class="code hl_function" href="classMemSpace.html#a6a7ed2a8545c7a588f399b0dc107d14a">MemSpace::registerData</a>(...);</div>
-<div class="line"><a class="code hl_function" href="classApplication.html#a46a7dba540b4678f04872cc1c275ce9e">Application::refreshCrashHandler</a>();</div>
-<div class="ttc" id="aclassApplication_html_a46a7dba540b4678f04872cc1c275ce9e"><div class="ttname"><a href="classApplication.html#a46a7dba540b4678f04872cc1c275ce9e">Application::refreshCrashHandler</a></div><div class="ttdeci">static void refreshCrashHandler()</div><div class="ttdoc">Re-snapshots the crash handler's install-time state.</div></div>
-<div class="ttc" id="aclassMemSpace_html_a6a7ed2a8545c7a588f399b0dc107d14a"><div class="ttname"><a href="classMemSpace.html#a6a7ed2a8545c7a588f399b0dc107d14a">MemSpace::registerData</a></div><div class="ttdeci">static void registerData(Ops &amp;&amp;ops)</div><div class="ttdoc">Registers an Ops record in the registry.</div></div>
+<div class="line">MemSpace::registerData(...);</div>
+<div class="line">Application::refreshCrashHandler();</div>
 </div><!-- fragment --><h2><a class="anchor" id="debug_crash_trace"></a>
 Diagnostic Traces Without Crashing</h2>
-<p>You can produce the same report a crash would generate — without actually crashing — using <code><a class="el" href="classCrashHandler.html#ac4b0f00d268bb709d61367cf72a6a886" title="Writes a diagnostic trace report to a unique file.">CrashHandler::writeTrace()</a></code>:</p>
+<p>You can produce the same report a crash would generate — without actually crashing — using <code>CrashHandler::writeTrace()</code>:</p>
 <div class="fragment"><div class="line"><span class="comment">// Something unexpected happened; capture a diagnostic snapshot</span></div>
-<div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">unexpectedState</a>) {</div>
-<div class="line">        <a class="code hl_function" href="classCrashHandler.html#ac4b0f00d268bb709d61367cf72a6a886">CrashHandler::writeTrace</a>(<span class="stringliteral">&quot;unexpected state in pipeline stage 3&quot;</span>);</div>
+<div class="line"><span class="keywordflow">if</span>(unexpectedState) {</div>
+<div class="line">        CrashHandler::writeTrace(<span class="stringliteral">&quot;unexpected state in pipeline stage 3&quot;</span>);</div>
 <div class="line">}</div>
-<div class="ttc" id="aclassCrashHandler_html_ac4b0f00d268bb709d61367cf72a6a886"><div class="ttname"><a href="classCrashHandler.html#ac4b0f00d268bb709d61367cf72a6a886">CrashHandler::writeTrace</a></div><div class="ttdeci">static void writeTrace(const char *reason=nullptr)</div><div class="ttdoc">Writes a diagnostic trace report to a unique file.</div></div>
 </div><!-- fragment --><p>Each call writes to a unique file:</p>
 <div class="fragment"><div class="line">&lt;tempdir&gt;/promeki-trace-&lt;appname&gt;-&lt;pid&gt;-&lt;seqno&gt;.log</div>
 </div><!-- fragment --><p>This is useful for capturing the state of a long-running process without stopping it.</p>
@@ -334,7 +315,7 @@ Diagnostic Traces Without Crashing</h2>
 Enabling Core Dumps</h2>
 <p>By default the crash handler does not modify the core dump resource limit. To enable core dumps, set <code>LibraryOptions::CoreDumps</code> to <code>true</code>:</p>
 <div class="fragment"><div class="line"><span class="comment">// Programmatically</span></div>
-<div class="line"><a class="code hl_function" href="classLibraryOptions.html#aefa2e033a8c07bc49e854d060a5aab1b">LibraryOptions::instance</a>().<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(LibraryOptions::CoreDumps, <span class="keyword">true</span>);</div>
+<div class="line">LibraryOptions::instance().set(LibraryOptions::CoreDumps, <span class="keyword">true</span>);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Or via environment</span></div>
 <div class="line"><span class="comment">// export PROMEKI_OPT_CoreDumps=true</span></div>
@@ -344,17 +325,99 @@ CrashHandler Library Options</h2>
 <p>All crash-related options can be set via code or environment variables:</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
-<th class="markdownTableHeadNone">Option   </th><th class="markdownTableHeadNone"><a class="el" href="classEnv.html" title="Provides access to process environment variables.">Env</a> variable   </th><th class="markdownTableHeadNone">Type   </th><th class="markdownTableHeadNone">Default   </th><th class="markdownTableHeadNone">Description    </th></tr>
+<th class="markdownTableHeadNone">Option   </th><th class="markdownTableHeadNone">Env variable   </th><th class="markdownTableHeadNone">Type   </th><th class="markdownTableHeadNone">Default   </th><th class="markdownTableHeadNone">Description    </th></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>LibraryOptions::CrashHandler</code>   </td><td class="markdownTableBodyNone"><code>PROMEKI_OPT_CrashHandler</code>   </td><td class="markdownTableBodyNone">bool   </td><td class="markdownTableBodyNone">true   </td><td class="markdownTableBodyNone">Install crash signal handlers    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>LibraryOptions::CoreDumps</code>   </td><td class="markdownTableBodyNone"><code>PROMEKI_OPT_CoreDumps</code>   </td><td class="markdownTableBodyNone">bool   </td><td class="markdownTableBodyNone">false   </td><td class="markdownTableBodyNone">Raise <code>RLIMIT_CORE</code> for core dumps    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>LibraryOptions::CrashLogDir</code>   </td><td class="markdownTableBodyNone"><code>PROMEKI_OPT_CrashLogDir</code>   </td><td class="markdownTableBodyNone"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>   </td><td class="markdownTableBodyNone">(empty = temp dir)   </td><td class="markdownTableBodyNone">Directory for crash/trace log files    </td></tr>
+<td class="markdownTableBodyNone"><code>LibraryOptions::CrashLogDir</code>   </td><td class="markdownTableBodyNone"><code>PROMEKI_OPT_CrashLogDir</code>   </td><td class="markdownTableBodyNone">String   </td><td class="markdownTableBodyNone">(empty = temp dir)   </td><td class="markdownTableBodyNone">Directory for crash/trace log files    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>LibraryOptions::CaptureEnvironment</code>   </td><td class="markdownTableBodyNone"><code>PROMEKI_OPT_CaptureEnvironment</code>   </td><td class="markdownTableBodyNone">bool   </td><td class="markdownTableBodyNone">true   </td><td class="markdownTableBodyNone">Include env vars in crash reports   </td></tr>
 </table>
 <hr  />
+<hr  />
+<h1><a class="anchor" id="debug_http_server"></a>
+Debug HTTP Server</h1>
+<p>When <code>PROMEKI_ENABLE_HTTP</code> is on (the default), <code>Application</code> can embed a lightweight HTTP debug server that exposes diagnostic information over a browser-friendly REST API and a baked-in web UI.</p>
+<h2><a class="anchor" id="debug_http_envvar"></a>
+Quickstart: env-var activation</h2>
+<p>Set <code>PROMEKI_DEBUG_SERVER</code> to a <code>host:port</code> spec before launching your application. The constructor picks it up automatically — no code changes required:</p>
+<div class="fragment"><div class="line"># Bind to loopback on port 8085 (short form)</div>
+<div class="line">PROMEKI_DEBUG_SERVER=:8085 ./myapp</div>
+<div class="line"> </div>
+<div class="line"># Explicit host — binds to all interfaces</div>
+<div class="line">PROMEKI_DEBUG_SERVER=0.0.0.0:8085 ./myapp</div>
+</div><!-- fragment --><p>Parse or bind failures are logged at <code>warn</code> level and are never fatal; the application continues without a debug server.</p>
+<p>Then open <code><a href="http://localhost:8085/">http://localhost:8085/</a></code> in a browser — it redirects to the built-in debug UI at <code>/promeki/debug/</code>.</p>
+<h2><a class="anchor" id="debug_http_programmatic"></a>
+Programmatic control</h2>
+<div class="fragment"><div class="line">Application app(argc, argv);</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Start on a specific port (loopback-only by default)</span></div>
+<div class="line"><span class="keywordflow">if</span>(Error err = Application::startDebugServer(8085); err.isError()) {</div>
+<div class="line">        promekiWarn(<span class="stringliteral">&quot;debug server failed: %s&quot;</span>, err.toString().cstr());</div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// ... later, to shut it down cleanly:</span></div>
+<div class="line">Application::stopDebugServer();</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Grab the server to add your own routes:</span></div>
+<div class="line"><span class="keywordflow">if</span>(DebugServer *dbg = Application::debugServer()) {</div>
+<div class="line">        dbg-&gt;httpServer().route(<span class="stringliteral">&quot;/my/route&quot;</span>, HttpMethod::Get, handler);</div>
+<div class="line">}</div>
+</div><!-- fragment --><p><code>startDebugServer()</code> returns <code>Error::AlreadyOpen</code> if the server is already listening. Call <code>stopDebugServer()</code> first to rebind.</p>
+<h2><a class="anchor" id="debug_http_direct"></a>
+Using DebugServer directly</h2>
+<p>Applications that own their own <code>HttpServer</code> can skip <code>Application</code> integration and cherry-pick individual module installers from <code>&lt;promeki/debugmodules.h&gt;</code>:</p>
+<div class="fragment"><div class="line"><span class="comment">// Attach only the build-info and logger endpoints to your own server</span></div>
+<div class="line">installBuildInfoDebugRoutes(myServer, <span class="stringliteral">&quot;/debug/api&quot;</span>);</div>
+<div class="line">installLoggerDebugRoutes(myServer, <span class="stringliteral">&quot;/debug/api&quot;</span>);</div>
+</div><!-- fragment --><p>Or use the full convenience wrapper on a dedicated server:</p>
+<div class="fragment"><div class="line">DebugServer dbg;</div>
+<div class="line">dbg.installDefaultModules();                 <span class="comment">// mounts everything</span></div>
+<div class="line"><span class="keywordflow">if</span>(Error err = dbg.listen(8085); err.isError()) {</div>
+<div class="line">        promekiWarn(<span class="stringliteral">&quot;debug server failed: %s&quot;</span>, err.toString().cstr());</div>
+<div class="line">}</div>
+<div class="line"><span class="keywordflow">return</span> app.exec();</div>
+</div><!-- fragment --><h2><a class="anchor" id="debug_http_api"></a>
+API endpoints</h2>
+<p>All endpoints are mounted under <code>/promeki/debug/api</code> by default.</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Endpoint   </th><th class="markdownTableHeadNone">Method   </th><th class="markdownTableHeadNone">Description    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>/promeki/debug/api/build</code>   </td><td class="markdownTableBodyNone">GET   </td><td class="markdownTableBodyNone">Build metadata, features, platform info    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>/promeki/debug/api/env</code>   </td><td class="markdownTableBodyNone">GET   </td><td class="markdownTableBodyNone">Full process environment as a JSON object    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>/promeki/debug/api/options/_schema</code>   </td><td class="markdownTableBodyNone">GET   </td><td class="markdownTableBodyNone">LibraryOptions key schema (read-only)    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>/promeki/debug/api/memory</code>   </td><td class="markdownTableBodyNone">GET   </td><td class="markdownTableBodyNone">Live <code>MemSpace</code> allocation counters    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>/promeki/debug/api/logger</code>   </td><td class="markdownTableBodyNone">GET   </td><td class="markdownTableBodyNone">Logger state: level, console, debug channels    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>/promeki/debug/api/logger/level</code>   </td><td class="markdownTableBodyNone">PUT   </td><td class="markdownTableBodyNone">Set log level — body <code>{"level": &lt;0-4&gt;}</code>    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>/promeki/debug/api/logger/debug/{name}</code>   </td><td class="markdownTableBodyNone">PUT   </td><td class="markdownTableBodyNone">Toggle a debug channel — body <code>{"enabled": &lt;bool&gt;}</code>    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>/promeki/debug/api/logger/stream</code>   </td><td class="markdownTableBodyNone">WS   </td><td class="markdownTableBodyNone">Stream log entries as JSON frames   </td></tr>
+</table>
+<h2><a class="anchor" id="debug_logging_listeners"></a>
+Logger listener API</h2>
+<p>The debug server's WebSocket log stream is built on a general-purpose listener API exposed by <code>Logger</code>. Applications can install their own listeners to consume log entries programmatically:</p>
+<div class="fragment"><div class="line">Logger::ListenerHandle h = Logger::defaultLogger().installListener(</div>
+<div class="line">        [](<span class="keyword">const</span> Logger::LogEntry &amp;entry, <span class="keyword">const</span> String &amp;threadName) {</div>
+<div class="line">                <span class="comment">// Called on the logger worker thread — marshal if needed</span></div>
+<div class="line">                myLogView-&gt;append(entry.msg);</div>
+<div class="line">        }, <span class="comment">/*replayCount=*/</span>50);   <span class="comment">// replay last 50 entries first</span></div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Stop receiving:</span></div>
+<div class="line">Logger::defaultLogger().removeListener(h);</div>
+</div><!-- fragment --><p><code>removeListener()</code> blocks until the worker thread has acknowledged removal, so it is safe to destroy state captured by the lambda immediately after it returns.</p>
+<p>The history ring size (default 1024) controls how many entries are available for replay:</p>
+<div class="fragment"><div class="line">Logger::defaultLogger().setHistorySize(4096);</div>
+</div><!-- fragment --><hr  />
 <h1><a class="anchor" id="debug_summary"></a>
 Quick Reference</h1>
 <h2><a class="anchor" id="debug_summary_env"></a>
@@ -363,14 +426,16 @@ Environment Variables</h2>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Variable   </th><th class="markdownTableHeadNone">Purpose   </th><th class="markdownTableHeadNone">Example    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>PROMEKI_DEBUG</code>   </td><td class="markdownTableBodyNone">Enable per-module debug logging   </td><td class="markdownTableBodyNone"><code>PROMEKI_DEBUG=<a class="el" href="classThreadPool.html" title="General-purpose thread pool for submitting callable tasks.">ThreadPool</a>,<a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a></code>    </td></tr>
+<td class="markdownTableBodyNone"><code>PROMEKI_DEBUG</code>   </td><td class="markdownTableBodyNone">Enable per-module debug logging   </td><td class="markdownTableBodyNone"><code>PROMEKI_DEBUG=ThreadPool,MediaIO</code>    </td></tr>
 <tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>PROMEKI_DEBUG_SERVER</code>   </td><td class="markdownTableBodyNone">Start the debug HTTP server   </td><td class="markdownTableBodyNone"><code>PROMEKI_DEBUG_SERVER=:8085</code>    </td></tr>
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>PROMEKI_OPT_CrashHandler</code>   </td><td class="markdownTableBodyNone">Enable/disable crash handlers   </td><td class="markdownTableBodyNone"><code>PROMEKI_OPT_CrashHandler=false</code>    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>PROMEKI_OPT_CoreDumps</code>   </td><td class="markdownTableBodyNone">Enable core dumps   </td><td class="markdownTableBodyNone"><code>PROMEKI_OPT_CoreDumps=true</code>    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>PROMEKI_OPT_CrashLogDir</code>   </td><td class="markdownTableBodyNone">Override crash log directory   </td><td class="markdownTableBodyNone"><code>PROMEKI_OPT_CrashLogDir=/var/log/myapp</code>    </td></tr>
+<td class="markdownTableBodyNone"><code>PROMEKI_OPT_CoreDumps</code>   </td><td class="markdownTableBodyNone">Enable core dumps   </td><td class="markdownTableBodyNone"><code>PROMEKI_OPT_CoreDumps=true</code>    </td></tr>
 <tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>PROMEKI_OPT_CrashLogDir</code>   </td><td class="markdownTableBodyNone">Override crash log directory   </td><td class="markdownTableBodyNone"><code>PROMEKI_OPT_CrashLogDir=/var/log/myapp</code>    </td></tr>
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>PROMEKI_OPT_CaptureEnvironment</code>   </td><td class="markdownTableBodyNone">Include env in crash reports   </td><td class="markdownTableBodyNone"><code>PROMEKI_OPT_CaptureEnvironment=false</code>   </td></tr>
 </table>
 <h2><a class="anchor" id="debug_summary_workflow"></a>
@@ -382,10 +447,14 @@ Typical Debugging Workflow</h2>
 <div class="line"># 2. Run with debug logging for the subsystem you&#39;re investigating</div>
 <div class="line">PROMEKI_DEBUG=ThreadPool ./build/myapp</div>
 <div class="line"> </div>
-<div class="line"># 3. If a crash occurs, check the crash log</div>
+<div class="line"># 3. Optionally attach the debug HTTP UI to inspect runtime state</div>
+<div class="line">PROMEKI_DEBUG_SERVER=:8085 PROMEKI_DEBUG=ThreadPool ./build/myapp</div>
+<div class="line"># Then open http://localhost:8085/ in a browser</div>
+<div class="line"> </div>
+<div class="line"># 4. If a crash occurs, check the crash log</div>
 <div class="line">cat /tmp/promeki-crash-myapp-12345.log</div>
 <div class="line"> </div>
-<div class="line"># 4. For deeper investigation, enable core dumps</div>
+<div class="line"># 5. For deeper investigation, enable core dumps</div>
 <div class="line">PROMEKI_OPT_CoreDumps=true ./build/myapp</div>
 <div class="line"># After crash:</div>
 <div class="line">gdb ./build/myapp core</div>
@@ -396,7 +465,7 @@ Typical Debugging Workflow</h2>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -1,11 +1,11 @@
 var timestamp_8h =
 [
-    [ "operator+", "timestamp_8h.html#a45d005facd66d543d90fe90d7d62445f", null ],
-    [ "operator+", "timestamp_8h.html#a93876f47f067d09a9ad16c6458b1e16b", null ],
-    [ "operator+=", "timestamp_8h.html#a8c272c2265d2b50b9e8bfc993401a160", null ],
-    [ "operator-", "timestamp_8h.html#a4659c04c8ea7e2675b92273bb13fd0d6", null ],
-    [ "operator-", "timestamp_8h.html#ac94ae108e66ab3033f303a216c61e46d", null ],
-    [ "operator-", "timestamp_8h.html#a4a9def840a4f40903c87cd16e5c6328e", null ],
-    [ "operator-=", "timestamp_8h.html#a05fd27c0cb2d79b67aec629786c5d5b4", null ],
-    [ "toClockDuration", "timestamp_8h.html#a896b960defc7651879f7b090a769924e", null ]
+    [ "operator+", "timestamp_8h.html#a943b12454dc550b05d8aaeb4b81bfdcf", null ],
+    [ "operator+", "timestamp_8h.html#af2c4dfcfea5cf99de6f25992dd8198af", null ],
+    [ "operator+=", "timestamp_8h.html#a22c193a860d74c8a056bab46cea5f115", null ],
+    [ "operator-", "timestamp_8h.html#ac8839a467aca6db3b26f748fffb36bbf", null ],
+    [ "operator-", "timestamp_8h.html#afac28f272c587f6999942e22fdc8b41c", null ],
+    [ "operator-", "timestamp_8h.html#a41e759b6e1db9884b73a1c129129e302", null ],
+    [ "operator-=", "timestamp_8h.html#aa2cd0659266ebcf37ae618d05c74f70b", null ],
+    [ "toClockDuration", "timestamp_8h.html#a2d58405c3678c2365c4e9c6dda869975", null ]
 ];

@@ -1,5 +1,0 @@
-<map id="InspectorDiscontinuity" name="InspectorDiscontinuity">
-<area shape="rect" id="Node000001" title="One detected discontinuity in the inspector&#39;s frame stream." alt="" coords="5,123,173,148"/>
-<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="59,5,119,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="92,44,92,123,87,123,87,44"/>
-</map>

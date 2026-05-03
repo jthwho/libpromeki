@@ -1,0 +1,33 @@
+<map id="promeki::MediaIOCommandOpen" name="promeki::MediaIOCommandOpen">
+<area shape="rect" id="Node000001" title="Command to open a media resource." alt="" coords="968,331,1207,356"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1MediaIOCommand.html" title="Base class for MediaIO commands." alt="" coords="589,104,795,129"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="807,130,877,149,912,163,945,181,991,217,1030,258,1080,329,1076,332,1026,262,987,221,943,186,910,168,876,154,805,135"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1RefCount.html" title="An atomic reference count object." alt="" coords="271,5,415,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="428,28,496,42,566,61,620,81,666,101,664,106,618,86,565,66,495,47,427,34"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1Atomic.html" title=" " alt="" coords="249,55,437,80"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="450,78,566,94,614,101,613,107,565,99,450,83"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Error.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="285,104,400,129"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="414,114,589,114,589,119,414,119"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1MediaIOStats.html" title="Telemetry container shared by per&#45;command and instance&#45;wide reporting." alt="" coords="257,153,428,179"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="441,151,565,134,613,127,614,132,566,139,442,156"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1VariantDatabase.html" title=" " alt="" coords="5,146,197,186"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="211,163,257,163,257,169,211,169"/>
+<area shape="rect" id="Node000008" href="$classpromeki_1_1MediaConfig.html" title="Generic name/value configuration container for the media subsystem." alt="" coords="609,185,775,211"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="789,196,867,206,907,216,945,229,986,251,1024,279,1076,329,1073,333,1020,283,983,256,943,234,905,221,866,211,789,201"/>
+<area shape="rect" id="Node000009" href="$classpromeki_1_1VariantDatabase.html" title=" " alt="" coords="247,203,439,243"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="452,213,609,201,609,207,452,218"/>
+<area shape="rect" id="Node000010" href="$classpromeki_1_1MediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata." alt="" coords="614,240,770,265"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="785,258,863,269,945,286,1007,306,1059,328,1057,333,1005,311,943,291,862,274,784,263"/>
+<area shape="rect" id="Node000011" href="$classpromeki_1_1Metadata.html" title="Key&#45;value metadata container using typed Variant values." alt="" coords="619,300,765,325"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="779,317,968,331,968,337,778,322"/>
+<area shape="rect" id="Node000012" href="$classpromeki_1_1VariantDatabase.html" title=" " alt="" coords="247,293,439,333"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="452,310,619,310,619,315,452,315"/>
+<area shape="rect" id="Node000013" href="$classpromeki_1_1AudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count." alt="" coords="615,360,769,385"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="783,374,861,373,944,369,1033,353,1034,359,944,374,862,379,783,379"/>
+<area shape="rect" id="Node000014" href="$classpromeki_1_1List.html" title=" " alt="" coords="615,417,769,443"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="783,429,862,423,943,409,1011,383,1065,354,1067,358,1013,388,945,414,863,429,784,434"/>
+<area shape="rect" id="Node000015" href="$classpromeki_1_1FrameRate.html" title="Represents a video frame rate as a rational number." alt="" coords="615,467,769,492"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="783,477,862,469,904,460,943,448,983,427,1019,402,1072,354,1076,358,1022,406,985,432,945,452,905,466,863,474,783,483"/>
+<area shape="rect" id="Node000016" href="$classpromeki_1_1FrameCount.html" title="Count of frames, optionally empty, unknown, or infinite." alt="" coords="611,516,773,541"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="787,530,866,521,905,511,943,496,989,464,1027,424,1057,385,1076,355,1081,358,1061,388,1031,428,992,468,945,500,907,516,867,526,788,535"/>
+</map>

@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -106,122 +104,119 @@ $(document).ready(function(){initNavTree('dataobjects.html',''); initResizable()
 <p>Every data object in promeki falls into one of two categories based on its size, usage patterns, and sharing semantics.</p>
 <h1><a class="anchor" id="simple"></a>
 Simple</h1>
-<p>Small, lightweight value types that are always used directly. They have no <code><a class="el" href="classRefCount.html" title="An atomic reference count object.">RefCount</a></code> overhead and cannot be wrapped in <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a></code>. Copying is cheap (a few words of memory), so there is no benefit to reference counting.</p>
+<p>Small, lightweight value types that are always used directly. They have no <code>RefCount</code> overhead and cannot be wrapped in <code>SharedPtr</code>. Copying is cheap (a few words of memory), so there is no benefit to reference counting.</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Class   </th><th class="markdownTableHeadNone">Description    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classPoint.html" title="N-dimensional point with arithmetic, interpolation, and serialization.">Point</a></code>   </td><td class="markdownTableBodyNone">N-dimensional coordinate    </td></tr>
+<td class="markdownTableBodyNone"><code>Point</code>   </td><td class="markdownTableBodyNone">N-dimensional coordinate    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a></code>   </td><td class="markdownTableBodyNone">Exact fraction (num/den)    </td></tr>
+<td class="markdownTableBodyNone"><code>Rational</code>   </td><td class="markdownTableBodyNone">Exact fraction (num/den)    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>Size2Du32</code> / <code>Size2Di32</code>   </td><td class="markdownTableBodyNone">2D width/height pair    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>Rect2Di32</code>   </td><td class="markdownTableBodyNone">2D rectangle (position + size)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a></code>   </td><td class="markdownTableBodyNone">128-bit unique identifier    </td></tr>
+<td class="markdownTableBodyNone"><code>UUID</code>   </td><td class="markdownTableBodyNone">128-bit unique identifier    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a></code>   </td><td class="markdownTableBodyNone">SMPTE timecode (H:M:S:F)    </td></tr>
+<td class="markdownTableBodyNone"><code>Timecode</code>   </td><td class="markdownTableBodyNone">SMPTE timecode (H:M:S:F)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a></code>   </td><td class="markdownTableBodyNone">Steady-clock time point    </td></tr>
+<td class="markdownTableBodyNone"><code>TimeStamp</code>   </td><td class="markdownTableBodyNone">Steady-clock time point    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classXYZColor.html" title="A color in the CIE 1931 XYZ color space.">XYZColor</a></code>   </td><td class="markdownTableBodyNone">CIE XYZ color triple    </td></tr>
+<td class="markdownTableBodyNone"><code>XYZColor</code>   </td><td class="markdownTableBodyNone">CIE XYZ color triple    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a></code>   </td><td class="markdownTableBodyNone">Float[4] color value with <a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a>    </td></tr>
+<td class="markdownTableBodyNone"><code>Color</code>   </td><td class="markdownTableBodyNone">Float[4] color value with ColorModel    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a></code>   </td><td class="markdownTableBodyNone"><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a> model / color space descriptor (TypeRegistry)    </td></tr>
+<td class="markdownTableBodyNone"><code>ColorModel</code>   </td><td class="markdownTableBodyNone">Color model / color space descriptor (TypeRegistry)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a></code>   </td><td class="markdownTableBodyNone">Memory space descriptor (TypeRegistry)    </td></tr>
+<td class="markdownTableBodyNone"><code>MemSpace</code>   </td><td class="markdownTableBodyNone">Memory space descriptor (TypeRegistry)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classPixelMemLayout.html" title="Describes the memory layout of pixel data without color semantics.">PixelMemLayout</a></code>   </td><td class="markdownTableBodyNone">Pixel memory layout descriptor (TypeRegistry)    </td></tr>
+<td class="markdownTableBodyNone"><code>PixelMemLayout</code>   </td><td class="markdownTableBodyNone">Pixel memory layout descriptor (TypeRegistry)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a></code>   </td><td class="markdownTableBodyNone">Full pixel description: format + color model + ranges (TypeRegistry)    </td></tr>
+<td class="markdownTableBodyNone"><code>PixelFormat</code>   </td><td class="markdownTableBodyNone">Full pixel description: format + color model + ranges (TypeRegistry)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classPair.html" title="Typed pair container wrapping std::pair.">Pair</a></code>   </td><td class="markdownTableBodyNone">Typed pair of two values    </td></tr>
+<td class="markdownTableBodyNone"><code>Pair</code>   </td><td class="markdownTableBodyNone">Typed pair of two values    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>Result</code>   </td><td class="markdownTableBodyNone"><code><a class="el" href="classPair.html" title="Typed pair container wrapping std::pair.">Pair</a>&lt;T, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>&gt;</code> for fallible operations    </td></tr>
+<td class="markdownTableBodyNone"><code>Result</code>   </td><td class="markdownTableBodyNone"><code>Pair&lt;T, Error&gt;</code> for fallible operations    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classSpan.html" title="Non-owning view over contiguous storage, wrapping std::span.">Span</a></code>   </td><td class="markdownTableBodyNone">Non-owning view over contiguous storage    </td></tr>
+<td class="markdownTableBodyNone"><code>Span</code>   </td><td class="markdownTableBodyNone">Non-owning view over contiguous storage    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classStack.html" title="LIFO stack container wrapping std::stack.">Stack</a></code>   </td><td class="markdownTableBodyNone">LIFO stack (std::stack wrapper)    </td></tr>
+<td class="markdownTableBodyNone"><code>Stack</code>   </td><td class="markdownTableBodyNone">LIFO stack (std::stack wrapper)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classPriorityQueue.html" title="Priority queue container wrapping std::priority_queue.">PriorityQueue</a></code>   </td><td class="markdownTableBodyNone">Priority queue (std::priority_queue wrapper)    </td></tr>
+<td class="markdownTableBodyNone"><code>PriorityQueue</code>   </td><td class="markdownTableBodyNone">Priority queue (std::priority_queue wrapper)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classDuration.html" title="Time duration with nanosecond precision.">Duration</a></code>   </td><td class="markdownTableBodyNone">Time duration value    </td></tr>
+<td class="markdownTableBodyNone"><code>Duration</code>   </td><td class="markdownTableBodyNone">Time duration value    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classFrameNumber.html" title="Absolute frame index along a media timeline.">FrameNumber</a></code>   </td><td class="markdownTableBodyNone">Absolute frame index along a media timeline    </td></tr>
+<td class="markdownTableBodyNone"><code>FrameNumber</code>   </td><td class="markdownTableBodyNone">Absolute frame index along a media timeline    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classFrameCount.html" title="Count of frames, optionally empty, unknown, or infinite.">FrameCount</a></code>   </td><td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> count (with empty / unknown / infinity sentinels)    </td></tr>
+<td class="markdownTableBodyNone"><code>FrameCount</code>   </td><td class="markdownTableBodyNone">Frame count (with empty / unknown / infinity sentinels)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classMediaDuration.html" title="A run of media frames described by a start frame plus a length.">MediaDuration</a></code>   </td><td class="markdownTableBodyNone">Start frame plus a frame count (defines <code>FrameRange</code>)    </td></tr>
+<td class="markdownTableBodyNone"><code>MediaDuration</code>   </td><td class="markdownTableBodyNone">Start frame plus a frame count (defines <code>FrameRange</code>)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a></code>   </td><td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> rate descriptor    </td></tr>
+<td class="markdownTableBodyNone"><code>FrameRate</code>   </td><td class="markdownTableBodyNone">Frame rate descriptor    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classAudioLevel.html" title="Audio level in dBFS (decibels relative to full scale).">AudioLevel</a></code>   </td><td class="markdownTableBodyNone">Audio level in dBFS    </td></tr>
+<td class="markdownTableBodyNone"><code>AudioLevel</code>   </td><td class="markdownTableBodyNone">Audio level in dBFS    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="structInspectorEvent.html" title="Per-frame measurement record produced by MediaIOTask_Inspector.">InspectorEvent</a></code>   </td><td class="markdownTableBodyNone">Per-frame measurement record produced by <code><a class="el" href="classMediaIOTask__Inspector.html" title="MediaIO sink backend that decodes and validates a media stream.">MediaIOTask_Inspector</a></code>    </td></tr>
+<td class="markdownTableBodyNone"><code>InspectorEvent</code>   </td><td class="markdownTableBodyNone">Per-frame measurement record produced by <code>InspectorMediaIO</code>    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="structInspectorSnapshot.html" title="Aggregate snapshot of the inspector&#39;s accumulated state.">InspectorSnapshot</a></code>   </td><td class="markdownTableBodyNone">Aggregate accumulator state from <code><a class="el" href="classMediaIOTask__Inspector.html" title="MediaIO sink backend that decodes and validates a media stream.">MediaIOTask_Inspector</a></code>    </td></tr>
+<td class="markdownTableBodyNone"><code>InspectorSnapshot</code>   </td><td class="markdownTableBodyNone">Aggregate accumulator state from <code>InspectorMediaIO</code>    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="structInspectorDiscontinuity.html" title="One detected discontinuity in the inspector&#39;s frame stream.">InspectorDiscontinuity</a></code>   </td><td class="markdownTableBodyNone">One detected discontinuity in the inspector's frame stream    </td></tr>
+<td class="markdownTableBodyNone"><code>InspectorDiscontinuity</code>   </td><td class="markdownTableBodyNone">One detected discontinuity in the inspector's frame stream    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classContentLightLevel.html" title="Content light level information (CTA-861.3 / ITU-T H.265 Annex D).">ContentLightLevel</a></code>   </td><td class="markdownTableBodyNone">HDR content light level (MaxCLL / MaxFALL, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">CTA-861.3</a>)    </td></tr>
+<td class="markdownTableBodyNone"><code>ContentLightLevel</code>   </td><td class="markdownTableBodyNone">HDR content light level (MaxCLL / MaxFALL, CTA-861.3)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classMasteringDisplay.html" title="Mastering display color volume metadata (SMPTE ST 2086).">MasteringDisplay</a></code>   </td><td class="markdownTableBodyNone">HDR mastering display color volume (SMPTE ST 2086)   </td></tr>
+<td class="markdownTableBodyNone"><code>MasteringDisplay</code>   </td><td class="markdownTableBodyNone">HDR mastering display color volume (SMPTE ST 2086)   </td></tr>
 </table>
 <h1><a class="anchor" id="shareable"></a>
 Shareable</h1>
-<p>Value types that store their data directly as member variables (no internal <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a></code>). Each class includes <code>PROMEKI_SHARED_FINAL</code> so it can be wrapped in <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a></code> when shared ownership is needed. Every shareable class provides a <code>Ptr</code> typedef:</p>
+<p>Value types that store their data directly as member variables (no internal <code>SharedPtr</code>). Each class includes <code>PROMEKI_SHARED_FINAL</code> so it can be wrapped in <code>SharedPtr</code> when shared ownership is needed. Every shareable class provides a <code>Ptr</code> typedef:</p>
 <div class="fragment"><div class="line"><span class="comment">// Explicit shared ownership at the call site</span></div>
-<div class="line"><a class="code hl_class" href="classList.html">Metadata::Ptr</a> <a class="code hl_class" href="classList.html">meta</a> = Metadata::Ptr::create();</div>
-<div class="line"><a class="code hl_class" href="classList.html">meta</a>.modify()-&gt;<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(Metadata::Title, <a class="code hl_class" href="classString.html">String</a>(<span class="stringliteral">&quot;Hello&quot;</span>));</div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
+<div class="line">Metadata::Ptr meta = Metadata::Ptr::create();</div>
+<div class="line">meta.modify()-&gt;set(Metadata::Title, String(<span class="stringliteral">&quot;Hello&quot;</span>));</div>
 </div><!-- fragment --><p>When used as a local variable or as a member of another class, no heap allocation or reference counting occurs — the object is a plain value.</p>
 <p>Shareable classes also provide convenience type aliases for collections:</p><ul>
-<li><code><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a></code> — a <code>promeki::List</code> of plain objects (e.g. <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Image::List</a></code>)</li>
-<li><code>PtrList</code> — a <code>promeki::List</code> of <code>Ptr</code> (e.g. <code><a class="el" href="classBuffer.html#a97dab4fcadca3cea1e8f874bde3c1380" title="List of shared Buffer pointers.">Buffer::PtrList</a></code>)</li>
+<li><code>List</code> — a <code><a class="el" href="classpromeki_1_1List.html" title="Dynamic array container wrapping std::vector.">promeki::List</a></code> of plain objects (e.g. <code>Image::List</code>)</li>
+<li><code>PtrList</code> — a <code><a class="el" href="classpromeki_1_1List.html" title="Dynamic array container wrapping std::vector.">promeki::List</a></code> of <code>Ptr</code> (e.g. <code>Buffer::PtrList</code>)</li>
 </ul>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Class   </th><th class="markdownTableHeadNone">Description    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a></code>   </td><td class="markdownTableBodyNone">std::string wrapper    </td></tr>
+<td class="markdownTableBodyNone"><code>String</code>   </td><td class="markdownTableBodyNone">std::string wrapper    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a></code>   </td><td class="markdownTableBodyNone">Aligned memory buffer    </td></tr>
+<td class="markdownTableBodyNone"><code>Buffer</code>   </td><td class="markdownTableBodyNone">Aligned memory buffer    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classAudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count.">AudioDesc</a></code>   </td><td class="markdownTableBodyNone">Audio format descriptor    </td></tr>
+<td class="markdownTableBodyNone"><code>AudioDesc</code>   </td><td class="markdownTableBodyNone">Audio format descriptor    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a></code>   </td><td class="markdownTableBodyNone">Image format descriptor    </td></tr>
+<td class="markdownTableBodyNone"><code>ImageDesc</code>   </td><td class="markdownTableBodyNone">Image format descriptor    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a></code>   </td><td class="markdownTableBodyNone">Media format descriptor    </td></tr>
+<td class="markdownTableBodyNone"><code>MediaDesc</code>   </td><td class="markdownTableBodyNone">Media format descriptor    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a></code>   </td><td class="markdownTableBodyNone">Typed key-value metadata    </td></tr>
+<td class="markdownTableBodyNone"><code>Metadata</code>   </td><td class="markdownTableBodyNone">Typed key-value metadata    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classJsonObject.html" title="JSON object container wrapping nlohmann::json.">JsonObject</a></code>   </td><td class="markdownTableBodyNone">JSON object wrapper    </td></tr>
+<td class="markdownTableBodyNone"><code>JsonObject</code>   </td><td class="markdownTableBodyNone">JSON object wrapper    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classJsonArray.html" title="JSON array container wrapping nlohmann::json.">JsonArray</a></code>   </td><td class="markdownTableBodyNone">JSON array wrapper    </td></tr>
+<td class="markdownTableBodyNone"><code>JsonArray</code>   </td><td class="markdownTableBodyNone">JSON array wrapper    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a></code>   </td><td class="markdownTableBodyNone">Generic list (std::vector wrapper)    </td></tr>
+<td class="markdownTableBodyNone"><code>List</code>   </td><td class="markdownTableBodyNone">Generic list (std::vector wrapper)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classMap.html" title="Ordered associative container wrapping std::map.">Map</a></code>   </td><td class="markdownTableBodyNone">Ordered map (std::map wrapper)    </td></tr>
+<td class="markdownTableBodyNone"><code>Map</code>   </td><td class="markdownTableBodyNone">Ordered map (std::map wrapper)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a></code>   </td><td class="markdownTableBodyNone">Ordered set (std::set wrapper)    </td></tr>
+<td class="markdownTableBodyNone"><code>Set</code>   </td><td class="markdownTableBodyNone">Ordered set (std::set wrapper)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classHashMap.html" title="Unordered associative container wrapping std::unordered_map.">HashMap</a></code>   </td><td class="markdownTableBodyNone">Unordered map (std::unordered_map wrapper)    </td></tr>
+<td class="markdownTableBodyNone"><code>HashMap</code>   </td><td class="markdownTableBodyNone">Unordered map (std::unordered_map wrapper)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classHashSet.html" title="Unordered unique-element container wrapping std::unordered_set.">HashSet</a></code>   </td><td class="markdownTableBodyNone">Unordered set (std::unordered_set wrapper)    </td></tr>
+<td class="markdownTableBodyNone"><code>HashSet</code>   </td><td class="markdownTableBodyNone">Unordered set (std::unordered_set wrapper)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classDeque.html" title="Double-ended queue container wrapping std::deque.">Deque</a></code>   </td><td class="markdownTableBodyNone">Double-ended queue (std::deque wrapper)    </td></tr>
+<td class="markdownTableBodyNone"><code>Deque</code>   </td><td class="markdownTableBodyNone">Double-ended queue (std::deque wrapper)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classArray.html" title="Fixed-size array container wrapping std::array.">Array</a></code>   </td><td class="markdownTableBodyNone">Fixed-size array (std::array wrapper)    </td></tr>
+<td class="markdownTableBodyNone"><code>Array</code>   </td><td class="markdownTableBodyNone">Fixed-size array (std::array wrapper)    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>Image</code>   </td><td class="markdownTableBodyNone">Image descriptor + pixel buffer planes (compressed images carry an attached <code>VideoPacket</code>)    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>Audio</code>   </td><td class="markdownTableBodyNone">Audio descriptor + sample buffer (compressed audio carries an attached <code>AudioPacket</code>)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a></code>   </td><td class="markdownTableBodyNone">Container of images, audio, and metadata    </td></tr>
+<td class="markdownTableBodyNone"><code>Frame</code>   </td><td class="markdownTableBodyNone">Container of images, audio, and metadata    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>MediaPacket</code>   </td><td class="markdownTableBodyNone">Abstract polymorphic base for encoded bitstream access units    </td></tr>
 <tr class="markdownTableRowEven">
@@ -229,66 +224,62 @@ Shareable</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>AudioPacket</code>   </td><td class="markdownTableBodyNone">Encoded audio access unit — attached to a compressed <code>Audio</code>    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classEncodedDesc.html" title="Describes a compressed or encoded media format.">EncodedDesc</a></code>   </td><td class="markdownTableBodyNone">Compressed/encoded media descriptor   </td></tr>
+<td class="markdownTableBodyNone"><code>EncodedDesc</code>   </td><td class="markdownTableBodyNone">Compressed/encoded media descriptor   </td></tr>
 </table>
 <h1><a class="anchor" id="dataobj_threading"></a>
 Thread Safety and Cross-Thread Sharing</h1>
-<p>Data objects are not internally thread-safe. Concurrent reads and writes to the same instance require external synchronization. The recommended pattern for sharing data between threads is to use <code>Ptr</code> (<code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a></code>) with ownership handoff: once you pass a <code>Ptr</code> to another thread, do not mutate the underlying object from the original thread.</p>
+<p>Data objects are not internally thread-safe. Concurrent reads and writes to the same instance require external synchronization. The recommended pattern for sharing data between threads is to use <code>Ptr</code> (<code>SharedPtr</code>) with ownership handoff: once you pass a <code>Ptr</code> to another thread, do not mutate the underlying object from the original thread.</p>
 <h2><a class="anchor" id="thread_ptr"></a>
 Pattern 1: Share a single object via Ptr</h2>
-<p>When you need to pass a data object to another thread (e.g., pushing a frame through a pipeline or emitting a signal), wrap it in its <code>Ptr</code> type. The atomic reference counting in <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a></code> makes the pointer itself safe to copy across threads.</p>
+<p>When you need to pass a data object to another thread (e.g., pushing a frame through a pipeline or emitting a signal), wrap it in its <code>Ptr</code> type. The atomic reference counting in <code>SharedPtr</code> makes the pointer itself safe to copy across threads.</p>
 <div class="fragment"><div class="line"><span class="comment">// Producer thread</span></div>
-<div class="line"><a class="code hl_class" href="classSharedPtr.html">Frame::Ptr</a> frame = Frame::Ptr::create(desc);</div>
+<div class="line">Frame::Ptr frame = Frame::Ptr::create(desc);</div>
 <div class="line"><span class="comment">// ... fill frame data ...</span></div>
 <div class="line">link.pushFrame(frame);  <span class="comment">// Ptr safely crosses thread boundary</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Consumer thread</span></div>
-<div class="line"><span class="keyword">auto</span> [frame, <a class="code hl_class" href="classList.html">err</a>] = link.pullFrame();</div>
+<div class="line"><span class="keyword">auto</span> [frame, err] = link.pullFrame();</div>
 <div class="line"><span class="comment">// frame is now exclusively accessed by this thread</span></div>
-<div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr&lt; Frame &gt;</a></div></div>
 </div><!-- fragment --><h2><a class="anchor" id="thread_composite"></a>
 Pattern 2: Composite structure via Ptr</h2>
 <p>When you need to share multiple related values across threads, compose them into a shareable data object and share that object via <code>Ptr</code>:</p>
-<div class="fragment"><div class="line"><span class="keyword">class </span><a class="code hl_class" href="classList.html">RenderJob</a> {</div>
-<div class="line">        <a class="code hl_define" href="sharedptr_8h.html#a19c77a1148cf694c53a7d0d6608c0cd9">PROMEKI_SHARED_FINAL</a>(<a class="code hl_class" href="classList.html">RenderJob</a>)</div>
+<div class="fragment"><div class="line"><span class="keyword">class </span>RenderJob {</div>
+<div class="line">        <a class="code hl_define" href="sharedptr_8h.html#a19c77a1148cf694c53a7d0d6608c0cd9">PROMEKI_SHARED_FINAL</a>(RenderJob)</div>
 <div class="line">        <span class="keyword">public</span>:</div>
-<div class="line">                <span class="keyword">using </span><a class="code hl_typedef" href="classList.html#a5065311ff7846505d9a73878bcf7a3e3">Ptr</a> = <a class="code hl_class" href="classList.html">SharedPtr&lt;RenderJob&gt;</a>;</div>
-<div class="line">                <span class="keyword">using </span><a class="code hl_class" href="classList.html">List</a> = promeki::List&lt;RenderJob&gt;;</div>
-<div class="line">                <span class="keyword">using </span>PtrList = promeki::List&lt;Ptr&gt;;</div>
+<div class="line">                <span class="keyword">using </span>Ptr = SharedPtr&lt;RenderJob&gt;;</div>
+<div class="line">                <span class="keyword">using </span>List = <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">promeki::List&lt;RenderJob&gt;</a>;</div>
+<div class="line">                <span class="keyword">using </span>PtrList = <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">promeki::List&lt;Ptr&gt;</a>;</div>
 <div class="line">                <span class="comment">// ... accessors ...</span></div>
 <div class="line">        <span class="keyword">private</span>:</div>
-<div class="line">                <a class="code hl_class" href="classImageDesc.html">ImageDesc</a>       _desc;</div>
-<div class="line">                <a class="code hl_class" href="classTimecode.html">Timecode</a>        <a class="code hl_function" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">_startTC</a>;</div>
-<div class="line">                <a class="code hl_class" href="classList.html">List&lt;String&gt;</a>    <a class="code hl_function" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">_layers</a>;</div>
+<div class="line">                ImageDesc       _desc;</div>
+<div class="line">                Timecode        _startTC;</div>
+<div class="line">                List&lt;String&gt;    _layers;</div>
 <div class="line">};</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Submit to thread pool</span></div>
-<div class="line"><a class="code hl_class" href="classList.html">RenderJob::Ptr</a> <a class="code hl_class" href="classList.html">job</a> = RenderJob::Ptr::create(desc, <a class="code hl_class" href="classList.html">tc</a>, <a class="code hl_class" href="classList.html">layers</a>);</div>
-<div class="line">pool.submit([<a class="code hl_class" href="classList.html">job</a>]() {</div>
+<div class="line">RenderJob::Ptr job = RenderJob::Ptr::create(desc, tc, layers);</div>
+<div class="line">pool.submit([job]() {</div>
 <div class="line">        <span class="comment">// job-&gt;desc(), job-&gt;startTC() -- safe, no concurrent mutation</span></div>
 <div class="line">});</div>
-<div class="ttc" id="aclassImageDesc_html"><div class="ttname"><a href="classImageDesc.html">ImageDesc</a></div><div class="ttdoc">Describes the format and layout of a single image.</div><div class="ttdef"><b>Definition</b> imagedesc.h:37</div></div>
-<div class="ttc" id="aclassList_html_a5065311ff7846505d9a73878bcf7a3e3"><div class="ttname"><a href="classList.html#a5065311ff7846505d9a73878bcf7a3e3">List::Ptr</a></div><div class="ttdeci">SharedPtr&lt; List &gt; Ptr</div><div class="ttdoc">Shared pointer type for List.</div><div class="ttdef"><b>Definition</b> list.h:44</div></div>
-<div class="ttc" id="aclassList_html_a708769d50011e6bdadc6bed2a6468aec"><div class="ttname"><a href="classList.html#a708769d50011e6bdadc6bed2a6468aec">List::List</a></div><div class="ttdeci">List()=default</div><div class="ttdoc">Default constructor. Creates an empty list.</div></div>
-<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:49</div></div>
-<div class="ttc" id="asharedptr_8h_html_a19c77a1148cf694c53a7d0d6608c0cd9"><div class="ttname"><a href="sharedptr_8h.html#a19c77a1148cf694c53a7d0d6608c0cd9">PROMEKI_SHARED_FINAL</a></div><div class="ttdeci">#define PROMEKI_SHARED_FINAL(TYPE)</div><div class="ttdoc">Macro for non-polymorphic native shared objects.</div><div class="ttdef"><b>Definition</b> sharedptr.h:114</div></div>
+<div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
+<div class="ttc" id="asharedptr_8h_html_a19c77a1148cf694c53a7d0d6608c0cd9"><div class="ttname"><a href="sharedptr_8h.html#a19c77a1148cf694c53a7d0d6608c0cd9">PROMEKI_SHARED_FINAL</a></div><div class="ttdeci">#define PROMEKI_SHARED_FINAL(TYPE)</div><div class="ttdoc">Macro for non-polymorphic native shared objects.</div><div class="ttdef"><b>Definition</b> sharedptr.h:158</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="thread_simple"></a>
 Simple types: just copy</h2>
 <p>Simple data objects are small and cheap to copy. When sharing them across threads, just capture or pass by value — no <code>Ptr</code> needed:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classTimecode.html">Timecode</a> <a class="code hl_class" href="classList.html">tc</a> = <a class="code hl_class" href="classList.html">currentTimecode</a>();</div>
-<div class="line">pool.submit([<a class="code hl_class" href="classList.html">tc</a>]() {</div>
+<div class="fragment"><div class="line">Timecode tc = currentTimecode();</div>
+<div class="line">pool.submit([tc]() {</div>
 <div class="line">        <span class="comment">// tc is a copy, safe to use</span></div>
 <div class="line">});</div>
 </div><!-- fragment --><h2><a class="anchor" id="thread_antipattern"></a>
 Avoid: Mutex around data objects</h2>
-<p>Do not protect data objects with a <a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a> as a general practice. If you find yourself wrapping a data object in a mutex, restructure so that each thread works on its own copy or uses the <code>Ptr</code> handoff pattern. The exception is explicitly thread-safe classes like <code><a class="el" href="classQueue.html" title="Thread-safe FIFO queue.">Queue</a></code> that manage their own internal synchronization.</p>
+<p>Do not protect data objects with a Mutex as a general practice. If you find yourself wrapping a data object in a mutex, restructure so that each thread works on its own copy or uses the <code>Ptr</code> handoff pattern. The exception is explicitly thread-safe classes like <code>Queue</code> that manage their own internal synchronization.</p>
 <p><b>See also:</b></p><ul>
-<li><b>Containers</b> module — <a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a>, <a class="el" href="classMap.html" title="Ordered associative container wrapping std::map.">Map</a>, <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a>, <a class="el" href="classArray.html" title="Fixed-size array container wrapping std::array.">Array</a>, and other container types.</li>
-<li><b>Media</b> module — <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> for aligned memory storage.</li>
-<li><b>ProAV Media</b> module — Audio, Image, <a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a>, and format descriptors.</li>
-<li><b>Math</b> module — <a class="el" href="classPoint.html" title="N-dimensional point with arithmetic, interpolation, and serialization.">Point</a>, Size, <a class="el" href="classRect.html" title="2D rectangle defined by position and size.">Rect</a>, <a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a>, and other value types.</li>
-<li><b>Time</b> module — <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>, <a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a>, and <a class="el" href="classDuration.html" title="Time duration with nanosecond precision.">Duration</a>.</li>
-<li><b>Utilities</b> module — <a class="el" href="classVariant.html" title="Concrete Variant type used throughout promeki.">Variant</a>, <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a>, <a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a>, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>, and other helpers. </li>
+<li><b>Containers</b> module — List, Map, Set, Array, and other container types.</li>
+<li><b>Media</b> module — Buffer for aligned memory storage.</li>
+<li><b>ProAV Media</b> module — Audio, Image, Frame, and format descriptors.</li>
+<li><b>Math</b> module — Point, Size, Rect, Rational, and other value types.</li>
+<li><b>Time</b> module — Timecode, TimeStamp, and Duration.</li>
+<li><b>Utilities</b> module — Variant, UUID, Metadata, Error, and other helpers. </li>
 </ul>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
@@ -297,7 +288,7 @@ Avoid: Mutex around data objects</h2>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

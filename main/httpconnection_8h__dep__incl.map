@@ -1,0 +1,10 @@
+<map id="include/promeki/httpconnection.h" name="include/promeki/httpconnection.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,245,31"/>
+<area shape="rect" id="Node000002" href="$httpserver_8h.html" title=" " alt="" coords="21,79,230,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="128,44,128,79,123,79,123,44"/>
+<area shape="rect" id="Node000003" href="$debugserver_8h.html" title=" " alt="" coords="14,225,237,251"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="108,116,96,134,88,153,87,172,93,192,116,224,111,227,88,194,82,173,83,151,92,131,104,113"/>
+<area shape="rect" id="Node000004" href="$httpapi_8h.html" title=" " alt="" coords="97,152,287,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="148,113,183,150,179,154,144,116"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="173,190,138,227,134,223,170,186"/>
+</map>

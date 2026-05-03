@@ -1,6 +1,6 @@
 var colormodel_8h =
 [
-    [ "ColorModel::CompInfo", "structColorModel_1_1CompInfo.html", "structColorModel_1_1CompInfo" ],
-    [ "ColorModel::Data", "structColorModel_1_1Data.html", "structColorModel_1_1Data" ],
-    [ "ColorModel::H273", "structColorModel_1_1H273.html", "structColorModel_1_1H273" ]
+    [ "promeki::ColorModel::CompInfo", "structpromeki_1_1ColorModel_1_1CompInfo.html", "structpromeki_1_1ColorModel_1_1CompInfo" ],
+    [ "promeki::ColorModel::Data", "structpromeki_1_1ColorModel_1_1Data.html", "structpromeki_1_1ColorModel_1_1Data" ],
+    [ "promeki::ColorModel::H273", "structpromeki_1_1ColorModel_1_1H273.html", "structpromeki_1_1ColorModel_1_1H273" ]
 ];

@@ -1,0 +1,8 @@
+<map id="promeki::ChromaSubsampling" name="promeki::ChromaSubsampling">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for chroma subsampling modes." alt="" coords="5,179,224,204"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="239,184,251,191,243,198,225,201,224,196,241,193,245,191,237,188"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="21,80,208,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,134,117,179,112,179,112,134"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="54,5,175,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="117,44,117,80,112,80,112,44"/>
+</map>

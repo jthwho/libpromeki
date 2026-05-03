@@ -1,4 +1,4 @@
 var style_8h =
 [
-    [ "TuiStyleState", "classTuiStyleState.html", null ]
+    [ "promeki::TuiStyleState", "classpromeki_1_1TuiStyleState.html", null ]
 ];

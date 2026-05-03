@@ -1,7 +1,0 @@
-<map id="VideoDecoder" name="VideoDecoder">
-<area shape="rect" id="Node000001" title="Abstract base class for stateful video decoders." alt="" coords="106,5,219,31"/>
-<area shape="rect" id="Node000002" href="$classJpegVideoDecoder.html" title="JPEG VideoDecoder built on libjpeg&#45;turbo." alt="" coords="5,79,147,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="140,41,92,81,88,76,137,37"/>
-<area shape="rect" id="Node000003" href="$classJpegXsVideoDecoder.html" title="JPEG XS VideoDecoder built on SVT&#45;JPEG&#45;XS." alt="" coords="171,79,328,104"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="189,37,237,76,233,81,185,41"/>
-</map>

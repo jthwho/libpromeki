@@ -1,0 +1,38 @@
+var classpromeki_1_1FrameRate =
+[
+    [ "WellKnown", "structpromeki_1_1FrameRate_1_1WellKnown.html", null ],
+    [ "RationalType", "classpromeki_1_1FrameRate.html#af1d6d83437d9c581ab08bbe170d827ca", null ],
+    [ "WellKnownRate", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07", [
+      [ "FPS_NotWellKnown", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07a3a7d54b9418819c92a091ce6c33ce722", null ],
+      [ "FPS_Invalid", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07aace014743d134b29f73a8a4ad5e56ac0", null ],
+      [ "FPS_120", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07a8b893331b40ca26168b878798d038b41", null ],
+      [ "FPS_119_88", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07a4c3de6535e1f1964d34b503d7ad93a97", null ],
+      [ "FPS_100", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07a567a4d67cd8c030630ea0efd9213ef94", null ],
+      [ "FPS_60", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07a5855b35c84fa0b8f5cfecd35baa511b5", null ],
+      [ "FPS_59_94", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07a768d5d10e8c7b2f2d02b3cbe425b5de3", null ],
+      [ "FPS_50", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07a9a5e7c9e41d61eac59f40736a525de5e", null ],
+      [ "FPS_48", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07a73ecb5062f246ab49a3548554528597d", null ],
+      [ "FPS_47_95", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07a64bc3e1e454e22ddc20ecb7802f3827f", null ],
+      [ "FPS_30", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07af384451bbaaa0f45e316d96a8b44119f", null ],
+      [ "FPS_29_97", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07aa6943a6e86f8fff72bac3f508b95e451", null ],
+      [ "FPS_25", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07aaccd824952123c8144a947699877b033", null ],
+      [ "FPS_24", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07a442479c760572bded6717499b59bd09b", null ],
+      [ "FPS_23_98", "classpromeki_1_1FrameRate.html#ab2ce7a9ae2054f285857b6eb3597ef07aa62ed7a2615f5cce3b15ceff5551377d", null ]
+    ] ],
+    [ "FrameRate", "classpromeki_1_1FrameRate.html#a16784236aab62e55ecd76073db7f6e2d", null ],
+    [ "FrameRate", "classpromeki_1_1FrameRate.html#ae6eb48514f11f26bface61071342d231", null ],
+    [ "FrameRate", "classpromeki_1_1FrameRate.html#a60417b94ab491a42ef159f5764101718", null ],
+    [ "cumulativeTicks", "classpromeki_1_1FrameRate.html#a529640e0f673b9c71d8c4de16957cd4c", null ],
+    [ "denominator", "classpromeki_1_1FrameRate.html#a565f8fe628bd2d72974afc2ec1eecfa6", null ],
+    [ "frameDuration", "classpromeki_1_1FrameRate.html#a8bc7528249a76aff1c2e6e3ba10d6cc6", null ],
+    [ "isValid", "classpromeki_1_1FrameRate.html#affb03eef1ddd3ae523d3da09af1e9909", null ],
+    [ "isWellKnownRate", "classpromeki_1_1FrameRate.html#a0415a9b2745eec3d4c62d2a8ad9262f5", null ],
+    [ "numerator", "classpromeki_1_1FrameRate.html#a331c2db64db5da566eb25df071ce38c0", null ],
+    [ "operator!=", "classpromeki_1_1FrameRate.html#a96ce4fb7b9be698e7e530e28471fe5e5", null ],
+    [ "operator==", "classpromeki_1_1FrameRate.html#ac30539d308853d890ba4d7bbed66602d", null ],
+    [ "rational", "classpromeki_1_1FrameRate.html#a9e80d286245768f20fccd0f236fecc2c", null ],
+    [ "samplesPerFrame", "classpromeki_1_1FrameRate.html#a63a9839814a436e6b59fe5647861e4bc", null ],
+    [ "toDouble", "classpromeki_1_1FrameRate.html#abf9457632afd84d41a7c9c66a87ca8a0", null ],
+    [ "toString", "classpromeki_1_1FrameRate.html#a56d062da4f87378fbeb4096aa305ddfc", null ],
+    [ "wellKnownRate", "classpromeki_1_1FrameRate.html#a96441be439d8393f8f21f6ad27368cc6", null ]
+];

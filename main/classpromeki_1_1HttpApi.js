@@ -1,0 +1,38 @@
+var classpromeki_1_1HttpApi =
+[
+    [ "Endpoint", "structpromeki_1_1HttpApi_1_1Endpoint.html", "structpromeki_1_1HttpApi_1_1Endpoint" ],
+    [ "ErrorResponse", "structpromeki_1_1HttpApi_1_1ErrorResponse.html", "structpromeki_1_1HttpApi_1_1ErrorResponse" ],
+    [ "Param", "structpromeki_1_1HttpApi_1_1Param.html", "structpromeki_1_1HttpApi_1_1Param" ],
+    [ "RpcCall", "classpromeki_1_1HttpApi.html#ae630065d588ea241b62468403aaed991", null ],
+    [ "ParamIn", "classpromeki_1_1HttpApi.html#a07e7d6ec23eb2525fe867bed7d8b749c", [
+      [ "Path", "classpromeki_1_1HttpApi.html#a07e7d6ec23eb2525fe867bed7d8b749caac70412e939d72a9234cdebb1af5867b", null ],
+      [ "Query", "classpromeki_1_1HttpApi.html#a07e7d6ec23eb2525fe867bed7d8b749ca66c1b4c7f3dc385b68a9fa903ccd016d", null ],
+      [ "Header", "classpromeki_1_1HttpApi.html#a07e7d6ec23eb2525fe867bed7d8b749cabf50d5e661106d0abe925af3c2e6f7e7", null ],
+      [ "Body", "classpromeki_1_1HttpApi.html#a07e7d6ec23eb2525fe867bed7d8b749caac101b32dda4448cf13a93fe283dddd8", null ]
+    ] ],
+    [ "HttpApi", "classpromeki_1_1HttpApi.html#a41c291f846f88cfff24c8b29f930ef64", null ],
+    [ "~HttpApi", "classpromeki_1_1HttpApi.html#adad769936e8fac0babc3e839d847613e", null ],
+    [ "addServer", "classpromeki_1_1HttpApi.html#af76ed92e55277759238692b412aa4768", null ],
+    [ "description", "classpromeki_1_1HttpApi.html#a16f4b27730b2fb0dcab8f8a8f46b703b", null ],
+    [ "endpointCount", "classpromeki_1_1HttpApi.html#aeb45811c7049a74a1c13238ae0802176", null ],
+    [ "endpoints", "classpromeki_1_1HttpApi.html#af01af8ee83efab5bef5dd1b488649329", null ],
+    [ "exposeDatabase", "classpromeki_1_1HttpApi.html#a718b6c2396b83932ded416a126268575", null ],
+    [ "exposeLookup", "classpromeki_1_1HttpApi.html#af249da9999313b3e79911dbce8ff6598", null ],
+    [ "installPromekiAPI", "classpromeki_1_1HttpApi.html#a37783563165ca8707c17425a6c2447f4", null ],
+    [ "isMounted", "classpromeki_1_1HttpApi.html#a9758c0386e18683ac0115de95b123323", null ],
+    [ "mount", "classpromeki_1_1HttpApi.html#a1ec2fa7ee02891c136411106457acaee", null ],
+    [ "prefix", "classpromeki_1_1HttpApi.html#a34daf2006217de9c96de393b7d814aba", null ],
+    [ "resolve", "classpromeki_1_1HttpApi.html#a0328429dcd9b5faae75cce85241067ac", null ],
+    [ "route", "classpromeki_1_1HttpApi.html#a772c8aad6b087de12031393d9f37b67d", null ],
+    [ "rpc", "classpromeki_1_1HttpApi.html#ad8a48f7efc9a586056538fc5d00d2520", null ],
+    [ "server", "classpromeki_1_1HttpApi.html#a00d58f7f9f52dee89091cd38502b928f", null ],
+    [ "server", "classpromeki_1_1HttpApi.html#a5ea582fd9874ad469212ff2b1d4f0572", null ],
+    [ "setDefaultErrors", "classpromeki_1_1HttpApi.html#af819bd3650f2fa448972490e08c5bff6", null ],
+    [ "setDescription", "classpromeki_1_1HttpApi.html#acb07d9f2e8aef3ad4f556a977d647b28", null ],
+    [ "setTitle", "classpromeki_1_1HttpApi.html#aebd0480d548425c5440fda516c78428a", null ],
+    [ "setVersion", "classpromeki_1_1HttpApi.html#aec43c2bd55434cf7c48b3af5c92deaaf", null ],
+    [ "title", "classpromeki_1_1HttpApi.html#a103f0490387a63965b5901b8ab521e75", null ],
+    [ "toCatalog", "classpromeki_1_1HttpApi.html#ad928b0fc795203e1d82ad0fec9e048d6", null ],
+    [ "toOpenApi", "classpromeki_1_1HttpApi.html#ac69a86065a878096988970c2151ede54", null ],
+    [ "version", "classpromeki_1_1HttpApi.html#af358b5869f3dca9bc15622515edfc15b", null ]
+];

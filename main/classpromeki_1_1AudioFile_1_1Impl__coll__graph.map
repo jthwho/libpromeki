@@ -1,0 +1,19 @@
+<map id="promeki::AudioFile::Impl" name="promeki::AudioFile::Impl">
+<area shape="rect" id="Node000001" title="Abstract implementation backend for AudioFile." alt="" coords="1053,48,1197,88"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="789,6,911,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="925,27,1030,45,1054,50,1053,55,1029,51,925,33"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1AudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count." alt="" coords="773,55,927,81"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="941,65,1053,65,1053,71,941,71"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1IODevice.html" title="Abstract base class for all I/O devices." alt="" coords="779,105,921,130"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="935,102,1029,85,1053,81,1054,86,1030,91,935,107"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="413,30,572,55"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="587,32,669,37,711,47,751,63,759,70,764,77,775,91,797,102,794,107,772,95,759,80,755,73,748,68,709,52,668,43,586,37"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,23,199,63"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="212,40,413,40,413,45,212,45"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="417,79,568,105"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="582,96,779,110,778,115,582,101"/>
+<area shape="rect" id="Node000008" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="393,129,592,154"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="606,140,749,133,790,127,790,133,750,139,606,146"/>
+<area shape="rect" id="Node000009" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="396,179,589,219"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="602,188,675,177,749,160,789,145,825,128,827,133,791,150,750,165,676,182,603,193"/>
+</map>

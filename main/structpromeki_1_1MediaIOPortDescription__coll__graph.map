@@ -1,0 +1,9 @@
+<map id="promeki::MediaIOPortDescription" name="promeki::MediaIOPortDescription">
+<area shape="rect" id="Node000001" title="Snapshot of a single MediaIOPort&#39;s identity and format landscape." alt="" coords="138,108,377,133"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,128,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="102,35,237,106,234,110,100,40"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1List.html" title=" " alt="" coords="153,5,362,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="260,45,260,108,255,108,255,45"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1MediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata." alt="" coords="386,5,542,31"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="447,43,423,66,393,86,360,101,327,111,325,105,359,96,391,82,420,61,444,39"/>
+</map>

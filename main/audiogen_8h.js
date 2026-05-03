@@ -1,4 +1,4 @@
 var audiogen_8h =
 [
-    [ "AudioGen::Config", "structAudioGen_1_1Config.html", "structAudioGen_1_1Config" ]
+    [ "promeki::AudioGen::Config", "structpromeki_1_1AudioGen_1_1Config.html", "structpromeki_1_1AudioGen_1_1Config" ]
 ];

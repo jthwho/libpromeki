@@ -1,7 +1,0 @@
-<map id="AudioDecoder::BackendRecord" name="AudioDecoder::BackendRecord">
-<area shape="rect" id="Node000001" title="Registration record attaching a concrete decoder to a (codec, backend) pair." alt="" coords="52,93,273,119"/>
-<area shape="rect" id="Node000002" href="$classAudioCodec_1_1Backend.html" title="Typed handle for a concrete codec backend." alt="" coords="5,5,168,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="108,39,154,91,150,95,104,43"/>
-<area shape="rect" id="Node000003" href="$classList.html" title=" " alt="" coords="193,5,285,31"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,43,175,95,171,91,217,39"/>
-</map>

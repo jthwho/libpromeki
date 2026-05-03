@@ -1,0 +1,7 @@
+<map id="promeki::VideoScanMode" name="promeki::VideoScanMode">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for progressive / interlaced video scan mode." alt="" coords="5,167,193,192"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="20,79,179,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="102,132,102,166,97,166,97,132"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="39,5,160,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="102,44,102,79,97,79,97,44"/>
+</map>

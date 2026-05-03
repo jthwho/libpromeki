@@ -1,4 +1,4 @@
 var inputparser_8h =
 [
-    [ "TuiInputParser::ParsedEvent", "structTuiInputParser_1_1ParsedEvent.html", "structTuiInputParser_1_1ParsedEvent" ]
+    [ "promeki::TuiInputParser::ParsedEvent", "structpromeki_1_1TuiInputParser_1_1ParsedEvent.html", "structpromeki_1_1TuiInputParser_1_1ParsedEvent" ]
 ];

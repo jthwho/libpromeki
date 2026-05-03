@@ -1,0 +1,10 @@
+<map id="promeki::PixelMemLayout::Data" name="promeki::PixelMemLayout::Data">
+<area shape="rect" id="Node000001" title="Immutable data record for a pixel format." alt="" coords="505,55,697,95"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,27,128,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="142,31,152,31,193,31,302,32,410,40,482,52,505,56,504,61,481,57,409,45,301,38,193,36,152,36,142,36"/>
+<area shape="rect" id="Node000004" href="$structpromeki_1_1PixelMemLayout_1_1PlaneDesc.html" title="Describes a single image plane." alt="" coords="217,55,409,95"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="142,48,218,59,217,64,142,53"/>
+<area shape="rect" id="Node000003" href="$structpromeki_1_1PixelMemLayout_1_1CompDesc.html" title="Describes a single component within the pixel format." alt="" coords="217,119,409,159"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="417,113,510,92,511,97,418,118"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="423,72,505,72,505,77,423,77"/>
+</map>

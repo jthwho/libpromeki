@@ -1,0 +1,21 @@
+<map id="promeki::DedicatedThreadMediaIO" name="promeki::DedicatedThreadMediaIO">
+<area shape="rect" id="Node000001" title="Strategy class that runs commands on a dedicated worker thread." alt="" coords="652,122,847,162"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1AudioFileMediaIO.html" title="MediaIO backend for audio file formats." alt="" coords="908,5,1107,31"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="782,111,833,74,894,40,927,28,928,33,896,44,836,78,785,115"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1ImageFileMediaIO.html" title="MediaIO backend for image files and image sequences." alt="" coords="906,55,1109,80"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="814,115,894,89,940,77,941,83,895,94,816,120"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1MjpegStreamMediaIO.html" title="MediaIO sink that JPEG&#45;encodes incoming frames at a rate&#45;gated cadence and broadcasts each result to ..." alt="" coords="895,104,1120,129"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="860,128,894,125,895,130,861,134"/>
+<area shape="rect" id="Node000008" href="$classpromeki_1_1QuickTimeMediaIO.html" title="MediaIO backend for QuickTime / ISO&#45;BMFF container files." alt="" coords="903,153,1111,179"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="861,150,903,154,903,159,860,155"/>
+<area shape="rect" id="Node000009" href="$classpromeki_1_1RtpMediaIO.html" title="MediaIO backend that transmits and receives frames as RTP streams." alt="" coords="927,203,1087,228"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="818,164,895,189,942,200,940,205,894,194,816,169"/>
+<area shape="rect" id="Node000010" href="$classpromeki_1_1SDLPlayerMediaIO.html" title="MediaIO sink that plays frames through SDL via FrameSync." alt="" coords="905,252,1109,277"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="786,169,836,205,896,238,929,249,927,254,894,243,833,210,783,173"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1CommandMediaIO.html" title="Abstract intermediate that owns the per&#45;command dispatch contract for backends that work in terms of ..." alt="" coords="399,129,604,155"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="618,139,652,139,652,145,618,145"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends." alt="" coords="212,129,351,155"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="364,139,399,139,399,145,364,145"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="5,129,164,155"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="178,139,212,139,212,145,178,145"/>
+</map>

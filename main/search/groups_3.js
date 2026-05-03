@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['framework_0',['SDL Widget Framework',['../group__widget.html',1,'']]]
+  ['enums_0',['Well-known Enums',['../group__wellknownenums.html',1,'']]],
+  ['events_1',['Events',['../group__events.html',1,'']]]
 ];

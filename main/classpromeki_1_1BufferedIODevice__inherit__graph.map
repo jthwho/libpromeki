@@ -1,0 +1,9 @@
+<map id="promeki::BufferedIODevice" name="promeki::BufferedIODevice">
+<area shape="rect" id="Node000001" title="Abstract IODevice with an internal read buffer." alt="" coords="5,152,204,177"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1File.html" title="File I/O device with buffered reading." alt="" coords="51,225,158,251"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="107,191,107,225,102,225,102,191"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1IODevice.html" title="Abstract base class for all I/O devices." alt="" coords="33,79,176,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,118,107,152,102,152,102,118"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="25,5,184,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,44,107,79,102,79,102,44"/>
+</map>

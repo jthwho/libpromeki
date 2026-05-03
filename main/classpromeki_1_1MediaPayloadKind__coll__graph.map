@@ -1,0 +1,8 @@
+<map id="promeki::MediaPayloadKind" name="promeki::MediaPayloadKind">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for the coarse category of a MediaPayload." alt="" coords="5,201,209,226"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="224,202,232,207,236,214,228,223,210,227,209,222,225,218,231,213,229,210,222,207"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="21,80,193,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="110,134,110,200,105,200,105,134"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="47,5,168,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="110,44,110,80,105,80,105,44"/>
+</map>

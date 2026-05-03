@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -103,7 +101,8 @@ $(document).ready(function(){initNavTree('globals_defs.html',''); initResizable(
 <li>PROMEKI_DECLARE_ID&#160;:&#160;<a class="el" href="group__util.html#ga155b8e018cd70514a008a09951cf033e">variantdatabase.h</a></li>
 <li>PROMEKI_FORMAT_VIA_TOSTRING&#160;:&#160;<a class="el" href="string_8h.html#a393cce32c8629430be0399b7d9d073f8">string.h</a></li>
 <li>PROMEKI_LOOKUP_REGISTER&#160;:&#160;<a class="el" href="group__util.html#ga5cbdbf7bece870dee46af061c78a716a">variantlookup.h</a></li>
-<li>PROMEKI_MEDIAIO_COMMAND&#160;:&#160;<a class="el" href="group__proav.html#gad90fff14e48cb9847b2be7d40be4a1a5">mediaio.h</a></li>
+<li>PROMEKI_MEDIAIO_COMMAND&#160;:&#160;<a class="el" href="group__mediaio__backend.html#ga274a51de092965159a1fd169efe47b8c">mediaiocommand.h</a></li>
+<li>PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH&#160;:&#160;<a class="el" href="group__proav.html#ga64c811c1da3047e954834b5c197d5acb">mediapayload.h</a></li>
 <li>PROMEKI_NAMESPACE_BEGIN&#160;:&#160;<a class="el" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">namespace.h</a></li>
 <li>PROMEKI_NAMESPACE_END&#160;:&#160;<a class="el" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">namespace.h</a></li>
 <li>PROMEKI_OBFUSCATE&#160;:&#160;<a class="el" href="obfuscatedstring_8h.html#acb89f83426760c47908ee175221bb79d">obfuscatedstring.h</a></li>
@@ -113,13 +112,16 @@ $(document).ready(function(){initNavTree('globals_defs.html',''); initResizable(
 <li>PROMEKI_REGISTER_ENUM_TYPE&#160;:&#160;<a class="el" href="group__util.html#gad8f5b041efeaee084ccff55a8e187e33">enum.h</a></li>
 <li>PROMEKI_REGISTER_FILE_FORMAT_FACTORY&#160;:&#160;<a class="el" href="fileformatfactory_8h.html#a7167593218f3b93312196326121f7a87">fileformatfactory.h</a></li>
 <li>PROMEKI_REGISTER_IMAGEFILEIO&#160;:&#160;<a class="el" href="group__proav.html#gaeb7193d3b1d2058212f4c97c3f24b271">imagefileio.h</a></li>
-<li>PROMEKI_REGISTER_MEDIAIO&#160;:&#160;<a class="el" href="group__proav.html#ga10f5578b94caf8706a28ed5b9e7b087f">mediaio.h</a></li>
+<li>PROMEKI_REGISTER_MEDIAIO_FACTORY&#160;:&#160;<a class="el" href="group__mediaio__user.html#ga495fe62190fcd108d0a569777ebb1434">mediaiofactory.h</a></li>
 <li>PROMEKI_REGISTER_MEDIAPAYLOAD&#160;:&#160;<a class="el" href="mediapayload_8h.html#a8bc8f01e50b5136ed265a50099e7ba0f">mediapayload.h</a></li>
 <li>PROMEKI_REGISTER_RESOURCES&#160;:&#160;<a class="el" href="resource_8h.html#af8544f54b7ac58fcc9381b662d18e473">resource.h</a></li>
 <li>PROMEKI_SHARED&#160;:&#160;<a class="el" href="group__util.html#ga171ec9034fbfc2c134195af18ea762e7">sharedptr.h</a></li>
 <li>PROMEKI_SHARED_ABSTRACT&#160;:&#160;<a class="el" href="sharedptr_8h.html#abea658d08e1442ff29c25acc39a48a8e">sharedptr.h</a></li>
 <li>PROMEKI_SHARED_DERIVED&#160;:&#160;<a class="el" href="sharedptr_8h.html#a60b00ce3287916679cab881cc182d143">sharedptr.h</a></li>
+<li>PROMEKI_SHARED_DERIVED_NOCOPY&#160;:&#160;<a class="el" href="sharedptr_8h.html#a4d7a3a1b805fb0c89b3c8f59d1d24a52">sharedptr.h</a></li>
 <li>PROMEKI_SHARED_FINAL&#160;:&#160;<a class="el" href="sharedptr_8h.html#a19c77a1148cf694c53a7d0d6608c0cd9">sharedptr.h</a></li>
+<li>PROMEKI_SHARED_FINAL_NOCOPY&#160;:&#160;<a class="el" href="sharedptr_8h.html#a4a3fa49c1d9daff40b143b7ed3c44268">sharedptr.h</a></li>
+<li>PROMEKI_SHARED_NOCOPY&#160;:&#160;<a class="el" href="sharedptr_8h.html#a459815ff9a5628e517b3b97972871bf8">sharedptr.h</a></li>
 <li>PROMEKI_STRING&#160;:&#160;<a class="el" href="string_8h.html#a0f81b971444a32cdfed1ba175958d2da">string.h</a></li>
 <li>PROMEKI_VARIANT_TYPES_NETWORK&#160;:&#160;<a class="el" href="group__util.html#gadd038fa9fc95b7e756cc1f175a180eb2">variant.h</a></li>
 <li>PROMEKI_WELL_KNOWN_RASTERS&#160;:&#160;<a class="el" href="videoformat_8h.html#ac430021c7e59e3a26ae47863ee0520cc">videoformat.h</a></li>
@@ -131,7 +133,7 @@ $(document).ready(function(){initNavTree('globals_defs.html',''); initResizable(
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

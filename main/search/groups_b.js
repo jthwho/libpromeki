@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['theory_0',['Music Theory',['../group__music.html',1,'']]],
-  ['time_1',['Time',['../group__time.html',1,'']]],
-  ['tui_20core_2',['TUI Core',['../group__tui__core.html',1,'']]],
-  ['tui_20widgets_3',['TUI Widgets',['../group__tui__widgets.html',1,'']]]
+  ['sdl_20widget_20framework_0',['SDL Widget Framework',['../group__widget.html',1,'']]],
+  ['streams_1',['Streams',['../group__streams.html',1,'']]],
+  ['strings_2',['Strings',['../group__strings.html',1,'']]],
+  ['support_3',['CUDA support',['../group__cuda.html',1,'']]],
+  ['surface_4',['surface',['../group__mediaio__backend.html',1,'MediaIO — Backend Surface'],['../group__mediaio__user.html',1,'MediaIO — User Surface']]]
 ];

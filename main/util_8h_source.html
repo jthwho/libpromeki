@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -116,181 +114,171 @@ $(document).ready(function(){initNavTree('util_8h_source.html',''); initResizabl
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">class </span><a class="code hl_class" href="classStringList.html">StringList</a>;</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">class </span>StringList;</div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="comment">// Runtime time assert</span></div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="preprocessor">#define PROMEKI_ASSERT(x) if(!(x)) { \</span></div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="preprocessor">        promekiErr(&quot;Assertion failed: &quot; PROMEKI_STRINGIFY(x)); \</span></div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="preprocessor">        promekiLogStackTrace(Logger::Err); \</span></div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="preprocessor">        promekiLogSync(); \</span></div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="preprocessor">        throw std::runtime_error(__FILE__ &quot;:&quot; PROMEKI_STRINGIFY(__LINE__) &quot; Assertion failed: &quot; PROMEKI_STRINGIFY(x)); \</span></div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="preprocessor">}</span></div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="comment">// Compile time assert</span></div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="preprocessor">#define PROMEKI_STATIC_ASSERT(x) static_assert(x, __LINE__ &quot;:&quot; PROMEKI_STRINGIFY(__LINE__) &quot; Assertion failed: &quot; PROMEKI_STRINGIFY(x));</span></div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="comment">// Macro string conversion and concatination</span></div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="preprocessor">#define PROMEKI_STRINGIFY_ARGS(...) #__VA_ARGS__</span></div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="preprocessor">#define PROMEKI_STRINGIFY_IMPL(value) #value</span></div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="preprocessor">#define PROMEKI_STRINGIFY(value) PROMEKI_STRINGIFY_IMPL(value)</span></div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="preprocessor">#define PROMEKI_CONCAT_IMPL(v1, v2) v1##v2</span></div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="preprocessor">#define PROMEKI_CONCAT(v1, v2) PROMEKI_CONCAT_IMPL(v1, v2)</span></div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="comment">// Returns a unique ID that can be used to make unique macro items</span></div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="preprocessor">#define PROMEKI_UNIQUE_ID PROMEKI_CONCAT(__LINE__, __COUNTER__)</span></div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="preprocessor">#define PROMEKI_ASSERT(x)                                                                                              \</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="preprocessor">        if (!(x)) {                                                                                                    \</span></div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="preprocessor">                promekiErr(&quot;Assertion failed: &quot; PROMEKI_STRINGIFY(x));                                                 \</span></div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="preprocessor">                promekiLogStackTrace(Logger::Err);                                                                     \</span></div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="preprocessor">                promekiLogSync();                                                                                      \</span></div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="preprocessor">                throw std::runtime_error(__FILE__                                                                      \</span></div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="preprocessor">                                         &quot;:&quot; PROMEKI_STRINGIFY(__LINE__) &quot; Assertion failed: &quot; PROMEKI_STRINGIFY(x));  \</span></div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="preprocessor">        }</span></div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="comment">// Compile time assert</span></div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="preprocessor">#define PROMEKI_STATIC_ASSERT(x)                                                                                       \</span></div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="preprocessor">        static_assert(x, __LINE__ &quot;:&quot; PROMEKI_STRINGIFY(__LINE__) &quot; Assertion failed: &quot; PROMEKI_STRINGIFY(x));</span></div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="comment">// Macro string conversion and concatination</span></div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="preprocessor">#define PROMEKI_STRINGIFY_ARGS(...) #__VA_ARGS__</span></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="preprocessor">#define PROMEKI_STRINGIFY_IMPL(value) #value</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="preprocessor">#define PROMEKI_STRINGIFY(value) PROMEKI_STRINGIFY_IMPL(value)</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="preprocessor">#define PROMEKI_CONCAT_IMPL(v1, v2) v1##v2</span></div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="preprocessor">#define PROMEKI_CONCAT(v1, v2) PROMEKI_CONCAT_IMPL(v1, v2)</span></div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="comment">// Returns the number of elements in a statically defined simple array.</span></div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="preprocessor">#define PROMEKI_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))</span></div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="comment">// Returns a unique ID that can be used to make unique macro items</span></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="preprocessor">#define PROMEKI_UNIQUE_ID PROMEKI_CONCAT(__LINE__, __COUNTER__)</span></div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span><span class="comment">// Marks a heap pointer as &quot;intentionally leaked&quot; so leak detectors</span></div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="comment">// (AddressSanitizer / LeakSanitizer) stop reporting it.  Use at every</span></div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="comment">// allocation site whose contents legitimately live for the process</span></div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="comment">// lifetime — registered Definitions, StringLiteralData caches, etc.</span></div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span><span class="comment">//</span></div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span><span class="comment">// Under sanitizer builds this delegates to __lsan_ignore_object() (a</span></div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="comment">// one-line registry entry, no runtime cost at the allocation site</span></div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="comment">// beyond the call).  In all other builds it evaluates its argument and</span></div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span><span class="comment">// discards the result, so the macro is safe to wrap any expression.</span></div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span><span class="comment">// Valgrind does not offer a runtime &quot;intentional leak&quot; API — ship a</span></div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="comment">// suppression file (tools/valgrind.supp) for that tool instead.</span></div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span><span class="preprocessor">#if defined(__has_feature)</span></div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span><span class="preprocessor">#       if __has_feature(address_sanitizer)</span></div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span><span class="preprocessor">#               define PROMEKI_ADDRESS_SANITIZER_ENABLED 1</span></div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span><span class="preprocessor">#       endif</span></div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span><span class="preprocessor">#if defined(__SANITIZE_ADDRESS__)</span></div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="preprocessor">#       define PROMEKI_ADDRESS_SANITIZER_ENABLED 1</span></div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span><span class="comment">// Returns the number of elements in a statically defined simple array.</span></div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="preprocessor">#define PROMEKI_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))</span></div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="comment">// Marks a heap pointer as &quot;intentionally leaked&quot; so leak detectors</span></div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span><span class="comment">// (AddressSanitizer / LeakSanitizer) stop reporting it.  Use at every</span></div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span><span class="comment">// allocation site whose contents legitimately live for the process</span></div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="comment">// lifetime — registered Definitions, StringLiteralData caches, etc.</span></div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="comment">//</span></div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span><span class="comment">// Under sanitizer builds this delegates to __lsan_ignore_object() (a</span></div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span><span class="comment">// one-line registry entry, no runtime cost at the allocation site</span></div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="comment">// beyond the call).  In all other builds it evaluates its argument and</span></div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span><span class="comment">// discards the result, so the macro is safe to wrap any expression.</span></div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span><span class="comment">// Valgrind does not offer a runtime &quot;intentional leak&quot; API — ship a</span></div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span><span class="comment">// suppression file (tools/valgrind.supp) for that tool instead.</span></div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span><span class="preprocessor">#if defined(__has_feature)</span></div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span><span class="preprocessor">#if __has_feature(address_sanitizer)</span></div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span><span class="preprocessor">#define PROMEKI_ADDRESS_SANITIZER_ENABLED 1</span></div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="preprocessor">#if defined(PROMEKI_ADDRESS_SANITIZER_ENABLED) &amp;&amp; \</span></div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span><span class="preprocessor">    __has_include(&lt;sanitizer/lsan_interface.h&gt;)</span></div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span><span class="preprocessor">#       include &lt;sanitizer/lsan_interface.h&gt;</span></div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span><span class="preprocessor">#       define PROMEKI_INTENTIONAL_LEAK(ptr) __lsan_ignore_object(ptr)</span></div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="preprocessor">#else</span></div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="preprocessor">#       define PROMEKI_INTENTIONAL_LEAK(ptr) ((void)(ptr))</span></div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="comment">// Some useful alignment macros</span></div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="preprocessor">#define PROMEKI_ALIGN_UP(x, align) (((x) + ((align) - 1)) &amp; ~((align) - 1))</span></div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="comment">// Use the PROMEKI_PRINTF_FUNC to hint to the compiler a particular variadic function</span></div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span><span class="comment">// uses printf() symantics.  This will allow the compiler to check that the variable</span></div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="comment">// arguments match up with the format.</span></div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="comment">// The m argument should be the index that contains the format</span></div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span><span class="comment">// The n argument should be the index of the start of the variadic</span></div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="comment">// Index starts at 1</span></div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="preprocessor">#if defined(PROMEKI_COMPILER_GCC_COMPAT)</span></div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="preprocessor">#       define PROMEKI_PRINTF_FUNC(m, n) __attribute__((format(printf, m, n)))</span></div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span><span class="preprocessor">#elif defined(PROMEKI_COMPILER_MSVC)</span></div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span><span class="preprocessor">#       define PROMEKI_PRINTF_FUNC(m, n) _Printf_format_string_</span></div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span><span class="preprocessor">#else</span></div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span><span class="preprocessor">#       define PROMEKI_PRINTF_FUNC(m, n)</span></div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span><span class="comment">// If you&#39;d like the compiler to implement the structure as </span></div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span><span class="comment">// a packed data structure (i.e. no platform alignment)</span></div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span><span class="comment">// surround the declaration with PROMEKI_PACKED_STRUCT_BEGIN </span></div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span><span class="comment">// and PROMEKI_PACKED_STRUCT_END</span></div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="comment">//</span></div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="comment">// Ex:</span></div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="preprocessor">#if defined(__SANITIZE_ADDRESS__)</span></div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span><span class="preprocessor">#define PROMEKI_ADDRESS_SANITIZER_ENABLED 1</span></div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span><span class="preprocessor">#if defined(PROMEKI_ADDRESS_SANITIZER_ENABLED) &amp;&amp; __has_include(&lt;sanitizer/lsan_interface.h&gt;)</span></div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="preprocessor">#include &lt;sanitizer/lsan_interface.h&gt;</span></div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="preprocessor">#define PROMEKI_INTENTIONAL_LEAK(ptr) __lsan_ignore_object(ptr)</span></div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span><span class="preprocessor">#else</span></div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="preprocessor">#define PROMEKI_INTENTIONAL_LEAK(ptr) ((void)(ptr))</span></div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span> </div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="comment">// Some useful alignment macros</span></div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="preprocessor">#define PROMEKI_ALIGN_UP(x, align) (((x) + ((align) - 1)) &amp; ~((align) - 1))</span></div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="comment">// Use the PROMEKI_PRINTF_FUNC to hint to the compiler a particular variadic function</span></div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="comment">// uses printf() symantics.  This will allow the compiler to check that the variable</span></div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span><span class="comment">// arguments match up with the format.</span></div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="comment">// The m argument should be the index that contains the format</span></div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="comment">// The n argument should be the index of the start of the variadic</span></div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="comment">// Index starts at 1</span></div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span><span class="preprocessor">#if defined(PROMEKI_COMPILER_GCC_COMPAT)</span></div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span><span class="preprocessor">#define PROMEKI_PRINTF_FUNC(m, n) __attribute__((format(printf, m, n)))</span></div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span><span class="preprocessor">#elif defined(PROMEKI_COMPILER_MSVC)</span></div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span><span class="preprocessor">#define PROMEKI_PRINTF_FUNC(m, n) _Printf_format_string_</span></div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span><span class="preprocessor">#else</span></div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span><span class="preprocessor">#define PROMEKI_PRINTF_FUNC(m, n)</span></div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span><span class="comment">// If you&#39;d like the compiler to implement the structure as</span></div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span><span class="comment">// a packed data structure (i.e. no platform alignment)</span></div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="comment">// surround the declaration with PROMEKI_PACKED_STRUCT_BEGIN</span></div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="comment">// and PROMEKI_PACKED_STRUCT_END</span></div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span><span class="comment">//</span></div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="comment">// PROMEKI_PACKED_STRUCT_BEGIN</span></div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span><span class="comment">// struct MyStruct {</span></div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span><span class="comment">//    int8_t value1;</span></div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span><span class="comment">//    int32_t value2;</span></div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span><span class="comment">//    int16_t value3;</span></div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span><span class="comment">// }</span></div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span><span class="comment">// PROMEKI_PACKED_STRUCT_END</span></div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span><span class="comment">//</span></div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><span class="comment">// You can validate the packed-ness of the structure as it should</span></div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span><span class="comment">// now show a sizeof(MyStruct) == to the exact size of all the data</span></div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="comment">// in the structure.</span></div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="preprocessor">#if defined(PROMEKI_COMPILER_GCC_COMPAT)</span></div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span><span class="preprocessor">#       define PROMEKI_PACKED_STRUCT_BEGIN</span></div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span><span class="preprocessor">#       define PROMEKI_PACKED_STRUCT_END __attribute__((packed))</span></div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span><span class="preprocessor">#elif defined(PROMEKI_COMPILER_MSVC)</span></div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span><span class="preprocessor">#       define PROMEKI_PACKED_STRUCT_BEGIN __pragma(pack(push, 1))</span></div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span><span class="preprocessor">#       define PROMEKI_PACKED_STRUCT_END __pragma(pack(pop))</span></div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span><span class="preprocessor">#else</span></div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span><span class="preprocessor">#       define PROMEKI_PACKED_STRUCT_BEGIN</span></div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="preprocessor">#       define PROMEKI_PACKED_STRUCT_END</span></div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span> </div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span><a class="code hl_class" href="classStringList.html">StringList</a> promekiStackTrace(<span class="keywordtype">bool</span> <a class="code hl_class" href="classList.html">demangle</a> = <span class="keyword">true</span>);</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="comment">// Ex:</span></div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span><span class="comment">//</span></div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span><span class="comment">// PROMEKI_PACKED_STRUCT_BEGIN</span></div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span><span class="comment">// struct MyStruct {</span></div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span><span class="comment">//    int8_t value1;</span></div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span><span class="comment">//    int32_t value2;</span></div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span><span class="comment">//    int16_t value3;</span></div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span><span class="comment">// }</span></div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><span class="comment">// PROMEKI_PACKED_STRUCT_END</span></div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span><span class="comment">//</span></div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="comment">// You can validate the packed-ness of the structure as it should</span></div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="comment">// now show a sizeof(MyStruct) == to the exact size of all the data</span></div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span><span class="comment">// in the structure.</span></div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span><span class="preprocessor">#if defined(PROMEKI_COMPILER_GCC_COMPAT)</span></div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span><span class="preprocessor">#define PROMEKI_PACKED_STRUCT_BEGIN</span></div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span><span class="preprocessor">#define PROMEKI_PACKED_STRUCT_END __attribute__((packed))</span></div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span><span class="preprocessor">#elif defined(PROMEKI_COMPILER_MSVC)</span></div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span><span class="preprocessor">#define PROMEKI_PACKED_STRUCT_BEGIN __pragma(pack(push, 1))</span></div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span><span class="preprocessor">#define PROMEKI_PACKED_STRUCT_END __pragma(pack(pop))</span></div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="preprocessor">#else</span></div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span><span class="preprocessor">#define PROMEKI_PACKED_STRUCT_BEGIN</span></div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span><span class="preprocessor">#define PROMEKI_PACKED_STRUCT_END</span></div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span> </div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> OutputType, <span class="keyword">typename</span> InputType&gt;</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span><a class="code hl_class" href="classList.html">OutputType</a> promekiConvert(<span class="keyword">const</span> <a class="code hl_class" href="classList.html">InputType</a> &amp;<a class="code hl_class" href="classList.html">input</a>, <a class="code hl_class" href="classError.html">Error</a> *<a class="code hl_class" href="classList.html">err</a> = <span class="keyword">nullptr</span>) {</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>        <span class="keyword">static_assert</span>(std::is_integral&lt;InputType&gt;::value || std::is_floating_point&lt;InputType&gt;::value,</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>                        <span class="stringliteral">&quot;InputType must be an integer or floating point type&quot;</span>);</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>        <span class="keyword">static_assert</span>(std::is_integral&lt;OutputType&gt;::value || std::is_floating_point&lt;OutputType&gt;::value,</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>                        <span class="stringliteral">&quot;OutputType must be an integer or floating point type&quot;</span>);</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>        <span class="keywordflow">if</span> (<a class="code hl_class" href="classList.html">input</a> &gt; std::numeric_limits&lt;OutputType&gt;::max() || <a class="code hl_class" href="classList.html">input &lt; std::numeric_limits&lt;OutputType&gt;::lowest</a>()) {</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>                <span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">err</a> != <span class="keyword">nullptr</span>) *<a class="code hl_class" href="classList.html">err</a> = <a class="code hl_enumvalue" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85">Error::Invalid</a>;</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">OutputType</a>();</div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>        }</div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>        <span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">err</a> != <span class="keyword">nullptr</span>) *<a class="code hl_class" href="classList.html">err</a> = <a class="code hl_enumvalue" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34">Error::Ok</a>;</div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>        <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span><a class="code hl_class" href="classList.html">OutputType</a><span class="keyword">&gt;</span>(<a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">input</a>);</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>}</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span> </div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span><span class="keyword">inline</span> <a class="code hl_class" href="classList.html">T</a> promekiLerp(<span class="keyword">const</span> <a class="code hl_class" href="classList.html">T</a>&amp; a, <span class="keyword">const</span> <a class="code hl_class" href="classList.html">T</a>&amp; b, <span class="keyword">const</span> <span class="keywordtype">double</span>&amp; <a class="code hl_class" href="classList.html">t</a>) {</div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>    <span class="keywordflow">return</span> a + <a class="code hl_class" href="classList.html">t</a> * (b - a);</div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>}</div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span> </div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span><a class="code hl_class" href="classList.html">T</a> promekiCatmullRom(<span class="keyword">const</span> std::array&lt;T, 4&gt;&amp; <a class="code hl_class" href="classList.html">points</a>, <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">t</a>) {</div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">t2</a> = <a class="code hl_class" href="classList.html">t</a> * <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">t</a>;</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">t3</a> = <a class="code hl_class" href="classList.html">t</a> * <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">t2</a>;</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">c1</a> = -0.5 * <a class="code hl_class" href="classList.html">points</a>[0] + 1.5 * <a class="code hl_class" href="classList.html">points</a>[1] - 1.5 * <a class="code hl_class" href="classList.html">points</a>[2] + 0.5 * <a class="code hl_class" href="classList.html">points</a>[3];</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">c2</a> = <a class="code hl_class" href="classList.html">points</a>[0] - 2.5 * <a class="code hl_class" href="classList.html">points</a>[1] + 2 * <a class="code hl_class" href="classList.html">points</a>[2] - 0.5 * <a class="code hl_class" href="classList.html">points</a>[3];</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">c3</a> = -0.5 * <a class="code hl_class" href="classList.html">points</a>[0] + 0.5 * <a class="code hl_class" href="classList.html">points</a>[2];</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">c4</a> = <a class="code hl_class" href="classList.html">points</a>[1];</div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">c1</a> * <a class="code hl_class" href="classList.html">t3</a> + <a class="code hl_class" href="classList.html">c2</a> * <a class="code hl_class" href="classList.html">t2</a> + <a class="code hl_class" href="classList.html">c3</a> * <a class="code hl_class" href="classList.html">t</a> + <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">c4</a>;</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>StringList promekiStackTrace(<span class="keywordtype">bool</span> demangle = <span class="keyword">true</span>);</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span> </div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> OutputType, <span class="keyword">typename</span> InputType&gt;</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>OutputType promekiConvert(<span class="keyword">const</span> InputType &amp;input, Error *err = <span class="keyword">nullptr</span>) {</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>        <span class="keyword">static_assert</span>(std::is_integral&lt;InputType&gt;::value || std::is_floating_point&lt;InputType&gt;::value,</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>                      <span class="stringliteral">&quot;InputType must be an integer or floating point type&quot;</span>);</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>        <span class="keyword">static_assert</span>(std::is_integral&lt;OutputType&gt;::value || std::is_floating_point&lt;OutputType&gt;::value,</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>                      <span class="stringliteral">&quot;OutputType must be an integer or floating point type&quot;</span>);</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>        <span class="keywordflow">if</span> (input &gt; std::numeric_limits&lt;OutputType&gt;::max() || input &lt; std::numeric_limits&lt;OutputType&gt;::lowest()) {</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>                <span class="keywordflow">if</span> (err != <span class="keyword">nullptr</span>) *err = Error::Invalid;</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>                <span class="keywordflow">return</span> OutputType();</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>        }</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>        <span class="keywordflow">if</span> (err != <span class="keyword">nullptr</span>) *err = Error::Ok;</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>        <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>OutputType<span class="keyword">&gt;</span>(input);</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>}</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span> </div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; <span class="keyword">inline</span> T promekiLerp(<span class="keyword">const</span> T &amp;a, <span class="keyword">const</span> T &amp;b, <span class="keyword">const</span> <span class="keywordtype">double</span> &amp;t) {</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>        <span class="keywordflow">return</span> a + t * (b - a);</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>}</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span> </div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; T promekiCatmullRom(<span class="keyword">const</span> std::array&lt;T, 4&gt; &amp;points, T t) {</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>        T t2 = t * t;</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>        T t3 = t * t2;</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>        T c1 = -0.5 * points[0] + 1.5 * points[1] - 1.5 * points[2] + 0.5 * points[3];</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>        T c2 = points[0] - 2.5 * points[1] + 2 * points[2] - 0.5 * points[3];</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>        T c3 = -0.5 * points[0] + 0.5 * points[2];</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>        T c4 = points[1];</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>        <span class="keywordflow">return</span> c1 * t3 + c2 * t2 + c3 * t + c4;</div>
 <div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>}</div>
 <div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span> </div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span><a class="code hl_class" href="classList.html">T</a> promekiBezier(<span class="keyword">const</span> std::array&lt;T, 4&gt;&amp; <a class="code hl_class" href="classList.html">points</a>, <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">t</a>) {</div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">u</a> = 1 - <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">t</a>;</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">t2</a> = <a class="code hl_class" href="classList.html">t</a> * <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">t</a>;</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">u2</a> = <a class="code hl_class" href="classList.html">u</a> * <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">u</a>;</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">t3</a> = <a class="code hl_class" href="classList.html">t2</a> * <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">t</a>;</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">u3</a> = <a class="code hl_class" href="classList.html">u2</a> * <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">u</a>;</div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">b0</a> = <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">u3</a>;</div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">b1</a> = 3 * <a class="code hl_class" href="classList.html">u2</a> * <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">t</a>;</div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">b2</a> = 3 * <a class="code hl_class" href="classList.html">u</a> * <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">t2</a>;</div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">b3</a> = <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">t3</a>;</div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">b0</a> * <a class="code hl_class" href="classList.html">points</a>[0] + <a class="code hl_class" href="classList.html">b1</a> * <a class="code hl_class" href="classList.html">points</a>[1] + <a class="code hl_class" href="classList.html">b2</a> * <a class="code hl_class" href="classList.html">points</a>[2] + <a class="code hl_class" href="classList.html">b3</a> * <a class="code hl_class" href="classList.html">points</a>[3];</div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>}</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span> </div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span><a class="code hl_class" href="classList.html">T</a> promekiBicubic(<span class="keyword">const</span> std::array&lt;std::array&lt;T, 4&gt;, 4&gt;&amp; <a class="code hl_class" href="classList.html">points</a>, <a class="code hl_class" href="classList.html">T</a> x, <a class="code hl_class" href="classList.html">T</a> y) {</div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>    std::array&lt;T, 4&gt; <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">arr</a>;</div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">i</a> = 0; <a class="code hl_class" href="classList.html">i</a> &lt; 4; ++<a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">i</a>) {</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>        std::array&lt;T, 4&gt; row;</div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">j</a> = 0; <a class="code hl_class" href="classList.html">j</a> &lt; 4; ++<a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">j</a>) {</div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>            row[<a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">j</a>] = <a class="code hl_class" href="classList.html">points</a>[<a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">i</a>][<a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">j</a>];</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; T promekiBezier(<span class="keyword">const</span> std::array&lt;T, 4&gt; &amp;points, T t) {</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>        T u = 1 - t;</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        T t2 = t * t;</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>        T u2 = u * u;</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>        T t3 = t2 * t;</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>        T u3 = u2 * u;</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>        T b0 = u3;</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>        T b1 = 3 * u2 * t;</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>        T b2 = 3 * u * t2;</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>        T b3 = t3;</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        <span class="keywordflow">return</span> b0 * points[0] + b1 * points[1] + b2 * points[2] + b3 * points[3];</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>}</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span> </div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; T promekiBicubic(<span class="keyword">const</span> std::array&lt;std::array&lt;T, 4&gt;, 4&gt; &amp;points, T x, T y) {</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        std::array&lt;T, 4&gt; arr;</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; 4; ++i) {</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>                std::array&lt;T, 4&gt; row;</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>                <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; 4; ++j) {</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>                        row[j] = points[i][j];</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>                }</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>                arr[i] = cubic_lerp(row, y);</div>
 <div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>        }</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>        <a class="code hl_class" href="classList.html">arr</a>[<a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">i</a>] = <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">cubic_lerp</a>(row, y);</div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>    }</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">cubic_lerp</a>(<a class="code hl_class" href="classList.html">arr</a>, x);</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>}</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span> </div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span><a class="code hl_class" href="classList.html">T</a> promekiCubic(<span class="keyword">const</span> std::array&lt;T, 4&gt;&amp; <a class="code hl_class" href="classList.html">points</a>, <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">t</a>) {</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    <a class="code hl_class" href="classList.html">T</a> a = <a class="code hl_class" href="classList.html">points</a>[3] - <a class="code hl_class" href="classList.html">points</a>[2] - <a class="code hl_class" href="classList.html">points</a>[0] + <a class="code hl_class" href="classList.html">points</a>[1];</div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    <a class="code hl_class" href="classList.html">T</a> b = <a class="code hl_class" href="classList.html">points</a>[0] - <a class="code hl_class" href="classList.html">points</a>[1] - a;</div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    <a class="code hl_class" href="classList.html">T</a> <a class="code hl_class" href="classList.html">c</a> = <a class="code hl_class" href="classList.html">points</a>[2] - <a class="code hl_class" href="classList.html">points</a>[0];</div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    <a class="code hl_class" href="classList.html">T</a> d = <a class="code hl_class" href="classList.html">points</a>[1];</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    <span class="keywordflow">return</span> a * <a class="code hl_class" href="classList.html">t</a> * <a class="code hl_class" href="classList.html">t</a> * <a class="code hl_class" href="classList.html">t</a> + b * <a class="code hl_class" href="classList.html">t</a> * <a class="code hl_class" href="classList.html">t</a> + <a class="code hl_class" href="classList.html">c</a> * <a class="code hl_class" href="classList.html">t</a> + d;</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>}</div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span> </div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span> </div>
-<div class="ttc" id="aclassError_html"><div class="ttname"><a href="classError.html">Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:39</div></div>
-<div class="ttc" id="aclassError_html_ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34"><div class="ttname"><a href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34">Error::Ok</a></div><div class="ttdeci">@ Ok</div><div class="ttdoc">No error.</div><div class="ttdef"><b>Definition</b> error.h:51</div></div>
-<div class="ttc" id="aclassError_html_ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85"><div class="ttname"><a href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85">Error::Invalid</a></div><div class="ttdeci">@ Invalid</div><div class="ttdoc">Invalid value or argument (EINVAL).</div><div class="ttdef"><b>Definition</b> error.h:66</div></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassStringList_html"><div class="ttname"><a href="classStringList.html">StringList</a></div><div class="ttdoc">Manages a list of strings.</div><div class="ttdef"><b>Definition</b> stringlist.h:21</div></div>
-<div class="ttc" id="aclassStringList_html_a708769d50011e6bdadc6bed2a6468aec"><div class="ttname"><a href="classStringList.html#a708769d50011e6bdadc6bed2a6468aec">StringList::List</a></div><div class="ttdeci">List()=default</div><div class="ttdoc">Default constructor. Creates an empty list.</div></div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>        <span class="keywordflow">return</span> cubic_lerp(arr, x);</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>}</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span> </div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; T promekiCubic(<span class="keyword">const</span> std::array&lt;T, 4&gt; &amp;points, T t) {</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>        T a = points[3] - points[2] - points[0] + points[1];</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>        T b = points[0] - points[1] - a;</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>        T c = points[2] - points[0];</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>        T d = points[1];</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>        <span class="keywordflow">return</span> a * t * t * t + b * t * t + c * t + d;</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>}</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span> </div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
 <div class="ttc" id="aerror_8h_html"><div class="ttname"><a href="error_8h.html">error.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:14</div></div>
@@ -303,7 +291,7 @@ $(document).ready(function(){initNavTree('util_8h_source.html',''); initResizabl
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="util_8h.html">util.h</a></li>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

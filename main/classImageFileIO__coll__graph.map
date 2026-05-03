@@ -1,9 +1,0 @@
-<map id="ImageFileIO" name="ImageFileIO">
-<area shape="rect" id="Node000001" title="Abstract backend for image file format I/O." alt="" coords="51,197,151,223"/>
-<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,80,65,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="32,119,31,146,39,172,51,185,67,195,64,200,48,189,34,175,26,147,27,119"/>
-<area shape="rect" id="Node000003" href="$classStringList.html" title="Manages a list of strings." alt="" coords="125,80,207,105"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="162,120,153,147,139,175,117,199,113,195,134,172,148,145,157,118"/>
-<area shape="rect" id="Node000004" href="$classList.html" title=" " alt="" coords="109,5,223,31"/>
-<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="169,45,169,80,163,80,163,45"/>
-</map>

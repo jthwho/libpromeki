@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -109,148 +107,148 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 </blockquote>
 <p>libpromeki provides the foundational building blocks that professional media software needs: timecode, frame rates, image and audio descriptors, pixel formats, color science, networking, memory management, signal/slot event systems, and more. It is designed so that you can focus on your application logic instead of reinventing infrastructure.</p>
 <p><b><a href="https://jthwho.github.io/libpromeki/main/">API Documentation</a></b></p>
-<h1><a class="anchor" id="autotoc_md19"></a>
+<h1><a class="anchor" id="autotoc_md23"></a>
 Guides</h1>
 <p>In-depth topic guides, browsable directly on GitHub or as part of the hosted Doxygen output:</p>
 <ul>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Building and Installing libpromeki</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Debugging and Diagnostics</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Threading and Concurrency</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Data Object Categories</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">TypeRegistry Pattern</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Color Science</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Color Space Conversion (CSC) Framework</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Font Rendering</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Media I/O Subsystem</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">MediaPipeline</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">MediaPipelinePlanner</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Inspector — Frame validation and monitoring</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Image Data Encoder Wire Format</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">NVIDIA NVENC setup</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Demonstration Applications</a></li>
-<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Utility Applications</a></li>
+<li><a class="el" href="building.html">Building and Installing libpromeki</a></li>
+<li><a class="el" href="debugging.html">Debugging and Diagnostics</a></li>
+<li><a class="el" href="threading.html">Threading and Concurrency</a></li>
+<li><a class="el" href="dataobjects.html">Data Object Categories</a></li>
+<li><a class="el" href="typeregistry.html">TypeRegistry Pattern</a></li>
+<li><a class="el" href="color_science.html">Color Science</a></li>
+<li><a class="el" href="csc.html">Color Space Conversion (CSC) Framework</a></li>
+<li><a class="el" href="fonts.html">Font Rendering</a></li>
+<li><a class="el" href="mediaio.html">Media I/O Subsystem</a></li>
+<li><a class="el" href="mediapipeline.html">MediaPipeline</a></li>
+<li><a class="el" href="mediaplanner.html">MediaPipelinePlanner</a></li>
+<li><a class="el" href="inspector.html">Inspector &mdash; Frame validation and monitoring</a></li>
+<li><a class="el" href="imagedataencoder.html">Image Data Encoder Wire Format</a></li>
+<li><a class="el" href="nvenc.html">NVIDIA NVENC setup</a></li>
+<li><a class="el" href="demos.html">Demonstration Applications</a></li>
+<li><a class="el" href="utils.html">Utility Applications</a></li>
 </ul>
-<h1><a class="anchor" id="autotoc_md20"></a>
+<h1><a class="anchor" id="autotoc_md24"></a>
 Feature Overview</h1>
-<h2><a class="anchor" id="autotoc_md21"></a>
+<h2><a class="anchor" id="autotoc_md25"></a>
 Core Library</h2>
 <p>General-purpose C++ infrastructure that the rest of the library is built on.</p>
 <ul>
 <li><b>Strings</b> — encoding-aware strings with copy-on-write semantics</li>
-<li><b>Containers</b> — <code><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a></code>, <code><a class="el" href="classMap.html" title="Ordered associative container wrapping std::map.">Map</a></code>, <code><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a></code>, <code><a class="el" href="classHashMap.html" title="Unordered associative container wrapping std::unordered_map.">HashMap</a></code>, <code><a class="el" href="classDeque.html" title="Double-ended queue container wrapping std::deque.">Deque</a></code>, <code><a class="el" href="classQueue.html" title="Thread-safe FIFO queue.">Queue</a></code>, <code><a class="el" href="classStack.html" title="LIFO stack container wrapping std::stack.">Stack</a></code>, <code><a class="el" href="classPriorityQueue.html" title="Priority queue container wrapping std::priority_queue.">PriorityQueue</a></code>, <code><a class="el" href="classArray.html" title="Fixed-size array container wrapping std::array.">Array</a></code></li>
-<li><b>Smart pointers &amp; memory</b> — <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a></code>, <code><a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a></code> (reference-counted memory blocks), <code><a class="el" href="classMemPool.html" title="Thread-safe memory pool allocator with external metadata.">MemPool</a></code>, <code><a class="el" href="classBufferPool.html" title="Simple fixed-geometry buffer pool for hot-path allocations.">BufferPool</a></code>, <code>SecureMem</code></li>
-<li><b>I/O &amp; serialization</b> — <code><a class="el" href="classDataStream.html" title="Binary stream for structured, portable serialization.">DataStream</a></code> (binary), <code><a class="el" href="classTextStream.html" title="Formatted text I/O with encoding awareness.">TextStream</a></code>, <code><a class="el" href="classAnsiStream.html" title="ANSI escape code writer backed by an IODevice. Writes ANSI escape sequences and raw text to an IODevi...">AnsiStream</a></code> (ANSI terminal), and a family of I/O devices (<code><a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a></code>, <code><a class="el" href="classBufferedIODevice.html" title="Abstract IODevice with an internal read buffer.">BufferedIODevice</a></code>, <code><a class="el" href="classBufferIODevice.html" title="IODevice backed by an in-memory Buffer.">BufferIODevice</a></code>, <code><a class="el" href="classStringIODevice.html" title="IODevice backed by a promeki String.">StringIODevice</a></code>)</li>
-<li><b><a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a> system</b> — <code><a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a></code>, <code><a class="el" href="classDir.html" title="Provides directory operations using std::filesystem.">Dir</a></code>, <code><a class="el" href="classFileInfo.html" title="Provides information about a file system entry.">FileInfo</a></code>, <code><a class="el" href="classFilePath.html" title="Simple value type wrapping std::filesystem::path.">FilePath</a></code>, plus a compiled-in resource filesystem (CIRF) for embedding assets</li>
-<li><b>Concurrency</b> — <code><a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a></code> (with built-in event loop), <code><a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a></code>, <code><a class="el" href="classReadWriteLock.html" title="Reader-writer lock wrapping std::shared_mutex.">ReadWriteLock</a></code>, <code><a class="el" href="classWaitCondition.html" title="Condition variable wrapping std::condition_variable.">WaitCondition</a></code>, <code><a class="el" href="classAtomic.html" title="Atomic variable wrapping std::atomic&lt;T&gt;.">Atomic</a></code>, <code><a class="el" href="classFuture.html" title="Asynchronous result wrapping std::future&lt;T&gt;.">Future</a></code>/<code><a class="el" href="classPromise.html" title="Promise wrapping std::promise&lt;T&gt;.">Promise</a></code>, <code><a class="el" href="classThreadPool.html" title="General-purpose thread pool for submitting callable tasks.">ThreadPool</a></code>, <code><a class="el" href="classStrand.html" title="Serialized executor backed by a ThreadPool.">Strand</a></code></li>
-<li><b><a class="el" href="classEvent.html" title="Base class for the event system.">Event</a> system</b> — Qt-style <code><a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a></code> with parent/child hierarchy, <code><a class="el" href="classSignal.html" title="Type-safe signal/slot mechanism for decoupled event notification.">Signal</a></code>/<code><a class="el" href="classSlot.html" title="Type-safe callback slot that wraps a callable with optional ownership tracking.">Slot</a></code> connections (including cross-thread dispatch), <code><a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a></code>, timers</li>
-<li><b>Time &amp; date</b> — <code><a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a></code>, <code>Timestamp</code>, <code><a class="el" href="classDuration.html" title="Time duration with nanosecond precision.">Duration</a></code>, <code><a class="el" href="classElapsedTimer.html" title="Monotonic elapsed-time measurement using std::chrono::steady_clock.">ElapsedTimer</a></code></li>
-<li><b>JSON</b> — <code><a class="el" href="classJsonObject.html" title="JSON object container wrapping nlohmann::json.">JsonObject</a></code> / <code><a class="el" href="classJsonArray.html" title="JSON array container wrapping nlohmann::json.">JsonArray</a></code> via nlohmann/json</li>
+<li><b>Containers</b> — <code>List</code>, <code>Map</code>, <code>Set</code>, <code>HashMap</code>, <code>Deque</code>, <code>Queue</code>, <code>Stack</code>, <code>PriorityQueue</code>, <code>Array</code></li>
+<li><b>Smart pointers &amp; memory</b> — <code>SharedPtr</code>, <code>Buffer</code> (reference-counted memory blocks), <code>MemPool</code>, <code>BufferPool</code>, <code>SecureMem</code></li>
+<li><b>I/O &amp; serialization</b> — <code>DataStream</code> (binary), <code>TextStream</code>, <code>AnsiStream</code> (ANSI terminal), and a family of I/O devices (<code>File</code>, <code>BufferedIODevice</code>, <code>BufferIODevice</code>, <code>StringIODevice</code>)</li>
+<li><b>File system</b> — <code>File</code>, <code>Dir</code>, <code>FileInfo</code>, <code>FilePath</code>, plus a compiled-in resource filesystem (CIRF) for embedding assets</li>
+<li><b>Concurrency</b> — <code>Thread</code> (with built-in event loop), <code>Mutex</code>, <code>ReadWriteLock</code>, <code>WaitCondition</code>, <code>Atomic</code>, <code>Future</code>/<code>Promise</code>, <code>ThreadPool</code>, <code>Strand</code></li>
+<li><b>Event system</b> — Qt-style <code>ObjectBase</code> with parent/child hierarchy, <code>Signal</code>/<code>Slot</code> connections (including cross-thread dispatch), <code>EventLoop</code>, timers</li>
+<li><b>Time &amp; date</b> — <code>DateTime</code>, <code>Timestamp</code>, <code>Duration</code>, <code>ElapsedTimer</code></li>
+<li><b>JSON</b> — <code>JsonObject</code> / <code>JsonArray</code> via nlohmann/json</li>
 <li><b>Hashing</b> — MD5, SHA-1, FNV-1a</li>
-<li><b>Utilities</b> — <code><a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a></code>, <code><a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a></code>, <code><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a></code> (reflection), <code><a class="el" href="classRandom.html" title="Pseudo-random number generator wrapping std::mt19937_64.">Random</a></code>, <code>CommandLineParser</code>, <code><a class="el" href="classLogger.html" title="Asynchronous thread-safe logging facility.">Logger</a></code>, <code><a class="el" href="classProcess.html" title="Subprocess execution with pipe-based I/O.">Process</a></code>, <code><a class="el" href="classBenchmark.html" title="Ordered collection of named timestamps for pipeline performance measurement.">Benchmark</a></code>, <code><a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a></code>, <code>ConfigOption</code>, <code><a class="el" href="classHistogram.html" title="Lightweight sub-bucketed log2 histogram for hot-path instrumentation.">Histogram</a></code></li>
-<li><b>Math &amp; geometry</b> — <code><a class="el" href="classMatrix.html" title="Generic fixed-size matrix with compile-time dimensions.">Matrix</a></code>, <code><a class="el" href="classPoint.html" title="N-dimensional point with arithmetic, interpolation, and serialization.">Point</a></code>, <code>Size2D</code>, <code><a class="el" href="classRect.html" title="2D rectangle defined by position and size.">Rect</a></code>, <code><a class="el" href="classLine.html" title="N-dimensional line segment defined by a start and end point.">Line</a></code>, <code><a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a></code></li>
+<li><b>Utilities</b> — <code>UUID</code>, <code>FourCC</code>, <code>Enum</code> (reflection), <code>Random</code>, <code>CommandLineParser</code>, <code>Logger</code>, <code>Process</code>, <code>Benchmark</code>, <code>VariantDatabase</code>, <code>ConfigOption</code>, <code>Histogram</code></li>
+<li><b>Math &amp; geometry</b> — <code>Matrix</code>, <code>Point</code>, <code>Size2D</code>, <code>Rect</code>, <code>Line</code>, <code>Rational</code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md22"></a>
+<h2><a class="anchor" id="autotoc_md26"></a>
 Professional Audio / Video</h2>
 <p>Classes for working with professional media formats, images, audio, color science, and timecode.</p>
 <p><b>Descriptors &amp; formats:</b></p><ul>
-<li><code><a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a></code> — image dimensions, planes, and pixel layout</li>
-<li><code><a class="el" href="classAudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count.">AudioDesc</a></code> — sample type, rate, and channel layout</li>
-<li><code><a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a></code> — combined frame rate, image layers, audio groups, and metadata for a complete media stream</li>
-<li><code><a class="el" href="classPixelMemLayout.html" title="Describes the memory layout of pixel data without color semantics.">PixelMemLayout</a></code> / <code><a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a></code> — extensive pixel format registry with 78 pixel formats and 132 pixel descriptors covering interleaved, planar, and semi-planar layouts (RGB, YCbCr, Bayer, DPX-packed, and more)</li>
+<li><code>ImageDesc</code> — image dimensions, planes, and pixel layout</li>
+<li><code>AudioDesc</code> — sample type, rate, and channel layout</li>
+<li><code>MediaDesc</code> — combined frame rate, image layers, audio groups, and metadata for a complete media stream</li>
+<li><code>PixelMemLayout</code> / <code>PixelFormat</code> — extensive pixel format registry with 78 pixel formats and 132 pixel descriptors covering interleaved, planar, and semi-planar layouts (RGB, YCbCr, Bayer, DPX-packed, and more)</li>
 </ul>
 <p><b>Image processing:</b></p><ul>
 <li><code>Image</code> — raster image container with multi-plane support</li>
 <li>Image file I/O for PNG, JPEG, Cineon (CIN), DPX, PNM, SGI, TGA, and raw YUV</li>
 <li>JPEG XS encode/decode (via SVT-JPEG-XS, x86-64)</li>
-<li><code><a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a></code> — software rasterization for interleaved and planar pixel formats</li>
-<li><code><a class="el" href="classFont.html" title="Abstract base class for font rendering.">Font</a></code> / <code><a class="el" href="classFastFont.html" title="High-performance cached font renderer.">FastFont</a></code> — FreeType-based font rendering with glyph caching and alpha compositing</li>
+<li><code>PaintEngine</code> — software rasterization for interleaved and planar pixel formats</li>
+<li><code>Font</code> / <code>FastFont</code> — FreeType-based font rendering with glyph caching and alpha compositing</li>
 </ul>
 <p><b>Audio processing:</b></p><ul>
-<li><code>Audio</code> / <code><a class="el" href="classAudioBuffer.html" title="Thread-safe ring-buffered audio sample FIFO with format conversion on push.">AudioBuffer</a></code> — audio sample containers</li>
-<li><code><a class="el" href="classAudioFile.html" title="Audio file reader and writer.">AudioFile</a></code> — audio file I/O (WAV, AIFF, OGG via libsndfile)</li>
-<li><code><a class="el" href="classAudioGen.html" title="Audio signal generator for producing test tones and silence.">AudioGen</a></code> — signal generators (sine, square, sawtooth, noise, etc.)</li>
-<li><code><a class="el" href="classAudioLevel.html" title="Audio level in dBFS (decibels relative to full scale).">AudioLevel</a></code> — level measurement</li>
-<li><code><a class="el" href="classAudioTestPattern.html" title="Multi-channel audio test pattern generator.">AudioTestPattern</a></code> — standard test audio patterns</li>
-<li><code><a class="el" href="classLtcEncoder.html" title="Encodes timecode values into LTC (Linear Timecode) audio samples.">LtcEncoder</a></code> / <code><a class="el" href="classLtcDecoder.html" title="Decodes LTC (Linear Timecode) audio samples into timecode values.">LtcDecoder</a></code> — Linear <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> (LTC) encode and decode on audio streams</li>
+<li><code>Audio</code> / <code>AudioBuffer</code> — audio sample containers</li>
+<li><code>AudioFile</code> — audio file I/O (WAV, AIFF, OGG via libsndfile)</li>
+<li><code>AudioGen</code> — signal generators (sine, square, sawtooth, noise, etc.)</li>
+<li><code>AudioLevel</code> — level measurement</li>
+<li><code>AudioTestPattern</code> — standard test audio patterns</li>
+<li><code>LtcEncoder</code> / <code>LtcDecoder</code> — Linear Timecode (LTC) encode and decode on audio streams</li>
 </ul>
-<p><b><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a> science:</b></p><ul>
-<li><code><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a></code> — color values with multiple color model support</li>
-<li><code><a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a></code> — color model descriptors (sRGB, Rec. 709, Rec. 2020, DCI-P3, CIE XYZ, and more)</li>
-<li><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a> space conversion pipeline with SIMD acceleration via the Highway library: transfer function, matrix, chroma, alpha, pack/unpack stages</li>
+<p><b>Color science:</b></p><ul>
+<li><code>Color</code> — color values with multiple color model support</li>
+<li><code>ColorModel</code> — color model descriptors (sRGB, Rec. 709, Rec. 2020, DCI-P3, CIE XYZ, and more)</li>
+<li>Color space conversion pipeline with SIMD acceleration via the Highway library: transfer function, matrix, chroma, alpha, pack/unpack stages</li>
 </ul>
-<p><b><a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>:</b></p><ul>
-<li><code><a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a></code> — SMPTE and non-standard timecode (backed by libvtc)</li>
-<li><code><a class="el" href="classTimecodeGenerator.html" title="General-purpose timecode generator.">TimecodeGenerator</a></code> — frame-accurate timecode generation</li>
-<li><code><a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a></code> — frame rate descriptors with drop-frame support</li>
+<p><b>Timecode:</b></p><ul>
+<li><code>Timecode</code> — SMPTE and non-standard timecode (backed by libvtc)</li>
+<li><code>TimecodeGenerator</code> — frame-accurate timecode generation</li>
+<li><code>FrameRate</code> — frame rate descriptors with drop-frame support</li>
 </ul>
 <p><b>Video &amp; frames:</b></p><ul>
-<li><code><a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a></code> — unified image + audio + metadata at a single timestamp</li>
-<li><code><a class="el" href="classVideoTestPattern.html" title="Standalone video test pattern generator.">VideoTestPattern</a></code> — color bars, grids, ramps, and other standard test patterns</li>
-<li><code><a class="el" href="classImgSeq.html" title="Describes a numbered image sequence on disk.">ImgSeq</a></code> — image sequence handling with frame range and naming patterns</li>
-<li><code><a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a></code> — typed key-value metadata container</li>
+<li><code>Frame</code> — unified image + audio + metadata at a single timestamp</li>
+<li><code>VideoTestPattern</code> — color bars, grids, ramps, and other standard test patterns</li>
+<li><code>ImgSeq</code> — image sequence handling with frame range and naming patterns</li>
+<li><code>Metadata</code> — typed key-value metadata container</li>
 </ul>
 <p><b>Media I/O framework:</b></p>
-<p>An extensible pipeline for reading, writing, and transforming media, built around <code><a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a></code> (registry/factory) and <code><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a></code> backends:</p>
+<p>An extensible pipeline for reading, writing, and transforming media, built around <code>MediaIO</code> (registry/factory) and <code>MediaIOTask</code> backends:</p>
 <ul>
 <li><b>TPG</b> — test pattern generator (video and audio)</li>
-<li><b><a class="el" href="classImageFile.html" title="Media file loader and saver.">ImageFile</a></b> — image file and image sequence I/O</li>
-<li><b><a class="el" href="classAudioFile.html" title="Audio file reader and writer.">AudioFile</a></b> — audio file I/O</li>
-<li><b><a class="el" href="classQuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a></b> — MOV/MP4 read and write</li>
+<li><b>ImageFile</b> — image file and image sequence I/O</li>
+<li><b>AudioFile</b> — audio file I/O</li>
+<li><b>QuickTime</b> — MOV/MP4 read and write</li>
 <li><b>RTP</b> — network streaming via RTP/SDP</li>
 <li><b>Converter</b> — pixel format and color space conversion</li>
-<li>Custom backends are registered with <code><a class="el" href="group__proav.html#ga10f5578b94caf8706a28ed5b9e7b087f" title="Macro to register a MediaIO backend at static initialization time.">PROMEKI_REGISTER_MEDIAIO()</a></code></li>
+<li>Custom backends are registered with <code>PROMEKI_REGISTER_MEDIAIO()</code></li>
 </ul>
 <p><b>Pipeline orchestration:</b></p>
-<p>High-level classes that wire a DAG of <code><a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a></code> stages from a declarative configuration:</p>
+<p>High-level classes that wire a DAG of <code>MediaIO</code> stages from a declarative configuration:</p>
 <ul>
-<li><code><a class="el" href="classMediaPipelineConfig.html" title="Declarative description of a complete media pipeline.">MediaPipelineConfig</a></code> — shareable description of stages + routes + metadata; validates the DAG, round-trips through JSON and <code><a class="el" href="classDataStream.html" title="Binary stream for structured, portable serialization.">DataStream</a></code>, and saves/loads as JSON preset files</li>
-<li><code><a class="el" href="classMediaPipeline.html" title="Data-driven builder and runtime for a DAG of MediaIO stages.">MediaPipeline</a></code> — instantiates the stages, drives signal-based frame flow on the caller's <code><a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a></code>, handles fan-out and back-pressure, exposes a <code>build / open / start / stop / close</code> lifecycle</li>
-<li><code><a class="el" href="classMediaPipelineStats.html" title="Aggregated statistics for a running MediaPipeline.">MediaPipelineStats</a></code> — per-stage <code><a class="el" href="classMediaIOStats.html" title="Statistics container for MediaIO backends.">MediaIOStats</a></code> map plus a pipeline- layer <code><a class="el" href="classPipelineStats.html" title="Telemetry that describes the pipeline layer itself.">PipelineStats</a></code> bucket (frames produced, write retries, errors, back-pressure, uptime); round-trips through JSON and <code><a class="el" href="classDataStream.html" title="Binary stream for structured, portable serialization.">DataStream</a></code></li>
+<li><code>MediaPipelineConfig</code> — shareable description of stages + routes + metadata; validates the DAG, round-trips through JSON and <code>DataStream</code>, and saves/loads as JSON preset files</li>
+<li><code>MediaPipeline</code> — instantiates the stages, drives signal-based frame flow on the caller's <code>EventLoop</code>, handles fan-out and back-pressure, exposes a <code>build / open / start / stop / close</code> lifecycle</li>
+<li><code>MediaPipelineStats</code> — per-stage <code>MediaIOStats</code> map plus a pipeline- layer <code>PipelineStats</code> bucket (frames produced, write retries, errors, back-pressure, uptime); round-trips through JSON and <code>DataStream</code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md23"></a>
+<h2><a class="anchor" id="autotoc_md27"></a>
 Networking</h2>
 <p>BSD-socket abstractions and real-time media transport protocols.</p>
 <ul>
-<li><b>Sockets</b> — <code><a class="el" href="classTcpSocket.html" title="Stream-oriented TCP socket.">TcpSocket</a></code>, <code><a class="el" href="classTcpServer.html" title="TCP server that listens for incoming connections.">TcpServer</a></code>, <code><a class="el" href="classUdpSocket.html" title="Datagram-oriented UDP socket with multicast support.">UdpSocket</a></code>, <code><a class="el" href="classRawSocket.html" title="Raw Ethernet frame socket.">RawSocket</a></code>, <code><a class="el" href="classPrioritySocket.html" title="UDP socket with QoS priority convenience methods.">PrioritySocket</a></code>, <code><a class="el" href="classLoopbackTransport.html" title="In-process PacketTransport implementation for tests.">LoopbackTransport</a></code></li>
-<li><b>Addresses</b> — <code><a class="el" href="classSocketAddress.html" title="Network address with port number.">SocketAddress</a></code>, <code><a class="el" href="classNetworkAddress.html" title="High-level network address that can represent IPv4, IPv6, or an unresolved hostname.">NetworkAddress</a></code>, <code>IPv4Address</code>, <code>IPv6Address</code>, <code><a class="el" href="classMacAddress.html" title="IEEE 802 MAC (Ethernet hardware) address.">MacAddress</a></code></li>
-<li><b>RTP/SDP</b> — <code><a class="el" href="classRtpSession.html" title="RTP session for sending and receiving packets (RFC 3550).">RtpSession</a></code>, <code><a class="el" href="classRtpPacket.html" title="A BufferView that interprets its data as an RTP packet.">RtpPacket</a></code>, <code><a class="el" href="classRtpPayload.html" title="Abstract base class for RTP payload type handlers.">RtpPayload</a></code> (RFC 3550); <code><a class="el" href="classSdpSession.html" title="SDP session description (RFC 4566).">SdpSession</a></code>, <code><a class="el" href="classSdpMediaDescription.html" title="SDP media description (m= section).">SdpMediaDescription</a></code></li>
-<li><b>Transport</b> — <code><a class="el" href="classPacketTransport.html" title="Abstract packet-I/O transport for datagram-oriented protocols.">PacketTransport</a></code>, <code><a class="el" href="classUdpSocketTransport.html" title="UDP socket implementation of PacketTransport.">UdpSocketTransport</a></code>, <code><a class="el" href="classMulticastManager.html" title="Manages multicast group membership for multi-stream scenarios.">MulticastManager</a></code>, <code><a class="el" href="classMulticastReceiver.html" title="Standalone multicast datagram receiver with an owned worker thread.">MulticastReceiver</a></code></li>
+<li><b>Sockets</b> — <code>TcpSocket</code>, <code>TcpServer</code>, <code>UdpSocket</code>, <code>RawSocket</code>, <code>PrioritySocket</code>, <code>LoopbackTransport</code></li>
+<li><b>Addresses</b> — <code>SocketAddress</code>, <code>NetworkAddress</code>, <code>IPv4Address</code>, <code>IPv6Address</code>, <code>MacAddress</code></li>
+<li><b>RTP/SDP</b> — <code>RtpSession</code>, <code>RtpPacket</code>, <code>RtpPayload</code> (RFC 3550); <code>SdpSession</code>, <code>SdpMediaDescription</code></li>
+<li><b>Transport</b> — <code>PacketTransport</code>, <code>UdpSocketTransport</code>, <code>MulticastManager</code>, <code>MulticastReceiver</code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md24"></a>
+<h2><a class="anchor" id="autotoc_md28"></a>
 Music &amp; MIDI</h2>
 <ul>
-<li><code><a class="el" href="classMidiNote.html" title="Represents a MIDI note number (0–127) with utility methods.">MidiNote</a></code> / <code><a class="el" href="classMidiNoteNames.html" title="Provides a customizable name overlay for MIDI notes.">MidiNoteNames</a></code> — MIDI note representation and lookup</li>
-<li><code><a class="el" href="classMusicalNote.html" title="Represents a single musical note with timing and expression data.">MusicalNote</a></code> — note with frequency and pitch</li>
-<li><code><a class="el" href="classMusicalScale.html" title="Represents a musical scale with a root pitch class and mode.">MusicalScale</a></code> — scale descriptors (major, minor, modes, custom)</li>
-<li><code><a class="el" href="classNoteSequenceParser.html" title="Parses a domain-specific text notation into a sequence of MusicalNote objects.">NoteSequenceParser</a></code> — parse note strings (e.g. <code>"C4 D4 E4 C5"</code>)</li>
+<li><code>MidiNote</code> / <code>MidiNoteNames</code> — MIDI note representation and lookup</li>
+<li><code>MusicalNote</code> — note with frequency and pitch</li>
+<li><code>MusicalScale</code> — scale descriptors (major, minor, modes, custom)</li>
+<li><code>NoteSequenceParser</code> — parse note strings (e.g. <code>"C4 D4 E4 C5"</code>)</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md25"></a>
+<h2><a class="anchor" id="autotoc_md29"></a>
 Terminal UI (promeki-tui)</h2>
 <p>An optional shared library providing a terminal widget toolkit.</p>
 <ul>
-<li><b><a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a> &amp; rendering</b> — <code><a class="el" href="classTuiSubsystem.html" title="TUI subsystem installed alongside an Application.">TuiSubsystem</a></code>, <code><a class="el" href="classTuiScreen.html" title="Double-buffered character cell grid for TUI rendering.">TuiScreen</a></code>, <code><a class="el" href="classTuiPainter.html" title="Painting context for TUI widgets.">TuiPainter</a></code>, <code><a class="el" href="classTuiPalette.html" title="Style palette for TUI widgets.">TuiPalette</a></code></li>
-<li><b>Widgets</b> — <code>Label</code>, <code>LineEdit</code>, <code>TextArea</code>, <code>Button</code>, <code>CheckBox</code>, <code>ProgressBar</code>, <code>ListView</code>, <code><a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a></code>, <code>ScrollArea</code>, <code>Splitter</code>, <code>TabWidget</code>, <code>StatusBar</code>, <code>Menu</code></li>
+<li><b>Application &amp; rendering</b> — <code>TuiSubsystem</code>, <code>TuiScreen</code>, <code>TuiPainter</code>, <code>TuiPalette</code></li>
+<li><b>Widgets</b> — <code>Label</code>, <code>LineEdit</code>, <code>TextArea</code>, <code>Button</code>, <code>CheckBox</code>, <code>ProgressBar</code>, <code>ListView</code>, <code>Frame</code>, <code>ScrollArea</code>, <code>Splitter</code>, <code>TabWidget</code>, <code>StatusBar</code>, <code>Menu</code></li>
 <li><b>Input</b> — keyboard and mouse event parsing</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md26"></a>
+<h2><a class="anchor" id="autotoc_md30"></a>
 SDL Graphics (promeki-sdl)</h2>
 <p>An optional shared library for SDL3-based applications (off by default).</p>
 <ul>
-<li><code><a class="el" href="classSdlSubsystem.html" title="SDL subsystem installed alongside an Application.">SdlSubsystem</a></code>, <code><a class="el" href="classSDLWindow.html" title="Top-level SDL window that serves as a root Widget.">SDLWindow</a></code>, <code><a class="el" href="classSDLVideoWidget.html" title="Widget that displays an UncompressedVideoPayload via SDL texture rendering.">SDLVideoWidget</a></code>, <code><a class="el" href="classSDLAudioOutput.html" title="Manages an SDL3 audio output device for playback.">SDLAudioOutput</a></code></li>
+<li><code>SdlSubsystem</code>, <code>SDLWindow</code>, <code>SDLVideoWidget</code>, <code>SDLAudioOutput</code></li>
 <li><code>SDLPlayer</code> — MediaIO-backed player with video display and audio output</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md27"></a>
+<h1><a class="anchor" id="autotoc_md31"></a>
 Library Architecture</h1>
 <p>libpromeki is organized into one main shared library and two optional UI libraries:</p>
 <p><b>promeki</b> — the core library. Networking, pro A/V, music, and other feature areas can be independently enabled or disabled via CMake feature flags.</p>
 <p><b>promeki-tui</b> — terminal UI widget library (optional).</p>
 <p><b>promeki-sdl</b> — SDL3-based GUI library (optional, off by default).</p>
-<h1><a class="anchor" id="autotoc_md28"></a>
+<h1><a class="anchor" id="autotoc_md32"></a>
 No Dependency Hell</h1>
-<p>All third-party libraries that promeki depends on are vendored as git submodules, built as static libraries with <code>-fPIC</code>, and absorbed directly into <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">libpromeki.so</a></code>. Alternatively, each dependency can be switched to use system-installed versions via <code>PROMEKI_USE_SYSTEM_*</code> CMake options.</p>
+<p>All third-party libraries that promeki depends on are vendored as git submodules, built as static libraries with <code>-fPIC</code>, and absorbed directly into <code>libpromeki.so</code>. Alternatively, each dependency can be switched to use system-installed versions via <code>PROMEKI_USE_SYSTEM_*</code> CMake options.</p>
 <p>When you install libpromeki, you get a shared library and a set of headers. Your application links against <code>promeki::promeki</code> — no chasing down system packages, no version mismatches, no transitive dependency surprises.</p>
 <p>Vendored dependencies: zlib-ng, libspng, libjpeg-turbo, FreeType, libsndfile, nlohmann/json, libvtc, SVT-JPEG-XS, Highway, CIRF.</p>
-<h1><a class="anchor" id="autotoc_md29"></a>
+<h1><a class="anchor" id="autotoc_md33"></a>
 Included Utilities</h1>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -264,34 +262,38 @@ Included Utilities</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>imgtest</code>   </td><td class="markdownTableBodyNone">Image file I/O test utility   </td></tr>
 </table>
-<h1><a class="anchor" id="autotoc_md30"></a>
+<h1><a class="anchor" id="autotoc_md34"></a>
 Building</h1>
 <div class="fragment"><div class="line">git clone --recurse-submodules https://github.com/jthwho/libpromeki.git</div>
 <div class="line">cd libpromeki</div>
 <div class="line">cmake -B build</div>
-<div class="line">cmake --build build -j$(nproc)</div>
-</div><!-- fragment --><p>For the complete build, install, and downstream-integration guide — including every CMake feature flag, vendored-vs-system dependency switch, build-performance option, test and install targets, and consumer CMake usage — see the <b>Building and Installing libpromeki</b> guide:</p>
+<div class="line">cmake --build build -j$(nproc)            # libraries + demos + utils</div>
+<div class="line">cmake --build build --target check        # unit tests (build + run)</div>
+</div><!-- fragment --><p>The default <code>all</code> build excludes the unit-test executables to keep incremental rebuilds fast — use the <code>check</code> target (build + run) or <code>tests</code> (build only) when you need them.</p>
+<p>For the complete build, install, and downstream-integration guide — including every CMake feature flag, vendored-vs-system dependency switch, build-performance option, test and install targets, and consumer CMake usage — see the <b>Building and Installing libpromeki</b> guide:</p>
 <ul>
-<li>Markdown source: <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">docs/building.md</a></li>
+<li>Markdown source: <a class="el" href="building.html">docs/building.md</a></li>
 <li>Hosted Doxygen: <a href="https://jthwho.github.io/libpromeki/main/building.html">https://jthwho.github.io/libpromeki/main/building.html</a></li>
-<li>Local Doxygen: <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">build/doxygen/html/building.html</a></code> after <code>cmake -B build -DPROMEKI_BUILD_DOCS=ON &amp;&amp; cmake --build build --target docs</code></li>
+<li>Local Doxygen: <code>build/doxygen/html/building.html</code> after <code>cmake -B build -DPROMEKI_BUILD_DOCS=ON &amp;&amp; cmake --build build --target docs</code></li>
 </ul>
-<h1><a class="anchor" id="autotoc_md31"></a>
+<h1><a class="anchor" id="autotoc_md35"></a>
+Contributing</h1>
+<p>See <code>CONTRIBUTING.md</code> at the repository root for the development workflow, including the <code>scripts/precommit.sh</code> gate that every commit should pass.</p>
+<h1><a class="anchor" id="autotoc_md36"></a>
 Debugging</h1>
 <p>If you build the library in Debug mode (<code>-DCMAKE_BUILD_TYPE=Debug</code>), the <code>promekiDebug()</code> logging function is enabled. Each source file that wants to use it must register a debug channel:</p>
-<div class="fragment"><div class="line">PROMEKI_DEBUG(<a class="code hl_class" href="classList.html">MyChannel</a>)</div>
+<div class="fragment"><div class="line">PROMEKI_DEBUG(MyChannel)</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// elsewhere in your code</span></div>
 <div class="line">promekiDebug(<span class="stringliteral">&quot;This is a debug log entry&quot;</span>)</div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment --><p>Then enable channels at runtime via the <code>PROMEKI_DEBUG</code> environment variable (comma-separated):</p>
 <div class="fragment"><div class="line">export PROMEKI_DEBUG=MyChannel,AnotherChannel</div>
 <div class="line">./yourapp</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md32"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md37"></a>
 History</h1>
 <p>The bulk of the code that makes up libpromeki started out life as code that existed across multiple libraries originally developed by my (now defunct) company, <a href="https://en.wikipedia.org/wiki/SpectSoft">SpectSoft</a>, for our video disk recorder product called RaveHD. During its run, it was used in post production, VFX, animation, and other media related sectors. At that time, the entire application stack was built on top of the <a href="https://www.qt.io/">Qt</a> framework. The Qt design patterns, aesthetic, and general way of doing things has certainly informed much of how this library was architected.</p>
 <p>What you see now is a library that takes the good bits from that old code base and has removed the Qt coupling and replaced it with modern C++ native STL. Hopefully you'll find it as useful as I have over the years. &ndash;jth</p>
-<h1><a class="anchor" id="autotoc_md33"></a>
+<h1><a class="anchor" id="autotoc_md38"></a>
 License</h1>
 <p>libpromeki is licensed under the [MIT License](LICENSE).</p>
 <p>Third-party library licenses and attribution notices are documented in [THIRD-PARTY-LICENSES](THIRD-PARTY-LICENSES). </p>
@@ -302,7 +304,7 @@ License</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

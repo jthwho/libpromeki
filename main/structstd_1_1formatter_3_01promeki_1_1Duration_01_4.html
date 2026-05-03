@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -108,7 +106,7 @@ $(document).ready(function(){initNavTree('structstd_1_1formatter_3_01promeki_1_1
 </div><!--header-->
 <div class="contents">
 
-<p><code>std::formatter</code> specialization for promeki::Duration.  
+<p><code>std::formatter</code> specialization for <a class="el" href="classpromeki_1_1Duration.html">promeki::Duration</a>.  
  <a href="structstd_1_1formatter_3_01promeki_1_1Duration_01_4.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="duration_8h_source.html">duration.h</a>&gt;</code></p>
@@ -123,11 +121,11 @@ Public Types</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:af30b488bd2158df425afc077ff985c72" id="r_af30b488bd2158df425afc077ff985c72"><td class="memItemLeft" align="right" valign="top"><a id="af30b488bd2158df425afc077ff985c72" name="af30b488bd2158df425afc077ff985c72"></a>
-<a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><b>parse</b> (std::format_parse_context &amp;<a class="el" href="classList.html">ctx</a>)</td></tr>
+constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><b>parse</b> (std::format_parse_context &amp;ctx)</td></tr>
 <tr class="separator:af30b488bd2158df425afc077ff985c72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a9d2673de541df5f2392bfac382fa9b" id="r_a9a9d2673de541df5f2392bfac382fa9b"><td class="memTemplParams" colspan="2"><a id="a9a9d2673de541df5f2392bfac382fa9b" name="a9a9d2673de541df5f2392bfac382fa9b"></a>
-template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">FormatContext</a> &gt; </td></tr>
-<tr class="memitem:a9a9d2673de541df5f2392bfac382fa9b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">auto</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>format</b> (<a class="el" href="classList.html">const</a> promeki::Duration &amp;d, <a class="el" href="classList.html">FormatContext</a> &amp;<a class="el" href="classList.html">ctx</a>) <a class="el" href="classList.html">const</a></td></tr>
+template&lt;typename FormatContext &gt; </td></tr>
+<tr class="memitem:a9a9d2673de541df5f2392bfac382fa9b"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>format</b> (const <a class="el" href="classpromeki_1_1Duration.html">promeki::Duration</a> &amp;d, FormatContext &amp;ctx) const</td></tr>
 <tr class="separator:a9a9d2673de541df5f2392bfac382fa9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
@@ -140,13 +138,12 @@ std::formatter&lt; std::string_view &gt;&#160;</td><td class="memItemRight" vali
 <tr class="separator:a84346ff15e4d7e0bb9321db3c14b42a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><code>std::formatter</code> specialization for promeki::Duration. </p>
+<div class="textblock"><p><code>std::formatter</code> specialization for <a class="el" href="classpromeki_1_1Duration.html">promeki::Duration</a>. </p>
 <dl class="section user"><dt>Format spec syntax</dt><dd><div class="fragment"><div class="line">{}           <span class="comment">// default HMS  e.g. &quot;1h 23m 45.123s&quot;</span></div>
-<div class="line">{:<a class="code hl_class" href="classList.html">hms</a>}       <span class="comment">// explicit HMS</span></div>
-<div class="line">{:<a class="code hl_class" href="classList.html">scaled</a>}    <span class="comment">// auto-scaled  e.g. &quot;1.5 ms&quot;</span></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="line">{:hms}       <span class="comment">// explicit HMS</span></div>
+<div class="line">{:scaled}    <span class="comment">// auto-scaled  e.g. &quot;1.5 ms&quot;</span></div>
 </div><!-- fragment --></dd></dl>
-<p>Standard string format specifiers (width, fill, alignment) follow the style keyword after a colon: </p><div class="fragment"><div class="line">{:<a class="code hl_class" href="classList.html">scaled</a>:&gt;16}  <span class="comment">// auto-scaled, right-justified, width 16</span></div>
+<p>Standard string format specifiers (width, fill, alignment) follow the style keyword after a colon: </p><div class="fragment"><div class="line">{:scaled:&gt;16}  <span class="comment">// auto-scaled, right-justified, width 16</span></div>
 </div><!-- fragment --> </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="duration_8h_source.html">duration.h</a></li>
 </ul>
@@ -157,7 +154,7 @@ std::formatter&lt; std::string_view &gt;&#160;</td><td class="memItemRight" vali
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>std</b></li><li class="navelem"><a class="el" href="structstd_1_1formatter_3_01promeki_1_1Duration_01_4.html">formatter&lt; promeki::Duration &gt;</a></li>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

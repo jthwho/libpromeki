@@ -1,0 +1,5 @@
+<map id="promeki::UdpSocket::Datagram" name="promeki::UdpSocket::Datagram">
+<area shape="rect" id="Node000001" title="Describes a single datagram for batch&#45;send APIs." alt="" coords="18,93,171,133"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1SocketAddress.html" title="Network address with port number." alt="" coords="5,5,184,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="97,44,97,93,92,93,92,44"/>
+</map>

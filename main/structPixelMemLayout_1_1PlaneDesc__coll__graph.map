@@ -1,5 +1,0 @@
-<map id="PixelMemLayout::PlaneDesc" name="PixelMemLayout::PlaneDesc">
-<area shape="rect" id="Node000001" title="Describes a single image plane." alt="" coords="5,93,212,119"/>
-<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="79,5,139,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,45,111,93,106,93,106,45"/>
-</map>

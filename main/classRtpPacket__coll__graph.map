@@ -1,5 +1,0 @@
-<map id="RtpPacket" name="RtpPacket">
-<area shape="rect" id="Node000001" title="A BufferView that interprets its data as an RTP packet." alt="" coords="9,79,95,104"/>
-<area shape="rect" id="Node000002" href="$classBufferView.html" title="Ordered list of (offset, size) views over a deduplicated set of backing Buffer objects." alt="" coords="5,5,99,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="55,44,55,79,49,79,49,44"/>
-</map>

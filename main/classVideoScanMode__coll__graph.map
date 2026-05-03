@@ -1,8 +1,0 @@
-<map id="VideoScanMode" name="VideoScanMode">
-<area shape="rect" id="Node000001" title="Well&#45;known Enum type for progressive / interlaced video scan mode." alt="" coords="57,186,184,211"/>
-<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="199,187,207,191,211,199,203,209,185,213,184,208,200,205,205,198,203,195,197,191"/>
-<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,236,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="123,119,123,186,118,186,118,119"/>
-<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="91,5,150,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="123,45,123,80,118,80,118,45"/>
-</map>

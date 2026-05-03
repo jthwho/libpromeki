@@ -1,0 +1,8 @@
+<map id="promeki::VideoEncoderPreset" name="promeki::VideoEncoderPreset">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for video&#45;encoder speed / quality presets." alt="" coords="5,193,220,219"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="235,196,247,206,239,215,221,219,220,214,236,210,241,206,232,201"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="21,80,204,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,134,115,193,110,193,110,134"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="52,5,173,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="115,44,115,80,110,80,110,44"/>
+</map>

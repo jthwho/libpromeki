@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -103,7 +101,7 @@ $(document).ready(function(){initNavTree('utils.html',''); initResizable(); });
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>Utility applications that provide functional use beyond the library.</p>
-<p>The <code>utils/</code> directory contains a suite of standalone utility applications that use the promeki library. Unlike the <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">demonstration applications</a> (which exist to showcase library APIs), utilities are meant to have functional use beyond the library itself. They serve two purposes:</p>
+<p>The <code>utils/</code> directory contains a suite of standalone utility applications that use the promeki library. Unlike the <a class="el" href="demos.html">demonstration applications</a> (which exist to showcase library APIs), utilities are meant to have functional use beyond the library itself. They serve two purposes:</p>
 <ul>
 <li><b>Practical tooling</b> — Each utility provides a useful function built on top of the promeki library, such as querying build information.</li>
 <li><b>Functional testing</b> — While the unit tests (in <code>tests/</code>) exercise individual classes in isolation, the utilities exercise the library as a whole, in the same way an actual client application would. This helps catch integration-level issues that unit tests may miss.</li>
@@ -115,7 +113,7 @@ Building</h1>
 </div><!-- fragment --><p>When built, the utility executables are placed in the <code>bin/</code> directory of the build tree alongside the unit test executables. They are also installed as part of <code>make install</code>.</p>
 <h1><a class="anchor" id="utils_standalone"></a>
 Standalone Build</h1>
-<p>The <code>utils/</code> directory has its own top-level <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">CMakeLists.txt</a></code> and can be built independently against an installed copy of libpromeki, just like any external project:</p>
+<p>The <code>utils/</code> directory has its own top-level <code>CMakeLists.txt</code> and can be built independently against an installed copy of libpromeki, just like any external project:</p>
 <div class="fragment"><div class="line">cd utils</div>
 <div class="line">mkdir build &amp;&amp; cd build</div>
 <div class="line">cmake -DCMAKE_PREFIX_PATH=/path/to/promeki/install ..</div>
@@ -135,9 +133,9 @@ Adding a New Utility</h1>
 </div><!-- fragment --><p>To add a new utility:</p>
 <ol type="1">
 <li>Create a new subdirectory under <code>utils/</code> (e.g. <code>utils/my-new-util/</code>).</li>
-<li>Add a <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">CMakeLists.txt</a></code> that creates the executable and links against the appropriate promeki target (<code>promeki::promeki</code>, or <code>promeki::tui</code> / <code>promeki::sdl</code> for UI libraries).</li>
+<li>Add a <code>CMakeLists.txt</code> that creates the executable and links against the appropriate promeki target (<code>promeki::promeki</code>, or <code>promeki::tui</code> / <code>promeki::sdl</code> for UI libraries).</li>
 <li>Include an <code>install(TARGETS ...)</code> rule so it gets installed.</li>
-<li>Add an <code>add_subdirectory()</code> call in <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">utils/CMakeLists.txt</a></code>.</li>
+<li>Add an <code>add_subdirectory()</code> call in <code>utils/CMakeLists.txt</code>.</li>
 </ol>
 <h1><a class="anchor" id="utils_list"></a>
 Current Utilities</h1>
@@ -151,7 +149,7 @@ Current Utilities</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">promeki-bench   </td><td class="markdownTableBodyNone">promeki::promeki   </td><td class="markdownTableBodyNone">Unified benchmark driver; CSC pair matrix plus future suites    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">mediaplay   </td><td class="markdownTableBodyNone">promeki::sdl   </td><td class="markdownTableBodyNone">Config-driven <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> playback tool   </td></tr>
+<td class="markdownTableBodyNone">mediaplay   </td><td class="markdownTableBodyNone">promeki::sdl   </td><td class="markdownTableBodyNone">Config-driven MediaIO playback tool   </td></tr>
 </table>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
@@ -160,7 +158,7 @@ Current Utilities</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

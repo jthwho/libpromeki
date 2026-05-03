@@ -1,0 +1,7 @@
+<map id="promeki::TuiCell" name="promeki::TuiCell">
+<area shape="rect" id="Node000001" title="A single cell in the TUI screen buffer." alt="" coords="74,93,201,119"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1Char.html" title="Unicode&#45;aware character class wrapping a single codepoint." alt="" coords="5,5,120,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="84,39,129,91,125,95,80,43"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1TuiStyle.html" title="Visual properties of a TUI cell (everything except the character)." alt="" coords="145,5,279,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="195,43,150,95,146,91,191,39"/>
+</map>

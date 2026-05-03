@@ -1,4 +1,4 @@
 var signal_8h =
 [
-    [ "Signal< Args >::removeConstAndRef< T >", "structSignal_1_1removeConstAndRef.html", null ]
+    [ "promeki::Signal< Args >::removeConstAndRef< T >", "structpromeki_1_1Signal_1_1removeConstAndRef.html", null ]
 ];

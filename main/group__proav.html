@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -109,311 +107,379 @@ $(document).ready(function(){initNavTree('group__proav.html',''); initResizable(
 
 <p>Professional audio/video media objects and codecs.  
 <a href="#details">More...</a></p>
+<div class="dynheader">
+Collaboration diagram for ProAV Media:</div>
+<div class="dyncontent">
+<div class="center"><img src="group__proav.png" border="0" usemap="#agroup____proav" alt=""/></div>
+<map name="agroup____proav" id="agroup____proav">
+<area shape="rect" title="Professional audio/video media objects and codecs." alt="" coords="5,7,109,33"/>
+<area shape="rect" href="group__wellknownenums.html" title=" " alt="" coords="332,7,479,33"/>
+</map>
+</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioBlock.html">AudioBlock</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for an audio processing block This object defines an interface for composing an audio processing chain.  <a href="classAudioBlock.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioBlock.html">promeki::AudioBlock</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for an audio processing block.  <a href="classpromeki_1_1AudioBlock.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioBuffer.html">AudioBuffer</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Thread-safe ring-buffered audio sample FIFO with format conversion on push.  <a href="classAudioBuffer.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioBuffer.html">promeki::AudioBuffer</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Thread-safe ring-buffered audio sample FIFO with format conversion on push.  <a href="classpromeki_1_1AudioBuffer.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioCodec.html">AudioCodec</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">First-class identifier for an audio codec family.  <a href="classAudioCodec.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioChannelMap.html">promeki::AudioChannelMap</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Per-channel <code></code>(<a class="el" href="classpromeki_1_1AudioStreamDesc.html" title="Identifier for a logical audio stream within a channel map.">AudioStreamDesc</a>, <a class="el" href="classpromeki_1_1ChannelRole.html" title="Well-known Enum type for the role a single audio channel plays.">ChannelRole</a>) assignment.  <a href="classpromeki_1_1AudioChannelMap.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDecoder.html">AudioDecoder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for stateful audio decoders.  <a href="classAudioDecoder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioCodec.html">promeki::AudioCodec</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">First-class identifier for an audio codec family.  <a href="classpromeki_1_1AudioCodec.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html">AudioDesc</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a concrete audio stream — format plus sample rate and channel count.  <a href="classAudioDesc.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioDecoder.html">promeki::AudioDecoder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for stateful audio decoders.  <a href="classpromeki_1_1AudioDecoder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioEncoder.html">AudioEncoder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for stateful audio encoders.  <a href="classAudioEncoder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioDesc.html">promeki::AudioDesc</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a concrete audio stream — format plus sample rate and channel count.  <a href="classpromeki_1_1AudioDesc.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioFile.html">AudioFile</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Audio file reader and writer.  <a href="classAudioFile.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioEncoder.html">promeki::AudioEncoder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for stateful audio encoders.  <a href="classpromeki_1_1AudioEncoder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioFormat.html">AudioFormat</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">First-class audio sample-format descriptor.  <a href="classAudioFormat.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioFile.html">promeki::AudioFile</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Audio file reader and writer.  <a href="classpromeki_1_1AudioFile.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioGen.html">AudioGen</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Audio signal generator for producing test tones and silence.  <a href="classAudioGen.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioFileMediaIO.html">promeki::AudioFileMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> backend for audio file formats.  <a href="classpromeki_1_1AudioFileMediaIO.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioPayload.html">AudioPayload</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base for any audio payload — compressed or uncompressed.  <a href="classAudioPayload.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioFileFactory.html">promeki::AudioFileFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the <a class="el" href="classpromeki_1_1AudioFile.html" title="Audio file reader and writer.">AudioFile</a> backend.  <a href="classpromeki_1_1AudioFileFactory.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioResampler.html">AudioResampler</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Variable-ratio audio sample rate converter backed by libsamplerate.  <a href="classAudioResampler.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioFormat.html">promeki::AudioFormat</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">First-class audio sample-format descriptor.  <a href="classpromeki_1_1AudioFormat.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html">AudioTestPattern</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Multi-channel audio test pattern generator.  <a href="classAudioTestPattern.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioGen.html">promeki::AudioGen</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Audio signal generator for producing test tones and silence.  <a href="classpromeki_1_1AudioGen.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCompressedAudioPayload.html">CompressedAudioPayload</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compressed audio payload — one encoded access unit whose codec identity lives in the base <a class="el" href="classAudioDesc.html">AudioDesc</a>'s compressed <a class="el" href="classAudioFormat.html">AudioFormat</a>.  <a href="classCompressedAudioPayload.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioMarker.html">promeki::AudioMarker</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">One sample-region annotation on an audio payload.  <a href="classpromeki_1_1AudioMarker.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCompressedVideoPayload.html">CompressedVideoPayload</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compressed video payload — one encoded access unit whose codec identity lives in the base <a class="el" href="classImageDesc.html">ImageDesc</a>'s compressed <a class="el" href="classPixelFormat.html">PixelFormat</a>.  <a href="classCompressedVideoPayload.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioMarkerList.html">promeki::AudioMarkerList</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ordered list of <a class="el" href="classpromeki_1_1AudioMarker.html">AudioMarker</a> annotations on a payload.  <a href="classpromeki_1_1AudioMarkerList.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCSCContext.html">CSCContext</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Per-invocation scratch space for CSC pipeline execution.  <a href="classCSCContext.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioMeter.html">promeki::AudioMeter</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pluggable per-block metering callback.  <a href="classpromeki_1_1AudioMeter.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCSCPipeline.html">CSCPipeline</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pre-compiled color space conversion pipeline.  <a href="classCSCPipeline.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioPeakRmsMeter.html">promeki::AudioPeakRmsMeter</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default per-channel peak + RMS meter.  <a href="classpromeki_1_1AudioPeakRmsMeter.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCSCRegistry.html">CSCRegistry</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Static registry for fast-path CSC conversion kernels.  <a href="classCSCRegistry.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioPayload.html">promeki::AudioPayload</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base for any audio payload — compressed or uncompressed.  <a href="classpromeki_1_1AudioPayload.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDebugMediaFile.html">DebugMediaFile</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Debug-grade media container that captures a <a class="el" href="classFrame.html">Frame</a> byte-for-byte.  <a href="classDebugMediaFile.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioResampler.html">promeki::AudioResampler</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Variable-ratio audio sample rate converter backed by libsamplerate.  <a href="classpromeki_1_1AudioResampler.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEncodedDesc.html">EncodedDesc</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a compressed or encoded media format.  <a href="classEncodedDesc.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioStreamDesc.html">promeki::AudioStreamDesc</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identifier for a logical audio stream within a channel map.  <a href="classpromeki_1_1AudioStreamDesc.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html">Frame</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A media frame containing payloads and metadata.  <a href="classFrame.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioTestPattern.html">promeki::AudioTestPattern</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Multi-channel audio test pattern generator.  <a href="classpromeki_1_1AudioTestPattern.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameBridge.html">FrameBridge</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cross-process frame transport over shared memory + local sockets.  <a href="classFrameBridge.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1BurnMediaIO.html">promeki::BurnMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> backend that burns text overlays onto video frames.  <a href="classpromeki_1_1BurnMediaIO.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDataDecoder.html">ImageDataDecoder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Companion decoder for <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a>.  <a href="classImageDataDecoder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1BurnFactory.html">promeki::BurnFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the Burn (text overlay) backend.  <a href="classpromeki_1_1BurnFactory.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fast VITC-style binary data encoder for raster images.  <a href="classImageDataEncoder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1CompressedAudioPayload.html">promeki::CompressedAudioPayload</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compressed audio payload — one encoded access unit whose codec identity lives in the base <a class="el" href="classpromeki_1_1AudioDesc.html">AudioDesc</a>'s compressed <a class="el" href="classpromeki_1_1AudioFormat.html">AudioFormat</a>.  <a href="classpromeki_1_1CompressedAudioPayload.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html">ImageDesc</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes the format and layout of a single image.  <a href="classImageDesc.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1CompressedVideoPayload.html">promeki::CompressedVideoPayload</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compressed video payload — one encoded access unit whose codec identity lives in the base <a class="el" href="classpromeki_1_1ImageDesc.html">ImageDesc</a>'s compressed <a class="el" href="classpromeki_1_1PixelFormat.html">PixelFormat</a>.  <a href="classpromeki_1_1CompressedVideoPayload.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html">ImageFile</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Media file loader and saver.  <a href="classImageFile.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1CSCContext.html">promeki::CSCContext</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Per-invocation scratch space for CSC pipeline execution.  <a href="classpromeki_1_1CSCContext.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImgSeq.html">ImgSeq</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a numbered image sequence on disk.  <a href="classImgSeq.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1CscMediaIO.html">promeki::CscMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> backend that performs color space conversion.  <a href="classpromeki_1_1CscMediaIO.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html">JpegVideoEncoder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">JPEG <a class="el" href="classVideoEncoder.html">VideoEncoder</a> built on libjpeg-turbo.  <a href="classJpegVideoEncoder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1CscFactory.html">promeki::CscFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the CSC (color space converter) backend.  <a href="classpromeki_1_1CscFactory.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoDecoder.html">JpegVideoDecoder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">JPEG <a class="el" href="classVideoDecoder.html">VideoDecoder</a> built on libjpeg-turbo.  <a href="classJpegVideoDecoder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1CSCPipeline.html">promeki::CSCPipeline</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pre-compiled color space conversion pipeline.  <a href="classpromeki_1_1CSCPipeline.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegXsVideoEncoder.html">JpegXsVideoEncoder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">JPEG XS <a class="el" href="classVideoEncoder.html">VideoEncoder</a> built on SVT-JPEG-XS.  <a href="classJpegXsVideoEncoder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1CSCRegistry.html">promeki::CSCRegistry</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Static registry for fast-path CSC conversion kernels.  <a href="classpromeki_1_1CSCRegistry.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegXsVideoDecoder.html">JpegXsVideoDecoder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">JPEG XS <a class="el" href="classVideoDecoder.html">VideoDecoder</a> built on SVT-JPEG-XS.  <a href="classJpegXsVideoDecoder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1DebugMediaFile.html">promeki::DebugMediaFile</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Debug-grade media container that captures a <a class="el" href="classpromeki_1_1Frame.html">Frame</a> byte-for-byte.  <a href="classpromeki_1_1DebugMediaFile.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLtcDecoder.html">LtcDecoder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decodes LTC (Linear <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>) audio samples into timecode values.  <a href="classLtcDecoder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1DebugMediaMediaIO.html">promeki::DebugMediaMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> backend that captures a <a class="el" href="classpromeki_1_1Frame.html">Frame</a> into a PMDF debug file.  <a href="classpromeki_1_1DebugMediaMediaIO.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLtcEncoder.html">LtcEncoder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Encodes timecode values into LTC (Linear <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>) audio samples.  <a href="classLtcEncoder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1DebugMediaFactory.html">promeki::DebugMediaFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the PMDF debug-media backend.  <a href="classpromeki_1_1DebugMediaFactory.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaDesc.html">MediaDesc</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a media format including frame rate, image layers, audio channels, and metadata.  <a href="classMediaDesc.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1EncodedDesc.html">promeki::EncodedDesc</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a compressed or encoded media format.  <a href="classpromeki_1_1EncodedDesc.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html">MediaIOStats</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Statistics container for <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> backends.  <a href="classMediaIOStats.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioMarkerType.html">promeki::AudioMarkerType</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Well-known audio event marker categories.  <a href="classpromeki_1_1AudioMarkerType.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOCommand.html">MediaIOCommand</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> commands.  <a href="classMediaIOCommand.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Frame.html">promeki::Frame</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A media frame containing payloads and metadata.  <a href="classpromeki_1_1Frame.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOCommandOpen.html">MediaIOCommandOpen</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Command to open a media resource.  <a href="classMediaIOCommandOpen.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1FrameBridge.html">promeki::FrameBridge</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cross-process frame transport over shared memory + local sockets.  <a href="classpromeki_1_1FrameBridge.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOCommandClose.html">MediaIOCommandClose</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Command to close a media resource.  <a href="classMediaIOCommandClose.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1FrameBridgeMediaIO.html">promeki::FrameBridgeMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> backend that publishes/consumes frames via <a class="el" href="classpromeki_1_1FrameBridge.html">FrameBridge</a>.  <a href="classpromeki_1_1FrameBridgeMediaIO.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOCommandRead.html">MediaIOCommandRead</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Command to read the next frame.  <a href="classMediaIOCommandRead.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1FrameBridgeFactory.html">promeki::FrameBridgeFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the <a class="el" href="classpromeki_1_1FrameBridge.html" title="Cross-process frame transport over shared memory + local sockets.">FrameBridge</a> IPC backend.  <a href="classpromeki_1_1FrameBridgeFactory.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOCommandWrite.html">MediaIOCommandWrite</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Command to write a frame.  <a href="classMediaIOCommandWrite.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1FrameSyncMediaIO.html">promeki::FrameSyncMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> backend that resyncs media to a target clock cadence.  <a href="classpromeki_1_1FrameSyncMediaIO.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOCommandSeek.html">MediaIOCommandSeek</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Command to seek to a frame position.  <a href="classMediaIOCommandSeek.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1FrameSyncFactory.html">promeki::FrameSyncFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the <a class="el" href="classpromeki_1_1FrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a> (clock-paced resync) backend.  <a href="classpromeki_1_1FrameSyncFactory.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOCommandParams.html">MediaIOCommandParams</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backend-specific parameterized command.  <a href="classMediaIOCommandParams.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1ImageDataDecoder.html">promeki::ImageDataDecoder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Companion decoder for <a class="el" href="classpromeki_1_1ImageDataEncoder.html">ImageDataEncoder</a>.  <a href="classpromeki_1_1ImageDataDecoder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOCommandStats.html">MediaIOCommandStats</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backend statistics query command.  <a href="classMediaIOCommandStats.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1ImageDataEncoder.html">promeki::ImageDataEncoder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fast VITC-style binary data encoder for raster images.  <a href="classpromeki_1_1ImageDataEncoder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html">MediaIO</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Controller for media I/O backends.  <a href="classMediaIO.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1ImageDesc.html">promeki::ImageDesc</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes the format and layout of a single image.  <a href="classpromeki_1_1ImageDesc.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOClock.html">MediaIOClock</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default <a class="el" href="classClock.html">Clock</a> for a <a class="el" href="classMediaIO.html">MediaIO</a> without a task-supplied clock.  <a href="classMediaIOClock.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1ImageFile.html">promeki::ImageFile</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Media file loader and saver.  <a href="classpromeki_1_1ImageFile.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIODescription.html">MediaIODescription</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Self-contained snapshot of a <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a>'s identity, role, and format landscape.  <a href="classMediaIODescription.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1ImageFileMediaIO.html">promeki::ImageFileMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> backend for image files and image sequences.  <a href="classpromeki_1_1ImageFileMediaIO.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask.html">MediaIOTask</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backend interface for media I/O.  <a href="classMediaIOTask.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1ImageFileFactory.html">promeki::ImageFileFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory entry for the <a class="el" href="classpromeki_1_1ImageFileMediaIO.html">ImageFileMediaIO</a> backend.  <a href="classpromeki_1_1ImageFileFactory.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__AudioFile.html">MediaIOTask_AudioFile</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend for audio file formats.  <a href="classMediaIOTask__AudioFile.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1ImgSeq.html">promeki::ImgSeq</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a numbered image sequence on disk.  <a href="classpromeki_1_1ImgSeq.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__Burn.html">MediaIOTask_Burn</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend that burns text overlays onto video frames.  <a href="classMediaIOTask__Burn.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorDiscontinuity.html">promeki::InspectorDiscontinuity</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">One detected discontinuity in the inspector's frame stream.  <a href="structpromeki_1_1InspectorDiscontinuity.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__CSC.html">MediaIOTask_CSC</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend that performs color space conversion.  <a href="classMediaIOTask__CSC.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent.html">promeki::InspectorEvent</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Per-frame measurement record produced by <a class="el" href="classpromeki_1_1InspectorMediaIO.html">InspectorMediaIO</a>.  <a href="structpromeki_1_1InspectorEvent.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__DebugMedia.html">MediaIOTask_DebugMedia</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> backend that captures a <a class="el" href="classFrame.html">Frame</a> into a PMDF debug file.  <a href="classMediaIOTask__DebugMedia.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorSnapshot.html">promeki::InspectorSnapshot</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Aggregate snapshot of the inspector's accumulated state.  <a href="structpromeki_1_1InspectorSnapshot.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__FrameBridge.html">MediaIOTask_FrameBridge</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> backend that publishes/consumes frames via <a class="el" href="classFrameBridge.html">FrameBridge</a>.  <a href="classMediaIOTask__FrameBridge.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1InspectorMediaIO.html">promeki::InspectorMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> sink backend that decodes and validates a media stream.  <a href="classpromeki_1_1InspectorMediaIO.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__FrameSync.html">MediaIOTask_FrameSync</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend that resyncs media to a target clock cadence.  <a href="classMediaIOTask__FrameSync.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1InspectorFactory.html">promeki::InspectorFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the Inspector backend.  <a href="classpromeki_1_1InspectorFactory.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__ImageFile.html">MediaIOTask_ImageFile</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend for image files and image sequences.  <a href="classMediaIOTask__ImageFile.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1JpegVideoEncoder.html">promeki::JpegVideoEncoder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">JPEG <a class="el" href="classpromeki_1_1VideoEncoder.html">VideoEncoder</a> built on libjpeg-turbo.  <a href="classpromeki_1_1JpegVideoEncoder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structInspectorDiscontinuity.html">InspectorDiscontinuity</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">One detected discontinuity in the inspector's frame stream.  <a href="structInspectorDiscontinuity.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1JpegVideoDecoder.html">promeki::JpegVideoDecoder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">JPEG <a class="el" href="classpromeki_1_1VideoDecoder.html">VideoDecoder</a> built on libjpeg-turbo.  <a href="classpromeki_1_1JpegVideoDecoder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structInspectorEvent.html">InspectorEvent</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Per-frame measurement record produced by <a class="el" href="classMediaIOTask__Inspector.html">MediaIOTask_Inspector</a>.  <a href="structInspectorEvent.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1JpegXsVideoEncoder.html">promeki::JpegXsVideoEncoder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">JPEG XS <a class="el" href="classpromeki_1_1VideoEncoder.html">VideoEncoder</a> built on SVT-JPEG-XS.  <a href="classpromeki_1_1JpegXsVideoEncoder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structInspectorSnapshot.html">InspectorSnapshot</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Aggregate snapshot of the inspector's accumulated state.  <a href="structInspectorSnapshot.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1JpegXsVideoDecoder.html">promeki::JpegXsVideoDecoder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">JPEG XS <a class="el" href="classpromeki_1_1VideoDecoder.html">VideoDecoder</a> built on SVT-JPEG-XS.  <a href="classpromeki_1_1JpegXsVideoDecoder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__Inspector.html">MediaIOTask_Inspector</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> sink backend that decodes and validates a media stream.  <a href="classMediaIOTask__Inspector.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1LtcDecoder.html">promeki::LtcDecoder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decodes LTC (Linear <a class="el" href="classpromeki_1_1Timecode.html" title="Class for holding and manipulating timecode.">Timecode</a>) audio samples into timecode values.  <a href="classpromeki_1_1LtcDecoder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__QuickTime.html">MediaIOTask_QuickTime</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend for <a class="el" href="classQuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a> / ISO-BMFF container files.  <a href="classMediaIOTask__QuickTime.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1LtcEncoder.html">promeki::LtcEncoder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Encodes timecode values into LTC (Linear <a class="el" href="classpromeki_1_1Timecode.html" title="Class for holding and manipulating timecode.">Timecode</a>) audio samples.  <a href="classpromeki_1_1LtcEncoder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__RawBitstream.html">MediaIOTask_RawBitstream</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> sink that writes encoded packet payloads verbatim to a file.  <a href="classMediaIOTask__RawBitstream.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MediaDesc.html">promeki::MediaDesc</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a media format including frame rate, image layers, audio channels, and metadata.  <a href="classpromeki_1_1MediaDesc.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__Rtp.html">MediaIOTask_Rtp</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend that transmits frames as RTP streams.  <a href="classMediaIOTask__Rtp.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MediaPayload.html">promeki::MediaPayload</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract polymorphic base for any media payload flowing through a pipeline.  <a href="classpromeki_1_1MediaPayload.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__SRC.html">MediaIOTask_SRC</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend that performs audio sample format conversion.  <a href="classMediaIOTask__SRC.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MjpegStreamSubscriber.html">promeki::MjpegStreamSubscriber</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Subscriber interface for <a class="el" href="classpromeki_1_1MjpegStreamMediaIO.html">MjpegStreamMediaIO</a>.  <a href="classpromeki_1_1MjpegStreamSubscriber.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__TPG.html">MediaIOTask_TPG</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend that generates test patterns.  <a href="classMediaIOTask__TPG.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1MjpegStreamSnapshot.html">promeki::MjpegStreamSnapshot</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Snapshot of <a class="el" href="classpromeki_1_1MjpegStreamMediaIO.html">MjpegStreamMediaIO</a> internal counters.  <a href="structpromeki_1_1MjpegStreamSnapshot.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__VideoDecoder.html">MediaIOTask_VideoDecoder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend that decodes compressed packets into uncompressed Frames.  <a href="classMediaIOTask__VideoDecoder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MjpegStreamMediaIO.html">promeki::MjpegStreamMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> sink that JPEG-encodes incoming frames at a rate-gated cadence and broadcasts each result to attached subscribers.  <a href="classpromeki_1_1MjpegStreamMediaIO.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__VideoEncoder.html">MediaIOTask_VideoEncoder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend that encodes uncompressed Frames into compressed packets.  <a href="classMediaIOTask__VideoEncoder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MjpegStreamFactory.html">promeki::MjpegStreamFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the MjpegStream backend.  <a href="classpromeki_1_1MjpegStreamFactory.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPayload.html">MediaPayload</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract polymorphic base for any media payload flowing through a pipeline.  <a href="classMediaPayload.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1NullPacingSnapshot.html">promeki::NullPacingSnapshot</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Snapshot of <a class="el" href="classpromeki_1_1NullPacingMediaIO.html">NullPacingMediaIO</a> internal counters.  <a href="structpromeki_1_1NullPacingSnapshot.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPixelFormat.html">PixelFormat</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Complete pixel description combining format, color model, and semantics.  <a href="classPixelFormat.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1NullPacingMediaIO.html">promeki::NullPacingMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> sink that mimics a real playback device by pacing and discarding incoming frames.  <a href="classpromeki_1_1NullPacingMediaIO.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPixelMemLayout.html">PixelMemLayout</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes the memory layout of pixel data without color semantics.  <a href="classPixelMemLayout.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1NullPacingFactory.html">promeki::NullPacingFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the NullPacing sink backend.  <a href="classpromeki_1_1NullPacingFactory.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQuickTime.html">QuickTime</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classQuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a> / ISO-BMFF container reader and writer.  <a href="classQuickTime.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1PcmAudioPayload.html">promeki::PcmAudioPayload</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">PCM audio payload — linear PCM samples in the format described by the base <a class="el" href="classpromeki_1_1AudioPayload.html">AudioPayload</a>'s <a class="el" href="classpromeki_1_1AudioDesc.html">AudioDesc</a>.  <a href="classpromeki_1_1PcmAudioPayload.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRateTracker.html">RateTracker</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sliding-window rate counter for live telemetry.  <a href="classRateTracker.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1PixelFormat.html">promeki::PixelFormat</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Complete pixel description combining format, color model, and semantics.  <a href="classpromeki_1_1PixelFormat.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUncompressedAudioPayload.html">UncompressedAudioPayload</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uncompressed audio payload — PCM samples in the format described by the base <a class="el" href="classAudioPayload.html">AudioPayload</a>'s <a class="el" href="classAudioDesc.html">AudioDesc</a>.  <a href="classUncompressedAudioPayload.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1PixelMemLayout.html">promeki::PixelMemLayout</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes the memory layout of pixel data without color semantics.  <a href="classpromeki_1_1PixelMemLayout.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUncompressedVideoPayload.html">UncompressedVideoPayload</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uncompressed video payload — raster pixels in the format described by the base <a class="el" href="classVideoPayload.html">VideoPayload</a>'s <a class="el" href="classImageDesc.html">ImageDesc</a>.  <a href="classUncompressedVideoPayload.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1QuickTime.html">promeki::QuickTime</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1QuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a> / ISO-BMFF container reader and writer.  <a href="classpromeki_1_1QuickTime.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html">VideoCodec</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">First-class identifier for a video codec family.  <a href="classVideoCodec.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1QuickTimeMediaIO.html">promeki::QuickTimeMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> backend for <a class="el" href="classpromeki_1_1QuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a> / ISO-BMFF container files.  <a href="classpromeki_1_1QuickTimeMediaIO.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html">VideoDecoder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for stateful video decoders.  <a href="classVideoDecoder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1QuickTimeFactory.html">promeki::QuickTimeFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the <a class="el" href="classpromeki_1_1QuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a> backend.  <a href="classpromeki_1_1QuickTimeFactory.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html">VideoEncoder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for stateful video encoders.  <a href="classVideoEncoder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1RateTracker.html">promeki::RateTracker</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sliding-window rate counter for live telemetry.  <a href="classpromeki_1_1RateTracker.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoPayload.html">VideoPayload</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base for any video payload — compressed or uncompressed.  <a href="classVideoPayload.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1RawBitstreamMediaIO.html">promeki::RawBitstreamMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> sink that writes encoded packet payloads verbatim to a file.  <a href="classpromeki_1_1RawBitstreamMediaIO.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoTestPattern.html">VideoTestPattern</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Standalone video test pattern generator.  <a href="classVideoTestPattern.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1RawBitstreamFactory.html">promeki::RawBitstreamFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the raw-bitstream sink backend.  <a href="classpromeki_1_1RawBitstreamFactory.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1RtpMediaIO.html">promeki::RtpMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> backend that transmits and receives frames as RTP streams.  <a href="classpromeki_1_1RtpMediaIO.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1RtpFactory.html">promeki::RtpFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the RTP backend.  <a href="classpromeki_1_1RtpFactory.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1SrcMediaIO.html">promeki::SrcMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> backend that performs audio sample format conversion.  <a href="classpromeki_1_1SrcMediaIO.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1SrcFactory.html">promeki::SrcFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the SRC (audio sample-rate / format converter) backend.  <a href="classpromeki_1_1SrcFactory.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1TpgMediaIO.html">promeki::TpgMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> backend that generates test patterns.  <a href="classpromeki_1_1TpgMediaIO.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1TpgFactory.html">promeki::TpgFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the TPG generator backend.  <a href="classpromeki_1_1TpgFactory.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1UncompressedVideoPayload.html">promeki::UncompressedVideoPayload</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uncompressed video payload — raster pixels in the format described by the base <a class="el" href="classpromeki_1_1VideoPayload.html">VideoPayload</a>'s <a class="el" href="classpromeki_1_1ImageDesc.html">ImageDesc</a>.  <a href="classpromeki_1_1UncompressedVideoPayload.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VideoCodec.html">promeki::VideoCodec</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">First-class identifier for a video codec family.  <a href="classpromeki_1_1VideoCodec.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VideoDecoder.html">promeki::VideoDecoder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for stateful video decoders.  <a href="classpromeki_1_1VideoDecoder.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VideoDecoderMediaIO.html">promeki::VideoDecoderMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> backend that decodes compressed packets into uncompressed Frames.  <a href="classpromeki_1_1VideoDecoderMediaIO.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VideoDecoderFactory.html">promeki::VideoDecoderFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the <a class="el" href="classpromeki_1_1VideoDecoder.html" title="Abstract base class for stateful video decoders.">VideoDecoder</a> backend.  <a href="classpromeki_1_1VideoDecoderFactory.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VideoEncoder.html">promeki::VideoEncoder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for stateful video encoders.  <a href="classpromeki_1_1VideoEncoder.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VideoEncoderMediaIO.html">promeki::VideoEncoderMediaIO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> backend that encodes uncompressed Frames into compressed packets.  <a href="classpromeki_1_1VideoEncoderMediaIO.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VideoEncoderFactory.html">promeki::VideoEncoderFactory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1MediaIOFactory.html">MediaIOFactory</a> for the <a class="el" href="classpromeki_1_1VideoEncoder.html" title="Abstract base class for stateful video encoders.">VideoEncoder</a> backend.  <a href="classpromeki_1_1VideoEncoderFactory.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VideoPayload.html">promeki::VideoPayload</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base for any video payload — compressed or uncompressed.  <a href="classpromeki_1_1VideoPayload.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VideoTestPattern.html">promeki::VideoTestPattern</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Standalone video test pattern generator.  <a href="classpromeki_1_1VideoTestPattern.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:ga2b6ed5141897e675cf1843076213ac62" id="r_ga2b6ed5141897e675cf1843076213ac62"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav.html#ga2b6ed5141897e675cf1843076213ac62">PROMEKI_REGISTER_AUDIOFILE_FACTORY</a>(name)&#160;&#160;&#160;        <a class="el" href="fileformatfactory_8h.html#a7167593218f3b93312196326121f7a87">PROMEKI_REGISTER_FILE_FORMAT_FACTORY</a>(<a class="el" href="classAudioFile.html">AudioFile</a>, name)</td></tr>
+<tr class="memitem:ga2b6ed5141897e675cf1843076213ac62" id="r_ga2b6ed5141897e675cf1843076213ac62"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav.html#ga2b6ed5141897e675cf1843076213ac62">PROMEKI_REGISTER_AUDIOFILE_FACTORY</a>(name)&#160;&#160;&#160;<a class="el" href="fileformatfactory_8h.html#a7167593218f3b93312196326121f7a87">PROMEKI_REGISTER_FILE_FORMAT_FACTORY</a>(AudioFile, name)</td></tr>
 <tr class="memdesc:ga2b6ed5141897e675cf1843076213ac62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro to register an AudioFileFactory subclass at static initialization time.  <br /></td></tr>
 <tr class="separator:ga2b6ed5141897e675cf1843076213ac62"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaeb7193d3b1d2058212f4c97c3f24b271" id="r_gaeb7193d3b1d2058212f4c97c3f24b271"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav.html#gaeb7193d3b1d2058212f4c97c3f24b271">PROMEKI_REGISTER_IMAGEFILEIO</a>(name)</td></tr>
-<tr class="memdesc:gaeb7193d3b1d2058212f4c97c3f24b271"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro to register an <a class="el" href="classImageFileIO.html" title="Abstract backend for image file format I/O.">ImageFileIO</a> subclass at static initialization time.  <br /></td></tr>
+<tr class="memitem:gaeb7193d3b1d2058212f4c97c3f24b271" id="r_gaeb7193d3b1d2058212f4c97c3f24b271"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav.html#gaeb7193d3b1d2058212f4c97c3f24b271">PROMEKI_REGISTER_IMAGEFILEIO</a>(name)</td></tr>
+<tr class="memdesc:gaeb7193d3b1d2058212f4c97c3f24b271"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro to register an ImageFileIO subclass at static initialization time.  <br /></td></tr>
 <tr class="separator:gaeb7193d3b1d2058212f4c97c3f24b271"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga10f5578b94caf8706a28ed5b9e7b087f" id="r_ga10f5578b94caf8706a28ed5b9e7b087f"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav.html#ga10f5578b94caf8706a28ed5b9e7b087f">PROMEKI_REGISTER_MEDIAIO</a>(<a class="el" href="classList.html">ClassName</a>)</td></tr>
-<tr class="memdesc:ga10f5578b94caf8706a28ed5b9e7b087f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro to register a <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> backend at static initialization time.  <br /></td></tr>
-<tr class="separator:ga10f5578b94caf8706a28ed5b9e7b087f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gad90fff14e48cb9847b2be7d40be4a1a5" id="r_gad90fff14e48cb9847b2be7d40be4a1a5"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav.html#gad90fff14e48cb9847b2be7d40be4a1a5">PROMEKI_MEDIAIO_COMMAND</a>(<a class="el" href="classList.html">NAME</a>,  <a class="el" href="classList.html">TYPE_TAG</a>)</td></tr>
-<tr class="memdesc:gad90fff14e48cb9847b2be7d40be4a1a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Boilerplate for derived <a class="el" href="classMediaIOCommand.html" title="Base class for MediaIO commands.">MediaIOCommand</a> classes.  <br /></td></tr>
-<tr class="separator:gad90fff14e48cb9847b2be7d40be4a1a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga64c811c1da3047e954834b5c197d5acb" id="r_ga64c811c1da3047e954834b5c197d5acb"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav.html#ga64c811c1da3047e954834b5c197d5acb">PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH</a>(Self)</td></tr>
+<tr class="memdesc:ga64c811c1da3047e954834b5c197d5acb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implements MediaPayload's VariantLookup dispatch hooks for a concrete leaf.  <br /></td></tr>
+<tr class="separator:ga64c811c1da3047e954834b5c197d5acb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:gaa386e98f269bf3f66d980b293dc5ac7f" id="r_gaa386e98f269bf3f66d980b293dc5ac7f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav.html#gaa386e98f269bf3f66d980b293dc5ac7f">AudioCodecBackendRegistry</a> = <a class="el" href="classStringRegistry.html">StringRegistry</a>&lt;&quot;AudioCodecBackend&quot;&gt;</td></tr>
-<tr class="memdesc:gaa386e98f269bf3f66d980b293dc5ac7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compile-time tag for the <a class="el" href="classAudioCodec.html" title="First-class identifier for an audio codec family.">AudioCodec</a> backend <a class="el" href="classStringRegistry.html" title="Thread-safe append-only registry that maps unique strings to integer IDs.">StringRegistry</a>.  <br /></td></tr>
-<tr class="separator:gaa386e98f269bf3f66d980b293dc5ac7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaef169420b11ea439bb24ed35fb04237d" id="r_gaef169420b11ea439bb24ed35fb04237d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav.html#gaef169420b11ea439bb24ed35fb04237d">AudioFileFactory</a> = <a class="el" href="classFileFormatFactory.html">FileFormatFactory</a>&lt; <a class="el" href="classAudioFile.html">AudioFile</a> &gt;</td></tr>
-<tr class="memdesc:gaef169420b11ea439bb24ed35fb04237d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory type for creating <a class="el" href="classAudioFile.html" title="Audio file reader and writer.">AudioFile</a> instances based on file format.  <br /></td></tr>
-<tr class="separator:gaef169420b11ea439bb24ed35fb04237d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga3b56f86d9f1d2a1dc4e46368b79d4ac0" id="r_ga3b56f86d9f1d2a1dc4e46368b79d4ac0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav.html#ga3b56f86d9f1d2a1dc4e46368b79d4ac0">VideoCodecBackendRegistry</a> = <a class="el" href="classStringRegistry.html">StringRegistry</a>&lt;&quot;VideoCodecBackend&quot;&gt;</td></tr>
-<tr class="memdesc:ga3b56f86d9f1d2a1dc4e46368b79d4ac0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compile-time tag for the <a class="el" href="classVideoCodec.html" title="First-class identifier for a video codec family.">VideoCodec</a> backend <a class="el" href="classStringRegistry.html" title="Thread-safe append-only registry that maps unique strings to integer IDs.">StringRegistry</a>.  <br /></td></tr>
-<tr class="separator:ga3b56f86d9f1d2a1dc4e46368b79d4ac0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga34ba81a11e07a24d743c57fdc4bea2c1" id="r_ga34ba81a11e07a24d743c57fdc4bea2c1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav.html#ga34ba81a11e07a24d743c57fdc4bea2c1">promeki::AudioCodecBackendRegistry</a> = <a class="el" href="classpromeki_1_1StringRegistry.html">StringRegistry</a>&lt;&quot;AudioCodecBackend&quot;&gt;</td></tr>
+<tr class="memdesc:ga34ba81a11e07a24d743c57fdc4bea2c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compile-time tag for the <a class="el" href="classpromeki_1_1AudioCodec.html" title="First-class identifier for an audio codec family.">AudioCodec</a> backend <a class="el" href="classpromeki_1_1StringRegistry.html" title="Thread-safe append-only registry that maps unique strings to integer IDs.">StringRegistry</a>.  <br /></td></tr>
+<tr class="separator:ga34ba81a11e07a24d743c57fdc4bea2c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0b6bbf6f9e7f14d4ca980948a716ae3e" id="r_ga0b6bbf6f9e7f14d4ca980948a716ae3e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav.html#ga0b6bbf6f9e7f14d4ca980948a716ae3e">promeki::AudioFileFactory</a> = <a class="el" href="classpromeki_1_1FileFormatFactory.html">FileFormatFactory</a>&lt; <a class="el" href="classpromeki_1_1AudioFile.html">AudioFile</a> &gt;</td></tr>
+<tr class="memdesc:ga0b6bbf6f9e7f14d4ca980948a716ae3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory type for creating <a class="el" href="classpromeki_1_1AudioFile.html" title="Audio file reader and writer.">AudioFile</a> instances based on file format.  <br /></td></tr>
+<tr class="separator:ga0b6bbf6f9e7f14d4ca980948a716ae3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaddb329f0cd3295bd6731bdffd804ca96" id="r_gaddb329f0cd3295bd6731bdffd804ca96"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav.html#gaddb329f0cd3295bd6731bdffd804ca96">promeki::AudioStreamDescRegistry</a> = <a class="el" href="classpromeki_1_1StringRegistry.html">StringRegistry</a>&lt;&quot;AudioStreamDesc&quot;&gt;</td></tr>
+<tr class="memdesc:gaddb329f0cd3295bd6731bdffd804ca96"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compile-time tag for the <a class="el" href="classpromeki_1_1AudioStreamDesc.html">AudioStreamDesc</a> registry.  <br /></td></tr>
+<tr class="separator:gaddb329f0cd3295bd6731bdffd804ca96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga8c0bf20dc1883f3288212d43d8f165ac" id="r_ga8c0bf20dc1883f3288212d43d8f165ac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav.html#ga8c0bf20dc1883f3288212d43d8f165ac">promeki::VideoCodecBackendRegistry</a> = <a class="el" href="classpromeki_1_1StringRegistry.html">StringRegistry</a>&lt;&quot;VideoCodecBackend&quot;&gt;</td></tr>
+<tr class="memdesc:ga8c0bf20dc1883f3288212d43d8f165ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compile-time tag for the <a class="el" href="classpromeki_1_1VideoCodec.html" title="First-class identifier for a video codec family.">VideoCodec</a> backend <a class="el" href="classpromeki_1_1StringRegistry.html" title="Thread-safe append-only registry that maps unique strings to integer IDs.">StringRegistry</a>.  <br /></td></tr>
+<tr class="separator:ga8c0bf20dc1883f3288212d43d8f165ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Professional audio/video media objects and codecs. </p>
 <p>Audio and image containers with format descriptors, file I/O factories, pixel format definitions, codec abstractions, and frame-level media handling for broadcast and post-production workflows. </p>
 <h2 class="groupheader">Macro Definition Documentation</h2>
-<a id="gad90fff14e48cb9847b2be7d40be4a1a5" name="gad90fff14e48cb9847b2be7d40be4a1a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#gad90fff14e48cb9847b2be7d40be4a1a5">&#9670;&#160;</a></span>PROMEKI_MEDIAIO_COMMAND</h2>
+<a id="ga64c811c1da3047e954834b5c197d5acb" name="ga64c811c1da3047e954834b5c197d5acb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga64c811c1da3047e954834b5c197d5acb">&#9670;&#160;</a></span>PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#<a class="el" href="classList.html">define</a> PROMEKI_MEDIAIO_COMMAND</td>
+          <td class="memname">#define PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH</td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><a class="el" href="classList.html">NAME</a>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramname">Self</td><td>)</td>
           <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><a class="el" href="classList.html">TYPE_TAG</a>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">        <span class="keyword">public</span>:                                                       \</div>
-<div class="line">                Type type()<span class="keyword"> const override </span>{ <span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">TYPE_TAG</a>; }       \</div>
-<div class="line">                <a class="code hl_class" href="classList.html">NAME</a> *_promeki_clone()<span class="keyword"> const </span>{                        <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">                        assert</a>(<span class="keyword">false</span> &amp;&amp; #<a class="code hl_class" href="classList.html">NAME</a> <span class="stringliteral">&quot; should not be cloned&quot;</span>); \</div>
-<div class="line">                        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;                               \</div>
-<div class="line">                }</div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<b>Value:</b><div class="fragment"><div class="line">        std::optional&lt;::promeki::Variant&gt; variantLookupResolve(const ::promeki::String &amp;key,                           \</div>
+<div class="line">                                                               <a class="code hl_class" href="classpromeki_1_1Error.html">::promeki::Error</a>        *err = <span class="keyword">nullptr</span>)<span class="keyword"> const override </span>{       \</div>
+<div class="line">                return ::promeki::VariantLookup&lt;Self&gt;::resolveDirect(*<span class="keyword">this</span>, key, err);                                 \</div>
+<div class="line">        }                                                                                                              \</div>
+<div class="line">        <span class="keywordtype">bool</span> variantLookupAssign(const ::promeki::String &amp;key, const ::promeki::Variant &amp;value,                        \</div>
+<div class="line">                                 <a class="code hl_class" href="classpromeki_1_1Error.html">::promeki::Error</a> *err = <span class="keyword">nullptr</span>)<span class="keyword"> override </span>{                                           \</div>
+<div class="line">                return ::promeki::VariantLookup&lt;Self&gt;::assignDirect(*<span class="keyword">this</span>, key, value, err);                           \</div>
+<div class="line">        }                                                                                                              \</div>
+<div class="line">        const ::promeki::VariantSpec *variantLookupSpecFor(const ::promeki::String &amp;key,                               \</div>
+<div class="line">                                                           <a class="code hl_class" href="classpromeki_1_1Error.html">::promeki::Error</a>        *err = <span class="keyword">nullptr</span>)<span class="keyword"> const override </span>{           \</div>
+<div class="line">                return ::promeki::VariantLookup&lt;Self&gt;::specForDirect(key, err);                                        \</div>
+<div class="line">        }                                                                                                              \</div>
+<div class="line">        <a class="code hl_class" href="classpromeki_1_1StringList.html">::promeki::StringList</a> variantLookupScalarNames()<span class="keyword"> const override </span>{                                              \</div>
+<div class="line">                return ::promeki::VariantLookup&lt;Self&gt;::registeredScalars();                                            \</div>
+<div class="line">        }                                                                                                              \</div>
+<div class="line">        <a class="code hl_class" href="classpromeki_1_1StringList.html">::promeki::StringList</a> variantLookupDump(const ::promeki::String &amp;indent = <a class="code hl_class" href="classpromeki_1_1String.html">::promeki::String</a>())                 \</div>
+<div class="line">                <span class="keyword">const</span> <span class="keyword">override</span> {                                                                                       \</div>
+<div class="line">                return ::promeki::VariantLookup&lt;Self&gt;::dump(*<span class="keyword">this</span>, indent);                                            \</div>
+<div class="line">        }</div>
+<div class="ttc" id="aclasspromeki_1_1Error_html"><div class="ttname"><a href="classpromeki_1_1Error.html">promeki::Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:43</div></div>
+<div class="ttc" id="aclasspromeki_1_1StringList_html"><div class="ttname"><a href="classpromeki_1_1StringList.html">promeki::StringList</a></div><div class="ttdoc">Manages a list of strings.</div><div class="ttdef"><b>Definition</b> stringlist.h:31</div></div>
+<div class="ttc" id="aclasspromeki_1_1String_html"><div class="ttname"><a href="classpromeki_1_1String.html">promeki::String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:64</div></div>
 </div><!-- fragment -->
-<p>Boilerplate for derived <a class="el" href="classMediaIOCommand.html" title="Base class for MediaIO commands.">MediaIOCommand</a> classes. </p>
-<p>Injects the <code>type()</code> override and an asserting <code>_promeki_clone()</code> required by the <a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a> proxy machinery. Use it as the first line of every concrete command class.</p>
+<p>Implements MediaPayload's VariantLookup dispatch hooks for a concrete leaf. </p>
+<p>Place in the <code>public</code> section of a concrete <code>MediaPayload</code> subclass's <code>class</code> body. Expands to overrides of <code>MediaPayload::variantLookupResolve</code> / <code>variantLookupAssign</code> / <code>variantLookupSpecFor</code> that forward to <code>VariantLookup&lt;Self&gt;::resolveDirect</code> / <code>assignDirect</code> / <code>specForDirect</code>, so a caller holding a reference-to-base lands on <code>Self's</code> registry and the upward cascade fills in inherited keys. Using <code>*Direct</code> (not the public dispatch entry) avoids infinite recursion through the virtual.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">NAME</td><td>The class name. </td></tr>
-    <tr><td class="paramname">TYPE_TAG</td><td>The <a class="el" href="classMediaIOCommand.html#a16255ac120516e70d467f2c2878071b9" title="Concrete command type.">MediaIOCommand::Type</a> enum value. </td></tr>
+    <tr><td class="paramname">Self</td><td>The concrete subclass the macro is expanded inside of.</td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="keyword">class </span>UncompressedVideoPayload : <span class="keyword">public</span> VideoPayload {</div>
+<div class="line">        <span class="keyword">public</span>:</div>
+<div class="line">                <a class="code hl_define" href="group__proav.html#ga64c811c1da3047e954834b5c197d5acb">PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH</a>(UncompressedVideoPayload)</div>
+<div class="line">                ...</div>
+<div class="line">};</div>
+<div class="ttc" id="agroup__proav_html_ga64c811c1da3047e954834b5c197d5acb"><div class="ttname"><a href="group__proav.html#ga64c811c1da3047e954834b5c197d5acb">PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH</a></div><div class="ttdeci">#define PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH(Self)</div><div class="ttdoc">Implements MediaPayload's VariantLookup dispatch hooks for a concrete leaf.</div><div class="ttdef"><b>Definition</b> mediapayload.h:742</div></div>
+</div><!-- fragment --> </dd></dl>
 
 </div>
 </div>
@@ -424,11 +490,11 @@ Typedefs</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#<a class="el" href="classList.html">define</a> PROMEKI_REGISTER_AUDIOFILE_FACTORY</td>
+          <td class="memname">#define PROMEKI_REGISTER_AUDIOFILE_FACTORY</td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname">name</td><td>)</td>
-          <td>&#160;&#160;&#160;        <a class="el" href="fileformatfactory_8h.html#a7167593218f3b93312196326121f7a87">PROMEKI_REGISTER_FILE_FORMAT_FACTORY</a>(<a class="el" href="classAudioFile.html">AudioFile</a>, name)</td>
+          <td>&#160;&#160;&#160;<a class="el" href="fileformatfactory_8h.html#a7167593218f3b93312196326121f7a87">PROMEKI_REGISTER_FILE_FORMAT_FACTORY</a>(AudioFile, name)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -450,7 +516,7 @@ Typedefs</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#<a class="el" href="classList.html">define</a> PROMEKI_REGISTER_IMAGEFILEIO</td>
+          <td class="memname">#define PROMEKI_REGISTER_IMAGEFILEIO</td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname">name</td><td>)</td>
@@ -458,42 +524,13 @@ Typedefs</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">        [[<a class="code hl_class" href="classList.html">maybe_unused</a>]] <span class="keyword">static</span> <span class="keywordtype">int</span> PROMEKI_CONCAT(<a class="code hl_class" href="classList.html">__promeki_imagefileio_</a>, PROMEKI_UNIQUE_ID) = \</div>
-<div class="line">        ImageFileIO::registerImageFileIO(<span class="keyword">new</span> name);</div>
+<b>Value:</b><div class="fragment"><div class="line">        [[maybe_unused]] <span class="keyword">static</span> <span class="keywordtype">int</span> PROMEKI_CONCAT(__promeki_imagefileio_, PROMEKI_UNIQUE_ID) =                        \</div>
+<div class="line">                ImageFileIO::registerImageFileIO(<span class="keyword">new</span> name);</div>
 </div><!-- fragment -->
-<p>Macro to register an <a class="el" href="classImageFileIO.html" title="Abstract backend for image file format I/O.">ImageFileIO</a> subclass at static initialization time. </p>
+<p>Macro to register an ImageFileIO subclass at static initialization time. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">name</td><td>The <a class="el" href="classImageFileIO.html" title="Abstract backend for image file format I/O.">ImageFileIO</a> subclass to instantiate and register. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="ga10f5578b94caf8706a28ed5b9e7b087f" name="ga10f5578b94caf8706a28ed5b9e7b087f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga10f5578b94caf8706a28ed5b9e7b087f">&#9670;&#160;</a></span>PROMEKI_REGISTER_MEDIAIO</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#<a class="el" href="classList.html">define</a> PROMEKI_REGISTER_MEDIAIO</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><a class="el" href="classList.html">ClassName</a></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">        [[<a class="code hl_class" href="classList.html">maybe_unused</a>]] <span class="keyword">static</span> <span class="keywordtype">int</span> PROMEKI_CONCAT(<a class="code hl_class" href="classList.html">__promeki_mediaio_</a>, PROMEKI_UNIQUE_ID) = \</div>
-<div class="line">                MediaIO::registerFormat(ClassName::formatDesc());</div>
-</div><!-- fragment -->
-<p>Macro to register a <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> backend at static initialization time. </p>
-<p>The backend class must provide a static <code>formatDesc()</code> method returning a <a class="el" href="structMediaIO_1_1FormatDesc.html" title="Describes a registered media I/O backend.">MediaIO::FormatDesc</a>.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">ClassName</td><td>The <a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> subclass to register. </td></tr>
+    <tr><td class="paramname">name</td><td>The ImageFileIO subclass to instantiate and register. </td></tr>
   </table>
   </dd>
 </dl>
@@ -501,54 +538,71 @@ Typedefs</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Typedef Documentation</h2>
-<a id="gaa386e98f269bf3f66d980b293dc5ac7f" name="gaa386e98f269bf3f66d980b293dc5ac7f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#gaa386e98f269bf3f66d980b293dc5ac7f">&#9670;&#160;</a></span>AudioCodecBackendRegistry</h2>
+<a id="ga34ba81a11e07a24d743c57fdc4bea2c1" name="ga34ba81a11e07a24d743c57fdc4bea2c1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga34ba81a11e07a24d743c57fdc4bea2c1">&#9670;&#160;</a></span>AudioCodecBackendRegistry</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="group__proav.html#gaa386e98f269bf3f66d980b293dc5ac7f">AudioCodecBackendRegistry</a> =  <a class="el" href="classStringRegistry.html">StringRegistry</a>&lt;&quot;AudioCodecBackend&quot;&gt;</td>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a> <a class="el" href="group__proav.html#ga34ba81a11e07a24d743c57fdc4bea2c1">promeki::AudioCodecBackendRegistry</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">typedef</a> <a class="el" href="classpromeki_1_1StringRegistry.html">StringRegistry</a>&lt;&quot;AudioCodecBackend&quot;&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Compile-time tag for the <a class="el" href="classAudioCodec.html" title="First-class identifier for an audio codec family.">AudioCodec</a> backend <a class="el" href="classStringRegistry.html" title="Thread-safe append-only registry that maps unique strings to integer IDs.">StringRegistry</a>. </p>
-<p>Chosen separately from the <code><a class="el" href="classVideoCodec.html" title="First-class identifier for a video codec family.">VideoCodec</a></code> backend tag so the two namespaces never alias — an <code>"Native"</code> backend on the audio side is a different typed value from a <code>"Native"</code> video backend. </p>
+<p>Compile-time tag for the <a class="el" href="classpromeki_1_1AudioCodec.html" title="First-class identifier for an audio codec family.">AudioCodec</a> backend <a class="el" href="classpromeki_1_1StringRegistry.html" title="Thread-safe append-only registry that maps unique strings to integer IDs.">StringRegistry</a>. </p>
+<p>Chosen separately from the <code><a class="el" href="classpromeki_1_1VideoCodec.html" title="First-class identifier for a video codec family.">VideoCodec</a></code> backend tag so the two namespaces never alias — an <code>"Native"</code> backend on the audio side is a different typed value from a <code>"Native"</code> video backend. </p>
 
 </div>
 </div>
-<a id="gaef169420b11ea439bb24ed35fb04237d" name="gaef169420b11ea439bb24ed35fb04237d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#gaef169420b11ea439bb24ed35fb04237d">&#9670;&#160;</a></span>AudioFileFactory</h2>
+<a id="ga0b6bbf6f9e7f14d4ca980948a716ae3e" name="ga0b6bbf6f9e7f14d4ca980948a716ae3e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga0b6bbf6f9e7f14d4ca980948a716ae3e">&#9670;&#160;</a></span>AudioFileFactory</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="group__proav.html#gaef169420b11ea439bb24ed35fb04237d">AudioFileFactory</a> =  <a class="el" href="classFileFormatFactory.html">FileFormatFactory</a>&lt;<a class="el" href="classAudioFile.html">AudioFile</a>&gt;</td>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a> <a class="el" href="classpromeki_1_1AudioFileFactory.html">promeki::AudioFileFactory</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">typedef</a> <a class="el" href="classpromeki_1_1FileFormatFactory.html">FileFormatFactory</a>&lt;<a class="el" href="classpromeki_1_1AudioFile.html">AudioFile</a>&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Factory type for creating <a class="el" href="classAudioFile.html" title="Audio file reader and writer.">AudioFile</a> instances based on file format. </p>
-<p>AudioFileFactory is a typedef for FileFormatFactory&lt;AudioFile&gt;. Subclasses register themselves via PROMEKI_REGISTER_AUDIOFILE_FACTORY to handle specific audio file formats (e.g. WAV, FLAC). </p>
+<p>Factory type for creating <a class="el" href="classpromeki_1_1AudioFile.html" title="Audio file reader and writer.">AudioFile</a> instances based on file format. </p>
+<p><a class="el" href="classpromeki_1_1AudioFileFactory.html" title="MediaIOFactory for the AudioFile backend.">AudioFileFactory</a> is a typedef for FileFormatFactory&lt;AudioFile&gt;. Subclasses register themselves via PROMEKI_REGISTER_AUDIOFILE_FACTORY to handle specific audio file formats (e.g. WAV, FLAC). </p>
 
 </div>
 </div>
-<a id="ga3b56f86d9f1d2a1dc4e46368b79d4ac0" name="ga3b56f86d9f1d2a1dc4e46368b79d4ac0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga3b56f86d9f1d2a1dc4e46368b79d4ac0">&#9670;&#160;</a></span>VideoCodecBackendRegistry</h2>
+<a id="gaddb329f0cd3295bd6731bdffd804ca96" name="gaddb329f0cd3295bd6731bdffd804ca96"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaddb329f0cd3295bd6731bdffd804ca96">&#9670;&#160;</a></span>AudioStreamDescRegistry</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="group__proav.html#ga3b56f86d9f1d2a1dc4e46368b79d4ac0">VideoCodecBackendRegistry</a> =  <a class="el" href="classStringRegistry.html">StringRegistry</a>&lt;&quot;VideoCodecBackend&quot;&gt;</td>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a> <a class="el" href="group__proav.html#gaddb329f0cd3295bd6731bdffd804ca96">promeki::AudioStreamDescRegistry</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">typedef</a> <a class="el" href="classpromeki_1_1StringRegistry.html">StringRegistry</a>&lt;&quot;AudioStreamDesc&quot;&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Compile-time tag for the <a class="el" href="classVideoCodec.html" title="First-class identifier for a video codec family.">VideoCodec</a> backend <a class="el" href="classStringRegistry.html" title="Thread-safe append-only registry that maps unique strings to integer IDs.">StringRegistry</a>. </p>
-<p>Chosen separately from the <code><a class="el" href="classAudioCodec.html" title="First-class identifier for an audio codec family.">AudioCodec</a></code> backend tag so the two namespaces never alias — a <code>Backend</code> handle for <code>"Nvidia"</code> on the video side is a different typed value from a (hypothetical) audio <code>"Nvidia"</code> backend. </p>
+<p>Compile-time tag for the <a class="el" href="classpromeki_1_1AudioStreamDesc.html">AudioStreamDesc</a> registry. </p>
+<p>Picks out the per-process <a class="el" href="classpromeki_1_1StringRegistry.html">StringRegistry</a> that backs <a class="el" href="classpromeki_1_1AudioStreamDesc.html">AudioStreamDesc</a> identity. Stream names like <code>"Main"</code>, <code>"Commentary"</code>, <code>"Music_FR"</code> all live in this namespace and never collide with other <a class="el" href="classpromeki_1_1StringRegistry.html">StringRegistry</a> consumers. </p>
+
+</div>
+</div>
+<a id="ga8c0bf20dc1883f3288212d43d8f165ac" name="ga8c0bf20dc1883f3288212d43d8f165ac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga8c0bf20dc1883f3288212d43d8f165ac">&#9670;&#160;</a></span>VideoCodecBackendRegistry</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a> <a class="el" href="group__proav.html#ga8c0bf20dc1883f3288212d43d8f165ac">promeki::VideoCodecBackendRegistry</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">typedef</a> <a class="el" href="classpromeki_1_1StringRegistry.html">StringRegistry</a>&lt;&quot;VideoCodecBackend&quot;&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Compile-time tag for the <a class="el" href="classpromeki_1_1VideoCodec.html" title="First-class identifier for a video codec family.">VideoCodec</a> backend <a class="el" href="classpromeki_1_1StringRegistry.html" title="Thread-safe append-only registry that maps unique strings to integer IDs.">StringRegistry</a>. </p>
+<p>Chosen separately from the <code><a class="el" href="classpromeki_1_1AudioCodec.html" title="First-class identifier for an audio codec family.">AudioCodec</a></code> backend tag so the two namespaces never alias — a <code>Backend</code> handle for <code>"Nvidia"</code> on the video side is a different typed value from a (hypothetical) audio <code>"Nvidia"</code> backend. </p>
 
 </div>
 </div>
@@ -558,7 +612,7 @@ Typedefs</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

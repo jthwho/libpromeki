@@ -1,0 +1,25 @@
+var structpromeki_1_1HevcDecoderConfig =
+[
+    [ "serialize", "structpromeki_1_1HevcDecoderConfig.html#ac38289673db5e99b6c0a5880e1e1520f", null ],
+    [ "toAnnexB", "structpromeki_1_1HevcDecoderConfig.html#a4e4e22a45ad7a671876694ed3501536c", null ],
+    [ "avgFrameRate", "structpromeki_1_1HevcDecoderConfig.html#abd083fe3d64f0d61c8c31f0375863d0f", null ],
+    [ "bitDepthChromaMinus8", "structpromeki_1_1HevcDecoderConfig.html#a1781468f2e18c93308b161edf86420a6", null ],
+    [ "bitDepthLumaMinus8", "structpromeki_1_1HevcDecoderConfig.html#a5b639e4e22f7932d188e7d7c3d77b5ab", null ],
+    [ "chromaFormat", "structpromeki_1_1HevcDecoderConfig.html#a0674416a4e1b158e23891e6b46438005", null ],
+    [ "configurationVersion", "structpromeki_1_1HevcDecoderConfig.html#a043dbda2265e6a65e5aa491355bc344b", null ],
+    [ "constantFrameRate", "structpromeki_1_1HevcDecoderConfig.html#a8d7b80196481234121c65b2e5cf4a4b3", null ],
+    [ "generalConstraintIndicatorFlags", "structpromeki_1_1HevcDecoderConfig.html#a016a5f915f8e8df7ca40ae95c6799c4b", null ],
+    [ "generalLevelIdc", "structpromeki_1_1HevcDecoderConfig.html#a9e8179e1c88e9991e18bdb084f43dea4", null ],
+    [ "generalProfileCompatibilityFlags", "structpromeki_1_1HevcDecoderConfig.html#a1321860bd2f2fcc930433d536d623b81", null ],
+    [ "generalProfileIdc", "structpromeki_1_1HevcDecoderConfig.html#a1c69237486d661b53079aef1ea4c5c63", null ],
+    [ "generalProfileSpace", "structpromeki_1_1HevcDecoderConfig.html#ae11cf0a5ab6fe50bfba79bd57f56ed54", null ],
+    [ "generalTierFlag", "structpromeki_1_1HevcDecoderConfig.html#ae4a3aa88542a27d67a2678611329a45f", null ],
+    [ "lengthSizeMinusOne", "structpromeki_1_1HevcDecoderConfig.html#a127ca78ab90f8d9e30c91e5e04216293", null ],
+    [ "minSpatialSegmentationIdc", "structpromeki_1_1HevcDecoderConfig.html#a0c55b4e7123e8814ba73f6dd13929b01", null ],
+    [ "numTemporalLayers", "structpromeki_1_1HevcDecoderConfig.html#abcd9c75042b0071889227413b6dfb241", null ],
+    [ "parallelismType", "structpromeki_1_1HevcDecoderConfig.html#a69a11c698b0122c37c3979b37a69e83b", null ],
+    [ "pps", "structpromeki_1_1HevcDecoderConfig.html#af883755ab2165752fddb4b65ee86f7f6", null ],
+    [ "sps", "structpromeki_1_1HevcDecoderConfig.html#ae52dc8d3926a6240a026b518e213850a", null ],
+    [ "temporalIdNested", "structpromeki_1_1HevcDecoderConfig.html#ad830619fd413d5c0b5e80af0f2838835", null ],
+    [ "vps", "structpromeki_1_1HevcDecoderConfig.html#add517666a9f55a1d240279b6812ea49c", null ]
+];

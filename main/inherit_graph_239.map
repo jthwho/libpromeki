@@ -1,3 +1,5 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$structMediaPipelineConfig_1_1Stage.html" title="Declarative description of one MediaIO stage." alt="" coords="5,5,160,45"/>
+<area shape="rect" id="Node000000" href="$classpromeki_1_1List.html" title=" " alt="" coords="5,5,180,31"/>
+<area shape="rect" id="Node000001" href="$classpromeki_1_1StringList.html" title="Manages a list of strings." alt="" coords="228,5,373,31"/>
+<area shape="poly" id="edge95_Node000000_Node000001" title=" " alt="" coords="194,15,228,15,228,21,194,21"/>
 </map>

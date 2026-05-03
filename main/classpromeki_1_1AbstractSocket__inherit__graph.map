@@ -1,0 +1,17 @@
+<map id="promeki::AbstractSocket" name="promeki::AbstractSocket">
+<area shape="rect" id="Node000001" title="Abstract base class for network sockets." alt="" coords="168,152,349,177"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1RawSocket.html" title="Raw Ethernet frame socket." alt="" coords="5,225,160,251"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="219,185,112,228,110,223,217,180"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1TcpSocket.html" title="Stream&#45;oriented TCP socket." alt="" coords="185,225,333,251"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="261,191,261,225,256,225,256,191"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1UdpSocket.html" title="Datagram&#45;oriented UDP socket with multicast support." alt="" coords="362,225,515,251"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="301,180,410,223,408,228,299,185"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1IODevice.html" title="Abstract base class for all I/O devices." alt="" coords="187,79,330,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="261,118,261,152,256,152,256,118"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="179,5,338,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="261,44,261,79,256,79,256,44"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1SslSocket.html" title="TcpSocket extension that wraps the byte stream in TLS." alt="" coords="183,299,329,324"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="260,265,259,299,254,298,255,264"/>
+<area shape="rect" id="Node000008" href="$classpromeki_1_1PrioritySocket.html" title="UDP socket with QoS priority convenience methods." alt="" coords="354,299,529,324"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="442,264,444,298,438,299,437,265"/>
+</map>

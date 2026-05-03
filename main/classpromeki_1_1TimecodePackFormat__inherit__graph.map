@@ -1,0 +1,7 @@
+<map id="promeki::TimecodePackFormat" name="promeki::TimecodePackFormat">
+<area shape="rect" id="Node000001" title="Selects the on&#45;the&#45;wire BCD time&#45;address layout used by Timecode::toBcd64 and Timecode::fromBcd64." alt="" coords="5,167,229,192"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="21,79,213,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,132,120,166,115,166,115,132"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="57,5,178,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="120,44,120,79,115,79,115,44"/>
+</map>

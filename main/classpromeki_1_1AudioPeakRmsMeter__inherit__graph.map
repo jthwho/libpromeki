@@ -1,0 +1,5 @@
+<map id="promeki::AudioPeakRmsMeter" name="promeki::AudioPeakRmsMeter">
+<area shape="rect" id="Node000001" title="Default per&#45;channel peak + RMS meter." alt="" coords="5,79,225,104"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1AudioMeter.html" title="Pluggable per&#45;block metering callback." alt="" coords="36,5,195,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,44,118,79,113,79,113,44"/>
+</map>

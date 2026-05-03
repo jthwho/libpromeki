@@ -1,4 +1,4 @@
 var audiofile_8h =
 [
-    [ "AudioFile::Impl", "classAudioFile_1_1Impl.html", "classAudioFile_1_1Impl" ]
+    [ "promeki::AudioFile::Impl", "classpromeki_1_1AudioFile_1_1Impl.html", "classpromeki_1_1AudioFile_1_1Impl" ]
 ];

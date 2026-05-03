@@ -1,8 +1,0 @@
-<map id="AudioSourceHint" name="AudioSourceHint">
-<area shape="rect" id="Node000001" title="Preferred audio source for image&#45;sequence readers." alt="" coords="57,157,188,182"/>
-<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="203,162,215,169,206,176,188,179,188,173,204,171,209,169,201,166"/>
-<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,240,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,119,125,156,120,156,120,119"/>
-<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="93,5,152,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="125,45,125,80,120,80,120,45"/>
-</map>

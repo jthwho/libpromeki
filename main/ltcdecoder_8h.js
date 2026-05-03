@@ -1,4 +1,4 @@
 var ltcdecoder_8h =
 [
-    [ "LtcDecoder::DecodedTimecode", "structLtcDecoder_1_1DecodedTimecode.html", "structLtcDecoder_1_1DecodedTimecode" ]
+    [ "promeki::LtcDecoder::DecodedTimecode", "structpromeki_1_1LtcDecoder_1_1DecodedTimecode.html", "structpromeki_1_1LtcDecoder_1_1DecodedTimecode" ]
 ];

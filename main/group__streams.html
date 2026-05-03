@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -110,29 +108,29 @@ $(document).ready(function(){initNavTree('group__streams.html',''); initResizabl
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDataStream.html">DataStream</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Binary stream for structured, portable serialization.  <a href="classDataStream.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1DataStream.html">promeki::DataStream</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Binary stream for structured, portable serialization.  <a href="classpromeki_1_1DataStream.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStreamStringIODevice.html">StreamStringIODevice</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write-only <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> that intercepts writes, accumulates characters, and invokes a callback on newlines or flush.  <a href="classStreamStringIODevice.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1StreamStringIODevice.html">promeki::StreamStringIODevice</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write-only <a class="el" href="classpromeki_1_1IODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> that intercepts writes, accumulates characters, and invokes a callback on newlines or flush.  <a href="classpromeki_1_1StreamStringIODevice.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStreamString.html">StreamString</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Collects text output into a <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>, splitting on newlines.  <a href="classStreamString.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1StreamString.html">promeki::StreamString</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Collects text output into a <a class="el" href="classpromeki_1_1String.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>, splitting on newlines.  <a href="classpromeki_1_1StreamString.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTextStream.html">TextStream</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Formatted text I/O with encoding awareness.  <a href="classTextStream.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1TextStream.html">promeki::TextStream</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Formatted text I/O with encoding awareness.  <a href="classpromeki_1_1TextStream.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Typed serialization streams for binary and text data. </p>
-<p><a class="el" href="classDataStream.html" title="Binary stream for structured, portable serialization.">DataStream</a> provides portable binary serialization; <a class="el" href="classTextStream.html" title="Formatted text I/O with encoding awareness.">TextStream</a> provides formatted text output. <a class="el" href="classStreamString.html" title="Collects text output into a String, splitting on newlines.">StreamString</a> is a convenience adapter that writes to an in-memory <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>. </p>
+<p>DataStream provides portable binary serialization; TextStream provides formatted text output. StreamString is a convenience adapter that writes to an in-memory String. </p>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

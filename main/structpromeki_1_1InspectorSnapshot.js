@@ -1,0 +1,27 @@
+var structpromeki_1_1InspectorSnapshot =
+[
+    [ "actualFps", "structpromeki_1_1InspectorSnapshot.html#a9780de18712362c8037afa750c7f4510", null ],
+    [ "audioDeltaAvgNs", "structpromeki_1_1InspectorSnapshot.html#ad55ccb83c990d594279095aa11910df3", null ],
+    [ "audioDeltaMaxNs", "structpromeki_1_1InspectorSnapshot.html#aba4af105edec1b28dd8a60135184936e", null ],
+    [ "audioDeltaMinNs", "structpromeki_1_1InspectorSnapshot.html#a2f6f9bab0a3238b4b2ed4b8062ff7acf", null ],
+    [ "audioDeltaSamples", "structpromeki_1_1InspectorSnapshot.html#ae4869da28b752182425c2fe88a23dc55", null ],
+    [ "audioSamplesAvg", "structpromeki_1_1InspectorSnapshot.html#a335fbe9e4f19cdaf57f2c38603df31f6", null ],
+    [ "audioSamplesFrames", "structpromeki_1_1InspectorSnapshot.html#acb6a9146d0acfe0c8316b387b60e9dd6", null ],
+    [ "audioSamplesMax", "structpromeki_1_1InspectorSnapshot.html#abbd6f30150bbe8e7342410c2a7d26a05", null ],
+    [ "audioSamplesMin", "structpromeki_1_1InspectorSnapshot.html#aff08e23de2e723976e5342c65af7f79a", null ],
+    [ "audioSamplesSpanNs", "structpromeki_1_1InspectorSnapshot.html#abc891d0c3791b0baa3f2a8fe9be19ea5", null ],
+    [ "audioSamplesTotal", "structpromeki_1_1InspectorSnapshot.html#a2ff7131f4e18a8adc5a981f2cd0acf44", null ],
+    [ "framesProcessed", "structpromeki_1_1InspectorSnapshot.html#ae212ddf63935391f84cb12115801587d", null ],
+    [ "framesWithAudioTimestamp", "structpromeki_1_1InspectorSnapshot.html#aa5124fb830e00214c353ef828796c9cc", null ],
+    [ "framesWithLtc", "structpromeki_1_1InspectorSnapshot.html#a183f3f6073999e5d658f86883033154a", null ],
+    [ "framesWithPictureData", "structpromeki_1_1InspectorSnapshot.html#ad17cbb2743b5feeff24d898e89642533", null ],
+    [ "framesWithVideoTimestamp", "structpromeki_1_1InspectorSnapshot.html#a86e7694a0b300f9f8ee487cd438226b9", null ],
+    [ "hasLastEvent", "structpromeki_1_1InspectorSnapshot.html#a783b3437559244b6b133e6352563ab74", null ],
+    [ "lastEvent", "structpromeki_1_1InspectorSnapshot.html#aed0f1fb161738d6d6dfb43a0eeb8105d", null ],
+    [ "measuredAudioSampleRate", "structpromeki_1_1InspectorSnapshot.html#abeeab3d3ba9feb39f0be828847de9641", null ],
+    [ "totalDiscontinuities", "structpromeki_1_1InspectorSnapshot.html#a1654e7568d75d1fb8bb81e0dd75db508", null ],
+    [ "videoDeltaAvgNs", "structpromeki_1_1InspectorSnapshot.html#a93cab93d39d5aa54b828befb91a21c93", null ],
+    [ "videoDeltaMaxNs", "structpromeki_1_1InspectorSnapshot.html#ac8e120c3f281cad08b6ca64943f31347", null ],
+    [ "videoDeltaMinNs", "structpromeki_1_1InspectorSnapshot.html#ab6df7505f059254939eddbc55d3f915e", null ],
+    [ "videoDeltaSamples", "structpromeki_1_1InspectorSnapshot.html#a9c4b4b3dc73417e7e7d52f984cc30670", null ]
+];

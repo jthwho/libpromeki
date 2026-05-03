@@ -1,8 +1,0 @@
-<map id="QuickTimeLayout" name="QuickTimeLayout">
-<area shape="rect" id="Node000001" title="Well&#45;known Enum type for QuickTime / ISO&#45;BMFF container layout." alt="" coords="58,157,194,182"/>
-<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="209,162,221,169,212,176,195,179,194,173,210,171,215,169,207,166"/>
-<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,247,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="129,119,129,156,123,156,123,119"/>
-<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="97,5,155,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="129,45,129,80,123,80,123,45"/>
-</map>

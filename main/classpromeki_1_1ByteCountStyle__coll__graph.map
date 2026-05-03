@@ -1,0 +1,8 @@
+<map id="promeki::ByteCountStyle" name="promeki::ByteCountStyle">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for human&#45;readable byte&#45;count formatting." alt="" coords="5,171,191,197"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="205,177,217,184,209,191,191,193,191,188,207,186,212,184,203,182"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="19,80,177,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,134,101,171,95,171,95,134"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="37,5,159,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="101,44,101,80,95,80,95,44"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="promeki::MediaPipelineConfig::Stage" name="promeki::MediaPipelineConfig::Stage">
+<area shape="rect" id="Node000001" title="Declarative description of one MediaIO stage." alt="" coords="126,212,343,252"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,95,128,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,126,210,210,207,214,92,131"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1MediaConfig.html" title="Generic name/value configuration container for the media subsystem." alt="" coords="152,95,317,120"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="237,134,237,212,232,212,232,134"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1VariantDatabase.html" title=" " alt="" coords="129,5,321,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="232,59,236,94,231,95,226,59"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Metadata.html" title="Key&#45;value metadata container using typed Variant values." alt="" coords="359,95,505,120"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="403,130,267,214,264,210,401,125"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1VariantDatabase.html" title=" " alt="" coords="345,5,537,45"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="440,59,436,95,431,94,435,59"/>
+</map>

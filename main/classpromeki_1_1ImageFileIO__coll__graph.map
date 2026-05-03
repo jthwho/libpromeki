@@ -1,0 +1,9 @@
+<map id="promeki::ImageFileIO" name="promeki::ImageFileIO">
+<area shape="rect" id="Node000001" title="Abstract backend for image file format I/O." alt="" coords="51,197,213,223"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,80,128,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="69,119,73,146,84,172,95,185,110,195,107,199,92,189,79,175,68,147,64,120"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1StringList.html" title="Manages a list of strings." alt="" coords="153,80,298,105"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="218,120,203,147,183,175,154,199,151,195,179,172,199,145,213,117"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1List.html" title=" " alt="" coords="138,5,313,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="228,45,228,80,223,80,223,45"/>
+</map>

@@ -1,0 +1,22 @@
+<map id="promeki::UdpSocket" name="promeki::UdpSocket">
+<area shape="rect" id="Node000001" title="Datagram&#45;oriented UDP socket with multicast support." alt="" coords="1417,115,1571,141"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1AbstractSocket.html" title="Abstract base class for network sockets." alt="" coords="1187,115,1368,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1382,125,1417,125,1417,131,1382,131"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1IODevice.html" title="Abstract base class for all I/O devices." alt="" coords="817,93,960,118"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="974,108,1187,120,1186,125,974,113"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="413,70,572,95"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="586,85,817,99,817,104,585,91"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,63,199,103"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="212,80,413,80,413,85,212,85"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="417,10,568,35"/>
+<area shape="poly" id="edge8_Node000002_Node000006" title=" " alt="" coords="582,20,663,22,750,28,867,41,958,55,1163,97,1228,113,1227,118,1162,103,957,61,866,47,749,33,663,27,582,25"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="545,37,617,57,722,79,818,94,817,99,721,84,615,63,543,42"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="393,185,592,210"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="605,188,678,174,714,163,748,148,760,138,772,127,816,112,818,117,775,132,763,142,751,153,716,168,679,179,606,193"/>
+<area shape="rect" id="Node000008" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="396,120,589,160"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="603,129,749,116,817,110,817,115,750,121,604,134"/>
+<area shape="rect" id="Node000009" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="773,142,1004,167"/>
+<area shape="poly" id="edge9_Node000002_Node000009" title=" " alt="" coords="1017,148,1162,139,1186,136,1187,142,1163,144,1018,153"/>
+<area shape="rect" id="Node000010" href="$classpromeki_1_1SocketAddress.html" title="Network address with port number." alt="" coords="799,197,978,222"/>
+<area shape="poly" id="edge10_Node000002_Node000010" title=" " alt="" coords="992,207,1076,200,1162,183,1213,162,1255,138,1258,143,1216,167,1163,188,1076,205,992,212"/>
+</map>

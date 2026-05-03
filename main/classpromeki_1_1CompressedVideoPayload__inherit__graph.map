@@ -1,0 +1,7 @@
+<map id="promeki::CompressedVideoPayload" name="promeki::CompressedVideoPayload">
+<area shape="rect" id="Node000001" title="Compressed video payload — one encoded access unit whose codec identity lives in the base ImageDesc&#39;s..." alt="" coords="5,152,208,192"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1VideoPayload.html" title="Abstract base for any video payload — compressed or uncompressed." alt="" coords="21,79,193,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,118,109,152,104,152,104,118"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1MediaPayload.html" title="Abstract polymorphic base for any media payload flowing through a pipeline." alt="" coords="19,5,194,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="109,44,109,79,104,79,104,44"/>
+</map>

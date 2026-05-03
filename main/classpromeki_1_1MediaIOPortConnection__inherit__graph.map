@@ -1,0 +1,5 @@
+<map id="promeki::MediaIOPortConnection" name="promeki::MediaIOPortConnection">
+<area shape="rect" id="Node000001" title="Live wire from one MediaIOSource to one or more MediaIOSink." alt="" coords="5,79,243,104"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="45,5,203,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="127,44,127,79,121,79,121,44"/>
+</map>

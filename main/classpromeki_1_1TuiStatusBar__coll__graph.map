@@ -1,0 +1,11 @@
+<map id="promeki::TuiStatusBar" name="promeki::TuiStatusBar">
+<area shape="rect" id="Node000001" title="Bottom&#45;of&#45;screen status line." alt="" coords="19,332,185,357"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TuiWidget.html" title="TUI&#45;specific widget base class." alt="" coords="28,257,176,283"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,297,105,332,99,332,99,297"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Widget.html" title="Base class for all widgets across UI backends." alt="" coords="37,183,167,208"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="105,222,105,257,99,257,99,222"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="23,108,181,133"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="105,148,105,182,99,182,99,148"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,5,199,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="105,59,105,108,99,108,99,59"/>
+</map>

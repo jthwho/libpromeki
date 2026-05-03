@@ -1,0 +1,19 @@
+<map id="promeki::MediaIOCommandParams" name="promeki::MediaIOCommandParams">
+<area shape="rect" id="Node000001" title="Backend&#45;specific parameterized command." alt="" coords="417,300,671,325"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1MediaIOCommand.html" title="Base class for MediaIO commands." alt="" coords="253,190,459,215"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="389,220,525,298,523,302,386,224"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1RefCount.html" title="An atomic reference count object." alt="" coords="5,95,149,120"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="115,123,198,156,308,187,307,193,196,161,113,128"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1Atomic.html" title=" " alt="" coords="174,95,362,120"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="290,128,347,188,343,192,286,132"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Error.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="387,95,501,120"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="426,132,369,192,365,188,422,128"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1MediaIOStats.html" title="Telemetry container shared by per&#45;command and instance&#45;wide reporting." alt="" coords="525,95,696,120"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="567,127,388,192,387,187,566,122"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1VariantDatabase.html" title=" " alt="" coords="515,5,707,45"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="613,59,613,94,608,94,608,59"/>
+<area shape="rect" id="Node000008" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="483,190,605,215"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="547,229,547,300,541,300,541,229"/>
+<area shape="rect" id="Node000009" href="$classpromeki_1_1VariantDatabase.html" title=" " alt="" coords="629,183,821,223"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="683,232,565,302,562,297,681,227"/>
+</map>

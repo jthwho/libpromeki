@@ -1,4 +1,4 @@
 var slot_8h =
 [
-    [ "Slot< Args >::removeConstAndRef< T >", "structSlot_1_1removeConstAndRef.html", null ]
+    [ "promeki::Slot< Args >::removeConstAndRef< T >", "structpromeki_1_1Slot_1_1removeConstAndRef.html", null ]
 ];

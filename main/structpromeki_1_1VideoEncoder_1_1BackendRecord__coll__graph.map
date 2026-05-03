@@ -1,0 +1,7 @@
+<map id="promeki::VideoEncoder::BackendRecord" name="promeki::VideoEncoder::BackendRecord">
+<area shape="rect" id="Node000001" title="Registration record attaching a concrete encoder to a (codec, backend) pair." alt="" coords="90,108,263,148"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1VideoCodec_1_1Backend.html" title="Typed handle for a concrete codec backend." alt="" coords="5,5,167,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="114,54,162,106,158,110,110,57"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1List.html" title=" " alt="" coords="191,13,346,38"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="251,50,196,110,192,106,247,46"/>
+</map>

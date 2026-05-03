@@ -1,4 +1,4 @@
 var imagedataencoder_8h =
 [
-    [ "ImageDataEncoder::Item", "structImageDataEncoder_1_1Item.html", "structImageDataEncoder_1_1Item" ]
+    [ "promeki::ImageDataEncoder::Item", "structpromeki_1_1ImageDataEncoder_1_1Item.html", "structpromeki_1_1ImageDataEncoder_1_1Item" ]
 ];

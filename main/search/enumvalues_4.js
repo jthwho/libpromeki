@@ -1,13 +1,13 @@
 var searchData=
 [
-  ['empty_0',['Empty',['../classMediaPipeline.html#a5b443714546d0d15aa4670acf2413199ace2c8aed9c2fa0cfbed56cbda4d8bf07',1,'MediaPipeline']]],
-  ['encodefailed_1',['EncodeFailed',['../classError.html#ab5980e13b879db253df802b0950d1708a0da389a20619220b914a8114ee62bef1',1,'Error']]],
-  ['endoffile_2',['EndOfFile',['../classError.html#ab5980e13b879db253df802b0950d1708a47ebde87a9587fbdf7b0d5a2c5a443d0',1,'Error']]],
-  ['endofstream_3',['EndOfStream',['../classMediaPayload.html#a807316b4e6c6bc46e1363540d7feef7aaa4788635b09993336b687fbe0411d103',1,'MediaPayload']]],
-  ['err_4',['Err',['../classLogger.html#ac744681e23720966b5f430ec2060da36a35811ca88fbdb4ffadbf3cb9aed61110',1,'Logger']]],
-  ['excludeposted_5',['ExcludePosted',['../classEventLoop.html#a18e4672007c4c1c025a5ed07243cbd9ea82df7560d4e3a3b3ab79d76505995b5b',1,'EventLoop']]],
-  ['excludetimers_6',['ExcludeTimers',['../classEventLoop.html#a18e4672007c4c1c025a5ed07243cbd9ea06a475c9b3a3e3407d6e36c40046cd7c',1,'EventLoop']]],
-  ['exclusive_7',['Exclusive',['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513ad2aa136051b8c5497603c92b00f6fe97',1,'File']]],
-  ['exists_8',['Exists',['../classError.html#ab5980e13b879db253df802b0950d1708a4aa2e5d7a56b60c9db994fbb271b98b7',1,'Error']]],
-  ['extended_9',['Extended',['../classUMID.html#ac52e60b55e48d0c43d8574e6ed92a2a1aa49a0775500f7542416ef93af9e50d13',1,'UMID']]]
+  ['empty_0',['empty',['../classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4ad0d00e15e0b3ac52836a9e75b2916013',1,'promeki::Error::Empty'],['../classpromeki_1_1MediaPipeline.html#ae2dc85f9ea16eea5b075e1389a79fe98ace2c8aed9c2fa0cfbed56cbda4d8bf07',1,'promeki::MediaPipeline::Empty']]],
+  ['encodefailed_1',['EncodeFailed',['../classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a2e3d4aa20397e4aa7baaf763c4953a70',1,'promeki::Error']]],
+  ['endoffile_2',['EndOfFile',['../classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a14844f288332d8e5543142096a2a48c9',1,'promeki::Error']]],
+  ['endofstream_3',['EndOfStream',['../classpromeki_1_1MediaPayload.html#af207223d37cd369d8aba34eddf6b768aab698169b353633522fe65f44512c2212',1,'promeki::MediaPayload']]],
+  ['err_4',['Err',['../classpromeki_1_1Logger.html#a9a954d118534471a79e211dfdc2484c1a4aa02bd6bc1292cce8412269b810c86d',1,'promeki::Logger']]],
+  ['excludeposted_5',['ExcludePosted',['../classpromeki_1_1EventLoop.html#a1eb08211d520dd1eaf1931401a62d23eaabda7309238833fff227d71dcfe5f52d',1,'promeki::EventLoop']]],
+  ['excludetimers_6',['ExcludeTimers',['../classpromeki_1_1EventLoop.html#a1eb08211d520dd1eaf1931401a62d23ea315d39648d5146f84620086e376808a1',1,'promeki::EventLoop']]],
+  ['exclusive_7',['Exclusive',['../classpromeki_1_1File.html#a8e611edb3673289ffea1fe896d111ecaa8698f082ac1742b2c9a316776aea5f4b',1,'promeki::File']]],
+  ['exists_8',['Exists',['../classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4afa39971c90acbb21518bb7d6674ab486',1,'promeki::Error']]],
+  ['extended_9',['Extended',['../classpromeki_1_1UMID.html#a9a2e39dc3303185c8e7c49ca58b1b566aaead0c66bbd05e1eeaa79ab18f156097',1,'promeki::UMID']]]
 ];

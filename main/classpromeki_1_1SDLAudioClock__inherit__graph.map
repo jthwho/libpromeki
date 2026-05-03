@@ -1,0 +1,5 @@
+<map id="promeki::SDLAudioClock" name="promeki::SDLAudioClock">
+<area shape="rect" id="Node000001" title="Clock driven by an SDL audio device&#39;s consumption rate." alt="" coords="5,79,188,104"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1Clock.html" title="Abstract clock interface." alt="" coords="37,5,157,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="99,44,99,79,94,79,94,44"/>
+</map>

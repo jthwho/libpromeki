@@ -1,0 +1,5 @@
+<map id="promeki::PixelMemLayout::PlaneDesc" name="promeki::PixelMemLayout::PlaneDesc">
+<area shape="rect" id="Node000001" title="Describes a single image plane." alt="" coords="5,93,197,133"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="40,5,163,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="104,44,104,93,99,93,99,44"/>
+</map>

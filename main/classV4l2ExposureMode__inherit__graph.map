@@ -1,7 +1,0 @@
-<map id="V4l2ExposureMode" name="V4l2ExposureMode">
-<area shape="rect" id="Node000001" title="Well&#45;known Enum type for V4L2 auto exposure mode." alt="" coords="58,152,205,177"/>
-<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,79,257,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="134,118,134,152,129,152,129,118"/>
-<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="102,5,161,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="134,44,134,79,129,79,129,44"/>
-</map>

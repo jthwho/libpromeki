@@ -1,11 +1,11 @@
 var mediapipelineconfig_8h =
 [
-    [ "MediaPipelineConfig::Stage", "structMediaPipelineConfig_1_1Stage.html", "structMediaPipelineConfig_1_1Stage" ],
-    [ "MediaPipelineConfig::Route", "structMediaPipelineConfig_1_1Route.html", "structMediaPipelineConfig_1_1Route" ],
-    [ "operator<<", "mediapipelineconfig_8h.html#a779ccaf98d3b85c919ae60cd5f07e175", null ],
-    [ "operator<<", "mediapipelineconfig_8h.html#a3aee8633d1cd791759a84198cfac8aaa", null ],
-    [ "operator<<", "mediapipelineconfig_8h.html#a60cce10b56379b90837c256110ff2fcd", null ],
-    [ "operator>>", "mediapipelineconfig_8h.html#a60a56dd8c169d7fb9ee5b9a835d32324", null ],
-    [ "operator>>", "mediapipelineconfig_8h.html#a9300de9873826f990b4e52d079939a11", null ],
-    [ "operator>>", "mediapipelineconfig_8h.html#a490ffd4e91d9840bdcddd8d5f9e78beb", null ]
+    [ "promeki::MediaPipelineConfig::Stage", "structpromeki_1_1MediaPipelineConfig_1_1Stage.html", "structpromeki_1_1MediaPipelineConfig_1_1Stage" ],
+    [ "promeki::MediaPipelineConfig::Route", "structpromeki_1_1MediaPipelineConfig_1_1Route.html", "structpromeki_1_1MediaPipelineConfig_1_1Route" ],
+    [ "operator<<", "mediapipelineconfig_8h.html#af22b11cd9d464c2c71472d2cc71ea70a", null ],
+    [ "operator<<", "mediapipelineconfig_8h.html#a9df77f8d83dfcf16d9144ac41d285337", null ],
+    [ "operator<<", "mediapipelineconfig_8h.html#a4c999bed5796dcff4c6f8b25047190bf", null ],
+    [ "operator>>", "mediapipelineconfig_8h.html#a5429c62ab43fc8b906873e0fac1e1044", null ],
+    [ "operator>>", "mediapipelineconfig_8h.html#a7de6b4f8c6e578cbcc3be2be51ca014b", null ],
+    [ "operator>>", "mediapipelineconfig_8h.html#a06c8bb697a20725797d0e6a80628d0f4", null ]
 ];

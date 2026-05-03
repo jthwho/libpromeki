@@ -1,4 +1,4 @@
 var mediaconfig_8h =
 [
-    [ "MediaConfigID", "group__media.html#ga5a21e9aead5071f63ae79fb219adc486", null ]
+    [ "MediaConfigID", "mediaconfig_8h.html#gab87ad7a17128cf523db4cb1e5bfdf483", null ]
 ];

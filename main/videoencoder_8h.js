@@ -1,4 +1,4 @@
 var videoencoder_8h =
 [
-    [ "VideoEncoder::BackendRecord", "structVideoEncoder_1_1BackendRecord.html", "structVideoEncoder_1_1BackendRecord" ]
+    [ "promeki::VideoEncoder::BackendRecord", "structpromeki_1_1VideoEncoder_1_1BackendRecord.html", "structpromeki_1_1VideoEncoder_1_1BackendRecord" ]
 ];

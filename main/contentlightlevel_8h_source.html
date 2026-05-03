@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -111,39 +109,38 @@ $(document).ready(function(){initNavTree('contentlightlevel_8h_source.html','');
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
-<div class="foldopen" id="foldopen00041" data-start="{" data-end="};">
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno"><a class="line" href="classContentLightLevel.html">   41</a></span><span class="keyword">class </span><a class="code hl_class" href="classContentLightLevel.html">ContentLightLevel</a> {</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>                <a class="code hl_class" href="classContentLightLevel.html">ContentLightLevel</a>() = <span class="keywordflow">default</span>;</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>                <a class="code hl_class" href="classContentLightLevel.html">ContentLightLevel</a>(<a class="code hl_class" href="classList.html">uint32_t</a> maxCLL, <a class="code hl_class" href="classList.html">uint32_t</a> maxFALL)</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>                        : _maxCLL(maxCLL), _maxFALL(maxFALL) {}</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>                <span class="keywordtype">bool</span> isValid()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _maxCLL &gt; 0; }</div>
+<div class="foldopen" id="foldopen00046" data-start="{" data-end="};">
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno"><a class="line" href="classpromeki_1_1ContentLightLevel.html">   46</a></span><span class="keyword">class </span><a class="code hl_class" href="classpromeki_1_1ContentLightLevel.html">ContentLightLevel</a> {</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>                <a class="code hl_class" href="classpromeki_1_1ContentLightLevel.html">ContentLightLevel</a>() = <span class="keywordflow">default</span>;</div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>                <a class="code hl_class" href="classList.html">uint32_t</a> maxCLL()<span class="keyword"> const  </span>{ <span class="keywordflow">return</span> _maxCLL; }</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>                <a class="code hl_class" href="classList.html">uint32_t</a> maxFALL()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _maxFALL; }</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>                <span class="keywordtype">void</span> setMaxCLL(<a class="code hl_class" href="classList.html">uint32_t</a> v)  { _maxCLL = v; }</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                <span class="keywordtype">void</span> setMaxFALL(<a class="code hl_class" href="classList.html">uint32_t</a> v) { _maxFALL = v; }</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span> </div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>                <span class="keywordtype">bool</span> operator==(<span class="keyword">const</span> <a class="code hl_class" href="classContentLightLevel.html">ContentLightLevel</a> &amp;<a class="code hl_class" href="classList.html">o</a>)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>                        <span class="keywordflow">return</span> _maxCLL == <a class="code hl_class" href="classList.html">o</a>._maxCLL &amp;&amp; _maxFALL == <a class="code hl_class" href="classList.html">o</a>._maxFALL;</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>                }</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>                <span class="keywordtype">bool</span> operator!=(<span class="keyword">const</span> <a class="code hl_class" href="classContentLightLevel.html">ContentLightLevel</a> &amp;<a class="code hl_class" href="classList.html">o</a>)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> !(*<span class="keyword">this</span> == <a class="code hl_class" href="classList.html">o</a>); }</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>                <a class="code hl_class" href="classString.html">String</a> toString() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>        <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>                <a class="code hl_class" href="classList.html">uint32_t</a> _maxCLL  = 0;</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>                <a class="code hl_class" href="classList.html">uint32_t</a> _maxFALL = 0;</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>};</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>                <a class="code hl_class" href="classpromeki_1_1ContentLightLevel.html">ContentLightLevel</a>(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">uint32_t</a> maxCLL, <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">uint32_t</a> maxFALL) : _maxCLL(maxCLL), _maxFALL(maxFALL) {}</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>                <span class="keywordtype">bool</span> isValid()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _maxCLL &gt; 0; }</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">uint32_t</a> maxCLL()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _maxCLL; }</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">uint32_t</a> maxFALL()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _maxFALL; }</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>                <span class="keywordtype">void</span> setMaxCLL(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">uint32_t</a> v) { _maxCLL = v; }</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>                <span class="keywordtype">void</span> setMaxFALL(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">uint32_t</a> v) { _maxFALL = v; }</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>                <span class="keywordtype">bool</span> operator==(<span class="keyword">const</span> <a class="code hl_class" href="classpromeki_1_1ContentLightLevel.html">ContentLightLevel</a> &amp;<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">o</a>)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>                        <span class="keywordflow">return</span> _maxCLL == <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">o</a>._maxCLL &amp;&amp; _maxFALL == <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">o</a>._maxFALL;</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                }</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>                <span class="keywordtype">bool</span> operator!=(<span class="keyword">const</span> <a class="code hl_class" href="classpromeki_1_1ContentLightLevel.html">ContentLightLevel</a> &amp;<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">o</a>)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> !(*<span class="keyword">this</span> == <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">o</a>); }</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>                <a class="code hl_class" href="classpromeki_1_1String.html">String</a> toString() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>        <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">uint32_t</a> _maxCLL = 0;</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>                <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">uint32_t</a> _maxFALL = 0;</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>};</div>
 </div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
-<div class="ttc" id="aclassContentLightLevel_html"><div class="ttname"><a href="classContentLightLevel.html">ContentLightLevel</a></div><div class="ttdoc">Content light level information (CTA-861.3 / ITU-T H.265 Annex D).</div><div class="ttdef"><b>Definition</b> contentlightlevel.h:41</div></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span> </div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
+<div class="ttc" id="aclasspromeki_1_1ContentLightLevel_html"><div class="ttname"><a href="classpromeki_1_1ContentLightLevel.html">promeki::ContentLightLevel</a></div><div class="ttdoc">Content light level information (CTA-861.3 / ITU-T H.265 Annex D).</div><div class="ttdef"><b>Definition</b> contentlightlevel.h:46</div></div>
+<div class="ttc" id="aclasspromeki_1_1String_html"><div class="ttname"><a href="classpromeki_1_1String.html">promeki::String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:64</div></div>
+<div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:14</div></div>
 <div class="ttc" id="anamespace_8h_html_a9a7eb1268c947a92a8cb60d369b8abf8"><div class="ttname"><a href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_END</div><div class="ttdoc">Ends a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:19</div></div>
@@ -155,7 +152,7 @@ $(document).ready(function(){initNavTree('contentlightlevel_8h_source.html','');
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="contentlightlevel_8h.html">contentlightlevel.h</a></li>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

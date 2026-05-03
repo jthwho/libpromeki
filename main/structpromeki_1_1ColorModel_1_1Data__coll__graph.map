@@ -1,0 +1,12 @@
+<map id="promeki::ColorModel::Data" name="promeki::ColorModel::Data">
+<area shape="rect" id="Node000001" title="Immutable descriptor for a color model." alt="" coords="611,93,769,133"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,37,128,62"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="140,32,152,31,201,31,396,36,481,46,587,71,645,91,643,96,586,76,480,52,396,41,201,36,152,36,141,37"/>
+<area shape="rect" id="Node000004" href="$structpromeki_1_1ColorModel_1_1CompInfo.html" title="Describes a single color component for display and documentation." alt="" coords="255,63,414,103"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="142,59,152,60,255,72,255,78,152,65,141,64"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Array.html" title=" " alt="" coords="225,127,444,153"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="458,135,586,127,610,124,611,129,587,132,458,140"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="428,88,611,104,610,109,427,93"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Matrix3x3.html" title="A 3x3 floating&#45;point matrix with SSE&#45;accelerated operations." alt="" coords="259,213,410,238"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="424,226,504,220,546,211,586,198,611,184,634,167,670,132,674,135,637,171,614,188,588,202,547,216,505,225,424,232"/>
+</map>

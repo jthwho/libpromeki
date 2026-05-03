@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -108,7 +106,7 @@ $(document).ready(function(){initNavTree('structstd_1_1formatter_3_01promeki_1_1
 </div><!--header-->
 <div class="contents">
 
-<p><code>std::formatter</code> specialization for promeki::Timecode.  
+<p><code>std::formatter</code> specialization for <a class="el" href="classpromeki_1_1Timecode.html">promeki::Timecode</a>.  
  <a href="structstd_1_1formatter_3_01promeki_1_1Timecode_01_4.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="timecode_8h_source.html">timecode.h</a>&gt;</code></p>
@@ -125,11 +123,11 @@ Public Types</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a7b646f2bf50ba18b3a4772339a6808b9" id="r_a7b646f2bf50ba18b3a4772339a6808b9"><td class="memItemLeft" align="right" valign="top"><a id="a7b646f2bf50ba18b3a4772339a6808b9" name="a7b646f2bf50ba18b3a4772339a6808b9"></a>
-<a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><b>parse</b> (std::format_parse_context &amp;<a class="el" href="classList.html">ctx</a>)</td></tr>
+constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><b>parse</b> (std::format_parse_context &amp;ctx)</td></tr>
 <tr class="separator:a7b646f2bf50ba18b3a4772339a6808b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa69c796fd506cf0f29152bbad2934760" id="r_aa69c796fd506cf0f29152bbad2934760"><td class="memTemplParams" colspan="2"><a id="aa69c796fd506cf0f29152bbad2934760" name="aa69c796fd506cf0f29152bbad2934760"></a>
-template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">FormatContext</a> &gt; </td></tr>
-<tr class="memitem:aa69c796fd506cf0f29152bbad2934760"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">auto</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>format</b> (<a class="el" href="classList.html">const</a> promeki::Timecode &amp;<a class="el" href="classList.html">tc</a>, <a class="el" href="classList.html">FormatContext</a> &amp;<a class="el" href="classList.html">ctx</a>) <a class="el" href="classList.html">const</a></td></tr>
+template&lt;typename FormatContext &gt; </td></tr>
+<tr class="memitem:aa69c796fd506cf0f29152bbad2934760"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>format</b> (const <a class="el" href="classpromeki_1_1Timecode.html">promeki::Timecode</a> &amp;tc, FormatContext &amp;ctx) const</td></tr>
 <tr class="separator:aa69c796fd506cf0f29152bbad2934760"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
@@ -142,18 +140,17 @@ std::formatter&lt; std::string_view &gt;&#160;</td><td class="memItemRight" vali
 <tr class="separator:a50ef02d109355ecbc2f795642b62dbe2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><code>std::formatter</code> specialization for promeki::Timecode. </p>
-<p>Demonstrates the bespoke-formatter pattern for a library type whose <code>toString()</code> takes a parameter and returns a non-<code><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a></code> type (here, <code>Result&lt;String&gt;</code>).</p>
+<div class="textblock"><p><code>std::formatter</code> specialization for <a class="el" href="classpromeki_1_1Timecode.html">promeki::Timecode</a>. </p>
+<p>Demonstrates the bespoke-formatter pattern for a library type whose <code>toString()</code> takes a parameter and returns a non-<code>String</code> type (here, <code>Result&lt;String&gt;</code>).</p>
 <dl class="section user"><dt>Format spec syntax</dt><dd><div class="fragment"><div class="line">{}                  <span class="comment">// default SMPTE  e.g. &quot;01:00:00:00&quot;</span></div>
-<div class="line">{:<a class="code hl_class" href="classList.html">smpte</a>}            <span class="comment">// explicit SMPTE</span></div>
-<div class="line">{:<a class="code hl_class" href="classList.html">smpte</a>-fps}        <span class="comment">// SMPTE with frame rate, e.g. &quot;01:00:00:00/24&quot;</span></div>
-<div class="line">{:<a class="code hl_class" href="classList.html">smpte</a>-<a class="code hl_class" href="classList.html">space</a>}      <span class="comment">// SMPTE with space-separated frame rate</span></div>
-<div class="line">{:<a class="code hl_class" href="classList.html">field</a>}            <span class="comment">// field-style separator, e.g. &quot;01:00:00.00&quot;</span></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="line">{:smpte}            <span class="comment">// explicit SMPTE</span></div>
+<div class="line">{:smpte-fps}        <span class="comment">// SMPTE with frame rate, e.g. &quot;01:00:00:00/24&quot;</span></div>
+<div class="line">{:smpte-space}      <span class="comment">// SMPTE with space-separated frame rate</span></div>
+<div class="line">{:field}            <span class="comment">// field-style separator, e.g. &quot;01:00:00.00&quot;</span></div>
 </div><!-- fragment --></dd></dl>
-<p>The hint may be followed by a colon and a standard string format spec to apply width / fill / alignment to the rendered timecode: </p><div class="fragment"><div class="line">{:<a class="code hl_class" href="classList.html">smpte</a>:&gt;16}        <span class="comment">// right-justified, width 16</span></div>
+<p>The hint may be followed by a colon and a standard string format spec to apply width / fill / alignment to the rendered timecode: </p><div class="fragment"><div class="line">{:smpte:&gt;16}        <span class="comment">// right-justified, width 16</span></div>
 <div class="line">{:&gt;16}              <span class="comment">// default SMPTE, right-justified width 16</span></div>
-<div class="line">{:<a class="code hl_class" href="classList.html">smpte</a>:*&lt;16}       <span class="comment">// left-justified, width 16, &#39;*&#39; fill</span></div>
+<div class="line">{:smpte:*&lt;16}       <span class="comment">// left-justified, width 16, &#39;*&#39; fill</span></div>
 </div><!-- fragment --><p>Unrecognized hints fall through to the standard string format parser, so a stray spec like <code>{</code>:&gt;16} still works. </p>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="ab12772e49ed650e120b926d82af4e651" name="ab12772e49ed650e120b926d82af4e651"></a>
@@ -166,7 +163,7 @@ std::formatter&lt; std::string_view &gt;&#160;</td><td class="memItemRight" vali
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classList.html">class</a> std::formatter&lt; promeki::Timecode &gt;::Style</td>
+          <td class="memname">enum class std::formatter&lt; <a class="el" href="classpromeki_1_1Timecode.html">promeki::Timecode</a> &gt;::Style</td>
         </tr>
       </table>
   </td>
@@ -198,7 +195,7 @@ std::formatter&lt; std::string_view &gt;&#160;</td><td class="memItemRight" vali
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>std</b></li><li class="navelem"><a class="el" href="structstd_1_1formatter_3_01promeki_1_1Timecode_01_4.html">formatter&lt; promeki::Timecode &gt;</a></li>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

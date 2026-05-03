@@ -1,0 +1,15 @@
+<map id="promeki::HttpConnection" name="promeki::HttpConnection">
+<area shape="rect" id="Node000001" title="Per&#45;connection HTTP/1.x request parser, response serializer, and socket pump." alt="" coords="788,142,973,167"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="411,13,569,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="584,36,673,55,765,84,820,112,863,140,860,144,817,116,763,89,671,60,582,41"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,5,199,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="213,23,410,23,410,28,213,28"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="393,63,587,103"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="600,100,811,139,810,145,600,105"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="393,127,587,182"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="600,152,788,152,788,157,600,157"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="415,206,565,231"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="578,202,764,172,806,165,807,170,764,177,579,207"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="393,256,587,296"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="600,259,681,242,763,218,817,192,860,165,862,170,819,196,765,222,682,248,601,264"/>
+</map>

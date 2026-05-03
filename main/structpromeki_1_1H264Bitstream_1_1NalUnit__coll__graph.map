@@ -1,0 +1,5 @@
+<map id="promeki::H264Bitstream::NalUnit" name="promeki::H264Bitstream::NalUnit">
+<area shape="rect" id="Node000001" title="Zero&#45;copy view onto one NAL unit within a larger buffer." alt="" coords="5,93,188,133"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1BufferView.html" title="Ordered list of (offset, size) views over a deduplicated set of backing Buffer objects." alt="" coords="19,5,174,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="99,44,99,93,94,93,94,44"/>
+</map>

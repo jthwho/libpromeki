@@ -1,7 +1,0 @@
-<map id="StringUnicodeLiteralData" name="StringUnicodeLiteralData">
-<area shape="rect" id="Node000001" title="Immutable Unicode string storage wrapping compile&#45;time decoded data." alt="" coords="5,168,191,193"/>
-<area shape="rect" id="Node000002" href="$classStringData.html" title="Pure virtual interface for String storage backends." alt="" coords="53,93,143,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,133,101,168,95,168,95,133"/>
-<area shape="rect" id="Node000003" href="$classRefCount.html" title="An atomic reference count object." alt="" coords="57,5,139,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="101,45,101,93,95,93,95,45"/>
-</map>

@@ -1,8 +1,0 @@
-<map id="ChromaSubsampling" name="ChromaSubsampling">
-<area shape="rect" id="Node000001" title="Well&#45;known Enum type for chroma subsampling modes." alt="" coords="58,164,215,189"/>
-<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="230,168,242,176,234,184,216,187,215,182,232,179,237,177,227,173"/>
-<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,268,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="139,119,139,164,134,164,134,119"/>
-<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="107,5,166,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="139,45,139,80,134,80,134,45"/>
-</map>

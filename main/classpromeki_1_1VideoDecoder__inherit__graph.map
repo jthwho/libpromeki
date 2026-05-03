@@ -1,0 +1,7 @@
+<map id="promeki::VideoDecoder" name="promeki::VideoDecoder">
+<area shape="rect" id="Node000001" title="Abstract base class for stateful video decoders." alt="" coords="137,5,311,31"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1JpegVideoDecoder.html" title="JPEG VideoDecoder built on libjpeg&#45;turbo." alt="" coords="5,79,208,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,40,127,81,124,76,192,35"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1JpegXsVideoDecoder.html" title="JPEG XS VideoDecoder built on SVT&#45;JPEG&#45;XS." alt="" coords="232,79,451,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="256,35,324,76,321,81,253,40"/>
+</map>

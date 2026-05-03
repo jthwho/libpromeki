@@ -1,4 +1,4 @@
 var mutex_8h =
 [
-    [ "Mutex::Locker", "classMutex_1_1Locker.html", "classMutex_1_1Locker" ]
+    [ "promeki::Mutex::Locker", "classpromeki_1_1Mutex_1_1Locker.html", "classpromeki_1_1Mutex_1_1Locker" ]
 ];

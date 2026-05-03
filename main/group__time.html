@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -106,84 +104,97 @@ $(document).ready(function(){initNavTree('group__time.html',''); initResizable()
 </div><!--header-->
 <div class="contents">
 
-<p><a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>, timestamps, durations, and frame rates.  
+<p>Timecode, timestamps, durations, and frame rates.  
 <a href="#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structClockJitter.html">ClockJitter</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Asymmetric bound on the error envelope of a clock's now() reading relative to ground truth.  <a href="structClockJitter.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1ClockJitter.html">promeki::ClockJitter</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Asymmetric bound on the error envelope of a clock's now() reading relative to ground truth.  <a href="structpromeki_1_1ClockJitter.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classClockFilter.html">ClockFilter</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pluggable smoothing filter applied to a clock's raw ns reading.  <a href="classClockFilter.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1ClockFilter.html">promeki::ClockFilter</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pluggable smoothing filter applied to a clock's raw ns reading.  <a href="classpromeki_1_1ClockFilter.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classClock.html">Clock</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract clock interface.  <a href="classClock.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Clock.html">promeki::Clock</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract clock interface.  <a href="classpromeki_1_1Clock.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWallClock.html">WallClock</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wall-clock implementation of <a class="el" href="classClock.html">Clock</a>.  <a href="classWallClock.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1WallClock.html">promeki::WallClock</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wall-clock implementation of <a class="el" href="classpromeki_1_1Clock.html">Clock</a>.  <a href="classpromeki_1_1WallClock.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classClockDomain.html">ClockDomain</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Named identity for a clock source.  <a href="classClockDomain.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1ClockDomain.html">promeki::ClockDomain</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Named identity for a clock source.  <a href="classpromeki_1_1ClockDomain.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDateTime.html">DateTime</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wall-clock date and time based on std::chrono::system_clock.  <a href="classDateTime.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1DateTime.html">promeki::DateTime</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wall-clock date and time based on std::chrono::system_clock.  <a href="classpromeki_1_1DateTime.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDuration.html">Duration</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Time duration with nanosecond precision.  <a href="classDuration.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Duration.html">promeki::Duration</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Time duration with nanosecond precision.  <a href="classpromeki_1_1Duration.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classElapsedTimer.html">ElapsedTimer</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Monotonic elapsed-time measurement using std::chrono::steady_clock.  <a href="classElapsedTimer.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1ElapsedTimer.html">promeki::ElapsedTimer</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Monotonic elapsed-time measurement using std::chrono::steady_clock.  <a href="classpromeki_1_1ElapsedTimer.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameCount.html">FrameCount</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Count of frames, optionally empty, unknown, or infinite.  <a href="classFrameCount.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1FrameCount.html">promeki::FrameCount</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Count of frames, optionally empty, unknown, or infinite.  <a href="classpromeki_1_1FrameCount.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameNumber.html">FrameNumber</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Absolute frame index along a media timeline.  <a href="classFrameNumber.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1FrameNumber.html">promeki::FrameNumber</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Absolute frame index along a media timeline.  <a href="classpromeki_1_1FrameNumber.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameRate.html">FrameRate</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents a video frame rate as a rational number.  <a href="classFrameRate.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1FrameRate.html">promeki::FrameRate</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents a video frame rate as a rational number.  <a href="classpromeki_1_1FrameRate.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameSync.html">FrameSync</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resyncs a source media stream to a destination clock's cadence.  <a href="classFrameSync.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1FrameSync.html">promeki::FrameSync</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resyncs a source media stream to a destination clock's cadence.  <a href="classpromeki_1_1FrameSync.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classHistogram.html">Histogram</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight sub-bucketed log2 histogram for hot-path instrumentation.  <a href="classHistogram.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Histogram.html">promeki::Histogram</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight sub-bucketed log2 histogram for hot-path instrumentation.  <a href="classpromeki_1_1Histogram.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaDuration.html">MediaDuration</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A run of media frames described by a start frame plus a length.  <a href="classMediaDuration.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MediaDuration.html">promeki::MediaDuration</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A run of media frames described by a start frame plus a length.  <a href="classpromeki_1_1MediaDuration.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Self-describing timestamp that pairs a time value with its clock domain and offset.  <a href="classMediaTimeStamp.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MediaTimeStamp.html">promeki::MediaTimeStamp</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Self-describing timestamp that pairs a time value with its clock domain and offset.  <a href="classpromeki_1_1MediaTimeStamp.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSyntheticClock.html">SyntheticClock</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Frame-count driven synthetic <a class="el" href="classClock.html" title="Abstract clock interface.">Clock</a>.  <a href="classSyntheticClock.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1PacingResult.html">promeki::PacingResult</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Result of a single <code><a class="el" href="classpromeki_1_1PacingGate.html#a4ad77f0a581dfa8855f2a70776d2ae59" title="Sleeps until the next deadline and returns a verdict.">PacingGate::wait</a></code> call.  <a href="structpromeki_1_1PacingResult.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecode.html">Timecode</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class for holding and manipulating timecode.  <a href="classTimecode.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1PacingGate.html">promeki::PacingGate</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reusable scheduling helper that paces a series of work items against an external <a class="el" href="classpromeki_1_1Clock.html">Clock</a>.  <a href="classpromeki_1_1PacingGate.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecodeGenerator.html">TimecodeGenerator</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">General-purpose timecode generator.  <a href="classTimecodeGenerator.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1SyntheticClock.html">promeki::SyntheticClock</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Frame-count driven synthetic <a class="el" href="classpromeki_1_1Clock.html" title="Abstract clock interface.">Clock</a>.  <a href="classpromeki_1_1SyntheticClock.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimeStamp.html">TimeStamp</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A monotonic timestamp based on std::chrono::steady_clock.  <a href="classTimeStamp.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Timecode.html">promeki::Timecode</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class for holding and manipulating timecode.  <a href="classpromeki_1_1Timecode.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1TimecodeGenerator.html">promeki::TimecodeGenerator</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">General-purpose timecode generator.  <a href="classpromeki_1_1TimecodeGenerator.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1TimeStamp.html">promeki::TimeStamp</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A monotonic timestamp based on std::chrono::steady_clock.  <a href="classpromeki_1_1TimeStamp.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:ga339eee54b6b4d766b3a39c08606fa1b6" id="r_ga339eee54b6b4d766b3a39c08606fa1b6"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__time.html#ga339eee54b6b4d766b3a39c08606fa1b6">ClockPauseMode</a> { <a class="el" href="group__time.html#gga339eee54b6b4d766b3a39c08606fa1b6aa0d3e5327da86b0e7f39bef0cf6a66bb">ClockPauseMode::CannotPause</a>
-, <a class="el" href="group__time.html#gga339eee54b6b4d766b3a39c08606fa1b6a4abdb460e40fee7cc1355428989eedcf">ClockPauseMode::PausesRawKeepsRunning</a>
-, <a class="el" href="group__time.html#gga339eee54b6b4d766b3a39c08606fa1b6a7087388a84dce34ae02e5bd96ed92c9d">ClockPauseMode::PausesRawStops</a>
+<tr class="memitem:gabd2baa04c534f74be32b1c9128ea40bf" id="r_gabd2baa04c534f74be32b1c9128ea40bf"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__time.html#gabd2baa04c534f74be32b1c9128ea40bf">promeki::ClockPauseMode</a> { <a class="el" href="group__time.html#ggabd2baa04c534f74be32b1c9128ea40bfaa0d3e5327da86b0e7f39bef0cf6a66bb">ClockPauseMode::CannotPause</a>
+, <a class="el" href="group__time.html#ggabd2baa04c534f74be32b1c9128ea40bfa4abdb460e40fee7cc1355428989eedcf">ClockPauseMode::PausesRawKeepsRunning</a>
+, <a class="el" href="group__time.html#ggabd2baa04c534f74be32b1c9128ea40bfa7087388a84dce34ae02e5bd96ed92c9d">ClockPauseMode::PausesRawStops</a>
  }</td></tr>
-<tr class="memdesc:ga339eee54b6b4d766b3a39c08606fa1b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a clock's pause capability.  <a href="group__time.html#ga339eee54b6b4d766b3a39c08606fa1b6">More...</a><br /></td></tr>
-<tr class="separator:ga339eee54b6b4d766b3a39c08606fa1b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:gabd2baa04c534f74be32b1c9128ea40bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a clock's pause capability.  <a href="group__time.html#gabd2baa04c534f74be32b1c9128ea40bf">More...</a><br /></td></tr>
+<tr class="separator:gabd2baa04c534f74be32b1c9128ea40bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga3d4a31ce30c7ab1493d5ad2c6885ee49" id="r_ga3d4a31ce30c7ab1493d5ad2c6885ee49"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__time.html#ga3d4a31ce30c7ab1493d5ad2c6885ee49">promeki::PacingVerdict</a> { <a class="el" href="group__time.html#gga3d4a31ce30c7ab1493d5ad2c6885ee49a978b537ecd05b58ea2afd9fa402ddc24">PacingVerdict::OnTime</a>
+, <a class="el" href="group__time.html#gga3d4a31ce30c7ab1493d5ad2c6885ee49ad9359722ca1b596c94882e47ad970cb5">PacingVerdict::Late</a>
+, <a class="el" href="group__time.html#gga3d4a31ce30c7ab1493d5ad2c6885ee49a72ef2b9b6965d078e3c7f95487a82d1c">PacingVerdict::Skip</a>
+, <a class="el" href="group__time.html#gga3d4a31ce30c7ab1493d5ad2c6885ee49a14f212865fe311a14c05140e7c67c2eb">PacingVerdict::Reanchor</a>
+ }</td></tr>
+<tr class="memdesc:ga3d4a31ce30c7ab1493d5ad2c6885ee49"><td class="mdescLeft">&#160;</td><td class="mdescRight">Outcome of a single <code>PacingGate::wait</code> call.  <a href="group__time.html#ga3d4a31ce30c7ab1493d5ad2c6885ee49">More...</a><br /></td></tr>
+<tr class="separator:ga3d4a31ce30c7ab1493d5ad2c6885ee49"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<p><a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>, timestamps, durations, and frame rates. </p>
-<p>SMPTE <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> (backed by libvtc), steady-clock <a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a>, calendar-aware <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a>, <a class="el" href="classDuration.html" title="Time duration with nanosecond precision.">Duration</a>, <a class="el" href="classElapsedTimer.html" title="Monotonic elapsed-time measurement using std::chrono::steady_clock.">ElapsedTimer</a> for benchmarking, and <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> descriptors. </p>
+<p>Timecode, timestamps, durations, and frame rates. </p>
+<p>SMPTE Timecode (backed by libvtc), steady-clock TimeStamp, calendar-aware DateTime, Duration, ElapsedTimer for benchmarking, and FrameRate descriptors. </p>
 <h2 class="groupheader">Enumeration Type Documentation</h2>
-<a id="ga339eee54b6b4d766b3a39c08606fa1b6" name="ga339eee54b6b4d766b3a39c08606fa1b6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga339eee54b6b4d766b3a39c08606fa1b6">&#9670;&#160;</a></span>ClockPauseMode</h2>
+<a id="gabd2baa04c534f74be32b1c9128ea40bf" name="gabd2baa04c534f74be32b1c9128ea40bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gabd2baa04c534f74be32b1c9128ea40bf">&#9670;&#160;</a></span>ClockPauseMode</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -192,7 +203,7 @@ Enumerations</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classList.html">class</a> <a class="el" href="group__time.html#ga339eee54b6b4d766b3a39c08606fa1b6">ClockPauseMode</a></td>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">enum</a> <a class="el" href="classpromeki_1_1UniquePtr.html">class</a> <a class="el" href="group__time.html#gabd2baa04c534f74be32b1c9128ea40bf">promeki::ClockPauseMode</a></td>
         </tr>
       </table>
   </td>
@@ -203,13 +214,48 @@ Enumerations</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Describes a clock's pause capability. </p>
-<p>The base <a class="el" href="classClock.html">Clock</a> applies the same delta-based pause accounting for both paused modes: at pause it snapshots the filtered raw value; on resume it adds <code>raw_now - raw_at_pause</code> to the paused-offset accumulator. The enum exists so callers can distinguish <code>CannotPause</code> (where <a class="el" href="classClock.html#acedc580419855c32366ce8347d6caec5">Clock::setPause</a> will error) and so consumers can reason about whether the underlying clock source actually stops. </p>
+<p>The base <a class="el" href="classpromeki_1_1Clock.html">Clock</a> applies the same delta-based pause accounting for both paused modes: at pause it snapshots the filtered raw value; on resume it adds <code>raw_now - raw_at_pause</code> to the paused-offset accumulator. The enum exists so callers can distinguish <code>CannotPause</code> (where <a class="el" href="classpromeki_1_1Clock.html#af2f5838c72a5a0010a60894d7c4bbc6f">Clock::setPause</a> will error) and so consumers can reason about whether the underlying clock source actually stops. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="gga339eee54b6b4d766b3a39c08606fa1b6aa0d3e5327da86b0e7f39bef0cf6a66bb" name="gga339eee54b6b4d766b3a39c08606fa1b6aa0d3e5327da86b0e7f39bef0cf6a66bb"></a>CannotPause&#160;</td><td class="fielddoc"><p><a class="el" href="classClock.html#acedc580419855c32366ce8347d6caec5">Clock::setPause</a> returns NotSupported. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ggabd2baa04c534f74be32b1c9128ea40bfaa0d3e5327da86b0e7f39bef0cf6a66bb" name="ggabd2baa04c534f74be32b1c9128ea40bfaa0d3e5327da86b0e7f39bef0cf6a66bb"></a>CannotPause&#160;</td><td class="fielddoc"><p><a class="el" href="classpromeki_1_1Clock.html#af2f5838c72a5a0010a60894d7c4bbc6f">Clock::setPause</a> returns NotSupported. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="gga339eee54b6b4d766b3a39c08606fa1b6a4abdb460e40fee7cc1355428989eedcf" name="gga339eee54b6b4d766b3a39c08606fa1b6a4abdb460e40fee7cc1355428989eedcf"></a>PausesRawKeepsRunning&#160;</td><td class="fielddoc"><p>Pause is bookkeeping only; raw() keeps advancing. </p>
+<tr><td class="fieldname"><a id="ggabd2baa04c534f74be32b1c9128ea40bfa4abdb460e40fee7cc1355428989eedcf" name="ggabd2baa04c534f74be32b1c9128ea40bfa4abdb460e40fee7cc1355428989eedcf"></a>PausesRawKeepsRunning&#160;</td><td class="fielddoc"><p>Pause is bookkeeping only; raw() keeps advancing. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="gga339eee54b6b4d766b3a39c08606fa1b6a7087388a84dce34ae02e5bd96ed92c9d" name="gga339eee54b6b4d766b3a39c08606fa1b6a7087388a84dce34ae02e5bd96ed92c9d"></a>PausesRawStops&#160;</td><td class="fielddoc"><p>onPause(true) freezes raw(); onPause(false) resumes. </p>
+<tr><td class="fieldname"><a id="ggabd2baa04c534f74be32b1c9128ea40bfa7087388a84dce34ae02e5bd96ed92c9d" name="ggabd2baa04c534f74be32b1c9128ea40bfa7087388a84dce34ae02e5bd96ed92c9d"></a>PausesRawStops&#160;</td><td class="fielddoc"><p>onPause(true) freezes raw(); onPause(false) resumes. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<a id="ga3d4a31ce30c7ab1493d5ad2c6885ee49" name="ga3d4a31ce30c7ab1493d5ad2c6885ee49"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga3d4a31ce30c7ab1493d5ad2c6885ee49">&#9670;&#160;</a></span>PacingVerdict</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">enum</a> <a class="el" href="classpromeki_1_1UniquePtr.html">class</a> <a class="el" href="group__time.html#ga3d4a31ce30c7ab1493d5ad2c6885ee49">promeki::PacingVerdict</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Outcome of a single <code><a class="el" href="classpromeki_1_1PacingGate.html#a4ad77f0a581dfa8855f2a70776d2ae59" title="Sleeps until the next deadline and returns a verdict.">PacingGate::wait</a></code> call. </p>
+<p>The verdict is the gate's recommendation to the caller — it does not prescribe an action. Backends decide what to do based on what they can do (a sender with no cross-fade just drops on <a class="el" href="group__time.html#gga3d4a31ce30c7ab1493d5ad2c6885ee49a72ef2b9b6965d078e3c7f95487a82d1c">Skip</a>; a sender with an SRC may compress the next block instead). </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="gga3d4a31ce30c7ab1493d5ad2c6885ee49a978b537ecd05b58ea2afd9fa402ddc24" name="gga3d4a31ce30c7ab1493d5ad2c6885ee49a978b537ecd05b58ea2afd9fa402ddc24"></a>OnTime&#160;</td><td class="fielddoc"><p>Slept until the deadline; proceed normally. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="gga3d4a31ce30c7ab1493d5ad2c6885ee49ad9359722ca1b596c94882e47ad970cb5" name="gga3d4a31ce30c7ab1493d5ad2c6885ee49ad9359722ca1b596c94882e47ad970cb5"></a>Late&#160;</td><td class="fielddoc"><p>Past the deadline by less than the skip threshold; proceed without sleeping. No catch-up action is recommended — the drift is small enough to absorb. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="gga3d4a31ce30c7ab1493d5ad2c6885ee49a72ef2b9b6965d078e3c7f95487a82d1c" name="gga3d4a31ce30c7ab1493d5ad2c6885ee49a72ef2b9b6965d078e3c7f95487a82d1c"></a>Skip&#160;</td><td class="fielddoc"><p>Past the deadline by at least the skip threshold but less than the reanchor threshold; the backend should drop / fast-forward this work item to bound the lag. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="gga3d4a31ce30c7ab1493d5ad2c6885ee49a14f212865fe311a14c05140e7c67c2eb" name="gga3d4a31ce30c7ab1493d5ad2c6885ee49a14f212865fe311a14c05140e7c67c2eb"></a>Reanchor&#160;</td><td class="fielddoc"><p>Past the deadline by at least the reanchor threshold; the gap is unrecoverable, the gate has re-anchored to <code>clock-&gt;now()</code> so the next wait() restarts the timeline. </p>
 </td></tr>
 </table>
 
@@ -221,7 +267,7 @@ Enumerations</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

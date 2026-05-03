@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['y_0',['y',['../classCIEPoint.html#a76738fe6fa594fb8f97576a8026ddaff',1,'CIEPoint::y()'],['../classColor.html#a7cdf5f4189b4ddd9d2227925917be084',1,'Color::y()'],['../classMouseEvent.html#ad4d5a5ffe8606be9d05e9be76848e233',1,'MouseEvent::y()'],['../classRect.html#ac8f004d33ff1524d9bb08bc11f697cf0',1,'Rect::y()'],['../classWidget.html#aeddec2a0f7f6e74d6d64f4a64b130dca',1,'Widget::y()'],['../classXYZColor.html#a82dccbe82338c14d80c362b760cb2d19',1,'XYZColor::y()']]],
-  ['ycbcr601_1',['ycbcr601',['../classColor.html#a58bbb61959c098fb57aa2472f5e4eb7f',1,'Color']]],
-  ['ycbcr709_2',['ycbcr709',['../classColor.html#af328f008a18537a6fe6664d9f534071c',1,'Color']]]
+  ['y_0',['y',['../classpromeki_1_1CIEPoint.html#ac9b0ef3df218f4d1af43343c0b8d2a08',1,'promeki::CIEPoint::y()'],['../classpromeki_1_1Color.html#a1bd7eb4a88108611365d81f6d1d233da',1,'promeki::Color::y()'],['../classpromeki_1_1MouseEvent.html#a6cba7176b962627fc75d4646fe525e50',1,'promeki::MouseEvent::y()'],['../classpromeki_1_1Rect.html#a97d008b6ad6c4a0032189fe4d235c6dd',1,'promeki::Rect::y()'],['../classpromeki_1_1Widget.html#a9b7b19ded52d0cdbb9e5ace5510642b4',1,'promeki::Widget::y()'],['../classpromeki_1_1XYZColor.html#a557030ccdf789f811078d5a8a963bc79',1,'promeki::XYZColor::y()']]],
+  ['ycbcr601_1',['ycbcr601',['../classpromeki_1_1Color.html#a6f79210657e351c9d9f9db52a0597a50',1,'promeki::Color']]],
+  ['ycbcr709_2',['ycbcr709',['../classpromeki_1_1Color.html#a4123fa07d33e86323f2e5006f5719093',1,'promeki::Color']]]
 ];

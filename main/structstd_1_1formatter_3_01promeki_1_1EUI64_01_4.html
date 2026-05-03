@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -107,7 +105,7 @@ $(document).ready(function(){initNavTree('structstd_1_1formatter_3_01promeki_1_1
 </div><!--header-->
 <div class="contents">
 
-<p><code>std::formatter</code> for promeki::EUI64 with format selection.  
+<p><code>std::formatter</code> for <a class="el" href="classpromeki_1_1EUI64.html">promeki::EUI64</a> with format selection.  
  <a href="structstd_1_1formatter_3_01promeki_1_1EUI64_01_4.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="eui64_8h_source.html">eui64.h</a>&gt;</code></p>
@@ -115,11 +113,11 @@ $(document).ready(function(){initNavTree('structstd_1_1formatter_3_01promeki_1_1
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:adeb06f4b46560b63b68485e1977881ce" id="r_adeb06f4b46560b63b68485e1977881ce"><td class="memItemLeft" align="right" valign="top"><a id="adeb06f4b46560b63b68485e1977881ce" name="adeb06f4b46560b63b68485e1977881ce"></a>
-<a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><b>parse</b> (std::format_parse_context &amp;<a class="el" href="classList.html">ctx</a>)</td></tr>
+constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><b>parse</b> (std::format_parse_context &amp;ctx)</td></tr>
 <tr class="separator:adeb06f4b46560b63b68485e1977881ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9053c1a719091a73d19bac56f43ff617" id="r_a9053c1a719091a73d19bac56f43ff617"><td class="memTemplParams" colspan="2"><a id="a9053c1a719091a73d19bac56f43ff617" name="a9053c1a719091a73d19bac56f43ff617"></a>
-template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">FormatContext</a> &gt; </td></tr>
-<tr class="memitem:a9053c1a719091a73d19bac56f43ff617"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">auto</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>format</b> (<a class="el" href="classList.html">const</a> promeki::EUI64 &amp;v, <a class="el" href="classList.html">FormatContext</a> &amp;<a class="el" href="classList.html">ctx</a>) <a class="el" href="classList.html">const</a></td></tr>
+template&lt;typename FormatContext &gt; </td></tr>
+<tr class="memitem:a9053c1a719091a73d19bac56f43ff617"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>format</b> (const <a class="el" href="classpromeki_1_1EUI64.html">promeki::EUI64</a> &amp;v, FormatContext &amp;ctx) const</td></tr>
 <tr class="separator:a9053c1a719091a73d19bac56f43ff617"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
@@ -129,19 +127,16 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_spec</b> = 0</td></tr
 <tr class="separator:a926806c9f4271ee76b8b5619cdfb02bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><code>std::formatter</code> for promeki::EUI64 with format selection. </p>
+<div class="textblock"><p><code>std::formatter</code> for <a class="el" href="classpromeki_1_1EUI64.html">promeki::EUI64</a> with format selection. </p>
 <p>Format specifiers (placed after the colon in a format field):</p><ul>
 <li><code>{}</code> or <code>{</code>:h} — OctetHyphen: <code>"aa-bb-cc-dd-ee-ff-00-11"</code> </li>
 <li><code>{</code>:o} — OctetColon: <code>"aa:bb:cc:dd:ee:ff:00:11"</code> </li>
 <li><code>{</code>:v} — IPv6: <code>"aabb:ccdd:eeff:0011"</code> </li>
 </ul>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classEUI64.html">EUI64</a> <a class="code hl_class" href="classList.html">eui</a>(0x02, 0x1A, 0x2B, 0xFF, 0xFE, 0x3C, 0x4D, 0x5E);</div>
-<div class="line"><a class="code hl_function" href="classString.html#a6dd70844f5f292c4b3325e6e761a5c33">String::format</a>(<span class="stringliteral">&quot;{}&quot;</span>, <a class="code hl_class" href="classList.html">eui</a>);    <span class="comment">// &quot;02-1a-2b-ff-fe-3c-4d-5e&quot;</span></div>
-<div class="line"><a class="code hl_function" href="classString.html#a6dd70844f5f292c4b3325e6e761a5c33">String::format</a>(<span class="stringliteral">&quot;{:o}&quot;</span>, <a class="code hl_class" href="classList.html">eui</a>);  <span class="comment">// &quot;02:1a:2b:ff:fe:3c:4d:5e&quot;</span></div>
-<div class="line"><a class="code hl_function" href="classString.html#a6dd70844f5f292c4b3325e6e761a5c33">String::format</a>(<span class="stringliteral">&quot;{:v}&quot;</span>, <a class="code hl_class" href="classList.html">eui</a>);  <span class="comment">// &quot;021a:2bff:fe3c:4d5e&quot;</span></div>
-<div class="ttc" id="aclassEUI64_html"><div class="ttname"><a href="classEUI64.html">EUI64</a></div><div class="ttdoc">IEEE EUI-64 extended unique identifier.</div><div class="ttdef"><b>Definition</b> eui64.h:50</div></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassString_html_a6dd70844f5f292c4b3325e6e761a5c33"><div class="ttname"><a href="classString.html#a6dd70844f5f292c4b3325e6e761a5c33">String::format</a></div><div class="ttdeci">static String format(std::format_string&lt; Args... &gt; fmt, Args &amp;&amp;... args)</div><div class="ttdoc">Creates a formatted string using C++20 std::format syntax.</div><div class="ttdef"><b>Definition</b> string.h:266</div></div>
+<div class="fragment"><div class="line">EUI64 eui(0x02, 0x1A, 0x2B, 0xFF, 0xFE, 0x3C, 0x4D, 0x5E);</div>
+<div class="line">String::format(<span class="stringliteral">&quot;{}&quot;</span>, eui);    <span class="comment">// &quot;02-1a-2b-ff-fe-3c-4d-5e&quot;</span></div>
+<div class="line">String::format(<span class="stringliteral">&quot;{:o}&quot;</span>, eui);  <span class="comment">// &quot;02:1a:2b:ff:fe:3c:4d:5e&quot;</span></div>
+<div class="line">String::format(<span class="stringliteral">&quot;{:v}&quot;</span>, eui);  <span class="comment">// &quot;021a:2bff:fe3c:4d5e&quot;</span></div>
 </div><!-- fragment --> </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="eui64_8h_source.html">eui64.h</a></li>
 </ul>
@@ -152,7 +147,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_spec</b> = 0</td></tr
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>std</b></li><li class="navelem"><a class="el" href="structstd_1_1formatter_3_01promeki_1_1EUI64_01_4.html">formatter&lt; promeki::EUI64 &gt;</a></li>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

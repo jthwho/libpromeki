@@ -1,0 +1,7 @@
+<map id="promeki::VideoEncoder" name="promeki::VideoEncoder">
+<area shape="rect" id="Node000001" title="Abstract base class for stateful video encoders." alt="" coords="135,5,309,31"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1JpegVideoEncoder.html" title="JPEG VideoEncoder built on libjpeg&#45;turbo." alt="" coords="5,79,207,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="193,40,126,81,124,76,190,35"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1JpegXsVideoEncoder.html" title="JPEG XS VideoEncoder built on SVT&#45;JPEG&#45;XS." alt="" coords="231,79,448,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="254,35,322,76,319,81,251,40"/>
+</map>

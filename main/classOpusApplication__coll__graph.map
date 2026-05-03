@@ -1,8 +1,0 @@
-<map id="OpusApplication" name="OpusApplication">
-<area shape="rect" id="Node000001" title="Well&#45;known Enum type for the Opus encoder application mode." alt="" coords="58,164,186,189"/>
-<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="201,168,213,177,204,185,186,188,186,182,202,180,207,177,198,172"/>
-<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,239,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,119,125,164,119,164,119,119"/>
-<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="93,5,151,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="125,45,125,80,119,80,119,45"/>
-</map>

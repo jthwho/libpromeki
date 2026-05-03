@@ -1,0 +1,8 @@
+<map id="promeki::InspectorTest" name="promeki::InspectorTest">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for InspectorMediaIO test selection." alt="" coords="5,208,176,233"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="151,204,186,207,198,212,203,221,196,230,181,236,137,236,137,231,180,230,193,226,197,221,194,216,185,212,151,210"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="11,80,170,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="93,134,93,208,88,208,88,134"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="30,5,151,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="93,44,93,80,88,80,88,44"/>
+</map>

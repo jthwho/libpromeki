@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -106,11 +104,11 @@ $(document).ready(function(){initNavTree('threading.html',''); initResizable(); 
 <p>This page describes the threading model, thread safety guarantees, and recommended patterns for concurrent programming with promeki.</p>
 <h1><a class="anchor" id="thread_model"></a>
 Threading Model</h1>
-<p>promeki uses a thread-affine model for functional objects (<code><a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a></code>) and a value-handoff model for data objects. The key concepts:</p>
+<p>promeki uses a thread-affine model for functional objects (<code>ObjectBase</code>) and a value-handoff model for data objects. The key concepts:</p>
 <ul>
-<li><b>Data objects</b> are plain values. They are not internally synchronized. Share them across threads via <code>Ptr</code> (<code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a></code>) with ownership handoff, or by copying simple types.</li>
-<li><b>Functional objects</b> (<code><a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a></code>) are bound to a specific thread's <code><a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a></code>. Call their methods only from that thread. Use signals/slots for cross-thread communication — the signal system automatically marshals calls to the receiver's <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a>.</li>
-<li><b>Thread-safe classes</b> like <code><a class="el" href="classQueue.html" title="Thread-safe FIFO queue.">Queue</a></code>, <code><a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a></code>, and <code><a class="el" href="classAtomic.html" title="Atomic variable wrapping std::atomic&lt;T&gt;.">Atomic</a></code> are explicitly documented as such and can be used from any thread.</li>
+<li><b>Data objects</b> are plain values. They are not internally synchronized. Share them across threads via <code>Ptr</code> (<code>SharedPtr</code>) with ownership handoff, or by copying simple types.</li>
+<li><b>Functional objects</b> (<code>ObjectBase</code>) are bound to a specific thread's <code>EventLoop</code>. Call their methods only from that thread. Use signals/slots for cross-thread communication — the signal system automatically marshals calls to the receiver's EventLoop.</li>
+<li><b>Thread-safe classes</b> like <code>Queue</code>, <code>Mutex</code>, and <code>Atomic</code> are explicitly documented as such and can be used from any thread.</li>
 </ul>
 <h1><a class="anchor" id="thread_categories"></a>
 Thread Safety Categories</h1>
@@ -119,141 +117,130 @@ Thread Safety Categories</h1>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Category   </th><th class="markdownTableHeadNone">Meaning   </th><th class="markdownTableHeadNone">Examples    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><b>Thread-safe</b>   </td><td class="markdownTableBodyNone">All public methods may be called concurrently from any thread. Internally synchronized.   </td><td class="markdownTableBodyNone"><code><a class="el" href="classQueue.html" title="Thread-safe FIFO queue.">Queue</a></code>, <code><a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a></code>, <code><a class="el" href="classReadWriteLock.html" title="Reader-writer lock wrapping std::shared_mutex.">ReadWriteLock</a></code>, <code><a class="el" href="classWaitCondition.html" title="Condition variable wrapping std::condition_variable.">WaitCondition</a></code>, <code><a class="el" href="classAtomic.html" title="Atomic variable wrapping std::atomic&lt;T&gt;.">Atomic</a></code>, <code><a class="el" href="classThreadPool.html" title="General-purpose thread pool for submitting callable tasks.">ThreadPool</a></code>, <code><a class="el" href="classFuture.html" title="Asynchronous result wrapping std::future&lt;T&gt;.">Future</a></code>    </td></tr>
+<td class="markdownTableBodyNone"><b>Thread-safe</b>   </td><td class="markdownTableBodyNone">All public methods may be called concurrently from any thread. Internally synchronized.   </td><td class="markdownTableBodyNone"><code>Queue</code>, <code>Mutex</code>, <code>ReadWriteLock</code>, <code>WaitCondition</code>, <code>Atomic</code>, <code>ThreadPool</code>, <code>Future</code>    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><b>Not thread-safe</b>   </td><td class="markdownTableBodyNone">External synchronization required for concurrent access to the same instance.   </td><td class="markdownTableBodyNone">Most data objects when accessed directly    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><b>Conditionally thread-safe</b>   </td><td class="markdownTableBodyNone">Distinct instances may be used concurrently. Concurrent access to a single instance requires external synchronization.   </td><td class="markdownTableBodyNone"><code><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a></code>, <code><a class="el" href="classMap.html" title="Ordered associative container wrapping std::map.">Map</a></code>, <code><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a></code>, <code><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a></code>    </td></tr>
+<td class="markdownTableBodyNone"><b>Conditionally thread-safe</b>   </td><td class="markdownTableBodyNone">Distinct instances may be used concurrently. Concurrent access to a single instance requires external synchronization.   </td><td class="markdownTableBodyNone"><code>List</code>, <code>Map</code>, <code>Set</code>, <code>String</code>    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><b>Thread-affine</b>   </td><td class="markdownTableBodyNone">Must be used from the thread that created it (or the thread it was moved to via <code>moveToThread()</code>).   </td><td class="markdownTableBodyNone"><code><a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a></code> and all subclasses   </td></tr>
+<td class="markdownTableBodyNone"><b>Thread-affine</b>   </td><td class="markdownTableBodyNone">Must be used from the thread that created it (or the thread it was moved to via <code>moveToThread()</code>).   </td><td class="markdownTableBodyNone"><code>ObjectBase</code> and all subclasses   </td></tr>
 </table>
 <h1><a class="anchor" id="thread_data"></a>
 Sharing Data Objects</h1>
-<p>See the <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Data Object Categories</a> page for detailed patterns and code examples. Summary:</p>
+<p>See the <a class="el" href="dataobjects.html">Data Object Categories</a> page for detailed patterns and code examples. Summary:</p>
 <ul>
 <li><b>Shareable types</b>: wrap in <code>Ptr</code> and hand off. Do not mutate from the original thread after handoff.</li>
 <li><b>Simple types</b>: copy by value — they are small and cheap.</li>
 <li><b>Composite data</b>: build a shareable struct, share via <code>Ptr</code>.</li>
-<li><b>Do not</b> use <code><a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a></code> to protect data objects. Restructure to use copy or <code>Ptr</code> handoff instead.</li>
+<li><b>Do not</b> use <code>Mutex</code> to protect data objects. Restructure to use copy or <code>Ptr</code> handoff instead.</li>
 </ul>
 <h1><a class="anchor" id="thread_objectbase"></a>
 ObjectBase and Thread Affinity</h1>
-<p>Every <code><a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a></code> instance is associated with the <code><a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a></code> of the thread that created it. This is its thread affinity.</p>
+<p>Every <code>ObjectBase</code> instance is associated with the <code>EventLoop</code> of the thread that created it. This is its thread affinity.</p>
 <ul>
-<li>Call methods on an <code><a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a></code> only from its affiliated thread.</li>
+<li>Call methods on an <code>ObjectBase</code> only from its affiliated thread.</li>
 <li>Use <code>moveToThread()</code> to change affinity. The object must not be in use on the old thread when you move it.</li>
-<li>Timers started with <code>startTimer()</code> fire on the object's <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a>.</li>
+<li>Timers started with <code>startTimer()</code> fire on the object's EventLoop.</li>
 </ul>
 <h2><a class="anchor" id="thread_signals"></a>
 Cross-Thread Signals</h2>
-<p>When a signal is connected to a slot on a different thread's <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a>, the signal system automatically queues the call and delivers it on the receiver's thread. This is the primary mechanism for safe cross-thread communication between functional objects.</p>
+<p>When a signal is connected to a slot on a different thread's EventLoop, the signal system automatically queues the call and delivers it on the receiver's thread. This is the primary mechanism for safe cross-thread communication between functional objects.</p>
 <div class="fragment"><div class="line"><span class="comment">// producer runs on thread A</span></div>
 <div class="line"><span class="comment">// consumer runs on thread B</span></div>
-<div class="line"><a class="code hl_function" href="classObjectBase.html#a7d2e491c5289e22a84070551cc95aaa1">ObjectBase::connect</a>(&amp;<a class="code hl_class" href="classList.html">producer</a>.dataReadySignal, &amp;<a class="code hl_class" href="classList.html">consumer</a>.onDataReadySlot);</div>
+<div class="line">ObjectBase::connect(&amp;producer.dataReadySignal, &amp;consumer.onDataReadySlot);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// When producer emits dataReady, the slot is invoked on thread B&#39;s</span></div>
 <div class="line"><span class="comment">// EventLoop -- not on thread A.  No manual synchronization needed.</span></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassObjectBase_html_a7d2e491c5289e22a84070551cc95aaa1"><div class="ttname"><a href="classObjectBase.html#a7d2e491c5289e22a84070551cc95aaa1">ObjectBase::connect</a></div><div class="ttdeci">static void connect(Signal&lt; Args... &gt; *signal, Slot&lt; Args... &gt; *slot)</div><div class="ttdoc">connects a signal and slot together. This function assumes both the signal and slot exist in a Object...</div></div>
-</div><!-- fragment --><p><a class="el" href="classSignal.html" title="Type-safe signal/slot mechanism for decoupled event notification.">Signal</a> arguments are marshaled via <code><a class="el" href="classVariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a></code> for cross-thread dispatch, so all argument types must be representable as <code><a class="el" href="classVariant.html" title="Concrete Variant type used throughout promeki.">Variant</a></code>.</p>
+</div><!-- fragment --><p>Signal arguments are marshaled via <code>VariantList</code> for cross-thread dispatch, so all argument types must be representable as <code>Variant</code>.</p>
 <h1><a class="anchor" id="thread_eventloop"></a>
 EventLoop</h1>
-<p>Each thread can have at most one <code><a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a></code>. The <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> processes events, timers, deferred calls, and cross-thread signal deliveries.</p>
+<p>Each thread can have at most one <code>EventLoop</code>. The EventLoop processes events, timers, deferred calls, and cross-thread signal deliveries.</p>
 <ul>
 <li><code>exec()</code> runs the loop, blocking until <code>quit()</code> is called.</li>
 <li><code>processEvents()</code> runs one iteration without blocking — suitable for integration with external loops or WASM environments.</li>
-<li><code><a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a></code> provides a built-in <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a>. The main thread's <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> is set up by <code><a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a></code>.</li>
+<li><code>Thread</code> provides a built-in EventLoop. The main thread's EventLoop is set up by <code>Application</code>.</li>
 </ul>
 <h1><a class="anchor" id="thread_primitives"></a>
 Concurrency Primitives</h1>
-<p>promeki provides wrapper classes for standard C++ synchronization primitives. These wrappers offer Qt-inspired naming and integrate with each other (e.g., <code><a class="el" href="classWaitCondition.html" title="Condition variable wrapping std::condition_variable.">WaitCondition</a></code> works with <code><a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a></code>). Always use the library wrappers instead of raw <code>std::</code> types.</p>
+<p>promeki provides wrapper classes for standard C++ synchronization primitives. These wrappers offer Qt-inspired naming and integrate with each other (e.g., <code>WaitCondition</code> works with <code>Mutex</code>). Always use the library wrappers instead of raw <code>std::</code> types.</p>
 <h2><a class="anchor" id="thread_mutex"></a>
 Mutex</h2>
-<p><code><a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a></code> wraps <code>std::mutex</code> with <code>lock()</code>, <code>unlock()</code>, and <code>tryLock()</code>. Use the nested <code><a class="el" href="classMutex_1_1Locker.html" title="RAII scoped locker for Mutex.">Mutex::Locker</a></code> for RAII scoped locking:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classMutex.html">Mutex</a> <a class="code hl_class" href="classList.html">mutex</a>;</div>
+<p><code>Mutex</code> wraps <code>std::mutex</code> with <code>lock()</code>, <code>unlock()</code>, and <code>tryLock()</code>. Use the nested <code>Mutex::Locker</code> for RAII scoped locking:</p>
+<div class="fragment"><div class="line">Mutex mutex;</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// RAII locking -- preferred</span></div>
 <div class="line">{</div>
-<div class="line">        <a class="code hl_class" href="classMutex_1_1Locker.html">Mutex::Locker</a> <a class="code hl_class" href="classList.html">locker</a>(<a class="code hl_class" href="classList.html">mutex</a>);</div>
+<div class="line">        Mutex::Locker locker(mutex);</div>
 <div class="line">        <span class="comment">// critical section</span></div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Manual locking -- when RAII scope doesn&#39;t fit</span></div>
-<div class="line"><a class="code hl_class" href="classList.html">mutex</a>.lock();</div>
+<div class="line">mutex.lock();</div>
 <div class="line"><span class="comment">// critical section</span></div>
-<div class="line"><a class="code hl_class" href="classList.html">mutex</a>.unlock();</div>
-<div class="ttc" id="aclassMutex_1_1Locker_html"><div class="ttname"><a href="classMutex_1_1Locker.html">Mutex::Locker</a></div><div class="ttdoc">RAII scoped locker for Mutex.</div><div class="ttdef"><b>Definition</b> mutex.h:41</div></div>
-<div class="ttc" id="aclassMutex_html"><div class="ttname"><a href="classMutex.html">Mutex</a></div><div class="ttdoc">Mutual exclusion lock wrapping std::mutex.</div><div class="ttdef"><b>Definition</b> mutex.h:33</div></div>
+<div class="line">mutex.unlock();</div>
 </div><!-- fragment --><h2><a class="anchor" id="thread_rwlock"></a>
 ReadWriteLock</h2>
-<p><code><a class="el" href="classReadWriteLock.html" title="Reader-writer lock wrapping std::shared_mutex.">ReadWriteLock</a></code> wraps <code>std::shared_mutex</code> for reader-writer patterns where multiple concurrent readers are safe but writers need exclusive access.</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classReadWriteLock.html">ReadWriteLock</a> <a class="code hl_class" href="classList.html">rwl</a>;</div>
+<p><code>ReadWriteLock</code> wraps <code>std::shared_mutex</code> for reader-writer patterns where multiple concurrent readers are safe but writers need exclusive access.</p>
+<div class="fragment"><div class="line">ReadWriteLock rwl;</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Multiple readers can hold this simultaneously</span></div>
 <div class="line">{</div>
-<div class="line">        <a class="code hl_class" href="classReadWriteLock_1_1ReadLocker.html">ReadWriteLock::ReadLocker</a> <a class="code hl_class" href="classList.html">locker</a>(<a class="code hl_class" href="classList.html">rwl</a>);</div>
+<div class="line">        ReadWriteLock::ReadLocker locker(rwl);</div>
 <div class="line">        <span class="comment">// read-only access</span></div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Writer gets exclusive access</span></div>
 <div class="line">{</div>
-<div class="line">        <a class="code hl_class" href="classReadWriteLock_1_1WriteLocker.html">ReadWriteLock::WriteLocker</a> <a class="code hl_class" href="classList.html">locker</a>(<a class="code hl_class" href="classList.html">rwl</a>);</div>
+<div class="line">        ReadWriteLock::WriteLocker locker(rwl);</div>
 <div class="line">        <span class="comment">// read-write access</span></div>
 <div class="line">}</div>
-<div class="ttc" id="aclassReadWriteLock_1_1ReadLocker_html"><div class="ttname"><a href="classReadWriteLock_1_1ReadLocker.html">ReadWriteLock::ReadLocker</a></div><div class="ttdoc">RAII scoped locker for shared (read) access.</div><div class="ttdef"><b>Definition</b> readwritelock.h:28</div></div>
-<div class="ttc" id="aclassReadWriteLock_1_1WriteLocker_html"><div class="ttname"><a href="classReadWriteLock_1_1WriteLocker.html">ReadWriteLock::WriteLocker</a></div><div class="ttdoc">RAII scoped locker for exclusive (write) access.</div><div class="ttdef"><b>Definition</b> readwritelock.h:55</div></div>
-<div class="ttc" id="aclassReadWriteLock_html"><div class="ttname"><a href="classReadWriteLock.html">ReadWriteLock</a></div><div class="ttdoc">Reader-writer lock wrapping std::shared_mutex.</div><div class="ttdef"><b>Definition</b> readwritelock.h:23</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="thread_waitcondition"></a>
 WaitCondition</h2>
-<p><code><a class="el" href="classWaitCondition.html" title="Condition variable wrapping std::condition_variable.">WaitCondition</a></code> wraps <code>std::condition_variable</code> for thread signaling. It works with <code><a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a></code> and supports both predicate and non-predicate waits with optional timeouts.</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classMutex.html">Mutex</a> <a class="code hl_class" href="classList.html">mutex</a>;</div>
-<div class="line"><a class="code hl_class" href="classWaitCondition.html">WaitCondition</a> <a class="code hl_class" href="classList.html">cv</a>;</div>
-<div class="line"><span class="keywordtype">bool</span> <a class="code hl_class" href="classList.html">ready</a> = <span class="keyword">false</span>;</div>
+<p><code>WaitCondition</code> wraps <code>std::condition_variable</code> for thread signaling. It works with <code>Mutex</code> and supports both predicate and non-predicate waits with optional timeouts.</p>
+<div class="fragment"><div class="line">Mutex mutex;</div>
+<div class="line">WaitCondition cv;</div>
+<div class="line"><span class="keywordtype">bool</span> ready = <span class="keyword">false</span>;</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Waiting thread</span></div>
-<div class="line"><a class="code hl_class" href="classList.html">mutex</a>.lock();</div>
-<div class="line"><a class="code hl_class" href="classList.html">cv</a>.wait(<a class="code hl_class" href="classList.html">mutex</a>, [&amp;] { <span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">ready</a>; });</div>
+<div class="line">mutex.lock();</div>
+<div class="line">cv.wait(mutex, [&amp;] { <span class="keywordflow">return</span> ready; });</div>
 <div class="line"><span class="comment">// ready is now true</span></div>
-<div class="line"><a class="code hl_class" href="classList.html">mutex</a>.unlock();</div>
+<div class="line">mutex.unlock();</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Signaling thread</span></div>
 <div class="line">{</div>
-<div class="line">        <a class="code hl_class" href="classMutex_1_1Locker.html">Mutex::Locker</a> <a class="code hl_class" href="classList.html">locker</a>(<a class="code hl_class" href="classList.html">mutex</a>);</div>
-<div class="line">        <a class="code hl_class" href="classList.html">ready</a> = <span class="keyword">true</span>;</div>
+<div class="line">        Mutex::Locker locker(mutex);</div>
+<div class="line">        ready = <span class="keyword">true</span>;</div>
 <div class="line">}</div>
-<div class="line"><a class="code hl_class" href="classList.html">cv</a>.wakeOne();  <span class="comment">// or cv.wakeAll()</span></div>
-<div class="ttc" id="aclassWaitCondition_html"><div class="ttname"><a href="classWaitCondition.html">WaitCondition</a></div><div class="ttdoc">Condition variable wrapping std::condition_variable.</div><div class="ttdef"><b>Definition</b> waitcondition.h:26</div></div>
+<div class="line">cv.wakeOne();  <span class="comment">// or cv.wakeAll()</span></div>
 </div><!-- fragment --><h2><a class="anchor" id="thread_atomic"></a>
 Atomic</h2>
-<p><code><a class="el" href="classAtomic.html" title="Atomic variable wrapping std::atomic&lt;T&gt;.">Atomic</a></code> wraps <code>std::atomic</code> with acquire/release semantics. Use <code><a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f" title="Returns the value from a Result.">value()</a></code> to load and <code>setValue()</code> to store. Read-modify-write operations (<code>fetchAndAdd()</code>, <code>compareAndSwap()</code>, <code>exchange()</code>) use <code>memory_order_acq_rel</code>.</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">Atomic&lt;int&gt;</a> <a class="code hl_class" href="classList.html">counter</a>(0);</div>
-<div class="line"><a class="code hl_class" href="classList.html">counter</a>.setValue(42);</div>
-<div class="line"><span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">old</a> = <a class="code hl_class" href="classList.html">counter</a>.fetchAndAdd(1);  <span class="comment">// old == 42, counter == 43</span></div>
+<p><code>Atomic</code> wraps <code>std::atomic</code> with acquire/release semantics. Use <code>value()</code> to load and <code>setValue()</code> to store. Read-modify-write operations (<code>fetchAndAdd()</code>, <code>compareAndSwap()</code>, <code>exchange()</code>) use <code>memory_order_acq_rel</code>.</p>
+<div class="fragment"><div class="line">Atomic&lt;int&gt; counter(0);</div>
+<div class="line">counter.setValue(42);</div>
+<div class="line"><span class="keywordtype">int</span> old = counter.fetchAndAdd(1);  <span class="comment">// old == 42, counter == 43</span></div>
 </div><!-- fragment --><h2><a class="anchor" id="thread_future"></a>
 Future and Promise</h2>
-<p><code><a class="el" href="classFuture.html" title="Asynchronous result wrapping std::future&lt;T&gt;.">Future</a></code> and <code><a class="el" href="classPromise.html" title="Promise wrapping std::promise&lt;T&gt;.">Promise</a></code> provide asynchronous result passing. A <code><a class="el" href="classPromise.html" title="Promise wrapping std::promise&lt;T&gt;.">Promise</a></code> produces a value (or error) that a <code><a class="el" href="classFuture.html" title="Asynchronous result wrapping std::future&lt;T&gt;.">Future</a></code> consumes. Both are move-only.</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">Promise&lt;int&gt;</a> p;</div>
-<div class="line"><a class="code hl_class" href="classList.html">Future&lt;int&gt;</a> <a class="code hl_class" href="classList.html">f</a> = p.future();</div>
+<p><code>Future</code> and <code>Promise</code> provide asynchronous result passing. A <code>Promise</code> produces a value (or error) that a <code>Future</code> consumes. Both are move-only.</p>
+<div class="fragment"><div class="line">Promise&lt;int&gt; p;</div>
+<div class="line">Future&lt;int&gt; f = p.future();</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Producer (e.g., on another thread)</span></div>
 <div class="line">p.setValue(42);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Consumer</span></div>
-<div class="line"><span class="keyword">auto</span> [<a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>, <a class="code hl_class" href="classList.html">err</a>] = <a class="code hl_class" href="classList.html">f</a>.result();  <span class="comment">// blocks until ready</span></div>
-<div class="ttc" id="aresult_8h_html_a3cb138b5e2739be6ec1340a22bbac91f"><div class="ttname"><a href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a></div><div class="ttdeci">const T &amp; value(const Result&lt; T &gt; &amp;r)</div><div class="ttdoc">Returns the value from a Result.</div><div class="ttdef"><b>Definition</b> result.h:56</div></div>
-</div><!-- fragment --><p><code><a class="el" href="classFuture.html" title="Asynchronous result wrapping std::future&lt;T&gt;.">Future</a>&lt;void&gt;</code> is specialized: <code>result()</code> returns an <code><a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a></code> instead of a <code>Result</code> pair. Both <code><a class="el" href="classFuture.html" title="Asynchronous result wrapping std::future&lt;T&gt;.">Future</a>&lt;T&gt;::result()</code> and <code><a class="el" href="classFuture.html" title="Asynchronous result wrapping std::future&lt;T&gt;.">Future</a>&lt;T&gt;::waitForFinished()</code> accept an optional <code>timeoutMs</code> parameter.</p>
+<div class="line"><span class="keyword">auto</span> [value, err] = f.result();  <span class="comment">// blocks until ready</span></div>
+</div><!-- fragment --><p><code>Future&lt;void&gt;</code> is specialized: <code>result()</code> returns an <code>Error</code> instead of a <code>Result</code> pair. Both <code>Future&lt;T&gt;::result()</code> and <code>Future&lt;T&gt;::waitForFinished()</code> accept an optional <code>timeoutMs</code> parameter.</p>
 <h1><a class="anchor" id="thread_pool"></a>
 ThreadPool</h1>
-<p><code><a class="el" href="classThreadPool.html" title="General-purpose thread pool for submitting callable tasks.">ThreadPool</a></code> provides a pool of worker threads for running tasks concurrently. Submit work with <code>submit()</code>, which returns a <code><a class="el" href="classFuture.html" title="Asynchronous result wrapping std::future&lt;T&gt;.">Future</a></code> for the result.</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classThreadPool.html">ThreadPool</a> pool;</div>
-<div class="line"><a class="code hl_class" href="classList.html">Future&lt;int&gt;</a> result = pool.<a class="code hl_function" href="classThreadPool.html#acd7225ce903d2a46a744f23eeb9b8d47">submit</a>([]() {</div>
-<div class="line">        <span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">expensiveComputation</a>();</div>
+<p><code>ThreadPool</code> provides a pool of worker threads for running tasks concurrently. Submit work with <code>submit()</code>, which returns a <code>Future</code> for the result.</p>
+<div class="fragment"><div class="line">ThreadPool pool;</div>
+<div class="line">Future&lt;int&gt; result = pool.submit([]() {</div>
+<div class="line">        <span class="keywordflow">return</span> expensiveComputation();</div>
 <div class="line">});</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Later...</span></div>
-<div class="line"><span class="keyword">auto</span> [<a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>, <a class="code hl_class" href="classList.html">err</a>] = result.result();</div>
-<div class="ttc" id="aclassThreadPool_html"><div class="ttname"><a href="classThreadPool.html">ThreadPool</a></div><div class="ttdoc">General-purpose thread pool for submitting callable tasks.</div><div class="ttdef"><b>Definition</b> threadpool.h:50</div></div>
-<div class="ttc" id="aclassThreadPool_html_acd7225ce903d2a46a744f23eeb9b8d47"><div class="ttname"><a href="classThreadPool.html#acd7225ce903d2a46a744f23eeb9b8d47">ThreadPool::submit</a></div><div class="ttdeci">auto submit(F &amp;&amp;callable) -&gt; Future&lt; std::invoke_result_t&lt; F &gt; &gt;</div><div class="ttdoc">Submits a callable for asynchronous execution.</div><div class="ttdef"><b>Definition</b> threadpool.h:86</div></div>
+<div class="line"><span class="keyword">auto</span> [value, err] = result.result();</div>
 </div><!-- fragment --><p>Key features:</p>
 <ul>
 <li>Default thread count is <code>std::thread::hardware_concurrency()</code>.</li>
@@ -261,11 +248,11 @@ ThreadPool</h1>
 <li><code>waitForDone()</code> blocks until all submitted tasks complete.</li>
 <li><code>clear()</code> discards pending (not running) tasks.</li>
 </ul>
-<p>Tasks submitted to the pool should be self-contained. Pass data in by copy (for simple types) or by <code>Ptr</code> (for shareable types). Do not capture raw pointers to <code><a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a></code> instances — use signals instead to communicate results back.</p>
+<p>Tasks submitted to the pool should be self-contained. Pass data in by copy (for simple types) or by <code>Ptr</code> (for shareable types). Do not capture raw pointers to <code>ObjectBase</code> instances — use signals instead to communicate results back.</p>
 <h1><a class="anchor" id="thread_pipeline"></a>
 MediaIO Threading</h1>
-<p>Each <code><a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a></code> instance owns a <code><a class="el" href="classStrand.html" title="Serialized executor backed by a ThreadPool.">Strand</a></code> that serializes its commands on a shared <code><a class="el" href="classThreadPool.html" title="General-purpose thread pool for submitting callable tasks.">ThreadPool</a></code>. Backends never manage their own threads — the <a class="el" href="classStrand.html" title="Serialized executor backed by a ThreadPool.">Strand</a> guarantees that every <code><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a></code> callback runs on a single logical worker at a time, while still sharing the pool across the whole application.</p>
-<p>Frames move between <code><a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a></code> stages via signals. A producer emits <code>frameReady</code> when a new frame is available; connected consumers call <code>writeFrame()</code> (non-blocking) on their own <a class="el" href="classStrand.html" title="Serialized executor backed by a ThreadPool.">Strand</a>. Back-pressure is reported through <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b" title="Resource temporarily unavailable (EAGAIN).">Error::TryAgain</a></code> and a matching <code>frameWanted</code> signal when the consumer drains again. </p>
+<p><code>MediaIO</code> is abstract; concrete backends inherit from one of three strategy classes that each pick a thread for command execution: <code>InlineMediaIO</code> (calling thread), <code>SharedThreadMediaIO</code> (per-instance <code>Strand</code> on a shared <code>ThreadPool</code>), or <code>DedicatedThreadMediaIO</code> (an owned worker thread). <code>SharedThreadMediaIO</code> is the default for compute backends — its strand serializes commands per-instance while the pool keeps the process-wide thread count bounded. I/O backends that block on syscalls inherit from <code>DedicatedThreadMediaIO</code> so a slow backend cannot starve the shared pool.</p>
+<p>Frames move between <code>MediaIO</code> ports via <code>MediaIOPortConnection</code>, which subscribes to the source's <code>frameReady</code> signal and pushes each ready result into every connected sink. Sink writes apply an always-on capacity gate that returns <code>Error::TryAgain</code> when the sink is full; consumers wait on <code>frameWanted</code> before retrying. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
@@ -273,7 +260,7 @@ MediaIO Threading</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

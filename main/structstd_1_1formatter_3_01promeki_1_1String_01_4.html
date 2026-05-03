@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -107,7 +105,7 @@ $(document).ready(function(){initNavTree('structstd_1_1formatter_3_01promeki_1_1
 </div><!--header-->
 <div class="contents">
 
-<p><code>std::formatter</code> specialization for promeki::String.  
+<p><code>std::formatter</code> specialization for <a class="el" href="classpromeki_1_1String.html">promeki::String</a>.  
  <a href="structstd_1_1formatter_3_01promeki_1_1String_01_4.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="string_8h_source.html">string.h</a>&gt;</code></p>
@@ -135,19 +133,19 @@ Collaboration diagram for std::formatter&lt; promeki::String &gt;:</div>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:a04119e53425636c22f60fc66ac24bec9" id="r_a04119e53425636c22f60fc66ac24bec9"><td class="memItemLeft" align="right" valign="top"><a id="a04119e53425636c22f60fc66ac24bec9" name="a04119e53425636c22f60fc66ac24bec9"></a>
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Base</b> = std::formatter&lt; std::string_view &gt;</td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>Base</b> = std::formatter&lt; std::string_view &gt;</td></tr>
 <tr class="separator:a04119e53425636c22f60fc66ac24bec9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ac0427c3d7ec3b7ae218d1836e22c8e0d" id="r_ac0427c3d7ec3b7ae218d1836e22c8e0d"><td class="memTemplParams" colspan="2"><a id="ac0427c3d7ec3b7ae218d1836e22c8e0d" name="ac0427c3d7ec3b7ae218d1836e22c8e0d"></a>
-template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">FormatContext</a> &gt; </td></tr>
-<tr class="memitem:ac0427c3d7ec3b7ae218d1836e22c8e0d"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">auto</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>format</b> (<a class="el" href="classList.html">const</a> promeki::String &amp;s, <a class="el" href="classList.html">FormatContext</a> &amp;<a class="el" href="classList.html">ctx</a>) <a class="el" href="classList.html">const</a></td></tr>
+template&lt;typename FormatContext &gt; </td></tr>
+<tr class="memitem:ac0427c3d7ec3b7ae218d1836e22c8e0d"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>format</b> (const <a class="el" href="classpromeki_1_1String.html">promeki::String</a> &amp;s, FormatContext &amp;ctx) const</td></tr>
 <tr class="separator:ac0427c3d7ec3b7ae218d1836e22c8e0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><code>std::formatter</code> specialization for promeki::String. </p>
-<p>Inherits from <code>std::formatter&lt;std::string_view&gt;</code> so that the full set of standard string format specifiers (width, fill, alignment, precision) is available for free. The <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>'s byte representation is exposed as a <code>string_view</code> via <code>cstr()</code> / <code>byteCount()</code> — for Unicode-encoded Strings this is the cached UTF-8 byte sequence, which is the right thing to feed into <code>std::format</code>. </p>
+<div class="textblock"><p><code>std::formatter</code> specialization for <a class="el" href="classpromeki_1_1String.html">promeki::String</a>. </p>
+<p>Inherits from <code>std::formatter&lt;std::string_view&gt;</code> so that the full set of standard string format specifiers (width, fill, alignment, precision) is available for free. The String's byte representation is exposed as a <code>string_view</code> via <code>cstr()</code> / <code>byteCount()</code> — for Unicode-encoded Strings this is the cached UTF-8 byte sequence, which is the right thing to feed into <code>std::format</code>. </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="string_8h_source.html">string.h</a></li>
 </ul>
@@ -158,7 +156,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>std</b></li><li class="navelem"><a class="el" href="structstd_1_1formatter_3_01promeki_1_1String_01_4.html">formatter&lt; promeki::String &gt;</a></li>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

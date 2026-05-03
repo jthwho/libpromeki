@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -108,7 +106,7 @@ $(document).ready(function(){initNavTree('structstd_1_1formatter_3_01promeki_1_1
 </div><!--header-->
 <div class="contents">
 
-<p><code>std::formatter</code> specialisation for promeki::VideoFormat.  
+<p><code>std::formatter</code> specialisation for <a class="el" href="classpromeki_1_1VideoFormat.html">promeki::VideoFormat</a>.  
  <a href="structstd_1_1formatter_3_01promeki_1_1VideoFormat_01_4.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="videoformat_8h_source.html">videoformat.h</a>&gt;</code></p>
@@ -123,11 +121,11 @@ Public Types</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a4bde6a6fcdec203a97d411ff96362545" id="r_a4bde6a6fcdec203a97d411ff96362545"><td class="memItemLeft" align="right" valign="top"><a id="a4bde6a6fcdec203a97d411ff96362545" name="a4bde6a6fcdec203a97d411ff96362545"></a>
-<a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><b>parse</b> (std::format_parse_context &amp;<a class="el" href="classList.html">ctx</a>)</td></tr>
+constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><b>parse</b> (std::format_parse_context &amp;ctx)</td></tr>
 <tr class="separator:a4bde6a6fcdec203a97d411ff96362545"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad59d7d7c837af1a7f49aad374386c368" id="r_ad59d7d7c837af1a7f49aad374386c368"><td class="memTemplParams" colspan="2"><a id="ad59d7d7c837af1a7f49aad374386c368" name="ad59d7d7c837af1a7f49aad374386c368"></a>
-template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">FormatContext</a> &gt; </td></tr>
-<tr class="memitem:ad59d7d7c837af1a7f49aad374386c368"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">auto</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>format</b> (<a class="el" href="classList.html">const</a> promeki::VideoFormat &amp;<a class="el" href="classList.html">vf</a>, <a class="el" href="classList.html">FormatContext</a> &amp;<a class="el" href="classList.html">ctx</a>) <a class="el" href="classList.html">const</a></td></tr>
+template&lt;typename FormatContext &gt; </td></tr>
+<tr class="memitem:ad59d7d7c837af1a7f49aad374386c368"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>format</b> (const <a class="el" href="classpromeki_1_1VideoFormat.html">promeki::VideoFormat</a> &amp;vf, FormatContext &amp;ctx) const</td></tr>
 <tr class="separator:ad59d7d7c837af1a7f49aad374386c368"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
@@ -140,8 +138,8 @@ std::formatter&lt; std::string_view &gt;&#160;</td><td class="memItemRight" vali
 <tr class="separator:a52153c3718e82c1beb6bc2ce4e094012"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><code>std::formatter</code> specialisation for promeki::VideoFormat. </p>
-<p>Accepts an optional style keyword that drives promeki::VideoFormat::StringOptions, followed by an optional standard string format spec for width / fill / alignment. The two sections are separated by a colon, matching the <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> formatter convention:</p>
+<div class="textblock"><p><code>std::formatter</code> specialisation for <a class="el" href="classpromeki_1_1VideoFormat.html">promeki::VideoFormat</a>. </p>
+<p>Accepts an optional style keyword that drives <a class="el" href="structpromeki_1_1VideoFormat_1_1StringOptions.html">promeki::VideoFormat::StringOptions</a>, followed by an optional standard string format spec for width / fill / alignment. The two sections are separated by a colon, matching the Timecode formatter convention:</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Format spec   </th><th class="markdownTableHeadNone">Result    </th></tr>
@@ -170,7 +168,7 @@ std::formatter&lt; std::string_view &gt;&#160;</td><td class="memItemRight" vali
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classList.html">class</a> std::formatter&lt; promeki::VideoFormat &gt;::Style</td>
+          <td class="memname">enum class std::formatter&lt; <a class="el" href="classpromeki_1_1VideoFormat.html">promeki::VideoFormat</a> &gt;::Style</td>
         </tr>
       </table>
   </td>
@@ -198,7 +196,7 @@ std::formatter&lt; std::string_view &gt;&#160;</td><td class="memItemRight" vali
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>std</b></li><li class="navelem"><a class="el" href="structstd_1_1formatter_3_01promeki_1_1VideoFormat_01_4.html">formatter&lt; promeki::VideoFormat &gt;</a></li>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

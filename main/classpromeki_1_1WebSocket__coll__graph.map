@@ -1,0 +1,15 @@
+<map id="promeki::WebSocket" name="promeki::WebSocket">
+<area shape="rect" id="Node000001" title="RFC 6455 WebSocket endpoint, client&#45; or server&#45;side." alt="" coords="839,119,993,145"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="411,13,569,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="583,16,637,17,696,21,757,32,816,50,843,64,868,82,905,117,901,121,865,86,840,68,814,54,756,37,696,27,637,22,583,22"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,5,199,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="213,23,410,23,410,28,213,28"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="415,62,565,87"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="579,80,815,109,856,117,855,122,814,115,579,85"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="393,112,587,152"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="601,129,839,129,839,135,601,135"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="393,176,587,216"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="600,190,704,181,814,164,883,142,885,147,815,169,705,187,601,195"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="393,240,587,280"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="600,255,706,242,761,228,814,210,840,195,864,177,901,143,905,147,868,181,843,200,816,214,763,234,707,247,601,261"/>
+</map>

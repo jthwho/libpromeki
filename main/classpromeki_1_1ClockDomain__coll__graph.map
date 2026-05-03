@@ -1,0 +1,5 @@
+<map id="promeki::ClockDomain" name="promeki::ClockDomain">
+<area shape="rect" id="Node000001" title="Named identity for a clock source." alt="" coords="23,123,194,148"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1StringRegistryItem.html" title="Lightweight handle identifying a string registered in StringRegistry." alt="" coords="5,5,212,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,59,111,122,106,122,106,59"/>
+</map>

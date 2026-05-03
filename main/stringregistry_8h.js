@@ -1,5 +1,6 @@
 var stringregistry_8h =
 [
-    [ "StringRegistry< Name >::Item", "classStringRegistry_1_1Item.html", "classStringRegistry_1_1Item" ],
-    [ "stringRegistryCollisionAbort", "stringregistry_8h.html#a3c862490cb18a51bf3cc6d0390cdb8e8", null ]
+    [ "promeki::StringRegistryItem< Name >", "classpromeki_1_1StringRegistryItem.html", "classpromeki_1_1StringRegistryItem" ],
+    [ "std::hash< promeki::StringRegistryItem< Name > >", "structstd_1_1hash_3_01promeki_1_1StringRegistryItem_3_01Name_01_4_01_4.html", null ],
+    [ "stringRegistryCollisionAbort", "stringregistry_8h.html#a0ec790e09a9889a311c614d915d26a83", null ]
 ];

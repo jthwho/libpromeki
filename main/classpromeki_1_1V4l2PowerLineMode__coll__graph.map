@@ -1,0 +1,8 @@
+<map id="promeki::V4l2PowerLineMode" name="promeki::V4l2PowerLineMode">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for V4L2 power line frequency filter." alt="" coords="5,186,221,211"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="236,190,248,198,240,207,222,210,221,205,238,202,243,199,233,194"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="21,80,205,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="116,134,116,186,111,186,111,134"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="53,5,174,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="116,44,116,80,111,80,111,44"/>
+</map>

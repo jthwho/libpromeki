@@ -1,0 +1,9 @@
+<map id="promeki::MediaIOPort" name="promeki::MediaIOPort">
+<area shape="rect" id="Node000001" title="Common base for a single I/O port hanging off a MediaIO." alt="" coords="105,79,269,104"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1MediaIOSink.html" title="Write&#45;side port of a MediaIO." alt="" coords="5,152,172,177"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="162,114,106,154,103,150,159,110"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1MediaIOSource.html" title="Read&#45;side port of a MediaIO." alt="" coords="196,152,379,177"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="216,110,273,150,269,154,213,114"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="108,5,267,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,44,190,79,185,79,185,44"/>
+</map>

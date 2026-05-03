@@ -1,0 +1,17 @@
+<map id="promeki::MulticastReceiver" name="promeki::MulticastReceiver">
+<area shape="rect" id="Node000001" title="Standalone multicast datagram receiver with an owned worker thread." alt="" coords="1195,119,1396,145"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1Thread.html" title="Wrapper around std::thread with a built&#45;in EventLoop." alt="" coords="779,62,908,87"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="922,80,1171,109,1219,117,1219,122,1170,115,922,85"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="399,13,558,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="572,35,779,63,778,69,571,40"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,5,199,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="212,23,399,23,399,28,212,28"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="403,62,554,87"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="568,72,778,72,778,77,568,77"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="393,111,564,137"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="577,108,778,81,779,86,578,113"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="708,112,979,152"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="992,129,1194,129,1194,135,992,135"/>
+<area shape="rect" id="Node000008" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="747,176,940,216"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="953,179,1170,149,1217,142,1218,147,1171,155,954,185"/>
+</map>

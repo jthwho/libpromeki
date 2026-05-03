@@ -1,0 +1,9 @@
+<map id="promeki::DebugServer" name="promeki::DebugServer">
+<area shape="rect" id="Node000001" title="Convenience wrapper that mounts the standard set of debug modules." alt="" coords="101,211,269,236"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="23,108,181,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="122,142,177,209,173,212,118,145"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,5,199,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="105,59,105,108,99,108,99,59"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="206,108,329,133"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="251,145,196,212,192,209,247,142"/>
+</map>

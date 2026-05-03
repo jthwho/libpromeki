@@ -1,5 +1,0 @@
-<map id="UdpSocket::Datagram" name="UdpSocket::Datagram">
-<area shape="rect" id="Node000001" title="Describes a single datagram for batch&#45;send APIs." alt="" coords="5,93,169,119"/>
-<area shape="rect" id="Node000002" href="$classSocketAddress.html" title="Network address with port number." alt="" coords="29,5,146,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="90,45,90,93,85,93,85,45"/>
-</map>

@@ -1,4 +1,4 @@
 var sdlplayerwidget_8h =
 [
-    [ "SDLPlayerWidget", "classSDLPlayerWidget.html", "classSDLPlayerWidget" ]
+    [ "promeki::SDLPlayerWidget", "classpromeki_1_1SDLPlayerWidget.html", "classpromeki_1_1SDLPlayerWidget" ]
 ];

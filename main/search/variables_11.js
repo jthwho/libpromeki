@@ -1,23 +1,11 @@
 var searchData=
 [
-  ['randomaccessgranularity_0',['randomAccessGranularity',['../structVideoCodec_1_1Data.html#afa1ca1214d74f4b45011f2080e132cd5',1,'VideoCodec::Data']]],
-  ['rangebias_1',['rangeBias',['../structCSCPipeline_1_1Stage.html#a44a064ea8278eb92c1951304aa5c1c80',1,'CSCPipeline::Stage']]],
-  ['rangemax_2',['rangeMax',['../structPixelFormat_1_1CompSemantic.html#a5fbac080782919ee6469fa83685b6805',1,'PixelFormat::CompSemantic']]],
-  ['rangemin_3',['rangeMin',['../structPixelFormat_1_1CompSemantic.html#ab7035a41d9beddc85128ea06e8a51bde',1,'PixelFormat::CompSemantic']]],
-  ['rangescale_4',['rangeScale',['../structCSCPipeline_1_1Stage.html#aff3075d0c5f8cdbe45d0caea017512f4',1,'CSCPipeline::Stage']]],
-  ['ratecontrolmodes_5',['ratecontrolmodes',['../structAudioCodec_1_1Data.html#a5fa0999b1cceacd42b360d96dde0708f',1,'AudioCodec::Data::rateControlModes'],['../structVideoCodec_1_1Data.html#a11426222968d9edc4f855b52de8f510c',1,'VideoCodec::Data::rateControlModes']]],
-  ['rcversion_6',['rcVersion',['../structBuildInfo.html#aa1a1f1fb7d161663b6717a54080870cf',1,'BuildInfo']]],
-  ['red_7',['Red',['../classColor.html#ade25ce437fd74a7b08fee1583b329c8e',1,'Color']]],
-  ['reflect_8',['reflect',['../structCRC_1_1Params.html#a55ef927e97034e79f99f0b5653b6121c',1,'CRC::Params']]],
-  ['release_9',['release',['../structMemSpace_1_1Ops.html#a7e1a52bd6ab8f690d90ce2c462a2c76d',1,'MemSpace::Ops']]],
-  ['releasebytes_10',['releasebytes',['../structMemSpace_1_1Stats.html#a1eee343d4320da5f12d51bb20d1e5028',1,'MemSpace::Stats::releaseBytes'],['../structMemSpace_1_1Stats_1_1Snapshot.html#ae0b98b7202090cdaf0d0d2e6c97cc510',1,'MemSpace::Stats::Snapshot::releaseBytes']]],
-  ['releasecount_11',['releasecount',['../structMemSpace_1_1Stats_1_1Snapshot.html#a14ef0dab7e776649f1b8b7be82bdb553',1,'MemSpace::Stats::Snapshot::releaseCount'],['../structMemSpace_1_1Stats.html#acb1a98c04069d0f18612c581ba581a80',1,'MemSpace::Stats::releaseCount']]],
-  ['repeats_12',['repeats',['../classBenchmarkResult.html#af3f3364cfcddf40cd548a2eefdc202b1',1,'BenchmarkResult']]],
-  ['repoident_13',['repoident',['../structBuildInfo.html#a20b4d6a2107f88027f9c8d5a61a30192',1,'BuildInfo']]],
-  ['resize_14',['Resize',['../classResizeEvent.html#a216f4563eccf3880282d29b646e3a013',1,'ResizeEvent']]],
-  ['resolve_15',['resolve',['../structdetail_1_1VariantQueryContext.html#a6ad2e5883ba11691cf88ab643e29075d',1,'detail::VariantQueryContext']]],
-  ['rest_16',['rest',['../structdetail_1_1VariantLookupSegment.html#ab98c85898ab4a6188b4916a60dd89176',1,'detail::VariantLookupSegment']]],
-  ['result_17',['result',['../classMediaIOCommandRead.html#a141c78b1dc0b319e1ac71123fce7c884',1,'MediaIOCommandRead::result'],['../classMediaIOCommandParams.html#a8d58a2d0c5a7e12a26a8250b2e6fc6ab',1,'MediaIOCommandParams::result']]],
-  ['rgbtoxyz_18',['rgbToXyz',['../structColorModel_1_1Data.html#a9901ef9ea6923749a4f98c4b505fe970',1,'ColorModel::Data']]],
-  ['ringdepth_19',['ringDepth',['../structFrameBridge_1_1Config.html#ac58c635f12a89c811d17b3571ea883b2',1,'FrameBridge::Config']]]
+  ['quality_0',['quality',['../structpromeki_1_1MediaPipelinePlanner_1_1Policy.html#ad58390086124dfbb78810af2aaf03fe7',1,'promeki::MediaPipelinePlanner::Policy']]],
+  ['queuecapacity_1',['QueueCapacity',['../classpromeki_1_1MediaIOStats.html#ae70e157636f00ab2724d5666d9a4257e',1,'promeki::MediaIOStats']]],
+  ['queuedepth_2',['QueueDepth',['../classpromeki_1_1MediaIOStats.html#a472c5e014e7b0f9052c99afb0b08436f',1,'promeki::MediaIOStats']]],
+  ['queuewaitduration_3',['QueueWaitDuration',['../classpromeki_1_1MediaIOStats.html#a6f08803f82c427ae38508a9a4723be4d',1,'promeki::MediaIOStats']]],
+  ['quicktimeflushsync_4',['QuickTimeFlushSync',['../classpromeki_1_1MediaConfig.html#a6ec4e28392183b9f6deb122e92702314',1,'promeki::MediaConfig']]],
+  ['quicktimefragmentframes_5',['QuickTimeFragmentFrames',['../classpromeki_1_1MediaConfig.html#a0bb6bbbf44ad3cae3571ab4d22b355eb',1,'promeki::MediaConfig']]],
+  ['quicktimelayout_6',['QuickTimeLayout',['../classpromeki_1_1MediaConfig.html#aaedee612c9236151ebe6e98d2ab0b491',1,'promeki::MediaConfig']]],
+  ['quit_7',['Quit',['../classpromeki_1_1Event.html#ac5ffe9393df14dac41140a9274985403',1,'promeki::Event']]]
 ];

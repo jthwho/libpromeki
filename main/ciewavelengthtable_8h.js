@@ -1,4 +1,4 @@
 var ciewavelengthtable_8h =
 [
-    [ "CIEWavelength", "structCIEWavelength.html", "structCIEWavelength" ]
+    [ "promeki::CIEWavelength", "structpromeki_1_1CIEWavelength.html", "structpromeki_1_1CIEWavelength" ]
 ];

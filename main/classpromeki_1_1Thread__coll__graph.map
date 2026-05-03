@@ -1,0 +1,11 @@
+<map id="promeki::Thread" name="promeki::Thread">
+<area shape="rect" id="Node000001" title="Wrapper around std::thread with a built&#45;in EventLoop." alt="" coords="216,196,345,221"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="23,108,181,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="139,137,258,193,255,198,137,142"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,5,199,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="105,59,105,108,99,108,99,59"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="205,108,356,133"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="283,147,283,195,278,195,278,147"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="381,108,551,133"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="437,143,378,174,317,198,315,193,376,170,435,138"/>
+</map>

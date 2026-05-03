@@ -1,0 +1,5 @@
+<map id="promeki::StringUnicodeLiteralData" name="promeki::StringUnicodeLiteralData">
+<area shape="rect" id="Node000001" title="Immutable Unicode string storage wrapping compile&#45;time decoded data." alt="" coords="5,79,252,104"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1StringData.html" title="Pure virtual interface for String storage backends." alt="" coords="52,5,205,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,44,131,79,126,79,126,44"/>
+</map>

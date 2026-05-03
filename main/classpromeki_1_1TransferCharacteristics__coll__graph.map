@@ -1,0 +1,8 @@
+<map id="promeki::TransferCharacteristics" name="promeki::TransferCharacteristics">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for VUI / container transfer characteristic (opto&#45;electronic transfer function)." alt="" coords="5,245,239,270"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="165,239,200,234,232,235,255,242,263,249,265,257,262,267,253,273,226,280,189,280,152,273,153,267,190,275,225,275,251,269,258,263,260,257,258,252,253,247,231,240,200,239,166,244"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="21,80,223,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,134,125,244,119,244,119,134"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="61,5,183,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="125,44,125,80,119,80,119,44"/>
+</map>

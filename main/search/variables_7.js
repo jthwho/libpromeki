@@ -1,13 +1,18 @@
 var searchData=
 [
-  ['generalconstraintindicatorflags_0',['generalConstraintIndicatorFlags',['../structHevcDecoderConfig.html#a3f311fee2fd0fc31290ccb33f0e85919',1,'HevcDecoderConfig']]],
-  ['generallevelidc_1',['generalLevelIdc',['../structHevcDecoderConfig.html#a1e374ad357f9b61b8c792e6484e11ee3',1,'HevcDecoderConfig']]],
-  ['generalprofilecompatibilityflags_2',['generalProfileCompatibilityFlags',['../structHevcDecoderConfig.html#a633710e26fc6e9e97bd4f9e286a313b6',1,'HevcDecoderConfig']]],
-  ['generalprofileidc_3',['generalProfileIdc',['../structHevcDecoderConfig.html#aff14532f7163b4282088feb801ecb653',1,'HevcDecoderConfig']]],
-  ['generalprofilespace_4',['generalProfileSpace',['../structHevcDecoderConfig.html#ad74c17b06133dfdd920edf04aaadd153',1,'HevcDecoderConfig']]],
-  ['generaltierflag_5',['generalTierFlag',['../structHevcDecoderConfig.html#a8caf54e1ed5dde76396bc32953381432',1,'HevcDecoderConfig']]],
-  ['green_6',['Green',['../classColor.html#a99d190056130b083fe716a721f0e2b74',1,'Color']]],
-  ['grep_7',['Grep',['../classRegEx.html#af5874cb066c531b5adc390859c885041',1,'RegEx']]],
-  ['group_8',['group',['../structMulticastReceiver_1_1GroupEntry.html#a1f5bdd13fd6cc470128a60842fcbb6aa',1,'MulticastReceiver::GroupEntry']]],
-  ['groupname_9',['groupName',['../structFrameBridge_1_1Config.html#a051cb637cd8ae180df7e935c0dd14094',1,'FrameBridge::Config']]]
+  ['gamma_0',['Gamma',['../classpromeki_1_1Metadata.html#a22eff5672ba7507544607c33b11120b9',1,'promeki::Metadata']]],
+  ['generalconstraintindicatorflags_1',['generalConstraintIndicatorFlags',['../structpromeki_1_1HevcDecoderConfig.html#a016a5f915f8e8df7ca40ae95c6799c4b',1,'promeki::HevcDecoderConfig']]],
+  ['generallevelidc_2',['generalLevelIdc',['../structpromeki_1_1HevcDecoderConfig.html#a9e8179e1c88e9991e18bdb084f43dea4',1,'promeki::HevcDecoderConfig']]],
+  ['generalprofilecompatibilityflags_3',['generalProfileCompatibilityFlags',['../structpromeki_1_1HevcDecoderConfig.html#a1321860bd2f2fcc930433d536d623b81',1,'promeki::HevcDecoderConfig']]],
+  ['generalprofileidc_4',['generalProfileIdc',['../structpromeki_1_1HevcDecoderConfig.html#a1c69237486d661b53079aef1ea4c5c63',1,'promeki::HevcDecoderConfig']]],
+  ['generalprofilespace_5',['generalProfileSpace',['../structpromeki_1_1HevcDecoderConfig.html#ae11cf0a5ab6fe50bfba79bd57f56ed54',1,'promeki::HevcDecoderConfig']]],
+  ['generaltierflag_6',['generalTierFlag',['../structpromeki_1_1HevcDecoderConfig.html#ae4a3aa88542a27d67a2678611329a45f',1,'promeki::HevcDecoderConfig']]],
+  ['genre_7',['Genre',['../classpromeki_1_1Metadata.html#af499ef11037c0dcdfa6bab1e675a85cb',1,'promeki::Metadata']]],
+  ['goplength_8',['GopLength',['../classpromeki_1_1MediaConfig.html#afc57d9fed13a17793901bbf26e704c0d',1,'promeki::MediaConfig']]],
+  ['green_9',['Green',['../classpromeki_1_1Color.html#aa1db98c84f2ce719476344b32d12b9e3',1,'promeki::Color']]],
+  ['grep_10',['Grep',['../classpromeki_1_1RegEx.html#a5f12eda7fe547d1da7483a725cb0c2ce',1,'promeki::RegEx']]],
+  ['group_11',['group',['../classpromeki_1_1MediaIOCommandRead.html#aeb05bb7ed1d41dded5854d9237a20efa',1,'promeki::MediaIOCommandRead::group'],['../classpromeki_1_1MediaIOCommandWrite.html#afdba56a4c3eb6dcb63ba9435063ba0a7',1,'promeki::MediaIOCommandWrite::group'],['../classpromeki_1_1MediaIOCommandSeek.html#ac7a3289c13feb4daa98760d0faefe324',1,'promeki::MediaIOCommandSeek::group'],['../classpromeki_1_1MediaIOCommandSetClock.html#aa7af92c5a10ba80de502bd769ab58d90',1,'promeki::MediaIOCommandSetClock::group'],['../structpromeki_1_1MulticastReceiver_1_1GroupEntry.html#a4dac31d8b0110f8c382fd3540585d7a2',1,'promeki::MulticastReceiver::GroupEntry::group']]],
+  ['groupjoinedsignal_12',['groupJoinedSignal',['../classpromeki_1_1MulticastManager.html#a7de9a818017075273d08bac8fd090c27',1,'promeki::MulticastManager']]],
+  ['groupleftsignal_13',['groupLeftSignal',['../classpromeki_1_1MulticastManager.html#a73e7a8eacd74035eefb6dd0003faecab',1,'promeki::MulticastManager']]],
+  ['groupname_14',['groupName',['../structpromeki_1_1FrameBridge_1_1Config.html#a1046c4df15d7b57492359a060b58b4a6',1,'promeki::FrameBridge::Config']]]
 ];

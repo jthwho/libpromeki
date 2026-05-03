@@ -1,0 +1,57 @@
+var classpromeki_1_1AudioCodec =
+[
+    [ "Backend", "classpromeki_1_1AudioCodec_1_1Backend.html", null ],
+    [ "Data", "structpromeki_1_1AudioCodec_1_1Data.html", "structpromeki_1_1AudioCodec_1_1Data" ],
+    [ "BackendList", "classpromeki_1_1AudioCodec.html#abaa27b791be7c338fe5b79bf8eaf4233", null ],
+    [ "IDList", "classpromeki_1_1AudioCodec.html#a49c0333eb6f57c486e95b2b67f481947", null ],
+    [ "CompressionType", "classpromeki_1_1AudioCodec.html#acf14922512f0f35ab40e2564657514e6", [
+      [ "CompressionInvalid", "classpromeki_1_1AudioCodec.html#acf14922512f0f35ab40e2564657514e6a93ecf9734008024ea59443ed32feb448", null ],
+      [ "CompressionLossless", "classpromeki_1_1AudioCodec.html#acf14922512f0f35ab40e2564657514e6a95030ade6f4f218d1c5c47b06fd538aa", null ],
+      [ "CompressionLossy", "classpromeki_1_1AudioCodec.html#acf14922512f0f35ab40e2564657514e6a460cde011c4c343f96b75814a23f2349", null ]
+    ] ],
+    [ "ID", "classpromeki_1_1AudioCodec.html#aef22efa619c33e061e7e9bcb5342de0d", [
+      [ "Invalid", "classpromeki_1_1AudioCodec.html#aef22efa619c33e061e7e9bcb5342de0da69f037914bf07b04477f9518f14d577b", null ],
+      [ "AAC", "classpromeki_1_1AudioCodec.html#aef22efa619c33e061e7e9bcb5342de0daaf4b38ea48f7ea0324f37f6cbdffbf90", null ],
+      [ "Opus", "classpromeki_1_1AudioCodec.html#aef22efa619c33e061e7e9bcb5342de0daf940c7c827665d794b01d61bc692b8e5", null ],
+      [ "FLAC", "classpromeki_1_1AudioCodec.html#aef22efa619c33e061e7e9bcb5342de0da728d2c75d5ded39e864a77b800d9c5dd", null ],
+      [ "MP3", "classpromeki_1_1AudioCodec.html#aef22efa619c33e061e7e9bcb5342de0da2437ccccf58eaef33c11c7d7c33da219", null ],
+      [ "AC3", "classpromeki_1_1AudioCodec.html#aef22efa619c33e061e7e9bcb5342de0da0fe2ecf8d686d8f5700cb31cc129867e", null ],
+      [ "UserDefined", "classpromeki_1_1AudioCodec.html#aef22efa619c33e061e7e9bcb5342de0daac96cfd89cb969a7fc5e604524c88bac", null ]
+    ] ],
+    [ "PacketIndependence", "classpromeki_1_1AudioCodec.html#ad0c6ae13329a4659e08320b557cbc6c6", [
+      [ "PacketIndependenceInvalid", "classpromeki_1_1AudioCodec.html#ad0c6ae13329a4659e08320b557cbc6c6aeae1b5febc5b8da8f5a7196a7842273a", null ],
+      [ "PacketIndependenceEvery", "classpromeki_1_1AudioCodec.html#ad0c6ae13329a4659e08320b557cbc6c6ab2a8d2be70ed18e4840f31fb5feb07c3", null ],
+      [ "PacketIndependenceKeyframe", "classpromeki_1_1AudioCodec.html#ad0c6ae13329a4659e08320b557cbc6c6a90ada065535bab58340fcfc4582fedcd", null ],
+      [ "PacketIndependenceInter", "classpromeki_1_1AudioCodec.html#ad0c6ae13329a4659e08320b557cbc6c6a53f2570b2945290648fdfb03a468f4bd", null ]
+    ] ],
+    [ "AudioCodec", "classpromeki_1_1AudioCodec.html#aa1a7d6c08ad2b48da5ea42265961acad", null ],
+    [ "availableDecoderBackends", "classpromeki_1_1AudioCodec.html#a8d0b8af67f7829a7cc68d8aa27ad3ac7", null ],
+    [ "availableEncoderBackends", "classpromeki_1_1AudioCodec.html#a21b62b7468d70fc6121502de62c82ee1", null ],
+    [ "backend", "classpromeki_1_1AudioCodec.html#a3b7690e1522dec59dfb580ddead04089", null ],
+    [ "canDecode", "classpromeki_1_1AudioCodec.html#ac5a40004459312d3312d0b8daeebe67e", null ],
+    [ "canEncode", "classpromeki_1_1AudioCodec.html#a6dbe423b73341c76bc00ccc172f8282a", null ],
+    [ "compressionType", "classpromeki_1_1AudioCodec.html#a5627189f235ee5efd762329bd9c2b071", null ],
+    [ "createDecoder", "classpromeki_1_1AudioCodec.html#aadb93a0503d7206655fe6565e292a720", null ],
+    [ "createEncoder", "classpromeki_1_1AudioCodec.html#aa821432fd669cdd5467d13837e21d7f0", null ],
+    [ "data", "classpromeki_1_1AudioCodec.html#a8260bac66b42d6067ac4f01a4a58cf83", null ],
+    [ "decoderSupportedOutputs", "classpromeki_1_1AudioCodec.html#a6e27847007c746d9032f5d24a43d0342", null ],
+    [ "description", "classpromeki_1_1AudioCodec.html#a09b20d36770c0b5786b3981d30c28cc9", null ],
+    [ "encoderSupportedInputs", "classpromeki_1_1AudioCodec.html#aaa35bd1cbc549f4b22012efe0f1dd38b", null ],
+    [ "fourccList", "classpromeki_1_1AudioCodec.html#a7ad8d064667687e4bd62f192e1530f1c", null ],
+    [ "frameSizeSamples", "classpromeki_1_1AudioCodec.html#a69965e8fda2ff2898fa6a7e77fe5dcc0", null ],
+    [ "hasBuiltInSilence", "classpromeki_1_1AudioCodec.html#ae31b59c8c8bd17b14eb40f755f00b227", null ],
+    [ "id", "classpromeki_1_1AudioCodec.html#a7c0ba2064c6bde7e3426926f45f22ec9", null ],
+    [ "isLossless", "classpromeki_1_1AudioCodec.html#a05bcf5e5874ea217ed7e6c8803fdbec1", null ],
+    [ "isStreamable", "classpromeki_1_1AudioCodec.html#af0a66893050509bd806b2e75fe7a53d2", null ],
+    [ "isValid", "classpromeki_1_1AudioCodec.html#a9c5858672a58ceafb2c623be4132b61e", null ],
+    [ "maxChannels", "classpromeki_1_1AudioCodec.html#a62d28e2729aa3d9cb09f83b9755282e3", null ],
+    [ "name", "classpromeki_1_1AudioCodec.html#a6ac4adca5958be76f8ac169d9fc276a7", null ],
+    [ "operator==", "classpromeki_1_1AudioCodec.html#aca6e5d60149885a582ed153930f3f5f6", null ],
+    [ "packetIndependence", "classpromeki_1_1AudioCodec.html#a4294a26a22d9b003130586b57494f892", null ],
+    [ "rateControlModes", "classpromeki_1_1AudioCodec.html#adbd9c4ab0a022f2c4a48c251f298e215", null ],
+    [ "supportedChannelCounts", "classpromeki_1_1AudioCodec.html#a52954ea1277083d6c87918042ace04ef", null ],
+    [ "supportedSampleFormats", "classpromeki_1_1AudioCodec.html#a6846a12767f058e0248a4ed2b4cf5746", null ],
+    [ "supportedSampleRates", "classpromeki_1_1AudioCodec.html#af79bd303663d0985ff2a3c8bd7032dd4", null ],
+    [ "supportsDRC", "classpromeki_1_1AudioCodec.html#a79bcc613bbeba12283413d380c62edca", null ],
+    [ "toString", "classpromeki_1_1AudioCodec.html#a4b10789bdbb2e867fa0ae2b3f7adde8f", null ]
+];

@@ -1,0 +1,7 @@
+<map id="promeki::HttpApi::Param" name="promeki::HttpApi::Param">
+<area shape="rect" id="Node000001" title="Single parameter descriptor for an Endpoint." alt="" coords="58,93,241,119"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,128,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="89,39,140,91,136,95,85,43"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1VariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID." alt="" coords="153,5,314,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="214,43,163,95,159,91,210,39"/>
+</map>

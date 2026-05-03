@@ -1,0 +1,5 @@
+<map id="promeki::RawBitstreamFactory" name="promeki::RawBitstreamFactory">
+<area shape="rect" id="Node000001" title="MediaIOFactory for the raw&#45;bitstream sink backend." alt="" coords="5,79,228,104"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1MediaIOFactory.html" title="Polymorphic factory that creates MediaIO instances for a given backend identity." alt="" coords="24,5,209,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,44,119,79,114,79,114,44"/>
+</map>

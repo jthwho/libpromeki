@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -114,34 +112,34 @@ $(document).ready(function(){initNavTree('notesequenceparser_8h_source.html','')
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
 <div class="foldopen" id="foldopen00042" data-start="{" data-end="};">
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno"><a class="line" href="classNoteSequenceParser.html">   42</a></span><span class="keyword">class </span><a class="code hl_class" href="classNoteSequenceParser.html">NoteSequenceParser</a> {</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno"><a class="line" href="classpromeki_1_1NoteSequenceParser.html">   42</a></span><span class="keyword">class </span><a class="code hl_class" href="classpromeki_1_1NoteSequenceParser.html">NoteSequenceParser</a> {</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno"><a class="line" href="classNoteSequenceParser.html#a0321a78ca3d84b14322bb1002c029cdd">   49</a></span>                MusicalNote::List <a class="code hl_function" href="classNoteSequenceParser.html#a0321a78ca3d84b14322bb1002c029cdd">parse</a>(<span class="keyword">const</span> <a class="code hl_class" href="classString.html">String</a> &amp;<a class="code hl_class" href="classList.html">input</a>);</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno"><a class="line" href="classpromeki_1_1NoteSequenceParser.html#afd29b2b69d3b29b3c645737a61bcc2c8">   49</a></span>                <a class="code hl_class" href="classpromeki_1_1List.html">MusicalNote::List</a> <a class="code hl_function" href="classpromeki_1_1NoteSequenceParser.html#afd29b2b69d3b29b3c645737a61bcc2c8">parse</a>(<span class="keyword">const</span> <a class="code hl_class" href="classpromeki_1_1String.html">String</a> &amp;<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">input</a>);</div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno"><a class="line" href="classNoteSequenceParser.html#a13d58dc0a391b93e4aacdb143579578d">   55</a></span>                <span class="keyword">const</span> <a class="code hl_class" href="classStringList.html">StringList</a> &amp;<a class="code hl_function" href="classNoteSequenceParser.html#a13d58dc0a391b93e4aacdb143579578d">errors</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _errors; }</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno"><a class="line" href="classpromeki_1_1NoteSequenceParser.html#a73c54a8362aa12cdcea169869207f7fa">   55</a></span>                <span class="keyword">const</span> <a class="code hl_class" href="classpromeki_1_1StringList.html">StringList</a> &amp;<a class="code hl_function" href="classpromeki_1_1NoteSequenceParser.html#a73c54a8362aa12cdcea169869207f7fa">errors</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _errors; }</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        <span class="keyword">private</span>:</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>                <span class="keyword">struct </span>Params {</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>                        <span class="keywordtype">double</span>       tempo       = 100.0;</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>                        <span class="keywordtype">double</span>       noteLength  = 0.25;</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>                        <span class="keywordtype">float</span>        amplitude   = 0.5f;</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                        <span class="keywordtype">int</span>          octave      = 4;</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>                        <a class="code hl_class" href="classMusicalScale.html">MusicalScale</a> scale;</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>                        <span class="keywordtype">float</span>        legato      = 0.5f;</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>                        <span class="keywordtype">float</span>        vibrato     = 0.0f;</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                        <span class="keywordtype">float</span>        vibratoRate = 5.0f;</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>                        <span class="keywordtype">float</span>        tremolo     = 0.0f;</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                        <span class="keywordtype">float</span>        tremoloRate = 5.0f;</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>                                <span class="keywordtype">double</span>       tempo = 100.0;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>                                <span class="keywordtype">double</span>       noteLength = 0.25;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>                                <span class="keywordtype">float</span>        amplitude = 0.5f;</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                                <span class="keywordtype">int</span>          octave = 4;</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>                                <a class="code hl_class" href="classpromeki_1_1MusicalScale.html">MusicalScale</a> scale;</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>                                <span class="keywordtype">float</span>        legato = 0.5f;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>                                <span class="keywordtype">float</span>        vibrato = 0.0f;</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                                <span class="keywordtype">float</span>        vibratoRate = 5.0f;</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>                                <span class="keywordtype">float</span>        tremolo = 0.0f;</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                                <span class="keywordtype">float</span>        tremoloRate = 5.0f;</div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>                };</div>
 <div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>                <a class="code hl_class" href="classString.html">String</a>                        _input;</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>                <span class="keywordtype">size_t</span>                        _pos         = 0;</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>                <span class="keywordtype">double</span>                        _currentTime = 0.0;</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>                Params                        _params;</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>                <a class="code hl_class" href="classList.html">List&lt;Params&gt;</a>                  _paramStack;</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>                <a class="code hl_class" href="classList.html">Map&lt;String, Params&gt;</a> _namedParams;</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>                MusicalNote::List             _notes;</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>                <a class="code hl_class" href="classStringList.html">StringList</a>                    _errors;</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>                String              _input;</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>                <span class="keywordtype">size_t</span>              _pos = 0;</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>                <span class="keywordtype">double</span>              _currentTime = 0.0;</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>                Params              _params;</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>                List&lt;Params&gt;        _paramStack;</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>                Map&lt;String, Params&gt; _namedParams;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>                MusicalNote::List   _notes;</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>                StringList          _errors;</div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>                <span class="keywordtype">void</span> parseToken();</div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>                <span class="keywordtype">void</span> parseTempo();</div>
@@ -163,28 +161,29 @@ $(document).ready(function(){initNavTree('notesequenceparser_8h_source.html','')
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>                <span class="keywordtype">void</span> skipComment();</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>                <span class="keywordtype">void</span> skipWhitespace();</div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span> </div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                <span class="keywordtype">char</span>        current() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                <span class="keywordtype">char</span>        peek(<span class="keywordtype">int</span> offset) <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                <span class="keywordtype">bool</span>        atEnd() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                <a class="code hl_class" href="classString.html">String</a> readParenArg();</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>                <span class="keywordtype">double</span>      parseDurationModifier();</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>                <span class="keywordtype">void</span>        emitNote(<span class="keywordtype">float</span> midiNote, <span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">dots</a>, <span class="keywordtype">double</span> <a class="code hl_class" href="classList.html">lengthMod</a>);</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>                <span class="keywordtype">void</span>        emitRest(<span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">dots</a>, <span class="keywordtype">double</span> <a class="code hl_class" href="classList.html">lengthMod</a>);</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>                <span class="keywordtype">void</span>        addError(<span class="keyword">const</span> <a class="code hl_class" href="classString.html">String</a> &amp;msg);</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                <span class="keywordtype">char</span>   current() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                <span class="keywordtype">char</span>   peek(<span class="keywordtype">int</span> offset) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                <span class="keywordtype">bool</span>   atEnd() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                String readParenArg();</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>                <span class="keywordtype">double</span> parseDurationModifier();</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>                <span class="keywordtype">void</span>   emitNote(<span class="keywordtype">float</span> midiNote, <span class="keywordtype">int</span> dots, <span class="keywordtype">double</span> lengthMod);</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>                <span class="keywordtype">void</span>   emitRest(<span class="keywordtype">int</span> dots, <span class="keywordtype">double</span> lengthMod);</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>                <span class="keywordtype">void</span>   addError(<span class="keyword">const</span> String &amp;msg);</div>
 <div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span> </div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>                <span class="keyword">static</span> <span class="keywordtype">double</span> parseNoteLengthValue(<span class="keyword">const</span> <a class="code hl_class" href="classString.html">String</a> &amp;s);</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                <span class="keyword">static</span> <span class="keywordtype">double</span> applyDots(<span class="keywordtype">double</span> length, <span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">dots</a>);</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>                <span class="keyword">static</span> <span class="keywordtype">double</span> parseNoteLengthValue(<span class="keyword">const</span> String &amp;s);</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                <span class="keyword">static</span> <span class="keywordtype">double</span> applyDots(<span class="keywordtype">double</span> length, <span class="keywordtype">int</span> dots);</div>
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>};</div>
 </div>
 <div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span> </div>
 <div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassMusicalScale_html"><div class="ttname"><a href="classMusicalScale.html">MusicalScale</a></div><div class="ttdoc">Represents a musical scale with a root pitch class and mode.</div><div class="ttdef"><b>Definition</b> musicalscale.h:27</div></div>
-<div class="ttc" id="aclassNoteSequenceParser_html"><div class="ttname"><a href="classNoteSequenceParser.html">NoteSequenceParser</a></div><div class="ttdoc">Parses a domain-specific text notation into a sequence of MusicalNote objects.</div><div class="ttdef"><b>Definition</b> notesequenceparser.h:42</div></div>
-<div class="ttc" id="aclassNoteSequenceParser_html_a0321a78ca3d84b14322bb1002c029cdd"><div class="ttname"><a href="classNoteSequenceParser.html#a0321a78ca3d84b14322bb1002c029cdd">NoteSequenceParser::parse</a></div><div class="ttdeci">MusicalNote::List parse(const String &amp;input)</div><div class="ttdoc">Parses the input string and returns a list of notes.</div></div>
-<div class="ttc" id="aclassNoteSequenceParser_html_a13d58dc0a391b93e4aacdb143579578d"><div class="ttname"><a href="classNoteSequenceParser.html#a13d58dc0a391b93e4aacdb143579578d">NoteSequenceParser::errors</a></div><div class="ttdeci">const StringList &amp; errors() const</div><div class="ttdoc">Returns any errors encountered during the last parse.</div><div class="ttdef"><b>Definition</b> notesequenceparser.h:55</div></div>
-<div class="ttc" id="aclassStringList_html"><div class="ttname"><a href="classStringList.html">StringList</a></div><div class="ttdoc">Manages a list of strings.</div><div class="ttdef"><b>Definition</b> stringlist.h:21</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
+<div class="ttc" id="aclasspromeki_1_1List_html"><div class="ttname"><a href="classpromeki_1_1List.html">promeki::List&lt; MusicalNote &gt;</a></div></div>
+<div class="ttc" id="aclasspromeki_1_1MusicalScale_html"><div class="ttname"><a href="classpromeki_1_1MusicalScale.html">promeki::MusicalScale</a></div><div class="ttdoc">Represents a musical scale with a root pitch class and mode.</div><div class="ttdef"><b>Definition</b> musicalscale.h:27</div></div>
+<div class="ttc" id="aclasspromeki_1_1NoteSequenceParser_html"><div class="ttname"><a href="classpromeki_1_1NoteSequenceParser.html">promeki::NoteSequenceParser</a></div><div class="ttdoc">Parses a domain-specific text notation into a sequence of MusicalNote objects.</div><div class="ttdef"><b>Definition</b> notesequenceparser.h:42</div></div>
+<div class="ttc" id="aclasspromeki_1_1NoteSequenceParser_html_a73c54a8362aa12cdcea169869207f7fa"><div class="ttname"><a href="classpromeki_1_1NoteSequenceParser.html#a73c54a8362aa12cdcea169869207f7fa">promeki::NoteSequenceParser::errors</a></div><div class="ttdeci">const StringList &amp; errors() const</div><div class="ttdoc">Returns any errors encountered during the last parse.</div><div class="ttdef"><b>Definition</b> notesequenceparser.h:55</div></div>
+<div class="ttc" id="aclasspromeki_1_1NoteSequenceParser_html_afd29b2b69d3b29b3c645737a61bcc2c8"><div class="ttname"><a href="classpromeki_1_1NoteSequenceParser.html#afd29b2b69d3b29b3c645737a61bcc2c8">promeki::NoteSequenceParser::parse</a></div><div class="ttdeci">MusicalNote::List parse(const String &amp;input)</div><div class="ttdoc">Parses the input string and returns a list of notes.</div></div>
+<div class="ttc" id="aclasspromeki_1_1StringList_html"><div class="ttname"><a href="classpromeki_1_1StringList.html">promeki::StringList</a></div><div class="ttdoc">Manages a list of strings.</div><div class="ttdef"><b>Definition</b> stringlist.h:31</div></div>
+<div class="ttc" id="aclasspromeki_1_1String_html"><div class="ttname"><a href="classpromeki_1_1String.html">promeki::String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:64</div></div>
+<div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
 <div class="ttc" id="amap_8h_html"><div class="ttname"><a href="map_8h.html">map.h</a></div></div>
 <div class="ttc" id="amusicalnote_8h_html"><div class="ttname"><a href="musicalnote_8h.html">musicalnote.h</a></div></div>
 <div class="ttc" id="amusicalscale_8h_html"><div class="ttname"><a href="musicalscale_8h.html">musicalscale.h</a></div></div>
@@ -199,7 +198,7 @@ $(document).ready(function(){initNavTree('notesequenceparser_8h_source.html','')
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="notesequenceparser_8h.html">notesequenceparser.h</a></li>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -1,0 +1,9 @@
+<map id="promeki::SDLWindow" name="promeki::SDLWindow">
+<area shape="rect" id="Node000001" title="Top&#45;level SDL window that serves as a root Widget." alt="" coords="22,257,182,283"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1Widget.html" title="Base class for all widgets across UI backends." alt="" coords="37,183,167,208"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,222,105,257,99,257,99,222"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="23,108,181,133"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="105,148,105,182,99,182,99,148"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,5,199,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="105,59,105,108,99,108,99,59"/>
+</map>

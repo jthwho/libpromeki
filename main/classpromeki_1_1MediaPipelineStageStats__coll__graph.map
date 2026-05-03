@@ -1,0 +1,11 @@
+<map id="promeki::MediaPipelineStageStats" name="promeki::MediaPipelineStageStats">
+<area shape="rect" id="Node000001" title="Per&#45;stage telemetry record." alt="" coords="620,47,833,87"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="309,5,432,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="446,25,596,45,620,48,619,53,596,50,446,30"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1MediaIOStats.html" title="Telemetry container shared by per&#45;command and instance&#45;wide reporting." alt="" coords="285,55,456,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="470,65,620,65,620,70,470,70"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1VariantDatabase.html" title=" " alt="" coords="5,47,197,87"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="211,65,285,65,285,70,211,70"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Map.html" title=" " alt="" coords="247,105,495,145"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="508,100,619,82,620,87,509,105"/>
+</map>

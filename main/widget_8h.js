@@ -1,17 +1,17 @@
 var widget_8h =
 [
-    [ "FocusPolicy", "group__widget.html#gab55053d0a57be0d70df423df9c2b12cd", [
-      [ "NoFocus", "group__widget.html#ggab55053d0a57be0d70df423df9c2b12cda506647bdf445931594e9b2de731eeb88", null ],
-      [ "TabFocus", "group__widget.html#ggab55053d0a57be0d70df423df9c2b12cda42ac1811b5f65ff0e0f2dc013ed5c0db", null ],
-      [ "ClickFocus", "group__widget.html#ggab55053d0a57be0d70df423df9c2b12cdaaf157268a8cf10ab876ef5fbc986ec8b", null ],
-      [ "StrongFocus", "group__widget.html#ggab55053d0a57be0d70df423df9c2b12cdacd803f669da6ea95150385d1d17b166c", null ]
+    [ "FocusPolicy", "widget_8h.html#ga37fbdb1058fb422570f5f10490401c3d", [
+      [ "NoFocus", "widget_8h.html#gga37fbdb1058fb422570f5f10490401c3da848057face69da6ee239c6408ae48264", null ],
+      [ "TabFocus", "widget_8h.html#gga37fbdb1058fb422570f5f10490401c3daa054b2d92e7d369a2c7846d6ccd86492", null ],
+      [ "ClickFocus", "widget_8h.html#gga37fbdb1058fb422570f5f10490401c3da507909cff652ea8595d6f5c87836bfa5", null ],
+      [ "StrongFocus", "widget_8h.html#gga37fbdb1058fb422570f5f10490401c3da2f453ceee8363b7792d6976d68c5e970", null ]
     ] ],
-    [ "SizePolicy", "group__widget.html#gadf3bce1b63354112cc4b0f620fe5822a", [
-      [ "SizeFixed", "group__widget.html#ggadf3bce1b63354112cc4b0f620fe5822aae5d6e5f9d941cc892c1759db5ecf8227", null ],
-      [ "SizeMinimum", "group__widget.html#ggadf3bce1b63354112cc4b0f620fe5822aa4e164127d74102a31d160c6bc1e14005", null ],
-      [ "SizeMaximum", "group__widget.html#ggadf3bce1b63354112cc4b0f620fe5822aa6c029524ceddafa39e9091a0f5683146", null ],
-      [ "SizePreferred", "group__widget.html#ggadf3bce1b63354112cc4b0f620fe5822aa2035f5ce2976cd90b9d4d48b320f1ffb", null ],
-      [ "SizeExpanding", "group__widget.html#ggadf3bce1b63354112cc4b0f620fe5822aaf2bcf12518309e23a1d81474c2913355", null ],
-      [ "SizeMinimumExpanding", "group__widget.html#ggadf3bce1b63354112cc4b0f620fe5822aae4998dd2c042d9783a6abcf10e34626e", null ]
+    [ "SizePolicy", "widget_8h.html#gafb11f8d217c002215f9eaaf490727a82", [
+      [ "SizeFixed", "widget_8h.html#ggafb11f8d217c002215f9eaaf490727a82a897fc486113d172813a784449802b761", null ],
+      [ "SizeMinimum", "widget_8h.html#ggafb11f8d217c002215f9eaaf490727a82a81db9826e417ecefd66aa1964b2cd9e7", null ],
+      [ "SizeMaximum", "widget_8h.html#ggafb11f8d217c002215f9eaaf490727a82a3b850e1f7ef9e683f9902c6d2477611d", null ],
+      [ "SizePreferred", "widget_8h.html#ggafb11f8d217c002215f9eaaf490727a82a0bea507b32021ac6f9895b2148c20926", null ],
+      [ "SizeExpanding", "widget_8h.html#ggafb11f8d217c002215f9eaaf490727a82a8442897790c9db0dcbd63639a833aa04", null ],
+      [ "SizeMinimumExpanding", "widget_8h.html#ggafb11f8d217c002215f9eaaf490727a82a3178f8f160423c2a86f5f260af73c59c", null ]
     ] ]
 ];

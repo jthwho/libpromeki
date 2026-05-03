@@ -1,0 +1,28 @@
+var structpromeki_1_1InspectorEvent =
+[
+    [ "audioSamplesTestEnabled", "structpromeki_1_1InspectorEvent.html#a2a463ae92e48539e20a1663e0d91964a", null ],
+    [ "audioSamplesThisFrame", "structpromeki_1_1InspectorEvent.html#a9c577e15da9be8caa2243dfd51b8d12e", null ],
+    [ "audioSamplesValid", "structpromeki_1_1InspectorEvent.html#aafd68652378568debf36e7884860ff6a", null ],
+    [ "audioTimestampDeltaNs", "structpromeki_1_1InspectorEvent.html#ab10b830057e8a8b27107a2dc72c5aae6", null ],
+    [ "audioTimestampDeltaValid", "structpromeki_1_1InspectorEvent.html#a34b7aa218c4119a8197a18926f520932", null ],
+    [ "audioTimestampNs", "structpromeki_1_1InspectorEvent.html#a0a5a8e66cdabf2b6f63f810fa3a8eddd", null ],
+    [ "audioTimestampValid", "structpromeki_1_1InspectorEvent.html#a5c67473353a27d26b46863e7a4cebd1a", null ],
+    [ "avSyncOffsetSamples", "structpromeki_1_1InspectorEvent.html#a31ade00eaf9755a1f2617e7be38496b7", null ],
+    [ "avSyncValid", "structpromeki_1_1InspectorEvent.html#ac23faf457ea91fd93f9dec8925ed6c9c", null ],
+    [ "discontinuities", "structpromeki_1_1InspectorEvent.html#a0c2f21175eafc435a9d7821a8f1b7493", null ],
+    [ "frameIndex", "structpromeki_1_1InspectorEvent.html#ad3878768a9fda62058b2b35f48b26b8d", null ],
+    [ "ltcDecoded", "structpromeki_1_1InspectorEvent.html#a5930a3164081ca84aad722d6a0eeca10", null ],
+    [ "ltcDecoderEnabled", "structpromeki_1_1InspectorEvent.html#ae974076d071629365144de9f3a0f2183", null ],
+    [ "ltcSampleStart", "structpromeki_1_1InspectorEvent.html#a64374a960584f8b76258bd60f6ce86c9", null ],
+    [ "ltcTimecode", "structpromeki_1_1InspectorEvent.html#a286aa7ba5e7121c629f9dd67adcc82d1", null ],
+    [ "pictureDecoded", "structpromeki_1_1InspectorEvent.html#a031f218edcfffebf0ec295e6f39ed465", null ],
+    [ "pictureDecoderEnabled", "structpromeki_1_1InspectorEvent.html#a39f056fedce0eee37278aa71c8bfe5b5", null ],
+    [ "pictureFrameNumber", "structpromeki_1_1InspectorEvent.html#a5f2104aabb4cfc3e690b33007c74821b", null ],
+    [ "pictureStreamId", "structpromeki_1_1InspectorEvent.html#ae563d298a8697ad87f9208810391c3d4", null ],
+    [ "pictureTimecode", "structpromeki_1_1InspectorEvent.html#aa5f2b99e30a4d6ecc8b90d25b30cb9c0", null ],
+    [ "timestampTestEnabled", "structpromeki_1_1InspectorEvent.html#ac0ba2af879344bdbf1a76c47bd1b6dfa", null ],
+    [ "videoTimestampDeltaNs", "structpromeki_1_1InspectorEvent.html#aed58167b02c1a4e519b3feacc38911a8", null ],
+    [ "videoTimestampDeltaValid", "structpromeki_1_1InspectorEvent.html#aae9b90038e34d5dfc62b4b55a2606210", null ],
+    [ "videoTimestampNs", "structpromeki_1_1InspectorEvent.html#aaf4e61ea51ee39856ba70dae8cd19087", null ],
+    [ "videoTimestampValid", "structpromeki_1_1InspectorEvent.html#ac5e5bbd448e78888aa7e63838e4961dc", null ]
+];

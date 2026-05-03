@@ -1,4 +1,4 @@
 var packettransport_8h =
 [
-    [ "PacketTransport::Datagram", "structPacketTransport_1_1Datagram.html", "structPacketTransport_1_1Datagram" ]
+    [ "promeki::PacketTransport::Datagram", "structpromeki_1_1PacketTransport_1_1Datagram.html", "structpromeki_1_1PacketTransport_1_1Datagram" ]
 ];

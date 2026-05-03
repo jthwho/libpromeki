@@ -1,4 +1,4 @@
 var audioencoder_8h =
 [
-    [ "AudioEncoder::BackendRecord", "structAudioEncoder_1_1BackendRecord.html", "structAudioEncoder_1_1BackendRecord" ]
+    [ "promeki::AudioEncoder::BackendRecord", "structpromeki_1_1AudioEncoder_1_1BackendRecord.html", "structpromeki_1_1AudioEncoder_1_1BackendRecord" ]
 ];

@@ -1,0 +1,25 @@
+var classpromeki_1_1Duration =
+[
+    [ "Duration", "classpromeki_1_1Duration.html#a1ff54b703c44f7b03ed38dbc60e21d77", null ],
+    [ "hours", "classpromeki_1_1Duration.html#a133206c005fc81acf45049018da017e7", null ],
+    [ "isNegative", "classpromeki_1_1Duration.html#a1c6ce7e08260fbe93670f99df5f9c527", null ],
+    [ "isZero", "classpromeki_1_1Duration.html#a81538ee8c22971c8a01937ce0a3eabaa", null ],
+    [ "microseconds", "classpromeki_1_1Duration.html#a5300904cbc0d7ceac7e6eedec3caea70", null ],
+    [ "milliseconds", "classpromeki_1_1Duration.html#a7e88b20d610e90dd2dece6f7322c61b5", null ],
+    [ "minutes", "classpromeki_1_1Duration.html#a135c1cc265dba6c8e277f6afd2b7f3ed", null ],
+    [ "nanoseconds", "classpromeki_1_1Duration.html#a7d875c0ca9649d69f4c70fb1cc5f29d3", null ],
+    [ "operator!=", "classpromeki_1_1Duration.html#a5242c8d8dd0adb1935f3b138b12b2dcf", null ],
+    [ "operator*", "classpromeki_1_1Duration.html#a23c693f3f4564fe6e765711e0846669e", null ],
+    [ "operator+", "classpromeki_1_1Duration.html#a29692e52070f47aaf5e7f3804ef95e79", null ],
+    [ "operator-", "classpromeki_1_1Duration.html#a7c2cd1ee0d5570e474a35890ab48f1c2", null ],
+    [ "operator/", "classpromeki_1_1Duration.html#a4128e4a9763f1e50168ced1ba30c9500", null ],
+    [ "operator<", "classpromeki_1_1Duration.html#a124256cca26ba55c98e4b7851334244c", null ],
+    [ "operator<=", "classpromeki_1_1Duration.html#a87de451edcb633b8745dbce0b34f72f6", null ],
+    [ "operator==", "classpromeki_1_1Duration.html#a7f9a2bc106327c80e2ba78b2a81a4f77", null ],
+    [ "operator>", "classpromeki_1_1Duration.html#a79c4da3d31da7b2761a37e55c4d01e1f", null ],
+    [ "operator>=", "classpromeki_1_1Duration.html#a3b91659e6d2b57f705c6e39388f78047", null ],
+    [ "seconds", "classpromeki_1_1Duration.html#a1069c3c57f9f43d439e56ec8edf69bd7", null ],
+    [ "toScaledString", "classpromeki_1_1Duration.html#a5aa32305511528d4c8bb2cd4aee04d6e", null ],
+    [ "toSecondsDouble", "classpromeki_1_1Duration.html#a783882d42054faba40d5899437463907", null ],
+    [ "toString", "classpromeki_1_1Duration.html#a649ec9d5f40db77fbc6895bea529c929", null ]
+];

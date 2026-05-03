@@ -1,0 +1,11 @@
+<map id="promeki::Enum::Definition" name="promeki::Enum::Definition">
+<area shape="rect" id="Node000001" title="Immutable per&#45;type record stored in the global registry." alt="" coords="61,285,253,311"/>
+<area shape="rect" id="Node000002" href="$structpromeki_1_1Enum_1_1Entry.html" title="One (name, integer) entry in an enum&#39;s value table." alt="" coords="5,168,168,193"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="103,204,153,284,148,287,99,207"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1StringLiteralData.html" title="Immutable string storage wrapping a string literal pointer." alt="" coords="192,168,387,193"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="268,204,172,287,169,283,264,200"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1StringData.html" title="Pure virtual interface for String storage backends." alt="" coords="213,93,366,119"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="292,133,292,168,287,168,287,133"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1RefCount.html" title="An atomic reference count object." alt="" coords="217,5,361,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="292,45,292,93,287,93,287,45"/>
+</map>

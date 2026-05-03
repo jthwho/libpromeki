@@ -1,0 +1,7 @@
+<map id="promeki::MediaIOPortGroup" name="promeki::MediaIOPortGroup">
+<area shape="rect" id="Node000001" title="Grouping of MediaIOPort siblings sharing a clock and step." alt="" coords="5,183,208,208"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="27,108,186,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,148,109,182,104,182,104,148"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="10,5,203,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="109,59,109,108,104,108,104,59"/>
+</map>

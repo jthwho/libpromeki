@@ -1,4 +1,4 @@
 var sdlwindow_8h =
 [
-    [ "SDLWindow", "classSDLWindow.html", "classSDLWindow" ]
+    [ "promeki::SDLWindow", "classpromeki_1_1SDLWindow.html", "classpromeki_1_1SDLWindow" ]
 ];

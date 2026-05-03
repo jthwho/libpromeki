@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -118,188 +116,172 @@ $(document).ready(function(){initNavTree('strand_8h_source.html',''); initResiza
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
-<div class="foldopen" id="foldopen00049" data-start="{" data-end="};">
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno"><a class="line" href="classStrand.html">   49</a></span><span class="keyword">class </span><a class="code hl_class" href="classStrand.html">Strand</a> {</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="classStrand.html#addafe08ed6d9ea519d731ab98ec247d9">   52</a></span>                <span class="keyword">using </span><a class="code hl_typedef" href="classStrand.html#addafe08ed6d9ea519d731ab98ec247d9">TaskFunc</a> = std::function&lt;<a class="code hl_class" href="classList.html">void</a>()&gt;;</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno"><a class="line" href="classStrand.html#a70cc2083de363bc42dd0b36bf4549650">   58</a></span>                <span class="keyword">explicit</span> <a class="code hl_function" href="classStrand.html#a70cc2083de363bc42dd0b36bf4549650">Strand</a>(<a class="code hl_class" href="classThreadPool.html">ThreadPool</a> &amp;pool) : _pool(pool) {}</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
-<div class="foldopen" id="foldopen00067" data-start="{" data-end="}">
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno"><a class="line" href="classStrand.html#af8b3169e35c9eb9bddf2fc41c83bd823">   67</a></span>                <a class="code hl_function" href="classStrand.html#af8b3169e35c9eb9bddf2fc41c83bd823">~Strand</a>() {</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                        <a class="code hl_function" href="classStrand.html#a32227088d8f2b3a7e3bac06fae99f0e4">waitForIdle</a>();</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>                }</div>
-</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>                <a class="code hl_class" href="classStrand.html">Strand</a>(<span class="keyword">const</span> <a class="code hl_class" href="classStrand.html">Strand</a> &amp;) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>                <a class="code hl_class" href="classStrand.html">Strand</a> &amp;operator=(<span class="keyword">const</span> <a class="code hl_class" href="classStrand.html">Strand</a> &amp;) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>                <a class="code hl_class" href="classStrand.html">Strand</a>(<a class="code hl_class" href="classStrand.html">Strand</a> &amp;&amp;) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>                <a class="code hl_class" href="classStrand.html">Strand</a> &amp;operator=(<a class="code hl_class" href="classStrand.html">Strand</a> &amp;&amp;) = <span class="keyword">delete</span>;</div>
+<div class="foldopen" id="foldopen00056" data-start="{" data-end="};">
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno"><a class="line" href="classpromeki_1_1Strand.html">   56</a></span><span class="keyword">class </span><a class="code hl_class" href="classpromeki_1_1Strand.html">Strand</a> {</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno"><a class="line" href="classpromeki_1_1Strand.html#ad1bdf4c6df26caaea5f4fe414b8d6944">   59</a></span>                <span class="keyword">using </span><a class="code hl_typedef" href="classpromeki_1_1Strand.html#ad1bdf4c6df26caaea5f4fe414b8d6944">TaskFunc</a> = std::function&lt;<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">void</a>()&gt;;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno"><a class="line" href="classpromeki_1_1Strand.html#af40abea53f851dde6cbac010513c0c50">   65</a></span>                <span class="keyword">explicit</span> <a class="code hl_function" href="classpromeki_1_1Strand.html#af40abea53f851dde6cbac010513c0c50">Strand</a>(<a class="code hl_class" href="classpromeki_1_1ThreadPool.html">ThreadPool</a> &amp;pool) : _pool(pool) {}</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno"><a class="line" href="classpromeki_1_1Strand.html#a3e5685203e15df3d2a8f949bdefaaee5">   74</a></span>                <a class="code hl_function" href="classpromeki_1_1Strand.html#a3e5685203e15df3d2a8f949bdefaaee5">~Strand</a>() { waitForIdle(); }</div>
 <div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>                <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt;</div>
-<div class="foldopen" id="foldopen00095" data-start="{" data-end="}">
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno"><a class="line" href="classStrand.html#a40368b1897ef2e7cab11ba3ad2eebef1">   95</a></span>                <span class="keyword">auto</span> <a class="code hl_function" href="classStrand.html#a40368b1897ef2e7cab11ba3ad2eebef1">submit</a>(<a class="code hl_class" href="classList.html">F</a> &amp;&amp;<a class="code hl_class" href="classList.html">callable</a>,</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                            <a class="code hl_typedef" href="classStrand.html#addafe08ed6d9ea519d731ab98ec247d9">TaskFunc</a> <a class="code hl_class" href="classList.html">onCancel</a> = {}) -&gt; <a class="code hl_class" href="classFuture.html">Future</a>&lt;std::invoke_result_t&lt;F&gt;&gt; {</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>                        <span class="keywordflow">return</span> submitImpl(std::forward&lt;F&gt;(<a class="code hl_class" href="classList.html">callable</a>),</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>                                          std::move(<a class="code hl_class" href="classList.html">onCancel</a>), <span class="keyword">false</span>);</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>                }</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>                <a class="code hl_class" href="classpromeki_1_1Strand.html">Strand</a>(<span class="keyword">const</span> <a class="code hl_class" href="classpromeki_1_1Strand.html">Strand</a> &amp;) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>                <a class="code hl_class" href="classpromeki_1_1Strand.html">Strand</a> &amp;operator=(<span class="keyword">const</span> <a class="code hl_class" href="classpromeki_1_1Strand.html">Strand</a> &amp;) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>                <a class="code hl_class" href="classpromeki_1_1Strand.html">Strand</a>(<a class="code hl_class" href="classpromeki_1_1Strand.html">Strand</a> &amp;&amp;) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>                <a class="code hl_class" href="classpromeki_1_1Strand.html">Strand</a> &amp;operator=(<a class="code hl_class" href="classpromeki_1_1Strand.html">Strand</a> &amp;&amp;) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>                <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt;</div>
+<div class="foldopen" id="foldopen00100" data-start="{" data-end="}">
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno"><a class="line" href="classpromeki_1_1Strand.html#a71d99c7ce7ca971317015bf992bba37d">  100</a></span>                <span class="keyword">auto</span> <a class="code hl_function" href="classpromeki_1_1Strand.html#a71d99c7ce7ca971317015bf992bba37d">submit</a>(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">F</a> &amp;&amp;<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">callable</a>, <a class="code hl_typedef" href="classpromeki_1_1Strand.html#ad1bdf4c6df26caaea5f4fe414b8d6944">TaskFunc</a> <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">onCancel</a> = {}) -&gt; <a class="code hl_class" href="classpromeki_1_1Future.html">Future</a>&lt;std::invoke_result_t&lt;F&gt;&gt; {</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                        <span class="keywordflow">return</span> submitImpl(std::forward&lt;F&gt;(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">callable</a>), std::move(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">onCancel</a>), <span class="keyword">false</span>);</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                }</div>
 </div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span> </div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>                <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt;</div>
-<div class="foldopen" id="foldopen00133" data-start="{" data-end="}">
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno"><a class="line" href="classStrand.html#aa6ca785d5064153322ef7005d84e53e8">  133</a></span>                <span class="keyword">auto</span> <a class="code hl_function" href="classStrand.html#aa6ca785d5064153322ef7005d84e53e8">submitUrgent</a>(<a class="code hl_class" href="classList.html">F</a> &amp;&amp;<a class="code hl_class" href="classList.html">callable</a>,</div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>                                  <a class="code hl_typedef" href="classStrand.html#addafe08ed6d9ea519d731ab98ec247d9">TaskFunc</a> <a class="code hl_class" href="classList.html">onCancel</a> = {}) -&gt; <a class="code hl_class" href="classFuture.html">Future</a>&lt;std::invoke_result_t&lt;F&gt;&gt; {</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>                        <span class="keywordflow">return</span> submitImpl(std::forward&lt;F&gt;(<a class="code hl_class" href="classList.html">callable</a>),</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>                                          std::move(<a class="code hl_class" href="classList.html">onCancel</a>), <span class="keyword">true</span>);</div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>                }</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span> </div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>                <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt;</div>
+<div class="foldopen" id="foldopen00136" data-start="{" data-end="}">
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno"><a class="line" href="classpromeki_1_1Strand.html#ab45dd2c9954ac9605e1c088c062a4ae5">  136</a></span>                <span class="keyword">auto</span> <a class="code hl_function" href="classpromeki_1_1Strand.html#ab45dd2c9954ac9605e1c088c062a4ae5">submitUrgent</a>(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">F</a> &amp;&amp;<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">callable</a>, <a class="code hl_typedef" href="classpromeki_1_1Strand.html#ad1bdf4c6df26caaea5f4fe414b8d6944">TaskFunc</a> <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">onCancel</a> = {}) -&gt; <a class="code hl_class" href="classpromeki_1_1Future.html">Future</a>&lt;std::invoke_result_t&lt;F&gt;&gt; {</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>                        <span class="keywordflow">return</span> submitImpl(std::forward&lt;F&gt;(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">callable</a>), std::move(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">onCancel</a>), <span class="keyword">true</span>);</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>                }</div>
 </div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span> </div>
-<div class="foldopen" id="foldopen00149" data-start="{" data-end="}">
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno"><a class="line" href="classStrand.html#a017113c66a0705b99cb04aff95a43b12">  149</a></span>                <span class="keywordtype">size_t</span> <a class="code hl_function" href="classStrand.html#a017113c66a0705b99cb04aff95a43b12">cancelPending</a>() {</div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>                        std::deque&lt;Entry&gt; <a class="code hl_class" href="classList.html">toCancel</a>;</div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>                        {</div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>                                <a class="code hl_class" href="classMutex_1_1Locker.html">Mutex::Locker</a> lock(_mutex);</div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>                                <a class="code hl_class" href="classList.html">toCancel</a> = std::move(_queue);</div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>                                _queue.clear();</div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>                        }</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>                        <span class="keywordtype">size_t</span> count = <a class="code hl_class" href="classList.html">toCancel</a>.<a class="code hl_function" href="classList.html#a7b46313fcbf10064276c8d0447a73691">size</a>();</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>                        <span class="keywordflow">for</span>(<span class="keyword">auto</span> &amp;entry : <a class="code hl_class" href="classList.html">toCancel</a>) {</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>                                entry.cancel();</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>                        }</div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>                        <span class="keywordflow">return</span> count;</div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>                }</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span> </div>
+<div class="foldopen" id="foldopen00150" data-start="{" data-end="}">
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno"><a class="line" href="classpromeki_1_1Strand.html#ab299ec5966b6cd196b908c3a53b8a682">  150</a></span>                <span class="keywordtype">size_t</span> <a class="code hl_function" href="classpromeki_1_1Strand.html#ab299ec5966b6cd196b908c3a53b8a682">cancelPending</a>() {</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>                        std::deque&lt;Entry&gt; <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">toCancel</a>;</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>                        {</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>                                <a class="code hl_class" href="classpromeki_1_1Mutex_1_1Locker.html">Mutex::Locker</a> lock(_mutex);</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>                                <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">toCancel</a> = std::move(_queue);</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>                                _queue.clear();</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>                        }</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>                        <span class="keywordtype">size_t</span> count = <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">toCancel</a>.size();</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>                        <span class="keywordflow">for</span> (<span class="keyword">auto</span> &amp;entry : <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">toCancel</a>) {</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>                                entry.cancel();</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>                        }</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>                        <span class="keywordflow">return</span> count;</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>                }</div>
 </div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span> </div>
-<div class="foldopen" id="foldopen00166" data-start="{" data-end="}">
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno"><a class="line" href="classStrand.html#a32227088d8f2b3a7e3bac06fae99f0e4">  166</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classStrand.html#a32227088d8f2b3a7e3bac06fae99f0e4">waitForIdle</a>() {</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>                        <a class="code hl_class" href="classMutex_1_1Locker.html">Mutex::Locker</a> lock(_mutex);</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>                        _idleCv.<a class="code hl_function" href="classWaitCondition.html#a4f47997dc1220ccc83d899455eed993f">wait</a>(_mutex, [<span class="keyword">this</span>] { <span class="keywordflow">return</span> !_running; });</div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>                }</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span> </div>
+<div class="foldopen" id="foldopen00167" data-start="{" data-end="}">
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno"><a class="line" href="classpromeki_1_1Strand.html#af0e6b6afb96268036d174b453d17292a">  167</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classpromeki_1_1Strand.html#af0e6b6afb96268036d174b453d17292a">waitForIdle</a>() {</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>                        <a class="code hl_class" href="classpromeki_1_1Mutex_1_1Locker.html">Mutex::Locker</a> lock(_mutex);</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>                        _idleCv.wait(_mutex, [<span class="keyword">this</span>] { <span class="keywordflow">return</span> !_running; });</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>                }</div>
 </div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span> </div>
-<div class="foldopen" id="foldopen00175" data-start="{" data-end="}">
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno"><a class="line" href="classStrand.html#aa02387a38e0d63774baa450ef4561ecd">  175</a></span>                <span class="keywordtype">bool</span> <a class="code hl_function" href="classStrand.html#aa02387a38e0d63774baa450ef4561ecd">isBusy</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>                        <a class="code hl_class" href="classMutex_1_1Locker.html">Mutex::Locker</a> lock(_mutex);</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>                        <span class="keywordflow">return</span> _running;</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>                }</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span> </div>
+<div class="foldopen" id="foldopen00176" data-start="{" data-end="}">
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno"><a class="line" href="classpromeki_1_1Strand.html#a3011003ea7aeafc3430f055c82a1468c">  176</a></span>                <span class="keywordtype">bool</span> <a class="code hl_function" href="classpromeki_1_1Strand.html#a3011003ea7aeafc3430f055c82a1468c">isBusy</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>                        <a class="code hl_class" href="classpromeki_1_1Mutex_1_1Locker.html">Mutex::Locker</a> lock(_mutex);</div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>                        <span class="keywordflow">return</span> _running;</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>                }</div>
 </div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span> </div>
-<div class="foldopen" id="foldopen00197" data-start="{" data-end="}">
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno"><a class="line" href="classStrand.html#af81ff4892a0aa5df02b81524125fec67">  197</a></span>                <span class="keywordtype">size_t</span> <a class="code hl_function" href="classStrand.html#af81ff4892a0aa5df02b81524125fec67">pendingCount</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>                        <a class="code hl_class" href="classMutex_1_1Locker.html">Mutex::Locker</a> lock(_mutex);</div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>                        <span class="keywordflow">return</span> _queue.size();</div>
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>                }</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span> </div>
+<div class="foldopen" id="foldopen00198" data-start="{" data-end="}">
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno"><a class="line" href="classpromeki_1_1Strand.html#ae269a212288dda8c2d49a1149ff41af6">  198</a></span>                <span class="keywordtype">size_t</span> <a class="code hl_function" href="classpromeki_1_1Strand.html#ae269a212288dda8c2d49a1149ff41af6">pendingCount</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>                        <a class="code hl_class" href="classpromeki_1_1Mutex_1_1Locker.html">Mutex::Locker</a> lock(_mutex);</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>                        <span class="keywordflow">return</span> _queue.size();</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>                }</div>
 </div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span> </div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>        <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>                <span class="keyword">struct </span>Entry {</div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>                        <a class="code hl_typedef" href="classStrand.html#addafe08ed6d9ea519d731ab98ec247d9">TaskFunc</a> run;</div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>                        <a class="code hl_typedef" href="classStrand.html#addafe08ed6d9ea519d731ab98ec247d9">TaskFunc</a> cancel;</div>
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>                };</div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span> </div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>                <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt;</div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>                <span class="keyword">auto</span> submitImpl(<a class="code hl_class" href="classList.html">F</a> &amp;&amp;<a class="code hl_class" href="classList.html">callable</a>, <a class="code hl_typedef" href="classStrand.html#addafe08ed6d9ea519d731ab98ec247d9">TaskFunc</a> <a class="code hl_class" href="classList.html">onCancel</a>,</div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>                                <span class="keywordtype">bool</span> <a class="code hl_class" href="classList.html">urgent</a>) -&gt; <a class="code hl_class" href="classList.html">Future&lt;std::invoke_result_t&lt;F&gt;</a>&gt; {</div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>                        <span class="keyword">using </span><a class="code hl_class" href="classList.html">R</a> = std::invoke_result_t&lt;F&gt;;</div>
-<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>                        <span class="keyword">auto</span> promise = std::make_shared&lt;Promise&lt;R&gt;&gt;();</div>
-<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>                        <a class="code hl_class" href="classList.html">Future&lt;R&gt;</a> future = promise-&gt;future();</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span> </div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>        <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>                <span class="keyword">struct </span>Entry {</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>                                TaskFunc run;</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>                                TaskFunc cancel;</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>                };</div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span> </div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>                <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt;</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>                <span class="keyword">auto</span> submitImpl(F &amp;&amp;callable, TaskFunc onCancel, <span class="keywordtype">bool</span> urgent) -&gt; Future&lt;std::invoke_result_t&lt;F&gt;&gt; {</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>                        <span class="keyword">using </span>R = std::invoke_result_t&lt;F&gt;;</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>                        <span class="keyword">auto</span>      promise = std::make_shared&lt;Promise&lt;R&gt;&gt;();</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>                        Future&lt;R&gt; future = promise-&gt;future();</div>
 <div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span> </div>
 <div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>                        Entry entry;</div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>                        entry.run = [promise, <a class="code hl_class" href="classList.html">f</a> = std::forward&lt;F&gt;(<a class="code hl_class" href="classList.html">callable</a>)]() <span class="keyword">mutable</span> {</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>                        entry.run = [promise, f = std::forward&lt;F&gt;(callable)]() <span class="keyword">mutable</span> {</div>
 <div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>                                <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_void_v&lt;R&gt;) {</div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>                                        <a class="code hl_class" href="classList.html">f</a>();</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>                                        f();</div>
 <div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>                                        promise-&gt;setValue();</div>
 <div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>                                } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>                                        promise-&gt;setValue(<a class="code hl_class" href="classList.html">f</a>());</div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>                                        promise-&gt;setValue(f());</div>
 <div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>                                }</div>
 <div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>                        };</div>
-<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>                        entry.cancel = [promise, <a class="code hl_class" href="classList.html">onCancel</a> = std::move(<a class="code hl_class" href="classList.html">onCancel</a>)]() <span class="keyword">mutable</span> {</div>
-<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>                                <span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">onCancel</a>) <a class="code hl_class" href="classList.html">onCancel</a>();</div>
-<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>                                promise-&gt;setError(<a class="code hl_enumvalue" href="classError.html#ab5980e13b879db253df802b0950d1708a1bf6bbc9f6c819cc824bf0dc3d5e7aec">Error::Cancelled</a>);</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>                        entry.cancel = [promise, onCancel = std::move(onCancel)]() <span class="keyword">mutable</span> {</div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>                                <span class="keywordflow">if</span> (onCancel) onCancel();</div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>                                promise-&gt;setError(Error::Cancelled);</div>
 <div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>                        };</div>
 <div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span> </div>
-<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>                        <span class="keywordtype">bool</span> <a class="code hl_class" href="classList.html">needSpawn</a> = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>                        <span class="keywordtype">bool</span> needSpawn = <span class="keyword">false</span>;</div>
 <div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>                        {</div>
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>                                <a class="code hl_class" href="classMutex_1_1Locker.html">Mutex::Locker</a> lock(_mutex);</div>
-<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>                                <span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">urgent</a>) {</div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>                                Mutex::Locker lock(_mutex);</div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>                                <span class="keywordflow">if</span> (urgent) {</div>
 <div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>                                        _queue.emplace_front(std::move(entry));</div>
 <div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>                                } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>                                        _queue.emplace_back(std::move(entry));</div>
 <div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>                                }</div>
-<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>                                <span class="keywordflow">if</span>(!_running) {</div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>                                <span class="keywordflow">if</span> (!_running) {</div>
 <div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>                                        _running = <span class="keyword">true</span>;</div>
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>                                        <a class="code hl_class" href="classList.html">needSpawn</a> = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>                                        needSpawn = <span class="keyword">true</span>;</div>
 <div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>                                }</div>
 <div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>                        }</div>
-<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>                        <span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">needSpawn</a>) {</div>
-<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>                                _pool.<a class="code hl_function" href="classThreadPool.html#acd7225ce903d2a46a744f23eeb9b8d47">submit</a>([<span class="keyword">this</span>] { runNext(); });</div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>                        <span class="keywordflow">if</span> (needSpawn) {</div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>                                _pool.submit([<span class="keyword">this</span>] { runNext(); });</div>
 <div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>                        }</div>
 <div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>                        <span class="keywordflow">return</span> future;</div>
 <div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>                }</div>
 <div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span> </div>
 <div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>                <span class="keywordtype">void</span> runNext() {</div>
 <div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>                        Entry entry;</div>
-<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>                        <span class="keywordtype">bool</span> <a class="code hl_class" href="classList.html">haveTask</a> = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>                        <span class="keywordtype">bool</span>  haveTask = <span class="keyword">false</span>;</div>
 <div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>                        {</div>
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>                                <a class="code hl_class" href="classMutex_1_1Locker.html">Mutex::Locker</a> lock(_mutex);</div>
-<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>                                <span class="keywordflow">if</span>(!_queue.empty()) {</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>                                Mutex::Locker lock(_mutex);</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>                                <span class="keywordflow">if</span> (!_queue.empty()) {</div>
 <div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>                                        entry = std::move(_queue.front());</div>
 <div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>                                        _queue.pop_front();</div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>                                        <a class="code hl_class" href="classList.html">haveTask</a> = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>                                        haveTask = <span class="keyword">true</span>;</div>
 <div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>                                }</div>
 <div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>                        }</div>
 <div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span> </div>
 <div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>                        <span class="comment">// Possible if cancelPending() emptied the queue</span></div>
 <div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>                        <span class="comment">// between spawn and execution.</span></div>
-<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>                        <span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">haveTask</a>) entry.run();</div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>                        <span class="keywordflow">if</span> (haveTask) entry.run();</div>
 <div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span> </div>
 <div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>                        <span class="comment">// Either re-submit (more work pending) or mark idle.</span></div>
-<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>                        <span class="keywordtype">bool</span> <a class="code hl_class" href="classList.html">reSpawn</a> = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>                        <span class="keywordtype">bool</span> reSpawn = <span class="keyword">false</span>;</div>
 <div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>                        {</div>
-<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>                                <a class="code hl_class" href="classMutex_1_1Locker.html">Mutex::Locker</a> lock(_mutex);</div>
-<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>                                <span class="keywordflow">if</span>(_queue.empty()) {</div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>                                Mutex::Locker lock(_mutex);</div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>                                <span class="keywordflow">if</span> (_queue.empty()) {</div>
 <div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>                                        _running = <span class="keyword">false</span>;</div>
-<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>                                        _idleCv.<a class="code hl_function" href="classWaitCondition.html#a2297e29e4dee6ffb93ab384b6d8c4dfa">wakeAll</a>();</div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>                                        _idleCv.wakeAll();</div>
 <div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>                                } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>                                        <a class="code hl_class" href="classList.html">reSpawn</a> = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>                                        reSpawn = <span class="keyword">true</span>;</div>
 <div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>                                }</div>
 <div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>                        }</div>
 <div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span> </div>
-<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span>                        <span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">reSpawn</a>) {</div>
-<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span>                                _pool.<a class="code hl_function" href="classThreadPool.html#acd7225ce903d2a46a744f23eeb9b8d47">submit</a>([<span class="keyword">this</span>] { runNext(); });</div>
+<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span>                        <span class="keywordflow">if</span> (reSpawn) {</div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span>                                _pool.submit([<span class="keyword">this</span>] { runNext(); });</div>
 <div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>                        }</div>
 <div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>                }</div>
 <div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span> </div>
-<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>                <a class="code hl_class" href="classThreadPool.html">ThreadPool</a>                              &amp;_pool;</div>
-<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>                <span class="keyword">mutable</span> <a class="code hl_class" href="classMutex.html">Mutex</a>                            _mutex;</div>
-<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>                <a class="code hl_class" href="classWaitCondition.html">WaitCondition</a>                            _idleCv;</div>
-<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>                std::deque&lt;Entry&gt;                        _queue;</div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>                <span class="keywordtype">bool</span>                                     _running = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>                ThreadPool       &amp;_pool;</div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>                <span class="keyword">mutable</span> Mutex     _mutex;</div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>                WaitCondition     _idleCv;</div>
+<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>                std::deque&lt;Entry&gt; _queue;</div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>                <span class="keywordtype">bool</span>              _running = <span class="keyword">false</span>;</div>
 <div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>};</div>
 </div>
 <div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span> </div>
 <div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
-<div class="ttc" id="aclassError_html_ab5980e13b879db253df802b0950d1708a1bf6bbc9f6c819cc824bf0dc3d5e7aec"><div class="ttname"><a href="classError.html#ab5980e13b879db253df802b0950d1708a1bf6bbc9f6c819cc824bf0dc3d5e7aec">Error::Cancelled</a></div><div class="ttdeci">@ Cancelled</div><div class="ttdoc">Operation was cancelled before completion.</div><div class="ttdef"><b>Definition</b> error.h:93</div></div>
-<div class="ttc" id="aclassFuture_html"><div class="ttname"><a href="classFuture.html">Future</a></div><div class="ttdoc">Asynchronous result wrapping std::future&lt;T&gt;.</div><div class="ttdef"><b>Definition</b> future.h:54</div></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassList_html_a7b46313fcbf10064276c8d0447a73691"><div class="ttname"><a href="classList.html#a7b46313fcbf10064276c8d0447a73691">List::size</a></div><div class="ttdeci">size_t size() const noexcept</div><div class="ttdoc">Returns the number of elements in the list.</div><div class="ttdef"><b>Definition</b> list.h:301</div></div>
-<div class="ttc" id="aclassMutex_1_1Locker_html"><div class="ttname"><a href="classMutex_1_1Locker.html">Mutex::Locker</a></div><div class="ttdoc">RAII scoped locker for Mutex.</div><div class="ttdef"><b>Definition</b> mutex.h:41</div></div>
-<div class="ttc" id="aclassMutex_html"><div class="ttname"><a href="classMutex.html">Mutex</a></div><div class="ttdoc">Mutual exclusion lock wrapping std::mutex.</div><div class="ttdef"><b>Definition</b> mutex.h:33</div></div>
-<div class="ttc" id="aclassStrand_html"><div class="ttname"><a href="classStrand.html">Strand</a></div><div class="ttdoc">Serialized executor backed by a ThreadPool.</div><div class="ttdef"><b>Definition</b> strand.h:49</div></div>
-<div class="ttc" id="aclassStrand_html_a017113c66a0705b99cb04aff95a43b12"><div class="ttname"><a href="classStrand.html#a017113c66a0705b99cb04aff95a43b12">Strand::cancelPending</a></div><div class="ttdeci">size_t cancelPending()</div><div class="ttdoc">Cancels all pending (not-yet-running) tasks.</div><div class="ttdef"><b>Definition</b> strand.h:149</div></div>
-<div class="ttc" id="aclassStrand_html_a32227088d8f2b3a7e3bac06fae99f0e4"><div class="ttname"><a href="classStrand.html#a32227088d8f2b3a7e3bac06fae99f0e4">Strand::waitForIdle</a></div><div class="ttdeci">void waitForIdle()</div><div class="ttdoc">Blocks until the strand has no pending or in-flight tasks.</div><div class="ttdef"><b>Definition</b> strand.h:166</div></div>
-<div class="ttc" id="aclassStrand_html_a40368b1897ef2e7cab11ba3ad2eebef1"><div class="ttname"><a href="classStrand.html#a40368b1897ef2e7cab11ba3ad2eebef1">Strand::submit</a></div><div class="ttdeci">auto submit(F &amp;&amp;callable, TaskFunc onCancel={}) -&gt; Future&lt; std::invoke_result_t&lt; F &gt; &gt;</div><div class="ttdoc">Submits a callable for serialized execution.</div><div class="ttdef"><b>Definition</b> strand.h:95</div></div>
-<div class="ttc" id="aclassStrand_html_a70cc2083de363bc42dd0b36bf4549650"><div class="ttname"><a href="classStrand.html#a70cc2083de363bc42dd0b36bf4549650">Strand::Strand</a></div><div class="ttdeci">Strand(ThreadPool &amp;pool)</div><div class="ttdoc">Constructs a Strand backed by the given ThreadPool.</div><div class="ttdef"><b>Definition</b> strand.h:58</div></div>
-<div class="ttc" id="aclassStrand_html_aa02387a38e0d63774baa450ef4561ecd"><div class="ttname"><a href="classStrand.html#aa02387a38e0d63774baa450ef4561ecd">Strand::isBusy</a></div><div class="ttdeci">bool isBusy() const</div><div class="ttdoc">Returns true if the strand is currently processing a task or has tasks queued.</div><div class="ttdef"><b>Definition</b> strand.h:175</div></div>
-<div class="ttc" id="aclassStrand_html_aa6ca785d5064153322ef7005d84e53e8"><div class="ttname"><a href="classStrand.html#aa6ca785d5064153322ef7005d84e53e8">Strand::submitUrgent</a></div><div class="ttdeci">auto submitUrgent(F &amp;&amp;callable, TaskFunc onCancel={}) -&gt; Future&lt; std::invoke_result_t&lt; F &gt; &gt;</div><div class="ttdoc">Submits a callable that jumps ahead of any not-yet-started tasks in the pending queue.</div><div class="ttdef"><b>Definition</b> strand.h:133</div></div>
-<div class="ttc" id="aclassStrand_html_addafe08ed6d9ea519d731ab98ec247d9"><div class="ttname"><a href="classStrand.html#addafe08ed6d9ea519d731ab98ec247d9">Strand::TaskFunc</a></div><div class="ttdeci">std::function&lt; void()&gt; TaskFunc</div><div class="ttdoc">Convenience alias for the void-returning task functions used by submit/cancel.</div><div class="ttdef"><b>Definition</b> strand.h:52</div></div>
-<div class="ttc" id="aclassStrand_html_af81ff4892a0aa5df02b81524125fec67"><div class="ttname"><a href="classStrand.html#af81ff4892a0aa5df02b81524125fec67">Strand::pendingCount</a></div><div class="ttdeci">size_t pendingCount() const</div><div class="ttdoc">Returns the number of tasks waiting to run.</div><div class="ttdef"><b>Definition</b> strand.h:197</div></div>
-<div class="ttc" id="aclassStrand_html_af8b3169e35c9eb9bddf2fc41c83bd823"><div class="ttname"><a href="classStrand.html#af8b3169e35c9eb9bddf2fc41c83bd823">Strand::~Strand</a></div><div class="ttdeci">~Strand()</div><div class="ttdoc">Destructor. Waits for all pending and in-flight tasks to complete before returning.</div><div class="ttdef"><b>Definition</b> strand.h:67</div></div>
-<div class="ttc" id="aclassThreadPool_html"><div class="ttname"><a href="classThreadPool.html">ThreadPool</a></div><div class="ttdoc">General-purpose thread pool for submitting callable tasks.</div><div class="ttdef"><b>Definition</b> threadpool.h:50</div></div>
-<div class="ttc" id="aclassThreadPool_html_acd7225ce903d2a46a744f23eeb9b8d47"><div class="ttname"><a href="classThreadPool.html#acd7225ce903d2a46a744f23eeb9b8d47">ThreadPool::submit</a></div><div class="ttdeci">auto submit(F &amp;&amp;callable) -&gt; Future&lt; std::invoke_result_t&lt; F &gt; &gt;</div><div class="ttdoc">Submits a callable for asynchronous execution.</div><div class="ttdef"><b>Definition</b> threadpool.h:86</div></div>
-<div class="ttc" id="aclassWaitCondition_html"><div class="ttname"><a href="classWaitCondition.html">WaitCondition</a></div><div class="ttdoc">Condition variable wrapping std::condition_variable.</div><div class="ttdef"><b>Definition</b> waitcondition.h:26</div></div>
-<div class="ttc" id="aclassWaitCondition_html_a2297e29e4dee6ffb93ab384b6d8c4dfa"><div class="ttname"><a href="classWaitCondition.html#a2297e29e4dee6ffb93ab384b6d8c4dfa">WaitCondition::wakeAll</a></div><div class="ttdeci">void wakeAll()</div><div class="ttdoc">Wakes all waiting threads.</div><div class="ttdef"><b>Definition</b> waitcondition.h:99</div></div>
-<div class="ttc" id="aclassWaitCondition_html_a4f47997dc1220ccc83d899455eed993f"><div class="ttname"><a href="classWaitCondition.html#a4f47997dc1220ccc83d899455eed993f">WaitCondition::wait</a></div><div class="ttdeci">Error wait(Mutex &amp;mutex, unsigned int timeoutMs=0)</div><div class="ttdoc">Waits until woken or the timeout expires.</div><div class="ttdef"><b>Definition</b> waitcondition.h:50</div></div>
+<div class="ttc" id="aclasspromeki_1_1Future_html"><div class="ttname"><a href="classpromeki_1_1Future.html">promeki::Future</a></div><div class="ttdoc">Asynchronous result wrapping std::future&lt;T&gt;.</div><div class="ttdef"><b>Definition</b> future.h:61</div></div>
+<div class="ttc" id="aclasspromeki_1_1Mutex_1_1Locker_html"><div class="ttname"><a href="classpromeki_1_1Mutex_1_1Locker.html">promeki::Mutex::Locker</a></div><div class="ttdoc">RAII scoped locker for Mutex.</div><div class="ttdef"><b>Definition</b> mutex.h:46</div></div>
+<div class="ttc" id="aclasspromeki_1_1Strand_html"><div class="ttname"><a href="classpromeki_1_1Strand.html">promeki::Strand</a></div><div class="ttdoc">Serialized executor backed by a ThreadPool.</div><div class="ttdef"><b>Definition</b> strand.h:56</div></div>
+<div class="ttc" id="aclasspromeki_1_1Strand_html_a3011003ea7aeafc3430f055c82a1468c"><div class="ttname"><a href="classpromeki_1_1Strand.html#a3011003ea7aeafc3430f055c82a1468c">promeki::Strand::isBusy</a></div><div class="ttdeci">bool isBusy() const</div><div class="ttdoc">Returns true if the strand is currently processing a task or has tasks queued.</div><div class="ttdef"><b>Definition</b> strand.h:176</div></div>
+<div class="ttc" id="aclasspromeki_1_1Strand_html_a3e5685203e15df3d2a8f949bdefaaee5"><div class="ttname"><a href="classpromeki_1_1Strand.html#a3e5685203e15df3d2a8f949bdefaaee5">promeki::Strand::~Strand</a></div><div class="ttdeci">~Strand()</div><div class="ttdoc">Destructor. Waits for all pending and in-flight tasks to complete before returning.</div><div class="ttdef"><b>Definition</b> strand.h:74</div></div>
+<div class="ttc" id="aclasspromeki_1_1Strand_html_a71d99c7ce7ca971317015bf992bba37d"><div class="ttname"><a href="classpromeki_1_1Strand.html#a71d99c7ce7ca971317015bf992bba37d">promeki::Strand::submit</a></div><div class="ttdeci">auto submit(F &amp;&amp;callable, TaskFunc onCancel={}) -&gt; Future&lt; std::invoke_result_t&lt; F &gt; &gt;</div><div class="ttdoc">Submits a callable for serialized execution.</div><div class="ttdef"><b>Definition</b> strand.h:100</div></div>
+<div class="ttc" id="aclasspromeki_1_1Strand_html_ab299ec5966b6cd196b908c3a53b8a682"><div class="ttname"><a href="classpromeki_1_1Strand.html#ab299ec5966b6cd196b908c3a53b8a682">promeki::Strand::cancelPending</a></div><div class="ttdeci">size_t cancelPending()</div><div class="ttdoc">Cancels all pending (not-yet-running) tasks.</div><div class="ttdef"><b>Definition</b> strand.h:150</div></div>
+<div class="ttc" id="aclasspromeki_1_1Strand_html_ab45dd2c9954ac9605e1c088c062a4ae5"><div class="ttname"><a href="classpromeki_1_1Strand.html#ab45dd2c9954ac9605e1c088c062a4ae5">promeki::Strand::submitUrgent</a></div><div class="ttdeci">auto submitUrgent(F &amp;&amp;callable, TaskFunc onCancel={}) -&gt; Future&lt; std::invoke_result_t&lt; F &gt; &gt;</div><div class="ttdoc">Submits a callable that jumps ahead of any not-yet-started tasks in the pending queue.</div><div class="ttdef"><b>Definition</b> strand.h:136</div></div>
+<div class="ttc" id="aclasspromeki_1_1Strand_html_ad1bdf4c6df26caaea5f4fe414b8d6944"><div class="ttname"><a href="classpromeki_1_1Strand.html#ad1bdf4c6df26caaea5f4fe414b8d6944">promeki::Strand::TaskFunc</a></div><div class="ttdeci">std::function&lt; void()&gt; TaskFunc</div><div class="ttdoc">Convenience alias for the void-returning task functions used by submit/cancel.</div><div class="ttdef"><b>Definition</b> strand.h:59</div></div>
+<div class="ttc" id="aclasspromeki_1_1Strand_html_ae269a212288dda8c2d49a1149ff41af6"><div class="ttname"><a href="classpromeki_1_1Strand.html#ae269a212288dda8c2d49a1149ff41af6">promeki::Strand::pendingCount</a></div><div class="ttdeci">size_t pendingCount() const</div><div class="ttdoc">Returns the number of tasks waiting to run.</div><div class="ttdef"><b>Definition</b> strand.h:198</div></div>
+<div class="ttc" id="aclasspromeki_1_1Strand_html_af0e6b6afb96268036d174b453d17292a"><div class="ttname"><a href="classpromeki_1_1Strand.html#af0e6b6afb96268036d174b453d17292a">promeki::Strand::waitForIdle</a></div><div class="ttdeci">void waitForIdle()</div><div class="ttdoc">Blocks until the strand has no pending or in-flight tasks.</div><div class="ttdef"><b>Definition</b> strand.h:167</div></div>
+<div class="ttc" id="aclasspromeki_1_1Strand_html_af40abea53f851dde6cbac010513c0c50"><div class="ttname"><a href="classpromeki_1_1Strand.html#af40abea53f851dde6cbac010513c0c50">promeki::Strand::Strand</a></div><div class="ttdeci">Strand(ThreadPool &amp;pool)</div><div class="ttdoc">Constructs a Strand backed by the given ThreadPool.</div><div class="ttdef"><b>Definition</b> strand.h:65</div></div>
+<div class="ttc" id="aclasspromeki_1_1ThreadPool_html"><div class="ttname"><a href="classpromeki_1_1ThreadPool.html">promeki::ThreadPool</a></div><div class="ttdoc">General-purpose thread pool for submitting callable tasks.</div><div class="ttdef"><b>Definition</b> threadpool.h:55</div></div>
+<div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
 <div class="ttc" id="afuture_8h_html"><div class="ttname"><a href="future_8h.html">future.h</a></div></div>
 <div class="ttc" id="amutex_8h_html"><div class="ttname"><a href="mutex_8h.html">mutex.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
@@ -315,7 +297,7 @@ $(document).ready(function(){initNavTree('strand_8h_source.html',''); initResiza
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="strand_8h.html">strand.h</a></li>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -1,0 +1,5 @@
+<map id="promeki::PixelFormat::CompSemantic" name="promeki::PixelFormat::CompSemantic">
+<area shape="rect" id="Node000001" title="Describes the semantic meaning and value range of a single component." alt="" coords="5,108,167,148"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="25,5,147,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="89,45,89,108,83,108,83,45"/>
+</map>

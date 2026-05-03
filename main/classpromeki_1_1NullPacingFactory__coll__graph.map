@@ -1,0 +1,5 @@
+<map id="promeki::NullPacingFactory" name="promeki::NullPacingFactory">
+<area shape="rect" id="Node000001" title="MediaIOFactory for the NullPacing sink backend." alt="" coords="5,79,204,104"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1MediaIOFactory.html" title="Polymorphic factory that creates MediaIO instances for a given backend identity." alt="" coords="12,5,197,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,44,107,79,102,79,102,44"/>
+</map>

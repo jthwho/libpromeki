@@ -1,14 +1,14 @@
 var framecount_8h =
 [
     [ "std::hash< promeki::FrameCount >", "structstd_1_1hash_3_01promeki_1_1FrameCount_01_4.html", null ],
-    [ "operator+", "framecount_8h.html#a030429fa7f19a3746abbae83f6ae2787", null ],
-    [ "operator+", "framecount_8h.html#aa519d6de8bac2a517c80de50e9bc6d34", null ],
-    [ "operator+", "framecount_8h.html#a5d2ad24e711e1658264855fdfb50d6c8", null ],
-    [ "operator+", "framecount_8h.html#abfd0c661d56226be575a04df3b718b0e", null ],
-    [ "operator-", "framecount_8h.html#ab9f1881efaf9b6b2c667abba15ee59f6", null ],
-    [ "operator-", "framecount_8h.html#a6fcfab9d19075f6bbc14692cbb4d1435", null ],
-    [ "operator-", "framecount_8h.html#ab5d80456fd115ef1c644a08ab15ee910", null ],
-    [ "operator-", "framecount_8h.html#a331530323f9b239e8e9e3e18984dfae3", null ],
-    [ "toFrameCount", "framecount_8h.html#afc8499a7d6fabe6d9c2ddb501c8651cd", null ],
-    [ "toFrameNumber", "framecount_8h.html#acb51c110a367e9da4417bd72f03450db", null ]
+    [ "operator+", "framecount_8h.html#a415b872d97c553c31ae972ab931a0b51", null ],
+    [ "operator+", "framecount_8h.html#afd7f88ac8a3e5b03fb6e78d662fcb63a", null ],
+    [ "operator+", "framecount_8h.html#abe0b83ae2b0c715431fe4cec4a9f6690", null ],
+    [ "operator+", "framecount_8h.html#aa777e3f0cf1dae0719427dfe19626638", null ],
+    [ "operator-", "framecount_8h.html#a2cc96bddade3c577407df3fb1fbe87bd", null ],
+    [ "operator-", "framecount_8h.html#a11112b8ac88cdba5ab52339675c4b084", null ],
+    [ "operator-", "framecount_8h.html#a327551bf169c07f60a1be00cfdb9aa85", null ],
+    [ "operator-", "framecount_8h.html#a9f4477de6915359bfc950689eb49e7b2", null ],
+    [ "toFrameCount", "framecount_8h.html#a7e4d35e7b677b8e83650e4ae9427a77d", null ],
+    [ "toFrameNumber", "framecount_8h.html#a104c695050c21469a353543dff41b299", null ]
 ];

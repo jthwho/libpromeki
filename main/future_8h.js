@@ -1,4 +1,4 @@
 var future_8h =
 [
-    [ "Future< void >", "classFuture_3_01void_01_4.html", "classFuture_3_01void_01_4" ]
+    [ "promeki::Future< void >", "classpromeki_1_1Future_3_01void_01_4.html", "classpromeki_1_1Future_3_01void_01_4" ]
 ];

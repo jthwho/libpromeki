@@ -1,4 +1,4 @@
 var cscpipeline_8h =
 [
-    [ "CSCPipeline::Stage", "structCSCPipeline_1_1Stage.html", "structCSCPipeline_1_1Stage" ]
+    [ "promeki::CSCPipeline::Stage", "structpromeki_1_1CSCPipeline_1_1Stage.html", "structpromeki_1_1CSCPipeline_1_1Stage" ]
 ];

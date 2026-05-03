@@ -1,4 +1,4 @@
 var multicastreceiver_8h =
 [
-    [ "MulticastReceiver::GroupEntry", "structMulticastReceiver_1_1GroupEntry.html", "structMulticastReceiver_1_1GroupEntry" ]
+    [ "promeki::MulticastReceiver::GroupEntry", "structpromeki_1_1MulticastReceiver_1_1GroupEntry.html", "structpromeki_1_1MulticastReceiver_1_1GroupEntry" ]
 ];

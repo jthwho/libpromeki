@@ -1,0 +1,7 @@
+<map id="promeki::VideoPayload" name="promeki::VideoPayload">
+<area shape="rect" id="Node000001" title="Abstract base for any video payload — compressed or uncompressed." alt="" coords="7,168,179,193"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1MediaPayload.html" title="Abstract polymorphic base for any media payload flowing through a pipeline." alt="" coords="5,93,180,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,133,95,168,90,168,90,133"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1RefCount.html" title="An atomic reference count object." alt="" coords="21,5,165,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="95,45,95,93,90,93,90,45"/>
+</map>

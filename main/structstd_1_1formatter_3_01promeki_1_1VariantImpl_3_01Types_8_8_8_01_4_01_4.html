@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -107,7 +105,7 @@ $(document).ready(function(){initNavTree('structstd_1_1formatter_3_01promeki_1_1
 </div><!--header-->
 <div class="contents">
 
-<p><code>std::formatter</code> partial specialization for promeki::VariantImpl.  
+<p><code>std::formatter</code> partial specialization for <a class="el" href="classpromeki_1_1VariantImpl.html">promeki::VariantImpl</a>.  
  <a href="structstd_1_1formatter_3_01promeki_1_1VariantImpl_3_01Types_8_8_8_01_4_01_4.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="variant_8h_source.html">variant.h</a>&gt;</code></p>
@@ -135,30 +133,27 @@ Collaboration diagram for std::formatter&lt; promeki::VariantImpl&lt; Types... &
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:aebc6231e8cb9ee5a34151da2cf17a9d8" id="r_aebc6231e8cb9ee5a34151da2cf17a9d8"><td class="memItemLeft" align="right" valign="top"><a id="aebc6231e8cb9ee5a34151da2cf17a9d8" name="aebc6231e8cb9ee5a34151da2cf17a9d8"></a>
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Base</b> = std::formatter&lt; std::string_view &gt;</td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>Base</b> = std::formatter&lt; std::string_view &gt;</td></tr>
 <tr class="separator:aebc6231e8cb9ee5a34151da2cf17a9d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a987d9a9b131e8cd9b4ef7e35715278bd" id="r_a987d9a9b131e8cd9b4ef7e35715278bd"><td class="memTemplParams" colspan="2"><a id="a987d9a9b131e8cd9b4ef7e35715278bd" name="a987d9a9b131e8cd9b4ef7e35715278bd"></a>
-template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">FormatContext</a> &gt; </td></tr>
-<tr class="memitem:a987d9a9b131e8cd9b4ef7e35715278bd"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">auto</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>format</b> (<a class="el" href="classList.html">const</a> promeki::VariantImpl&lt; Types... &gt; &amp;v, <a class="el" href="classList.html">FormatContext</a> &amp;<a class="el" href="classList.html">ctx</a>) <a class="el" href="classList.html">const</a></td></tr>
+template&lt;typename FormatContext &gt; </td></tr>
+<tr class="memitem:a987d9a9b131e8cd9b4ef7e35715278bd"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>format</b> (const <a class="el" href="classpromeki_1_1VariantImpl.html">promeki::VariantImpl</a>&lt; Types... &gt; &amp;v, FormatContext &amp;ctx) const</td></tr>
 <tr class="separator:a987d9a9b131e8cd9b4ef7e35715278bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename... Types&gt;<br />
-struct std::formatter&lt; promeki::VariantImpl&lt; Types... &gt; &gt;</div><p><code>std::formatter</code> partial specialization for promeki::VariantImpl. </p>
-<p>Routes the held value through <code><a class="el" href="classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe" title="Converts the stored value to the requested type To.">VariantImpl::get&lt;String&gt;()</a></code>, which already knows how to convert every variant alternative to a <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> (numbers via <code><a class="el" href="classString.html#a0a47079f644f212316a6f30ac1a36bd4" title="Converts a numeric value to its String representation.">String::number</a></code>, library types via their <code>toString</code>, collections like <code><a class="el" href="classStringList.html" title="Manages a list of strings.">StringList</a></code> via <code>join</code>, etc.). This means promeki::Variant — and any other <code><a class="el" href="classVariantImpl.html" title="Type-safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES.">VariantImpl</a></code> instantiation — is usable as a promeki::String::format argument out of the box, regardless of what type it currently holds.</p>
+struct std::formatter&lt; promeki::VariantImpl&lt; Types... &gt; &gt;</div><p><code>std::formatter</code> partial specialization for <a class="el" href="classpromeki_1_1VariantImpl.html">promeki::VariantImpl</a>. </p>
+<p>Routes the held value through <code>VariantImpl::get&lt;String&gt;()</code>, which already knows how to convert every variant alternative to a String (numbers via <code>String::number</code>, library types via their <code>toString</code>, collections like <code>StringList</code> via <code>join</code>, etc.). This means <a class="el" href="classpromeki_1_1Variant.html">promeki::Variant</a> — and any other <code>VariantImpl</code> instantiation — is usable as a <a class="el" href="classpromeki_1_1String.html#a9068fcc49803f457cd25e3fd8ceeba3b">promeki::String::format</a> argument out of the box, regardless of what type it currently holds.</p>
 <p>Standard string format specifiers (width, fill, alignment) are inherited from <code>std::formatter&lt;std::string_view&gt;</code>.</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classVariant.html">Variant</a> v;</div>
-<div class="line">v.<a class="code hl_function" href="classVariantImpl.html#a0ae83cd9c68c1fbe6381a52a0a3b4b8f">set</a>(42);                              <span class="comment">// holds int</span></div>
-<div class="line"><a class="code hl_class" href="classString.html">String</a> s = <a class="code hl_function" href="classString.html#a6dd70844f5f292c4b3325e6e761a5c33">String::format</a>(<span class="stringliteral">&quot;v = {}&quot;</span>, v); <span class="comment">// &quot;v = 42&quot;</span></div>
-<div class="line">v.<a class="code hl_function" href="classVariantImpl.html#a0ae83cd9c68c1fbe6381a52a0a3b4b8f">set</a>(promeki::UUID::generate());       <span class="comment">// now holds UUID</span></div>
-<div class="line">s = <a class="code hl_function" href="classString.html#a6dd70844f5f292c4b3325e6e761a5c33">String::format</a>(<span class="stringliteral">&quot;v = {}&quot;</span>, v);        <span class="comment">// &quot;v = &lt;uuid&gt;&quot;</span></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
-<div class="ttc" id="aclassString_html_a6dd70844f5f292c4b3325e6e761a5c33"><div class="ttname"><a href="classString.html#a6dd70844f5f292c4b3325e6e761a5c33">String::format</a></div><div class="ttdeci">static String format(std::format_string&lt; Args... &gt; fmt, Args &amp;&amp;... args)</div><div class="ttdoc">Creates a formatted string using C++20 std::format syntax.</div><div class="ttdef"><b>Definition</b> string.h:266</div></div>
-<div class="ttc" id="aclassVariantImpl_html_a0ae83cd9c68c1fbe6381a52a0a3b4b8f"><div class="ttname"><a href="classVariantImpl.html#a0ae83cd9c68c1fbe6381a52a0a3b4b8f">VariantImpl::set</a></div><div class="ttdeci">void set(const T &amp;value)</div><div class="ttdoc">Replaces the currently held value with value.</div><div class="ttdef"><b>Definition</b> variant.h:291</div></div>
-<div class="ttc" id="aclassVariant_html"><div class="ttname"><a href="classVariant.html">Variant</a></div><div class="ttdoc">Concrete Variant type used throughout promeki.</div><div class="ttdef"><b>Definition</b> variant.h:602</div></div>
+<div class="fragment"><div class="line">Variant v;</div>
+<div class="line">v.set(42);                              <span class="comment">// holds int</span></div>
+<div class="line">String s = String::format(<span class="stringliteral">&quot;v = {}&quot;</span>, v); <span class="comment">// &quot;v = 42&quot;</span></div>
+<div class="line">v.set(<a class="code hl_function" href="classpromeki_1_1UUID.html#a9f05abddffc217bb93c4e64a95507c5e">promeki::UUID::generate</a>());       <span class="comment">// now holds UUID</span></div>
+<div class="line">s = String::format(<span class="stringliteral">&quot;v = {}&quot;</span>, v);        <span class="comment">// &quot;v = &lt;uuid&gt;&quot;</span></div>
+<div class="ttc" id="aclasspromeki_1_1UUID_html_a9f05abddffc217bb93c4e64a95507c5e"><div class="ttname"><a href="classpromeki_1_1UUID.html#a9f05abddffc217bb93c4e64a95507c5e">promeki::UUID::generate</a></div><div class="ttdeci">static UUID generate(int version=4)</div><div class="ttdoc">Convenience generator that dispatches to the appropriate generateVn() function.</div></div>
 </div><!-- fragment --> </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="variant_8h_source.html">variant.h</a></li>
 </ul>
@@ -169,7 +164,7 @@ struct std::formatter&lt; promeki::VariantImpl&lt; Types... &gt; &gt;</div><p><c
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>std</b></li><li class="navelem"><a class="el" href="structstd_1_1formatter_3_01promeki_1_1VariantImpl_3_01Types_8_8_8_01_4_01_4.html">formatter&lt; promeki::VariantImpl&lt; Types... &gt; &gt;</a></li>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

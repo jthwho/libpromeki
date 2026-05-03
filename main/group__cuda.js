@@ -1,14 +1,14 @@
 var group__cuda =
 [
-    [ "CudaDevice", "classCudaDevice.html", [
-      [ "CudaDevice", "classCudaDevice.html#adbd372a1466866a8d40b095a1f0e8130", null ],
-      [ "CudaDevice", "classCudaDevice.html#ac1d9cad5bd20807ace4466e4ca72bf1c", null ],
-      [ "computeMajor", "classCudaDevice.html#ae61a3c145f1e7c091f27575173bac64b", null ],
-      [ "computeMinor", "classCudaDevice.html#ac1635484b3acd1a81d7c8a13926fb74d", null ],
-      [ "isValid", "classCudaDevice.html#a9a0037c219c21be9d3d8cd9293e4225d", null ],
-      [ "name", "classCudaDevice.html#a3461b9c7e052e2ccd6e9ddd5f0aa638e", null ],
-      [ "ordinal", "classCudaDevice.html#a2ea6712f982dd5d869e443833904e6fd", null ],
-      [ "totalMemory", "classCudaDevice.html#a856e649286574473be59912ec2c661fe", null ]
+    [ "promeki::CudaDevice", "classpromeki_1_1CudaDevice.html", [
+      [ "CudaDevice", "classpromeki_1_1CudaDevice.html#a242719f789a2d12e5108a5c1634870af", null ],
+      [ "CudaDevice", "classpromeki_1_1CudaDevice.html#a653681c7724fb6bbe5c42c290acf611b", null ],
+      [ "computeMajor", "classpromeki_1_1CudaDevice.html#a6a5f413426819e61be715168181f43cf", null ],
+      [ "computeMinor", "classpromeki_1_1CudaDevice.html#ac1413940d2f5a9b3df6880b7dcef58d1", null ],
+      [ "isValid", "classpromeki_1_1CudaDevice.html#ae784290772a83dc1c505b2ca4f211f13", null ],
+      [ "name", "classpromeki_1_1CudaDevice.html#a61cbcc9de8c78530bf4350e28e87c100", null ],
+      [ "ordinal", "classpromeki_1_1CudaDevice.html#acfb898f584aabfb98c2204e027f2b7a9", null ],
+      [ "totalMemory", "classpromeki_1_1CudaDevice.html#a37d6f3566ba7a54f5d363776cdcdc8e0", null ]
     ] ],
-    [ "CudaBootstrap", "classCudaBootstrap.html", null ]
+    [ "promeki::CudaBootstrap", "classpromeki_1_1CudaBootstrap.html", null ]
 ];

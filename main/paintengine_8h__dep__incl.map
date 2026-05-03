@@ -8,8 +8,8 @@
 <area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="249,109,312,150,310,154,246,114"/>
 <area shape="rect" id="Node000005" href="$videotestpattern_8h.html" title=" " alt="" coords="204,225,455,251"/>
 <area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="332,191,332,225,327,225,327,191"/>
-<area shape="rect" id="Node000006" href="$mediaiotask__burn_8h.html" title=" " alt="" coords="106,299,318,339"/>
-<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="302,260,242,301,239,296,299,256"/>
-<area shape="rect" id="Node000007" href="$mediaiotask__tpg_8h.html" title=" " alt="" coords="342,299,554,339"/>
-<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="360,256,421,296,418,301,357,261"/>
+<area shape="rect" id="Node000006" href="$burnmediaio_8h.html" title=" " alt="" coords="94,299,319,324"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="299,260,228,301,225,296,297,255"/>
+<area shape="rect" id="Node000007" href="$tpgmediaio_8h.html" title=" " alt="" coords="343,299,561,324"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="362,255,433,296,431,301,359,260"/>
 </map>

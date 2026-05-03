@@ -1,0 +1,9 @@
+<map id="promeki::MediaIOPortGroupDescription" name="promeki::MediaIOPortGroupDescription">
+<area shape="rect" id="Node000001" title="Snapshot of a single MediaIOPortGroup&#39;s timing / position state." alt="" coords="128,108,331,148"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,128,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="80,41,94,63,112,82,156,106,153,110,109,86,90,66,76,44"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1FrameRate.html" title="Represents a video frame rate as a rational number." alt="" coords="152,5,307,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="232,45,232,108,227,108,227,45"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1FrameCount.html" title="Count of frames, optionally empty, unknown, or infinite." alt="" coords="331,5,493,31"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="384,41,309,86,266,110,264,106,307,82,381,36"/>
+</map>

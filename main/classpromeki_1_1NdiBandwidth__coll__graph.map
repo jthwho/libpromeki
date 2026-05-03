@@ -1,0 +1,8 @@
+<map id="promeki::NdiBandwidth" name="promeki::NdiBandwidth">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for the NDI receiver bandwidth tier." alt="" coords="5,186,180,211"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="196,190,207,199,199,207,181,210,180,205,196,202,201,199,193,194"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="13,80,172,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,134,95,186,90,186,90,134"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="32,5,153,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="95,44,95,80,90,80,90,44"/>
+</map>

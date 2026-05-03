@@ -1,0 +1,35 @@
+<map id="promeki::TuiWidget" name="promeki::TuiWidget">
+<area shape="rect" id="Node000001" title="TUI&#45;specific widget base class." alt="" coords="391,327,539,352"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1TuiButton.html" title="Clickable button with text label." alt="" coords="604,5,749,31"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="466,312,476,256,497,182,513,144,532,106,556,71,585,40,603,29,605,33,588,44,560,74,537,109,517,146,502,184,482,257,472,313"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1TuiCheckBox.html" title="Toggleable checkbox with text label." alt="" coords="593,55,760,80"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="469,312,482,264,504,204,538,142,560,114,585,89,604,78,607,82,588,93,564,118,542,145,509,206,487,266,474,314"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1TuiFrame.html" title="Container widget with a border and optional title." alt="" coords="605,104,748,129"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="472,313,488,274,511,227,544,179,585,139,606,127,608,132,588,143,548,183,516,230,492,276,477,315"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1TuiLabel.html" title="Displays text (single or multi&#45;line)." alt="" coords="608,153,745,179"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="477,313,520,250,550,216,585,188,608,176,611,181,588,192,554,220,524,253,482,316"/>
+<area shape="rect" id="Node000008" href="$classpromeki_1_1TuiLineEdit.html" title="Single&#45;line text input widget." alt="" coords="599,203,754,228"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="486,314,529,275,585,237,613,226,615,231,588,242,533,279,489,318"/>
+<area shape="rect" id="Node000009" href="$classpromeki_1_1TuiListView.html" title="Scrollable list of items with keyboard and mouse navigation." alt="" coords="598,252,755,277"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="505,319,586,286,623,275,625,280,588,291,507,324"/>
+<area shape="rect" id="Node000010" href="$classpromeki_1_1TuiMenu.html" title="Dropdown menu." alt="" coords="607,301,746,327"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="553,326,607,320,607,325,553,331"/>
+<area shape="rect" id="Node000011" href="$classpromeki_1_1TuiMenuBar.html" title="Top&#45;of&#45;screen menu bar with dropdown menus." alt="" coords="597,351,757,376"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="553,347,597,352,596,357,553,352"/>
+<area shape="rect" id="Node000012" href="$classpromeki_1_1TuiProgressBar.html" title="Horizontal progress indicator." alt="" coords="587,400,767,425"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="508,355,588,386,625,397,623,402,586,391,506,360"/>
+<area shape="rect" id="Node000013" href="$classpromeki_1_1TuiScrollArea.html" title="Container that scrolls content larger than its viewport." alt="" coords="593,449,761,475"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="490,360,533,399,588,436,616,447,614,452,585,440,530,403,486,364"/>
+<area shape="rect" id="Node000014" href="$classpromeki_1_1TuiSplitter.html" title="Resizable split between two child widgets." alt="" coords="602,499,751,524"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="482,363,524,425,554,457,588,485,611,496,608,501,585,490,550,461,520,428,477,366"/>
+<area shape="rect" id="Node000015" href="$classpromeki_1_1TuiStatusBar.html" title="Bottom&#45;of&#45;screen status line." alt="" coords="594,548,759,573"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="477,364,493,402,516,448,548,495,588,535,608,546,606,550,585,539,544,499,512,451,488,404,472,366"/>
+<area shape="rect" id="Node000016" href="$classpromeki_1_1TuiTabWidget.html" title="Tabbed container with keyboard&#45;switchable tabs." alt="" coords="591,597,762,623"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="474,365,487,412,509,472,542,532,564,560,588,584,607,595,604,600,585,588,560,563,538,535,504,474,482,414,469,366"/>
+<area shape="rect" id="Node000017" href="$classpromeki_1_1TuiTextArea.html" title="Multi&#45;line text editing/display widget." alt="" coords="597,647,756,672"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="472,365,482,421,502,494,518,532,537,569,560,603,588,633,605,644,603,649,585,637,556,607,532,572,513,534,497,496,476,423,466,366"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1Widget.html" title="Base class for all widgets across UI backends." alt="" coords="212,327,343,352"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="356,337,391,337,391,342,356,342"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="5,327,164,352"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="178,337,212,337,212,342,178,342"/>
+</map>

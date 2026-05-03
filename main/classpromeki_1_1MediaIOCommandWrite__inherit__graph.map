@@ -1,0 +1,5 @@
+<map id="promeki::MediaIOCommandWrite" name="promeki::MediaIOCommandWrite">
+<area shape="rect" id="Node000001" title="Command to write a frame." alt="" coords="5,79,245,104"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1MediaIOCommand.html" title="Base class for MediaIO commands." alt="" coords="23,5,228,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="128,44,128,79,123,79,123,44"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="promeki::AudioChannelMap::WellKnownLayout" name="promeki::AudioChannelMap::WellKnownLayout">
+<area shape="rect" id="Node000001" title="One entry in the well&#45;known layout dictionary." alt="" coords="63,93,265,133"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,128,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="90,38,146,91,142,95,87,42"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1List.html" title=" " alt="" coords="152,5,371,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="241,42,186,95,182,91,238,38"/>
+</map>

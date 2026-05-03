@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -105,58 +103,61 @@ $(document).ready(function(){initNavTree('group__io.html',''); initResizable(); 
 </div><!--header-->
 <div class="contents">
 
-<p><a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a> system access and device-oriented I/O.  
+<p>File system access and device-oriented I/O.  
 <a href="#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferedIODevice.html">BufferedIODevice</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> with an internal read buffer.  <a href="classBufferedIODevice.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AsyncBufferQueue.html">promeki::AsyncBufferQueue</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sequential <a class="el" href="classpromeki_1_1IODevice.html">IODevice</a> that ferries shared <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> segments from a producer to a consumer with async-read semantics.  <a href="classpromeki_1_1AsyncBufferQueue.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferIODevice.html">BufferIODevice</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> backed by an in-memory <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>.  <a href="classBufferIODevice.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1BufferedIODevice.html">promeki::BufferedIODevice</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract <a class="el" href="classpromeki_1_1IODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> with an internal read buffer.  <a href="classpromeki_1_1BufferedIODevice.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDir.html">Dir</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Provides directory operations using std::filesystem.  <a href="classDir.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1BufferIODevice.html">promeki::BufferIODevice</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1IODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> backed by an in-memory <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>.  <a href="classpromeki_1_1BufferIODevice.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html">File</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a> I/O device with buffered reading.  <a href="classFile.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Dir.html">promeki::Dir</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Provides directory operations using std::filesystem.  <a href="classpromeki_1_1Dir.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFileFormatFactory.html">FileFormatFactory&lt; Product &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generic factory template for file-format-specific product creation.  <a href="classFileFormatFactory.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1File.html">promeki::File</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1File.html" title="File I/O device with buffered reading.">File</a> I/O device with buffered reading.  <a href="classpromeki_1_1File.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFileInfo.html">FileInfo</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Provides information about a file system entry.  <a href="classFileInfo.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1FileFormatFactory.html">promeki::FileFormatFactory&lt; Product &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generic factory template for file-format-specific product creation.  <a href="classpromeki_1_1FileFormatFactory.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFileIODevice.html">FileIODevice</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> wrapping a C stdio FILE pointer.  <a href="classFileIODevice.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1FileInfo.html">promeki::FileInfo</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Provides information about a file system entry.  <a href="classpromeki_1_1FileInfo.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFilePath.html">FilePath</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simple value type wrapping std::filesystem::path.  <a href="classFilePath.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1FileIODevice.html">promeki::FileIODevice</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1IODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> wrapping a C stdio FILE pointer.  <a href="classpromeki_1_1FileIODevice.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html">IODevice</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for all I/O devices.  <a href="classIODevice.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1FilePath.html">promeki::FilePath</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simple value type wrapping std::filesystem::path.  <a href="classpromeki_1_1FilePath.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classProcess.html">Process</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Subprocess execution with pipe-based I/O.  <a href="classProcess.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1IODevice.html">promeki::IODevice</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for all I/O devices.  <a href="classpromeki_1_1IODevice.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResource.html">Resource</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compiled-in resource filesystem (Qt-style ":/...").  <a href="classResource.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Process.html">promeki::Process</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Subprocess execution with pipe-based I/O.  <a href="classpromeki_1_1Process.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStringIODevice.html">StringIODevice</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> backed by a promeki <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>.  <a href="classStringIODevice.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Resource.html">promeki::Resource</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compiled-in resource filesystem (Qt-style ":/...").  <a href="classpromeki_1_1Resource.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1StringIODevice.html">promeki::StringIODevice</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1IODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> backed by a promeki <a class="el" href="classpromeki_1_1String.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>.  <a href="classpromeki_1_1StringIODevice.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<p><a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a> system access and device-oriented I/O. </p>
-<p>Layered I/O device hierarchy (<a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>, <a class="el" href="classBufferedIODevice.html" title="Abstract IODevice with an internal read buffer.">BufferedIODevice</a>, <a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a>) plus file-system helpers (<a class="el" href="classFilePath.html" title="Simple value type wrapping std::filesystem::path.">FilePath</a>, <a class="el" href="classDir.html" title="Provides directory operations using std::filesystem.">Dir</a>, <a class="el" href="classFileInfo.html" title="Provides information about a file system entry.">FileInfo</a>) and child-process management (<a class="el" href="classProcess.html" title="Subprocess execution with pipe-based I/O.">Process</a>). </p>
+<p>File system access and device-oriented I/O. </p>
+<p>Layered I/O device hierarchy (IODevice, BufferedIODevice, File) plus file-system helpers (FilePath, Dir, FileInfo) and child-process management (Process). </p>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

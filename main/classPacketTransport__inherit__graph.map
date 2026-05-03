@@ -1,7 +1,0 @@
-<map id="PacketTransport" name="PacketTransport">
-<area shape="rect" id="Node000001" title="Abstract packet&#45;I/O transport for datagram&#45;oriented protocols." alt="" coords="101,5,225,31"/>
-<area shape="rect" id="Node000002" href="$classLoopbackTransport.html" title="In&#45;process PacketTransport implementation for tests." alt="" coords="5,79,149,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="140,41,93,80,90,76,137,37"/>
-<area shape="rect" id="Node000003" href="$classUdpSocketTransport.html" title="UDP socket implementation of PacketTransport." alt="" coords="174,79,325,104"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="189,37,237,76,233,81,185,41"/>
-</map>

@@ -1,8 +1,0 @@
-<map id="MetadataRtpFormat" name="MetadataRtpFormat">
-<area shape="rect" id="Node000001" title="Well&#45;known Enum type for the metadata&#45;stream wire format over RTP." alt="" coords="58,157,210,182"/>
-<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="225,162,237,169,228,176,211,179,210,173,226,171,231,169,223,167"/>
-<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,263,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="137,119,137,156,131,156,131,119"/>
-<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="105,5,163,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="137,45,137,80,131,80,131,45"/>
-</map>

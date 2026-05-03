@@ -1,0 +1,5 @@
+<map id="promeki::JpegVideoDecoder" name="promeki::JpegVideoDecoder">
+<area shape="rect" id="Node000001" title="JPEG VideoDecoder built on libjpeg&#45;turbo." alt="" coords="5,79,208,104"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1VideoDecoder.html" title="Abstract base class for stateful video decoders." alt="" coords="19,5,194,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,44,109,79,104,79,104,44"/>
+</map>

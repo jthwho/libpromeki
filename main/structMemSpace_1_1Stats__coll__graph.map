@@ -1,5 +1,0 @@
-<map id="MemSpace::Stats" name="MemSpace::Stats">
-<area shape="rect" id="Node000001" title="Lock&#45;free runtime statistics for a memory space." alt="" coords="13,240,148,265"/>
-<area shape="rect" id="Node000002" href="$classAtomic.html" title=" " alt="" coords="5,5,156,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="83,45,83,240,78,240,78,45"/>
-</map>

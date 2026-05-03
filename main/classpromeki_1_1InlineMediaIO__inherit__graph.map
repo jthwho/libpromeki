@@ -1,0 +1,9 @@
+<map id="promeki::InlineMediaIO" name="promeki::InlineMediaIO">
+<area shape="rect" id="Node000001" title="Strategy class that runs commands inline on the calling thread." alt="" coords="21,225,195,251"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1CommandMediaIO.html" title="Abstract intermediate that owns the per&#45;command dispatch contract for backends that work in terms of ..." alt="" coords="5,152,211,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,191,111,225,105,225,105,191"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends." alt="" coords="39,79,177,104"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="111,118,111,152,105,152,105,118"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="29,5,187,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="111,44,111,79,105,79,105,44"/>
+</map>

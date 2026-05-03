@@ -1,0 +1,7 @@
+<map id="promeki::TuiInputParser::ParsedEvent" name="promeki::TuiInputParser::ParsedEvent">
+<area shape="rect" id="Node000001" title="Parsed event variant." alt="" coords="63,108,238,148"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,13,128,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="87,47,137,106,133,110,83,50"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Point.html" title=" " alt="" coords="152,5,317,45"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="212,58,168,110,164,106,208,54"/>
+</map>

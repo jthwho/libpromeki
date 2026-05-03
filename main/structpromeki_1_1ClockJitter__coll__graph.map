@@ -1,0 +1,5 @@
+<map id="promeki::ClockJitter" name="promeki::ClockJitter">
+<area shape="rect" id="Node000001" title="Asymmetric bound on the error envelope of a clock&#39;s now() reading relative to ground truth." alt="" coords="5,108,156,133"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1Duration.html" title="Time duration with nanosecond precision." alt="" coords="11,5,151,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="83,45,83,108,78,108,78,45"/>
+</map>

@@ -1,4 +1,4 @@
 var mediapipelineplanner_8h =
 [
-    [ "MediaPipelinePlanner::Policy", "structMediaPipelinePlanner_1_1Policy.html", "structMediaPipelinePlanner_1_1Policy" ]
+    [ "promeki::MediaPipelinePlanner::Policy", "structpromeki_1_1MediaPipelinePlanner_1_1Policy.html", "structpromeki_1_1MediaPipelinePlanner_1_1Policy" ]
 ];

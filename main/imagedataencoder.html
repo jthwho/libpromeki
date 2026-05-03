@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -102,8 +100,8 @@ $(document).ready(function(){initNavTree('imagedataencoder.html',''); initResiza
   <div class="headertitle"><div class="title">Image Data Encoder Wire Format</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>VITC-style binary data encoder for libpromeki Images — wire format specification, byte order, <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> parameters, and a worked example for third-party decoders.</p>
-<p>The <code><a class="el" href="classImageDataEncoder.html" title="Fast VITC-style binary data encoder for raster images.">ImageDataEncoder</a></code> class stamps 64-bit opaque payloads into specific scan-line bands of a libpromeki <code>Image</code> as a sequence of wide black/white "bit cells", in a layout that resembles SMPTE Vertical Interval Time Code (VITC) but is <em>not</em> SMPTE-compliant: it carries different fields, uses a different sync pattern, and a different <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a>. This page is the normative wire format reference — anything not described here is implementation-defined and subject to change.</p>
+<div class="textblock"><p>VITC-style binary data encoder for libpromeki Images — wire format specification, byte order, CRC parameters, and a worked example for third-party decoders.</p>
+<p>The <code>ImageDataEncoder</code> class stamps 64-bit opaque payloads into specific scan-line bands of a libpromeki <code>Image</code> as a sequence of wide black/white "bit cells", in a layout that resembles SMPTE Vertical Interval Time Code (VITC) but is <em>not</em> SMPTE-compliant: it carries different fields, uses a different sync pattern, and a different CRC. This page is the normative wire format reference — anything not described here is implementation-defined and subject to change.</p>
 <h1><a class="anchor" id="img_data_overview"></a>
 Overview</h1>
 <p>The encoder writes one or more "bands" of scan lines into an image, where each band carries the same opaque 64-bit payload across every scan line in the band. Within each scan line, the payload is laid out as a sequence of equally-wide pixel "cells", each of which represents one bit of a fixed wire frame:</p>
@@ -111,8 +109,8 @@ Overview</h1>
 <div class="line">| W B W B       | MSB  ............... LSB     | MSB ... LSB  |     |</div>
 </div><!-- fragment --><ul>
 <li><b>Sync nibble</b> — four cells holding white, black, white, black, in that order. Binary <code>1010</code>, <code>0xA</code>, MSB-first. Provides a fixed alignment pattern at the start of every encoded scan line.</li>
-<li><b>Payload</b> — 64 bits of opaque data, transmitted MSB-first. The library uses this slot to carry frame numbers, BCD timecode words (see <code><a class="el" href="classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b" title="Packs the timecode into the 64-bit BCD time-address word.">Timecode::toBcd64</a></code>), stream identifiers, etc. Anything that fits in 64 bits is fair game.</li>
-<li><b><a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a></b> — 8 bits of CRC-8/AUTOSAR computed over the 8 payload bytes interpreted as a big-endian word. Transmitted MSB-first. Detects single-bit errors and a high fraction of multi-bit errors over a 4-byte payload.</li>
+<li><b>Payload</b> — 64 bits of opaque data, transmitted MSB-first. The library uses this slot to carry frame numbers, BCD timecode words (see <code>Timecode::toBcd64</code>), stream identifiers, etc. Anything that fits in 64 bits is fair game.</li>
+<li><b>CRC</b> — 8 bits of CRC-8/AUTOSAR computed over the 8 payload bytes interpreted as a big-endian word. Transmitted MSB-first. Detects single-bit errors and a high fraction of multi-bit errors over a 4-byte payload.</li>
 <li><b>Padding</b> — any pixels left over after the <code>76</code> cells fit in the image width are filled with the format's "black" on luma / RGB planes and with the format's neutral midpoint on sub-sampled chroma planes.</li>
 </ul>
 <p>Total bits per row: <code>4 + 64 + 8 = 76</code>.</p>
@@ -123,16 +121,15 @@ Bit and byte ordering</h1>
 <ul>
 <li>The sync nibble is transmitted bit 3 first (white), bit 2 (black), bit 1 (white), bit 0 (black).</li>
 <li>The payload is transmitted bit 63 first, bit 0 last.</li>
-<li>The <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> is transmitted bit 7 first, bit 0 last.</li>
+<li>The CRC is transmitted bit 7 first, bit 0 last.</li>
 </ul>
-<p>The <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> is computed over the <b>payload only</b> (the sync nibble is fixed and adds no information; including it in the <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> would just shift the <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> by a constant). The 64-bit payload is interpreted as 8 bytes in <b>big-endian</b> order before being fed to the <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> algorithm:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">uint8_t</a> bytes[8];</div>
-<div class="line"><span class="keywordflow">for</span>(<span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">i</a> = 0; <a class="code hl_class" href="classList.html">i</a> &lt; 8; <a class="code hl_class" href="classList.html">i</a>++) {</div>
-<div class="line">    bytes[<a class="code hl_class" href="classList.html">i</a>] = (payload &gt;&gt; ((7 - <a class="code hl_class" href="classList.html">i</a>) * 8)) &amp; 0xff;</div>
+<p>The CRC is computed over the <b>payload only</b> (the sync nibble is fixed and adds no information; including it in the CRC would just shift the CRC by a constant). The 64-bit payload is interpreted as 8 bytes in <b>big-endian</b> order before being fed to the CRC algorithm:</p>
+<div class="fragment"><div class="line">uint8_t bytes[8];</div>
+<div class="line"><span class="keywordflow">for</span>(<span class="keywordtype">int</span> i = 0; i &lt; 8; i++) {</div>
+<div class="line">    bytes[i] = (payload &gt;&gt; ((7 - i) * 8)) &amp; 0xff;</div>
 <div class="line">}</div>
 <div class="line"><span class="comment">// bytes[0] = MSB of payload, bytes[7] = LSB of payload</span></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-</div><!-- fragment --><p>The <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> parameters match the standard CRC-8/AUTOSAR variant from the Rocksoft / reveng catalogue:</p>
+</div><!-- fragment --><p>The CRC parameters match the standard CRC-8/AUTOSAR variant from the Rocksoft / reveng catalogue:</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Parameter   </th><th class="markdownTableHeadNone">Value   </th><th class="markdownTableHeadNone">Notes    </th></tr>
@@ -141,7 +138,7 @@ Bit and byte ordering</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">Polynomial   </td><td class="markdownTableBodyNone"><code>0x2F</code>   </td><td class="markdownTableBodyNone"><code>x^8 + x^5 + x^3 + x^2 + x + 1</code>    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Init   </td><td class="markdownTableBodyNone"><code>0xFF</code>   </td><td class="markdownTableBodyNone">Non-zero so all-zero payloads do not yield <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a>=0    </td></tr>
+<td class="markdownTableBodyNone">Init   </td><td class="markdownTableBodyNone"><code>0xFF</code>   </td><td class="markdownTableBodyNone">Non-zero so all-zero payloads do not yield CRC=0    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">RefIn   </td><td class="markdownTableBodyNone">false   </td><td class="markdownTableBodyNone">No input reflection    </td></tr>
 <tr class="markdownTableRowOdd">
@@ -149,9 +146,9 @@ Bit and byte ordering</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">XorOut   </td><td class="markdownTableBodyNone"><code>0xFF</code>   </td><td class="markdownTableBodyNone">Final XOR    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Check   </td><td class="markdownTableBodyNone"><code>0xDF</code>   </td><td class="markdownTableBodyNone"><a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> over ASCII <code>"123456789"</code>   </td></tr>
+<td class="markdownTableBodyNone">Check   </td><td class="markdownTableBodyNone"><code>0xDF</code>   </td><td class="markdownTableBodyNone">CRC over ASCII <code>"123456789"</code>   </td></tr>
 </table>
-<p>Reference implementation: <code><a class="el" href="namespaceCrcParams.html#ad9911d6a1aac5c4be92a118863b3e29c">CrcParams::Crc8Autosar</a></code> in libpromeki, or any standards-compliant CRC-8/AUTOSAR implementation. CRC-8/AUTOSAR has a Hamming distance of 6 at message lengths up to 8 data bytes — the strongest among the 8-bit CRCs commonly available.</p>
+<p>Reference implementation: <code>CrcParams::Crc8Autosar</code> in libpromeki, or any standards-compliant CRC-8/AUTOSAR implementation. CRC-8/AUTOSAR has a Hamming distance of 6 at message lengths up to 8 data bytes — the strongest among the 8-bit CRCs commonly available.</p>
 <h1><a class="anchor" id="img_data_cellwidth"></a>
 Bit cell width selection</h1>
 <p>The bit cell width (in pixels) is chosen at encoder construction time as the largest value that satisfies these two constraints:</p>
@@ -176,10 +173,10 @@ Bit cell width selection</h1>
 </table>
 <p>(*) — interleaved YCbCr macropixels carry chroma in-line at full width within the single plane, so the plane's <code>hSubsampling</code> is left at 1 even though the <em>format</em> is 4:2:2.</p>
 <p>The trailing pad width is then <code>imageWidth - 76 * bitWidth</code> pixels, rounded down to the same alignment quantum (any sub-quantum leftovers at the end of the line are left untouched by the encoder and retain whatever the rest of the application has put there).</p>
-<p>If the image is too narrow to fit a single <code>76</code>-cell row at the format's quantum, the encoder fails construction (<code><a class="el" href="classImageDataEncoder.html#a22cc4c9e0d401f83e2363c764cb21a1d" title="Returns true if the encoder is ready to use.">ImageDataEncoder::isValid</a></code> returns <code>false</code>).</p>
+<p>If the image is too narrow to fit a single <code>76</code>-cell row at the format's quantum, the encoder fails construction (<code>ImageDataEncoder::isValid</code> returns <code>false</code>).</p>
 <h1><a class="anchor" id="img_data_value_mapping"></a>
 Per-format value mapping</h1>
-<p>The encoder uses libpromeki's <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">CSC pipeline</a> to render its three "primer" cells once at construction time, then memcpys them into place per scan line. The primers are derived from these source colors:</p>
+<p>The encoder uses libpromeki's <a class="el" href="csc.html">CSC pipeline</a> to render its three "primer" cells once at construction time, then memcpys them into place per scan line. The primers are derived from these source colors:</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Primer   </th><th class="markdownTableHeadNone">Source RGB   </th><th class="markdownTableHeadNone">Used for    </th></tr>
@@ -190,8 +187,8 @@ Per-format value mapping</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">neutral   </td><td class="markdownTableBodyNone"><code>(128, 128, 128)</code>   </td><td class="markdownTableBodyNone">Both "1" and "0" cells <em>and</em> pad on chroma planes   </td></tr>
 </table>
-<p>The neutral primer is used on <b>any plane that is sub-sampled</b> (<code>hSubsampling &gt; 1</code> or <code>vSubsampling &gt; 1</code>). The reason is subtle: the CSC pipeline's float-to-integer rounding can land white-cell chroma and black-cell chroma on neighbouring integers (e.g. white→Cb=127, black→Cb=128 for limited-range <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>), which would otherwise create visible chroma flicker between cells. Using a single neutral primer for the chroma plane forces a uniform value across the entire encoded row, so the bit pattern only ever modulates luma.</p>
-<p>For a typical 8-bit limited-range <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> destination, the encoded row therefore looks like:</p>
+<p>The neutral primer is used on <b>any plane that is sub-sampled</b> (<code>hSubsampling &gt; 1</code> or <code>vSubsampling &gt; 1</code>). The reason is subtle: the CSC pipeline's float-to-integer rounding can land white-cell chroma and black-cell chroma on neighbouring integers (e.g. white→Cb=127, black→Cb=128 for limited-range Rec.709), which would otherwise create visible chroma flicker between cells. Using a single neutral primer for the chroma plane forces a uniform value across the entire encoded row, so the bit pattern only ever modulates luma.</p>
+<p>For a typical 8-bit limited-range Rec.709 destination, the encoded row therefore looks like:</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Plane   </th><th class="markdownTableHeadRight">"1" cell   </th><th class="markdownTableHeadRight">"0" cell   </th><th class="markdownTableHeadRight">Pad    </th></tr>
@@ -207,7 +204,7 @@ Per-format value mapping</h1>
 <p>For RGB formats every plane is full-range, so the white and black primers are the format's component-wise max and min respectively (e.g. <code>0/255</code> for 8-bit, <code>0/65535</code> for 16-bit).</p>
 <h1><a class="anchor" id="img_data_decode"></a>
 How to write a decoder</h1>
-<p>A minimal decoder for a known <code><a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a></code> and image size proceeds as follows:</p>
+<p>A minimal decoder for a known <code>PixelFormat</code> and image size proceeds as follows:</p>
 <ol type="1">
 <li>Compute the bit cell width using the same algorithm the encoder uses (<a class="el" href="imagedataencoder.html#img_data_cellwidth">Bit cell width selection</a> above).</li>
 <li>Pick a single luma scan line that should be inside the encoded band. Read <code>bitWidth</code> bytes (or one byte per cell — only the luma value at the start of each cell matters) at the relevant positions:<ul>
@@ -218,8 +215,8 @@ How to write a decoder</h1>
 </ul>
 </li>
 <li>Establish a "white reference" by reading the byte at cell index 0 (which is the first sync bit and therefore guaranteed to be white). Treat any cell whose sample is "close enough to" the white reference as a 1, and any other cell as a 0. In practice a simple equality check works because the encoder writes the cells via <code>memcpy</code> from a pre-rendered primer — every white cell holds an exact copy of the same primer bytes.</li>
-<li>Read 76 cells into a 76-bit shift register, MSB-first. Verify the top 4 bits equal the sync nibble <code>0xA</code>. Extract bits <code>71..8</code> as the 64-bit payload and bits <code>7..0</code> as the 8-bit <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a>.</li>
-<li>Recompute the <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> over the 8 payload bytes (big-endian) using CRC-8/AUTOSAR and compare to the wire <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a>. A mismatch indicates the row was corrupted in transit and should be discarded; decoders that have multiple band scan lines available can try another scan line from the same band.</li>
+<li>Read 76 cells into a 76-bit shift register, MSB-first. Verify the top 4 bits equal the sync nibble <code>0xA</code>. Extract bits <code>71..8</code> as the 64-bit payload and bits <code>7..0</code> as the 8-bit CRC.</li>
+<li>Recompute the CRC over the 8 payload bytes (big-endian) using CRC-8/AUTOSAR and compare to the wire CRC. A mismatch indicates the row was corrupted in transit and should be discarded; decoders that have multiple band scan lines available can try another scan line from the same band.</li>
 </ol>
 <h1><a class="anchor" id="img_data_alignment"></a>
 Alignment notes</h1>
@@ -230,7 +227,7 @@ Worked example</h1>
 <p>Consider a 1920×1080 RGBA8_sRGB image with two bands:</p>
 <ul>
 <li>Lines <code>0..15</code> carry payload <code>0x0123456789ABCDEF</code>.</li>
-<li>Lines <code>16..31</code> carry the BCD timecode word for <code>01:00:00:00</code> in <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a> NDF, which is <code>0x0001000000000000</code> (hour units = 1 at bits 48..51 of the 64-bit word, every other field zero) per <code><a class="el" href="classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b" title="Packs the timecode into the 64-bit BCD time-address word.">Timecode::toBcd64</a></code> with <code>TimecodePackFormat::Vitc</code> mode.</li>
+<li>Lines <code>16..31</code> carry the BCD timecode word for <code>01:00:00:00</code> in 29.97 NDF, which is <code>0x0001000000000000</code> (hour units = 1 at bits 48..51 of the 64-bit word, every other field zero) per <code>Timecode::toBcd64</code> with <code>TimecodePackFormat::Vitc</code> mode.</li>
 </ul>
 <p>The bit cell width is <code>1920 / 76 = 25</code> (alignment quantum 1 for RGBA8), so the first band of scan lines looks like:</p>
 <div class="fragment"><div class="line">bytes 0..99      (cells 0..3)  : sync   1010</div>
@@ -238,25 +235,25 @@ Worked example</h1>
 <div class="line">bytes 1700..1899 (cells 68..75): CRC-8/AUTOSAR over 0x01..EF</div>
 <div class="line">bytes 1900..7679                 : padding (black RGBA)</div>
 </div><!-- fragment --><p>Each cell is <code>25 * 4 = 100</code> bytes (25 RGBA pixels), and <code>76 * 100 = 7600</code> bytes leaves <code>1920 * 4 - 7600 = 80</code> bytes of pad at the right edge of every encoded scan line.</p>
-<p>The <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> for payload <code>0x0123456789ABCDEF</code> can be computed against any standards-compliant CRC-8/AUTOSAR implementation:</p>
+<p>The CRC for payload <code>0x0123456789ABCDEF</code> can be computed against any standards-compliant CRC-8/AUTOSAR implementation:</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="crc_8h.html">promeki/crc.h</a>&gt;</span></div>
 <div class="line"><span class="keyword">using namespace </span>promeki;</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classList.html">uint8_t</a> bytes[8] = { 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF };</div>
-<div class="line"><a class="code hl_class" href="classList.html">uint8_t</a> <a class="code hl_class" href="classList.html">crc</a> = Crc8::compute(<a class="code hl_variable" href="namespaceCrcParams.html#ad9911d6a1aac5c4be92a118863b3e29c">CrcParams::Crc8Autosar</a>, bytes, 8);</div>
+<div class="line"><a class="code hl_class" href="classpromeki_1_1UniquePtr.html">uint8_t</a> bytes[8] = { 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF };</div>
+<div class="line"><a class="code hl_class" href="classpromeki_1_1UniquePtr.html">uint8_t</a> <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">crc</a> = Crc8::compute(CrcParams::Crc8Autosar, bytes, 8);</div>
+<div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
 <div class="ttc" id="acrc_8h_html"><div class="ttname"><a href="crc_8h.html">crc.h</a></div></div>
-<div class="ttc" id="anamespaceCrcParams_html_ad9911d6a1aac5c4be92a118863b3e29c"><div class="ttname"><a href="namespaceCrcParams.html#ad9911d6a1aac5c4be92a118863b3e29c">CrcParams::Crc8Autosar</a></div><div class="ttdeci">constexpr Crc8::Params Crc8Autosar</div><div class="ttdef"><b>Definition</b> crc.h:175</div></div>
 </div><!-- fragment --><h1><a class="anchor" id="img_data_format_history"></a>
 Why not actual VITC?</h1>
-<p>SMPTE VITC (12M-2) is a 90-bit-per-line wire format with its own sync words, <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> polynomial, and bit positions. This encoder is deliberately <em>not</em> compliant with that standard for several reasons:</p>
+<p>SMPTE VITC (12M-2) is a 90-bit-per-line wire format with its own sync words, CRC polynomial, and bit positions. This encoder is deliberately <em>not</em> compliant with that standard for several reasons:</p>
 <ul>
 <li>VITC carries SMPTE timecode digits as its only payload, with no provision for arbitrary opaque data. We need to stamp things like rolling frame numbers, stream IDs, and other application identifiers into images, where SMPTE digits would be a poor fit.</li>
 <li>VITC uses a fixed bit-cell width tuned for analog NTSC line widths and a specific oscilloscope-friendly transition pattern. We want the cells to scale up to whatever pixel pitch the destination image has, and we don't care about analog transition behaviour.</li>
-<li>VITC's 8-bit <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> uses polynomial <code>0x39</code>, which has weaker error-detection properties than CRC-8/AUTOSAR at our payload length.</li>
+<li>VITC's 8-bit CRC uses polynomial <code>0x39</code>, which has weaker error-detection properties than CRC-8/AUTOSAR at our payload length.</li>
 </ul>
 <p>Callers that need an actual SMPTE-compliant VITC pattern in an image should look elsewhere; this encoder targets the much simpler "stamp a few 64-bit words into an image so a tool downstream can
 find them again" use case.</p>
-<p><b>See also:</b> <code><a class="el" href="classImageDataEncoder.html" title="Fast VITC-style binary data encoder for raster images.">ImageDataEncoder</a></code>, <code><a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a></code>, <code><a class="el" href="namespaceCrcParams.html#ad9911d6a1aac5c4be92a118863b3e29c">CrcParams::Crc8Autosar</a></code>, <code><a class="el" href="classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b" title="Packs the timecode into the 64-bit BCD time-address word.">Timecode::toBcd64</a></code>. </p>
+<p><b>See also:</b> <code>ImageDataEncoder</code>, <code>CRC</code>, <code>CrcParams::Crc8Autosar</code>, <code>Timecode::toBcd64</code>. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
@@ -264,7 +261,7 @@ find them again" use case.</p>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

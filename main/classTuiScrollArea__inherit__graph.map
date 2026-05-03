@@ -1,9 +1,0 @@
-<map id="TuiScrollArea" name="TuiScrollArea">
-<area shape="rect" id="Node000001" title="Container that scrolls content larger than its viewport." alt="" coords="5,225,112,251"/>
-<area shape="rect" id="Node000002" href="$classTuiWidget.html" title="TUI&#45;specific widget base class." alt="" coords="15,152,102,177"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="61,191,61,225,56,225,56,191"/>
-<area shape="rect" id="Node000003" href="$classWidget.html" title="Base class for all widgets across UI backends." alt="" coords="25,79,93,104"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="61,118,61,152,56,152,56,118"/>
-<area shape="rect" id="Node000004" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="11,5,107,31"/>
-<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="61,44,61,79,56,79,56,44"/>
-</map>

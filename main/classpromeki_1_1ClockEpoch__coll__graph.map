@@ -1,0 +1,8 @@
+<map id="promeki::ClockEpoch" name="promeki::ClockEpoch">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for clock domain epoch behaviour." alt="" coords="5,179,164,204"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="179,183,191,191,182,199,165,202,164,197,180,194,185,191,177,188"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="5,80,164,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="87,134,87,179,82,179,82,134"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="24,5,145,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="87,44,87,80,82,80,82,44"/>
+</map>

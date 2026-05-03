@@ -1,0 +1,7 @@
+<map id="promeki::PacingResult" name="promeki::PacingResult">
+<area shape="rect" id="Node000001" title="Result of a single PacingGate::wait call." alt="" coords="68,93,235,119"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1Duration.html" title="Time duration with nanosecond precision." alt="" coords="5,5,145,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="97,39,143,91,139,95,93,43"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Error.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="170,5,285,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="210,43,164,95,160,91,206,39"/>
+</map>

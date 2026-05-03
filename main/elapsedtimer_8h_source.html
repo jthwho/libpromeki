@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -111,81 +109,76 @@ $(document).ready(function(){initNavTree('elapsedtimer_8h_source.html',''); init
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
-<div class="foldopen" id="foldopen00023" data-start="{" data-end="};">
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="classElapsedTimer.html">   23</a></span><span class="keyword">class </span><a class="code hl_class" href="classElapsedTimer.html">ElapsedTimer</a> {</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>        <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno"><a class="line" href="classElapsedTimer.html#a898261990fc2ab88f0ac3c35f0de83d0">   28</a></span>                <a class="code hl_function" href="classElapsedTimer.html#a898261990fc2ab88f0ac3c35f0de83d0">ElapsedTimer</a>() : _valid(<a class="code hl_class" href="classList.html">true</a>), _start(std::<a class="code hl_class" href="classList.html">chrono</a>::<a class="code hl_class" href="classList.html">steady_clock</a>::now()) {}</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
-<div class="foldopen" id="foldopen00033" data-start="{" data-end="}">
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="classElapsedTimer.html#a27343db4608fa0bce7182e4351974dd6">   33</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classElapsedTimer.html#a27343db4608fa0bce7182e4351974dd6">start</a>() {</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>                        _start = std::chrono::steady_clock::now();</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>                        _valid = <span class="keyword">true</span>;</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>                }</div>
+<div class="foldopen" id="foldopen00030" data-start="{" data-end="};">
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno"><a class="line" href="classpromeki_1_1ElapsedTimer.html">   30</a></span><span class="keyword">class </span><a class="code hl_class" href="classpromeki_1_1ElapsedTimer.html">ElapsedTimer</a> {</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>        <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="classpromeki_1_1ElapsedTimer.html#ad6dc7a369ee848f5e04904d7e03731ee">   35</a></span>                <a class="code hl_function" href="classpromeki_1_1ElapsedTimer.html#ad6dc7a369ee848f5e04904d7e03731ee">ElapsedTimer</a>() : _valid(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">true</a>), _start(std::<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">chrono</a>::<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">steady_clock</a>::now()) {}</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
+<div class="foldopen" id="foldopen00040" data-start="{" data-end="}">
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno"><a class="line" href="classpromeki_1_1ElapsedTimer.html#a590914863f4c34f8eebbfdfaea1a19e3">   40</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classpromeki_1_1ElapsedTimer.html#a590914863f4c34f8eebbfdfaea1a19e3">start</a>() {</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>                        _start = std::chrono::steady_clock::now();</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>                        _valid = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>                }</div>
 </div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
-<div class="foldopen" id="foldopen00042" data-start="{" data-end="}">
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno"><a class="line" href="classElapsedTimer.html#a764a4246b14f2fcc0eb31de5cf0496e2">   42</a></span>                <a class="code hl_class" href="classList.html">int64_t</a> <a class="code hl_function" href="classElapsedTimer.html#a764a4246b14f2fcc0eb31de5cf0496e2">restart</a>() {</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>                        <span class="keyword">auto</span> now = std::chrono::steady_clock::now();</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>                        <a class="code hl_class" href="classList.html">int64_t</a> ms = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(now - _start).<a class="code hl_function" href="classList.html#a9a96233863513c858b8f6bc61363ebc1">count</a>();</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>                        _start = now;</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>                        _valid = <span class="keyword">true</span>;</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>                        <span class="keywordflow">return</span> ms;</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>                }</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
+<div class="foldopen" id="foldopen00049" data-start="{" data-end="}">
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno"><a class="line" href="classpromeki_1_1ElapsedTimer.html#ad35d3129d3da3cd9cf27408274e8f815">   49</a></span>                <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">int64_t</a> <a class="code hl_function" href="classpromeki_1_1ElapsedTimer.html#ad35d3129d3da3cd9cf27408274e8f815">restart</a>() {</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>                        <span class="keyword">auto</span>    now = std::chrono::steady_clock::now();</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>                        <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">int64_t</a> ms = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(now - _start).count();</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>                        _start = now;</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>                        _valid = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                        <span class="keywordflow">return</span> ms;</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                }</div>
 </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
-<div class="foldopen" id="foldopen00054" data-start="{" data-end="}">
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno"><a class="line" href="classElapsedTimer.html#a58778f8c53862348016e5b6a32d640f3">   54</a></span>                <a class="code hl_class" href="classList.html">int64_t</a> <a class="code hl_function" href="classElapsedTimer.html#a58778f8c53862348016e5b6a32d640f3">elapsed</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                        <span class="keywordflow">return</span> std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>                                std::chrono::steady_clock::now() - _start</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>                        ).<a class="code hl_function" href="classList.html#a9a96233863513c858b8f6bc61363ebc1">count</a>();</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>                }</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
+<div class="foldopen" id="foldopen00061" data-start="{" data-end="}">
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno"><a class="line" href="classpromeki_1_1ElapsedTimer.html#a8a1c032c8631eb8a525e21dc0e50c856">   61</a></span>                <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">int64_t</a> <a class="code hl_function" href="classpromeki_1_1ElapsedTimer.html#a8a1c032c8631eb8a525e21dc0e50c856">elapsed</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                        <span class="keywordflow">return</span> std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(std::chrono::steady_clock::now() -</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>                                                                                     _start)</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>                                .count();</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>                }</div>
 </div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
-<div class="foldopen" id="foldopen00064" data-start="{" data-end="}">
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno"><a class="line" href="classElapsedTimer.html#ad7fff11f69b85d656909aaba97a1b631">   64</a></span>                <a class="code hl_class" href="classList.html">int64_t</a> <a class="code hl_function" href="classElapsedTimer.html#ad7fff11f69b85d656909aaba97a1b631">elapsedUs</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>                        <span class="keywordflow">return</span> std::chrono::duration_cast&lt;std::chrono::microseconds&gt;(</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                                std::chrono::steady_clock::now() - _start</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>                        ).<a class="code hl_function" href="classList.html#a9a96233863513c858b8f6bc61363ebc1">count</a>();</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                }</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
+<div class="foldopen" id="foldopen00071" data-start="{" data-end="}">
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno"><a class="line" href="classpromeki_1_1ElapsedTimer.html#ac2384e2ff176042ebbe7aa8b270a4386">   71</a></span>                <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">int64_t</a> <a class="code hl_function" href="classpromeki_1_1ElapsedTimer.html#ac2384e2ff176042ebbe7aa8b270a4386">elapsedUs</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>                        <span class="keywordflow">return</span> std::chrono::duration_cast&lt;std::chrono::microseconds&gt;(std::chrono::steady_clock::now() -</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>                                                                                     _start)</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>                                .count();</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>                }</div>
 </div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span> </div>
-<div class="foldopen" id="foldopen00074" data-start="{" data-end="}">
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno"><a class="line" href="classElapsedTimer.html#ad3fc83472c9ea9db66213c036681eb0f">   74</a></span>                <a class="code hl_class" href="classList.html">int64_t</a> <a class="code hl_function" href="classElapsedTimer.html#ad3fc83472c9ea9db66213c036681eb0f">elapsedNs</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>                        <span class="keywordflow">return</span> std::chrono::duration_cast&lt;std::chrono::nanoseconds&gt;(</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>                                std::chrono::steady_clock::now() - _start</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>                        ).<a class="code hl_function" href="classList.html#a9a96233863513c858b8f6bc61363ebc1">count</a>();</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>                }</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span> </div>
+<div class="foldopen" id="foldopen00081" data-start="{" data-end="}">
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno"><a class="line" href="classpromeki_1_1ElapsedTimer.html#a19cb89759525e146619ea9886ab99a18">   81</a></span>                <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">int64_t</a> <a class="code hl_function" href="classpromeki_1_1ElapsedTimer.html#a19cb89759525e146619ea9886ab99a18">elapsedNs</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>                        <span class="keywordflow">return</span> std::chrono::duration_cast&lt;std::chrono::nanoseconds&gt;(std::chrono::steady_clock::now() -</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>                                                                                    _start)</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>                                .count();</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>                }</div>
 </div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
-<div class="foldopen" id="foldopen00085" data-start="{" data-end="}">
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno"><a class="line" href="classElapsedTimer.html#af0faf643ce81b76949e1a208486e9967">   85</a></span>                <span class="keywordtype">bool</span> <a class="code hl_function" href="classElapsedTimer.html#af0faf643ce81b76949e1a208486e9967">hasExpired</a>(<a class="code hl_class" href="classList.html">int64_t</a> ms)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>                        <span class="keywordflow">return</span> <a class="code hl_function" href="classElapsedTimer.html#a58778f8c53862348016e5b6a32d640f3">elapsed</a>() &gt;= ms;</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>                }</div>
-</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno"><a class="line" href="classElapsedTimer.html#a22795e90a7324694694f13acdd31a525">   93</a></span>                <span class="keywordtype">bool</span> <a class="code hl_function" href="classElapsedTimer.html#a22795e90a7324694694f13acdd31a525">isValid</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _valid; }</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span> </div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno"><a class="line" href="classElapsedTimer.html#a6e28c9726e0fae2f1984d5db5e50fb48">   98</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classElapsedTimer.html#a6e28c9726e0fae2f1984d5db5e50fb48">invalidate</a>() { _valid = <span class="keyword">false</span>; }</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno"><a class="line" href="classpromeki_1_1ElapsedTimer.html#af7adc082d8809cf787b84a3ca851ae97">   92</a></span>                <span class="keywordtype">bool</span> <a class="code hl_function" href="classpromeki_1_1ElapsedTimer.html#af7adc082d8809cf787b84a3ca851ae97">hasExpired</a>(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">int64_t</a> ms)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> elapsed() &gt;= ms; }</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno"><a class="line" href="classpromeki_1_1ElapsedTimer.html#ad11205073c92a5f8e89b07000b4b52cb">   98</a></span>                <span class="keywordtype">bool</span> <a class="code hl_function" href="classpromeki_1_1ElapsedTimer.html#ad11205073c92a5f8e89b07000b4b52cb">isValid</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _valid; }</div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span> </div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>        <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                <span class="keywordtype">bool</span> _valid;</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                std::chrono::steady_clock::time_point _start;</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>};</div>
-</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno"><a class="line" href="classpromeki_1_1ElapsedTimer.html#a83663f5d9e290bd2ba73006dc4fc84c0">  103</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classpromeki_1_1ElapsedTimer.html#a83663f5d9e290bd2ba73006dc4fc84c0">invalidate</a>() { _valid = <span class="keyword">false</span>; }</div>
 <div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
-<div class="ttc" id="aclassElapsedTimer_html"><div class="ttname"><a href="classElapsedTimer.html">ElapsedTimer</a></div><div class="ttdoc">Monotonic elapsed-time measurement using std::chrono::steady_clock.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:23</div></div>
-<div class="ttc" id="aclassElapsedTimer_html_a22795e90a7324694694f13acdd31a525"><div class="ttname"><a href="classElapsedTimer.html#a22795e90a7324694694f13acdd31a525">ElapsedTimer::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdoc">Returns true if the timer has been started and not invalidated.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:93</div></div>
-<div class="ttc" id="aclassElapsedTimer_html_a27343db4608fa0bce7182e4351974dd6"><div class="ttname"><a href="classElapsedTimer.html#a27343db4608fa0bce7182e4351974dd6">ElapsedTimer::start</a></div><div class="ttdeci">void start()</div><div class="ttdoc">Records the current time as the start point.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:33</div></div>
-<div class="ttc" id="aclassElapsedTimer_html_a58778f8c53862348016e5b6a32d640f3"><div class="ttname"><a href="classElapsedTimer.html#a58778f8c53862348016e5b6a32d640f3">ElapsedTimer::elapsed</a></div><div class="ttdeci">int64_t elapsed() const</div><div class="ttdoc">Returns milliseconds elapsed since start.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:54</div></div>
-<div class="ttc" id="aclassElapsedTimer_html_a6e28c9726e0fae2f1984d5db5e50fb48"><div class="ttname"><a href="classElapsedTimer.html#a6e28c9726e0fae2f1984d5db5e50fb48">ElapsedTimer::invalidate</a></div><div class="ttdeci">void invalidate()</div><div class="ttdoc">Invalidates the timer, marking it as not running.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:98</div></div>
-<div class="ttc" id="aclassElapsedTimer_html_a764a4246b14f2fcc0eb31de5cf0496e2"><div class="ttname"><a href="classElapsedTimer.html#a764a4246b14f2fcc0eb31de5cf0496e2">ElapsedTimer::restart</a></div><div class="ttdeci">int64_t restart()</div><div class="ttdoc">Restarts the timer and returns the elapsed time since the previous start.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:42</div></div>
-<div class="ttc" id="aclassElapsedTimer_html_a898261990fc2ab88f0ac3c35f0de83d0"><div class="ttname"><a href="classElapsedTimer.html#a898261990fc2ab88f0ac3c35f0de83d0">ElapsedTimer::ElapsedTimer</a></div><div class="ttdeci">ElapsedTimer()</div><div class="ttdoc">Constructs and starts the timer.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:28</div></div>
-<div class="ttc" id="aclassElapsedTimer_html_ad3fc83472c9ea9db66213c036681eb0f"><div class="ttname"><a href="classElapsedTimer.html#ad3fc83472c9ea9db66213c036681eb0f">ElapsedTimer::elapsedNs</a></div><div class="ttdeci">int64_t elapsedNs() const</div><div class="ttdoc">Returns nanoseconds elapsed since start.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:74</div></div>
-<div class="ttc" id="aclassElapsedTimer_html_ad7fff11f69b85d656909aaba97a1b631"><div class="ttname"><a href="classElapsedTimer.html#ad7fff11f69b85d656909aaba97a1b631">ElapsedTimer::elapsedUs</a></div><div class="ttdeci">int64_t elapsedUs() const</div><div class="ttdoc">Returns microseconds elapsed since start.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:64</div></div>
-<div class="ttc" id="aclassElapsedTimer_html_af0faf643ce81b76949e1a208486e9967"><div class="ttname"><a href="classElapsedTimer.html#af0faf643ce81b76949e1a208486e9967">ElapsedTimer::hasExpired</a></div><div class="ttdeci">bool hasExpired(int64_t ms) const</div><div class="ttdoc">Returns true if the elapsed time is at least ms milliseconds.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:85</div></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassList_html_a9a96233863513c858b8f6bc61363ebc1"><div class="ttname"><a href="classList.html#a9a96233863513c858b8f6bc61363ebc1">List::count</a></div><div class="ttdeci">size_t count(const T &amp;value) const</div><div class="ttdoc">Returns the number of occurrences of value.</div><div class="ttdef"><b>Definition</b> list.h:629</div></div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>        <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>                <span class="keywordtype">bool</span>                                  _valid;</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>                std::chrono::steady_clock::time_point _start;</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>};</div>
+</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span> </div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
+<div class="ttc" id="aclasspromeki_1_1ElapsedTimer_html"><div class="ttname"><a href="classpromeki_1_1ElapsedTimer.html">promeki::ElapsedTimer</a></div><div class="ttdoc">Monotonic elapsed-time measurement using std::chrono::steady_clock.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:30</div></div>
+<div class="ttc" id="aclasspromeki_1_1ElapsedTimer_html_a19cb89759525e146619ea9886ab99a18"><div class="ttname"><a href="classpromeki_1_1ElapsedTimer.html#a19cb89759525e146619ea9886ab99a18">promeki::ElapsedTimer::elapsedNs</a></div><div class="ttdeci">int64_t elapsedNs() const</div><div class="ttdoc">Returns nanoseconds elapsed since start.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:81</div></div>
+<div class="ttc" id="aclasspromeki_1_1ElapsedTimer_html_a590914863f4c34f8eebbfdfaea1a19e3"><div class="ttname"><a href="classpromeki_1_1ElapsedTimer.html#a590914863f4c34f8eebbfdfaea1a19e3">promeki::ElapsedTimer::start</a></div><div class="ttdeci">void start()</div><div class="ttdoc">Records the current time as the start point.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:40</div></div>
+<div class="ttc" id="aclasspromeki_1_1ElapsedTimer_html_a83663f5d9e290bd2ba73006dc4fc84c0"><div class="ttname"><a href="classpromeki_1_1ElapsedTimer.html#a83663f5d9e290bd2ba73006dc4fc84c0">promeki::ElapsedTimer::invalidate</a></div><div class="ttdeci">void invalidate()</div><div class="ttdoc">Invalidates the timer, marking it as not running.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:103</div></div>
+<div class="ttc" id="aclasspromeki_1_1ElapsedTimer_html_a8a1c032c8631eb8a525e21dc0e50c856"><div class="ttname"><a href="classpromeki_1_1ElapsedTimer.html#a8a1c032c8631eb8a525e21dc0e50c856">promeki::ElapsedTimer::elapsed</a></div><div class="ttdeci">int64_t elapsed() const</div><div class="ttdoc">Returns milliseconds elapsed since start.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:61</div></div>
+<div class="ttc" id="aclasspromeki_1_1ElapsedTimer_html_ac2384e2ff176042ebbe7aa8b270a4386"><div class="ttname"><a href="classpromeki_1_1ElapsedTimer.html#ac2384e2ff176042ebbe7aa8b270a4386">promeki::ElapsedTimer::elapsedUs</a></div><div class="ttdeci">int64_t elapsedUs() const</div><div class="ttdoc">Returns microseconds elapsed since start.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:71</div></div>
+<div class="ttc" id="aclasspromeki_1_1ElapsedTimer_html_ad11205073c92a5f8e89b07000b4b52cb"><div class="ttname"><a href="classpromeki_1_1ElapsedTimer.html#ad11205073c92a5f8e89b07000b4b52cb">promeki::ElapsedTimer::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdoc">Returns true if the timer has been started and not invalidated.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:98</div></div>
+<div class="ttc" id="aclasspromeki_1_1ElapsedTimer_html_ad35d3129d3da3cd9cf27408274e8f815"><div class="ttname"><a href="classpromeki_1_1ElapsedTimer.html#ad35d3129d3da3cd9cf27408274e8f815">promeki::ElapsedTimer::restart</a></div><div class="ttdeci">int64_t restart()</div><div class="ttdoc">Restarts the timer and returns the elapsed time since the previous start.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:49</div></div>
+<div class="ttc" id="aclasspromeki_1_1ElapsedTimer_html_ad6dc7a369ee848f5e04904d7e03731ee"><div class="ttname"><a href="classpromeki_1_1ElapsedTimer.html#ad6dc7a369ee848f5e04904d7e03731ee">promeki::ElapsedTimer::ElapsedTimer</a></div><div class="ttdeci">ElapsedTimer()</div><div class="ttdoc">Constructs and starts the timer.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:35</div></div>
+<div class="ttc" id="aclasspromeki_1_1ElapsedTimer_html_af7adc082d8809cf787b84a3ca851ae97"><div class="ttname"><a href="classpromeki_1_1ElapsedTimer.html#af7adc082d8809cf787b84a3ca851ae97">promeki::ElapsedTimer::hasExpired</a></div><div class="ttdeci">bool hasExpired(int64_t ms) const</div><div class="ttdoc">Returns true if the elapsed time is at least ms milliseconds.</div><div class="ttdef"><b>Definition</b> elapsedtimer.h:92</div></div>
+<div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:14</div></div>
 <div class="ttc" id="anamespace_8h_html_a9a7eb1268c947a92a8cb60d369b8abf8"><div class="ttname"><a href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_END</div><div class="ttdoc">Ends a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:19</div></div>
@@ -196,7 +189,7 @@ $(document).ready(function(){initNavTree('elapsedtimer_8h_source.html',''); init
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="elapsedtimer_8h.html">elapsedtimer.h</a></li>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

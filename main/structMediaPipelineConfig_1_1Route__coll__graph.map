@@ -1,5 +1,0 @@
-<map id="MediaPipelineConfig::Route" name="MediaPipelineConfig::Route">
-<area shape="rect" id="Node000001" title="One directed frame&#45;flow edge between two stages." alt="" coords="5,137,160,177"/>
-<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="53,5,113,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="85,44,85,137,80,137,80,44"/>
-</map>

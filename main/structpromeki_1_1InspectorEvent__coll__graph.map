@@ -1,0 +1,9 @@
+<map id="promeki::InspectorEvent" name="promeki::InspectorEvent">
+<area shape="rect" id="Node000001" title="Per&#45;frame measurement record produced by InspectorMediaIO." alt="" coords="353,65,535,91"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1FrameNumber.html" title="Absolute frame index along a media timeline." alt="" coords="12,5,189,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,25,330,45,402,63,400,68,329,50,203,31"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Timecode.html" title="Class for holding and manipulating timecode." alt="" coords="27,65,175,91"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="189,75,353,75,353,81,189,81"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1List.html" title=" " alt="" coords="5,115,196,155"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="209,115,329,95,371,88,372,93,330,101,210,121"/>
+</map>

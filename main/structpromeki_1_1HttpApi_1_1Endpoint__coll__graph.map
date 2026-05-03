@@ -1,0 +1,22 @@
+<map id="promeki::HttpApi::Endpoint" name="promeki::HttpApi::Endpoint">
+<area shape="rect" id="Node000001" title="Self&#45;describing HTTP endpoint." alt="" coords="820,291,1019,317"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="454,11,577,37"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="591,31,632,46,679,73,725,105,806,176,870,242,910,289,906,293,866,246,802,179,721,109,676,77,630,50,589,36"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1HttpMethod.html" title="Well&#45;known Enum type for HTTP request methods." alt="" coords="435,217,596,242"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="610,236,701,248,797,265,881,289,879,294,795,271,700,253,609,241"/>
+<area shape="poly" id="edge5_Node000003_Node000003" title=" " alt="" coords="488,202,496,194,515,190,531,192,541,199,544,208,539,218,534,215,539,208,537,202,530,197,515,195,499,198,492,206"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="184,203,343,243"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="357,222,434,225,434,230,356,228"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="5,210,127,235"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="140,220,184,220,184,225,140,225"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1StringList.html" title="Manages a list of strings." alt="" coords="443,266,588,291"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="602,281,820,295,820,300,602,287"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1List.html" title=" " alt="" coords="176,267,351,293"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="364,277,442,276,442,282,364,282"/>
+<area shape="rect" id="Node000008" href="$classpromeki_1_1List.html" title=" " alt="" coords="426,315,605,341"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="618,327,705,326,796,321,851,314,852,319,796,327,705,332,618,333"/>
+<area shape="rect" id="Node000009" href="$classpromeki_1_1VariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID." alt="" coords="435,365,596,390"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="610,371,700,363,795,347,845,332,889,314,891,319,847,337,797,352,701,368,610,377"/>
+<area shape="rect" id="Node000010" href="$classpromeki_1_1List.html" title=" " alt="" coords="400,414,631,439"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="644,420,720,408,795,387,827,371,857,352,903,315,906,319,860,356,830,376,797,392,721,414,645,425"/>
+</map>

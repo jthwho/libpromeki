@@ -1,0 +1,9 @@
+<map id="promeki::FrameBridge::Config" name="promeki::FrameBridge::Config">
+<area shape="rect" id="Node000001" title="Output&#45;side configuration." alt="" coords="179,93,345,133"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1MediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata." alt="" coords="5,5,161,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,35,181,67,227,91,224,95,178,72,116,39"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1AudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count." alt="" coords="185,5,339,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="265,44,265,93,259,93,259,44"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="363,5,486,31"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="396,40,342,72,299,96,296,91,339,67,393,35"/>
+</map>

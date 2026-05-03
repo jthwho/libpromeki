@@ -1,0 +1,9 @@
+<map id="promeki::AudioPayload" name="promeki::AudioPayload">
+<area shape="rect" id="Node000001" title="Abstract base for any audio payload — compressed or uncompressed." alt="" coords="133,79,305,104"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1CompressedAudioPayload.html" title="Compressed audio payload — one encoded access unit whose codec identity lives in the base AudioDesc&#39;s..." alt="" coords="5,152,208,192"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,114,135,154,132,150,189,110"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1PcmAudioPayload.html" title="PCM audio payload — linear PCM samples in the format described by the base AudioPayload&#39;s AudioDesc." alt="" coords="232,159,432,185"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="248,110,317,157,314,161,245,114"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1MediaPayload.html" title="Abstract polymorphic base for any media payload flowing through a pipeline." alt="" coords="131,5,306,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,44,221,79,216,79,216,44"/>
+</map>

@@ -1,8 +1,0 @@
-<map id="TimecodePackFormat" name="TimecodePackFormat">
-<area shape="rect" id="Node000001" title="Selects the on&#45;the&#45;wire BCD time&#45;address layout used by Timecode::toBcd64 and Timecode::fromBcd64." alt="" coords="57,157,220,182"/>
-<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="235,162,247,169,238,176,221,179,220,173,236,171,241,169,233,167"/>
-<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,272,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,119,141,156,136,156,136,119"/>
-<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="109,5,168,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="141,45,141,80,136,80,136,45"/>
-</map>

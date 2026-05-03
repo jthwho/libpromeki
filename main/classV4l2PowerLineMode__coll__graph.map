@@ -1,8 +1,0 @@
-<map id="V4l2PowerLineMode" name="V4l2PowerLineMode">
-<area shape="rect" id="Node000001" title="Well&#45;known Enum type for V4L2 power line frequency filter." alt="" coords="32,186,187,211"/>
-<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="202,189,213,198,205,207,188,211,187,205,203,202,208,199,199,194"/>
-<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,213,120"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="112,134,112,186,107,186,107,134"/>
-<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="80,5,139,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="112,44,112,80,107,80,107,44"/>
-</map>

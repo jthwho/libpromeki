@@ -1,4 +1,4 @@
 var udpsocket_8h =
 [
-    [ "UdpSocket::Datagram", "structUdpSocket_1_1Datagram.html", "structUdpSocket_1_1Datagram" ]
+    [ "promeki::UdpSocket::Datagram", "structpromeki_1_1UdpSocket_1_1Datagram.html", "structpromeki_1_1UdpSocket_1_1Datagram" ]
 ];

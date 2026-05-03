@@ -1,9 +1,0 @@
-<map id="VideoPayload" name="VideoPayload">
-<area shape="rect" id="Node000001" title="Abstract base for any video payload — compressed or uncompressed." alt="" coords="156,79,267,104"/>
-<area shape="rect" id="Node000003" href="$classCompressedVideoPayload.html" title="Compressed video payload — one encoded access unit whose codec identity lives in the base ImageDesc&#39;s..." alt="" coords="5,152,196,177"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="183,114,120,154,117,150,181,109"/>
-<area shape="rect" id="Node000004" href="$classUncompressedVideoPayload.html" title="Uncompressed video payload — raster pixels in the format described by the base VideoPayload&#39;s ImageDe..." alt="" coords="220,152,427,177"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="243,109,306,150,304,154,240,114"/>
-<area shape="rect" id="Node000002" href="$classMediaPayload.html" title="Abstract polymorphic base for any media payload flowing through a pipeline." alt="" coords="155,5,268,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,44,214,79,209,79,209,44"/>
-</map>

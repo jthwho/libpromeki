@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -105,40 +103,40 @@ $(document).ready(function(){initNavTree('group__pipeline.html',''); initResizab
 </div><!--header-->
 <div class="contents">
 
-<p>MediaIO-based media pipeline and its backends.  
+<p>MediaPipeline composition layer over MediaIO.  
 <a href="#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBenchmarkReporter.html">BenchmarkReporter</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Aggregates <a class="el" href="classBenchmark.html" title="Ordered collection of named timestamps for pipeline performance measurement.">Benchmark</a> objects and computes per-step timing statistics.  <a href="classBenchmarkReporter.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MediaPipeline.html">promeki::MediaPipeline</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Data-driven builder and runtime for a DAG of <a class="el" href="classpromeki_1_1MediaIO.html">MediaIO</a> stages.  <a href="classpromeki_1_1MediaPipeline.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html">MediaPipeline</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Data-driven builder and runtime for a DAG of <a class="el" href="classMediaIO.html">MediaIO</a> stages.  <a href="classMediaPipeline.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MediaPipelineConfig.html">promeki::MediaPipelineConfig</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declarative description of a complete media pipeline.  <a href="classpromeki_1_1MediaPipelineConfig.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipelineConfig.html">MediaPipelineConfig</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declarative description of a complete media pipeline.  <a href="classMediaPipelineConfig.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MediaPipelinePlanner.html">promeki::MediaPipelinePlanner</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resolves a partial <a class="el" href="classpromeki_1_1MediaPipelineConfig.html">MediaPipelineConfig</a> into one whose every route is directly format-compatible by splicing in the bridging stages declared via <a class="el" href="classpromeki_1_1MediaIOFactory.html#a171e54f78e270e6cf51e314879006135">MediaIOFactory::bridge</a>.  <a href="classpromeki_1_1MediaPipelinePlanner.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipelinePlanner.html">MediaPipelinePlanner</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resolves a partial <a class="el" href="classMediaPipelineConfig.html">MediaPipelineConfig</a> into one whose every route is directly format-compatible by splicing in the bridging stages declared via <a class="el" href="structMediaIO_1_1FormatDesc.html#a9ccaa0a3dc78045bcec0c9d0380df06c">MediaIO::FormatDesc::bridge</a>.  <a href="classMediaPipelinePlanner.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MediaPipelineStageStats.html">promeki::MediaPipelineStageStats</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Per-stage telemetry record.  <a href="classpromeki_1_1MediaPipelineStageStats.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipelineStats.html">MediaPipelineStats</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Aggregated statistics for a running <a class="el" href="classMediaPipeline.html">MediaPipeline</a>.  <a href="classMediaPipelineStats.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MediaPipelineStats.html">promeki::MediaPipelineStats</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Telemetry snapshot for a running <a class="el" href="classpromeki_1_1MediaPipeline.html">MediaPipeline</a>.  <a href="classpromeki_1_1MediaPipelineStats.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPipelineStats.html">PipelineStats</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Telemetry that describes the pipeline layer itself.  <a href="classPipelineStats.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1PipelineEvent.html">promeki::PipelineEvent</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Value-typed envelope for everything <a class="el" href="classpromeki_1_1MediaPipeline.html">MediaPipeline</a> can announce to a subscriber.  <a href="classpromeki_1_1PipelineEvent.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<p>MediaIO-based media pipeline and its backends. </p>
-<p><a class="el" href="classMediaIO.html">MediaIO</a> controller, <a class="el" href="classMediaIOTask.html">MediaIOTask</a> backends, and the per-instance <a class="el" href="classStrand.html">Strand</a> executor that moves frames between stages. Concrete backends include <a class="el" href="classMediaIOTask__TPG.html">MediaIOTask_TPG</a>, <a class="el" href="classMediaIOTask__ImageFile.html">MediaIOTask_ImageFile</a>, <a class="el" href="classMediaIOTask__AudioFile.html">MediaIOTask_AudioFile</a>, <a class="el" href="classMediaIOTask__QuickTime.html">MediaIOTask_QuickTime</a>, and <a class="el" href="classMediaIOTask__CSC.html">MediaIOTask_CSC</a>. </p>
+<p>MediaPipeline composition layer over MediaIO. </p>
+<p><a class="el" href="classpromeki_1_1MediaPipeline.html">promeki::MediaPipeline</a> composes one or more <a class="el" href="classpromeki_1_1MediaIO.html">promeki::MediaIO</a> instances and the <a class="el" href="classpromeki_1_1MediaIOPortConnection.html">promeki::MediaIOPortConnection</a> objects between them under a single lifecycle (run / pause / close). <a class="el" href="classpromeki_1_1MediaPipelinePlanner.html">promeki::MediaPipelinePlanner</a> handles auto-bridge insertion for format-mismatched stages. </p>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

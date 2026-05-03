@@ -1,4 +1,4 @@
 var audioblock_8h =
 [
-    [ "AudioBlock::Config", "classAudioBlock_1_1Config.html", "classAudioBlock_1_1Config" ]
+    [ "promeki::AudioBlock::Config", "classpromeki_1_1AudioBlock_1_1Config.html", "classpromeki_1_1AudioBlock_1_1Config" ]
 ];

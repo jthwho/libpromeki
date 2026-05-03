@@ -1,0 +1,13 @@
+<map id="promeki::MediaIOCommand" name="promeki::MediaIOCommand">
+<area shape="rect" id="Node000001" title="Base class for MediaIO commands." alt="" coords="253,183,459,208"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1RefCount.html" title="An atomic reference count object." alt="" coords="5,95,149,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,123,201,156,296,180,294,185,199,161,113,128"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Atomic.html" title=" " alt="" coords="174,95,362,120"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="291,128,346,180,342,184,288,131"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1Error.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="387,95,501,120"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="424,131,370,184,366,180,421,128"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1MediaIOStats.html" title="Telemetry container shared by per&#45;command and instance&#45;wide reporting." alt="" coords="525,95,696,120"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="564,127,391,185,389,180,563,122"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1VariantDatabase.html" title=" " alt="" coords="515,5,707,45"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="613,59,613,94,608,94,608,59"/>
+</map>

@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -103,92 +101,142 @@ $(document).ready(function(){initNavTree('signal.html',''); initResizable(); });
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><dl class="reflist">
-<dt>Member <a class="el" href="classAbstractSocket.html#a77948be06e2469025b66856a5853a69e">AbstractSocket::PROMEKI_SIGNAL</a>  (disconnected)</dt>
-<dd><a class="anchor" id="_signal000002"></a>  </dd>
-<dt>Member <a class="el" href="classAbstractSocket.html#a6b894ded240d99fcdfcced5d914baec6">AbstractSocket::PROMEKI_SIGNAL</a>  (stateChanged, SocketState)</dt>
-<dd><a class="anchor" id="_signal000003"></a>  </dd>
-<dt>Member <a class="el" href="classAbstractSocket.html#a6b962aa95c5b4c9a4bf07575c0403884">AbstractSocket::PROMEKI_SIGNAL</a>  (connected)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1AbstractSocket.html#ac3a06a3777c20750fd2d1c581da55e9c">promeki::AbstractSocket::connectedSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000001"></a>  </dd>
-<dt>Member <a class="el" href="classAudioBlock.html#a84ea42f8f63c2ea62494af8b8cf0b555">AudioBlock::PROMEKI_SIGNAL</a>  (sourceHasSamples, <a class="el" href="classAudioBlock.html" title="Base class for an audio processing block This object defines an interface for composing an audio proc...">AudioBlock</a> *, size_t)</dt>
-<dd><a class="anchor" id="_signal000004"></a>  </dd>
-<dt>Member <a class="el" href="classAudioBlock.html#a0cc3ed93295a93dbd5e1aacef36f8e00">AudioBlock::PROMEKI_SIGNAL</a>  (sinkReadyForSamples, <a class="el" href="classAudioBlock.html" title="Base class for an audio processing block This object defines an interface for composing an audio proc...">AudioBlock</a> *, size_t)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1AbstractSocket.html#a475d9fe178df4b0d27c23c9c9072a841">promeki::AbstractSocket::disconnectedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000002"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1AbstractSocket.html#a761521aa26c7c30433e9c8d8fde637fb">promeki::AbstractSocket::stateChangedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000003"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1AudioBlock.html#a98905a7d8699aefb06600f97a222c7d6">promeki::AudioBlock::sinkReadyForSamplesSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000005"></a>  </dd>
-<dt>Member <a class="el" href="classFrameBridge.html#a00c49e74b80a65344f8e60e081dde6ac">FrameBridge::PROMEKI_SIGNAL</a>  (frameAvailable)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1AudioBlock.html#a27d6ac1e5d7a7a4bea278eccb4ef68e7">promeki::AudioBlock::sourceHasSamplesSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000004"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1FrameBridge.html#aed0517a9a31ec3a3b1c56f74478d26aa">promeki::FrameBridge::frameAvailableSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000006"></a>  </dd>
-<dt>Member <a class="el" href="classFrameBridge.html#a94bc9258ea76dc300ba194c91e10d91e">FrameBridge::PROMEKI_SIGNAL</a>  (framesMissed, uint64_t)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1FrameBridge.html#a849cdd9b2e00edbe89d01950849d8e2f">promeki::FrameBridge::framesMissedSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000007"></a>  </dd>
-<dt>Member <a class="el" href="classFrameBridge.html#abf373cd7161b9240214e3a66efb6684c">FrameBridge::PROMEKI_SIGNAL</a>  (peerDisconnected)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1FrameBridge.html#a42518e41e809fb50181507eb65c8b3da">promeki::FrameBridge::peerDisconnectedSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000008"></a>  </dd>
-<dt>Member <a class="el" href="classIODevice.html#ac988dc10a5b980be627d8556d3d7be0d">IODevice::PROMEKI_SIGNAL</a>  (readyRead)</dt>
-<dd><a class="anchor" id="_signal000009"></a>  </dd>
-<dt>Member <a class="el" href="classIODevice.html#af8772ce94267b968cbb0a53a5f5faeb5">IODevice::PROMEKI_SIGNAL</a>  (bytesWritten, int64_t)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1HttpClient.html#a0d0153dcab820ed8ced11d2ac778405c">promeki::HttpClient::errorOccurredSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000010"></a>  </dd>
-<dt>Member <a class="el" href="classIODevice.html#a0b167b96c2d97ab1d2d9eedaa0c438ec">IODevice::PROMEKI_SIGNAL</a>  (errorOccurred, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>)</dt>
-<dd><a class="anchor" id="_signal000011"></a>  </dd>
-<dt>Member <a class="el" href="classIODevice.html#a2bd16af14badf06fd0c137cb1048d483">IODevice::PROMEKI_SIGNAL</a>  (aboutToClose)</dt>
-<dd><a class="anchor" id="_signal000012"></a>  </dd>
-<dt>Member <a class="el" href="classLocalServer.html#a1203fffd2cc9ac7e8ebf4101c4267a11">LocalServer::PROMEKI_SIGNAL</a>  (newConnection)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1HttpClient.html#ae4c6948e26d3d040a64ce6f0144c45ea">promeki::HttpClient::requestFinishedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000009"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1HttpConnection.html#a78fd0f123924c1550808b9bdc2f1908d">promeki::HttpConnection::closedSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000013"></a>  </dd>
-<dt>Member <a class="el" href="classLocalSocket.html#ab9d8c26d46184eee7d78c1c07e14645b">LocalSocket::PROMEKI_SIGNAL</a>  (connected)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1HttpConnection.html#a75d5871092769d8710b7cdf132edb35e">promeki::HttpConnection::errorOccurredSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000014"></a>  </dd>
-<dt>Member <a class="el" href="classLocalSocket.html#a9c6f46c8031e4dc65578bc17ee7d48da">LocalSocket::PROMEKI_SIGNAL</a>  (disconnected)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1HttpConnection.html#ab5a8da76921f1b43f6770ab53fc0bd2e">promeki::HttpConnection::requestReceivedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000011"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1HttpConnection.html#a231377435060920f58758955a2c347d9">promeki::HttpConnection::responseSentSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000012"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1HttpServer.html#a700c3b050b6839172849f81f0975bb30">promeki::HttpServer::errorOccurredSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000017"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1HttpServer.html#a540b3efcda638f59206b4cb6cf3553e6">promeki::HttpServer::requestReceivedSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000015"></a>  </dd>
-<dt>Member <a class="el" href="classMediaIO.html#a532036c268a925fd298bfcd9141c7957">MediaIO::PROMEKI_SIGNAL</a>  (errorOccurred, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1HttpServer.html#a88aca4a841af380c656b951506b87540">promeki::HttpServer::responseSentSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000016"></a>  </dd>
-<dt>Member <a class="el" href="classMediaIO.html#a84aa1eb4c9b05b66f8e6410e6e610a79">MediaIO::PROMEKI_SIGNAL</a>  (frameReady)</dt>
-<dd><a class="anchor" id="_signal000017"></a> </dd>
-<dt>Member <a class="el" href="classMediaIO.html#a93c306d7c76a36e66a3696d17901221f">MediaIO::PROMEKI_SIGNAL</a>  (frameWanted)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1IODevice.html#a424fcb85773aebe284a7db73fe6a7db1">promeki::IODevice::aboutToCloseSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000021"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1IODevice.html#a844010f4e8ad9d4b083aba4add7f11ee">promeki::IODevice::bytesWrittenSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000019"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1IODevice.html#a252683076278ef8294dbf5752fb7b69e">promeki::IODevice::errorOccurredSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000020"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1IODevice.html#ae77cc75af0d4346eb39050b8aa9ac09d">promeki::IODevice::readyReadSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000018"></a>  </dd>
-<dt>Member <a class="el" href="classMediaIO.html#a7b219c7a074ab860a4f6b4cd61e3a406">MediaIO::PROMEKI_SIGNAL</a>  (writeError, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>)</dt>
-<dd><a class="anchor" id="_signal000019"></a> </dd>
-<dt>Member <a class="el" href="classMediaIO.html#af8a7c23e819e3eb161ccc2fda2796003">MediaIO::PROMEKI_SIGNAL</a>  (descriptorChanged)</dt>
-<dd><a class="anchor" id="_signal000020"></a> </dd>
-<dt>Member <a class="el" href="classMediaIO.html#a37f671827a64bf4a303cbab91b60434a">MediaIO::PROMEKI_SIGNAL</a>  (closed, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>)</dt>
-<dd><a class="anchor" id="_signal000021"></a> </dd>
-<dt>Member <a class="el" href="classMediaPipeline.html#ac04065241e220dba967c552d23493228">MediaPipeline::PROMEKI_SIGNAL</a>  (pipelineError, <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1LocalServer.html#ad64a6e5cf0c633cd98c40b3f100fafa6">promeki::LocalServer::newConnectionSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000022"></a>  </dd>
-<dt>Member <a class="el" href="classMediaPipeline.html#a682ffd4d759b249f5c4ab2b0d7c83b7d">MediaPipeline::PROMEKI_SIGNAL</a>  (closed, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>)</dt>
-<dd><a class="anchor" id="_signal000028"></a>  </dd>
-<dt>Member <a class="el" href="classMediaPipeline.html#ab1e4dc635623329ff50c471a3c75730a">MediaPipeline::PROMEKI_SIGNAL</a>  (finished, bool)</dt>
-<dd><a class="anchor" id="_signal000027"></a>  </dd>
-<dt>Member <a class="el" href="classMediaPipeline.html#a1c28dcdfa4fda176ec1248ff139aad01">MediaPipeline::PROMEKI_SIGNAL</a>  (stageClosed, <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>)</dt>
-<dd><a class="anchor" id="_signal000026"></a>  </dd>
-<dt>Member <a class="el" href="classMediaPipeline.html#a39d12a9a6108c57b2539e8670aaa9bf3">MediaPipeline::PROMEKI_SIGNAL</a>  (stageStarted, <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>)</dt>
-<dd><a class="anchor" id="_signal000024"></a>  </dd>
-<dt>Member <a class="el" href="classMediaPipeline.html#a085c98d845de323610df50e378b2fbd2">MediaPipeline::PROMEKI_SIGNAL</a>  (stageOpened, <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1LocalSocket.html#a90621b82bb7044bccebf11278408e8dd">promeki::LocalSocket::connectedSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000023"></a>  </dd>
-<dt>Member <a class="el" href="classMediaPipeline.html#aa655930c6d6b05572f3cea4640534ee4">MediaPipeline::PROMEKI_SIGNAL</a>  (stageStopped, <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1LocalSocket.html#a38e14da695feed0fbbaeb28150cc1c83">promeki::LocalSocket::disconnectedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000024"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaIO.html#a6cc1b4e2bfefe5bfa1d6b5de7792c546">promeki::MediaIO::closedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000027"></a> </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaIO.html#a42c8445ba2a4c8985d872222d612210e">promeki::MediaIO::commandCompletedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000028"></a> </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaIO.html#a9aafa6d45d226935761f06ccbe059020">promeki::MediaIO::descriptorChangedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000026"></a> </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaIO.html#aa41a66cd047860d57a97a18926b1873f">promeki::MediaIO::errorOccurredSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000025"></a>  </dd>
-<dt>Member <a class="el" href="classMulticastManager.html#aaa544763035d2a66cb94d042c1dc51ac">MulticastManager::PROMEKI_SIGNAL</a>  (groupJoined, <a class="el" href="classSocketAddress.html" title="Network address with port number.">SocketAddress</a>)</dt>
-<dd><a class="anchor" id="_signal000029"></a>  </dd>
-<dt>Member <a class="el" href="classMulticastManager.html#ac01af183f371dbe0940039aa941af1e8">MulticastManager::PROMEKI_SIGNAL</a>  (groupLeft, <a class="el" href="classSocketAddress.html" title="Network address with port number.">SocketAddress</a>)</dt>
-<dd><a class="anchor" id="_signal000030"></a>  </dd>
-<dt>Member <a class="el" href="classMulticastReceiver.html#a501571264bdafb40cfbbb8994337bc43">MulticastReceiver::PROMEKI_SIGNAL</a>  (datagramReceived, <a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a>, <a class="el" href="classSocketAddress.html" title="Network address with port number.">SocketAddress</a>)</dt>
-<dd><a class="anchor" id="_signal000031"></a>  </dd>
-<dt>Member <a class="el" href="classMulticastReceiver.html#a775e08c7b545869a0949c942fda1e3a7">MulticastReceiver::PROMEKI_SIGNAL</a>  (receiveError, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>)</dt>
-<dd><a class="anchor" id="_signal000032"></a>  </dd>
-<dt>Member <a class="el" href="classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e">ObjectBase::aboutToDestroySignalName</a>  </dt>
-<dd><a class="anchor" id="_signal000033"></a>  </dd>
-<dt>Member <a class="el" href="classProcess.html#af618a1e521a45b1fc138e663f27ad833">Process::PROMEKI_SIGNAL</a>  (finished, int)</dt>
-<dd><a class="anchor" id="_signal000035"></a>  </dd>
-<dt>Member <a class="el" href="classProcess.html#a40e823fee0f09cffd6abca28118a335d">Process::PROMEKI_SIGNAL</a>  (errorOccurred, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>)</dt>
-<dd><a class="anchor" id="_signal000038"></a>  </dd>
-<dt>Member <a class="el" href="classProcess.html#a3359ddc3d4a75676bbb00e07639dbfba">Process::PROMEKI_SIGNAL</a>  (readyReadStderr)</dt>
-<dd><a class="anchor" id="_signal000037"></a>  </dd>
-<dt>Member <a class="el" href="classProcess.html#a2aa9775692ea7bf4b4f4359af4a9840a">Process::PROMEKI_SIGNAL</a>  (readyReadStdout)</dt>
-<dd><a class="anchor" id="_signal000036"></a>  </dd>
-<dt>Member <a class="el" href="classProcess.html#a7461fbd7eacf3fe8c7329323406e82f4">Process::PROMEKI_SIGNAL</a>  (started)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1MediaIOPortConnection.html#afb42429ddc40e3d658335581ab034be6">promeki::MediaIOPortConnection::allSinksDoneSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000033"></a> </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaIOPortConnection.html#ae6018501b3f0666dfd16c2f34853ec65">promeki::MediaIOPortConnection::errorOccurredSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000030"></a> </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaIOPortConnection.html#addd9a363f8ccba56f9422d84a3a877e7">promeki::MediaIOPortConnection::sinkErrorSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000032"></a> </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaIOPortConnection.html#a4f6b9f99889f859e15a713e3fa26872e">promeki::MediaIOPortConnection::sinkLimitReachedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000031"></a> </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaIOPortConnection.html#ad5e660266f09c9a4930405ff02c57a53">promeki::MediaIOPortConnection::stoppedSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000034"></a>  </dd>
-<dt>Member <a class="el" href="classRtpSession.html#aa96235f400afdbfbfd3363c12c4d4a87">RtpSession::PROMEKI_SIGNAL</a>  (packetReceived, <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>, uint32_t, uint8_t, bool)</dt>
-<dd><a class="anchor" id="_signal000039"></a>  </dd>
-<dt>Member <a class="el" href="classRtpSession.html#ad1d8bc716ff456059335c93a7d27e976">RtpSession::PROMEKI_SIGNAL</a>  (ssrcCollision, uint32_t)</dt>
-<dd><a class="anchor" id="_signal000040"></a>  </dd>
-<dt>Member <a class="el" href="classTcpServer.html#af0108164e5ebe06aaca36553eb6a6231">TcpServer::PROMEKI_SIGNAL</a>  (newConnection)</dt>
-<dd><a class="anchor" id="_signal000041"></a>  </dd>
-<dt>Member <a class="el" href="classThread.html#a16415ff9a9928b5fe29ec027c5bdfa7a">Thread::PROMEKI_SIGNAL</a>  (started)</dt>
+<dt>Member <a class="el" href="classpromeki_1_1MediaIOPortConnection.html#a543052a9aab49eead39a833ee65f18d4">promeki::MediaIOPortConnection::upstreamDoneSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000029"></a> </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaIOSink.html#aabcce1e54397c42b7032e0a6294b7b96">promeki::MediaIOSink::frameWantedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000035"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaIOSink.html#ac8aa07f06be4d3f56200956eadf96302">promeki::MediaIOSink::writeErrorSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000036"></a> </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaIOSource.html#a9fd54f9c4365c97d242d4a055dfb2e58">promeki::MediaIOSource::frameReadySignal</a>  </dt>
+<dd><a class="anchor" id="_signal000037"></a> </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaPipeline.html#a692929b84963334b487d54f9f65f94b6">promeki::MediaPipeline::closedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000044"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaPipeline.html#ac1e6dd03cdfe8a680df40b9e5f8e9987">promeki::MediaPipeline::finishedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000043"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaPipeline.html#ab5b2a30b0e07eaaebd4ad96b55f1c41a">promeki::MediaPipeline::pipelineErrorSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000038"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaPipeline.html#aca02a4d569f117c7c70cde9c0a706208">promeki::MediaPipeline::stageClosedSignal</a>  </dt>
 <dd><a class="anchor" id="_signal000042"></a>  </dd>
-<dt>Member <a class="el" href="classThread.html#ab30119d23cdfefb218adb12949c175a6">Thread::PROMEKI_SIGNAL</a>  (finished, int)</dt>
-<dd><a class="anchor" id="_signal000043"></a> </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaPipeline.html#a7b0d1dd89e9f786bd8b5388e73a58a48">promeki::MediaPipeline::stageOpenedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000039"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaPipeline.html#a5632e2caade5cfd6316af31d3fe7674c">promeki::MediaPipeline::stageStartedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000040"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaPipeline.html#a1363fc767e18c77b9094d085acc8d6e8">promeki::MediaPipeline::stageStoppedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000041"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MediaPipeline.html#a126ed0a2870ddf5609f311ec7d796fe0">promeki::MediaPipeline::statsUpdatedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000045"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MulticastManager.html#a7de9a818017075273d08bac8fd090c27">promeki::MulticastManager::groupJoinedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000046"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MulticastManager.html#a73e7a8eacd74035eefb6dd0003faecab">promeki::MulticastManager::groupLeftSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000047"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MulticastReceiver.html#a90862ef9fc37952e8d5e3d2396edd4f1">promeki::MulticastReceiver::datagramReceivedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000048"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1MulticastReceiver.html#ae05ff86f7ab4210f5739f2b5affb93ee">promeki::MulticastReceiver::receiveErrorSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000049"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1ObjectBase.html#a4374f690ef031e433b07b0cb0811443a">promeki::ObjectBase::aboutToDestroySignal</a>  </dt>
+<dd><a class="anchor" id="_signal000050"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1Process.html#a4c20fcf19c410f40440231a1f7eca2d6">promeki::Process::errorOccurredSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000055"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1Process.html#ab124b52faba420715ad3a5ad31fc7d0b">promeki::Process::finishedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000052"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1Process.html#a15eddfc79d63f7c5dd34a22b2f673587">promeki::Process::readyReadStderrSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000054"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1Process.html#a41bf38589b446b4a71d133734c155334">promeki::Process::readyReadStdoutSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000053"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1Process.html#a25aa7912c9a5560474a8e0af46344143">promeki::Process::startedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000051"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1RtpSession.html#a08e8b6661867f9c4c649649d767d2ae9">promeki::RtpSession::packetReceivedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000056"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1RtpSession.html#a4e3c71810c68f419996340e8d6aa3aa1">promeki::RtpSession::ssrcCollisionSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000057"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1SslSocket.html#affbe716fe3e44c4d2cbfff0b8f40c6a1">promeki::SslSocket::encryptedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000058"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1SslSocket.html#a474eba507f44a3ffd4ba8c1c8dae786c">promeki::SslSocket::sslErrorsSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000059"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1TcpServer.html#aa6d79f121f34f3cc1e4262c902852ac0">promeki::TcpServer::newConnectionSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000060"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1Thread.html#ae940e16c29bb882d8050ab05d87199e9">promeki::Thread::finishedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000062"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1Thread.html#acdc8efe5953f6832f8da9e95c5e0828a">promeki::Thread::startedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000061"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1WebSocket.html#aa3d3588074ed3e5660e78a8de1425171">promeki::WebSocket::binaryMessageReceivedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000066"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1WebSocket.html#ae97c768f7ce9dda1be61a0f658018ffe">promeki::WebSocket::connectedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000063"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1WebSocket.html#a62251e08da45f53c7961da05bd39bd98">promeki::WebSocket::disconnectedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000064"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1WebSocket.html#aa1070c0e270fcee3f84f88588c3dc361">promeki::WebSocket::errorOccurredSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000068"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1WebSocket.html#af767bac7b9b557192c27d144d8beb511">promeki::WebSocket::pongReceivedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000067"></a>  </dd>
+<dt>Member <a class="el" href="classpromeki_1_1WebSocket.html#a51b3e2c4bef8aa1e00f00437865c91b7">promeki::WebSocket::textMessageReceivedSignal</a>  </dt>
+<dd><a class="anchor" id="_signal000065"></a> </dd>
 </dl>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
@@ -197,7 +245,7 @@ $(document).ready(function(){initNavTree('signal.html',''); initResizable(); });
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

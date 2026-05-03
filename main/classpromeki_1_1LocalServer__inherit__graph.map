@@ -1,0 +1,5 @@
+<map id="promeki::LocalServer" name="promeki::LocalServer">
+<area shape="rect" id="Node000001" title="Server that accepts local (same&#45;host) stream connections." alt="" coords="5,79,165,104"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="6,5,165,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="88,44,88,79,83,79,83,44"/>
+</map>

@@ -15,6 +15,8 @@ var topics =
     [ "Network", "group__network.html", "group__network" ],
     [ "ProAV Media", "group__proav.html", "group__proav" ],
     [ "Color", "group__color.html", "group__color" ],
+    [ "MediaIO — User Surface", "group__mediaio__user.html", "group__mediaio__user" ],
+    [ "MediaIO — Backend Surface", "group__mediaio__backend.html", "group__mediaio__backend" ],
     [ "Pipeline", "group__pipeline.html", "group__pipeline" ],
     [ "Paint", "group__paint.html", "group__paint" ],
     [ "Music Theory", "group__music.html", "group__music" ],

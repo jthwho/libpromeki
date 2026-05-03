@@ -1,0 +1,9 @@
+<map id="promeki::HttpFileHandler" name="promeki::HttpFileHandler">
+<area shape="rect" id="Node000001" title="Static&#45;file&#45;serving HTTP handler." alt="" coords="117,181,304,207"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1HttpHandler.html" title="Abstract base class for HTTP request handlers." alt="" coords="5,93,168,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="116,124,195,179,192,183,113,129"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1RefCount.html" title="An atomic reference count object." alt="" coords="15,5,159,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="89,45,89,93,84,93,84,45"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="192,93,315,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="244,132,219,182,214,180,239,130"/>
+</map>

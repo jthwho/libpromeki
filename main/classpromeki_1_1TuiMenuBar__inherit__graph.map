@@ -1,0 +1,9 @@
+<map id="promeki::TuiMenuBar" name="promeki::TuiMenuBar">
+<area shape="rect" id="Node000001" title="Top&#45;of&#45;screen menu bar with dropdown menus." alt="" coords="5,225,165,251"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TuiWidget.html" title="TUI&#45;specific widget base class." alt="" coords="11,152,159,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="88,191,88,225,83,225,83,191"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Widget.html" title="Base class for all widgets across UI backends." alt="" coords="20,79,151,104"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="88,118,88,152,83,152,83,118"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="6,5,165,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="88,44,88,79,83,79,83,44"/>
+</map>

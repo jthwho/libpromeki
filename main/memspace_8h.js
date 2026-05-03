@@ -1,7 +1,7 @@
 var memspace_8h =
 [
-    [ "MemSpace::Stats", "structMemSpace_1_1Stats.html", "structMemSpace_1_1Stats" ],
-    [ "MemSpace::Stats::Snapshot", "structMemSpace_1_1Stats_1_1Snapshot.html", "structMemSpace_1_1Stats_1_1Snapshot" ],
-    [ "MemSpace::Ops", "structMemSpace_1_1Ops.html", "structMemSpace_1_1Ops" ],
-    [ "MemAllocation", "structMemAllocation.html", "structMemAllocation" ]
+    [ "promeki::MemSpace::Stats", "structpromeki_1_1MemSpace_1_1Stats.html", "structpromeki_1_1MemSpace_1_1Stats" ],
+    [ "promeki::MemSpace::Stats::Snapshot", "structpromeki_1_1MemSpace_1_1Stats_1_1Snapshot.html", "structpromeki_1_1MemSpace_1_1Stats_1_1Snapshot" ],
+    [ "promeki::MemSpace::Ops", "structpromeki_1_1MemSpace_1_1Ops.html", "structpromeki_1_1MemSpace_1_1Ops" ],
+    [ "promeki::MemAllocation", "structpromeki_1_1MemAllocation.html", "structpromeki_1_1MemAllocation" ]
 ];

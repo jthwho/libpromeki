@@ -1,4 +1,4 @@
 var sdlplayer_8h =
 [
-    [ "SDLPlayerTask", "classSDLPlayerTask.html", "classSDLPlayerTask" ]
+    [ "promeki::SDLPlayerMediaIO", "classpromeki_1_1SDLPlayerMediaIO.html", "classpromeki_1_1SDLPlayerMediaIO" ]
 ];

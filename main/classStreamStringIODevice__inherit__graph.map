@@ -1,7 +1,0 @@
-<map id="StreamStringIODevice" name="StreamStringIODevice">
-<area shape="rect" id="Node000001" title="Write&#45;only IODevice that intercepts writes, accumulates characters, and invokes a callback on newline..." alt="" coords="5,152,172,177"/>
-<area shape="rect" id="Node000002" href="$classIODevice.html" title="Abstract base class for all I/O devices." alt="" coords="48,79,129,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="91,118,91,152,86,152,86,118"/>
-<area shape="rect" id="Node000003" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="41,5,137,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="91,44,91,79,86,79,86,44"/>
-</map>

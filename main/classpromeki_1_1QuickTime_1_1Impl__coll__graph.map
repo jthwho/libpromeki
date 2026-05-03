@@ -1,0 +1,27 @@
+<map id="promeki::QuickTime::Impl" name="promeki::QuickTime::Impl">
+<area shape="rect" id="Node000001" title="Abstract backend for a QuickTime instance." alt="" coords="1127,165,1281,205"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="797,49,920,74"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="934,62,1017,74,1062,86,1104,102,1150,131,1186,163,1182,167,1147,135,1101,106,1060,91,1016,79,933,67"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1IODevice.html" title="Abstract base class for all I/O devices." alt="" coords="787,98,930,123"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="944,117,1022,129,1103,147,1153,163,1152,168,1102,152,1021,135,943,123"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="413,13,572,38"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="586,15,626,17,669,23,711,33,751,51,760,59,764,68,768,76,775,83,799,96,797,100,772,87,763,79,759,70,755,62,748,56,709,39,668,28,626,22,585,21"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,5,199,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="212,23,413,23,413,28,212,28"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="417,62,568,87"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="582,81,787,101,786,106,582,86"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="393,111,592,137"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="606,120,749,116,787,114,787,119,749,121,606,126"/>
+<area shape="rect" id="Node000008" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="396,161,589,201"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="603,168,675,157,749,141,772,132,809,121,811,126,774,137,750,147,676,163,603,174"/>
+<area shape="rect" id="Node000009" href="$classpromeki_1_1List.html" title=" " alt="" coords="773,147,944,173"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="958,165,1127,177,1126,182,957,170"/>
+<area shape="rect" id="Node000010" href="$classpromeki_1_1MediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata." alt="" coords="781,197,937,222"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="950,208,1025,207,1102,201,1126,198,1127,204,1103,207,1025,212,951,213"/>
+<area shape="rect" id="Node000011" href="$classpromeki_1_1Metadata.html" title="Key&#45;value metadata container using typed Variant values." alt="" coords="785,246,932,271"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="946,253,1022,246,1102,229,1135,217,1166,203,1168,208,1137,222,1103,235,1023,251,946,259"/>
+<area shape="rect" id="Node000012" href="$classpromeki_1_1VariantDatabase.html" title=" " alt="" coords="397,239,589,279"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="603,256,785,256,785,261,603,261"/>
+<area shape="rect" id="Node000013" href="$classpromeki_1_1Timecode.html" title="Class for holding and manipulating timecode." alt="" coords="785,295,933,321"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="947,306,1024,296,1064,286,1102,272,1126,258,1149,240,1185,204,1189,207,1153,244,1129,262,1104,277,1065,292,1025,301,947,311"/>
+</map>

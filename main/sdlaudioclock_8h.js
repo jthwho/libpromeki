@@ -1,5 +1,5 @@
 var sdlaudioclock_8h =
 [
-    [ "SDLAudioClock", "classSDLAudioClock.html", "classSDLAudioClock" ],
-    [ "SDLAudioClock::Stats", "structSDLAudioClock_1_1Stats.html", "structSDLAudioClock_1_1Stats" ]
+    [ "promeki::SDLAudioClock", "classpromeki_1_1SDLAudioClock.html", "classpromeki_1_1SDLAudioClock" ],
+    [ "promeki::SDLAudioClock::Stats", "structpromeki_1_1SDLAudioClock_1_1Stats.html", "structpromeki_1_1SDLAudioClock_1_1Stats" ]
 ];

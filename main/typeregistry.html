@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -118,16 +116,13 @@ Construction and Copying</h1>
 <p>Constructing a wrapper from an ID performs a single registry lookup and caches the resulting <code>const Data *</code>. After construction, all access is a pointer dereference — no lookup, no indirection beyond the pointer itself.</p>
 <p>Copying a wrapper copies one pointer. Comparing two wrappers compares two pointers. Both are trivially cheap.</p>
 <div class="fragment"><div class="line"><span class="comment">// Construction from a well-known ID</span></div>
-<div class="line"><a class="code hl_class" href="classColorModel.html">ColorModel</a> <a class="code hl_class" href="classList.html">cm</a>(<a class="code hl_enumvalue" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baab461b41b14d00c9f34acbe77a873e0c1">ColorModel::sRGB</a>);</div>
+<div class="line">ColorModel cm(ColorModel::sRGB);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Copy is just a pointer copy</span></div>
-<div class="line"><a class="code hl_class" href="classColorModel.html">ColorModel</a> <a class="code hl_class" href="classList.html">cm2</a> = <a class="code hl_class" href="classList.html">cm</a>;</div>
+<div class="line">ColorModel cm2 = cm;</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Comparison is pointer comparison</span></div>
-<div class="line"><a class="code hl_class" href="classList.html">assert</a>(<a class="code hl_class" href="classList.html">cm</a> == <a class="code hl_class" href="classList.html">cm2</a>);</div>
-<div class="ttc" id="aclassColorModel_html"><div class="ttname"><a href="classColorModel.html">ColorModel</a></div><div class="ttdoc">Single source of truth for a color model and its associated color space.</div><div class="ttdef"><b>Definition</b> colormodel.h:129</div></div>
-<div class="ttc" id="aclassColorModel_html_aca0059e9fdc0d7c39dec6c523c6cb3baab461b41b14d00c9f34acbe77a873e0c1"><div class="ttname"><a href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baab461b41b14d00c9f34acbe77a873e0c1">ColorModel::sRGB</a></div><div class="ttdeci">@ sRGB</div><div class="ttdoc">sRGB (IEC 61966-2-1).</div><div class="ttdef"><b>Definition</b> colormodel.h:140</div></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="line">assert(cm == cm2);</div>
 </div><!-- fragment --><h1><a class="anchor" id="tr_extension"></a>
 Registering User-Defined Types</h1>
 <p>Users extend the registry in two steps:</p>
@@ -136,38 +131,31 @@ Registering User-Defined Types</h1>
 <li>Call <code>registerData()</code> with a populated Data struct whose <code>id</code> field is set to the new ID. After this call, constructing a wrapper from that ID resolves to the registered data.</li>
 </ol>
 <div class="fragment"><div class="line"><span class="comment">// Allocate a new ID</span></div>
-<div class="line"><a class="code hl_enumeration" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3ba">ColorModel::ID</a> <a class="code hl_class" href="classList.html">myID</a> = <a class="code hl_function" href="classColorModel.html#acc77841b50730b95cdc879e53cd6ff68">ColorModel::registerType</a>();</div>
+<div class="line">ColorModel::ID myID = ColorModel::registerType();</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Populate and register the data</span></div>
-<div class="line"><a class="code hl_struct" href="structColorModel_1_1Data.html">ColorModel::Data</a> <a class="code hl_class" href="classList.html">myData</a>;</div>
-<div class="line"><a class="code hl_class" href="classList.html">myData</a>.id   = <a class="code hl_class" href="classList.html">myID</a>;</div>
-<div class="line"><a class="code hl_class" href="classList.html">myData</a>.type = <a class="code hl_enumvalue" href="classColorModel.html#a421e6efa9c86c51eca8171d50e67b3eead2f79b4b92e540107e8312254e11c983">ColorModel::TypeRGB</a>;</div>
-<div class="line"><a class="code hl_class" href="classList.html">myData</a>.name = <span class="stringliteral">&quot;MyCustomRGB&quot;</span>;</div>
+<div class="line">ColorModel::Data myData;</div>
+<div class="line">myData.id   = myID;</div>
+<div class="line">myData.type = ColorModel::TypeRGB;</div>
+<div class="line">myData.name = <span class="stringliteral">&quot;MyCustomRGB&quot;</span>;</div>
 <div class="line"><span class="comment">// ... fill in remaining fields ...</span></div>
-<div class="line"><a class="code hl_function" href="classColorModel.html#a3c26f86fe133b7a401e2a4af5a5ce8e8">ColorModel::registerData</a>(std::move(<a class="code hl_class" href="classList.html">myData</a>));</div>
+<div class="line">ColorModel::registerData(std::move(myData));</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Now usable as a normal ColorModel</span></div>
-<div class="line"><a class="code hl_class" href="classColorModel.html">ColorModel</a> <a class="code hl_class" href="classList.html">cm</a>(<a class="code hl_class" href="classList.html">myID</a>);</div>
-<div class="line"><a class="code hl_class" href="classList.html">assert</a>(<a class="code hl_class" href="classList.html">cm</a>.name() == <span class="stringliteral">&quot;MyCustomRGB&quot;</span>);</div>
-<div class="ttc" id="aclassColorModel_html_a3c26f86fe133b7a401e2a4af5a5ce8e8"><div class="ttname"><a href="classColorModel.html#a3c26f86fe133b7a401e2a4af5a5ce8e8">ColorModel::registerData</a></div><div class="ttdeci">static void registerData(Data &amp;&amp;data)</div><div class="ttdoc">Registers a Data record in the registry.</div></div>
-<div class="ttc" id="aclassColorModel_html_a421e6efa9c86c51eca8171d50e67b3eead2f79b4b92e540107e8312254e11c983"><div class="ttname"><a href="classColorModel.html#a421e6efa9c86c51eca8171d50e67b3eead2f79b4b92e540107e8312254e11c983">ColorModel::TypeRGB</a></div><div class="ttdeci">@ TypeRGB</div><div class="ttdoc">Red, Green, Blue.</div><div class="ttdef"><b>Definition</b> colormodel.h:176</div></div>
-<div class="ttc" id="aclassColorModel_html_aca0059e9fdc0d7c39dec6c523c6cb3ba"><div class="ttname"><a href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3ba">ColorModel::ID</a></div><div class="ttdeci">ID</div><div class="ttdoc">Identifies a color model.</div><div class="ttdef"><b>Definition</b> colormodel.h:138</div></div>
-<div class="ttc" id="aclassColorModel_html_acc77841b50730b95cdc879e53cd6ff68"><div class="ttname"><a href="classColorModel.html#acc77841b50730b95cdc879e53cd6ff68">ColorModel::registerType</a></div><div class="ttdeci">static ID registerType()</div><div class="ttdoc">Allocates and returns a unique ID for a user-defined color model.</div></div>
-<div class="ttc" id="astructColorModel_1_1Data_html"><div class="ttname"><a href="structColorModel_1_1Data.html">ColorModel::Data</a></div><div class="ttdoc">Immutable descriptor for a color model.</div><div class="ttdef"><b>Definition</b> colormodel.h:238</div></div>
+<div class="line">ColorModel cm(myID);</div>
+<div class="line">assert(cm.name() == <span class="stringliteral">&quot;MyCustomRGB&quot;</span>);</div>
 </div><!-- fragment --><h1><a class="anchor" id="tr_guidelines"></a>
 Design Guidelines</h1>
 <ul>
 <li><b>Never store a naked ID.</b> IDs exist only to construct the wrapper. Store and pass the wrapper instead — it is the same size as a pointer and avoids repeated lookups.</li>
 <li><p class="startli"><b>The wrapper is the API type.</b> Function parameters, return values, and member variables should use the wrapper class, not the ID enum. Pass wrappers by <code>const</code> reference:</p>
 <div class="fragment"><div class="line"><span class="comment">// WRONG -- forces a registry lookup at every call site</span></div>
-<div class="line"><a class="code hl_class" href="classList.html">Image</a>(<span class="keywordtype">size_t</span> <a class="code hl_class" href="classList.html">w</a>, <span class="keywordtype">size_t</span> h, <a class="code hl_enumeration" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4ded">PixelFormat::ID</a> <a class="code hl_class" href="classList.html">pd</a>);</div>
+<div class="line">Image(<span class="keywordtype">size_t</span> w, <span class="keywordtype">size_t</span> h, PixelFormat::ID pd);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// RIGHT -- the caller already has a resolved wrapper (or the</span></div>
 <div class="line"><span class="comment">// compiler inserts the implicit conversion once)</span></div>
-<div class="line"><a class="code hl_class" href="classList.html">Image</a>(<span class="keywordtype">size_t</span> <a class="code hl_class" href="classList.html">w</a>, <span class="keywordtype">size_t</span> h, <span class="keyword">const</span> <a class="code hl_class" href="classPixelFormat.html">PixelFormat</a> &amp;<a class="code hl_class" href="classList.html">pd</a>);</div>
-<div class="ttc" id="aclassPixelFormat_html"><div class="ttname"><a href="classPixelFormat.html">PixelFormat</a></div><div class="ttdoc">Complete pixel description combining format, color model, and semantics.</div><div class="ttdef"><b>Definition</b> pixelformat.h:129</div></div>
-<div class="ttc" id="aclassPixelFormat_html_a7ae7d8a6cf46a5c9947b72d5ec9d4ded"><div class="ttname"><a href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4ded">PixelFormat::ID</a></div><div class="ttdeci">ID</div><div class="ttdoc">Identifies a pixel description.</div><div class="ttdef"><b>Definition</b> pixelformat.h:139</div></div>
-</div><!-- fragment --><p class="startli">Because every wrapper has an implicit constructor from its ID enum, changing a parameter from <code>ID</code> to <code>const Wrapper &amp;</code> is source-compatible: callers that pass an enum constant like <code><a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedac09d859f4e4dc0d747afe58c98dae903" title="8-bit RGBA, sRGB, full range.">PixelFormat::RGBA8_sRGB</a></code> compile unchanged.</p>
+<div class="line">Image(<span class="keywordtype">size_t</span> w, <span class="keywordtype">size_t</span> h, <span class="keyword">const</span> PixelFormat &amp;pd);</div>
+</div><!-- fragment --><p class="startli">Because every wrapper has an implicit constructor from its ID enum, changing a parameter from <code>ID</code> to <code>const Wrapper &amp;</code> is source-compatible: callers that pass an enum constant like <code>PixelFormat::RGBA8_sRGB</code> compile unchanged.</p>
 </li>
 <li><b>Data is immutable.</b> Once registered, a Data record must not be modified. This guarantees that concurrent reads from multiple threads are safe without locking.</li>
 <li><b>Inline everything.</b> All wrapper accessors should be inline in the header so the compiler can see through the abstraction. The wrapper should compile away to the same code as accessing the Data struct directly.</li>
@@ -177,12 +165,11 @@ ID Disambiguation Guards</h1>
 <p>TypeRegistry ID enums are unscoped, so the compiler treats them as integers in overload resolution. When a class has another constructor whose first parameter is an integer-compatible type (e.g. <code>uint8_t</code>), the ID may silently match the wrong overload.</p>
 <p>In this situation, provide an explicit ID overload as a <b>disambiguation guard</b> — a constructor that accepts the ID type directly and forwards to the wrapper overload:</p>
 <div class="fragment"><div class="line"><span class="comment">// Primary constructor -- takes the wrapper</span></div>
-<div class="line"><a class="code hl_class" href="classColor.html">Color</a>(<span class="keyword">const</span> <a class="code hl_class" href="classColorModel.html">ColorModel</a> &amp;model, <span class="keywordtype">float</span> <a class="code hl_class" href="classList.html">c0</a>, <span class="keywordtype">float</span> <a class="code hl_class" href="classList.html">c1</a>, <span class="keywordtype">float</span> <a class="code hl_class" href="classList.html">c2</a>, <span class="keywordtype">float</span> <a class="code hl_class" href="classList.html">c3</a> = 1.0f);</div>
+<div class="line">Color(<span class="keyword">const</span> ColorModel &amp;model, <span class="keywordtype">float</span> c0, <span class="keywordtype">float</span> c1, <span class="keywordtype">float</span> c2, <span class="keywordtype">float</span> c3 = 1.0f);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Disambiguation guard -- prevents ColorModel::sRGB (an int-like</span></div>
 <div class="line"><span class="comment">// enum) from matching Color(uint8_t, uint8_t, uint8_t, uint8_t)</span></div>
-<div class="line"><a class="code hl_class" href="classColor.html">Color</a>(<a class="code hl_enumeration" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3ba">ColorModel::ID</a> <span class="keywordtype">id</span>, <span class="keywordtype">float</span> <a class="code hl_class" href="classList.html">c0</a>, <span class="keywordtype">float</span> <a class="code hl_class" href="classList.html">c1</a>, <span class="keywordtype">float</span> <a class="code hl_class" href="classList.html">c2</a>, <span class="keywordtype">float</span> <a class="code hl_class" href="classList.html">c3</a> = 1.0f);</div>
-<div class="ttc" id="aclassColor_html"><div class="ttname"><a href="classColor.html">Color</a></div><div class="ttdoc">A color value in any supported color model.</div><div class="ttdef"><b>Definition</b> color.h:97</div></div>
+<div class="line">Color(ColorModel::ID <span class="keywordtype">id</span>, <span class="keywordtype">float</span> c0, <span class="keywordtype">float</span> c1, <span class="keywordtype">float</span> c2, <span class="keywordtype">float</span> c3 = 1.0f);</div>
 </div><!-- fragment --><p>This is the <b>only</b> case where an ID should appear in a public parameter list. Document the overload with a comment explaining why it exists so it is not removed during future cleanup.</p>
 <h1><a class="anchor" id="tr_classes"></a>
 Classes Using This Pattern</h1>
@@ -190,15 +177,15 @@ Classes Using This Pattern</h1>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Class   </th><th class="markdownTableHeadNone">Data Struct   </th><th class="markdownTableHeadNone">Description    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a></code>   </td><td class="markdownTableBodyNone"><code><a class="el" href="structColorModel_1_1Data.html" title="Immutable descriptor for a color model.">ColorModel::Data</a></code>   </td><td class="markdownTableBodyNone"><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a> model / color space descriptors    </td></tr>
+<td class="markdownTableBodyNone"><code>ColorModel</code>   </td><td class="markdownTableBodyNone"><code>ColorModel::Data</code>   </td><td class="markdownTableBodyNone">Color model / color space descriptors    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a></code>   </td><td class="markdownTableBodyNone"><code><a class="el" href="structMemSpace_1_1Ops.html" title="Function table for memory space operations.">MemSpace::Ops</a></code>   </td><td class="markdownTableBodyNone">Memory space operation tables    </td></tr>
+<td class="markdownTableBodyNone"><code>MemSpace</code>   </td><td class="markdownTableBodyNone"><code>MemSpace::Ops</code>   </td><td class="markdownTableBodyNone">Memory space operation tables    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classPixelMemLayout.html" title="Describes the memory layout of pixel data without color semantics.">PixelMemLayout</a></code>   </td><td class="markdownTableBodyNone"><code><a class="el" href="structPixelMemLayout_1_1Data.html" title="Immutable data record for a pixel format.">PixelMemLayout::Data</a></code>   </td><td class="markdownTableBodyNone">Pixel memory layout (components, bit depths, planes)    </td></tr>
+<td class="markdownTableBodyNone"><code>PixelMemLayout</code>   </td><td class="markdownTableBodyNone"><code>PixelMemLayout::Data</code>   </td><td class="markdownTableBodyNone">Pixel memory layout (components, bit depths, planes)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a></code>   </td><td class="markdownTableBodyNone"><code><a class="el" href="structPixelFormat_1_1Data.html" title="Immutable data record for a pixel description.">PixelFormat::Data</a></code>   </td><td class="markdownTableBodyNone">Full pixel description (format + color model + ranges)   </td></tr>
+<td class="markdownTableBodyNone"><code>PixelFormat</code>   </td><td class="markdownTableBodyNone"><code>PixelFormat::Data</code>   </td><td class="markdownTableBodyNone">Full pixel description (format + color model + ranges)   </td></tr>
 </table>
-<p><b>See also:</b> <code><a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a></code>, <code><a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a></code>, <code><a class="el" href="classPixelMemLayout.html" title="Describes the memory layout of pixel data without color semantics.">PixelMemLayout</a></code>, <code><a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a></code>. </p>
+<p><b>See also:</b> <code>ColorModel</code>, <code>MemSpace</code>, <code>PixelMemLayout</code>, <code>PixelFormat</code>. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
@@ -206,7 +193,7 @@ Classes Using This Pattern</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

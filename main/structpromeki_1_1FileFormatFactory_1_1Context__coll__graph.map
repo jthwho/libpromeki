@@ -1,0 +1,17 @@
+<map id="promeki::FileFormatFactory&lt; Product &gt;::Context" name="promeki::FileFormatFactory&lt; Product &gt;::Context">
+<area shape="rect" id="Node000001" title="Context passed to factory methods for lookup and creation." alt="" coords="1036,55,1236,95"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="783,38,906,63"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="920,54,1036,64,1036,69,920,59"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1IODevice.html" title="Abstract base class for all I/O devices." alt="" coords="773,87,916,113"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="929,90,1035,81,1036,86,930,95"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="413,13,572,38"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="587,14,669,20,711,30,751,46,759,52,764,60,775,74,796,85,794,90,772,78,760,63,755,56,748,50,709,35,668,25,586,20"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,5,199,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="212,23,413,23,413,28,212,28"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="417,62,568,87"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="582,78,773,92,773,98,581,84"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="393,111,592,137"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="606,123,677,121,749,116,788,110,788,115,750,121,677,127,606,129"/>
+<area shape="rect" id="Node000008" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="396,161,589,201"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="602,171,675,160,749,143,787,128,820,110,823,115,789,132,750,148,676,165,603,176"/>
+</map>

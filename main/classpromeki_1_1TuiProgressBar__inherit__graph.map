@@ -1,0 +1,9 @@
+<map id="promeki::TuiProgressBar" name="promeki::TuiProgressBar">
+<area shape="rect" id="Node000001" title="Horizontal progress indicator." alt="" coords="5,225,185,251"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TuiWidget.html" title="TUI&#45;specific widget base class." alt="" coords="21,152,169,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="98,191,98,225,93,225,93,191"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Widget.html" title="Base class for all widgets across UI backends." alt="" coords="30,79,161,104"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="98,118,98,152,93,152,93,118"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="16,5,175,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="98,44,98,79,93,79,93,44"/>
+</map>

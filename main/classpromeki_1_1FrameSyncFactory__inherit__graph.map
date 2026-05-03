@@ -1,0 +1,5 @@
+<map id="promeki::FrameSyncFactory" name="promeki::FrameSyncFactory">
+<area shape="rect" id="Node000001" title="MediaIOFactory for the FrameSync (clock&#45;paced resync) backend." alt="" coords="5,79,208,104"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1MediaIOFactory.html" title="Polymorphic factory that creates MediaIO instances for a given backend identity." alt="" coords="14,5,199,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,44,109,79,104,79,104,44"/>
+</map>

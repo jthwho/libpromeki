@@ -1,7 +1,13 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classFont.html" title="Abstract base class for font rendering." alt="" coords="5,31,56,56"/>
-<area shape="rect" id="Node000001" href="$classBasicFont.html" title="Alpha&#45;compositing font renderer." alt="" coords="104,5,189,31"/>
-<area shape="poly" id="edge72_Node000000_Node000001" title=" " alt="" coords="69,32,103,25,105,30,70,38"/>
-<area shape="rect" id="Node000002" href="$classFastFont.html" title="High&#45;performance cached font renderer." alt="" coords="109,55,185,80"/>
-<area shape="poly" id="edge73_Node000000_Node000002" title=" " alt="" coords="70,49,109,57,108,62,69,54"/>
+<area shape="rect" id="Node000000" href="$classpromeki_1_1Event.html" title="Base class for the event system." alt="" coords="5,104,127,129"/>
+<area shape="rect" id="Node000001" href="$classpromeki_1_1KeyEvent.html" title="Event delivered when a key is pressed or released." alt="" coords="184,5,329,31"/>
+<area shape="poly" id="edge86_Node000000_Node000001" title=" " alt="" coords="91,93,129,66,174,40,203,28,205,33,176,44,132,70,94,98"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1MouseEvent.html" title="Event delivered for mouse input." alt="" coords="175,55,339,80"/>
+<area shape="poly" id="edge87_Node000000_Node000002" title=" " alt="" coords="128,98,206,78,207,83,130,103"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1PaintEvent.html" title="Event delivered when a widget needs to repaint." alt="" coords="180,104,333,129"/>
+<area shape="poly" id="edge88_Node000000_Node000003" title=" " alt="" coords="141,114,180,114,180,119,141,119"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1ResizeEvent.html" title="Event delivered when a widget is resized." alt="" coords="175,153,339,179"/>
+<area shape="poly" id="edge89_Node000000_Node000004" title=" " alt="" coords="130,130,207,151,206,156,128,135"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1TimerEvent.html" title="Event delivered when a timer fires." alt="" coords="177,203,336,228"/>
+<area shape="poly" id="edge90_Node000000_Node000005" title=" " alt="" coords="95,136,132,162,176,188,208,200,206,205,174,192,129,167,92,140"/>
 </map>

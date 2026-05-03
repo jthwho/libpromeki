@@ -1,0 +1,47 @@
+var classpromeki_1_1WebSocket =
+[
+    [ "List", "classpromeki_1_1WebSocket.html#a8bf47a3fde9e706b4fbf3b8bccba438b", null ],
+    [ "CloseCode", "classpromeki_1_1WebSocket.html#a41544a4a1a70c05a0d537648a4186d33", [
+      [ "CloseNormal", "classpromeki_1_1WebSocket.html#a41544a4a1a70c05a0d537648a4186d33a467d3df84d171af0deabc41884c48220", null ],
+      [ "CloseGoingAway", "classpromeki_1_1WebSocket.html#a41544a4a1a70c05a0d537648a4186d33abedca9d15850c908c4601a235166f9e1", null ],
+      [ "CloseProtocolError", "classpromeki_1_1WebSocket.html#a41544a4a1a70c05a0d537648a4186d33a574ec10b3ea99c0f803fedb9952f6d99", null ],
+      [ "CloseUnsupportedData", "classpromeki_1_1WebSocket.html#a41544a4a1a70c05a0d537648a4186d33a15bfd938b1649d206dee64d33eb1ab91", null ],
+      [ "CloseNoStatus", "classpromeki_1_1WebSocket.html#a41544a4a1a70c05a0d537648a4186d33ae792e074e3d3e0a0bfe3f4e8b4bf550e", null ],
+      [ "CloseAbnormal", "classpromeki_1_1WebSocket.html#a41544a4a1a70c05a0d537648a4186d33af19959e9c650ea3ec6eaba11c4abdeec", null ],
+      [ "CloseInvalidPayload", "classpromeki_1_1WebSocket.html#a41544a4a1a70c05a0d537648a4186d33a142ef6cc8c20f0dac1dbbe49e5086d78", null ],
+      [ "ClosePolicyViolation", "classpromeki_1_1WebSocket.html#a41544a4a1a70c05a0d537648a4186d33aea30fed83c8a6253525dc42e5b7a79a4", null ],
+      [ "CloseMessageTooBig", "classpromeki_1_1WebSocket.html#a41544a4a1a70c05a0d537648a4186d33a989e3cb9e24872697e56c5f6298d3c9d", null ],
+      [ "CloseMissingExtension", "classpromeki_1_1WebSocket.html#a41544a4a1a70c05a0d537648a4186d33a9fa2d616bd1fd315c7e4d089ecb0b828", null ],
+      [ "CloseInternalError", "classpromeki_1_1WebSocket.html#a41544a4a1a70c05a0d537648a4186d33af3c9d6bf74fe3927489147b9a4a64cf8", null ]
+    ] ],
+    [ "State", "classpromeki_1_1WebSocket.html#a217cbe43d00998896d58f4b1ae95c343", [
+      [ "Disconnected", "classpromeki_1_1WebSocket.html#a217cbe43d00998896d58f4b1ae95c343a91e54d70ada419deefd11757256ab0d5", null ],
+      [ "Connecting", "classpromeki_1_1WebSocket.html#a217cbe43d00998896d58f4b1ae95c343a266c085ee1a6cc9465f596e280fcd5aa", null ],
+      [ "Connected", "classpromeki_1_1WebSocket.html#a217cbe43d00998896d58f4b1ae95c343a51271941a9907d675334ea4ac6c7da47", null ],
+      [ "Closing", "classpromeki_1_1WebSocket.html#a217cbe43d00998896d58f4b1ae95c343adfd8280c17edab29c5c5dbcc70743d76", null ]
+    ] ],
+    [ "WebSocket", "classpromeki_1_1WebSocket.html#aad4b16ab5bc4182eb898d92316f115aa", null ],
+    [ "~WebSocket", "classpromeki_1_1WebSocket.html#a8aaff41d42ef82a55e3993330c5ea638", null ],
+    [ "abort", "classpromeki_1_1WebSocket.html#afbabd095580dd71079b6ffd121e3aceb", null ],
+    [ "adoptUpgradedSocket", "classpromeki_1_1WebSocket.html#ab864fe2106de33b01f67b4f2442fa56e", null ],
+    [ "connectToUrl", "classpromeki_1_1WebSocket.html#a85e69723031b1b6f31d5dd110cc666ee", null ],
+    [ "disconnect", "classpromeki_1_1WebSocket.html#a4393677a1b0543ae6f628f3c2d5e4604", null ],
+    [ "isConnected", "classpromeki_1_1WebSocket.html#ac901c23e8faf872690d678470ede276e", null ],
+    [ "negotiatedSubprotocol", "classpromeki_1_1WebSocket.html#a0bfc4c9a191ca4a10375504b75dd1a33", null ],
+    [ "ping", "classpromeki_1_1WebSocket.html#ab232b97d1fd398a37a855676005a6938", null ],
+    [ "requestedSubprotocols", "classpromeki_1_1WebSocket.html#af37b61a73f33ed62e7e2249c59e0fef8", null ],
+    [ "sendBinaryMessage", "classpromeki_1_1WebSocket.html#a26d1f0131a0906a152338e195b9cc7a4", null ],
+    [ "sendTextMessage", "classpromeki_1_1WebSocket.html#ab1f994643d0433073792248efd93ae26", null ],
+    [ "setMaxMessageBytes", "classpromeki_1_1WebSocket.html#a482bc598da0d10963506ef6e5f43aa51", null ],
+    [ "setRequestedSubprotocols", "classpromeki_1_1WebSocket.html#a9ea30649c651b4e5ea2202e330c227e7", null ],
+    [ "setRequestHeader", "classpromeki_1_1WebSocket.html#ad9f248a7a3f095faadae07b12151a2b4", null ],
+    [ "setSslContext", "classpromeki_1_1WebSocket.html#a14dbae448a87c8d852e406feb43856c6", null ],
+    [ "sslContext", "classpromeki_1_1WebSocket.html#a4d3db406be8692df28486b81a67eb71e", null ],
+    [ "state", "classpromeki_1_1WebSocket.html#ac6b783e8b3453714ef305825cde15d4b", null ],
+    [ "binaryMessageReceivedSignal", "classpromeki_1_1WebSocket.html#aa3d3588074ed3e5660e78a8de1425171", null ],
+    [ "connectedSignal", "classpromeki_1_1WebSocket.html#ae97c768f7ce9dda1be61a0f658018ffe", null ],
+    [ "disconnectedSignal", "classpromeki_1_1WebSocket.html#a62251e08da45f53c7961da05bd39bd98", null ],
+    [ "errorOccurredSignal", "classpromeki_1_1WebSocket.html#aa1070c0e270fcee3f84f88588c3dc361", null ],
+    [ "pongReceivedSignal", "classpromeki_1_1WebSocket.html#af767bac7b9b557192c27d144d8beb511", null ],
+    [ "textMessageReceivedSignal", "classpromeki_1_1WebSocket.html#a51b3e2c4bef8aa1e00f00437865c91b7", null ]
+];

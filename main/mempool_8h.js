@@ -1,5 +1,5 @@
 var mempool_8h =
 [
-    [ "MemPool::Stats", "structMemPool_1_1Stats.html", "structMemPool_1_1Stats" ],
-    [ "MemPool::Block", "classMemPool_1_1Block.html", "classMemPool_1_1Block" ]
+    [ "promeki::MemPool::Stats", "structpromeki_1_1MemPool_1_1Stats.html", "structpromeki_1_1MemPool_1_1Stats" ],
+    [ "promeki::MemPool::Block", "classpromeki_1_1MemPool_1_1Block.html", "classpromeki_1_1MemPool_1_1Block" ]
 ];

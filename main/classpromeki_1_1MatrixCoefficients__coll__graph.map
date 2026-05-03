@@ -1,0 +1,8 @@
+<map id="promeki::MatrixCoefficients" name="promeki::MatrixCoefficients">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for VUI / container matrix coefficients (luma&#45;chroma derivation from the RGB pri..." alt="" coords="5,237,208,263"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="150,231,179,228,206,229,226,236,235,250,232,258,224,265,201,271,169,271,136,265,137,260,170,266,200,266,222,260,227,255,229,250,223,241,205,235,180,233,150,237"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1TypedEnum.html" title=" " alt="" coords="21,80,192,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,134,109,237,104,237,104,134"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Enum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="46,5,167,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="109,44,109,80,104,80,104,44"/>
+</map>

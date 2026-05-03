@@ -1,0 +1,25 @@
+var classpromeki_1_1SdpSession =
+[
+    [ "List", "classpromeki_1_1SdpSession.html#a91ee3b89aaf6f5d00bc02e7ea8387650", null ],
+    [ "MediaDescriptionList", "classpromeki_1_1SdpSession.html#a59b91b9dce7caf98b9c5e54115bbfded", null ],
+    [ "Ptr", "classpromeki_1_1SdpSession.html#ac4f228626957aad71c18a78e46ee6b93", null ],
+    [ "PtrList", "classpromeki_1_1SdpSession.html#a0e160d3d358f0c446b54f2cb780aed47", null ],
+    [ "SdpSession", "classpromeki_1_1SdpSession.html#adeca89bc8777cbdb80def0665cc58beb", null ],
+    [ "addMediaDescription", "classpromeki_1_1SdpSession.html#a81f6423d71d395a778d4c2129b134393", null ],
+    [ "connectionAddress", "classpromeki_1_1SdpSession.html#a7de820d9dfee2e977c52219ba63d3113", null ],
+    [ "mediaDescriptions", "classpromeki_1_1SdpSession.html#a2f3c0a48a2f58881022ea308cd923194", null ],
+    [ "operator!=", "classpromeki_1_1SdpSession.html#a83f7a8722fa594d7ac7ee95e800fbb59", null ],
+    [ "operator==", "classpromeki_1_1SdpSession.html#a5619074e1054e0d3238d25c474a5af7c", null ],
+    [ "originAddress", "classpromeki_1_1SdpSession.html#a3895f81e06470b11e828f0e9869da8bf", null ],
+    [ "originAddrType", "classpromeki_1_1SdpSession.html#a350520740720263c9528a757fa30c97f", null ],
+    [ "originNetType", "classpromeki_1_1SdpSession.html#a4de4b1e0be6edb34c67a26c6769e493d", null ],
+    [ "originUsername", "classpromeki_1_1SdpSession.html#a64da875454e6e55fd7abcf338e38b2f2", null ],
+    [ "sessionId", "classpromeki_1_1SdpSession.html#a4962c97c907dbdefb49c4f4d7001b424", null ],
+    [ "sessionName", "classpromeki_1_1SdpSession.html#acfc2cc073a81b41fb84e057e2f0b8133", null ],
+    [ "sessionVersion", "classpromeki_1_1SdpSession.html#a16a3547328ce728e71ac4dce4986557d", null ],
+    [ "setConnectionAddress", "classpromeki_1_1SdpSession.html#a06530349d29f78ed8de093ab96e06c05", null ],
+    [ "setOrigin", "classpromeki_1_1SdpSession.html#a4795a7d717deac82c1dfe4242908f1f9", null ],
+    [ "setSessionName", "classpromeki_1_1SdpSession.html#a4f2fad85a94e7215c51290b397610264", null ],
+    [ "toFile", "classpromeki_1_1SdpSession.html#aba3cc2ede4751a627fa0b5aba65da216", null ],
+    [ "toString", "classpromeki_1_1SdpSession.html#a9de161d266a04258a7bcd515e7f33f51", null ]
+];

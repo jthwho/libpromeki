@@ -1,7 +1,0 @@
-<map id="BenchmarkResult" name="BenchmarkResult">
-<area shape="rect" id="Node000001" title="Result of running a single BenchmarkCase." alt="" coords="36,152,173,177"/>
-<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="38,44,43,85,49,106,59,127,70,140,84,150,81,154,67,143,54,129,44,108,38,86,33,45"/>
-<area shape="rect" id="Node000003" href="$classMap.html" title=" " alt="" coords="90,5,261,31"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="176,45,167,86,148,129,124,154,121,150,144,127,162,84,170,43"/>
-</map>

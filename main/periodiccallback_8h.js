@@ -1,4 +1,4 @@
 var periodiccallback_8h =
 [
-    [ "PeriodicCallback", "classPeriodicCallback.html", "classPeriodicCallback" ]
+    [ "promeki::PeriodicCallback", "classpromeki_1_1PeriodicCallback.html", "classpromeki_1_1PeriodicCallback" ]
 ];

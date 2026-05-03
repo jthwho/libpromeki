@@ -22,8 +22,6 @@
 /* @license-end */
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
-<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -103,9 +101,9 @@ $(document).ready(function(){initNavTree('nvenc.html',''); initResizable(); });
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>How to install CUDA, the NVIDIA Video Codec SDK, and the NVENC runtime so libpromeki's <code>NvencVideoEncoder</code> builds and runs on your machine.</p>
-<p>NVENC is a hardware video encoder built into every NVIDIA GPU from Kepler onward. libpromeki wraps it behind the generic <code><a class="el" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders.">VideoEncoder</a></code> interface, so application code never calls NVENC directly — it just asks for an encoder named <code>"h264"</code> or <code>"hevc"</code> and receives an <code>NvencVideoEncoder</code> when the backend is enabled at build time. Getting to that point needs three distinct pieces of NVIDIA software:</p>
+<p>NVENC is a hardware video encoder built into every NVIDIA GPU from Kepler onward. libpromeki wraps it behind the generic <code>VideoEncoder</code> interface, so application code never calls NVENC directly — it just asks for an encoder named <code>"h264"</code> or <code>"hevc"</code> and receives an <code>NvencVideoEncoder</code> when the backend is enabled at build time. Getting to that point needs three distinct pieces of NVIDIA software:</p>
 <ol type="1">
-<li>The <b>NVIDIA display driver</b> (provides <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">libnvidia-encode.so</a></code> at runtime — this is the actual user-mode NVENC library).</li>
+<li>The <b>NVIDIA display driver</b> (provides <code>libnvidia-encode.so</code> at runtime — this is the actual user-mode NVENC library).</li>
 <li>The <b>CUDA toolkit</b> (provides CUDA runtime + driver API headers that libpromeki's <code>cuda</code> and <code>NvencVideoEncoder</code> build against).</li>
 <li>The <b>NVIDIA Video Codec SDK</b> (provides <code>nvEncodeAPI.h</code> — the NVENC API header, which is distributed separately from CUDA and the driver).</li>
 </ol>
@@ -146,7 +144,7 @@ $(document).ready(function(){initNavTree('nvenc.html',''); initResizable(); });
 <div class="line">  Samples/            ← reference applications, useful for</div>
 <div class="line">                        cross-checking behaviour</div>
 <div class="line">  Read_Me.pdf</div>
-</div><!-- fragment --><p><a class="el" href="classPoint.html" title="N-dimensional point with arithmetic, interpolation, and serialization.">Point</a> libpromeki at the SDK at configure time:</p>
+</div><!-- fragment --><p>Point libpromeki at the SDK at configure time:</p>
 <div class="fragment"><div class="line">cmake -B build -S . \</div>
 <div class="line">    -DPROMEKI_NVENC_SDK_DIR=/home/you/src/Video_Codec_SDK_13.0.37</div>
 </div><!-- fragment --><p>Or export it as an environment variable once:</p>
@@ -154,7 +152,7 @@ $(document).ready(function(){initNavTree('nvenc.html',''); initResizable(); });
 <div class="line">cmake -B build -S .</div>
 </div><!-- fragment --><p>A <code>-DPROMEKI_NVENC_SDK_DIR=...</code> on the command line always wins over the environment variable. The legacy <code>NVENC_SDK_DIR</code> environment variable is also consulted as a find hint for compatibility with existing setups.</p>
 <p>The CMake probe looks for <code>Interface/nvEncodeAPI.h</code> below that directory. If it finds the header, <code>PROMEKI_ENABLE_NVENC</code> defaults to <code>ON</code>; otherwise it defaults to <code>OFF</code> and the backend is not built.</p>
-<p>Supported SDK versions: <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">12.0</a> and newer. Older SDKs use a different preset / tuning-info model that libpromeki does not map to.</p>
+<p>Supported SDK versions: 12.0 and newer. Older SDKs use a different preset / tuning-info model that libpromeki does not map to.</p>
 <h1><a class="anchor" id="nvenc_verify"></a>
 Verification</h1>
 <p>A clean configure with everything set up correctly prints lines like these during <code>cmake</code>:</p>
@@ -164,12 +162,12 @@ Verification</h1>
 <div class="fragment"><div class="line">Features: NETWORK PROAV ... CUDA NVENC</div>
 </div><!-- fragment --><p>Finally, run the NVENC unit tests:</p>
 <div class="fragment"><div class="line">./build/bin/unittest-promeki -tc=&#39;Nvenc*&#39;</div>
-</div><!-- fragment --><p>These tests auto-skip when no GPU is present, but on a machine with a working driver + SDK + runtime they encode a handful of synthetic frames through both <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> and HEVC and verify the resulting bitstream.</p>
+</div><!-- fragment --><p>These tests auto-skip when no GPU is present, but on a machine with a working driver + SDK + runtime they encode a handful of synthetic frames through both H.264 and HEVC and verify the resulting bitstream.</p>
 <h1><a class="anchor" id="nvenc_troubleshoot"></a>
 Troubleshooting</h1>
 <h2><a class="anchor" id="nvenc_trouble_runtime"></a>
 libnvidia-encode not found at runtime</h2>
-<p>The build succeeds but <code>NvencVideoEncoder::createEncoder</code> returns an encoder whose first <code>submitFrame</code> call reports <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ad7cf29e5c28336196d31c8b72407a4b2" title="An external library call failed.">Error::LibraryFailure</a></code>. Check:</p>
+<p>The build succeeds but <code>NvencVideoEncoder::createEncoder</code> returns an encoder whose first <code>submitFrame</code> call reports <code>Error::LibraryFailure</code>. Check:</p>
 <ul>
 <li>Is <code>libnvidia-encode-NNN</code> installed? (<code>apt list --installed | grep nvidia-encode</code>)</li>
 <li>Does its major version match the driver? (<code>nvidia-smi</code> reports the driver version; the package suffix must match.)</li>
@@ -182,7 +180,7 @@ CMake cannot find the SDK</h2>
 </div><!-- fragment --><p>pass the SDK directory via <code>-DPROMEKI_NVENC_SDK_DIR=...</code> The directory must contain <code>Interface/nvEncodeAPI.h</code>; the SDK zip expands to that layout automatically.</p>
 <h2><a class="anchor" id="nvenc_trouble_driver_mismatch"></a>
 Driver / toolkit version skew</h2>
-<p>NVENC is forward-compatible: an SDK built against API version N runs on drivers supporting N or newer. If you installed the toolkit from apt but the Video Codec SDK is a newer major release than your driver supports, NVENC initialisation will fail with <code>NV_ENC_ERR_INVALID_VERSION</code>. Either upgrade the driver or use an older SDK release whose minimum driver version your driver satisfies (see the SDK's <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Read_Me.pdf</a></code> for the compatibility matrix). </p>
+<p>NVENC is forward-compatible: an SDK built against API version N runs on drivers supporting N or newer. If you installed the toolkit from apt but the Video Codec SDK is a newer major release than your driver supports, NVENC initialisation will fail with <code>NV_ENC_ERR_INVALID_VERSION</code>. Either upgrade the driver or use an older SDK release whose minimum driver version your driver satisfies (see the SDK's <code>Read_Me.pdf</code> for the compatibility matrix). </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
@@ -190,7 +188,7 @@ Driver / toolkit version skew</h2>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
   </ul>
 </div>
 </body>

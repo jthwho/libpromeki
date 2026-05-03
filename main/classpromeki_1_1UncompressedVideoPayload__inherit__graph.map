@@ -1,0 +1,7 @@
+<map id="promeki::UncompressedVideoPayload" name="promeki::UncompressedVideoPayload">
+<area shape="rect" id="Node000001" title="Uncompressed video payload — raster pixels in the format described by the base VideoPayload&#39;s ImageDe..." alt="" coords="5,152,224,192"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1VideoPayload.html" title="Abstract base for any video payload — compressed or uncompressed." alt="" coords="29,79,201,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,118,117,152,112,152,112,118"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1MediaPayload.html" title="Abstract polymorphic base for any media payload flowing through a pipeline." alt="" coords="27,5,202,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="117,44,117,79,112,79,112,44"/>
+</map>

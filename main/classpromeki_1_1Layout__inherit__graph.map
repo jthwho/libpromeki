@@ -1,0 +1,13 @@
+<map id="promeki::Layout" name="promeki::Layout">
+<area shape="rect" id="Node000001" title="Abstract base class for layout managers." alt="" coords="205,79,333,104"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1BoxLayout.html" title="Layout that arranges widgets in a horizontal or vertical line." alt="" coords="103,152,257,177"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="246,115,196,154,193,150,243,110"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1GridLayout.html" title="Grid layout with rows and columns." alt="" coords="281,152,436,177"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="296,110,346,150,342,154,293,115"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="190,5,349,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="272,44,272,79,267,79,267,44"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1HBoxLayout.html" title="Horizontal box layout (left to right)." alt="" coords="5,225,168,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="156,188,104,227,100,223,153,183"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1VBoxLayout.html" title="Vertical box layout (top to bottom)." alt="" coords="192,225,355,251"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="207,183,260,223,256,227,204,188"/>
+</map>

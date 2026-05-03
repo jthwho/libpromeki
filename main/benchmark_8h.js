@@ -1,4 +1,4 @@
 var benchmark_8h =
 [
-    [ "Benchmark::Entry", "structBenchmark_1_1Entry.html", "structBenchmark_1_1Entry" ]
+    [ "promeki::Benchmark::Entry", "structpromeki_1_1Benchmark_1_1Entry.html", "structpromeki_1_1Benchmark_1_1Entry" ]
 ];

@@ -1,0 +1,11 @@
+<map id="promeki::HttpClient" name="promeki::HttpClient">
+<area shape="rect" id="Node000001" title="Async HTTP/1.x client built on top of TcpSocket and llhttp." alt="" coords="783,77,933,102"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="411,13,569,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="584,37,759,67,797,74,796,79,758,72,583,42"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,5,199,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="213,23,410,23,410,28,213,28"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="393,62,587,117"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="600,87,782,87,782,92,600,92"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="393,141,587,181"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="600,138,758,107,794,99,796,105,759,112,601,143"/>
+</map>

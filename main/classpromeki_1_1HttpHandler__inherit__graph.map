@@ -1,0 +1,7 @@
+<map id="promeki::HttpHandler" name="promeki::HttpHandler">
+<area shape="rect" id="Node000001" title="Abstract base class for HTTP request handlers." alt="" coords="131,5,293,31"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1HttpFileHandler.html" title="Static&#45;file&#45;serving HTTP handler." alt="" coords="5,79,192,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="183,40,119,81,116,76,180,36"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1HttpFunctionHandler.html" title="Adapter that turns an HttpHandlerFunc into an HttpHandler." alt="" coords="216,79,435,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="244,36,308,76,305,81,241,40"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="promeki::HttpApi" name="promeki::HttpApi">
+<area shape="rect" id="Node000001" title="Self&#45;describing HTTP API surface with built&#45;in catalog and explorer." alt="" coords="118,225,251,251"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="23,108,181,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="121,143,179,224,174,227,116,146"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,5,199,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="105,59,105,108,99,108,99,59"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1String.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="206,108,329,133"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="253,146,195,227,191,224,249,143"/>
+</map>

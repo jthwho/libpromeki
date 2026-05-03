@@ -1,9 +1,9 @@
 <map id="include/promeki/fastfont.h" name="include/promeki/fastfont.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="131,5,326,31"/>
-<area shape="rect" id="Node000002" href="$videotestpattern_8h.html" title=" " alt="" coords="103,79,354,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,44,231,79,226,79,226,44"/>
-<area shape="rect" id="Node000003" href="$mediaiotask__burn_8h.html" title=" " alt="" coords="5,152,217,192"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="202,114,141,154,138,150,199,109"/>
-<area shape="rect" id="Node000004" href="$mediaiotask__tpg_8h.html" title=" " alt="" coords="241,152,453,192"/>
-<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="259,109,320,150,317,154,256,114"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="143,5,338,31"/>
+<area shape="rect" id="Node000002" href="$videotestpattern_8h.html" title=" " alt="" coords="115,79,366,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="243,44,243,79,238,79,238,44"/>
+<area shape="rect" id="Node000003" href="$burnmediaio_8h.html" title=" " alt="" coords="5,152,231,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="211,113,139,154,137,149,208,108"/>
+<area shape="rect" id="Node000004" href="$tpgmediaio_8h.html" title=" " alt="" coords="255,152,472,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="273,108,345,149,342,154,271,113"/>
 </map>

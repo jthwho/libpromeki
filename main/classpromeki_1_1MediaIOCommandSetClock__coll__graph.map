@@ -1,0 +1,23 @@
+<map id="promeki::MediaIOCommandSetClock" name="promeki::MediaIOCommandSetClock">
+<area shape="rect" id="Node000001" title="Command to replace the Clock bound to a port group." alt="" coords="1027,167,1253,207"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1MediaIOCommand.html" title="Base class for MediaIO commands." alt="" coords="732,104,937,129"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="904,130,1053,165,1052,170,903,135"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1RefCount.html" title="An atomic reference count object." alt="" coords="415,5,559,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="574,29,640,43,709,61,763,81,809,101,806,106,761,86,707,66,639,48,573,34"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1Atomic.html" title=" " alt="" coords="393,55,581,80"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="595,78,708,94,756,101,755,107,708,99,595,84"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Error.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="430,104,545,129"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="558,114,732,114,732,119,558,119"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1MediaIOStats.html" title="Telemetry container shared by per&#45;command and instance&#45;wide reporting." alt="" coords="402,153,573,179"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="586,151,708,134,755,127,756,132,708,139,587,156"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1VariantDatabase.html" title=" " alt="" coords="6,142,198,182"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="212,160,402,162,402,168,212,166"/>
+<area shape="rect" id="Node000008" href="$classpromeki_1_1MediaIOPortGroup.html" title="Grouping of MediaIOPort siblings sharing a clock and step." alt="" coords="733,175,936,200"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="950,185,1027,185,1027,190,950,190"/>
+<area shape="rect" id="Node000009" href="$classpromeki_1_1ObjectBase.html" title="Base object for promeki." alt="" coords="408,209,567,235"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="580,210,733,195,733,200,581,215"/>
+<area shape="rect" id="Node000010" href="$classpromeki_1_1Signal.html" title=" " alt="" coords="5,206,199,246"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="212,222,408,220,408,225,212,228"/>
+<area shape="rect" id="Node000011" href="$classpromeki_1_1SharedPtr.html" title=" " alt="" coords="749,225,921,265"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="934,223,1032,205,1033,210,935,229"/>
+</map>

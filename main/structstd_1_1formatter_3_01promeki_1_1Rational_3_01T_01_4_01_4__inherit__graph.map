@@ -1,5 +1,7 @@
 <map id="std::formatter&lt; promeki::Rational&lt; T &gt; &gt;" name="std::formatter&lt; promeki::Rational&lt; T &gt; &gt;">
-<area shape="rect" id="Node000001" title="std::formatter partial specialization for promeki::Rational." alt="" coords="18,93,199,133"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="5,5,212,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,59,111,93,106,93,106,59"/>
+<area shape="rect" id="Node000001" title="std::formatter partial specialization for promeki::Rational." alt="" coords="18,181,199,221"/>
+<area shape="rect" id="Node000002" href="$structpromeki_1_1ToStringFormatter.html" title=" " alt="" coords="5,93,212,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,147,111,181,106,181,106,147"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="35,5,182,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="111,59,111,93,106,93,106,59"/>
 </map>

@@ -1,0 +1,5 @@
+<map id="promeki::RtpPayloadL24" name="promeki::RtpPayloadL24">
+<area shape="rect" id="Node000001" title="RTP payload handler for 24&#45;bit linear audio (L24)." alt="" coords="5,79,185,104"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1RtpPayload.html" title="Abstract base class for RTP payload type handlers." alt="" coords="17,5,174,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="98,44,98,79,93,79,93,44"/>
+</map>

@@ -1,6 +1,9 @@
 var searchData=
 [
-  ['video_0',['Video',['../classPrioritySocket.html#a6bce4a1450ae2363f084806b3706e890a81d38a70de770b3fbb96bc02abee5af0',1,'PrioritySocket']]],
-  ['voice_1',['Voice',['../classPrioritySocket.html#a6bce4a1450ae2363f084806b3706e890a99ec051ad97eec6f7028edba3ade0910',1,'PrioritySocket']]],
-  ['vp9_2',['VP9',['../classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dcaf058ec198a80032f66ff7ca7e21e0cc7',1,'VideoCodec']]]
+  ['udpsockettype_0',['UdpSocketType',['../classpromeki_1_1AbstractSocket.html#a8981db1b0852980601ef36b7a7c755e2a25524335003ae1e9c5609f2cba5db8cd',1,'promeki::AbstractSocket']]],
+  ['unconnected_1',['Unconnected',['../classpromeki_1_1AbstractSocket.html#a02bb04ea4fcfaa14636813248b374af9a377445d20a0ac989d4bf666a87341a55',1,'promeki::AbstractSocket']]],
+  ['underlined_2',['Underlined',['../classpromeki_1_1AnsiStream.html#aa98ee4877dd89cec2ce4061c66afb546aec5dd0b798276bb910b332add0bbee00',1,'promeki::AnsiStream']]],
+  ['unicode_3',['Unicode',['../classpromeki_1_1String.html#a2e02641a0c2be79290ec8fed1aef9c60ac210aa3f01e3c888d7e7f22d8050dd49',1,'promeki::String']]],
+  ['unsupportedsystemerror_4',['UnsupportedSystemError',['../classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a5fc22d334a89f4c5a2620f3e3ad3405c',1,'promeki::Error']]],
+  ['userdefined_5',['userdefined',['../classpromeki_1_1AudioCodec.html#aef22efa619c33e061e7e9bcb5342de0daac96cfd89cb969a7fc5e604524c88bac',1,'promeki::AudioCodec::UserDefined'],['../classpromeki_1_1AudioFormat.html#a5b804c470ef2ec4beffceace093889eca59c4eb9dcbdface7f50761a473877664',1,'promeki::AudioFormat::UserDefined'],['../classpromeki_1_1ColorModel.html#a76430e8b657369a0f58af45378dad415a06ef16d8a3eee1b825e5b7e2f8e615e7',1,'promeki::ColorModel::UserDefined'],['../classpromeki_1_1MemSpace.html#afa501c8062876d0f522c813e494d752daa5a0e1d733f80f741ebc371c68dc48f0',1,'promeki::MemSpace::UserDefined'],['../classpromeki_1_1PixelFormat.html#a4612eae6db7110e291d37ac9b9a23207aa1b596fbdad6d3fde285688e5aaf01bf',1,'promeki::PixelFormat::UserDefined'],['../classpromeki_1_1PixelMemLayout.html#a2f4ea67cf1b6ccc5dd1c2e1eb6ad3375a09667ae1fd5a51cf6c149168a4143259',1,'promeki::PixelMemLayout::UserDefined'],['../classpromeki_1_1VideoCodec.html#ab20ea9967d9a56e7cc4f2140ffd02362a72635b8b5f01fa5a6dafc9e8424441d0',1,'promeki::VideoCodec::UserDefined']]]
 ];
