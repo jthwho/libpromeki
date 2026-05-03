@@ -78,6 +78,11 @@ Error CommandMediaIO::dispatch(MediaIOCommand::Ptr cmd) {
                         result = executeCmd(*cs);
                         break;
                 }
+                case MediaIOCommand::SetClock: {
+                        auto *csc = static_cast<MediaIOCommandSetClock *>(raw);
+                        result = executeCmd(*csc);
+                        break;
+                }
         }
         return result;
 }
@@ -115,6 +120,11 @@ Error CommandMediaIO::executeCmd(MediaIOCommandParams &cmd) {
 Error CommandMediaIO::executeCmd(MediaIOCommandStats &cmd) {
         (void)cmd;
         return Error::Ok;
+}
+
+Error CommandMediaIO::executeCmd(MediaIOCommandSetClock &cmd) {
+        (void)cmd;
+        return Error::NotSupported;
 }
 
 void CommandMediaIO::configChanged(const MediaConfig &delta) {

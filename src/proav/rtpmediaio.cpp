@@ -2130,16 +2130,29 @@ Error RtpMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
 
         auto vids = frame.videoPayloads();
         if (_video.active && _video.txThread != nullptr && !vids.isEmpty() && vids[0].isValid()) {
-                // Hand the payload directly to the TX worker — the
-                // @ref VideoPayload::Ptr keeps the payload (and its
-                // plane buffers) alive for the duration of the
-                // packetisation inside @ref sendVideo.  Supports
-                // both uncompressed raster and compressed access
-                // units in the same lambda.
-                VideoPayload::Ptr vp = vids[0];
-                _video.txThread->_workQueue.push(
-                        TxWorkItem{[this, vp, frameIndex]() { return sendVideo(*vp, frameIndex); }, &videoResult});
-                videoDispatched = true;
+                // Frame-level pacing happens here on the strand, not
+                // inside sendVideo (which runs on the per-stream TX
+                // thread).  This keeps the gate's clock pointer
+                // thread-confined to the strand and avoids needing a
+                // mutex around the SharedPtr swap performed by
+                // executeCmd(SetClock).  Skip verdict drops the
+                // frame to bound lag rather than emitting stale
+                // content.
+                if (!paceVideoFrame()) {
+                        noteFrameDropped(portGroup(0));
+                } else {
+                        // Hand the payload directly to the TX worker —
+                        // the @ref VideoPayload::Ptr keeps the payload
+                        // (and its plane buffers) alive for the
+                        // duration of the packetisation inside
+                        // @ref sendVideo.  Supports both uncompressed
+                        // raster and compressed access units in the
+                        // same lambda.
+                        VideoPayload::Ptr vp = vids[0];
+                        _video.txThread->_workQueue.push(
+                                TxWorkItem{[this, vp, frameIndex]() { return sendVideo(*vp, frameIndex); }, &videoResult});
+                        videoDispatched = true;
+                }
         }
 
         auto auds = frame.audioPayloads();
@@ -2199,6 +2212,47 @@ Error RtpMediaIO::executeCmd(MediaIOCommandParams &cmd) {
                 return Error::Ok;
         }
         return Error::NotSupported;
+}
+
+Error RtpMediaIO::executeCmd(MediaIOCommandSetClock &cmd) {
+        // Reject in reader mode — RX timing is driven by RTP packet
+        // arrival from the network and the user cannot meaningfully
+        // replace it.
+        if (_readerMode) return Error::NotSupported;
+
+        _videoGate.setClock(cmd.clock);
+        return Error::Ok;
+}
+
+bool RtpMediaIO::paceVideoFrame() {
+        if (!_videoGate.hasClock()) return true;
+        if (!_frameRate.isValid()) return true;
+
+        // Update period each call so a mid-stream frame-rate change
+        // (rare but legal in some MediaIOs) takes effect immediately.
+        _videoGate.setPeriod(_frameRate.frameDuration());
+
+        PacingResult pr = _videoGate.wait();
+        if (pr.error.isError()) {
+                promekiErr("RtpMediaIO: video pacing clock failure: %s",
+                           pr.error.name().cstr());
+                // Pacing failed but the frame should still ship —
+                // dropping silently on clock failure would surprise
+                // callers more than emitting unpaced.
+                return true;
+        }
+        switch (pr.verdict) {
+                case PacingVerdict::Skip:
+                        return false;
+                case PacingVerdict::Reanchor:
+                        promekiWarn("RtpMediaIO: video pacing re-anchored after %s lag",
+                                    pr.slack.toString().cstr());
+                        return true;
+                case PacingVerdict::OnTime:
+                case PacingVerdict::Late:
+                        return true;
+        }
+        return true;
 }
 
 Error RtpMediaIO::executeCmd(MediaIOCommandStats &cmd) {

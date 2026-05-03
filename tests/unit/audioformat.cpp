@@ -660,6 +660,50 @@ TEST_CASE("AudioFormat: convertTo() planar→interleaved with width change goes 
         CHECK(out[3] == doctest::Approx(1.0f).epsilon(0.001));
 }
 
+TEST_CASE("AudioFormat: convertTo() planar↔interleaved fastpath skips via-float for same byte format") {
+        // PCMP_S16LE → PCMI_S16LE differs only in layout — the
+        // byte-transpose fastpath should run and ignore the scratch.
+        AudioFormat src(AudioFormat::PCMP_S16LE);
+        AudioFormat dst(AudioFormat::PCMI_S16LE);
+
+        // Sentinel scratch — fastpath must not touch it.
+        float scratch[8];
+        for (size_t i = 0; i < 8; ++i) scratch[i] = -123.0f;
+
+        // 3 stereo frames, planar S16: ch0=[100,200,300], ch1=[10,20,30].
+        const int16_t in[6] = {100, 200, 300, 10, 20, 30};
+        int16_t       out[6] = {};
+        Error         err = src.convertTo(dst, out, in, /*samplesPerChannel=*/3, /*channels=*/2, scratch);
+        CHECK(err.isOk());
+        // Expected interleaved: [L0,R0,L1,R1,L2,R2] = [100,10,200,20,300,30].
+        CHECK(out[0] == 100);
+        CHECK(out[1] == 10);
+        CHECK(out[2] == 200);
+        CHECK(out[3] == 20);
+        CHECK(out[4] == 300);
+        CHECK(out[5] == 30);
+        // Scratch was not used.
+        for (size_t i = 0; i < 8; ++i) CHECK(scratch[i] == -123.0f);
+}
+
+TEST_CASE("AudioFormat: convertTo() planar↔interleaved fastpath works without scratch") {
+        // A pure byte transpose has no via-float trip; passing a null
+        // scratch must succeed.
+        AudioFormat src(AudioFormat::PCMI_S16LE);
+        AudioFormat dst(AudioFormat::PCMP_S16LE);
+
+        // 2 stereo frames, interleaved: [L0,R0,L1,R1] = [1,10,2,20].
+        const int16_t in[4] = {1, 10, 2, 20};
+        int16_t       out[4] = {};
+        Error err = src.convertTo(dst, out, in, /*samplesPerChannel=*/2, /*channels=*/2, /*scratch=*/nullptr);
+        CHECK(err.isOk());
+        // Expected planar: [L0,L1, R0,R1] = [1,2, 10,20].
+        CHECK(out[0] == 1);
+        CHECK(out[1] == 2);
+        CHECK(out[2] == 10);
+        CHECK(out[3] == 20);
+}
+
 TEST_CASE("AudioFormat: registerDirectConverter installs a custom path") {
         AudioFormat::ID   userSrc = AudioFormat::registerType();
         AudioFormat::ID   userDst = AudioFormat::registerType();

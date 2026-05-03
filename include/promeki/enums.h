@@ -303,6 +303,65 @@ inline const AudioPattern AudioPattern::Dialnorm{16};
 inline const AudioPattern AudioPattern::Iec60958{17};
 
 /**
+ * @brief Well-known audio event marker categories.
+ * @ingroup proav
+ *
+ * Tag carried by every entry in an @ref AudioMarkerList — the
+ * @ref Metadata::AudioMarkers value attached to an audio payload.
+ * Each entry locates a sample region within the carrying payload
+ * (@c offset + @c length) and classifies the region with one of
+ * these types so downstream stages can decide what to do with it
+ * (display a glitch indicator, exclude from loudness measurements,
+ * route through a concealment stage, …) without having to know
+ * which backend produced the marker.
+ *
+ * - @c Unknown        — placeholder / category not assigned.  The
+ *                       region is annotated but the producing
+ *                       stage either could not classify it or has
+ *                       not yet adopted the @ref AudioMarkerType
+ *                       vocabulary.
+ * - @c SilenceFill    — synthesized silence inserted by the
+ *                       producer to bridge a gap in the source
+ *                       timeline (e.g. NDI / RTP receiver gap
+ *                       concealment).  The samples in the region
+ *                       are guaranteed silent in the format-correct
+ *                       sense.
+ * - @c ConcealedLoss  — packet loss that was concealed by the
+ *                       producer (PLC, FEC, last-good repeat, etc.)
+ *                       — the region carries plausible but
+ *                       reconstructed samples, not silence.
+ * - @c Discontinuity  — boundary marker between two segments of
+ *                       audio that should not be assumed temporally
+ *                       contiguous (clock change, source switch,
+ *                       resync).  Typically @c length == 0.
+ * - @c Glitch         — the producer detected a sample-level anomaly
+ *                       in the region (xrun, clipping, NaN, etc.).
+ *                       The samples are passed through unmodified;
+ *                       the marker is purely informational.
+ *
+ * Default value is @c Unknown.
+ */
+class AudioMarkerType : public TypedEnum<AudioMarkerType> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("AudioMarkerType", 0, {"Unknown", 0}, {"SilenceFill", 1},
+                                           {"ConcealedLoss", 2}, {"Discontinuity", 3}, {"Glitch", 4});
+
+                using TypedEnum<AudioMarkerType>::TypedEnum;
+
+                static const AudioMarkerType Unknown;
+                static const AudioMarkerType SilenceFill;
+                static const AudioMarkerType ConcealedLoss;
+                static const AudioMarkerType Discontinuity;
+                static const AudioMarkerType Glitch;
+};
+
+inline const AudioMarkerType AudioMarkerType::Unknown{0};
+inline const AudioMarkerType AudioMarkerType::SilenceFill{1};
+inline const AudioMarkerType AudioMarkerType::ConcealedLoss{2};
+inline const AudioMarkerType AudioMarkerType::Discontinuity{3};
+inline const AudioMarkerType AudioMarkerType::Glitch{4};
+
+/**
  * @brief Well-known Enum type for chroma subsampling modes.
  *
  * Mirrors @c JpegVideoEncoder::Subsampling in value and order.  Used as the

@@ -1532,6 +1532,7 @@ set(PROMEKI_SOURCES
     src/core/numname.cpp
     src/core/numnameseq.cpp
     src/core/objectbase.cpp
+    src/core/pacinggate.cpp
     src/core/periodiccallback.cpp
     src/core/pidcontroller.cpp
     src/core/pixelformat.cpp
@@ -2464,6 +2465,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/audiocodec.cpp
         tests/unit/audioformat.cpp
         tests/unit/audiolevel.cpp
+        tests/unit/audiomarker.cpp
         tests/unit/backendweight.cpp
         tests/unit/base64.cpp
         tests/unit/typeregistry_isolation.cpp
@@ -2692,6 +2694,8 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediaio_bridges.cpp
             tests/unit/mediaio_identifiers.cpp
             tests/unit/mediaio_negotiation.cpp
+            tests/unit/mediaio_setclock.cpp
+            tests/unit/pacinggate.cpp
             tests/unit/mediaioportconnection.cpp
             tests/unit/mediaioreadcache.cpp
             tests/unit/mediaiosink.cpp

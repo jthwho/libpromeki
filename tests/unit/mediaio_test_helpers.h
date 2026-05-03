@@ -56,17 +56,19 @@ namespace promeki {
                                 using SeekHook = std::function<Error(MediaIOCommandSeek &)>;
                                 using ParamsHook = std::function<Error(MediaIOCommandParams &)>;
                                 using StatsHook = std::function<Error(MediaIOCommandStats &)>;
+                                using SetClockHook = std::function<Error(MediaIOCommandSetClock &)>;
 
                                 InlineTestMediaIO(ObjectBase *parent = nullptr) : InlineMediaIO(parent) {}
                                 ~InlineTestMediaIO() override = default;
 
-                                OpenHook   onOpen;
-                                CloseHook  onClose;
-                                ReadHook   onRead;
-                                WriteHook  onWrite;
-                                SeekHook   onSeek;
-                                ParamsHook onParams;
-                                StatsHook  onStats;
+                                OpenHook     onOpen;
+                                CloseHook    onClose;
+                                ReadHook     onRead;
+                                WriteHook    onWrite;
+                                SeekHook     onSeek;
+                                ParamsHook   onParams;
+                                StatsHook    onStats;
+                                SetClockHook onSetClock;
 
                         protected:
                                 Error executeCmd(MediaIOCommandOpen &cmd) override {
@@ -89,6 +91,10 @@ namespace promeki {
                                 }
                                 Error executeCmd(MediaIOCommandStats &cmd) override {
                                         return onStats ? onStats(cmd) : Error::Ok;
+                                }
+                                Error executeCmd(MediaIOCommandSetClock &cmd) override {
+                                        return onSetClock ? onSetClock(cmd)
+                                                          : ::promeki::CommandMediaIO::executeCmd(cmd);
                                 }
                 };
 

@@ -820,6 +820,19 @@ void MediaIO::completeCommand(MediaIOCommand::Ptr cmd) {
                         // preserved — same container, additive.
                         populateStandardStats(raw->stats);
                         break;
+                case MediaIOCommand::SetClock: {
+                        // Framework owns the actual swap so backends
+                        // never touch group->_clock directly.  On any
+                        // error (including the default NotSupported)
+                        // the existing clock stays in place, preserving
+                        // the invariant that group->clock() always
+                        // reflects what is actually in effect.
+                        auto *csc = static_cast<MediaIOCommandSetClock *>(raw);
+                        if (csc->group != nullptr && cmd->result.isOk()) {
+                                csc->group->_clock = csc->clock;
+                        }
+                        break;
+                }
         }
         // Notify any observability subscribers (pipeline-level stats
         // collectors in particular) that a command resolved.  Fires

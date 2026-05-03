@@ -317,6 +317,27 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                            .setMin(int32_t(0))
                                            .setDescription("Number of RTP packets that composed this essence."));
 
+                /// @brief Per-payload audio event markers (@ref AudioMarkerList).
+                ///
+                /// Set by audio producers that need to annotate sample
+                /// regions of the carried payload — most commonly
+                /// network audio receivers (NDI, RTP, …) flagging
+                /// synthesized silence, concealed packet loss, or
+                /// discontinuities in the source timeline, but any
+                /// stage that inspects or generates samples may stamp
+                /// markers here.  Each entry locates a region in the
+                /// owning @ref PcmAudioPayload by sample @c offset and
+                /// @c length and tags it with an @ref AudioMarker::Type.
+                /// Empty (or absent) means the payload carries no
+                /// noteworthy events.
+                PROMEKI_DECLARE_ID(
+                        AudioMarkers,
+                        VariantSpec()
+                                .setType(Variant::TypeAudioMarkerList)
+                                .setDefault(AudioMarkerList())
+                                .setDescription("Per-payload audio event markers (silence fills, "
+                                                "concealed loss, discontinuities, …)."));
+
 #if PROMEKI_ENABLE_NETWORK
                 /// @brief PTP grandmaster clock identity (EUI-64).
                 PROMEKI_DECLARE_ID(PtpGrandmasterId,

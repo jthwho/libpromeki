@@ -8,6 +8,7 @@
 #pragma once
 
 #include <promeki/atomic.h>
+#include <promeki/clock.h>
 #include <promeki/duration.h>
 #include <promeki/enums.h>
 #include <promeki/framerate.h>
@@ -15,6 +16,7 @@
 #include <promeki/mediaiofactory.h>
 #include <promeki/mutex.h>
 #include <promeki/namespace.h>
+#include <promeki/pacinggate.h>
 #include <promeki/ratetracker.h>
 #include <promeki/sharedthreadmediaio.h>
 #include <promeki/timestamp.h>
@@ -145,15 +147,19 @@ class NullPacingMediaIO : public SharedThreadMediaIO {
                 bool                    _isOpen = false;
 
                 // ---- Pacing state ----
-                /// Wallclock anchor for the next tick.  Frames whose
-                /// arrival time is < @c _nextDeadline are dropped;
-                /// the first arrival at or after @c _nextDeadline
-                /// consumes the frame and advances @c _nextDeadline
-                /// by one period.
-                TimeStamp _nextDeadline;
-                /// Anchor for the burn-timings log: wallclock of the
-                /// previous consumption.  Invalid until the first
-                /// consumption.
+                //
+                // Wallclock-mode pacing runs through PacingGate's
+                // non-blocking tryAcquire path: if the next tick
+                // deadline has arrived we consume, otherwise we drop
+                // (the existing rate-limiter semantic).  Free mode
+                // leaves the gate without a clock so tryAcquire
+                // returns true unconditionally and every frame is
+                // consumed.
+                PacingGate _gate;
+
+                /// Wallclock of the previous consumption — kept only
+                /// for the burn-timings log line.  Invalid until the
+                /// first consumption.
                 TimeStamp _lastConsumed;
                 bool      _hasLastConsumed = false;
 

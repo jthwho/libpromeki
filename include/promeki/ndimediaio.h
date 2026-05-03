@@ -16,6 +16,7 @@
 #include <thread>
 #include <promeki/audiobuffer.h>
 #include <promeki/audiodesc.h>
+#include <promeki/audiomarker.h>
 #include <promeki/clock.h>
 #include <promeki/dedicatedthreadmediaio.h>
 #include <promeki/framenumber.h>
@@ -27,6 +28,7 @@
 #include <promeki/metadata.h>
 #include <promeki/mutex.h>
 #include <promeki/ndiclock.h>
+#include <promeki/pacinggate.h>
 #include <promeki/pcmaudiopayload.h>
 #include <promeki/queue.h>
 #include <promeki/string.h>
@@ -137,6 +139,19 @@ class NdiMediaIO : public DedicatedThreadMediaIO {
                 static inline const MediaIOStats::ID StatsMetadataReceived{"NdiMetadataReceived"};
                 /** @brief int64_t — receiver-side dropped frames (queue overflow). */
                 static inline const MediaIOStats::ID StatsDroppedReceives{"NdiDroppedReceives"};
+                /**
+                 * @brief int64_t — total samples of silence the
+                 *        receiver injected into the audio ring to
+                 *        bridge gaps detected in the sender's
+                 *        per-frame timestamps.
+                 */
+                static inline const MediaIOStats::ID StatsAudioSilenceFilled{"NdiAudioSilenceFilled"};
+                /**
+                 * @brief int64_t — total receiver-side audio gap
+                 *        events (each event corresponds to one
+                 *        contiguous silence fill).
+                 */
+                static inline const MediaIOStats::ID StatsAudioGapEvents{"NdiAudioGapEvents"};
 
                 /** @brief Constructs an NdiMediaIO. */
                 NdiMediaIO(ObjectBase *parent = nullptr);
@@ -164,6 +179,36 @@ class NdiMediaIO : public DedicatedThreadMediaIO {
                 Error executeCmd(MediaIOCommandRead &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
+                /**
+                 * @brief Accepts an external pacing clock for sink mode.
+                 *
+                 * In sink mode the supplied @ref Clock becomes the
+                 * pacing reference for outbound video and audio: each
+                 * @c sendVideo / @c sendAudio call sleeps until the
+                 * clock reaches the next per-stream deadline before
+                 * handing the frame to the SDK.  The first sent
+                 * payload in each stream anchors that stream's
+                 * timeline; subsequent deadlines advance by the
+                 * stream's natural period (one frame for video, one
+                 * audio block for audio).  A null @c cmd.clock
+                 * detaches the external clock and lets the SDK's
+                 * internal @c clock_video / @c clock_audio flags
+                 * resume responsibility.
+                 *
+                 * Source mode returns @c Error::NotSupported — the
+                 * receive path's clock is driven by the sender's
+                 * timestamps and is not user-replaceable.
+                 *
+                 * @note When the SDK was created with @c clock_video
+                 *       or @c clock_audio enabled the SDK will still
+                 *       block to honor its own pacing in addition to
+                 *       ours; for the supplied clock to be the sole
+                 *       pacing source the corresponding
+                 *       @c MediaConfig::NdiSendClockVideo /
+                 *       @c MediaConfig::NdiSendClockAudio key should
+                 *       be set @c false at open time.
+                 */
+                Error executeCmd(MediaIOCommandSetClock &cmd) override;
                 void  cancelBlockingWork() override;
 
         private:
@@ -176,6 +221,49 @@ class NdiMediaIO : public DedicatedThreadMediaIO {
 
                 Error sendVideo(const UncompressedVideoPayload &vp);
                 Error sendAudio(const PcmAudioPayload &ap);
+
+                /**
+                 * @brief Pushes one received NDI audio frame into the ring.
+                 *
+                 * Detects gaps in the sender's per-frame timestamps,
+                 * bridges them with @ref AudioBuffer::pushSilence so
+                 * the ring's sample count and the sender's timeline
+                 * stay in sync, appends a @ref AudioMarkerType::SilenceFill
+                 * entry to @ref _audioMarkersSinceDrain for each gap,
+                 * and updates @ref _audioFirstSampleTicks /
+                 * @ref _audioNextSampleTicks.  Then pushes the real
+                 * samples.
+                 *
+                 * @c captureLoop calls this with the parsed-out fields
+                 * of an @c NDIlib_audio_frame_v3_t — the SDK type does
+                 * not appear in this header so the tests can drive
+                 * the path without pulling in the SDK.  The method
+                 * takes @ref _audioMutex internally; callers must not
+                 * hold it.
+                 *
+                 * @param timestampTicks NDI 100ns ticks for the first
+                 *        sample of this frame.  The sentinel value
+                 *        @c -1 means "not provided"; gap detection is
+                 *        skipped on those frames.
+                 * @param samples Sample count in this frame.
+                 * @param channels Channel count.
+                 * @param rate Sample rate (Hz).
+                 * @param planarFloatData Pointer to a tightly-packed
+                 *        planar float buffer (one channel run after
+                 *        another, channelStrideBytes apart).
+                 * @param channelStrideBytes Distance between channel
+                 *        plane starts.  When equal to
+                 *        @c samples * sizeof(float) the buffer is
+                 *        already tightly packed and is pushed
+                 *        directly; otherwise the per-channel runs are
+                 *        coalesced into a tightly-packed scratch
+                 *        buffer first.
+                 */
+                void ingestNdiAudio(int64_t timestampTicks, size_t samples, size_t channels,
+                                    float rate, const uint8_t *planarFloatData,
+                                    size_t channelStrideBytes);
+
+                friend struct NdiMediaIOTestAccess;
 
                 // NDI handles — opaque pointers to SDK-managed state.
                 NDIlib_send_instance_type *_send = nullptr;
@@ -223,13 +311,53 @@ class NdiMediaIO : public DedicatedThreadMediaIO {
                 Queue<UncompressedVideoPayload::Ptr> _videoQueue;
                 AudioBuffer              _audioRing;
                 Mutex                    _audioMutex;
-                // Most-recent received audio NDI timestamp (100ns
-                // ticks).  Captured by the capture thread, drained on
-                // every executeCmd(Read).  Used to stamp the
-                // dequeued audio payload with a sender-anchored
-                // CaptureTime so downstream drift correction sees
-                // wire arrival times.
-                std::atomic<int64_t>     _lastAudioTimestampTicks{0};
+                // Sender-anchored timeline state for the audio ring.
+                // Both fields are NDI 100ns ticks, guarded by
+                // @ref _audioMutex (the same mutex that guards the
+                // ring).  The capture thread updates them on every
+                // received audio frame; the strand drains and resets
+                // them on every executeCmd(Read).
+                //
+                // @c _audioFirstSampleTicks is the timestamp of the
+                // first sample currently sitting in the ring.  It's
+                // the canonical PTS for whatever the next drain emits
+                // — anchored on the sender's first-sample time, not
+                // on the most-recent NDI frame's timestamp (which
+                // would be the *last* sample's anchor and therefore
+                // lie about a coalesced multi-frame drain).  Zero
+                // when no anchor is latched (ring empty + no prior
+                // frames since the last reset).
+                //
+                // @c _audioNextSampleTicks is the timestamp the next
+                // arriving sample is expected to land on, computed as
+                // @c lastFrame.timestamp + samples * 1e7 / rate.
+                // The capture thread compares each new frame's
+                // timestamp against this value to detect gaps; the
+                // gap (if positive and within sanity bounds) is
+                // bridged with @ref AudioBuffer::pushSilence so the
+                // ring's sample count and the sender's media
+                // timeline stay in sync.  Zero when no prior frame
+                // has been pushed since the last reset.
+                int64_t                  _audioFirstSampleTicks = 0;
+                int64_t                  _audioNextSampleTicks  = 0;
+                // Markers accumulated for the next drained payload.
+                // Each entry's @c offset is the sample index within
+                // the eventual payload (i.e. the value of
+                // @c _audioRing.available() at the moment the marker
+                // was appended); @c length is the sample count
+                // covered.  The list is stamped onto the drained
+                // payload's @ref Metadata::AudioMarkers in
+                // executeCmd(Read) and then cleared.
+                AudioMarkerList          _audioMarkersSinceDrain;
+                // Total samples of silence injected by the gap-fill
+                // logic since the last open.  Atomic so the strand's
+                // executeCmd(Stats) can publish it without taking
+                // @ref _audioMutex.  Mirrored as
+                // @ref StatsAudioSilenceFilled.
+                std::atomic<int64_t>     _audioSilenceSamples{0};
+                // Total contiguous silence-fill events since the
+                // last open.  Mirrored as @ref StatsAudioGapEvents.
+                std::atomic<int64_t>     _audioGapEvents{0};
                 Mutex                    _metadataMutex;
                 Metadata                 _pendingMetadata;
                 bool                     _hasPendingMetadata = false;
@@ -252,6 +380,20 @@ class NdiMediaIO : public DedicatedThreadMediaIO {
                 // alive past close if any consumer still holds a
                 // reference.
                 Clock::Ptr _sourceClock;
+
+                // External sink-mode pacing — one PacingGate per
+                // stream so video and audio can drift independently
+                // around the same clock (a single gate would conflate
+                // their timelines).  Both gates share the same Clock
+                // bound via executeCmd(MediaIOCommandSetClock).  The
+                // gates' wait() runs on the dedicated worker thread
+                // inside sendVideo / sendAudio (same thread as the
+                // setter, so no synchronization required).  When no
+                // clock is bound the gates are no-ops and the SDK's
+                // internal clock_video / clock_audio flags remain in
+                // control.
+                PacingGate _videoGate;
+                PacingGate _audioGate;
 };
 
 /**

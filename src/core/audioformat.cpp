@@ -1055,6 +1055,45 @@ Error AudioFormat::convertTo(const AudioFormat &dst, void *out, const void *in, 
         return Error::Ok;
 }
 
+// Returns true when @p src and @p dst share the same per-sample byte
+// pattern (size, signedness, float-ness, endianness) and differ only in
+// planar vs. interleaved layout.  In that case the conversion is a pure
+// byte-level transpose — no via-float trip needed, bit-accurate for
+// non-PCM payloads.
+static bool layoutOnlyDiffer(const AudioFormat::Data *a, const AudioFormat::Data *b) {
+        if (a == nullptr || b == nullptr) return false;
+        if (a->compressed || b->compressed) return false;
+        if (a->isPlanar == b->isPlanar) return false;
+        return a->bytesPerSample == b->bytesPerSample && a->bitsPerSample == b->bitsPerSample &&
+               a->isSigned == b->isSigned && a->isFloat == b->isFloat && a->isBigEndian == b->isBigEndian;
+}
+
+// Byte-level layout transpose: planar↔interleaved on a buffer of
+// fixed-size sample bytes.  Fast path for the cross-layout case when
+// @ref layoutOnlyDiffer is true.
+template <bool SrcPlanar>
+static void byteTransposeLayout(void *out, const void *in, size_t samplesPerChannel, size_t channels, size_t bps) {
+        const uint8_t *src = static_cast<const uint8_t *>(in);
+        uint8_t       *dst = static_cast<uint8_t *>(out);
+        if constexpr (SrcPlanar) {
+                // Planar [ch0[0..N), ch1[0..N), ...] → interleaved [s0c0,s0c1,...].
+                for (size_t c = 0; c < channels; ++c) {
+                        const uint8_t *cIn = src + c * samplesPerChannel * bps;
+                        for (size_t s = 0; s < samplesPerChannel; ++s) {
+                                std::memcpy(dst + (s * channels + c) * bps, cIn + s * bps, bps);
+                        }
+                }
+        } else {
+                // Interleaved [s0c0,s0c1,...] → planar [ch0[0..N), ch1[0..N), ...].
+                for (size_t s = 0; s < samplesPerChannel; ++s) {
+                        const uint8_t *sIn = src + s * channels * bps;
+                        for (size_t c = 0; c < channels; ++c) {
+                                std::memcpy(dst + (c * samplesPerChannel + s) * bps, sIn + c * bps, bps);
+                        }
+                }
+        }
+}
+
 Error AudioFormat::convertTo(const AudioFormat &dst, void *out, const void *in, size_t samplesPerChannel,
                               size_t channels, float *scratch) const {
         if (!isValid() || !dst.isValid()) return Error::InvalidArgument;
@@ -1072,6 +1111,17 @@ Error AudioFormat::convertTo(const AudioFormat &dst, void *out, const void *in, 
                         fn(out, in, totalFloats);
                         return Error::Ok;
                 }
+        } else if (layoutOnlyDiffer(d, dst.data())) {
+                // Cross-layout fast path: only the planar/interleaved
+                // layout differs.  A pure byte transpose preserves every
+                // input bit (so it survives non-PCM payloads) and skips
+                // the via-float trip — no scratch needed.
+                if (isPlanar()) {
+                        byteTransposeLayout<true>(out, in, samplesPerChannel, channels, d->bytesPerSample);
+                } else {
+                        byteTransposeLayout<false>(out, in, samplesPerChannel, channels, d->bytesPerSample);
+                }
+                return Error::Ok;
         }
 
         if (isCompressed() || dst.isCompressed()) return Error::NotSupported;
@@ -1084,11 +1134,11 @@ Error AudioFormat::convertTo(const AudioFormat &dst, void *out, const void *in, 
                 return Error::Ok;
         }
 
-        // Cross-layout: convert src bytes to a contiguous float run in
-        // src's layout, transpose into dst's layout in a second float
-        // buffer, then convert that to dst bytes.  The transpose has
-        // to live in a separate buffer because each output element
-        // pulls from a non-adjacent input slot.
+        // Cross-layout, different byte format: convert src bytes to a
+        // contiguous float run in src's layout, transpose into dst's
+        // layout in a second float buffer, then convert that to dst
+        // bytes.  The transpose has to live in a separate buffer because
+        // each output element pulls from a non-adjacent input slot.
         samplesToFloat(scratch, static_cast<const uint8_t *>(in), totalFloats);
         Buffer transposed(totalFloats * sizeof(float));
         if (!transposed.isValid()) return Error::NoMem;

@@ -19,6 +19,7 @@
 #include <promeki/mediaiofactory.h>
 #include <promeki/mutex.h>
 #include <promeki/namespace.h>
+#include <promeki/pacinggate.h>
 #include <promeki/pcmaudiopayload.h>
 #include <promeki/pixelformat.h>
 #include <promeki/queue.h>
@@ -343,6 +344,25 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandParams &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
+                /**
+                 * @brief Accepts an external pacing clock for writer mode.
+                 *
+                 * In writer mode the supplied @ref Clock paces the
+                 * frame-level cadence: each @c sendVideo sleeps until
+                 * the clock reports the next frame deadline before
+                 * handing packets to the per-stream TX worker.  The
+                 * intra-frame packet spread (kernel-FQ /
+                 * @c RtpPacingMode::Userspace / None) is unaffected
+                 * and continues to use its own timing logic.  Audio
+                 * blocks are not paced by this clock — AES67 packet
+                 * timing is governed by the per-packet RTP timestamp
+                 * stride that the audio FIFO already maintains.
+                 *
+                 * Reader mode returns @c Error::NotSupported.  A null
+                 * @c cmd.clock detaches the external clock and lets
+                 * the upstream pump's natural cadence resume control.
+                 */
+                Error executeCmd(MediaIOCommandSetClock &cmd) override;
 
                 // Wakes the reader-side executeCmd(Read) loop so close()
                 // can drain a strand parked on _readerQueue.pop().
@@ -465,6 +485,22 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                  *                   @ref FrameRate::cumulativeTicks.
                  */
                 Error sendVideo(const VideoPayload &payload, const FrameNumber &frameIndex);
+
+                /**
+                 * @brief Paces the next video frame against
+                 *        @ref _videoGate.
+                 *
+                 * No-op when no external clock is bound or the frame
+                 * rate is unknown.  Returns @c true when the frame
+                 * should be sent, @c false when the gate's verdict
+                 * recommends dropping it (lag past the skip
+                 * threshold).  Reanchor is logged but the frame
+                 * still ships.  Clock failures are logged and the
+                 * frame ships unpaced.
+                 *
+                 * @return @c true to send, @c false to drop.
+                 */
+                bool paceVideoFrame();
 
                 /**
                  * @brief Sends one audio chunk on the @c _audio stream.
@@ -616,6 +652,17 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 // export path can serve it.
                 SdpSession _sdpSession;
                 String     _sdpPath;
+
+                // External writer-mode video pacing — null clock means
+                // the upstream pump's natural cadence is the only
+                // timing source.  Set via
+                // executeCmd(MediaIOCommandSetClock); read on the
+                // dedicated worker thread in executeCmd(Write) (same
+                // thread as the setter, no synchronization required).
+                // Audio is not paced separately by the gate — AES67
+                // packet timing is governed by the per-packet RTP
+                // timestamp stride that the audio FIFO maintains.
+                PacingGate _videoGate;
 };
 
 /**

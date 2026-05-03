@@ -571,3 +571,254 @@ TEST_CASE("AudioBuffer: resampler push still propagates the channel map") {
         CHECK(ab.format().channelMap().stream(1) == main);
 }
 #endif
+
+// ============================================================================
+// Planar src → interleaved dst (no float processing — uses the byte-transpose
+// fastpath in AudioFormat::convertTo)
+// ============================================================================
+
+TEST_CASE("AudioBuffer: push planar float, pop interleaved float (transpose fastpath)") {
+        AudioBuffer ab(f32LE48k2ch(), 64);
+        AudioDesc   planarIn(AudioFormat::PCMP_Float32LE, 48000.0f, 2);
+
+        // 3 stereo frames, planar layout: [L0,L1,L2, R0,R1,R2].
+        const float in[6] = {1.0f, 2.0f, 3.0f, 10.0f, 20.0f, 30.0f};
+        REQUIRE(ab.push(in, 3, planarIn).isOk());
+
+        float out[6] = {};
+        auto [popped, err] = ab.pop(out, 3);
+        CHECK(err.isOk());
+        CHECK(popped == 3);
+        // Expected interleaved: [L0,R0, L1,R1, L2,R2].
+        CHECK(out[0] == 1.0f);
+        CHECK(out[1] == 10.0f);
+        CHECK(out[2] == 2.0f);
+        CHECK(out[3] == 20.0f);
+        CHECK(out[4] == 3.0f);
+        CHECK(out[5] == 30.0f);
+}
+
+TEST_CASE("AudioBuffer: push planar S16, pop interleaved S16 (byte transpose)") {
+        AudioBuffer ab(s16LE48k2ch(), 64);
+        AudioDesc   planarIn(AudioFormat::PCMP_S16LE, 48000.0f, 2);
+
+        // 3 stereo frames, planar S16: [L0,L1,L2, R0,R1,R2].
+        const int16_t in[6] = {100, 200, 300, 1000, 2000, 3000};
+        REQUIRE(ab.push(in, 3, planarIn).isOk());
+
+        int16_t out[6] = {};
+        auto [popped, err] = ab.pop(out, 3);
+        CHECK(err.isOk());
+        CHECK(popped == 3);
+        // Expected interleaved: [L0,R0, L1,R1, L2,R2].
+        CHECK(out[0] == 100);
+        CHECK(out[1] == 1000);
+        CHECK(out[2] == 200);
+        CHECK(out[3] == 2000);
+        CHECK(out[4] == 300);
+        CHECK(out[5] == 3000);
+}
+
+TEST_CASE("AudioBuffer: push planar S16, pop interleaved float (cross-format + transpose)") {
+        // Cross-layout AND cross-byte-format — exercises the via-float
+        // path inside AudioFormat::convertTo with explicit transpose.
+        AudioBuffer ab(f32LE48k2ch(), 64);
+        AudioDesc   planarIn(AudioFormat::PCMP_S16LE, 48000.0f, 2);
+
+        // 2 stereo frames, planar S16:
+        //   ch0 = [0x4000, 0x0000]  → ~0.5,  ~0.0
+        //   ch1 = [0xC000, 0x7FFF]  → ~-0.5, ~+1.0
+        const int16_t in[4] = {0x4000, 0x0000, static_cast<int16_t>(0xC000), 0x7FFF};
+        REQUIRE(ab.push(in, 2, planarIn).isOk());
+
+        float out[4] = {};
+        auto [popped, err] = ab.pop(out, 2);
+        CHECK(err.isOk());
+        CHECK(popped == 2);
+        // Expected interleaved: [L0,R0, L1,R1] = [~0.5,~-0.5, ~0.0,~+1.0].
+        CHECK(out[0] == doctest::Approx(0.5f).epsilon(0.001));
+        CHECK(out[1] == doctest::Approx(-0.5f).epsilon(0.001));
+        CHECK(out[2] == doctest::Approx(0.0f).epsilon(0.001));
+        CHECK(out[3] == doctest::Approx(1.0f).epsilon(0.001));
+}
+
+TEST_CASE("AudioBuffer: planar push wraps the ring correctly") {
+        // Force a wrap by leaving the ring half-full and then pushing
+        // enough planar samples to cross the boundary.  The planar
+        // converter has to spill through a temp buffer (it can't split
+        // a planar source at frame boundaries) — verify that the spill
+        // is then memcpy'd through the wrap properly.
+        AudioBuffer ab(f32LE48k2ch(), 4);
+        AudioDesc   planarIn(AudioFormat::PCMP_Float32LE, 48000.0f, 2);
+
+        // Push 2 frames first (no wrap), then pop 1 to advance head.
+        const float warmup[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+        REQUIRE(ab.push(warmup, 2, f32LE48k2ch()).isOk());
+        float discard[2] = {};
+        auto [popDiscard, popDiscardErr] = ab.pop(discard, 1);
+        REQUIRE(popDiscardErr.isOk());
+
+        // Now push 3 planar frames into a ring with head=1, tail=2,
+        // capacity=4 — the 3rd frame wraps to slot 0.
+        const float in[6] = {1.0f, 2.0f, 3.0f, 10.0f, 20.0f, 30.0f};
+        REQUIRE(ab.push(in, 3, planarIn).isOk());
+        CHECK(ab.available() == 4);
+
+        // Drain everything.  The first pop returns the leftover warmup
+        // frame (zero), then the three transposed frames in order.
+        float out[8] = {};
+        auto [popped, err] = ab.pop(out, 4);
+        CHECK(err.isOk());
+        CHECK(popped == 4);
+        CHECK(out[0] == 0.0f); // warmup
+        CHECK(out[1] == 0.0f);
+        CHECK(out[2] == 1.0f);  // L0
+        CHECK(out[3] == 10.0f); // R0
+        CHECK(out[4] == 2.0f);
+        CHECK(out[5] == 20.0f);
+        CHECK(out[6] == 3.0f);
+        CHECK(out[7] == 30.0f);
+}
+
+TEST_CASE("AudioBuffer: planar push with gain forces via-float path and stays correct") {
+        // With gain active, planar src takes the via-float path (the
+        // no-processing fastpath is bypassed).  Step 1 of the via-float
+        // path must transpose planar → interleaved before the gain loop
+        // runs, otherwise channel 0 gets channel-1's gain and vice-versa.
+        AudioBuffer ab(f32LE48k2ch());
+        ab.reserve(64);
+        REQUIRE(ab.setChannelGains({0.5f, 2.0f}).isOk());
+
+        AudioDesc   planarIn(AudioFormat::PCMP_Float32LE, 48000.0f, 2);
+        // 2 stereo frames, planar: ch0=[0.4,0.6], ch1=[0.1,0.3].
+        const float in[4] = {0.4f, 0.6f, 0.1f, 0.3f};
+        REQUIRE(ab.push(in, 2, planarIn).isOk());
+
+        float out[4] = {};
+        auto [n, err] = ab.pop(out, 2);
+        CHECK(n == 2);
+        // After gain: ch0 ×0.5, ch1 ×2.0, interleaved.
+        CHECK(out[0] == doctest::Approx(0.4f * 0.5f));
+        CHECK(out[1] == doctest::Approx(0.1f * 2.0f));
+        CHECK(out[2] == doctest::Approx(0.6f * 0.5f));
+        CHECK(out[3] == doctest::Approx(0.3f * 2.0f));
+}
+
+TEST_CASE("AudioBuffer: planar push with remap routes through interleaved float") {
+        // Remap forces via-float; with a planar source, step 1 must
+        // transpose to interleaved before the remap loop reads frames.
+        AudioBuffer ab(f32LE48k2ch());
+        ab.reserve(64);
+        REQUIRE(ab.setChannelRemap({1, 0}).isOk()); // swap channels
+
+        AudioDesc   planarIn(AudioFormat::PCMP_Float32LE, 48000.0f, 2);
+        const float in[4] = {0.4f, 0.6f, 0.1f, 0.3f}; // ch0=[0.4,0.6], ch1=[0.1,0.3]
+        REQUIRE(ab.push(in, 2, planarIn).isOk());
+
+        float out[4] = {};
+        auto [n, err] = ab.pop(out, 2);
+        CHECK(n == 2);
+        // Output[0] ← input ch1, output[1] ← input ch0 — interleaved.
+        CHECK(out[0] == doctest::Approx(0.1f));
+        CHECK(out[1] == doctest::Approx(0.4f));
+        CHECK(out[2] == doctest::Approx(0.3f));
+        CHECK(out[3] == doctest::Approx(0.6f));
+}
+
+// ============================================================================
+// pushSilence
+// ============================================================================
+
+TEST_CASE("AudioBuffer: pushSilence on invalid format fails") {
+        AudioBuffer ab;
+        CHECK(ab.pushSilence(10) == Error::InvalidArgument);
+}
+
+TEST_CASE("AudioBuffer: pushSilence with zero samples is a no-op") {
+        AudioBuffer ab(f32LE48k2ch(), 32);
+        CHECK(ab.pushSilence(0).isOk());
+        CHECK(ab.available() == 0);
+}
+
+TEST_CASE("AudioBuffer: pushSilence beyond capacity returns NoSpace") {
+        AudioBuffer ab(f32LE48k2ch(), 16);
+        CHECK(ab.pushSilence(32) == Error::NoSpace);
+        CHECK(ab.available() == 0);
+}
+
+TEST_CASE("AudioBuffer: pushSilence writes float zeros") {
+        AudioBuffer ab(f32LE48k2ch(), 16);
+        REQUIRE(ab.pushSilence(8).isOk());
+        CHECK(ab.available() == 8);
+        float out[16] = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f,
+                         9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f};
+        auto [n, err] = ab.pop(out, 8);
+        CHECK(n == 8);
+        for (int i = 0; i < 16; ++i) CHECK(out[i] == 0.0f);
+}
+
+TEST_CASE("AudioBuffer: pushSilence into S16 storage writes 0x0000") {
+        AudioBuffer ab(s16LE48k2ch(), 16);
+        REQUIRE(ab.pushSilence(4).isOk());
+        int16_t out[8] = {123, -456, 789, -1011, 1213, -1415, 1617, -1819};
+        auto [n, err]  = ab.pop(out, 4);
+        CHECK(n == 4);
+        for (int i = 0; i < 8; ++i) CHECK(out[i] == 0);
+}
+
+TEST_CASE("AudioBuffer: pushSilence into U8 storage writes the format's silence midpoint") {
+        // Unsigned PCM silence is the midpoint, not zero bits.  Verify
+        // pushSilence routes through floatToSamples so the conversion
+        // is correct.  The exact midpoint value is whatever
+        // floatToSamples(0.0f) produces — for u8 with Min=0 Max=255
+        // that's truncation of 127.5 → 127.  Reading the value back
+        // through samplesToFloat / floatToSamples (i.e. via push of a
+        // zero-float reference) ensures we compare against the
+        // library's own silence, not WAV's 0x80 convention.
+        AudioDesc      u8desc(AudioFormat::PCMI_U8, 48000.0f, 2);
+        AudioBuffer    ab(u8desc, 16);
+        REQUIRE(ab.pushSilence(4).isOk());
+        uint8_t silenceOut[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+        auto [n, err]         = ab.pop(silenceOut, 4);
+        CHECK(n == 4);
+
+        // Reference: push 4 frames of native float zero into a fresh
+        // ring and read back its u8 representation.  That's the
+        // ground truth the library considers "silence" for u8.
+        AudioBuffer    ref(u8desc, 16);
+        AudioDesc      floatDesc(AudioFormat::PCMI_Float32LE, 48000.0f, 2);
+        const float    zeros[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+        REQUIRE(ref.push(zeros, 4, floatDesc).isOk());
+        uint8_t refOut[8] = {0};
+        auto [rn, rerr]   = ref.pop(refOut, 4);
+        REQUIRE(rn == 4);
+
+        for (int i = 0; i < 8; ++i) CHECK(silenceOut[i] == refOut[i]);
+}
+
+TEST_CASE("AudioBuffer: pushSilence handles wrap across the ring boundary") {
+        AudioBuffer ab(f32LE48k2ch(), 8);
+        // Push 6 frames (12 floats), pop 4 frames (8 floats) — leaves
+        // _head at frame 4, _tail at frame 6, _count = 2.  pushSilence(4)
+        // must wrap from frame 6 around to frame 2.
+        AudioDesc   srcDesc(AudioFormat::PCMI_Float32LE, 48000.0f, 2);
+        const float seed[12] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+        REQUIRE(ab.push(seed, 6, srcDesc).isOk());
+        float drain[8] = {};
+        auto [drained, derr] = ab.pop(drain, 4);
+        CHECK(drained == 4);
+        REQUIRE(ab.pushSilence(4).isOk());
+        CHECK(ab.available() == 6);
+
+        // Pop everything: first 2 frames are the seed remainder
+        // (frames 4 and 5, floats 9..12), next 4 frames are silence.
+        float out[12] = {};
+        auto [n, err] = ab.pop(out, 6);
+        CHECK(n == 6);
+        CHECK(out[0] == 9.0f);
+        CHECK(out[1] == 10.0f);
+        CHECK(out[2] == 11.0f);
+        CHECK(out[3] == 12.0f);
+        for (int i = 4; i < 12; ++i) CHECK(out[i] == 0.0f);
+}
+

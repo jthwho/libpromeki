@@ -151,6 +151,23 @@ class CommandMediaIO : public MediaIO {
                 virtual Error executeCmd(MediaIOCommandStats &cmd);
 
                 /**
+                 * @brief Handles a request to swap the group's @ref Clock.
+                 *
+                 * Default returns @c Error::NotSupported.  Backends that
+                 * can use an external clock as a pacing reference (NDI
+                 * sender, RTP sender) override to accept the swap and
+                 * record the new clock for use by their write path.
+                 *
+                 * On @c Error::Ok the framework swaps
+                 * @c cmd.group->_clock inside
+                 * @ref MediaIO::completeCommand; backends never write
+                 * to the group's clock pointer directly.  A null
+                 * @c cmd.clock asks the backend to restore its default
+                 * behavior.
+                 */
+                virtual Error executeCmd(MediaIOCommandSetClock &cmd);
+
+                /**
                  * @brief Called when a Write command carries a
                  *        non-empty @ref Frame::configUpdate delta.
                  *

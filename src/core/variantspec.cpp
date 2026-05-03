@@ -96,6 +96,7 @@ namespace {
                         case Variant::TypeAudioFormat: return "AudioFormat";
                         case Variant::TypeAudioStreamDesc: return "AudioStreamDesc";
                         case Variant::TypeAudioChannelMap: return "AudioChannelMap";
+                        case Variant::TypeAudioMarkerList: return "AudioMarkerList";
                         case Variant::TypeEnum: {
                                 if (enumType.isValid()) return String("Enum ") + enumType.name();
                                 return "Enum";
@@ -304,6 +305,11 @@ namespace {
                         }
                         case Variant::TypeAudioChannelMap: {
                                 auto r = AudioChannelMap::fromString(str);
+                                if (error(r).isError()) break;
+                                return Variant(value(r));
+                        }
+                        case Variant::TypeAudioMarkerList: {
+                                auto r = AudioMarkerList::fromString(str);
                                 if (error(r).isError()) break;
                                 return Variant(value(r));
                         }

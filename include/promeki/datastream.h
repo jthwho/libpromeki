@@ -321,7 +321,9 @@ class DataStream {
                         TypeWindowedStat =
                                 0x50, ///< @brief WindowedStat (uint32 capacity + uint32 count + N tagged doubles)
                         TypeWindowedStatsBundle =
-                                0x51 ///< @brief WindowedStatsBundle (uint32 count + N (String name, WindowedStat) pairs)
+                                0x51, ///< @brief WindowedStatsBundle (uint32 count + N (String name, WindowedStat) pairs)
+                        TypeAudioMarkerList =
+                                0x52 ///< @brief AudioMarkerList (uint32 count + N (int64 offset, int64 length, int32 type))
                 };
 
                 /**

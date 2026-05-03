@@ -27,6 +27,7 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaiostats.h>
 #include <promeki/mediaiotypes.h>
+#include <promeki/clock.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -94,13 +95,14 @@ class MediaIOCommand {
         public:
                 /** @brief Concrete command kind. */
                 enum Kind {
-                        Open,   ///< @brief MediaIOCommandOpen
-                        Close,  ///< @brief MediaIOCommandClose
-                        Read,   ///< @brief MediaIOCommandRead
-                        Write,  ///< @brief MediaIOCommandWrite
-                        Seek,   ///< @brief MediaIOCommandSeek
-                        Params, ///< @brief MediaIOCommandParams
-                        Stats   ///< @brief MediaIOCommandStats
+                        Open,     ///< @brief MediaIOCommandOpen
+                        Close,    ///< @brief MediaIOCommandClose
+                        Read,     ///< @brief MediaIOCommandRead
+                        Write,    ///< @brief MediaIOCommandWrite
+                        Seek,     ///< @brief MediaIOCommandSeek
+                        Params,   ///< @brief MediaIOCommandParams
+                        Stats,    ///< @brief MediaIOCommandStats
+                        SetClock  ///< @brief MediaIOCommandSetClock
                 };
 
                 /** @brief Shared pointer type for command sharing. */
@@ -150,13 +152,14 @@ class MediaIOCommand {
                  */
                 static const char *kindName(Kind k) {
                         switch (k) {
-                                case Open:   return "Open";
-                                case Close:  return "Close";
-                                case Read:   return "Read";
-                                case Write:  return "Write";
-                                case Seek:   return "Seek";
-                                case Params: return "Params";
-                                case Stats:  return "Stats";
+                                case Open:     return "Open";
+                                case Close:    return "Close";
+                                case Read:     return "Read";
+                                case Write:    return "Write";
+                                case Seek:     return "Seek";
+                                case Params:   return "Params";
+                                case Stats:    return "Stats";
+                                case SetClock: return "SetClock";
                         }
                         return "Unknown";
                 }
@@ -552,6 +555,51 @@ class MediaIOCommandParams : public MediaIOCommand {
  */
 class MediaIOCommandStats : public MediaIOCommand {
                 PROMEKI_MEDIAIO_COMMAND(MediaIOCommandStats, Stats)
+};
+
+/**
+ * @brief Command to replace the @ref Clock bound to a port group.
+ * @ingroup mediaio_backend
+ *
+ * Built by @ref MediaIOPortGroup::setClock and dispatched through
+ * @ref MediaIO::submit.  The backend's
+ * @c executeCmd(MediaIOCommandSetClock &) decides whether it can
+ * honor the new clock as its timing reference — typically a sender
+ * uses the supplied clock to pace outbound frames against an
+ * upstream device clock (capture card, AES67, PTP grandmaster).
+ *
+ * On @c Error::Ok the framework swaps the clock pointer on
+ * @ref group inside @ref MediaIO::completeCommand; on any error the
+ * existing clock is left in place, so @c group->clock() always
+ * reflects what is actually in effect.
+ *
+ * Default base implementation returns @c Error::NotSupported.  A
+ * null @ref clock means "restore the backend's default clock
+ * behavior" — backends that override this command interpret a null
+ * input as an explicit unbind.
+ */
+class MediaIOCommandSetClock : public MediaIOCommand {
+                PROMEKI_MEDIAIO_COMMAND(MediaIOCommandSetClock, SetClock)
+        public:
+                // ---- Inputs ----
+                /**
+                 * @brief The port group whose clock is being replaced.
+                 *
+                 * Set by @ref MediaIOPortGroup::setClock to @c this.
+                 * Backends with multiple groups dispatch on this pointer
+                 * to decide which internal pacing reference to update.
+                 */
+                MediaIOPortGroup *group = nullptr;
+
+                /**
+                 * @brief The new clock to bind, or null to restore the
+                 *        backend's default behavior.
+                 *
+                 * Reference-counted so the pointer outlives the
+                 * dispatch path even when callers drop their handle
+                 * immediately after submitting.
+                 */
+                Clock::Ptr        clock;
 };
 
 PROMEKI_NAMESPACE_END

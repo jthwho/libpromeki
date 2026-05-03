@@ -147,8 +147,49 @@ class MediaIOPortGroup : public ObjectBase {
                  * Always non-null for a constructed group — the
                  * timing reference is required at construction.  Every
                  * port in the group advances against this clock.
+                 *
+                 * The returned reference reflects whatever clock is
+                 * currently in effect — including the result of a
+                 * successful @ref setClock.  A clock previously
+                 * obtained from this accessor is a snapshot: it does
+                 * not auto-track later swaps.  Re-pull when you need
+                 * the current binding.
                  */
                 const Clock::Ptr &clock() const { return _clock; }
+
+                /**
+                 * @brief Replaces the group's @ref Clock with @p clock.
+                 *
+                 * Builds a @ref MediaIOCommandSetClock targeting this
+                 * group, dispatches it through the owning
+                 * @ref MediaIO::submit, and returns the resulting
+                 * @ref MediaIORequest.  The framework swaps
+                 * @ref clock on @c Error::Ok and leaves it untouched
+                 * on any error, so @ref clock always reflects what
+                 * the backend is actually honoring.
+                 *
+                 * Per the always-async API rule, callers that want
+                 * synchronous behavior write
+                 * @c group->setClock(c).wait().
+                 *
+                 * @par Pre-open
+                 * Resolves with @c Error::NotOpen when the owning
+                 * @ref MediaIO is not open or is closing.
+                 *
+                 * @par Backend support
+                 * Default backend implementation returns
+                 * @c Error::NotSupported — only backends that can
+                 * use an external clock as a pacing reference (NDI
+                 * sender, RTP sender) accept the swap.  A null
+                 * @p clock asks the backend to restore its default
+                 * behavior; backends that don't support clock
+                 * swapping at all return @c Error::NotSupported for
+                 * both null and non-null inputs.
+                 *
+                 * @param clock The clock to bind, or null to restore
+                 *              the backend default.
+                 */
+                MediaIORequest setClock(const Clock::Ptr &clock);
 
                 /**
                  * @brief Returns the number of write commands in flight on the group.

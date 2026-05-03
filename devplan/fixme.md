@@ -299,12 +299,10 @@ However, standard RFC 2435 senders strip all markers and transmit only the entro
 ## AudioBuffer: via-float push path has multi-channel layout bugs
 
 **File:** `src/proav/audiobuffer.cpp:502`
-**FIXME:** The via-float push path in `AudioBuffer` calls `samplesToFloat` / `floatToSamples` treating all samples as a flat contiguous block, which is wrong for multi-channel audio when the source and destination formats differ in `isPlanar()`. The remap/gain/meter loops that follow also implicitly assume interleaved layout. Today this is benign because every live caller hits the same-format fast path above it (no conversion needed), so the bug never triggers. However, if a caller ever pushes multi-channel audio in a different format, the output will be garbled in the same way the NDI send-side pitch bug was.
+**FIXED** (2026-05-02): `AudioFormat::convertTo` gained a channel-aware planar↔interleaved byte-transpose fastpath (`layoutOnlyDiffer` + `byteTransposeLayout<SrcPlanar>`). All `AudioBuffer::pushLocked` paths now route through `AudioFormat::convertTo(dst, out, in, samplesPerChannel, channels, scratch)`. The remap/gain/meter loops operate on the post-transpose interleaved buffer, resolving the layout-assumption bug for multi-channel planar inputs. Unit tests for planar push (float, S16, cross-format, ring wrap, with gain, with remap) added to `tests/unit/audiobuffer.cpp`.
 
-Suggested fix: route the via-float conversion through `AudioFormat::convertTo` (the new channel-aware overload) and walk the subsequent remap/gain/meter steps in the declared layout rather than assuming interleaved.
-
-- [ ] Identify all callers that can reach the via-float push path with non-trivial channel counts.
-- [ ] Route via-float conversion through `AudioFormat::convertTo(dst, out, in, samplesPerChannel, channels, scratch)`.
-- [ ] Audit the remap/gain/meter loop in the same function — fix to walk in declared layout order.
-- [ ] Add a unit test for `AudioBuffer` that pushes multi-channel planar audio through a format-converting push to catch regression.
+- [x] Identify all callers that can reach the via-float push path with non-trivial channel counts.
+- [x] Route via-float conversion through `AudioFormat::convertTo(dst, out, in, samplesPerChannel, channels, scratch)`.
+- [x] Audit the remap/gain/meter loop in the same function — fix to walk in declared layout order.
+- [x] Add a unit test for `AudioBuffer` that pushes multi-channel planar audio through a format-converting push to catch regression.
 

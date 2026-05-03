@@ -12,10 +12,14 @@
 #include <doctest/doctest.h>
 
 #include <chrono>
+#include <cstring>
 #include <thread>
+#include <vector>
 
+#include <promeki/audiobuffer.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audioformat.h>
+#include <promeki/audiomarker.h>
 #include <promeki/buffer.h>
 #include <promeki/clockdomain.h>
 #include <promeki/enums.h>
@@ -35,11 +39,43 @@
 #include <promeki/ndiclock.h>
 #include <promeki/ndidiscovery.h>
 #include <promeki/ndilib.h>
+#include <promeki/ndimediaio.h>
 #include <promeki/pcmaudiopayload.h>
 #include <promeki/pixelformat.h>
 #include <promeki/result.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/url.h>
+
+PROMEKI_NAMESPACE_BEGIN
+
+/**
+ * @brief Test-only friend of @ref NdiMediaIO.
+ *
+ * Exposes the audio-ingest path so unit tests can drive synthetic
+ * NDI audio frames into the ring without spinning up the NDI SDK
+ * (the live SDK requires network discovery + a sender).  Only used
+ * by @c tests/unit/ndimediaio.cpp.
+ */
+struct NdiMediaIOTestAccess {
+                static void ingest(NdiMediaIO &io, int64_t timestampTicks, size_t samples, size_t channels,
+                                   float rate, const uint8_t *planar, size_t channelStrideBytes) {
+                        io.ingestNdiAudio(timestampTicks, samples, channels, rate, planar, channelStrideBytes);
+                }
+                static int64_t firstSampleTicks(const NdiMediaIO &io) { return io._audioFirstSampleTicks; }
+                static int64_t nextSampleTicks(const NdiMediaIO &io) { return io._audioNextSampleTicks; }
+                static const AudioMarkerList &markers(const NdiMediaIO &io) {
+                        return io._audioMarkersSinceDrain;
+                }
+                static int64_t silenceSamples(const NdiMediaIO &io) {
+                        return io._audioSilenceSamples.load(std::memory_order_relaxed);
+                }
+                static int64_t gapEvents(const NdiMediaIO &io) {
+                        return io._audioGapEvents.load(std::memory_order_relaxed);
+                }
+                static size_t  available(NdiMediaIO &io) { return io._audioRing.available(); }
+};
+
+PROMEKI_NAMESPACE_END
 
 using namespace promeki;
 
@@ -479,6 +515,248 @@ TEST_CASE("NdiMediaIO: rejects unsupported pixel formats with FormatMismatch at 
         // but exercises the error-path teardown.
         io->close().wait();
         delete io;
+}
+
+// ============================================================================
+// Audio ingest / gap-fill / PTS tracking
+//
+// These tests exercise NdiMediaIO::ingestNdiAudio directly via the
+// NdiMediaIOTestAccess friend struct, bypassing the live SDK.  They
+// verify the timeline tracking that drives the receiver's audio PTS
+// and the @ref AudioMarkerList that flags synthesized silence to
+// downstream stages.  Each test pushes synthetic planar-float
+// "audio" with a known sender-anchored timestamp and inspects the
+// resulting state.
+// ============================================================================
+
+namespace {
+
+        // NDI ticks are 100 ns; one second is 1e7 ticks.
+        constexpr int64_t kTicksPerSecond = 10'000'000;
+
+        // Build a tightly-packed planar float buffer with @p samples
+        // samples and @p channels channels.  Every sample is a
+        // distinct value for content checks downstream of the ring.
+        std::vector<float> makePlanarRamp(size_t samples, size_t channels, float seed) {
+                std::vector<float> buf(samples * channels, 0.0f);
+                for (size_t c = 0; c < channels; ++c) {
+                        for (size_t s = 0; s < samples; ++s) {
+                                buf[c * samples + s] = seed + static_cast<float>(c) * 100.0f +
+                                                       static_cast<float>(s);
+                        }
+                }
+                return buf;
+        }
+
+        const uint8_t *bytes(const std::vector<float> &v) {
+                return reinterpret_cast<const uint8_t *>(v.data());
+        }
+
+} // namespace
+
+TEST_CASE("NdiMediaIO: ingest first audio frame anchors the timeline") {
+        NdiMediaIO  io;
+        const float rate     = 48000.0f;
+        const size_t channels = 2;
+        const size_t samples  = 480;
+        auto         buf      = makePlanarRamp(samples, channels, 0.0f);
+        const int64_t ts      = 100 * kTicksPerSecond; // arbitrary anchor
+
+        NdiMediaIOTestAccess::ingest(io, ts, samples, channels, rate, bytes(buf),
+                                     samples * sizeof(float));
+
+        CHECK(NdiMediaIOTestAccess::firstSampleTicks(io) == ts);
+        // Next sample = ts + samples * (1e7 / rate) = ts + 100000 ticks.
+        CHECK(NdiMediaIOTestAccess::nextSampleTicks(io) == ts + 100000);
+        CHECK(NdiMediaIOTestAccess::markers(io).isEmpty());
+        CHECK(NdiMediaIOTestAccess::silenceSamples(io) == 0);
+        CHECK(NdiMediaIOTestAccess::available(io) == samples);
+}
+
+TEST_CASE("NdiMediaIO: contiguous frames coalesce without inserting silence") {
+        NdiMediaIO    io;
+        const float   rate     = 48000.0f;
+        const size_t  channels = 2;
+        const size_t  samples  = 240;
+        const int64_t durTicks = 50000; // 240 samples at 48 kHz = 50000 ticks
+        const int64_t ts0      = 5 * kTicksPerSecond;
+
+        auto buf0 = makePlanarRamp(samples, channels, 0.0f);
+        auto buf1 = makePlanarRamp(samples, channels, 1000.0f);
+
+        NdiMediaIOTestAccess::ingest(io, ts0, samples, channels, rate, bytes(buf0),
+                                     samples * sizeof(float));
+        // Second frame's timestamp is exactly the expected next-sample
+        // anchor — no gap, no silence.
+        NdiMediaIOTestAccess::ingest(io, ts0 + durTicks, samples, channels, rate, bytes(buf1),
+                                     samples * sizeof(float));
+
+        CHECK(NdiMediaIOTestAccess::firstSampleTicks(io) == ts0);
+        CHECK(NdiMediaIOTestAccess::nextSampleTicks(io) == ts0 + 2 * durTicks);
+        CHECK(NdiMediaIOTestAccess::markers(io).isEmpty());
+        CHECK(NdiMediaIOTestAccess::silenceSamples(io) == 0);
+        CHECK(NdiMediaIOTestAccess::gapEvents(io) == 0);
+        CHECK(NdiMediaIOTestAccess::available(io) == 2 * samples);
+}
+
+TEST_CASE("NdiMediaIO: gap beyond jitter window inserts silence with marker") {
+        NdiMediaIO    io;
+        const float   rate     = 48000.0f;
+        const size_t  channels = 2;
+        const size_t  samples  = 240;
+        const int64_t durTicks = 50000; // 240 samples
+        const int64_t ts0      = 5 * kTicksPerSecond;
+
+        auto buf0 = makePlanarRamp(samples, channels, 0.0f);
+        auto buf1 = makePlanarRamp(samples, channels, 1000.0f);
+
+        NdiMediaIOTestAccess::ingest(io, ts0, samples, channels, rate, bytes(buf0),
+                                     samples * sizeof(float));
+        // Skip 500 samples worth of timeline (~10.42 ms — well above
+        // the 5 ms jitter tolerance, so it counts as a real gap).
+        const int64_t gapSamples = 500;
+        const int64_t gapTicks   = static_cast<int64_t>(static_cast<double>(gapSamples) *
+                                                        kTicksPerSecond / rate);
+        const int64_t ts1        = ts0 + durTicks + gapTicks;
+        NdiMediaIOTestAccess::ingest(io, ts1, samples, channels, rate, bytes(buf1),
+                                     samples * sizeof(float));
+
+        // Ring now holds: [frame0 (240) + silence (~500) + frame1 (240)].
+        CHECK(NdiMediaIOTestAccess::available(io) >= 2 * samples + 499);
+        CHECK(NdiMediaIOTestAccess::available(io) <= 2 * samples + 501);
+
+        // Marker list has exactly one SilenceFill at offset = 240.
+        const AudioMarkerList &mk = NdiMediaIOTestAccess::markers(io);
+        REQUIRE(mk.size() == 1);
+        CHECK(mk.entries()[0].offset() == static_cast<int64_t>(samples));
+        CHECK(mk.entries()[0].length() >= 499);
+        CHECK(mk.entries()[0].length() <= 501);
+        CHECK(mk.entries()[0].type() == AudioMarkerType::SilenceFill);
+
+        // First-sample anchor unchanged (still pointing at frame 0).
+        CHECK(NdiMediaIOTestAccess::firstSampleTicks(io) == ts0);
+        CHECK(NdiMediaIOTestAccess::silenceSamples(io) >= 499);
+        CHECK(NdiMediaIOTestAccess::gapEvents(io) == 1);
+}
+
+TEST_CASE("NdiMediaIO: gap larger than 1 second triggers re-anchor") {
+        NdiMediaIO    io;
+        const float   rate     = 48000.0f;
+        const size_t  channels = 2;
+        const size_t  samples  = 240;
+        const int64_t durTicks = 50000;
+        const int64_t ts0      = 5 * kTicksPerSecond;
+
+        auto buf0 = makePlanarRamp(samples, channels, 0.0f);
+        auto buf1 = makePlanarRamp(samples, channels, 1000.0f);
+
+        NdiMediaIOTestAccess::ingest(io, ts0, samples, channels, rate, bytes(buf0),
+                                     samples * sizeof(float));
+        // Jump >1 s into the future — this should clear the buffered
+        // samples and re-anchor on the new frame.
+        const int64_t ts1 = ts0 + durTicks + 2 * kTicksPerSecond;
+        NdiMediaIOTestAccess::ingest(io, ts1, samples, channels, rate, bytes(buf1),
+                                     samples * sizeof(float));
+
+        // Re-anchored: only the new frame's samples are in the ring,
+        // and PTS is the new frame's timestamp.
+        CHECK(NdiMediaIOTestAccess::available(io) == samples);
+        CHECK(NdiMediaIOTestAccess::firstSampleTicks(io) == ts1);
+        CHECK(NdiMediaIOTestAccess::nextSampleTicks(io) == ts1 + durTicks);
+        CHECK(NdiMediaIOTestAccess::markers(io).isEmpty());
+        // Silence counter does not advance on a re-anchor — we
+        // discard rather than bridge.
+        CHECK(NdiMediaIOTestAccess::silenceSamples(io) == 0);
+}
+
+TEST_CASE("NdiMediaIO: sub-millisecond timestamp jitter does not bridge or warn") {
+        // Sender-side timestamp jitter on a sample-locked audio
+        // clock should be absorbed silently — no silence injection,
+        // no marker, no warning, and the next-sample anchor keeps
+        // tracking the prior prediction (not the noisy timestamp).
+        NdiMediaIO    io;
+        const float   rate     = 48000.0f;
+        const size_t  channels = 2;
+        const size_t  samples  = 240;
+        const int64_t durTicks = 50000;
+        const int64_t ts0      = 5 * kTicksPerSecond;
+
+        auto buf0 = makePlanarRamp(samples, channels, 0.0f);
+        auto buf1 = makePlanarRamp(samples, channels, 1000.0f);
+        auto buf2 = makePlanarRamp(samples, channels, 2000.0f);
+
+        NdiMediaIOTestAccess::ingest(io, ts0, samples, channels, rate, bytes(buf0),
+                                     samples * sizeof(float));
+        // Frame 1: 2 ms positive jitter (well inside the 5 ms tolerance).
+        const int64_t ts1 = ts0 + durTicks + 20'000;
+        NdiMediaIOTestAccess::ingest(io, ts1, samples, channels, rate, bytes(buf1),
+                                     samples * sizeof(float));
+        // Frame 2: 2 ms negative jitter (still inside tolerance).
+        const int64_t ts2 = ts1 + durTicks - 20'000;
+        NdiMediaIOTestAccess::ingest(io, ts2, samples, channels, rate, bytes(buf2),
+                                     samples * sizeof(float));
+
+        CHECK(NdiMediaIOTestAccess::available(io) == 3 * samples);
+        CHECK(NdiMediaIOTestAccess::markers(io).isEmpty());
+        CHECK(NdiMediaIOTestAccess::silenceSamples(io) == 0);
+        CHECK(NdiMediaIOTestAccess::gapEvents(io) == 0);
+        // Anchor advances by exactly samples each frame, ignoring
+        // the noisy ts1 / ts2 values.
+        CHECK(NdiMediaIOTestAccess::nextSampleTicks(io) == ts0 + 3 * durTicks);
+}
+
+TEST_CASE("NdiMediaIO: timestamp regression beyond jitter window is treated as continuous") {
+        NdiMediaIO    io;
+        const float   rate     = 48000.0f;
+        const size_t  channels = 2;
+        const size_t  samples  = 240;
+        const int64_t durTicks = 50000;
+        const int64_t ts0      = 5 * kTicksPerSecond;
+
+        auto buf0 = makePlanarRamp(samples, channels, 0.0f);
+        auto buf1 = makePlanarRamp(samples, channels, 1000.0f);
+
+        NdiMediaIOTestAccess::ingest(io, ts0, samples, channels, rate, bytes(buf0),
+                                     samples * sizeof(float));
+        // 10 ms backward jump — well outside the 5 ms jitter window.
+        const int64_t ts1 = ts0 + durTicks - 100'000;
+        NdiMediaIOTestAccess::ingest(io, ts1, samples, channels, rate, bytes(buf1),
+                                     samples * sizeof(float));
+
+        CHECK(NdiMediaIOTestAccess::available(io) == 2 * samples);
+        CHECK(NdiMediaIOTestAccess::markers(io).isEmpty());
+        CHECK(NdiMediaIOTestAccess::silenceSamples(io) == 0);
+        CHECK(NdiMediaIOTestAccess::gapEvents(io) == 0);
+        // Real regression re-anchors on the regressed timestamp.
+        CHECK(NdiMediaIOTestAccess::nextSampleTicks(io) == ts1 + durTicks);
+}
+
+TEST_CASE("NdiMediaIO: undefined timestamp skips gap detection") {
+        NdiMediaIO    io;
+        const float   rate     = 48000.0f;
+        const size_t  channels = 2;
+        const size_t  samples  = 240;
+        const int64_t durTicks = 50000;
+        const int64_t ts0      = 5 * kTicksPerSecond;
+
+        auto buf0 = makePlanarRamp(samples, channels, 0.0f);
+        auto buf1 = makePlanarRamp(samples, channels, 1000.0f);
+
+        NdiMediaIOTestAccess::ingest(io, ts0, samples, channels, rate, bytes(buf0),
+                                     samples * sizeof(float));
+        // SDK sentinel for "no timestamp" — the public NDI header
+        // defines NDIlib_recv_timestamp_undefined as -1.  Pass the
+        // raw value here so the test does not depend on the SDK
+        // header.
+        NdiMediaIOTestAccess::ingest(io, -1, samples, channels, rate, bytes(buf1),
+                                     samples * sizeof(float));
+
+        CHECK(NdiMediaIOTestAccess::available(io) == 2 * samples);
+        CHECK(NdiMediaIOTestAccess::markers(io).isEmpty());
+        CHECK(NdiMediaIOTestAccess::silenceSamples(io) == 0);
+        // Next-sample anchor unchanged from frame 0 — undefined
+        // timestamps don't move it.
+        CHECK(NdiMediaIOTestAccess::nextSampleTicks(io) == ts0 + durTicks);
 }
 
 #endif // PROMEKI_ENABLE_NDI

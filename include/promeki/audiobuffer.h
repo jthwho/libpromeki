@@ -415,6 +415,28 @@ class AudioBuffer {
                 Error push(const void *data, size_t samples, const AudioDesc &srcFormat);
 
                 /**
+                 * @brief Pushes @p samples samples of silence into the buffer.
+                 *
+                 * Silence means the format-correct zero-amplitude
+                 * representation, not zero bits — so signed integer
+                 * formats get @c 0, floats get @c 0.0f, and unsigned
+                 * integer formats get the midpoint (e.g. @c 0x80 for
+                 * @c PCMI_U8).  The samples are written directly into
+                 * the ring in the storage format; remap, gain, and meter
+                 * are not applied (silence in produces silence out
+                 * regardless of those settings).
+                 *
+                 * Wakes any thread blocked in @c popWait().
+                 *
+                 * @param samples Sample count to insert.
+                 * @return @c Error::Ok, @c Error::NoSpace if the ring
+                 *         can't hold @p samples, or
+                 *         @c Error::InvalidArgument if no storage format
+                 *         has been set.
+                 */
+                Error pushSilence(size_t samples);
+
+                /**
                  * @brief Pops up to @p samples samples into a raw buffer.
                  *
                  * Non-blocking: returns immediately with whatever is
@@ -462,6 +484,7 @@ class AudioBuffer {
 
                 // Lock-free internals called with _mutex already held.
                 Error  pushLocked(const void *data, size_t samples, const AudioDesc &srcFormat);
+                Error  pushSilenceLocked(size_t samples);
                 size_t popLocked(void *dst, size_t samples);
 
                 mutable Mutex _mutex;

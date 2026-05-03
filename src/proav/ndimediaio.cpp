@@ -262,6 +262,23 @@ Error NdiMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         return Error::Ok;
 }
 
+Error NdiMediaIO::executeCmd(MediaIOCommandSetClock &cmd) {
+        // Reject in source mode — the receive-side clock is driven by
+        // the upstream sender's per-frame timestamps and the user
+        // cannot meaningfully replace it.
+        if (!_sinkMode) return Error::NotSupported;
+
+        // Bind both gates to the same clock; setClock automatically
+        // re-arms each so the next sendVideo / sendAudio anchors
+        // against the new clock's now() rather than carrying a stale
+        // anchor forward.  A null cmd.clock unbinds — both gates
+        // become no-ops and the SDK's internal clock_video /
+        // clock_audio takes over.
+        _videoGate.setClock(cmd.clock);
+        _audioGate.setClock(cmd.clock);
+        return Error::Ok;
+}
+
 Error NdiMediaIO::executeCmd(MediaIOCommandStats &cmd) {
         cmd.stats.set(StatsFramesSent, _framesSent.load(std::memory_order_relaxed));
         cmd.stats.set(StatsAudioFramesSent, _audioFramesSent.load(std::memory_order_relaxed));
@@ -270,6 +287,8 @@ Error NdiMediaIO::executeCmd(MediaIOCommandStats &cmd) {
         cmd.stats.set(StatsAudioFramesReceived, _audioFramesReceived.load(std::memory_order_relaxed));
         cmd.stats.set(StatsMetadataReceived, _metadataReceived.load(std::memory_order_relaxed));
         cmd.stats.set(StatsDroppedReceives, _droppedReceives.load(std::memory_order_relaxed));
+        cmd.stats.set(StatsAudioSilenceFilled, _audioSilenceSamples.load(std::memory_order_relaxed));
+        cmd.stats.set(StatsAudioGapEvents, _audioGapEvents.load(std::memory_order_relaxed));
         cmd.stats.set(MediaIOStats::QueueDepth, static_cast<int64_t>(_videoQueue.size()));
         cmd.stats.set(MediaIOStats::QueueCapacity, static_cast<int64_t>(VideoQueueDepth));
         return Error::Ok;
@@ -316,18 +335,31 @@ Error NdiMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                                 BufferView view(pcm, 0, usedBytes);
                                 auto       audioPayload = PcmAudioPayload::Ptr::create(nativeDesc, got, view);
                                 // PTS = sender-anchored time of the
-                                // most-recent NDI audio frame whose
-                                // samples are in this drain.  See the
-                                // video case for the PTS / CaptureTime
-                                // distinction.
-                                int64_t        audioTicks = _lastAudioTimestampTicks.load(std::memory_order_acquire);
-                                MediaTimeStamp audioPts   = ndiTimestampToPts(audioTicks);
+                                // FIRST sample in this drain — the
+                                // canonical anchor for the payload.
+                                // _audioFirstSampleTicks is set by
+                                // ingestNdiAudio when the ring transitions
+                                // from empty to non-empty (after any
+                                // gap-bridging silence) so it correctly
+                                // reflects coalesced multi-frame drains.
+                                MediaTimeStamp audioPts = ndiTimestampToPts(_audioFirstSampleTicks);
                                 if (audioPts.isValid()) {
                                         audioPayload.modify()->setPts(audioPts);
                                         audioPayload.modify()->setDts(audioPts);
                                 }
                                 audioPayload.modify()->metadata().set(
                                         Metadata::CaptureTime, localArrivalCaptureTime());
+                                // Stamp the silence-fill / discontinuity
+                                // markers accumulated for this drain
+                                // before clearing the accumulator.
+                                if (!_audioMarkersSinceDrain.isEmpty()) {
+                                        audioPayload.modify()->metadata().set(
+                                                Metadata::AudioMarkers, _audioMarkersSinceDrain);
+                                }
+                                _audioMarkersSinceDrain.clear();
+                                // Ring is now empty — the next ingest
+                                // sets _audioFirstSampleTicks afresh.
+                                _audioFirstSampleTicks = 0;
                                 frame.modify()->addPayload(std::move(audioPayload));
                         }
                 }
@@ -533,6 +565,35 @@ Error NdiMediaIO::sendVideo(const UncompressedVideoPayload &vp) {
 
         const NDIlib_v6 *api = NdiLib::instance().api();
         if (!api || !api->send_send_video_v2) return Error::LibraryFailure;
+        // Pace against the external clock (if any) immediately before
+        // handing the buffer to the SDK so the deadline reflects when
+        // bytes actually leave us.  No-op when no clock is bound.
+        // First call arms the gate without sleeping, so frame 0 fires
+        // immediately.
+        if (_videoGate.hasClock() && _frameRate.isValid()) {
+                _videoGate.setPeriod(_frameRate.frameDuration());
+        }
+        PacingResult pr = _videoGate.wait();
+        if (pr.error.isError()) {
+                promekiErr("NdiMediaIO: video pacing clock failure: %s", pr.error.name().cstr());
+        }
+        switch (pr.verdict) {
+                case PacingVerdict::Skip:
+                        // We're behind by >= one frame — drop this
+                        // frame to bound the lag rather than emit
+                        // stale content.  Audio cross-fade / SRC is a
+                        // backend follow-up; video has no analog so a
+                        // drop is the only option.
+                        noteFrameDropped(portGroup(0));
+                        return Error::Ok;
+                case PacingVerdict::Reanchor:
+                        promekiWarn("NdiMediaIO: video pacing re-anchored after %s lag",
+                                    pr.slack.toString().cstr());
+                        break;
+                case PacingVerdict::OnTime:
+                case PacingVerdict::Late:
+                        break;
+        }
         api->send_send_video_v2(_send, &f);
 
         _framesSent.fetch_add(1, std::memory_order_relaxed);
@@ -597,6 +658,42 @@ Error NdiMediaIO::sendAudio(const PcmAudioPayload &ap) {
 
         const NDIlib_v6 *api = NdiLib::instance().api();
         if (!api || !api->send_send_audio_v3) return Error::LibraryFailure;
+        // Pace against the external clock for the audio block's
+        // duration (samples / sampleRate).  The audio gate's "period"
+        // is set per-call here because real audio block sizes vary
+        // — the underlying gate uses the supplied advance for both
+        // accumulation and (when stale anchor) initial threshold
+        // sizing.  v1 audio response to Skip is the same as video
+        // (drop); cross-fade / SRC catch-up is a backend follow-up
+        // that consumes the verdict's @c skippedTicks.
+        const Duration audioAdvance = (_audioSampleRate > 0.0f && samples > 0)
+                ? Duration::fromNanoseconds(static_cast<int64_t>(
+                          static_cast<double>(samples) * 1.0e9 /
+                          static_cast<double>(_audioSampleRate)))
+                : Duration();
+        if (_audioGate.hasClock() && !audioAdvance.isZero() && _audioGate.period().isZero()) {
+                // Seed the period with the first observed block size
+                // so skip / reanchor thresholds default to something
+                // meaningful (they default to 0 with no period set,
+                // which would disable Skip / Reanchor).
+                _audioGate.setPeriod(audioAdvance);
+        }
+        PacingResult ar = _audioGate.wait(audioAdvance);
+        if (ar.error.isError()) {
+                promekiErr("NdiMediaIO: audio pacing clock failure: %s", ar.error.name().cstr());
+        }
+        switch (ar.verdict) {
+                case PacingVerdict::Skip:
+                        noteFrameDropped(portGroup(0));
+                        return Error::Ok;
+                case PacingVerdict::Reanchor:
+                        promekiWarn("NdiMediaIO: audio pacing re-anchored after %s lag",
+                                    ar.slack.toString().cstr());
+                        break;
+                case PacingVerdict::OnTime:
+                case PacingVerdict::Late:
+                        break;
+        }
         api->send_send_audio_v3(_send, &f);
 
         _audioFramesSent.fetch_add(1, std::memory_order_relaxed);
@@ -784,6 +881,192 @@ void NdiMediaIO::closeSource() {
                 auto popResult = _videoQueue.tryPop();
                 if (popResult.second().isError()) break;
         }
+        // Reset the per-stream audio timeline state so the next open
+        // starts from a clean slate.  No mutex needed — the capture
+        // thread is already joined.
+        _audioFirstSampleTicks = 0;
+        _audioNextSampleTicks  = 0;
+        _audioMarkersSinceDrain.clear();
+        _audioSilenceSamples.store(0, std::memory_order_relaxed);
+        _audioGapEvents.store(0, std::memory_order_relaxed);
+        _audioRing.clear();
+}
+
+void NdiMediaIO::ingestNdiAudio(int64_t timestampTicks, size_t samples, size_t channels, float rate,
+                                const uint8_t *planarFloatData, size_t channelStrideBytes) {
+        if (samples == 0 || channels == 0 || rate <= 0.0f || planarFloatData == nullptr) return;
+
+        // Lazy-rebuild the ring on first use or on shape change.
+        AudioDesc ringDesc(AudioFormat(AudioFormat::PCMI_Float32LE), rate,
+                           static_cast<unsigned int>(channels));
+        AudioDesc pushDesc(AudioFormat(AudioFormat::PCMP_Float32LE), rate,
+                           static_cast<unsigned int>(channels));
+
+        Mutex::Locker lk(_audioMutex);
+        if (!_audioRing.format().isValid() ||
+            _audioRing.format().sampleRate() != ringDesc.sampleRate() ||
+            _audioRing.format().channels() != ringDesc.channels()) {
+                // Reserve one second of headroom — well beyond the
+                // inter-Read drain interval at any reasonable video
+                // frame rate, while small enough to amount to ~ 384 KiB
+                // at 48 kHz stereo float.  Shape-change clears the
+                // timeline anchor so the next push relatches.
+                _audioRing             = AudioBuffer(ringDesc, static_cast<size_t>(rate));
+                _audioFirstSampleTicks = 0;
+                _audioNextSampleTicks  = 0;
+                _audioMarkersSinceDrain.clear();
+        }
+
+        // Gap detection.  NDI ticks are 100 ns; convert sample counts
+        // and gap durations to/from ticks via the source rate.
+        constexpr int64_t kTicksPerSecond = 10'000'000;
+        constexpr int64_t kMaxGapTicks    = kTicksPerSecond; // 1 s — beyond this we treat the
+                                                              // stream as restarted instead of
+                                                              // bridging.
+        // Treat |timestamp - prediction| <= kJitterTolTicks as
+        // sender-side timestamp jitter rather than a real timeline
+        // event.  Senders typically run their audio off a
+        // sample-locked clock but stamp frames with a coarser system
+        // clock, producing per-frame deviations of a few hundred
+        // microseconds to a couple of milliseconds in either
+        // direction.  Without this window every NDI source produces
+        // a steady stream of "regressed by 0.x ms" warnings (and we
+        // would also be inserting a few dozen samples of phantom
+        // silence on every positive jitter, which is audibly worse
+        // than ignoring the timestamp noise).  5 ms ≈ 240 samples at
+        // 48 kHz — well below the threshold of audible drift, well
+        // above any realistic timestamp quantization.
+        constexpr int64_t kJitterTolTicks = 50'000;
+        const double      ticksPerSample  = static_cast<double>(kTicksPerSecond) / static_cast<double>(rate);
+        const int64_t     frameDurTicks   = static_cast<int64_t>(static_cast<double>(samples) * ticksPerSample);
+
+        const bool haveSenderTs    = (timestampTicks > 0);
+
+        // When the deviation falls inside the jitter window we
+        // ignore the new timestamp altogether and keep predicting
+        // the next-sample anchor from the running sample count.
+        // Real gaps and real backwards jumps still re-anchor on the
+        // observed timestamp.
+        bool       insideJitterWindow = false;
+
+        // Bridge any gap that opened between the previous frame's
+        // expected next sample and this frame's first sample.
+        if (haveSenderTs && _audioNextSampleTicks > 0) {
+                const int64_t gapTicks = timestampTicks - _audioNextSampleTicks;
+                const int64_t absGap   = gapTicks < 0 ? -gapTicks : gapTicks;
+                if (absGap <= kJitterTolTicks) {
+                        // Sub-jitter — silently absorb.  No silence
+                        // injection, no warning, no timeline shift
+                        // beyond the sample count itself.
+                        insideJitterWindow = true;
+                } else if (gapTicks > 0) {
+                        if (gapTicks > kMaxGapTicks) {
+                                // Treat this as a sender restart —
+                                // the gap is too large to bridge with
+                                // silence without injecting an
+                                // audible run.  Drop pending samples
+                                // and re-anchor on the new frame.
+                                promekiWarn("NdiMediaIO: audio timeline gap %.3f s exceeds 1 s — "
+                                            "discarding %zu buffered samples and re-anchoring",
+                                            static_cast<double>(gapTicks) / kTicksPerSecond,
+                                            _audioRing.available());
+                                _audioRing.clear();
+                                _audioFirstSampleTicks = 0;
+                                _audioNextSampleTicks  = 0;
+                                _audioMarkersSinceDrain.clear();
+                        } else {
+                                // Round down to whole samples — we
+                                // can only fill discrete sample
+                                // counts, and a sub-sample remainder
+                                // doesn't accumulate (it gets
+                                // absorbed into _audioNextSampleTicks
+                                // for the next frame's gap calc).
+                                const int64_t gapSamples =
+                                        static_cast<int64_t>(static_cast<double>(gapTicks) / ticksPerSample);
+                                if (gapSamples > 0) {
+                                        const int64_t markerOffset =
+                                                static_cast<int64_t>(_audioRing.available());
+                                        Error se = _audioRing.pushSilence(static_cast<size_t>(gapSamples));
+                                        if (se.isError()) {
+                                                promekiWarn("NdiMediaIO: audio gap silence-fill (%lld samples) "
+                                                            "failed (%s) — gap left unbridged",
+                                                            static_cast<long long>(gapSamples), se.name().cstr());
+                                        } else {
+                                                _audioMarkersSinceDrain.append(
+                                                        markerOffset, gapSamples, AudioMarkerType::SilenceFill);
+                                                _audioSilenceSamples.fetch_add(gapSamples,
+                                                                               std::memory_order_relaxed);
+                                                _audioGapEvents.fetch_add(1, std::memory_order_relaxed);
+                                                if (_audioFirstSampleTicks == 0) {
+                                                        // Ring was empty — the
+                                                        // synthesized silence is
+                                                        // the first sample of the
+                                                        // next drain, so anchor
+                                                        // PTS at the gap start.
+                                                        _audioFirstSampleTicks = _audioNextSampleTicks;
+                                                }
+                                                _audioNextSampleTicks += gapSamples *
+                                                                         static_cast<int64_t>(ticksPerSample);
+                                        }
+                                }
+                        }
+                } else {
+                        // Real backwards jump (beyond jitter
+                        // tolerance).  Could be sender restart with
+                        // a smaller-than-1s rewind, packet reorder,
+                        // or clock-source change — any way we don't
+                        // want to insert negative silence.  Push the
+                        // samples and let _audioNextSampleTicks
+                        // re-anchor below.
+                        promekiWarn("NdiMediaIO: audio timestamp regressed by %.3f ms — "
+                                    "treating as continuous",
+                                    static_cast<double>(absGap) / 10'000.0);
+                }
+        }
+
+        // Push the real audio samples.  Tightly-packed planar input
+        // goes directly to the ring; padded planar is coalesced to a
+        // scratch buffer first so the planar fast-path can take it.
+        const size_t tightStride = samples * sizeof(float);
+        Error        pe;
+        if (channelStrideBytes == tightStride) {
+                pe = _audioRing.push(planarFloatData, samples, pushDesc);
+        } else {
+                Buffer packed(channels * tightStride);
+                if (!packed.isValid()) {
+                        pe = Error::NoMem;
+                } else {
+                        uint8_t *dst = static_cast<uint8_t *>(packed.data());
+                        for (size_t c = 0; c < channels; ++c) {
+                                std::memcpy(dst + c * tightStride,
+                                            planarFloatData + c * channelStrideBytes, tightStride);
+                        }
+                        pe = _audioRing.push(packed.data(), samples, pushDesc);
+                }
+        }
+        if (pe.isError()) {
+                promekiWarn("NdiMediaIO: audio ring push failed (%s) — %zu samples dropped",
+                            pe.name().cstr(), samples);
+                return;
+        }
+
+        // Update the timeline anchors.  When the ring was empty
+        // before this push, the first real sample becomes the PTS
+        // anchor.  For the next-sample anchor, we either advance
+        // the running prediction (jitter case — keep the prior
+        // anchor as the source of truth, the new timestamp is
+        // assumed noisy) or re-anchor on the new timestamp (real
+        // gap / regression / first frame).
+        if (_audioFirstSampleTicks == 0 && haveSenderTs) {
+                _audioFirstSampleTicks = timestampTicks;
+        }
+        if (haveSenderTs) {
+                if (insideJitterWindow) {
+                        _audioNextSampleTicks += frameDurTicks;
+                } else {
+                        _audioNextSampleTicks = timestampTicks + frameDurTicks;
+                }
+        }
 }
 
 void NdiMediaIO::captureLoop() {
@@ -903,68 +1186,19 @@ void NdiMediaIO::captureLoop() {
                                 break;
                         }
                         case NDIlib_frame_type_audio: {
-                                // The SDK delivers planar 32-bit floats
-                                // with @c channel_stride_in_bytes between
-                                // channel planes.  We interleave on the
-                                // way into the ring so the rest of the
-                                // pipeline (SDL audio out, FrameSync,
-                                // PcmAudioPayload::convert) can stay on
-                                // the interleaved native-float fast
-                                // path — `PcmAudioPayload::convert`
-                                // currently can't translate planar →
-                                // interleaved, so a planar payload
-                                // round-trips as scrambled audio.
-                                AudioDesc adesc(AudioFormat(AudioFormat::PCMI_Float32LE),
-                                                static_cast<float>(aframe.sample_rate),
-                                                static_cast<unsigned int>(aframe.no_channels));
-                                {
-                                        Mutex::Locker lk(_audioMutex);
-                                        if (!_audioRing.format().isValid() ||
-                                            _audioRing.format().sampleRate() != adesc.sampleRate() ||
-                                            _audioRing.format().channels()   != adesc.channels()) {
-                                                // Reserve one second of headroom — well
-                                                // beyond the inter-Read drain interval at
-                                                // any reasonable video frame rate, while
-                                                // small enough to amount to ~ 384 KiB at
-                                                // 48 kHz stereo float.  The default
-                                                // AudioBuffer ctor leaves capacity at 0,
-                                                // which would silently NoSpace every push.
-                                                _audioRing = AudioBuffer(
-                                                        adesc,
-                                                        static_cast<size_t>(adesc.sampleRate()));
-                                        }
-                                        const size_t samples  = static_cast<size_t>(aframe.no_samples);
-                                        const size_t channels = static_cast<size_t>(aframe.no_channels);
-                                        const size_t totalBytes = samples * channels * sizeof(float);
-                                        Buffer::Ptr  packed = Buffer::Ptr::create(totalBytes);
-                                        float       *dst    = static_cast<float *>(packed.modify()->data());
-                                        const uint8_t *src  = aframe.p_data;
-                                        // Walk one sample at a time across
-                                        // the input's channel-strided
-                                        // planes, writing the interleaved
-                                        // L,R,L,R,... layout SDL expects.
-                                        for (size_t s = 0; s < samples; ++s) {
-                                                for (size_t c = 0; c < channels; ++c) {
-                                                        const float *plane = reinterpret_cast<const float *>(
-                                                                src + c * aframe.channel_stride_in_bytes);
-                                                        dst[s * channels + c] = plane[s];
-                                                }
-                                        }
-                                        Error pe = _audioRing.push(dst, samples, adesc);
-                                        if (pe.isError()) {
-                                                promekiWarn("NdiMediaIO: audio ring push "
-                                                            "failed (%s) — %zu samples dropped",
-                                                            pe.name().cstr(), samples);
-                                        }
-                                }
-                                // Stash the per-frame NDI timestamp so
-                                // executeCmd(Read) can stamp the
-                                // dequeued audio payload with a
-                                // sender-anchored CaptureTime.
-                                if (aframe.timestamp != NDIlib_recv_timestamp_undefined) {
-                                        _lastAudioTimestampTicks.store(aframe.timestamp,
-                                                                       std::memory_order_release);
-                                }
+                                // Hand the per-frame metadata over to
+                                // ingestNdiAudio, which owns the gap
+                                // detection / silence-fill /
+                                // marker-list bookkeeping.  The SDK's
+                                // @c -1 (NDIlib_recv_timestamp_undefined)
+                                // is forwarded as-is — ingestNdiAudio
+                                // skips gap detection on those frames.
+                                const size_t samples  = static_cast<size_t>(aframe.no_samples);
+                                const size_t channels = static_cast<size_t>(aframe.no_channels);
+                                const float  rate     = static_cast<float>(aframe.sample_rate);
+                                ingestNdiAudio(static_cast<int64_t>(aframe.timestamp), samples, channels, rate,
+                                               aframe.p_data,
+                                               static_cast<size_t>(aframe.channel_stride_in_bytes));
                                 _audioFramesReceived.fetch_add(1, std::memory_order_relaxed);
                                 api->recv_free_audio_v3(_recv, &aframe);
                                 break;

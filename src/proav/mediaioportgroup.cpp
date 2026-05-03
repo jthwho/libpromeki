@@ -52,6 +52,19 @@ void MediaIOPortGroup::setStep(int val) {
         _step = val;
 }
 
+MediaIORequest MediaIOPortGroup::setClock(const Clock::Ptr &clock) {
+        if (_mediaIO == nullptr) return MediaIORequest::resolved(Error::Invalid);
+        if (!_mediaIO->isOpen() || _mediaIO->isClosing()) return MediaIORequest::resolved(Error::NotOpen);
+
+        auto *cmdSet = new MediaIOCommandSetClock();
+        cmdSet->group = this;
+        cmdSet->clock = clock;
+        MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdSet);
+        MediaIORequest      req(cmd);
+        _mediaIO->submit(cmd);
+        return req;
+}
+
 MediaIORequest MediaIOPortGroup::seekToFrame(const FrameNumber &frameNumber, MediaIOSeekMode mode) {
         if (_mediaIO == nullptr) return MediaIORequest::resolved(Error::Invalid);
         if (!_mediaIO->isOpen() || _mediaIO->isClosing()) return MediaIORequest::resolved(Error::NotOpen);

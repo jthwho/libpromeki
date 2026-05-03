@@ -103,15 +103,22 @@ Error NullPacingMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                         return Error::InvalidArgument;
                 }
                 _period = _targetRate.frameDuration();
+                // Bind the gate to a fresh WallClock so tryAcquire
+                // enforces the rate against real wall time.  Future
+                // versions can wire MediaIOCommandSetClock to swap in
+                // an external pacing clock without touching this code.
+                _gate.setClock(Clock::Ptr::takeOwnership(new WallClock()));
+                _gate.setPeriod(_period);
         } else {
                 _period = Duration();
+                _gate.setClock(Clock::Ptr());
+                _gate.setPeriod(Duration());
         }
 
         _burnTimings = cfg.getAs<bool>(MediaConfig::NullPacingBurnTimings, false);
 
         _hasLastConsumed = false;
         _lastConsumed = TimeStamp();
-        _nextDeadline = TimeStamp();
         {
                 Mutex::Locker lk(_stateMutex);
                 _stats = NullPacingSnapshot{};
@@ -160,36 +167,13 @@ Error NullPacingMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         if (!cmd.frame.isValid()) return Error::InvalidArgument;
 
         const TimeStamp arrival = TimeStamp::now();
-        bool            consume = false;
-
-        if (_mode.value() == promeki::NullPacingMode::Free.value()) {
-                consume = true;
-        } else {
-                if (!_hasLastConsumed) {
-                        // First frame after open — anchor the
-                        // wallclock cadence on this arrival so the
-                        // sink starts producing immediately rather
-                        // than waiting one full period.  Subsequent
-                        // ticks march forward by _period from here.
-                        _nextDeadline = arrival + _period;
-                        consume = true;
-                } else if (arrival.value() >= _nextDeadline.value()) {
-                        consume = true;
-                        // Catch-up rule: if the arrival is well past
-                        // the deadline (e.g. the upstream was paused),
-                        // re-anchor on the arrival rather than letting
-                        // the deadline drift far enough to consume a
-                        // burst of subsequent frames without pacing.
-                        TimeStamp candidate = _nextDeadline + _period;
-                        if (candidate.value() <= arrival.value()) {
-                                _nextDeadline = arrival + _period;
-                        } else {
-                                _nextDeadline = candidate;
-                        }
-                } else {
-                        consume = false;
-                }
-        }
+        // Free mode = no clock bound to the gate; tryAcquire returns
+        // true unconditionally so every frame is consumed.
+        // Wallclock mode = WallClock + period; tryAcquire enforces the
+        // rate (true on or after the next deadline, false on early
+        // arrival).  Catch-up after a long stall is handled by the
+        // gate's reanchor threshold.
+        const bool consume = _gate.tryAcquire();
 
         // Drain stamp = the moment we decided what to do with the
         // frame, used for the per-frame in-sink latency.  Both

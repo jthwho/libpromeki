@@ -431,17 +431,23 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
         // Resampler path: rates differ (fixed conversion) or drift
         // correction is enabled (dynamic ratio adjustment).
         if (needsResampler(srcFormat)) {
-                // Convert input to native float, then resample.
+                // Convert input to interleaved native float, then resample.
+                // Channel-aware convertTo() handles the planar↔interleaved
+                // transpose for planar @p srcFormat; the resampler always
+                // wants interleaved float input.
                 const float *nativeData;
                 Buffer       nativeScratch;
                 if (srcFormat.isNative()) {
                         nativeData = static_cast<const float *>(data);
                 } else {
-                        size_t totalFloats = samples * srcFormat.channels();
+                        const AudioFormat nativeFloat(AudioFormat::NativeFloat);
+                        size_t            totalFloats = samples * srcFormat.channels();
                         nativeScratch = Buffer(totalFloats * sizeof(float));
                         if (!nativeScratch.isValid()) return Error::NoMem;
                         float *heapFloat = static_cast<float *>(nativeScratch.data());
-                        srcFormat.samplesToFloat(heapFloat, static_cast<const uint8_t *>(data), samples);
+                        Error  err = srcFormat.format().convertTo(nativeFloat, heapFloat, data, samples,
+                                                                  srcFormat.channels(), heapFloat);
+                        if (err.isError()) return err;
                         nativeData = heapFloat;
                 }
                 return resampleAndPush(nativeData, samples);
@@ -468,62 +474,95 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
                 return Error::Ok;
         }
 
-        // Fast path: a registered direct converter for the (src, dst)
-        // pair skips the via-float trip — one memory pass instead of
-        // two and bit-accurate for non-PCM payloads.  Restricted to
-        // interleaved-on-both-sides because every entry in the built-in
-        // direct table assumes matching planarness.  Bypassed entirely
-        // when float-domain processing is requested so the meter sees a
-        // consistent stream.
-        if (!processing && !srcFormat.format().isPlanar() && !_format.format().isPlanar()) {
-                if (auto fn = AudioFormat::directConverter(srcFormat.format().id(), _format.format().id())) {
-                        const uint8_t *src = static_cast<const uint8_t *>(data);
-                        uint8_t       *base = static_cast<uint8_t *>(_storage.data());
-                        const size_t   channels = _format.channels();
-                        const size_t   srcBpf = srcFormat.format().bytesPerSample() * channels;
-                        const size_t   dstBpf = _format.format().bytesPerSample() * channels;
+        // No-float-processing fast path: route through
+        // @ref AudioFormat::convertTo's channel-aware overload.  That
+        // covers (in priority order):
+        //   - same-layout direct converters     — one memory pass.
+        //   - cross-layout byte transpose       — one memory pass,
+        //     bit-accurate, when src and dst share the same byte
+        //     pattern and differ only in planar vs interleaved.
+        //   - via-float fallback                — two passes through
+        //     a float scratch buffer.
+        //
+        // Restricted to an interleaved dst because the ring math
+        // assumes one slot = one frame.  Planar dst storage is not
+        // currently supported by the ring layer regardless.
+        if (!processing && !_format.format().isPlanar()) {
+                const size_t channels = _format.channels();
+                const size_t dstBpf = _format.format().bytesPerSample() * channels;
 
-                        size_t firstChunk = samples;
-                        if (_tail + samples > _capacity) firstChunk = _capacity - _tail;
-                        size_t remainder = samples - firstChunk;
+                // Float scratch for the via-float fallback inside
+                // convertTo.  The direct/byte-transpose paths leave it
+                // untouched.  Stack-allocate up to kStackFloats; spill
+                // to the heap above that.
+                const size_t kStackFloats = 4096;
+                float        stackScratch[kStackFloats];
+                float       *floatScratch = stackScratch;
+                Buffer       heapScratch;
+                const size_t scratchFloats = samples * channels;
+                if (scratchFloats > kStackFloats) {
+                        heapScratch = Buffer(scratchFloats * sizeof(float));
+                        if (!heapScratch.isValid()) return Error::NoMem;
+                        floatScratch = static_cast<float *>(heapScratch.data());
+                }
 
-                        if (firstChunk > 0) {
-                                fn(base + _tail * dstBpf, src, firstChunk * channels);
-                        }
-                        if (remainder > 0) {
-                                fn(base, src + firstChunk * srcBpf, remainder * channels);
-                        }
-                        _tail = (_tail + samples) % _capacity;
-                        _count += samples;
+                uint8_t *base = static_cast<uint8_t *>(_storage.data());
+
+                if (srcFormat.format().isPlanar() && channels > 1) {
+                        // Planar src can't be split at frame boundaries
+                        // (per-channel runs are non-adjacent in src), so
+                        // convert the whole batch into a temp interleaved
+                        // buffer first, then memcpy into the ring with
+                        // wrap handling.
+                        Buffer tempDst(samples * dstBpf);
+                        if (!tempDst.isValid()) return Error::NoMem;
+                        Error err = srcFormat.format().convertTo(_format.format(), tempDst.data(), data,
+                                                                  samples, channels, floatScratch);
+                        if (err.isError()) return err;
+                        writeBytesAtTail(static_cast<const uint8_t *>(tempDst.data()), samples);
                         return Error::Ok;
                 }
+
+                // Interleaved src + interleaved dst (or mono on either
+                // side, where layout is moot): split at frame boundaries
+                // and convert each chunk directly into the ring.
+                const uint8_t *src = static_cast<const uint8_t *>(data);
+                const size_t   srcBpf = srcFormat.format().bytesPerSample() * channels;
+
+                size_t firstChunk = samples;
+                if (_tail + samples > _capacity) firstChunk = _capacity - _tail;
+                size_t remainder = samples - firstChunk;
+
+                if (firstChunk > 0) {
+                        Error err = srcFormat.format().convertTo(_format.format(), base + _tail * dstBpf,
+                                                                  src, firstChunk, channels, floatScratch);
+                        if (err.isError()) return err;
+                }
+                if (remainder > 0) {
+                        Error err = srcFormat.format().convertTo(_format.format(), base,
+                                                                  src + firstChunk * srcBpf, remainder,
+                                                                  channels, floatScratch);
+                        if (err.isError()) return err;
+                }
+                _tail = (_tail + samples) % _capacity;
+                _count += samples;
+                return Error::Ok;
         }
 
-        // Conversion path: src -> native float -> (remap+gain+meter) -> dst.
+        // Via-float path: src bytes → interleaved native float →
+        // (remap, gain, meter) → dst bytes.
         //
-        // FIXME: this path is broken for multi-channel via-float
-        // pushes.
-        //   1. Step 1's @c srcFormat.samplesToFloat call passes
-        //      @p samples (per-channel run) instead of
-        //      @c samples * inChannels — only the first channel's
-        //      worth of floats gets converted, the rest stay
-        //      uninitialised.
-        //   2. Step 5 has the symmetric bug on the
-        //      @c floatToSamples side via @c firstChunkSamples /
-        //      @c remainderSamples (per-channel) instead of
-        //      multiplied by @c outChannels.
-        //   3. Steps 2/3/4 (remap, gain, meter) walk
-        //      @c f * inChannels / @c f * outChannels frames, so
-        //      they implicitly assume interleaved float layout —
-        //      a planar @p srcFormat would silently scramble.
+        // The pipeline middle (remap, gain, meter) indexes frames as
+        // (sample, channel) pairs and therefore requires the float
+        // working buffer to be in interleaved layout, regardless of
+        // src's layout.  Step 1 below routes through the channel-aware
+        // @ref AudioFormat::convertTo, which transposes planar input
+        // into interleaved float for us.
         //
-        // Today this is masked because every live caller hits the
-        // same-format fast path at the top of pushLocked (e.g. the
-        // NDI receiver pushes interleaved float into an interleaved
-        // float ring).  The fix should route through the new
-        // channel-aware @ref AudioFormat::convertTo overload (which
-        // already handles the planar↔interleaved transpose) and
-        // walk all subsequent steps in their declared layout.
+        // The dst conversion at the end (step 5) uses
+        // @ref AudioDesc::floatToSamples, which is layout-agnostic at
+        // the byte level — correct for the interleaved dst case (the
+        // only case the ring layer currently supports).
         const size_t inChannels = srcFormat.channels();
         const size_t outChannels = _format.channels();
         const size_t inFloatCount = samples * inChannels;
@@ -548,8 +587,20 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
         float *inFloat = scratch;
         float *outFloat = sharesBuffer ? scratch : (scratch + inFloatCount);
 
-        // Step 1: srcFormat bytes -> native float.
-        srcFormat.samplesToFloat(inFloat, static_cast<const uint8_t *>(data), samples);
+        // Step 1: src bytes → interleaved native float.  The
+        // channel-aware convertTo handles the planar→interleaved
+        // transpose when src is planar; for already-interleaved src it
+        // dispatches to the direct table or the via-float identity.
+        // Passing @p inFloat as both @c out and the via-float scratch
+        // is safe: the only path that aliases is the float-identity
+        // self-copy (a no-op on the host endian), and the cross-layout
+        // via-float case allocates its own transpose buffer internally.
+        {
+                const AudioFormat nativeFloat(AudioFormat::NativeFloat);
+                Error err = srcFormat.format().convertTo(nativeFloat, inFloat, data, samples, inChannels,
+                                                         inFloat);
+                if (err.isError()) return err;
+        }
 
         // Step 2 (optional): remap input channels into output channels.
         if (!_remap.isEmpty()) {
@@ -622,6 +673,53 @@ Error AudioBuffer::push(const void *data, size_t samples, const AudioDesc &srcFo
         Error         err = pushLocked(data, samples, srcFormat);
         if (err.isOk() && samples > 0) _cv.wakeOne();
         return err;
+}
+
+Error AudioBuffer::pushSilence(size_t samples) {
+        Mutex::Locker lock(_mutex);
+        Error         err = pushSilenceLocked(samples);
+        if (err.isOk() && samples > 0) _cv.wakeOne();
+        return err;
+}
+
+Error AudioBuffer::pushSilenceLocked(size_t samples) {
+        if (!_format.isValid()) return Error::InvalidArgument;
+        if (samples == 0) return Error::Ok;
+        if (_capacity - _count < samples) return Error::NoSpace;
+
+        // The format-correct silence value is whatever
+        // floatToSamples(0.0f) produces — that's @c 0 for signed and
+        // float formats, and the midpoint for unsigned formats.  We
+        // generate it once on the stack (or heap for very large fills)
+        // by zeroing a float scratch the size of one chunk and running
+        // floatToSamples per chunk into the ring.  Chunks are sized to
+        // keep the scratch off the heap for typical gap fills (a few
+        // hundred samples at a few channels).
+        const size_t channels = _format.channels();
+        const size_t bps      = bytesPerSample();
+        const size_t kStackFloats = 4096;
+        float        stackBuf[kStackFloats] = {};
+        const size_t maxChunkSamples =
+                channels > 0 ? (kStackFloats / channels) : kStackFloats;
+
+        uint8_t *base = static_cast<uint8_t *>(_storage.data());
+        size_t   remaining = samples;
+        while (remaining > 0) {
+                size_t chunk = remaining;
+                if (chunk > maxChunkSamples) chunk = maxChunkSamples;
+
+                // Clamp chunk to the linear run before wrap so each
+                // floatToSamples call writes contiguous bytes.
+                size_t toWrap = _capacity - _tail;
+                if (chunk > toWrap) chunk = toWrap;
+
+                _format.floatToSamples(base + _tail * bps, stackBuf, chunk);
+
+                _tail = (_tail + chunk) % _capacity;
+                _count += chunk;
+                remaining -= chunk;
+        }
+        return Error::Ok;
 }
 
 // ---------------------------------------------------------------------------

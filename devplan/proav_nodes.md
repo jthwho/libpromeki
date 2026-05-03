@@ -388,6 +388,20 @@ Grammar built on `MediaConfig`: type-aware `Key:Value` parsing against each back
 
 ---
 
+## Phase 4z-ndi additions (2026-05-02)
+
+**`AudioMarker` / `AudioMarkerList` / `AudioMarkerType`** — `include/promeki/audiomarker.h` + `include/promeki/enums.h`.  Plain-value types for annotating sample regions within an audio payload.  `AudioMarkerType` is a `TypedEnum` with five well-known values: `Unknown`, `SilenceFill`, `ConcealedLoss`, `Discontinuity`, `Glitch`.  `AudioMarker` carries an `int64_t offset` + `int64_t length` + `AudioMarkerType` with `toString()` / `fromString()` round-trip and `std::hash` specialization.  `AudioMarkerList` is a `PROMEKI_SHARED_FINAL` ordered container with `totalLengthFor()` / `countFor()` aggregates, comma-separated `toString()` / `fromString()`, and `DataStream` wire format (`TypeAudioMarkerList = 0x52`).  `Metadata::AudioMarkers` ID added (TypeAudioMarkerList).  Tests in `tests/unit/audiomarker.cpp` (11 TEST_CASEs covering all code paths).
+
+**`AudioBuffer::pushSilence(samples)`** — `include/promeki/audiobuffer.h` + `src/proav/audiobuffer.cpp`.  Pushes format-correct silence directly into the ring: signed/float formats get zero, unsigned integer formats get the midpoint (U8 → 127, etc.) via `floatToSamples(0.0f)`.  Bypasses remap/gain/meter — silence in produces silence out regardless of those settings.  Wakes `popWait()`.  New tests in `tests/unit/audiobuffer.cpp` (float, S16, U8 midpoint, ring wrap, error cases).
+
+**`PacingGate`** — `include/promeki/pacinggate.h` + `src/core/pacinggate.cpp`.  Reusable scheduling helper that paces a series of work items against an external `Clock::Ptr`.  Embed one per stream in a backend; `wait(advance)` sleeps until the deadline, returns a `PacingResult` with a `PacingVerdict` (`OnTime`, `Late`, `Skip`, `Reanchor`), a signed `slack` `Duration`, and an optional clock error.  `tryAcquire(advance)` is a non-blocking "is the tick due?" probe for rate-limiter patterns.  Threshold defaults: skip at one period, reanchor at `DefaultReanchorMultiple` (8) periods; both configurable and both track period changes unless explicitly overridden.  Telemetry counters: `ticksOnTime`, `ticksLate`, `ticksSkipped`, `reanchors`, `tryAcquireRejected`.  Full test suite in `tests/unit/pacinggate.cpp` (22 TEST_CASEs).
+
+**`NdiMediaIO` source-mode audio receive-path fix** — `src/proav/ndimediaio.cpp`.  Replaced the old `_lastAudioTimestampTicks` (which stamped the drained payload's PTS with the *last* NDI frame in the drain — wrong for coalesced multi-frame drains) with a proper sender-anchored timeline tracker (`_audioFirstSampleTicks` / `_audioNextSampleTicks`).  Factored a private `ingestNdiAudio()` helper (befriended by `NdiMediaIOTestAccess` for tests): detects gaps in per-frame NDI timestamps, bridges them with `pushSilence`, appends `SilenceFill` markers to a per-drain `AudioMarkerList`, re-anchors on gaps > 1 s, and absorbs sub-5 ms jitter silently.  Drain now stamps payload PTS from `_audioFirstSampleTicks` and attaches accumulated markers as `Metadata::AudioMarkers`.  New stats: `StatsAudioSilenceFilled`, `StatsAudioGapEvents`.  Tests via `NdiMediaIOTestAccess` in `tests/unit/ndimediaio.cpp` (7 new TEST_CASEs for first-frame anchor, contiguous coalescing, gap fill with marker, >1 s re-anchor, jitter absorption, regression, undefined timestamp).
+
+**`NdiMediaIO::executeCmd(MediaIOCommandSetClock)`** — `src/proav/ndimediaio.cpp`.  Sink mode only.  Binds the supplied `Clock::Ptr` to `_videoGate` and `_audioGate` (`PacingGate` instances, one per stream); each `sendVideo` / `sendAudio` call calls `gate.wait()` to pace outbound frames.  Null clock detaches the external clock and lets the SDK's internal `clock_video` / `clock_audio` resume control.  Source mode returns `NotSupported`.  `MediaIOCommandSetClock` + `MediaIOPortGroup::setClock()` framework: swap-on-Ok contract, pre-open gating, kindName.  Tests in `tests/unit/mediaio_setclock.cpp` (5 TEST_CASEs).
+
+---
+
 ## Known Issues / Open FIXMEs in Existing Backends
 
 All tracked in `fixme.md`. Summary of the ones that belong to this document:

@@ -1857,6 +1857,30 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                         val = AudioChannelMap(std::move(entries));
                         break;
                 }
+                case TypeAudioMarkerList: {
+                        // Outer tag already consumed; the per-entry payload
+                        // is a uint32 count followed by N (int64 offset,
+                        // int64 length, int32 type) triples — same shape
+                        // produced by
+                        // operator<<(DataStream&, const AudioMarkerList&).
+                        uint32_t count = 0;
+                        *this >> count;
+                        AudioMarkerList::EntryList entries;
+                        entries.reserve(count);
+                        for (uint32_t i = 0; i < count && _status == Ok; ++i) {
+                                int64_t offset    = 0;
+                                int64_t length    = 0;
+                                int32_t typeValue = 0;
+                                *this >> offset >> length >> typeValue;
+                                entries.pushToBack(AudioMarker(offset, length, AudioMarkerType(typeValue)));
+                        }
+                        if (_status != Ok) {
+                                val = Variant();
+                                break;
+                        }
+                        val = AudioMarkerList(std::move(entries));
+                        break;
+                }
                 case TypeWindowedStat: {
                         // Outer tag already consumed; the per-entry payload
                         // is uint32 capacity + uint32 count + N tagged
@@ -2036,6 +2060,8 @@ namespace {
         template <> struct has_free_read<AudioStreamDesc> : std::true_type {};
         template <> struct has_free_write<AudioChannelMap> : std::true_type {};
         template <> struct has_free_read<AudioChannelMap> : std::true_type {};
+        template <> struct has_free_write<AudioMarkerList> : std::true_type {};
+        template <> struct has_free_read<AudioMarkerList> : std::true_type {};
         template <> struct has_free_write<WindowedStat> : std::true_type {};
         template <> struct has_free_read<WindowedStat> : std::true_type {};
 
