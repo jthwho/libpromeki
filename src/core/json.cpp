@@ -12,6 +12,52 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+namespace {
+
+// Single recursive Variant → nlohmann::json walker shared by
+// setFromVariant / addFromVariant.  Keeping the encode logic in one
+// place means there's no toJsonString round-trip to re-parse — the
+// nested VariantList / VariantMap branches recurse directly into
+// child nodes.
+nlohmann::json encodeVariant(const Variant &val) {
+        switch (val.type()) {
+                case Variant::TypeInvalid: return nullptr;
+                case Variant::TypeBool: return val.get<bool>();
+                case Variant::TypeU8: return val.get<uint8_t>();
+                case Variant::TypeS8: return val.get<int8_t>();
+                case Variant::TypeU16: return val.get<uint16_t>();
+                case Variant::TypeS16: return val.get<int16_t>();
+                case Variant::TypeU32: return val.get<uint32_t>();
+                case Variant::TypeS32: return val.get<int32_t>();
+                case Variant::TypeU64: return val.get<uint64_t>();
+                case Variant::TypeS64: return val.get<int64_t>();
+                case Variant::TypeFloat: return val.get<float>();
+                case Variant::TypeDouble: return val.get<double>();
+                case Variant::TypeVariantList: {
+                        nlohmann::json     arr = nlohmann::json::array();
+                        const VariantList *vl = val.peek<VariantList>();
+                        if (vl != nullptr) {
+                                const size_t n = vl->size();
+                                for (size_t i = 0; i < n; ++i) arr.push_back(encodeVariant((*vl)[i]));
+                        }
+                        return arr;
+                }
+                case Variant::TypeVariantMap: {
+                        nlohmann::json    obj = nlohmann::json::object();
+                        const VariantMap *vm = val.peek<VariantMap>();
+                        if (vm != nullptr) {
+                                vm->forEach([&obj](const String &k, const Variant &v) {
+                                        obj[k.str()] = encodeVariant(v);
+                                });
+                        }
+                        return obj;
+                }
+                default: return val.get<String>().str();
+        }
+}
+
+} // anonymous namespace
+
 void JsonObject::set(const String &key, const UUID &val) {
         _j[key.str()] = val.toString().str();
 }
@@ -21,22 +67,7 @@ void JsonArray::add(const UUID &val) {
 }
 
 void JsonObject::setFromVariant(const String &key, const Variant &val) {
-        const auto &k = key.str();
-        switch (val.type()) {
-                case Variant::TypeInvalid: _j[k] = nullptr; break;
-                case Variant::TypeBool: _j[k] = val.get<bool>(); break;
-                case Variant::TypeU8: _j[k] = val.get<uint8_t>(); break;
-                case Variant::TypeS8: _j[k] = val.get<int8_t>(); break;
-                case Variant::TypeU16: _j[k] = val.get<uint16_t>(); break;
-                case Variant::TypeS16: _j[k] = val.get<int16_t>(); break;
-                case Variant::TypeU32: _j[k] = val.get<uint32_t>(); break;
-                case Variant::TypeS32: _j[k] = val.get<int32_t>(); break;
-                case Variant::TypeU64: _j[k] = val.get<uint64_t>(); break;
-                case Variant::TypeS64: _j[k] = val.get<int64_t>(); break;
-                case Variant::TypeFloat: _j[k] = val.get<float>(); break;
-                case Variant::TypeDouble: _j[k] = val.get<double>(); break;
-                default: _j[k] = val.get<String>().str(); break;
-        }
+        _j[key.str()] = encodeVariant(val);
 }
 
 void JsonObject::forEach(std::function<void(const String &, const Variant &)> func) const {
@@ -48,21 +79,7 @@ void JsonObject::forEach(std::function<void(const String &, const Variant &)> fu
 }
 
 void JsonArray::addFromVariant(const Variant &val) {
-        switch (val.type()) {
-                case Variant::TypeInvalid: _j.push_back(nullptr); break;
-                case Variant::TypeBool: _j.push_back(val.get<bool>()); break;
-                case Variant::TypeU8: _j.push_back(val.get<uint8_t>()); break;
-                case Variant::TypeS8: _j.push_back(val.get<int8_t>()); break;
-                case Variant::TypeU16: _j.push_back(val.get<uint16_t>()); break;
-                case Variant::TypeS16: _j.push_back(val.get<int16_t>()); break;
-                case Variant::TypeU32: _j.push_back(val.get<uint32_t>()); break;
-                case Variant::TypeS32: _j.push_back(val.get<int32_t>()); break;
-                case Variant::TypeU64: _j.push_back(val.get<uint64_t>()); break;
-                case Variant::TypeS64: _j.push_back(val.get<int64_t>()); break;
-                case Variant::TypeFloat: _j.push_back(val.get<float>()); break;
-                case Variant::TypeDouble: _j.push_back(val.get<double>()); break;
-                default: _j.push_back(val.get<String>().str()); break;
-        }
+        _j.push_back(encodeVariant(val));
 }
 
 void JsonArray::forEach(std::function<void(const Variant &)> func) const {

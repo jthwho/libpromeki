@@ -661,3 +661,245 @@ TEST_CASE("VariantLookup cascade: forEachScalar walks the chain deduped") {
                 if (n == "BaseValue") ++baseValueCount;
         CHECK(baseValueCount == 1);
 }
+
+// ========================================================================
+// VariantTree handler — descends through nested VariantList / VariantMap
+// ========================================================================
+
+namespace {
+
+        struct LookupTreeOwner {
+                        VariantMap config;
+
+                        LookupTreeOwner() {
+                                VariantMap video;
+                                video.insert("width", Variant(int32_t(1920)));
+                                video.insert("height", Variant(int32_t(1080)));
+
+                                VariantList tags;
+                                tags.pushToBack(Variant(String("alpha")));
+                                tags.pushToBack(Variant(String("beta")));
+
+                                config.insert("video", Variant(video));
+                                config.insert("tags", Variant(tags));
+                        }
+        };
+
+        // Spec describing the tree shape so specFor() can walk it.
+        // The outer is TypeVariantMap; values can be either a TypeVariantMap
+        // (the "video" sub-object) or a TypeVariantList (the "tags" array),
+        // so the value-spec is left open here — the test exercises the
+        // specFor walker on the outer type primarily.
+        const VariantSpec *configTreeSpec() {
+                static const VariantSpec spec = []() {
+                        VariantSpec s;
+                        s.setType(Variant::TypeVariantMap);
+                        return s;
+                }();
+                return &spec;
+        }
+
+} // namespace
+
+PROMEKI_LOOKUP_REGISTER(LookupTreeOwner)
+        .variantTree(
+                "Config",
+                [](const LookupTreeOwner &o) -> Variant { return Variant(o.config); },
+                configTreeSpec());
+
+TEST_CASE("VariantLookup: variantTree resolves terminal Name") {
+        LookupTreeOwner o;
+        Error           err;
+        auto            v = VariantLookup<LookupTreeOwner>::resolve(o, "Config", &err);
+        CHECK(err.isOk());
+        REQUIRE(v.has_value());
+        CHECK(v->type() == Variant::TypeVariantMap);
+}
+
+TEST_CASE("VariantLookup: variantTree resolves nested map key") {
+        LookupTreeOwner o;
+        Error           err;
+        auto            v = VariantLookup<LookupTreeOwner>::resolve(o, "Config.video.width", &err);
+        CHECK(err.isOk());
+        REQUIRE(v.has_value());
+        CHECK(v->get<int32_t>() == 1920);
+
+        v = VariantLookup<LookupTreeOwner>::resolve(o, "Config.video.height", &err);
+        CHECK(err.isOk());
+        CHECK(v->get<int32_t>() == 1080);
+}
+
+TEST_CASE("VariantLookup: variantTree resolves indexed list element") {
+        LookupTreeOwner o;
+        Error           err;
+        auto            v = VariantLookup<LookupTreeOwner>::resolve(o, "Config.tags[0]", &err);
+        CHECK(err.isOk());
+        REQUIRE(v.has_value());
+        CHECK(v->get<String>() == "alpha");
+
+        v = VariantLookup<LookupTreeOwner>::resolve(o, "Config.tags[1]", &err);
+        CHECK(err.isOk());
+        CHECK(v->get<String>() == "beta");
+}
+
+TEST_CASE("VariantLookup: variantTree missing nested key reports IdNotFound") {
+        LookupTreeOwner o;
+        Error           err;
+        auto            v = VariantLookup<LookupTreeOwner>::resolve(o, "Config.video.depth", &err);
+        CHECK(err.code() == Error::IdNotFound);
+        CHECK_FALSE(v.has_value());
+}
+
+TEST_CASE("VariantLookup: variantTree out-of-range index reports OutOfRange") {
+        LookupTreeOwner o;
+        Error           err;
+        auto            v = VariantLookup<LookupTreeOwner>::resolve(o, "Config.tags[42]", &err);
+        CHECK(err.code() == Error::OutOfRange);
+        CHECK_FALSE(v.has_value());
+}
+
+TEST_CASE("VariantLookup: variantTree assign reports ReadOnly") {
+        LookupTreeOwner o;
+        Error           err;
+        bool            ok = VariantLookup<LookupTreeOwner>::assign(o, "Config.video.width", Variant(int32_t(640)), &err);
+        CHECK_FALSE(ok);
+        CHECK(err.code() == Error::ReadOnly);
+}
+
+TEST_CASE("VariantLookup: variantTree specFor surfaces the registered spec") {
+        Error              err;
+        const VariantSpec *sp = VariantLookup<LookupTreeOwner>::specFor("Config", &err);
+        CHECK(err.isOk());
+        REQUIRE(sp != nullptr);
+        CHECK(sp->types().size() == 1);
+        CHECK(sp->types()[0] == Variant::TypeVariantMap);
+}
+
+// Spec-walker test fixture: nested Map → List → S32 so we can assert
+// specFor walks each layer (named, bracketed, and the mixed "name[N]"
+// segment that exercises both descents in one segment).
+namespace {
+        struct LookupTreeNested {};
+
+        const VariantSpec *nestedTreeSpec() {
+                static const VariantSpec spec = []() {
+                        VariantSpec leaf = VariantSpec().setType(Variant::TypeS32);
+                        VariantSpec listSpec =
+                                VariantSpec().setType(Variant::TypeVariantList).setElementSpec(leaf);
+                        return VariantSpec().setType(Variant::TypeVariantMap).setValueSpec(listSpec);
+                }();
+                return &spec;
+        }
+} // namespace
+
+PROMEKI_LOOKUP_REGISTER(LookupTreeNested)
+        .variantTree(
+                "Tree", [](const LookupTreeNested &) -> Variant { return Variant(VariantMap()); },
+                nestedTreeSpec());
+
+TEST_CASE("VariantLookup: variantTree specFor walks element/value sub-specs") {
+        // The walker must descend into valueSpec for named keys and
+        // elementSpec for bracketed indices, including the mixed
+        // "name[N]" segment shape (descend valueSpec → elementSpec).
+        Error              err;
+        const VariantSpec *spTop = VariantLookup<LookupTreeNested>::specFor("Tree", &err);
+        REQUIRE(spTop != nullptr);
+        CHECK(spTop->types()[0] == Variant::TypeVariantMap);
+
+        const VariantSpec *spInnerList = VariantLookup<LookupTreeNested>::specFor("Tree.someKey", &err);
+        CHECK(err.isOk());
+        REQUIRE(spInnerList != nullptr);
+        CHECK(spInnerList->types()[0] == Variant::TypeVariantList);
+
+        // "Tree.someKey[0]" must descend valueSpec then elementSpec —
+        // the mixed-segment case the original lambda got wrong.
+        const VariantSpec *spLeaf = VariantLookup<LookupTreeNested>::specFor("Tree.someKey[0]", &err);
+        CHECK(err.isOk());
+        REQUIRE(spLeaf != nullptr);
+        CHECK(spLeaf->types()[0] == Variant::TypeS32);
+}
+
+TEST_CASE("VariantLookup: variantTree appears in dump output") {
+        LookupTreeOwner o;
+        StringList      lines = VariantLookup<LookupTreeOwner>::dump(o);
+        bool            sawConfig = false;
+        for (const String &l : lines) {
+                if (l.contains("Config")) {
+                        sawConfig = true;
+                        break;
+                }
+        }
+        CHECK(sawConfig);
+}
+
+// ========================================================================
+// VariantSpec::coerce — recursive String → native coercion under nested specs
+// ========================================================================
+
+TEST_CASE("VariantSpec::coerce passes value through when no coercion needed") {
+        VariantSpec spec = VariantSpec().setType(Variant::TypeS32);
+        Error       err;
+        Variant     out = spec.coerce(Variant(int32_t(42)), &err);
+        CHECK(err.isOk());
+        CHECK(out.get<int32_t>() == 42);
+}
+
+TEST_CASE("VariantSpec::coerce parses leaf String into native type") {
+        VariantSpec spec = VariantSpec().setType(Variant::TypeS32);
+        Error       err;
+        Variant     out = spec.coerce(Variant(String("99")), &err);
+        CHECK(err.isOk());
+        CHECK(out.type() == Variant::TypeS32);
+        CHECK(out.get<int32_t>() == 99);
+}
+
+TEST_CASE("VariantSpec::coerce walks VariantList element-spec") {
+        VariantSpec elem = VariantSpec().setType(Variant::TypeS32);
+        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantList).setElementSpec(elem);
+
+        VariantList src;
+        src.pushToBack(Variant(String("1")));
+        src.pushToBack(Variant(String("2")));
+        src.pushToBack(Variant(String("3")));
+
+        Error   err;
+        Variant out = spec.coerce(Variant(src), &err);
+        CHECK(err.isOk());
+        REQUIRE(out.type() == Variant::TypeVariantList);
+        VariantList vl = out.get<VariantList>();
+        REQUIRE(vl.size() == 3);
+        CHECK(vl[0].type() == Variant::TypeS32);
+        CHECK(vl[0].get<int32_t>() == 1);
+        CHECK(vl[2].get<int32_t>() == 3);
+}
+
+TEST_CASE("VariantSpec::coerce walks VariantMap value-spec") {
+        VariantSpec val  = VariantSpec().setType(Variant::TypeS32);
+        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantMap).setValueSpec(val);
+
+        VariantMap src;
+        src.insert("a", Variant(String("10")));
+        src.insert("b", Variant(String("20")));
+
+        Error   err;
+        Variant out = spec.coerce(Variant(src), &err);
+        CHECK(err.isOk());
+        VariantMap vm = out.get<VariantMap>();
+        CHECK(vm.value("a").type() == Variant::TypeS32);
+        CHECK(vm.value("a").get<int32_t>() == 10);
+        CHECK(vm.value("b").get<int32_t>() == 20);
+}
+
+TEST_CASE("VariantSpec::coerce reports parse failure inside nested list") {
+        VariantSpec elem = VariantSpec().setType(Variant::TypeS32);
+        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantList).setElementSpec(elem);
+
+        VariantList src;
+        src.pushToBack(Variant(String("1")));
+        src.pushToBack(Variant(String("not-a-number")));
+
+        Error   err;
+        Variant out = spec.coerce(Variant(src), &err);
+        CHECK(err.isError());
+        CHECK_FALSE(out.isValid());
+}

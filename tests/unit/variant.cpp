@@ -11,6 +11,9 @@
 #include <promeki/sdpsession.h>
 #include <promeki/url.h>
 #include <promeki/variantspec.h>
+#include <promeki/datastream.h>
+#include <promeki/bufferiodevice.h>
+#include <promeki/buffer.h>
 
 using namespace promeki;
 
@@ -328,11 +331,23 @@ TEST_CASE("Variant_StringListEquality") {
         CHECK(Variant(sl1) != Variant(sl3));
 }
 
-TEST_CASE("Variant_StringListFromJson") {
+TEST_CASE("Variant_VariantListFromJson") {
+        // JSON arrays now decode into VariantList (typed nested tree)
+        // rather than the old StringList fallback.  Cross-conversion
+        // VariantList → StringList still works for callers that want
+        // the flattened form.
         nlohmann::json j = nlohmann::json::array({"foo", "bar", "baz"});
         Variant        v = Variant::fromJson(j);
-        CHECK(v.type() == Variant::TypeStringList);
+        CHECK(v.type() == Variant::TypeVariantList);
 
+        VariantList vl = v.get<VariantList>();
+        REQUIRE(vl.size() == 3);
+        CHECK(vl[0].get<String>() == "foo");
+        CHECK(vl[1].get<String>() == "bar");
+        CHECK(vl[2].get<String>() == "baz");
+
+        // Cross-conversion path: a VariantList of strings still
+        // round-trips through get<StringList>().
         StringList sl = v.get<StringList>();
         CHECK(sl.size() == 3);
         CHECK(sl[0] == "foo");
@@ -1016,4 +1031,457 @@ TEST_CASE("VariantSpec_Duration_ParseString_Rejects_Unknown_Unit") {
         Variant     parsed = spec.parseString("3 weeks", &err);
         CHECK(err.isError());
         CHECK_FALSE(parsed.isValid());
+}
+
+// ============================================================================
+// VariantList / VariantMap as Variant alternatives
+// ============================================================================
+
+TEST_CASE("Variant_VariantList_Alternative") {
+        VariantList vl;
+        vl.pushToBack(Variant(int32_t(42)));
+        vl.pushToBack(Variant(String("hello")));
+        vl.pushToBack(Variant(true));
+
+        Variant v(vl);
+        CHECK(v.type() == Variant::TypeVariantList);
+        CHECK(v.isValid());
+
+        VariantList out = v.get<VariantList>();
+        REQUIRE(out.size() == 3);
+        CHECK(out[0].get<int32_t>() == 42);
+        CHECK(out[1].get<String>() == "hello");
+        CHECK(out[2].get<bool>() == true);
+
+        // Equality: a VariantList held inside a Variant compares
+        // structurally to another Variant holding the same list.
+        VariantList vl2;
+        vl2.pushToBack(Variant(int32_t(42)));
+        vl2.pushToBack(Variant(String("hello")));
+        vl2.pushToBack(Variant(true));
+        CHECK(Variant(vl) == Variant(vl2));
+}
+
+TEST_CASE("Variant_VariantMap_Alternative") {
+        VariantMap vm;
+        vm.insert("width", Variant(int32_t(1920)));
+        vm.insert("height", Variant(int32_t(1080)));
+        vm.insert("name", Variant(String("Main")));
+
+        Variant v(vm);
+        CHECK(v.type() == Variant::TypeVariantMap);
+        CHECK(v.isValid());
+
+        VariantMap out = v.get<VariantMap>();
+        CHECK(out.size() == 3);
+        CHECK(out.value("width").get<int32_t>() == 1920);
+        CHECK(out.value("height").get<int32_t>() == 1080);
+        CHECK(out.value("name").get<String>() == "Main");
+        CHECK(out.value("missing").isValid() == false);
+
+        // keys() returns sorted (Map ordering)
+        StringList ks = out.keys();
+        REQUIRE(ks.size() == 3);
+        CHECK(ks[0] == "height");
+        CHECK(ks[1] == "name");
+        CHECK(ks[2] == "width");
+}
+
+TEST_CASE("Variant_NestedTree_FromJson_Round_Trip") {
+        // Build a JSON tree with mixed scalars, a nested array, and a
+        // nested object — fromJson should produce a typed Variant tree
+        // and toJsonString round-trip back to the same JSON shape.
+        const char *json = R"({
+                "title": "demo",
+                "size": 42,
+                "tags": ["alpha", "beta", "gamma"],
+                "nested": {"a": 1, "b": true}
+        })";
+        nlohmann::json j = nlohmann::json::parse(json);
+        Variant        v = Variant::fromJson(j);
+        REQUIRE(v.type() == Variant::TypeVariantMap);
+
+        VariantMap top = v.get<VariantMap>();
+        CHECK(top.value("title").get<String>() == "demo");
+        CHECK(top.value("size").get<int64_t>() == 42);
+
+        Variant tagsV = top.value("tags");
+        REQUIRE(tagsV.type() == Variant::TypeVariantList);
+        VariantList tags = tagsV.get<VariantList>();
+        REQUIRE(tags.size() == 3);
+        CHECK(tags[0].get<String>() == "alpha");
+        CHECK(tags[1].get<String>() == "beta");
+        CHECK(tags[2].get<String>() == "gamma");
+
+        Variant nestedV = top.value("nested");
+        REQUIRE(nestedV.type() == Variant::TypeVariantMap);
+        VariantMap nested = nestedV.get<VariantMap>();
+        CHECK(nested.value("a").get<int64_t>() == 1);
+        CHECK(nested.value("b").get<bool>() == true);
+
+        // Round-trip back to JSON: parse the toJsonString output and
+        // confirm the structure matches the input JSON's shape.
+        String         s = top.toJsonString();
+        nlohmann::json reparsed = nlohmann::json::parse(s.cstr());
+        CHECK(reparsed["title"] == "demo");
+        CHECK(reparsed["size"] == 42);
+        REQUIRE(reparsed["tags"].is_array());
+        CHECK(reparsed["tags"][0] == "alpha");
+        REQUIRE(reparsed["nested"].is_object());
+        CHECK(reparsed["nested"]["a"] == 1);
+        CHECK(reparsed["nested"]["b"] == true);
+}
+
+TEST_CASE("Variant_VariantList_FromString_JsonArray") {
+        // String → VariantList parses a JSON-array literal.
+        Variant     v = Variant(String("[1, \"two\", true]"));
+        Error       err;
+        VariantList vl = v.get<VariantList>(&err);
+        CHECK(err.isOk());
+        REQUIRE(vl.size() == 3);
+        CHECK(vl[0].get<int64_t>() == 1);
+        CHECK(vl[1].get<String>() == "two");
+        CHECK(vl[2].get<bool>() == true);
+}
+
+TEST_CASE("Variant_VariantMap_FromString_JsonObject") {
+        Variant    v = Variant(String("{\"a\": 1, \"b\": \"hi\"}"));
+        Error      err;
+        VariantMap vm = v.get<VariantMap>(&err);
+        CHECK(err.isOk());
+        CHECK(vm.size() == 2);
+        CHECK(vm.value("a").get<int64_t>() == 1);
+        CHECK(vm.value("b").get<String>() == "hi");
+}
+
+TEST_CASE("Variant_VariantList_PimplDeep_Recursion") {
+        // A VariantList containing a VariantList containing a Variant
+        // — the heap indirection inside VariantList is what makes this
+        // legal sizing-wise.
+        VariantList inner;
+        inner.pushToBack(Variant(int32_t(1)));
+        inner.pushToBack(Variant(int32_t(2)));
+
+        VariantList outer;
+        outer.pushToBack(Variant(inner));
+        outer.pushToBack(Variant(String("after")));
+
+        Variant v(outer);
+        CHECK(v.type() == Variant::TypeVariantList);
+        VariantList check = v.get<VariantList>();
+        REQUIRE(check.size() == 2);
+        REQUIRE(check[0].type() == Variant::TypeVariantList);
+        VariantList innerOut = check[0].get<VariantList>();
+        REQUIRE(innerOut.size() == 2);
+        CHECK(innerOut[0].get<int32_t>() == 1);
+        CHECK(innerOut[1].get<int32_t>() == 2);
+        CHECK(check[1].get<String>() == "after");
+}
+
+TEST_CASE("VariantSpec_VariantList_ElementValidation") {
+        // A spec for TypeVariantList can carry a per-element spec.
+        // Lists whose elements all satisfy the inner spec validate;
+        // lists with a single rogue element are rejected.
+        VariantSpec elem = VariantSpec().setType(Variant::TypeS32).setRange(0, 100);
+        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantList).setElementSpec(elem);
+
+        CHECK(spec.hasElementSpec());
+        REQUIRE(spec.elementSpec() != nullptr);
+        CHECK(spec.elementSpec()->types().size() == 1);
+
+        VariantList good;
+        good.pushToBack(Variant(int32_t(10)));
+        good.pushToBack(Variant(int32_t(50)));
+        good.pushToBack(Variant(int32_t(99)));
+        Error err;
+        CHECK(spec.validate(Variant(good), &err));
+        CHECK(err.isOk());
+
+        VariantList bad;
+        bad.pushToBack(Variant(int32_t(10)));
+        bad.pushToBack(Variant(int32_t(500))); // out of range
+        CHECK_FALSE(spec.validate(Variant(bad), &err));
+        CHECK(err.code() == Error::OutOfRange);
+}
+
+TEST_CASE("VariantSpec_VariantMap_ValueValidation") {
+        VariantSpec val  = VariantSpec().setType(Variant::TypeString);
+        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantMap).setValueSpec(val);
+
+        CHECK(spec.hasValueSpec());
+
+        VariantMap good;
+        good.insert("a", Variant(String("x")));
+        good.insert("b", Variant(String("y")));
+        Error err;
+        CHECK(spec.validate(Variant(good), &err));
+
+        VariantMap bad;
+        bad.insert("a", Variant(int32_t(42))); // wrong type
+        CHECK_FALSE(spec.validate(Variant(bad), &err));
+}
+
+TEST_CASE("VariantSpec_VariantList_TypeName_Annotated") {
+        // typeName() surfaces the element-spec shape for help output.
+        VariantSpec elem = VariantSpec().setType(Variant::TypeS32);
+        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantList).setElementSpec(elem);
+        CHECK(spec.typeName() == "VariantList<int>");
+
+        VariantSpec valSpec  = VariantSpec().setType(Variant::TypeString);
+        VariantSpec mapSpec  = VariantSpec().setType(Variant::TypeVariantMap).setValueSpec(valSpec);
+        CHECK(mapSpec.typeName() == "VariantMap<String>");
+}
+
+TEST_CASE("VariantSpec_VariantList_ParseString") {
+        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantList);
+        Error       err;
+        Variant     v = spec.parseString("[1, 2, 3]", &err);
+        CHECK(err.isOk());
+        REQUIRE(v.type() == Variant::TypeVariantList);
+        CHECK(v.get<VariantList>().size() == 3);
+}
+
+TEST_CASE("Variant_ResolvePath_Map") {
+        VariantMap inner;
+        inner.insert("count", Variant(int32_t(7)));
+        inner.insert("name", Variant(String("alpha")));
+
+        VariantMap top;
+        top.insert("inner", Variant(inner));
+        top.insert("flag", Variant(true));
+
+        Variant root(top);
+        Error   err;
+        Variant v = promekiResolveVariantPath(root, "flag", &err);
+        CHECK(err.isOk());
+        CHECK(v.get<bool>() == true);
+
+        v = promekiResolveVariantPath(root, "inner.name", &err);
+        CHECK(err.isOk());
+        CHECK(v.get<String>() == "alpha");
+
+        v = promekiResolveVariantPath(root, "inner.missing", &err);
+        CHECK(err.code() == Error::IdNotFound);
+}
+
+TEST_CASE("Variant_ResolvePath_List") {
+        VariantList inner;
+        inner.pushToBack(Variant(String("x")));
+        inner.pushToBack(Variant(String("y")));
+
+        VariantMap top;
+        top.insert("items", Variant(inner));
+
+        Variant root(top);
+        Error   err;
+        Variant v = promekiResolveVariantPath(root, "items[1]", &err);
+        CHECK(err.isOk());
+        CHECK(v.get<String>() == "y");
+
+        // Out-of-range index.
+        v = promekiResolveVariantPath(root, "items[5]", &err);
+        CHECK(err.code() == Error::OutOfRange);
+}
+
+TEST_CASE("Variant_ResolvePath_Mixed") {
+        // Build a small tree: top.streams[0].codec
+        VariantMap stream0;
+        stream0.insert("codec", Variant(String("h264")));
+        stream0.insert("bitrate", Variant(int32_t(5000)));
+        VariantMap stream1;
+        stream1.insert("codec", Variant(String("aac")));
+
+        VariantList streams;
+        streams.pushToBack(Variant(stream0));
+        streams.pushToBack(Variant(stream1));
+
+        VariantMap root;
+        root.insert("streams", Variant(streams));
+
+        Variant rootV(root);
+        Error   err;
+        CHECK(promekiResolveVariantPath(rootV, "streams[0].codec", &err).get<String>() == "h264");
+        CHECK(err.isOk());
+        CHECK(promekiResolveVariantPath(rootV, "streams[1].codec", &err).get<String>() == "aac");
+        CHECK(promekiResolveVariantPath(rootV, "streams[0].bitrate", &err).get<int32_t>() == 5000);
+}
+
+TEST_CASE("Variant_VariantList_MovedFrom_Is_ValidEmpty") {
+        // After std::move, the source is in valid empty state — touching
+        // it must not crash.  Lazy-impl design satisfies this without an
+        // extra heap allocation per move.
+        VariantList src;
+        src.pushToBack(Variant(int32_t(1)));
+        src.pushToBack(Variant(int32_t(2)));
+        VariantList dst = std::move(src);
+        CHECK(dst.size() == 2);
+        // Source is still observable as empty:
+        CHECK(src.isEmpty());
+        CHECK(src.size() == 0);
+        CHECK(src.begin() == src.end());
+        // Re-insertion after move must work.
+        src.pushToBack(Variant(int32_t(99)));
+        CHECK(src.size() == 1);
+        CHECK(src[0].get<int32_t>() == 99);
+}
+
+TEST_CASE("Variant_VariantMap_MovedFrom_Is_ValidEmpty") {
+        VariantMap src;
+        src.insert("a", Variant(int32_t(1)));
+        VariantMap dst = std::move(src);
+        CHECK(dst.size() == 1);
+        CHECK(src.isEmpty());
+        CHECK(src.size() == 0);
+        CHECK(src.contains("a") == false);
+        CHECK_FALSE(src.value("a").isValid());
+        src.insert("z", Variant(int32_t(42)));
+        CHECK(src.size() == 1);
+}
+
+TEST_CASE("Variant_VariantList_DefaultCtor_NoAlloc_Behaves_Empty") {
+        // Default ctor never allocates; the empty list still satisfies the
+        // observable read API without a forced heap touch.
+        VariantList empty;
+        CHECK(empty.isEmpty());
+        CHECK(empty.size() == 0);
+        CHECK(empty.begin() == empty.end());
+        CHECK(empty.list().isEmpty());
+
+        VariantList copy = empty;
+        CHECK(copy.isEmpty());
+        VariantList moved = std::move(empty);
+        CHECK(moved.isEmpty());
+        CHECK(empty.isEmpty());
+}
+
+TEST_CASE("Variant_VariantList_Empty_Equals_Empty") {
+        VariantList a;
+        VariantList b;
+        b.pushToBack(Variant(int32_t(1)));
+        b.popBack();
+        CHECK(a == b);
+        CHECK_FALSE(a != b);
+}
+
+TEST_CASE("Variant_ResolvePath_EmptyPath_ReturnsRoot") {
+        VariantMap m;
+        m.insert("a", Variant(int32_t(1)));
+        Variant root(m);
+        Error   err;
+        Variant out = promekiResolveVariantPath(root, String(), &err);
+        CHECK(err.isOk());
+        CHECK(out.type() == Variant::TypeVariantMap);
+        CHECK(out.get<VariantMap>().size() == 1);
+}
+
+TEST_CASE("Variant_VariantSpec_Coerce_TypeMismatch_Passes_Through") {
+        // Spec wants a VariantMap with string values, but the supplied
+        // Variant is a VariantList.  Without a value-spec match, coerce
+        // returns the value untouched (no spurious error).
+        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantMap)
+                                .setValueSpec(VariantSpec().setType(Variant::TypeString));
+        VariantList vl;
+        vl.pushToBack(Variant(int32_t(1)));
+        Error   err;
+        Variant out = spec.coerce(Variant(vl), &err);
+        CHECK(err.isOk());
+        CHECK(out.type() == Variant::TypeVariantList);
+        CHECK(out.get<VariantList>().size() == 1);
+}
+
+TEST_CASE("Variant_DataStream_DeeplyNested_RoundTrip") {
+        // Build VariantMap{"x": VariantList[VariantMap{"k": int}]}.
+        VariantMap inner;
+        inner.insert("k", Variant(int32_t(7)));
+
+        VariantList list;
+        list.pushToBack(Variant(inner));
+
+        VariantMap top;
+        top.insert("x", Variant(list));
+
+        // BufferIODevice needs a backing Buffer; mirror the WriterFixture
+        // pattern from datastream.cpp's own tests.
+        Buffer         buf(4096);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        DataStream ws = DataStream::createWriter(&dev);
+        Variant    in(top);
+        ws << in;
+        REQUIRE(ws.status() == DataStream::Ok);
+
+        dev.seek(0);
+        DataStream rs = DataStream::createReader(&dev);
+        Variant    out;
+        rs >> out;
+        REQUIRE(rs.status() == DataStream::Ok);
+        REQUIRE(out.type() == Variant::TypeVariantMap);
+
+        VariantMap topOut = out.get<VariantMap>();
+        REQUIRE(topOut.contains("x"));
+        Variant xV = topOut.value("x");
+        REQUIRE(xV.type() == Variant::TypeVariantList);
+        VariantList xList = xV.get<VariantList>();
+        REQUIRE(xList.size() == 1);
+        REQUIRE(xList[0].type() == Variant::TypeVariantMap);
+        VariantMap innerOut = xList[0].get<VariantMap>();
+        CHECK(innerOut.value("k").get<int32_t>() == 7);
+}
+
+TEST_CASE("Variant_Peek_Borrows_Without_Copy") {
+        // peek<T>() returns nullptr on type mismatch and a borrowed
+        // pointer otherwise — no deep copy of the underlying container.
+        VariantMap m;
+        m.insert("a", Variant(int32_t(1)));
+        Variant v(m);
+
+        const VariantMap *vm = v.peek<VariantMap>();
+        REQUIRE(vm != nullptr);
+        CHECK(vm->size() == 1);
+        CHECK(vm->value("a").get<int32_t>() == 1);
+
+        // Mismatched type returns nullptr (no allocation, no error).
+        CHECK(v.peek<VariantList>() == nullptr);
+        CHECK(v.peek<int32_t>() == nullptr);
+
+        // Invalid Variant: every peek returns nullptr.
+        Variant invalid;
+        CHECK(invalid.peek<VariantMap>() == nullptr);
+        CHECK(invalid.peek<String>() == nullptr);
+}
+
+TEST_CASE("Variant_Peek_Aliases_Storage") {
+        // Successive peeks against the same Variant return the same
+        // pointer — confirms it really is a borrow into storage, not a
+        // copy each call.
+        VariantList list;
+        list.pushToBack(Variant(int32_t(7)));
+        Variant v(list);
+
+        const VariantList *p1 = v.peek<VariantList>();
+        const VariantList *p2 = v.peek<VariantList>();
+        CHECK(p1 == p2);
+        REQUIRE(p1 != nullptr);
+        CHECK(p1->size() == 1);
+}
+
+TEST_CASE("Variant_VariantList_DeepCopy_Independence") {
+        // A copy of a Variant holding a VariantList must not share
+        // storage with the source — pimpl copy-ctor performs a deep
+        // List<Variant> copy.
+        VariantList vl;
+        vl.pushToBack(Variant(int32_t(1)));
+        Variant a(vl);
+        Variant b = a;
+
+        VariantList aOut = a.get<VariantList>();
+        VariantList bOut = b.get<VariantList>();
+        REQUIRE(aOut.size() == 1);
+        REQUIRE(bOut.size() == 1);
+
+        // Mutate aOut (a copy from a.get<VariantList>) — must not
+        // affect b's list.
+        aOut.pushToBack(Variant(String("appended")));
+        VariantList bAgain = b.get<VariantList>();
+        CHECK(bAgain.size() == 1);
 }

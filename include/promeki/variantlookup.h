@@ -158,6 +158,89 @@ namespace detail {
                 return true;
         }
 
+        /**
+ * @brief Walks a key path through a @ref VariantSpec tree.
+ * @ingroup util
+ *
+ * Used by @ref VariantLookup::Registrar::variantTree to surface the
+ * declared spec of a sub-path through the variantTree binding's
+ * outer spec.  Each segment of @p path advances the cursor:
+ *
+ *  - A bracketed @c [N] step descends into @c cur->elementSpec().
+ *  - A name step (e.g. @c foo) descends into @c cur->valueSpec().
+ *  - Both, in segments shaped @c name[N], applies the name descent
+ *    first then the index descent — matches the runtime resolver.
+ *
+ * Returns @c nullptr when the cursor cannot descend (no
+ * element/value spec declared at that depth) and sets @p err to
+ * @c Error::IdNotFound.  An empty @p path returns @p cur unchanged.
+ *
+ * @param cur   Starting spec; may be @c nullptr (returns @c nullptr).
+ * @param path  Dotted/indexed sub-path (no leading dot).
+ * @param err   Optional error output.
+ * @return      The spec for the leaf, or @c nullptr on failure.
+ */
+        inline const VariantSpec *walkSpecPath(const VariantSpec *cur, const String &path, Error *err = nullptr) {
+                if (cur == nullptr) {
+                        if (err != nullptr) *err = Error::IdNotFound;
+                        return nullptr;
+                }
+                if (err != nullptr) *err = Error::Ok;
+                String remaining = path;
+                while (!remaining.isEmpty() && cur != nullptr) {
+                        VariantLookupSegment seg;
+                        // parseLeadingSegment requires a leading name; we
+                        // accept paths that start with a bracket (root is the
+                        // list) by handling that case explicitly.
+                        bool   bracketStart = (remaining[0] == '[');
+                        if (bracketStart) {
+                                // Index-only step: e.g. "[3]" or "[3].rest".
+                                size_t      end = 1;
+                                const char *p = remaining.cstr();
+                                const size_t len = remaining.byteCount();
+                                while (end < len && p[end] >= '0' && p[end] <= '9') ++end;
+                                if (end == 1 || end >= len || p[end] != ']') {
+                                        if (err != nullptr) *err = Error::ParseFailed;
+                                        return nullptr;
+                                }
+                                cur = cur->elementSpec();
+                                if (cur == nullptr) {
+                                        if (err != nullptr) *err = Error::IdNotFound;
+                                        return nullptr;
+                                }
+                                ++end; // past ']'
+                                if (end == len) {
+                                        remaining = String();
+                                } else if (p[end] == '.') {
+                                        remaining = remaining.mid(end + 1);
+                                } else {
+                                        if (err != nullptr) *err = Error::ParseFailed;
+                                        return nullptr;
+                                }
+                                continue;
+                        }
+                        if (!parseLeadingSegment(remaining, seg, err)) return nullptr;
+                        // Name step always descends via valueSpec.  If the
+                        // segment also has an index, descend once more via
+                        // elementSpec — matches the runtime resolver's
+                        // (map → list) traversal for "name[N]" segments.
+                        cur = cur->valueSpec();
+                        if (cur == nullptr) {
+                                if (err != nullptr) *err = Error::IdNotFound;
+                                return nullptr;
+                        }
+                        if (seg.hasIndex) {
+                                cur = cur->elementSpec();
+                                if (cur == nullptr) {
+                                        if (err != nullptr) *err = Error::IdNotFound;
+                                        return nullptr;
+                                }
+                        }
+                        remaining = seg.hasRest ? seg.rest : String();
+                }
+                return cur;
+        }
+
 } // namespace detail
 
 /**
@@ -429,6 +512,19 @@ template <typename T> class VariantLookup {
                  * forwards to @c VariantDatabase<DbName>::specFor(rest).
                  */
                 using ComposeSpecFor = std::function<const VariantSpec *(const String &, Error *)>;
+
+                /**
+                 * @brief Getter for a @ref Registrar::variantTree handler.
+                 *
+                 * Returns the @ref Variant at the registered name on
+                 * @p instance — typically a Variant carrying a
+                 * @ref VariantList or @ref VariantMap.  The dispatcher
+                 * descends into the returned tree via
+                 * @ref promekiResolveVariantPath when the lookup key has
+                 * a trailing path or index suffix, so callers get
+                 * @c "Foo.bar[0]" -style sub-path access for free.
+                 */
+                using VariantTreeGet = std::function<Variant(const T &)>;
 
                 // ============================================================
                 // Registrar (fluent builder)
@@ -798,6 +894,154 @@ template <typename T> class VariantLookup {
                                 }
 
                                 /**
+                                 * @brief Registers a variant-tree binding under @p name.
+                                 *
+                                 * Lets a type expose a free-form @ref Variant
+                                 * — typically holding a @ref VariantList or
+                                 * @ref VariantMap — and have lookups descend
+                                 * into the tree using the standard dotted /
+                                 * indexed key syntax:
+                                 *
+                                 *  - @c "Name"           — terminal, returns the whole Variant.
+                                 *  - @c "Name.sub"       — descends if the Variant holds a VariantMap.
+                                 *  - @c "Name[N]"        — descends if the Variant holds a VariantList.
+                                 *  - @c "Name[N].sub"    — combines the above.
+                                 *
+                                 * Spec discovery follows the same shape: the
+                                 * @p spec parameter is the spec for the
+                                 * top-level Variant, and trailing path
+                                 * fragments walk the spec's
+                                 * @ref VariantSpec::elementSpec /
+                                 * @ref VariantSpec::valueSpec chain so
+                                 * @c specFor("Name.sub") returns the inner
+                                 * spec when one was declared.
+                                 *
+                                 * @param name  Segment name.
+                                 * @param get   Function returning the Variant
+                                 *              at @c Name on the instance.
+                                 *              Returning an invalid Variant
+                                 *              for terminal lookups yields
+                                 *              @c std::nullopt with
+                                 *              @c Error::IdNotFound.
+                                 * @param spec  Optional @ref VariantSpec
+                                 *              describing the top-level
+                                 *              Variant's shape.  When set
+                                 *              with element / value
+                                 *              sub-specs, the cascade
+                                 *              surfaces them via
+                                 *              @ref specFor.
+                                 *
+                                 * @note Read-only.  Mutating a sub-path
+                                 *       through a variantTree binding is
+                                 *       not yet supported because it
+                                 *       requires splicing a new Variant
+                                 *       back into the registered tree.
+                                 *       Callers that need write access
+                                 *       should expose a top-level scalar
+                                 *       setter that takes a whole new
+                                 *       Variant.
+                                 */
+                                Registrar variantTree(const String &name, VariantTreeGet get,
+                                                      const VariantSpec *spec = nullptr) const {
+                                        // Resolve a "Name.rest" lookup: borrow the
+                                        // Variant from the user, descend via the
+                                        // shared tree-walker.  Empty rest returns
+                                        // the whole Variant, with IdNotFound when
+                                        // the getter signalled "not present"
+                                        // (invalid Variant).
+                                        ComposeResolve resolveFn = [get](const T &t, const String &rest,
+                                                                         Error *err) -> std::optional<Variant> {
+                                                Variant root = get(t);
+                                                if (!root.isValid()) {
+                                                        if (err != nullptr) *err = Error::IdNotFound;
+                                                        return std::nullopt;
+                                                }
+                                                if (rest.isEmpty()) return root;
+                                                Error   pe;
+                                                Variant out = promekiResolveVariantPath(root, rest, &pe);
+                                                if (pe.isError()) {
+                                                        if (err != nullptr) *err = pe;
+                                                        return std::nullopt;
+                                                }
+                                                return out;
+                                        };
+                                        // Resolve a "Name[N].rest" lookup: glue the
+                                        // index back into the path string and reuse
+                                        // promekiResolveVariantPath.
+                                        IndexedCompResolve indexedResolveFn = [get](const T &t, size_t idx,
+                                                                                    const String &rest,
+                                                                                    Error *err) -> std::optional<Variant> {
+                                                Variant root = get(t);
+                                                if (!root.isValid()) {
+                                                        if (err != nullptr) *err = Error::IdNotFound;
+                                                        return std::nullopt;
+                                                }
+                                                String path = String::sprintf("[%zu]", idx);
+                                                if (!rest.isEmpty()) path += "." + rest;
+                                                Error   pe;
+                                                Variant out = promekiResolveVariantPath(root, path, &pe);
+                                                if (pe.isError()) {
+                                                        if (err != nullptr) *err = pe;
+                                                        return std::nullopt;
+                                                }
+                                                return out;
+                                        };
+                                        // specFor walks the spec's element/value
+                                        // subtree to mirror what
+                                        // promekiResolveVariantPath did at runtime.
+                                        ComposeSpecFor specFn = [spec](const String &rest,
+                                                                       Error        *err) -> const VariantSpec * {
+                                                if (spec == nullptr) {
+                                                        if (err != nullptr) *err = Error::IdNotFound;
+                                                        return nullptr;
+                                                }
+                                                if (rest.isEmpty()) return spec;
+                                                return detail::walkSpecPath(spec, rest, err);
+                                        };
+                                        // Indexed entry's specFor: an extra
+                                        // [N] prefix vs. the named entry.
+                                        ComposeSpecFor indexedSpecFn = [spec](const String &rest,
+                                                                              Error        *err) -> const VariantSpec * {
+                                                if (spec == nullptr) {
+                                                        if (err != nullptr) *err = Error::IdNotFound;
+                                                        return nullptr;
+                                                }
+                                                String path("[0]"); // index value irrelevant for spec walk
+                                                if (!rest.isEmpty()) path += "." + rest;
+                                                return detail::walkSpecPath(spec, path, err);
+                                        };
+                                        std::function<StringList(const T &, const String &)> dumpFn =
+                                                [get](const T &t, const String &indent) -> StringList {
+                                                StringList out;
+                                                Variant    root = get(t);
+                                                if (!root.isValid()) return out;
+                                                String s = indent;
+                                                s += "[";
+                                                s += root.typeName();
+                                                s += "]: ";
+                                                s += root.format(String());
+                                                out.pushToBack(s);
+                                                return out;
+                                        };
+                                        Registry                  &r = registry();
+                                        ReadWriteLock::WriteLocker lock(r.lock);
+                                        uint64_t                   id = r.declareName(name);
+                                        r.variantTrees.insert(id, ComposeEntry{std::move(resolveFn), ComposeAssign(),
+                                                                               std::move(specFn), dumpFn});
+                                        // Indexed access (Name[N]) lives in a parallel
+                                        // entry so the dispatcher's existing
+                                        // seg.hasIndex branch lands here rather than
+                                        // forcing an indexedChild lookup.  The
+                                        // indexed dump shape is empty because the
+                                        // base entry already prints the whole tree.
+                                        r.indexedVariantTrees.insert(
+                                                id, IndexedCompEntry{std::move(indexedResolveFn), IndexedCompAssign(),
+                                                                     std::move(indexedSpecFn),
+                                                                     std::function<StringList(const T &, const String &)>()});
+                                        return *this;
+                                }
+
+                                /**
                                  * @brief Declares @c T's C++ base for lookup cascade.
                                  *
                                  * When a lookup on @c T misses every handler,
@@ -957,44 +1201,61 @@ template <typename T> class VariantLookup {
                         if (!seg.hasRest) {
                                 if (seg.hasIndex) {
                                         auto it = r.indexedScalars.find(id);
-                                        if (it == r.indexedScalars.end()) {
-                                                if (r.inherit.resolve) {
-                                                        return r.inherit.resolve(instance, key, err);
+                                        if (it != r.indexedScalars.end()) {
+                                                auto v = it->second.get(instance, seg.index);
+                                                if (!v.has_value()) {
+                                                        if (err != nullptr) *err = Error::OutOfRange;
                                                 }
-                                                if (err != nullptr) *err = Error::IdNotFound;
-                                                return std::nullopt;
+                                                return v;
                                         }
-                                        auto v = it->second.get(instance, seg.index);
-                                        if (!v.has_value()) {
-                                                if (err != nullptr) *err = Error::OutOfRange;
+                                        // Indexed access on a variantTree binding
+                                        // (e.g. "Tags[2]") falls through to here.
+                                        auto vtIt = r.indexedVariantTrees.find(id);
+                                        if (vtIt != r.indexedVariantTrees.end()) {
+                                                return vtIt->second.resolve(instance, seg.index, String(), err);
                                         }
-                                        return v;
-                                }
-                                auto it = r.scalars.find(id);
-                                if (it == r.scalars.end()) {
                                         if (r.inherit.resolve) {
                                                 return r.inherit.resolve(instance, key, err);
                                         }
                                         if (err != nullptr) *err = Error::IdNotFound;
                                         return std::nullopt;
                                 }
-                                auto v = it->second.get(instance);
-                                if (!v.has_value()) {
-                                        if (err != nullptr) *err = Error::IdNotFound;
+                                auto it = r.scalars.find(id);
+                                if (it != r.scalars.end()) {
+                                        auto v = it->second.get(instance);
+                                        if (!v.has_value()) {
+                                                if (err != nullptr) *err = Error::IdNotFound;
+                                        }
+                                        return v;
                                 }
-                                return v;
+                                // Terminal "Name" against a variantTree binding —
+                                // returns the whole tree as a Variant.
+                                auto vtIt = r.variantTrees.find(id);
+                                if (vtIt != r.variantTrees.end()) {
+                                        return vtIt->second.resolve(instance, String(), err);
+                                }
+                                if (r.inherit.resolve) {
+                                        return r.inherit.resolve(instance, key, err);
+                                }
+                                if (err != nullptr) *err = Error::IdNotFound;
+                                return std::nullopt;
                         }
 
                         if (seg.hasIndex) {
                                 auto it = r.indexedChildren.find(id);
-                                if (it == r.indexedChildren.end()) {
-                                        if (r.inherit.resolve) {
-                                                return r.inherit.resolve(instance, key, err);
-                                        }
-                                        if (err != nullptr) *err = Error::IdNotFound;
-                                        return std::nullopt;
+                                if (it != r.indexedChildren.end()) {
+                                        return it->second.resolve(instance, seg.index, seg.rest, err);
                                 }
-                                return it->second.resolve(instance, seg.index, seg.rest, err);
+                                // "Name[N].rest" against a variantTree binding.
+                                auto vtIt = r.indexedVariantTrees.find(id);
+                                if (vtIt != r.indexedVariantTrees.end()) {
+                                        return vtIt->second.resolve(instance, seg.index, seg.rest, err);
+                                }
+                                if (r.inherit.resolve) {
+                                        return r.inherit.resolve(instance, key, err);
+                                }
+                                if (err != nullptr) *err = Error::IdNotFound;
+                                return std::nullopt;
                         }
 
                         auto itChild = r.children.find(id);
@@ -1004,6 +1265,12 @@ template <typename T> class VariantLookup {
                         auto itDb = r.databases.find(id);
                         if (itDb != r.databases.end()) {
                                 return itDb->second.resolve(instance, seg.rest, err);
+                        }
+                        // "Name.rest" against a variantTree binding — descend into
+                        // the registered Variant via promekiResolveVariantPath.
+                        auto itVt = r.variantTrees.find(id);
+                        if (itVt != r.variantTrees.end()) {
+                                return itVt->second.resolve(instance, seg.rest, err);
                         }
                         if (r.inherit.resolve) {
                                 return r.inherit.resolve(instance, key, err);
@@ -1149,58 +1416,73 @@ template <typename T> class VariantLookup {
                         if (!seg.hasRest) {
                                 if (seg.hasIndex) {
                                         auto it = r.indexedScalars.find(id);
-                                        if (it == r.indexedScalars.end()) {
-                                                if (r.inherit.assign) {
-                                                        return r.inherit.assign(instance, key, value, err);
+                                        if (it != r.indexedScalars.end()) {
+                                                if (!it->second.set) {
+                                                        if (err != nullptr) *err = Error::ReadOnly;
+                                                        return false;
                                                 }
-                                                if (err != nullptr) *err = Error::IdNotFound;
+                                                Error setErr = it->second.set(instance, seg.index, value);
+                                                if (setErr.isError()) {
+                                                        if (err != nullptr) *err = setErr;
+                                                        return false;
+                                                }
+                                                return true;
+                                        }
+                                        // Indexed assign on variantTree binding —
+                                        // not supported (would require splicing the
+                                        // value back into the tree).
+                                        if (r.indexedVariantTrees.find(id) != r.indexedVariantTrees.end()) {
+                                                if (err != nullptr) *err = Error::ReadOnly;
                                                 return false;
                                         }
+                                        if (r.inherit.assign) {
+                                                return r.inherit.assign(instance, key, value, err);
+                                        }
+                                        if (err != nullptr) *err = Error::IdNotFound;
+                                        return false;
+                                }
+                                auto it = r.scalars.find(id);
+                                if (it != r.scalars.end()) {
                                         if (!it->second.set) {
                                                 if (err != nullptr) *err = Error::ReadOnly;
                                                 return false;
                                         }
-                                        Error setErr = it->second.set(instance, seg.index, value);
+                                        Error setErr = it->second.set(instance, value);
                                         if (setErr.isError()) {
                                                 if (err != nullptr) *err = setErr;
                                                 return false;
                                         }
                                         return true;
                                 }
-                                auto it = r.scalars.find(id);
-                                if (it == r.scalars.end()) {
-                                        if (r.inherit.assign) {
-                                                return r.inherit.assign(instance, key, value, err);
-                                        }
-                                        if (err != nullptr) *err = Error::IdNotFound;
-                                        return false;
-                                }
-                                if (!it->second.set) {
+                                if (r.variantTrees.find(id) != r.variantTrees.end()) {
                                         if (err != nullptr) *err = Error::ReadOnly;
                                         return false;
                                 }
-                                Error setErr = it->second.set(instance, value);
-                                if (setErr.isError()) {
-                                        if (err != nullptr) *err = setErr;
-                                        return false;
+                                if (r.inherit.assign) {
+                                        return r.inherit.assign(instance, key, value, err);
                                 }
-                                return true;
+                                if (err != nullptr) *err = Error::IdNotFound;
+                                return false;
                         }
 
                         if (seg.hasIndex) {
                                 auto it = r.indexedChildren.find(id);
-                                if (it == r.indexedChildren.end()) {
-                                        if (r.inherit.assign) {
-                                                return r.inherit.assign(instance, key, value, err);
+                                if (it != r.indexedChildren.end()) {
+                                        if (!it->second.assign) {
+                                                if (err != nullptr) *err = Error::ReadOnly;
+                                                return false;
                                         }
-                                        if (err != nullptr) *err = Error::IdNotFound;
-                                        return false;
+                                        return it->second.assign(instance, seg.index, seg.rest, value, err);
                                 }
-                                if (!it->second.assign) {
+                                if (r.indexedVariantTrees.find(id) != r.indexedVariantTrees.end()) {
                                         if (err != nullptr) *err = Error::ReadOnly;
                                         return false;
                                 }
-                                return it->second.assign(instance, seg.index, seg.rest, value, err);
+                                if (r.inherit.assign) {
+                                        return r.inherit.assign(instance, key, value, err);
+                                }
+                                if (err != nullptr) *err = Error::IdNotFound;
+                                return false;
                         }
 
                         auto itChild = r.children.find(id);
@@ -1218,6 +1500,10 @@ template <typename T> class VariantLookup {
                                         return false;
                                 }
                                 return itDb->second.assign(instance, seg.rest, value, err);
+                        }
+                        if (r.variantTrees.find(id) != r.variantTrees.end()) {
+                                if (err != nullptr) *err = Error::ReadOnly;
+                                return false;
                         }
                         if (r.inherit.assign) {
                                 return r.inherit.assign(instance, key, value, err);
@@ -1375,36 +1661,50 @@ template <typename T> class VariantLookup {
                         if (!seg.hasRest) {
                                 if (seg.hasIndex) {
                                         auto it = r.indexedScalars.find(id);
-                                        if (it == r.indexedScalars.end()) {
-                                                if (r.inherit.specFor) {
-                                                        return r.inherit.specFor(key, err);
-                                                }
-                                                if (err != nullptr) *err = Error::IdNotFound;
-                                                return nullptr;
+                                        if (it != r.indexedScalars.end()) return it->second.spec;
+                                        // "Name[N]" against a variantTree binding —
+                                        // the spec is the element-spec of the tree's
+                                        // declared spec, surfaced by the binding's
+                                        // own specFor handler.
+                                        auto vtIt = r.indexedVariantTrees.find(id);
+                                        if (vtIt != r.indexedVariantTrees.end()) {
+                                                return vtIt->second.specFor(String(), err);
                                         }
-                                        return it->second.spec;
-                                }
-                                auto it = r.scalars.find(id);
-                                if (it == r.scalars.end()) {
                                         if (r.inherit.specFor) {
                                                 return r.inherit.specFor(key, err);
                                         }
                                         if (err != nullptr) *err = Error::IdNotFound;
                                         return nullptr;
                                 }
-                                return it->second.spec;
+                                auto it = r.scalars.find(id);
+                                if (it != r.scalars.end()) return it->second.spec;
+                                // Terminal "Name" against a variantTree binding —
+                                // the spec describes the whole registered Variant.
+                                auto vtIt = r.variantTrees.find(id);
+                                if (vtIt != r.variantTrees.end()) {
+                                        return vtIt->second.specFor(String(), err);
+                                }
+                                if (r.inherit.specFor) {
+                                        return r.inherit.specFor(key, err);
+                                }
+                                if (err != nullptr) *err = Error::IdNotFound;
+                                return nullptr;
                         }
 
                         if (seg.hasIndex) {
                                 auto it = r.indexedChildren.find(id);
-                                if (it == r.indexedChildren.end()) {
-                                        if (r.inherit.specFor) {
-                                                return r.inherit.specFor(key, err);
-                                        }
-                                        if (err != nullptr) *err = Error::IdNotFound;
-                                        return nullptr;
+                                if (it != r.indexedChildren.end()) {
+                                        return it->second.specFor(seg.rest, err);
                                 }
-                                return it->second.specFor(seg.rest, err);
+                                auto vtIt = r.indexedVariantTrees.find(id);
+                                if (vtIt != r.indexedVariantTrees.end()) {
+                                        return vtIt->second.specFor(seg.rest, err);
+                                }
+                                if (r.inherit.specFor) {
+                                        return r.inherit.specFor(key, err);
+                                }
+                                if (err != nullptr) *err = Error::IdNotFound;
+                                return nullptr;
                         }
 
                         auto itChild = r.children.find(id);
@@ -1414,6 +1714,10 @@ template <typename T> class VariantLookup {
                         auto itDb = r.databases.find(id);
                         if (itDb != r.databases.end()) {
                                 return itDb->second.specFor(seg.rest, err);
+                        }
+                        auto itVt = r.variantTrees.find(id);
+                        if (itVt != r.variantTrees.end()) {
+                                return itVt->second.specFor(seg.rest, err);
                         }
                         if (r.inherit.specFor) {
                                 return r.inherit.specFor(key, err);
@@ -1624,6 +1928,7 @@ template <typename T> class VariantLookup {
                         List<Item>                                           children;
                         List<Item>                                           indexedChildren;
                         List<Item>                                           databases;
+                        List<Item>                                           variantTrees;
                         std::function<StringList(const T &, const String &)> inheritFn;
                         {
                                 const Registry           &r = registry();
@@ -1646,6 +1951,19 @@ template <typename T> class VariantLookup {
                                         if (n == r.names.end()) continue;
                                         databases.pushToBack(Item{n->second, it->second.dump});
                                 }
+                                // variantTree bindings get included with the
+                                // same dump shape as databases — one section
+                                // per registered name, with the bound Variant
+                                // rendered via Variant::format().  Indexed
+                                // variant-trees deliberately register an empty
+                                // dump so we don't double-emit the same tree
+                                // under two names.
+                                for (auto it = r.variantTrees.cbegin(); it != r.variantTrees.cend(); ++it) {
+                                        if (!it->second.dump) continue;
+                                        auto n = r.names.find(it->first);
+                                        if (n == r.names.end()) continue;
+                                        variantTrees.pushToBack(Item{n->second, it->second.dump});
+                                }
                                 inheritFn = r.inherit.dumpComposites;
                         }
 
@@ -1664,6 +1982,9 @@ template <typename T> class VariantLookup {
                                 emit(c.name, c.dump(instance, sub));
                         }
                         for (const Item &d : databases) {
+                                emit(d.name, d.dump(instance, sub));
+                        }
+                        for (const Item &d : variantTrees) {
                                 emit(d.name, d.dump(instance, sub));
                         }
 
@@ -1898,6 +2219,8 @@ template <typename T> class VariantLookup {
                                 Map<uint64_t, ComposeEntry>       children;
                                 Map<uint64_t, IndexedCompEntry>   indexedChildren;
                                 Map<uint64_t, ComposeEntry>       databases;
+                                Map<uint64_t, ComposeEntry>       variantTrees;
+                                Map<uint64_t, IndexedCompEntry>   indexedVariantTrees;
                                 InheritEntry                      inherit;
                                 mutable ReadWriteLock             lock;
 

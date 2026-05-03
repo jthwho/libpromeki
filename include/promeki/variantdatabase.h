@@ -334,24 +334,30 @@ template <CompiledString Name> class VariantDatabase {
                  *         rejected.
                  */
                 Error setFromJson(ID id, const Variant &value) {
-                        if (value.type() == Variant::TypeString) {
-                                const VariantSpec *sp = spec(id);
-                                if (sp != nullptr && !sp->acceptsType(Variant::TypeString)) {
-                                        Error   pe;
-                                        Variant parsed = sp->parseString(value.get<String>(), &pe);
-                                        if (pe.isOk()) {
-                                                Error err;
-                                                set(id, std::move(parsed), &err);
-                                                return err;
-                                        }
-                                        // String didn't parse into the
-                                        // spec's native type; report
-                                        // that rather than falling back
-                                        // to storing the raw string,
-                                        // which would itself fail spec
-                                        // validation under Strict mode.
-                                        return pe;
+                        const VariantSpec *sp = spec(id);
+                        if (sp != nullptr) {
+                                // Recursive coercion: top-level Strings get
+                                // parsed via VariantSpec::parseString, and
+                                // nested VariantList / VariantMap entries get
+                                // walked with their element / value sub-spec
+                                // so a {"color": "red"} JSON object whose
+                                // declared spec is TypeVariantMap with a
+                                // TypeColor valueSpec lands as
+                                // VariantMap{"color": Color::Red} rather than
+                                // VariantMap{"color": String("red")}.
+                                Error   ce;
+                                Variant coerced = sp->coerce(value, &ce);
+                                if (ce.isError()) {
+                                        // The leaf parse / recursion failed
+                                        // — surface that error rather than
+                                        // storing a value that would fail
+                                        // spec validation in Strict mode
+                                        // anyway.
+                                        return ce;
                                 }
+                                Error err;
+                                set(id, std::move(coerced), &err);
+                                return err;
                         }
                         Error err;
                         set(id, value, &err);
@@ -614,10 +620,44 @@ template <CompiledString Name> class VariantDatabase {
                                                                             : body.substr(colon + 1);
                                         String           keyName(keyView.data(), keyView.size());
                                         String           specStr(specView.data(), specView.size());
-                                        ID               id = ID::find(keyName);
+                                        // Split on the first '.' (or '[') to allow
+                                        // nested keys like "Foo.bar" or "Foo[0]"
+                                        // when the value at "Foo" is a VariantMap
+                                        // / VariantList.  The leading ID
+                                        // component still must be a registered key.
+                                        size_t      sep = keyName.byteCount();
+                                        const char *kn = keyName.cstr();
+                                        for (size_t p = 0; p < keyName.byteCount(); ++p) {
+                                                if (kn[p] == '.' || kn[p] == '[') {
+                                                        sep = p;
+                                                        break;
+                                                }
+                                        }
+                                        String headKey = (sep == keyName.byteCount()) ? keyName
+                                                                                       : String(kn, sep);
+                                        String tailPath;
+                                        if (sep < keyName.byteCount()) {
+                                                // Trim a leading '.' but keep '['.
+                                                size_t start = (kn[sep] == '.') ? sep + 1 : sep;
+                                                tailPath = String(kn + start, keyName.byteCount() - start);
+                                        }
+                                        ID               id = ID::find(headKey);
                                         auto             it = id.isValid() ? _data.find(id.id()) : _data.end();
                                         if (it != _data.end()) {
-                                                String rendered = it->second.format(specStr);
+                                                Variant target = it->second;
+                                                if (!tailPath.isEmpty()) {
+                                                        Error pe;
+                                                        target = promekiResolveVariantPath(target, tailPath, &pe);
+                                                        if (pe.isError() || !target.isValid()) {
+                                                                sawUnresolved = true;
+                                                                out += "[UNKNOWN KEY: ";
+                                                                out.append(keyView.data(), keyView.size());
+                                                                out += ']';
+                                                                i = end + 1;
+                                                                continue;
+                                                        }
+                                                }
+                                                String rendered = target.format(specStr);
                                                 out.append(rendered.cstr(), rendered.byteCount());
                                         } else {
                                                 std::optional<String> resolved;

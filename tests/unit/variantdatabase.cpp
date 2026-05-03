@@ -882,3 +882,143 @@ TEST_CASE("VariantDatabase: format leaves text without tokens unchanged") {
         DB db;
         CHECK(db.format("no tokens here") == String("no tokens here"));
 }
+
+// ============================================================================
+// Nested-key format substitution (VariantList / VariantMap descent)
+// ============================================================================
+
+TEST_CASE("VariantDatabase: format descends into VariantMap value") {
+        using DB = VariantDatabase<"FmtTagNestedMap">;
+        DB::ID who("Who");
+        DB     db;
+
+        VariantMap who_map;
+        who_map.insert("first", Variant(String("Alice")));
+        who_map.insert("last", Variant(String("Smith")));
+        db.set(who, Variant(who_map));
+
+        // {Who.first} resolves to the inner string via promekiResolveVariantPath.
+        CHECK(db.format("hi {Who.first}!") == String("hi Alice!"));
+        CHECK(db.format("{Who.last}, {Who.first}") == String("Smith, Alice"));
+}
+
+TEST_CASE("VariantDatabase: format descends into VariantList by index") {
+        using DB = VariantDatabase<"FmtTagNestedList">;
+        DB::ID tags("Tags");
+        DB     db;
+
+        VariantList list;
+        list.pushToBack(Variant(String("alpha")));
+        list.pushToBack(Variant(String("beta")));
+        list.pushToBack(Variant(String("gamma")));
+        db.set(tags, Variant(list));
+
+        CHECK(db.format("{Tags[1]}") == String("beta"));
+        CHECK(db.format("{Tags[0]}/{Tags[2]}") == String("alpha/gamma"));
+}
+
+TEST_CASE("VariantDatabase: format reports unknown nested key cleanly") {
+        using DB = VariantDatabase<"FmtTagNestedMiss">;
+        DB::ID who("Who");
+        DB     db;
+        VariantMap m;
+        m.insert("name", Variant(String("Alice")));
+        db.set(who, Variant(m));
+
+        Error  err;
+        String s = db.format("{Who.missing}", &err);
+        CHECK(err == Error::IdNotFound);
+        CHECK(s == String("[UNKNOWN KEY: Who.missing]"));
+}
+
+// ============================================================================
+// Recursive setFromJson coercion (nested element / value spec)
+// ============================================================================
+
+namespace {
+        // Tag wrapper exposes ID declarations as static inline members so
+        // declareID's spec sticks for the whole TU run.
+        struct CoerceDB : public VariantDatabase<"CoerceTagListOfInts"> {
+                        // List of ints: declared with element-spec so JSON
+                        // strings like ["1","2","3"] parse through to int32.
+                        PROMEKI_DECLARE_ID(IntList,
+                                           VariantSpec()
+                                                   .setType(Variant::TypeVariantList)
+                                                   .setElementSpec(VariantSpec().setType(Variant::TypeS32)));
+        };
+
+        struct CoerceMapDB : public VariantDatabase<"CoerceTagMapOfInts"> {
+                        PROMEKI_DECLARE_ID(IntMap,
+                                           VariantSpec()
+                                                   .setType(Variant::TypeVariantMap)
+                                                   .setValueSpec(VariantSpec().setType(Variant::TypeS32)));
+        };
+} // namespace
+
+TEST_CASE("VariantDatabase: setFromJson coerces nested list elements") {
+        // JSON values arrive as strings; the spec's elementSpec asks for
+        // TypeS32, so each element should round-trip via parseString.
+        VariantList incoming;
+        incoming.pushToBack(Variant(String("1")));
+        incoming.pushToBack(Variant(String("2")));
+        incoming.pushToBack(Variant(String("3")));
+
+        CoerceDB db;
+        Error    err = db.setFromJson(CoerceDB::IntList, Variant(incoming));
+        CHECK(err.isOk());
+
+        Variant stored = db.get(CoerceDB::IntList);
+        REQUIRE(stored.type() == Variant::TypeVariantList);
+        VariantList out = stored.get<VariantList>();
+        REQUIRE(out.size() == 3);
+        CHECK(out[0].type() == Variant::TypeS32);
+        CHECK(out[0].get<int32_t>() == 1);
+        CHECK(out[1].get<int32_t>() == 2);
+        CHECK(out[2].get<int32_t>() == 3);
+}
+
+TEST_CASE("VariantDatabase: setFromJson coerces nested map values") {
+        VariantMap incoming;
+        incoming.insert("a", Variant(String("10")));
+        incoming.insert("b", Variant(String("20")));
+
+        CoerceMapDB db;
+        Error       err = db.setFromJson(CoerceMapDB::IntMap, Variant(incoming));
+        CHECK(err.isOk());
+
+        Variant stored = db.get(CoerceMapDB::IntMap);
+        REQUIRE(stored.type() == Variant::TypeVariantMap);
+        VariantMap out = stored.get<VariantMap>();
+        CHECK(out.value("a").type() == Variant::TypeS32);
+        CHECK(out.value("a").get<int32_t>() == 10);
+        CHECK(out.value("b").get<int32_t>() == 20);
+}
+
+TEST_CASE("VariantDatabase: setFromJson reports nested coercion failure") {
+        VariantList incoming;
+        incoming.pushToBack(Variant(String("1")));
+        incoming.pushToBack(Variant(String("not-a-number")));
+
+        CoerceDB db;
+        Error    err = db.setFromJson(CoerceDB::IntList, Variant(incoming));
+        CHECK(err.isError());
+        // Value should not have been stored on failure.
+        CHECK_FALSE(db.contains(CoerceDB::IntList));
+}
+
+TEST_CASE("VariantDatabase: fromJson round-trips through nested coercion") {
+        // End-to-end: parse a JSON object with a nested array of strings,
+        // route it through the database's fromJson pipeline, and verify
+        // that the spec's element-spec coerced each string to int.  The
+        // CoerceDB subclass exists only to host the PROMEKI_DECLARE_ID
+        // call; the Tag's spec registry is shared with the underlying
+        // VariantDatabase template, so the base form picks up the spec.
+        using DB = VariantDatabase<"CoerceTagListOfInts">;
+        JsonObject  jo = JsonObject::parse(String(R"({"IntList":["7","8","9"]})"));
+        DB          db = DB::fromJson(jo);
+        VariantList out = db.get(CoerceDB::IntList).get<VariantList>();
+        REQUIRE(out.size() == 3);
+        CHECK(out[0].type() == Variant::TypeS32);
+        CHECK(out[0].get<int32_t>() == 7);
+        CHECK(out[2].get<int32_t>() == 9);
+}

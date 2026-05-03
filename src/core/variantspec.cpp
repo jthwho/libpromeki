@@ -31,6 +31,54 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+// ============================================================================
+// Special members — out-of-line so the UniquePtr<VariantSpec> sub-spec
+// holders can deep-clone with VariantSpec complete.
+// ============================================================================
+
+VariantSpec::VariantSpec(const VariantSpec &other)
+    : _types(other._types),
+      _default(other._default),
+      _min(other._min),
+      _max(other._max),
+      _enumType(other._enumType),
+      _description(other._description) {
+        if (other._elementSpec.isValid()) {
+                _elementSpec = UniquePtr<VariantSpec>::create(*other._elementSpec);
+        }
+        if (other._valueSpec.isValid()) {
+                _valueSpec = UniquePtr<VariantSpec>::create(*other._valueSpec);
+        }
+}
+
+VariantSpec &VariantSpec::operator=(const VariantSpec &other) {
+        if (&other == this) return *this;
+        _types = other._types;
+        _default = other._default;
+        _min = other._min;
+        _max = other._max;
+        _enumType = other._enumType;
+        _description = other._description;
+        _elementSpec = other._elementSpec.isValid() ? UniquePtr<VariantSpec>::create(*other._elementSpec)
+                                                   : UniquePtr<VariantSpec>();
+        _valueSpec = other._valueSpec.isValid() ? UniquePtr<VariantSpec>::create(*other._valueSpec)
+                                               : UniquePtr<VariantSpec>();
+        return *this;
+}
+
+VariantSpec &VariantSpec::setElementSpec(const VariantSpec &spec) {
+        _elementSpec = UniquePtr<VariantSpec>::create(spec);
+        return *this;
+}
+
+VariantSpec &VariantSpec::setValueSpec(const VariantSpec &spec) {
+        _valueSpec = UniquePtr<VariantSpec>::create(spec);
+        return *this;
+}
+
+const VariantSpec *VariantSpec::elementSpec() const { return _elementSpec.get(); }
+const VariantSpec *VariantSpec::valueSpec() const { return _valueSpec.get(); }
+
 namespace {
 
         /// Returns true if the Variant::Type is any integer or floating-point type.
@@ -107,6 +155,8 @@ namespace {
                         }
                         case Variant::TypeUrl: return "Url";
                         case Variant::TypeWindowedStat: return "WindowedStat";
+                        case Variant::TypeVariantList: return "VariantList";
+                        case Variant::TypeVariantMap: return "VariantMap";
 #if PROMEKI_ENABLE_NETWORK
                         case Variant::TypeSocketAddress: return "SocketAddress";
                         case Variant::TypeSdpSession: return "SdpSession";
@@ -350,6 +400,18 @@ namespace {
                                 if (error(r).isError()) break;
                                 return Variant(value(r));
                         }
+                        case Variant::TypeVariantList: {
+                                Error       pe;
+                                VariantList vl = VariantList::fromJsonString(str, &pe);
+                                if (pe.isError()) break;
+                                return Variant(vl);
+                        }
+                        case Variant::TypeVariantMap: {
+                                Error      pe;
+                                VariantMap vm = VariantMap::fromJsonString(str, &pe);
+                                if (pe.isError()) break;
+                                return Variant(vm);
+                        }
 #if PROMEKI_ENABLE_NETWORK
                         case Variant::TypeSocketAddress: {
                                 // SocketAddress() (null) serializes to an empty
@@ -449,6 +511,43 @@ bool VariantSpec::validate(const Variant &value, Error *err) const {
                 }
         }
 
+        // 4. Nested-element validation for VariantList: every element
+        //    must satisfy the declared element spec, if one exists.
+        //    peek<>() borrows the list rather than deep-copying it.
+        if (_elementSpec.isValid()) {
+                if (const VariantList *vl = value.peek<VariantList>()) {
+                        const size_t n = vl->size();
+                        for (size_t i = 0; i < n; ++i) {
+                                Error eErr;
+                                if (!_elementSpec->validate((*vl)[i], &eErr)) {
+                                        if (err) *err = eErr.isError() ? eErr : Error::InvalidArgument;
+                                        return false;
+                                }
+                        }
+                }
+        }
+
+        // 5. Nested-value validation for VariantMap: every value must
+        //    satisfy the declared value spec.  Keys are not validated
+        //    here — they are always String and any per-key constraints
+        //    belong to the consumer.
+        if (_valueSpec.isValid()) {
+                if (const VariantMap *vm = value.peek<VariantMap>()) {
+                        Error mapErr = Error::Ok;
+                        vm->forEach([&](const String &, const Variant &v) {
+                                if (mapErr.isError()) return;
+                                Error vErr;
+                                if (!_valueSpec->validate(v, &vErr)) {
+                                        mapErr = vErr.isError() ? vErr : Error::InvalidArgument;
+                                }
+                        });
+                        if (mapErr.isError()) {
+                                if (err) *err = mapErr;
+                                return false;
+                        }
+                }
+        }
+
         if (err) *err = Error::Ok;
         return true;
 }
@@ -459,11 +558,23 @@ bool VariantSpec::validate(const Variant &value, Error *err) const {
 
 String VariantSpec::typeName() const {
         if (_types.isEmpty()) return "(any)";
-        if (_types.size() == 1) return singleTypeName(_types[0], _enumType);
+        auto annotate = [this](Variant::Type t) -> String {
+                String base = singleTypeName(t, _enumType);
+                // For container types, surface the element / value shape
+                // so help output and introspection can show "VariantList<int>"
+                // or "VariantMap<int>" instead of just the bare container.
+                if (t == Variant::TypeVariantList && _elementSpec.isValid()) {
+                        base += "<" + _elementSpec->typeName() + ">";
+                } else if (t == Variant::TypeVariantMap && _valueSpec.isValid()) {
+                        base += "<" + _valueSpec->typeName() + ">";
+                }
+                return base;
+        };
+        if (_types.size() == 1) return annotate(_types[0]);
         String result;
         for (size_t i = 0; i < _types.size(); i++) {
                 if (i > 0) result += " | ";
-                result += singleTypeName(_types[i], _enumType);
+                result += annotate(_types[i]);
         }
         return result;
 }
@@ -539,6 +650,71 @@ Variant VariantSpec::parseString(const String &str, Error *err) const {
 // ============================================================================
 // Help output
 // ============================================================================
+
+Variant VariantSpec::coerce(const Variant &val, Error *err) const {
+        if (err) *err = Error::Ok;
+
+        // Top-level String coercion: spec wants a non-String native type
+        // and the JSON layer handed us a String — feed it through
+        // parseString so the database stores the right Variant alternative.
+        if (val.type() == Variant::TypeString && !_types.isEmpty() && !acceptsType(Variant::TypeString)) {
+                Error   pe;
+                Variant parsed = parseString(val.get<String>(), &pe);
+                if (pe.isError()) {
+                        if (err) *err = pe;
+                        return Variant();
+                }
+                return parsed;
+        }
+
+        // VariantList with declared element-spec — recurse.  We rebuild
+        // the list element-by-element rather than mutating in place so
+        // the original Variant is left untouched.  peek<>() borrows the
+        // source list to avoid an extra deep copy on entry.
+        if (_elementSpec.isValid()) {
+                if (const VariantList *src = val.peek<VariantList>()) {
+                        const size_t n = src->size();
+                        VariantList  out;
+                        out.reserve(n);
+                        for (size_t i = 0; i < n; ++i) {
+                                Error   eErr;
+                                Variant coerced = _elementSpec->coerce((*src)[i], &eErr);
+                                if (eErr.isError()) {
+                                        if (err) *err = eErr;
+                                        return Variant();
+                                }
+                                out.pushToBack(std::move(coerced));
+                        }
+                        return Variant(std::move(out));
+                }
+        }
+
+        // VariantMap with declared value-spec — recurse over values.
+        // Keys remain as-is (always String).
+        if (_valueSpec.isValid()) {
+                if (const VariantMap *src = val.peek<VariantMap>()) {
+                        VariantMap out;
+                        Error      mapErr = Error::Ok;
+                        src->forEach([&](const String &k, const Variant &v) {
+                                if (mapErr.isError()) return;
+                                Error   vErr;
+                                Variant coerced = _valueSpec->coerce(v, &vErr);
+                                if (vErr.isError()) {
+                                        mapErr = vErr;
+                                        return;
+                                }
+                                out.insert(k, std::move(coerced));
+                        });
+                        if (mapErr.isError()) {
+                                if (err) *err = mapErr;
+                                return Variant();
+                        }
+                        return Variant(std::move(out));
+                }
+        }
+
+        return val;
+}
 
 String VariantSpec::detailsString() const {
         // Compact "details" column: type, optional range, default.

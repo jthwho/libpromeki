@@ -323,7 +323,11 @@ class DataStream {
                         TypeWindowedStatsBundle =
                                 0x51, ///< @brief WindowedStatsBundle (uint32 count + N (String name, WindowedStat) pairs)
                         TypeAudioMarkerList =
-                                0x52 ///< @brief AudioMarkerList (uint32 count + N (int64 offset, int64 length, int32 type))
+                                0x52, ///< @brief AudioMarkerList (uint32 count + N (int64 offset, int64 length, int32 type))
+                        TypeVariantList =
+                                0x53, ///< @brief VariantList (uint32 count + N tagged Variants — same wire as List<Variant>)
+                        TypeVariantMap =
+                                0x54, ///< @brief VariantMap (uint32 count + N (String key, Variant value) — same wire as Map<String,Variant>)
                 };
 
                 /**

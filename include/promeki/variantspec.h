@@ -12,6 +12,7 @@
 #include <promeki/enum.h>
 #include <promeki/list.h>
 #include <promeki/string.h>
+#include <promeki/uniqueptr.h>
 #include <promeki/error.h>
 #include <promeki/textstream.h>
 
@@ -167,6 +168,35 @@ class VariantSpec {
                 }
 
                 /**
+                 * @brief Declares the spec each element of a TypeVariantList must satisfy.
+                 *
+                 * Setting an element spec lets @ref validate descend into a
+                 * @ref VariantList and check every element, and lets
+                 * @ref VariantLookup resolve trailing path segments
+                 * inside the list against the element's declared shape.
+                 * Has no effect for specs whose @ref types is not a
+                 * @c TypeVariantList.
+                 *
+                 * @param spec The per-element spec.
+                 * @return Reference to this spec for chaining.
+                 */
+                VariantSpec &setElementSpec(const VariantSpec &spec);
+
+                /**
+                 * @brief Declares the spec each value of a TypeVariantMap must satisfy.
+                 *
+                 * Setting a value spec lets @ref validate descend into a
+                 * @ref VariantMap and check every value, and lets
+                 * @ref VariantLookup resolve trailing path segments
+                 * against the value's declared shape.  Has no effect for
+                 * specs whose @ref types is not a @c TypeVariantMap.
+                 *
+                 * @param spec The per-value spec.
+                 * @return Reference to this spec for chaining.
+                 */
+                VariantSpec &setValueSpec(const VariantSpec &spec);
+
+                /**
                  * @brief Returns the list of accepted Variant types.
                  * @return The type list.  Empty if no type constraint was set.
                  */
@@ -243,6 +273,28 @@ class VariantSpec {
                 const String &description() const { return _description; }
 
                 /**
+                 * @brief Returns true when an element spec has been declared.
+                 */
+                bool hasElementSpec() const { return _elementSpec.isValid(); }
+
+                /**
+                 * @brief Returns the element spec for a TypeVariantList,
+                 *        or @c nullptr when none was declared.
+                 */
+                const VariantSpec *elementSpec() const;
+
+                /**
+                 * @brief Returns true when a value spec has been declared.
+                 */
+                bool hasValueSpec() const { return _valueSpec.isValid(); }
+
+                /**
+                 * @brief Returns the value spec for a TypeVariantMap,
+                 *        or @c nullptr when none was declared.
+                 */
+                const VariantSpec *valueSpec() const;
+
+                /**
                  * @brief Returns true if this spec has at least one type or a default value.
                  * @return True if the spec carries useful information.
                  */
@@ -306,6 +358,33 @@ class VariantSpec {
                 // ============================================================
 
                 /**
+                 * @brief Recursively coerces @p val to the spec's native shape.
+                 *
+                 * Designed for the JSON deserialisation path where every
+                 * leaf arrives as a JSON primitive (often @c String) but
+                 * the spec wants the rich native type (Color, Size2D,
+                 * Enum, etc.).  Walks the value:
+                 *
+                 *  - @c TypeString and the spec doesn't accept String
+                 *    natively → @ref parseString to the spec's native type.
+                 *  - @c TypeVariantList with an @ref elementSpec set →
+                 *    recurse into every element.
+                 *  - @c TypeVariantMap with a @ref valueSpec set →
+                 *    recurse into every value.
+                 *  - Anything else → returned as-is.
+                 *
+                 * Returns the coerced Variant on success.  On failure
+                 * (parseString rejected a string, recursive coercion
+                 * failed) returns an invalid Variant and sets @p err
+                 * to the underlying parse / conversion code.
+                 *
+                 * @param val The value to coerce.
+                 * @param err Optional error output.
+                 * @return The coerced value, or invalid on failure.
+                 */
+                Variant coerce(const Variant &val, Error *err = nullptr) const;
+
+                /**
                  * @brief Parses a CLI-style string into a Variant of the correct type.
                  *
                  * The spec's type list drives the parser — no template
@@ -359,13 +438,25 @@ class VariantSpec {
                  */
                 operator Variant() const { return _default; }
 
+                /**
+                 * @brief Copy constructor.  Performs a deep copy of any
+                 * declared element / value sub-spec.
+                 */
+                VariantSpec(const VariantSpec &other);
+                VariantSpec(VariantSpec &&other) noexcept = default;
+                VariantSpec &operator=(const VariantSpec &other);
+                VariantSpec &operator=(VariantSpec &&other) noexcept = default;
+                ~VariantSpec() = default;
+
         private:
-                TypeList   _types;
-                Variant    _default;
-                Variant    _min;
-                Variant    _max;
-                Enum::Type _enumType;
-                String     _description;
+                TypeList                _types;
+                Variant                 _default;
+                Variant                 _min;
+                Variant                 _max;
+                Enum::Type              _enumType;
+                String                  _description;
+                UniquePtr<VariantSpec>  _elementSpec; // for TypeVariantList
+                UniquePtr<VariantSpec>  _valueSpec;   // for TypeVariantMap
 };
 
 PROMEKI_NAMESPACE_END

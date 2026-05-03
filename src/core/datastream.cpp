@@ -1907,6 +1907,56 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                         val = ws;
                         break;
                 }
+                case TypeVariantList: {
+                        // Outer tag already consumed; payload is uint32
+                        // count + N tagged Variants — same shape as
+                        // operator<<(DataStream&, const VariantList&)
+                        // minus the leading tag.
+                        uint32_t count = 0;
+                        *this >> count;
+                        if (_status != Ok) {
+                                val = Variant();
+                                break;
+                        }
+                        VariantList list;
+                        list.reserve(count);
+                        for (uint32_t i = 0; i < count && _status == Ok; ++i) {
+                                Variant v;
+                                *this >> v;
+                                list.pushToBack(std::move(v));
+                        }
+                        if (_status != Ok) {
+                                val = Variant();
+                                break;
+                        }
+                        val = list;
+                        break;
+                }
+                case TypeVariantMap: {
+                        // Outer tag already consumed; payload is uint32
+                        // count + N (String key, Variant value) pairs —
+                        // same shape as operator<<(DataStream&, const
+                        // VariantMap&) minus the leading tag.
+                        uint32_t count = 0;
+                        *this >> count;
+                        if (_status != Ok) {
+                                val = Variant();
+                                break;
+                        }
+                        VariantMap map;
+                        for (uint32_t i = 0; i < count && _status == Ok; ++i) {
+                                String  key;
+                                Variant entry;
+                                *this >> key >> entry;
+                                map.insert(std::move(key), std::move(entry));
+                        }
+                        if (_status != Ok) {
+                                val = Variant();
+                                break;
+                        }
+                        val = map;
+                        break;
+                }
 #if PROMEKI_ENABLE_NETWORK
                 case TypeSocketAddress: {
                         String s = readStringData();
@@ -2064,6 +2114,10 @@ namespace {
         template <> struct has_free_read<AudioMarkerList> : std::true_type {};
         template <> struct has_free_write<WindowedStat> : std::true_type {};
         template <> struct has_free_read<WindowedStat> : std::true_type {};
+        template <> struct has_free_write<VariantList> : std::true_type {};
+        template <> struct has_free_read<VariantList> : std::true_type {};
+        template <> struct has_free_write<VariantMap> : std::true_type {};
+        template <> struct has_free_read<VariantMap> : std::true_type {};
 
         template <typename T>
         inline constexpr bool has_datastream_write_v = has_member_write<T>::value || has_free_write<T>::value;

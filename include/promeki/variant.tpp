@@ -150,6 +150,39 @@ To VariantImpl<Types...>::get(Error *err) const {
 
                 } else if constexpr (std::is_same_v<To, StringList>) {
                         if constexpr (std::is_same_v<From, String>) return arg.split(",");
+                        if constexpr (std::is_same_v<From, VariantList>) {
+                                StringList sl;
+                                for(const auto &v : arg) sl.pushToBack(v.template get<String>());
+                                return sl;
+                        }
+
+                } else if constexpr (std::is_same_v<To, VariantList>) {
+                        if constexpr (std::is_same_v<From, String>) {
+                                Error e;
+                                VariantList vl = VariantList::fromJsonString(arg, &e);
+                                if(e.isError()) {
+                                        if(err != nullptr) *err = Error::ParseFailed;
+                                        return VariantList();
+                                }
+                                return vl;
+                        }
+                        if constexpr (std::is_same_v<From, StringList>) {
+                                VariantList vl;
+                                vl.reserve(arg.size());
+                                for(size_t i = 0; i < arg.size(); ++i) vl.pushToBack(Variant(arg[i]));
+                                return vl;
+                        }
+
+                } else if constexpr (std::is_same_v<To, VariantMap>) {
+                        if constexpr (std::is_same_v<From, String>) {
+                                Error e;
+                                VariantMap vm = VariantMap::fromJsonString(arg, &e);
+                                if(e.isError()) {
+                                        if(err != nullptr) *err = Error::ParseFailed;
+                                        return VariantMap();
+                                }
+                                return vm;
+                        }
 
                 } else if constexpr (std::is_same_v<To, Color>) {
                         if constexpr (std::is_same_v<From, String>) return Color::fromString(arg);
@@ -342,6 +375,8 @@ To VariantImpl<Types...>::get(Error *err) const {
                         if constexpr (std::is_same_v<From, FrameRate>) return arg.toString();
                         if constexpr (std::is_same_v<From, VideoFormat>) return arg.toString();
                         if constexpr (std::is_same_v<From, StringList>) return arg.join(",");
+                        if constexpr (std::is_same_v<From, VariantList>) return arg.toJsonString();
+                        if constexpr (std::is_same_v<From, VariantMap>) return arg.toJsonString();
                         if constexpr (std::is_same_v<From, Color>) return arg.toString();
                         // VideoCodec / AudioCodec precede the generic
                         // TypeRegistry branch so the pinned-backend

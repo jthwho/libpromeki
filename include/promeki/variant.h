@@ -35,6 +35,7 @@
 #include <promeki/color.h>
 #include <promeki/list.h>
 #include <promeki/map.h>
+#include <promeki/uniqueptr.h>
 #include <promeki/audiochannelmap.h>
 #include <promeki/audiocodec.h>
 #include <promeki/audioformat.h>
@@ -91,9 +92,11 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeString    | `String`            |
  * | TypeDateTime  | `DateTime`          |
  * | TypeTimeStamp | `TimeStamp`         |
+ * | TypeMediaTimeStamp | `MediaTimeStamp` |
  * | TypeFrameNumber | `FrameNumber`     |
  * | TypeFrameCount | `FrameCount`       |
  * | TypeMediaDuration | `MediaDuration` |
+ * | TypeDuration  | `Duration`          |
  * | TypeSize2D    | `Size2Du32`            |
  * | TypeUUID      | `UUID`              |
  * | TypeUMID      | `UMID`              |
@@ -116,6 +119,8 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeEnum      | `Enum`              |
  * | TypeEnumList  | `EnumList`          |
  * | TypeWindowedStat | `WindowedStat`   |
+ * | TypeVariantList | `VariantList`     |
+ * | TypeVariantMap  | `VariantMap`      |
  *
  * When @c PROMEKI_ENABLE_NETWORK is true, the following types are also available:
  *
@@ -182,6 +187,8 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeContentLightLevel, ContentLightLevel)                                                                    \
         X(TypeUrl, Url)                                                                                                \
         X(TypeWindowedStat, WindowedStat)                                                                              \
+        X(TypeVariantList, VariantList)                                                                                \
+        X(TypeVariantMap, VariantMap)                                                                                  \
         PROMEKI_VARIANT_TYPES_NETWORK
 
 namespace detail {
@@ -266,33 +273,21 @@ template <typename... Types> class VariantImpl {
                  *  - signed integer    -> `int64_t`
                  *  - floating-point    -> `double`
                  *  - string            -> `String`
-                 *  - array             -> `StringList` (elements converted to String)
-                 *  - anything else     -> `String` (via `json::dump()`)
+                 *  - array             -> `VariantList` (recursive, every element converted via fromJson)
+                 *  - object            -> `VariantMap`  (recursive, every value converted via fromJson)
+                 *
+                 * Arrays and objects produce a typed nested tree rather than the
+                 * flattened-string fallback used historically — callers can
+                 * walk the tree, validate it against a @ref VariantSpec, and
+                 * round-trip back to JSON without losing structure.
+                 *
+                 * Defined out-of-line below the @ref VariantList / @ref VariantMap
+                 * class definitions so the body can construct those types.
                  *
                  * @param val  The JSON value to convert.
                  * @return A VariantImpl holding the converted value.
                  */
-                static VariantImpl fromJson(const nlohmann::json &val) {
-                        if (val.is_null()) return VariantImpl();
-                        if (val.is_boolean()) return val.get<bool>();
-                        if (val.is_number_integer()) {
-                                if (val.is_number_unsigned()) return val.get<uint64_t>();
-                                return val.get<int64_t>();
-                        }
-                        if (val.is_number_float()) return val.get<double>();
-                        if (val.is_string()) return String(val.get<std::string>());
-                        if (val.is_array()) {
-                                StringList list;
-                                for (const auto &item : val) {
-                                        if (item.is_string())
-                                                list.pushToBack(String(item.get<std::string>()));
-                                        else
-                                                list.pushToBack(String(item.dump()));
-                                }
-                                return list;
-                        }
-                        return String(val.dump());
-                }
+                static VariantImpl fromJson(const nlohmann::json &val);
 
                 /** @brief Default-constructs an invalid (empty) variant holding std::monostate. */
                 VariantImpl() = default;
@@ -349,6 +344,32 @@ template <typename... Types> class VariantImpl {
                  * @return The converted value, or a default-constructed @p To on failure.
                  */
                 template <typename To> To get(Error *err = nullptr) const;
+
+                /**
+                 * @brief Borrows the held value when its type is exactly @p T.
+                 *
+                 * Returns a non-owning pointer into the underlying
+                 * @c std::variant alternative when @p T matches the
+                 * current type, or @c nullptr otherwise.  Cheap (no
+                 * copy) and especially valuable for the heavy
+                 * alternatives — @ref VariantList, @ref VariantMap,
+                 * @ref String, @ref Buffer and similar container types — where
+                 * calling @ref get repeatedly during a tree walk would deep-copy
+                 * each container.
+                 *
+                 * @par Example
+                 * @code
+                 * if (const VariantMap *m = v.peek<VariantMap>()) {
+                 *     // walk *m without paying for a deep copy
+                 *     m->forEach([](const String &k, const Variant &v) { ... });
+                 * }
+                 * @endcode
+                 *
+                 * @tparam T  Any alternative listed in @c PROMEKI_VARIANT_TYPES.
+                 * @return    Pointer to the stored value, or @c nullptr
+                 *            when the current type is not @p T.
+                 */
+                template <typename T> const T *peek() const noexcept { return std::get_if<T>(&v); }
 
                 /** @brief Returns the Type enumerator for the currently held value. */
                 Type type() const { return static_cast<Type>(v.index()); }
@@ -610,6 +631,269 @@ template <typename... Types> class VariantImpl {
                 std::variant<Types...> v;
 };
 
+/**
+ * @brief Heterogeneous list of @ref Variant values.
+ * @ingroup util
+ *
+ * @ref VariantList is a Variant alternative — i.e. a Variant can hold
+ * a VariantList directly, enabling JSON-shaped trees and recursive
+ * payloads to flow through the standard Variant pipeline.  To break
+ * the size recursion (a VariantList contains Variants which can
+ * themselves be VariantLists), the underlying @c List<Variant>
+ * lives behind a @ref UniquePtr handle; @c sizeof(VariantList) is
+ * one pointer regardless of how the contained Variants nest.
+ *
+ * Public API forwards the heavily-used @c List<Variant> operations
+ * (size, indexing, push, clear, range-for) directly.  For operations
+ * not surfaced here, callers can borrow the underlying list via
+ * @ref list().
+ *
+ * @par Element iteration
+ * Iteration is exposed via raw @c Variant @c * pointers — the underlying
+ * @c std::vector<Variant> storage is contiguous, so range-for and
+ * pointer arithmetic both work.  This avoids leaking
+ * @c List<Variant>::iterator into the header (which would require
+ * @ref Variant to be a complete type for the iterator's full
+ * instantiation).
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe.  Distinct instances may be used
+ * concurrently; concurrent access to a single instance must be
+ * externally synchronized.
+ */
+class VariantList {
+        public:
+                /** @cond INTERNAL */
+                struct Impl;
+                /** @endcond */
+
+                /** @brief Mutable forward iterator. */
+                using Iterator = Variant *;
+                /** @brief Const forward iterator. */
+                using ConstIterator = const Variant *;
+
+                /** @brief Constructs an empty list. */
+                VariantList();
+                /** @brief Constructs from an initializer list of Variants. */
+                VariantList(std::initializer_list<Variant> il);
+                /** @brief Constructs from an existing @c List<Variant> (deep copy). */
+                explicit VariantList(const List<Variant> &other);
+                /** @brief Constructs from an existing @c List<Variant> (move). */
+                explicit VariantList(List<Variant> &&other);
+
+                VariantList(const VariantList &other);
+                VariantList(VariantList &&other) noexcept;
+                ~VariantList();
+
+                VariantList &operator=(const VariantList &other);
+                VariantList &operator=(VariantList &&other) noexcept;
+
+                /** @brief Returns the number of stored Variants. */
+                size_t size() const;
+                /** @brief Returns true when the list has no elements. */
+                bool isEmpty() const;
+                /** @brief Removes all elements. */
+                void clear();
+                /** @brief Pre-allocates storage for at least @p capacity elements. */
+                void reserve(size_t capacity);
+
+                /** @brief Returns a mutable reference to the element at @p index (no bounds check). */
+                Variant &operator[](size_t index);
+                /** @brief Returns a const reference to the element at @p index (no bounds check). */
+                const Variant &operator[](size_t index) const;
+                /** @brief Returns a mutable reference to the element at @p index, throwing on OOB. */
+                Variant &at(size_t index);
+                /** @brief Returns a const reference to the element at @p index, throwing on OOB. */
+                const Variant &at(size_t index) const;
+
+                /** @brief Appends @p v to the end of the list. */
+                void pushToBack(const Variant &v);
+                /** @brief Appends @p v to the end of the list (move overload). */
+                void pushToBack(Variant &&v);
+                /** @brief Removes the last element.  Undefined when empty. */
+                void popBack();
+
+                /** @brief Returns a pointer to the underlying contiguous storage. */
+                Variant *data();
+                /// @copydoc data()
+                const Variant *data() const;
+
+                /** @brief Returns iterator to the first element. */
+                Iterator begin();
+                /** @brief Returns iterator to one past the last element. */
+                Iterator end();
+                /** @brief Returns const iterator to the first element. */
+                ConstIterator begin() const;
+                /** @brief Returns const iterator to one past the last element. */
+                ConstIterator end() const;
+                /// @copydoc begin() const
+                ConstIterator cbegin() const;
+                /// @copydoc end() const
+                ConstIterator cend() const;
+
+                /**
+                 * @brief Borrows the underlying @c List<Variant> for advanced operations.
+                 *
+                 * Use this when you need a method not surfaced on
+                 * VariantList directly (sort, contains, removeIf, etc.).
+                 * The returned reference is valid for the lifetime of
+                 * this VariantList.
+                 */
+                List<Variant> &list();
+                /// @copydoc list()
+                const List<Variant> &list() const;
+
+                /** @brief Returns true iff both lists hold equal sequences of Variants. */
+                bool operator==(const VariantList &other) const;
+                /** @brief Returns true iff the lists differ. */
+                bool operator!=(const VariantList &other) const { return !(*this == other); }
+
+                /**
+                 * @brief Renders the list as a JSON-array string.
+                 *
+                 * Each element is rendered via @ref JsonArray::addFromVariant,
+                 * which itself recurses into nested VariantList / VariantMap
+                 * entries.  Useful for passing a VariantList through interfaces
+                 * that only accept @c String values (DataStream, log lines,
+                 * config files).
+                 */
+                String toJsonString() const;
+
+                /**
+                 * @brief Parses a JSON-array string into a VariantList.
+                 *
+                 * @param json  JSON text of the form @c "[...]".  Anything
+                 *              else (including a JSON object) sets @p err to
+                 *              @ref Error::ParseFailed and returns an empty
+                 *              list.
+                 * @param err   Optional error output.
+                 * @return      The parsed list, or an empty list on failure.
+                 */
+                static VariantList fromJsonString(const String &json, Error *err = nullptr);
+
+        private:
+                UniquePtr<Impl> _impl;
+};
+
+/**
+ * @brief Heterogeneous string-keyed map of @ref Variant values.
+ * @ingroup util
+ *
+ * @ref VariantMap is a Variant alternative — same shape as
+ * @ref VariantList but keyed by @ref String.  Used for JSON-shaped
+ * objects, RPC argument bags, dynamic config payloads.  As with
+ * VariantList, the underlying @c Map<String, Variant> lives behind
+ * a @ref UniquePtr handle so the type is complete with known size
+ * even when @ref Variant is incomplete.
+ *
+ * @par Iteration
+ * @c std::map storage is not contiguous, so map iteration is exposed
+ * via @ref forEach and via @ref VariantMap::keys "keys" rather than raw
+ * iterators.  Per-key access is via @ref value, @ref find, and
+ * @ref contains.
+ *
+ * @par Thread Safety
+ * Conditionally thread-safe — same contract as @ref VariantList.
+ */
+class VariantMap {
+        public:
+                /** @cond INTERNAL */
+                struct Impl;
+                /** @endcond */
+
+                /** @brief Constructs an empty map. */
+                VariantMap();
+                /** @brief Constructs from an initializer list of (key, value) pairs. */
+                VariantMap(std::initializer_list<std::pair<const String, Variant>> il);
+                /** @brief Constructs from an existing @c Map<String, Variant> (deep copy). */
+                explicit VariantMap(const Map<String, Variant> &other);
+                /** @brief Constructs from an existing @c Map<String, Variant> (move). */
+                explicit VariantMap(Map<String, Variant> &&other);
+
+                VariantMap(const VariantMap &other);
+                VariantMap(VariantMap &&other) noexcept;
+                ~VariantMap();
+
+                VariantMap &operator=(const VariantMap &other);
+                VariantMap &operator=(VariantMap &&other) noexcept;
+
+                /** @brief Returns the number of (key, value) pairs. */
+                size_t size() const;
+                /** @brief Returns true when the map has no entries. */
+                bool isEmpty() const;
+                /** @brief Removes all entries. */
+                void clear();
+
+                /** @brief Returns true if @p key exists in the map. */
+                bool contains(const String &key) const;
+
+                /** @brief Inserts (or replaces) the entry for @p key. */
+                void insert(const String &key, const Variant &value);
+                /// @copydoc insert(const String &, const Variant &)
+                void insert(const String &key, Variant &&value);
+
+                /** @brief Removes the entry for @p key, returning true if it was present. */
+                bool remove(const String &key);
+
+                /**
+                 * @brief Returns the value for @p key, or an invalid Variant if absent.
+                 *
+                 * Callers can distinguish "missing" from "present but invalid" via
+                 * @ref contains.
+                 */
+                Variant value(const String &key) const;
+
+                /** @brief Returns the value for @p key, or @p defaultValue if absent. */
+                Variant value(const String &key, const Variant &defaultValue) const;
+
+                /** @brief Returns a pointer to the entry for @p key, or @c nullptr. */
+                Variant *find(const String &key);
+                /// @copydoc find(const String &)
+                const Variant *find(const String &key) const;
+
+                /** @brief Returns a sorted list of all keys present in the map. */
+                StringList keys() const;
+
+                /** @brief Iterates every (key, value) pair in key order. */
+                void forEach(std::function<void(const String &, const Variant &)> fn) const;
+
+                /**
+                 * @brief Borrows the underlying @c Map<String, Variant> for
+                 *        operations not surfaced directly.
+                 */
+                Map<String, Variant> &map();
+                /// @copydoc map()
+                const Map<String, Variant> &map() const;
+
+                /** @brief Returns true iff both maps hold equal entry sets. */
+                bool operator==(const VariantMap &other) const;
+                /** @brief Returns true iff the maps differ. */
+                bool operator!=(const VariantMap &other) const { return !(*this == other); }
+
+                /**
+                 * @brief Renders the map as a JSON-object string.
+                 *
+                 * Recursive: nested VariantList / VariantMap values become
+                 * nested JSON arrays / objects.
+                 */
+                String toJsonString() const;
+
+                /**
+                 * @brief Parses a JSON-object string into a VariantMap.
+                 *
+                 * @param json  JSON text of the form @c "{...}".  Anything
+                 *              else (including a JSON array) sets @p err to
+                 *              @ref Error::ParseFailed and returns an empty
+                 *              map.
+                 * @param err   Optional error output.
+                 * @return      The parsed map, or an empty map on failure.
+                 */
+                static VariantMap fromJsonString(const String &json, Error *err = nullptr);
+
+        private:
+                UniquePtr<Impl> _impl;
+};
+
 #define X(name, type) type,
 /**
  * @brief Concrete Variant type used throughout promeki.
@@ -618,6 +902,36 @@ template <typename... Types> class VariantImpl {
  * so that @c variant_fwd.h can declare @ref Variant as an incomplete
  * class and break header fan-out.  All behaviour is inherited
  * unchanged from @ref VariantImpl.
+ *
+ * @par JSON-shaped trees
+ * @ref VariantList and @ref VariantMap are first-class Variant
+ * alternatives, so a Variant can hold a recursive tree of values.
+ * @ref fromJson decodes a @c nlohmann::json into a typed tree;
+ * @ref VariantList::toJsonString / @ref VariantMap::toJsonString
+ * round-trip back to the wire form.  Walk the tree with
+ * @ref promekiResolveVariantPath using the standard
+ * @c "name.sub[N].leaf" syntax.
+ *
+ * @code
+ * nlohmann::json j = nlohmann::json::parse(R"({
+ *     "title": "demo",
+ *     "tags":  ["alpha", "beta"],
+ *     "video": {"width": 1920, "height": 1080}
+ * })");
+ * Variant tree = Variant::fromJson(j);
+ *
+ * // Borrow the underlying VariantMap without a deep copy.
+ * if (const VariantMap *m = tree.peek<VariantMap>()) {
+ *     CHECK(m->value("title").get<String>() == "demo");
+ * }
+ *
+ * // Deep lookup using the dotted/indexed path syntax.
+ * Variant w = promekiResolveVariantPath(tree, "video.width");
+ * CHECK(w.get<int32_t>() == 1920);
+ *
+ * Variant tag1 = promekiResolveVariantPath(tree, "tags[1]");
+ * CHECK(tag1.get<String>() == "beta");
+ * @endcode
  *
  * @par Thread Safety
  * Conditionally thread-safe — same contract as @ref VariantImpl.
@@ -632,44 +946,35 @@ class Variant : public VariantImpl<PROMEKI_VARIANT_TYPES detail::VariantEnd> {
 };
 #undef X
 
-/**
- * @brief List of @ref Variant values used for type-erased argument marshalling.
- *
- * Implemented as a thin subclass of @c List<Variant> so that
- * @c variant_fwd.h can declare it as an incomplete class.
- */
-class VariantList : public List<Variant> {
-        public:
-                using List<Variant>::List;
-                VariantList() = default;
-                VariantList(std::initializer_list<Variant> il) {
-                        for (const auto &v : il) pushToBack(v);
+// Out-of-line VariantImpl::fromJson — must come after VariantList /
+// VariantMap class definitions so the body can construct them.
+template <typename... Types>
+VariantImpl<Types...> VariantImpl<Types...>::fromJson(const nlohmann::json &val) {
+        if (val.is_null()) return VariantImpl();
+        if (val.is_boolean()) return val.get<bool>();
+        if (val.is_number_integer()) {
+                if (val.is_number_unsigned()) return val.get<uint64_t>();
+                return val.get<int64_t>();
+        }
+        if (val.is_number_float()) return val.get<double>();
+        if (val.is_string()) return String(val.get<std::string>());
+        if (val.is_array()) {
+                VariantList list;
+                list.reserve(val.size());
+                for (const auto &item : val) {
+                        list.pushToBack(Variant(VariantImpl::fromJson(item)));
                 }
-                VariantList(const List<Variant> &other) : List<Variant>(other) {}
-                VariantList(List<Variant> &&other) : List<Variant>(std::move(other)) {}
-};
-
-/**
- * @brief String-keyed map of @ref Variant values.
- *
- * Implemented as a thin subclass of @c Map<String, Variant> so that
- * @c variant_fwd.h can declare it as an incomplete class — the same
- * pattern used by @ref VariantList.  Used wherever a request needs
- * to deliver a heterogeneous, named bag of values to a callee
- * (RPC argument lists, dynamic config payloads, signal/slot
- * cross-thread marshalling that already carries names alongside
- * values).
- */
-class VariantMap : public Map<String, Variant> {
-        public:
-                using Map<String, Variant>::Map;
-                VariantMap() = default;
-                VariantMap(std::initializer_list<std::pair<const String, Variant>> il) {
-                        for (const auto &kv : il) insert(kv.first, kv.second);
+                return list;
+        }
+        if (val.is_object()) {
+                VariantMap map;
+                for (auto it = val.begin(); it != val.end(); ++it) {
+                        map.insert(String(it.key()), Variant(VariantImpl::fromJson(it.value())));
                 }
-                VariantMap(const Map<String, Variant> &other) : Map<String, Variant>(other) {}
-                VariantMap(Map<String, Variant> &&other) : Map<String, Variant>(std::move(other)) {}
-};
+                return map;
+        }
+        return String(val.dump());
+}
 
 // ---------------------------------------------------------------------------
 // Extern template declarations.  The matching explicit instantiations live
@@ -690,6 +995,61 @@ extern template class VariantImpl<PROMEKI_VARIANT_TYPES detail::VariantEnd>;
 PROMEKI_VARIANT_TYPES
 #undef X
 /// @endcond
+
+class DataStream;
+
+/**
+ * @brief Writes a VariantList to a DataStream.
+ *
+ * Forwards to the generic @c operator<<(DataStream &, const List<T> &)
+ * via the underlying @c List<Variant>.  Defined out-of-line in
+ * @c variant.cpp so the @c List<Variant> template instantiation
+ * stays in one TU.
+ */
+DataStream &operator<<(DataStream &stream, const VariantList &list);
+
+/** @brief Reads a VariantList from a DataStream. */
+DataStream &operator>>(DataStream &stream, VariantList &list);
+
+/** @brief Writes a VariantMap to a DataStream. */
+DataStream &operator<<(DataStream &stream, const VariantMap &map);
+
+/** @brief Reads a VariantMap from a DataStream. */
+DataStream &operator>>(DataStream &stream, VariantMap &map);
+
+/**
+ * @brief Resolves a dotted/indexed path against a @ref Variant tree.
+ * @ingroup util
+ *
+ * Walks @p root following the same key grammar used by
+ * @ref VariantLookup (`segment ( '.' segment )*`, where
+ * `segment := name ( '[' index ']' )?`), descending through nested
+ * @ref VariantMap and @ref VariantList alternatives as needed.
+ *
+ * @par Examples
+ *  - `"foo"` against a VariantMap → returns the value for key `"foo"`.
+ *  - `"foo.bar"` against a VariantMap → looks up `foo`, descends if it
+ *    holds a VariantMap, then looks up `bar`.
+ *  - `"foo[0]"` → looks up `foo`, descends if it holds a VariantList,
+ *    returns element 0.
+ *  - `"[0]"` against a VariantList — the leading segment is empty
+ *    so the walker treats the whole @p root as the list and returns
+ *    element 0.
+ *
+ * @par Errors
+ *  - @c Error::IdNotFound — a key was missing from a VariantMap.
+ *  - @c Error::OutOfRange — a list index was beyond the VariantList size.
+ *  - @c Error::ParseFailed — the path itself was malformed.
+ *  - @c Error::Invalid     — descended into a Variant that wasn't
+ *                            VariantMap / VariantList when the path
+ *                            still had segments to walk.
+ *
+ * @param root  The Variant to walk.  Typically holds a VariantMap or VariantList.
+ * @param path  The dotted/indexed path to follow.
+ * @param err   Optional error output.
+ * @return      The resolved Variant, or an invalid Variant on failure.
+ */
+Variant promekiResolveVariantPath(const Variant &root, const String &path, Error *err = nullptr);
 
 PROMEKI_NAMESPACE_END
 

@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <limits>
 #include <type_traits>
+#include <utility>
 #include <promeki/namespace.h>
 #include <promeki/platform.h>
 #include <promeki/error.h>
@@ -128,9 +129,29 @@ OutputType promekiConvert(const InputType &input, Error *err = nullptr) {
                       "InputType must be an integer or floating point type");
         static_assert(std::is_integral<OutputType>::value || std::is_floating_point<OutputType>::value,
                       "OutputType must be an integer or floating point type");
-        if (input > std::numeric_limits<OutputType>::max() || input < std::numeric_limits<OutputType>::lowest()) {
-                if (err != nullptr) *err = Error::Invalid;
-                return OutputType();
+        // For mixed signed/unsigned integer comparisons, the operands
+        // would otherwise undergo C++'s usual arithmetic conversions and
+        // produce a false "out of range" verdict (e.g. a uint64_t input
+        // of 1 compared against int64_t::lowest() gets the negative
+        // bound silently widened to a huge unsigned value, so 1 looks
+        // smaller).  std::cmp_less / std::cmp_greater are the C++20
+        // sign-correct comparison primitives that route around this.
+        // bool is excluded from this path because std::cmp_* is
+        // constrained to "standard integer" types and rejects bool with
+        // a static_assert.
+        if constexpr (std::is_integral_v<InputType> && std::is_integral_v<OutputType> &&
+                      !std::is_same_v<InputType, bool> && !std::is_same_v<OutputType, bool>) {
+                if (std::cmp_greater(input, std::numeric_limits<OutputType>::max()) ||
+                    std::cmp_less(input, std::numeric_limits<OutputType>::lowest())) {
+                        if (err != nullptr) *err = Error::Invalid;
+                        return OutputType();
+                }
+        } else {
+                if (input > std::numeric_limits<OutputType>::max() ||
+                    input < std::numeric_limits<OutputType>::lowest()) {
+                        if (err != nullptr) *err = Error::Invalid;
+                        return OutputType();
+                }
         }
         if (err != nullptr) *err = Error::Ok;
         return static_cast<OutputType>(input);
