@@ -43,10 +43,10 @@ class MediaDesc {
                 using Ptr = SharedPtr<MediaDesc>;
 
                 /** @brief List of MediaDesc values. */
-                using List = promeki::List<MediaDesc>;
+                using List = ::promeki::List<MediaDesc>;
 
                 /** @brief List of shared MediaDesc pointers. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Constructs a default (invalid) media description. */
                 MediaDesc() = default;

@@ -60,7 +60,7 @@ class Variant;
 class WindowedStat {
         public:
                 /** @brief Sample list type returned by @ref values. */
-                using Samples = List<double>;
+                using Samples = ::promeki::List<double>;
 
                 /**
                  * @brief Aggregated descriptive statistics computed in a single pass.
@@ -152,11 +152,11 @@ class WindowedStat {
                  * types to @c double and pushes the result.  Two
                  * domain-specific types receive bespoke handling:
                  *   - @c Duration is exposed in nanoseconds (matches
-                 *     the unit @ref MediaIOCommand::executeDurationNs uses
+                 *     the unit @c MediaIOCommand::executeDurationNs uses
                  *     internally so windowed values stay comparable
                  *     across strategies and backends).
                  *   - @c FrameCount honours its sentinel states:
-                 *     @ref FrameCount::Unknown / @ref FrameCount::Infinity
+                 *     @c FrameCount::unknown / @c FrameCount::infinity
                  *     return @c false rather than push a misleading
                  *     negative or sentinel value.
                  *

@@ -26,7 +26,7 @@ class StringList;
 class NumNameSeq {
         public:
                 /** @brief List of NumNameSeq values. */
-                using List = promeki::List<NumNameSeq>;
+                using List = ::promeki::List<NumNameSeq>;
 
                 /**
                  * @brief Parses a list of NumNameSeq objects from the string list.

@@ -131,7 +131,7 @@ class FrameRate {
                  *
                  * @return List of (label, rate) pairs, one per well-known
                  *         entry.  Never empty; never contains
-                 *         @ref FPS_Invalid.
+                 *         @c FPS_Invalid.
                  */
                 static List<WellKnown> wellKnownRates();
 

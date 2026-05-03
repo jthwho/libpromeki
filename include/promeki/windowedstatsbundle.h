@@ -54,10 +54,10 @@ class WindowedStatsBundle {
                 using ID = MediaIOStats::ID;
 
                 /** @brief Underlying ordered map type. */
-                using Map = promeki::Map<ID, WindowedStat>;
+                using Map = ::promeki::Map<ID, WindowedStat>;
 
                 /** @brief List of plain-value bundles. */
-                using List = promeki::List<WindowedStatsBundle>;
+                using List = ::promeki::List<WindowedStatsBundle>;
 
                 WindowedStatsBundle() = default;
 

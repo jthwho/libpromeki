@@ -27,8 +27,8 @@ class MediaIOSink;
  * A @ref MediaIOPortConnection drives a signal-driven drain pump that
  * forwards frames from a source port to one or more sink ports with
  * proper backpressure.  It subscribes to the source's
- * @ref MediaIOSource::frameReady and to each sink's
- * @ref MediaIOSink::frameWanted signal, and pumps the transfer until
+ * %MediaIOSource::frameReady and to each sink's
+ * %MediaIOSink::frameWanted signal, and pumps the transfer until
  * either the source signals end-of-stream / error, or every sink has
  * stopped accepting frames (limit hit, write error, or removed).
  *
@@ -46,17 +46,17 @@ class MediaIOSink;
  *    @c frameReady.
  *  - @c readFrame returns @c Error::EndOfFile → emit @ref upstreamDone
  *    and stop reading.
- *  - @c readFrame returns another error → emit @ref errorOccurred and
+ *  - @c readFrame returns another error → emit @c %errorOccurred and
  *    stop pumping.
  *  - Any active sink's @c writesAccepted drops to zero → wait for the
  *    next @c frameWanted before reading again (so the source's queue
  *    can absorb backlog while we wait, but the slowest sink throttles
  *    the whole connection).
- *  - A sink @c writeFrame returns a hard error → emit @ref sinkError
+ *  - A sink @c writeFrame returns a hard error → emit @c %sinkError
  *    for that sink, mark it stopped, continue the pump for the
  *    remaining sinks.
  *  - A sink reaches its per-sink @ref FrameCount limit at the next
- *    @ref Frame::isSafeCutPoint → emit @ref sinkLimitReached, mark
+ *    @ref Frame::isSafeCutPoint → emit @c %sinkLimitReached, mark
  *    the sink stopped (limit-reached), continue the pump for the
  *    remaining sinks.
  *  - All sinks become stopped → emit @ref allSinksDone and stop
@@ -75,7 +75,7 @@ class MediaIOSink;
  * Constructed in the stopped state.  Sinks are added via
  * @ref addSink before @ref start.  Once @ref start has been called,
  * the sink set is frozen for the life of the run.  @ref stop
- * disconnects the signal handlers and emits @ref stopped; the
+ * disconnects the signal handlers and emits @c %stopped; the
  * connection does not open or close the underlying ports — the
  * caller is responsible for opening / closing the owning
  * @ref MediaIO instances.
@@ -146,7 +146,7 @@ class MediaIOPortConnection : public ObjectBase {
                 MediaIOSink *sink() const;
 
                 /** @brief Returns the list of attached sinks in attachment order. */
-                promeki::List<MediaIOSink *> sinks() const;
+                List<MediaIOSink *> sinks() const;
 
                 /** @brief Returns the number of attached sinks. */
                 int sinkCount() const { return static_cast<int>(_sinks.size()); }
@@ -193,7 +193,7 @@ class MediaIOPortConnection : public ObjectBase {
                 Error start();
 
                 /**
-                 * @brief Disconnects the drain handlers and emits @ref stopped.
+                 * @brief Disconnects the drain handlers and emits @c %stopped.
                  *
                  * In-flight strand commands on the source / sinks
                  * complete normally — the connection just stops
@@ -257,7 +257,7 @@ class MediaIOPortConnection : public ObjectBase {
                  *
                  * Source-side @c readFrame errors and contract
                  * violations from the pump bubble up here.  Per-sink
-                 * write errors fire on @ref sinkError instead.
+                 * write errors fire on @c %sinkError instead.
                  *
                  * @param err The error returned by @c readFrame.
                  *            @c TryAgain is handled internally and
@@ -325,7 +325,7 @@ class MediaIOPortConnection : public ObjectBase {
                 void schedulePump();
 
                 MediaIOSource           *_source = nullptr;
-                promeki::List<SinkState> _sinks;
+                List<SinkState> _sinks;
                 // The pump holds the most recent in-flight read
                 // request across iterations.  When @ref readFrame
                 // returns a request whose payload has not yet

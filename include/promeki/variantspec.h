@@ -72,7 +72,7 @@ class VariantSpec {
                 using Type = Variant::Type;
 
                 /** @brief Convenience alias for a list of Variant type enumerators. */
-                using TypeList = List<Type>;
+                using TypeList = ::promeki::List<Type>;
 
                 /** @brief Constructs an empty (invalid) spec with no type or default. */
                 VariantSpec() = default;

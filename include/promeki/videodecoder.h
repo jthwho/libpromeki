@@ -27,9 +27,9 @@ class MediaConfig;
  * @brief Abstract base class for stateful video decoders.
  * @ingroup proav
  *
- * A VideoDecoder is the inverse of @ref VideoEncoder: packets submitted
- * via @ref submitPacket feed an internal decode pipeline and
- * uncompressed frames come back out of @ref receiveFrame.  The decoder
+ * A VideoDecoder is the inverse of @ref VideoEncoder. Packets submitted
+ * via @ref submitPayload feed an internal decode pipeline and
+ * uncompressed frames come back out of @ref receiveVideoPayload.  The decoder
  * may buffer several packets before producing its first frame (B-frame
  * reordering, reference-frame dependencies).
  *
@@ -49,9 +49,9 @@ class MediaConfig;
  *   1. Resolve a session via @ref VideoCodec::createDecoder.
  *   2. Optionally call @ref configure (most decoders infer parameters
  *      from the bitstream and need no explicit configuration).
- *   3. For each encoded packet, call @ref submitPacket.
- *   4. After each submit, drain with @ref receiveFrame until it
- *      returns an invalid @ref Image.
+ *   3. For each encoded packet, call @ref submitPayload.
+ *   4. After each submit, drain with @ref receiveVideoPayload until it
+ *      returns a null Ptr.
  *   5. Call @ref flush when the input stream ends, then drain again.
  *   6. Destroy the decoder.
  *

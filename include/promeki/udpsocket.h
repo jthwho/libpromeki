@@ -28,7 +28,7 @@ PROMEKI_NAMESPACE_BEGIN
  * destination/source addresses.
  *
  * @par Thread Safety
- * Inherits @ref IODevice: thread-affine.  A single UdpSocket
+ * Inherits @ref IODevice &mdash; thread-affine.  A single UdpSocket
  * must only be used from the thread that created it.
  *
  * @par Example
@@ -72,7 +72,7 @@ class UdpSocket : public AbstractSocket {
                 };
 
                 /** @brief List of datagrams for batch send. */
-                using DatagramList = List<Datagram>;
+                using DatagramList = ::promeki::List<Datagram>;
 
                 /** @brief Value returned by @ref setPacingRate() to disable pacing. */
                 static constexpr uint64_t PacingRateUnlimited = ~static_cast<uint64_t>(0);

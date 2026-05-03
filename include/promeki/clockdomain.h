@@ -78,7 +78,7 @@ class ClockDomain {
                 using ID = StringRegistry<"ClockDomain">::Item;
 
                 /** @brief List of clock domain IDs. */
-                using IDList = List<ID>;
+                using IDList = ::promeki::List<ID>;
 
                 /**
                  * @brief Opaque data record for a registered clock domain.

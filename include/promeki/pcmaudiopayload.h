@@ -56,7 +56,7 @@ class PcmAudioPayload : public AudioPayload {
                 using Ptr = SharedPtr<PcmAudioPayload, /*CopyOnWrite=*/true, PcmAudioPayload>;
 
                 /** @brief List of shared pointers to PcmAudioPayload instances. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Unique-ownership pointer to a PcmAudioPayload. */
                 using UPtr = UniquePtr<PcmAudioPayload>;

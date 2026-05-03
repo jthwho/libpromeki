@@ -45,7 +45,7 @@ class KeyEvent;
  *
  * The widget owns the MediaIO, which owns the task.  The task holds
  * a back-pointer to this widget so its pull thread can call back
- * into @ref presentImage — safe because the destruction order
+ * into @c presentImage — safe because the destruction order
  * guarantees the MediaIO (and therefore the task + its threads) is
  * torn down before the widget's bases.
  *

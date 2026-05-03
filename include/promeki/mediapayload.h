@@ -64,7 +64,7 @@ class VariantSpec;
  * @par Subclassing
  *
  * Intermediate abstracts (@ref VideoPayload, @ref AudioPayload)
- * leave @ref _promeki_clone and @ref kind pure-virtual; the
+ * leave @c _promeki_clone and @ref kind pure-virtual; the
  * concrete leaves override them and provide covariant clones.  The
  * concrete classes are intentionally not @c final — codec-specific
  * specializations (for example, an H.264 or ProRes wrapper of
@@ -107,7 +107,7 @@ class MediaPayload {
                 using Ptr = SharedPtr<MediaPayload, /*CopyOnWrite=*/true, MediaPayload>;
 
                 /** @brief List of shared pointers to base @c MediaPayload instances. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /**
                  * @brief Generic bit flags that apply to every payload kind.
@@ -404,7 +404,7 @@ class MediaPayload {
                  *        is set — the payload is intra-coded but not a
                  *        random-access point.
                  *
-                 * Distinct from @ref isKeyframe: a gradual-refresh
+                 * Distinct from @ref isKeyframe &mdash; a gradual-refresh
                  * slice refreshes part of the frame each GOP so the
                  * stream becomes decodable only after a full refresh
                  * cycle completes, not at any single frame.  Seekers
@@ -567,7 +567,7 @@ class MediaPayload {
                  *
                  * Walks @ref data() and, when a plane's backing
                  * @ref Buffer is shared (reference count &gt; 1),
-                 * clones it via @ref Buffer::Ptr::modify.  Whole-
+                 * clones it via @c Buffer::Ptr::modify.  Whole-
                  * buffer views keep their @c offset=0, @c size=full
                  * invariant; sub-range views retain offset and size
                  * but point at the exclusive clone.
@@ -668,7 +668,7 @@ class MediaPayload {
                  *        buffers.
                  *
                  * Default: no-op.  Subclasses override and call
-                 * @ref Buffer::Ptr::modify on each extra field that
+                 * @c Buffer::Ptr::modify on each extra field that
                  * holds a shared @ref Buffer.
                  */
                 virtual void ensureExclusiveExtras() {}
@@ -689,7 +689,7 @@ DataStream &operator<<(DataStream &s, const MediaPayload::Ptr &p);
 DataStream &operator>>(DataStream &s, MediaPayload::Ptr &p);
 
 /**
- * @brief Registers a concrete @ref MediaPayload subclass with the
+ * @brief Registers a concrete @c MediaPayload subclass with the
  *        deserialisation registry.
  *
  * Place at the top level of a concrete subclass's source file.  The
@@ -718,9 +718,9 @@ DataStream &operator>>(DataStream &s, MediaPayload::Ptr &p);
  *        concrete leaf.
  * @ingroup proav
  *
- * Place in the @c public section of a concrete @ref MediaPayload
+ * Place in the @c public section of a concrete @c MediaPayload
  * subclass's @c class body.  Expands to overrides of
- * @ref MediaPayload::variantLookupResolve / @c variantLookupAssign /
+ * @c MediaPayload::variantLookupResolve / @c variantLookupAssign /
  * @c variantLookupSpecFor that forward to
  * @c VariantLookup<Self>::resolveDirect / @c assignDirect /
  * @c specForDirect, so a caller holding a reference-to-base lands on

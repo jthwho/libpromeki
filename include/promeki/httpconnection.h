@@ -40,8 +40,8 @@ class EventLoop;
  *  - Construct with the accepted TcpSocket (ownership is transferred).
  *  - Call @ref start to register the socket fd with the connection's
  *    @ref EventLoop and begin reading.
- *  - The connection emits @ref requestReceived / @ref responseSent /
- *    @ref closed signals on the loop's thread; the dispatcher
+ *  - The connection emits @c %requestReceived / @c %responseSent /
+ *    @c %closed signals on the loop's thread; the dispatcher
  *    callback installed via @ref setRequestHandler is invoked on the
  *    loop thread between request completion and response start.
  *
@@ -60,7 +60,7 @@ class EventLoop;
  *       can drive it directly when needed.
  *
  * @par Thread Safety
- * Inherits @ref ObjectBase: thread-affine.  All connection state
+ * Inherits @ref ObjectBase &mdash; thread-affine.  All connection state
  * mutates on the EventLoop thread that owns the underlying
  * @ref TcpSocket.  Cross-thread interaction goes through the
  * loop's @c postCallable.
@@ -69,7 +69,7 @@ class HttpConnection : public ObjectBase {
                 PROMEKI_OBJECT(HttpConnection, ObjectBase)
         public:
                 /** @brief Convenience list type. */
-                using List = promeki::List<HttpConnection *>;
+                using List = ::promeki::List<HttpConnection *>;
 
                 /** @brief Default per-connection idle timeout in milliseconds. */
                 static constexpr unsigned int DefaultIdleTimeoutMs = 60'000;
@@ -144,7 +144,7 @@ class HttpConnection : public ObjectBase {
                  * @brief Closes the connection.
                  *
                  * Cancels any in-flight write, unregisters from the
-                 * EventLoop, closes the socket, and emits @ref closed.
+                 * EventLoop, closes the socket, and emits @c %closed.
                  */
                 void close();
 
@@ -177,7 +177,7 @@ class HttpConnection : public ObjectBase {
                  * call this method from the connection's EventLoop
                  * thread (typically via @c postCallable).
                  *
-                 * Safe to call exactly once per @ref requestReceived
+                 * Safe to call exactly once per @c %requestReceived
                  * emission; calling more than once raises an error.
                  */
                 Error postResponse(HttpResponse response);
@@ -188,7 +188,7 @@ class HttpConnection : public ObjectBase {
                 /** @brief Emitted after the response has finished writing. @signal */
                 PROMEKI_SIGNAL(responseSent, HttpRequest, HttpResponse);
 
-                /** @brief Emitted as the connection enters @ref Closed state. @signal */
+                /** @brief Emitted as the connection enters the @c Closed state. @signal */
                 PROMEKI_SIGNAL(closed);
 
                 /** @brief Emitted on parser / I/O / timeout errors. @signal */

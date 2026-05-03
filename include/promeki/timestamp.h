@@ -254,10 +254,10 @@ inline TimeStamp operator-(const TimeStamp &ts, const TimeStamp::Duration &durat
 // ---------------------------------------------------------------------------
 
 /**
- * @brief Converts a @ref Duration to the underlying clock duration type.
+ * @brief Converts a @ref promeki::Duration to the underlying clock duration type.
  *
  * @param d The library Duration to convert.
- * @return The equivalent @ref TimeStamp::Duration (clock-native).
+ * @return The equivalent @c TimeStamp::Duration (clock-native).
  */
 inline TimeStamp::Duration toClockDuration(const Duration &d) {
         return std::chrono::duration_cast<TimeStamp::Duration>(std::chrono::nanoseconds(d.nanoseconds()));
@@ -310,16 +310,16 @@ inline TimeStamp operator-(const TimeStamp &ts, const Duration &d) {
 }
 
 /**
- * @brief Returns the @ref Duration between two TimeStamps.
+ * @brief Returns the @ref promeki::Duration between two TimeStamps.
  *
  * Equivalent to <tt>a.value() - b.value()</tt> converted to the
- * library's portable @ref Duration type.  Used wherever code wants
+ * library's portable @ref promeki::Duration type.  Used wherever code wants
  * "time since" or "time between" measurements without having to
  * dip into raw @c std::chrono.
  *
  * @param a The later TimeStamp.
  * @param b The earlier TimeStamp.
- * @return @c a - @c b as a @ref Duration.  Can be negative if @p a
+ * @return @c a - @c b as a @ref promeki::Duration.  Can be negative if @p a
  *         precedes @p b.
  */
 inline Duration operator-(const TimeStamp &a, const TimeStamp &b) {

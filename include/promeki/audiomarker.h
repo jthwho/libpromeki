@@ -36,13 +36,13 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @c offset is the zero-based sample index where the region starts;
  * @c length is the number of samples it covers.  Both values are in
- * the units of the payload's @ref AudioDesc::sampleCount, i.e. one
+ * the units of the payload's @ref AudioPayload::sampleCount, i.e. one
  * unit per @em frame regardless of channel count.  A region may
  * cover @c [offset, offset + length) sample indices; the half-open
  * interval mirrors the rest of the library (e.g.
  * @ref AudioPayload::sampleCount).
  *
- * A boundary-only marker (e.g. @ref AudioMarkerType::Discontinuity)
+ * A boundary-only marker (e.g. @c AudioMarkerType::Discontinuity)
  * sets @c length == 0 — the marker locates a point on the timeline
  * without claiming any samples.
  *
@@ -357,7 +357,7 @@ PROMEKI_FORMAT_VIA_TOSTRING(promeki::AudioMarkerList);
 /**
  * @brief Hash specialization for @ref promeki::AudioMarker.
  *
- * Combines @c offset, @c length, and the @ref AudioMarkerType value
+ * Combines @c offset, @c length, and the @c AudioMarkerType value
  * via the boost-style mix.  Markers are equal exactly when all
  * three fields match, so hashing all three keeps unequal markers
  * apart.

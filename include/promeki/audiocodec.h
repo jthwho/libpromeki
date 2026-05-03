@@ -99,7 +99,7 @@ class AudioCodec {
                 };
 
                 /** @brief List of AudioCodec IDs. */
-                using IDList = List<ID>;
+                using IDList = ::promeki::List<ID>;
 
                 /**
                  * @brief Classifies the codec's lossy-vs-lossless behaviour.
@@ -158,7 +158,7 @@ class AudioCodec {
                 };
 
                 /** @brief List of codec backend handles. */
-                using BackendList = List<Backend>;
+                using BackendList = ::promeki::List<Backend>;
 
                 /**
                  * @brief Immutable descriptor for an audio codec.

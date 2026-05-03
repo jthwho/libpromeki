@@ -55,9 +55,9 @@ class Frame {
                 /** @brief Shared pointer type for Frame. */
                 using Ptr = SharedPtr<Frame>;
                 /** @brief Plain value list of Frame objects. */
-                using List = promeki::List<Frame>;
+                using List = ::promeki::List<Frame>;
                 /** @brief List of shared pointers to Frame objects. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Constructs an empty frame with no images, audio, or metadata. */
                 Frame() = default;
@@ -80,12 +80,12 @@ class Frame {
                 void addPayload(MediaPayload::Ptr p) { _payloads.pushToBack(std::move(p)); }
 
                 /**
-                 * @brief Returns the @ref Video-kind entries from
+                 * @brief Returns the Video-kind entries from
                  *        @ref payloadList as typed pointers.
                  *
                  * Walks @ref payloadList once and collects every
                  * @ref MediaPayload whose @c kind is
-                 * @ref MediaPayloadKind::Video, returning them as a
+                 * @c MediaPayloadKind::Video, returning them as a
                  * fresh @ref VideoPayload::PtrList with shared
                  * ownership (no clone).  Null payload entries are
                  * skipped.
@@ -102,7 +102,7 @@ class Frame {
                 VideoPayload::PtrList videoPayloads() const;
 
                 /**
-                 * @brief Returns the @ref Audio-kind entries from
+                 * @brief Returns the Audio-kind entries from
                  *        @ref payloadList as typed pointers.
                  *
                  * @return A fresh @ref AudioPayload::PtrList of all

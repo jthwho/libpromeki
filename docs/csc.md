@@ -184,5 +184,5 @@ The CSC test suite validates conversions at multiple levels:
 - **Level 9**: Rec.601 / Rec.2020 coefficient validation
 
 **See also:** `CSCPipeline`, `CSCContext`, `CSCRegistry`,
-`Image::convert()`; [Color Science](color.md) for the underlying color
+`Image::convert()`; [Color Science](@ref color_science) for the underlying color
 model architecture.

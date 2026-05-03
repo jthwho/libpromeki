@@ -37,7 +37,7 @@ PROMEKI_NAMESPACE_BEGIN
  *    @c mbedtls_ssl_write transparently.
  *
  * @par Thread Safety
- * Inherits @ref TcpSocket / @ref IODevice: thread-affine.  An
+ * Inherits @ref TcpSocket / @ref IODevice &mdash; thread-affine.  An
  * SslSocket binds to one EventLoop's thread for the duration of
  * its life.  The attached @ref SslContext may be shared across
  * many SslSocket instances on many threads — its mutable
@@ -54,7 +54,7 @@ class SslSocket : public TcpSocket {
                 PROMEKI_OBJECT(SslSocket, TcpSocket)
         public:
                 /** @brief Convenience list type. */
-                using List = promeki::List<SslSocket *>;
+                using List = ::promeki::List<SslSocket *>;
 
                 /** @brief Constructs a socket with no SslContext attached. */
                 explicit SslSocket(ObjectBase *parent = nullptr);

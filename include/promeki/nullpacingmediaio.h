@@ -39,7 +39,7 @@ struct NullPacingSnapshot {
                 int64_t framesConsumed = 0;
                 /// @brief Frames the sink has dropped (arrived inside an
                 /// active wallclock interval and were not paced past a
-                /// tick).  Always zero in @ref NullPacingMode::Free.
+                /// tick).  Always zero in @c NullPacingMode::Free.
                 int64_t framesDropped = 0;
                 /// @brief Sum of all per-frame in-sink latencies in
                 /// microseconds (arrival → discard).  Both consumed and
@@ -65,13 +65,13 @@ struct NullPacingSnapshot {
  * interval, and then throws it away.  Two modes are supported
  * (selected via @ref MediaConfig::NullPacingMode):
  *
- *  - @ref NullPacingMode::Wallclock — emit (consume) at most one
+ *  - @c NullPacingMode::Wallclock — emit (consume) at most one
  *    frame per @c 1/TargetFps wall-clock period.  Frames arriving
  *    inside the same period are dropped immediately and counted
  *    in @ref MediaIOStats::FramesDropped.  This is the default and
  *    is what the pipeline demo uses to expose realistic "fps at the
  *    sink" numbers without needing an actual playback device.
- *  - @ref NullPacingMode::Free — accept every frame as fast as the
+ *  - @c NullPacingMode::Free — accept every frame as fast as the
  *    upstream feeds it; never drops.  Useful as a passthrough sink
  *    when the upstream stage's natural rate is itself the
  *    measurement target.
@@ -83,7 +83,7 @@ struct NullPacingSnapshot {
  * pipeline gave it at @c open().  If both the configured rate and
  * the descriptor rate are invalid, the sink reports
  * @ref Error::InvalidArgument from @c open().  In
- * @ref NullPacingMode::Free the target rate is irrelevant and the
+ * @c NullPacingMode::Free the target rate is irrelevant and the
  * sink opens unconditionally.
  *
  * @par Reported stats
@@ -140,7 +140,7 @@ class NullPacingMediaIO : public SharedThreadMediaIO {
 
         private:
                 // ---- Resolved configuration (latched at open time) ----
-                promeki::NullPacingMode _mode = promeki::NullPacingMode::Wallclock;
+                NullPacingMode          _mode = NullPacingMode::Wallclock;
                 FrameRate               _targetRate;
                 Duration                _period;
                 bool                    _burnTimings = false;

@@ -6,7 +6,7 @@ handling cancellation, and observing state through signals.
 
 For an introduction aimed at backend authors (writing a new
 `MediaIO` subclass), see the
-[MediaIO Backend Guide](mediaio_backend_guide.md).
+[MediaIO Backend Guide](#mediaio_backend_guide).
 
 ## Concepts {#mediaio_user_concepts}
 
@@ -16,7 +16,7 @@ and synthetic generators. Every public method is asynchronous;
 every operation returns a [MediaIORequest](#mediaio_user_requests).
 A backend's per-stream input/output points are exposed as
 [ports](#mediaio_user_ports) (`MediaIOSource`, `MediaIOSink`)
-grouped under [port groups](#mediaio_user_portgroups)
+grouped under [port groups](#mediaio_user_ports)
 (`MediaIOPortGroup`). Transfers between MediaIOs are wired up with
 [MediaIOPortConnection](#mediaio_user_connections).
 
@@ -141,7 +141,7 @@ read cache so signal-driven consumers see one trailing
 
 ## Ports and port groups {#mediaio_user_ports}
 
-A backend's open returns one or more [port groups](#mediaio_user_portgroups);
+A backend's open returns one or more [port groups](#mediaio_user_ports);
 each group contains zero or more sources (`MediaIOSource`) and
 zero or more sinks (`MediaIOSink`).
 
@@ -388,7 +388,7 @@ double  bps      = s.getAs<double>(MediaIOStats::BytesPerSecond, 0.0);
 ## Pipeline composition {#mediaio_user_pipeline}
 
 For graphs of more than a couple of MediaIOs, see
-[MediaPipeline](mediapipeline.md) — it wraps the MediaIO surface
+[MediaPipeline](#mediapipeline) — it wraps the MediaIO surface
 with a planner that builds the right port connections, inserts
 auto-bridges for format mismatches, and exposes a unified
 lifecycle (`run`, `pause`, `close`). For one-off transfers,
@@ -399,7 +399,7 @@ lifecycle (`run`, `pause`, `close`). For one-off transfers,
 | Backend | Direction | Purpose |
 |---------|-----------|---------|
 | `TPG` | source | Synthetic test pattern (color bars + audio with embedded LTC + timecode + image data band). Defaults are tuned to feed the Inspector. |
-| `Inspector` | sink | Frame validator/monitor — decodes the TPG image data band, tracks A/V sync, emits per-frame events and a periodic summary. See the [Inspector user guide](inspector.md). |
+| `Inspector` | sink | Frame validator/monitor — decodes the TPG image data band, tracks A/V sync, emits per-frame events and a periodic summary. See the [Inspector user guide](#inspector). |
 | `ImageFile` | both | Single image or numbered image sequence (DPX, Cineon, PNG, JPEG, JPEG XS, TGA, SGI, PNM, raw YUV). |
 | `AudioFile` | both | libsndfile-backed audio file (WAV, FLAC, AIFF, …). |
 | `QuickTime` | both | QuickTime/ISO-BMFF reader and writer. Compressed video samples ride as Annex-B bytes on the frame payload. |

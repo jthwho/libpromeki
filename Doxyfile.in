@@ -1279,8 +1279,7 @@ HTML_STYLESHEET        =
 # list). For an example see the documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_STYLESHEET  = @CMAKE_CURRENT_SOURCE_DIR@/thirdparty/doxygen-awesome-css/doxygen-awesome.css \
-                         @CMAKE_CURRENT_SOURCE_DIR@/thirdparty/doxygen-awesome-css/doxygen-awesome-sidebar-only.css
+HTML_EXTRA_STYLESHEET  = @PROMEKI_DOCS_EXTRA_STYLESHEET@
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note
@@ -2194,7 +2193,11 @@ INCLUDE_FILE_PATTERNS  =
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
 PREDEFINED             = PROMEKI_PRINTF_FUNC(m,n)= \
-                         PROMEKI_NAMESPACE_END=}
+                         "PROMEKI_NAMESPACE_BEGIN=namespace promeki {" \
+                         PROMEKI_NAMESPACE_END=} \
+                         "PROMEKI_DECLARE_ID(Name, ...)=static constexpr ID Name" \
+                         "PROMEKI_SIGNAL(Name, ...)=Signal<__VA_ARGS__> Name##Signal" \
+                         "PROMEKI_SLOT(Name, ...)=void Name(__VA_ARGS__)"
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The

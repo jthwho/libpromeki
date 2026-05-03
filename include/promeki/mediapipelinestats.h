@@ -40,10 +40,10 @@ PROMEKI_NAMESPACE_BEGIN
 class MediaPipelineStageStats {
         public:
                 /** @brief Map of command kind to its windowed-stat bundle. */
-                using WindowedMap = promeki::Map<MediaIOCommand::Kind, WindowedStatsBundle>;
+                using WindowedMap = ::promeki::Map<MediaIOCommand::Kind, WindowedStatsBundle>;
 
                 /** @brief List of plain-value stage records. */
-                using List = promeki::List<MediaPipelineStageStats>;
+                using List = ::promeki::List<MediaPipelineStageStats>;
 
                 MediaPipelineStageStats() = default;
 
@@ -55,7 +55,7 @@ class MediaPipelineStageStats {
                  *
                  * Populated with whatever the backend's
                  * @c executeCmd(MediaIOCommandStats &) and
-                 * @ref MediaIO::populateStandardStats produced at
+                 * @c MediaIO::populateStandardStats produced at
                  * snapshot time.  Empty when the stage was not open.
                  */
                 MediaIOStats cumulative;
@@ -132,10 +132,10 @@ class MediaPipelineStats {
                 using Ptr = SharedPtr<MediaPipelineStats>;
 
                 /** @brief List of value snapshots. */
-                using List = promeki::List<MediaPipelineStats>;
+                using List = ::promeki::List<MediaPipelineStats>;
 
                 /** @brief List of shared snapshot pointers. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Ordered list of per-stage records. */
                 using StageList = MediaPipelineStageStats::List;

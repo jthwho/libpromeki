@@ -16,8 +16,8 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-        with:
-          submodules: true
+        # No submodules: PROMEKI_DOCS_ONLY mode (below) configures only
+        # the Doxygen target and skips every third-party dep.
 
       - name: Install Doxygen
         run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
@@ -35,7 +35,7 @@ jobs:
 
       - name: Build documentation
         run: |
-          cmake -B build -DPROMEKI_BUILD_DOCS=ON -DPROMEKI_BUILD_TESTS=OFF \
+          cmake -B build -DPROMEKI_DOCS_ONLY=ON \
             -DPROMEKI_DOCS_VERSION=${{ steps.version.outputs.name }}
           cmake --build build --target docs
 

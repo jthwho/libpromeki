@@ -30,7 +30,7 @@ PROMEKI_NAMESPACE_BEGIN
  * HttpMethod parsed{ String("PUT") }; // HttpMethod::Put
  * @endcode
  *
- * Default value is @ref Get — the most common request method, matching
+ * Default value is @c HttpMethod::Get — the most common request method, matching
  * the convention used elsewhere in the library for sensible defaults.
  */
 class HttpMethod : public TypedEnum<HttpMethod> {
@@ -63,7 +63,7 @@ class HttpMethod : public TypedEnum<HttpMethod> {
                 /**
                  * @brief Whether the method has a meaningful request body.
                  *
-                 * True for @ref Post, @ref Put, and @ref Patch; false for
+                 * True for @c HttpMethod::Post, @c HttpMethod::Put, and @c HttpMethod::Patch; false for
                  * the rest.  Used by @ref HttpConnection to decide
                  * whether to wait for a body even when no
                  * @c Content-Length header is present.

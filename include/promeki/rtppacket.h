@@ -59,10 +59,10 @@ PROMEKI_NAMESPACE_BEGIN
 class RtpPacket : public BufferView {
         public:
                 /** @brief List of RtpPacket values. */
-                using List = promeki::List<RtpPacket>;
+                using List = ::promeki::List<RtpPacket>;
 
                 /** @brief List of sizes. */
-                using SizeList = promeki::List<size_t>;
+                using SizeList = ::promeki::List<size_t>;
 
                 /** @brief Minimum RTP fixed header size in bytes. */
                 static constexpr size_t HeaderSize = 12;

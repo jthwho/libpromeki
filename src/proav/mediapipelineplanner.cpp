@@ -66,21 +66,21 @@ namespace {
         // the planner to MediaPipeline's instance method.
         // ----------------------------------------------------------------
 
-        Error topologicallySort(const MediaPipelineConfig &config, promeki::List<String> &order) {
+        Error topologicallySort(const MediaPipelineConfig &config, List<String> &order) {
                 order.clear();
-                promeki::Map<String, int>                   inDeg;
-                promeki::Map<String, promeki::List<String>> adj;
-                const auto                                 &stages = config.stages();
+                Map<String, int>           inDeg;
+                Map<String, List<String>>  adj;
+                const auto                &stages = config.stages();
                 for (size_t i = 0; i < stages.size(); ++i) {
                         inDeg.insert(stages[i].name, 0);
-                        adj.insert(stages[i].name, promeki::List<String>());
+                        adj.insert(stages[i].name, List<String>());
                 }
                 const auto &routes = config.routes();
                 for (size_t i = 0; i < routes.size(); ++i) {
                         adj[routes[i].from].pushToBack(routes[i].to);
                         inDeg[routes[i].to] += 1;
                 }
-                promeki::List<String> ready;
+                List<String> ready;
                 for (size_t i = 0; i < stages.size(); ++i) {
                         if (inDeg[stages[i].name] == 0) ready.pushToBack(stages[i].name);
                 }
@@ -191,7 +191,7 @@ namespace {
         };
 
         bool findSingleBridge(const MediaDesc &from, const MediaDesc &to, const MediaPipelinePlanner::Policy &policy,
-                              BridgeStep *out, promeki::List<BridgeTraceEntry> *trace = nullptr) {
+                              BridgeStep *out, List<BridgeTraceEntry> *trace = nullptr) {
                 const auto &factories = MediaIOFactory::registeredFactories();
                 int         bestCost = INT_MAX;
                 bool        found = false;
@@ -249,7 +249,7 @@ namespace {
         // compressed → compressed transitions.  Synthesises an intermediate
         // uncompressed MediaDesc compatible with both ends.
         bool findCodecTransitive(const MediaDesc &from, const MediaDesc &to, const MediaPipelinePlanner::Policy &policy,
-                                 promeki::List<BridgeStep> *out) {
+                                 List<BridgeStep> *out) {
                 if (from.imageList().isEmpty() || to.imageList().isEmpty()) return false;
                 const PixelFormat &fromPd = from.imageList()[0].pixelFormat();
                 const PixelFormat &toPd = to.imageList()[0].pixelFormat();
@@ -317,7 +317,7 @@ namespace {
                 *diagnostic += line;
         }
 
-        void appendBridgeTrace(String *diagnostic, const promeki::List<BridgeTraceEntry> &trace) {
+        void appendBridgeTrace(String *diagnostic, const List<BridgeTraceEntry> &trace) {
                 if (diagnostic == nullptr) return;
                 if (trace.isEmpty()) {
                         appendDiagnostic(diagnostic, "    bridges considered: (none registered)");
@@ -390,8 +390,8 @@ namespace {
                 // return Ok with preferred==offered (already handled above).
                 MediaDesc target = (pe == Error::Ok && preferred.isValid()) ? preferred : producedDesc;
 
-                promeki::List<BridgeStep>       chain;
-                promeki::List<BridgeTraceEntry> trace;
+                List<BridgeStep>       chain;
+                List<BridgeTraceEntry> trace;
                 BridgeStep                      singleAttempt;
                 bool single = findSingleBridge(producedDesc, target, policy, &singleAttempt, &trace);
                 if (single) {
@@ -516,7 +516,7 @@ namespace {
         // must delete.  Returns false if any non-injected stage failed to
         // instantiate.
         bool buildStageMap(const MediaPipelineConfig &config, const MediaPipelinePlanner::InjectedStages &injected,
-                           promeki::Map<String, MediaIO *> *stages, promeki::Set<String> *ownedNames,
+                           Map<String, MediaIO *> *stages, Set<String> *ownedNames,
                            String *failedName) {
                 for (const auto &s : config.stages()) {
                         auto injIt = injected.find(s.name);
@@ -536,7 +536,7 @@ namespace {
                 return true;
         }
 
-        void destroyOwnedStages(promeki::Map<String, MediaIO *> &stages, const promeki::Set<String> &ownedNames) {
+        void destroyOwnedStages(Map<String, MediaIO *> &stages, const Set<String> &ownedNames) {
                 for (auto it = stages.begin(); it != stages.end(); ++it) {
                         if (!ownedNames.contains(it->first)) continue;
                         MediaIO *io = it->second;
@@ -555,9 +555,9 @@ bool MediaPipelinePlanner::isResolved(const MediaPipelineConfig &config, String 
         // No injected stages here — callers that need to check a
         // pipeline with injected stages should call plan() directly
         // and ignore the resolved-config output.
-        promeki::Map<String, MediaIO *> stages;
-        promeki::Set<String>            ownedNames;
-        String                          failedName;
+        Map<String, MediaIO *> stages;
+        Set<String>            ownedNames;
+        String                 failedName;
         if (!buildStageMap(config, InjectedStages(), &stages, &ownedNames, &failedName)) {
                 destroyOwnedStages(stages, ownedNames);
                 if (diagnostic != nullptr) {
@@ -568,7 +568,7 @@ bool MediaPipelinePlanner::isResolved(const MediaPipelineConfig &config, String 
 
         // Topological order so we discover source descs before
         // walking their downstream routes.
-        promeki::List<String> order;
+        List<String> order;
         if (topologicallySort(config, order).isError()) {
                 destroyOwnedStages(stages, ownedNames);
                 if (diagnostic != nullptr) {
@@ -577,10 +577,10 @@ bool MediaPipelinePlanner::isResolved(const MediaPipelineConfig &config, String 
                 return false;
         }
 
-        promeki::Set<String> hasUpstream;
+        Set<String> hasUpstream;
         for (const auto &r : config.routes()) hasUpstream.insert(r.to);
 
-        promeki::Map<String, MediaDesc> producedBy;
+        Map<String, MediaDesc> producedBy;
         for (size_t i = 0; i < order.size(); ++i) {
                 const String &name = order[i];
                 if (!hasUpstream.contains(name)) {
@@ -631,7 +631,7 @@ Error MediaPipelinePlanner::plan(const MediaPipelineConfig &in, MediaPipelineCon
         }
 
         // 2. Topologically sort.
-        promeki::List<String> order;
+        List<String> order;
         if (topologicallySort(in, order).isError()) {
                 if (diagnostic != nullptr) {
                         *diagnostic = "MediaPipelinePlanner: cycle in route graph.";
@@ -642,9 +642,9 @@ Error MediaPipelinePlanner::plan(const MediaPipelineConfig &in, MediaPipelineCon
         // 3. Instantiate / adopt stages so we can query them.
         // Injected stages keep their caller-owned identity; the
         // planner never closes or deletes them.
-        promeki::Map<String, MediaIO *> stages;
-        promeki::Set<String>            ownedNames;
-        String                          failedName;
+        Map<String, MediaIO *> stages;
+        Set<String>            ownedNames;
+        String                 failedName;
         if (!buildStageMap(in, injected, &stages, &ownedNames, &failedName)) {
                 if (diagnostic != nullptr) {
                         *diagnostic = String("MediaPipelinePlanner: cannot instantiate '") + failedName + "'.";
@@ -654,10 +654,10 @@ Error MediaPipelinePlanner::plan(const MediaPipelineConfig &in, MediaPipelineCon
         }
 
         // 4. Discover source MediaDescs (stages with no upstream).
-        promeki::Set<String> hasUpstream;
+        Set<String> hasUpstream;
         for (const auto &r : in.routes()) hasUpstream.insert(r.to);
 
-        promeki::Map<String, MediaDesc> producedBy;
+        Map<String, MediaDesc> producedBy;
         for (size_t i = 0; i < order.size(); ++i) {
                 const String &name = order[i];
                 if (hasUpstream.contains(name)) continue;
@@ -686,10 +686,10 @@ Error MediaPipelinePlanner::plan(const MediaPipelineConfig &in, MediaPipelineCon
 
         // 6. Walk routes in topological order so produced descs flow
         // forward correctly.
-        promeki::Map<String, promeki::List<MediaPipelineConfig::Route>> routesByFrom;
+        Map<String, List<MediaPipelineConfig::Route>> routesByFrom;
         for (const auto &r : in.routes()) {
                 if (!routesByFrom.contains(r.from)) {
-                        routesByFrom.insert(r.from, promeki::List<MediaPipelineConfig::Route>());
+                        routesByFrom.insert(r.from, List<MediaPipelineConfig::Route>());
                 }
                 routesByFrom[r.from].pushToBack(r);
         }

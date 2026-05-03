@@ -28,7 +28,7 @@ class TuiWidget;
  *
  * Owns the @ref Terminal, @ref TuiScreen, palette, input parser, and
  * the event-loop plumbing (STDIN + SIGWINCH self-pipe as
- * @ref EventLoop::IoSource callbacks) that drive a text UI.  Stack-
+ * @c EventLoop::addIoSource callbacks) that drive a text UI.  Stack-
  * construct one after @c Application:
  *
  * @code

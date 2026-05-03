@@ -30,7 +30,7 @@ class UdpSocket;
  * of socket pointers.
  *
  * @par Thread Safety
- * Inherits @ref ObjectBase: thread-affine.  A single
+ * Inherits @ref ObjectBase &mdash; thread-affine.  A single
  * MulticastManager must only be used from the thread that
  * created it.
  *

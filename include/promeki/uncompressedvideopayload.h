@@ -65,7 +65,7 @@ class UncompressedVideoPayload : public VideoPayload {
                 using Ptr = SharedPtr<UncompressedVideoPayload, /*CopyOnWrite=*/true, UncompressedVideoPayload>;
 
                 /** @brief List of shared pointers to UncompressedVideoPayload instances. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Unique-ownership pointer to an UncompressedVideoPayload. */
                 using UPtr = UniquePtr<UncompressedVideoPayload>;

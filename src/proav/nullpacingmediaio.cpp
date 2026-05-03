@@ -52,7 +52,7 @@ MediaIOFactory::Config::SpecMap NullPacingFactory::configSpecs() const {
                 const VariantSpec *gs = MediaConfig::spec(id);
                 specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
         };
-        s(MediaConfig::NullPacingMode, promeki::NullPacingMode::Wallclock);
+        s(MediaConfig::NullPacingMode, NullPacingMode::Wallclock);
         s(MediaConfig::NullPacingTargetFps, Rational<int>(0, 1));
         s(MediaConfig::NullPacingBurnTimings, false);
         return specs;
@@ -85,17 +85,17 @@ Error NullPacingMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         const MediaIO::Config &cfg = cmd.config;
 
         Error modeErr;
-        Enum  modeEnum = cfg.get(MediaConfig::NullPacingMode).asEnum(promeki::NullPacingMode::Type, &modeErr);
+        Enum  modeEnum = cfg.get(MediaConfig::NullPacingMode).asEnum(NullPacingMode::Type, &modeErr);
         if (modeErr.isError() || !modeEnum.hasListedValue()) {
                 promekiErr("NullPacingMediaIO: invalid NullPacingMode");
                 return Error::InvalidArgument;
         }
-        _mode = promeki::NullPacingMode(modeEnum.value());
+        _mode = NullPacingMode(modeEnum.value());
 
         Rational<int> configuredFps = cfg.get(MediaConfig::NullPacingTargetFps).get<Rational<int>>();
         _targetRate = resolveTargetRate(configuredFps, cmd.pendingMediaDesc.frameRate());
 
-        if (_mode.value() == promeki::NullPacingMode::Wallclock.value()) {
+        if (_mode.value() == NullPacingMode::Wallclock.value()) {
                 if (!_targetRate.isValid()) {
                         promekiErr("NullPacingMediaIO: Wallclock mode "
                                    "requires NullPacingTargetFps > 0/1 or "

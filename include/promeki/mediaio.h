@@ -94,7 +94,7 @@ class MediaIORequest;
  *
  * @par Thread Safety
  *
- * Inherits @ref ObjectBase: thread-affine.  MediaIO is intended
+ * Inherits @ref ObjectBase &mdash; thread-affine.  MediaIO is intended
  * to be driven from a single user thread.  Public methods
  * (@c open / @c close / @c readFrame / @c writeFrame /
  * @c seekToFrame / @c setStep etc.) are not safe to call
@@ -147,7 +147,7 @@ class MediaIO : public ObjectBase {
                  *
                  * If @p filename parses as a URL whose scheme matches a
                  * registered backend, dispatches to @ref createFromUrl
-                 * in @ref Source mode.  Otherwise treats the argument
+                 * in @ref MediaIOSource mode.  Otherwise treats the argument
                  * as a filesystem path and picks a backend by path
                  * probe, extension, or content probe (in that order).
                  *
@@ -161,7 +161,7 @@ class MediaIO : public ObjectBase {
                  * @brief Creates a MediaIO writer for the given filename.
                  *
                  * URL strings are dispatched identically to
-                 * @ref createForFileRead but in @ref Sink mode.
+                 * @ref createForFileRead but in @ref MediaIOSink mode.
                  *
                  * @param filename The path or URL to the media resource.
                  * @param parent Optional parent object.
@@ -551,7 +551,7 @@ class MediaIO : public ObjectBase {
                  * strand keeps the command alive).
                  *
                  * While the close is in flight @ref isClosing returns
-                 * true and @ref readFrame / @ref writeFrame stop
+                 * true and @ref MediaIOSource::readFrame / @ref MediaIOSink::writeFrame stop
                  * submitting new work (reads still drain any queued
                  * results so the consumer can observe the trailing
                  * EOS).  Callers must not touch the cached descriptor
@@ -822,7 +822,7 @@ class MediaIO : public ObjectBase {
                  * marshalling via @ref EventLoop.
                  *
                  * Intended as the observability hook for pipeline-level
-                 * telemetry collectors (@ref MediaPipelineStatsCollector
+                 * telemetry collectors (@ref MediaIOStatsCollector
                  * subscribes per stage to roll per-command timings into
                  * a windowed ring) — anyone needing to observe every
                  * command without subclassing the backend can hang

@@ -67,7 +67,7 @@ enum class SchedulePolicy {
  * through a sliced vtable — undefined behaviour.  @c ~Thread() is
  * a backstop that joins on its way out, but by then the slice has
  * already happened.  See @ref MulticastReceiver::stop and
- * @ref DedicatedThreadMediaIO::~DedicatedThreadMediaIO for
+ * @c DedicatedThreadMediaIO::~DedicatedThreadMediaIO for
  * existing examples of the correct shape.
  */
 class Thread : public ObjectBase {

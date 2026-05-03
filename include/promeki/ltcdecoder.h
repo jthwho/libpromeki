@@ -61,7 +61,7 @@ class LtcDecoder {
                 };
 
                 /** @brief List of decoded timecode results. */
-                using DecodedList = List<DecodedTimecode>;
+                using DecodedList = ::promeki::List<DecodedTimecode>;
 
                 /**
                  * @brief Constructs an LTC decoder.

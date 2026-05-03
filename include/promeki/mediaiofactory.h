@@ -24,13 +24,13 @@ class MediaIO;
 class ObjectBase;
 
 /**
- * @brief Macro to register a @ref MediaIOFactory at static initialization.
+ * @brief Macro to register a @c MediaIOFactory at static initialization.
  * @ingroup mediaio_user
  *
  * Allocates a single process-lifetime instance of @p FactoryClass and
- * registers it with @ref MediaIOFactory::registerFactory.
+ * registers it with @c MediaIOFactory::registerFactory.
  *
- * @param FactoryClass A concrete @ref MediaIOFactory subclass with a
+ * @param FactoryClass A concrete @c MediaIOFactory subclass with a
  *                     default constructor.
  */
 #define PROMEKI_REGISTER_MEDIAIO_FACTORY(FactoryClass)                                                                 \

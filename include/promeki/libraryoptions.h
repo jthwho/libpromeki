@@ -28,7 +28,7 @@ PROMEKI_NAMESPACE_BEGIN
  * Options can also be set programmatically at any time:
  *
  * @par Thread Safety
- * Inherits @ref VariantDatabase: distinct instances may be used
+ * Inherits @ref VariantDatabase &mdash; distinct instances may be used
  * concurrently.  The singleton @ref instance is intended to be
  * configured once at startup (typically in @c main before worker
  * threads start) and read thereafter from any thread.  Concurrent

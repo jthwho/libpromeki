@@ -25,7 +25,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @ref DebugServer is intentionally thin: it owns one @ref HttpServer,
  * one @ref HttpApi attached to it, and exposes a one-call helper
  * (@ref installDefaultModules) that stitches together every installer
- * in @ref debugmodules.h under the canonical @c "/api" base prefix.
+ * in @c debugmodules.h under the canonical @c "/api" base prefix.
  * Applications that want to cherry-pick which diagnostics they expose
  * — or attach them to their own user-facing server — can skip this
  * class and call the installer functions directly on any
@@ -137,7 +137,7 @@ class DebugServer : public ObjectBase {
                  * @c /_openapi, and adds a 302 redirect from @c "/"
                  * to the debug UI at @c \<prefix>/promeki/.
                  *
-                 * The root redirect is exclusive to @ref DebugServer:
+                 * The root redirect is exclusive to @ref DebugServer &mdash;
                  * applications that install the promeki API into
                  * their own server (via @ref HttpApi::installPromekiAPI)
                  * keep control of @c "/" themselves.

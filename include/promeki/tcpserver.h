@@ -23,7 +23,7 @@ class TcpSocket;
  * connections. Accepted connections are returned as TcpSocket objects.
  *
  * @par Thread Safety
- * Inherits @ref ObjectBase: thread-affine.  A single TcpServer
+ * Inherits @ref ObjectBase &mdash; thread-affine.  A single TcpServer
  * must only be used from the thread that created it.
  *
  * @par Example

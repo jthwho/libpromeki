@@ -53,7 +53,7 @@ public:                                                                         
 
 class ObjectBase;
 
-using ObjectBaseList = List<ObjectBase *>;
+using ObjectBaseList = ::promeki::List<ObjectBase *>;
 
 /**
  * @brief Object that holds a pointer to an ObjectBase-derived object.
@@ -189,8 +189,8 @@ class ObjectBase {
                                 friend class SlotMeta;
 
                         public:
-                                using SignalList = List<SignalMeta *>;
-                                using SlotList = List<SlotMeta *>;
+                                using SignalList = ::promeki::List<SignalMeta *>;
+                                using SlotList = ::promeki::List<SlotMeta *>;
                                 /**
                                  * @brief Constructs MetaInfo with a type name and optional parent.
                                  * @param n The mangled type name (typically from typeid).
@@ -420,7 +420,7 @@ class ObjectBase {
                  * parent-child chain to the queued callable the moment
                  * @c deleteLater is invoked, so a parent that dies
                  * between now and the dispatch cannot double-delete
-                 * the child via @ref destroyChildren.
+                 * the child via @c destroyChildren.
                  *
                  * Falls back to a synchronous @c delete @c this when
                  * the object has no associated EventLoop.  Always run
@@ -439,7 +439,7 @@ class ObjectBase {
                  *        destruction.
                  *
                  * Cleanup handlers fire from the destructor (after
-                 * @ref aboutToDestroy emits, after children are
+                 * @c aboutToDestroySignal emits, after children are
                  * destroyed) and receive @c this as their argument.
                  * Each handler is gated by an @ref ObjectBasePtr to
                  * @p target — if @p target has already been destroyed
@@ -451,7 +451,7 @@ class ObjectBase {
                  *
                  * Used internally to wire automatic
                  * signal/slot disconnect on receiver destruction —
-                 * see @ref Signal::connect(Function, ObjectBase *).
+                 * see @c Signal::connect with an @ref ObjectBase context.
                  *
                  * @param target Foreign object the handler depends on
                  *               (may be @c nullptr).

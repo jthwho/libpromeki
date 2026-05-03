@@ -110,11 +110,11 @@ namespace {
 } // namespace
 
 String Units::fromByteCount(uint64_t bytes, int maxDecimals) {
-        return ::promeki::formatByteCount(bytes, maxDecimals, false);
+        return formatByteCount(bytes, maxDecimals, false);
 }
 
 String Units::fromByteCount(uint64_t bytes, int maxDecimals, const ByteCountStyle &style) {
-        return ::promeki::formatByteCount(bytes, maxDecimals, style.value() == ByteCountStyle::Binary.value());
+        return formatByteCount(bytes, maxDecimals, style.value() == ByteCountStyle::Binary.value());
 }
 
 String Units::fromDurationNs(double ns, int precision) {

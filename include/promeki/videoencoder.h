@@ -30,8 +30,8 @@ class MediaConfig;
  * A VideoEncoder is a single push-frame / pull-packet codec session.
  * Concrete session classes hold codec state (reference frames,
  * rate-control context, internal allocators, …) across successive
- * @ref submitFrame calls and emit @ref CompressedVideoPayload access
- * units via @ref receivePacket as the codec decides they're ready.
+ * @ref submitPayload calls and emit @ref CompressedVideoPayload access
+ * units via @ref receiveCompressedPayload as the codec decides they're ready.
  *
  * Encoders expose no codec-family metadata directly — the caller asks
  * the @ref codec wrapper returned by @ref codec() instead.  The codec
@@ -78,13 +78,13 @@ class MediaConfig;
  *   2. Call @ref configure with a @ref MediaConfig holding bitrate,
  *      GOP length, preset, and any other well-known knobs.  (Skip
  *      when a config was already supplied to @c createEncoder.)
- *   3. For each source frame, call @ref submitFrame.
+ *   3. For each source frame, call @ref submitPayload.
  *   4. After each submit (and any time after), drain with
- *      @ref receivePacket until it returns a null Ptr.  Packets may
+ *      @ref receiveCompressedPayload until it returns a null Ptr.  Packets may
  *      arrive with PTS out of order (B-frames); the DTS on each
  *      packet reflects decode order.
  *   5. When the input stream is exhausted, call @ref flush and keep
- *      draining until @ref receivePacket returns a packet whose
+ *      draining until @ref receiveCompressedPayload returns a packet whose
  *      @c MediaPayload::Flags::EndOfStream flag is set.
  *   6. Destroy the encoder.
  *
@@ -218,7 +218,7 @@ class VideoEncoder {
                  * overrides).
                  *
                  * @param record The populated BackendRecord.  The @c codecId
-                 *               must resolve via @ref VideoCodec::lookupData
+                 *               must resolve via @c VideoCodec::lookupData
                  *               and the @c backend handle must come from
                  *               @ref VideoCodec::registerBackend.
                  * @return @c Error::Ok on success; @c Error::Invalid when
@@ -255,7 +255,7 @@ class VideoEncoder {
                  * is consulted; when that is empty or not found, the
                  * highest-weight registered backend is chosen.  The
                  * returned encoder has @ref codec() pre-populated and
-                 * @ref configure() invoked when @p config is non-null.
+                 * @ref configure invoked when @p config is non-null.
                  */
                 static Result<VideoEncoder *> create(VideoCodec::ID codecId, VideoCodec::Backend pinned,
                                                      const MediaConfig *config);

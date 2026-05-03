@@ -58,7 +58,7 @@ class SslContext {
                 using Ptr = SharedPtr<SslContext, false>;
 
                 /** @brief List of contexts. */
-                using List = promeki::List<SslContext>;
+                using List = ::promeki::List<SslContext>;
 
                 /** @brief Permitted TLS protocol version policy. */
                 enum SslProtocol {

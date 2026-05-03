@@ -268,7 +268,7 @@ class PixelMemLayout {
                 };
 
                 /** @brief List of PixelMemLayout IDs. */
-                using IDList = List<ID>;
+                using IDList = ::promeki::List<ID>;
 
                 /** @brief Describes a single component within the pixel format. */
                 struct CompDesc {

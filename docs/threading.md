@@ -35,7 +35,7 @@ categories:
 
 ## Sharing Data Objects {#thread_data}
 
-See the [Data Object Categories](dataobjects.md) page for detailed
+See the [Data Object Categories](@ref dataobjects) page for detailed
 patterns and code examples. Summary:
 
 - **Shareable types**: wrap in `Ptr` and hand off. Do not mutate

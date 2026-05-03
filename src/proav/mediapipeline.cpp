@@ -54,15 +54,15 @@ namespace {
         // so this only fires for the single-stage corner case).
 } // namespace
 
-Error MediaPipeline::topologicallySort(promeki::List<String> &order) const {
+Error MediaPipeline::topologicallySort(List<String> &order) const {
         order.clear();
 
-        promeki::Map<String, int>                   inDeg;
-        promeki::Map<String, promeki::List<String>> adj;
-        const MediaPipelineConfig::StageList       &stages = _config.stages();
+        Map<String, int>                      inDeg;
+        Map<String, List<String>>             adj;
+        const MediaPipelineConfig::StageList &stages = _config.stages();
         for (size_t i = 0; i < stages.size(); ++i) {
                 inDeg.insert(stages[i].name, 0);
-                adj.insert(stages[i].name, promeki::List<String>());
+                adj.insert(stages[i].name, List<String>());
         }
         const MediaPipelineConfig::RouteList &routes = _config.routes();
         for (size_t i = 0; i < routes.size(); ++i) {
@@ -72,7 +72,7 @@ Error MediaPipeline::topologicallySort(promeki::List<String> &order) const {
 
         // Ready queue seeded with every in-degree-zero node in declared
         // order, giving us deterministic output for equivalent graphs.
-        promeki::List<String> ready;
+        List<String> ready;
         for (size_t i = 0; i < stages.size(); ++i) {
                 if (inDeg[stages[i].name] == 0) ready.pushToBack(stages[i].name);
         }
@@ -81,7 +81,7 @@ Error MediaPipeline::topologicallySort(promeki::List<String> &order) const {
                 const String n = ready.front();
                 ready.remove(static_cast<size_t>(0));
                 order.pushToBack(n);
-                const promeki::List<String> &nbrs = adj[n];
+                const List<String> &nbrs = adj[n];
                 for (size_t i = 0; i < nbrs.size(); ++i) {
                         const String &m = nbrs[i];
                         inDeg[m] -= 1;
@@ -288,7 +288,7 @@ Error MediaPipeline::build(const MediaPipelineConfig &config, bool autoplan) {
 
         // Fan-in check — for this first implementation a stage may have
         // at most one incoming route.  Fan-out is unrestricted.
-        promeki::Map<String, int> inCount;
+        Map<String, int> inCount;
         for (size_t i = 0; i < effectiveConfig->stages().size(); ++i) {
                 inCount.insert(effectiveConfig->stages()[i].name, 0);
         }
@@ -407,13 +407,13 @@ Error MediaPipeline::open() {
         // Build a quick from-lookup for the "who feeds me?" query; the
         // @c build step already rejects fan-in so every non-source
         // stage has exactly one upstream.
-        promeki::Map<String, String> upstreamOf;
+        Map<String, String> upstreamOf;
         for (size_t i = 0; i < _config.routes().size(); ++i) {
                 const MediaPipelineConfig::Route &r = _config.routes()[i];
                 upstreamOf.insert(r.to, r.from);
         }
 
-        promeki::List<String> opened;
+        List<String> opened;
         _terminalSinksRemaining = 0;
         for (size_t i = 0; i < _topoOrder.size(); ++i) {
                 const String                     &name = _topoOrder[i];
@@ -669,7 +669,7 @@ void MediaPipeline::initiateClose(bool clean) {
 
         // Collect the set of stages that are downstream of some route —
         // anything NOT in that set is a true source.
-        promeki::Set<String>                  hasUpstream;
+        Set<String>                           hasUpstream;
         const MediaPipelineConfig::RouteList &routes = _config.routes();
         for (size_t i = 0; i < routes.size(); ++i) {
                 hasUpstream.insert(routes[i].to);
@@ -679,8 +679,8 @@ void MediaPipeline::initiateClose(bool clean) {
         // the mutation passes below can trigger a re-entrant
         // @ref finalizeClose (via @ref onStageClosed) without
         // invalidating the detection iterators.
-        promeki::List<String> triggers;
-        promeki::List<String> alreadyClosed;
+        List<String> triggers;
+        List<String> alreadyClosed;
         for (size_t i = 0; i < _topoOrder.size(); ++i) {
                 const String &name = _topoOrder[i];
                 auto          sit = _stages.find(name);
@@ -758,7 +758,7 @@ void MediaPipeline::forceCloseRemaining() {
         // Snapshot the outstanding set — close(false) on a stage can
         // re-enter via its closedSignal handler, mutating
         // _stagesAwaitingClosed while we iterate.
-        promeki::List<String> remaining;
+        List<String> remaining;
         for (auto it = _stagesAwaitingClosed.cbegin(); it != _stagesAwaitingClosed.cend(); ++it) {
                 remaining.pushToBack(*it);
         }
@@ -1070,7 +1070,7 @@ void MediaPipeline::publish(PipelineEvent ev) {
                 ev.setTimestamp(TimeStamp::now());
         }
 
-        promeki::List<Subscriber> snapshot;
+        List<Subscriber> snapshot;
         {
                 Mutex::Locker lock(_subsMutex);
                 if (_subscribers.isEmpty()) return;

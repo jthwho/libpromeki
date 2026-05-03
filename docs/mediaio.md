@@ -7,11 +7,11 @@ documented through two audience-targeted guides.
 
 ## Two guides {#mediaio_guides}
 
-- **[MediaIO User Guide](mediaio_user_guide.md)** — for application
+- **@ref mediaio_user_guide "MediaIO User Guide"** — for application
   authors. The always-async API, factory entry points,
   `MediaIORequest`, ports and port groups, port connections,
   cancellation, signals, and the catalog of available backends.
-- **[MediaIO Backend Author Guide](mediaio_backend_guide.md)** —
+- **@ref mediaio_backend_guide "MediaIO Backend Author Guide"** —
   for backend authors. Strategy class selection, factory
   registration, the `executeCmd` contract, port construction
   during open, the cancellation contract, the live-capture
@@ -19,13 +19,13 @@ documented through two audience-targeted guides.
 
 ## See also {#mediaio_see_also}
 
-- **[Inspector — Frame validation and monitoring](inspector.md)** —
+- **@ref inspector "Inspector — Frame validation and monitoring"** —
   the QA companion for the TPG synthetic source.
-- **[MediaPipeline](mediapipeline.md)** — the pipeline composition
+- **@ref mediapipeline "MediaPipeline"** — the pipeline composition
   layer that wraps MediaIO + port connections behind a single
   lifecycle.
-- **[MediaPipelinePlanner](mediaplanner.md)** — automatic bridge
+- **@ref mediaplanner "MediaPipelinePlanner"** — automatic bridge
   insertion for format-mismatched stages.
-- **[Threading](threading.md)** — process-wide concurrency model
+- **@ref threading "Threading"** — process-wide concurrency model
   including the `ThreadPool`/`Strand` primitives the framework
   relies on.

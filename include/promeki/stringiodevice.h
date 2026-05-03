@@ -31,7 +31,7 @@ PROMEKI_NAMESPACE_BEGIN
  * content at the current position. The String grows as needed.
  *
  * @par Thread Safety
- * Inherits @ref IODevice: thread-affine.  A single instance must
+ * Inherits @ref IODevice &mdash; thread-affine.  A single instance must
  * only be used from the thread that created it.
  */
 class StringIODevice : public IODevice {

@@ -49,7 +49,7 @@ PROMEKI_NAMESPACE_BEGIN
  * |-----|------|---------|-------------|
  * | @ref MediaConfig::JpegXsBpp           | int         | 3       | Bits-per-pixel target. |
  * | @ref MediaConfig::JpegXsDecomposition | int         | 5       | Horizontal decomposition depth (0-5). |
- * | @ref MediaConfig::OutputPixelFormat   | PixelFormat | Invalid | Optional override of the encoder's reported @ref outputPixelFormat. |
+ * | @ref MediaConfig::OutputPixelFormat   | PixelFormat | Invalid | Optional override of the encoder's reported @c outputPixelFormat. |
  * | @ref MediaConfig::Capacity            | int         | 8       | Output FIFO depth before a one-shot warning is logged. |
  *
  * @par Thread Safety

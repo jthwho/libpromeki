@@ -25,7 +25,7 @@ PROMEKI_NAMESPACE_BEGIN
  * Models Go's @c http.ServeMux: route patterns map to handlers, with
  * exact matches preferred over parameterized matches and longer
  * literal segments preferred over shorter ones.  Method-aware: a
- * pattern registered for @ref HttpMethod::Get does not respond to
+ * pattern registered for @c HttpMethod::Get does not respond to
  * @c POST, and the default 405 handler fills in the @c Allow header
  * automatically based on the methods that *did* match the path.
  *
@@ -155,7 +155,7 @@ class HttpRouter {
 
         private:
                 struct PatternSegment {
-                                using List = promeki::List<PatternSegment>;
+                                using List = ::promeki::List<PatternSegment>;
                                 enum Kind {
                                         Literal,
                                         Param,
@@ -166,7 +166,7 @@ class HttpRouter {
                 };
 
                 struct Pattern {
-                                using List = promeki::List<Pattern>;
+                                using List = ::promeki::List<Pattern>;
                                 String               source;
                                 PatternSegment::List segments;
                                 bool                 trailingSlash = false;
@@ -174,7 +174,7 @@ class HttpRouter {
                 };
 
                 struct Route {
-                                using List = promeki::List<Route>;
+                                using List = ::promeki::List<Route>;
                                 Pattern          pattern;
                                 int              methodValue = -1; ///< -1 == any
                                 HttpHandler::Ptr handler;

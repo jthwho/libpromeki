@@ -16,7 +16,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Outcome of a single @ref PacingGate::wait call.
+ * @brief Outcome of a single @c PacingGate::wait call.
  * @ingroup time
  *
  * The verdict is the gate's recommendation to the caller — it does
@@ -42,7 +42,7 @@ enum class PacingVerdict {
 };
 
 /**
- * @brief Result of a single @ref PacingGate::wait call.
+ * @brief Result of a single @c PacingGate::wait call.
  * @ingroup time
  */
 struct PacingResult {
@@ -254,7 +254,7 @@ class PacingGate {
 
                 /**
                  * @brief Convenience overload using @ref period.
-                 * @return @ref wait(period())
+                 * @return @c wait(period())
                  */
                 PacingResult       wait() { return wait(_period); }
 
@@ -297,7 +297,7 @@ class PacingGate {
 
                 /**
                  * @brief Convenience overload using @ref period.
-                 * @return @ref tryAcquire(period())
+                 * @return @c tryAcquire(period())
                  */
                 bool               tryAcquire() { return tryAcquire(_period); }
 

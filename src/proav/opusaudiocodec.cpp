@@ -52,8 +52,8 @@ namespace {
 
         // Maps the OpusApplication enum onto libopus's OPUS_APPLICATION_*.
         int applicationFromEnum(const Enum &app) {
-                if (app == promeki::OpusApplication::Voip) return OPUS_APPLICATION_VOIP;
-                if (app == promeki::OpusApplication::LowDelay) return OPUS_APPLICATION_RESTRICTED_LOWDELAY;
+                if (app == OpusApplication::Voip) return OPUS_APPLICATION_VOIP;
+                if (app == OpusApplication::LowDelay) return OPUS_APPLICATION_RESTRICTED_LOWDELAY;
                 return OPUS_APPLICATION_AUDIO; // default
         }
 
@@ -337,7 +337,7 @@ namespace {
                         unsigned int                       _channels = 0;
                         bool                               _useFloat = false;
                         int32_t                            _bitrateBps = 64000;
-                        Enum                               _application = promeki::OpusApplication::Audio;
+                        Enum                               _application = OpusApplication::Audio;
                         float                              _frameSizeMs = 20.0f;
                         List<int16_t>                      _pendingS16;
                         List<float>                        _pendingFloat;

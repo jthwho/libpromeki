@@ -39,9 +39,9 @@ class MediaDesc;
  *   1. The cached @ref MediaIO::mediaDesc on a stage that the caller
  *      already opened.
  *   2. The @c preferredFormat field of @ref MediaIO::describe.
- *   3. The pre-open hint set via @ref MediaIO::setExpectedDesc.
+ *   3. The pre-open hint set via @c MediaIO::setExpectedDesc.
  *   4. As a last resort, the planner opens the source briefly in
- *      @ref MediaIO::Source mode to read its mediaDesc, then closes
+ *      @c MediaIO::Source mode to read its mediaDesc, then closes
  *      it.  Backends with side-effecting opens (RTP, V4L2 capture)
  *      pay the cost of one open / close cycle during planning.
  *      The probe uses only the stage's registered backend and
@@ -154,7 +154,7 @@ class MediaPipelinePlanner {
                  * instead of failing to build a stand-in from the
                  * registry.
                  */
-                using InjectedStages = promeki::Map<String, MediaIO *>;
+                using InjectedStages = ::promeki::Map<String, MediaIO *>;
 
                 /**
                  * @brief Resolves @p in into a fully-direct @p out.

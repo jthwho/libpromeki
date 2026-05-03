@@ -342,13 +342,13 @@ namespace {
                 Black
         };
 
-        bool hasCycleDfs(const String &node, const Map<String, promeki::List<String>> &adj,
+        bool hasCycleDfs(const String &node, const Map<String, List<String>> &adj,
                          Map<String, VisitColor> &color) {
                 auto &c = color[node];
                 c = VisitColor::Gray;
                 auto it = adj.find(node);
                 if (it != adj.end()) {
-                        const promeki::List<String> &edges = it->second;
+                        const List<String> &edges = it->second;
                         for (size_t i = 0; i < edges.size(); ++i) {
                                 const String &next = edges[i];
                                 auto          nextIt = color.find(next);

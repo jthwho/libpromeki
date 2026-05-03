@@ -36,8 +36,8 @@ MediaIOSink *MediaIOPortConnection::sink() const {
         return _sinks.isEmpty() ? nullptr : _sinks[0].sink;
 }
 
-promeki::List<MediaIOSink *> MediaIOPortConnection::sinks() const {
-        promeki::List<MediaIOSink *> out;
+List<MediaIOSink *> MediaIOPortConnection::sinks() const {
+        List<MediaIOSink *> out;
         for (size_t i = 0; i < _sinks.size(); ++i) out.pushToBack(_sinks[i].sink);
         return out;
 }

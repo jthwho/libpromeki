@@ -33,7 +33,7 @@ PROMEKI_NAMESPACE_BEGIN
  * Error::NotSupported.
  *
  * @par Thread Safety
- * Inherits @ref ObjectBase: thread-affine.  A Process instance
+ * Inherits @ref ObjectBase &mdash; thread-affine.  A Process instance
  * must only be used from the thread that created it (typically
  * its owning EventLoop's thread).  The pipe I/O accessors
  * (@c readAllStdout, @c writeToStdin, etc.) follow the same

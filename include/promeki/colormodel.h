@@ -229,7 +229,7 @@ class ColorModel {
                 typedef Array<CIEPoint, 4> Primaries;
 
                 /** @brief List of ColorModel IDs. */
-                using IDList = List<ID>;
+                using IDList = ::promeki::List<ID>;
 
                 /**
                  * @brief Immutable descriptor for a color model.

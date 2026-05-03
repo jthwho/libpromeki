@@ -24,7 +24,7 @@ class Widget;
  * Owns the SDL library state (init / quit), the @ref SDLEventPump,
  * and the SDL-to-EventLoop bridge (a self-pipe fed by
  * @c SDL_AddEventWatch and registered as an
- * @ref EventLoop::IoSource).  Stack-construct one after
+ * @c EventLoop::addIoSource).  Stack-construct one after
  * @c Application:
  *
  * @code

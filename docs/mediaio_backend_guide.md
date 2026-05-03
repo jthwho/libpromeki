@@ -6,7 +6,7 @@ populating cached state, and registering the backend with the
 factory system.
 
 For an introduction to using the framework as a consumer, see the
-[MediaIO User Guide](mediaio_user_guide.md). The user guide
+[MediaIO User Guide](@ref mediaio_user_guide). The user guide
 explains the always-async API, port connections, and signal
 contracts; this guide assumes you know that material and focuses
 on the implementer's surface.
@@ -453,7 +453,7 @@ bool FooFactory::bridge(const MediaDesc &from, const MediaDesc &to,
 ```
 
 The default implementation returns `false` (i.e. "I'm not a
-planner-insertable bridge"). See [MediaPipelinePlanner](mediaplanner.md)
+planner-insertable bridge"). See @ref mediaplanner "MediaPipelinePlanner"
 for how the planner uses these.
 
 ## Testing {#mediaio_backend_test}

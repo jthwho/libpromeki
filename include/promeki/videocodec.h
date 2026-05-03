@@ -138,7 +138,7 @@ class VideoCodec {
                 };
 
                 /** @brief List of VideoCodec IDs. */
-                using IDList = List<ID>;
+                using IDList = ::promeki::List<ID>;
 
                 /**
                  * @brief Describes a codec's inter-frame coding behaviour.
@@ -216,7 +216,7 @@ class VideoCodec {
                 };
 
                 /** @brief List of codec backend handles. */
-                using BackendList = List<Backend>;
+                using BackendList = ::promeki::List<Backend>;
 
                 /**
                  * @brief Immutable descriptor for a video codec.
@@ -238,7 +238,7 @@ class VideoCodec {
                          *
                          * Stored as @c int for header-layering reasons
                          * (PixelFormat pulls in colormodel/pixelmemlayout).
-                         * Callers wrap each as @ref PixelFormat(id) at use time.
+                         * Callers wrap each as @c PixelFormat(id) at use time.
                          */
                                 List<int>               compressedPixelFormats;
                                 CodingType              codingType = CodingInvalid; ///< Intra-only vs temporal.

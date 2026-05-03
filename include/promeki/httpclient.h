@@ -38,7 +38,7 @@ class EventLoop;
  * the request to completion.
  *
  * @par Thread Safety
- * Inherits @ref ObjectBase: thread-affine.  All state mutates on
+ * Inherits @ref ObjectBase &mdash; thread-affine.  All state mutates on
  * the client's owning EventLoop thread.  Callers that block-wait
  * on the @ref Future must be running on a different thread than
  * the one driving the EventLoop, otherwise the loop will never

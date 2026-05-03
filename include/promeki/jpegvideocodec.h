@@ -22,7 +22,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Encodes uncompressed images (RGB8, RGBA8, YCbCr 4:2:2 YUYV/UYVY/planar,
  * YCbCr 4:2:0 planar/NV12) to JPEG compressed form.  Each call to
- * @ref submitFrame runs one JPEG encode through libjpeg-turbo and
+ * @c submitFrame runs one JPEG encode through libjpeg-turbo and
  * queues the resulting compressed bytes as a @ref CompressedVideoPayload;
  * @ref receiveCompressedPayload pops the head of that queue.
  *
@@ -38,7 +38,7 @@ PROMEKI_NAMESPACE_BEGIN
  * |-----|------|---------|-------------|
  * | @ref MediaConfig::JpegQuality       | int                         | 85      | libjpeg-turbo quality (1-100, clamped). |
  * | @ref MediaConfig::JpegSubsampling   | Enum @ref ChromaSubsampling | YUV422  | Chroma subsampling for RGB encode paths. |
- * | @ref MediaConfig::OutputPixelFormat | PixelFormat                 | Invalid | Optional override of the encoder's reported @ref outputPixelFormat. |
+ * | @ref MediaConfig::OutputPixelFormat | PixelFormat                 | Invalid | Optional override of the encoder's reported @c outputPixelFormat. |
  * | @ref MediaConfig::Capacity          | int                         | 8       | Output FIFO depth before a one-shot warning is logged. |
  *
  * @par Thread Safety

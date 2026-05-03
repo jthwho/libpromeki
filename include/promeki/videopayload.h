@@ -40,7 +40,7 @@ class DataStream;
  * which is accepted as a harmless consequence of keeping a single
  * descriptor type across both families.
  *
- * VideoPayload is abstract — @ref _promeki_clone and @ref kind
+ * VideoPayload is abstract — @c _promeki_clone and @ref kind
  * remain pure-virtual so the concrete leaves must supply a
  * covariant clone.  Subclassing concrete leaves for codec-specific
  * specializations (a future @c NALBitstreamPayload for H.264 / HEVC
@@ -60,7 +60,7 @@ class VideoPayload : public MediaPayload {
                 using Ptr = SharedPtr<VideoPayload, /*CopyOnWrite=*/true, VideoPayload>;
 
                 /** @brief List of shared pointers to VideoPayload instances. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Constructs an empty video payload with no descriptor and no data. */
                 VideoPayload() = default;
@@ -79,7 +79,7 @@ class VideoPayload : public MediaPayload {
                  */
                 VideoPayload(const ImageDesc &desc, const BufferView &data) : MediaPayload(data), _desc(desc) {}
 
-                /** @brief Returns @ref MediaPayloadKind::Video. */
+                /** @brief Returns @c MediaPayloadKind::Video. */
                 const MediaPayloadKind &kind() const override { return MediaPayloadKind::Video; }
 
                 /** @brief Returns the image descriptor. */

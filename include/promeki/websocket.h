@@ -39,12 +39,12 @@ class HttpResponse;
  * @c Switching Protocols handshake has completed.
  *
  * @par Thread Safety
- * Inherits @ref ObjectBase: thread-affine.  Every WebSocket lives
+ * Inherits @ref ObjectBase &mdash; thread-affine.  Every WebSocket lives
  * on exactly one @ref EventLoop — the loop that's
  * @ref EventLoop::current at construction time.  All frame
  * parsing, signal emission, and write pumping happens on that
  * loop's thread.  Cross-thread callers should connect to the
- * @ref textMessageReceived / @ref binaryMessageReceived signals;
+ * @c textMessageReceivedSignal / @c binaryMessageReceivedSignal signals;
  * the standard signal-dispatch machinery moves the call to the
  * receiver's loop.
  *
@@ -80,7 +80,7 @@ class WebSocket : public ObjectBase {
                 PROMEKI_OBJECT(WebSocket, ObjectBase)
         public:
                 /** @brief Convenience list type. */
-                using List = promeki::List<WebSocket *>;
+                using List = ::promeki::List<WebSocket *>;
 
                 /** @brief High-level connection state. */
                 enum State {
@@ -245,7 +245,7 @@ class WebSocket : public ObjectBase {
                  * @brief Sets the upper bound on a single message.
                  *
                  * Messages exceeding this size cause the connection
-                 * to close with @ref CloseMessageTooBig.  Pass
+                 * to close with @c WebSocket::CloseMessageTooBig.  Pass
                  * @c -1 to disable the cap.
                  */
                 void setMaxMessageBytes(int64_t bytes) { _maxMessageBytes = bytes; }

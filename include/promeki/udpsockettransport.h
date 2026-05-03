@@ -50,7 +50,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  *
  * @par Thread Safety
- * Inherits @ref PacketTransport: a single instance must only be
+ * Inherits @ref PacketTransport &mdash; a single instance must only be
  * used from one thread at a time.  The underlying @ref UdpSocket
  * is itself thread-affine.
  */

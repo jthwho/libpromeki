@@ -146,7 +146,7 @@ class MediaIOPort : public ObjectBase {
                  *
                  * For sources this is the shape the port produces;
                  * for sinks it is the shape the port accepts.
-                 * Backends populate it via @ref MediaIO::addSource
+                 * Backends populate it via @ref CommandMediaIO::addSource
                  * / @c addSink (the @c desc argument).
                  */
                 const MediaDesc &mediaDesc() const { return _mediaDesc; }

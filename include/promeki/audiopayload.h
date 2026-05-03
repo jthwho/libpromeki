@@ -46,7 +46,7 @@ PROMEKI_NAMESPACE_BEGIN
  * - compressed bitstream — one @ref BufferView covering the
  *   encoded access unit.
  *
- * AudioPayload is abstract — @ref _promeki_clone and @ref kind
+ * AudioPayload is abstract — @c _promeki_clone and @ref kind
  * remain pure-virtual so the concrete leaves must supply a
  * covariant clone.  Subclassing concrete leaves for codec-specific
  * specializations is an intentional extension point.
@@ -64,7 +64,7 @@ class AudioPayload : public MediaPayload {
                 using Ptr = SharedPtr<AudioPayload, /*CopyOnWrite=*/true, AudioPayload>;
 
                 /** @brief List of shared pointers to AudioPayload instances. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Constructs an empty audio payload. */
                 AudioPayload() = default;
@@ -83,7 +83,7 @@ class AudioPayload : public MediaPayload {
                 AudioPayload(const AudioDesc &desc, size_t sampleCount, const BufferView &data)
                     : MediaPayload(data), _desc(desc), _sampleCount(sampleCount) {}
 
-                /** @brief Returns @ref MediaPayloadKind::Audio. */
+                /** @brief Returns @c MediaPayloadKind::Audio. */
                 const MediaPayloadKind &kind() const override { return MediaPayloadKind::Audio; }
 
                 /** @brief Returns the audio descriptor. */

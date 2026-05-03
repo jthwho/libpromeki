@@ -204,7 +204,7 @@ Use angle brackets for all includes: `<promeki/foo.h>`, not `"promeki/foo.h"`.
 - Type alias naming: PascalCase — `RevIterator`, `ConstRevIterator`, `RationalType`
 - Template type aliases at namespace level: `using Size2Du32 = Size2DTemplate<uint32_t>;`
 
-### Convenience Type Aliases for Templates
+### Convenience Type Aliases for Templates {#convenience-type-aliases-for-templates}
 
 Template types are never spelled directly at call sites. When a template class is used with specific instantiations, always define a `using` alias so callers write the concrete name, not the template arguments. Why:
 
@@ -379,7 +379,7 @@ Use the raw `std::` type only when no wrapper exists (e.g., `std::thread`, `std:
 
 ---
 
-## Heap Ownership and Pointer Types
+## Heap Ownership and Pointer Types {#heap-ownership-and-pointer-types}
 
 libpromeki does not use raw `new`/`delete` for object lifetime. Every heap-allocated object is owned by one of two smart pointers, and raw pointers are reserved for non-owning references. The "No raw ownership" design principle above is enforced through the conventions below.
 
@@ -413,7 +413,7 @@ Every heap-managed type exposes ownership aliases (`Ptr`, `UPtr`, `PtrList`, `Im
 - `using ImplPtr = UniquePtr<Impl>;` next to the forward-declaration of a private nested `Impl`.
 - Namespace-scope `using FooUPtr = UniquePtr<Foo>;` for opaque forward-declared types defined in a `.cpp`.
 
-A class may define both `Ptr` and `UPtr` when it is legitimately used in both modes — e.g. `AudioPacket` is typically shared via `::Ptr` but may be owned uniquely through `::UPtr` in transient factory paths.
+A class may define both `Ptr` and `UPtr` when it is legitimately used in both modes — e.g. `AudioPacket` is typically shared via its `Ptr` alias but may be owned uniquely through its `UPtr` alias in transient factory paths.
 
 ### Conditional Ownership (Dual-Pointer Pattern)
 
@@ -441,7 +441,7 @@ _ownedTransport.clear();
 
 The owned-side destructor runs automatically when `_ownedTransport` goes out of scope — there is no `if(_ownsTransport) delete _transport;` branch to get wrong.
 
-### Caveats and Limitations
+### Caveats and Limitations {#caveats-and-limitations}
 
 - **UniquePtr does not support custom deleters.** For cases that need one (e.g. `std::unique_ptr<char, void(*)(void*)>` wrapping `strdup`'d memory with `free` as the deleter), use `std::unique_ptr` — this is the one context where bypassing the wrapper is appropriate.
 - **A type held via `SharedPtr<T>` with copy-on-write enabled must remain copyable.** `PROMEKI_SHARED(T)` / `PROMEKI_SHARED_FINAL(T)` emits a `_promeki_clone()` method whose default body is `new T(*this)`. Adding a `UniquePtr` member to `T` deletes its copy constructor and breaks the clone. Mitigations:
@@ -470,7 +470,7 @@ class MulticastReceiver {
 
 ---
 
-## The SharedPtr / Copy-on-Write Pattern
+## The SharedPtr / Copy-on-Write Pattern {#the-sharedptr--copy-on-write-pattern}
 
 SharedPtr provides reference-counted smart pointers with optional copy-on-write semantics (see [Object Categories](#object-categories) above).
 

@@ -24,7 +24,7 @@ class SdpMediaDescription;
  * @ingroup proav
  *
  * AudioDesc is to @ref AudioFormat what @ref ImageDesc is to
- * @ref PixelFormat: AudioFormat identifies the sample encoding
+ * @ref PixelFormat &mdash; AudioFormat identifies the sample encoding
  * (PCM layout, bit depth, endianness, optional compressed codec)
  * while AudioDesc binds that format to a specific sample rate,
  * channel count, and optional metadata.
@@ -50,10 +50,10 @@ class AudioDesc {
                 using Ptr = SharedPtr<AudioDesc>;
 
                 /** @brief List of AudioDesc values. */
-                using List = promeki::List<AudioDesc>;
+                using List = ::promeki::List<AudioDesc>;
 
                 /** @brief List of shared AudioDesc pointers. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /**
                  * @brief Constructs an AudioDesc from a JSON object.

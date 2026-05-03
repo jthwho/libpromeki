@@ -38,8 +38,8 @@ PROMEKI_NAMESPACE_BEGIN
  */
 template <typename KeyType, typename StructType> class StructDatabase {
         public:
-                using Database = promeki::Map<KeyType, StructType>;
-                using NameDatabase = promeki::Map<String, KeyType>;
+                using Database = ::promeki::Map<KeyType, StructType>;
+                using NameDatabase = ::promeki::Map<String, KeyType>;
 
                 /** @brief Constructs an empty database. */
                 StructDatabase() = default;

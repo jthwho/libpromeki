@@ -54,14 +54,14 @@ class HttpServer;
  *                                      Postman / openapi-generator).
  *
  * @par Thread Safety
- * Inherits @ref ObjectBase: thread-affine.  Construction captures
+ * Inherits @ref ObjectBase &mdash; thread-affine.  Construction captures
  * the @ref HttpServer reference; both objects must share a single
  * @ref EventLoop (typically the main loop).  Endpoints registered
  * after @ref mount are visible immediately — the catalog is
  * generated on demand on each request.
  *
  * @par Decoupling from HttpServer
- * The server has no compile-time dependency on @ref HttpApi: the
+ * The server has no compile-time dependency on @ref HttpApi &mdash; the
  * existing @c HttpServer::exposeDatabase / @c HttpServer::exposeLookup
  * helpers stay available for "internal mount, don't advertise" cases.
  * @ref HttpApi provides matching @c exposeDatabase / @c exposeLookup
@@ -150,7 +150,7 @@ class HttpApi : public ObjectBase {
                  * UI renders both with one code path.
                  */
                 struct Param {
-                                using List = promeki::List<Param>;
+                                using List = ::promeki::List<Param>;
 
                                 String      name;                ///< Wire name (case-sensitive for headers).
                                 ParamIn     in = ParamIn::Query; ///< Where to read it from.
@@ -169,7 +169,7 @@ class HttpApi : public ObjectBase {
                  * doesn't override it.
                  */
                 struct ErrorResponse {
-                                using List = promeki::List<ErrorResponse>;
+                                using List = ::promeki::List<ErrorResponse>;
 
                                 int         status = 0;  ///< HTTP status code (e.g. 400, 404, 500).
                                 String      description; ///< One-line human-readable summary.
@@ -188,7 +188,7 @@ class HttpApi : public ObjectBase {
                  * twice is a programming error.
                  */
                 struct Endpoint {
-                                using List = promeki::List<Endpoint>;
+                                using List = ::promeki::List<Endpoint>;
 
                                 /**
                          * @brief Route pattern, relative to the parent
@@ -256,8 +256,8 @@ class HttpApi : public ObjectBase {
                  * required params cause the call to be rejected with
                  * @c 400 before the handler runs.
                  *
-                 * Returning @ref Result::Ok with a Variant produces a
-                 * 200 with @c {"value": <variant>} as the body
+                 * Returning a successful @ref Result with a Variant produces a
+                 * 200 with @c {"value":&nbsp;&lt;variant&gt;} as the body
                  * (serialized via @ref JsonObject::setFromVariant).
                  * Returning a populated @ref Error maps to one of the
                  * declared @ref ErrorResponse entries by status code,
@@ -378,13 +378,13 @@ class HttpApi : public ObjectBase {
                  *
                  * The framework parses each declared @ref Param from
                  * its declared @ref ParamIn, validates against its
-                 * @ref VariantSpec, and hands the resulting @ref Args
+                 * @ref VariantSpec, and hands the resulting @c VariantMap
                  * to @p call.  A successful @ref Result is rendered as
-                 * @c {"value": <variant>} JSON with status 200; an
+                 * @c {"value":&nbsp;&lt;variant&gt;} JSON with status 200; an
                  * error @ref Result picks a matching @ref ErrorResponse
                  * by status code (falling back to 500).
                  *
-                 * The default method is @ref HttpMethod::Post when @p
+                 * The default method is @c HttpMethod::Post when @p
                  * ep.params contains any @ref ParamIn::Body entries,
                  * otherwise whatever @p ep.method already specifies.
                  */
@@ -593,7 +593,7 @@ class HttpApi : public ObjectBase {
 
         private:
                 struct ServerEntry {
-                                using List = promeki::List<ServerEntry>;
+                                using List = ::promeki::List<ServerEntry>;
                                 String url;
                                 String description;
                 };

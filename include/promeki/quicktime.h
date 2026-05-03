@@ -216,7 +216,7 @@ class QuickTime {
                 };
 
                 /** @brief Plain-value list of tracks. */
-                using TrackList = List<Track>;
+                using TrackList = ::promeki::List<Track>;
 
                 /**
                  * @brief One encoded sample extracted from (or destined for) a track.

@@ -428,7 +428,7 @@ class PixelFormat {
                 };
 
                 /** @brief List of PixelFormat IDs. */
-                using IDList = List<ID>;
+                using IDList = ::promeki::List<ID>;
 
                 /** @brief Describes the semantic meaning and value range of a single component. */
                 struct CompSemantic {

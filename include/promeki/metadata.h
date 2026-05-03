@@ -327,7 +327,7 @@ class Metadata : public VariantDatabase<"Metadata"> {
                 /// stage that inspects or generates samples may stamp
                 /// markers here.  Each entry locates a region in the
                 /// owning @ref PcmAudioPayload by sample @c offset and
-                /// @c length and tags it with an @ref AudioMarker::Type.
+                /// @c length and tags it with an @ref AudioMarkerType.
                 /// Empty (or absent) means the payload carries no
                 /// noteworthy events.
                 PROMEKI_DECLARE_ID(

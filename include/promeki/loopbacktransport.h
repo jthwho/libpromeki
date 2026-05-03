@@ -49,7 +49,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  *
  * @par Thread Safety
- * Inherits @ref PacketTransport: the send and receive sides may
+ * Inherits @ref PacketTransport &mdash; the send and receive sides may
  * safely run on separate threads (the internal FIFO is mutex-
  * guarded), but multiple concurrent senders or multiple concurrent
  * receivers on the same instance must be externally synchronized.

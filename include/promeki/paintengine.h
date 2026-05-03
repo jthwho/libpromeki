@@ -77,10 +77,10 @@ class PaintEngine {
                 };
 
                 /** @brief List of 2D points used for batch drawing operations. */
-                using PointList = List<Point2Di32>;
+                using PointList = ::promeki::List<Point2Di32>;
 
                 /** @brief List of per-point alpha values used for compositing. */
-                using AlphaList = List<float>;
+                using AlphaList = ::promeki::List<float>;
 
                 /**
                  * @brief Abstract implementation backend for PaintEngine.

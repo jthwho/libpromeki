@@ -48,7 +48,7 @@ PROMEKI_NAMESPACE_BEGIN
  * - The concrete @ref VideoEncoder must operate in a 1-in / 1-out
  *   regime (no B-frames, no look-ahead) so every @c writeFrame
  *   produces its corresponding packet(s) synchronously.  The
- *   @ref NvencVideoEncoder v1 already satisfies this.  B-frame
+ *   @c NvencVideoEncoder v1 already satisfies this.  B-frame
  *   support needs an EOS protocol between the pipeline and this
  *   task and is deferred.
  * - No SPS/PPS/VPS extraction — parameter sets are concatenated with

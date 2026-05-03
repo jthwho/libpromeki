@@ -129,7 +129,7 @@ format's quantum, the encoder fails construction
 
 ## Per-format value mapping {#img_data_value_mapping}
 
-The encoder uses libpromeki's [CSC pipeline](csc.md) to render its
+The encoder uses libpromeki's [CSC pipeline](@ref csc) to render its
 three "primer" cells once at construction time, then memcpys them
 into place per scan line. The primers are derived from these
 source colors:

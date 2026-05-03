@@ -59,10 +59,10 @@ class HttpHeaders {
                 using Ptr = SharedPtr<HttpHeaders>;
 
                 /** @brief Plain value list (e.g. for queues of headers). */
-                using List = promeki::List<HttpHeaders>;
+                using List = ::promeki::List<HttpHeaders>;
 
                 /** @brief List of shared pointers. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Constructs an empty header set. */
                 HttpHeaders() = default;
@@ -153,7 +153,7 @@ class HttpHeaders {
 
         private:
                 struct Entry {
-                                using List = promeki::List<Entry>;
+                                using List = ::promeki::List<Entry>;
                                 String name; ///< Canonical case as first stored.
                                 String value;
                 };
@@ -163,8 +163,8 @@ class HttpHeaders {
                 // use a plain list-of-pairs because typical header counts
                 // are well under 30 and the constant-factor wins.
                 struct KeyBucket {
-                                using List = promeki::List<KeyBucket>;
-                                using IndexList = promeki::List<size_t>;
+                                using List = ::promeki::List<KeyBucket>;
+                                using IndexList = ::promeki::List<size_t>;
                                 String    lower;
                                 IndexList indices;
                 };

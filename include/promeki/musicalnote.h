@@ -30,7 +30,7 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class MusicalNote {
         public:
-                using List = promeki::List<MusicalNote>;
+                using List = ::promeki::List<MusicalNote>;
 
                 /** @brief Default-constructs an invalid (rest) note. */
                 MusicalNote() = default;

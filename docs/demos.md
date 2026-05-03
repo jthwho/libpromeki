@@ -4,7 +4,7 @@ Applications that demonstrate specific aspects of the promeki library.
 
 The `demos/` directory contains standalone demonstration applications that
 showcase the capabilities and usage patterns of the promeki library. Unlike
-the [utility applications](utils.md) (which provide functional use beyond
+the [utility applications](@ref utils) (which provide functional use beyond
 the library itself), demos exist purely to help users learn and understand
 specific library APIs.
 

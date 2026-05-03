@@ -24,7 +24,7 @@ PROMEKI_NAMESPACE_BEGIN
  * insufficient permissions are available.
  *
  * @par Thread Safety
- * Inherits @ref IODevice: thread-affine.  A single RawSocket
+ * Inherits @ref IODevice &mdash; thread-affine.  A single RawSocket
  * must only be used from the thread that created it.
  *
  * @par Example

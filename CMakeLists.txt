@@ -161,6 +161,26 @@ mark_as_advanced(
     CMAKE_SHARED_LINKER_FLAGS_DEVRELEASE
 )
 
+# Docs-only mode ###############################################################
+#
+# PROMEKI_DOCS_ONLY=ON skips every library, executable, and third-party
+# dependency and configures only the `docs` target.  This lets the GitHub
+# Actions documentation workflow build docs from a checkout that did NOT
+# pull any submodules — the only inputs Doxygen needs are the in-tree
+# headers, the markdown under docs/, and the version metadata.  When ON
+# we set up just enough state for the `docs` target and `return()` early,
+# bypassing all of the dependency wiring (mbedtls, libsndfile, freetype,
+# and friends) that would otherwise fail without their submodule sources.
+option(PROMEKI_DOCS_ONLY
+    "Configure only the documentation target; skip libraries and third-party deps"
+    OFF)
+
+if(PROMEKI_DOCS_ONLY)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/PromekiDocsTarget.cmake)
+    promeki_setup_docs_target()
+    return()
+endif()
+
 include(CTest)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -2995,33 +3015,9 @@ else()
 endif()
 
 # Documentation ################################################################
-
-set(PROMEKI_DOCS_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/doxygen" CACHE PATH
-    "Output directory for generated documentation")
-
-find_package(Doxygen QUIET)
-if(DOXYGEN_FOUND)
-    string(SUBSTRING "${BUILD_INFO_REPOIDENT}" 0 7 BUILD_INFO_REPOIDENT_SHORT)
-    set(PROMEKI_DOCS_VERSION "${BUILD_INFO_VERSION}" CACHE STRING
-        "Version string shown in generated documentation")
-    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
-    set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/footer.html.in
-        ${CMAKE_CURRENT_BINARY_DIR}/doxygen_footer.html @ONLY)
-    configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
-    file(GLOB PROMEKI_DOCS_IMAGES ${CMAKE_CURRENT_SOURCE_DIR}/docs/*.jpg)
-    add_custom_target(docs
-        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${PROMEKI_DOCS_OUTPUT_DIR}/html/docs
-        COMMAND ${CMAKE_COMMAND} -E copy ${PROMEKI_DOCS_IMAGES} ${PROMEKI_DOCS_OUTPUT_DIR}/html/docs/
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Generating API documentation with Doxygen"
-        VERBATIM)
-    if(PROMEKI_BUILD_DOCS)
-        add_custom_target(docs-all ALL DEPENDS docs)
-    endif()
-else()
-    if(PROMEKI_BUILD_DOCS)
-        message(FATAL_ERROR "PROMEKI_BUILD_DOCS is ON but Doxygen was not found")
-    endif()
-endif()
+#
+# The actual docs target wiring lives in cmake/PromekiDocsTarget.cmake so the
+# same setup is reachable from both the normal build and the early-return
+# PROMEKI_DOCS_ONLY path above.
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/PromekiDocsTarget.cmake)
+promeki_setup_docs_target()

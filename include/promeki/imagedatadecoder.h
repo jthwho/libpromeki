@@ -26,7 +26,7 @@ class UncompressedVideoPayload;
  * @ingroup proav
  *
  * Reads back the 64-bit payloads written by @ref ImageDataEncoder
- * from a raster @ref Image, with enough robustness to survive
+ * from a raster @ref UncompressedVideoPayload, with enough robustness to survive
  * compression, scaling, and other "real-world" image-pipeline
  * indignities.  See @ref imagedataencoder for the wire format
  * specification — anything described there is normative; this class
@@ -158,7 +158,7 @@ class ImageDataDecoder {
                 };
 
                 /** @brief List of decoded items, one per supplied band. */
-                using DecodedList = List<DecodedItem>;
+                using DecodedList = ::promeki::List<DecodedItem>;
 
                 /** @brief Constructs an invalid decoder. */
                 ImageDataDecoder() = default;

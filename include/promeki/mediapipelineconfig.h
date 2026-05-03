@@ -56,10 +56,10 @@ class MediaPipelineConfig {
                 using Ptr = SharedPtr<MediaPipelineConfig>;
 
                 /** @brief List of MediaPipelineConfig values. */
-                using List = promeki::List<MediaPipelineConfig>;
+                using List = ::promeki::List<MediaPipelineConfig>;
 
                 /** @brief List of shared MediaPipelineConfig pointers. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /**
                  * @brief Per-stage role classification.
@@ -140,10 +140,10 @@ class MediaPipelineConfig {
                 };
 
                 /** @brief Ordered list of stages. */
-                using StageList = promeki::List<Stage>;
+                using StageList = ::promeki::List<Stage>;
 
                 /** @brief Ordered list of routes. */
-                using RouteList = promeki::List<Route>;
+                using RouteList = ::promeki::List<Route>;
 
                 /** @brief Constructs an empty pipeline config. */
                 MediaPipelineConfig() = default;
@@ -241,11 +241,11 @@ class MediaPipelineConfig {
                 /**
                  * @brief Returns the per-stage @ref WindowedStat ring capacity.
                  *
-                 * Propagated to each stage's @ref MediaConfig::StatsWindowSize
+                 * Propagated to each stage's @c MediaConfig::StatsWindowSize
                  * during @ref MediaPipeline::build / @ref MediaPipeline::injectStage,
                  * so a single pipeline-wide knob controls the size of every
                  * MediaIO's per-command telemetry window.  Stages that
-                 * explicitly set @ref MediaConfig::StatsWindowSize override
+                 * explicitly set @c MediaConfig::StatsWindowSize override
                  * the pipeline default.  A value of zero disables tracking.
                  */
                 int statsWindowSize() const { return _statsWindowSize; }
@@ -299,7 +299,7 @@ class MediaPipelineConfig {
                  *    names are unique.
                  *  - Every stage has a non-empty @ref Stage::type or
                  *    @ref Stage::path.
-                 *  - Every stage has a valid @ref Stage::mode.
+                 *  - Every stage has a valid @ref Stage::role.
                  *  - Every route's @c from and @c to reference existing
                  *    stage names.
                  *  - The route graph is acyclic.

@@ -23,7 +23,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup video
  *
  * Each entry has the form @c X(EnumID, CanonicalName, Width, Height).
- * The macro is expanded in both @ref VideoFormat::WellKnownRaster
+ * The macro is expanded in both @c VideoFormat::WellKnownRaster
  * (enum generation) and in @c videoformat.cpp (registry data).
  *
  * Only canonical names appear here.  Additional parsing aliases
@@ -50,18 +50,18 @@ PROMEKI_NAMESPACE_BEGIN
  * Each entry has the form
  * @c X(EnumID, RasterID, FrameRateID, ScanMode, Flags).
  *
- * - @c EnumID — unqualified @ref VideoFormat::WellKnownFormat identifier
+ * - @c EnumID — unqualified @c VideoFormat::WellKnownFormat identifier
  *   (e.g. @c Smpte1080p29_97).
- * - @c RasterID — unqualified @ref VideoFormat::WellKnownRaster id
+ * - @c RasterID — unqualified @c VideoFormat::WellKnownRaster id
  *   (e.g. @c Raster_HD).
- * - @c FrameRateID — unqualified @ref FrameRate::WellKnownRate id
+ * - @c FrameRateID — unqualified @c FrameRate::WellKnownRate id
  *   (e.g. @c FPS_29_97).
- * - @c ScanMode — unqualified @ref VideoScanMode static member
+ * - @c ScanMode — unqualified @c VideoScanMode static member
  *   (e.g. @c Progressive, @c Interlaced, @c PsF).
- * - @c Flags — bitwise-OR of @ref VideoFormat::WellKnownFormatFlag
+ * - @c Flags — bitwise-OR of @c VideoFormat::WellKnownFormatFlag
  *   values describing the format family.
  *
- * Expanded in both @ref VideoFormat::WellKnownFormat (enum generation)
+ * Expanded in both @c VideoFormat::WellKnownFormat (enum generation)
  * and in @c videoformat.cpp (registry data).
  */
 #define PROMEKI_WELL_KNOWN_VIDEO_FORMATS                                                                               \
@@ -242,7 +242,7 @@ class VideoFormat {
                 };
 
                 /** @brief Plain-value list of @ref WellKnownFormat ids. */
-                using WellKnownFormatList = List<WellKnownFormat>;
+                using WellKnownFormatList = ::promeki::List<WellKnownFormat>;
 
                 /** @brief Controls how toString() formats the result. */
                 struct StringOptions {

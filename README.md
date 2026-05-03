@@ -23,22 +23,22 @@ infrastructure.
 In-depth topic guides, browsable directly on GitHub or as part of the
 hosted Doxygen output:
 
-- [Building and Installing libpromeki](docs/building.md)
-- [Debugging and Diagnostics](docs/debugging.md)
-- [Threading and Concurrency](docs/threading.md)
-- [Data Object Categories](docs/dataobjects.md)
-- [TypeRegistry Pattern](docs/typeregistry.md)
-- [Color Science](docs/color.md)
-- [Color Space Conversion (CSC) Framework](docs/csc.md)
-- [Font Rendering](docs/fonts.md)
-- [Media I/O Subsystem](docs/mediaio.md)
-- [MediaPipeline](docs/mediapipeline.md)
-- [MediaPipelinePlanner](docs/mediaplanner.md)
-- [Inspector — Frame validation and monitoring](docs/inspector.md)
-- [Image Data Encoder Wire Format](docs/imagedataencoder.md)
-- [NVIDIA NVENC setup](docs/nvenc.md)
-- [Demonstration Applications](docs/demos.md)
-- [Utility Applications](docs/utils.md)
+- @ref building "Building and Installing libpromeki"
+- @ref debugging "Debugging and Diagnostics"
+- @ref threading "Threading and Concurrency"
+- @ref dataobjects "Data Object Categories"
+- @ref typeregistry "TypeRegistry Pattern"
+- @ref color_science "Color Science"
+- @ref csc "Color Space Conversion (CSC) Framework"
+- @ref fonts "Font Rendering"
+- @ref mediaio "Media I/O Subsystem"
+- @ref mediapipeline "MediaPipeline"
+- @ref mediaplanner "MediaPipelinePlanner"
+- @ref inspector "Inspector &mdash; Frame validation and monitoring"
+- @ref imagedataencoder "Image Data Encoder Wire Format"
+- @ref nvenc "NVIDIA NVENC setup"
+- @ref demos "Demonstration Applications"
+- @ref utils "Utility Applications"
 
 ## Feature Overview
 
@@ -252,14 +252,14 @@ switch, build-performance option, test and install targets, and
 consumer CMake usage — see the **Building and Installing libpromeki**
 guide:
 
-- Markdown source: [docs/building.md](docs/building.md)
+- Markdown source: @ref building "docs/building.md"
 - Hosted Doxygen: <https://jthwho.github.io/libpromeki/main/building.html>
 - Local Doxygen: `build/doxygen/html/building.html` after
   `cmake -B build -DPROMEKI_BUILD_DOCS=ON && cmake --build build --target docs`
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow,
+See `CONTRIBUTING.md` at the repository root for the development workflow,
 including the `scripts/precommit.sh` gate that every commit should
 pass.
 

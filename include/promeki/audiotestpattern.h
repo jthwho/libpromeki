@@ -59,7 +59,7 @@ class Timecode;
  *  - @c Iec60958 — biphase-mark channel-status block in PCM.
  *
  * Call @ref configure after changing any pattern parameter and before
- * calling @ref create or @ref render.  The class is not thread-safe;
+ * calling @ref createPayload.  The class is not thread-safe;
  * external synchronization is required for concurrent access.
  *
  * @par Example
@@ -281,7 +281,7 @@ class AudioTestPattern {
                  * @brief Configures internal generators for the current settings.
                  *
                  * Must be called after changing mode list, frequencies, or
-                 * levels and before calling @ref create or @ref render.
+                 * levels and before calling @ref createPayload.
                  * Rebuilds per-channel generator state and drops any
                  * cached pattern buffers.
                  *
@@ -307,7 +307,7 @@ class AudioTestPattern {
                                                                                 const Timecode &tc) const;
 
                 /**
-                 * @brief Payload-native counterpart to @ref createPayload(samples, tc).
+                 * @brief Payload-native counterpart to @ref createPayload.
                  *
                  * Equivalent to @c createPayload(samples, Timecode()) —
                  * LTC and AvSync channels degrade to silence.

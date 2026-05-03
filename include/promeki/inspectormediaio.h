@@ -274,7 +274,7 @@ struct InspectorSnapshot {
  * @brief MediaIO sink backend that decodes and validates a media stream.
  * @ingroup proav
  *
- * The inverse of @ref TpgMediaIO: where the TPG @em produces
+ * The inverse of @ref TpgMediaIO &mdash; where the TPG @em produces
  * test-pattern frames, the inspector @em consumes frames and runs a
  * configurable set of checks on each one.  The set of checks is
  * driven by @ref MediaConfig::InspectorTests — an EnumList of

@@ -36,7 +36,7 @@ class SDLAudioOutput;
  * The clock registers (or reuses) a per-device @ref ClockDomain at
  * construction.  The domain name is <tt>"sdl.audio:<deviceName>"</tt>
  * when a name is supplied, <tt>"sdl.audio"</tt> otherwise.  The
- * epoch is @ref ClockEpoch::PerStream — two SDL audio clocks are
+ * epoch is @c ClockEpoch::PerStream — two SDL audio clocks are
  * independent time sources, not cross-stream comparable.
  *
  * @par Time model

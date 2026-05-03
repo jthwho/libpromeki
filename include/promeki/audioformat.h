@@ -175,7 +175,7 @@ class AudioFormat {
                 };
 
                 /** @brief List of AudioFormat IDs. */
-                using IDList = List<ID>;
+                using IDList = ::promeki::List<ID>;
 
                 /**
                  * @brief The platform's native float32 PCM format.

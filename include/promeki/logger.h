@@ -215,7 +215,7 @@ class Logger {
                                 int    line = 0;        ///< Line number of the registration.
                                 bool   enabled = false; ///< Current enabled state.
 
-                                using List = promeki::List<DebugChannel>;
+                                using List = ::promeki::List<DebugChannel>;
                 };
 
                 /**

@@ -20,7 +20,7 @@ PROMEKI_NAMESPACE_BEGIN
  * naturally: `auto [val, err] = someFactory();`
  *
  * @par Thread Safety
- * Inherits @ref Pair: distinct instances may be used concurrently;
+ * Inherits @ref Pair &mdash; distinct instances may be used concurrently;
  * a single instance is thread-safe only as far as @c T is.  Result
  * is most often a transient return value, so concurrent access is
  * rarely meaningful.

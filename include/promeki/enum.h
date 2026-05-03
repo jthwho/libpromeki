@@ -57,7 +57,7 @@ PROMEKI_NAMESPACE_BEGIN
  *       the rationale.  The @c Codec example below uses the bare
  *       @c struct @c { @c static @c inline @c const @c Enum @c X; @c }
  *       pattern only to illustrate the base-class API; for any new
- *       shared enum, copy one of the @ref TypedEnum-derived classes in
+ *       shared enum, copy one of the @ref TypedEnum "TypedEnum-derived" classes in
  *       @c enums.h instead.
  *
  * @par Example (base API — prefer TypedEnum for shared enums)
@@ -261,7 +261,7 @@ class Enum {
                 using Value = Pair<String, int>;
 
                 /// @brief Ordered list of (name, integer) entries.
-                using ValueList = List<Value>;
+                using ValueList = ::promeki::List<Value>;
 
                 /// @brief List of registered enum type names.
                 using TypeList = StringList;
@@ -597,11 +597,11 @@ namespace detail {
 PROMEKI_NAMESPACE_END
 
 /**
- * @brief Declares an @ref Enum type with a table placed in rodata.
+ * @brief Declares an @ref promeki::Enum type with a table placed in rodata.
  * @ingroup util
  *
  * Expands inside a class body (typically one deriving from
- * @ref TypedEnum) to three declarations that together give the
+ * @ref promeki::TypedEnum) to three declarations that together give the
  * type a zero-heap, compile-time-validated registration:
  *
  * 1. `static constexpr Enum::Entry _promeki_enum_entries_[]` — the
@@ -611,7 +611,7 @@ PROMEKI_NAMESPACE_END
  *    its @c typeIndex at static-init time; nothing else is ever
  *    written.
  * 3. `static inline const Enum::Type Type` — the handle consumed by
- *    @ref TypedEnum's constructors and by user code.
+ *    @ref promeki::TypedEnum's constructors and by user code.
  *
  * Three `static_assert`s verify at compile time that:
  *

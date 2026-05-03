@@ -24,7 +24,7 @@ PROMEKI_NAMESPACE_BEGIN
  * back to a plain @c List<String> at the next @c modify() call.
  *
  * @par Thread Safety
- * Inherits @ref List: distinct instances may be used concurrently;
+ * Inherits @ref List &mdash; distinct instances may be used concurrently;
  * concurrent access to a single instance must be externally
  * synchronized.
  */

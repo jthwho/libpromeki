@@ -55,7 +55,7 @@ class UncompressedVideoPayload;
  * @c create(), then draw a text overlay via @c applyBurn() once the
  * text content has been determined.  This lets the caller assemble
  * upstream context (e.g. a @c Frame with metadata) before deciding
- * what to burn in.  The overlay text may contain @c '\n' to span
+ * what to burn in.  The overlay text may contain newline characters to span
  * multiple lines; each line is centered horizontally within the
  * bounding box and the whole block is positioned according to
  * @c burnPosition().  Burn-in uses the @c FastFont glyph cache so
@@ -226,7 +226,7 @@ class VideoTestPattern {
                 /**
                  * @brief Draws a text overlay onto an existing payload.
                  *
-                 * Splits @p burnText on @c '\n' and renders each line
+                 * Splits @p burnText on newline characters and renders each line
                  * stacked under the burn font, centered horizontally
                  * within the bounding box and positioned according to
                  * @ref burnPosition.  When @ref burnEnabled is @c false

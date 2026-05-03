@@ -29,7 +29,7 @@ PROMEKI_NAMESPACE_BEGIN
  * RFC 9110 phrase for the code, or @c "Status <code>" as a fallback for
  * unrecognized codes so the wire form remains valid.
  *
- * Default value is @ref Ok — the most common success code, mirroring
+ * Default value is @c Ok — the most common success code, mirroring
  * the convention chosen for @ref HttpMethod.
  *
  * @par Example

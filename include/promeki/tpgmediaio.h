@@ -56,7 +56,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | @ref MediaConfig::VideoBurnEnabled   | bool      | true       | Enable text burn-in on the pattern. |
  * | @ref MediaConfig::VideoBurnFontPath  | String    | ""         | TrueType font path. Empty = bundled default font. |
  * | @ref MediaConfig::VideoBurnFontSize  | int       | 0          | Font size in pixels. 0 = auto-scale from image height (36px at 1080p). |
- * | @ref MediaConfig::VideoBurnText      | String    | "{Timecode:smpte}" | @ref VariantLookup<Frame>::format template for the burn text.  Resolved per-frame against the assembled @ref Frame after all per-frame metadata has been added.  Empty string disables the burn for the call.  Use @c '\n' inside the template to span multiple lines. |
+ * | @ref MediaConfig::VideoBurnText      | String    | "{Timecode:smpte}" | @ref VariantLookup<Frame>::format template for the burn text.  Resolved per-frame against the assembled @ref Frame after all per-frame metadata has been added.  Empty string disables the burn for the call.  Use newline characters inside the template to span multiple lines. |
  * | @ref MediaConfig::VideoBurnPosition  | Enum @ref BurnPosition | BottomCenter | Position preset. |
  * | @ref MediaConfig::VideoBurnTextColor | Color     | White      | Burn text foreground color. |
  * | @ref MediaConfig::VideoBurnBgColor   | Color     | Black      | Burn text background color. |
@@ -75,13 +75,13 @@ PROMEKI_NAMESPACE_BEGIN
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
  * | @ref MediaConfig::AudioEnabled       | bool   | true   | Enable audio generation. |
- * | @ref MediaConfig::AudioMode          | Enum @ref AudioPattern | AvSync | Audio pattern selector. |
+ * | @c MediaConfig::AudioMode            | Enum @ref AudioPattern | AvSync | Audio pattern selector. |
  * | @ref MediaConfig::AudioRate          | float  | 48000  | Sample rate in Hz. |
  * | @ref MediaConfig::AudioChannels      | int    | 2      | Channel count. |
  * | @ref MediaConfig::AudioToneFrequency | double | 1000.0 | Tone frequency in Hz. |
  * | @ref MediaConfig::AudioToneLevel     | double | -20.0  | Tone level in dBFS. |
  * | @ref MediaConfig::AudioLtcLevel      | double | -20.0  | LTC level in dBFS. |
- * | @ref MediaConfig::AudioLtcChannel    | int    | 0      | LTC channel (-1 = all). |
+ * | @c MediaConfig::AudioLtcChannel      | int    | 0      | LTC channel (-1 = all). |
  *
  * @par Config keys — Timecode
  * | Key | Type | Default | Description |

@@ -231,7 +231,7 @@ class MediaIORequest {
                  *    seek/params): per-command keys (dispatch
                  *    duration, queue wait, bytes processed, plus
                  *    any backend-specific keys).
-                 *  - For @ref MediaIOCommandStats: instance-wide
+                 *  - For @ref MediaIOCommandStats &mdash; instance-wide
                  *    cumulative aggregate (frames dropped, bytes
                  *    per second, queue depth, etc.).
                  *

@@ -86,7 +86,7 @@ class MediaIOPortGroup : public ObjectBase {
                 friend class CommandMediaIO;
         public:
                 /** @brief List of port references owned by the group. */
-                using PortList = promeki::List<MediaIOPort *>;
+                using PortList = ::promeki::List<MediaIOPort *>;
 
                 /**
                  * @brief Constructs a port group owned by @p mediaIO.
@@ -98,7 +98,7 @@ class MediaIOPortGroup : public ObjectBase {
                  * single timing reference by definition, so there is
                  * no meaningful "no clock" state.  Backends that don't
                  * have a hardware clock typically pass a
-                 * @ref MediaIOClock; the @ref MediaIO::addPortGroup
+                 * @ref MediaIOClock; the @ref CommandMediaIO::addPortGroup
                  * helper handles that case implicitly.
                  *
                  * @param mediaIO The owning @ref MediaIO; must be non-null.

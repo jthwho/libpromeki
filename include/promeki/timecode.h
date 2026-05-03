@@ -359,12 +359,12 @@ class Timecode {
                  * specification only differs at one bit position, bit 27 —
                  * see @ref TimecodePackFormat for the table.
                  *
-                 * In @ref TimecodePackFormat::Ltc "Ltc" mode this calls
+                 * In @c TimecodePackFormat::Ltc mode this calls
                  * libvtc's @c vtc_ltc_pack and returns the lower 8 bytes of
                  * its 80-bit output (the 16-bit sync word at bits 64-79 is
                  * intentionally dropped — wire framing is the encoder's job,
-                 * not this method's).  In @ref TimecodePackFormat::Vitc
-                 * "Vitc" mode this packs directly so bit 27 carries the
+                 * not this method's).  In @c TimecodePackFormat::Vitc
+                 * mode this packs directly so bit 27 carries the
                  * field marker bit (sourced from @ref isFirstField), per
                  * SMPTE 12M-2 / 12-3.
                  *
@@ -376,7 +376,7 @@ class Timecode {
                  * @c ImageDataEncoder transmits MSB-first.
                  *
                  * @param fmt Which variant's bit interpretation to use
-                 *            (default: @ref TimecodePackFormat::Vitc).
+                 *            (default: @c TimecodePackFormat::Vitc).
                  * @return The 64-bit BCD time-address word.
                  * @see fromBcd64, TimecodePackFormat
                  */
@@ -415,7 +415,7 @@ class Timecode {
                  *
                  * @param bcd  The 64-bit BCD word.
                  * @param fmt  Which variant's bit interpretation to use
-                 *             (default: @ref TimecodePackFormat::Vitc).
+                 *             (default: @c TimecodePackFormat::Vitc).
                  * @param mode The timecode mode the result should adopt
                  *             (subject to the DF rules above).
                  * @return A @ref Result holding the unpacked Timecode on
@@ -424,12 +424,12 @@ class Timecode {
                  */
                 static Result<Timecode> fromBcd64(uint64_t bcd, TimecodePackFormat fmt, const Mode &mode);
 
-                /** @brief Convenience overload — defaults to @ref TimecodePackFormat::Vitc and unknown @ref Mode. */
+                /** @brief Convenience overload — defaults to @c TimecodePackFormat::Vitc and unknown @ref Mode. */
                 static Result<Timecode> fromBcd64(uint64_t bcd) {
                         return fromBcd64(bcd, TimecodePackFormat::Vitc, Mode());
                 }
 
-                /** @brief Convenience overload — uses @ref TimecodePackFormat::Vitc, with caller-supplied @ref Mode. */
+                /** @brief Convenience overload — uses @c TimecodePackFormat::Vitc, with caller-supplied @ref Mode. */
                 static Result<Timecode> fromBcd64(uint64_t bcd, const Mode &mode) {
                         return fromBcd64(bcd, TimecodePackFormat::Vitc, mode);
                 }

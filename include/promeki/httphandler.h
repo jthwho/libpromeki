@@ -32,7 +32,7 @@ PROMEKI_NAMESPACE_BEGIN
 using HttpHandlerFunc = std::function<void(const HttpRequest &request, HttpResponse &response)>;
 
 /** @brief Convenience list of @ref HttpHandlerFunc values. */
-using HttpHandlerFuncList = List<HttpHandlerFunc>;
+using HttpHandlerFuncList = ::promeki::List<HttpHandlerFunc>;
 
 /**
  * @brief Middleware that wraps the next handler in the chain.
@@ -58,7 +58,7 @@ using HttpMiddleware =
         std::function<void(const HttpRequest &request, HttpResponse &response, std::function<void()> next)>;
 
 /** @brief Convenience list of @ref HttpMiddleware values. */
-using HttpMiddlewareList = List<HttpMiddleware>;
+using HttpMiddlewareList = ::promeki::List<HttpMiddleware>;
 
 /**
  * @brief Abstract base class for HTTP request handlers.

@@ -33,7 +33,7 @@ PROMEKI_NAMESPACE_BEGIN
  * every arriving datagram to a user callback.
  *
  * Downstream consumers currently targeted:
- *  - @ref MediaIO_Rtp reader mode (one receiver per video / audio
+ *  - @c MediaIO_Rtp reader mode (one receiver per video / audio
  *    / data RTP stream whose destination happens to be a multicast
  *    group).
  *  - SAP / SDP announcement listener (joins @c 224.2.127.254:9875
@@ -57,7 +57,7 @@ PROMEKI_NAMESPACE_BEGIN
  *  - a @ref Buffer "Buffer::Ptr" whose backing allocation is owned
  *    by the receiver and valid only for the duration of the call —
  *    if the consumer needs to keep the bytes longer it must copy
- *    them or take a fresh @ref Buffer::Ptr::create copy of the data.
+ *    them or take a fresh @c Buffer::Ptr::create copy of the data.
  *  - the sender's @ref SocketAddress.
  *
  * Callbacks should be fast and non-blocking.  Work that cannot
@@ -127,7 +127,7 @@ class MulticastReceiver : public Thread {
                 };
 
                 /** @brief List of configured group memberships. */
-                using GroupList = List<GroupEntry>;
+                using GroupList = ::promeki::List<GroupEntry>;
 
                 /** @brief Default receive buffer size in bytes. */
                 static constexpr size_t DefaultMaxPacketSize = 2048;

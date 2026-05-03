@@ -173,7 +173,7 @@ struct MemSpaceRegistry {
                                         a.ptr = std::aligned_alloc(a.align, allocSize);
                                         PROMEKI_ASSERT(a.ptr != nullptr);
                                         //promekiDebug("%p: secure allocate %d (aligned %d), align %d", a.ptr, (int)a.size, (int)allocSize, (int)a.align);
-                                        Error err = promeki::secureLock(a.ptr, allocSize);
+                                        Error err = secureLock(a.ptr, allocSize);
                                         if (err.isError()) {
                                                 promekiWarn("%p: secureLock failed (%s), buffer may be swapped to disk",
                                                             a.ptr, err.desc().cstr());
@@ -183,8 +183,8 @@ struct MemSpaceRegistry {
                                         // Wrapper guarantees: a.ptr != nullptr.
                                         PROMEKI_ASSERT(a.ptr != nullptr);
                                         //promekiDebug("%p: secure free", a.ptr);
-                                        promeki::secureZero(a.ptr, a.size);
-                                        Error err = promeki::secureUnlock(a.ptr, a.size);
+                                        secureZero(a.ptr, a.size);
+                                        Error err = secureUnlock(a.ptr, a.size);
                                         if (err.isError()) {
                                                 promekiWarn("%p: secureUnlock failed (%s)", a.ptr, err.desc().cstr());
                                         }

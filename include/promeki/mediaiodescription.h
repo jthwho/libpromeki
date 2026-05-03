@@ -39,7 +39,7 @@ struct MediaIOPortDescription {
                 };
 
                 /** @brief List alias. */
-                using List = promeki::List<MediaIOPortDescription>;
+                using List = ::promeki::List<MediaIOPortDescription>;
 
                 /** @brief Human-readable port name (e.g. @c "video", @c "src0"). */
                 String name;
@@ -99,7 +99,7 @@ struct MediaIOPortDescription {
  */
 struct MediaIOPortGroupDescription {
                 /** @brief List alias. */
-                using List = promeki::List<MediaIOPortGroupDescription>;
+                using List = ::promeki::List<MediaIOPortGroupDescription>;
 
                 /** @brief Human-readable group name. */
                 String name;
@@ -164,10 +164,10 @@ class MediaIODescription {
                 using Ptr = SharedPtr<MediaIODescription>;
 
                 /** @brief List of value snapshots. */
-                using List = promeki::List<MediaIODescription>;
+                using List = ::promeki::List<MediaIODescription>;
 
                 /** @brief List of shared snapshot pointers. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /**
                  * @brief Sentinel for an unknown frame count.

@@ -495,7 +495,7 @@ pull them out separately from the routine info-level traffic.
   `InspectorDiscontinuity` — the result types.
 - `TpgMediaIO` — the producer side designed to pair
   with the inspector for end-to-end QA.
-- [Image Data Encoder Wire Format](imagedataencoder.md) — the wire
+- [Image Data Encoder Wire Format](@ref imagedataencoder) — the wire
   format spec for the picture-side data band.
 - `Timecode::toBcd64` / `Timecode::fromBcd64` — the
   timecode encoding the picture data band carries.

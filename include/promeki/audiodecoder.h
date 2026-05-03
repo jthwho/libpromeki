@@ -26,10 +26,10 @@ class MediaConfig;
  * @brief Abstract base class for stateful audio decoders.
  * @ingroup proav
  *
- * Inverse of @ref AudioEncoder: encoded @ref CompressedAudioPayload
- * access units pushed via @ref submitPacket feed an internal pipeline
+ * Inverse of @ref AudioEncoder &mdash; encoded @ref CompressedAudioPayload
+ * access units pushed via @ref submitPayload feed an internal pipeline
  * and @ref PcmAudioPayload frames come back out of
- * @ref receiveFrame.  The decoder
+ * @ref receiveAudioPayload.  The decoder
  * may buffer several packets before producing its first frame (codec
  * start-up state, silence priming, reordering where present).
  *
@@ -46,9 +46,9 @@ class MediaConfig;
  *
  *   1. Resolve a session via @ref AudioCodec::createDecoder.
  *   2. Optionally call @ref configure.
- *   3. For each encoded packet, call @ref submitPacket.
- *   4. After each submit, drain with @ref receiveFrame until it
- *      returns an invalid @ref Audio.
+ *   3. For each encoded packet, call @ref submitPayload.
+ *   4. After each submit, drain with @ref receiveAudioPayload until it
+ *      returns a null Ptr.
  *   5. Call @ref flush when the input stream ends, then drain again.
  *   6. Destroy the decoder.
  *

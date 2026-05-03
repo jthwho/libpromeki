@@ -43,7 +43,7 @@ PROMEKI_NAMESPACE_BEGIN
  * and only @ref advance / @ref setCurrentFrame move time forward.
  *
  * @par Thread Safety
- * Inherits @ref Clock: read accessors (now, raw, jitter,
+ * Inherits @ref Clock &mdash; read accessors (now, raw, jitter,
  * rateRatio) are safe to call from any thread once the clock is
  * configured.  @c advance / @c setCurrentFrame / @c setFrameRate /
  * @c reset must be externally synchronized — typically only the

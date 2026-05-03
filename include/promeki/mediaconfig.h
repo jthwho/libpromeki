@@ -562,8 +562,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setMin(int32_t(1))
                                            .setDescription("Scan lines per ImageDataDecoder band in Inspector."));
 
-                /// @brief int — audio channel index that carries LTC.  Mirrors
-                /// @ref AudioLtcChannel; default 0.
+                /// @brief int — audio channel index that carries LTC; default 0.
                 PROMEKI_DECLARE_ID(InspectorLtcChannel,
                                    VariantSpec()
                                            .setType(Variant::TypeS32)
@@ -626,7 +625,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                 /// second.  Default @c 0/1 means "follow the source
                 /// descriptor": the sink reads the frame rate from the
                 /// upstream @ref MediaDesc cached at @c open() time.
-                /// Ignored in @ref NullPacingMode::Free mode.
+                /// Ignored in @c promeki::NullPacingMode::Free mode.
                 PROMEKI_DECLARE_ID(NullPacingTargetFps, VariantSpec()
                                                                 .setType(Variant::TypeRational)
                                                                 .setDefault(Rational<int>(0, 1))
@@ -652,7 +651,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                 // ============================================================
 
                 /// @brief Rational — maximum encode rate for the
-                /// @ref MediaIO_MjpegStream sink, in frames per
+                /// @ref MjpegStreamMediaIO sink, in frames per
                 /// second.  Frames arriving inside @c 1/MjpegMaxFps of
                 /// the previously-encoded frame are dropped before
                 /// JPEG encoding so the sink can throttle a fast
@@ -667,7 +666,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                                         "limit."));
 
                 /// @brief int — JPEG quality (1-100) used by the
-                /// @ref MediaIO_MjpegStream sink when encoding
+                /// @ref MjpegStreamMediaIO sink when encoding
                 /// frames.  Default @c 80.  Forwarded verbatim to
                 /// @ref JpegVideoEncoder via @ref MediaConfig::JpegQuality
                 /// at session creation.
@@ -681,7 +680,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
 
                 /// @brief int — depth of the latest-N ring of
                 /// encoded frames retained by the
-                /// @ref MediaIO_MjpegStream sink.  Subscribers
+                /// @ref MjpegStreamMediaIO sink.  Subscribers
                 /// always receive the newest frame; the ring keeps
                 /// recent history so freshly-attached subscribers can
                 /// be primed with the latest frame without waiting for
@@ -1515,7 +1514,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
 
                 /// @brief Polymorphic reader-side SDP input.  Accepts either:
                 /// - @c String: interpreted as a filesystem path.
-                /// - @ref SdpSession: consumed directly, no filesystem access.
+                /// - @ref SdpSession - consumed directly, no filesystem access.
                 PROMEKI_DECLARE_ID(
                         RtpSdp,
                         VariantSpec()
@@ -1694,7 +1693,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
 
                 /// @brief String — canonical NDI source name (`MachineName (Source)`)
                 /// for source mode.  When the MediaIO is opened from an
-                /// `ndi://` URL via @ref MediaIOFactory::createFromUrl, this
+                /// `ndi://` URL via @ref MediaIO::createFromUrl, this
                 /// key is populated automatically from the URL parse.
                 PROMEKI_DECLARE_ID(NdiSourceName, VariantSpec()
                                                           .setType(Variant::TypeString)
@@ -1780,7 +1779,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                                .setDescription("recv_capture_v3 poll timeout in ms."));
 
                 /// @brief Duration — maximum time the receiver waits for
-                /// @ref NdiDiscovery to register the requested source
+                /// @c NdiDiscovery to register the requested source
                 /// before giving up.  Capped at 30 s defensively.  Bare
                 /// numbers passed via the CLI are parsed as seconds, so
                 /// `--dc NdiFindWait:5` means 5 s; pass `5000ms` etc.

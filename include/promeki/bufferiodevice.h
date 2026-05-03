@@ -35,7 +35,7 @@ PROMEKI_NAMESPACE_BEGIN
  * exceed availSize() return an error.
  *
  * @par Thread Safety
- * Inherits @ref IODevice: thread-affine.  A single instance must
+ * Inherits @ref IODevice &mdash; thread-affine.  A single instance must
  * only be used from the thread that created it.
  */
 class BufferIODevice : public IODevice {

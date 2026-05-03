@@ -33,7 +33,7 @@ class MediaIOPortGroup;
  *
  * @par Late-bind construction
  * The clock can be constructed with a null group and later bound via
- * @ref setGroup.  This supports the @ref MediaIO::addPortGroup
+ * @ref setGroup.  This supports the @ref CommandMediaIO::addPortGroup
  * helper, which needs a clock to construct the group, and a group
  * pointer to populate the clock — the helper allocates the clock
  * with a null group, constructs the group with the clock, then ties
@@ -71,7 +71,7 @@ class MediaIOClock : public Clock {
                 /**
                  * @brief Binds this clock to @p group.
                  *
-                 * Used by @ref MediaIO::addPortGroup to break the
+                 * Used by @ref CommandMediaIO::addPortGroup to break the
                  * construction-order chicken-and-egg between the group
                  * (which requires a clock at construction) and the
                  * default synthetic clock (which needs the group to

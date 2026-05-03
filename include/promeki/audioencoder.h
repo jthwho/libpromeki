@@ -27,10 +27,10 @@ class MediaConfig;
  * @ingroup proav
  *
  * AudioEncoder is a single push-frame / pull-packet codec session:
- * @ref PcmAudioPayload frames pushed via @ref submitFrame
+ * @ref PcmAudioPayload frames pushed via @ref submitPayload
  * feed an internal pipeline, and encoded
  * @ref CompressedAudioPayload access units come back out of
- * @ref receivePacket zero, one, or many submits later depending on the
+ * @ref receiveCompressedPayload zero, one, or many submits later depending on the
  * codec's frame size and look-ahead.
  *
  * Encoders expose no codec-family metadata directly — the caller asks
@@ -65,13 +65,13 @@ class MediaConfig;
  *   1. Resolve a session via @ref AudioCodec::createEncoder.
  *   2. Call @ref configure with a @ref MediaConfig.  (Skip when a
  *      config was already supplied to @c createEncoder.)
- *   3. For each @ref PcmAudioPayload frame, call @ref submitFrame.
- *   4. After each submit, drain with @ref receivePacket until it
+ *   3. For each @ref PcmAudioPayload frame, call @ref submitPayload.
+ *   4. After each submit, drain with @ref receiveCompressedPayload until it
  *      returns a null Ptr.  Each emitted packet carries this codec's
  *      @ref codec() value so downstream code can route it without
  *      consulting the encoder again.
  *   5. When the input stream is exhausted, call @ref flush and keep
- *      draining until @ref receivePacket returns a packet whose
+ *      draining until @ref receiveCompressedPayload returns a packet whose
  *      @c MediaPayload::Flags::EndOfStream flag is set.
  *   6. Destroy the encoder.
  *
@@ -117,7 +117,7 @@ class AudioEncoder {
                 /**
                  * @brief Applies encoder parameters from a @ref MediaConfig.
                  *
-                 * Same semantics as @ref VideoEncoder::configure: reads
+                 * Same semantics as @ref VideoEncoder::configure &mdash; reads
                  * known keys, ignores the rest.  Default is a no-op.
                  */
                 virtual void configure(const MediaConfig &config);

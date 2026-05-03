@@ -482,7 +482,7 @@ template <typename T> class Span;
 /**
  * @brief Streams the current value of an Atomic to a TextStream.
  *
- * Reads via @ref Atomic::value() (acquire load) and forwards the result
+ * Reads via @c Atomic::value() (acquire load) and forwards the result
  * to @p s using whatever @c operator<< overload @p T provides.
  *
  * @param s Output text stream.

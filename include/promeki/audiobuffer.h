@@ -37,7 +37,7 @@ PROMEKI_NAMESPACE_BEGIN
  * wants a different framing or format (e.g. a container writer that
  * writes fixed-size chunks of s16 little-endian).
  *
- * @par Relationship to @ref AudioBlock
+ * @par Relationship to AudioBlock
  *
  * @c AudioBuffer is a @b data @b container — a value-type FIFO of
  * sample bytes plus an internal @ref AudioResampler.  It has no
@@ -47,7 +47,7 @@ PROMEKI_NAMESPACE_BEGIN
  * consumer that may run on different clocks or in different formats.
  *
  * @ref AudioBlock, in contrast, is a @b pipeline @b node — an
- * @ref ObjectBase-derived processing element that exposes named
+ * @c ObjectBase-derived processing element that exposes named
  * source and sink channels for connecting into an audio graph.
  * The two classes are not redundant: an @ref AudioBlock typically
  * owns one or more @ref AudioBuffer instances internally to hand
@@ -63,7 +63,7 @@ PROMEKI_NAMESPACE_BEGIN
  * When the input and output @b sample @b rates differ and
  * @c PROMEKI_ENABLE_SRC is available, @c push() resamples on the fly
  * via an internal @ref AudioResampler.  Use @c setResamplerQuality()
- * to control the quality mode (default: @ref SrcQuality::SincMedium).
+ * to control the quality mode (default: @c SrcQuality::SincMedium).
  * When @c PROMEKI_ENABLE_SRC is not available, @c push() returns
  * @c Error::NotSupported for rate mismatches.
  *
@@ -174,7 +174,7 @@ class AudioBuffer {
                  *
                  * The audio format, sample rate, and channel count are
                  * fixed at construction (or by @ref setFormat /
-                 * @ref setChannels), but the descriptor's
+                 * @c setChannels), but the descriptor's
                  * @ref AudioChannelMap is refreshed on every push that
                  * delivers a different stream/role assignment than the
                  * one currently cached.  Each successful push copies
@@ -373,7 +373,7 @@ class AudioBuffer {
                  * @ref AudioChannelMap; call
                  * @c format().setChannelMap() separately if the new
                  * channel order should also be reflected in the
-                 * descriptor returned by @ref format().
+                 * descriptor returned by @ref format.
                  *
                  * @param remap Source channel index per output channel.
                  * @return @c Error::Ok or @c Error::InvalidArgument

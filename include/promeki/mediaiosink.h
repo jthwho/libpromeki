@@ -30,7 +30,7 @@ class MediaIORequest;
  * carries the write API that used to live on @ref MediaIO directly —
  * the per-port @c writeFrame entry point, per-port format-negotiation
  * surface (@ref expectedDesc / @ref proposeInput), and the per-port
- * write-side signals (@ref frameWanted, @ref writeError).
+ * write-side signals (@c frameWantedSignal, @c writeErrorSignal).
  *
  * Sinks are created by the backend during open and parented to
  * their @ref MediaIOPortGroup, which is in turn parented to the
@@ -178,7 +178,7 @@ class MediaIOSink : public MediaIOPort {
                  * When @ref writesAccepted reports zero the request
                  * resolves immediately with @c Error::TryAgain
                  * without queueing anything.  Callers wait for the
-                 * @ref frameWanted signal before retrying.
+                 * @c frameWantedSignal before retrying.
                  *
                  * @par Pre-open / closed
                  * Resolves with @c Error::NotOpen when the owning

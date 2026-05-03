@@ -22,7 +22,7 @@ namespace detail {
         /**
  * @brief Logs a fatal hash-collision diagnostic and aborts the process.
  *
- * Out-of-line so @ref StringRegistry does not need to pull in the
+ * Out-of-line so @c StringRegistry does not need to pull in the
  * logger header (and its transitive dependencies) from every
  * translation unit that touches the registry.  Shared across every
  * registry instantiation; the caller threads the registry's name

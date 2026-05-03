@@ -26,7 +26,7 @@ PROMEKI_NAMESPACE_BEGIN
  * open() and closed by close().
  *
  * @par Thread Safety
- * Inherits @ref IODevice: thread-affine.  A single AbstractSocket
+ * Inherits @ref IODevice &mdash; thread-affine.  A single AbstractSocket
  * instance must only be used from the thread that created it (or
  * moved to via @c moveToThread()).
  *

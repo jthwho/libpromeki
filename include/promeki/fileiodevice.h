@@ -45,7 +45,7 @@ PROMEKI_NAMESPACE_BEGIN
  * supports it.
  *
  * @par Thread Safety
- * Inherits @ref IODevice: thread-affine.  A single instance must
+ * Inherits @ref IODevice &mdash; thread-affine.  A single instance must
  * only be used from the thread that created it.
  */
 class FileIODevice : public IODevice {

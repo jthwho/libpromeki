@@ -30,7 +30,7 @@ PROMEKI_NAMESPACE_BEGIN
 class FourCC {
         public:
                 /** @brief Plain-value list type for @c FourCC. */
-                using List = promeki::List<FourCC>;
+                using List = ::promeki::List<FourCC>;
 
                 /**
                  * @brief Constructs a FourCC from four individual characters.

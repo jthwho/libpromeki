@@ -212,9 +212,9 @@ class Resource {
  * @brief Registers a cirf-generated resource set at static-init time.
  *
  * Expands to a file-scope object whose constructor calls
- * @c Resource::registerRoot(&NAME##_root, PREFIX). Use it AFTER
- * including the cirf-generated header so that @c <NAME>_root is in
- * scope. The macro must appear at namespace scope.
+ * `Resource::registerRoot(&NAME##_root, PREFIX)`. Use it AFTER
+ * including the cirf-generated header so that the symbol named
+ * `<NAME>_root` is in scope. The macro must appear at namespace scope.
  *
  * @par Example
  * @code

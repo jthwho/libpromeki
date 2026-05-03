@@ -45,7 +45,7 @@ Optional host tooling picked up automatically when present:
 | `/usr/bin/time` (GNU) | Records per-TU compile wall-time and peak RSS (`PROMEKI_BUILD_STATS`) |
 | `doxygen` | Builds this documentation (`PROMEKI_BUILD_DOCS`) |
 | CUDA Toolkit | Enables GPU MemSpaces and is required for NVENC / NVDEC |
-| NVIDIA Video Codec SDK | Enables NVENC / NVDEC — see [NVENC setup](nvenc.md) |
+| NVIDIA Video Codec SDK | Enables NVENC / NVDEC &mdash; see @ref nvenc "NVENC setup" |
 
 ---
 
@@ -68,8 +68,8 @@ the default **DevRelease** build type.
 
 libpromeki recognises three CMake build types. The build type
 controls optimisation, debug symbols, and whether per-module debug
-logging (`promekiDebug()`) is compiled in. See [Debugging and
-Diagnostics](debugging.md) for the full discussion; the short
+logging (`promekiDebug()`) is compiled in. See @ref debugging
+"Debugging and Diagnostics" for the full discussion; the short
 version is:
 
 | Build type | Optimisation | Debug symbols | `promekiDebug()` | Typical use |
@@ -107,9 +107,9 @@ consuming code can conditionally compile against a custom build.
 | `PROMEKI_ENABLE_CIRF` | `ON` | Compiled-in resource filesystem (`:/.PROMEKI/...`) |
 | `PROMEKI_ENABLE_V4L2` | auto | V4L2 video capture + ALSA audio capture (Linux only; auto-enabled when the headers are present) |
 | `PROMEKI_ENABLE_CUDA` | auto | CUDA support (device / pinned-host memspaces; prerequisite for NVENC / NVDEC) |
-| `PROMEKI_ENABLE_NVENC` | auto | NVIDIA NVENC H.264 / HEVC encoder — see [NVENC setup](nvenc.md) |
-| `PROMEKI_ENABLE_NVDEC` | auto | NVIDIA NVDEC H.264 / HEVC decoder — see [NVENC setup](nvenc.md) |
-| `PROMEKI_ENABLE_NDI` | auto | NDI (Network Device Interface) media transport — see [NDI setup](ndi.md) |
+| `PROMEKI_ENABLE_NVENC` | auto | NVIDIA NVENC H.264 / HEVC encoder &mdash; see @ref nvenc "NVENC setup" |
+| `PROMEKI_ENABLE_NVDEC` | auto | NVIDIA NVDEC H.264 / HEVC decoder &mdash; see @ref nvenc "NVENC setup" |
+| `PROMEKI_ENABLE_NDI` | auto | NDI (Network Device Interface) media transport &mdash; see @ref ndi "NDI setup" |
 
 Flags marked *auto* default `ON` when their prerequisites are
 detected and `OFF` otherwise. Pass an explicit
@@ -330,9 +330,8 @@ overshoot that.  The script holds a non-blocking flock on
 `.precommit.lock` at the repo root, so a second precommit invocation
 while one is running exits immediately with a clear error rather
 than queueing up.  The script exits non-zero on the first failed
-step and prints a clear summary at the end.  See
-[CONTRIBUTING.md](../CONTRIBUTING.md) for the full development
-workflow.
+step and prints a clear summary at the end.  See `CONTRIBUTING.md`
+at the repository root for the full development workflow.
 
 ---
 
@@ -434,8 +433,8 @@ The output directory can be overridden with
 
 ## See Also {#building_see_also}
 
-- [Debugging and Diagnostics](debugging.md) — build-type /
+- @ref debugging "Debugging and Diagnostics" &mdash; build-type /
   debug-logging / crash-handler reference
-- [NVENC setup](nvenc.md) — NVENC / NVDEC SDK setup and
+- @ref nvenc "NVENC setup" &mdash; NVENC / NVDEC SDK setup and
   `PROMEKI_NVENC_SDK_DIR`
-- [NDI setup](ndi.md) — NDI SDK setup and `PROMEKI_NDI_SDK_DIR`
+- @ref ndi "NDI setup" &mdash; NDI SDK setup and `PROMEKI_NDI_SDK_DIR`

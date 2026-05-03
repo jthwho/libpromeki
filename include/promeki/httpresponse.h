@@ -71,10 +71,10 @@ class HttpResponse {
                 using Ptr = SharedPtr<HttpResponse>;
 
                 /** @brief Plain value list (e.g. for queues of responses). */
-                using List = promeki::List<HttpResponse>;
+                using List = ::promeki::List<HttpResponse>;
 
                 /** @brief List of shared pointers. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Default HTTP version reported when none was set. */
                 static const String DefaultHttpVersion;

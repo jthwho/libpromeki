@@ -98,7 +98,7 @@ class NdiDiscovery {
                 };
 
                 /// @brief Convenience type for snapshot lists.
-                using RecordList = List<Record>;
+                using RecordList = ::promeki::List<Record>;
 
                 /**
                  * @brief Returns the singleton, constructing it on first call.

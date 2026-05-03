@@ -280,7 +280,7 @@ PROMEKI_FORMAT_VIA_TOSTRING(promeki::AudioStreamDesc);
  * @brief Hash specialization so @ref promeki::AudioStreamDesc can serve
  *        as a key in @c HashMap / @c HashSet (and any @c std::unordered_*).
  *
- * Hashes the registered ID directly; the @ref AudioStreamDescRegistry
+ * Hashes the registered ID directly; the @c AudioStreamDescRegistry
  * already disambiguates names via FNV-1a + linear probing, so the IDs
  * are well-distributed and a passthrough hash is appropriate.
  */

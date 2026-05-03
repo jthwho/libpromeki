@@ -40,7 +40,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Threading:
  *  - @ref enqueue and @ref closeWriting are safe to call from any
- *    thread.  Both emit @ref readyRead so a consumer hosted on an
+ *    thread.  Both emit @ref readyReadSignal so a consumer hosted on an
  *    @ref EventLoop different from the producer will be marshalled
  *    awake by the existing cross-thread connect machinery.
  *  - @ref read, @ref atEnd, @ref bytesAvailable, @ref open, and
@@ -84,7 +84,7 @@ class AsyncBufferQueue : public IODevice {
                  * @brief Closes the device.
                  *
                  * Drops any still-queued segments and emits
-                 * @ref aboutToClose.  Safe to call from the consumer
+                 * @c aboutToCloseSignal.  Safe to call from the consumer
                  * thread; not safe from a producer (use
                  * @ref closeWriting from the producer).
                  */
@@ -154,7 +154,7 @@ class AsyncBufferQueue : public IODevice {
                  * @brief Appends a segment to the back of the queue.
                  *
                  * Empty / null pointers are ignored.  Emits
-                 * @ref readyRead from the calling thread; cross-thread
+                 * @ref readyReadSignal from the calling thread; cross-thread
                  * consumers are woken via the standard signal/slot
                  * marshalling path when their connection captured an
                  * @ref ObjectBase context.
@@ -172,7 +172,7 @@ class AsyncBufferQueue : public IODevice {
                  * After this call @ref enqueue returns
                  * @ref Error::NotOpen, and @ref atEnd flips to @c true
                  * once the consumer drains the remaining segments.
-                 * Emits @ref readyRead one final time so a parked
+                 * Emits @ref readyReadSignal one final time so a parked
                  * consumer wakes and observes the new end-of-stream
                  * condition.  Idempotent.
                  */

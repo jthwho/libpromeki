@@ -30,7 +30,7 @@ PROMEKI_NAMESPACE_BEGIN
  * - Functions that want compile-time type checking take the concrete
  *   class (e.g. @c "const VideoPattern &") instead of a bare
  *   @c "const Enum &"; runtime compatibility with @ref Variant and any
- *   @ref Enum-based API is preserved via public inheritance.
+ *   @ref Enum based API is preserved via public inheritance.
  *
  * Subsystems that consume these values (e.g. @c VideoTestPattern) alias
  * the well-known class directly via @c using, so there is no parallel
@@ -669,7 +669,7 @@ inline const ImgSeqPathMode ImgSeqPathMode::Absolute{1};
  * mostly chooses *who computes* the auxiliary bits and which spec the
  * decoder should consult to interpret them.
  *
- * Default is @ref Vitc, since the typical libpromeki use case is
+ * Default is @c TimecodePackFormat::Vitc, since the typical libpromeki use case is
  * stamping a frame's identity (including the HFR field/pair bit) into
  * the image itself, where there is no biphase mark to balance.
  */
@@ -740,9 +740,9 @@ class VideoScanMode : public TypedEnum<VideoScanMode> {
 
                 /**
                  * @brief Returns true if this scan mode represents an
-                 * interlaced (two-field) raster — @ref Interlaced,
-                 * @ref InterlacedEvenFirst, or @ref InterlacedOddFirst.
-                 * @ref PsF is @em not considered interlaced by this
+                 * interlaced (two-field) raster &mdash; @c VideoScanMode::Interlaced,
+                 * @c VideoScanMode::InterlacedEvenFirst, or @c VideoScanMode::InterlacedOddFirst.
+                 * @c VideoScanMode::PsF is @em not considered interlaced by this
                  * helper: its wire format is interlaced but its
                  * content (and coded bitstream, when packed) is
                  * progressive.
@@ -778,8 +778,8 @@ inline const VideoScanMode VideoScanMode::PsF{5};
  *                  passthrough filter).
  *
  * The mediaplay CLI's @c -i / @c -o flags are named for the
- * @em pipeline's input and output: @c -i wires a @ref Source backend
- * into the pipeline and @c -o wires a @ref Sink backend.
+ * @em pipeline's input and output: @c -i wires a @c MediaIODirection::Source backend
+ * into the pipeline and @c -o wires a @c MediaIODirection::Sink backend.
  */
 class MediaIODirection : public TypedEnum<MediaIODirection> {
         public:

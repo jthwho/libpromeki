@@ -70,7 +70,7 @@ class SdpMediaDescription {
                 using Attribute = Pair<String, String>;
 
                 /** @brief Ordered list of attributes, preserving insertion order. */
-                using AttributeList = List<Attribute>;
+                using AttributeList = ::promeki::List<Attribute>;
 
                 /** @brief Returns the value of a named attribute, or empty string. */
                 String attribute(const String &name) const {
@@ -136,7 +136,7 @@ class SdpMediaDescription {
                 RtpMap rtpMap() const;
 
                 /** @brief Parameter map extracted from an @c a=fmtp attribute. */
-                using FmtpParameters = Map<String, String>;
+                using FmtpParameters = ::promeki::Map<String, String>;
 
                 /**
                  * @brief Parses the @c a=fmtp attribute into a key=value map.
@@ -201,10 +201,13 @@ class SdpSession {
                 using Ptr = SharedPtr<SdpSession>;
 
                 /** @brief List of SdpSession values. */
-                using List = promeki::List<SdpSession>;
+                using List = ::promeki::List<SdpSession>;
 
                 /** @brief List of shared SdpSession pointers. */
-                using PtrList = promeki::List<SdpSession::Ptr>;
+                using PtrList = ::promeki::List<SdpSession::Ptr>;
+
+                /** @brief List of @ref SdpMediaDescription values, used by @ref mediaDescriptions. */
+                using MediaDescriptionList = ::promeki::List<SdpMediaDescription>;
 
                 /**
                  * @brief Parses an SDP text string into an SdpSession.
@@ -276,7 +279,7 @@ class SdpSession {
                 void setConnectionAddress(const String &address) { _connectionAddress = address; }
 
                 /** @brief Returns the list of media descriptions. */
-                const promeki::List<SdpMediaDescription> &mediaDescriptions() const { return _mediaDescriptions; }
+                const MediaDescriptionList &mediaDescriptions() const { return _mediaDescriptions; }
 
                 /** @brief Adds a media description. */
                 void addMediaDescription(const SdpMediaDescription &md) { _mediaDescriptions.pushToBack(md); }
@@ -322,7 +325,7 @@ class SdpSession {
                 String                             _originAddrType = "IP4";
                 String                             _originAddress = "0.0.0.0";
                 String                             _connectionAddress;
-                promeki::List<SdpMediaDescription> _mediaDescriptions;
+                MediaDescriptionList               _mediaDescriptions;
 };
 
 PROMEKI_NAMESPACE_END

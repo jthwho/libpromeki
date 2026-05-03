@@ -31,16 +31,16 @@ namespace detail {
  * @c variantquery.cpp.  The forward declaration here is enough to hold
  * a node in a @ref UniquePtr because every @ref VariantQuery special
  * member is explicit-instantiated in the same translation unit that
- * defines @ref VariantQueryNode, so the implicit destructor never
+ * defines @c VariantQueryNode, so the implicit destructor never
  * needs to see a complete type at a call site.
  */
         class VariantQueryNode;
 
-        /** @brief Unique-ownership pointer to a @ref VariantQueryNode. */
+        /** @brief Unique-ownership pointer to a @c VariantQueryNode. */
         using VariantQueryNodeUPtr = UniquePtr<VariantQueryNode>;
 
         /**
- * @brief Evaluation inputs injected into the AST by @ref VariantQuery::match.
+ * @brief Evaluation inputs injected into the AST by @c VariantQuery::match.
  *
  * The AST itself is type-erased — every concrete node leans on
  * @c std::function callbacks supplied through this context rather
@@ -70,12 +70,12 @@ namespace detail {
         };
 
         /**
- * @brief Parses @p expr into an AST shared by every @ref VariantQuery instantiation.
+ * @brief Parses @p expr into an AST shared by every @c VariantQuery instantiation.
  *
  * Defined in @c variantquery.cpp.  The parser is generic over the
  * target type because the AST references keys as strings; typing
- * happens at @ref VariantQuery::match via the
- * @ref VariantQueryContext injected from the enclosing template.
+ * happens at @c VariantQuery::match via the
+ * @c VariantQueryContext injected from the enclosing template.
  *
  * @param expr        The query source.
  * @param errorDetail Populated with a human-readable diagnostic
@@ -101,7 +101,8 @@ namespace detail {
  * Parses an expression once into an AST; evaluates it against any
  * @c T for which @ref VariantLookup "VariantLookup<T>" has been
  * registered via @ref PROMEKI_LOOKUP_REGISTER.  The expression
- * vocabulary mirrors @c VariantLookup<T>::resolve / @c ::format, so
+ * vocabulary mirrors `VariantLookup<T>::resolve` and the burn
+ * formatter, so
  * anything that can be rendered into a burn template or read by the
  * key resolver can also drive a query.
  *
@@ -127,7 +128,7 @@ namespace detail {
  *
  * @par Key references
  * All the forms accepted by @c VariantLookup<T>::resolve are valid
- * keys.  For @ref Frame:
+ * keys.  For @ref Frame &mdash;
  *  - Metadata key (behind @c "Meta." prefix): @c "Meta.Title"
  *  - Frame scalar: @c "VideoCount"
  *  - Subscripted video / audio: @c "Video[0].Width", @c "Audio[0].Meta.Album"
@@ -177,7 +178,7 @@ namespace detail {
  * @tparam T The target type.  Must have @c VariantLookup<T>
  *           registrations for the keys the query references.
  *           Explicit template instantiations are provided for
- *           @ref Frame, @ref Image and @ref Audio; other types can
+ *           @ref Frame, @ref VideoPayload and @ref AudioPayload; other types can
  *           be instantiated by adding a
  *           @c template class VariantQuery<MyType>; line in the
  *           translation unit that owns @c MyType 's registrations.
@@ -211,7 +212,7 @@ template <typename T> class VariantQuery {
                  * @brief Evaluates the query against @p instance.
                  *
                  * Invalid queries always return false.  The
-                 * @ref VariantQueryContext is built fresh per call
+                 * @c VariantQueryContext is built fresh per call
                  * and captures @p instance by reference, so the AST
                  * never retains a pointer past the return.
                  */

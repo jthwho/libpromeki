@@ -43,15 +43,15 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * - @b Asynchronous (no-sync): the input never acknowledges and
  *   the output never waits for it.  Readers that fall more than
- *   @ref Config::ringDepth frames behind miss frames — signalled
- *   via @ref framesMissed — and resynchronize on the next TICK.
+ *   @c FrameBridge::Config::ringDepth frames behind miss frames — signalled
+ *   via @c framesMissedSignal — and resynchronize on the next TICK.
  *
  * Mixing modes is supported: an output may have both sync and
  * no-sync inputs attached, and only the sync inputs gate the
  * writer.
  *
  * @par Waiting for consumers
- * With @ref Config::waitForConsumer set, the output-side
+ * With @c FrameBridge::Config::waitForConsumer set, the output-side
  * @ref writeFrame blocks until at least one consumer is
  * connected instead of silently discarding frames.  This
  * matches the common "producer stalls until downstream is
@@ -226,7 +226,7 @@ class FrameBridge : public ObjectBase {
                  * Thread-safe: may be called from any thread at any
                  * time.  Sets an atomic flag that causes a
                  * @ref writeFrame currently blocked inside a
-                 * @ref Config::waitForConsumer wait (or waiting on
+                 * @c FrameBridge::Config::waitForConsumer wait (or waiting on
                  * sync-input acknowledgements) to return
                  * @c Error::Cancelled promptly.  Later @ref writeFrame
                  * calls also return @c Error::Cancelled until the

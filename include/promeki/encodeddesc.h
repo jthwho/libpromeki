@@ -38,10 +38,10 @@ class EncodedDesc {
                 using Ptr = SharedPtr<EncodedDesc>;
 
                 /** @brief Plain value list of EncodedDesc objects. */
-                using List = promeki::List<EncodedDesc>;
+                using List = ::promeki::List<EncodedDesc>;
 
                 /** @brief List of shared pointers to EncodedDesc. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Constructs an invalid (default) encoded description. */
                 EncodedDesc() = default;

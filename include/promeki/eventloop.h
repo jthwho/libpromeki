@@ -282,7 +282,7 @@ class EventLoop {
                  * one speculatively.
                  *
                  * @param fd     The file descriptor to monitor.
-                 * @param events Bitmask of @ref IoEvent values requesting
+                 * @param events Bitmask of @c IoEvent values requesting
                  *               read / write readiness notifications.
                  * @param cb     Callback invoked with (fd, readyEvents)
                  *               on each readiness event.

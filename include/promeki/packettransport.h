@@ -94,7 +94,7 @@ class PacketTransport {
                 };
 
                 /** @brief List of datagrams for batch send. */
-                using DatagramList = List<Datagram>;
+                using DatagramList = ::promeki::List<Datagram>;
 
                 /** @brief Virtual destructor. */
                 virtual ~PacketTransport() = default;
@@ -165,7 +165,7 @@ class PacketTransport {
                 /**
                  * @brief Enables per-packet transmit-time scheduling.
                  *
-                 * When enabled, the @ref Datagram::txTimeNs field is
+                 * When enabled, the @c Datagram::txTimeNs field is
                  * honored and packets are released according to their
                  * target time.  The default implementation returns
                  * @ref Error::NotSupported.

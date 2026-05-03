@@ -681,6 +681,7 @@ class VariantMap : public Map<String, Variant> {
 // spelled through the Variant::Base alias.
 // ---------------------------------------------------------------------------
 
+/// @cond INTERNAL
 #define X(name, type) type,
 extern template class VariantImpl<PROMEKI_VARIANT_TYPES detail::VariantEnd>;
 #undef X
@@ -688,6 +689,7 @@ extern template class VariantImpl<PROMEKI_VARIANT_TYPES detail::VariantEnd>;
 #define X(name, type) extern template type Variant::Base::get<type>(Error * err) const;
 PROMEKI_VARIANT_TYPES
 #undef X
+/// @endcond
 
 PROMEKI_NAMESPACE_END
 

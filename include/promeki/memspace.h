@@ -78,7 +78,7 @@ class MemSpace {
                 };
 
                 /** @brief List of MemSpace IDs. */
-                using IDList = List<ID>;
+                using IDList = ::promeki::List<ID>;
 
                 /**
                  * @brief Lock-free runtime statistics for a memory space.

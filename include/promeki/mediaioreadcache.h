@@ -40,7 +40,7 @@ class MediaIOSource;
  *    returning.
  *
  * @par frameReady semantics
- * @ref MediaIOSource::frameReady fires on the transition "head of
+ * @c MediaIOSource::frameReady fires on the transition "head of
  * the cache becomes ready."  Concretely, the cache emits the signal
  * exactly once between any pair of @ref readFrame pops; once a head
  * is "armed" it stays armed until @ref readFrame consumes it (at
@@ -173,7 +173,7 @@ class MediaIOReadCache {
                  * strand worker thread after the per-Read cache
                  * writes have run but before the cmd's
                  * @ref MediaIOCommand::markCompleted fires.  Drives
-                 * the @ref MediaIOSource::frameReady edge-detection.
+                 * the @c MediaIOSource::frameReady edge-detection.
                  *
                  * Safe to call when the completed cmd is no longer
                  * in the queue (for example, after @ref cancelAll

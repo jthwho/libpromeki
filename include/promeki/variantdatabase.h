@@ -109,7 +109,7 @@ template <CompiledString Name> class VariantDatabase {
                 using ID = typename StringRegistry<Name>::Item;
 
                 /** @brief Map of ID to VariantSpec for batch spec operations. */
-                using SpecMap = Map<ID, VariantSpec>;
+                using SpecMap = ::promeki::Map<ID, VariantSpec>;
 
                 // ============================================================
                 // Static spec registry
@@ -1014,16 +1014,16 @@ PROMEKI_NAMESPACE_END
  * @brief Declares a well-known VariantDatabase key as a compile-time constant.
  * @ingroup util
  *
- * Expands, inside a class derived from @ref VariantDatabase, to two
+ * Expands, inside a class derived from @c VariantDatabase, to two
  * declarations that together give the key both a `constexpr` ID and a
- * registered @ref VariantSpec :
+ * registered @c VariantSpec.  Specifically:
  *
  * 1. `static constexpr ID <Name>` initialized from the pure FNV-1a hash of
- *    `"<Name>"` via @ref StringRegistry::Item::literal — usable in `switch`
+ *    `"<Name>"` via @c StringRegistry::Item::literal — usable in `switch`
  *    labels, `static_assert`, template parameters, and other constant
  *    expression contexts.
  * 2. A sibling `static inline const ID` whose initializer calls
- *    @ref VariantDatabase::declareID with the same name to register the
+ *    @c VariantDatabase::declareID with the same name to register the
  *    spec (and the name, for reverse lookup) at static-init time.  The
  *    strict-hash path guarantees the two IDs agree; a hash collision with
  *    another well-known key will abort the process before `main()` runs.

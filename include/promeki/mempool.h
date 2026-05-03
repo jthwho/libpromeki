@@ -102,8 +102,8 @@ class MemPool {
                  */
                 static bool isValidAlignment(size_t val) { return (val > 0) && !(val & (val - 1)); }
 
-                using BlockSet = Set<Block>;            ///< Sorted set of blocks ordered by address.
-                using BlockMap = Map<uintptr_t, Block>; ///< Map from aligned address to allocated block.
+                using BlockSet = ::promeki::Set<Block>;            ///< Sorted set of blocks ordered by address.
+                using BlockMap = ::promeki::Map<uintptr_t, Block>; ///< Map from aligned address to allocated block.
 
                 /** @brief Constructs an empty memory pool with a default hex name. */
                 MemPool();

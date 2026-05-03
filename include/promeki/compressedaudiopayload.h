@@ -73,7 +73,7 @@ class CompressedAudioPayload : public AudioPayload {
                 using Ptr = SharedPtr<CompressedAudioPayload, /*CopyOnWrite=*/true, CompressedAudioPayload>;
 
                 /** @brief List of shared pointers to CompressedAudioPayload instances. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Unique-ownership pointer to a CompressedAudioPayload. */
                 using UPtr = UniquePtr<CompressedAudioPayload>;

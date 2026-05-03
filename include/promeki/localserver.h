@@ -32,7 +32,7 @@ class LocalSocket;
  * filesystem sockets have no inode reuse issues of their own.
  *
  * @par Thread Safety
- * Inherits @ref ObjectBase: thread-affine.  A single LocalServer
+ * Inherits @ref ObjectBase &mdash; thread-affine.  A single LocalServer
  * must only be used from the thread that created it.
  *
  * @par Example

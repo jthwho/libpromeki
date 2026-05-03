@@ -95,6 +95,9 @@ class AudioChannelMap {
                 /** @brief List of shared @ref AudioChannelMap pointers. */
                 using PtrList = ::promeki::List<Ptr>;
 
+                /** @brief List of channel roles, used to construct an @ref AudioChannelMap. */
+                using ChannelRoleList = ::promeki::List<ChannelRole>;
+
                 /**
                  * @brief One entry in the well-known layout dictionary.
                  *
@@ -107,12 +110,15 @@ class AudioChannelMap {
                  * at instantiation time.
                  */
                 struct WellKnownLayout {
-                                String                       name;
-                                ::promeki::List<ChannelRole> roles;
+                                String          name;
+                                ChannelRoleList roles;
                 };
 
+                /** @brief List of well-known channel layouts. */
+                using WellKnownLayoutList = ::promeki::List<WellKnownLayout>;
+
                 /** @brief Returns the dictionary of well-known layouts. */
-                static ::promeki::List<WellKnownLayout> wellKnownLayouts();
+                static WellKnownLayoutList wellKnownLayouts();
 
                 /**
                  * @brief Parses a string into an @c AudioChannelMap.
@@ -159,7 +165,7 @@ class AudioChannelMap {
                  *   - 12 → 7.1.4
                  *
                  * Counts not listed return @p channels Undefined-stream /
-                 * @ref ChannelRole::Unused entries — the caller is
+                 * @c ChannelRole::Unused entries — the caller is
                  * expected to fill in roles explicitly.
                  *
                  * Callers that need a non-default layout (e.g. @c "3.0"
@@ -190,7 +196,7 @@ class AudioChannelMap {
                  * @brief Constructs a map from an explicit role list,
                  *        every channel in @ref AudioStreamDesc::Undefined.
                  */
-                explicit AudioChannelMap(::promeki::List<ChannelRole> roles) {
+                explicit AudioChannelMap(ChannelRoleList roles) {
                         _entries.reserve(roles.size());
                         for (const ChannelRole &r : roles) _entries.pushToBack(Entry(AudioStreamDesc(), r));
                 }
@@ -209,7 +215,7 @@ class AudioChannelMap {
                  * @param stream The stream every channel belongs to.
                  * @param roles  Role list, one entry per channel.
                  */
-                AudioChannelMap(const AudioStreamDesc &stream, ::promeki::List<ChannelRole> roles) {
+                AudioChannelMap(const AudioStreamDesc &stream, ChannelRoleList roles) {
                         _entries.reserve(roles.size());
                         for (const ChannelRole &r : roles) _entries.pushToBack(Entry(stream, r));
                 }

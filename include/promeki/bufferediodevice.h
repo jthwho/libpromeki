@@ -28,7 +28,7 @@ PROMEKI_NAMESPACE_BEGIN
  * bypass the internal buffer and go directly to readFromDevice().
  *
  * @par Thread Safety
- * Inherits @ref IODevice: thread-affine.  A single instance must
+ * Inherits @ref IODevice &mdash; thread-affine.  A single instance must
  * only be used from the thread that created it.
  */
 class BufferedIODevice : public IODevice {

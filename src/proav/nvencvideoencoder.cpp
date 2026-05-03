@@ -1499,7 +1499,7 @@ class NvencVideoEncoder::Impl {
                         // VideoScanMode value so the payload carries
                         // the same encoding the decoder stamps.
                         const VideoScanMode picScan = fromNvencLockedPicStruct(picStruct);
-                        pmeta.set(Metadata::VideoScanMode, Enum(promeki::VideoScanMode::Type, picScan.value()));
+                        pmeta.set(Metadata::VideoScanMode, Enum(VideoScanMode::Type, picScan.value()));
 
                         // Duration: derive one frame's wall-clock
                         // duration from the session frame rate when

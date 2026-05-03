@@ -86,9 +86,9 @@ template <typename T> class Span {
                 Span &operator=(const Span &other) = default;
 
                 /**
-                 * @brief Implicit conversion from Span<U> to Span<T> when U* is convertible to T*.
+                 * @brief Implicit conversion from Span\<U\> to Span\<T\> when U* is convertible to T*.
                  *
-                 * Enables passing a mutable Span<X> where a Span<const X> is expected.
+                 * Enables passing a mutable Span\<X\> where a Span\<const X\> is expected.
                  *
                  * @tparam U Source element type (must satisfy U* convertible to T*).
                  * @param other The source span.

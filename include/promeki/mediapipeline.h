@@ -55,13 +55,13 @@ class MediaIOStatsCollector;
  *
  * Fan-out is supported: a single source may appear as the @c from of
  * multiple routes, and each destination back-pressures independently
- * via @ref MediaIO::writesAccepted and @c frameWanted.  Fan-in on a
+ * via @c MediaIOSink::writesAccepted and @c frameWanted.  Fan-in on a
  * single stage is not supported in this implementation (the first
  * stage that would receive frames from more than one producer is
  * rejected at @ref build time).
  *
  * @par Thread Safety
- * Inherits @ref ObjectBase: thread-affine.  Pipeline lifecycle
+ * Inherits @ref ObjectBase &mdash; thread-affine.  Pipeline lifecycle
  * (@c build, @c open, @c start, @c stop, @c close) is driven from
  * the owning EventLoop's thread.  Per-stage execution happens on
  * the strand worker that the stage's MediaIO uses; the pipeline
@@ -208,7 +208,7 @@ class MediaPipeline : public ObjectBase {
                  * Uses a graceful cascade: the true source stages (no
                  * upstream in the pipeline) are closed first via
                  * @ref MediaIO::close with @c block=false.  As each
-                 * source's synthetic EOS reaches @ref drainSource and
+                 * source's synthetic EOS reaches @c drainSource and
                  * latches @c upstreamDone, every direct downstream
                  * consumer of that source is closed in turn — so
                  * intermediate stages only see close() after all their
@@ -457,7 +457,7 @@ class MediaPipeline : public ObjectBase {
                  * @brief Configures the periodic stats tick.
                  *
                  * When @p interval is @c Duration::zero (default) the tick
-                 * is disabled and neither @ref statsUpdated nor
+                 * is disabled and neither @c statsUpdatedSignal nor
                  * @ref PipelineEvent::Kind::StatsUpdated fires.  A
                  * positive @p interval is rounded up to the nearest
                  * millisecond and starts a millisecond-precision timer
@@ -501,7 +501,7 @@ class MediaPipeline : public ObjectBase {
                 struct SourceState {
                                 MediaIO                 *from = nullptr;
                                 MediaIOPortConnection   *connection = nullptr;
-                                promeki::List<EdgeState> edges;
+                                List<EdgeState> edges;
                                 bool                     upstreamDone = false;
                 };
 
@@ -512,7 +512,7 @@ class MediaPipeline : public ObjectBase {
                 };
 
                 Error    destroyStages();
-                Error    topologicallySort(promeki::List<String> &order) const;
+                Error    topologicallySort(List<String> &order) const;
                 MediaIO *instantiateStage(const MediaPipelineConfig::Stage &s);
 
                 /**
@@ -690,11 +690,11 @@ class MediaPipeline : public ObjectBase {
 
                 MediaPipelineConfig                                  _config;
                 State                                                _state = State::Empty;
-                promeki::Map<String, MediaIO *>                      _stages;
-                promeki::Map<String, MediaIO *>                      _injected;
-                promeki::Map<String, MediaIOStatsCollector *>        _statsCollectors;
-                promeki::Map<String, SourceState>                    _sources;
-                promeki::List<String>                                _topoOrder;
+                Map<String, MediaIO *>                      _stages;
+                Map<String, MediaIO *>                      _injected;
+                Map<String, MediaIOStatsCollector *>        _statsCollectors;
+                Map<String, SourceState>                    _sources;
+                List<String>                                _topoOrder;
 
                 // Close-cascade bookkeeping.  Latched by
                 // @ref initiateClose and unwound in
@@ -704,7 +704,7 @@ class MediaPipeline : public ObjectBase {
                 // operational or close-time error.
                 bool                 _closing = false;
                 bool                 _cleanFinish = false;
-                promeki::Set<String> _stagesAwaitingClosed;
+                Set<String> _stagesAwaitingClosed;
                 Error                _closeError = Error::Ok;
 
                 // Close-watchdog timer.  Armed by @ref initiateClose,
@@ -735,7 +735,7 @@ class MediaPipeline : public ObjectBase {
                 // releases before invoking callbacks so a callback may
                 // (un)subscribe re-entrantly without deadlocking.
                 mutable Mutex                 _subsMutex;
-                promeki::Map<int, Subscriber> _subscribers;
+                Map<int, Subscriber> _subscribers;
                 int                           _nextSubId = 0;
                 Logger::ListenerHandle        _loggerTap = 0;
 

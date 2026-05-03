@@ -26,7 +26,7 @@ class AudioDesc;
  * channels (counts supplied via @ref Config) and is intended to be
  * composed with other blocks into a processing chain.
  *
- * @par Relationship to @ref AudioBuffer
+ * @par Relationship to AudioBuffer
  *
  * @c AudioBlock and @ref AudioBuffer occupy different layers and
  * are not interchangeable.  @c AudioBlock is a @b pipeline @b node

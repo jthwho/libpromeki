@@ -83,7 +83,7 @@ class Thread;
  *   ST 2110-30 pgroup handling are deferred to a follow-up.
  * - **Data** — per-frame @ref Metadata as JSON via
  *   @ref RtpPayloadJson (default), with
- *   @ref MetadataRtpFormat::St2110_40 reserved for the future
+ *   @c MetadataRtpFormat::St2110_40 reserved for the future
  *   SMPTE ST 2110-40 Ancillary Data payload class.
  *
  * A stream is transmitted only when its destination is set (e.g.

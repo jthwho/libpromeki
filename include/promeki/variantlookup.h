@@ -182,11 +182,11 @@ namespace detail {
  * @par Handler kinds
  *  - @b scalar             — terminal @c "Name" producing a @ref Variant.
  *  - @b indexedScalar      — terminal @c "Name[N]" producing a @ref Variant.
- *  - @b child<U>           — composition @c "Name.rest" delegating to
- *    @c VariantLookup<U>::resolve on a borrowed @c const @c U&.
- *  - @b indexedChild<U>    — composition @c "Name[N].rest" delegating to
- *    @c VariantLookup<U>::resolve on a borrowed @c const @c U&.
- *  - @b database<Name>     — composition @c "Prefix.DbKey" resolving
+ *  - @b child\<U\>           — composition @c "Name.rest" delegating to
+ *    @c VariantLookup\<U\>::resolve on a borrowed @c const @c U&.
+ *  - @b indexedChild\<U\>    — composition @c "Name[N].rest" delegating to
+ *    @c VariantLookup\<U\>::resolve on a borrowed @c const @c U&.
+ *  - @b database\<Name\>     — composition @c "Prefix.DbKey" resolving
  *    @c DbKey through a borrowed @ref VariantDatabase.
  *
  * @par Inheritance cascade
@@ -210,7 +210,7 @@ namespace detail {
  * first so a caller holding a reference-to-base lands on the @em most
  * derived type's registry, and the upward cascade then fills in any
  * keys the derived class inherited from its base.  Use
- * @ref PROMEKI_VARIANTLOOKUP_DISPATCH(Self) inside the derived
+ * @c PROMEKI_VARIANTLOOKUP_DISPATCH(Self) inside the derived
  * @c class body to implement these overrides uniformly.  Types that
  * do not opt in stay on the direct-lookup fast path with no vtable
  * hit.
@@ -423,9 +423,9 @@ template <typename T> class VariantLookup {
                  * Maps a trailing key-path fragment (everything after the
                  * composition's leading segment) to a @ref VariantSpec
                  * pointer, or @c nullptr when no spec is declared.  For a
-                 * @ref Registrar::child "child<U>" handler this forwards
+                 * @ref Registrar::child "child\<U\>" handler this forwards
                  * to @c VariantLookup<U>::specFor(rest); for a
-                 * @ref Registrar::database "database<DbName>" handler it
+                 * @ref Registrar::database "database\<DbName\>" handler it
                  * forwards to @c VariantDatabase<DbName>::specFor(rest).
                  */
                 using ComposeSpecFor = std::function<const VariantSpec *(const String &, Error *)>;
@@ -498,14 +498,14 @@ template <typename T> class VariantLookup {
                                  * @brief Registers a child composition (no index).
                                  *
                                  * Looking up @c "Name.rest" calls @p get on the instance,
-                                 * then forwards @c rest to @c VariantLookup<U>::resolve.
+                                 * then forwards @c rest to `VariantLookup<U>::resolve`.
                                  * A null @p get result yields @c Error::IdNotFound.
                                  * @ref specFor on the same path delegates to
-                                 * @c VariantLookup<U>::specFor(rest), so @c U's
+                                 * `VariantLookup<U>::specFor(rest)`, so @c U's
                                  * declared types flow up transparently.
                                  *
                                  * @tparam U      Child type.  Must have its own
-                                 *                @c VariantLookup<U> registrations for
+                                 *                @c VariantLookup\<U\> registrations for
                                  *                the @c rest portion to resolve.
                                  * @param name    Segment name.
                                  * @param get     Const accessor returning a borrowed @c U*.
@@ -646,7 +646,7 @@ template <typename T> class VariantLookup {
                                  *
                                  * @tparam U    The child type.  Must be
                                  *              registered with its own
-                                 *              @c VariantLookup<U>.
+                                 *              @c VariantLookup\<U\>.
                                  * @param name  Segment name (e.g. @c "Buffer").
                                  * @param get   Computes the child on demand;
                                  *              return @c std::nullopt to

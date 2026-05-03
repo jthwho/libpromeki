@@ -102,7 +102,7 @@ class MediaIO;
  * collector then becomes a no-op until @ref setTarget rewires it.
  *
  * @par Thread Safety
- * Inherits @ref ObjectBase: thread-affine.  Subscription to the
+ * Inherits @ref ObjectBase &mdash; thread-affine.  Subscription to the
  * @ref MediaIO 's @c commandCompletedSignal uses the ObjectBase-owner
  * @ref Signal::connect overload, so per-command notifications are
  * automatically marshalled onto the collector's @ref EventLoop when the

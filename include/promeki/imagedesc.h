@@ -47,10 +47,10 @@ class ImageDesc {
                 using Ptr = SharedPtr<ImageDesc>;
 
                 /** @brief List of ImageDesc values. */
-                using List = promeki::List<ImageDesc>;
+                using List = ::promeki::List<ImageDesc>;
 
                 /** @brief List of shared ImageDesc pointers. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Constructs an invalid (default) image description. */
                 ImageDesc() {}

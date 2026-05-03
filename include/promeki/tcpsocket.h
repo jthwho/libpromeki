@@ -20,7 +20,7 @@ PROMEKI_NAMESPACE_BEGIN
  * interface for data transfer after a connection is established.
  *
  * @par Thread Safety
- * Inherits @ref IODevice: thread-affine.  A single TcpSocket
+ * Inherits @ref IODevice &mdash; thread-affine.  A single TcpSocket
  * must only be used from the thread that created it.
  *
  * @par Example

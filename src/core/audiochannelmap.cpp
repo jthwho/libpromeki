@@ -14,13 +14,13 @@ namespace {
         // Static well-known layout table.  Built once at first call and
         // referenced for the lifetime of the process.
         // ---------------------------------------------------------------------
-        const ::promeki::List<AudioChannelMap::WellKnownLayout> &knownLayoutsRef() {
+        const AudioChannelMap::WellKnownLayoutList &knownLayoutsRef() {
                 static const auto layouts = [] {
-                        ::promeki::List<AudioChannelMap::WellKnownLayout> out;
+                        AudioChannelMap::WellKnownLayoutList out;
                         const auto push = [&](const char *name, std::initializer_list<ChannelRole> rs) {
                                 AudioChannelMap::WellKnownLayout entry;
                                 entry.name = name;
-                                entry.roles = ::promeki::List<ChannelRole>(rs);
+                                entry.roles = AudioChannelMap::ChannelRoleList(rs);
                                 out.pushToBack(std::move(entry));
                         };
                         push("Mono", {ChannelRole::Mono});
@@ -78,7 +78,7 @@ namespace {
         }
 } // namespace
 
-::promeki::List<AudioChannelMap::WellKnownLayout> AudioChannelMap::wellKnownLayouts() {
+AudioChannelMap::WellKnownLayoutList AudioChannelMap::wellKnownLayouts() {
         return knownLayoutsRef();
 }
 
@@ -94,7 +94,7 @@ AudioChannelMap AudioChannelMap::defaultForChannels(size_t channels, const Audio
                 }
         }
         // No canonical layout — fill with Unused and let the caller populate roles.
-        ::promeki::List<ChannelRole> roles;
+        AudioChannelMap::ChannelRoleList roles;
         roles.reserve(channels);
         for (size_t i = 0; i < channels; ++i) roles.pushToBack(ChannelRole::Unused);
         return AudioChannelMap(stream, std::move(roles));
@@ -193,7 +193,7 @@ AudioStreamDesc AudioChannelMap::commonStream() const {
 String AudioChannelMap::wellKnownName() const {
         if (_entries.isEmpty() || !isSingleStream()) return String();
         // Build the role list and look it up against the well-known table.
-        ::promeki::List<ChannelRole> roles;
+        AudioChannelMap::ChannelRoleList roles;
         roles.reserve(_entries.size());
         for (const auto &e : _entries) roles.pushToBack(e.second());
         for (const auto &layout : knownLayoutsRef()) {

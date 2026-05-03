@@ -51,7 +51,7 @@ class WebSocket;
  * connection serializes to the wire when the handler returns.
  *
  * @par Thread Safety
- * Inherits @ref ObjectBase: thread-affine.  Construction captures
+ * Inherits @ref ObjectBase &mdash; thread-affine.  Construction captures
  * @ref EventLoop::current as the *owning loop*.  If the server is
  * constructed inside a worker @ref Thread, the server uses that
  * thread's loop; otherwise it falls back to
@@ -189,11 +189,11 @@ class HttpServer : public ObjectBase {
                  * @brief Mounts a CRUD HTTP API over a @ref VariantDatabase.
                  *
                  * Adds five routes under @p mountPath:
-                 *  - @c GET   @c <mountPath>            — full snapshot as JSON object
-                 *  - @c GET   @c <mountPath>/_schema    — registered specs as JSON
-                 *  - @c GET   @c <mountPath>/{key}      — one value as JSON
-                 *  - @c PUT   @c <mountPath>/{key}      — accepts JSON, validates, stores
-                 *  - @c DELETE @c <mountPath>/{key}     — clears the entry
+                 *  - @c GET   @p mountPath            — full snapshot as JSON object
+                 *  - @c GET   @p mountPath/_schema    — registered specs as JSON
+                 *  - @c GET   @p mountPath/{key}      — one value as JSON
+                 *  - @c PUT   @p mountPath/{key}      — accepts JSON, validates, stores
+                 *  - @c DELETE @p mountPath/{key}     — clears the entry
                  *
                  * When @p readOnly is true, the @c PUT / @c DELETE
                  * routes are skipped — useful for exposing a runtime
@@ -214,7 +214,7 @@ class HttpServer : public ObjectBase {
                  * @brief Mounts a read-only HTTP view over a @ref VariantLookup target.
                  *
                  * Adds one route:
-                 *  - @c GET @c <mountPath>/{path:*}  — resolves the
+                 *  - @c GET @p mountPath/{path:*}  — resolves the
                  *      path-style key against @c VariantLookup<T>
                  *      (slashes mapped to dots) and returns the
                  *      resulting Variant as JSON.

@@ -34,7 +34,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | maxLuminance   | cd/m² (nits)    | 1000.0                        |
  *
  * A default-constructed MasteringDisplay is invalid
- * (@ref isValid returns false).
+ * (@c MasteringDisplay::isValid returns false).
  *
  * @par Thread Safety
  * Distinct instances may be used concurrently.  A single instance

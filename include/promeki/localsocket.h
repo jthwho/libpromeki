@@ -29,7 +29,7 @@ PROMEKI_NAMESPACE_BEGIN
  * else that takes an @c IODevice *.
  *
  * @par Thread Safety
- * Inherits @ref IODevice: thread-affine.  A single LocalSocket
+ * Inherits @ref IODevice &mdash; thread-affine.  A single LocalSocket
  * must only be used from the thread that created it.
  *
  * @par Example

@@ -64,7 +64,10 @@ class StringList;
 class String {
         public:
                 /** @brief List of Strings. */
-                using List = promeki::List<String>;
+                using List = ::promeki::List<String>;
+
+                /** @brief List of @ref Char values, used by case-folding helpers. */
+                using CharList = ::promeki::List<Char>;
 
                 /**
                  * @brief Random-access iterator over characters (Char values).
@@ -830,7 +833,7 @@ class String {
                                 }
                                 return String(std::move(s));
                         }
-                        promeki::List<Char> chars;
+                        CharList chars;
                         chars.reserve(d->length());
                         for (size_t i = 0; i < d->length(); ++i) chars.pushToBack(d->charAt(i).toUpper());
                         return String(new StringUnicodeData(std::move(chars)));
@@ -854,7 +857,7 @@ class String {
                                 }
                                 return String(std::move(s));
                         }
-                        promeki::List<Char> chars;
+                        CharList chars;
                         chars.reserve(d->length());
                         for (size_t i = 0; i < d->length(); ++i) chars.pushToBack(d->charAt(i).toLower());
                         return String(new StringUnicodeData(std::move(chars)));
@@ -1297,7 +1300,7 @@ PROMEKI_NAMESPACE_BEGIN
  *   PROMEKI_FORMAT_VIA_TOSTRING(promeki::UUID);
  * @endcode
  *
- * Types with parameterized @c toString() (e.g. @ref Color or @ref Json)
+ * Types with parameterized @c toString() (e.g. @ref Color or @c Json)
  * or with non-@c String return types (e.g. @ref Timecode, which returns
  * @c Result<String>) need a hand-written
  * @c std::formatter specialization that parses the format spec

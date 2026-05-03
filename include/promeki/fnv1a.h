@@ -73,8 +73,8 @@ constexpr uint64_t fnv1aMixCodepoint(uint64_t seed, char32_t cp) {
  * @brief Computes the FNV-1a hash of a Unicode codepoint sequence.
  *
  * Each codepoint is mixed in as four little-endian bytes via
- * @ref fnv1aMixCodepoint, so the result is endian-independent and matches
- * @ref fnv1aLatin1AsCodepoints when given the same logical content.
+ * @c fnv1aMixCodepoint, so the result is endian-independent and matches
+ * @c fnv1aLatin1AsCodepoints when given the same logical content.
  *
  * @param data  Pointer to the codepoint array.
  * @param count Number of codepoints.
@@ -92,7 +92,7 @@ constexpr uint64_t fnv1aCodepoints(const char32_t *data, size_t count, uint64_t 
  * @brief Computes the FNV-1a hash of a Latin1 byte stream as if each byte
  *        were a 4-byte little-endian Unicode codepoint.
  *
- * This produces the same hash as @ref fnv1aCodepoints over a codepoint
+ * This produces the same hash as @c fnv1aCodepoints over a codepoint
  * array containing the same logical characters, allowing Latin1 and Unicode
  * representations of the same string to hash to identical values.
  *

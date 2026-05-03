@@ -3,7 +3,7 @@
 Utility applications that provide functional use beyond the library.
 
 The `utils/` directory contains a suite of standalone utility applications
-that use the promeki library. Unlike the [demonstration applications](demos.md)
+that use the promeki library. Unlike the [demonstration applications](@ref demos)
 (which exist to showcase library APIs), utilities are meant to have
 functional use beyond the library itself. They serve two purposes:
 

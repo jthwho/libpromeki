@@ -64,10 +64,10 @@ class HttpRequest {
                 using Ptr = SharedPtr<HttpRequest>;
 
                 /** @brief Plain value list (e.g. for queues of requests). */
-                using List = promeki::List<HttpRequest>;
+                using List = ::promeki::List<HttpRequest>;
 
                 /** @brief List of shared pointers. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Default HTTP version reported when none was parsed. */
                 static const String DefaultHttpVersion;

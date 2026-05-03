@@ -37,7 +37,7 @@ PROMEKI_NAMESPACE_BEGIN
  *    through @ref Variant directly so they are stored as already-
  *    serialized JSON),
  *  - free-form @ref metadata,
- *  - a @ref timestamp seeded by @ref MediaPipeline::publish when the
+ *  - a @ref timestamp seeded by @c MediaPipeline::publish when the
  *    event is dispatched.
  *
  * The class is a plain Shareable value (not an @ref ObjectBase): it
@@ -88,10 +88,10 @@ class PipelineEvent {
                 using Ptr = SharedPtr<PipelineEvent>;
 
                 /** @brief List of plain-value PipelineEvent records. */
-                using List = promeki::List<PipelineEvent>;
+                using List = ::promeki::List<PipelineEvent>;
 
                 /** @brief List of shared PipelineEvent pointers. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /**
                  * @brief Categorical tag identifying which kind of pipeline
@@ -142,7 +142,7 @@ class PipelineEvent {
                 /** @brief Returns the free-form metadata block (level, source, etc.). */
                 const Metadata &metadata() const { return _metadata; }
 
-                /** @brief Returns the dispatch timestamp seeded by @ref MediaPipeline::publish. */
+                /** @brief Returns the dispatch timestamp seeded by @c MediaPipeline::publish. */
                 const TimeStamp &timestamp() const { return _ts; }
 
                 // ------------------------------------------------------------

@@ -31,7 +31,7 @@ class MediaIORequest;
  * A @ref MediaIOSource produces frames out of a @ref MediaIO instance.
  * It carries the per-port read API — @c readFrame, the per-port read
  * queue, format negotiation (@ref proposeOutput), and the per-port
- * @ref frameReady signal.  Step / current-frame / seek state lives on
+ * @c frameReady signal.  Step / current-frame / seek state lives on
  * the source's @ref MediaIOPortGroup, so multi-source groups stay in
  * lockstep by definition; the methods on this class are convenience
  * forwarders to the group.

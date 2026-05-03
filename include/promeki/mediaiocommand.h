@@ -86,7 +86,7 @@ public:                                                                         
  *     fields and returns an @ref Error.
  *  3. **Completed** by @ref MediaIO::completeCommand().  Cache writes
  *     happen first, then cache-derived signals fire, then the
- *     command's @ref onComplete hook fires (resolving the
+ *     command's @c onComplete hook fires (resolving the
  *     @ref MediaIORequest).  This ordering is fixed so
  *     @c MediaIORequest::then() callbacks always observe up-to-date
  *     cached state.

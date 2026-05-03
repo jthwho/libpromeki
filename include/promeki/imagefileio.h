@@ -39,7 +39,7 @@ class ImageFile;
 class ImageFileIO {
         public:
                 /** @brief List of registered ImageFileIO backend IDs. */
-                using IDList = List<int>;
+                using IDList = ::promeki::List<int>;
 
                 /**
                  * @brief Registers an ImageFileIO backend in the global registry.

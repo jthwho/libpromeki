@@ -107,10 +107,10 @@ class Buffer {
                 static const size_t DefaultAlign;
 
                 /** @brief List of Buffer values. */
-                using List = promeki::List<Buffer>;
+                using List = ::promeki::List<Buffer>;
 
                 /** @brief List of shared Buffer pointers. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Constructs an invalid (empty) buffer. */
                 Buffer() = default;

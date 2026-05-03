@@ -33,7 +33,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Codec-specific state
  *
  * - @ref frameType classifies the access unit as @c I / @c P / @c B
- *   / @c IDR / @c BRef (or @ref FrameType::Unknown when the producer
+ *   / @c IDR / @c BRef (or @c FrameType::Unknown when the producer
  *   doesn't set it).  The accessor is @c virtual so codec-specific
  *   subclasses (future @c NALBitstreamPayload, @c ProResPayload, …)
  *   can map their internal slice / picture types onto this common
@@ -45,7 +45,7 @@ PROMEKI_NAMESPACE_BEGIN
  *   on the producer's @ref MediaConfig; this per-payload override
  *   is null in the common case.
  *
- * The @ref MediaPayload::ParameterSet concept from the older packet
+ * The @c MediaPayload::ParameterSet concept from the older packet
  * type lives here as the @c ParameterSet flag — packets that carry
  * @em only parameter sets (no actual slice data) set it so muxers
  * know to treat them specially.
@@ -77,7 +77,7 @@ class CompressedVideoPayload : public VideoPayload {
                 using Ptr = SharedPtr<CompressedVideoPayload, /*CopyOnWrite=*/true, CompressedVideoPayload>;
 
                 /** @brief List of shared pointers to CompressedVideoPayload instances. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Unique-ownership pointer to a CompressedVideoPayload. */
                 using UPtr = UniquePtr<CompressedVideoPayload>;
@@ -142,11 +142,11 @@ class CompressedVideoPayload : public VideoPayload {
                  *
                  * Virtual so codec-specific subclasses can map their
                  * internal picture / slice type onto this common
-                 * vocabulary.  The default reports @ref FrameType::IDR
+                 * vocabulary.  The default reports @c FrameType::IDR
                  * when the @ref MediaPayload::Keyframe flag is set
                  * (callers that want to distinguish non-IDR I-pictures
                  * should set the frame type explicitly) and
-                 * @ref FrameType::Unknown otherwise.
+                 * @c FrameType::Unknown otherwise.
                  */
                 virtual const FrameType &frameType() const {
                         if (_frameType.isValid() && _frameType != FrameType::Unknown) {
@@ -212,7 +212,7 @@ class CompressedVideoPayload : public VideoPayload {
                  *
                  * Reuses the base @ref MediaPayload::isExclusive
                  * plane-list walk and additionally checks
-                 * @ref inBandCodecData: when the codec data buffer
+                 * @ref inBandCodecData &mdash; when the codec data buffer
                  * is shared, the payload as a whole is not
                  * exclusive.
                  */

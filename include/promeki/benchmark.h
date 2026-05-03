@@ -58,9 +58,9 @@ class Benchmark {
                 /** @brief Shared pointer type for Benchmark. */
                 using Ptr = SharedPtr<Benchmark>;
                 /** @brief Plain value list of Benchmark objects. */
-                using List = promeki::List<Benchmark>;
+                using List = ::promeki::List<Benchmark>;
                 /** @brief List of shared pointers to Benchmark objects. */
-                using PtrList = promeki::List<Ptr>;
+                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Registered string ID type for benchmark events. */
                 using Id = StringRegistry<"Benchmark">::Item;
@@ -72,7 +72,7 @@ class Benchmark {
                 };
 
                 /** @brief List of benchmark entries. */
-                using EntryList = promeki::List<Entry>;
+                using EntryList = ::promeki::List<Entry>;
 
                 /** @brief Constructs an empty Benchmark. */
                 Benchmark() = default;
