@@ -1,5 +1,7 @@
 var NAVTREEINDEX28 =
 {
+"classpromeki_1_1TuiLabel.html#ae3512cc7f6460fe7abffb24e96d33788":[25,0,0,375,1],
+"classpromeki_1_1TuiLineEdit.html":[23,21,3],
 "classpromeki_1_1TuiLineEdit.html#a01119c1674f3eb3b31bf04e5022a4aec":[23,21,3,2],
 "classpromeki_1_1TuiLineEdit.html#a34135a6295b15d935b6dd9b746462503":[23,21,3,3],
 "classpromeki_1_1TuiLineEdit.html#a81ae5ee326f37fe94a28dc37de2bc7f2":[23,21,3,1],
@@ -247,7 +249,5 @@ var NAVTREEINDEX28 =
 "classpromeki_1_1UdpSocketTransport.html#a10abd0040a0a780923df6903f3da9837":[23,12,48,8],
 "classpromeki_1_1UdpSocketTransport.html#a181cb40bc06a3652992fdb5ba254eec1":[23,12,48,6],
 "classpromeki_1_1UdpSocketTransport.html#a27fdb8b26dccea5c37db6f29027a231e":[23,12,48,21],
-"classpromeki_1_1UdpSocketTransport.html#a280308e1ef53dc86994508e69279e205":[23,12,48,5],
-"classpromeki_1_1UdpSocketTransport.html#a28470686c60583374ff8e359955841f2":[23,12,48,16],
-"classpromeki_1_1UdpSocketTransport.html#a28ea7fdaa1b5da317bd032fe3659521f":[23,12,48,2]
+"classpromeki_1_1UdpSocketTransport.html#a280308e1ef53dc86994508e69279e205":[23,12,48,5]
 };

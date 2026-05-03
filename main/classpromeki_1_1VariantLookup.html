@@ -156,6 +156,9 @@ Public Types</h2></td></tr>
 <tr class="memitem:aadfca026f5a97999405f5c2711ca56a0" id="r_aadfca026f5a97999405f5c2711ca56a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantLookup.html#aadfca026f5a97999405f5c2711ca56a0">ComposeSpecFor</a> = std::function&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1VariantSpec.html">VariantSpec</a> *(<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;, <a class="el" href="classpromeki_1_1Error.html">Error</a> *)&gt;</td></tr>
 <tr class="memdesc:aadfca026f5a97999405f5c2711ca56a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Erased spec resolver for a composed handler.  <br /></td></tr>
 <tr class="separator:aadfca026f5a97999405f5c2711ca56a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afdd5f37dbb0ba7b71ccdcbf15ffe7eb7" id="r_afdd5f37dbb0ba7b71ccdcbf15ffe7eb7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantLookup.html#afdd5f37dbb0ba7b71ccdcbf15ffe7eb7">VariantTreeGet</a> = std::function&lt; <a class="el" href="classpromeki_1_1Variant.html">Variant</a>(<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">T</a> &amp;)&gt;</td></tr>
+<tr class="memdesc:afdd5f37dbb0ba7b71ccdcbf15ffe7eb7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Getter for a <a class="el" href="classpromeki_1_1VariantLookup_1_1Registrar.html#aba1646ad2c55c307386df9ff38c2edf7">Registrar::variantTree</a> handler.  <br /></td></tr>
+<tr class="separator:afdd5f37dbb0ba7b71ccdcbf15ffe7eb7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -283,8 +286,8 @@ class promeki::VariantLookup&lt; T &gt;</div><p>Type-parameterised registry of n
 <div class="line"><span class="keyword">const</span> <a class="code hl_class" href="classpromeki_1_1VariantSpec.html">VariantSpec</a> *    variantLookupSpecFor(<span class="keyword">const</span> <a class="code hl_class" href="classpromeki_1_1String.html">String</a> &amp;, <a class="code hl_class" href="classpromeki_1_1Error.html">Error</a> *) <span class="keyword">const</span>;</div>
 <div class="ttc" id="aclasspromeki_1_1Error_html"><div class="ttname"><a href="classpromeki_1_1Error.html">promeki::Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:43</div></div>
 <div class="ttc" id="aclasspromeki_1_1String_html"><div class="ttname"><a href="classpromeki_1_1String.html">promeki::String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:64</div></div>
-<div class="ttc" id="aclasspromeki_1_1VariantSpec_html"><div class="ttname"><a href="classpromeki_1_1VariantSpec.html">promeki::VariantSpec</a></div><div class="ttdoc">Describes the constraints and default value for a VariantDatabase ID.</div><div class="ttdef"><b>Definition</b> variantspec.h:69</div></div>
-<div class="ttc" id="aclasspromeki_1_1Variant_html"><div class="ttname"><a href="classpromeki_1_1Variant.html">promeki::Variant</a></div><div class="ttdoc">Concrete Variant type used throughout promeki.</div><div class="ttdef"><b>Definition</b> variant.h:625</div></div>
+<div class="ttc" id="aclasspromeki_1_1VariantSpec_html"><div class="ttname"><a href="classpromeki_1_1VariantSpec.html">promeki::VariantSpec</a></div><div class="ttdoc">Describes the constraints and default value for a VariantDatabase ID.</div><div class="ttdef"><b>Definition</b> variantspec.h:70</div></div>
+<div class="ttc" id="aclasspromeki_1_1Variant_html"><div class="ttname"><a href="classpromeki_1_1Variant.html">promeki::Variant</a></div><div class="ttdoc">Concrete Variant type used throughout promeki.</div><div class="ttdef"><b>Definition</b> variant.h:939</div></div>
 </div><!-- fragment --> get polymorphic dispatch for free — the public <a class="el" href="classpromeki_1_1VariantLookup.html#af701dacb0053237576d15cd74d6a7cfc">resolve</a> / <a class="el" href="classpromeki_1_1VariantLookup.html#ab2de2172b05aacf0e5b2e0acd3d5e9e6">assign</a> / <a class="el" href="classpromeki_1_1VariantLookup.html#a9c7e90e1e7f36b7df03f90d4a4fddc5e">specFor</a> entry points route through the virtual first so a caller holding a reference-to-base lands on the <em>most</em> derived type's registry, and the upward cascade then fills in any keys the derived class inherited from its base. Use <code>PROMEKI_VARIANTLOOKUP_DISPATCH(Self)</code> inside the derived <code>class</code> body to implement these overrides uniformly. Types that do not opt in stay on the direct-lookup fast path with no vtable hit.</dd></dl>
 <p>Each handler optionally accepts a setter / mutable accessor. Omitting it marks the path read-only, causing <a class="el" href="classpromeki_1_1VariantLookup.html#ab2de2172b05aacf0e5b2e0acd3d5e9e6">assign</a> to fail with <code><a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a854d22dfee7fd40e78eb87858f14b37d" title="Read-only file system (EROFS).">Error::ReadOnly</a></code>. <a class="el" href="classpromeki_1_1Terminal.html" title="Low-level terminal I/O abstraction.">Terminal</a> handlers also accept an optional <a class="el" href="classpromeki_1_1VariantSpec.html">VariantSpec</a> pointer describing the value's declared type; the spec surfaces through <a class="el" href="classpromeki_1_1VariantLookup.html#a9c7e90e1e7f36b7df03f90d4a4fddc5e">specFor</a> for callers that need to coerce string literals to the key's native type (query compilers, introspectors, configuration tools).</p>
 <dl class="section user"><dt>Lookup keys</dt><dd>Internally every registered name is hashed to a <code>uint64_t</code> via 64-bit FNV-1a and stored in hash-keyed maps so <a class="el" href="classpromeki_1_1VariantLookup.html#af701dacb0053237576d15cd74d6a7cfc">resolve</a> / <a class="el" href="classpromeki_1_1VariantLookup.html#ab2de2172b05aacf0e5b2e0acd3d5e9e6">assign</a> / <a class="el" href="classpromeki_1_1VariantLookup.html#a9c7e90e1e7f36b7df03f90d4a4fddc5e">specFor</a> avoid per-call string comparisons. A per-<code>T</code> reverse map preserves names for introspection. The <a class="el" href="classpromeki_1_1VariantLookup_1_1Key.html">Key</a> nested type is a lightweight handle around the same <code>uint64_t</code> ID with a <code>constexpr</code> <a class="el" href="classpromeki_1_1VariantLookup_1_1Key.html#ae5cda9655f04ed79603ecfba803e4ce4">Key::literal</a> factory, so callers that already know which terminal they want can skip the name round-trip with a typed overload.</dd></dl>
@@ -295,11 +298,11 @@ class promeki::VariantLookup&lt; T &gt;</div><p>Type-parameterised registry of n
 <div class="line">                [](<span class="keyword">const</span> Image &amp;i) -&gt; <span class="keyword">const</span> VariantDatabase&lt;<span class="stringliteral">&quot;Metadata&quot;</span>&gt;* {</div>
 <div class="line">                        <span class="keywordflow">return</span> &amp;i.desc().metadata();</div>
 <div class="line">                });</div>
-<div class="ttc" id="agroup__util_html_ga5cbdbf7bece870dee46af061c78a716a"><div class="ttname"><a href="group__util.html#ga5cbdbf7bece870dee46af061c78a716a">PROMEKI_LOOKUP_REGISTER</a></div><div class="ttdeci">#define PROMEKI_LOOKUP_REGISTER(Type)</div><div class="ttdoc">Registers VariantLookup handlers for a type.</div><div class="ttdef"><b>Definition</b> variantlookup.h:2023</div></div>
+<div class="ttc" id="agroup__util_html_ga5cbdbf7bece870dee46af061c78a716a"><div class="ttname"><a href="group__util.html#ga5cbdbf7bece870dee46af061c78a716a">PROMEKI_LOOKUP_REGISTER</a></div><div class="ttdeci">#define PROMEKI_LOOKUP_REGISTER(Type)</div><div class="ttdoc">Registers VariantLookup handlers for a type.</div><div class="ttdef"><b>Definition</b> variantlookup.h:2346</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="section user"><dt>Dispatch</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classpromeki_1_1Error.html">Error</a> <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">err</a>;</div>
 <div class="line"><span class="keyword">auto</span> v = <a class="code hl_function" href="classpromeki_1_1VariantLookup.html#af701dacb0053237576d15cd74d6a7cfc">VariantLookup&lt;Image&gt;::resolve</a>(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">img</a>, <span class="stringliteral">&quot;Meta.Timecode&quot;</span>, &amp;<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">err</a>);</div>
-<div class="ttc" id="aclasspromeki_1_1VariantLookup_html_af701dacb0053237576d15cd74d6a7cfc"><div class="ttname"><a href="classpromeki_1_1VariantLookup.html#af701dacb0053237576d15cd74d6a7cfc">promeki::VariantLookup::resolve</a></div><div class="ttdeci">static std::optional&lt; Variant &gt; resolve(const T &amp;instance, const String &amp;key, Error *err=nullptr)</div><div class="ttdoc">Resolves key against instance.</div><div class="ttdef"><b>Definition</b> variantlookup.h:916</div></div>
+<div class="ttc" id="aclasspromeki_1_1VariantLookup_html_af701dacb0053237576d15cd74d6a7cfc"><div class="ttname"><a href="classpromeki_1_1VariantLookup.html#af701dacb0053237576d15cd74d6a7cfc">promeki::VariantLookup::resolve</a></div><div class="ttdeci">static std::optional&lt; Variant &gt; resolve(const T &amp;instance, const String &amp;key, Error *err=nullptr)</div><div class="ttdoc">Resolves key against instance.</div><div class="ttdef"><b>Definition</b> variantlookup.h:1160</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="section user"><dt>Error codes</dt><dd><ul>
 <li><code><a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4aa1d4e58e1f6bcb07de7b2aa675c60cc6" title="No error.">Error::Ok</a></code> — resolution / assignment succeeded.</li>
@@ -348,6 +351,25 @@ template&lt;<a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> <a 
 
 <p><a class="el" href="classpromeki_1_1Terminal.html" title="Low-level terminal I/O abstraction.">Terminal</a> scalar setter. </p>
 <p>Returns <code><a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4aa1d4e58e1f6bcb07de7b2aa675c60cc6" title="No error.">Error::Ok</a></code> on success or a specific error code on failure (e.g. <code><a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4acb2c33b27c2c96338e43706d2a846e83" title="Type conversion could not be performed.">Error::ConversionFailed</a></code> for a value of the wrong type, <code><a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a65a62d2e9bbb7600dce6d6fce11f5b59" title="Value is out of range.">Error::OutOfRange</a></code> for a numeric bounds violation). <a class="el" href="classpromeki_1_1VariantLookup.html#ab2de2172b05aacf0e5b2e0acd3d5e9e6">assign</a> propagates the returned code to the caller unchanged. </p>
+
+</div>
+</div>
+<a id="afdd5f37dbb0ba7b71ccdcbf15ffe7eb7" name="afdd5f37dbb0ba7b71ccdcbf15ffe7eb7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afdd5f37dbb0ba7b71ccdcbf15ffe7eb7">&#9670;&#160;</a></span>VariantTreeGet</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> <a class="el" href="classpromeki_1_1UniquePtr.html">T</a> &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a> <a class="el" href="classpromeki_1_1VariantLookup.html">promeki::VariantLookup</a>&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">T</a> &gt;::VariantTreeGet =  std::function&lt;<a class="el" href="classpromeki_1_1Variant.html">Variant</a>(<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">T</a> &amp;)&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Getter for a <a class="el" href="classpromeki_1_1VariantLookup_1_1Registrar.html#aba1646ad2c55c307386df9ff38c2edf7">Registrar::variantTree</a> handler. </p>
+<p>Returns the <a class="el" href="classpromeki_1_1Variant.html">Variant</a> at the registered name on <code>instance</code> — typically a <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> carrying a <a class="el" href="classpromeki_1_1VariantList.html">VariantList</a> or <a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a>. The dispatcher descends into the returned tree via <a class="el" href="group__util.html#ga9a226becfda3afcb900553587041cd76">promekiResolveVariantPath</a> when the lookup key has a trailing path or index suffix, so callers get <code>"Foo.bar[0]"</code> -style sub-path access for free. </p>
 
 </div>
 </div>
@@ -1102,7 +1124,7 @@ template&lt;<a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> <a 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1VariantLookup.html">VariantLookup</a></li>
-    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 23:49:04 from commit 49b0299 (1.0.0).</li>
   </ul>
 </div>
 </body>

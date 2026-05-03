@@ -45,7 +45,9 @@ var classpromeki_1_1VariantImpl =
       [ "TypeMasteringDisplay", "classpromeki_1_1VariantImpl.html#a150a41989e40927781e90aa640c6811ba2acfb5c848b29cf9a0e86e46883cef0f", null ],
       [ "TypeContentLightLevel", "classpromeki_1_1VariantImpl.html#a150a41989e40927781e90aa640c6811ba47b38ecf58feac77bc306f51592a6041", null ],
       [ "TypeUrl", "classpromeki_1_1VariantImpl.html#a150a41989e40927781e90aa640c6811ba3289bae35ceb81c2e37c59e590a18b2a", null ],
-      [ "TypeWindowedStat", "classpromeki_1_1VariantImpl.html#a150a41989e40927781e90aa640c6811ba04e49b6f44e30b124c85cad3b9b7a2fb", null ]
+      [ "TypeWindowedStat", "classpromeki_1_1VariantImpl.html#a150a41989e40927781e90aa640c6811ba04e49b6f44e30b124c85cad3b9b7a2fb", null ],
+      [ "TypeVariantList", "classpromeki_1_1VariantImpl.html#a150a41989e40927781e90aa640c6811ba2c55d6c321541f5c01a8aec5d1f36913", null ],
+      [ "TypeVariantMap", "classpromeki_1_1VariantImpl.html#a150a41989e40927781e90aa640c6811ba6c87751afc202628c75dfcf50e15a143", null ]
     ] ],
     [ "VariantImpl", "classpromeki_1_1VariantImpl.html#a01d53f99b913830b4aa27b0a0064d647", null ],
     [ "VariantImpl", "classpromeki_1_1VariantImpl.html#a316f8e76060552912f45427fa52c1bf2", null ],
@@ -55,6 +57,7 @@ var classpromeki_1_1VariantImpl =
     [ "isValid", "classpromeki_1_1VariantImpl.html#a1585edf275caefa7e05251994e9bc8f9", null ],
     [ "operator!=", "classpromeki_1_1VariantImpl.html#a1ee6cd8d95930644d534a567521ca11a", null ],
     [ "operator==", "classpromeki_1_1VariantImpl.html#a1586804d02d9593835adb745e7cfa36e", null ],
+    [ "peek", "classpromeki_1_1VariantImpl.html#a1d88cc0c42c895f4dfd042e367438d51", null ],
     [ "set", "classpromeki_1_1VariantImpl.html#a18273536c187d6d1f8439b316576f628", null ],
     [ "toStandardType", "classpromeki_1_1VariantImpl.html#a532c995fcdaf4b3f9e8e1c9aec515e27", null ],
     [ "type", "classpromeki_1_1VariantImpl.html#a718721099b6a20c1ac83273a33c1a5a7", null ],

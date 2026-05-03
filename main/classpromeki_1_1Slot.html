@@ -155,19 +155,19 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>id</b> () <a class="el
 <tr class="memdesc:a1fb9ed5239508cd2878a0e682d8de486"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes the slot's callable with the given typed arguments.  <br /></td></tr>
 <tr class="separator:a1fb9ed5239508cd2878a0e682d8de486"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c9d2de3acd6d7c16b04d7de9939baa8" id="r_a7c9d2de3acd6d7c16b04d7de9939baa8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Slot.html#a7c9d2de3acd6d7c16b04d7de9939baa8">exec</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1VariantList.html">VariantList</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">variantList</a>)</td></tr>
-<tr class="memdesc:a7c9d2de3acd6d7c16b04d7de9939baa8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes the slot's callable by unpacking arguments from a <a class="el" href="classpromeki_1_1VariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a>.  <br /></td></tr>
+<tr class="memdesc:a7c9d2de3acd6d7c16b04d7de9939baa8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes the slot's callable by unpacking arguments from a <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a>.  <br /></td></tr>
 <tr class="separator:a7c9d2de3acd6d7c16b04d7de9939baa8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ad9baf685759484a9030aa24c98d6973d" id="r_ad9baf685759484a9030aa24c98d6973d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1VariantList.html">VariantList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Slot.html#ad9baf685759484a9030aa24c98d6973d">pack</a> (Args... <a class="el" href="classpromeki_1_1UniquePtr.html">args</a>)</td></tr>
-<tr class="memdesc:ad9baf685759484a9030aa24c98d6973d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Packs the given arguments into a <a class="el" href="classpromeki_1_1VariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a>.  <br /></td></tr>
+<tr class="memdesc:ad9baf685759484a9030aa24c98d6973d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Packs the given arguments into a <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a>.  <br /></td></tr>
 <tr class="separator:ad9baf685759484a9030aa24c98d6973d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename... Args&gt;<br />
 class promeki::Slot&lt; Args &gt;</div><p>Type-safe callback slot that wraps a callable with optional ownership tracking. </p>
-<p><a class="el" href="classpromeki_1_1Slot.html" title="Type-safe callback slot that wraps a callable with optional ownership tracking.">Slot</a> provides a mechanism for storing and invoking callbacks with a fixed argument signature. It supports direct invocation with typed arguments as well as deferred invocation from a <a class="el" href="classpromeki_1_1VariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a>, enabling type-erased signal/slot communication.</p>
+<p><a class="el" href="classpromeki_1_1Slot.html" title="Type-safe callback slot that wraps a callable with optional ownership tracking.">Slot</a> provides a mechanism for storing and invoking callbacks with a fixed argument signature. It supports direct invocation with typed arguments as well as deferred invocation from a <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a>, enabling type-erased signal/slot communication.</p>
 <dl class="section user"><dt>Thread Safety</dt><dd>Thread-affine — a <a class="el" href="classpromeki_1_1Slot.html" title="Type-safe callback slot that wraps a callable with optional ownership tracking.">Slot</a> belongs to its owning <a class="el" href="classpromeki_1_1ObjectBase.html" title="Base object for promeki.">ObjectBase</a> and should be invoked from that thread. <a class="el" href="classpromeki_1_1Signal.html">Signal</a> handles the cross-thread routing for connections that need it.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -292,8 +292,8 @@ template&lt;typename... Args&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Executes the slot's callable by unpacking arguments from a <a class="el" href="classpromeki_1_1VariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a>. </p>
-<p>Each element in the <a class="el" href="classpromeki_1_1VariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a> is converted back to the corresponding typed argument and forwarded to the underlying callable.</p>
+<p>Executes the slot's callable by unpacking arguments from a <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a>. </p>
+<p>Each element in the <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a> is converted back to the corresponding typed argument and forwarded to the underlying callable.</p>
 <p>Defined in <code>slot.tpp</code> so <code><a class="el" href="slot_8h.html">slot.h</a></code> does not pull in the full <code><a class="el" href="variant_8h.html">variant.h</a></code>. Include <code>promeki/slot.tpp</code> from any TU that calls <code><a class="el" href="classpromeki_1_1Slot.html#a7c9d2de3acd6d7c16b04d7de9939baa8" title="Executes the slot&#39;s callable by unpacking arguments from a VariantList.">exec(const VariantList &amp;)</a></code>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -330,7 +330,7 @@ template&lt;typename... Args&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Packs the given arguments into a <a class="el" href="classpromeki_1_1VariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a>. </p>
+<p>Packs the given arguments into a <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a>. </p>
 <p>Each argument is converted to a <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> after stripping const and reference qualifiers. This is useful for serializing a set of arguments for later deferred invocation via <a class="el" href="classpromeki_1_1Slot.html#a7c9d2de3acd6d7c16b04d7de9939baa8" title="Executes the slot&#39;s callable by unpacking arguments from a VariantList.">exec(const VariantList &amp;)</a>.</p>
 <p>Defined in <code>slot.tpp</code> so <code><a class="el" href="slot_8h.html">slot.h</a></code> does not pull in the full <code><a class="el" href="variant_8h.html">variant.h</a></code>. Include <code>promeki/slot.tpp</code> from any TU that calls <a class="el" href="classpromeki_1_1Slot.html#ad9baf685759484a9030aa24c98d6973d" title="Packs the given arguments into a VariantList.">pack()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
@@ -339,7 +339,7 @@ template&lt;typename... Args&gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classpromeki_1_1VariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a> containing each argument as a <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a> containing each argument as a <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a>. </dd></dl>
 
 </div>
 </div>
@@ -353,7 +353,7 @@ template&lt;typename... Args&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1Slot.html">Slot</a></li>
-    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 23:49:04 from commit 49b0299 (1.0.0).</li>
   </ul>
 </div>
 </body>

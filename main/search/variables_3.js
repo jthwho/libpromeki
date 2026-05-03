@@ -3,7 +3,7 @@ var searchData=
   ['callback_0',['callback',['../classpromeki_1_1CmdLineParser_1_1Option.html#ad8a7fc8a3c02d2cdcf08d8c796aa40ce',1,'promeki::CmdLineParser::Option']]],
   ['cancelled_1',['cancelled',['../classpromeki_1_1MediaIOCommand.html#acf917d52b46e974d04aba03793e4dd03',1,'promeki::MediaIOCommand']]],
   ['canseek_2',['canseek',['../structpromeki_1_1MediaIOPortGroupDescription.html#a8791fcde9f3dc529f7ef6e99096b07d1',1,'promeki::MediaIOPortGroupDescription::canSeek'],['../classpromeki_1_1MediaIOCommandOpen.html#a0727ec567667deb0faeafba881254e78',1,'promeki::MediaIOCommandOpen::canSeek']]],
-  ['capacity_3',['capacity',['../structpromeki_1_1WindowedStat_1_1Stats.html#a527d82593e7b59ddffb975d31dc93efa',1,'promeki::WindowedStat::Stats::capacity'],['../classpromeki_1_1MediaConfig.html#a09f80c31ceeb580e0a76e7d2bda116cf',1,'promeki::MediaConfig::Capacity']]],
+  ['capacity_3',['capacity',['../classpromeki_1_1MediaConfig.html#a09f80c31ceeb580e0a76e7d2bda116cf',1,'promeki::MediaConfig::Capacity'],['../structpromeki_1_1WindowedStat_1_1Stats.html#a527d82593e7b59ddffb975d31dc93efa',1,'promeki::WindowedStat::Stats::capacity']]],
   ['captureenvironment_4',['CaptureEnvironment',['../classpromeki_1_1LibraryOptions.html#a24c8362c4b283ed565c0e15c5c9541a9',1,'promeki::LibraryOptions']]],
   ['capturetime_5',['CaptureTime',['../classpromeki_1_1Metadata.html#a321df8dfcf69205ffb28303930bbfac7',1,'promeki::Metadata']]],
   ['ch_6',['ch',['../structpromeki_1_1TuiCell.html#a8b0cd16a396cff18f331fbc6aaaefb0b',1,'promeki::TuiCell']]],

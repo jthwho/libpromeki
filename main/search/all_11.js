@@ -86,7 +86,7 @@ var searchData=
   ['notesequenceparser_83',['NoteSequenceParser',['../classpromeki_1_1NoteSequenceParser.html',1,'promeki']]],
   ['notesequenceparser_2eh_84',['notesequenceparser.h',['../notesequenceparser_8h.html',1,'']]],
   ['notexist_85',['NotExist',['../classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a73292b42e203d585e11ef84f3354d3f8',1,'promeki::Error']]],
-  ['notfound_86',['notfound',['../classpromeki_1_1HttpResponse.html#aa34d91c7c328f4dd7af9b780acf36072',1,'promeki::HttpResponse::notFound()'],['../classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a1b836fa244b76c5c1c28d7f5dfd2a8fc',1,'promeki::Error::NotFound']]],
+  ['notfound_86',['notfound',['../classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a1b836fa244b76c5c1c28d7f5dfd2a8fc',1,'promeki::Error::NotFound'],['../classpromeki_1_1HttpResponse.html#aa34d91c7c328f4dd7af9b780acf36072',1,'promeki::HttpResponse::notFound()']]],
   ['nothostaccessible_87',['NotHostAccessible',['../classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4aa5875eb0041805316436f52ce443c596',1,'promeki::Error']]],
   ['notimplemented_88',['NotImplemented',['../classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a6d4fdf7b49de543a95d0a36be72c3f40',1,'promeki::Error']]],
   ['notopen_89',['notopen',['../classpromeki_1_1MediaPipelineConfig.html#acd7bb69f906117b2688086f0d51017b3abdd7de68889646349ad64c3f6404b635',1,'promeki::MediaPipelineConfig::NotOpen'],['../classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a922fce566803efdcf7a721442b9fbe93',1,'promeki::Error::NotOpen'],['../classpromeki_1_1IODevice.html#a3afa7ed7733b8b9de76b0b78f623b292a305184c784ff2ad5c5699dc5bd72f54b',1,'promeki::IODevice::NotOpen']]],

@@ -263,6 +263,12 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1UUID.html">promeki::UUID</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Universally Unique Identifier (<a class="el" href="classpromeki_1_1UUID.html" title="Universally Unique Identifier (UUID).">UUID</a>).  <a href="classpromeki_1_1UUID.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantList.html">promeki::VariantList</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Heterogeneous list of <a class="el" href="classpromeki_1_1Variant.html">Variant</a> values.  <a href="classpromeki_1_1VariantList.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantMap.html">promeki::VariantMap</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Heterogeneous string-keyed map of <a class="el" href="classpromeki_1_1Variant.html">Variant</a> values.  <a href="classpromeki_1_1VariantMap.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantDatabase.html">promeki::VariantDatabase&lt; Name &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A collection of named <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> values keyed by string-registered IDs.  <a href="classpromeki_1_1VariantDatabase.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -364,6 +370,12 @@ Functions</h2></td></tr>
 <tr class="memitem:ga1149fbe2fa8035dd316d1a7048d76397"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">UniquePtr</a>&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">Derived</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__util.html#ga1149fbe2fa8035dd316d1a7048d76397">promeki::uniquePointerCast</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">UniquePtr</a>&lt; Base &gt; &amp;&amp;<a class="el" href="classpromeki_1_1UniquePtr.html">up</a>)</td></tr>
 <tr class="memdesc:ga1149fbe2fa8035dd316d1a7048d76397"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dynamic downcast across a polymorphic <a class="el" href="classpromeki_1_1UniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a> hierarchy.  <br /></td></tr>
 <tr class="separator:ga1149fbe2fa8035dd316d1a7048d76397"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9a226becfda3afcb900553587041cd76" id="r_ga9a226becfda3afcb900553587041cd76"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Variant.html">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga9a226becfda3afcb900553587041cd76">promeki::promekiResolveVariantPath</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &amp;root, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;path, <a class="el" href="classpromeki_1_1Error.html">Error</a> *<a class="el" href="classpromeki_1_1UniquePtr.html">err</a>=<a class="el" href="classpromeki_1_1UniquePtr.html">nullptr</a>)</td></tr>
+<tr class="memdesc:ga9a226becfda3afcb900553587041cd76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resolves a dotted/indexed path against a <a class="el" href="classpromeki_1_1Variant.html">Variant</a> tree.  <br /></td></tr>
+<tr class="separator:ga9a226becfda3afcb900553587041cd76"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga69cbf0bbc9509bb252c52f40255a2ed8" id="r_ga69cbf0bbc9509bb252c52f40255a2ed8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1VariantSpec.html">VariantSpec</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga69cbf0bbc9509bb252c52f40255a2ed8">promeki::detail::walkSpecPath</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1VariantSpec.html">VariantSpec</a> *<a class="el" href="classpromeki_1_1UniquePtr.html">cur</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;path, <a class="el" href="classpromeki_1_1Error.html">Error</a> *<a class="el" href="classpromeki_1_1UniquePtr.html">err</a>=<a class="el" href="classpromeki_1_1UniquePtr.html">nullptr</a>)</td></tr>
+<tr class="memdesc:ga69cbf0bbc9509bb252c52f40255a2ed8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Walks a key path through a <a class="el" href="classpromeki_1_1VariantSpec.html">VariantSpec</a> tree.  <br /></td></tr>
+<tr class="separator:ga69cbf0bbc9509bb252c52f40255a2ed8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>General-purpose utilities, error handling, and diagnostics. </p>
@@ -415,7 +427,7 @@ Functions</h2></td></tr>
 <div class="line">        <span class="comment">// Title.id() is now a constant expression:</span></div>
 <div class="line">        <span class="keyword">static_assert</span>(Title.id() == ID::literal(<span class="stringliteral">&quot;Title&quot;</span>).id());</div>
 <div class="line">};</div>
-<div class="ttc" id="agroup__util_html_ga155b8e018cd70514a008a09951cf033e"><div class="ttname"><a href="group__util.html#ga155b8e018cd70514a008a09951cf033e">PROMEKI_DECLARE_ID</a></div><div class="ttdeci">#define PROMEKI_DECLARE_ID(Name,...)</div><div class="ttdoc">Declares a well-known VariantDatabase key as a compile-time constant.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:1048</div></div>
+<div class="ttc" id="agroup__util_html_ga155b8e018cd70514a008a09951cf033e"><div class="ttname"><a href="group__util.html#ga155b8e018cd70514a008a09951cf033e">PROMEKI_DECLARE_ID</a></div><div class="ttdeci">#define PROMEKI_DECLARE_ID(Name,...)</div><div class="ttdoc">Declares a well-known VariantDatabase key as a compile-time constant.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:1088</div></div>
 </div><!-- fragment --> </dd></dl>
 
 </div>
@@ -437,7 +449,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line">        [[maybe_unused]] <span class="keyword">static</span> <span class="keyword">inline</span> const ::promeki::VariantLookup&lt;Type&gt;::Registrar PROMEKI_CONCAT(                 \</div>
 <div class="line">                _promeki_lookup_reg_, __COUNTER__) = <a class="code hl_function" href="classpromeki_1_1VariantLookup.html#a39beb3f4284bc0436431f3d6c8f3d6ed">::promeki::VariantLookup&lt;Type&gt;::registrar</a>()</div>
-<div class="ttc" id="aclasspromeki_1_1VariantLookup_html_a39beb3f4284bc0436431f3d6c8f3d6ed"><div class="ttname"><a href="classpromeki_1_1VariantLookup.html#a39beb3f4284bc0436431f3d6c8f3d6ed">promeki::VariantLookup::registrar</a></div><div class="ttdeci">static Registrar registrar()</div><div class="ttdoc">Returns a fresh Registrar for chain-style registration.</div><div class="ttdef"><b>Definition</b> variantlookup.h:890</div></div>
+<div class="ttc" id="aclasspromeki_1_1VariantLookup_html_a39beb3f4284bc0436431f3d6c8f3d6ed"><div class="ttname"><a href="classpromeki_1_1VariantLookup.html#a39beb3f4284bc0436431f3d6c8f3d6ed">promeki::VariantLookup::registrar</a></div><div class="ttdeci">static Registrar registrar()</div><div class="ttdoc">Returns a fresh Registrar for chain-style registration.</div><div class="ttdef"><b>Definition</b> variantlookup.h:1134</div></div>
 </div><!-- fragment -->
 <p>Registers VariantLookup handlers for a type. </p>
 <p>Expands to a uniquely-named <code>static</code> <code>inline</code> constant that captures the final <a class="el" href="classpromeki_1_1VariantLookup_1_1Registrar.html">Registrar</a> value from a fluent chain. The side effects (inserting handlers into the per-<code>T</code> registry) happen during static-init, so the macro must appear at namespace or class scope.</p>
@@ -447,7 +459,7 @@ Functions</h2></td></tr>
 <div class="line">        .scalar(<span class="stringliteral">&quot;Height&quot;</span>, [](<span class="keyword">const</span> Image &amp;i){ <span class="keywordflow">return</span> Variant(i.desc().height()); })</div>
 <div class="line">        .database&lt;&quot;Metadata&quot;&gt;(<span class="stringliteral">&quot;Meta&quot;</span>,</div>
 <div class="line">                [](<span class="keyword">const</span> Image &amp;i){ <span class="keywordflow">return</span> &amp;i.desc().metadata(); });</div>
-<div class="ttc" id="agroup__util_html_ga5cbdbf7bece870dee46af061c78a716a"><div class="ttname"><a href="group__util.html#ga5cbdbf7bece870dee46af061c78a716a">PROMEKI_LOOKUP_REGISTER</a></div><div class="ttdeci">#define PROMEKI_LOOKUP_REGISTER(Type)</div><div class="ttdoc">Registers VariantLookup handlers for a type.</div><div class="ttdef"><b>Definition</b> variantlookup.h:2023</div></div>
+<div class="ttc" id="agroup__util_html_ga5cbdbf7bece870dee46af061c78a716a"><div class="ttname"><a href="group__util.html#ga5cbdbf7bece870dee46af061c78a716a">PROMEKI_LOOKUP_REGISTER</a></div><div class="ttdeci">#define PROMEKI_LOOKUP_REGISTER(Type)</div><div class="ttdoc">Registers VariantLookup handlers for a type.</div><div class="ttdef"><b>Definition</b> variantlookup.h:2346</div></div>
 </div><!-- fragment --> </dd></dl>
 
 </div>
@@ -690,11 +702,15 @@ Functions</h2></td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">TypeTimeStamp   </td><td class="markdownTableBodyNone"><code>TimeStamp</code>    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">TypeFrameNumber   </td><td class="markdownTableBodyNone"><code>FrameNumber</code>    </td></tr>
+<td class="markdownTableBodyNone">TypeMediaTimeStamp   </td><td class="markdownTableBodyNone"><code>MediaTimeStamp</code>    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">TypeFrameCount   </td><td class="markdownTableBodyNone"><code>FrameCount</code>    </td></tr>
+<td class="markdownTableBodyNone">TypeFrameNumber   </td><td class="markdownTableBodyNone"><code>FrameNumber</code>    </td></tr>
 <tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">TypeFrameCount   </td><td class="markdownTableBodyNone"><code>FrameCount</code>    </td></tr>
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">TypeMediaDuration   </td><td class="markdownTableBodyNone"><code>MediaDuration</code>    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">TypeDuration   </td><td class="markdownTableBodyNone"><code>Duration</code>    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">TypeSize2D   </td><td class="markdownTableBodyNone"><code>Size2Du32</code>    </td></tr>
 <tr class="markdownTableRowEven">
@@ -738,7 +754,11 @@ Functions</h2></td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">TypeEnumList   </td><td class="markdownTableBodyNone"><code>EnumList</code>    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">TypeWindowedStat   </td><td class="markdownTableBodyNone"><code>WindowedStat</code>   </td></tr>
+<td class="markdownTableBodyNone">TypeWindowedStat   </td><td class="markdownTableBodyNone"><code>WindowedStat</code>    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">TypeVariantList   </td><td class="markdownTableBodyNone"><code>VariantList</code>    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">TypeVariantMap   </td><td class="markdownTableBodyNone"><code>VariantMap</code>   </td></tr>
 </table>
 <p>When <code>PROMEKI_ENABLE_NETWORK</code> is true, the following types are also available:</p>
 <table class="markdownTable">
@@ -1005,6 +1025,66 @@ template&lt;<a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> <a 
 
 </div>
 </div>
+<a id="ga9a226becfda3afcb900553587041cd76" name="ga9a226becfda3afcb900553587041cd76"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga9a226becfda3afcb900553587041cd76">&#9670;&#160;</a></span>promekiResolveVariantPath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1Variant.html">Variant</a> promeki::promekiResolveVariantPath </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &amp;&#160;</td>
+          <td class="paramname"><em>root</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1Error.html">Error</a> *&#160;</td>
+          <td class="paramname"><em>err</em> = <code><a class="el" href="classpromeki_1_1UniquePtr.html">nullptr</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Resolves a dotted/indexed path against a <a class="el" href="classpromeki_1_1Variant.html">Variant</a> tree. </p>
+<p>Walks <code>root</code> following the same key grammar used by <a class="el" href="classpromeki_1_1VariantLookup.html">VariantLookup</a> (&lsquo;segment ( &rsquo;.' segment )*<code>, where </code>segment := name ( '[' index ']' )?`), descending through nested <a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a> and <a class="el" href="classpromeki_1_1VariantList.html">VariantList</a> alternatives as needed.</p>
+<dl class="section user"><dt>Examples</dt><dd><ul>
+<li><code>"foo"</code> against a <a class="el" href="classpromeki_1_1VariantMap.html" title="Heterogeneous string-keyed map of Variant values.">VariantMap</a> → returns the value for key <code>"foo"</code>.</li>
+<li><code>"foo.bar"</code> against a <a class="el" href="classpromeki_1_1VariantMap.html" title="Heterogeneous string-keyed map of Variant values.">VariantMap</a> → looks up <code>foo</code>, descends if it holds a <a class="el" href="classpromeki_1_1VariantMap.html" title="Heterogeneous string-keyed map of Variant values.">VariantMap</a>, then looks up <code>bar</code>.</li>
+<li><code>"foo[0]"</code> → looks up <code>foo</code>, descends if it holds a <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a>, returns element 0.</li>
+<li><code>"[0]"</code> against a <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a> — the leading segment is empty so the walker treats the whole <code>root</code> as the list and returns element 0.</li>
+</ul>
+</dd></dl>
+<dl class="section user"><dt>Errors</dt><dd><ul>
+<li><code><a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a979811130a1a9a4618b266794fa84b97" title="Requested ID was not found in the database.">Error::IdNotFound</a></code> — a key was missing from a <a class="el" href="classpromeki_1_1VariantMap.html" title="Heterogeneous string-keyed map of Variant values.">VariantMap</a>.</li>
+<li><code><a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a65a62d2e9bbb7600dce6d6fce11f5b59" title="Value is out of range.">Error::OutOfRange</a></code> — a list index was beyond the <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a> size.</li>
+<li><code><a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4ae8684dbead4715d0175b83e16f523988" title="Text input (expression, URL, etc.) failed to parse.">Error::ParseFailed</a></code> — the path itself was malformed.</li>
+<li><code><a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a6dd90c21b0a2441b67dccc6cbbb25da8" title="Invalid value or argument (EINVAL).">Error::Invalid</a></code> — descended into a <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> that wasn't <a class="el" href="classpromeki_1_1VariantMap.html" title="Heterogeneous string-keyed map of Variant values.">VariantMap</a> / <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a> when the path still had segments to walk.</li>
+</ul>
+</dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">root</td><td>The <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> to walk. Typically holds a <a class="el" href="classpromeki_1_1VariantMap.html" title="Heterogeneous string-keyed map of Variant values.">VariantMap</a> or <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a>. </td></tr>
+    <tr><td class="paramname">path</td><td>The dotted/indexed path to follow. </td></tr>
+    <tr><td class="paramname">err</td><td>Optional error output. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The resolved <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a>, or an invalid <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> on failure. </dd></dl>
+
+</div>
+</div>
 <a id="gaf6574c9099c15391758cdb4039c6e37b" name="gaf6574c9099c15391758cdb4039c6e37b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#gaf6574c9099c15391758cdb4039c6e37b">&#9670;&#160;</a></span>secureZero()</h2>
 
@@ -1218,13 +1298,73 @@ template&lt;<a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> <a 
 
 </div>
 </div>
+<a id="ga69cbf0bbc9509bb252c52f40255a2ed8" name="ga69cbf0bbc9509bb252c52f40255a2ed8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga69cbf0bbc9509bb252c52f40255a2ed8">&#9670;&#160;</a></span>walkSpecPath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1VariantSpec.html">VariantSpec</a> * promeki::detail::walkSpecPath </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1VariantSpec.html">VariantSpec</a> *&#160;</td>
+          <td class="paramname"><em>cur</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1Error.html">Error</a> *&#160;</td>
+          <td class="paramname"><em>err</em> = <code><a class="el" href="classpromeki_1_1UniquePtr.html">nullptr</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Walks a key path through a <a class="el" href="classpromeki_1_1VariantSpec.html">VariantSpec</a> tree. </p>
+<p>Used by <a class="el" href="classpromeki_1_1VariantLookup_1_1Registrar.html#aba1646ad2c55c307386df9ff38c2edf7">VariantLookup::Registrar::variantTree</a> to surface the declared spec of a sub-path through the variantTree binding's outer spec. Each segment of <code>path</code> advances the cursor:</p>
+<ul>
+<li>A bracketed <code></code>[N] step descends into <code>cur-&gt;elementSpec()</code>.</li>
+<li>A name step (e.g. <code>foo</code>) descends into <code>cur-&gt;valueSpec()</code>.</li>
+<li>Both, in segments shaped <code>name</code>[N], applies the name descent first then the index descent — matches the runtime resolver.</li>
+</ul>
+<p>Returns <code>nullptr</code> when the cursor cannot descend (no element/value spec declared at that depth) and sets <code>err</code> to <code><a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a979811130a1a9a4618b266794fa84b97" title="Requested ID was not found in the database.">Error::IdNotFound</a></code>. An empty <code>path</code> returns <code>cur</code> unchanged.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cur</td><td>Starting spec; may be <code>nullptr</code> (returns <code>nullptr</code>). </td></tr>
+    <tr><td class="paramname">path</td><td>Dotted/indexed sub-path (no leading dot). </td></tr>
+    <tr><td class="paramname">err</td><td>Optional error output. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The spec for the leaf, or <code>nullptr</code> on failure. </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 23:49:04 from commit 49b0299 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -10,5 +10,6 @@ var classpromeki_1_1VariantLookup =
     [ "IndexedScalarGet", "classpromeki_1_1VariantLookup.html#a4252a6b1b8ed5e7474fab3541d05e0a7", null ],
     [ "IndexedScalarSet", "classpromeki_1_1VariantLookup.html#aaf35b252b3303284589195351726affe", null ],
     [ "ScalarGet", "classpromeki_1_1VariantLookup.html#a0ec9bc712191b6fa0e67482a5f5adb42", null ],
-    [ "ScalarSet", "classpromeki_1_1VariantLookup.html#ab30dde13613e57006c26a1b1b738ec43", null ]
+    [ "ScalarSet", "classpromeki_1_1VariantLookup.html#ab30dde13613e57006c26a1b1b738ec43", null ],
+    [ "VariantTreeGet", "classpromeki_1_1VariantLookup.html#afdd5f37dbb0ba7b71ccdcbf15ffe7eb7", null ]
 ];

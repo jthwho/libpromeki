@@ -170,6 +170,8 @@ Public Types</h2></td></tr>
 , <b>TypeUrl</b>
 , <br />
 &#160;&#160;<b>TypeWindowedStat</b>
+, <b>TypeVariantList</b>
+, <b>TypeVariantMap</b>
 <br />
  }</td></tr>
 <tr class="memdesc:a150a41989e40927781e90aa640c6811b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enumerates every type the variant can hold.  <a href="classpromeki_1_1VariantImpl.html#a150a41989e40927781e90aa640c6811b">More...</a><br /></td></tr>
@@ -197,6 +199,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab9ed5bffe96e354eaaa0eb540ba566e0"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">To</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantImpl.html#ab9ed5bffe96e354eaaa0eb540ba566e0">get</a> (<a class="el" href="classpromeki_1_1Error.html">Error</a> *<a class="el" href="classpromeki_1_1UniquePtr.html">err</a>=<a class="el" href="classpromeki_1_1UniquePtr.html">nullptr</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
 <tr class="memdesc:ab9ed5bffe96e354eaaa0eb540ba566e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts the stored value to the requested type <code>To</code>.  <br /></td></tr>
 <tr class="separator:ab9ed5bffe96e354eaaa0eb540ba566e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d88cc0c42c895f4dfd042e367438d51" id="r_a1d88cc0c42c895f4dfd042e367438d51"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> <a class="el" href="classpromeki_1_1UniquePtr.html">T</a> &gt; </td></tr>
+<tr class="memitem:a1d88cc0c42c895f4dfd042e367438d51"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">T</a> *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantImpl.html#a1d88cc0c42c895f4dfd042e367438d51">peek</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
+<tr class="memdesc:a1d88cc0c42c895f4dfd042e367438d51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Borrows the held value when its type is exactly <code>T</code>.  <br /></td></tr>
+<tr class="separator:a1d88cc0c42c895f4dfd042e367438d51"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a718721099b6a20c1ac83273a33c1a5a7" id="r_a718721099b6a20c1ac83273a33c1a5a7"><td class="memItemLeft" align="right" valign="top"><a id="a718721099b6a20c1ac83273a33c1a5a7" name="a718721099b6a20c1ac83273a33c1a5a7"></a>
 <a class="el" href="classpromeki_1_1VariantImpl.html#a150a41989e40927781e90aa640c6811b">Type</a>&#160;</td><td class="memItemRight" valign="bottom"><b>type</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
 <tr class="memdesc:a718721099b6a20c1ac83273a33c1a5a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the Type enumerator for the currently held value. <br /></td></tr>
@@ -227,9 +233,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a42a4e7bfee9e5c73babf71d2533d40b7" id="r_a42a4e7bfee9e5c73babf71d2533d40b7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">char</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantImpl.html#a42a4e7bfee9e5c73babf71d2533d40b7">typeName</a> (<a class="el" href="classpromeki_1_1VariantImpl.html#a150a41989e40927781e90aa640c6811b">Type</a> id)</td></tr>
 <tr class="memdesc:a42a4e7bfee9e5c73babf71d2533d40b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the human-readable C++ type name for the given Type enumerator.  <br /></td></tr>
 <tr class="separator:a42a4e7bfee9e5c73babf71d2533d40b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aecf9653d848b2d02aeef8722edb250e0" id="r_aecf9653d848b2d02aeef8722edb250e0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1VariantImpl.html">VariantImpl</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantImpl.html#aecf9653d848b2d02aeef8722edb250e0">fromJson</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> nlohmann::json &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">val</a>)</td></tr>
-<tr class="memdesc:aecf9653d848b2d02aeef8722edb250e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classpromeki_1_1VariantImpl.html" title="Type-safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES.">VariantImpl</a> from a JSON value, inferring the best native type.  <br /></td></tr>
-<tr class="separator:aecf9653d848b2d02aeef8722edb250e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5df9744d5079b8e1c0a69a4456cde21f" id="r_a5df9744d5079b8e1c0a69a4456cde21f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1VariantImpl.html">VariantImpl</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantImpl.html#a5df9744d5079b8e1c0a69a4456cde21f">fromJson</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> nlohmann::json &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">val</a>)</td></tr>
+<tr class="memdesc:a5df9744d5079b8e1c0a69a4456cde21f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classpromeki_1_1VariantImpl.html" title="Type-safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES.">VariantImpl</a> from a JSON value, inferring the best native type.  <br /></td></tr>
+<tr class="separator:a5df9744d5079b8e1c0a69a4456cde21f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename... Types&gt;<br />
@@ -244,12 +250,12 @@ class promeki::VariantImpl&lt; Types &gt;</div><p>Type-safe tagged union that ca
 <div class="line"><a class="code hl_enumeration" href="classpromeki_1_1VariantImpl.html#a150a41989e40927781e90aa640c6811b">Variant::Type</a> <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">t</a> = v.<a class="code hl_function" href="classpromeki_1_1VariantImpl.html#a718721099b6a20c1ac83273a33c1a5a7">type</a>();  <span class="comment">// Variant::TypeString</span></div>
 <div class="ttc" id="aclasspromeki_1_1String_html"><div class="ttname"><a href="classpromeki_1_1String.html">promeki::String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:64</div></div>
 <div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
-<div class="ttc" id="aclasspromeki_1_1VariantImpl_html_a150a41989e40927781e90aa640c6811b"><div class="ttname"><a href="classpromeki_1_1VariantImpl.html#a150a41989e40927781e90aa640c6811b">promeki::VariantImpl&lt; std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, FrameNumber, FrameCount, MediaDuration, Duration, Size2Du32, UUID, UMID, Timecode, Rational&lt; int &gt;, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelMemLayout, PixelFormat, VideoCodec, AudioCodec, AudioFormat, AudioStreamDesc, AudioChannelMap, AudioMarkerList, Enum, EnumList, MasteringDisplay, ContentLightLevel, Url, WindowedStat, detail::VariantEnd &gt;::Type</a></div><div class="ttdeci">Type</div><div class="ttdoc">Enumerates every type the variant can hold.</div><div class="ttdef"><b>Definition</b> variant.h:241</div></div>
-<div class="ttc" id="aclasspromeki_1_1VariantImpl_html_a1585edf275caefa7e05251994e9bc8f9"><div class="ttname"><a href="classpromeki_1_1VariantImpl.html#a1585edf275caefa7e05251994e9bc8f9">promeki::VariantImpl::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdoc">Returns true if the variant holds a value other than std::monostate.</div><div class="ttdef"><b>Definition</b> variant.h:317</div></div>
-<div class="ttc" id="aclasspromeki_1_1VariantImpl_html_a18273536c187d6d1f8439b316576f628"><div class="ttname"><a href="classpromeki_1_1VariantImpl.html#a18273536c187d6d1f8439b316576f628">promeki::VariantImpl::set</a></div><div class="ttdeci">void set(const T &amp;value)</div><div class="ttdoc">Replaces the currently held value with value.</div><div class="ttdef"><b>Definition</b> variant.h:331</div></div>
-<div class="ttc" id="aclasspromeki_1_1VariantImpl_html_a718721099b6a20c1ac83273a33c1a5a7"><div class="ttname"><a href="classpromeki_1_1VariantImpl.html#a718721099b6a20c1ac83273a33c1a5a7">promeki::VariantImpl::type</a></div><div class="ttdeci">Type type() const</div><div class="ttdoc">Returns the Type enumerator for the currently held value.</div><div class="ttdef"><b>Definition</b> variant.h:354</div></div>
+<div class="ttc" id="aclasspromeki_1_1VariantImpl_html_a150a41989e40927781e90aa640c6811b"><div class="ttname"><a href="classpromeki_1_1VariantImpl.html#a150a41989e40927781e90aa640c6811b">promeki::VariantImpl&lt; std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, FrameNumber, FrameCount, MediaDuration, Duration, Size2Du32, UUID, UMID, Timecode, Rational&lt; int &gt;, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelMemLayout, PixelFormat, VideoCodec, AudioCodec, AudioFormat, AudioStreamDesc, AudioChannelMap, AudioMarkerList, Enum, EnumList, MasteringDisplay, ContentLightLevel, Url, WindowedStat, VariantList, VariantMap, detail::VariantEnd &gt;::Type</a></div><div class="ttdeci">Type</div><div class="ttdoc">Enumerates every type the variant can hold.</div><div class="ttdef"><b>Definition</b> variant.h:248</div></div>
+<div class="ttc" id="aclasspromeki_1_1VariantImpl_html_a1585edf275caefa7e05251994e9bc8f9"><div class="ttname"><a href="classpromeki_1_1VariantImpl.html#a1585edf275caefa7e05251994e9bc8f9">promeki::VariantImpl::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdoc">Returns true if the variant holds a value other than std::monostate.</div><div class="ttdef"><b>Definition</b> variant.h:312</div></div>
+<div class="ttc" id="aclasspromeki_1_1VariantImpl_html_a18273536c187d6d1f8439b316576f628"><div class="ttname"><a href="classpromeki_1_1VariantImpl.html#a18273536c187d6d1f8439b316576f628">promeki::VariantImpl::set</a></div><div class="ttdeci">void set(const T &amp;value)</div><div class="ttdoc">Replaces the currently held value with value.</div><div class="ttdef"><b>Definition</b> variant.h:326</div></div>
+<div class="ttc" id="aclasspromeki_1_1VariantImpl_html_a718721099b6a20c1ac83273a33c1a5a7"><div class="ttname"><a href="classpromeki_1_1VariantImpl.html#a718721099b6a20c1ac83273a33c1a5a7">promeki::VariantImpl::type</a></div><div class="ttdeci">Type type() const</div><div class="ttdoc">Returns the Type enumerator for the currently held value.</div><div class="ttdef"><b>Definition</b> variant.h:375</div></div>
 <div class="ttc" id="aclasspromeki_1_1VariantImpl_html_ab9ed5bffe96e354eaaa0eb540ba566e0"><div class="ttname"><a href="classpromeki_1_1VariantImpl.html#ab9ed5bffe96e354eaaa0eb540ba566e0">promeki::VariantImpl::get</a></div><div class="ttdeci">To get(Error *err=nullptr) const</div><div class="ttdoc">Converts the stored value to the requested type To.</div></div>
-<div class="ttc" id="aclasspromeki_1_1Variant_html"><div class="ttname"><a href="classpromeki_1_1Variant.html">promeki::Variant</a></div><div class="ttdoc">Concrete Variant type used throughout promeki.</div><div class="ttdef"><b>Definition</b> variant.h:625</div></div>
+<div class="ttc" id="aclasspromeki_1_1Variant_html"><div class="ttname"><a href="classpromeki_1_1Variant.html">promeki::Variant</a></div><div class="ttdoc">Concrete Variant type used throughout promeki.</div><div class="ttdef"><b>Definition</b> variant.h:939</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -383,7 +389,7 @@ template&lt;typename... Types&gt; </div>
 <div class="ttc" id="aclasspromeki_1_1Error_html"><div class="ttname"><a href="classpromeki_1_1Error.html">promeki::Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:43</div></div>
 <div class="ttc" id="aclasspromeki_1_1UniquePtr_html_a748a764bc3f04f9341f7f8274fd4e1b9"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html#a748a764bc3f04f9341f7f8274fd4e1b9">promeki::UniquePtr::get</a></div><div class="ttdeci">T * get() const</div><div class="ttdoc">Returns the raw pointer without asserting non-null.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:214</div></div>
 <div class="ttc" id="aclasspromeki_1_1UniquePtr_html_a80c22d66073a9ff2fff30f568c51fab5"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html#a80c22d66073a9ff2fff30f568c51fab5">promeki::UniquePtr::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdoc">Returns true if this UniquePtr owns an object.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:185</div></div>
-<div class="ttc" id="aclasspromeki_1_1VariantImpl_html_ad428c82637eb19834c36c618717a8461"><div class="ttname"><a href="classpromeki_1_1VariantImpl.html#ad428c82637eb19834c36c618717a8461">promeki::VariantImpl::asEnum</a></div><div class="ttdeci">Enum asEnum(Enum::Type enumType, Error *err=nullptr) const</div><div class="ttdoc">Resolves the stored value to an Enum of the given type.</div><div class="ttdef"><b>Definition</b> variant.h:501</div></div>
+<div class="ttc" id="aclasspromeki_1_1VariantImpl_html_ad428c82637eb19834c36c618717a8461"><div class="ttname"><a href="classpromeki_1_1VariantImpl.html#ad428c82637eb19834c36c618717a8461">promeki::VariantImpl::asEnum</a></div><div class="ttdeci">Enum asEnum(Enum::Type enumType, Error *err=nullptr) const</div><div class="ttdoc">Resolves the stored value to an Enum of the given type.</div><div class="ttdef"><b>Definition</b> variant.h:522</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -447,8 +453,8 @@ template&lt;typename... Types&gt; </div>
 
 </div>
 </div>
-<a id="aecf9653d848b2d02aeef8722edb250e0" name="aecf9653d848b2d02aeef8722edb250e0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aecf9653d848b2d02aeef8722edb250e0">&#9670;&#160;</a></span>fromJson()</h2>
+<a id="a5df9744d5079b8e1c0a69a4456cde21f" name="a5df9744d5079b8e1c0a69a4456cde21f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5df9744d5079b8e1c0a69a4456cde21f">&#9670;&#160;</a></span>fromJson()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -459,7 +465,7 @@ template&lt;typename... Types&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1VariantImpl.html">VariantImpl</a> <a class="el" href="classpromeki_1_1VariantImpl.html">promeki::VariantImpl</a>&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">Types</a> &gt;::fromJson </td>
+          <td class="memname"><a class="el" href="classpromeki_1_1VariantImpl.html">VariantImpl</a>&lt; Types... &gt; <a class="el" href="classpromeki_1_1VariantImpl.html">promeki::VariantImpl</a>&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">Types</a> &gt;::fromJson </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> nlohmann::json &amp;&#160;</td>
           <td class="paramname"><em>val</em></td><td>)</td>
@@ -468,7 +474,7 @@ template&lt;typename... Types&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -481,9 +487,11 @@ template&lt;typename... Types&gt; </div>
 <li>signed integer -&gt; <code>int64_t</code></li>
 <li>floating-point -&gt; <code>double</code></li>
 <li>string -&gt; <code><a class="el" href="classpromeki_1_1String.html" title="Encoding-aware string class with copy-on-write semantics.">String</a></code></li>
-<li>array -&gt; <code><a class="el" href="classpromeki_1_1StringList.html" title="Manages a list of strings.">StringList</a></code> (elements converted to <a class="el" href="classpromeki_1_1String.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>)</li>
-<li>anything else -&gt; <code><a class="el" href="classpromeki_1_1String.html" title="Encoding-aware string class with copy-on-write semantics.">String</a></code> (via <code>json::dump()</code>)</li>
+<li>array -&gt; <code><a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a></code> (recursive, every element converted via fromJson)</li>
+<li>object -&gt; <code><a class="el" href="classpromeki_1_1VariantMap.html" title="Heterogeneous string-keyed map of Variant values.">VariantMap</a></code> (recursive, every value converted via fromJson)</li>
 </ul>
+<p>Arrays and objects produce a typed nested tree rather than the flattened-string fallback used historically — callers can walk the tree, validate it against a <a class="el" href="classpromeki_1_1VariantSpec.html">VariantSpec</a>, and round-trip back to JSON without losing structure.</p>
+<p>Defined out-of-line below the <a class="el" href="classpromeki_1_1VariantList.html">VariantList</a> / <a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a> class definitions so the body can construct those types.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">val</td><td>The JSON value to convert. </td></tr>
@@ -567,6 +575,51 @@ template&lt;typename... Types&gt; </div>
 <div class="line"><span class="comment">// Cross-type convertible</span></div>
 <div class="line"><a class="code hl_class" href="classpromeki_1_1Variant.html">Variant</a>(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">int32_t</a>(42)) == <a class="code hl_class" href="classpromeki_1_1Variant.html">Variant</a>(<a class="code hl_class" href="classpromeki_1_1String.html">String</a>(<span class="stringliteral">&quot;42&quot;</span>)); <span class="comment">// true</span></div>
 </div><!-- fragment --> </dd></dl>
+
+</div>
+</div>
+<a id="a1d88cc0c42c895f4dfd042e367438d51" name="a1d88cc0c42c895f4dfd042e367438d51"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d88cc0c42c895f4dfd042e367438d51">&#9670;&#160;</a></span>peek()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename... Types&gt; </div>
+<div class="memtemplate">
+template&lt;<a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> <a class="el" href="classpromeki_1_1UniquePtr.html">T</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">T</a> * <a class="el" href="classpromeki_1_1VariantImpl.html">promeki::VariantImpl</a>&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">Types</a> &gt;::peek </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Borrows the held value when its type is exactly <code>T</code>. </p>
+<p>Returns a non-owning pointer into the underlying <code>std::variant</code> alternative when <code>T</code> matches the current type, or <code>nullptr</code> otherwise. Cheap (no copy) and especially valuable for the heavy alternatives — <a class="el" href="classpromeki_1_1VariantList.html">VariantList</a>, <a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a>, <a class="el" href="classpromeki_1_1String.html">String</a>, <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> and similar container types — where calling <a class="el" href="classpromeki_1_1VariantImpl.html#ab9ed5bffe96e354eaaa0eb540ba566e0">get</a> repeatedly during a tree walk would deep-copy each container.</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="keywordflow">if</span> (<span class="keyword">const</span> <a class="code hl_class" href="classpromeki_1_1VariantMap.html">VariantMap</a> *<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">m</a> = v.peek&lt;<a class="code hl_class" href="classpromeki_1_1VariantMap.html">VariantMap</a>&gt;()) {</div>
+<div class="line">    <span class="comment">// walk *m without paying for a deep copy</span></div>
+<div class="line">    <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">m</a>-&gt;forEach([](<span class="keyword">const</span> <a class="code hl_class" href="classpromeki_1_1String.html">String</a> &amp;<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">k</a>, <span class="keyword">const</span> <a class="code hl_class" href="classpromeki_1_1Variant.html">Variant</a> &amp;v) { ... });</div>
+<div class="line">}</div>
+<div class="ttc" id="aclasspromeki_1_1VariantMap_html"><div class="ttname"><a href="classpromeki_1_1VariantMap.html">promeki::VariantMap</a></div><div class="ttdoc">Heterogeneous string-keyed map of Variant values.</div><div class="ttdef"><b>Definition</b> variant.h:798</div></div>
+</div><!-- fragment --></dd></dl>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>Any alternative listed in <code>PROMEKI_VARIANT_TYPES</code>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Pointer to the stored value, or <code>nullptr</code> when the current type is not <code>T</code>. </dd></dl>
 
 </div>
 </div>
@@ -693,7 +746,7 @@ template&lt;typename... Types&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1VariantImpl.html">VariantImpl</a></li>
-    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 23:49:04 from commit 49b0299 (1.0.0).</li>
   </ul>
 </div>
 </body>

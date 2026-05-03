@@ -241,7 +241,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="ttc" id="aclasspromeki_1_1PipelineEvent_html_ace0c0e7085cf8ec1d287752b83bd234ba8499576aa97bf34e41c9ffec52b20151"><div class="ttname"><a href="classpromeki_1_1PipelineEvent.html#ace0c0e7085cf8ec1d287752b83bd234ba8499576aa97bf34e41c9ffec52b20151">promeki::PipelineEvent::Kind::StateChanged</a></div><div class="ttdeci">@ StateChanged</div><div class="ttdoc">Pipeline-level state transition.</div></div>
 <div class="ttc" id="aclasspromeki_1_1String_html"><div class="ttname"><a href="classpromeki_1_1String.html">promeki::String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:64</div></div>
 <div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
-<div class="ttc" id="aclasspromeki_1_1Variant_html"><div class="ttname"><a href="classpromeki_1_1Variant.html">promeki::Variant</a></div><div class="ttdoc">Concrete Variant type used throughout promeki.</div><div class="ttdef"><b>Definition</b> variant.h:625</div></div>
+<div class="ttc" id="aclasspromeki_1_1Variant_html"><div class="ttname"><a href="classpromeki_1_1Variant.html">promeki::Variant</a></div><div class="ttdoc">Concrete Variant type used throughout promeki.</div><div class="ttdef"><b>Definition</b> variant.h:939</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="section user"><dt>Thread Safety</dt><dd>Conditionally thread-safe. Distinct instances may be used concurrently; concurrent access to a single instance must be externally synchronized. <code><a class="el" href="classpromeki_1_1PipelineEvent.html#aef07647ac90105901718c9a038964a8b" title="Shared pointer alias.">PipelineEvent::Ptr</a></code> uses an atomic refcount and is safe to share across threads — events are typically published by <a class="el" href="classpromeki_1_1MediaPipeline.html">MediaPipeline</a> to subscribers on different threads via shared pointer. </dd></dl>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
@@ -498,7 +498,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1PipelineEvent.html">PipelineEvent</a></li>
-    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 23:49:04 from commit 49b0299 (1.0.0).</li>
   </ul>
 </div>
 </body>

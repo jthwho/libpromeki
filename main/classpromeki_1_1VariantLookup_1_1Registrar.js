@@ -8,5 +8,6 @@ var classpromeki_1_1VariantLookup_1_1Registrar =
     [ "indexedScalar", "classpromeki_1_1VariantLookup_1_1Registrar.html#aeff2f065a6020d84222d608ab0644c4b", null ],
     [ "inheritsFrom", "classpromeki_1_1VariantLookup_1_1Registrar.html#ae6a6f6aca8b235e14c4d6b739a4030bb", null ],
     [ "scalar", "classpromeki_1_1VariantLookup_1_1Registrar.html#aa2d66f7a1ea3a5a4a6d9ea957e252443", null ],
-    [ "scalar", "classpromeki_1_1VariantLookup_1_1Registrar.html#a9870a89ec4ee6e5a933ad9fdfc88d878", null ]
+    [ "scalar", "classpromeki_1_1VariantLookup_1_1Registrar.html#a9870a89ec4ee6e5a933ad9fdfc88d878", null ],
+    [ "variantTree", "classpromeki_1_1VariantLookup_1_1Registrar.html#aba1646ad2c55c307386df9ff38c2edf7", null ]
 ];

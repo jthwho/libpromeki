@@ -277,7 +277,7 @@ class promeki::VariantDatabase&lt; Name &gt;</div><p>A collection of named <a cl
 <div class="ttc" id="aclasspromeki_1_1VariantDatabase_html_a1f683ab3f87edafe8552ed83dd898e75"><div class="ttname"><a href="classpromeki_1_1VariantDatabase.html#a1f683ab3f87edafe8552ed83dd898e75">promeki::VariantDatabase&lt;&quot;Config&quot;&gt;::ID</a></div><div class="ttdeci">typename StringRegistry&lt; Name &gt;::Item ID</div><div class="ttdoc">Lightweight handle identifying an entry by name.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:109</div></div>
 <div class="ttc" id="aclasspromeki_1_1VariantDatabase_html_a36a185a1e22fcfa0030ea612869cb9a5"><div class="ttname"><a href="classpromeki_1_1VariantDatabase.html#a36a185a1e22fcfa0030ea612869cb9a5">promeki::VariantDatabase&lt;&quot;Config&quot;&gt;::declareID</a></div><div class="ttdeci">static ID declareID(const String &amp;name, const VariantSpec &amp;spec)</div><div class="ttdoc">Declares an ID and registers its VariantSpec.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:140</div></div>
 <div class="ttc" id="aclasspromeki_1_1VariantDatabase_html_af57c0f32260eafb3c26b6d1c98c8e77d"><div class="ttname"><a href="classpromeki_1_1VariantDatabase.html#af57c0f32260eafb3c26b6d1c98c8e77d">promeki::VariantDatabase&lt;&quot;Config&quot;&gt;::spec</a></div><div class="ttdeci">static const VariantSpec * spec(ID id)</div><div class="ttdoc">Returns the VariantSpec for the given ID, or nullptr if none.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:155</div></div>
-<div class="ttc" id="aclasspromeki_1_1VariantSpec_html"><div class="ttname"><a href="classpromeki_1_1VariantSpec.html">promeki::VariantSpec</a></div><div class="ttdoc">Describes the constraints and default value for a VariantDatabase ID.</div><div class="ttdef"><b>Definition</b> variantspec.h:69</div></div>
+<div class="ttc" id="aclasspromeki_1_1VariantSpec_html"><div class="ttname"><a href="classpromeki_1_1VariantSpec.html">promeki::VariantSpec</a></div><div class="ttdoc">Describes the constraints and default value for a VariantDatabase ID.</div><div class="ttdef"><b>Definition</b> variantspec.h:70</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a6d2ef43d2e19e55933291301929a8b7d" name="a6d2ef43d2e19e55933291301929a8b7d"></a>
@@ -367,7 +367,7 @@ template&lt;<a class="el" href="classpromeki_1_1CompiledString.html">CompiledStr
 <div class="line">    <a class="code hl_class" href="classpromeki_1_1VariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
 <div class="line">                 .setDefault(1920)</div>
 <div class="line">                 .setDescription(<span class="stringliteral">&quot;Frame width&quot;</span>));</div>
-<div class="ttc" id="agroup__util_html_ga155b8e018cd70514a008a09951cf033e"><div class="ttname"><a href="group__util.html#ga155b8e018cd70514a008a09951cf033e">PROMEKI_DECLARE_ID</a></div><div class="ttdeci">#define PROMEKI_DECLARE_ID(Name,...)</div><div class="ttdoc">Declares a well-known VariantDatabase key as a compile-time constant.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:1048</div></div>
+<div class="ttc" id="agroup__util_html_ga155b8e018cd70514a008a09951cf033e"><div class="ttname"><a href="group__util.html#ga155b8e018cd70514a008a09951cf033e">PROMEKI_DECLARE_ID</a></div><div class="ttdeci">#define PROMEKI_DECLARE_ID(Name,...)</div><div class="ttdoc">Declares a well-known VariantDatabase key as a compile-time constant.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:1088</div></div>
 </div><!-- fragment --> </dd></dl>
 
 </div>
@@ -905,7 +905,7 @@ template&lt;<a class="el" href="classpromeki_1_1CompiledString.html">CompiledStr
 <div class="line">a.<a class="code hl_function" href="classpromeki_1_1VariantDatabase.html#a50e5dfc931f847e9f9242e82add0de0a">set</a>(key, 1920);</div>
 <div class="line">b.<a class="code hl_function" href="classpromeki_1_1VariantDatabase.html#a50e5dfc931f847e9f9242e82add0de0a">set</a>(key, 1920);</div>
 <div class="line"><span class="keywordtype">bool</span> <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">same</a> = (a == b);  <span class="comment">// true</span></div>
-<div class="ttc" id="aclasspromeki_1_1VariantDatabase_html_a50e5dfc931f847e9f9242e82add0de0a"><div class="ttname"><a href="classpromeki_1_1VariantDatabase.html#a50e5dfc931f847e9f9242e82add0de0a">promeki::VariantDatabase::set</a></div><div class="ttdeci">bool set(ID id, const Variant &amp;value, Error *err=nullptr)</div><div class="ttdoc">Sets the value for the given ID.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:428</div></div>
+<div class="ttc" id="aclasspromeki_1_1VariantDatabase_html_a50e5dfc931f847e9f9242e82add0de0a"><div class="ttname"><a href="classpromeki_1_1VariantDatabase.html#a50e5dfc931f847e9f9242e82add0de0a">promeki::VariantDatabase::set</a></div><div class="ttdeci">bool set(ID id, const Variant &amp;value, Error *err=nullptr)</div><div class="ttdoc">Sets the value for the given ID.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:434</div></div>
 </div><!-- fragment --> </dd></dl>
 
 </div>
@@ -1665,7 +1665,7 @@ template&lt;<a class="el" href="classpromeki_1_1CompiledString.html">CompiledStr
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1VariantDatabase.html">VariantDatabase</a></li>
-    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 23:49:04 from commit 49b0299 (1.0.0).</li>
   </ul>
 </div>
 </body>

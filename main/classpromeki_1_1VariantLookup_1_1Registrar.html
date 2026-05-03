@@ -143,6 +143,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a96b9592026247fe23c30232d9d7176ed"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1VariantLookup_1_1Registrar.html">Registrar</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantLookup_1_1Registrar.html#a96b9592026247fe23c30232d9d7176ed">database</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;prefix, std::function&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1VariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">DbName</a> &gt; *(<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">T</a> &amp;)&gt; get, std::function&lt; <a class="el" href="classpromeki_1_1VariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">DbName</a> &gt; *(<a class="el" href="classpromeki_1_1UniquePtr.html">T</a> &amp;)&gt; <a class="el" href="classpromeki_1_1UniquePtr.html">getMut</a>=<a class="el" href="classpromeki_1_1UniquePtr.html">nullptr</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
 <tr class="memdesc:a96b9592026247fe23c30232d9d7176ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a prefixed database binding.  <br /></td></tr>
 <tr class="separator:a96b9592026247fe23c30232d9d7176ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba1646ad2c55c307386df9ff38c2edf7" id="r_aba1646ad2c55c307386df9ff38c2edf7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1VariantLookup_1_1Registrar.html">Registrar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantLookup_1_1Registrar.html#aba1646ad2c55c307386df9ff38c2edf7">variantTree</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;name, <a class="el" href="classpromeki_1_1VariantLookup.html#afdd5f37dbb0ba7b71ccdcbf15ffe7eb7">VariantTreeGet</a> get, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1VariantSpec.html">VariantSpec</a> *spec=<a class="el" href="classpromeki_1_1UniquePtr.html">nullptr</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:aba1646ad2c55c307386df9ff38c2edf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a variant-tree binding under <code>name</code>.  <br /></td></tr>
+<tr class="separator:aba1646ad2c55c307386df9ff38c2edf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae6a6f6aca8b235e14c4d6b739a4030bb" id="r_ae6a6f6aca8b235e14c4d6b739a4030bb"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> Base &gt; </td></tr>
 <tr class="memitem:ae6a6f6aca8b235e14c4d6b739a4030bb"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1VariantLookup_1_1Registrar.html">Registrar</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantLookup_1_1Registrar.html#ae6a6f6aca8b235e14c4d6b739a4030bb">inheritsFrom</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
 <tr class="memdesc:ae6a6f6aca8b235e14c4d6b739a4030bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declares <code>T's</code> C++ base for lookup cascade.  <br /></td></tr>
@@ -417,6 +420,69 @@ template&lt;<a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> Bas
 
 </div>
 </div>
+<a id="aba1646ad2c55c307386df9ff38c2edf7" name="aba1646ad2c55c307386df9ff38c2edf7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aba1646ad2c55c307386df9ff38c2edf7">&#9670;&#160;</a></span>variantTree()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> <a class="el" href="classpromeki_1_1UniquePtr.html">T</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1VariantLookup_1_1Registrar.html">Registrar</a> <a class="el" href="classpromeki_1_1VariantLookup.html">promeki::VariantLookup</a>&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">T</a> &gt;::Registrar::variantTree </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1VariantLookup.html#afdd5f37dbb0ba7b71ccdcbf15ffe7eb7">VariantTreeGet</a>&#160;</td>
+          <td class="paramname"><em>get</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1VariantSpec.html">VariantSpec</a> *&#160;</td>
+          <td class="paramname"><em>spec</em> = <code><a class="el" href="classpromeki_1_1UniquePtr.html">nullptr</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Registers a variant-tree binding under <code>name</code>. </p>
+<p>Lets a type expose a free-form <a class="el" href="classpromeki_1_1Variant.html">Variant</a> — typically holding a <a class="el" href="classpromeki_1_1VariantList.html">VariantList</a> or <a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a> — and have lookups descend into the tree using the standard dotted / indexed key syntax:</p>
+<ul>
+<li><code>"Name"</code> — terminal, returns the whole <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a>.</li>
+<li><code>"Name.sub"</code> — descends if the <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> holds a <a class="el" href="classpromeki_1_1VariantMap.html" title="Heterogeneous string-keyed map of Variant values.">VariantMap</a>.</li>
+<li><code>"Name[N]"</code> — descends if the <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> holds a <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a>.</li>
+<li><code>"Name[N].sub"</code> — combines the above.</li>
+</ul>
+<p>Spec discovery follows the same shape: the <code>spec</code> parameter is the spec for the top-level <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a>, and trailing path fragments walk the spec's <a class="el" href="classpromeki_1_1VariantSpec.html#a049e2e951b506e11f00b337cae4e218d">VariantSpec::elementSpec</a> / <a class="el" href="classpromeki_1_1VariantSpec.html#a1520c249a86872ef882d913d230cf526">VariantSpec::valueSpec</a> chain so <code>specFor</code>("Name.sub") returns the inner spec when one was declared.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>Segment name. </td></tr>
+    <tr><td class="paramname">get</td><td>Function returning the <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> at <code>Name</code> on the instance. Returning an invalid <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> for terminal lookups yields <code>std::nullopt</code> with <code><a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a979811130a1a9a4618b266794fa84b97" title="Requested ID was not found in the database.">Error::IdNotFound</a></code>. </td></tr>
+    <tr><td class="paramname">spec</td><td>Optional <a class="el" href="classpromeki_1_1VariantSpec.html">VariantSpec</a> describing the top-level <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a>'s shape. When set with element / value sub-specs, the cascade surfaces them via <a class="el" href="classpromeki_1_1VariantLookup.html#a9c7e90e1e7f36b7df03f90d4a4fddc5e">specFor</a>.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Read-only. Mutating a sub-path through a variantTree binding is not yet supported because it requires splicing a new <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> back into the registered tree. Callers that need write access should expose a top-level scalar setter that takes a whole new <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a>. </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="variantlookup_8h_source.html">variantlookup.h</a></li>
 </ul>
@@ -427,7 +493,7 @@ template&lt;<a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> Bas
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1VariantLookup.html">VariantLookup</a></li><li class="navelem"><a class="el" href="classpromeki_1_1VariantLookup_1_1Registrar.html">Registrar</a></li>
-    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 23:49:04 from commit 49b0299 (1.0.0).</li>
   </ul>
 </div>
 </body>

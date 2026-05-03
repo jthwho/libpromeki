@@ -99,227 +99,284 @@ $(document).ready(function(){initNavTree('classpromeki_1_1VariantMap.html',''); 
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classpromeki_1_1VariantMap-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">promeki::VariantMap Class Reference</div></div>
+  <div class="headertitle"><div class="title">promeki::VariantMap Class Reference<div class="ingroups"><a class="el" href="group__util.html">Utilities</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>String-keyed map of <a class="el" href="classpromeki_1_1Variant.html">Variant</a> values.  
+<p>Heterogeneous string-keyed map of <a class="el" href="classpromeki_1_1Variant.html">Variant</a> values.  
  <a href="classpromeki_1_1VariantMap.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="variant_8h_source.html">variant.h</a>&gt;</code></p>
-<div class="dynheader">
-Inheritance diagram for promeki::VariantMap:</div>
-<div class="dyncontent">
-<div class="center"><img src="classpromeki_1_1VariantMap__inherit__graph.png" border="0" usemap="#apromeki_1_1VariantMap_inherit__map" alt="Inheritance graph"/></div>
-<map name="apromeki_1_1VariantMap_inherit__map" id="apromeki_1_1VariantMap_inherit__map">
-<area shape="rect" title="String&#45;keyed map of Variant values." alt="" coords="11,93,169,119"/>
-<area shape="rect" href="classpromeki_1_1Map.html" title=" " alt="" coords="5,5,175,45"/>
-<area shape="poly" title=" " alt="" coords="93,59,93,93,87,93,87,59"/>
-</map>
-<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
-<div class="dynheader">
-Collaboration diagram for promeki::VariantMap:</div>
-<div class="dyncontent">
-<div class="center"><img src="classpromeki_1_1VariantMap__coll__graph.png" border="0" usemap="#apromeki_1_1VariantMap_coll__map" alt="Collaboration graph"/></div>
-<map name="apromeki_1_1VariantMap_coll__map" id="apromeki_1_1VariantMap_coll__map">
-<area shape="rect" title="String&#45;keyed map of Variant values." alt="" coords="11,93,169,119"/>
-<area shape="rect" href="classpromeki_1_1Map.html" title=" " alt="" coords="5,5,175,45"/>
-<area shape="poly" title=" " alt="" coords="93,59,93,93,87,93,87,59"/>
-</map>
-<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a665ad47b91fdbf3e5b2c00e52952fc00" id="r_a665ad47b91fdbf3e5b2c00e52952fc00"><td class="memItemLeft" align="right" valign="top"><a id="a665ad47b91fdbf3e5b2c00e52952fc00" name="a665ad47b91fdbf3e5b2c00e52952fc00"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>VariantMap</b> ()</td></tr>
+<tr class="memdesc:a665ad47b91fdbf3e5b2c00e52952fc00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an empty map. <br /></td></tr>
+<tr class="separator:a665ad47b91fdbf3e5b2c00e52952fc00"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8560e95fc00fd2e51a12a06006fd48e3" id="r_a8560e95fc00fd2e51a12a06006fd48e3"><td class="memItemLeft" align="right" valign="top"><a id="a8560e95fc00fd2e51a12a06006fd48e3" name="a8560e95fc00fd2e51a12a06006fd48e3"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>VariantMap</b> (std::initializer_list&lt; std::pair&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a>, <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &gt; &gt; <a class="el" href="classpromeki_1_1UniquePtr.html">il</a>)</td></tr>
+<tr class="memdesc:a8560e95fc00fd2e51a12a06006fd48e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs from an initializer list of (key, value) pairs. <br /></td></tr>
 <tr class="separator:a8560e95fc00fd2e51a12a06006fd48e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac6209aa34bd97cb97f43a0005cbfa2b7" id="r_ac6209aa34bd97cb97f43a0005cbfa2b7"><td class="memItemLeft" align="right" valign="top"><a id="ac6209aa34bd97cb97f43a0005cbfa2b7" name="ac6209aa34bd97cb97f43a0005cbfa2b7"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>VariantMap</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Map.html">Map</a>&lt; <a class="el" href="classpromeki_1_1String.html">String</a>, <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &gt; &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">other</a>)</td></tr>
+<tr class="memdesc:ac6209aa34bd97cb97f43a0005cbfa2b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs from an existing <code>Map&lt;String, Variant&gt;</code> (deep copy). <br /></td></tr>
 <tr class="separator:ac6209aa34bd97cb97f43a0005cbfa2b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad56587b6f2fe62aaea3f19d57fc0e0b0" id="r_ad56587b6f2fe62aaea3f19d57fc0e0b0"><td class="memItemLeft" align="right" valign="top"><a id="ad56587b6f2fe62aaea3f19d57fc0e0b0" name="ad56587b6f2fe62aaea3f19d57fc0e0b0"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>VariantMap</b> (<a class="el" href="classpromeki_1_1Map.html">Map</a>&lt; <a class="el" href="classpromeki_1_1String.html">String</a>, <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &gt; &amp;&amp;<a class="el" href="classpromeki_1_1UniquePtr.html">other</a>)</td></tr>
+<tr class="memdesc:ad56587b6f2fe62aaea3f19d57fc0e0b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs from an existing <code>Map&lt;String, Variant&gt;</code> (move). <br /></td></tr>
 <tr class="separator:ad56587b6f2fe62aaea3f19d57fc0e0b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_classpromeki_1_1Map"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classpromeki_1_1Map')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classpromeki_1_1Map.html">promeki::Map&lt; String, Variant &gt;</a></td></tr>
-<tr class="memitem:a49c746f084404db249d06662f908dd7d inherit pub_methods_classpromeki_1_1Map" id="r_a49c746f084404db249d06662f908dd7d"><td class="memItemLeft" align="right" valign="top">
-&#160;</td><td class="memItemRight" valign="bottom"><b>Map</b> ()=<a class="el" href="classpromeki_1_1UniquePtr.html">default</a></td></tr>
-<tr class="memdesc:a49c746f084404db249d06662f908dd7d inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default constructor. Creates an empty map. <br /></td></tr>
-<tr class="separator:a49c746f084404db249d06662f908dd7d inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9f5f45f992390a1f5e919f9ea7f97064 inherit pub_methods_classpromeki_1_1Map" id="r_a9f5f45f992390a1f5e919f9ea7f97064"><td class="memItemLeft" align="right" valign="top">
-&#160;</td><td class="memItemRight" valign="bottom"><b>Map</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Map.html">Map</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">other</a>)</td></tr>
-<tr class="memdesc:a9f5f45f992390a1f5e919f9ea7f97064 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor. <br /></td></tr>
-<tr class="separator:a9f5f45f992390a1f5e919f9ea7f97064 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8fc06e5a42a413055f19383db09c0363 inherit pub_methods_classpromeki_1_1Map" id="r_a8fc06e5a42a413055f19383db09c0363"><td class="memItemLeft" align="right" valign="top">
-&#160;</td><td class="memItemRight" valign="bottom"><b>Map</b> (<a class="el" href="classpromeki_1_1Map.html">Map</a> &amp;&amp;<a class="el" href="classpromeki_1_1UniquePtr.html">other</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a8fc06e5a42a413055f19383db09c0363 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move constructor. <br /></td></tr>
-<tr class="separator:a8fc06e5a42a413055f19383db09c0363 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a260f7dddf393fb386183ee9e24d7342c inherit pub_methods_classpromeki_1_1Map" id="r_a260f7dddf393fb386183ee9e24d7342c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#a260f7dddf393fb386183ee9e24d7342c">Map</a> (std::initializer_list&lt; std::pair&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a>, <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &gt; &gt; <a class="el" href="classpromeki_1_1UniquePtr.html">initList</a>)</td></tr>
-<tr class="memdesc:a260f7dddf393fb386183ee9e24d7342c inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a map from an initializer list of key-value pairs.  <br /></td></tr>
-<tr class="separator:a260f7dddf393fb386183ee9e24d7342c inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aae3d522c73538d9790e24f3c30f3b5bd inherit pub_methods_classpromeki_1_1Map" id="r_aae3d522c73538d9790e24f3c30f3b5bd"><td class="memItemLeft" align="right" valign="top">
-&#160;</td><td class="memItemRight" valign="bottom"><b>~Map</b> ()=<a class="el" href="classpromeki_1_1UniquePtr.html">default</a></td></tr>
-<tr class="memdesc:aae3d522c73538d9790e24f3c30f3b5bd inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. <br /></td></tr>
-<tr class="separator:aae3d522c73538d9790e24f3c30f3b5bd inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4254dd5180807ffa42dcd5fb83ea0d55 inherit pub_methods_classpromeki_1_1Map" id="r_a4254dd5180807ffa42dcd5fb83ea0d55"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1Map.html">Map</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Map.html">Map</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">other</a>)</td></tr>
-<tr class="memdesc:a4254dd5180807ffa42dcd5fb83ea0d55 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy assignment operator. <br /></td></tr>
-<tr class="separator:a4254dd5180807ffa42dcd5fb83ea0d55 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a511c3df0003792eab77a8fef5e9e030e inherit pub_methods_classpromeki_1_1Map" id="r_a511c3df0003792eab77a8fef5e9e030e"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1Map.html">Map</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classpromeki_1_1Map.html">Map</a> &amp;&amp;<a class="el" href="classpromeki_1_1UniquePtr.html">other</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a511c3df0003792eab77a8fef5e9e030e inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move assignment operator. <br /></td></tr>
-<tr class="separator:a511c3df0003792eab77a8fef5e9e030e inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3f56417c9221b36ca9d34956dc79e43b inherit pub_methods_classpromeki_1_1Map" id="r_a3f56417c9221b36ca9d34956dc79e43b"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1Map.html#a3c420b0ca3a990214a2d1ff28154bfc6">Iterator</a>&#160;</td><td class="memItemRight" valign="bottom"><b>begin</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a3f56417c9221b36ca9d34956dc79e43b inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable iterator to the first entry. <br /></td></tr>
-<tr class="separator:a3f56417c9221b36ca9d34956dc79e43b inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abc0a85168aaa33f752930eecb502abc7 inherit pub_methods_classpromeki_1_1Map" id="r_abc0a85168aaa33f752930eecb502abc7"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1Map.html#a66846d0d8a9a22d914668ceb46c715de">ConstIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><b>begin</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:abc0a85168aaa33f752930eecb502abc7 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const iterator to the first entry. <br /></td></tr>
-<tr class="separator:abc0a85168aaa33f752930eecb502abc7 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a76d8f422902539d04dad95cf8eb130d1 inherit pub_methods_classpromeki_1_1Map" id="r_a76d8f422902539d04dad95cf8eb130d1"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1Map.html#a66846d0d8a9a22d914668ceb46c715de">ConstIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><b>cbegin</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a76d8f422902539d04dad95cf8eb130d1 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const iterator to the first entry. <br /></td></tr>
-<tr class="separator:a76d8f422902539d04dad95cf8eb130d1 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa0141abb954cb2fd8b0f07d49841ed44 inherit pub_methods_classpromeki_1_1Map" id="r_aa0141abb954cb2fd8b0f07d49841ed44"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Map.html#a66846d0d8a9a22d914668ceb46c715de">ConstIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#aa0141abb954cb2fd8b0f07d49841ed44">constBegin</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:aa0141abb954cb2fd8b0f07d49841ed44 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const iterator to the first entry.    <br /></td></tr>
-<tr class="separator:aa0141abb954cb2fd8b0f07d49841ed44 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af82d30719a798c65a0c4c33b3dfbc356 inherit pub_methods_classpromeki_1_1Map" id="r_af82d30719a798c65a0c4c33b3dfbc356"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1Map.html#a3c420b0ca3a990214a2d1ff28154bfc6">Iterator</a>&#160;</td><td class="memItemRight" valign="bottom"><b>end</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:af82d30719a798c65a0c4c33b3dfbc356 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable iterator to one past the last entry. <br /></td></tr>
-<tr class="separator:af82d30719a798c65a0c4c33b3dfbc356 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa8966ff712770cecfceada1f4d80ebc4 inherit pub_methods_classpromeki_1_1Map" id="r_aa8966ff712770cecfceada1f4d80ebc4"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1Map.html#a66846d0d8a9a22d914668ceb46c715de">ConstIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><b>end</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:aa8966ff712770cecfceada1f4d80ebc4 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const iterator to one past the last entry. <br /></td></tr>
-<tr class="separator:aa8966ff712770cecfceada1f4d80ebc4 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a81f4351e77315b1abc338f4471548a0f inherit pub_methods_classpromeki_1_1Map" id="r_a81f4351e77315b1abc338f4471548a0f"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1Map.html#a66846d0d8a9a22d914668ceb46c715de">ConstIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><b>cend</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a81f4351e77315b1abc338f4471548a0f inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const iterator to one past the last entry. <br /></td></tr>
-<tr class="separator:a81f4351e77315b1abc338f4471548a0f inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30743ef2988fc3e552ed6e0770072421 inherit pub_methods_classpromeki_1_1Map" id="r_a30743ef2988fc3e552ed6e0770072421"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Map.html#a66846d0d8a9a22d914668ceb46c715de">ConstIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#a30743ef2988fc3e552ed6e0770072421">constEnd</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a30743ef2988fc3e552ed6e0770072421 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const iterator to one past the last entry.    <br /></td></tr>
-<tr class="separator:a30743ef2988fc3e552ed6e0770072421 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9f43c89d231eabb9f5829f476164327e inherit pub_methods_classpromeki_1_1Map" id="r_a9f43c89d231eabb9f5829f476164327e"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1Map.html#a9a87b962d898871c46b1caf90c654869">RevIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><b>rbegin</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a9f43c89d231eabb9f5829f476164327e inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reverse iterator to the last entry. <br /></td></tr>
-<tr class="separator:a9f43c89d231eabb9f5829f476164327e inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1c9aed2c96e5a3cb01cf182e3dd5ac3d inherit pub_methods_classpromeki_1_1Map" id="r_a1c9aed2c96e5a3cb01cf182e3dd5ac3d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Map.html#a9a87b962d898871c46b1caf90c654869">RevIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#a1c9aed2c96e5a3cb01cf182e3dd5ac3d">revBegin</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a1c9aed2c96e5a3cb01cf182e3dd5ac3d inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reverse iterator to the last entry.    <br /></td></tr>
-<tr class="separator:a1c9aed2c96e5a3cb01cf182e3dd5ac3d inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a083d536795acc44d94a2aa3a1d411e82 inherit pub_methods_classpromeki_1_1Map" id="r_a083d536795acc44d94a2aa3a1d411e82"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1Map.html#ab2ea584046d0fe6b9aea3abecfd3f95d">ConstRevIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><b>crbegin</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a083d536795acc44d94a2aa3a1d411e82 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reverse iterator to the last entry. <br /></td></tr>
-<tr class="separator:a083d536795acc44d94a2aa3a1d411e82 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5a3cc98ce563da44017e065a406719f2 inherit pub_methods_classpromeki_1_1Map" id="r_a5a3cc98ce563da44017e065a406719f2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Map.html#ab2ea584046d0fe6b9aea3abecfd3f95d">ConstRevIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#a5a3cc98ce563da44017e065a406719f2">constRevBegin</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a5a3cc98ce563da44017e065a406719f2 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reverse iterator to the last entry.    <br /></td></tr>
-<tr class="separator:a5a3cc98ce563da44017e065a406719f2 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa44fff976ca7ae24e28b7faf3e5231d6 inherit pub_methods_classpromeki_1_1Map" id="r_aa44fff976ca7ae24e28b7faf3e5231d6"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1Map.html#a9a87b962d898871c46b1caf90c654869">RevIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><b>rend</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:aa44fff976ca7ae24e28b7faf3e5231d6 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reverse iterator to one before the first entry. <br /></td></tr>
-<tr class="separator:aa44fff976ca7ae24e28b7faf3e5231d6 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2bf6956754146a401cd9a304e5dc121c inherit pub_methods_classpromeki_1_1Map" id="r_a2bf6956754146a401cd9a304e5dc121c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Map.html#a9a87b962d898871c46b1caf90c654869">RevIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#a2bf6956754146a401cd9a304e5dc121c">revEnd</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a2bf6956754146a401cd9a304e5dc121c inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reverse iterator to one before the first entry.    <br /></td></tr>
-<tr class="separator:a2bf6956754146a401cd9a304e5dc121c inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9be8ffeb3e3d2e473cf543dc6e838b2a inherit pub_methods_classpromeki_1_1Map" id="r_a9be8ffeb3e3d2e473cf543dc6e838b2a"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1Map.html#ab2ea584046d0fe6b9aea3abecfd3f95d">ConstRevIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><b>crend</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a9be8ffeb3e3d2e473cf543dc6e838b2a inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reverse iterator to one before the first entry. <br /></td></tr>
-<tr class="separator:a9be8ffeb3e3d2e473cf543dc6e838b2a inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af705ac169e14608afedded496269a89c inherit pub_methods_classpromeki_1_1Map" id="r_af705ac169e14608afedded496269a89c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Map.html#ab2ea584046d0fe6b9aea3abecfd3f95d">ConstRevIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#af705ac169e14608afedded496269a89c">constRevEnd</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:af705ac169e14608afedded496269a89c inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reverse iterator to one before the first entry.    <br /></td></tr>
-<tr class="separator:af705ac169e14608afedded496269a89c inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a44e2569dc91e8a20bae7c3e9c9d32960 inherit pub_methods_classpromeki_1_1Map" id="r_a44e2569dc91e8a20bae7c3e9c9d32960"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isEmpty</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a44e2569dc91e8a20bae7c3e9c9d32960 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the map has no entries. <br /></td></tr>
-<tr class="separator:a44e2569dc91e8a20bae7c3e9c9d32960 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a612cf0d5c69e39cced042fad1ec70b3e inherit pub_methods_classpromeki_1_1Map" id="r_a612cf0d5c69e39cced042fad1ec70b3e"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a612cf0d5c69e39cced042fad1ec70b3e inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of key-value pairs. <br /></td></tr>
-<tr class="separator:a612cf0d5c69e39cced042fad1ec70b3e inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a00ddad85dff4542c0e69131d83b3d7bf inherit pub_methods_classpromeki_1_1Map" id="r_a00ddad85dff4542c0e69131d83b3d7bf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Variant.html">Variant</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#a00ddad85dff4542c0e69131d83b3d7bf">operator[]</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key)</td></tr>
-<tr class="memdesc:a00ddad85dff4542c0e69131d83b3d7bf inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a reference to the value for <code>key</code>, inserting a default-constructed value if it does not exist.  <br /></td></tr>
-<tr class="separator:a00ddad85dff4542c0e69131d83b3d7bf inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad25f56b833eefde6f1807948ed21d03e inherit pub_methods_classpromeki_1_1Map" id="r_ad25f56b833eefde6f1807948ed21d03e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#ad25f56b833eefde6f1807948ed21d03e">operator[]</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:ad25f56b833eefde6f1807948ed21d03e inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the value for <code>key</code>.  <br /></td></tr>
-<tr class="separator:ad25f56b833eefde6f1807948ed21d03e inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a208b628d9d6c63a5cde8bac45414813e inherit pub_methods_classpromeki_1_1Map" id="r_a208b628d9d6c63a5cde8bac45414813e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Variant.html">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#a208b628d9d6c63a5cde8bac45414813e">value</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &amp;defaultValue=<a class="el" href="classpromeki_1_1Variant.html">Variant</a> {}) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:a208b628d9d6c63a5cde8bac45414813e inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the value for <code>key</code>, or <code>defaultValue</code> if the key is not present.  <br /></td></tr>
-<tr class="separator:a208b628d9d6c63a5cde8bac45414813e inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ace3bef625d27a9327db2a3f65a7fdd5f inherit pub_methods_classpromeki_1_1Map" id="r_ace3bef625d27a9327db2a3f65a7fdd5f"><td class="memItemLeft" align="right" valign="top">
+<tr class="memitem:a643cf429a28252c740797c65309e89cf" id="r_a643cf429a28252c740797c65309e89cf"><td class="memItemLeft" align="right" valign="top"><a id="a643cf429a28252c740797c65309e89cf" name="a643cf429a28252c740797c65309e89cf"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>VariantMap</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">other</a>)</td></tr>
+<tr class="separator:a643cf429a28252c740797c65309e89cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeeaf2e4c1f1cd743ac3c83029836b57c" id="r_aeeaf2e4c1f1cd743ac3c83029836b57c"><td class="memItemLeft" align="right" valign="top"><a id="aeeaf2e4c1f1cd743ac3c83029836b57c" name="aeeaf2e4c1f1cd743ac3c83029836b57c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>VariantMap</b> (<a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a> &amp;&amp;<a class="el" href="classpromeki_1_1UniquePtr.html">other</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
+<tr class="separator:aeeaf2e4c1f1cd743ac3c83029836b57c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79c29b31f417c909d15e015c3b6cb554" id="r_a79c29b31f417c909d15e015c3b6cb554"><td class="memItemLeft" align="right" valign="top"><a id="a79c29b31f417c909d15e015c3b6cb554" name="a79c29b31f417c909d15e015c3b6cb554"></a>
+<a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">other</a>)</td></tr>
+<tr class="separator:a79c29b31f417c909d15e015c3b6cb554"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab01d5385f5f3658e505c9270cb583bf4" id="r_ab01d5385f5f3658e505c9270cb583bf4"><td class="memItemLeft" align="right" valign="top"><a id="ab01d5385f5f3658e505c9270cb583bf4" name="ab01d5385f5f3658e505c9270cb583bf4"></a>
+<a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a> &amp;&amp;<a class="el" href="classpromeki_1_1UniquePtr.html">other</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
+<tr class="separator:ab01d5385f5f3658e505c9270cb583bf4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb93a7b72d817c383aed44df43baa99e" id="r_afb93a7b72d817c383aed44df43baa99e"><td class="memItemLeft" align="right" valign="top"><a id="afb93a7b72d817c383aed44df43baa99e" name="afb93a7b72d817c383aed44df43baa99e"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:afb93a7b72d817c383aed44df43baa99e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of (key, value) pairs. <br /></td></tr>
+<tr class="separator:afb93a7b72d817c383aed44df43baa99e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae8836456c092f46ec2fa251a9d542e64" id="r_ae8836456c092f46ec2fa251a9d542e64"><td class="memItemLeft" align="right" valign="top"><a id="ae8836456c092f46ec2fa251a9d542e64" name="ae8836456c092f46ec2fa251a9d542e64"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isEmpty</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:ae8836456c092f46ec2fa251a9d542e64"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when the map has no entries. <br /></td></tr>
+<tr class="separator:ae8836456c092f46ec2fa251a9d542e64"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d3ea51837282ca8286bb8ccceef05e4" id="r_a3d3ea51837282ca8286bb8ccceef05e4"><td class="memItemLeft" align="right" valign="top"><a id="a3d3ea51837282ca8286bb8ccceef05e4" name="a3d3ea51837282ca8286bb8ccceef05e4"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>clear</b> ()</td></tr>
+<tr class="memdesc:a3d3ea51837282ca8286bb8ccceef05e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes all entries. <br /></td></tr>
+<tr class="separator:a3d3ea51837282ca8286bb8ccceef05e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab30c60232880da95d04200d23b9e81a" id="r_aab30c60232880da95d04200d23b9e81a"><td class="memItemLeft" align="right" valign="top"><a id="aab30c60232880da95d04200d23b9e81a" name="aab30c60232880da95d04200d23b9e81a"></a>
 <a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>contains</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:ace3bef625d27a9327db2a3f65a7fdd5f inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if <code>key</code> exists in the map. <br /></td></tr>
-<tr class="separator:ace3bef625d27a9327db2a3f65a7fdd5f inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4efcc6101bbcb6607bc9b77bfb5f8812 inherit pub_methods_classpromeki_1_1Map" id="r_a4efcc6101bbcb6607bc9b77bfb5f8812"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Map.html#a3c420b0ca3a990214a2d1ff28154bfc6">Iterator</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#a4efcc6101bbcb6607bc9b77bfb5f8812">find</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key)</td></tr>
-<tr class="memdesc:a4efcc6101bbcb6607bc9b77bfb5f8812 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finds the entry for <code>key</code>.  <br /></td></tr>
-<tr class="separator:a4efcc6101bbcb6607bc9b77bfb5f8812 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a01f27c5006e622c32b648464502b06b7 inherit pub_methods_classpromeki_1_1Map" id="r_a01f27c5006e622c32b648464502b06b7"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1Map.html#a66846d0d8a9a22d914668ceb46c715de">ConstIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><b>find</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:a01f27c5006e622c32b648464502b06b7 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const overload of <a class="el" href="classpromeki_1_1Map.html#a4efcc6101bbcb6607bc9b77bfb5f8812" title="Finds the entry for key.">find()</a>. <br /></td></tr>
-<tr class="separator:a01f27c5006e622c32b648464502b06b7 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a21fefd154875f65cc078aaef1c1d9f6e inherit pub_methods_classpromeki_1_1Map" id="r_a21fefd154875f65cc078aaef1c1d9f6e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#a21fefd154875f65cc078aaef1c1d9f6e">insert</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">val</a>)</td></tr>
-<tr class="memdesc:a21fefd154875f65cc078aaef1c1d9f6e inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inserts or assigns a key-value pair.  <br /></td></tr>
-<tr class="separator:a21fefd154875f65cc078aaef1c1d9f6e inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2b20e0a97a1cda57f9a4d49a30f74303 inherit pub_methods_classpromeki_1_1Map" id="r_a2b20e0a97a1cda57f9a4d49a30f74303"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#a2b20e0a97a1cda57f9a4d49a30f74303">insert</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key, <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &amp;&amp;<a class="el" href="classpromeki_1_1UniquePtr.html">val</a>)</td></tr>
-<tr class="memdesc:a2b20e0a97a1cda57f9a4d49a30f74303 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inserts or assigns a key-value pair (move overload).  <br /></td></tr>
-<tr class="separator:a2b20e0a97a1cda57f9a4d49a30f74303 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2815564f5c724725a1971faf8af06971 inherit pub_methods_classpromeki_1_1Map" id="r_a2815564f5c724725a1971faf8af06971"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#a2815564f5c724725a1971faf8af06971">insertNew</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">val</a>)</td></tr>
-<tr class="memdesc:a2815564f5c724725a1971faf8af06971 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inserts a key-value pair only if <code>key</code> is absent.  <br /></td></tr>
-<tr class="separator:a2815564f5c724725a1971faf8af06971 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a22277997eea4a887fd87300592e4dbd6 inherit pub_methods_classpromeki_1_1Map" id="r_a22277997eea4a887fd87300592e4dbd6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#a22277997eea4a887fd87300592e4dbd6">remove</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key)</td></tr>
-<tr class="memdesc:a22277997eea4a887fd87300592e4dbd6 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes the entry for <code>key</code>.  <br /></td></tr>
-<tr class="separator:a22277997eea4a887fd87300592e4dbd6 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1b1b61f6a7cd30ff086893be83a8bed0 inherit pub_methods_classpromeki_1_1Map" id="r_a1b1b61f6a7cd30ff086893be83a8bed0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Map.html#a3c420b0ca3a990214a2d1ff28154bfc6">Iterator</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#a1b1b61f6a7cd30ff086893be83a8bed0">remove</a> (<a class="el" href="classpromeki_1_1Map.html#a3c420b0ca3a990214a2d1ff28154bfc6">Iterator</a> pos)</td></tr>
-<tr class="memdesc:a1b1b61f6a7cd30ff086893be83a8bed0 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes the entry at <code>pos</code>.  <br /></td></tr>
-<tr class="separator:a1b1b61f6a7cd30ff086893be83a8bed0 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0c14fa6631c0bfe64873dbc3b1da6b34 inherit pub_methods_classpromeki_1_1Map" id="r_a0c14fa6631c0bfe64873dbc3b1da6b34"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>clear</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a0c14fa6631c0bfe64873dbc3b1da6b34 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes all entries. <br /></td></tr>
-<tr class="separator:a0c14fa6631c0bfe64873dbc3b1da6b34 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c3f12441ba111261172eb8070ff9d76 inherit pub_methods_classpromeki_1_1Map" id="r_a9c3f12441ba111261172eb8070ff9d76"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#a9c3f12441ba111261172eb8070ff9d76">swap</a> (<a class="el" href="classpromeki_1_1Map.html">Map</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">other</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a9c3f12441ba111261172eb8070ff9d76 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Swaps contents with another map.  <br /></td></tr>
-<tr class="separator:a9c3f12441ba111261172eb8070ff9d76 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ada3da7bd511b0ee7cad3944db5961028 inherit pub_methods_classpromeki_1_1Map" id="r_ada3da7bd511b0ee7cad3944db5961028"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1List.html">List</a>&lt; <a class="el" href="classpromeki_1_1String.html">String</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>keys</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:ada3da7bd511b0ee7cad3944db5961028 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a list of all keys. <br /></td></tr>
-<tr class="separator:ada3da7bd511b0ee7cad3944db5961028 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7c0594878876bf394e5d91598996a508 inherit pub_methods_classpromeki_1_1Map" id="r_a7c0594878876bf394e5d91598996a508"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1List.html">List</a>&lt; <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>values</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:a7c0594878876bf394e5d91598996a508 inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a list of all values. <br /></td></tr>
-<tr class="separator:a7c0594878876bf394e5d91598996a508 inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abd8c66c560d9d3616b516b466bea827b inherit pub_methods_classpromeki_1_1Map" id="r_abd8c66c560d9d3616b516b466bea827b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Map.html#abd8c66c560d9d3616b516b466bea827b">forEach</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">Func</a> &amp;&amp;func) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:abd8c66c560d9d3616b516b466bea827b inherit pub_methods_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls <code>func</code> for every key-value pair.  <br /></td></tr>
-<tr class="separator:abd8c66c560d9d3616b516b466bea827b inherit pub_methods_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:aab30c60232880da95d04200d23b9e81a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if <code>key</code> exists in the map. <br /></td></tr>
+<tr class="separator:aab30c60232880da95d04200d23b9e81a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ed68c8d2e9569bb6fc7a61200051cce" id="r_a5ed68c8d2e9569bb6fc7a61200051cce"><td class="memItemLeft" align="right" valign="top"><a id="a5ed68c8d2e9569bb6fc7a61200051cce" name="a5ed68c8d2e9569bb6fc7a61200051cce"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>insert</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &amp;<a class="el" href="classpromeki_1_1VariantMap.html#a25e13e66111e1f41e2716110bcc4b9a4">value</a>)</td></tr>
+<tr class="memdesc:a5ed68c8d2e9569bb6fc7a61200051cce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inserts (or replaces) the entry for <code>key</code>. <br /></td></tr>
+<tr class="separator:a5ed68c8d2e9569bb6fc7a61200051cce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a525d1b7a8a1b965927026b283685e922" id="r_a525d1b7a8a1b965927026b283685e922"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantMap.html#a525d1b7a8a1b965927026b283685e922">insert</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key, <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &amp;&amp;<a class="el" href="classpromeki_1_1VariantMap.html#a25e13e66111e1f41e2716110bcc4b9a4">value</a>)</td></tr>
+<tr class="memdesc:a525d1b7a8a1b965927026b283685e922"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inserts (or replaces) the entry for <code>key</code>.    <br /></td></tr>
+<tr class="separator:a525d1b7a8a1b965927026b283685e922"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78ca19bb088d42dcc63e3be3637f7c33" id="r_a78ca19bb088d42dcc63e3be3637f7c33"><td class="memItemLeft" align="right" valign="top"><a id="a78ca19bb088d42dcc63e3be3637f7c33" name="a78ca19bb088d42dcc63e3be3637f7c33"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>remove</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key)</td></tr>
+<tr class="memdesc:a78ca19bb088d42dcc63e3be3637f7c33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes the entry for <code>key</code>, returning true if it was present. <br /></td></tr>
+<tr class="separator:a78ca19bb088d42dcc63e3be3637f7c33"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25e13e66111e1f41e2716110bcc4b9a4" id="r_a25e13e66111e1f41e2716110bcc4b9a4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Variant.html">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantMap.html#a25e13e66111e1f41e2716110bcc4b9a4">value</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a25e13e66111e1f41e2716110bcc4b9a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the value for <code>key</code>, or an invalid <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> if absent.  <br /></td></tr>
+<tr class="separator:a25e13e66111e1f41e2716110bcc4b9a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a960dd5d5186405ae8261f1ade7ae9816" id="r_a960dd5d5186405ae8261f1ade7ae9816"><td class="memItemLeft" align="right" valign="top"><a id="a960dd5d5186405ae8261f1ade7ae9816" name="a960dd5d5186405ae8261f1ade7ae9816"></a>
+<a class="el" href="classpromeki_1_1Variant.html">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><b>value</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &amp;defaultValue) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a960dd5d5186405ae8261f1ade7ae9816"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the value for <code>key</code>, or <code>defaultValue</code> if absent. <br /></td></tr>
+<tr class="separator:a960dd5d5186405ae8261f1ade7ae9816"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8fd7c46026612d5b0c546cea58c99ecd" id="r_a8fd7c46026612d5b0c546cea58c99ecd"><td class="memItemLeft" align="right" valign="top"><a id="a8fd7c46026612d5b0c546cea58c99ecd" name="a8fd7c46026612d5b0c546cea58c99ecd"></a>
+<a class="el" href="classpromeki_1_1Variant.html">Variant</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>find</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key)</td></tr>
+<tr class="memdesc:a8fd7c46026612d5b0c546cea58c99ecd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a pointer to the entry for <code>key</code>, or <code>nullptr</code>. <br /></td></tr>
+<tr class="separator:a8fd7c46026612d5b0c546cea58c99ecd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fc4c3436d0167ebfc3e3a48922a28b7" id="r_a4fc4c3436d0167ebfc3e3a48922a28b7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Variant.html">Variant</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantMap.html#a4fc4c3436d0167ebfc3e3a48922a28b7">find</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;key) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a4fc4c3436d0167ebfc3e3a48922a28b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a pointer to the entry for <code>key</code>, or <code>nullptr</code>.    <br /></td></tr>
+<tr class="separator:a4fc4c3436d0167ebfc3e3a48922a28b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add7eda925ad9ad1f83bf998f55082e48" id="r_add7eda925ad9ad1f83bf998f55082e48"><td class="memItemLeft" align="right" valign="top"><a id="add7eda925ad9ad1f83bf998f55082e48" name="add7eda925ad9ad1f83bf998f55082e48"></a>
+<a class="el" href="classpromeki_1_1StringList.html">StringList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>keys</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:add7eda925ad9ad1f83bf998f55082e48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a sorted list of all keys present in the map. <br /></td></tr>
+<tr class="separator:add7eda925ad9ad1f83bf998f55082e48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1bad1479e849ee0e06c9fa74f0f2c667" id="r_a1bad1479e849ee0e06c9fa74f0f2c667"><td class="memItemLeft" align="right" valign="top"><a id="a1bad1479e849ee0e06c9fa74f0f2c667" name="a1bad1479e849ee0e06c9fa74f0f2c667"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>forEach</b> (std::function&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">void</a>(<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &amp;)&gt; fn) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a1bad1479e849ee0e06c9fa74f0f2c667"><td class="mdescLeft">&#160;</td><td class="mdescRight">Iterates every (key, value) pair in key order. <br /></td></tr>
+<tr class="separator:a1bad1479e849ee0e06c9fa74f0f2c667"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d87edcac9ae710984c153c7215df1fa" id="r_a2d87edcac9ae710984c153c7215df1fa"><td class="memItemLeft" align="right" valign="top"><a id="a2d87edcac9ae710984c153c7215df1fa" name="a2d87edcac9ae710984c153c7215df1fa"></a>
+<a class="el" href="classpromeki_1_1Map.html">Map</a>&lt; <a class="el" href="classpromeki_1_1String.html">String</a>, <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>map</b> ()</td></tr>
+<tr class="memdesc:a2d87edcac9ae710984c153c7215df1fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Borrows the underlying <code>Map&lt;String, Variant&gt;</code> for operations not surfaced directly. <br /></td></tr>
+<tr class="separator:a2d87edcac9ae710984c153c7215df1fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aec3c1c089af7de41a85ede91fa5c6c4f" id="r_aec3c1c089af7de41a85ede91fa5c6c4f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Map.html">Map</a>&lt; <a class="el" href="classpromeki_1_1String.html">String</a>, <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantMap.html#aec3c1c089af7de41a85ede91fa5c6c4f">map</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:aec3c1c089af7de41a85ede91fa5c6c4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Borrows the underlying <code>Map&lt;String, Variant&gt;</code> for operations not surfaced directly.    <br /></td></tr>
+<tr class="separator:aec3c1c089af7de41a85ede91fa5c6c4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae40d42bbb1beb67f424ce3348f2b3198" id="r_ae40d42bbb1beb67f424ce3348f2b3198"><td class="memItemLeft" align="right" valign="top"><a id="ae40d42bbb1beb67f424ce3348f2b3198" name="ae40d42bbb1beb67f424ce3348f2b3198"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">other</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:ae40d42bbb1beb67f424ce3348f2b3198"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true iff both maps hold equal entry sets. <br /></td></tr>
+<tr class="separator:ae40d42bbb1beb67f424ce3348f2b3198"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a521d70a384b5076f25ed54b05cfeee25" id="r_a521d70a384b5076f25ed54b05cfeee25"><td class="memItemLeft" align="right" valign="top"><a id="a521d70a384b5076f25ed54b05cfeee25" name="a521d70a384b5076f25ed54b05cfeee25"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">other</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a521d70a384b5076f25ed54b05cfeee25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true iff the maps differ. <br /></td></tr>
+<tr class="separator:a521d70a384b5076f25ed54b05cfeee25"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61f3b0c7c01595c37c1bbd124d708064" id="r_a61f3b0c7c01595c37c1bbd124d708064"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1String.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantMap.html#a61f3b0c7c01595c37c1bbd124d708064">toJsonString</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a61f3b0c7c01595c37c1bbd124d708064"><td class="mdescLeft">&#160;</td><td class="mdescRight">Renders the map as a JSON-object string.  <br /></td></tr>
+<tr class="separator:a61f3b0c7c01595c37c1bbd124d708064"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pub_types_classpromeki_1_1Map"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classpromeki_1_1Map')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classpromeki_1_1Map.html">promeki::Map&lt; String, Variant &gt;</a></td></tr>
-<tr class="memitem:a0211dba07c5ea50ede4a9d81d68d3f96 inherit pub_types_classpromeki_1_1Map" id="r_a0211dba07c5ea50ede4a9d81d68d3f96"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Ptr</b> = <a class="el" href="classpromeki_1_1SharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classpromeki_1_1Map.html">Map</a> &gt;</td></tr>
-<tr class="memdesc:a0211dba07c5ea50ede4a9d81d68d3f96 inherit pub_types_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shared pointer type for <a class="el" href="classpromeki_1_1Map.html" title="Ordered associative container wrapping std::map.">Map</a>. <br /></td></tr>
-<tr class="separator:a0211dba07c5ea50ede4a9d81d68d3f96 inherit pub_types_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3649e0e5533e9a6ba93fc0975de01445 inherit pub_types_classpromeki_1_1Map" id="r_a3649e0e5533e9a6ba93fc0975de01445"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Data</b> = std::map&lt; <a class="el" href="classpromeki_1_1String.html">String</a>, <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &gt;</td></tr>
-<tr class="memdesc:a3649e0e5533e9a6ba93fc0975de01445 inherit pub_types_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Underlying std::map storage type. <br /></td></tr>
-<tr class="separator:a3649e0e5533e9a6ba93fc0975de01445 inherit pub_types_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3c420b0ca3a990214a2d1ff28154bfc6 inherit pub_types_classpromeki_1_1Map" id="r_a3c420b0ca3a990214a2d1ff28154bfc6"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Iterator</b> = <a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> Data::iterator</td></tr>
-<tr class="memdesc:a3c420b0ca3a990214a2d1ff28154bfc6 inherit pub_types_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mutable forward iterator. <br /></td></tr>
-<tr class="separator:a3c420b0ca3a990214a2d1ff28154bfc6 inherit pub_types_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a66846d0d8a9a22d914668ceb46c715de inherit pub_types_classpromeki_1_1Map" id="r_a66846d0d8a9a22d914668ceb46c715de"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ConstIterator</b> = <a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> Data::const_iterator</td></tr>
-<tr class="memdesc:a66846d0d8a9a22d914668ceb46c715de inherit pub_types_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const forward iterator. <br /></td></tr>
-<tr class="separator:a66846d0d8a9a22d914668ceb46c715de inherit pub_types_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a87b962d898871c46b1caf90c654869 inherit pub_types_classpromeki_1_1Map" id="r_a9a87b962d898871c46b1caf90c654869"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>RevIterator</b> = <a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> Data::reverse_iterator</td></tr>
-<tr class="memdesc:a9a87b962d898871c46b1caf90c654869 inherit pub_types_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mutable reverse iterator. <br /></td></tr>
-<tr class="separator:a9a87b962d898871c46b1caf90c654869 inherit pub_types_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab2ea584046d0fe6b9aea3abecfd3f95d inherit pub_types_classpromeki_1_1Map" id="r_ab2ea584046d0fe6b9aea3abecfd3f95d"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ConstRevIterator</b> = <a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> Data::const_reverse_iterator</td></tr>
-<tr class="memdesc:ab2ea584046d0fe6b9aea3abecfd3f95d inherit pub_types_classpromeki_1_1Map"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const reverse iterator. <br /></td></tr>
-<tr class="separator:ab2ea584046d0fe6b9aea3abecfd3f95d inherit pub_types_classpromeki_1_1Map"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a8960ec8512b6710d93b79e33867a7ade" id="r_a8960ec8512b6710d93b79e33867a7ade"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1VariantMap.html#a8960ec8512b6710d93b79e33867a7ade">fromJsonString</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">json</a>, <a class="el" href="classpromeki_1_1Error.html">Error</a> *<a class="el" href="classpromeki_1_1UniquePtr.html">err</a>=<a class="el" href="classpromeki_1_1UniquePtr.html">nullptr</a>)</td></tr>
+<tr class="memdesc:a8960ec8512b6710d93b79e33867a7ade"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a JSON-object string into a <a class="el" href="classpromeki_1_1VariantMap.html" title="Heterogeneous string-keyed map of Variant values.">VariantMap</a>.  <br /></td></tr>
+<tr class="separator:a8960ec8512b6710d93b79e33867a7ade"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>String-keyed map of <a class="el" href="classpromeki_1_1Variant.html">Variant</a> values. </p>
-<p>Implemented as a thin subclass of <code><a class="el" href="classpromeki_1_1Map.html">Map&lt;String, Variant&gt;</a></code> so that <code><a class="el" href="variant__fwd_8h.html">variant_fwd.h</a></code> can declare it as an incomplete class — the same pattern used by <a class="el" href="classpromeki_1_1VariantList.html">VariantList</a>. Used wherever a request needs to deliver a heterogeneous, named bag of values to a callee (RPC argument lists, dynamic config payloads, signal/slot cross-thread marshalling that already carries names alongside values). </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
+<div class="textblock"><p>Heterogeneous string-keyed map of <a class="el" href="classpromeki_1_1Variant.html">Variant</a> values. </p>
+<p><a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a> is a <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> alternative — same shape as <a class="el" href="classpromeki_1_1VariantList.html">VariantList</a> but keyed by <a class="el" href="classpromeki_1_1String.html">String</a>. Used for JSON-shaped objects, RPC argument bags, dynamic config payloads. As with <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a>, the underlying <code>Map&lt;String, Variant&gt;</code> lives behind a <a class="el" href="classpromeki_1_1UniquePtr.html">UniquePtr</a> handle so the type is complete with known size even when <a class="el" href="classpromeki_1_1Variant.html">Variant</a> is incomplete.</p>
+<dl class="section user"><dt>Iteration</dt><dd><code>std::map</code> storage is not contiguous, so map iteration is exposed via <a class="el" href="classpromeki_1_1VariantMap.html#a1bad1479e849ee0e06c9fa74f0f2c667">forEach</a> and via <a class="el" href="classpromeki_1_1VariantMap.html#add7eda925ad9ad1f83bf998f55082e48">keys</a> rather than raw iterators. Per-key access is via <a class="el" href="classpromeki_1_1VariantMap.html#a25e13e66111e1f41e2716110bcc4b9a4">value</a>, <a class="el" href="classpromeki_1_1VariantMap.html#a8fd7c46026612d5b0c546cea58c99ecd">find</a>, and <a class="el" href="classpromeki_1_1VariantMap.html#aab30c60232880da95d04200d23b9e81a">contains</a>.</dd></dl>
+<dl class="section user"><dt>Thread Safety</dt><dd>Conditionally thread-safe — same contract as <a class="el" href="classpromeki_1_1VariantList.html">VariantList</a>. </dd></dl>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a4fc4c3436d0167ebfc3e3a48922a28b7" name="a4fc4c3436d0167ebfc3e3a48922a28b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4fc4c3436d0167ebfc3e3a48922a28b7">&#9670;&#160;</a></span>find()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Variant.html">Variant</a> * promeki::VariantMap::find </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>key</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns a pointer to the entry for <code>key</code>, or <code>nullptr</code>.   </p>
+
+</div>
+</div>
+<a id="a8960ec8512b6710d93b79e33867a7ade" name="a8960ec8512b6710d93b79e33867a7ade"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8960ec8512b6710d93b79e33867a7ade">&#9670;&#160;</a></span>fromJsonString()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a> promeki::VariantMap::fromJsonString </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>json</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1Error.html">Error</a> *&#160;</td>
+          <td class="paramname"><em>err</em> = <code><a class="el" href="classpromeki_1_1UniquePtr.html">nullptr</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Parses a JSON-object string into a <a class="el" href="classpromeki_1_1VariantMap.html" title="Heterogeneous string-keyed map of Variant values.">VariantMap</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">json</td><td>JSON text of the form <code>"{...}"</code>. Anything else (including a JSON array) sets <code>err</code> to <a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4ae8684dbead4715d0175b83e16f523988">Error::ParseFailed</a> and returns an empty map. </td></tr>
+    <tr><td class="paramname">err</td><td>Optional error output. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The parsed map, or an empty map on failure. </dd></dl>
+
+</div>
+</div>
+<a id="a525d1b7a8a1b965927026b283685e922" name="a525d1b7a8a1b965927026b283685e922"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a525d1b7a8a1b965927026b283685e922">&#9670;&#160;</a></span>insert()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a> promeki::VariantMap::insert </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1Variant.html">Variant</a> &amp;&amp;&#160;</td>
+          <td class="paramname"><em>value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Inserts (or replaces) the entry for <code>key</code>.   </p>
+
+</div>
+</div>
+<a id="aec3c1c089af7de41a85ede91fa5c6c4f" name="aec3c1c089af7de41a85ede91fa5c6c4f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aec3c1c089af7de41a85ede91fa5c6c4f">&#9670;&#160;</a></span>map()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Map.html">Map</a>&lt; <a class="el" href="classpromeki_1_1String.html">String</a>, <a class="el" href="classpromeki_1_1Variant.html">Variant</a> &gt; &amp; promeki::VariantMap::map </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Borrows the underlying <code>Map&lt;String, Variant&gt;</code> for operations not surfaced directly.   </p>
+
+</div>
+</div>
+<a id="a61f3b0c7c01595c37c1bbd124d708064" name="a61f3b0c7c01595c37c1bbd124d708064"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a61f3b0c7c01595c37c1bbd124d708064">&#9670;&#160;</a></span>toJsonString()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1String.html">String</a> promeki::VariantMap::toJsonString </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Renders the map as a JSON-object string. </p>
+<p>Recursive: nested <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a> / <a class="el" href="classpromeki_1_1VariantMap.html" title="Heterogeneous string-keyed map of Variant values.">VariantMap</a> values become nested JSON arrays / objects. </p>
+
+</div>
+</div>
+<a id="a25e13e66111e1f41e2716110bcc4b9a4" name="a25e13e66111e1f41e2716110bcc4b9a4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a25e13e66111e1f41e2716110bcc4b9a4">&#9670;&#160;</a></span>value()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1Variant.html">Variant</a> promeki::VariantMap::value </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1String.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>key</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the value for <code>key</code>, or an invalid <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> if absent. </p>
+<p>Callers can distinguish "missing" from "present but invalid" via <a class="el" href="classpromeki_1_1VariantMap.html#aab30c60232880da95d04200d23b9e81a">contains</a>. </p>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="variant_8h_source.html">variant.h</a></li>
 </ul>
 </div><!-- contents -->
@@ -329,7 +386,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1VariantMap.html">VariantMap</a></li>
-    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 23:49:04 from commit 49b0299 (1.0.0).</li>
   </ul>
 </div>
 </body>

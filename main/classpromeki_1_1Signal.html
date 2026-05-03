@@ -171,7 +171,7 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a1b9e06a39e75818e29d753107a451043" id="r_a1b9e06a39e75818e29d753107a451043"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1VariantList.html">VariantList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Signal.html#a1b9e06a39e75818e29d753107a451043">pack</a> (Args... <a class="el" href="classpromeki_1_1UniquePtr.html">args</a>)</td></tr>
-<tr class="memdesc:a1b9e06a39e75818e29d753107a451043"><td class="mdescLeft">&#160;</td><td class="mdescRight">Packs the arguments into a <a class="el" href="classpromeki_1_1VariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a>.  <br /></td></tr>
+<tr class="memdesc:a1b9e06a39e75818e29d753107a451043"><td class="mdescLeft">&#160;</td><td class="mdescRight">Packs the arguments into a <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a>.  <br /></td></tr>
 <tr class="separator:a1b9e06a39e75818e29d753107a451043"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -592,8 +592,8 @@ template&lt;typename... Args&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Packs the arguments into a <a class="el" href="classpromeki_1_1VariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a>. </p>
-<p>Packs all the signal parameters into a <a class="el" href="classpromeki_1_1VariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a> object that can be used to marshal the data to either defer the emit or pass it as an event to another object (e.g. on another thread). Note, this will also make copies of any arguments passed by reference as the references probably won't be valid by the time you want to use the container.</p>
+<p>Packs the arguments into a <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a>. </p>
+<p>Packs all the signal parameters into a <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a> object that can be used to marshal the data to either defer the emit or pass it as an event to another object (e.g. on another thread). Note, this will also make copies of any arguments passed by reference as the references probably won't be valid by the time you want to use the container.</p>
 <p>The definition lives in <code>signal.tpp</code> so that <code><a class="el" href="signal_8h.html">signal.h</a></code> does not pull the full <code><a class="el" href="variant_8h.html">variant.h</a></code> through its 40+ member type headers. Callers that need to invoke <a class="el" href="classpromeki_1_1Signal.html#a1b9e06a39e75818e29d753107a451043" title="Packs the arguments into a VariantList.">pack()</a> must include <code>promeki/signal.tpp</code>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -601,7 +601,7 @@ template&lt;typename... Args&gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classpromeki_1_1VariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a> containing copies of all arguments. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a> containing copies of all arguments. </dd></dl>
 
 </div>
 </div>
@@ -615,7 +615,7 @@ template&lt;typename... Args&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1Signal.html">Signal</a></li>
-    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 23:49:04 from commit 49b0299 (1.0.0).</li>
   </ul>
 </div>
 </body>

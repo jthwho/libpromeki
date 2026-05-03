@@ -5,5 +5,6 @@ var variantlookup_8h =
     [ "promeki::VariantLookup< T >::Registrar", "classpromeki_1_1VariantLookup_1_1Registrar.html", "classpromeki_1_1VariantLookup_1_1Registrar" ],
     [ "PROMEKI_LOOKUP_REGISTER", "group__util.html#ga5cbdbf7bece870dee46af061c78a716a", null ],
     [ "parseLeadingSegment", "variantlookup_8h.html#a42affdd30036c37b17d49ff3e78a1162", null ],
+    [ "walkSpecPath", "variantlookup_8h.html#ga69cbf0bbc9509bb252c52f40255a2ed8", null ],
     [ "hasVariantLookupDispatchV", "variantlookup_8h.html#ad15b9d50f9e1118bbbcb4abc05f8e0e3", null ]
 ];

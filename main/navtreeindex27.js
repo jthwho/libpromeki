@@ -1,5 +1,7 @@
 var NAVTREEINDEX27 =
 {
+"classpromeki_1_1Terminal.html#a9a121de58a10940e8c862badb133477c":[23,10,40,3],
+"classpromeki_1_1Terminal.html#a9b25a76b3c552a36edad92684335cf27":[23,10,40,17],
 "classpromeki_1_1Terminal.html#a9b75fcd79debf22ed5795bf1ca191559":[23,10,40,5],
 "classpromeki_1_1Terminal.html#a9f0c0f227794ed02767091538c52a475":[23,10,40,8],
 "classpromeki_1_1Terminal.html#aa1d881aa06c63a64f384192761f46843":[23,10,40,20],
@@ -247,7 +249,5 @@ var NAVTREEINDEX27 =
 "classpromeki_1_1TuiLabel.html#a5f00a84e8dbd310cc158c7246bc3fb74":[25,0,0,375,5],
 "classpromeki_1_1TuiLabel.html#aaaef82f6048c7c59ac0db0ce221bc751":[25,0,0,375,2],
 "classpromeki_1_1TuiLabel.html#adb8207f3210e9dc57754b81bde59bbe5":[25,0,0,375,7],
-"classpromeki_1_1TuiLabel.html#ae029373d348c81902ff3959a758cd0c4":[25,0,0,375,4],
-"classpromeki_1_1TuiLabel.html#ae3512cc7f6460fe7abffb24e96d33788":[25,0,0,375,1],
-"classpromeki_1_1TuiLineEdit.html":[23,21,3]
+"classpromeki_1_1TuiLabel.html#ae029373d348c81902ff3959a758cd0c4":[25,0,0,375,4]
 };

@@ -4,6 +4,7 @@ var searchData=
   ['valueformatter_1',['valueformatter',['../classpromeki_1_1WindowedStat.html#abe3a5cedc7bf27161dd313400185b8ea',1,'promeki::WindowedStat::ValueFormatter'],['../classpromeki_1_1WindowedStatsBundle.html#ad1ae0c11b061a329762444b8960e152d',1,'promeki::WindowedStatsBundle::ValueFormatter']]],
   ['valuelist_2',['ValueList',['../classpromeki_1_1Enum.html#ab49995d2ef023accb98245bca1479c02',1,'promeki::Enum']]],
   ['variantquerynodeuptr_3',['VariantQueryNodeUPtr',['../variantquery_8h.html#ac1bf08fb0d8d508858eb72c4f5cf5377',1,'promeki::detail']]],
-  ['videocodecbackendregistry_4',['VideoCodecBackendRegistry',['../group__proav.html#ga8c0bf20dc1883f3288212d43d8f165ac',1,'promeki']]],
-  ['visitor_5',['Visitor',['../classpromeki_1_1H264Bitstream.html#abdee695c6dc0f74a8839db6564a64e05',1,'promeki::H264Bitstream']]]
+  ['varianttreeget_4',['VariantTreeGet',['../classpromeki_1_1VariantLookup.html#afdd5f37dbb0ba7b71ccdcbf15ffe7eb7',1,'promeki::VariantLookup']]],
+  ['videocodecbackendregistry_5',['VideoCodecBackendRegistry',['../group__proav.html#ga8c0bf20dc1883f3288212d43d8f165ac',1,'promeki']]],
+  ['visitor_6',['Visitor',['../classpromeki_1_1H264Bitstream.html#abdee695c6dc0f74a8839db6564a64e05',1,'promeki::H264Bitstream']]]
 ];

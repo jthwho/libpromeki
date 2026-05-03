@@ -64,6 +64,6 @@ var searchData=
   ['disconnectedsignal_61',['disconnectedsignal',['../classpromeki_1_1AbstractSocket.html#a475d9fe178df4b0d27c23c9c9072a841',1,'promeki::AbstractSocket::disconnectedSignal'],['../classpromeki_1_1LocalSocket.html#a38e14da695feed0fbbaeb28150cc1c83',1,'promeki::LocalSocket::disconnectedSignal'],['../classpromeki_1_1WebSocket.html#a62251e08da45f53c7961da05bd39bd98',1,'promeki::WebSocket::disconnectedSignal']]],
   ['discontinuities_62',['discontinuities',['../structpromeki_1_1InspectorEvent.html#a0c2f21175eafc435a9d7821a8f1b7493',1,'promeki::InspectorEvent']]],
   ['dts_63',['dts',['../structpromeki_1_1QuickTime_1_1Sample.html#a438cbb0655503e266aa806afd7d95e72',1,'promeki::QuickTime::Sample']]],
-  ['duration_64',['duration',['../classpromeki_1_1Metadata.html#a2a42cb208387a9184217a57f88ee02cf',1,'promeki::Metadata::Duration'],['../structpromeki_1_1QuickTime_1_1Sample.html#a7244e039e3fd85d73c1d8a4c6478cf8e',1,'promeki::QuickTime::Sample::duration']]],
+  ['duration_64',['duration',['../structpromeki_1_1QuickTime_1_1Sample.html#a7244e039e3fd85d73c1d8a4c6478cf8e',1,'promeki::QuickTime::Sample::duration'],['../classpromeki_1_1Metadata.html#a2a42cb208387a9184217a57f88ee02cf',1,'promeki::Metadata::Duration']]],
   ['dutycycle_65',['dutyCycle',['../structpromeki_1_1AudioGen_1_1Config.html#a3555c35487c1ae7bd6e48ff837f50952',1,'promeki::AudioGen::Config']]]
 ];

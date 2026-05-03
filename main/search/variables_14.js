@@ -6,7 +6,7 @@ var searchData=
   ['terminationsignalhandler_3',['TerminationSignalHandler',['../classpromeki_1_1LibraryOptions.html#a2f76324079e54d26c0c485501676f653',1,'promeki::LibraryOptions']]],
   ['textmessagereceivedsignal_4',['textMessageReceivedSignal',['../classpromeki_1_1WebSocket.html#a51b3e2c4bef8aa1e00f00437865c91b7',1,'promeki::WebSocket']]],
   ['time_5',['time',['../structpromeki_1_1BuildInfo.html#a2a27a13090266be279025014113b263c',1,'promeki::BuildInfo']]],
-  ['timecode_6',['timecode',['../classpromeki_1_1Metadata.html#aab69bf834df8584634ece60081dd8a30',1,'promeki::Metadata::Timecode'],['../structpromeki_1_1LtcDecoder_1_1DecodedTimecode.html#af7bd4618f5be25e0faff6f141225e6c6',1,'promeki::LtcDecoder::DecodedTimecode::timecode']]],
+  ['timecode_6',['timecode',['../structpromeki_1_1LtcDecoder_1_1DecodedTimecode.html#af7bd4618f5be25e0faff6f141225e6c6',1,'promeki::LtcDecoder::DecodedTimecode::timecode'],['../classpromeki_1_1Metadata.html#aab69bf834df8584634ece60081dd8a30',1,'promeki::Metadata::Timecode']]],
   ['timecodedropframe_7',['TimecodeDropFrame',['../classpromeki_1_1MediaConfig.html#a0ab549db9c49e012c0b3696b1fad4411',1,'promeki::MediaConfig']]],
   ['timecodeenabled_8',['TimecodeEnabled',['../classpromeki_1_1MediaConfig.html#ad3e8eb39c30169aa0f6d3769ebee536c',1,'promeki::MediaConfig']]],
   ['timecodestart_9',['TimecodeStart',['../classpromeki_1_1MediaConfig.html#a55a2746b1fdfded4d6901ba1f335b9f8',1,'promeki::MediaConfig']]],

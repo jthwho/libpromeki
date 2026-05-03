@@ -433,9 +433,6 @@ var hierarchy =
     [ "promeki::List< Track >", "classpromeki_1_1List.html", null ],
     [ "promeki::List< Type >", "classpromeki_1_1List.html", null ],
     [ "promeki::List< uint8_t >", "classpromeki_1_1List.html", null ],
-    [ "promeki::List< Variant >", "classpromeki_1_1List.html", [
-      [ "promeki::VariantList", "classpromeki_1_1VariantList.html", null ]
-    ] ],
     [ "promeki::List< View >", "classpromeki_1_1List.html", null ],
     [ "promeki::Mutex::Locker", "classpromeki_1_1Mutex_1_1Locker.html", null ],
     [ "promeki::Logger::LogEntry", "structpromeki_1_1Logger_1_1LogEntry.html", null ],
@@ -461,9 +458,6 @@ var hierarchy =
     [ "promeki::Map< size_t, promeki::List< float > >", "classpromeki_1_1Map.html", null ],
     [ "promeki::Map< std::atomic< promeki::ObjectBase * > *, std::atomic< promeki::ObjectBase * > * >", "classpromeki_1_1Map.html", null ],
     [ "promeki::Map< String, KeyType >", "classpromeki_1_1Map.html", null ],
-    [ "promeki::Map< String, Variant >", "classpromeki_1_1Map.html", [
-      [ "promeki::VariantMap", "classpromeki_1_1VariantMap.html", null ]
-    ] ],
     [ "promeki::Map< uint32_t, CachedGlyph >", "classpromeki_1_1Map.html", null ],
     [ "promeki::Map< uint32_t, promeki::SDLWindow * >", "classpromeki_1_1Map.html", null ],
     [ "promeki::Map< uint64_t, ComposeEntry >", "classpromeki_1_1Map.html", null ],
@@ -848,6 +842,7 @@ var hierarchy =
     [ "promeki::UniquePtr< promeki::DebugServer >", "classpromeki_1_1UniquePtr.html", null ],
     [ "promeki::UniquePtr< promeki::SDLPlayerMediaIO >", "classpromeki_1_1UniquePtr.html", null ],
     [ "promeki::UniquePtr< promeki::TcpServer >", "classpromeki_1_1UniquePtr.html", null ],
+    [ "promeki::UniquePtr< promeki::VariantSpec >", "classpromeki_1_1UniquePtr.html", null ],
     [ "promeki::UniquePtr< promeki::VideoEncoder >", "classpromeki_1_1UniquePtr.html", null ],
     [ "promeki::UniquePtr< ReceiveThread >", "classpromeki_1_1UniquePtr.html", null ],
     [ "promeki::UniquePtr< UdpSocket >", "classpromeki_1_1UniquePtr.html", null ],
@@ -874,11 +869,13 @@ var hierarchy =
     ] ],
     [ "promeki::detail::VariantEnd", "structpromeki_1_1detail_1_1VariantEnd.html", null ],
     [ "promeki::VariantImpl< Types >", "classpromeki_1_1VariantImpl.html", null ],
-    [ "promeki::VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, FrameNumber, FrameCount, MediaDuration, Duration, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelMemLayout, PixelFormat, VideoCodec, AudioCodec, AudioFormat, AudioStreamDesc, AudioChannelMap, AudioMarkerList, Enum, EnumList, MasteringDisplay, ContentLightLevel, Url, WindowedStat, detail::VariantEnd >", "classpromeki_1_1VariantImpl.html", [
+    [ "promeki::VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, FrameNumber, FrameCount, MediaDuration, Duration, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelMemLayout, PixelFormat, VideoCodec, AudioCodec, AudioFormat, AudioStreamDesc, AudioChannelMap, AudioMarkerList, Enum, EnumList, MasteringDisplay, ContentLightLevel, Url, WindowedStat, VariantList, VariantMap, detail::VariantEnd >", "classpromeki_1_1VariantImpl.html", [
       [ "promeki::Variant", "classpromeki_1_1Variant.html", null ]
     ] ],
+    [ "promeki::VariantList", "classpromeki_1_1VariantList.html", null ],
     [ "promeki::VariantLookup< T >", "classpromeki_1_1VariantLookup.html", null ],
     [ "promeki::detail::VariantLookupSegment", "structpromeki_1_1detail_1_1VariantLookupSegment.html", null ],
+    [ "promeki::VariantMap", "classpromeki_1_1VariantMap.html", null ],
     [ "promeki::VariantQuery< T >", "classpromeki_1_1VariantQuery.html", null ],
     [ "promeki::detail::VariantQueryContext", "structpromeki_1_1detail_1_1VariantQueryContext.html", null ],
     [ "promeki::VariantSpec", "classpromeki_1_1VariantSpec.html", null ],

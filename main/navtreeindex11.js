@@ -1,5 +1,7 @@
 var NAVTREEINDEX11 =
 {
+"classpromeki_1_1Histogram.html#a443952bd72a7c99bd89365ea4c78bdef":[23,9,12,8],
+"classpromeki_1_1Histogram.html#a540527f364740e198a221886c6074f0b":[23,9,12,0],
 "classpromeki_1_1Histogram.html#a5789dbf8e73eeed5e853fc6c5d401ca1":[23,9,12,6],
 "classpromeki_1_1Histogram.html#a847c304fa485c0f25dcf6838d800abfa":[23,9,12,7],
 "classpromeki_1_1Histogram.html#a8ee4aad7b2a5afb10c1b88453b863120":[23,9,12,5],
@@ -247,7 +249,5 @@ var NAVTREEINDEX11 =
 "classpromeki_1_1IODevice.html#a2fd963a76795a806489190a66eafa63e":[23,2,9,6],
 "classpromeki_1_1IODevice.html#a3afa7ed7733b8b9de76b0b78f623b292":[23,2,9,2],
 "classpromeki_1_1IODevice.html#a3afa7ed7733b8b9de76b0b78f623b292a0a844a87c6122668289101177e2187ea":[23,2,9,2,3],
-"classpromeki_1_1IODevice.html#a3afa7ed7733b8b9de76b0b78f623b292a305184c784ff2ad5c5699dc5bd72f54b":[23,2,9,2,0],
-"classpromeki_1_1IODevice.html#a3afa7ed7733b8b9de76b0b78f623b292a6ca6b47330569098324f16927635366d":[23,2,9,2,4],
-"classpromeki_1_1IODevice.html#a3afa7ed7733b8b9de76b0b78f623b292a75de3b07975e79abbe625ac5c0756c3c":[23,2,9,2,2]
+"classpromeki_1_1IODevice.html#a3afa7ed7733b8b9de76b0b78f623b292a305184c784ff2ad5c5699dc5bd72f54b":[23,2,9,2,0]
 };

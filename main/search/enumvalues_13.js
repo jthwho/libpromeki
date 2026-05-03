@@ -83,11 +83,13 @@ var searchData=
   ['typeumid_80',['TypeUMID',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a77d67f3b5f334b328ab7cf4982c02240',1,'promeki::DataStream']]],
   ['typeurl_81',['TypeUrl',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a5b7cc77309be73914414a7d56ad3c2dd',1,'promeki::DataStream']]],
   ['typeuuid_82',['TypeUUID',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a9ad61b97080ee5ac588c11dd4b04ca98',1,'promeki::DataStream']]],
-  ['typevideocodec_83',['TypeVideoCodec',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5ae5a370a675b618fcc386dd37a54a21ba',1,'promeki::DataStream']]],
-  ['typevideoformat_84',['TypeVideoFormat',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5ae11632cfbebd085f951c4f9e5cde8581',1,'promeki::DataStream']]],
-  ['typewindowedstat_85',['TypeWindowedStat',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a14f8a5cbc509520cfce1811d24b20b1f',1,'promeki::DataStream']]],
-  ['typewindowedstatsbundle_86',['TypeWindowedStatsBundle',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5aa7d6db3fbb1836fd236b260b50de0b8d',1,'promeki::DataStream']]],
-  ['typexyz_87',['TypeXYZ',['../classpromeki_1_1ColorModel.html#ab68237a2ea2560eb3597a909c61d7283aab12b860d3cc35ff821f836c68fcfcbd',1,'promeki::ColorModel']]],
-  ['typexyzcolor_88',['TypeXYZColor',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a8e42a468469e8ef0a50bce057fee0bde',1,'promeki::DataStream']]],
-  ['typeycbcr_89',['TypeYCbCr',['../classpromeki_1_1ColorModel.html#ab68237a2ea2560eb3597a909c61d7283a8a1dabf2bc7272fb71ecb55b344525a1',1,'promeki::ColorModel']]]
+  ['typevariantlist_83',['TypeVariantList',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5acf51c0a3cc04a0fe6222a029ebd4a83b',1,'promeki::DataStream']]],
+  ['typevariantmap_84',['TypeVariantMap',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a08f34f97b5b4755b0acbc5afa18539c1',1,'promeki::DataStream']]],
+  ['typevideocodec_85',['TypeVideoCodec',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5ae5a370a675b618fcc386dd37a54a21ba',1,'promeki::DataStream']]],
+  ['typevideoformat_86',['TypeVideoFormat',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5ae11632cfbebd085f951c4f9e5cde8581',1,'promeki::DataStream']]],
+  ['typewindowedstat_87',['TypeWindowedStat',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a14f8a5cbc509520cfce1811d24b20b1f',1,'promeki::DataStream']]],
+  ['typewindowedstatsbundle_88',['TypeWindowedStatsBundle',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5aa7d6db3fbb1836fd236b260b50de0b8d',1,'promeki::DataStream']]],
+  ['typexyz_89',['TypeXYZ',['../classpromeki_1_1ColorModel.html#ab68237a2ea2560eb3597a909c61d7283aab12b860d3cc35ff821f836c68fcfcbd',1,'promeki::ColorModel']]],
+  ['typexyzcolor_90',['TypeXYZColor',['../classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a8e42a468469e8ef0a50bce057fee0bde',1,'promeki::DataStream']]],
+  ['typeycbcr_91',['TypeYCbCr',['../classpromeki_1_1ColorModel.html#ab68237a2ea2560eb3597a909c61d7283a8a1dabf2bc7272fb71ecb55b344525a1',1,'promeki::ColorModel']]]
 ];

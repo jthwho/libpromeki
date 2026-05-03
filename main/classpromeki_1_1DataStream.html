@@ -214,6 +214,8 @@ Public Types</h2></td></tr>
 , <br />
 &#160;&#160;<a class="el" href="classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5aa7d6db3fbb1836fd236b260b50de0b8d">TypeWindowedStatsBundle</a>
 , <a class="el" href="classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a443ae0417e5e24dea9111718b29428a0">TypeAudioMarkerList</a>
+, <a class="el" href="classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5acf51c0a3cc04a0fe6222a029ebd4a83b">TypeVariantList</a>
+, <a class="el" href="classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a08f34f97b5b4755b0acbc5afa18539c1">TypeVariantMap</a>
 <br />
  }</td></tr>
 <tr class="memdesc:ab658df464f14966de95fae4835987ef5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type identifiers written before each value.  <a href="classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5">More...</a><br /></td></tr>
@@ -740,7 +742,7 @@ Static Public Attributes</h2></td></tr>
 <div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">err</a>.isOk()) { ... }</div>
 <div class="ttc" id="aclasspromeki_1_1BufferIODevice_html"><div class="ttname"><a href="classpromeki_1_1BufferIODevice.html">promeki::BufferIODevice</a></div><div class="ttdoc">IODevice backed by an in-memory Buffer.</div><div class="ttdef"><b>Definition</b> bufferiodevice.h:41</div></div>
 <div class="ttc" id="aclasspromeki_1_1DataStream_html_a2ce87399ec4611eebc78beb2c9b58446"><div class="ttname"><a href="classpromeki_1_1DataStream.html#a2ce87399ec4611eebc78beb2c9b58446">promeki::DataStream::createWriter</a></div><div class="ttdeci">static DataStream createWriter(IODevice *device, ByteOrder order=BigEndian)</div><div class="ttdoc">Constructs a DataStream for writing on an IODevice.</div></div>
-<div class="ttc" id="aclasspromeki_1_1DataStream_html_a64ddb4f11b1560672038f9898ea2c186"><div class="ttname"><a href="classpromeki_1_1DataStream.html#a64ddb4f11b1560672038f9898ea2c186">promeki::DataStream::device</a></div><div class="ttdeci">IODevice * device() const</div><div class="ttdoc">Returns the underlying IODevice.</div><div class="ttdef"><b>Definition</b> datastream.h:480</div></div>
+<div class="ttc" id="aclasspromeki_1_1DataStream_html_a64ddb4f11b1560672038f9898ea2c186"><div class="ttname"><a href="classpromeki_1_1DataStream.html#a64ddb4f11b1560672038f9898ea2c186">promeki::DataStream::device</a></div><div class="ttdeci">IODevice * device() const</div><div class="ttdoc">Returns the underlying IODevice.</div><div class="ttdef"><b>Definition</b> datastream.h:484</div></div>
 <div class="ttc" id="aclasspromeki_1_1DataStream_html_abf8426efbfc8adcbc78783dc65c2133b"><div class="ttname"><a href="classpromeki_1_1DataStream.html#abf8426efbfc8adcbc78783dc65c2133b">promeki::DataStream::createReader</a></div><div class="ttdeci">static DataStream createReader(IODevice *device)</div><div class="ttdoc">Constructs a DataStream for reading from an IODevice.</div></div>
 <div class="ttc" id="aclasspromeki_1_1IODevice_html_a23869e9b99ca244798c62edc3bc2ce41"><div class="ttname"><a href="classpromeki_1_1IODevice.html#a23869e9b99ca244798c62edc3bc2ce41">promeki::IODevice::open</a></div><div class="ttdeci">virtual Error open(OpenMode mode)=0</div><div class="ttdoc">Opens the device with the specified mode.</div></div>
 <div class="ttc" id="aclasspromeki_1_1IODevice_html_a3afa7ed7733b8b9de76b0b78f623b292a75de3b07975e79abbe625ac5c0756c3c"><div class="ttname"><a href="classpromeki_1_1IODevice.html#a3afa7ed7733b8b9de76b0b78f623b292a75de3b07975e79abbe625ac5c0756c3c">promeki::IODevice::WriteOnly</a></div><div class="ttdeci">@ WriteOnly</div><div class="ttdoc">Open for writing only.</div><div class="ttdef"><b>Definition</b> iodevice.h:58</div></div>
@@ -957,6 +959,10 @@ Static Public Attributes</h2></td></tr>
 <tr><td class="fieldname"><a id="ab658df464f14966de95fae4835987ef5aa7d6db3fbb1836fd236b260b50de0b8d" name="ab658df464f14966de95fae4835987ef5aa7d6db3fbb1836fd236b260b50de0b8d"></a>TypeWindowedStatsBundle&#160;</td><td class="fielddoc"><p><a class="el" href="classpromeki_1_1WindowedStatsBundle.html" title="Per-stat-ID WindowedStat container for telemetry breakdowns.">WindowedStatsBundle</a> (uint32 count + N (<a class="el" href="classpromeki_1_1String.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> name, <a class="el" href="classpromeki_1_1WindowedStat.html" title="Fixed-capacity ring of double samples with descriptive statistics.">WindowedStat</a>) pairs) </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ab658df464f14966de95fae4835987ef5a443ae0417e5e24dea9111718b29428a0" name="ab658df464f14966de95fae4835987ef5a443ae0417e5e24dea9111718b29428a0"></a>TypeAudioMarkerList&#160;</td><td class="fielddoc"><p><a class="el" href="classpromeki_1_1AudioMarkerList.html" title="Ordered list of AudioMarker annotations on a payload.">AudioMarkerList</a> (uint32 count + N (int64 offset, int64 length, int32 type)) </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab658df464f14966de95fae4835987ef5acf51c0a3cc04a0fe6222a029ebd4a83b" name="ab658df464f14966de95fae4835987ef5acf51c0a3cc04a0fe6222a029ebd4a83b"></a>TypeVariantList&#160;</td><td class="fielddoc"><p><a class="el" href="classpromeki_1_1VariantList.html" title="Heterogeneous list of Variant values.">VariantList</a> (uint32 count + N tagged Variants — same wire as List&lt;Variant&gt;) </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab658df464f14966de95fae4835987ef5a08f34f97b5b4755b0acbc5afa18539c1" name="ab658df464f14966de95fae4835987ef5a08f34f97b5b4755b0acbc5afa18539c1"></a>TypeVariantMap&#160;</td><td class="fielddoc"><p><a class="el" href="classpromeki_1_1VariantMap.html" title="Heterogeneous string-keyed map of Variant values.">VariantMap</a> (uint32 count + N (<a class="el" href="classpromeki_1_1String.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> key, <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> value) — same wire as Map&lt;String,Variant&gt;) </p>
 </td></tr>
 </table>
 
@@ -1590,7 +1596,7 @@ template&lt;<a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> <a 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1DataStream.html">DataStream</a></li>
-    <li class="footer">Generated on 2026-05-03 05:09:07 from commit 9533c24 (1.0.0).</li>
+    <li class="footer">Generated on 2026-05-03 23:49:04 from commit 49b0299 (1.0.0).</li>
   </ul>
 </div>
 </body>

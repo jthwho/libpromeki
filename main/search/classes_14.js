@@ -20,13 +20,14 @@ var searchData=
   ['uniqueptr_3c_20promeki_3a_3adebugserver_20_3e_17',['UniquePtr&lt; promeki::DebugServer &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
   ['uniqueptr_3c_20promeki_3a_3asdlplayermediaio_20_3e_18',['UniquePtr&lt; promeki::SDLPlayerMediaIO &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
   ['uniqueptr_3c_20promeki_3a_3atcpserver_20_3e_19',['UniquePtr&lt; promeki::TcpServer &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
-  ['uniqueptr_3c_20promeki_3a_3avideoencoder_20_3e_20',['UniquePtr&lt; promeki::VideoEncoder &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
-  ['uniqueptr_3c_20receivethread_20_3e_21',['UniquePtr&lt; ReceiveThread &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
-  ['uniqueptr_3c_20udpsocket_20_3e_22',['UniquePtr&lt; UdpSocket &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
-  ['uniqueptr_3c_20variantquerynode_20_3e_23',['UniquePtr&lt; VariantQueryNode &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
-  ['uniqueptr_3c_20videodecoder_20_3e_24',['UniquePtr&lt; VideoDecoder &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
-  ['uniqueptr_3c_20videoencoder_20_3e_25',['UniquePtr&lt; VideoEncoder &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
-  ['units_26',['Units',['../classpromeki_1_1Units.html',1,'promeki']]],
-  ['url_27',['Url',['../classpromeki_1_1Url.html',1,'promeki']]],
-  ['uuid_28',['UUID',['../classpromeki_1_1UUID.html',1,'promeki']]]
+  ['uniqueptr_3c_20promeki_3a_3avariantspec_20_3e_20',['UniquePtr&lt; promeki::VariantSpec &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
+  ['uniqueptr_3c_20promeki_3a_3avideoencoder_20_3e_21',['UniquePtr&lt; promeki::VideoEncoder &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
+  ['uniqueptr_3c_20receivethread_20_3e_22',['UniquePtr&lt; ReceiveThread &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
+  ['uniqueptr_3c_20udpsocket_20_3e_23',['UniquePtr&lt; UdpSocket &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
+  ['uniqueptr_3c_20variantquerynode_20_3e_24',['UniquePtr&lt; VariantQueryNode &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
+  ['uniqueptr_3c_20videodecoder_20_3e_25',['UniquePtr&lt; VideoDecoder &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
+  ['uniqueptr_3c_20videoencoder_20_3e_26',['UniquePtr&lt; VideoEncoder &gt;',['../classpromeki_1_1UniquePtr.html',1,'promeki']]],
+  ['units_27',['Units',['../classpromeki_1_1Units.html',1,'promeki']]],
+  ['url_28',['Url',['../classpromeki_1_1Url.html',1,'promeki']]],
+  ['uuid_29',['UUID',['../classpromeki_1_1UUID.html',1,'promeki']]]
 ];

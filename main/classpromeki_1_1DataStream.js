@@ -80,7 +80,9 @@ var classpromeki_1_1DataStream =
       [ "TypeAudioStreamDesc", "classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a03cc7519ecb4c86257540d32b4bffa96", null ],
       [ "TypeWindowedStat", "classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a14f8a5cbc509520cfce1811d24b20b1f", null ],
       [ "TypeWindowedStatsBundle", "classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5aa7d6db3fbb1836fd236b260b50de0b8d", null ],
-      [ "TypeAudioMarkerList", "classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a443ae0417e5e24dea9111718b29428a0", null ]
+      [ "TypeAudioMarkerList", "classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a443ae0417e5e24dea9111718b29428a0", null ],
+      [ "TypeVariantList", "classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5acf51c0a3cc04a0fe6222a029ebd4a83b", null ],
+      [ "TypeVariantMap", "classpromeki_1_1DataStream.html#ab658df464f14966de95fae4835987ef5a08f34f97b5b4755b0acbc5afa18539c1", null ]
     ] ],
     [ "DataStream", "classpromeki_1_1DataStream.html#a06a6d00be814c6e8d95ffb4560b5961c", null ],
     [ "~DataStream", "classpromeki_1_1DataStream.html#ad35c04e4b9d551675032a196df46bfb9", null ],
