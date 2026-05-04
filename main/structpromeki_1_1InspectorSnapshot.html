@@ -114,17 +114,19 @@ Collaboration diagram for promeki::InspectorSnapshot:</div>
 <div class="dyncontent">
 <div class="center"><img src="structpromeki_1_1InspectorSnapshot__coll__graph.png" border="0" usemap="#apromeki_1_1InspectorSnapshot_coll__map" alt="Collaboration graph"/></div>
 <map name="apromeki_1_1InspectorSnapshot_coll__map" id="apromeki_1_1InspectorSnapshot_coll__map">
-<area shape="rect" title="Aggregate snapshot of the inspector&#39;s accumulated state." alt="" coords="771,83,975,109"/>
-<area shape="rect" href="classpromeki_1_1FrameCount.html" title="Count of frames, optionally empty, unknown, or infinite." alt="" coords="363,59,525,85"/>
-<area shape="poly" title=" " alt="" coords="539,75,771,88,770,93,539,80"/>
-<area shape="rect" href="structpromeki_1_1InspectorEvent.html" title="Per&#45;frame measurement record produced by InspectorMediaIO." alt="" coords="353,109,535,134"/>
-<area shape="poly" title=" " alt="" coords="549,116,746,107,770,105,771,110,747,112,549,122"/>
-<area shape="rect" href="classpromeki_1_1FrameNumber.html" title="Absolute frame index along a media timeline." alt="" coords="12,49,189,74"/>
-<area shape="poly" title=" " alt="" coords="203,69,330,88,399,106,397,111,329,93,203,74"/>
-<area shape="rect" href="classpromeki_1_1Timecode.html" title="Class for holding and manipulating timecode." alt="" coords="27,109,175,134"/>
-<area shape="poly" title=" " alt="" coords="189,119,353,119,353,124,189,124"/>
-<area shape="rect" href="classpromeki_1_1List.html" title=" " alt="" coords="5,159,196,199"/>
-<area shape="poly" title=" " alt="" coords="209,159,329,139,371,131,372,137,330,144,210,164"/>
+<area shape="rect" title="Aggregate snapshot of the inspector&#39;s accumulated state." alt="" coords="841,83,1045,109"/>
+<area shape="rect" href="classpromeki_1_1FrameCount.html" title="Count of frames, optionally empty, unknown, or infinite." alt="" coords="433,59,596,85"/>
+<area shape="poly" title=" " alt="" coords="610,75,841,88,841,93,609,80"/>
+<area shape="rect" href="structpromeki_1_1InspectorEvent.html" title="Per&#45;frame measurement record produced by InspectorMediaIO." alt="" coords="424,109,605,134"/>
+<area shape="poly" title=" " alt="" coords="619,116,817,107,841,105,841,110,818,112,620,122"/>
+<area shape="rect" href="classpromeki_1_1FrameNumber.html" title="Absolute frame index along a media timeline." alt="" coords="29,19,207,45"/>
+<area shape="poly" title=" " alt="" coords="221,23,265,25,312,32,358,44,401,63,410,71,415,79,418,87,426,94,450,106,448,111,422,98,414,90,410,81,406,74,399,68,356,49,310,37,264,31,220,28"/>
+<area shape="rect" href="classpromeki_1_1Timecode.html" title="Class for holding and manipulating timecode." alt="" coords="44,74,192,99"/>
+<area shape="poly" title=" " alt="" coords="206,92,424,111,424,116,205,97"/>
+<area shape="rect" href="classpromeki_1_1List.html" title=" " alt="" coords="5,123,231,178"/>
+<area shape="poly" title=" " alt="" coords="244,144,400,133,423,131,424,136,400,139,244,149"/>
+<area shape="rect" href="classpromeki_1_1List.html" title=" " alt="" coords="23,203,213,243"/>
+<area shape="poly" title=" " alt="" coords="227,203,312,186,399,164,484,132,486,137,401,169,313,192,228,209"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -208,6 +210,64 @@ Public Attributes</h2></td></tr>
 <tr class="separator:abeeab3d3ba9feb39f0be828847de9641"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1654e7568d75d1fb8bb81e0dd75db508" id="r_a1654e7568d75d1fb8bb81e0dd75db508"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorSnapshot.html#a1654e7568d75d1fb8bb81e0dd75db508">totalDiscontinuities</a> = 0</td></tr>
 <tr class="separator:a1654e7568d75d1fb8bb81e0dd75db508"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af72988efeb3f8caef5f204adac676263" id="r_af72988efeb3f8caef5f204adac676263"><td class="memItemLeft" align="right" valign="top"><a id="af72988efeb3f8caef5f204adac676263" name="af72988efeb3f8caef5f204adac676263"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>audioPtsJitterSamples</b> = 0</td></tr>
+<tr class="memdesc:af72988efeb3f8caef5f204adac676263"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of audio chunks that contributed a jitter measurement. <br /></td></tr>
+<tr class="separator:af72988efeb3f8caef5f204adac676263"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0dd02a6a6db541ab608f0cb96cd6843" id="r_ac0dd02a6a6db541ab608f0cb96cd6843"><td class="memItemLeft" align="right" valign="top"><a id="ac0dd02a6a6db541ab608f0cb96cd6843" name="ac0dd02a6a6db541ab608f0cb96cd6843"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>audioPtsJitterMinNs</b> = 0</td></tr>
+<tr class="memdesc:ac0dd02a6a6db541ab608f0cb96cd6843"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimum observed audio PTS jitter (ns). <br /></td></tr>
+<tr class="separator:ac0dd02a6a6db541ab608f0cb96cd6843"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4bd3efb334abc1ffc687be6eb7b86b53" id="r_a4bd3efb334abc1ffc687be6eb7b86b53"><td class="memItemLeft" align="right" valign="top"><a id="a4bd3efb334abc1ffc687be6eb7b86b53" name="a4bd3efb334abc1ffc687be6eb7b86b53"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>audioPtsJitterMaxNs</b> = 0</td></tr>
+<tr class="memdesc:a4bd3efb334abc1ffc687be6eb7b86b53"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum observed audio PTS jitter (ns). <br /></td></tr>
+<tr class="separator:a4bd3efb334abc1ffc687be6eb7b86b53"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab07ede8fdfb076639091874151f1bac4" id="r_ab07ede8fdfb076639091874151f1bac4"><td class="memItemLeft" align="right" valign="top"><a id="ab07ede8fdfb076639091874151f1bac4" name="ab07ede8fdfb076639091874151f1bac4"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><b>audioPtsJitterAvgNs</b> = 0.0</td></tr>
+<tr class="memdesc:ab07ede8fdfb076639091874151f1bac4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Running mean of the audio PTS jitter (ns). <br /></td></tr>
+<tr class="separator:ab07ede8fdfb076639091874151f1bac4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ed1b9b6edaef756d5e93d1b8b5dc1a2" id="r_a8ed1b9b6edaef756d5e93d1b8b5dc1a2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorSnapshot.html#a8ed1b9b6edaef756d5e93d1b8b5dc1a2">audioReanchorCount</a> = 0</td></tr>
+<tr class="separator:a8ed1b9b6edaef756d5e93d1b8b5dc1a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a8e7e1d9e7cf73a7d1335e351df8441" id="r_a0a8e7e1d9e7cf73a7d1335e351df8441"><td class="memItemLeft" align="right" valign="top"><a id="a0a8e7e1d9e7cf73a7d1335e351df8441" name="a0a8e7e1d9e7cf73a7d1335e351df8441"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>videoPtsJitterSamples</b> = 0</td></tr>
+<tr class="memdesc:a0a8e7e1d9e7cf73a7d1335e351df8441"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of frames that contributed a video PTS jitter measurement. <br /></td></tr>
+<tr class="separator:a0a8e7e1d9e7cf73a7d1335e351df8441"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ca1019b0ea8d7cb4e182e2f94607699" id="r_a1ca1019b0ea8d7cb4e182e2f94607699"><td class="memItemLeft" align="right" valign="top"><a id="a1ca1019b0ea8d7cb4e182e2f94607699" name="a1ca1019b0ea8d7cb4e182e2f94607699"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>videoPtsJitterMinNs</b> = 0</td></tr>
+<tr class="memdesc:a1ca1019b0ea8d7cb4e182e2f94607699"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimum observed video PTS jitter (ns). <br /></td></tr>
+<tr class="separator:a1ca1019b0ea8d7cb4e182e2f94607699"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7a771dc7c9792bb0d7acf743bbee68d" id="r_ab7a771dc7c9792bb0d7acf743bbee68d"><td class="memItemLeft" align="right" valign="top"><a id="ab7a771dc7c9792bb0d7acf743bbee68d" name="ab7a771dc7c9792bb0d7acf743bbee68d"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>videoPtsJitterMaxNs</b> = 0</td></tr>
+<tr class="memdesc:ab7a771dc7c9792bb0d7acf743bbee68d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum observed video PTS jitter (ns). <br /></td></tr>
+<tr class="separator:ab7a771dc7c9792bb0d7acf743bbee68d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8bc0e48ef5060787ae2fe749f2af574a" id="r_a8bc0e48ef5060787ae2fe749f2af574a"><td class="memItemLeft" align="right" valign="top"><a id="a8bc0e48ef5060787ae2fe749f2af574a" name="a8bc0e48ef5060787ae2fe749f2af574a"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><b>videoPtsJitterAvgNs</b> = 0.0</td></tr>
+<tr class="memdesc:a8bc0e48ef5060787ae2fe749f2af574a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Running mean of the video PTS jitter (ns). <br /></td></tr>
+<tr class="separator:a8bc0e48ef5060787ae2fe749f2af574a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2f6d1b0d65278d3b2a9a29125452f84" id="r_ac2f6d1b0d65278d3b2a9a29125452f84"><td class="memItemLeft" align="right" valign="top"><a id="ac2f6d1b0d65278d3b2a9a29125452f84" name="ac2f6d1b0d65278d3b2a9a29125452f84"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>videoReanchorCount</b> = 0</td></tr>
+<tr class="memdesc:ac2f6d1b0d65278d3b2a9a29125452f84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of times the video stream had to be re-anchored. <br /></td></tr>
+<tr class="separator:ac2f6d1b0d65278d3b2a9a29125452f84"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c92d62bc682ce06ff8f5794244cd9d8" id="r_a3c92d62bc682ce06ff8f5794244cd9d8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorSnapshot.html#a3c92d62bc682ce06ff8f5794244cd9d8">avBaselineSet</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">false</a></td></tr>
+<tr class="separator:a3c92d62bc682ce06ff8f5794244cd9d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8dc56ada21476b79a87659658d8173b4" id="r_a8dc56ada21476b79a87659658d8173b4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorSnapshot.html#a8dc56ada21476b79a87659658d8173b4">avBaselineOffsetNs</a> = 0</td></tr>
+<tr class="separator:a8dc56ada21476b79a87659658d8173b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a608c81e5e7e433c90577561e78da91f4" id="r_a608c81e5e7e433c90577561e78da91f4"><td class="memItemLeft" align="right" valign="top"><a id="a608c81e5e7e433c90577561e78da91f4" name="a608c81e5e7e433c90577561e78da91f4"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>avPtsDriftSamples</b> = 0</td></tr>
+<tr class="memdesc:a608c81e5e7e433c90577561e78da91f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of frames that contributed an A/V drift measurement. <br /></td></tr>
+<tr class="separator:a608c81e5e7e433c90577561e78da91f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66f80f5ddf812cfcb2c2ce7cc6e4351b" id="r_a66f80f5ddf812cfcb2c2ce7cc6e4351b"><td class="memItemLeft" align="right" valign="top"><a id="a66f80f5ddf812cfcb2c2ce7cc6e4351b" name="a66f80f5ddf812cfcb2c2ce7cc6e4351b"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>avPtsDriftMinNs</b> = 0</td></tr>
+<tr class="memdesc:a66f80f5ddf812cfcb2c2ce7cc6e4351b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimum observed deviation from the baseline (ns). <br /></td></tr>
+<tr class="separator:a66f80f5ddf812cfcb2c2ce7cc6e4351b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abae143d6e57dd13ae991f51b419e2166" id="r_abae143d6e57dd13ae991f51b419e2166"><td class="memItemLeft" align="right" valign="top"><a id="abae143d6e57dd13ae991f51b419e2166" name="abae143d6e57dd13ae991f51b419e2166"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>avPtsDriftMaxNs</b> = 0</td></tr>
+<tr class="memdesc:abae143d6e57dd13ae991f51b419e2166"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum observed deviation from the baseline (ns). <br /></td></tr>
+<tr class="separator:abae143d6e57dd13ae991f51b419e2166"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af73e291ca3fd7278d0bed25f34fe4a68" id="r_af73e291ca3fd7278d0bed25f34fe4a68"><td class="memItemLeft" align="right" valign="top"><a id="af73e291ca3fd7278d0bed25f34fe4a68" name="af73e291ca3fd7278d0bed25f34fe4a68"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><b>avPtsDriftAvgNs</b> = 0.0</td></tr>
+<tr class="memdesc:af73e291ca3fd7278d0bed25f34fe4a68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Running mean of the A/V drift (ns). <br /></td></tr>
+<tr class="separator:af73e291ca3fd7278d0bed25f34fe4a68"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a783b3437559244b6b133e6352563ab74" id="r_a783b3437559244b6b133e6352563ab74"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorSnapshot.html#a783b3437559244b6b133e6352563ab74">hasLastEvent</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">false</a></td></tr>
 <tr class="separator:a783b3437559244b6b133e6352563ab74"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aed0f1fb161738d6d6dfb43a0eeb8105d" id="r_aed0f1fb161738d6d6dfb43a0eeb8105d"><td class="memItemLeft" align="right" valign="top"><a id="aed0f1fb161738d6d6dfb43a0eeb8105d" name="aed0f1fb161738d6d6dfb43a0eeb8105d"></a>
@@ -231,6 +291,21 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Actual observed frames-per-second, derived from <code>videoDeltaAvgNs</code> (<code>0</code> if not yet measured). </p>
+
+</div>
+</div>
+<a id="a8ed1b9b6edaef756d5e93d1b8b5dc1a2" name="a8ed1b9b6edaef756d5e93d1b8b5dc1a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ed1b9b6edaef756d5e93d1b8b5dc1a2">&#9670;&#160;</a></span>audioReanchorCount</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a> promeki::InspectorSnapshot::audioReanchorCount = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Number of times the audio stream had to be re-anchored because the PTS diverged from the prediction beyond the configured tolerance. </p>
 
 </div>
 </div>
@@ -261,6 +336,36 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Total audio samples counted across every frame that carried an audio chunk with a valid <a class="el" href="classpromeki_1_1MediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a> anchor (excludes the very first such frame, which is used only as the anchor). </p>
+
+</div>
+</div>
+<a id="a8dc56ada21476b79a87659658d8173b4" name="a8dc56ada21476b79a87659658d8173b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8dc56ada21476b79a87659658d8173b4">&#9670;&#160;</a></span>avBaselineOffsetNs</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a> promeki::InspectorSnapshot::avBaselineOffsetNs = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Baseline <code></code>(videoPts - audioPts) in nanoseconds — captured on the first frame where both essences carry valid PTSs. Subsequent drift measurements report deviations from this value. </p>
+
+</div>
+</div>
+<a id="a3c92d62bc682ce06ff8f5794244cd9d8" name="a3c92d62bc682ce06ff8f5794244cd9d8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3c92d62bc682ce06ff8f5794244cd9d8">&#9670;&#160;</a></span>avBaselineSet</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a> promeki::InspectorSnapshot::avBaselineSet = <a class="el" href="classpromeki_1_1UniquePtr.html">false</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>True once a baseline <code></code>(videoPts - audioPts) has been captured (first frame where both essences carry a valid PTS). </p>
 
 </div>
 </div>
@@ -319,7 +424,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="structpromeki_1_1InspectorSnapshot.html">InspectorSnapshot</a></li>
-    <li class="footer">Generated on 2026-05-04 01:57:20 from commit 87240ac (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-04 08:46:32 from commit d7c202b (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

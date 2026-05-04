@@ -1,13 +1,15 @@
 <map id="promeki::InspectorSnapshot" name="promeki::InspectorSnapshot">
-<area shape="rect" id="Node000001" title="Aggregate snapshot of the inspector&#39;s accumulated state." alt="" coords="771,83,975,109"/>
-<area shape="rect" id="Node000002" href="$classpromeki_1_1FrameCount.html" title="Count of frames, optionally empty, unknown, or infinite." alt="" coords="363,59,525,85"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="539,75,771,88,770,93,539,80"/>
-<area shape="rect" id="Node000003" href="$structpromeki_1_1InspectorEvent.html" title="Per&#45;frame measurement record produced by InspectorMediaIO." alt="" coords="353,109,535,134"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="549,116,746,107,770,105,771,110,747,112,549,122"/>
-<area shape="rect" id="Node000004" href="$classpromeki_1_1FrameNumber.html" title="Absolute frame index along a media timeline." alt="" coords="12,49,189,74"/>
-<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="203,69,330,88,399,106,397,111,329,93,203,74"/>
-<area shape="rect" id="Node000005" href="$classpromeki_1_1Timecode.html" title="Class for holding and manipulating timecode." alt="" coords="27,109,175,134"/>
-<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="189,119,353,119,353,124,189,124"/>
-<area shape="rect" id="Node000006" href="$classpromeki_1_1List.html" title=" " alt="" coords="5,159,196,199"/>
-<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="209,159,329,139,371,131,372,137,330,144,210,164"/>
+<area shape="rect" id="Node000001" title="Aggregate snapshot of the inspector&#39;s accumulated state." alt="" coords="841,83,1045,109"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1FrameCount.html" title="Count of frames, optionally empty, unknown, or infinite." alt="" coords="433,59,596,85"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="610,75,841,88,841,93,609,80"/>
+<area shape="rect" id="Node000003" href="$structpromeki_1_1InspectorEvent.html" title="Per&#45;frame measurement record produced by InspectorMediaIO." alt="" coords="424,109,605,134"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="619,116,817,107,841,105,841,110,818,112,620,122"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1FrameNumber.html" title="Absolute frame index along a media timeline." alt="" coords="29,19,207,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="221,23,265,25,312,32,358,44,401,63,410,71,415,79,418,87,426,94,450,106,448,111,422,98,414,90,410,81,406,74,399,68,356,49,310,37,264,31,220,28"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Timecode.html" title="Class for holding and manipulating timecode." alt="" coords="44,74,192,99"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="206,92,424,111,424,116,205,97"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1List.html" title=" " alt="" coords="5,123,231,178"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="244,144,400,133,423,131,424,136,400,139,244,149"/>
+<area shape="rect" id="Node000007" href="$classpromeki_1_1List.html" title=" " alt="" coords="23,203,213,243"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="227,203,312,186,399,164,484,132,486,137,401,169,313,192,228,209"/>
 </map>

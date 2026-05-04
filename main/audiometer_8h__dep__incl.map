@@ -1,9 +1,11 @@
 <map id="include/promeki/audiometer.h" name="include/promeki/audiometer.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="158,5,375,31"/>
-<area shape="rect" id="Node000002" href="$audiobuffer_8h.html" title=" " alt="" coords="159,79,375,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="269,44,269,79,264,79,264,44"/>
-<area shape="rect" id="Node000003" href="$quicktimemediaio_8h.html" title=" " alt="" coords="5,152,267,177"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="235,113,159,154,156,149,232,108"/>
-<area shape="rect" id="Node000004" href="$rtpmediaio_8h.html" title=" " alt="" coords="291,152,506,177"/>
-<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="301,108,378,149,376,154,298,113"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="307,5,525,31"/>
+<area shape="rect" id="Node000002" href="$audiobuffer_8h.html" title=" " alt="" coords="308,79,524,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="419,44,419,79,413,79,413,44"/>
+<area shape="rect" id="Node000003" href="$inspectormediaio_8h.html" title=" " alt="" coords="5,152,261,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="358,110,180,154,178,149,357,105"/>
+<area shape="rect" id="Node000004" href="$quicktimemediaio_8h.html" title=" " alt="" coords="285,152,547,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="419,118,419,152,413,152,413,118"/>
+<area shape="rect" id="Node000005" href="$rtpmediaio_8h.html" title=" " alt="" coords="571,152,786,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="472,105,637,149,635,154,471,110"/>
 </map>

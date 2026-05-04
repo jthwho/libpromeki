@@ -1,3 +1,3 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$structpromeki_1_1AudioEncoder_1_1BackendRecord.html" title="Registration record attaching a concrete encoder to a (codec, backend) pair." alt="" coords="5,5,179,45"/>
+<area shape="rect" id="Node000000" href="$classpromeki_1_1AudioDataEncoder.html" title="Sample&#45;domain binary data encoder for PCM audio payloads." alt="" coords="5,5,209,31"/>
 </map>

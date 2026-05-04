@@ -135,6 +135,12 @@ Public Types</h2></td></tr>
 , <a class="el" href="structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca5b760b05dc9c353563a988daaf5ab2a6">MissingVideoTimestamp</a>
 , <br />
 &#160;&#160;<a class="el" href="structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca7b444a22522edfb9fe3124a44b058ff5">MissingAudioTimestamp</a>
+, <a class="el" href="structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccaaa30ca18ab18a1c072909c3934338a22">AudioTimestampReanchor</a>
+, <a class="el" href="structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccad6c736927d834e48a2297adbfdd46186">VideoTimestampReanchor</a>
+, <a class="el" href="structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccac17ed2619f14a9e550ac06d6c34c56dd">AudioChannelMismatch</a>
+, <br />
+&#160;&#160;<a class="el" href="structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccaead68fca128bb63446cc20b240c0720f">AudioDataDecodeFailure</a>
+, <a class="el" href="structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca219cdff33155cb188dac0df19e644429">AudioDataLengthAnomaly</a>
 <br />
  }</td></tr>
 <tr class="memdesc:a9c81c4640d23b1e98ecec01f71bf40cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Categorical type of the discontinuity.  <a href="structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cc">More...</a><br /></td></tr>
@@ -189,11 +195,23 @@ Public Attributes</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a9c81c4640d23b1e98ecec01f71bf40ccaa7ccb17cbc6dedeb15af6c8b27b83ac0" name="a9c81c4640d23b1e98ecec01f71bf40ccaa7ccb17cbc6dedeb15af6c8b27b83ac0"></a>LtcDecodeFailure&#160;</td><td class="fielddoc"><p>LTC failed to decode in this frame's audio after a previously-successful decode. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a9c81c4640d23b1e98ecec01f71bf40cca5598c0f54aa4ff4c4f7620cf3804ebb6" name="a9c81c4640d23b1e98ecec01f71bf40cca5598c0f54aa4ff4c4f7620cf3804ebb6"></a>SyncOffsetChange&#160;</td><td class="fielddoc"><p>The picture-vs-LTC sync offset moved by more than the configured tolerance from the previous frame. Audio and video are locked in pro workflows, so any change from a previously-stable offset is a real fault rather than a measurement artifact. </p>
+<tr><td class="fieldname"><a id="a9c81c4640d23b1e98ecec01f71bf40cca5598c0f54aa4ff4c4f7620cf3804ebb6" name="a9c81c4640d23b1e98ecec01f71bf40cca5598c0f54aa4ff4c4f7620cf3804ebb6"></a>SyncOffsetChange&#160;</td><td class="fielddoc"><p>The marker-based A/V sync offset (audio codeword position vs the rational-rate- predicted ideal, baseline-anchored on the first match) moved by more than the configured tolerance from the previous frame. Audio and video are locked in pro workflows, so any change from a previously-stable offset is a real fault rather than a measurement artifact. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a9c81c4640d23b1e98ecec01f71bf40cca5b760b05dc9c353563a988daaf5ab2a6" name="a9c81c4640d23b1e98ecec01f71bf40cca5b760b05dc9c353563a988daaf5ab2a6"></a>MissingVideoTimestamp&#160;</td><td class="fielddoc"><p>Video essence arrived without a valid <a class="el" href="classpromeki_1_1MediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a> even though the Timestamp test is enabled (<a class="el" href="classpromeki_1_1MediaIO.html" title="Abstract controller for media I/O backends.">MediaIO</a> guarantees one on every essence). </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a9c81c4640d23b1e98ecec01f71bf40cca7b444a22522edfb9fe3124a44b058ff5" name="a9c81c4640d23b1e98ecec01f71bf40cca7b444a22522edfb9fe3124a44b058ff5"></a>MissingAudioTimestamp&#160;</td><td class="fielddoc"><p>Audio essence arrived without a valid <a class="el" href="classpromeki_1_1MediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a> even though the Timestamp test is enabled. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a9c81c4640d23b1e98ecec01f71bf40ccaaa30ca18ab18a1c072909c3934338a22" name="a9c81c4640d23b1e98ecec01f71bf40ccaaa30ca18ab18a1c072909c3934338a22"></a>AudioTimestampReanchor&#160;</td><td class="fielddoc"><p>The audio <a class="el" href="classpromeki_1_1MediaTimeStamp.html">MediaTimeStamp</a> on an incoming chunk diverged from the prediction (audio stream anchor</p><ul>
+<li>cumulative samples × sample period) by more than the configured tolerance. The inspector re-anchors the audio stream timeline on the new PTS so that subsequent wall-clock derivations remain accurate. </li>
+</ul>
+</td></tr>
+<tr><td class="fieldname"><a id="a9c81c4640d23b1e98ecec01f71bf40ccad6c736927d834e48a2297adbfdd46186" name="a9c81c4640d23b1e98ecec01f71bf40ccad6c736927d834e48a2297adbfdd46186"></a>VideoTimestampReanchor&#160;</td><td class="fielddoc"><p>The video <a class="el" href="classpromeki_1_1MediaTimeStamp.html">MediaTimeStamp</a> on this frame diverged from the prediction (video anchor + frame index × frame duration) by more than the configured tolerance. The inspector re-anchors the video timeline on the new PTS. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a9c81c4640d23b1e98ecec01f71bf40ccac17ed2619f14a9e550ac06d6c34c56dd" name="a9c81c4640d23b1e98ecec01f71bf40ccac17ed2619f14a9e550ac06d6c34c56dd"></a>AudioChannelMismatch&#160;</td><td class="fielddoc"><p>An audio channel's <a class="el" href="classpromeki_1_1AudioDataEncoder.html">AudioDataEncoder</a> marker decoded successfully but the channel byte in the codeword (bits 48..55) did not match the channel index the inspector pulled it from. Indicates the audio path swapped or duplicated channels. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a9c81c4640d23b1e98ecec01f71bf40ccaead68fca128bb63446cc20b240c0720f" name="a9c81c4640d23b1e98ecec01f71bf40ccaead68fca128bb63446cc20b240c0720f"></a>AudioDataDecodeFailure&#160;</td><td class="fielddoc"><p>An <a class="el" href="classpromeki_1_1AudioDataEncoder.html">AudioDataEncoder</a> codeword was detected (sync nibble located, samples- per-bit measured) but failed final validation — either the recovered sync byte didn't match <code>0xA</code> or the recovered <a class="el" href="classpromeki_1_1CRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> didn't match the recomputed <a class="el" href="classpromeki_1_1CRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a>. Indicates the audio path scrambled the codeword bits (lossy codec, gain distortion, sample drop). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a9c81c4640d23b1e98ecec01f71bf40cca219cdff33155cb188dac0df19e644429" name="a9c81c4640d23b1e98ecec01f71bf40cca219cdff33155cb188dac0df19e644429"></a>AudioDataLengthAnomaly&#160;</td><td class="fielddoc"><p>An <a class="el" href="classpromeki_1_1AudioDataEncoder.html">AudioDataEncoder</a> codeword was detected but its measured sample length (76 × samplesPerBit) deviated by more than the inspector's tolerance from the expected length. Normal SRC round-trip drift sits well inside the tolerance; firing this discontinuity means the audio path is rate-shifting the codeword substantially. </p>
 </td></tr>
 </table>
 
@@ -209,7 +227,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="structpromeki_1_1InspectorDiscontinuity.html">InspectorDiscontinuity</a></li>
-    <li class="footer">Generated on 2026-05-04 01:57:20 from commit 87240ac (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-04 08:46:32 from commit d7c202b (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

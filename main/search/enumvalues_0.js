@@ -35,6 +35,10 @@ var searchData=
   ['argnone_32',['ArgNone',['../classpromeki_1_1CmdLineParser_1_1Option.html#aea135fc988ae4961253d61dd3859003da2dfbb68a03730a0fe5f1f61a44d922ca',1,'promeki::CmdLineParser::Option']]],
   ['argstring_33',['ArgString',['../classpromeki_1_1CmdLineParser_1_1Option.html#aea135fc988ae4961253d61dd3859003dab86fad6ffc3cb5d542e988eb1e9a87e9',1,'promeki::CmdLineParser::Option']]],
   ['argunknown_34',['ArgUnknown',['../classpromeki_1_1CmdLineParser_1_1Option.html#aea135fc988ae4961253d61dd3859003da25000a45941c69e56a8807bfd469c018',1,'promeki::CmdLineParser::Option']]],
-  ['av1_35',['av1',['../classpromeki_1_1PixelFormat.html#a4612eae6db7110e291d37ac9b9a23207a38cee38a50e93096396972accff0a0b9',1,'promeki::PixelFormat::AV1'],['../classpromeki_1_1VideoCodec.html#ab20ea9967d9a56e7cc4f2140ffd02362ac27a587a77ed258f4a2848c81be96d69',1,'promeki::VideoCodec::AV1']]],
-  ['averageband_36',['AverageBand',['../classpromeki_1_1ImageDataDecoder.html#a9ac30856e0a0847003840d0d6d98240ba62283784e23c065a153c8bd1936a5365',1,'promeki::ImageDataDecoder']]]
+  ['audiochannelmismatch_35',['AudioChannelMismatch',['../structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccac17ed2619f14a9e550ac06d6c34c56dd',1,'promeki::InspectorDiscontinuity']]],
+  ['audiodatadecodefailure_36',['AudioDataDecodeFailure',['../structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccaead68fca128bb63446cc20b240c0720f',1,'promeki::InspectorDiscontinuity']]],
+  ['audiodatalengthanomaly_37',['AudioDataLengthAnomaly',['../structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca219cdff33155cb188dac0df19e644429',1,'promeki::InspectorDiscontinuity']]],
+  ['audiotimestampreanchor_38',['AudioTimestampReanchor',['../structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccaaa30ca18ab18a1c072909c3934338a22',1,'promeki::InspectorDiscontinuity']]],
+  ['av1_39',['av1',['../classpromeki_1_1PixelFormat.html#a4612eae6db7110e291d37ac9b9a23207a38cee38a50e93096396972accff0a0b9',1,'promeki::PixelFormat::AV1'],['../classpromeki_1_1VideoCodec.html#ab20ea9967d9a56e7cc4f2140ffd02362ac27a587a77ed258f4a2848c81be96d69',1,'promeki::VideoCodec::AV1']]],
+  ['averageband_40',['AverageBand',['../classpromeki_1_1ImageDataDecoder.html#a9ac30856e0a0847003840d0d6d98240ba62283784e23c065a153c8bd1936a5365',1,'promeki::ImageDataDecoder']]]
 ];

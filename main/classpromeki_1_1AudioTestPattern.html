@@ -329,6 +329,19 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad5b736be111f660115a9b704faa7db76" id="r_ad5b736be111f660115a9b704faa7db76"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1SharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classpromeki_1_1PcmAudioPayload.html">PcmAudioPayload</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">true</a>, <a class="el" href="classpromeki_1_1PcmAudioPayload.html">PcmAudioPayload</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioTestPattern.html#ad5b736be111f660115a9b704faa7db76">createPayload</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> <a class="el" href="classpromeki_1_1UniquePtr.html">samples</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
 <tr class="memdesc:ad5b736be111f660115a9b704faa7db76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Payload-native counterpart to <a class="el" href="classpromeki_1_1AudioTestPattern.html#a68a651a0ca6ccda69d2e577f4a7acf2c">createPayload</a>.  <br /></td></tr>
 <tr class="separator:ad5b736be111f660115a9b704faa7db76"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a89751d70fcbf25dc8a6c181a72f82f" id="r_a9a89751d70fcbf25dc8a6c181a72f82f"><td class="memItemLeft" align="right" valign="top"><a id="a9a89751d70fcbf25dc8a6c181a72f82f" name="a9a89751d70fcbf25dc8a6c181a72f82f"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">uint8_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>pcmMarkerStreamId</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a9a89751d70fcbf25dc8a6c181a72f82f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the stream ID stamped on <code>PcmMarker</code> channels (high 8 bits of the marker payload). <br /></td></tr>
+<tr class="separator:a9a89751d70fcbf25dc8a6c181a72f82f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a7de00c524bab6b8d0204f27b7fc31e" id="r_a0a7de00c524bab6b8d0204f27b7fc31e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioTestPattern.html#a0a7de00c524bab6b8d0204f27b7fc31e">setPcmMarkerStreamId</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">uint8_t</a> streamId)</td></tr>
+<tr class="memdesc:a0a7de00c524bab6b8d0204f27b7fc31e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the stream ID stamped on <code>PcmMarker</code> channels.  <br /></td></tr>
+<tr class="separator:a0a7de00c524bab6b8d0204f27b7fc31e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a818e148896c231d51cb72ae27e1ce8a8" id="r_a818e148896c231d51cb72ae27e1ce8a8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">uint64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioTestPattern.html#a818e148896c231d51cb72ae27e1ce8a8">pcmMarkerFrameNumber</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a818e148896c231d51cb72ae27e1ce8a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the next frame number the <code>PcmMarker</code> encoder will stamp.  <br /></td></tr>
+<tr class="separator:a818e148896c231d51cb72ae27e1ce8a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55533bfe7cdd4e203501618aba4e5b82" id="r_a55533bfe7cdd4e203501618aba4e5b82"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioTestPattern.html#a55533bfe7cdd4e203501618aba4e5b82">setPcmMarkerFrameNumber</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">uint64_t</a> fn)</td></tr>
+<tr class="memdesc:a55533bfe7cdd4e203501618aba4e5b82"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the next frame number to stamp on <code>PcmMarker</code> channels.  <br /></td></tr>
+<tr class="separator:a55533bfe7cdd4e203501618aba4e5b82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -341,21 +354,14 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:ac258bb26af0670ea06371aa5af121f14" id="r_ac258bb26af0670ea06371aa5af121f14"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1UniquePtr.html">constexpr</a> <a class="el" href="classpromeki_1_1UniquePtr.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioTestPattern.html#ac258bb26af0670ea06371aa5af121f14">kSrcProbeFrequencyHz</a> = 997.0</td></tr>
 <tr class="memdesc:ac258bb26af0670ea06371aa5af121f14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Canonical SRC-probe reference frequency in Hz.  <br /></td></tr>
 <tr class="separator:ac258bb26af0670ea06371aa5af121f14"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5bc13c5f67bbc04e62fd8ce07457a29c" id="r_a5bc13c5f67bbc04e62fd8ce07457a29c"><td class="memItemLeft" align="right" valign="top"><a id="a5bc13c5f67bbc04e62fd8ce07457a29c" name="a5bc13c5f67bbc04e62fd8ce07457a29c"></a>
-<a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1UniquePtr.html">constexpr</a> <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kPcmMarkerPreambleSamples</b> = 16</td></tr>
-<tr class="memdesc:a5bc13c5f67bbc04e62fd8ce07457a29c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Length of the PcmMarker sync preamble in samples. <br /></td></tr>
-<tr class="separator:a5bc13c5f67bbc04e62fd8ce07457a29c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad9e6cb04b2dba0b961a7cbf179dfdb34" id="r_ad9e6cb04b2dba0b961a7cbf179dfdb34"><td class="memItemLeft" align="right" valign="top"><a id="ad9e6cb04b2dba0b961a7cbf179dfdb34" name="ad9e6cb04b2dba0b961a7cbf179dfdb34"></a>
-<a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1UniquePtr.html">constexpr</a> <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kPcmMarkerStartSamples</b> = 8</td></tr>
-<tr class="memdesc:ad9e6cb04b2dba0b961a7cbf179dfdb34"><td class="mdescLeft">&#160;</td><td class="mdescRight">Length of the PcmMarker "start of payload" marker (four high samples followed by four low samples). <br /></td></tr>
-<tr class="separator:ad9e6cb04b2dba0b961a7cbf179dfdb34"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab06cdb5a2e25fba65f6a35dfb8c6e1f2" id="r_ab06cdb5a2e25fba65f6a35dfb8c6e1f2"><td class="memItemLeft" align="right" valign="top"><a id="ab06cdb5a2e25fba65f6a35dfb8c6e1f2" name="ab06cdb5a2e25fba65f6a35dfb8c6e1f2"></a>
-<a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1UniquePtr.html">constexpr</a> <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kPcmMarkerPayloadBits</b> = 64</td></tr>
-<tr class="memdesc:ab06cdb5a2e25fba65f6a35dfb8c6e1f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bits in the PcmMarker payload. <br /></td></tr>
-<tr class="separator:ab06cdb5a2e25fba65f6a35dfb8c6e1f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9f8fa1daa037e309a27e9a44e130fa86" id="r_a9f8fa1daa037e309a27e9a44e130fa86"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1UniquePtr.html">constexpr</a> <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1AudioTestPattern.html#a9f8fa1daa037e309a27e9a44e130fa86">kPcmMarkerFrameSamples</a></td></tr>
-<tr class="memdesc:a9f8fa1daa037e309a27e9a44e130fa86"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total number of deterministic samples in one PcmMarker framing unit (preamble + start + 64 bits.  <br /></td></tr>
-<tr class="separator:a9f8fa1daa037e309a27e9a44e130fa86"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49d2d55f4e65594d1b422ad782657002" id="r_a49d2d55f4e65594d1b422ad782657002"><td class="memItemLeft" align="right" valign="top"><a id="a49d2d55f4e65594d1b422ad782657002" name="a49d2d55f4e65594d1b422ad782657002"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1UniquePtr.html">constexpr</a> <a class="el" href="classpromeki_1_1UniquePtr.html">uint8_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kDefaultPcmMarkerStreamId</b> = 0</td></tr>
+<tr class="memdesc:a49d2d55f4e65594d1b422ad782657002"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default stream ID for the PcmMarker pattern (0). <br /></td></tr>
+<tr class="separator:a49d2d55f4e65594d1b422ad782657002"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa8c9578c13d479e185074fa41afb72f" id="r_aaa8c9578c13d479e185074fa41afb72f"><td class="memItemLeft" align="right" valign="top"><a id="aaa8c9578c13d479e185074fa41afb72f" name="aaa8c9578c13d479e185074fa41afb72f"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1UniquePtr.html">constexpr</a> <a class="el" href="classpromeki_1_1UniquePtr.html">uint64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kPcmMarkerFrameMask</b> = 0x0000ffffffffffffULL</td></tr>
+<tr class="memdesc:aaa8c9578c13d479e185074fa41afb72f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mask for the 48-bit frame-number field of the PcmMarker payload. <a class="el" href="classpromeki_1_1Frame.html" title="A media frame containing payloads and metadata.">Frame</a> numbers larger than <code>2^48</code> - 1 wrap inside the payload word. <br /></td></tr>
+<tr class="separator:aaa8c9578c13d479e185074fa41afb72f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a009eb5db0458362f7ba8df3cdf7474d4" id="r_a009eb5db0458362f7ba8df3cdf7474d4"><td class="memItemLeft" align="right" valign="top"><a id="a009eb5db0458362f7ba8df3cdf7474d4" name="a009eb5db0458362f7ba8df3cdf7474d4"></a>
 <a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1List.html">List</a>&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">double</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>kDefaultSteppedToneFreqs</b></td></tr>
 <tr class="memdesc:a009eb5db0458362f7ba8df3cdf7474d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default SteppedTone frequency list (low / mid / high). <br /></td></tr>
@@ -426,7 +432,7 @@ Static Public Attributes</h2></td></tr>
 <div class="line">Audio audio = <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">gen</a>.<a class="code hl_function" href="classpromeki_1_1UniquePtr.html#aece0fa694f2b9febed4f5f1729f9df83">create</a>(samplesPerFrame, <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">currentTimecode</a>);</div>
 <div class="ttc" id="aclasspromeki_1_1AudioDesc_html"><div class="ttname"><a href="classpromeki_1_1AudioDesc.html">promeki::AudioDesc</a></div><div class="ttdoc">Describes a concrete audio stream — format plus sample rate and channel count.</div><div class="ttdef"><b>Definition</b> audiodesc.h:46</div></div>
 <div class="ttc" id="aclasspromeki_1_1AudioLevel_html_afe18012ac4ab191c327a312ae571a83f"><div class="ttname"><a href="classpromeki_1_1AudioLevel.html#afe18012ac4ab191c327a312ae571a83f">promeki::AudioLevel::fromDbfs</a></div><div class="ttdeci">static AudioLevel fromDbfs(double dbfs)</div><div class="ttdoc">Creates an AudioLevel from a dBFS value.</div><div class="ttdef"><b>Definition</b> audiolevel.h:43</div></div>
-<div class="ttc" id="aclasspromeki_1_1AudioTestPattern_html"><div class="ttname"><a href="classpromeki_1_1AudioTestPattern.html">promeki::AudioTestPattern</a></div><div class="ttdoc">Multi-channel audio test pattern generator.</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:89</div></div>
+<div class="ttc" id="aclasspromeki_1_1AudioTestPattern_html"><div class="ttname"><a href="classpromeki_1_1AudioTestPattern.html">promeki::AudioTestPattern</a></div><div class="ttdoc">Multi-channel audio test pattern generator.</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:90</div></div>
 <div class="ttc" id="aclasspromeki_1_1EnumList_html"><div class="ttname"><a href="classpromeki_1_1EnumList.html">promeki::EnumList</a></div><div class="ttdoc">Ordered, duplicate-preserving list of Enum values sharing one type.</div><div class="ttdef"><b>Definition</b> enumlist.h:59</div></div>
 <div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
 <div class="ttc" id="aclasspromeki_1_1UniquePtr_html_aece0fa694f2b9febed4f5f1729f9df83"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html#aece0fa694f2b9febed4f5f1729f9df83">promeki::UniquePtr::create</a></div><div class="ttdeci">static UniquePtr create(Args &amp;&amp;...args)</div><div class="ttdoc">Constructs a new T in-place and returns a UniquePtr owning it.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:122</div></div>
@@ -592,6 +598,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Creates a new Audio buffer with the test pattern. </p>
 <p>Iterates the per-channel mode list, generates the corresponding signal for each channel (or silence for channels with no mode entry), and returns the combined interleaved Audio buffer.</p>
+<p><code>PcmMarker</code> channels are stamped with an <a class="el" href="classpromeki_1_1AudioDataEncoder.html">AudioDataEncoder</a> packet whose payload is laid out as <code></code>[stream:8][channel:8][frameNumber:48] (MSB-first). The frame number is taken from the generator's monotonic counter (see <a class="el" href="classpromeki_1_1AudioTestPattern.html#a818e148896c231d51cb72ae27e1ce8a8">pcmMarkerFrameNumber</a>); call <a class="el" href="classpromeki_1_1AudioTestPattern.html#a55533bfe7cdd4e203501618aba4e5b82">setPcmMarkerFrameNumber</a> to lock the marker to an external clock such as the TPG's per-frame counter.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">samples</td><td>Number of samples to generate. </td></tr>
@@ -687,6 +694,34 @@ Static Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a818e148896c231d51cb72ae27e1ce8a8" name="a818e148896c231d51cb72ae27e1ce8a8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a818e148896c231d51cb72ae27e1ce8a8">&#9670;&#160;</a></span>pcmMarkerFrameNumber()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">uint64_t</a> promeki::AudioTestPattern::pcmMarkerFrameNumber </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the next frame number the <code>PcmMarker</code> encoder will stamp. </p>
+<p>Auto-incremented once per <a class="el" href="classpromeki_1_1AudioTestPattern.html#a68a651a0ca6ccda69d2e577f4a7acf2c">createPayload</a> call; the caller may override with <a class="el" href="classpromeki_1_1AudioTestPattern.html#a55533bfe7cdd4e203501618aba4e5b82">setPcmMarkerFrameNumber</a> to keep the marker locked to a video frame counter. </p>
+
+</div>
+</div>
 <a id="a7f9ff624dd59e4335dd09fd5cb02fb1f" name="a7f9ff624dd59e4335dd09fd5cb02fb1f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7f9ff624dd59e4335dd09fd5cb02fb1f">&#9670;&#160;</a></span>setChannelIdBaseFreq()</h2>
 
@@ -745,9 +780,8 @@ Static Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<h2 class="groupheader">Member Data Documentation</h2>
-<a id="a9f8fa1daa037e309a27e9a44e130fa86" name="a9f8fa1daa037e309a27e9a44e130fa86"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9f8fa1daa037e309a27e9a44e130fa86">&#9670;&#160;</a></span>kPcmMarkerFrameSamples</h2>
+<a id="a55533bfe7cdd4e203501618aba4e5b82" name="a55533bfe7cdd4e203501618aba4e5b82"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a55533bfe7cdd4e203501618aba4e5b82">&#9670;&#160;</a></span>setPcmMarkerFrameNumber()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -756,28 +790,55 @@ Static Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">constexpr</a> <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> promeki::AudioTestPattern::kPcmMarkerFrameSamples</td>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a> promeki::AudioTestPattern::setPcmMarkerFrameNumber </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">uint64_t</a>&#160;</td>
+          <td class="paramname"><em>fn</em></td><td>)</td>
+          <td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_variable" href="classpromeki_1_1AudioTestPattern.html#a5bc13c5f67bbc04e62fd8ce07457a29c">kPcmMarkerPreambleSamples</a> + <a class="code hl_variable" href="classpromeki_1_1AudioTestPattern.html#ad9e6cb04b2dba0b961a7cbf179dfdb34">kPcmMarkerStartSamples</a> +</div>
-<div class="line">                                                                 <a class="code hl_variable" href="classpromeki_1_1AudioTestPattern.html#ab06cdb5a2e25fba65f6a35dfb8c6e1f2">kPcmMarkerPayloadBits</a> + 1</div>
-<div class="ttc" id="aclasspromeki_1_1AudioTestPattern_html_a5bc13c5f67bbc04e62fd8ce07457a29c"><div class="ttname"><a href="classpromeki_1_1AudioTestPattern.html#a5bc13c5f67bbc04e62fd8ce07457a29c">promeki::AudioTestPattern::kPcmMarkerPreambleSamples</a></div><div class="ttdeci">static constexpr size_t kPcmMarkerPreambleSamples</div><div class="ttdoc">Length of the PcmMarker sync preamble in samples.</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:343</div></div>
-<div class="ttc" id="aclasspromeki_1_1AudioTestPattern_html_ab06cdb5a2e25fba65f6a35dfb8c6e1f2"><div class="ttname"><a href="classpromeki_1_1AudioTestPattern.html#ab06cdb5a2e25fba65f6a35dfb8c6e1f2">promeki::AudioTestPattern::kPcmMarkerPayloadBits</a></div><div class="ttdeci">static constexpr size_t kPcmMarkerPayloadBits</div><div class="ttdoc">Bits in the PcmMarker payload.</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:350</div></div>
-<div class="ttc" id="aclasspromeki_1_1AudioTestPattern_html_ad9e6cb04b2dba0b961a7cbf179dfdb34"><div class="ttname"><a href="classpromeki_1_1AudioTestPattern.html#ad9e6cb04b2dba0b961a7cbf179dfdb34">promeki::AudioTestPattern::kPcmMarkerStartSamples</a></div><div class="ttdeci">static constexpr size_t kPcmMarkerStartSamples</div><div class="ttdoc">Length of the PcmMarker &quot;start of payload&quot; marker (four high samples followed by four low samples).</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:347</div></div>
-</div><!-- fragment -->
-<p>Total number of deterministic samples in one PcmMarker framing unit (preamble + start + 64 bits. </p>
-<ul>
-<li>parity). Channels shorter than this carry a truncated frame; the decoder is expected to resynchronise. </li>
-</ul>
+
+<p>Sets the next frame number to stamp on <code>PcmMarker</code> channels. </p>
+<p>Use this from a wrapper that already owns the authoritative frame counter (e.g. <code><a class="el" href="classpromeki_1_1TpgMediaIO.html" title="MediaIO backend that generates test patterns.">TpgMediaIO</a></code>) so audio and video markers carry matching frame numbers. The auto-increment still applies after each <a class="el" href="classpromeki_1_1AudioTestPattern.html#a68a651a0ca6ccda69d2e577f4a7acf2c">createPayload</a> call. </p>
 
 </div>
 </div>
+<a id="a0a7de00c524bab6b8d0204f27b7fc31e" name="a0a7de00c524bab6b8d0204f27b7fc31e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0a7de00c524bab6b8d0204f27b7fc31e">&#9670;&#160;</a></span>setPcmMarkerStreamId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a> promeki::AudioTestPattern::setPcmMarkerStreamId </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">uint8_t</a>&#160;</td>
+          <td class="paramname"><em>streamId</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the stream ID stamped on <code>PcmMarker</code> channels. </p>
+<p>Mirrors <code><a class="el" href="classpromeki_1_1TpgMediaIO.html" title="MediaIO backend that generates test patterns.">TpgMediaIO</a>'s</code> video data band so a single downstream consumer can correlate audio and video by the same stream identifier. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
 <a id="ac258bb26af0670ea06371aa5af121f14" name="ac258bb26af0670ea06371aa5af121f14"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac258bb26af0670ea06371aa5af121f14">&#9670;&#160;</a></span>kSrcProbeFrequencyHz</h2>
 
@@ -813,7 +874,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1AudioTestPattern.html">AudioTestPattern</a></li>
-    <li class="footer">Generated on 2026-05-04 01:57:20 from commit 87240ac (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-04 08:46:32 from commit d7c202b (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

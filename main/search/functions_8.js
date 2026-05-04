@@ -57,7 +57,7 @@ var searchData=
   ['hours_54',['hours',['../classpromeki_1_1Duration.html#a133206c005fc81acf45049018da017e7',1,'promeki::Duration']]],
   ['hsl_55',['hsl',['../classpromeki_1_1Color.html#ae9df69ab631e0747ad49ec4722bf9331',1,'promeki::Color']]],
   ['hsv_56',['hsv',['../classpromeki_1_1Color.html#a1046935a49639ff6190a68dd00dc7328',1,'promeki::Color']]],
-  ['httpapi_57',['httpapi',['../classpromeki_1_1HttpApi.html#a41c291f846f88cfff24c8b29f930ef64',1,'promeki::HttpApi::HttpApi()'],['../classpromeki_1_1DebugServer.html#ad3fbe33021325553d6b90f92e687251f',1,'promeki::DebugServer::httpApi()'],['../classpromeki_1_1DebugServer.html#a9c10a02f7a025199b7c8c211ffd42dd8',1,'promeki::DebugServer::httpApi() const']]],
+  ['httpapi_57',['httpapi',['../classpromeki_1_1DebugServer.html#a9c10a02f7a025199b7c8c211ffd42dd8',1,'promeki::DebugServer::httpApi()'],['../classpromeki_1_1HttpApi.html#a41c291f846f88cfff24c8b29f930ef64',1,'promeki::HttpApi::HttpApi()'],['../classpromeki_1_1DebugServer.html#ad3fbe33021325553d6b90f92e687251f',1,'promeki::DebugServer::httpApi()']]],
   ['httpclient_58',['HttpClient',['../classpromeki_1_1HttpClient.html#aab516387872056c68d7ef8529493e71c',1,'promeki::HttpClient']]],
   ['httpconnection_59',['HttpConnection',['../classpromeki_1_1HttpConnection.html#a42809720caed86f22e926ee711dbb751',1,'promeki::HttpConnection']]],
   ['httpfilehandler_60',['httpfilehandler',['../classpromeki_1_1HttpFileHandler.html#ac676483ee4fee5c4241943098c2818ef',1,'promeki::HttpFileHandler::HttpFileHandler(const Dir &amp;root)'],['../classpromeki_1_1HttpFileHandler.html#ad3089cfe399aa6578b3d51d7cac41519',1,'promeki::HttpFileHandler::HttpFileHandler(const String &amp;rootPath)']]],
@@ -66,6 +66,6 @@ var searchData=
   ['httprequest_63',['HttpRequest',['../classpromeki_1_1HttpRequest.html#ad3ce9575e4d5cee4c62c9a756d8c89fc',1,'promeki::HttpRequest']]],
   ['httpresponse_64',['HttpResponse',['../classpromeki_1_1HttpResponse.html#aa43e3f4cb076056b0b183f619b9d7252',1,'promeki::HttpResponse']]],
   ['httprouter_65',['HttpRouter',['../classpromeki_1_1HttpRouter.html#a5a79b2f1513dee0277b6e03e5ee55689',1,'promeki::HttpRouter']]],
-  ['httpserver_66',['httpserver',['../classpromeki_1_1DebugServer.html#ab0d6fdaed77eb75f080a306bddd1c4d2',1,'promeki::DebugServer::httpServer()'],['../classpromeki_1_1DebugServer.html#a16b3e7d18224b0c6d34b6c07c5826d9c',1,'promeki::DebugServer::httpServer() const'],['../classpromeki_1_1HttpServer.html#a18714f4ebe5fa0bafb7a5609a9e9b1b6',1,'promeki::HttpServer::HttpServer()']]],
+  ['httpserver_66',['httpserver',['../classpromeki_1_1HttpServer.html#a18714f4ebe5fa0bafb7a5609a9e9b1b6',1,'promeki::HttpServer::HttpServer()'],['../classpromeki_1_1DebugServer.html#ab0d6fdaed77eb75f080a306bddd1c4d2',1,'promeki::DebugServer::httpServer()'],['../classpromeki_1_1DebugServer.html#a16b3e7d18224b0c6d34b6c07c5826d9c',1,'promeki::DebugServer::httpServer() const']]],
   ['httpversion_67',['httpversion',['../classpromeki_1_1HttpRequest.html#a2cc2113366ec1b51e00f4a7ecc14022f',1,'promeki::HttpRequest::httpVersion()'],['../classpromeki_1_1HttpResponse.html#ad7b44acce707035b638fcae79db46b83',1,'promeki::HttpResponse::httpVersion()']]]
 ];

@@ -157,7 +157,21 @@ Verification</h1>
 <div class="line">--   NDI Advanced SDK headers detected</div>
 </div><!-- fragment --><p>After building, check the compiled-in features via the build-info string emitted by any libpromeki executable at startup:</p>
 <div class="fragment"><div class="line">Features: NETWORK PROAV ... NDI</div>
-</div><!-- fragment --><h1><a class="anchor" id="ndi_troubleshoot"></a>
+</div><!-- fragment --><h1><a class="anchor" id="ndi_urls"></a>
+URL form</h1>
+<p>The NDI MediaIO backend accepts two URL shapes for both source and sink mode:</p>
+<ul>
+<li><code>ndi://&lt;host&gt;/&lt;name&gt;</code> — <code>&lt;name&gt;</code> on <code>&lt;host&gt;</code>. For sink mode, <code>&lt;host&gt;</code> must be the local machine (NDI senders advertise from the local box); a non-local host is rejected at open with <code>Error::InvalidArgument</code>. For source mode, <code>&lt;host&gt;</code> filters the discovery match to that machine's canonical name.</li>
+<li><code>ndi:///&lt;name&gt;</code> — <code>&lt;name&gt;</code> on this machine. Equivalent to <code>ndi://&lt;this-host&gt;/&lt;name&gt;</code>; the local hostname is filled in automatically.</li>
+</ul>
+<p>The same URL is openable for either direction. Direction is selected by the caller:</p>
+<ul>
+<li><code>MediaIO::createForFileRead("ndi:///MyCamera")</code> opens a receiver on <code>&lt;this-host&gt; (MyCamera)</code>.</li>
+<li><code>MediaIO::createForFileWrite("ndi:///MyOutput")</code> opens a sender named <code>MyOutput</code>.</li>
+<li><code>MediaIO::createFromUrl("ndi:///MyCamera")</code> defaults to a receiver; pass <code>?OpenMode=Write</code> to open as a sender.</li>
+</ul>
+<p><code>NdiFactory::enumerate()</code> returns currently-advertised sources in <code>ndi://&lt;host&gt;/&lt;name&gt;</code> form, so each enumerated URL round-trips through <code>createForFileRead</code> to the same source.</p>
+<h1><a class="anchor" id="ndi_troubleshoot"></a>
 Troubleshooting</h1>
 <h2><a class="anchor" id="ndi_trouble_sdk"></a>
 CMake cannot find the SDK</h2>
@@ -179,7 +193,7 @@ libndi not found at runtime</h2>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-05-04 01:57:20 from commit 87240ac (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-04 08:46:32 from commit d7c202b (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

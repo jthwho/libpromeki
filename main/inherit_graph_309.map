@@ -1,3 +1,15 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classpromeki_1_1MemPool.html" title="Thread&#45;safe memory pool allocator with external metadata." alt="" coords="5,5,151,31"/>
+<area shape="rect" id="Node000000" href="$classpromeki_1_1MediaPayload.html" title="Abstract polymorphic base for any media payload flowing through a pipeline." alt="" coords="5,99,180,125"/>
+<area shape="rect" id="Node000001" href="$classpromeki_1_1AudioPayload.html" title="Abstract base for any audio payload — compressed or uncompressed." alt="" coords="228,70,400,95"/>
+<area shape="poly" id="edge121_Node000000_Node000001" title=" " alt="" coords="193,96,228,91,228,97,194,101"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1VideoPayload.html" title="Abstract base for any video payload — compressed or uncompressed." alt="" coords="228,127,400,153"/>
+<area shape="poly" id="edge124_Node000000_Node000004" title=" " alt="" coords="194,122,228,127,228,132,193,127"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1CompressedAudioPayload.html" title="Compressed audio payload — one encoded access unit whose codec identity lives in the base AudioDesc&#39;s..." alt="" coords="456,5,659,45"/>
+<area shape="poly" id="edge122_Node000001_Node000002" title=" " alt="" coords="381,64,471,43,473,48,383,69"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1PcmAudioPayload.html" title="PCM audio payload — linear PCM samples in the format described by the base AudioPayload&#39;s AudioDesc." alt="" coords="457,70,657,95"/>
+<area shape="poly" id="edge123_Node000001_Node000003" title=" " alt="" coords="414,80,457,80,457,85,414,85"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1CompressedVideoPayload.html" title="Compressed video payload — one encoded access unit whose codec identity lives in the base ImageDesc&#39;s..." alt="" coords="456,120,659,160"/>
+<area shape="poly" id="edge125_Node000004_Node000005" title=" " alt="" coords="414,137,456,137,456,143,414,143"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1UncompressedVideoPayload.html" title="Uncompressed video payload — raster pixels in the format described by the base VideoPayload&#39;s ImageDe..." alt="" coords="448,184,667,224"/>
+<area shape="poly" id="edge126_Node000004_Node000006" title=" " alt="" coords="377,154,481,181,480,186,376,159"/>
 </map>

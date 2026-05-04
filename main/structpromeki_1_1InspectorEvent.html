@@ -99,6 +99,7 @@ $(document).ready(function(){initNavTree('structpromeki_1_1InspectorEvent.html',
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="structpromeki_1_1InspectorEvent-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">promeki::InspectorEvent Struct Reference<div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
@@ -114,16 +115,23 @@ Collaboration diagram for promeki::InspectorEvent:</div>
 <div class="dyncontent">
 <div class="center"><img src="structpromeki_1_1InspectorEvent__coll__graph.png" border="0" usemap="#apromeki_1_1InspectorEvent_coll__map" alt="Collaboration graph"/></div>
 <map name="apromeki_1_1InspectorEvent_coll__map" id="apromeki_1_1InspectorEvent_coll__map">
-<area shape="rect" title="Per&#45;frame measurement record produced by InspectorMediaIO." alt="" coords="353,65,535,91"/>
-<area shape="rect" href="classpromeki_1_1FrameNumber.html" title="Absolute frame index along a media timeline." alt="" coords="12,5,189,31"/>
-<area shape="poly" title=" " alt="" coords="203,25,330,45,402,63,400,68,329,50,203,31"/>
-<area shape="rect" href="classpromeki_1_1Timecode.html" title="Class for holding and manipulating timecode." alt="" coords="27,65,175,91"/>
-<area shape="poly" title=" " alt="" coords="189,75,353,75,353,81,189,81"/>
-<area shape="rect" href="classpromeki_1_1List.html" title=" " alt="" coords="5,115,196,155"/>
-<area shape="poly" title=" " alt="" coords="209,115,329,95,371,88,372,93,330,101,210,121"/>
+<area shape="rect" title="Per&#45;frame measurement record produced by InspectorMediaIO." alt="" coords="424,95,605,120"/>
+<area shape="rect" href="classpromeki_1_1FrameNumber.html" title="Absolute frame index along a media timeline." alt="" coords="29,5,207,31"/>
+<area shape="poly" title=" " alt="" coords="221,19,309,29,401,49,452,69,494,92,492,97,450,74,399,54,308,34,220,24"/>
+<area shape="rect" href="classpromeki_1_1Timecode.html" title="Class for holding and manipulating timecode." alt="" coords="44,60,192,85"/>
+<area shape="poly" title=" " alt="" coords="206,78,424,97,424,102,205,83"/>
+<area shape="rect" href="classpromeki_1_1List.html" title=" " alt="" coords="5,109,231,164"/>
+<area shape="poly" title=" " alt="" coords="244,130,400,119,423,117,424,122,400,125,244,135"/>
+<area shape="rect" href="classpromeki_1_1List.html" title=" " alt="" coords="23,189,213,229"/>
+<area shape="poly" title=" " alt="" coords="227,189,312,172,399,150,484,118,486,123,401,155,313,178,228,195"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html">AudioChannelMarker</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:ad3878768a9fda62058b2b35f48b26b8d" id="r_ad3878768a9fda62058b2b35f48b26b8d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1FrameNumber.html">FrameNumber</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent.html#ad3878768a9fda62058b2b35f48b26b8d">frameIndex</a> {0}</td></tr>
@@ -190,10 +198,26 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a2a463ae92e48539e20a1663e0d91964a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aafd68652378568debf36e7884860ff6a" id="r_aafd68652378568debf36e7884860ff6a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent.html#aafd68652378568debf36e7884860ff6a">audioSamplesValid</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">false</a></td></tr>
 <tr class="separator:aafd68652378568debf36e7884860ff6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c577e15da9be8caa2243dfd51b8d12e" id="r_a9c577e15da9be8caa2243dfd51b8d12e"><td class="memItemLeft" align="right" valign="top"><a id="a9c577e15da9be8caa2243dfd51b8d12e" name="a9c577e15da9be8caa2243dfd51b8d12e"></a>
-<a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>audioSamplesThisFrame</b> = 0</td></tr>
-<tr class="memdesc:a9c577e15da9be8caa2243dfd51b8d12e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of audio samples carried by this frame's first audio chunk. <br /></td></tr>
+<tr class="memitem:a9c577e15da9be8caa2243dfd51b8d12e" id="r_a9c577e15da9be8caa2243dfd51b8d12e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent.html#a9c577e15da9be8caa2243dfd51b8d12e">audioSamplesThisFrame</a> = 0</td></tr>
 <tr class="separator:a9c577e15da9be8caa2243dfd51b8d12e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a581f1a960cab20ffb30e930177df7a2e" id="r_a581f1a960cab20ffb30e930177df7a2e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent.html#a581f1a960cab20ffb30e930177df7a2e">audioPtsJitterValid</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">false</a></td></tr>
+<tr class="separator:a581f1a960cab20ffb30e930177df7a2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d48661dd2fdd60dc67c0ae543330e3b" id="r_a6d48661dd2fdd60dc67c0ae543330e3b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent.html#a6d48661dd2fdd60dc67c0ae543330e3b">audioPtsJitterNs</a> = 0</td></tr>
+<tr class="separator:a6d48661dd2fdd60dc67c0ae543330e3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a73d55306b6d8753425b0f39747f9d144" id="r_a73d55306b6d8753425b0f39747f9d144"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent.html#a73d55306b6d8753425b0f39747f9d144">videoPtsJitterValid</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">false</a></td></tr>
+<tr class="separator:a73d55306b6d8753425b0f39747f9d144"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2054f0152079171c203eadc76802c90" id="r_ae2054f0152079171c203eadc76802c90"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent.html#ae2054f0152079171c203eadc76802c90">videoPtsJitterNs</a> = 0</td></tr>
+<tr class="separator:ae2054f0152079171c203eadc76802c90"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0a5b25dca5243ee84b7323fead946f0" id="r_ab0a5b25dca5243ee84b7323fead946f0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent.html#ab0a5b25dca5243ee84b7323fead946f0">avPtsDriftValid</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">false</a></td></tr>
+<tr class="separator:ab0a5b25dca5243ee84b7323fead946f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a205683089cb99d071d1ee3865c9990bf" id="r_a205683089cb99d071d1ee3865c9990bf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent.html#a205683089cb99d071d1ee3865c9990bf">avPtsDriftNs</a> = 0</td></tr>
+<tr class="separator:a205683089cb99d071d1ee3865c9990bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7bdd266f95d564970ed1e044a803e3d4" id="r_a7bdd266f95d564970ed1e044a803e3d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent.html#a7bdd266f95d564970ed1e044a803e3d4">audioDataDecoderEnabled</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">false</a></td></tr>
+<tr class="separator:a7bdd266f95d564970ed1e044a803e3d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a768cf4faadf7a6701e19ee33f0f9912d" id="r_a768cf4faadf7a6701e19ee33f0f9912d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent.html#a768cf4faadf7a6701e19ee33f0f9912d">audioDataDecoded</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">false</a></td></tr>
+<tr class="separator:a768cf4faadf7a6701e19ee33f0f9912d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a911f0ce3d86de6633909c525bf2809" id="r_a1a911f0ce3d86de6633909c525bf2809"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1List.html">List</a>&lt; <a class="el" href="structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html">AudioChannelMarker</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent.html#a1a911f0ce3d86de6633909c525bf2809">audioChannelMarkers</a></td></tr>
+<tr class="separator:a1a911f0ce3d86de6633909c525bf2809"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c2f21175eafc435a9d7821a8f1b7493" id="r_a0c2f21175eafc435a9d7821a8f1b7493"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1List.html">List</a>&lt; <a class="el" href="structpromeki_1_1InspectorDiscontinuity.html">InspectorDiscontinuity</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1InspectorEvent.html#a0c2f21175eafc435a9d7821a8f1b7493">discontinuities</a></td></tr>
 <tr class="separator:a0c2f21175eafc435a9d7821a8f1b7493"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -201,6 +225,96 @@ Public Attributes</h2></td></tr>
 <div class="textblock"><p>Per-frame measurement record produced by <a class="el" href="classpromeki_1_1InspectorMediaIO.html">InspectorMediaIO</a>. </p>
 <p>The inspector populates one of these for every frame it sees and delivers it to the user-supplied callback (set via <a class="el" href="classpromeki_1_1InspectorMediaIO.html#aae806c93724f873a05c6b9810496735c">InspectorMediaIO::setEventCallback</a>). Fields are only meaningful when the corresponding decoder was enabled in the config — check <code>pictureDecoded</code> / <code>ltcDecoded</code> before reading. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="a1a911f0ce3d86de6633909c525bf2809" name="a1a911f0ce3d86de6633909c525bf2809"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1a911f0ce3d86de6633909c525bf2809">&#9670;&#160;</a></span>audioChannelMarkers</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1List.html">List</a>&lt;<a class="el" href="structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html">AudioChannelMarker</a>&gt; promeki::InspectorEvent::audioChannelMarkers</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>One <a class="el" href="structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html">AudioChannelMarker</a> per channel, indexed by channel. Empty when the test is disabled or no audio chunk arrived on this frame. </p>
+
+</div>
+</div>
+<a id="a768cf4faadf7a6701e19ee33f0f9912d" name="a768cf4faadf7a6701e19ee33f0f9912d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a768cf4faadf7a6701e19ee33f0f9912d">&#9670;&#160;</a></span>audioDataDecoded</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a> promeki::InspectorEvent::audioDataDecoded = <a class="el" href="classpromeki_1_1UniquePtr.html">false</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>True if at least one channel produced a successful audio data marker decode this frame. </p>
+
+</div>
+</div>
+<a id="a7bdd266f95d564970ed1e044a803e3d4" name="a7bdd266f95d564970ed1e044a803e3d4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7bdd266f95d564970ed1e044a803e3d4">&#9670;&#160;</a></span>audioDataDecoderEnabled</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a> promeki::InspectorEvent::audioDataDecoderEnabled = <a class="el" href="classpromeki_1_1UniquePtr.html">false</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>True if the <em>audio data decoder enable</em> flag was set in the config. </p>
+
+</div>
+</div>
+<a id="a6d48661dd2fdd60dc67c0ae543330e3b" name="a6d48661dd2fdd60dc67c0ae543330e3b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6d48661dd2fdd60dc67c0ae543330e3b">&#9670;&#160;</a></span>audioPtsJitterNs</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a> promeki::InspectorEvent::audioPtsJitterNs = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Difference (actual - predicted) between the audio chunk's <a class="el" href="classpromeki_1_1MediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a> and the inspector's prediction based on the audio stream anchor and cumulative sample count. Positive means the chunk arrived later in wall-clock time than the stream's sample cadence would predict; negative means earlier. </p>
+
+</div>
+</div>
+<a id="a581f1a960cab20ffb30e930177df7a2e" name="a581f1a960cab20ffb30e930177df7a2e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a581f1a960cab20ffb30e930177df7a2e">&#9670;&#160;</a></span>audioPtsJitterValid</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a> promeki::InspectorEvent::audioPtsJitterValid = <a class="el" href="classpromeki_1_1UniquePtr.html">false</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>True when this frame received an audio chunk and a prediction was available (any frame after the first that carries an audio <a class="el" href="classpromeki_1_1MediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a>). <a class="el" href="structpromeki_1_1InspectorEvent.html#a6d48661dd2fdd60dc67c0ae543330e3b">audioPtsJitterNs</a> is meaningful only when this is <code>true</code>. </p>
+
+</div>
+</div>
+<a id="a9c577e15da9be8caa2243dfd51b8d12e" name="a9c577e15da9be8caa2243dfd51b8d12e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c577e15da9be8caa2243dfd51b8d12e">&#9670;&#160;</a></span>audioSamplesThisFrame</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a> promeki::InspectorEvent::audioSamplesThisFrame = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Number of audio samples carried by this frame's first audio chunk. With bursty network audio this is a <em>delivery shape</em> statistic — it reports how the upstream chose to slice the audio across video frames, not how many samples logically belong to this frame's slice of time. Per-stream cadence is reported via <a class="el" href="structpromeki_1_1InspectorSnapshot.html#abeeab3d3ba9feb39f0be828847de9641">InspectorSnapshot::measuredAudioSampleRate</a>. </p>
+
+</div>
+</div>
 <a id="aafd68652378568debf36e7884860ff6a" name="aafd68652378568debf36e7884860ff6a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aafd68652378568debf36e7884860ff6a">&#9670;&#160;</a></span>audioSamplesValid</h2>
 
@@ -231,6 +345,36 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a205683089cb99d071d1ee3865c9990bf" name="a205683089cb99d071d1ee3865c9990bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a205683089cb99d071d1ee3865c9990bf">&#9670;&#160;</a></span>avPtsDriftNs</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a> promeki::InspectorEvent::avPtsDriftNs = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Drift of <code></code>(videoPts - audioPts) from the baseline offset captured on the first frame where both essences carried valid PTSs. A constant zero indicates the two essence clocks share a common reference and stay locked; a drifting value indicates the audio and video clocks are running at slightly different rates. </p>
+
+</div>
+</div>
+<a id="ab0a5b25dca5243ee84b7323fead946f0" name="ab0a5b25dca5243ee84b7323fead946f0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab0a5b25dca5243ee84b7323fead946f0">&#9670;&#160;</a></span>avPtsDriftValid</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a> promeki::InspectorEvent::avPtsDriftValid = <a class="el" href="classpromeki_1_1UniquePtr.html">false</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>True when both essences carried valid PTSs on this frame AND a baseline (videoPts - audioPts) has been established by an earlier frame. </p>
+
+</div>
+</div>
 <a id="a31ade00eaf9755a1f2617e7be38496b7" name="a31ade00eaf9755a1f2617e7be38496b7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a31ade00eaf9755a1f2617e7be38496b7">&#9670;&#160;</a></span>avSyncOffsetSamples</h2>
 
@@ -242,9 +386,10 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Instantaneous A/V sync offset in audio samples between the picture timecode anchor and the audio LTC sync anchor. This is the <em>current</em> misalignment between the two sources on this specific frame, not a delta against a previous frame.</p>
-<p>Sign convention: positive = video leads audio (the picture's TC anchor lands at an earlier wall-clock audio sample than the LTC's TC anchor). Negative = audio leads video.</p>
-<dl class="section note"><dt>Note</dt><dd>A small constant offset (a few samples — typically 1-3 at common sample rates) is normal when the LTC is produced by libvtc's encoder and decoded by libvtc's decoder. The encoder's raised-cosine transition ramp and the decoder's hysteresis threshold combine to give the decoder a fixed edge-detection latency relative to the encoder's bit boundary. The value is <em>constant</em> across frames, so any movement does represent real drift — the inspector flags such movement as a discontinuity (see <a class="el" href="classpromeki_1_1MediaConfig.html#a4123795e818a66e10f74d13a244c6be4">MediaConfig::InspectorSyncOffsetToleranceSamples</a>). </dd></dl>
+<p>Instantaneous A/V sync offset, in audio samples, of the <a class="el" href="classpromeki_1_1AudioDataEncoder.html">AudioDataEncoder</a> codeword carrying this frame's 48-bit frame number, reported as a <em>deviation</em> from a baseline phase the inspector latches on the first successful marker match. The raw phase is the difference between the codeword's actual stream-sample position and the rational-rate- predicted position (<a class="el" href="classpromeki_1_1FrameRate.html#a529640e0f673b9c71d8c4de16957cd4c">FrameRate::cumulativeTicks</a> at the inspector's audio sample rate); the reported value is that raw phase minus the baseline.</p>
+<p>The baseline absorbs any constant phase the producer happened to start with — a mid-stream join, a non-zero first frame number, an SRC's constant group delay, or any other one-time offset between the producer's audio cadence and the rational ideal. None of those are real A/V sync errors, so a clean cadenced run reports 0 every frame regardless of rate, starting frame, or pipeline shape. Real changes in the codeword position relative to its expected rational position (codeword moved within a chunk, audio sample dropped/inserted, audio path resampling drift) still show up because they move the raw phase away from the latched baseline.</p>
+<p>Sign convention: positive = audio codeword landed at a <em>later</em> stream sample than the baseline predicts, which means the audio is delayed relative to the video — i.e. video leads audio. Negative = audio leads video.</p>
+<dl class="section note"><dt>Note</dt><dd>Both encoders stamp the same <code></code>[stream:8][channel:8][frame:48] codeword, so the frame-number lookup is sample-accurate end-to-end when the audio path doesn't resample. Any frame-to-frame movement beyond <a class="el" href="classpromeki_1_1MediaConfig.html#a4123795e818a66e10f74d13a244c6be4">MediaConfig::InspectorSyncOffsetToleranceSamples</a> is flagged as an <a class="el" href="structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca5598c0f54aa4ff4c4f7620cf3804ebb6">InspectorDiscontinuity::SyncOffsetChange</a> — and because both the cadence and the baseline phase are already removed, the tolerance defaults to 0. </dd></dl>
 
 </div>
 </div>
@@ -259,7 +404,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>True if the inspector was able to compute an A/V sync offset for this frame (both picture and LTC decoded successfully, and the LTC carried a known frame rate). </p>
+<p>True if the inspector was able to compute an A/V sync offset for this frame: an audio codeword decoded successfully, the picture data band on a frame matching its 48-bit frame number is in history, and the upstream frame rate is known. </p>
 
 </div>
 </div>
@@ -319,7 +464,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Audio sample offset <em>within</em> this frame's audio chunk where the LTC sync word arrived. Zero means the sync word landed exactly at the start of the chunk; positive means later in the chunk; negative is rare but possible when the sync word was buffered from a previous chunk. This is the canonical "LTC time anchor" used by the TC sync drift check. </p>
+<p>Absolute audio sample position in the inspector's stream where the LTC sync word arrived. Sample 0 is the very first audio sample the inspector ever ingested; the per-stream wall-clock time of any sample <code>N</code> is <code>audioStreamStartNs</code> + N / sampleRate (in seconds). </p>
 
 </div>
 </div>
@@ -383,6 +528,36 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="ae2054f0152079171c203eadc76802c90" name="ae2054f0152079171c203eadc76802c90"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae2054f0152079171c203eadc76802c90">&#9670;&#160;</a></span>videoPtsJitterNs</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a> promeki::InspectorEvent::videoPtsJitterNs = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Difference (actual - predicted) between this frame's video <a class="el" href="classpromeki_1_1MediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a> and the inspector's prediction based on the video anchor and the frame index. </p>
+
+</div>
+</div>
+<a id="a73d55306b6d8753425b0f39747f9d144" name="a73d55306b6d8753425b0f39747f9d144"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a73d55306b6d8753425b0f39747f9d144">&#9670;&#160;</a></span>videoPtsJitterValid</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a> promeki::InspectorEvent::videoPtsJitterValid = <a class="el" href="classpromeki_1_1UniquePtr.html">false</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>True when the video PTS jitter measurement is meaningful (any frame after the first that carries a video PTS). </p>
+
+</div>
+</div>
 <a id="aed58167b02c1a4e519b3feacc38911a8" name="aed58167b02c1a4e519b3feacc38911a8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aed58167b02c1a4e519b3feacc38911a8">&#9670;&#160;</a></span>videoTimestampDeltaNs</h2>
 
@@ -438,7 +613,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="structpromeki_1_1InspectorEvent.html">InspectorEvent</a></li>
-    <li class="footer">Generated on 2026-05-04 01:57:20 from commit 87240ac (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-04 08:46:32 from commit d7c202b (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

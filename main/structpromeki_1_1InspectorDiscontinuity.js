@@ -9,7 +9,12 @@ var structpromeki_1_1InspectorDiscontinuity =
       [ "LtcDecodeFailure", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccaa7ccb17cbc6dedeb15af6c8b27b83ac0", null ],
       [ "SyncOffsetChange", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca5598c0f54aa4ff4c4f7620cf3804ebb6", null ],
       [ "MissingVideoTimestamp", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca5b760b05dc9c353563a988daaf5ab2a6", null ],
-      [ "MissingAudioTimestamp", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca7b444a22522edfb9fe3124a44b058ff5", null ]
+      [ "MissingAudioTimestamp", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca7b444a22522edfb9fe3124a44b058ff5", null ],
+      [ "AudioTimestampReanchor", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccaaa30ca18ab18a1c072909c3934338a22", null ],
+      [ "VideoTimestampReanchor", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccad6c736927d834e48a2297adbfdd46186", null ],
+      [ "AudioChannelMismatch", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccac17ed2619f14a9e550ac06d6c34c56dd", null ],
+      [ "AudioDataDecodeFailure", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccaead68fca128bb63446cc20b240c0720f", null ],
+      [ "AudioDataLengthAnomaly", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca219cdff33155cb188dac0df19e644429", null ]
     ] ],
     [ "currentValue", "structpromeki_1_1InspectorDiscontinuity.html#a87f3605d8a893ff3897e5656afd039da", null ],
     [ "description", "structpromeki_1_1InspectorDiscontinuity.html#a3e0d9ca051f5a033cee16a03d2af1320", null ],

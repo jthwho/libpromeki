@@ -171,6 +171,55 @@ var group__proav =
       [ "supportsDRC", "classpromeki_1_1AudioCodec.html#a79bcc613bbeba12283413d380c62edca", null ],
       [ "toString", "classpromeki_1_1AudioCodec.html#a4b10789bdbb2e867fa0ae2b3f7adde8f", null ]
     ] ],
+    [ "promeki::AudioDataDecoder", "classpromeki_1_1AudioDataDecoder.html", [
+      [ "Band", "structpromeki_1_1AudioDataDecoder_1_1Band.html", [
+        [ "channel", "structpromeki_1_1AudioDataDecoder_1_1Band.html#a2992b6234145d5f56a8d4f4cc36dfeb7", null ],
+        [ "firstSample", "structpromeki_1_1AudioDataDecoder_1_1Band.html#ade56fa786fadae113525e92d84a61f49", null ],
+        [ "sampleCount", "structpromeki_1_1AudioDataDecoder_1_1Band.html#ae7afd81392b2fafa4eae1ce3ef38608c", null ]
+      ] ],
+      [ "DecodedItem", "structpromeki_1_1AudioDataDecoder_1_1DecodedItem.html", [
+        [ "decodedCrc", "structpromeki_1_1AudioDataDecoder_1_1DecodedItem.html#a312554cb5d53b2731ff3c15faf68f861", null ],
+        [ "decodedSync", "structpromeki_1_1AudioDataDecoder_1_1DecodedItem.html#a7360ad045d6535df118e64209f6263c8", null ],
+        [ "error", "structpromeki_1_1AudioDataDecoder_1_1DecodedItem.html#ae5c846b62679749cf00e43dd1db6c11f", null ],
+        [ "expectedCrc", "structpromeki_1_1AudioDataDecoder_1_1DecodedItem.html#acee78612abfda17fe79952da3279c78f", null ],
+        [ "packetSampleCount", "structpromeki_1_1AudioDataDecoder_1_1DecodedItem.html#a880e2fca5811fcc9369bfc3485d5ec28", null ],
+        [ "payload", "structpromeki_1_1AudioDataDecoder_1_1DecodedItem.html#af4e5205ae2977e263f3c4288d9dbe185", null ],
+        [ "samplesPerBit", "structpromeki_1_1AudioDataDecoder_1_1DecodedItem.html#a02fedf57638b846b60d10a5827d140b5", null ],
+        [ "streamSampleStart", "structpromeki_1_1AudioDataDecoder_1_1DecodedItem.html#a16ebe2c2f050c7c0a4fcc208fbb9a004", null ],
+        [ "syncStartSample", "structpromeki_1_1AudioDataDecoder_1_1DecodedItem.html#ad03ab0f4e275c502c9ddb279c22fd54c", null ]
+      ] ],
+      [ "StreamState", "structpromeki_1_1AudioDataDecoder_1_1StreamState.html", [
+        [ "buffer", "structpromeki_1_1AudioDataDecoder_1_1StreamState.html#a1e31e0cca1a1cdbe89968266475171c6", null ],
+        [ "sampleAnchor", "structpromeki_1_1AudioDataDecoder_1_1StreamState.html#a572fd246650a306121dc6d47ad240bca", null ]
+      ] ],
+      [ "DecodedList", "classpromeki_1_1AudioDataDecoder.html#a9bb45025cc74067c68803e62cf019a61", null ],
+      [ "AudioDataDecoder", "classpromeki_1_1AudioDataDecoder.html#ae63a5c8b8526853f36dfa9c99e4a8a4a", null ],
+      [ "AudioDataDecoder", "classpromeki_1_1AudioDataDecoder.html#a0b0bf4e62046ed87acd8e09b9839165a", null ],
+      [ "decode", "classpromeki_1_1AudioDataDecoder.html#aaae1a2e8bcd8a802cbfcee97332696c7", null ],
+      [ "decode", "classpromeki_1_1AudioDataDecoder.html#a7e65b95e0e059fdab33560e43dd20b7b", null ],
+      [ "decode", "classpromeki_1_1AudioDataDecoder.html#ad2ff731d22e55bebb4640cdb9d5c789a", null ],
+      [ "decodeAll", "classpromeki_1_1AudioDataDecoder.html#a0c3ca9c252210b431b943922800a7bad", null ],
+      [ "desc", "classpromeki_1_1AudioDataDecoder.html#a5085bfe36259489874bc329397cffefd", null ],
+      [ "expectedSamplesPerBit", "classpromeki_1_1AudioDataDecoder.html#a970cbc93bbdfef8476230ea26a5f2b72", null ],
+      [ "isValid", "classpromeki_1_1AudioDataDecoder.html#a6102a5a899b6d42af173fac5c30de4be", null ]
+    ] ],
+    [ "promeki::AudioDataEncoder", "classpromeki_1_1AudioDataEncoder.html", [
+      [ "Item", "structpromeki_1_1AudioDataEncoder_1_1Item.html", [
+        [ "channel", "structpromeki_1_1AudioDataEncoder_1_1Item.html#a36ab80c3e954787913830f2b65653f68", null ],
+        [ "firstSample", "structpromeki_1_1AudioDataEncoder_1_1Item.html#a12629514b93b683ea5230190cc6971d6", null ],
+        [ "payload", "structpromeki_1_1AudioDataEncoder_1_1Item.html#a1919d7528c09448799e86d717b17c9a3", null ],
+        [ "sampleCount", "structpromeki_1_1AudioDataEncoder_1_1Item.html#acf4aced6e838533deced40cd96135b49", null ]
+      ] ],
+      [ "AudioDataEncoder", "classpromeki_1_1AudioDataEncoder.html#a8d04b92b9ec8ec5156a5ba1b096714b6", null ],
+      [ "AudioDataEncoder", "classpromeki_1_1AudioDataEncoder.html#a3da0c466ee1e2280f6d6818df05b47f7", null ],
+      [ "amplitude", "classpromeki_1_1AudioDataEncoder.html#a4360e2cd75f921bc140930e0dce3a2a3", null ],
+      [ "desc", "classpromeki_1_1AudioDataEncoder.html#a862974afef84fce32b21962642bc165a", null ],
+      [ "encode", "classpromeki_1_1AudioDataEncoder.html#ab67d1c2c2c2a947a3e18f3c9f0d8dd0c", null ],
+      [ "encode", "classpromeki_1_1AudioDataEncoder.html#a862db343abc9c98e426bbfec4a1005a7", null ],
+      [ "isValid", "classpromeki_1_1AudioDataEncoder.html#af535454511557859e2cbaceb785b1f4c", null ],
+      [ "packetSamples", "classpromeki_1_1AudioDataEncoder.html#aaeef09d9015ddf6178b2933e2e5d8031", null ],
+      [ "samplesPerBit", "classpromeki_1_1AudioDataEncoder.html#aa8fa9d43d14314ad7d4c6dc521661e32", null ]
+    ] ],
     [ "promeki::AudioDecoder", "classpromeki_1_1AudioDecoder.html", [
       [ "BackendRecord", "structpromeki_1_1AudioDecoder_1_1BackendRecord.html", [
         [ "supportedOutputs", "structpromeki_1_1AudioDecoder_1_1BackendRecord.html#a34fb97374fe3d8cec39bf7bae4d7aca2", null ]
@@ -543,6 +592,8 @@ var group__proav =
       [ "ltcLevel", "classpromeki_1_1AudioTestPattern.html#aca92fc116da73a1ad6c98733a2f9868e", null ],
       [ "noiseBufferSeconds", "classpromeki_1_1AudioTestPattern.html#ab7f9337f564a286244c7f7730058b580", null ],
       [ "noiseSeed", "classpromeki_1_1AudioTestPattern.html#af0a2b3415c0b951d9fccfcad349bb827", null ],
+      [ "pcmMarkerFrameNumber", "classpromeki_1_1AudioTestPattern.html#a818e148896c231d51cb72ae27e1ce8a8", null ],
+      [ "pcmMarkerStreamId", "classpromeki_1_1AudioTestPattern.html#a9a89751d70fcbf25dc8a6c181a72f82f", null ],
       [ "polarityPulseHz", "classpromeki_1_1AudioTestPattern.html#ab396d239dc3ce055b14f631df1777702", null ],
       [ "polarityPulseWidthSec", "classpromeki_1_1AudioTestPattern.html#ab29f580d519735f6937f7be16742430a", null ],
       [ "setChannelIdBaseFreq", "classpromeki_1_1AudioTestPattern.html#a7f9ff624dd59e4335dd09fd5cb02fb1f", null ],
@@ -558,6 +609,8 @@ var group__proav =
       [ "setLtcLevel", "classpromeki_1_1AudioTestPattern.html#a1693334be4a9147d3477b6f61e796838", null ],
       [ "setNoiseBufferSeconds", "classpromeki_1_1AudioTestPattern.html#a487eae0961f97a9581119a31e9a00149", null ],
       [ "setNoiseSeed", "classpromeki_1_1AudioTestPattern.html#a0143e20f6d28322e26b464af10fc2570", null ],
+      [ "setPcmMarkerFrameNumber", "classpromeki_1_1AudioTestPattern.html#a55533bfe7cdd4e203501618aba4e5b82", null ],
+      [ "setPcmMarkerStreamId", "classpromeki_1_1AudioTestPattern.html#a0a7de00c524bab6b8d0204f27b7fc31e", null ],
       [ "setPolarityPulseHz", "classpromeki_1_1AudioTestPattern.html#a0913f7e3e29e8f53a1ac7025a785a9bf", null ],
       [ "setPolarityPulseWidthSec", "classpromeki_1_1AudioTestPattern.html#a1b05f39e727c3db804bd95856ce4471b", null ],
       [ "setSteppedToneFreqs", "classpromeki_1_1AudioTestPattern.html#ab16e34e02a07802d354b3862e6d916c1", null ],
@@ -1075,7 +1128,12 @@ var group__proav =
         [ "LtcDecodeFailure", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccaa7ccb17cbc6dedeb15af6c8b27b83ac0", null ],
         [ "SyncOffsetChange", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca5598c0f54aa4ff4c4f7620cf3804ebb6", null ],
         [ "MissingVideoTimestamp", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca5b760b05dc9c353563a988daaf5ab2a6", null ],
-        [ "MissingAudioTimestamp", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca7b444a22522edfb9fe3124a44b058ff5", null ]
+        [ "MissingAudioTimestamp", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca7b444a22522edfb9fe3124a44b058ff5", null ],
+        [ "AudioTimestampReanchor", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccaaa30ca18ab18a1c072909c3934338a22", null ],
+        [ "VideoTimestampReanchor", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccad6c736927d834e48a2297adbfdd46186", null ],
+        [ "AudioChannelMismatch", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccac17ed2619f14a9e550ac06d6c34c56dd", null ],
+        [ "AudioDataDecodeFailure", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40ccaead68fca128bb63446cc20b240c0720f", null ],
+        [ "AudioDataLengthAnomaly", "structpromeki_1_1InspectorDiscontinuity.html#a9c81c4640d23b1e98ecec01f71bf40cca219cdff33155cb188dac0df19e644429", null ]
       ] ],
       [ "currentValue", "structpromeki_1_1InspectorDiscontinuity.html#a87f3605d8a893ff3897e5656afd039da", null ],
       [ "description", "structpromeki_1_1InspectorDiscontinuity.html#a3e0d9ca051f5a033cee16a03d2af1320", null ],
@@ -1083,6 +1141,21 @@ var group__proav =
       [ "previousValue", "structpromeki_1_1InspectorDiscontinuity.html#a3ab363c9a483217b7b08266b794158d2", null ]
     ] ],
     [ "promeki::InspectorEvent", "structpromeki_1_1InspectorEvent.html", [
+      [ "AudioChannelMarker", "structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html", [
+        [ "channelMatches", "structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html#ad07f37ab525479b8351f784f17b33a41", null ],
+        [ "decoded", "structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html#a7689bdf58e380b253617c464fd9b639a", null ],
+        [ "encodedChannel", "structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html#a5b0cad660fddc1ffea2aee33a1193fdd", null ],
+        [ "frameNumber", "structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html#ad7b21d4f4d86838c0b5959624b51c360", null ],
+        [ "packetsCorrupt", "structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html#ab36d5ad424e74fd10ae4d754ce4be655", null ],
+        [ "packetsDecoded", "structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html#a3a001d14b043064337bb51905314b9fc", null ],
+        [ "streamId", "structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html#a66f187b5c7d3eb0755b564b155dd7460", null ],
+        [ "streamSampleStart", "structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html#a60a072d4f288caaed2fec9b0063fefd0", null ]
+      ] ],
+      [ "audioChannelMarkers", "structpromeki_1_1InspectorEvent.html#a1a911f0ce3d86de6633909c525bf2809", null ],
+      [ "audioDataDecoded", "structpromeki_1_1InspectorEvent.html#a768cf4faadf7a6701e19ee33f0f9912d", null ],
+      [ "audioDataDecoderEnabled", "structpromeki_1_1InspectorEvent.html#a7bdd266f95d564970ed1e044a803e3d4", null ],
+      [ "audioPtsJitterNs", "structpromeki_1_1InspectorEvent.html#a6d48661dd2fdd60dc67c0ae543330e3b", null ],
+      [ "audioPtsJitterValid", "structpromeki_1_1InspectorEvent.html#a581f1a960cab20ffb30e930177df7a2e", null ],
       [ "audioSamplesTestEnabled", "structpromeki_1_1InspectorEvent.html#a2a463ae92e48539e20a1663e0d91964a", null ],
       [ "audioSamplesThisFrame", "structpromeki_1_1InspectorEvent.html#a9c577e15da9be8caa2243dfd51b8d12e", null ],
       [ "audioSamplesValid", "structpromeki_1_1InspectorEvent.html#aafd68652378568debf36e7884860ff6a", null ],
@@ -1090,6 +1163,8 @@ var group__proav =
       [ "audioTimestampDeltaValid", "structpromeki_1_1InspectorEvent.html#a34b7aa218c4119a8197a18926f520932", null ],
       [ "audioTimestampNs", "structpromeki_1_1InspectorEvent.html#a0a5a8e66cdabf2b6f63f810fa3a8eddd", null ],
       [ "audioTimestampValid", "structpromeki_1_1InspectorEvent.html#a5c67473353a27d26b46863e7a4cebd1a", null ],
+      [ "avPtsDriftNs", "structpromeki_1_1InspectorEvent.html#a205683089cb99d071d1ee3865c9990bf", null ],
+      [ "avPtsDriftValid", "structpromeki_1_1InspectorEvent.html#ab0a5b25dca5243ee84b7323fead946f0", null ],
       [ "avSyncOffsetSamples", "structpromeki_1_1InspectorEvent.html#a31ade00eaf9755a1f2617e7be38496b7", null ],
       [ "avSyncValid", "structpromeki_1_1InspectorEvent.html#ac23faf457ea91fd93f9dec8925ed6c9c", null ],
       [ "discontinuities", "structpromeki_1_1InspectorEvent.html#a0c2f21175eafc435a9d7821a8f1b7493", null ],
@@ -1104,6 +1179,8 @@ var group__proav =
       [ "pictureStreamId", "structpromeki_1_1InspectorEvent.html#ae563d298a8697ad87f9208810391c3d4", null ],
       [ "pictureTimecode", "structpromeki_1_1InspectorEvent.html#aa5f2b99e30a4d6ecc8b90d25b30cb9c0", null ],
       [ "timestampTestEnabled", "structpromeki_1_1InspectorEvent.html#ac0ba2af879344bdbf1a76c47bd1b6dfa", null ],
+      [ "videoPtsJitterNs", "structpromeki_1_1InspectorEvent.html#ae2054f0152079171c203eadc76802c90", null ],
+      [ "videoPtsJitterValid", "structpromeki_1_1InspectorEvent.html#a73d55306b6d8753425b0f39747f9d144", null ],
       [ "videoTimestampDeltaNs", "structpromeki_1_1InspectorEvent.html#aed58167b02c1a4e519b3feacc38911a8", null ],
       [ "videoTimestampDeltaValid", "structpromeki_1_1InspectorEvent.html#aae9b90038e34d5dfc62b4b55a2606210", null ],
       [ "videoTimestampNs", "structpromeki_1_1InspectorEvent.html#aaf4e61ea51ee39856ba70dae8cd19087", null ],
@@ -1115,12 +1192,23 @@ var group__proav =
       [ "audioDeltaMaxNs", "structpromeki_1_1InspectorSnapshot.html#aba4af105edec1b28dd8a60135184936e", null ],
       [ "audioDeltaMinNs", "structpromeki_1_1InspectorSnapshot.html#a2f6f9bab0a3238b4b2ed4b8062ff7acf", null ],
       [ "audioDeltaSamples", "structpromeki_1_1InspectorSnapshot.html#ae4869da28b752182425c2fe88a23dc55", null ],
+      [ "audioPtsJitterAvgNs", "structpromeki_1_1InspectorSnapshot.html#ab07ede8fdfb076639091874151f1bac4", null ],
+      [ "audioPtsJitterMaxNs", "structpromeki_1_1InspectorSnapshot.html#a4bd3efb334abc1ffc687be6eb7b86b53", null ],
+      [ "audioPtsJitterMinNs", "structpromeki_1_1InspectorSnapshot.html#ac0dd02a6a6db541ab608f0cb96cd6843", null ],
+      [ "audioPtsJitterSamples", "structpromeki_1_1InspectorSnapshot.html#af72988efeb3f8caef5f204adac676263", null ],
+      [ "audioReanchorCount", "structpromeki_1_1InspectorSnapshot.html#a8ed1b9b6edaef756d5e93d1b8b5dc1a2", null ],
       [ "audioSamplesAvg", "structpromeki_1_1InspectorSnapshot.html#a335fbe9e4f19cdaf57f2c38603df31f6", null ],
       [ "audioSamplesFrames", "structpromeki_1_1InspectorSnapshot.html#acb6a9146d0acfe0c8316b387b60e9dd6", null ],
       [ "audioSamplesMax", "structpromeki_1_1InspectorSnapshot.html#abbd6f30150bbe8e7342410c2a7d26a05", null ],
       [ "audioSamplesMin", "structpromeki_1_1InspectorSnapshot.html#aff08e23de2e723976e5342c65af7f79a", null ],
       [ "audioSamplesSpanNs", "structpromeki_1_1InspectorSnapshot.html#abc891d0c3791b0baa3f2a8fe9be19ea5", null ],
       [ "audioSamplesTotal", "structpromeki_1_1InspectorSnapshot.html#a2ff7131f4e18a8adc5a981f2cd0acf44", null ],
+      [ "avBaselineOffsetNs", "structpromeki_1_1InspectorSnapshot.html#a8dc56ada21476b79a87659658d8173b4", null ],
+      [ "avBaselineSet", "structpromeki_1_1InspectorSnapshot.html#a3c92d62bc682ce06ff8f5794244cd9d8", null ],
+      [ "avPtsDriftAvgNs", "structpromeki_1_1InspectorSnapshot.html#af73e291ca3fd7278d0bed25f34fe4a68", null ],
+      [ "avPtsDriftMaxNs", "structpromeki_1_1InspectorSnapshot.html#abae143d6e57dd13ae991f51b419e2166", null ],
+      [ "avPtsDriftMinNs", "structpromeki_1_1InspectorSnapshot.html#a66f80f5ddf812cfcb2c2ce7cc6e4351b", null ],
+      [ "avPtsDriftSamples", "structpromeki_1_1InspectorSnapshot.html#a608c81e5e7e433c90577561e78da91f4", null ],
       [ "framesProcessed", "structpromeki_1_1InspectorSnapshot.html#ae212ddf63935391f84cb12115801587d", null ],
       [ "framesWithAudioTimestamp", "structpromeki_1_1InspectorSnapshot.html#aa5124fb830e00214c353ef828796c9cc", null ],
       [ "framesWithLtc", "structpromeki_1_1InspectorSnapshot.html#a183f3f6073999e5d658f86883033154a", null ],
@@ -1133,7 +1221,12 @@ var group__proav =
       [ "videoDeltaAvgNs", "structpromeki_1_1InspectorSnapshot.html#a93cab93d39d5aa54b828befb91a21c93", null ],
       [ "videoDeltaMaxNs", "structpromeki_1_1InspectorSnapshot.html#ac8e120c3f281cad08b6ca64943f31347", null ],
       [ "videoDeltaMinNs", "structpromeki_1_1InspectorSnapshot.html#ab6df7505f059254939eddbc55d3f915e", null ],
-      [ "videoDeltaSamples", "structpromeki_1_1InspectorSnapshot.html#a9c4b4b3dc73417e7e7d52f984cc30670", null ]
+      [ "videoDeltaSamples", "structpromeki_1_1InspectorSnapshot.html#a9c4b4b3dc73417e7e7d52f984cc30670", null ],
+      [ "videoPtsJitterAvgNs", "structpromeki_1_1InspectorSnapshot.html#a8bc0e48ef5060787ae2fe749f2af574a", null ],
+      [ "videoPtsJitterMaxNs", "structpromeki_1_1InspectorSnapshot.html#ab7a771dc7c9792bb0d7acf743bbee68d", null ],
+      [ "videoPtsJitterMinNs", "structpromeki_1_1InspectorSnapshot.html#a1ca1019b0ea8d7cb4e182e2f94607699", null ],
+      [ "videoPtsJitterSamples", "structpromeki_1_1InspectorSnapshot.html#a0a8e7e1d9e7cf73a7d1335e351df8441", null ],
+      [ "videoReanchorCount", "structpromeki_1_1InspectorSnapshot.html#ac2f6d1b0d65278d3b2a9a29125452f84", null ]
     ] ],
     [ "promeki::InspectorMediaIO", "classpromeki_1_1InspectorMediaIO.html", [
       [ "EventCallback", "classpromeki_1_1InspectorMediaIO.html#a6f73c2682a40eb283adf9c2efa09b720", null ],

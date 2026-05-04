@@ -26,6 +26,8 @@ var annotated_dup =
       [ "AudioBuffer", "classpromeki_1_1AudioBuffer.html", "classpromeki_1_1AudioBuffer" ],
       [ "AudioChannelMap", "classpromeki_1_1AudioChannelMap.html", "classpromeki_1_1AudioChannelMap" ],
       [ "AudioCodec", "classpromeki_1_1AudioCodec.html", "classpromeki_1_1AudioCodec" ],
+      [ "AudioDataDecoder", "classpromeki_1_1AudioDataDecoder.html", "classpromeki_1_1AudioDataDecoder" ],
+      [ "AudioDataEncoder", "classpromeki_1_1AudioDataEncoder.html", "classpromeki_1_1AudioDataEncoder" ],
       [ "AudioDataType", "classpromeki_1_1AudioDataType.html", null ],
       [ "AudioDecoder", "classpromeki_1_1AudioDecoder.html", "classpromeki_1_1AudioDecoder" ],
       [ "AudioDesc", "classpromeki_1_1AudioDesc.html", "classpromeki_1_1AudioDesc" ],

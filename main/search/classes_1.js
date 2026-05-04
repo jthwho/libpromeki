@@ -2,7 +2,7 @@ var searchData=
 [
   ['backend_0',['backend',['../classpromeki_1_1VideoCodec_1_1Backend.html',1,'promeki::VideoCodec::Backend'],['../classpromeki_1_1AudioCodec_1_1Backend.html',1,'promeki::AudioCodec::Backend']]],
   ['backendrecord_1',['backendrecord',['../structpromeki_1_1AudioDecoder_1_1BackendRecord.html',1,'promeki::AudioDecoder::BackendRecord'],['../structpromeki_1_1AudioEncoder_1_1BackendRecord.html',1,'promeki::AudioEncoder::BackendRecord'],['../structpromeki_1_1VideoDecoder_1_1BackendRecord.html',1,'promeki::VideoDecoder::BackendRecord'],['../structpromeki_1_1VideoEncoder_1_1BackendRecord.html',1,'promeki::VideoEncoder::BackendRecord']]],
-  ['band_2',['Band',['../structpromeki_1_1ImageDataDecoder_1_1Band.html',1,'promeki::ImageDataDecoder']]],
+  ['band_2',['band',['../structpromeki_1_1AudioDataDecoder_1_1Band.html',1,'promeki::AudioDataDecoder::Band'],['../structpromeki_1_1ImageDataDecoder_1_1Band.html',1,'promeki::ImageDataDecoder::Band']]],
   ['base64_3',['Base64',['../classpromeki_1_1Base64.html',1,'promeki']]],
   ['basicfont_4',['BasicFont',['../classpromeki_1_1BasicFont.html',1,'promeki']]],
   ['benchmark_5',['Benchmark',['../classpromeki_1_1Benchmark.html',1,'promeki']]],

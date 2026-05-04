@@ -593,13 +593,13 @@ template&lt;typename... Args&gt; </td></tr>
 <div class="line"><a class="code hl_function" href="textstream_8h.html#a444018ccc2cb88395a7c44deb7a2795e">dec</a>-&gt;setExpectedDesc(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">compressedDesc</a>);</div>
 <div class="line"><a class="code hl_function" href="textstream_8h.html#a444018ccc2cb88395a7c44deb7a2795e">dec</a>-&gt;open(MediaIO::Transform);</div>
 <div class="line"><a class="code hl_function" href="textstream_8h.html#a444018ccc2cb88395a7c44deb7a2795e">dec</a>-&gt;writeFrame(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">packetFrame</a>);</div>
-<div class="line"><a class="code hl_class" href="classpromeki_1_1SharedPtr.html">Frame::Ptr</a> <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">decoded</a>;</div>
-<div class="line"><a class="code hl_function" href="textstream_8h.html#a444018ccc2cb88395a7c44deb7a2795e">dec</a>-&gt;readFrame(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">decoded</a>);</div>
+<div class="line"><a class="code hl_class" href="classpromeki_1_1SharedPtr.html">Frame::Ptr</a> decoded;</div>
+<div class="line"><a class="code hl_function" href="textstream_8h.html#a444018ccc2cb88395a7c44deb7a2795e">dec</a>-&gt;readFrame(decoded);</div>
 <div class="line"><a class="code hl_function" href="textstream_8h.html#a444018ccc2cb88395a7c44deb7a2795e">dec</a>-&gt;close();</div>
 <div class="ttc" id="aclasspromeki_1_1MediaConfig_html"><div class="ttname"><a href="classpromeki_1_1MediaConfig.html">promeki::MediaConfig</a></div><div class="ttdoc">Generic name/value configuration container for the media subsystem.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:57</div></div>
 <div class="ttc" id="aclasspromeki_1_1MediaConfig_html_a1f85041e0c1eef7f1efe87e6dbb4c607"><div class="ttname"><a href="classpromeki_1_1MediaConfig.html#a1f85041e0c1eef7f1efe87e6dbb4c607">promeki::MediaConfig::Type</a></div><div class="ttdeci">static constexpr ID Type</div><div class="ttdoc">String — registered backend type name (e.g. &quot;TPG&quot;, &quot;ImageFile&quot;).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:104</div></div>
-<div class="ttc" id="aclasspromeki_1_1MediaConfig_html_a8b3aa0d8a01281fddadd1516815ca5df"><div class="ttname"><a href="classpromeki_1_1MediaConfig.html#a8b3aa0d8a01281fddadd1516815ca5df">promeki::MediaConfig::OutputPixelFormat</a></div><div class="ttdeci">static constexpr ID OutputPixelFormat</div><div class="ttdoc">PixelFormat — target pixel description for the converter stage (Invalid = video pass-through).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:707</div></div>
-<div class="ttc" id="aclasspromeki_1_1MediaConfig_html_aca14f56b1498775502e6600c4076e162"><div class="ttname"><a href="classpromeki_1_1MediaConfig.html#aca14f56b1498775502e6600c4076e162">promeki::MediaConfig::VideoCodec</a></div><div class="ttdeci">static constexpr ID VideoCodec</div><div class="ttdoc">VideoCodec — typed codec identity used by the generic video encoder / decoder MediaIO subclasses back...</div><div class="ttdef"><b>Definition</b> mediaconfig.h:1225</div></div>
+<div class="ttc" id="aclasspromeki_1_1MediaConfig_html_a8b3aa0d8a01281fddadd1516815ca5df"><div class="ttname"><a href="classpromeki_1_1MediaConfig.html#a8b3aa0d8a01281fddadd1516815ca5df">promeki::MediaConfig::OutputPixelFormat</a></div><div class="ttdeci">static constexpr ID OutputPixelFormat</div><div class="ttdoc">PixelFormat — target pixel description for the converter stage (Invalid = video pass-through).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:754</div></div>
+<div class="ttc" id="aclasspromeki_1_1MediaConfig_html_aca14f56b1498775502e6600c4076e162"><div class="ttname"><a href="classpromeki_1_1MediaConfig.html#aca14f56b1498775502e6600c4076e162">promeki::MediaConfig::VideoCodec</a></div><div class="ttdeci">static constexpr ID VideoCodec</div><div class="ttdoc">VideoCodec — typed codec identity used by the generic video encoder / decoder MediaIO subclasses back...</div><div class="ttdef"><b>Definition</b> mediaconfig.h:1272</div></div>
 <div class="ttc" id="aclasspromeki_1_1MediaIO_html"><div class="ttname"><a href="classpromeki_1_1MediaIO.html">promeki::MediaIO</a></div><div class="ttdoc">Abstract controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:109</div></div>
 <div class="ttc" id="aclasspromeki_1_1MediaIO_html_ae7a1400f37e3c427a534ac10c33ce9fa"><div class="ttname"><a href="classpromeki_1_1MediaIO.html#ae7a1400f37e3c427a534ac10c33ce9fa">promeki::MediaIO::create</a></div><div class="ttdeci">static MediaIO * create(const Config &amp;config, ObjectBase *parent=nullptr)</div><div class="ttdoc">Creates a MediaIO instance from a configuration.</div></div>
 <div class="ttc" id="aclasspromeki_1_1PixelFormat_html"><div class="ttname"><a href="classpromeki_1_1PixelFormat.html">promeki::PixelFormat</a></div><div class="ttdoc">Complete pixel description combining format, color model, and semantics.</div><div class="ttdef"><b>Definition</b> pixelformat.h:130</div></div>
@@ -614,8 +614,8 @@ template&lt;typename... Args&gt; </td></tr>
 <div class="line"><a class="code hl_function" href="textstream_8h.html#a444018ccc2cb88395a7c44deb7a2795e">dec</a>-&gt;setExpectedDesc(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">compressedDesc</a>);</div>
 <div class="line"><a class="code hl_function" href="textstream_8h.html#a444018ccc2cb88395a7c44deb7a2795e">dec</a>-&gt;open(MediaIO::Transform);</div>
 <div class="line"><a class="code hl_function" href="textstream_8h.html#a444018ccc2cb88395a7c44deb7a2795e">dec</a>-&gt;writeFrame(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">packetFrame</a>);   <span class="comment">// codec resolved here</span></div>
-<div class="line"><a class="code hl_class" href="classpromeki_1_1SharedPtr.html">Frame::Ptr</a> <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">decoded</a>;</div>
-<div class="line"><a class="code hl_function" href="textstream_8h.html#a444018ccc2cb88395a7c44deb7a2795e">dec</a>-&gt;readFrame(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">decoded</a>);</div>
+<div class="line"><a class="code hl_class" href="classpromeki_1_1SharedPtr.html">Frame::Ptr</a> decoded;</div>
+<div class="line"><a class="code hl_function" href="textstream_8h.html#a444018ccc2cb88395a7c44deb7a2795e">dec</a>-&gt;readFrame(decoded);</div>
 <div class="line"><a class="code hl_function" href="textstream_8h.html#a444018ccc2cb88395a7c44deb7a2795e">dec</a>-&gt;close();</div>
 </div><!-- fragment --></dd></dl>
 <dl class="section user"><dt>Thread Safety</dt><dd>Strand-affine — see <a class="el" href="classpromeki_1_1CommandMediaIO.html">CommandMediaIO</a>. </dd></dl>
@@ -989,7 +989,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1VideoDecoderMediaIO.html">VideoDecoderMediaIO</a></li>
-    <li class="footer">Generated on 2026-05-04 01:57:20 from commit 87240ac (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-04 08:46:32 from commit d7c202b (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

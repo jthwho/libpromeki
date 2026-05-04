@@ -114,11 +114,13 @@ $(document).ready(function(){initNavTree('functions_vars_d.html',''); initResiza
 <li>date&#160;:&#160;<a class="el" href="structpromeki_1_1BuildInfo.html#ae4d5c244faddb134c51652234b5c7067">promeki::BuildInfo</a></li>
 <li>Date&#160;:&#160;<a class="el" href="classpromeki_1_1Metadata.html#a46bcaf09a930459d666daf5fef513f11">promeki::Metadata</a></li>
 <li>DebugServerEnv&#160;:&#160;<a class="el" href="classpromeki_1_1Application.html#a4b64254d34140d5d10c28fc07b091e07">promeki::Application</a></li>
-<li>decodedCrc&#160;:&#160;<a class="el" href="structpromeki_1_1ImageDataDecoder_1_1DecodedItem.html#a8dbf1f95b356eec328e3e1116446325c">promeki::ImageDataDecoder::DecodedItem</a></li>
-<li>decodedSync&#160;:&#160;<a class="el" href="structpromeki_1_1ImageDataDecoder_1_1DecodedItem.html#adccbfc8d0bb917f96903e79481fbce07">promeki::ImageDataDecoder::DecodedItem</a></li>
+<li>decoded&#160;:&#160;<a class="el" href="structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html#a7689bdf58e380b253617c464fd9b639a">promeki::InspectorEvent::AudioChannelMarker</a></li>
+<li>decodedCrc&#160;:&#160;<a class="el" href="structpromeki_1_1AudioDataDecoder_1_1DecodedItem.html#a312554cb5d53b2731ff3c15faf68f861">promeki::AudioDataDecoder::DecodedItem</a>, <a class="el" href="structpromeki_1_1ImageDataDecoder_1_1DecodedItem.html#a8dbf1f95b356eec328e3e1116446325c">promeki::ImageDataDecoder::DecodedItem</a></li>
+<li>decodedSync&#160;:&#160;<a class="el" href="structpromeki_1_1AudioDataDecoder_1_1DecodedItem.html#a7360ad045d6535df118e64209f6263c8">promeki::AudioDataDecoder::DecodedItem</a>, <a class="el" href="structpromeki_1_1ImageDataDecoder_1_1DecodedItem.html#adccbfc8d0bb917f96903e79481fbce07">promeki::ImageDataDecoder::DecodedItem</a></li>
 <li>decodeTargets&#160;:&#160;<a class="el" href="structpromeki_1_1PixelFormat_1_1Data.html#a251762f340cea807712656d192a8b0ef">promeki::PixelFormat::Data</a></li>
 <li>DefaultAccessMode&#160;:&#160;<a class="el" href="classpromeki_1_1FrameBridge.html#aad1b46dda250fbcbe8de8b6a6b329acb">promeki::FrameBridge</a></li>
 <li>DefaultAlign&#160;:&#160;<a class="el" href="classpromeki_1_1Buffer.html#af2fca78761943634adeac4894e62d689">promeki::Buffer</a></li>
+<li>DefaultAmplitude&#160;:&#160;<a class="el" href="classpromeki_1_1AudioDataEncoder.html#aad337af85f7b822e5455dd14b1caa09b">promeki::AudioDataEncoder</a></li>
 <li>DefaultApiPrefix&#160;:&#160;<a class="el" href="classpromeki_1_1DebugServer.html#a62488d0083e271799d62c2a644a64790">promeki::DebugServer</a></li>
 <li>DefaultAudioHeadroomFraction&#160;:&#160;<a class="el" href="classpromeki_1_1FrameBridge.html#a594d67f7a50759aa8ada2db034796cf6">promeki::FrameBridge</a></li>
 <li>DefaultBacklog&#160;:&#160;<a class="el" href="classpromeki_1_1LocalServer.html#a2bb8870dbaa2ee1cfd4d806d40ec6565">promeki::LocalServer</a></li>
@@ -145,6 +147,7 @@ $(document).ready(function(){initNavTree('functions_vars_d.html',''); initResiza
 <li>DefaultReanchorMultiple&#160;:&#160;<a class="el" href="classpromeki_1_1PacingGate.html#a069bcb22f03da5feecf1ea90a07bda1f">promeki::PacingGate</a></li>
 <li>DefaultReceiveTimeoutMs&#160;:&#160;<a class="el" href="classpromeki_1_1AbstractSocket.html#a34c7ee25ee25cb4ddd479e1ccdda328f">promeki::AbstractSocket</a>, <a class="el" href="classpromeki_1_1LocalSocket.html#a9d2cee63d48ea08b88371b4fc1b5ea41">promeki::LocalSocket</a>, <a class="el" href="classpromeki_1_1MulticastReceiver.html#a98b75e5a8dd5529d6499aae47f22fc8b">promeki::MulticastReceiver</a></li>
 <li>DefaultRingDepth&#160;:&#160;<a class="el" href="classpromeki_1_1FrameBridge.html#a26d94b11c0780d086a72c5424322ddf9">promeki::FrameBridge</a></li>
+<li>DefaultSamplesPerBit&#160;:&#160;<a class="el" href="classpromeki_1_1AudioDataEncoder.html#aaf6a838764fec026a037a5fc9e6541f8">promeki::AudioDataEncoder</a></li>
 <li>defaultSeekMode&#160;:&#160;<a class="el" href="classpromeki_1_1MediaIOCommandOpen.html#aab9374991fe4e78027138ddbd63e9ff6">promeki::MediaIOCommandOpen</a></li>
 <li>DefaultSendTimeoutMs&#160;:&#160;<a class="el" href="classpromeki_1_1AbstractSocket.html#a6148a7ca174c65a72822f2b147109f76">promeki::AbstractSocket</a>, <a class="el" href="classpromeki_1_1LocalSocket.html#a47010fd9ac90566c72054a306137f7b2">promeki::LocalSocket</a></li>
 <li>DefaultSequenceHead&#160;:&#160;<a class="el" href="classpromeki_1_1ImageFileMediaIO.html#abc1d05a5b92c6f604dfe0a8c021d1ac2">promeki::ImageFileMediaIO</a></li>
@@ -176,7 +179,7 @@ $(document).ready(function(){initNavTree('functions_vars_d.html',''); initResiza
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-05-04 01:57:20 from commit 87240ac (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-04 08:46:32 from commit d7c202b (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>
