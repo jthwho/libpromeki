@@ -12,7 +12,16 @@ Need to confirm exact failure and pick a strategy:
 - Encode at the nominal rate using a non-standard frame-count form
   that consumers may or may not parse.
 - Switch to a different sample-domain framing (e.g. the TPG's
-  `PcmMarker` BCD64 path) for HFR captures.
+  `PcmMarker` path) for HFR captures.
+
+**Note (2026-05-03):** `PcmMarker` is now the TPG default on every
+channel.  The new `AudioDataEncoder` / `AudioDataDecoder` wire format
+carries a 48-bit frame counter — sufficient for any practical capture
+duration at any frame rate — and the inspector decodes it per-channel
+via `InspectorTest::AudioData`.  For HFR use cases this already
+provides a better round-trip identifier than LTC; the remaining work
+is deciding whether to keep `LTC` as an opt-in or deprecate it for
+HFR configs.
 
 Related: [core/timecode-hfr-display.md](../core/timecode-hfr-display.md)
 — `Timecode::toString` formatter also breaks for HFR rates.

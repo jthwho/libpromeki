@@ -12,10 +12,13 @@
 #include <promeki/namespace.h>
 #include <promeki/sharedthreadmediaio.h>
 #include <promeki/mediaiofactory.h>
+#include <promeki/audiodatadecoder.h>
 #include <promeki/imagedataencoder.h>
 #include <promeki/imagedatadecoder.h>
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
+#include <promeki/audiobuffer.h>
+#include <promeki/buffer.h>
 #include <promeki/timecode.h>
 #include <promeki/mutex.h>
 #include <promeki/list.h>
@@ -69,6 +72,46 @@ struct InspectorDiscontinuity {
                         /// Audio essence arrived without a valid MediaTimeStamp
                         /// even though the Timestamp test is enabled.
                         MissingAudioTimestamp,
+                        /// The audio @ref MediaTimeStamp on an incoming chunk
+                        /// diverged from the prediction (audio stream anchor
+                        /// + cumulative samples × sample period) by more than
+                        /// the configured tolerance.  The inspector re-anchors
+                        /// the audio stream timeline on the new PTS so that
+                        /// subsequent wall-clock derivations remain accurate.
+                        AudioTimestampReanchor,
+                        /// The video @ref MediaTimeStamp on this frame diverged
+                        /// from the prediction (video anchor + frame index ×
+                        /// frame duration) by more than the configured
+                        /// tolerance.  The inspector re-anchors the video
+                        /// timeline on the new PTS.
+                        VideoTimestampReanchor,
+                        /// An audio channel's @ref AudioDataEncoder
+                        /// marker decoded successfully but the channel
+                        /// byte in the codeword (bits 48..55) did not
+                        /// match the channel index the inspector pulled
+                        /// it from.  Indicates the audio path swapped
+                        /// or duplicated channels.
+                        AudioChannelMismatch,
+                        /// An @ref AudioDataEncoder codeword was
+                        /// detected (sync nibble located, samples-
+                        /// per-bit measured) but failed final
+                        /// validation — either the recovered sync
+                        /// byte didn't match @c 0xA or the recovered
+                        /// CRC didn't match the recomputed CRC.
+                        /// Indicates the audio path scrambled the
+                        /// codeword bits (lossy codec, gain
+                        /// distortion, sample drop).
+                        AudioDataDecodeFailure,
+                        /// An @ref AudioDataEncoder codeword was
+                        /// detected but its measured sample length
+                        /// (76 × samplesPerBit) deviated by more
+                        /// than the inspector's tolerance from the
+                        /// expected length.  Normal SRC round-trip
+                        /// drift sits well inside the tolerance;
+                        /// firing this discontinuity means the audio
+                        /// path is rate-shifting the codeword
+                        /// substantially.
+                        AudioDataLengthAnomaly,
                 };
 
                 Kind   kind;          ///< Which kind of discontinuity this is.
@@ -119,13 +162,18 @@ struct InspectorEvent {
                 bool ltcDecoderEnabled = false;
                 /// Most recent timecode recovered from the audio LTC stream.
                 Timecode ltcTimecode;
-                /// Audio sample offset @em within this frame's audio chunk
-                /// where the LTC sync word arrived.  Zero means the sync word
-                /// landed exactly at the start of the chunk; positive means
-                /// later in the chunk; negative is rare but possible when the
-                /// sync word was buffered from a previous chunk.  This is the
-                /// canonical "LTC time anchor" used by the TC sync drift
-                /// check.
+                /// Absolute audio sample position in the inspector's stream
+                /// where the LTC sync word arrived.  Sample 0 is the very
+                /// first audio sample the inspector ever ingested; the
+                /// per-stream wall-clock time of any sample @c N is
+                /// @c audioStreamStartNs + N / sampleRate (in seconds).
+                ///
+                /// @note This was previously a within-chunk offset, valid
+                /// only when audio arrived on tidy per-frame boundaries.
+                /// The current value is in the absolute stream coordinate
+                /// system so the A/V sync check works correctly with
+                /// bursty / network-delivered audio that doesn't align to
+                /// video frame boundaries.
                 int64_t ltcSampleStart = 0;
 
                 // ---- A/V Sync (picture TC vs audio LTC) ----
@@ -192,7 +240,108 @@ struct InspectorEvent {
                 /// per-frame sample count was read).
                 bool audioSamplesValid = false;
                 /// Number of audio samples carried by this frame's first audio chunk.
+                /// With bursty network audio this is a *delivery shape* statistic
+                /// — it reports how the upstream chose to slice the audio across
+                /// video frames, not how many samples logically belong to this
+                /// frame's slice of time.  Per-stream cadence is reported via
+                /// @ref InspectorSnapshot::measuredAudioSampleRate.
                 int64_t audioSamplesThisFrame = 0;
+
+                // ---- Per-essence PTS jitter (continuous-stream model) ----
+
+                /// True when this frame received an audio chunk and a
+                /// prediction was available (any frame after the first that
+                /// carries an audio MediaTimeStamp).  @ref audioPtsJitterNs
+                /// is meaningful only when this is @c true.
+                bool audioPtsJitterValid = false;
+                /// Difference (actual - predicted) between the audio chunk's
+                /// MediaTimeStamp and the inspector's prediction based on the
+                /// audio stream anchor and cumulative sample count.  Positive
+                /// means the chunk arrived later in wall-clock time than the
+                /// stream's sample cadence would predict; negative means
+                /// earlier.
+                int64_t audioPtsJitterNs = 0;
+                /// True when the video PTS jitter measurement is meaningful
+                /// (any frame after the first that carries a video PTS).
+                bool videoPtsJitterValid = false;
+                /// Difference (actual - predicted) between this frame's video
+                /// MediaTimeStamp and the inspector's prediction based on the
+                /// video anchor and the frame index.
+                int64_t videoPtsJitterNs = 0;
+
+                // ---- A/V cross-essence PTS drift ----
+
+                /// True when both essences carried valid PTSs on this frame
+                /// AND a baseline (videoPts - audioPts) has been established
+                /// by an earlier frame.
+                bool avPtsDriftValid = false;
+                /// Drift of @c (videoPts - audioPts) from the baseline offset
+                /// captured on the first frame where both essences carried
+                /// valid PTSs.  A constant zero indicates the two essence
+                /// clocks share a common reference and stay locked; a
+                /// drifting value indicates the audio and video clocks are
+                /// running at slightly different rates.
+                int64_t avPtsDriftNs = 0;
+
+                // ---- Per-channel audio data marker decode ----
+
+                /// One per-channel decoded @ref AudioDataEncoder
+                /// marker.  Populated on every frame where the audio
+                /// data decode test is enabled and at least one audio
+                /// chunk arrived; the list length equals the audio
+                /// stream's channel count.
+                struct AudioChannelMarker {
+                                /// True if at least one codeword decoded
+                                /// successfully on this channel during the
+                                /// current frame (CRC + sync nibble both
+                                /// valid).  When @c true the @c streamId,
+                                /// @c encodedChannel, and @c frameNumber
+                                /// fields reflect the most recent successful
+                                /// decode.
+                                bool decoded = false;
+                                /// True when @c decoded is true and the
+                                /// channel byte in the marker matches the
+                                /// channel index the inspector read it from.
+                                bool channelMatches = false;
+                                /// Stream ID byte (bits 56..63 of the
+                                /// codeword).
+                                uint8_t streamId = 0;
+                                /// Channel byte (bits 48..55 of the
+                                /// codeword) — the value the encoder
+                                /// stamped, which should equal the
+                                /// channel index this entry came from.
+                                uint8_t encodedChannel = 0;
+                                /// Frame number (bits 0..47 of the
+                                /// codeword).
+                                uint64_t frameNumber = 0;
+                                /// Total codewords completed on this
+                                /// channel during the current frame
+                                /// (counts both successes and failures —
+                                /// any decoded packet that the streaming
+                                /// decoder emitted).
+                                uint32_t packetsDecoded = 0;
+                                /// Codewords that decoded with a CRC or
+                                /// sync-nibble error.  Subset of
+                                /// @c packetsDecoded.
+                                uint32_t packetsCorrupt = 0;
+                                /// Stream-absolute sample position of the
+                                /// most recently completed codeword's
+                                /// leading edge.  Sample 0 is the very
+                                /// first sample the inspector ever pushed
+                                /// through the AudioData stream state.
+                                int64_t streamSampleStart = -1;
+                };
+
+                /// True if the *audio data decoder enable* flag was
+                /// set in the config.
+                bool audioDataDecoderEnabled = false;
+                /// True if at least one channel produced a successful
+                /// audio data marker decode this frame.
+                bool audioDataDecoded = false;
+                /// One @ref AudioChannelMarker per channel, indexed
+                /// by channel.  Empty when the test is disabled or
+                /// no audio chunk arrived on this frame.
+                List<AudioChannelMarker> audioChannelMarkers;
 
                 // ---- Continuity ----
 
@@ -263,6 +412,55 @@ struct InspectorSnapshot {
                 /// Total number of discontinuities of any kind, summed over all
                 /// frames.
                 int64_t totalDiscontinuities = 0;
+
+                // ---- Per-essence PTS jitter accumulators (jitter is
+                // measured against the prediction; see
+                // @ref InspectorEvent::audioPtsJitterNs and
+                // @ref InspectorEvent::videoPtsJitterNs) ----
+
+                /// Number of audio chunks that contributed a jitter measurement.
+                int64_t audioPtsJitterSamples = 0;
+                /// Minimum observed audio PTS jitter (ns).
+                int64_t audioPtsJitterMinNs = 0;
+                /// Maximum observed audio PTS jitter (ns).
+                int64_t audioPtsJitterMaxNs = 0;
+                /// Running mean of the audio PTS jitter (ns).
+                double audioPtsJitterAvgNs = 0.0;
+                /// Number of times the audio stream had to be re-anchored
+                /// because the PTS diverged from the prediction beyond the
+                /// configured tolerance.
+                int64_t audioReanchorCount = 0;
+
+                /// Number of frames that contributed a video PTS jitter measurement.
+                int64_t videoPtsJitterSamples = 0;
+                /// Minimum observed video PTS jitter (ns).
+                int64_t videoPtsJitterMinNs = 0;
+                /// Maximum observed video PTS jitter (ns).
+                int64_t videoPtsJitterMaxNs = 0;
+                /// Running mean of the video PTS jitter (ns).
+                double videoPtsJitterAvgNs = 0.0;
+                /// Number of times the video stream had to be re-anchored.
+                int64_t videoReanchorCount = 0;
+
+                // ---- A/V cross-stream PTS drift accumulators ----
+
+                /// True once a baseline @c (videoPts - audioPts) has been
+                /// captured (first frame where both essences carry a valid PTS).
+                bool avBaselineSet = false;
+                /// Baseline @c (videoPts - audioPts) in nanoseconds — captured
+                /// on the first frame where both essences carry valid PTSs.
+                /// Subsequent drift measurements report deviations from this
+                /// value.
+                int64_t avBaselineOffsetNs = 0;
+                /// Number of frames that contributed an A/V drift measurement.
+                int64_t avPtsDriftSamples = 0;
+                /// Minimum observed deviation from the baseline (ns).
+                int64_t avPtsDriftMinNs = 0;
+                /// Maximum observed deviation from the baseline (ns).
+                int64_t avPtsDriftMaxNs = 0;
+                /// Running mean of the A/V drift (ns).
+                double avPtsDriftAvgNs = 0.0;
+
                 /// True if @c lastEvent is populated (at least one frame has
                 /// been processed).
                 bool hasLastEvent = false;
@@ -278,34 +476,44 @@ struct InspectorSnapshot {
  * test-pattern frames, the inspector @em consumes frames and runs a
  * configurable set of checks on each one.  The set of checks is
  * driven by @ref MediaConfig::InspectorTests — an EnumList of
- * @ref InspectorTest values.  The default lists every known test,
- * so a default-configured inspector runs the full suite; override
- * the list to run a subset.  Currently supported tests:
+ * @ref InspectorTest values.  The default carries every check that
+ * the @ref TpgMediaIO default produces signal for; @c Ltc / @c TcSync
+ * and @c CaptureStats are off by default and have to be opted in via
+ * the config key.  Currently supported tests:
  *
  *  - @c ImageData   — pulls the two 64-bit payloads written by
  *    @ref ImageDataEncoder out of the top of every frame,
  *    recovering the rolling frame number, stream ID, and BCD
- *    timecode.
- *  - @c Ltc         — runs the selected audio channel through
- *    @ref LtcDecoder and reports any timecodes recovered.
- *  - @c TcSync      — with both decoders running, computes the
- *    per-frame offset between the picture timecode and the audio
- *    LTC, in audio samples and in fractional frames.  This is an
- *    *instantaneous* measurement; a constant offset across frames
- *    is healthy (audio and video are locked), while any movement
- *    is flagged as a discontinuity.
+ *    timecode.  *Default-on.*
+ *  - @c AudioData   — runs @ref AudioDataDecoder over every audio
+ *    channel and recovers the @c [stream:8][channel:8][frame:48]
+ *    codeword stamped by the @c PcmMarker test pattern.  Flags
+ *    any channel whose encoded channel byte differs from its
+ *    actual index as an
+ *    @ref InspectorDiscontinuity::AudioChannelMismatch.
+ *    *Default-on.*
  *  - @c Continuity  — tracks frame number, stream ID, picture
  *    timecode, and LTC timecode from one frame to the next, and
  *    flags any unexpected jump as a @ref InspectorDiscontinuity
- *    record on the per-frame event.
+ *    record on the per-frame event.  *Default-on.*
  *  - @c Timestamp   — checks that the per-essence
  *    @ref MediaTimeStamp is valid on every frame, records the
  *    frame-to-frame delta (min / max / avg) for video and audio,
- *    and reports the actual observed FPS.
+ *    and reports the actual observed FPS.  *Default-on.*
  *  - @c AudioSamples — tracks per-frame audio sample count (min /
  *    max / avg) and derives the measured audio sample rate by
  *    dividing cumulative samples by the elapsed audio
- *    @ref MediaTimeStamp span.
+ *    @ref MediaTimeStamp span.  *Default-on.*
+ *  - @c Ltc         — runs the selected audio channel through
+ *    @ref LtcDecoder and reports any timecodes recovered.
+ *    *Off by default* — opt in when the upstream is configured
+ *    to put @c AudioPattern::LTC on a channel.
+ *  - @c TcSync      — with both decoders running, computes the
+ *    per-frame offset between the picture timecode and the audio
+ *    LTC, in audio samples and in fractional frames.  A constant
+ *    offset across frames is healthy; any movement flags a
+ *    discontinuity.  *Off by default* — implicitly turns on
+ *    @c ImageData and @c Ltc when enabled.
  *
  * Dependency relationships are auto-resolved at open time: enabling
  * @c TcSync implicitly turns on @c ImageData and @c Ltc; enabling
@@ -407,8 +615,10 @@ class InspectorMediaIO : public SharedThreadMediaIO {
         private:
                 void  decompressImages(Frame &frame);
                 void  initDecoders(const Frame &frame);
+                void  ingestAudio(const Frame &frame, InspectorEvent &event);
                 void  runImageDataCheck(const Frame &frame, InspectorEvent &event);
-                void  runLtcCheck(const Frame &frame, InspectorEvent &event);
+                void  runAudioDataCheck(const Frame &frame, InspectorEvent &event);
+                void  runLtcCheck(InspectorEvent &event);
                 void  runAvSyncCheck(const Frame &frame, InspectorEvent &event);
                 void  runContinuityCheck(InspectorEvent &event);
                 void  runTimestampCheck(const Frame &frame, InspectorEvent &event);
@@ -420,30 +630,96 @@ class InspectorMediaIO : public SharedThreadMediaIO {
                 void  resetState();
 
                 // ---- Configuration (resolved at open time) ----
-                bool   _decodeImageData = false;
-                bool   _decodeLtc = false;
-                bool   _checkTcSync = false;
-                bool   _checkContinuity = false;
-                bool   _checkTimestamp = false;
-                bool   _checkAudioSamples = false;
-                bool   _checkCaptureStats = false;
-                bool   _dropFrames = true;
-                int    _imageDataRepeatLines = 16;
-                int    _ltcChannel = 0;
-                int    _syncOffsetToleranceSamples = 0;
-                double _logIntervalSec = 1.0;
-                bool   _isOpen = false;
+                bool    _decodeImageData = false;
+                bool    _decodeAudioData = false;
+                bool    _decodeLtc = false;
+                bool    _checkTcSync = false;
+                bool    _checkContinuity = false;
+                bool    _checkTimestamp = false;
+                bool    _checkAudioSamples = false;
+                bool    _checkCaptureStats = false;
+                bool    _dropFrames = true;
+                int     _imageDataRepeatLines = 16;
+                int     _ltcChannel = 0;
+                int     _syncOffsetToleranceSamples = 0;
+                int64_t _audioPtsToleranceNs = 5'000'000;
+                int64_t _videoPtsToleranceNs = 5'000'000;
+                double  _logIntervalSec = 1.0;
+                bool    _isOpen = false;
+                /// Nominal video frame duration in nanoseconds (cached at
+                /// open() from the upstream MediaDesc's frame rate).  Used
+                /// by the video PTS prediction.
+                double _videoFrameDurationNs = 0.0;
 
                 // ---- Decoder state (constructed lazily on the first frame
                 // because we need the actual ImageDesc and AudioDesc to
                 // build them) ----
                 ImageDataDecoder _imageDataDecoder;
+                AudioDataDecoder _audioDataDecoder;
                 LtcDecoder::UPtr _ltcDecoder;
                 bool             _decodersInitialized = false;
-                /// Total audio samples fed to the LTC decoder so far.
-                /// Lets us turn the decoder's cumulative @c sampleStart
-                /// values into per-chunk offsets.
-                int64_t _ltcCumulativeSamples = 0;
+
+                // ---- AudioData per-channel rolling accumulators ----
+                //
+                // Decoupled from the LTC-side @ref _audioStream so the
+                // two decoders don't fight over the same FIFO and so
+                // the data check can survive bursty audio that splits
+                // a codeword across multiple chunks.  One @ref
+                // AudioDataDecoder::StreamState per channel — owns the
+                // per-channel rolling buffer and the absolute stream
+                // sample anchor reported back through @ref
+                // AudioDataDecoder::DecodedItem::streamSampleStart.
+                List<AudioDataDecoder::StreamState> _audioDataStreamStates;
+                // Per-channel "have I ever seen a clean decode on
+                // this channel?" latch.  Anomaly discontinuities
+                // (decode failure / length anomaly) only fire on
+                // channels that have produced at least one valid
+                // codeword — without this gate, channels that simply
+                // don't carry PcmMarker (LTC, tones, silence) would
+                // generate spurious anomalies whenever findSync's
+                // 4-transition search happens to land on a samplesPerBit
+                // inside the decoder's bandwidth gate.
+                // Stored as @c uint8_t (0/1) rather than @c bool —
+                // @c List<bool> wraps @c std::vector<bool> whose
+                // proxy references break the lvalue interfaces our
+                // @c List wrapper exposes.
+                List<uint8_t> _audioDataChannelActive;
+
+                // ---- Audio stream (continuous-stream view of incoming
+                // audio that decouples per-frame chunk boundaries from
+                // analyses that want a real stream) ----
+
+                /// FIFO that accumulates incoming audio in native float
+                /// interleaved at the stream's sample rate.  Format is
+                /// learned from the first audio chunk; subsequent chunks
+                /// in different formats convert on push via AudioBuffer's
+                /// built-in conversion.  Sized for ~1 s of headroom.
+                AudioBuffer _audioStream;
+                /// True once the buffer has been initialized with a format.
+                bool _audioStreamReady = false;
+                /// Cached sample rate of the audio stream (Hz).
+                double _audioSampleRate = 0.0;
+                /// True once a wall-clock anchor is known for stream
+                /// sample 0.  Set on the first audio chunk that carries
+                /// a valid PTS.
+                bool _audioStreamAnchored = false;
+                /// Wall-clock nanoseconds corresponding to stream sample 0.
+                /// Sample @c N's wall-clock is
+                /// @c _audioStreamStartNs + N * 1e9 / _audioSampleRate.
+                int64_t _audioStreamStartNs = 0;
+                /// Total audio samples ever pushed into @ref _audioStream.
+                int64_t _audioCumulativeIn = 0;
+                /// Total audio samples ever drained from @ref _audioStream
+                /// for analysis (i.e. fed to the LTC decoder).  Equal to
+                /// the LTC decoder's internal sample counter, so its
+                /// @c sampleStart results map directly to absolute stream
+                /// sample positions.
+                int64_t _audioCumulativeAnalyzed = 0;
+                /// Scratch buffer (shared-pointer so a @ref BufferView can
+                /// borrow it without copying) for pulling samples out of
+                /// the audio stream during analysis; held as a member so
+                /// steady-state drains avoid per-call reallocation.
+                Buffer::Ptr _audioDrainScratch;
 
                 // ---- Continuity tracking ----
                 bool     _hasPreviousPicture = false;
@@ -484,18 +760,21 @@ class InspectorMediaIO : public SharedThreadMediaIO {
                 int64_t _previousVideoTimestampNs = 0;
                 int64_t _previousAudioTimestampNs = 0;
 
-                // ---- AudioSamples test state (first-seen anchor;
-                // cumulative samples / elapsed ns since the anchor
-                // drive the measured-rate calculation).  The anchor
-                // frame's own sample count is NOT included in the
-                // cumulative total — it marks the start of the
-                // measurement window.  "Previous" is used to detect
-                // timestamp gaps so we can restart the anchor
-                // without poisoning the average. ----
-                bool    _audioSamplesAnchorSet = false;
-                int64_t _audioSamplesAnchorNs = 0;
-                int64_t _audioSamplesPreviousStampNs = 0;
-                int64_t _audioSamplesCumulative = 0;
+                // ---- Video PTS prediction anchor (for jitter / re-anchor) ----
+                bool        _videoPtsAnchored = false;
+                int64_t     _videoPtsAnchorNs = 0;
+                FrameNumber _videoPtsAnchorFrame{0};
+
+                // ---- A/V cross-PTS baseline for drift measurement.  Set
+                // on the first frame that carries valid PTSs on both
+                // essences. ----
+                bool    _avBaselineSet = false;
+                int64_t _avBaselineOffsetNs = 0;
+                /// Most recent audio chunk PTS (used by the A/V drift check
+                /// when the *current* frame doesn't itself carry an audio
+                /// chunk — a normal occurrence under bursty delivery).
+                bool    _hasLastAudioPtsForAv = false;
+                int64_t _lastAudioPtsForAvNs = 0;
 
                 // ---- Per-frame counter ----
                 FrameNumber _frameIndex{0};

@@ -1096,12 +1096,19 @@ inline const EUI64Format EUI64Format::IPv6{2};
  *                     named by @ref MediaConfig::InspectorStatsFile
  *                     (or a unique file in @c Dir::temp() when that
  *                     key is empty).
+ * - @c AudioData    — decode the @ref AudioDataEncoder
+ *                     @c [stream:8][channel:8][frame:48] codeword from
+ *                     every audio channel, validate CRC + sync nibble,
+ *                     and flag mismatched channel bytes as
+ *                     @ref InspectorDiscontinuity::AudioChannelMismatch.
+ *                     Default-on; opt out when the upstream carries no
+ *                     @c PcmMarker channels.
  */
 class InspectorTest : public TypedEnum<InspectorTest> {
         public:
                 PROMEKI_REGISTER_ENUM_TYPE("InspectorTest", 0, {"ImageData", 0}, {"Ltc", 1}, {"TcSync", 2},
                                            {"Continuity", 3}, {"Timestamp", 4}, {"AudioSamples", 5},
-                                           {"CaptureStats", 6});
+                                           {"CaptureStats", 6}, {"AudioData", 7});
 
                 using TypedEnum<InspectorTest>::TypedEnum;
 
@@ -1112,6 +1119,7 @@ class InspectorTest : public TypedEnum<InspectorTest> {
                 static const InspectorTest Timestamp;
                 static const InspectorTest AudioSamples;
                 static const InspectorTest CaptureStats;
+                static const InspectorTest AudioData;
 };
 
 inline const InspectorTest InspectorTest::ImageData{0};
@@ -1121,6 +1129,7 @@ inline const InspectorTest InspectorTest::Continuity{3};
 inline const InspectorTest InspectorTest::Timestamp{4};
 inline const InspectorTest InspectorTest::AudioSamples{5};
 inline const InspectorTest InspectorTest::CaptureStats{6};
+inline const InspectorTest InspectorTest::AudioData{7};
 
 /**
  * @brief Well-known Enum type for codec rate-control modes (audio + video).

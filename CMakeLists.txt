@@ -1787,6 +1787,8 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/framesync.cpp
         src/proav/debugmediafile.cpp
         src/proav/debugmediamediaio.cpp
+        src/proav/audiodataencoder.cpp
+        src/proav/audiodatadecoder.cpp
         src/proav/imagedataencoder.cpp
         src/proav/imagedatadecoder.cpp
         src/proav/imagedesc.cpp
@@ -2692,6 +2694,8 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/debugmediafile.cpp
             tests/unit/frame.cpp
             tests/unit/framebridge.cpp
+            tests/unit/audiodataencoder.cpp
+            tests/unit/audiodatadecoder.cpp
             tests/unit/imagedataencoder.cpp
             tests/unit/imagedatadecoder.cpp
             tests/unit/imagedesc.cpp

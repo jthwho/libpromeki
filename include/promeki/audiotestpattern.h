@@ -19,6 +19,7 @@
 #include <promeki/enums.h>
 #include <promeki/list.h>
 #include <promeki/map.h>
+#include <promeki/audiodataencoder.h>
 #include <promeki/ltcencoder.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -297,6 +298,15 @@ class AudioTestPattern {
                  * channels with no mode entry), and returns the combined
                  * interleaved Audio buffer.
                  *
+                 * @c PcmMarker channels are stamped with an
+                 * @ref AudioDataEncoder packet whose payload is laid out
+                 * as @c [stream:8][channel:8][frameNumber:48]
+                 * (MSB-first).  The frame number is taken from the
+                 * generator's monotonic counter (see
+                 * @ref pcmMarkerFrameNumber); call
+                 * @ref setPcmMarkerFrameNumber to lock the marker to an
+                 * external clock such as the TPG's per-frame counter.
+                 *
                  * @param samples Number of samples to generate.
                  * @param tc      Current frame timecode.  Used by @c LTC
                  *                and @c AvSync channels; invalid values
@@ -315,6 +325,44 @@ class AudioTestPattern {
                 SharedPtr<PcmAudioPayload, true, PcmAudioPayload> createPayload(size_t samples) const {
                         return createPayload(samples, Timecode());
                 }
+
+                /**
+                 * @brief Returns the stream ID stamped on @c PcmMarker
+                 *        channels (high 8 bits of the marker payload).
+                 */
+                uint8_t pcmMarkerStreamId() const { return _pcmMarkerStreamId; }
+
+                /**
+                 * @brief Sets the stream ID stamped on @c PcmMarker
+                 *        channels.
+                 *
+                 * Mirrors @c TpgMediaIO's video data band so a single
+                 * downstream consumer can correlate audio and video by
+                 * the same stream identifier.
+                 */
+                void setPcmMarkerStreamId(uint8_t streamId) { _pcmMarkerStreamId = streamId; }
+
+                /**
+                 * @brief Returns the next frame number the @c PcmMarker
+                 *        encoder will stamp.
+                 *
+                 * Auto-incremented once per @ref createPayload call; the
+                 * caller may override with @ref setPcmMarkerFrameNumber
+                 * to keep the marker locked to a video frame counter.
+                 */
+                uint64_t pcmMarkerFrameNumber() const { return _pcmMarkerCounter; }
+
+                /**
+                 * @brief Sets the next frame number to stamp on @c PcmMarker
+                 *        channels.
+                 *
+                 * Use this from a wrapper that already owns the
+                 * authoritative frame counter (e.g. @c TpgMediaIO) so
+                 * audio and video markers carry matching frame numbers.
+                 * The auto-increment still applies after each
+                 * @ref createPayload call.
+                 */
+                void setPcmMarkerFrameNumber(uint64_t fn) { _pcmMarkerCounter = fn; }
 
                 /**
                  * @brief Returns the ChannelId tone frequency for a given channel.
@@ -339,23 +387,13 @@ class AudioTestPattern {
                 /// frequency by a detectable amount.
                 static constexpr double kSrcProbeFrequencyHz = 997.0;
 
-                /// @brief Length of the PcmMarker sync preamble in samples.
-                static constexpr size_t kPcmMarkerPreambleSamples = 16;
+                /// @brief Default stream ID for the PcmMarker pattern (0).
+                static constexpr uint8_t kDefaultPcmMarkerStreamId = 0;
 
-                /// @brief Length of the PcmMarker "start of payload" marker
-                ///        (four high samples followed by four low samples).
-                static constexpr size_t kPcmMarkerStartSamples = 8;
-
-                /// @brief Bits in the PcmMarker payload.
-                static constexpr size_t kPcmMarkerPayloadBits = 64;
-
-                /// @brief Total number of deterministic samples in one
-                ///        PcmMarker framing unit (preamble + start + 64 bits
-                ///        + parity).  Channels shorter than this carry
-                ///        a truncated frame; the decoder is expected to
-                ///        resynchronise.
-                static constexpr size_t kPcmMarkerFrameSamples = kPcmMarkerPreambleSamples + kPcmMarkerStartSamples +
-                                                                 kPcmMarkerPayloadBits + 1; // +1 trailing parity bit
+                /// @brief Mask for the 48-bit frame-number field of the
+                ///        PcmMarker payload.  Frame numbers larger than
+                ///        @c 2^48 - 1 wrap inside the payload word.
+                static constexpr uint64_t kPcmMarkerFrameMask = 0x0000ffffffffffffULL;
 
                 /// @brief Default SteppedTone frequency list (low / mid / high).
                 static const List<double> kDefaultSteppedToneFreqs;
@@ -472,9 +510,16 @@ class AudioTestPattern {
                 // on the same stream stay decorrelated.
                 mutable size_t _noiseSampleCursor = 0;
 
-                // Running monotonic counter used by the PcmMarker
-                // generator when the current frame has no valid
-                // timecode.  Incremented on every create() call.
+                // Stream ID stamped on every PcmMarker payload (top 8
+                // bits of the encoded word).  Defaults to 0; the wrapper
+                // (e.g. TpgMediaIO) overrides via setPcmMarkerStreamId.
+                uint8_t _pcmMarkerStreamId = kDefaultPcmMarkerStreamId;
+
+                // Running monotonic counter used as the 48-bit frame
+                // number field of the PcmMarker payload.  Auto-
+                // incremented on every create() call; an external
+                // wrapper may overwrite via setPcmMarkerFrameNumber to
+                // lock the audio marker to a video frame counter.
                 mutable uint64_t _pcmMarkerCounter = 0;
 
                 mutable double _sweepSampleCursor = 0.0;
@@ -510,8 +555,17 @@ class AudioTestPattern {
                                        const List<float> &buffer) const;
                 void writeChirpChannel(float *out, size_t channel, size_t channels, size_t samples) const;
                 void writeDualToneChannel(float *out, size_t channel, size_t channels, size_t samples) const;
-                void writePcmMarkerChannel(float *out, size_t channel, size_t channels, size_t samples,
-                                           uint64_t payload) const;
+                /**
+                 * @brief Stamps every PcmMarker channel of @p payload
+                 *        with the @ref AudioDataEncoder codeword.
+                 *
+                 * Computes the per-channel marker payload as
+                 * @c [stream:8][channel:8][frameNumber:48] and writes
+                 * it via the encoder.  Called by @ref createPayload
+                 * after the float-domain pattern pass; runs only when
+                 * at least one channel is in @c PcmMarker mode.
+                 */
+                void stampPcmMarkers(PcmAudioPayload &payload, uint64_t frameNumber) const;
                 void writeSweepChannel(float *out, size_t channel, size_t channels, size_t samples) const;
                 void writePolarityChannel(float *out, size_t channel, size_t channels, size_t samples) const;
                 void writeSteppedToneChannel(float *out, size_t channel, size_t channels, size_t samples) const;

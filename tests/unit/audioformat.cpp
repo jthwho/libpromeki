@@ -246,6 +246,30 @@ TEST_CASE("AudioFormat: signed-24-in-32 negative full-scale round-trips through 
         CHECK(out[1] == doctest::Approx(1.0f).epsilon(2.0 / AudioFormat::MaxS24));
 }
 
+TEST_CASE("AudioFormat: packed 24-bit round-trip across all four interleaved variants") {
+        // Round-trips negative full-scale and intermediate values through
+        // the 3-byte-per-sample S24 / U24 paths.  Originally these
+        // converters skipped the sign-extension step, so any negative
+        // signed-24 sample read back as a large positive int — visible
+        // here because @c -1.0f, @c -0.5f land off the @c [-1, 1] axis
+        // by a factor of ~3.
+        const AudioFormat::ID ids[] = {AudioFormat::PCMI_S24LE, AudioFormat::PCMI_S24BE, AudioFormat::PCMI_U24LE,
+                                       AudioFormat::PCMI_U24BE};
+        const float           in[5] = {-1.0f, -0.5f, 0.0f, 0.5f, 1.0f};
+        for (auto id : ids) {
+                AudioFormat f(id);
+                CAPTURE(f.name());
+                uint8_t bytes[5 * 3] = {};
+                f.floatToSamples(bytes, in, 5);
+                float out[5] = {};
+                f.samplesToFloat(out, bytes, 5);
+                for (size_t i = 0; i < 5; ++i) {
+                        CAPTURE(i);
+                        CHECK(out[i] == doctest::Approx(in[i]).epsilon(2.0 / AudioFormat::MaxS24));
+                }
+        }
+}
+
 TEST_CASE("AudioFormat: 24-in-32 round-trip across all eight interleaved variants") {
         const AudioFormat::ID ids[] = {
                 AudioFormat::PCMI_S24LE_HB32, AudioFormat::PCMI_S24LE_LB32, AudioFormat::PCMI_S24BE_HB32,

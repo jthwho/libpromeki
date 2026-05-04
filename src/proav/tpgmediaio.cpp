@@ -53,15 +53,17 @@ MediaIOFactory::Config::SpecMap TpgFactory::configSpecs() const {
         s(MediaConfig::VideoBurnTextColor, Color::White);
         s(MediaConfig::VideoBurnBgColor, Color::Black);
         s(MediaConfig::VideoBurnDrawBg, true);
-        // Audio — enabled by default, defaulting to LTC on ch0 and an
-        // AvSync click marker on ch1 so the plain TPG stream emits
-        // both a decodable timecode reference and a per-second click
-        // that pairs with the video AvSync pattern and the burn.  The
-        // channel list is interpreted positionally: extra channels
-        // beyond the list are silenced.
+        // Audio — enabled by default with a @c PcmMarker on every
+        // channel so the plain TPG stream stamps each channel with
+        // its own @c [stream:8][channel:8][frame:48] codeword.  The
+        // marker is sample-accurate, decodable on any PCM format, and
+        // robust through ordinary sample-rate conversion — see
+        // @ref AudioDataEncoder.  Extra channels beyond the list are
+        // silenced; the user remains free to pin specific channels to
+        // @c LTC, @c AvSync, @c Tone, etc. via the
+        // @ref MediaConfig::AudioChannelModes config key.
         EnumList defaultAudioModes = EnumList::forType<AudioPattern>();
-        defaultAudioModes.append(AudioPattern::LTC);
-        defaultAudioModes.append(AudioPattern::AvSync);
+        for (int i = 0; i < 16; ++i) defaultAudioModes.append(AudioPattern::PcmMarker);
         s(MediaConfig::AudioEnabled, true);
         s(MediaConfig::AudioChannelModes, defaultAudioModes);
         s(MediaConfig::AudioRate, 48000.0f);
@@ -161,7 +163,12 @@ Error TpgMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 // pass on each frame.
                 _dataEncoderEnabled = cfg.getAs<bool>(MediaConfig::TpgDataEncoderEnabled, true);
                 _dataEncoderRepeat = static_cast<uint32_t>(cfg.getAs<int>(MediaConfig::TpgDataEncoderRepeatLines, 16));
-                _streamId = cfg.getAs<uint32_t>(MediaConfig::StreamID, uint32_t(0));
+                // Stream ID lives in 8 bits — the TPG-shared 64-bit
+                // codeword carries the layout
+                // @c [stream:8][channel:8][frame:48], so anything above
+                // @c 0xff is folded down via masking rather than
+                // rejected.  Audio markers reuse the same stream value.
+                _streamId = cfg.getAs<uint32_t>(MediaConfig::StreamID, uint32_t(0)) & 0xffu;
                 if (_dataEncoderEnabled) {
                         _dataEncoder = ImageDataEncoder(_imageDesc);
                         if (!_dataEncoder.isValid()) {
@@ -263,6 +270,7 @@ Error TpgMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 _audioPattern->setDualToneRatio(dtRatio);
                 _audioPattern->setNoiseBufferSeconds(noiseSec);
                 _audioPattern->setNoiseSeed(noiseSeed);
+                _audioPattern->setPcmMarkerStreamId(static_cast<uint8_t>(_streamId & 0xffu));
                 _audioPattern->configure();
         }
 
@@ -370,6 +378,11 @@ Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         if (_audioEnabled && _audioPattern.isValid()) {
                 size_t samples =
                         _frameRate.samplesPerFrame(static_cast<int64_t>(_audioDesc.sampleRate()), _frameCount.value());
+                // Lock the audio PcmMarker frame number to the same
+                // counter the video data band carries so a downstream
+                // consumer can match audio markers to their video
+                // frame by exact equality of the low 48 bits.
+                _audioPattern->setPcmMarkerFrameNumber(_frameCount.value());
                 auto payload = _audioPattern->createPayload(samples, tc);
                 if (payload.isValid()) {
                         frame.modify()->addPayload(payload);
@@ -444,11 +457,17 @@ Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         // Binary data encoder pass — runs last so the stamped band
         // sits on top of both the pattern and any burn-in.  We emit
         // two items per frame:
-        //   item 0: (streamID << 32) | frameNumber  (frame ID)
-        //   item 1: BCD timecode word (Timecode::toBcd64)
+        //   item 0: TPG-shared 64-bit codeword
+        //           @c [stream:8][channel:8][frame:48].  Video uses
+        //           @c channel=0; the audio PcmMarker pattern reuses
+        //           the same layout with the channel index in bits
+        //           48..55, so a downstream consumer can correlate
+        //           audio and video by stream + frame.
+        //   item 1: BCD timecode word (Timecode::toBcd64).
         if (_videoEnabled && _dataEncoderEnabled && _dataEncoder.isValid()) {
-                const uint64_t frameId = (static_cast<uint64_t>(_streamId) << 32) |
-                                         static_cast<uint32_t>(_frameCount.value() & 0xffffffffu);
+                constexpr uint64_t kFrameMask = 0x0000ffffffffffffULL;
+                const uint64_t     frameId = (static_cast<uint64_t>(_streamId & 0xffu) << 56) |
+                                         (static_cast<uint64_t>(0u) << 48) | (_frameCount.value() & kFrameMask);
                 const uint64_t               tcBcd = (_timecodeEnabled && tc.isValid()) ? tc.toBcd64() : uint64_t(0);
                 List<ImageDataEncoder::Item> items;
                 items.pushToBack({0, _dataEncoderRepeat, frameId});

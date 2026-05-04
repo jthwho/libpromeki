@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <doctest/doctest.h>
+#include <promeki/audiodatadecoder.h>
 #include <promeki/audiotestpattern.h>
 #include <promeki/pcmaudiopayload.h>
 #include <promeki/audiodesc.h>
@@ -696,84 +697,79 @@ TEST_CASE("AudioTestPattern_DualToneContinuousAcrossChunks") {
 // PcmMarker — deterministic framing landing in the first N samples
 // ============================================================================
 
-TEST_CASE("AudioTestPattern_PcmMarkerPreamble") {
-        AudioDesc        desc(48000, 1);
+TEST_CASE("AudioTestPattern_PcmMarkerEncodesFrameNumberAndChannel") {
+        // Two-channel PcmMarker stamp — the per-channel codeword
+        // carries [stream:8][channel:8][frame:48].  Validate every
+        // field round-trips via AudioDataDecoder.
+        AudioDesc        desc(48000, 2);
         AudioTestPattern gen(desc);
-        gen.setChannelModes(makeModes({AudioPattern::PcmMarker}));
+        gen.setChannelModes(makeModes({AudioPattern::PcmMarker, AudioPattern::PcmMarker}));
+        gen.setPcmMarkerStreamId(0x42);
         REQUIRE(gen.configure().isOk());
+        // configure() resets the marker counter, so set the frame
+        // number after — matches the per-frame "set then create"
+        // pattern the TPG wraps around the generator.
+        gen.setPcmMarkerFrameNumber(0x123456789abcULL);
 
-        // No timecode → payload falls back to the monotonic counter.
-        auto audio = gen.createPayload(4096);
+        auto audio = gen.createPayload(2048);
         REQUIRE(audio.isValid());
-        const float *data = reinterpret_cast<const float *>(audio->plane(0).data());
 
-        // First 16 samples are the alternating ±1.0 preamble.
-        for (size_t i = 0; i < AudioTestPattern::kPcmMarkerPreambleSamples; ++i) {
-                const float expected = (i & 1u) ? -1.0f : 1.0f;
-                CHECK(data[i] == doctest::Approx(expected));
-        }
-
-        // Next 8 samples are four +1.0 followed by four -1.0 (start
-        // of frame marker).
-        const size_t startBase = AudioTestPattern::kPcmMarkerPreambleSamples;
-        for (size_t i = 0; i < AudioTestPattern::kPcmMarkerStartSamples; ++i) {
-                const float expected = (i < 4) ? 1.0f : -1.0f;
-                CHECK(data[startBase + i] == doctest::Approx(expected));
+        AudioDataDecoder dec(audio->desc());
+        REQUIRE(dec.isValid());
+        for (uint32_t ch = 0; ch < 2; ++ch) {
+                CAPTURE(ch);
+                auto r = dec.decode(*audio, AudioDataDecoder::Band{0, 2048, ch});
+                REQUIRE(r.error.isOk());
+                const uint64_t expected =
+                        (uint64_t(0x42) << 56) | (uint64_t(ch) << 48) | uint64_t(0x123456789abcULL);
+                CHECK(r.payload == expected);
         }
 }
 
-TEST_CASE("AudioTestPattern_PcmMarkerPayloadEncodesCounter") {
+TEST_CASE("AudioTestPattern_PcmMarkerAdvancesFrameNumberPerCreate") {
+        // Two consecutive createPayload calls should stamp frame
+        // numbers N and N+1 — the auto-increment runs once per call.
         AudioDesc        desc(48000, 1);
         AudioTestPattern gen(desc);
         gen.setChannelModes(makeModes({AudioPattern::PcmMarker}));
         REQUIRE(gen.configure().isOk());
+        gen.setPcmMarkerFrameNumber(7);
 
-        // First create() call uses counter value 0.  Payload should be
-        // 64 zero bits, all landing at -0.8.
-        auto first = gen.createPayload(256);
+        auto first = gen.createPayload(2048);
+        auto second = gen.createPayload(2048);
         REQUIRE(first.isValid());
-        const float *pf = reinterpret_cast<const float *>(first->plane(0).data());
-        const size_t payloadBase =
-                AudioTestPattern::kPcmMarkerPreambleSamples + AudioTestPattern::kPcmMarkerStartSamples;
-        for (size_t i = 0; i < AudioTestPattern::kPcmMarkerPayloadBits; ++i) {
-                CHECK(pf[payloadBase + i] == doctest::Approx(-0.8f));
-        }
-
-        // Second create() call uses counter value 1 — the LSB of the
-        // MSB-first payload lands in the last payload sample.  All
-        // other bits stay at -0.8.
-        auto second = gen.createPayload(256);
         REQUIRE(second.isValid());
-        const float *ps = reinterpret_cast<const float *>(second->plane(0).data());
-        for (size_t i = 0; i < AudioTestPattern::kPcmMarkerPayloadBits - 1; ++i) {
-                CHECK(ps[payloadBase + i] == doctest::Approx(-0.8f));
-        }
-        const size_t lastBit = payloadBase + AudioTestPattern::kPcmMarkerPayloadBits - 1;
-        CHECK(ps[lastBit] == doctest::Approx(0.8f));
+
+        AudioDataDecoder dec(first->desc());
+        auto             r1 = dec.decode(*first, AudioDataDecoder::Band{0, 2048, 0});
+        auto             r2 = dec.decode(*second, AudioDataDecoder::Band{0, 2048, 0});
+        REQUIRE(r1.error.isOk());
+        REQUIRE(r2.error.isOk());
+        CHECK((r1.payload & AudioTestPattern::kPcmMarkerFrameMask) == 7);
+        CHECK((r2.payload & AudioTestPattern::kPcmMarkerFrameMask) == 8);
 }
 
-TEST_CASE("AudioTestPattern_PcmMarkerUsesTimecodeBcd") {
-        AudioDesc        desc(48000, 1);
+TEST_CASE("AudioTestPattern_PcmMarkerLeavesNonMarkerChannelsAlone") {
+        // Channel 0 = Tone, channel 1 = PcmMarker.  Only channel 1
+        // should carry the codeword — channel 0 keeps the configured
+        // tone and produces a non-trivial peak amplitude.
+        AudioDesc        desc(48000, 2);
         AudioTestPattern gen(desc);
-        gen.setChannelModes(makeModes({AudioPattern::PcmMarker}));
+        gen.setChannelModes(makeModes({AudioPattern::Tone, AudioPattern::PcmMarker}));
+        gen.setToneFrequency(1000.0);
+        gen.setToneLevel(AudioLevel::fromDbfs(-12.0));
         REQUIRE(gen.configure().isOk());
 
-        Timecode tc(Timecode::Mode(FrameRate::FPS_30, false), 1, 2, 3, 4);
-        REQUIRE(tc.isValid());
-        const uint64_t expected = tc.toBcd64();
-
-        auto audio = gen.createPayload(256, tc);
+        auto audio = gen.createPayload(2048);
         REQUIRE(audio.isValid());
-        const float *data = reinterpret_cast<const float *>(audio->plane(0).data());
-        const size_t payloadBase =
-                AudioTestPattern::kPcmMarkerPreambleSamples + AudioTestPattern::kPcmMarkerStartSamples;
 
-        uint64_t decoded = 0;
-        for (size_t i = 0; i < AudioTestPattern::kPcmMarkerPayloadBits; ++i) {
-                const bool bit = data[payloadBase + i] > 0.0f;
-                decoded = (decoded << 1) | (bit ? 1u : 0u);
-        }
-        CHECK(decoded == expected);
+        // Channel 0 carries a real tone, not a codeword.
+        CHECK(audioPeakChannel(*audio, 0) > 0.1f);
+
+        // Channel 1 decodes back via AudioDataDecoder.
+        AudioDataDecoder dec(audio->desc());
+        auto             r = dec.decode(*audio, AudioDataDecoder::Band{0, 2048, 1});
+        CHECK(r.error.isOk());
 }
 
 // ============================================================================

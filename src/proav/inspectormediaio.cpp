@@ -111,14 +111,19 @@ MediaIOFactory::Config::SpecMap InspectorFactory::configSpecs() const {
                 specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
         };
         // Inspector defaults run every *in-memory* check out of the
-        // box.  CaptureStats is deliberately excluded from the
-        // default list because it opens an output file — making it
-        // opt-in keeps a default-configured inspector side-effect
-        // free.
+        // box that the TPG default produces signal for.  Excluded from
+        // the default list:
+        //   - @c CaptureStats — opens a file, so opt-in keeps a
+        //     default-configured inspector side-effect free.
+        //   - @c Ltc / @c TcSync — the TPG default no longer puts
+        //     @c LTC on any channel (every channel carries a
+        //     @c PcmMarker), so a default inspector against a default
+        //     TPG would just count zeros.  Callers that pin a channel
+        //     to @c AudioPattern::LTC re-enable the LTC tests via the
+        //     @ref MediaConfig::InspectorTests config key.
         EnumList allTests = EnumList::forType<InspectorTest>();
         allTests.append(InspectorTest::ImageData);
-        allTests.append(InspectorTest::Ltc);
-        allTests.append(InspectorTest::TcSync);
+        allTests.append(InspectorTest::AudioData);
         allTests.append(InspectorTest::Continuity);
         allTests.append(InspectorTest::Timestamp);
         allTests.append(InspectorTest::AudioSamples);
@@ -177,15 +182,27 @@ void InspectorMediaIO::resetState() {
         _hasPreviousAudioTimestamp = false;
         _previousVideoTimestampNs = 0;
         _previousAudioTimestampNs = 0;
-        _audioSamplesAnchorSet = false;
-        _audioSamplesAnchorNs = 0;
-        _audioSamplesPreviousStampNs = 0;
-        _audioSamplesCumulative = 0;
         _frameIndex = 0;
         _decodersInitialized = false;
         _imageDataDecoder = ImageDataDecoder();
+        _audioDataDecoder = AudioDataDecoder();
+        _audioDataStreamStates.clear();
+        _audioDataChannelActive.clear();
         _ltcDecoder.reset();
-        _ltcCumulativeSamples = 0;
+        _audioStream = AudioBuffer();
+        _audioStreamReady = false;
+        _audioSampleRate = 0.0;
+        _audioStreamAnchored = false;
+        _audioStreamStartNs = 0;
+        _audioCumulativeIn = 0;
+        _audioCumulativeAnalyzed = 0;
+        _videoPtsAnchored = false;
+        _videoPtsAnchorNs = 0;
+        _videoPtsAnchorFrame = FrameNumber{0};
+        _avBaselineSet = false;
+        _avBaselineOffsetNs = 0;
+        _hasLastAudioPtsForAv = false;
+        _lastAudioPtsForAvNs = 0;
         _lastLogWallSec = monotonicWallSeconds();
         _framesSinceLastLog = 0;
 }
@@ -196,8 +213,23 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _dropFrames = cfg.getAs<bool>(MediaConfig::InspectorDropFrames, true);
         _imageDataRepeatLines = cfg.getAs<int>(MediaConfig::InspectorImageDataRepeatLines, 16);
         _ltcChannel = cfg.getAs<int>(MediaConfig::InspectorLtcChannel, 0);
-        _syncOffsetToleranceSamples = cfg.getAs<int>(MediaConfig::InspectorSyncOffsetToleranceSamples, 0);
+        _syncOffsetToleranceSamples = cfg.getAs<int>(MediaConfig::InspectorSyncOffsetToleranceSamples, 2);
+        _audioPtsToleranceNs =
+                cfg.getAs<int64_t>(MediaConfig::InspectorAudioPtsToleranceNs, int64_t(5'000'000));
+        _videoPtsToleranceNs =
+                cfg.getAs<int64_t>(MediaConfig::InspectorVideoPtsToleranceNs, int64_t(5'000'000));
         _logIntervalSec = cfg.getAs<double>(MediaConfig::InspectorLogIntervalSec, 1.0);
+
+        // Cache the nominal video frame duration in nanoseconds for the
+        // PTS prediction; if upstream didn't supply a frame rate the
+        // jitter check stays dormant (prediction is impossible).
+        const FrameRate fr = cmd.pendingMediaDesc.frameRate();
+        if (fr.isValid()) {
+                const Duration d = fr.frameDuration();
+                _videoFrameDurationNs = static_cast<double>(d.nanoseconds());
+        } else {
+                _videoFrameDurationNs = 0.0;
+        }
 
         // Resolve the test selection.  The configured list drives
         // which tests run: each entry turns one test on, anything
@@ -208,6 +240,7 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // formatDesc) carries every test, so a default-configured
         // inspector runs the full suite.
         _decodeImageData = false;
+        _decodeAudioData = false;
         _decodeLtc = false;
         _checkTcSync = false;
         _checkContinuity = false;
@@ -231,6 +264,8 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                         _checkAudioSamples = true;
                 else if (v == InspectorTest::CaptureStats.value())
                         _checkCaptureStats = true;
+                else if (v == InspectorTest::AudioData.value())
+                        _decodeAudioData = true;
         }
         if (_checkTcSync) {
                 _decodeImageData = true;
@@ -260,6 +295,7 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // useful when post-mortem'ing a recorded log file.  Each line
         // shares the "config:" prefix so the whole block is scannable.
         promekiInfo("Image data decode     = %s", _decodeImageData ? "enabled" : "disabled");
+        promekiInfo("Audio data decode     = %s", _decodeAudioData ? "enabled" : "disabled");
         promekiInfo("LTC decode            = %s", _decodeLtc ? "enabled" : "disabled");
         promekiInfo("LTC channel           = %d", _ltcChannel);
         promekiInfo("A/V sync check        = %s", _checkTcSync ? "enabled" : "disabled");
@@ -270,6 +306,12 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         promekiInfo("Capture stats check   = %s%s%s", _checkCaptureStats ? "enabled (writing " : "disabled",
                     _checkCaptureStats ? _statsFilePath.cstr() : "", _checkCaptureStats ? ")" : "");
         promekiInfo("Image data band       = %d scan lines per item", _imageDataRepeatLines);
+        promekiInfo("Audio PTS tolerance   = %lld ns (%.3f ms)",
+                    static_cast<long long>(_audioPtsToleranceNs),
+                    _audioPtsToleranceNs / 1.0e6);
+        promekiInfo("Video PTS tolerance   = %lld ns (%.3f ms)",
+                    static_cast<long long>(_videoPtsToleranceNs),
+                    _videoPtsToleranceNs / 1.0e6);
         promekiInfo("Drop frames           = %s", _dropFrames ? "yes" : "no");
         promekiInfo("Log interval          = %.2f seconds", _logIntervalSec);
 
@@ -395,6 +437,29 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandClose &cmd) {
                                     "(%lld samples)",
                                     snap.audioDeltaMinNs / 1.0e6, snap.audioDeltaAvgNs / 1.0e6,
                                     snap.audioDeltaMaxNs / 1.0e6, static_cast<long long>(snap.audioDeltaSamples));
+                }
+                if (snap.audioPtsJitterSamples > 0) {
+                        promekiInfo("  Audio PTS jitter: min %+.3f ms / avg %+.3f ms / max %+.3f ms  "
+                                    "(over %lld chunks, %lld re-anchors)",
+                                    snap.audioPtsJitterMinNs / 1.0e6, snap.audioPtsJitterAvgNs / 1.0e6,
+                                    snap.audioPtsJitterMaxNs / 1.0e6,
+                                    static_cast<long long>(snap.audioPtsJitterSamples),
+                                    static_cast<long long>(snap.audioReanchorCount));
+                }
+                if (snap.videoPtsJitterSamples > 0) {
+                        promekiInfo("  Video PTS jitter: min %+.3f ms / avg %+.3f ms / max %+.3f ms  "
+                                    "(over %lld frames, %lld re-anchors)",
+                                    snap.videoPtsJitterMinNs / 1.0e6, snap.videoPtsJitterAvgNs / 1.0e6,
+                                    snap.videoPtsJitterMaxNs / 1.0e6,
+                                    static_cast<long long>(snap.videoPtsJitterSamples),
+                                    static_cast<long long>(snap.videoReanchorCount));
+                }
+                if (snap.avPtsDriftSamples > 0) {
+                        promekiInfo("  A/V PTS drift: min %+.3f ms / avg %+.3f ms / max %+.3f ms  "
+                                    "(baseline videoPts-audioPts %+.3f ms, %lld samples)",
+                                    snap.avPtsDriftMinNs / 1.0e6, snap.avPtsDriftAvgNs / 1.0e6,
+                                    snap.avPtsDriftMaxNs / 1.0e6, snap.avBaselineOffsetNs / 1.0e6,
+                                    static_cast<long long>(snap.avPtsDriftSamples));
                 }
         }
 
@@ -533,10 +598,10 @@ void InspectorMediaIO::decompressImages(Frame &frame) {
 }
 
 void InspectorMediaIO::initDecoders(const Frame &frame) {
-        if (_decodersInitialized) return;
-
         // Picture decoder needs a valid image to learn the descriptor.
-        if (_decodeImageData) {
+        // It can latch on the first frame with video; once latched we
+        // skip this check on subsequent calls.
+        if (_decodeImageData && !_imageDataDecoder.isValid()) {
                 auto vids = frame.videoPayloads();
                 if (!vids.isEmpty() && vids[0].isValid()) {
                         const ImageDesc &d = vids[0]->desc();
@@ -549,18 +614,156 @@ void InspectorMediaIO::initDecoders(const Frame &frame) {
                 }
         }
 
-        // LTC decoder needs the audio sample rate.
-        if (_decodeLtc) {
+        // LTC decoder + audio stream both need the first audio chunk
+        // to learn the sample rate.  Network-fed inspectors may see
+        // several video frames before the first audio arrives, so we
+        // try every call until one of them latches.
+        if (!_audioStreamReady) {
                 auto auds = frame.audioPayloads();
                 if (!auds.isEmpty() && auds[0].isValid()) {
-                        const int rate = static_cast<int>(auds[0]->desc().sampleRate());
-                        if (rate > 0) {
-                                _ltcDecoder = LtcDecoder::UPtr::create(rate);
+                        const AudioDesc &srcDesc = auds[0]->desc();
+                        const int        rate = static_cast<int>(srcDesc.sampleRate());
+                        const unsigned   ch = srcDesc.channels();
+                        if (rate > 0 && ch > 0) {
+                                // Stream storage: native float interleaved
+                                // at the source's rate / channel count.
+                                // 1 s of headroom is plenty — analyses
+                                // drain on every writeFrame call so the
+                                // ring rarely holds more than one video
+                                // frame's worth.
+                                AudioDesc bufDesc(AudioFormat(AudioFormat::NativeFloat),
+                                                  static_cast<float>(rate), ch);
+                                _audioStream = AudioBuffer(bufDesc, static_cast<size_t>(rate));
+                                _audioStreamReady = true;
+                                _audioSampleRate = static_cast<double>(rate);
+                                if (_decodeLtc && !_ltcDecoder) {
+                                        _ltcDecoder = LtcDecoder::UPtr::create(rate);
+                                }
+                                if (_decodeAudioData && !_audioDataDecoder.isValid()) {
+                                        // Build the data decoder against
+                                        // the source descriptor — that
+                                        // way every per-channel decode
+                                        // path runs on the chunk's
+                                        // native format without an
+                                        // intermediate conversion.
+                                        _audioDataDecoder = AudioDataDecoder(srcDesc);
+                                        if (!_audioDataDecoder.isValid()) {
+                                                promekiWarn("InspectorMediaIO: audio data "
+                                                            "decoder could not be initialised "
+                                                            "for %s",
+                                                            srcDesc.toString().cstr());
+                                        }
+                                }
                         }
                 }
         }
 
         _decodersInitialized = true;
+}
+
+// ---------------------------------------------------------------------------
+// Audio stream ingest — converts each frame's audio payload(s) into a
+// continuous stream view via @ref _audioStream, decoupling per-frame
+// chunk shape from analyses that want to see audio as a stream.
+// Also runs the audio PTS jitter / re-anchor check.
+// ---------------------------------------------------------------------------
+
+void InspectorMediaIO::ingestAudio(const Frame &frame, InspectorEvent &event) {
+        if (!_audioStreamReady) return; // initDecoders hasn't latched yet
+
+        auto auds = frame.audioPayloads();
+        if (auds.isEmpty()) return;
+        const AudioPayload::Ptr &ap = auds[0];
+        if (!ap.isValid()) return;
+        const auto *uap = ap->as<PcmAudioPayload>();
+        if (uap == nullptr) return; // streaming only meaningful for PCM
+
+        const AudioDesc &srcDesc = uap->desc();
+        if (srcDesc.format().isPlanar()) {
+                // Separately-allocated planar payloads need a transpose
+                // step we don't yet implement here; warn once and skip.
+                // NDI's interleaved-on-drain layout and the TPG's
+                // PCMI_Float32LE output don't trigger this path.
+                promekiWarn("InspectorMediaIO: planar PCM audio not yet "
+                            "supported in audio stream — skipping ingest");
+                return;
+        }
+
+        const size_t samples = uap->sampleCount();
+
+        // PTS handling first, before pushing samples — the prediction
+        // for "the first sample of this chunk" uses the cumulative-in
+        // count BEFORE the push.
+        const MediaTimeStamp &mts = uap->pts();
+        if (mts.isValid()) {
+                const int64_t actualPts =
+                        mts.timeStamp().nanoseconds() + mts.offset().nanoseconds();
+                if (!_audioStreamAnchored) {
+                        // First valid PTS — anchor stream sample 0 here.
+                        _audioStreamStartNs = actualPts;
+                        _audioStreamAnchored = true;
+                } else if (_audioSampleRate > 0.0) {
+                        const double  samplesBefore = static_cast<double>(_audioCumulativeIn);
+                        const int64_t predictedPts =
+                                _audioStreamStartNs +
+                                static_cast<int64_t>(samplesBefore * 1.0e9 / _audioSampleRate);
+                        const int64_t jitter = actualPts - predictedPts;
+                        event.audioPtsJitterValid = true;
+                        event.audioPtsJitterNs = jitter;
+
+                        const int64_t absJitter = jitter < 0 ? -jitter : jitter;
+                        if (absJitter > _audioPtsToleranceNs) {
+                                // Re-anchor: trust the new PTS as the
+                                // wall-clock time of the chunk's first
+                                // sample, and back-compute a new stream
+                                // start so subsequent predictions stay
+                                // consistent with the cumulative count.
+                                _audioStreamStartNs =
+                                        actualPts - static_cast<int64_t>(samplesBefore * 1.0e9 /
+                                                                         _audioSampleRate);
+
+                                InspectorDiscontinuity d;
+                                d.kind = InspectorDiscontinuity::AudioTimestampReanchor;
+                                d.previousValue = String::sprintf(
+                                        "%lld", static_cast<long long>(predictedPts));
+                                d.currentValue = String::sprintf(
+                                        "%lld", static_cast<long long>(actualPts));
+                                d.description = String::sprintf(
+                                        "Audio PTS diverged from prediction by %+.3f ms "
+                                        "(tolerance %.3f ms) — re-anchoring stream",
+                                        jitter / 1.0e6, _audioPtsToleranceNs / 1.0e6);
+                                event.discontinuities.pushToBack(d);
+                        }
+                }
+                _hasLastAudioPtsForAv = true;
+                _lastAudioPtsForAvNs = actualPts;
+        }
+
+        if (samples == 0) return;
+
+        // The cumulative-in counter drives downstream PTS-jitter
+        // predictions, so it advances on every chunk that arrived
+        // regardless of which decoders are wired up.
+        _audioCumulativeIn += static_cast<int64_t>(samples);
+
+        // The @ref _audioStream FIFO is only drained by
+        // @ref runLtcCheck; pushing samples in when no consumer is
+        // wired up would fill the ring until @c push returns
+        // @c NoSpace and frames start dropping.  Skip the push when
+        // LTC is off — the audio data check uses its own per-channel
+        // accumulators (see @ref runAudioDataCheck).
+        if (!_decodeLtc) return;
+        if (uap->planeCount() == 0) return;
+        BufferView::Entry plane = uap->plane(0);
+        if (!plane.isValid()) return;
+
+        Error err = _audioStream.push(plane.data(), samples, srcDesc);
+        if (err.isError()) {
+                promekiWarn("InspectorMediaIO: audio stream push failed (%s) — "
+                            "%zu samples dropped on frame %lld",
+                            err.name().cstr(), samples,
+                            static_cast<long long>(_frameIndex.value()));
+        }
 }
 
 // ---------------------------------------------------------------------------
@@ -611,49 +814,261 @@ void InspectorMediaIO::runImageDataCheck(const Frame &frame, InspectorEvent &eve
         auto rt = Timecode::fromBcd64(items[1].payload);
         if (rt.second().isError()) return;
 
+        // Wire format: [stream:8][channel:8][frame:48].  Video data
+        // bands always carry @c channel=0; the audio @c PcmMarker
+        // pattern reuses the same word with the channel index in
+        // bits 48..55.  We extract @c stream and @c frame here; the
+        // channel byte is checked by the per-channel audio data
+        // decode pass downstream.
         const uint64_t frameId = items[0].payload;
         event.pictureFrameNumber = static_cast<uint32_t>(frameId & 0xffffffffu);
-        event.pictureStreamId = static_cast<uint32_t>(frameId >> 32);
+        event.pictureStreamId = static_cast<uint32_t>((frameId >> 56) & 0xffu);
         event.pictureTimecode = rt.first();
         event.pictureDecoded = true;
 }
 
-void InspectorMediaIO::runLtcCheck(const Frame &frame, InspectorEvent &event) {
-        event.ltcDecoderEnabled = true;
-        if (!_ltcDecoder) return;
-        auto auds = frame.audioPayloads();
-        if (auds.isEmpty()) return;
-        const AudioPayload::Ptr &ap = auds[0];
-        if (!ap.isValid()) return;
-        const auto *uap = ap->as<PcmAudioPayload>();
-        if (uap == nullptr) return; // LTC only decodes from PCM
+void InspectorMediaIO::runAudioDataCheck(const Frame &frame, InspectorEvent &event) {
+        event.audioDataDecoderEnabled = true;
+        if (!_audioDataDecoder.isValid()) return;
 
-        // Capture the cumulative-sample anchor that marks the start of
-        // *this* audio chunk before we feed it to the decoder, so we
-        // can convert the decoder's absolute sampleStart values into
-        // within-chunk offsets afterwards.  LtcDecoder accepts the
-        // raw payload in any PCM format and pulls the named channel
-        // itself, so the inspector no longer has to do its own demux
-        // + int8 conversion.
-        const int64_t chunkStartAbs = _ltcCumulativeSamples;
-        auto          results = _ltcDecoder->decode(*uap, _ltcChannel);
-        _ltcCumulativeSamples += static_cast<int64_t>(uap->sampleCount());
+        const auto auds = frame.audioPayloads();
+        if (auds.isEmpty()) return;
+        const auto &ap = auds[0];
+        if (!ap.isValid()) return;
+        const auto *pcm = ap->as<PcmAudioPayload>();
+        if (pcm == nullptr) return;
+
+        const AudioDesc &desc = pcm->desc();
+        if (desc.format() != _audioDataDecoder.desc().format() || desc.sampleRate() != _audioDataDecoder.desc().sampleRate() ||
+            desc.channels() != _audioDataDecoder.desc().channels()) {
+                // Source descriptor changed mid-stream — rebuild the
+                // decoder against the new shape on the next frame and
+                // drop any partial stream states since they were sized
+                // for the old shape.
+                _audioDataDecoder = AudioDataDecoder();
+                _audioDataStreamStates.clear();
+                _audioDataChannelActive.clear();
+                return;
+        }
+
+        const size_t channels = desc.channels();
+        if (channels == 0) return;
+        const size_t samples = pcm->sampleCount();
+        const size_t bps = desc.format().bytesPerSample();
+        if (bps == 0) return;
+        const size_t bufferSamples = pcm->sampleCount();
+        const size_t stride = desc.bytesPerSampleStride();
+        if (pcm->planeCount() < 1) return;
+        const uint8_t *base = pcm->data()[0].data();
+        if (base == nullptr) return;
+
+        // Lazy-grow stream states to match the channel count.  Stays
+        // pinned to the source channel count for the lifetime of this
+        // decoder instance — a channel-count change rebuilds the
+        // decoder above and drops the states with it.
+        if (_audioDataStreamStates.size() != channels) {
+                _audioDataStreamStates.clear();
+                _audioDataStreamStates.resize(channels);
+        }
+        if (_audioDataChannelActive.size() != channels) {
+                _audioDataChannelActive.clear();
+                _audioDataChannelActive.resize(channels, 0);
+        }
+
+        std::vector<uint8_t> rawScratch;
+        std::vector<float>   floatScratch;
+
+        event.audioChannelMarkers.clear();
+        event.audioChannelMarkers.reserve(channels);
+        bool anyDecoded = false;
+
+        for (uint32_t ch = 0; ch < channels; ++ch) {
+                // Extract this frame's chunk for the channel into a
+                // contiguous float scratch buffer.  Empty when the
+                // frame has no audio (bursty delivery) — decodeAll
+                // will then run a pure trim cycle on the existing
+                // accumulator without appending.
+                floatScratch.clear();
+                if (samples > 0) {
+                        floatScratch.resize(samples);
+                        const uint8_t *channelBase = base + desc.channelBufferOffset(ch, bufferSamples);
+                        if (stride == bps) {
+                                desc.format().samplesToFloat(floatScratch.data(), channelBase, samples);
+                        } else {
+                                rawScratch.resize(samples * bps);
+                                for (size_t i = 0; i < samples; ++i) {
+                                        std::memcpy(rawScratch.data() + i * bps, channelBase + i * stride, bps);
+                                }
+                                desc.format().samplesToFloat(floatScratch.data(), rawScratch.data(), samples);
+                        }
+                }
+
+                AudioDataDecoder::DecodedList items;
+                _audioDataDecoder.decodeAll(_audioDataStreamStates[ch], floatScratch.data(),
+                                            floatScratch.size(), items);
+
+                // Per-codeword anomaly check.  The
+                // @ref AudioDataLengthAnomaly tolerance is set to
+                // ±20 % of the expected packet sample count — wide
+                // enough to absorb any normal SRC ratio (48 ↔ 44.1
+                // is ~9 % one-way and round-trips to ~0 %), tight
+                // enough to flag genuine rate distortion that the
+                // ±50 % bandwidth gate inside the decoder lets pass.
+                const int64_t expectedPacketSamples =
+                        static_cast<int64_t>(_audioDataDecoder.expectedSamplesPerBit()) *
+                        static_cast<int64_t>(AudioDataDecoder::BitsPerPacket);
+                const int64_t lengthTolerance = expectedPacketSamples / 5;
+
+                InspectorEvent::AudioChannelMarker m;
+                m.packetsDecoded = static_cast<uint32_t>(items.size());
+                for (const auto &r : items) {
+                        if (r.error.isOk()) {
+                                m.decoded = true;
+                                m.streamId = static_cast<uint8_t>((r.payload >> 56) & 0xffu);
+                                m.encodedChannel = static_cast<uint8_t>((r.payload >> 48) & 0xffu);
+                                m.frameNumber = r.payload & 0x0000ffffffffffffULL;
+                                m.streamSampleStart = r.streamSampleStart;
+                                m.channelMatches = (m.encodedChannel == static_cast<uint8_t>(ch));
+                                // Latch "this channel carries
+                                // codewords" so subsequent failures
+                                // on it surface as anomalies.
+                                _audioDataChannelActive[ch] = 1;
+                                if (!m.channelMatches) {
+                                        InspectorDiscontinuity d;
+                                        d.kind = InspectorDiscontinuity::AudioChannelMismatch;
+                                        d.previousValue = String::sprintf("ch=%u", ch);
+                                        d.currentValue =
+                                                String::sprintf("encodedCh=%u", m.encodedChannel);
+                                        d.description = String::sprintf(
+                                                "Audio data marker channel "
+                                                "mismatch on ch=%u: encoded "
+                                                "channel byte was %u",
+                                                ch, m.encodedChannel);
+                                        event.discontinuities.pushToBack(d);
+                                }
+                                anyDecoded = true;
+                        } else if (r.error == Error::CorruptData) {
+                                ++m.packetsCorrupt;
+                                // Sync-byte or CRC failure on a
+                                // codeword that otherwise looked
+                                // real (passed findSync + the
+                                // bandwidth gate).  Surface as a
+                                // decode-failure discontinuity, but
+                                // only after we've previously seen
+                                // a clean codeword on this channel
+                                // — without that latch a
+                                // non-PcmMarker channel (LTC,
+                                // continuous tone) would emit
+                                // anomalies whenever findSync's
+                                // 4-transition search happens to
+                                // produce an in-band samplesPerBit.
+                                // Bandwidth-out-of-range items show
+                                // up as Error::OutOfRange and are
+                                // skipped on the @c else above.
+                                if (!_audioDataChannelActive[ch]) continue;
+                                InspectorDiscontinuity d;
+                                d.kind = InspectorDiscontinuity::AudioDataDecodeFailure;
+                                d.previousValue = String::sprintf("ch=%u", ch);
+                                d.currentValue = String::sprintf(
+                                        "sync=0x%X decodedCrc=0x%02X expectedCrc=0x%02X",
+                                        r.decodedSync, r.decodedCrc, r.expectedCrc);
+                                d.description = String::sprintf(
+                                        "Audio data codeword failed validation on ch=%u: "
+                                        "sync=0x%X decodedCrc=0x%02X expectedCrc=0x%02X",
+                                        ch, r.decodedSync, r.decodedCrc, r.expectedCrc);
+                                event.discontinuities.pushToBack(d);
+                        }
+
+                        // Length-anomaly check fires only on channels
+                        // we've previously confirmed carry codewords
+                        // (same active-latch logic as the decode
+                        // failure case above) and only for items
+                        // whose pitch landed inside the bandwidth
+                        // gate.  A packet that decoded inside the
+                        // gate but at a wildly different sample
+                        // length signals something downstream is
+                        // rate-shifting the audio in a way that
+                        // could eventually cause decode failures.
+                        if (_audioDataChannelActive[ch] && r.error != Error::OutOfRange &&
+                            r.packetSampleCount > 0) {
+                                const int64_t deviation = r.packetSampleCount - expectedPacketSamples;
+                                const int64_t absDev = deviation < 0 ? -deviation : deviation;
+                                if (absDev > lengthTolerance) {
+                                        InspectorDiscontinuity d;
+                                        d.kind = InspectorDiscontinuity::AudioDataLengthAnomaly;
+                                        d.previousValue = String::sprintf(
+                                                "expected=%lld",
+                                                static_cast<long long>(expectedPacketSamples));
+                                        d.currentValue = String::sprintf(
+                                                "actual=%lld",
+                                                static_cast<long long>(r.packetSampleCount));
+                                        d.description = String::sprintf(
+                                                "Audio data codeword length on ch=%u "
+                                                "deviated from expected by %+lld samples "
+                                                "(expected %lld, got %lld, tolerance ±%lld)",
+                                                ch, static_cast<long long>(deviation),
+                                                static_cast<long long>(expectedPacketSamples),
+                                                static_cast<long long>(r.packetSampleCount),
+                                                static_cast<long long>(lengthTolerance));
+                                        event.discontinuities.pushToBack(d);
+                                }
+                        }
+                }
+                event.audioChannelMarkers.pushToBack(m);
+        }
+        event.audioDataDecoded = anyDecoded;
+}
+
+void InspectorMediaIO::runLtcCheck(InspectorEvent &event) {
+        event.ltcDecoderEnabled = true;
+        if (!_ltcDecoder || !_audioStreamReady) return;
+
+        // Drain everything currently buffered into a scratch and feed
+        // it to the LTC decoder as a single contiguous chunk.  Because
+        // ingestAudio runs first and pushes the just-arrived chunk
+        // before us, the drain captures both any backlog from previous
+        // frames (bursty audio) and whatever just landed.  The LTC
+        // decoder is itself stream-stateful, so feeding it accumulated
+        // bursts is equivalent to feeding it a steady drip.
+        const size_t available = _audioStream.available();
+        if (available == 0) return;
+        const AudioDesc bufDesc = _audioStream.format();
+        if (!bufDesc.isValid()) return;
+        const size_t bytes = bufDesc.bufferSize(available);
+        if (!_audioDrainScratch.isValid() || _audioDrainScratch->size() < bytes) {
+                _audioDrainScratch = Buffer::Ptr::create(bytes);
+                if (!_audioDrainScratch.isValid()) return;
+        }
+        auto [got, popErr] = _audioStream.pop(_audioDrainScratch.modify()->data(), available);
+        if (popErr.isError() || got == 0) return;
+
+        // The LTC decoder reports sampleStart in *its* internal counter,
+        // which equals our cumulative-analyzed counter because we feed
+        // it cumulatively from sample 0.  Capture the pre-decode value
+        // so we can rebase the result if needed (currently a no-op —
+        // the decoder's counter and ours stay locked).
+        const int64_t analyzedBefore = _audioCumulativeAnalyzed;
+        // Wrap the popped bytes in a temporary PcmAudioPayload so the
+        // existing format-agnostic LtcDecoder::decode entrypoint pulls
+        // the right channel out for us.
+        BufferView              scratchBv(_audioDrainScratch, 0, bufDesc.bufferSize(got));
+        PcmAudioPayload         tempPayload(bufDesc, got, scratchBv);
+        LtcDecoder::DecodedList results = _ltcDecoder->decode(tempPayload, _ltcChannel);
+        _audioCumulativeAnalyzed = analyzedBefore + static_cast<int64_t>(got);
 
         if (results.isEmpty()) return;
 
-        // Multiple LTC frames may decode within one audio chunk if the
-        // upstream FPS straddles LTC frame boundaries — we keep the
-        // last one for the per-frame report.  The discontinuity check
-        // (which fires elsewhere) only sees the most recent.
+        // Multiple LTC frames may decode in one drain when burst sizes
+        // straddle LTC frame boundaries — we keep the last one for the
+        // per-frame report.
         const auto &last = results[results.size() - 1];
         event.ltcDecoded = true;
         event.ltcTimecode = last.timecode;
-        // Convert the decoder's absolute sample position into a
-        // within-chunk offset.  May be negative if libvtc's state
-        // machine emitted an LTC frame whose sync word was buffered
-        // from a previous chunk — that's fine, the drift formula
-        // handles signed offsets.
-        event.ltcSampleStart = last.sampleStart - chunkStartAbs;
+        // Absolute stream-sample position of the LTC sync word.  Sample
+        // 0 is the first sample the inspector ever ingested; the
+        // wall-clock at this position is _audioStreamStartNs +
+        // sampleStart * 1e9 / _audioSampleRate.
+        event.ltcSampleStart = last.sampleStart;
 
         // Latch the LTC's frame-rate mode the first time we see one,
         // so the picture-TC continuity check has a rate to work with.
@@ -671,12 +1086,7 @@ void InspectorMediaIO::runAvSyncCheck(const Frame &frame, InspectorEvent &event)
         if (!_checkTcSync) return;
         if (!event.pictureDecoded || !event.ltcDecoded) return;
         if (!event.ltcTimecode.isValid()) return;
-        auto auds = frame.audioPayloads();
-        if (auds.isEmpty()) return;
-        const AudioPayload::Ptr &ap = auds[0];
-        if (!ap.isValid()) return;
-        const int64_t sampleRate = static_cast<int64_t>(ap->desc().sampleRate());
-        if (sampleRate <= 0) return;
+        if (!_audioStreamAnchored || _audioSampleRate <= 0.0) return;
 
         // The picture-side BCD wire format only carries digits + the
         // DF flag, so the picture timecode comes back from the decoder
@@ -687,14 +1097,22 @@ void InspectorMediaIO::runAvSyncCheck(const Frame &frame, InspectorEvent &event)
         // numbers in the same coordinate system.
         Timecode         pictureTc = event.pictureTimecode;
         const VtcFormat *ltcVtc = event.ltcTimecode.mode().vtcFormat();
-        if (ltcVtc != nullptr) {
-                pictureTc.setMode(event.ltcTimecode.mode());
-        }
         if (ltcVtc == nullptr) return;
+        pictureTc.setMode(event.ltcTimecode.mode());
 
         FrameNumber picFrames = pictureTc.toFrameNumber();
         FrameNumber ltcFrames = event.ltcTimecode.toFrameNumber();
         if (!picFrames.isValid() || !ltcFrames.isValid()) return;
+
+        // Need the picture's MediaTimeStamp for the wall-clock anchor.
+        // Without it we can't put the picture timecode on a wall-clock
+        // axis — skip silently rather than reporting a meaningless value.
+        auto vids = frame.videoPayloads();
+        if (vids.isEmpty() || !vids[0].isValid()) return;
+        const MediaTimeStamp &vMts = vids[0]->pts();
+        if (!vMts.isValid()) return;
+        const int64_t picWallNs =
+                vMts.timeStamp().nanoseconds() + vMts.offset().nanoseconds();
 
         // Average samples-per-frame from the LTC format's exact
         // rational rate.  For integer rates (24, 25, 30, 60, …) this
@@ -707,31 +1125,40 @@ void InspectorMediaIO::runAvSyncCheck(const Frame &frame, InspectorEvent &event)
         // of precision for converting samples ↔ fractional frames
         // in the periodic log.
         if (ltcVtc->rate.num <= 0 || ltcVtc->rate.den <= 0) return;
-        const double spf = static_cast<double>(sampleRate) * static_cast<double>(ltcVtc->rate.den) /
+        const double spf = _audioSampleRate * static_cast<double>(ltcVtc->rate.den) /
                            static_cast<double>(ltcVtc->rate.num);
         if (spf <= 0.0) return;
         _samplesPerFrame = spf;
 
-        // Sign convention: positive = video leads audio (the
-        // picture's TC anchor lands at an earlier wall-clock audio
-        // sample than the LTC's TC anchor).
+        // Sign convention: positive = video leads audio (the picture's
+        // TC anchor lands at an earlier wall-clock time than the LTC's
+        // TC anchor).
         //
-        // Derivation: picture's wall-clock time at TC X is
-        //   tWall_pic(X) = chunkStart + (X - picTc) * spf
-        // LTC's wall-clock time at TC X is
-        //   tWall_ltc(X) = ltcSyncAbs + (X - ltcTc) * spf
-        // offset = tWall_ltc(X) - tWall_pic(X)
-        //        = (ltcSyncAbs - chunkStart) + (picTc - ltcTc) * spf
-        //        = ltcSampleStart           + (picFrames - ltcFrames) * spf
+        // Derivation: each side gets normalized to "wall-clock at TC
+        // 00:00:00:00" by subtracting its TC's frame count expressed
+        // as wall-clock duration.
         //
-        // ltcSampleStart is the within-chunk offset captured in
-        // runLtcCheck above.  This is an *instantaneous* offset
-        // measurement on the current frame — it is not a delta
-        // against a previous frame, so a constant non-zero value
-        // indicates a fixed phase relationship rather than drift.
-        const int64_t tcOffsetFrames = picFrames.value() - ltcFrames.value();
-        const double  offsetSamples =
-                static_cast<double>(event.ltcSampleStart) + static_cast<double>(tcOffsetFrames) * spf;
+        //   picWallAtZero = picWallNs    - picFrames * frameDurNs
+        //   ltcWallAtZero = ltcWallNs    - ltcFrames * frameDurNs
+        //   offsetNs      = ltcWallAtZero - picWallAtZero
+        //
+        // ltcWallNs is the wall-clock of the LTC sync word, derived
+        // from the absolute audio sample position of the sync word
+        // (event.ltcSampleStart) and the audio stream anchor.  This
+        // makes the check independent of how the audio was chunked
+        // into per-frame payloads — bursty network audio works just
+        // as well as steady cadenced delivery.
+        const double  frameDurNs = 1.0e9 / (static_cast<double>(ltcVtc->rate.num) /
+                                             static_cast<double>(ltcVtc->rate.den));
+        const double  ltcWallNs = static_cast<double>(_audioStreamStartNs) +
+                                 static_cast<double>(event.ltcSampleStart) * 1.0e9 /
+                                         _audioSampleRate;
+        const double picWallAtZero =
+                static_cast<double>(picWallNs) - static_cast<double>(picFrames.value()) * frameDurNs;
+        const double ltcWallAtZero =
+                ltcWallNs - static_cast<double>(ltcFrames.value()) * frameDurNs;
+        const double offsetNs = ltcWallAtZero - picWallAtZero;
+        const double offsetSamples = offsetNs * _audioSampleRate / 1.0e9;
         event.avSyncOffsetSamples = static_cast<int64_t>(std::llround(offsetSamples));
         event.avSyncValid = true;
 
@@ -903,6 +1330,74 @@ void InspectorMediaIO::runTimestampCheck(const Frame &frame, InspectorEvent &eve
                 event.audioTimestampDeltaValid = true;
         }
 
+        // Video PTS prediction & re-anchor.  Anchored on the first
+        // valid PTS at frame N0; the predicted PTS for any subsequent
+        // frame N is anchorNs + (N - N0) * frameDurationNs.  The jitter
+        // is reported per-frame; if it exceeds the configured tolerance
+        // we re-anchor on the new PTS and emit a discontinuity.
+        //
+        // The frame duration normally comes from the upstream MediaDesc
+        // captured at open() time, but standalone test rigs and
+        // backends that don't carry a frame rate end up with zero.  In
+        // that case we derive it from the first observed PTS delta and
+        // lock it in for the rest of the run.
+        if (event.videoTimestampValid) {
+                if (!_videoPtsAnchored) {
+                        _videoPtsAnchored = true;
+                        _videoPtsAnchorNs = event.videoTimestampNs;
+                        _videoPtsAnchorFrame = event.frameIndex;
+                } else {
+                        if (_videoFrameDurationNs <= 0.0 && _hasPreviousVideoTimestamp) {
+                                const int64_t observed =
+                                        event.videoTimestampNs - _previousVideoTimestampNs;
+                                if (observed > 0) {
+                                        _videoFrameDurationNs = static_cast<double>(observed);
+                                }
+                        }
+                        if (_videoFrameDurationNs > 0.0) {
+                                const int64_t framesSince =
+                                        event.frameIndex.value() - _videoPtsAnchorFrame.value();
+                                const int64_t predictedNs =
+                                        _videoPtsAnchorNs +
+                                        static_cast<int64_t>(static_cast<double>(framesSince) *
+                                                             _videoFrameDurationNs);
+                                const int64_t jitter = event.videoTimestampNs - predictedNs;
+                                event.videoPtsJitterValid = true;
+                                event.videoPtsJitterNs = jitter;
+                                const int64_t absJ = jitter < 0 ? -jitter : jitter;
+                                if (absJ > _videoPtsToleranceNs) {
+                                        InspectorDiscontinuity d;
+                                        d.kind = InspectorDiscontinuity::VideoTimestampReanchor;
+                                        d.previousValue = String::sprintf(
+                                                "%lld", static_cast<long long>(predictedNs));
+                                        d.currentValue = String::sprintf(
+                                                "%lld", static_cast<long long>(event.videoTimestampNs));
+                                        d.description = String::sprintf(
+                                                "Video PTS diverged from prediction by %+.3f ms "
+                                                "(tolerance %.3f ms) — re-anchoring",
+                                                jitter / 1.0e6, _videoPtsToleranceNs / 1.0e6);
+                                        event.discontinuities.pushToBack(d);
+                                        _videoPtsAnchorNs = event.videoTimestampNs;
+                                        _videoPtsAnchorFrame = event.frameIndex;
+                                }
+                        }
+                }
+        }
+
+        // A/V cross-essence drift: how does (videoPts - audioPts)
+        // move over time?  Use the latest known audio PTS — bursty
+        // delivery may mean this frame had no audio chunk, but a
+        // recent one is still meaningful for the cross-clock check.
+        if (event.videoTimestampValid && _hasLastAudioPtsForAv) {
+                const int64_t offsetNs = event.videoTimestampNs - _lastAudioPtsForAvNs;
+                if (!_avBaselineSet) {
+                        _avBaselineSet = true;
+                        _avBaselineOffsetNs = offsetNs;
+                }
+                event.avPtsDriftValid = true;
+                event.avPtsDriftNs = offsetNs - _avBaselineOffsetNs;
+        }
+
         // Surface a missing timestamp as a discontinuity so it lands in
         // the same warning channel as the other continuity faults.  We
         // fire unconditionally rather than "only after a previously
@@ -957,39 +1452,13 @@ void InspectorMediaIO::runAudioSamplesCheck(const Frame &frame, InspectorEvent &
         event.audioSamplesValid = true;
         event.audioSamplesThisFrame = n;
 
-        // Derive the measured sample rate from cumulative samples and
-        // the elapsed audio PTS span.  The *first* anchored frame
-        // establishes the origin; samples from that frame are
-        // deliberately excluded because the measurement window they
-        // mark is the time from anchor to the *next* frame, not the
-        // samples that precede the anchor.  Any timestamp gap resets
-        // the anchor so the next valid chunk starts a fresh window.
-        const MediaTimeStamp &audMts = uap->pts();
-        if (!audMts.isValid()) {
-                _audioSamplesAnchorSet = false;
-                return;
-        }
-        const int64_t stampNs = audMts.timeStamp().nanoseconds() + audMts.offset().nanoseconds();
-        if (!_audioSamplesAnchorSet) {
-                _audioSamplesAnchorSet = true;
-                _audioSamplesAnchorNs = stampNs;
-                _audioSamplesPreviousStampNs = stampNs;
-                _audioSamplesCumulative = 0;
-                return;
-        }
-        // Timestamps must advance monotonically for the rate
-        // derivation to be meaningful; a non-monotone stamp points at
-        // a gap or a backend-level fault, so we reset the anchor
-        // rather than feeding a nonsensical denominator.
-        if (stampNs <= _audioSamplesPreviousStampNs) {
-                _audioSamplesAnchorSet = true;
-                _audioSamplesAnchorNs = stampNs;
-                _audioSamplesPreviousStampNs = stampNs;
-                _audioSamplesCumulative = 0;
-                return;
-        }
-        _audioSamplesCumulative += n;
-        _audioSamplesPreviousStampNs = stampNs;
+        // Stream-level cadence (cumulative samples vs. wall-clock span)
+        // is reported from the audio stream anchors directly — see the
+        // stats accumulator block in @ref executeCmd.  ingestAudio is
+        // the single owner of those anchors and handles re-anchor on
+        // PTS jumps, so this per-frame check has nothing to add to the
+        // running totals beyond the per-frame delivery-shape stat
+        // above.
 }
 
 void InspectorMediaIO::emitPeriodicLogIfDue() {
@@ -1124,6 +1593,32 @@ void InspectorMediaIO::emitPeriodicLogIfDue() {
                 }
         }
 
+        if (_checkTimestamp) {
+                if (snap.audioPtsJitterSamples > 0) {
+                        promekiInfo("  Audio PTS jitter: min/avg/max = %+.3f / %+.3f / %+.3f ms "
+                                    "(over %lld chunks, %lld re-anchors)",
+                                    snap.audioPtsJitterMinNs / 1.0e6, snap.audioPtsJitterAvgNs / 1.0e6,
+                                    snap.audioPtsJitterMaxNs / 1.0e6,
+                                    static_cast<long long>(snap.audioPtsJitterSamples),
+                                    static_cast<long long>(snap.audioReanchorCount));
+                }
+                if (snap.videoPtsJitterSamples > 0) {
+                        promekiInfo("  Video PTS jitter: min/avg/max = %+.3f / %+.3f / %+.3f ms "
+                                    "(over %lld frames, %lld re-anchors)",
+                                    snap.videoPtsJitterMinNs / 1.0e6, snap.videoPtsJitterAvgNs / 1.0e6,
+                                    snap.videoPtsJitterMaxNs / 1.0e6,
+                                    static_cast<long long>(snap.videoPtsJitterSamples),
+                                    static_cast<long long>(snap.videoReanchorCount));
+                }
+                if (snap.avPtsDriftSamples > 0) {
+                        promekiInfo("  A/V PTS drift: min/avg/max = %+.3f / %+.3f / %+.3f ms "
+                                    "(baseline videoPts-audioPts %+.3f ms, %lld samples)",
+                                    snap.avPtsDriftMinNs / 1.0e6, snap.avPtsDriftAvgNs / 1.0e6,
+                                    snap.avPtsDriftMaxNs / 1.0e6, snap.avBaselineOffsetNs / 1.0e6,
+                                    static_cast<long long>(snap.avPtsDriftSamples));
+                }
+        }
+
         // Continuity is reported only when there's something to say —
         // a clean stream stays silent.  When discontinuities have
         // accumulated we emit a warning summary so the line stands
@@ -1193,9 +1688,12 @@ Error InspectorMediaIO::openCaptureStatsFile(const String &configured) {
         std::fprintf(_statsFile, "frame\t"
                                  "wall_ns\twall_iso\t"
                                  "video_ts_ns\tvideo_clock\tvideo_delta_ns\tvideo_delta_ms\t"
+                                 "video_pts_jitter_ns\t"
                                  "image_width\timage_height\tpixel_format\timage_bytes\t"
                                  "audio_ts_ns\taudio_clock\taudio_delta_ns\taudio_delta_ms\t"
-                                 "audio_samples\taudio_format\taudio_rate_hz\taudio_channels\taudio_bytes\n");
+                                 "audio_pts_jitter_ns\t"
+                                 "audio_samples\taudio_format\taudio_rate_hz\taudio_channels\taudio_bytes\t"
+                                 "av_pts_drift_ns\n");
 
         promekiInfo("InspectorMediaIO: CaptureStats writing to %s", _statsFilePath.cstr());
         _statsWriteError = false;
@@ -1252,17 +1750,23 @@ void InspectorMediaIO::runCaptureStats(const Frame &frame, const InspectorEvent 
                 videoDeltaNs = String::number(d);
                 videoDeltaMs = String::sprintf("%.6f", d / 1.0e6);
         }
+        String videoPtsJitterNs = String("-");
+        if (event.videoPtsJitterValid) {
+                videoPtsJitterNs = String::number(event.videoPtsJitterNs);
+        }
 
         // -- Audio columns --
         String audioTsNs = String("-");
         String audioClockName = String("-");
         String audioDeltaNs = String("-");
         String audioDeltaMs = String("-");
+        String audioPtsJitterNs = String("-");
         String audioSamples = String("-");
         String audioFormat = String("-");
         String audioRateHz = String("-");
         String audioChannels = String("-");
         String audioBytes = String("-");
+        String avPtsDriftNs = String("-");
         {
                 auto auds = frame.audioPayloads();
                 if (!auds.isEmpty() && auds[0].isValid()) {
@@ -1292,20 +1796,31 @@ void InspectorMediaIO::runCaptureStats(const Frame &frame, const InspectorEvent 
                 audioDeltaNs = String::number(d);
                 audioDeltaMs = String::sprintf("%.6f", d / 1.0e6);
         }
+        if (event.audioPtsJitterValid) {
+                audioPtsJitterNs = String::number(event.audioPtsJitterNs);
+        }
+        if (event.avPtsDriftValid) {
+                avPtsDriftNs = String::number(event.avPtsDriftNs);
+        }
 
         const int rc =
                 std::fprintf(_statsFile,
                              "%lld\t"
                              "%lld\t%s\t"
+                             "%s\t%s\t%s\t%s\t%s\t"
                              "%s\t%s\t%s\t%s\t"
-                             "%s\t%s\t%s\t%s\t"
-                             "%s\t%s\t%s\t%s\t"
-                             "%s\t%s\t%s\t%s\t%s\n",
+                             "%s\t%s\t%s\t%s\t%s\t"
+                             "%s\t%s\t%s\t%s\t%s\t"
+                             "%s\n",
                              static_cast<long long>(event.frameIndex.value()), static_cast<long long>(wallNs), wallIso,
                              videoTsNs.cstr(), videoClockName.cstr(), videoDeltaNs.cstr(), videoDeltaMs.cstr(),
-                             imgWidth.cstr(), imgHeight.cstr(), pixelFormat.cstr(), imageBytes.cstr(), audioTsNs.cstr(),
-                             audioClockName.cstr(), audioDeltaNs.cstr(), audioDeltaMs.cstr(), audioSamples.cstr(),
-                             audioFormat.cstr(), audioRateHz.cstr(), audioChannels.cstr(), audioBytes.cstr());
+                             videoPtsJitterNs.cstr(),
+                             imgWidth.cstr(), imgHeight.cstr(), pixelFormat.cstr(), imageBytes.cstr(),
+                             audioTsNs.cstr(), audioClockName.cstr(), audioDeltaNs.cstr(), audioDeltaMs.cstr(),
+                             audioPtsJitterNs.cstr(),
+                             audioSamples.cstr(), audioFormat.cstr(), audioRateHz.cstr(), audioChannels.cstr(),
+                             audioBytes.cstr(),
+                             avPtsDriftNs.cstr());
         if (rc < 0) {
                 promekiErr("InspectorMediaIO: CaptureStats write "
                            "failed on frame %lld (%s) — further rows "
@@ -1335,8 +1850,15 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         InspectorEvent event;
         event.frameIndex = _frameIndex;
 
+        // Audio ingest runs before any audio-side check so the LTC
+        // drain sees this frame's audio chunk in the stream.  It also
+        // emits AudioTimestampReanchor discontinuities into @c event,
+        // which the periodic warning loop below relays.
+        ingestAudio(work, event);
+
         if (_decodeImageData) runImageDataCheck(work, event);
-        if (_decodeLtc) runLtcCheck(work, event);
+        if (_decodeAudioData) runAudioDataCheck(work, event);
+        if (_decodeLtc) runLtcCheck(event);
         runAvSyncCheck(work, event);
         runContinuityCheck(event);
         if (_checkTimestamp) runTimestampCheck(work, event);
@@ -1398,18 +1920,86 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                                 _stats.audioSamplesAvg += (static_cast<double>(n) - _stats.audioSamplesAvg) / k;
                         }
                         _stats.audioSamplesFrames++;
-                        // Expose the anchor-based cumulative totals so
-                        // snapshot consumers and the periodic log can
-                        // report measured rate.  These mirror the
-                        // inspector-private anchor fields.
-                        _stats.audioSamplesTotal = _audioSamplesCumulative;
-                        _stats.audioSamplesSpanNs =
-                                _audioSamplesAnchorSet ? (_audioSamplesPreviousStampNs - _audioSamplesAnchorNs) : 0;
+                        // Stream-level cumulative totals: cumulative
+                        // samples / span between the first ingested
+                        // chunk's PTS and the most recent ingested
+                        // chunk's PTS.  This is the long-run
+                        // measured rate; the per-frame min/max/avg
+                        // above is the per-delivery shape.  When
+                        // audio is bursty, span and cumulative are
+                        // both still meaningful — they just measure
+                        // the *stream* rather than per-frame.
+                        _stats.audioSamplesTotal = _audioCumulativeIn;
+                        _stats.audioSamplesSpanNs = (_audioStreamAnchored && _hasLastAudioPtsForAv)
+                                                            ? (_lastAudioPtsForAvNs - _audioStreamStartNs)
+                                                            : 0;
                         _stats.measuredAudioSampleRate =
-                                _stats.audioSamplesSpanNs > 0 ? (static_cast<double>(_stats.audioSamplesTotal) * 1.0e9 /
-                                                                 static_cast<double>(_stats.audioSamplesSpanNs))
-                                                              : 0.0;
+                                _stats.audioSamplesSpanNs > 0
+                                        ? (static_cast<double>(_stats.audioSamplesTotal) * 1.0e9 /
+                                           static_cast<double>(_stats.audioSamplesSpanNs))
+                                        : 0.0;
                 }
+                if (event.audioPtsJitterValid) {
+                        const int64_t j = event.audioPtsJitterNs;
+                        if (_stats.audioPtsJitterSamples == 0) {
+                                _stats.audioPtsJitterMinNs = j;
+                                _stats.audioPtsJitterMaxNs = j;
+                                _stats.audioPtsJitterAvgNs = static_cast<double>(j);
+                        } else {
+                                if (j < _stats.audioPtsJitterMinNs) _stats.audioPtsJitterMinNs = j;
+                                if (j > _stats.audioPtsJitterMaxNs) _stats.audioPtsJitterMaxNs = j;
+                                const double n =
+                                        static_cast<double>(_stats.audioPtsJitterSamples + 1);
+                                _stats.audioPtsJitterAvgNs +=
+                                        (static_cast<double>(j) - _stats.audioPtsJitterAvgNs) / n;
+                        }
+                        _stats.audioPtsJitterSamples++;
+                }
+                if (event.videoPtsJitterValid) {
+                        const int64_t j = event.videoPtsJitterNs;
+                        if (_stats.videoPtsJitterSamples == 0) {
+                                _stats.videoPtsJitterMinNs = j;
+                                _stats.videoPtsJitterMaxNs = j;
+                                _stats.videoPtsJitterAvgNs = static_cast<double>(j);
+                        } else {
+                                if (j < _stats.videoPtsJitterMinNs) _stats.videoPtsJitterMinNs = j;
+                                if (j > _stats.videoPtsJitterMaxNs) _stats.videoPtsJitterMaxNs = j;
+                                const double n =
+                                        static_cast<double>(_stats.videoPtsJitterSamples + 1);
+                                _stats.videoPtsJitterAvgNs +=
+                                        (static_cast<double>(j) - _stats.videoPtsJitterAvgNs) / n;
+                        }
+                        _stats.videoPtsJitterSamples++;
+                }
+                if (event.avPtsDriftValid) {
+                        const int64_t d = event.avPtsDriftNs;
+                        if (_stats.avPtsDriftSamples == 0) {
+                                _stats.avPtsDriftMinNs = d;
+                                _stats.avPtsDriftMaxNs = d;
+                                _stats.avPtsDriftAvgNs = static_cast<double>(d);
+                        } else {
+                                if (d < _stats.avPtsDriftMinNs) _stats.avPtsDriftMinNs = d;
+                                if (d > _stats.avPtsDriftMaxNs) _stats.avPtsDriftMaxNs = d;
+                                const double n = static_cast<double>(_stats.avPtsDriftSamples + 1);
+                                _stats.avPtsDriftAvgNs +=
+                                        (static_cast<double>(d) - _stats.avPtsDriftAvgNs) / n;
+                        }
+                        _stats.avPtsDriftSamples++;
+                }
+                _stats.avBaselineSet = _avBaselineSet;
+                _stats.avBaselineOffsetNs = _avBaselineOffsetNs;
+
+                // Re-anchor counters mirror the per-frame discontinuity
+                // events so consumers can read the totals from the
+                // snapshot without scanning every event.
+                for (const auto &d : event.discontinuities) {
+                        if (d.kind == InspectorDiscontinuity::AudioTimestampReanchor) {
+                                _stats.audioReanchorCount++;
+                        } else if (d.kind == InspectorDiscontinuity::VideoTimestampReanchor) {
+                                _stats.videoReanchorCount++;
+                        }
+                }
+
                 _stats.totalDiscontinuities += event.discontinuities.size();
                 _stats.hasLastEvent = true;
                 _stats.lastEvent = event;

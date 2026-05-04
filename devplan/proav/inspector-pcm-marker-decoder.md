@@ -1,27 +1,40 @@
 # Inspector: `PcmMarker` audio-channel decoder
 
-`InspectorMediaIO` should grow a decoder for the TPG's
-`AudioPattern::PcmMarker` output — the sample-domain inverse of the
-generator. Gives sample-exact round-trip verification (bit flips,
-dropped / duplicated / reordered chunks all become visible), the
-audio-pipeline analog of the picture `ImageDataDecoder`.
+**COMPLETE** — shipped in the `AudioDataEncoder` / `AudioDataDecoder` +
+inspector `AudioData` test changeset.
 
-The generator framing is already defined in
-`AudioTestPattern::kPcmMarker*` constants:
+## What shipped
 
-- 16-sample alternating preamble.
-- 8-sample start marker (four highs + four lows).
-- 64-bit MSB-first payload at ±0.8.
-- Trailing parity bit at ±0.6.
+- `AudioDataEncoder` — Manchester-encoded 76-bit codeword (4 sync +
+  64 payload + 8 CRC-8/AUTOSAR), one encoder per
+  (AudioDesc, samplesPerBit, amplitude) triple.  Handles every PCM
+  format (interleaved + planar) via pre-built primer buffers.
 
-## Tasks
+- `AudioDataDecoder` — sync-nibble run-length measurement + integrate-
+  and-compare Manchester demodulation.  ±50 % pitch tolerance absorbs
+  ordinary SRC drift.  Streaming `decodeAll(StreamState&, ...)` API for
+  cross-chunk codeword reassembly.  Per-band `decode(payload, band)` for
+  batch-style callers.
 
-- [ ] Hunt for the preamble; latch on first match.
-- [ ] Walk the start marker; reject and retry on parity / shape
-  mismatch.
-- [ ] Decode the 64-bit payload and validate the parity bit.
-- [ ] Report the decoded value to the Inspector event alongside the
-  existing LTC / picture-data results.
-- [ ] When the payload looks like a BCD64 timecode, parse via
-  `Timecode::fromBcd64`; otherwise expose the raw 64-bit counter.
-- [ ] Tests round-trip TPG → Inspector and verify recovered values.
+- Wire format unified with TPG video data band:
+  `[stream:8][channel:8][frame:48]` (MSB-first, big-endian payload
+  bytes for CRC).  `AudioTestPattern::PcmMarker` replaced the old
+  bespoke preamble / start-marker / parity-bit framing.
+
+- `InspectorTest::AudioData` (default-on) — per-channel
+  `AudioDataDecoder::StreamState`, per-channel active latch, new
+  `InspectorEvent::AudioChannelMarker` struct, and three new
+  `InspectorDiscontinuity::Kind` values:
+  - `AudioChannelMismatch` — encoded channel byte ≠ physical channel.
+  - `AudioDataDecodeFailure` — sync-detected codeword with bad CRC or
+    sync nibble.
+  - `AudioDataLengthAnomaly` — measured codeword length deviates
+    substantially from the expected span.
+
+- Tests: `tests/unit/audiodataencoder.cpp` (13 cases),
+  `tests/unit/audiodatadecoder.cpp` (19 cases including 16-phase SRC
+  round-trips and multi-codeword streaming), plus inspector integration
+  tests in `tests/unit/mediaiotask_inspector.cpp`.
+
+For design notes see `docs/` (doxygen) and the class-level comments in
+`include/promeki/audiodataencoder.h` / `include/promeki/audiodatadecoder.h`.

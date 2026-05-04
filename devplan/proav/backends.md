@@ -32,8 +32,10 @@ that history now lives in git. What remains here is the open work.
   `AudioFormat::convertTo` / direct-converter registry.
 - **BurnMediaIO** — text overlay via `VideoTestPattern::applyBurn`.
 - **FrameSyncMediaIO** — wraps `FrameSync` for cadence resync.
-- **InspectorMediaIO** — QA sink: image-data band decode, audio LTC
-  decode, A/V sync offset, continuity checks, `--filter` queries.
+- **InspectorMediaIO** — QA sink: image-data band decode, per-channel
+  `AudioDataDecoder` marker decode (`InspectorTest::AudioData`,
+  default-on), audio LTC decode (opt-in), A/V sync offset, continuity
+  checks, `--filter` queries.
 - **VideoEncoderMediaIO** / **VideoDecoderMediaIO** — generic codec
   wrappers over the `VideoCodec` registry. JPEG, JPEG XS, NVENC,
   NVDEC backends are registered.

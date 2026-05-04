@@ -22,14 +22,6 @@ namespace {
         /// Two-pi constant with enough precision for audio phase integration.
         static constexpr double kTwoPi = 6.28318530717958647692;
 
-        /// Peak amplitude for the PcmMarker payload bits.  Bits land at
-        /// ±kPcmMarkerBitLevel, the preamble and start-of-frame marker
-        /// sit at ±kPcmMarkerSyncLevel (≈full scale) so the decoder can
-        /// confidently distinguish the two bands.
-        static constexpr float kPcmMarkerSyncLevel = 1.0f;
-        static constexpr float kPcmMarkerBitLevel = 0.8f;
-        static constexpr float kPcmMarkerParityLevel = 0.6f;
-
         /// EBU line-up reference level: −18 dBFS.
         static const AudioLevel kEbuLineupLevel = AudioLevel::fromDbfs(-18.0);
 
@@ -429,6 +421,15 @@ PcmAudioPayload::Ptr AudioTestPattern::createPayload(size_t samples, const Timec
         BufferView view(buf, 0, bufBytes);
         auto       payload = PcmAudioPayload::Ptr::create(workingDesc, samples, view);
         if (!payload.isValid()) return PcmAudioPayload::Ptr();
+
+        // Stamp PcmMarker channels via the AudioDataEncoder using the
+        // current monotonic frame counter, then advance it for the
+        // next call.  External wrappers that own a frame counter
+        // (TpgMediaIO) overwrite via @ref setPcmMarkerFrameNumber
+        // before each call.
+        stampPcmMarkers(*payload.modify(), _pcmMarkerCounter);
+        _pcmMarkerCounter++;
+
         return payload;
 }
 
@@ -460,15 +461,11 @@ void AudioTestPattern::writePattern(float *out, size_t samples, const Timecode &
                 if (!burst.isEmpty()) avSyncData = burst.data();
         }
 
-        // PcmMarker payload: prefer the frame's BCD64 timecode when we
-        // have one (gives the decoder a self-describing time anchor
-        // that matches the picture-side data band), otherwise fall
-        // back to a per-instance monotonic counter.  The counter is
-        // incremented regardless so invalid-tc and valid-tc runs still
-        // produce distinct per-call payloads.
-        const uint64_t pcmPayload = tc.isValid() ? tc.toBcd64() : _pcmMarkerCounter;
-        _pcmMarkerCounter++;
-
+        // PcmMarker channels are stamped in a post-pass via the
+        // AudioDataEncoder once the float-domain pattern has been
+        // composed and the buffer is wrapped in a PcmAudioPayload —
+        // see @ref stampPcmMarkers.  The float-domain loop below
+        // simply leaves those channels at the buffer's pre-zero state.
         for (size_t ch = 0; ch < channels; ++ch) {
                 AudioPattern mode = modeForChannel(ch);
 
@@ -507,7 +504,9 @@ void AudioTestPattern::writePattern(float *out, size_t samples, const Timecode &
                         continue;
                 }
                 if (mode == AudioPattern::PcmMarker) {
-                        writePcmMarkerChannel(out, ch, channels, samples, pcmPayload);
+                        // Handled in stampPcmMarkers post-pass —
+                        // the float-domain loop just leaves the
+                        // channel zeroed.
                         continue;
                 }
                 if (mode == AudioPattern::Sweep) {
@@ -708,58 +707,47 @@ void AudioTestPattern::writeDualToneChannel(float *out, size_t channel, size_t c
         _dualTonePhase2 = phase2;
 }
 
-void AudioTestPattern::writePcmMarkerChannel(float *out, size_t channel, size_t channels, size_t samples,
-                                             uint64_t payload) const {
-        // Wire format (all values land verbatim in PCM samples):
-        //
-        //   [ preamble     ] kPcmMarkerPreambleSamples of alternating
-        //                    +full / -full so a decoder can detect the
-        //                    pattern via a simple AC-coupled toggle.
-        //   [ start-of-frame ] kPcmMarkerStartSamples: four +full
-        //                    followed by four -full; distinguishes the
-        //                    preamble (alternating) from the marker.
-        //   [ payload      ] kPcmMarkerPayloadBits samples, one per
-        //                    payload bit, MSB first.  A set bit lands
-        //                    at +kPcmMarkerBitLevel; a clear bit at
-        //                    -kPcmMarkerBitLevel.
-        //   [ parity       ] one sample at ±kPcmMarkerParityLevel
-        //                    encoding the XOR of all payload bits so
-        //                    the decoder can sanity-check a frame.
-        //   [ silence      ] any remaining samples in the chunk.
-        //
-        // Chunks shorter than the full frame are truncated; the
-        // decoder is expected to resynchronise on the next chunk.
-        size_t pos = 0;
+void AudioTestPattern::stampPcmMarkers(PcmAudioPayload &payload, uint64_t frameNumber) const {
+        const size_t channels = _desc.channels();
+        if (channels == 0 || !_channelModes.isValid()) return;
 
-        // Preamble.
-        for (size_t i = 0; i < kPcmMarkerPreambleSamples && pos < samples; ++i, ++pos) {
-                const float v = (i & 1u) ? -kPcmMarkerSyncLevel : kPcmMarkerSyncLevel;
-                out[pos * channels + channel] = v;
+        // Cheap pre-scan: bail before constructing an encoder when no
+        // channel asked for PcmMarker.  The encoder builds primer
+        // buffers in its constructor, so skipping when there's nothing
+        // to do keeps the per-frame fast path free of the allocation.
+        bool any = false;
+        for (size_t ch = 0; ch < channels; ++ch) {
+                if (modeForChannel(ch) == AudioPattern::PcmMarker) {
+                        any = true;
+                        break;
+                }
         }
+        if (!any) return;
 
-        // Start-of-frame marker: four highs then four lows.
-        for (size_t i = 0; i < kPcmMarkerStartSamples && pos < samples; ++i, ++pos) {
-                const float v = (i < (kPcmMarkerStartSamples / 2)) ? kPcmMarkerSyncLevel : -kPcmMarkerSyncLevel;
-                out[pos * channels + channel] = v;
+        AudioDataEncoder enc(payload.desc());
+        if (!enc.isValid()) return;
+        if (payload.sampleCount() < enc.packetSamples()) return;
+
+        const uint64_t maskedFrame = frameNumber & kPcmMarkerFrameMask;
+
+        List<AudioDataEncoder::Item> items;
+        for (size_t ch = 0; ch < channels; ++ch) {
+                if (modeForChannel(ch) != AudioPattern::PcmMarker) continue;
+                AudioDataEncoder::Item item{};
+                item.firstSample = 0;
+                item.sampleCount = payload.sampleCount();
+                item.channel = static_cast<uint32_t>(ch);
+                // Wire format: top byte = stream ID, next byte =
+                // channel index, low 48 bits = frame number.  Mirrors
+                // the @c TpgMediaIO video data band so a downstream
+                // consumer can correlate audio and video by the same
+                // 56-bit stream-plus-frame identifier.
+                item.payload = (static_cast<uint64_t>(_pcmMarkerStreamId) << 56) |
+                               (static_cast<uint64_t>(ch & 0xffu) << 48) | maskedFrame;
+                items.pushToBack(item);
         }
-
-        // Payload: 64 bits MSB-first.
-        int parity = 0;
-        for (size_t i = 0; i < kPcmMarkerPayloadBits && pos < samples; ++i, ++pos) {
-                const int bit = static_cast<int>((payload >> (kPcmMarkerPayloadBits - 1 - i)) & 0x1u);
-                parity ^= bit;
-                out[pos * channels + channel] = bit ? kPcmMarkerBitLevel : -kPcmMarkerBitLevel;
-        }
-
-        // Parity bit — lives at a lower amplitude than the payload so
-        // a rough decoder can't confuse the two bands.
-        if (pos < samples) {
-                out[pos * channels + channel] = parity ? kPcmMarkerParityLevel : -kPcmMarkerParityLevel;
-                ++pos;
-        }
-
-        // Remaining samples are left at zero (the buffer was
-        // pre-zeroed in create()) — they act as an inter-frame gap.
+        if (items.isEmpty()) return;
+        enc.encode(payload, items);
 }
 
 void AudioTestPattern::writeSweepChannel(float *out, size_t channel, size_t channels, size_t samples) const {

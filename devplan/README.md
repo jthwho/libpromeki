@@ -29,6 +29,7 @@ devplan/
 │   ├── optimization.md  Network transmit (sendmmsg, kernel pacing, TXTIME)
 │   ├── timestamps.md    MediaTimeStamp / ClockDomain follow-ups
 │   ├── framesync.md     COMPLETE; stub retained
+│   ├── inspector-pcm-marker-decoder.md  COMPLETE; stub retained
 │   ├── dsp.md           Deferred audio DSP backends
 │   ├── nvenc.md         NVENC / NVDEC follow-up work
 │   └── quicktime.md     QuickTime writer drain-at-close (deferred)

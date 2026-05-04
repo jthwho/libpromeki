@@ -538,19 +538,31 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
 
                 /// @brief int — maximum allowed sample-to-sample change in the
                 /// picture-vs-LTC sync offset before the inspector flags a
-                /// discontinuity.  Default 0: any change is reported.  Set
-                /// higher (e.g. 1, 2, ...) when the upstream encode/decode
-                /// pair has a known small jitter that should not generate
-                /// noise.  Only meaningful when the @c TcSync test is
-                /// enabled.
+                /// discontinuity.  Only meaningful when the @c TcSync test
+                /// is enabled.
+                ///
+                /// Default 2: the libvtc LTC encoder's raised-cosine
+                /// transition ramp combined with the decoder's hysteresis
+                /// threshold gives the decoder a ±1 sample edge-detection
+                /// variance even on a perfectly stable input.  In practice
+                /// the offset alternates between two adjacent integer
+                /// values from frame to frame; flagging that as a
+                /// discontinuity drowns the log in false positives.  A
+                /// tolerance of 2 absorbs that natural jitter while still
+                /// catching real drift (≥3 samples between consecutive
+                /// frames).  Set to 0 to enforce strict bit-exact lock
+                /// (useful in synthesized-LTC test environments) or higher
+                /// if the upstream pipeline has known additional jitter
+                /// (e.g. an SRC re-clocking the audio).
                 PROMEKI_DECLARE_ID(InspectorSyncOffsetToleranceSamples,
                                    VariantSpec()
                                            .setType(Variant::TypeS32)
-                                           .setDefault(int32_t(0))
+                                           .setDefault(int32_t(2))
                                            .setMin(int32_t(0))
                                            .setDescription("Max allowed sample-to-sample change in "
                                                            "picture-vs-LTC sync offset before flagging "
-                                                           "a discontinuity (0 = any change)."));
+                                                           "a discontinuity (default 2 absorbs LTC "
+                                                           "edge-detection jitter)."));
 
                 /// @brief int — scan lines per @ref ImageDataEncoder band.  Must
                 /// match the encoder's @ref TpgDataEncoderRepeatLines so the
@@ -579,6 +591,39 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setDefault(1.0)
                                            .setMin(0.0)
                                            .setDescription("Inspector periodic-summary log interval, seconds."));
+
+                /// @brief int64 — maximum tolerated divergence between an
+                /// incoming audio chunk's @ref MediaTimeStamp and the
+                /// inspector's prediction (audio stream anchor + cumulative
+                /// samples × sample period), in nanoseconds.  Within this
+                /// window the divergence is silently absorbed as a jitter
+                /// statistic; beyond it the inspector emits an
+                /// @c AudioTimestampReanchor discontinuity and re-anchors
+                /// the audio stream timeline on the new PTS.  Default
+                /// 5,000,000 (5 ms — about 240 samples at 48 kHz, well
+                /// below typical sender-side timestamp noise).
+                PROMEKI_DECLARE_ID(InspectorAudioPtsToleranceNs,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS64)
+                                           .setDefault(int64_t(5'000'000))
+                                           .setMin(int64_t(0))
+                                           .setDescription("Max tolerated audio PTS deviation from prediction "
+                                                           "before re-anchoring (nanoseconds)."));
+
+                /// @brief int64 — maximum tolerated divergence between this
+                /// frame's video @ref MediaTimeStamp and the inspector's
+                /// prediction (video anchor + frame index × frame duration),
+                /// in nanoseconds.  Within this window the divergence is a
+                /// jitter statistic; beyond it the inspector emits a
+                /// @c VideoTimestampReanchor discontinuity and re-anchors
+                /// the video timeline on the new PTS.  Default 5,000,000.
+                PROMEKI_DECLARE_ID(InspectorVideoPtsToleranceNs,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS64)
+                                           .setDefault(int64_t(5'000'000))
+                                           .setMin(int64_t(0))
+                                           .setDescription("Max tolerated video PTS deviation from prediction "
+                                                           "before re-anchoring (nanoseconds)."));
 
                 /// @brief String — output file for the @c CaptureStats
                 /// inspector test.

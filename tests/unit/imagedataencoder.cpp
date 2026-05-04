@@ -404,8 +404,11 @@ TEST_CASE("ImageDataEncoder rejects mismatched image descriptor") {
 TEST_CASE("ImageDataEncoder end-to-end via TPG MediaIO") {
         // Build a TPG configured with an RGB target so the test's
         // simple "white byte == 255" decoder works without YCbCr math,
-        // and a known stream ID so we can match it back.
-        const uint32_t  kStreamId = 0xC0FFEEAAu;
+        // and a known stream ID so we can match it back.  Stream IDs
+        // ride in the top byte of the data band's 64-bit codeword so
+        // values above @c 0xff fold modulo 256 — pick something that
+        // fits the 8-bit field cleanly to keep the assertion direct.
+        const uint32_t  kStreamId = 0xAAu;
         MediaIO::Config cfg = MediaIOFactory::defaultConfig("TPG");
         cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
         cfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
@@ -450,10 +453,16 @@ TEST_CASE("ImageDataEncoder end-to-end via TPG MediaIO") {
         DecodedRow     row0 = decodeRow(line0, cellBytes, 0xff);
         CHECK(row0.sync == ImageDataEncoder::SyncNibble);
 
+        // Wire format: [stream:8][channel:8][frame:48].  Video data
+        // bands always carry @c channel=0; the audio PcmMarker
+        // pattern reuses the same word with the channel index in
+        // bits 48..55.
         const uint64_t frameId = row0.payload;
-        const uint32_t decodedStreamId = static_cast<uint32_t>(frameId >> 32);
-        const uint32_t decodedFrameNo = static_cast<uint32_t>(frameId & 0xffffffffu);
+        const uint32_t decodedStreamId = static_cast<uint32_t>((frameId >> 56) & 0xffu);
+        const uint32_t decodedChannel = static_cast<uint32_t>((frameId >> 48) & 0xffu);
+        const uint64_t decodedFrameNo = frameId & 0x0000ffffffffffffULL;
         CHECK(decodedStreamId == kStreamId);
+        CHECK(decodedChannel == 0u);
         CHECK(decodedFrameNo == 0u); // first frame
 
         // Verify CRC.

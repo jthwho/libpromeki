@@ -69,18 +69,26 @@ static void floatToFloat32BE(uint8_t *outbuf, const float *in, size_t samples) {
 
 template <bool SignedRange, bool BigEndian> static void s24ToFloat(float *out, const uint8_t *in, size_t samples) {
         for (size_t i = 0; i < samples; ++i) {
-                int32_t val;
+                uint32_t u24;
                 if constexpr (BigEndian) {
-                        val = static_cast<int32_t>(in[0]) << 16 | static_cast<int32_t>(in[1]) << 8 |
-                              static_cast<int32_t>(in[2]);
+                        u24 = static_cast<uint32_t>(in[0]) << 16 | static_cast<uint32_t>(in[1]) << 8 |
+                              static_cast<uint32_t>(in[2]);
                 } else {
-                        val = static_cast<int32_t>(in[0]) | static_cast<int32_t>(in[1]) << 8 |
-                              static_cast<int32_t>(in[2]) << 16;
+                        u24 = static_cast<uint32_t>(in[0]) | static_cast<uint32_t>(in[1]) << 8 |
+                              static_cast<uint32_t>(in[2]) << 16;
                 }
                 if constexpr (SignedRange) {
-                        *out++ = AudioFormat::integerToFloat<int32_t, AudioFormat::MinS24, AudioFormat::MaxS24>(val);
+                        // Sign-extend the 24-bit value into a 32-bit
+                        // signed int.  Without this, every negative
+                        // S24 sample reads as a large positive int32
+                        // and integerToFloat overshoots the [-1, 1]
+                        // range.
+                        int32_t s24 =
+                                (u24 & 0x800000u) ? static_cast<int32_t>(u24 | 0xFF000000u) : static_cast<int32_t>(u24);
+                        *out++ = AudioFormat::integerToFloat<int32_t, AudioFormat::MinS24, AudioFormat::MaxS24>(s24);
                 } else {
-                        *out++ = AudioFormat::integerToFloat<int32_t, AudioFormat::MinU24, AudioFormat::MaxU24>(val);
+                        *out++ = AudioFormat::integerToFloat<int32_t, AudioFormat::MinU24, AudioFormat::MaxU24>(
+                                static_cast<int32_t>(u24));
                 }
                 in += 3;
         }
