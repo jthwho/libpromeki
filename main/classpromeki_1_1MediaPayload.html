@@ -411,7 +411,7 @@ compressed?" is answered by <a class="el" href="classpromeki_1_1MediaPayload.htm
 <div class="line">    <span class="keyword">auto</span> *<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">vp</a> = p-&gt;as&lt;<a class="code hl_class" href="classpromeki_1_1VideoPayload.html">VideoPayload</a>&gt;();  <span class="comment">// safe dispatch, no RTTI miss</span></div>
 <div class="line">    ...</div>
 <div class="line">}</div>
-<div class="ttc" id="aclasspromeki_1_1SharedPtr_html"><div class="ttname"><a href="classpromeki_1_1SharedPtr.html">promeki::SharedPtr</a></div><div class="ttdoc">A smart pointer class with reference counting and optional copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> sharedptr.h:353</div></div>
+<div class="ttc" id="aclasspromeki_1_1SharedPtr_html"><div class="ttname"><a href="classpromeki_1_1SharedPtr.html">promeki::SharedPtr</a></div><div class="ttdoc">A smart pointer class with reference counting and optional copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> sharedptr.h:334</div></div>
 <div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
 <div class="ttc" id="aclasspromeki_1_1VideoPayload_html"><div class="ttname"><a href="classpromeki_1_1VideoPayload.html">promeki::VideoPayload</a></div><div class="ttdoc">Abstract base for any video payload — compressed or uncompressed.</div><div class="ttdef"><b>Definition</b> videopayload.h:56</div></div>
 </div><!-- fragment --><dl class="section user"><dt>Thread Safety</dt><dd><a class="el" href="classpromeki_1_1MediaPayload.html#a863dbce39e690ce783d44397ceb721dc">MediaPayload::Ptr</a> is atomically refcounted, so handing a payload between pipeline stages running on different threads is safe. A single <a class="el" href="classpromeki_1_1MediaPayload.html" title="Abstract polymorphic base for any media payload flowing through a pipeline.">MediaPayload</a> instance is conditionally thread-safe: const accessors (descriptor, kind, metadata read) are safe; mutators require external synchronization. The intended pipeline pattern is "produce on stage A, hand off to
@@ -1507,7 +1507,7 @@ plane." </p>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1MediaPayload.html">MediaPayload</a></li>
-    <li class="footer">Generated on 2026-05-04 08:46:32 from commit d7c202b (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-04 19:45:16 from commit c353e07 (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

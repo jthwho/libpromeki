@@ -56,7 +56,7 @@ var searchData=
   ['videoptsjittersamples_53',['videoPtsJitterSamples',['../structpromeki_1_1InspectorSnapshot.html#a0a8e7e1d9e7cf73a7d1335e351df8441',1,'promeki::InspectorSnapshot']]],
   ['videoptsjittervalid_54',['videoPtsJitterValid',['../structpromeki_1_1InspectorEvent.html#a73d55306b6d8753425b0f39747f9d144',1,'promeki::InspectorEvent']]],
   ['videoqp_55',['VideoQp',['../classpromeki_1_1MediaConfig.html#a3aa8bf2c5b33fc7f6eb6de2847c95643',1,'promeki::MediaConfig']]],
-  ['videorange_56',['videorange',['../structpromeki_1_1PixelFormat_1_1Data.html#a50fd85525e51ffc2a89260982812682e',1,'promeki::PixelFormat::Data::videoRange'],['../classpromeki_1_1MediaConfig.html#a31c7ef940b0531d3175e2df52f5ddec7',1,'promeki::MediaConfig::VideoRange'],['../classpromeki_1_1Metadata.html#aabfa48d7282c4c6e6b475d408482d2d8',1,'promeki::Metadata::VideoRange']]],
+  ['videorange_56',['videorange',['../classpromeki_1_1Metadata.html#aabfa48d7282c4c6e6b475d408482d2d8',1,'promeki::Metadata::VideoRange'],['../structpromeki_1_1PixelFormat_1_1Data.html#a50fd85525e51ffc2a89260982812682e',1,'promeki::PixelFormat::Data::videoRange'],['../classpromeki_1_1MediaConfig.html#a31c7ef940b0531d3175e2df52f5ddec7',1,'promeki::MediaConfig::VideoRange']]],
   ['videorcmode_57',['VideoRcMode',['../classpromeki_1_1MediaConfig.html#a0ad4d389dd9e48d94a0b99d2ffcbfb56',1,'promeki::MediaConfig']]],
   ['videoreanchorcount_58',['videoReanchorCount',['../structpromeki_1_1InspectorSnapshot.html#ac2f6d1b0d65278d3b2a9a29125452f84',1,'promeki::InspectorSnapshot']]],
   ['videorepeatheaders_59',['VideoRepeatHeaders',['../classpromeki_1_1MediaConfig.html#a81066e47aa767cdf8b937cd61cdeaf8d',1,'promeki::MediaConfig']]],

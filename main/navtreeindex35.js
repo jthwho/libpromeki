@@ -1,5 +1,6 @@
 var NAVTREEINDEX35 =
 {
+"md_CODING__STANDARDS.html#autotoc_md48":[20,2],
 "md_CODING__STANDARDS.html#autotoc_md49":[20,2,0],
 "md_CODING__STANDARDS.html#autotoc_md50":[20,2,1],
 "md_CODING__STANDARDS.html#autotoc_md51":[20,2,2],
@@ -248,6 +249,5 @@ var NAVTREEINDEX35 =
 "nvenc.html#nvenc_trouble_runtime":[16,4,0],
 "nvenc.html#nvenc_trouble_sdk":[16,4,1],
 "nvenc.html#nvenc_troubleshoot":[16,4],
-"nvenc.html#nvenc_verify":[16,3],
-"nvencvideoencoder_8h.html":[26,0,0,0,198]
+"nvenc.html#nvenc_verify":[16,3]
 };

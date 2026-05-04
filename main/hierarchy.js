@@ -736,6 +736,7 @@ var hierarchy =
     [ "promeki::SharedPtr< AudioMeter, false >", "classpromeki_1_1SharedPtr.html", null ],
     [ "promeki::SharedPtr< Buffer >", "classpromeki_1_1SharedPtr.html", null ],
     [ "promeki::SharedPtr< Clock, false, Clock >", "classpromeki_1_1SharedPtr.html", null ],
+    [ "promeki::SharedPtr< Data >", "classpromeki_1_1SharedPtr.html", null ],
     [ "promeki::SharedPtr< Frame >", "classpromeki_1_1SharedPtr.html", null ],
     [ "promeki::SharedPtr< HttpHandler, false >", "classpromeki_1_1SharedPtr.html", null ],
     [ "promeki::SharedPtr< IODevice, false >", "classpromeki_1_1SharedPtr.html", null ],

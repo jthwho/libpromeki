@@ -1,5 +1,6 @@
 var NAVTREEINDEX36 =
 {
+"nvencvideoencoder_8h.html":[26,0,0,0,198],
 "nvencvideoencoder_8h_source.html":[26,0,0,0,198],
 "obfuscatedstring_8h.html":[26,0,0,0,199],
 "obfuscatedstring_8h.html#a8933046c7d7e21a6f8f5921f695c2556":[26,0,0,0,199,1],
@@ -135,12 +136,9 @@ var NAVTREEINDEX36 =
 "sharedmemory_8h.html":[26,0,0,0,239],
 "sharedmemory_8h_source.html":[26,0,0,0,239],
 "sharedptr_8h.html":[26,0,0,0,240],
-"sharedptr_8h.html#a19c77a1148cf694c53a7d0d6608c0cd9":[26,0,0,0,240,9],
-"sharedptr_8h.html#a459815ff9a5628e517b3b97972871bf8":[26,0,0,0,240,11],
-"sharedptr_8h.html#a4a3fa49c1d9daff40b143b7ed3c44268":[26,0,0,0,240,10],
-"sharedptr_8h.html#a4d7a3a1b805fb0c89b3c8f59d1d24a52":[26,0,0,0,240,8],
-"sharedptr_8h.html#a60b00ce3287916679cab881cc182d143":[26,0,0,0,240,7],
-"sharedptr_8h.html#abea658d08e1442ff29c25acc39a48a8e":[26,0,0,0,240,6],
+"sharedptr_8h.html#a19c77a1148cf694c53a7d0d6608c0cd9":[26,0,0,0,240,8],
+"sharedptr_8h.html#a5081c750cc2f9f6d5135933abe640544":[26,0,0,0,240,7],
+"sharedptr_8h.html#abea658d08e1442ff29c25acc39a48a8e":[26,0,0,0,240,5],
 "sharedptr_8h_source.html":[26,0,0,0,240],
 "sharedthreadmediaio_8h.html":[26,0,0,0,241],
 "sharedthreadmediaio_8h_source.html":[26,0,0,0,241],
@@ -249,5 +247,7 @@ var NAVTREEINDEX36 =
 "structpromeki_1_1AudioFormat_1_1Data.html#a61c1ba84613cf0eaa58eb55c0a25e012":[23,13,12,0,13],
 "structpromeki_1_1AudioFormat_1_1Data.html#a68c22fd8b9bc6997c0dc497c502f4470":[23,13,12,0,0],
 "structpromeki_1_1AudioFormat_1_1Data.html#a6b89e88612fd13b57119749ca64bada7":[23,13,12,0,10],
-"structpromeki_1_1AudioFormat_1_1Data.html#a7faaec4a4052924054c92faac0ad4e0c":[23,13,12,0,2]
+"structpromeki_1_1AudioFormat_1_1Data.html#a7faaec4a4052924054c92faac0ad4e0c":[23,13,12,0,2],
+"structpromeki_1_1AudioFormat_1_1Data.html#a8641161c17869289d22f4fe1edcd8608":[23,13,12,0,3],
+"structpromeki_1_1AudioFormat_1_1Data.html#a96d9b87ce3ed4961bb88bf9c167b4894":[23,13,12,0,11]
 };

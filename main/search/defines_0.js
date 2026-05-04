@@ -9,12 +9,9 @@ var searchData=
   ['promeki_5fregister_5fmediapayload_6',['PROMEKI_REGISTER_MEDIAPAYLOAD',['../mediapayload_8h.html#a8bc8f01e50b5136ed265a50099e7ba0f',1,'mediapayload.h']]],
   ['promeki_5fregister_5fresources_7',['PROMEKI_REGISTER_RESOURCES',['../resource_8h.html#af8544f54b7ac58fcc9381b662d18e473',1,'resource.h']]],
   ['promeki_5fshared_5fabstract_8',['PROMEKI_SHARED_ABSTRACT',['../sharedptr_8h.html#abea658d08e1442ff29c25acc39a48a8e',1,'sharedptr.h']]],
-  ['promeki_5fshared_5fderived_9',['PROMEKI_SHARED_DERIVED',['../sharedptr_8h.html#a60b00ce3287916679cab881cc182d143',1,'sharedptr.h']]],
-  ['promeki_5fshared_5fderived_5fnocopy_10',['PROMEKI_SHARED_DERIVED_NOCOPY',['../sharedptr_8h.html#a4d7a3a1b805fb0c89b3c8f59d1d24a52',1,'sharedptr.h']]],
-  ['promeki_5fshared_5ffinal_11',['PROMEKI_SHARED_FINAL',['../sharedptr_8h.html#a19c77a1148cf694c53a7d0d6608c0cd9',1,'sharedptr.h']]],
-  ['promeki_5fshared_5ffinal_5fnocopy_12',['PROMEKI_SHARED_FINAL_NOCOPY',['../sharedptr_8h.html#a4a3fa49c1d9daff40b143b7ed3c44268',1,'sharedptr.h']]],
-  ['promeki_5fshared_5fnocopy_13',['PROMEKI_SHARED_NOCOPY',['../sharedptr_8h.html#a459815ff9a5628e517b3b97972871bf8',1,'sharedptr.h']]],
-  ['promeki_5fstring_14',['PROMEKI_STRING',['../string_8h.html#a0f81b971444a32cdfed1ba175958d2da',1,'string.h']]],
-  ['promeki_5fwell_5fknown_5frasters_15',['PROMEKI_WELL_KNOWN_RASTERS',['../videoformat_8h.html#ac430021c7e59e3a26ae47863ee0520cc',1,'videoformat.h']]],
-  ['promeki_5fwell_5fknown_5fvideo_5fformats_16',['PROMEKI_WELL_KNOWN_VIDEO_FORMATS',['../videoformat_8h.html#aca325afe75ceadbdcae0118a6ec1d6cb',1,'videoformat.h']]]
+  ['promeki_5fshared_5fderived_9',['PROMEKI_SHARED_DERIVED',['../sharedptr_8h.html#a5081c750cc2f9f6d5135933abe640544',1,'sharedptr.h']]],
+  ['promeki_5fshared_5ffinal_10',['PROMEKI_SHARED_FINAL',['../sharedptr_8h.html#a19c77a1148cf694c53a7d0d6608c0cd9',1,'sharedptr.h']]],
+  ['promeki_5fstring_11',['PROMEKI_STRING',['../string_8h.html#a0f81b971444a32cdfed1ba175958d2da',1,'string.h']]],
+  ['promeki_5fwell_5fknown_5frasters_12',['PROMEKI_WELL_KNOWN_RASTERS',['../videoformat_8h.html#ac430021c7e59e3a26ae47863ee0520cc',1,'videoformat.h']]],
+  ['promeki_5fwell_5fknown_5fvideo_5fformats_13',['PROMEKI_WELL_KNOWN_VIDEO_FORMATS',['../videoformat_8h.html#aca325afe75ceadbdcae0118a6ec1d6cb',1,'videoformat.h']]]
 ];

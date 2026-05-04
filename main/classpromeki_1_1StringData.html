@@ -229,7 +229,7 @@ Public Member Functions</h2></td></tr>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a0033b4bcb7ce8823eb903a9d31d80fde" id="r_a0033b4bcb7ce8823eb903a9d31d80fde"><td class="memItemLeft" align="right" valign="top"><a id="a0033b4bcb7ce8823eb903a9d31d80fde" name="a0033b4bcb7ce8823eb903a9d31d80fde"></a>
 <a class="el" href="classpromeki_1_1RefCount.html">RefCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>_promeki_refct</b></td></tr>
-<tr class="memdesc:a0033b4bcb7ce8823eb903a9d31d80fde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Manual reference count (PROMEKI_SHARED cannot be used on abstract classes). <br /></td></tr>
+<tr class="memdesc:a0033b4bcb7ce8823eb903a9d31d80fde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Manual reference count (hand-rolled to keep _promeki_clone pure virtual). <br /></td></tr>
 <tr class="separator:a0033b4bcb7ce8823eb903a9d31d80fde"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
@@ -241,7 +241,7 @@ Static Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Pure virtual interface for <a class="el" href="classpromeki_1_1String.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> storage backends. </p>
-<p><a class="el" href="classpromeki_1_1StringData.html" title="Pure virtual interface for String storage backends.">StringData</a> defines the contract that both Latin1 and Unicode storage implementations must satisfy. It manually provides <a class="el" href="classpromeki_1_1RefCount.html" title="An atomic reference count object.">RefCount</a> and <a class="el" href="classpromeki_1_1StringData.html#a42f89d87e8367384f8233f694f2780c7" title="Creates a deep copy of this storage backend.">_promeki_clone()</a> since PROMEKI_SHARED cannot be used on abstract classes. </p>
+<p><a class="el" href="classpromeki_1_1StringData.html" title="Pure virtual interface for String storage backends.">StringData</a> defines the contract that both Latin1 and Unicode storage implementations must satisfy. It manually provides <a class="el" href="classpromeki_1_1RefCount.html" title="An atomic reference count object.">RefCount</a> and <a class="el" href="classpromeki_1_1StringData.html#a42f89d87e8367384f8233f694f2780c7" title="Creates a deep copy of this storage backend.">_promeki_clone()</a> so leaves are forced to override via the pure-virtual signature; PROMEKI_SHARED_BASE would synthesize a non-pure abort-on-clone body, which is silently weaker. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a42f89d87e8367384f8233f694f2780c7" name="a42f89d87e8367384f8233f694f2780c7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a42f89d87e8367384f8233f694f2780c7">&#9670;&#160;</a></span>_promeki_clone()</h2>
@@ -1147,7 +1147,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1StringData.html">StringData</a></li>
-    <li class="footer">Generated on 2026-05-04 08:46:32 from commit d7c202b (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-04 19:45:16 from commit c353e07 (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

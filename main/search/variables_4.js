@@ -11,7 +11,7 @@ var searchData=
   ['datartppayloadtype_8',['DataRtpPayloadType',['../classpromeki_1_1MediaConfig.html#a54a21a5c08cb6aaa9934d14f0c1d6697',1,'promeki::MediaConfig']]],
   ['datartpssrc_9',['DataRtpSsrc',['../classpromeki_1_1MediaConfig.html#a47a74f684e0ee569f36c3ad65ba41f96',1,'promeki::MediaConfig']]],
   ['datastreammaxcontainercount_10',['DataStreamMaxContainerCount',['../datastream_8h.html#a7287b2e53bbd5dfdebcb8342300d17cd',1,'promeki::detail']]],
-  ['date_11',['date',['../structpromeki_1_1BuildInfo.html#ae4d5c244faddb134c51652234b5c7067',1,'promeki::BuildInfo::date'],['../classpromeki_1_1Metadata.html#a46bcaf09a930459d666daf5fef513f11',1,'promeki::Metadata::Date']]],
+  ['date_11',['date',['../classpromeki_1_1Metadata.html#a46bcaf09a930459d666daf5fef513f11',1,'promeki::Metadata::Date'],['../structpromeki_1_1BuildInfo.html#ae4d5c244faddb134c51652234b5c7067',1,'promeki::BuildInfo::date']]],
   ['debugserverenv_12',['DebugServerEnv',['../classpromeki_1_1Application.html#a4b64254d34140d5d10c28fc07b091e07',1,'promeki::Application']]],
   ['decoded_13',['decoded',['../structpromeki_1_1InspectorEvent_1_1AudioChannelMarker.html#a7689bdf58e380b253617c464fd9b639a',1,'promeki::InspectorEvent::AudioChannelMarker']]],
   ['decodedcrc_14',['decodedcrc',['../structpromeki_1_1ImageDataDecoder_1_1DecodedItem.html#a8dbf1f95b356eec328e3e1116446325c',1,'promeki::ImageDataDecoder::DecodedItem::decodedCrc'],['../structpromeki_1_1AudioDataDecoder_1_1DecodedItem.html#a312554cb5d53b2731ff3c15faf68f861',1,'promeki::AudioDataDecoder::DecodedItem::decodedCrc']]],
@@ -67,6 +67,6 @@ var searchData=
   ['disconnectedsignal_64',['disconnectedsignal',['../classpromeki_1_1AbstractSocket.html#a475d9fe178df4b0d27c23c9c9072a841',1,'promeki::AbstractSocket::disconnectedSignal'],['../classpromeki_1_1LocalSocket.html#a38e14da695feed0fbbaeb28150cc1c83',1,'promeki::LocalSocket::disconnectedSignal'],['../classpromeki_1_1WebSocket.html#a62251e08da45f53c7961da05bd39bd98',1,'promeki::WebSocket::disconnectedSignal']]],
   ['discontinuities_65',['discontinuities',['../structpromeki_1_1InspectorEvent.html#a0c2f21175eafc435a9d7821a8f1b7493',1,'promeki::InspectorEvent']]],
   ['dts_66',['dts',['../structpromeki_1_1QuickTime_1_1Sample.html#a438cbb0655503e266aa806afd7d95e72',1,'promeki::QuickTime::Sample']]],
-  ['duration_67',['duration',['../structpromeki_1_1QuickTime_1_1Sample.html#a7244e039e3fd85d73c1d8a4c6478cf8e',1,'promeki::QuickTime::Sample::duration'],['../classpromeki_1_1Metadata.html#a2a42cb208387a9184217a57f88ee02cf',1,'promeki::Metadata::Duration']]],
+  ['duration_67',['duration',['../classpromeki_1_1Metadata.html#a2a42cb208387a9184217a57f88ee02cf',1,'promeki::Metadata::Duration'],['../structpromeki_1_1QuickTime_1_1Sample.html#a7244e039e3fd85d73c1d8a4c6478cf8e',1,'promeki::QuickTime::Sample::duration']]],
   ['dutycycle_68',['dutyCycle',['../structpromeki_1_1AudioGen_1_1Config.html#a3555c35487c1ae7bd6e48ff837f50952',1,'promeki::AudioGen::Config']]]
 ];

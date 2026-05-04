@@ -1,7 +1,5 @@
 var NAVTREEINDEX39 =
 {
-"structpromeki_1_1PixelFormat_1_1Data.html#a50fd85525e51ffc2a89260982812682e":[23,13,70,1,14],
-"structpromeki_1_1PixelFormat_1_1Data.html#a5701a445e7b7448971d2c789344e3efb":[23,13,70,1,2],
 "structpromeki_1_1PixelFormat_1_1Data.html#a596e3bbe27f914a8d35c740fd5e0b4b3":[23,13,70,1,13],
 "structpromeki_1_1PixelFormat_1_1Data.html#a59e7aa1baf490cd36541dca562fbb452":[23,13,70,1,10],
 "structpromeki_1_1PixelFormat_1_1Data.html#a671a90536978b4ef2e8eb9c98f507813":[23,13,70,1,6],
@@ -249,5 +247,7 @@ var NAVTREEINDEX39 =
 "typeregistry.html":[18],
 "typeregistry.html#tr_classes":[18,5],
 "typeregistry.html#tr_construction":[18,1],
-"typeregistry.html#tr_disambiguation":[18,4]
+"typeregistry.html#tr_disambiguation":[18,4],
+"typeregistry.html#tr_extension":[18,2],
+"typeregistry.html#tr_guidelines":[18,3]
 };

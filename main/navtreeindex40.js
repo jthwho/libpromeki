@@ -1,7 +1,5 @@
 var NAVTREEINDEX40 =
 {
-"typeregistry.html#tr_extension":[18,2],
-"typeregistry.html#tr_guidelines":[18,3],
 "typeregistry.html#tr_overview":[18,0],
 "udpsocket_8h.html":[26,0,0,0,274],
 "udpsocket_8h_source.html":[26,0,0,0,274],
