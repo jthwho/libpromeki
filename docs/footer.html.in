@@ -4,13 +4,13 @@
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     $navpath
-    <li class="footer">Generated on @BUILD_INFO_DATE@ @BUILD_INFO_TIME@ from commit @BUILD_INFO_REPOIDENT_SHORT@ (@BUILD_INFO_VERSION@).</li>
+    <li class="footer">Generated on @BUILD_INFO_DATE@ @BUILD_INFO_TIME@ from commit @BUILD_INFO_REPOIDENT_SHORT@ (@BUILD_INFO_VERSION_FULL@).</li>
   </ul>
 </div>
 <!--END GENERATE_TREEVIEW-->
 <!--BEGIN !GENERATE_TREEVIEW-->
 <hr class="footer"/><address class="footer"><small>
-Generated on @BUILD_INFO_DATE@ @BUILD_INFO_TIME@ from commit @BUILD_INFO_REPOIDENT_SHORT@ (@BUILD_INFO_VERSION@).
+Generated on @BUILD_INFO_DATE@ @BUILD_INFO_TIME@ from commit @BUILD_INFO_REPOIDENT_SHORT@ (@BUILD_INFO_VERSION_FULL@).
 </small></address>
 <!--END !GENERATE_TREEVIEW-->
 </body>

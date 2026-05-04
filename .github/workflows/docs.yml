@@ -16,6 +16,11 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          # Pull real bytes for LFS-tracked assets (e.g. docs/*.jpg logos)
+          # so they get copied into gh-pages as images instead of pointer
+          # files served as text/plain.
+          lfs: true
         # No submodules: PROMEKI_DOCS_ONLY mode (below) configures only
         # the Doxygen target and skips every third-party dep.
 

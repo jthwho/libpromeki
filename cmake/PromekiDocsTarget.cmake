@@ -11,9 +11,10 @@
 #      project() time) and the commit hash from `git rev-parse HEAD`, so
 #      no submodules are required for the docs build.
 #
-# In docs-only mode the doxygen-awesome-css submodule may not be checked
-# out; we include its stylesheets only when present and otherwise fall
-# back to Doxygen's default theme.
+# Styling: HTML_EXTRA_STYLESHEET points at docs/promeki_doxygen.css, a
+# minimal override that lifts the version (PROJECT_NUMBER) out of Doxygen's
+# default 50%-size rendering.  Defaults to Doxygen's built-in theme
+# otherwise.
 
 function(promeki_setup_docs_target)
     set(PROMEKI_DOCS_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/doxygen" CACHE PATH
@@ -32,6 +33,23 @@ function(promeki_setup_docs_target)
     # BUILD_INFO_* are not yet defined, so derive minimal substitutes.
     if(NOT DEFINED BUILD_INFO_VERSION)
         set(BUILD_INFO_VERSION "${APP_VERSION}")
+    endif()
+    # Pretty version for display in the docs (PROJECT_NUMBER and footer):
+    # MAJOR.MINOR.PATCH[-stage[N]][+buildN], matching the suffix recipe used
+    # for BUILD_INFO_IDENT.  Composed here from APP_VERSION_* (always set at
+    # project() time) so docs-only mode gets the same string without needing
+    # the rest of the build to configure first.
+    if(APP_VERSION_STAGE_NAME STREQUAL "release")
+        set(BUILD_INFO_VERSION_FULL "${BUILD_INFO_VERSION}")
+    elseif(APP_VERSION_STAGE_NAME STREQUAL "rc")
+        set(BUILD_INFO_VERSION_FULL "${BUILD_INFO_VERSION}-rc${APP_VERSION_STAGE_NUM}")
+    elseif(APP_VERSION_STAGE_NUM EQUAL 1)
+        set(BUILD_INFO_VERSION_FULL "${BUILD_INFO_VERSION}-${APP_VERSION_STAGE_NAME}")
+    else()
+        set(BUILD_INFO_VERSION_FULL "${BUILD_INFO_VERSION}-${APP_VERSION_STAGE_NAME}${APP_VERSION_STAGE_NUM}")
+    endif()
+    if(APP_VERSION_BUILD AND NOT APP_VERSION_BUILD STREQUAL "0")
+        set(BUILD_INFO_VERSION_FULL "${BUILD_INFO_VERSION_FULL}+${APP_VERSION_BUILD}")
     endif()
     if(NOT DEFINED BUILD_INFO_REPOIDENT)
         find_package(Git QUIET)
@@ -56,21 +74,14 @@ function(promeki_setup_docs_target)
 
     string(SUBSTRING "${BUILD_INFO_REPOIDENT}" 0 7 BUILD_INFO_REPOIDENT_SHORT)
 
-    set(PROMEKI_DOCS_VERSION "${BUILD_INFO_VERSION}" CACHE STRING
-        "Version string shown in generated documentation")
+    # Plain (non-cache) variable so a VERSION/BUILD edit immediately flows
+    # into the next docs build instead of being shadowed by a stale cache entry.
+    set(PROMEKI_DOCS_VERSION "${BUILD_INFO_VERSION_FULL}")
 
-    # Optional doxygen-awesome-css submodule.  When the submodule is checked
-    # out we use its modern theme; otherwise we leave HTML_EXTRA_STYLESHEET
-    # empty and fall back to Doxygen's built-in styles.  Keeping this
-    # optional lets the docs build succeed without `git submodule update`.
-    set(_awesome_dir "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/doxygen-awesome-css")
-    if(EXISTS "${_awesome_dir}/doxygen-awesome.css")
-        set(PROMEKI_DOCS_EXTRA_STYLESHEET
-            "${_awesome_dir}/doxygen-awesome.css ${_awesome_dir}/doxygen-awesome-sidebar-only.css")
-    else()
-        set(PROMEKI_DOCS_EXTRA_STYLESHEET "")
-        message(STATUS "doxygen-awesome-css submodule not checked out; using default Doxygen theme")
-    endif()
+    # Local stylesheet that makes the project version prominent in the
+    # generated header; everything else defers to Doxygen's defaults.
+    set(PROMEKI_DOCS_EXTRA_STYLESHEET
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/promeki_doxygen.css")
 
     set(DOXYGEN_IN  ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
     set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
