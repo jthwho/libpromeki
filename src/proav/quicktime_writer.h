@@ -105,7 +105,7 @@ struct QuickTimeWriterTrack {
  * the bulk @c mdat write path.
  */
 class QuickTimeWriter : public QuickTime::Impl {
-                PROMEKI_SHARED_DERIVED(QuickTime::Impl, QuickTimeWriter)
+                PROMEKI_SHARED_DERIVED(QuickTimeWriter)
         public:
                 QuickTimeWriter();
                 ~QuickTimeWriter() override;

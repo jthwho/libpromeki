@@ -17,7 +17,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 template <typename CompType, int BitsPerComp, bool IsUYVY> class PaintEngine_422 : public PaintEngine::Impl {
-                PROMEKI_SHARED_DERIVED(PaintEngine::Impl, PaintEngine_422)
+                PROMEKI_SHARED_DERIVED(PaintEngine_422)
         public:
                 static constexpr int BytesPerComp = sizeof(CompType);
                 static constexpr int BytesPerMacro = 4 * BytesPerComp;

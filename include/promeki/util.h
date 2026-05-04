@@ -138,9 +138,15 @@ OutputType promekiConvert(const InputType &input, Error *err = nullptr) {
         // sign-correct comparison primitives that route around this.
         // bool is excluded from this path because std::cmp_* is
         // constrained to "standard integer" types and rejects bool with
-        // a static_assert.
-        if constexpr (std::is_integral_v<InputType> && std::is_integral_v<OutputType> &&
-                      !std::is_same_v<InputType, bool> && !std::is_same_v<OutputType, bool>) {
+        // a static_assert.  bool is also excluded from the generic
+        // comparison path because comparing a bool against
+        // numeric_limits<int64_t>::max() trips -Wbool-compare; a bool
+        // input always fits in any numeric output, and a bool output's
+        // numeric_limits range is meaningless for clamping (the final
+        // static_cast<bool> handles the truthy conversion).
+        if constexpr (std::is_same_v<InputType, bool> || std::is_same_v<OutputType, bool>) {
+                // No range check needed.
+        } else if constexpr (std::is_integral_v<InputType> && std::is_integral_v<OutputType>) {
                 if (std::cmp_greater(input, std::numeric_limits<OutputType>::max()) ||
                     std::cmp_less(input, std::numeric_limits<OutputType>::lowest())) {
                         if (err != nullptr) *err = Error::Invalid;

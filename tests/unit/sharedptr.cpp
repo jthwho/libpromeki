@@ -19,7 +19,7 @@ PROMEKI_DEBUG(SharedPtrTest);
 static std::atomic<int> objectsAlive = 0;
 
 class Base {
-                PROMEKI_SHARED(Base)
+                PROMEKI_SHARED_BASE(Base)
         public:
                 int value = 0;
 
@@ -32,7 +32,7 @@ class Base {
 };
 
 class Derived : public Base {
-                PROMEKI_SHARED_DERIVED(Base, Derived)
+                PROMEKI_SHARED_DERIVED(Derived)
         public:
                 Derived() = default;
                 Derived(int v) : Base(v) {}

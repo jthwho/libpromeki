@@ -24,7 +24,7 @@ PROMEKI_NAMESPACE_BEGIN
 // =========================================================================
 
 template <bool MethodB> class PaintEngine_DPX : public PaintEngine::Impl {
-                PROMEKI_SHARED_DERIVED(PaintEngine::Impl, PaintEngine_DPX)
+                PROMEKI_SHARED_DERIVED(PaintEngine_DPX)
         public:
                 static constexpr int MaxCompValue = 1023;
 
@@ -370,7 +370,7 @@ PaintEngine createPaintEngine_DPX_B(const PixelFormat::Data *, const Uncompresse
 // =========================================================================
 
 class PaintEngine_v210 : public PaintEngine::Impl {
-                PROMEKI_SHARED_DERIVED(PaintEngine::Impl, PaintEngine_v210)
+                PROMEKI_SHARED_DERIVED(PaintEngine_v210)
         public:
                 static constexpr int MaxCompValue = 1023;
 

@@ -47,12 +47,12 @@ PROMEKI_DEBUG(HttpClient);
 // ============================================================
 
 struct HttpClient::Pending {
-                // Pending owns a Promise<HttpResponse> (move-only), so the
-                // copy-cloning PROMEKI_SHARED_FINAL macro will not compile
-                // here.  The NOCOPY variant adds the refcount + an abort()
-                // clone stub; the matching @ref PendingPtr below disables
-                // CoW so the abort path is never reached.
-                PROMEKI_SHARED_FINAL_NOCOPY(Pending)
+                // Pending owns a Promise<HttpResponse> (move-only), so it
+                // is not copy-constructible.  PROMEKI_SHARED_FINAL routes
+                // to the abort-on-clone path automatically; the matching
+                // @ref PendingPtr below disables CoW so the abort path is
+                // never reached at runtime.
+                PROMEKI_SHARED_FINAL(Pending)
 
                 HttpClient *client = nullptr;
                 EventLoop  *loop = nullptr;

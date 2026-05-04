@@ -83,7 +83,7 @@ static sf_count_t sfvio_tell(void *user_data) {
 static SF_VIRTUAL_IO sfVirtualIO = {sfvio_get_filelen, sfvio_seek, sfvio_read, sfvio_write, sfvio_tell};
 
 class AudioFile_LibSndFile : public AudioFile::Impl {
-                PROMEKI_SHARED_DERIVED(AudioFile::Impl, AudioFile_LibSndFile)
+                PROMEKI_SHARED_DERIVED(AudioFile_LibSndFile)
         public:
                 AudioFile_LibSndFile(AudioFile::Operation op) : AudioFile::Impl(op) {
                         memset(&_info, 0, sizeof(_info));

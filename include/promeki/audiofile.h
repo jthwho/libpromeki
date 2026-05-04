@@ -65,7 +65,7 @@ class AudioFile {
                  * writing, seeking, and closing audio files.
                  */
                 class Impl {
-                                PROMEKI_SHARED(Impl)
+                                PROMEKI_SHARED_BASE(Impl)
                         public:
                                 /**
                                  * @brief Constructs an Impl for the given operation.

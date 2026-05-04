@@ -24,11 +24,13 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * StringData defines the contract that both Latin1 and Unicode storage
  * implementations must satisfy. It manually provides RefCount and
- * _promeki_clone() since PROMEKI_SHARED cannot be used on abstract classes.
+ * _promeki_clone() so leaves are forced to override via the pure-virtual
+ * signature; PROMEKI_SHARED_BASE would synthesize a non-pure
+ * abort-on-clone body, which is silently weaker.
  */
 class StringData {
         public:
-                /** @brief Manual reference count (PROMEKI_SHARED cannot be used on abstract classes). */
+                /** @brief Manual reference count (hand-rolled to keep _promeki_clone pure virtual). */
                 RefCount _promeki_refct;
 
                 /** @brief Creates a deep copy of this storage backend. */
@@ -195,7 +197,7 @@ class StringData {
  * This is the fast path for ASCII / Latin1 strings.
  */
 class StringLatin1Data : public StringData {
-                PROMEKI_SHARED_DERIVED(StringData, StringLatin1Data)
+                PROMEKI_SHARED_DERIVED(StringLatin1Data)
         public:
                 /** @brief Default constructor. Creates empty Latin1 storage. */
                 StringLatin1Data() = default;
@@ -279,7 +281,7 @@ class StringLatin1Data : public StringData {
  * is lazily cached for byte-level output.
  */
 class StringUnicodeData : public StringData {
-                PROMEKI_SHARED_DERIVED(StringData, StringUnicodeData)
+                PROMEKI_SHARED_DERIVED(StringUnicodeData)
         public:
                 /** @brief Default constructor. Creates empty Unicode storage. */
                 StringUnicodeData() : _strDirty(true) {}

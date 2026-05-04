@@ -61,7 +61,7 @@ static constexpr CompMap MONO = {{0, 0, 0, 0}};
  */
 template <typename CompType, int CompCount, int BitsPerComp, CompMap Map>
 class PaintEngine_Interleaved : public PaintEngine::Impl {
-                PROMEKI_SHARED_DERIVED(PaintEngine::Impl, PaintEngine_Interleaved)
+                PROMEKI_SHARED_DERIVED(PaintEngine_Interleaved)
         public:
                 static constexpr int  BytesPerPixel = sizeof(CompType) * CompCount;
                 static constexpr int  MaxCompValue = (1 << BitsPerComp) - 1;

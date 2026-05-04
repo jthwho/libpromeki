@@ -18,7 +18,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 template <typename CompType, int BitsPerComp> class PaintEngine_MultiPlane : public PaintEngine::Impl {
-                PROMEKI_SHARED_DERIVED(PaintEngine::Impl, PaintEngine_MultiPlane)
+                PROMEKI_SHARED_DERIVED(PaintEngine_MultiPlane)
         public:
                 static constexpr int MaxCompValue = (1 << BitsPerComp) - 1;
                 static constexpr int BytesPerComp = sizeof(CompType);

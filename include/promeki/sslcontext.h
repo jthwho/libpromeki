@@ -52,7 +52,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  */
 class SslContext {
-                PROMEKI_SHARED_FINAL_NOCOPY(SslContext)
+                PROMEKI_SHARED_FINAL(SslContext)
         public:
                 /** @brief Shared pointer type for SslContext. */
                 using Ptr = SharedPtr<SslContext, false>;

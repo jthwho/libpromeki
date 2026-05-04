@@ -245,7 +245,7 @@ class QuickTime {
                  * compiles and returns meaningful errors.
                  */
                 class Impl {
-                                PROMEKI_SHARED(Impl)
+                                PROMEKI_SHARED_BASE(Impl)
                         public:
                                 /** @brief Constructs an Impl for the given operation. */
                                 explicit Impl(Operation op) : _operation(op) {}

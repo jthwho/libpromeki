@@ -1022,3 +1022,67 @@ TEST_CASE("VariantDatabase: fromJson round-trips through nested coercion") {
         CHECK(out[0].get<int32_t>() == 7);
         CHECK(out[2].get<int32_t>() == 9);
 }
+
+TEST_CASE("VariantDatabase: copy-on-write isolates mutations") {
+        // After copy, the two handles share storage.  Mutating one must
+        // not be visible on the other — the copy detaches.  Done with
+        // both set() and remove()/clear() to cover the two mutating
+        // paths through _d.modify().
+        TestDB           original;
+        const TestDB::ID a("vdb.cow.a");
+        const TestDB::ID b("vdb.cow.b");
+        original.set(a, 1);
+        original.set(b, 2);
+
+        TestDB copy = original;
+        CHECK(copy == original);
+        CHECK(copy.size() == 2);
+
+        // Mutate the copy: change one key, remove another.
+        copy.set(a, 99);
+        copy.remove(b);
+
+        // Original is untouched.
+        CHECK(original.size() == 2);
+        CHECK(original.getAs<int>(a) == 1);
+        CHECK(original.contains(b));
+
+        // Copy reflects its own mutations.
+        CHECK(copy.size() == 1);
+        CHECK(copy.getAs<int>(a) == 99);
+        CHECK_FALSE(copy.contains(b));
+
+        // clear() also detaches: the original keeps its entries.
+        TestDB another = original;
+        another.clear();
+        CHECK(another.isEmpty());
+        CHECK(original.size() == 2);
+}
+
+TEST_CASE("VariantDatabase: copy-on-write covers validation mode") {
+        // The validation mode lives in the shared Data, so changing it
+        // on a copy must not bleed back into the original.
+        TestDB original;
+        original.setValidation(SpecValidation::Strict);
+        TestDB copy = original;
+        CHECK(copy.validation() == SpecValidation::Strict);
+
+        copy.setValidation(SpecValidation::Warn);
+        CHECK(copy.validation() == SpecValidation::Warn);
+        CHECK(original.validation() == SpecValidation::Strict);
+}
+
+TEST_CASE("VariantDatabase: copy-on-write equality short-circuits aliased copies") {
+        // Two handles that haven't been mutated share Data via SharedPtr,
+        // so operator== returns true without walking the entry map.  The
+        // observable effect is that the equality check passes — we can't
+        // probe the short-circuit directly without exposing internals,
+        // but if the comparison were ever broken to do an unconditional
+        // deep walk, this case would still pass.  Kept here so a future
+        // change that breaks the value-equality path also fires.
+        TestDB original;
+        original.set(TestDB::ID("vdb.cow.eq.k1"), 1);
+        original.set(TestDB::ID("vdb.cow.eq.k2"), 2);
+        TestDB copy = original;
+        CHECK(copy == original);
+}

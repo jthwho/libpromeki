@@ -62,7 +62,7 @@ PROMEKI_NAMESPACE_BEGIN
  * synchronization.
  */
 class HttpFileHandler : public HttpHandler {
-                PROMEKI_SHARED_DERIVED(HttpHandler, HttpFileHandler)
+                PROMEKI_SHARED_DERIVED(HttpFileHandler)
         public:
                 /** @brief Default index file served for directory-style requests. */
                 static const String DefaultIndexFile;

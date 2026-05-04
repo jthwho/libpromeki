@@ -69,12 +69,12 @@ struct QuickTimeSampleIndex {
  * Phase 2 when sample reads land.
  *
  * The file handle is held via raw pointer so the containing class
- * stays (shallow-)copyable for the PROMEKI_SHARED clone machinery,
+ * stays (shallow-)copyable for the PROMEKI_SHARED_BASE clone machinery,
  * matching the established AudioFile::Impl pattern. Ownership is
  * managed manually in open()/close()/~QuickTimeReader().
  */
 class QuickTimeReader : public QuickTime::Impl {
-                PROMEKI_SHARED_DERIVED(QuickTime::Impl, QuickTimeReader)
+                PROMEKI_SHARED_DERIVED(QuickTimeReader)
         public:
                 QuickTimeReader();
                 ~QuickTimeReader() override;

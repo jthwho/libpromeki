@@ -10,6 +10,7 @@
 #include <optional>
 #include <type_traits>
 #include <promeki/namespace.h>
+#include <promeki/sharedptr.h>
 #include <promeki/stringregistry.h>
 #include <promeki/variant.h>
 #include <promeki/variantspec.h>
@@ -62,6 +63,17 @@ enum class SpecValidation {
  * Supports serialization to/from JSON, TextStream, and DataStream.
  * All serialization formats use the string names (not integer IDs),
  * so data can be safely persisted and loaded across runs.
+ *
+ * @par Storage and copy semantics
+ * VariantDatabase is a value type with internal copy-on-write
+ * sharing: copying a database is O(1) and does not duplicate the
+ * underlying entry map until one of the copies is mutated.  This
+ * matters because @ref Metadata (a @c VariantDatabase subclass) is
+ * a member of @ref Frame and rides on every frame copy through a
+ * pipeline; without CoW, a long pipeline would deep-copy the
+ * metadata map at every stage.  The validation mode is part of
+ * the shared state, so changing it on one copy detaches that
+ * copy and leaves any aliased instances unaffected.
  *
  * @warning The integer IDs within ID are deterministic hashes of the
  *          string names, so they are stable across runs for the same
@@ -194,9 +206,10 @@ template <CompiledString Name> class VariantDatabase {
                  */
                 static VariantDatabase fromSpecs(const SpecMap &specs) {
                         VariantDatabase db;
+                        Data           *d = db._d.modify();
                         for (auto it = specs.cbegin(); it != specs.cend(); ++it) {
                                 const Variant &def = it->second.defaultValue();
-                                if (def.isValid()) db._data.insert(it->first.id(), def);
+                                if (def.isValid()) d->data.insert(it->first.id(), def);
                         }
                         return db;
                 }
@@ -399,13 +412,13 @@ template <CompiledString Name> class VariantDatabase {
                  *
                  * @param mode The validation mode.
                  */
-                void setValidation(SpecValidation mode) { _validation = mode; }
+                void setValidation(SpecValidation mode) { _d.modify()->validation = mode; }
 
                 /**
                  * @brief Returns the current validation mode.
                  * @return The validation mode.
                  */
-                SpecValidation validation() const { return _validation; }
+                SpecValidation validation() const { return _d->validation; }
 
                 // ============================================================
                 // Value management
@@ -433,7 +446,7 @@ template <CompiledString Name> class VariantDatabase {
                  */
                 bool set(ID id, const Variant &value, Error *err = nullptr) {
                         if (!validateOnSet(id, value, err)) return false;
-                        _data.insert(id.id(), value);
+                        _d.modify()->data.insert(id.id(), value);
                         return true;
                 }
 
@@ -446,7 +459,7 @@ template <CompiledString Name> class VariantDatabase {
                  */
                 bool set(ID id, Variant &&value, Error *err = nullptr) {
                         if (!validateOnSet(id, value, err)) return false;
-                        _data.insert(id.id(), std::move(value));
+                        _d.modify()->data.insert(id.id(), std::move(value));
                         return true;
                 }
 
@@ -464,8 +477,8 @@ template <CompiledString Name> class VariantDatabase {
                  *         already existed for @p id.
                  */
                 bool setIfMissing(ID id, const Variant &value) {
-                        if (_data.contains(id.id())) return false;
-                        _data.insert(id.id(), value);
+                        if (_d->data.contains(id.id())) return false;
+                        _d.modify()->data.insert(id.id(), value);
                         return true;
                 }
 
@@ -477,8 +490,8 @@ template <CompiledString Name> class VariantDatabase {
                  *         already existed for @p id.
                  */
                 bool setIfMissing(ID id, Variant &&value) {
-                        if (_data.contains(id.id())) return false;
-                        _data.insert(id.id(), std::move(value));
+                        if (_d->data.contains(id.id())) return false;
+                        _d.modify()->data.insert(id.id(), std::move(value));
                         return true;
                 }
 
@@ -489,8 +502,8 @@ template <CompiledString Name> class VariantDatabase {
                  * @return The stored value, or defaultValue if not found.
                  */
                 Variant get(ID id, const Variant &defaultValue = Variant()) const {
-                        auto it = _data.find(id.id());
-                        if (it == _data.end()) return defaultValue;
+                        auto it = _d->data.find(id.id());
+                        if (it == _d->data.end()) return defaultValue;
                         return it->second;
                 }
 
@@ -508,8 +521,8 @@ template <CompiledString Name> class VariantDatabase {
                  *         conversion failure.
                  */
                 template <typename T> T getAs(ID id, const T &defaultValue = T{}, Error *err = nullptr) const {
-                        auto it = _data.find(id.id());
-                        if (it == _data.end()) {
+                        auto it = _d->data.find(id.id());
+                        if (it == _d->data.end()) {
                                 if (err) *err = Error::IdNotFound;
                                 return defaultValue;
                         }
@@ -642,8 +655,8 @@ template <CompiledString Name> class VariantDatabase {
                                                 tailPath = String(kn + start, keyName.byteCount() - start);
                                         }
                                         ID               id = ID::find(headKey);
-                                        auto             it = id.isValid() ? _data.find(id.id()) : _data.end();
-                                        if (it != _data.end()) {
+                                        auto             it = id.isValid() ? _d->data.find(id.id()) : _d->data.end();
+                                        if (it != _d->data.end()) {
                                                 Variant target = it->second;
                                                 if (!tailPath.isEmpty()) {
                                                         Error pe;
@@ -710,31 +723,37 @@ template <CompiledString Name> class VariantDatabase {
                  * @param id The entry identifier.
                  * @return True if a value is stored for the ID.
                  */
-                bool contains(ID id) const { return _data.contains(id.id()); }
+                bool contains(ID id) const { return _d->data.contains(id.id()); }
 
                 /**
                  * @brief Removes the value for the given ID.
                  * @param id The entry identifier.
                  * @return True if the entry was removed, false if it was not present.
                  */
-                bool remove(ID id) { return _data.remove(id.id()); }
+                bool remove(ID id) {
+                        if (!_d->data.contains(id.id())) return false;
+                        return _d.modify()->data.remove(id.id());
+                }
 
                 /**
                  * @brief Returns the number of entries in the database.
                  * @return The number of stored key-value pairs.
                  */
-                size_t size() const { return _data.size(); }
+                size_t size() const { return _d->data.size(); }
 
                 /**
                  * @brief Returns true if the database has no entries.
                  * @return True if empty.
                  */
-                bool isEmpty() const { return _data.isEmpty(); }
+                bool isEmpty() const { return _d->data.isEmpty(); }
 
                 /**
                  * @brief Removes all entries from the database.
                  */
-                void clear() { _data.clear(); }
+                void clear() {
+                        if (_d->data.isEmpty()) return;
+                        _d.modify()->data.clear();
+                }
 
                 /**
                  * @brief Returns a list of all IDs that have values in this database.
@@ -742,7 +761,7 @@ template <CompiledString Name> class VariantDatabase {
                  */
                 List<ID> ids() const {
                         List<ID> ret;
-                        for (auto it = _data.cbegin(); it != _data.cend(); ++it) {
+                        for (auto it = _d->data.cbegin(); it != _d->data.cend(); ++it) {
                                 ret.pushToBack(ID::fromId(it->first));
                         }
                         return ret;
@@ -771,7 +790,7 @@ template <CompiledString Name> class VariantDatabase {
                  */
                 StringList unknownKeys(const SpecMap &extraSpecs = SpecMap()) const {
                         StringList out;
-                        for (auto it = _data.cbegin(); it != _data.cend(); ++it) {
+                        for (auto it = _d->data.cbegin(); it != _d->data.cend(); ++it) {
                                 ID id = ID::fromId(it->first);
                                 if (extraSpecs.find(id) != extraSpecs.end()) continue;
                                 if (spec(id) != nullptr) continue;
@@ -791,7 +810,7 @@ template <CompiledString Name> class VariantDatabase {
                  * @param func The function to invoke for each entry.
                  */
                 template <typename Func> void forEach(Func &&func) const {
-                        for (auto it = _data.cbegin(); it != _data.cend(); ++it) {
+                        for (auto it = _d->data.cbegin(); it != _d->data.cend(); ++it) {
                                 func(ID::fromId(it->first), it->second);
                         }
                 }
@@ -818,10 +837,11 @@ template <CompiledString Name> class VariantDatabase {
                  */
                 VariantDatabase extract(const List<ID> &idList) const {
                         VariantDatabase result;
+                        Data           *r = result._d.modify();
                         for (size_t i = 0; i < idList.size(); ++i) {
-                                auto it = _data.find(idList[i].id());
-                                if (it != _data.end()) {
-                                        result._data.insert(it->first, it->second);
+                                auto it = _d->data.find(idList[i].id());
+                                if (it != _d->data.end()) {
+                                        r->data.insert(it->first, it->second);
                                 }
                         }
                         return result;
@@ -846,10 +866,13 @@ template <CompiledString Name> class VariantDatabase {
                  * bool same = (a == b);  // true
                  * @endcode
                  */
-                bool operator==(const VariantDatabase &other) const { return _data == other._data; }
+                bool operator==(const VariantDatabase &other) const {
+                        if (_d == other._d) return true;
+                        return _d->data == other._d->data;
+                }
 
                 /** @brief Returns true if the databases differ. */
-                bool operator!=(const VariantDatabase &other) const { return _data != other._data; }
+                bool operator!=(const VariantDatabase &other) const { return !(*this == other); }
 
                 // ============================================================
                 // JSON serialization
@@ -866,7 +889,7 @@ template <CompiledString Name> class VariantDatabase {
                  */
                 JsonObject toJson() const {
                         JsonObject json;
-                        for (auto it = _data.cbegin(); it != _data.cend(); ++it) {
+                        for (auto it = _d->data.cbegin(); it != _d->data.cend(); ++it) {
                                 String name = StringRegistry<Name>::instance().name(it->first);
                                 json.setFromVariant(name, it->second);
                         }
@@ -886,8 +909,8 @@ template <CompiledString Name> class VariantDatabase {
                  * @param stream The DataStream to write to.
                  */
                 void writeTo(DataStream &stream) const {
-                        stream << static_cast<uint32_t>(_data.size());
-                        for (auto it = _data.cbegin(); it != _data.cend(); ++it) {
+                        stream << static_cast<uint32_t>(_d->data.size());
+                        for (auto it = _d->data.cbegin(); it != _d->data.cend(); ++it) {
                                 String name = StringRegistry<Name>::instance().name(it->first);
                                 stream << name << it->second;
                         }
@@ -903,7 +926,7 @@ template <CompiledString Name> class VariantDatabase {
                  * @param stream The DataStream to read from.
                  */
                 void readFrom(DataStream &stream) {
-                        _data.clear();
+                        _d.modify()->data.clear();
                         uint32_t count = 0;
                         stream >> count;
                         for (uint32_t i = 0; i < count && stream.status() == DataStream::Ok; ++i) {
@@ -932,15 +955,29 @@ template <CompiledString Name> class VariantDatabase {
                  * @param stream The TextStream to write to.
                  */
                 void writeTo(TextStream &stream) const {
-                        for (auto it = _data.cbegin(); it != _data.cend(); ++it) {
+                        for (auto it = _d->data.cbegin(); it != _d->data.cend(); ++it) {
                                 String name = StringRegistry<Name>::instance().name(it->first);
                                 stream << name << " = " << it->second << endl;
                         }
                 }
 
         private:
-                Map<uint64_t, Variant> _data;
-                SpecValidation         _validation = SpecValidation::Strict;
+                /**
+                 * @brief Internal CoW storage for the database's entries
+                 *        and per-instance validation mode.
+                 *
+                 * Held via @c SharedPtr<Data> so copying a VariantDatabase
+                 * (or any subclass — Metadata, MediaConfig, MediaIOStats,
+                 * MediaIOParams, LibraryOptions) is O(1) and the entry
+                 * map is only deep-copied when one of the aliased
+                 * handles is mutated.
+                 */
+                struct Data {
+                                PROMEKI_SHARED_FINAL(Data)
+                                Map<uint64_t, Variant> data;
+                                SpecValidation         validation = SpecValidation::Strict;
+                };
+                SharedPtr<Data> _d = SharedPtr<Data>::create();
 
                 /**
                  * @brief Thread-safe spec registry for this Tag's ID namespace.
@@ -998,12 +1035,13 @@ template <CompiledString Name> class VariantDatabase {
                  */
                 bool validateOnSet(ID id, const Variant &value, Error *err = nullptr) {
                         if (err) *err = Error::Ok;
-                        if (_validation == SpecValidation::None) return true;
+                        const SpecValidation mode = _d->validation;
+                        if (mode == SpecValidation::None) return true;
                         const VariantSpec *s = specRegistry().find(id.id());
                         if (!s) return true;
                         Error verr;
                         if (!s->validate(value, &verr)) {
-                                if (_validation == SpecValidation::Warn) {
+                                if (mode == SpecValidation::Warn) {
                                         promekiWarn("VariantDatabase: value for '%s' fails spec (%s)", id.name().cstr(),
                                                     verr.name().cstr());
                                         return true;

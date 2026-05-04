@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+
 #pragma once
 
 #include <variant>

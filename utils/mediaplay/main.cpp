@@ -55,7 +55,6 @@
 #include <promeki/rect.h>
 #include <promeki/size2d.h>
 #include <promeki/string.h>
-#include <promeki/thread.h>
 
 #include <promeki/sdl/sdlsubsystem.h>
 #include <promeki/sdl/sdlaudiooutput.h>
@@ -532,7 +531,7 @@ int main(int argc, char **argv) {
 
         // --- Stats writer (optional JSONL file) ---
         // Owned by main; lives for the duration of app.exec() + final
-        // shutdown snapshot.  Opened before the stats thread starts so
+        // shutdown snapshot.  Opened before the stats timer starts so
         // periodic writes have a valid handle from the first tick.
         File *statsFile = nullptr;
         if (!opts.writeStatsPath.isEmpty()) {
@@ -689,10 +688,11 @@ int main(int argc, char **argv) {
                 });
         }
 
-        // Shared stats-snapshot hook.  Called from the stats worker
-        // thread on every tick and once more from the main thread at
-        // shutdown after the worker has joined, so accesses to
-        // @p statsFile never overlap across threads.
+        // Shared stats-snapshot hook.  Invoked from the main EventLoop
+        // on every periodic tick and once more from the main thread at
+        // shutdown, so it always runs on the pipeline's owning thread —
+        // pipeline.stats() and the collector windows it walks are
+        // accessed without cross-thread synchronization.
         auto emitStats = [&pipeline, statsFile](const char *label) {
                 MediaPipelineStats s = pipeline.stats();
                 StringList         lines = s.describe();
@@ -713,27 +713,23 @@ int main(int argc, char **argv) {
                 statsFile->flush();
         };
 
-        // The stats timer runs on its own worker thread so each
-        // synchronous MediaIO::stats() round-trip doesn't park the
-        // main-thread EventLoop that the SDL player relies on for
-        // renderPending() dispatch.
-        Thread statsThread;
-        if (statsEnabled) {
+        // The stats timer runs on the main EventLoop so it shares the
+        // pipeline's thread affinity — the collector and pipeline
+        // state are owned there, and pipeline.stats() walks them
+        // without any cross-thread synchronization.  Each tick parks
+        // the loop briefly (microseconds) while io->stats() round-trips
+        // through each stage's strand; at the default 1 s interval that
+        // is well below SDL's render budget.
+        if (statsEnabled && mainEL != nullptr) {
                 unsigned int intervalMs = static_cast<unsigned int>(opts.statsInterval * 1000.0);
                 if (intervalMs < 1) intervalMs = 1;
-                statsThread.setName(String("mp-stats"));
-                statsThread.start();
-                statsThread.threadEventLoop()->startTimer(intervalMs, [&emitStats]() { emitStats("stats"); });
+                mainEL->startTimer(intervalMs, [&emitStats]() { emitStats("stats"); });
         }
 
         Error serr = pipeline.start();
         if (serr.isError()) {
                 fprintf(stderr, "Error: pipeline start failed: %s\n", serr.desc().cstr());
                 (void)pipeline.close();
-                if (statsEnabled) {
-                        statsThread.quit();
-                        statsThread.wait();
-                }
                 delete ui.audioOutput;
                 delete ui.window;
                 if (statsFile != nullptr) {
@@ -751,14 +747,6 @@ int main(int argc, char **argv) {
         // calls (e.g. from a late cleanup path) fall through to the
         // default behaviour.
         Application::setQuitRequestHandler(nullptr);
-
-        // Stop the stats thread first so it can't race the final
-        // emitStats() call below — once we return from wait() the
-        // stats file and the pipeline are ours alone.
-        if (statsEnabled) {
-                statsThread.quit();
-                statsThread.wait();
-        }
 
         // Final snapshot: stats collector was enabled for either
         // --stats or --write-stats, so emit one last record while the

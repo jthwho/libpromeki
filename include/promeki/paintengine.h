@@ -90,7 +90,7 @@ class PaintEngine {
                  * to the active Impl instance.
                  */
                 class Impl {
-                                PROMEKI_SHARED(Impl)
+                                PROMEKI_SHARED_BASE(Impl)
                         public:
                                 /** @brief Virtual destructor. */
                                 virtual ~Impl();

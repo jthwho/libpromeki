@@ -82,13 +82,13 @@ using HttpMiddlewareList = ::promeki::List<HttpMiddleware>;
  */
 class HttpHandler {
         public:
-                // Hand-rolled SHARED pattern instead of PROMEKI_SHARED:
-                // the base must stay abstract so concrete leaves (with
-                // their own state) can implement serve() — and the
-                // PROMEKI_SHARED macro tries to instantiate
-                // `new HttpHandler(*this)` in its default _promeki_clone,
-                // which fails on an abstract type.  Same approach used
-                // by MediaPayload.
+                // Hand-rolled SHARED pattern instead of PROMEKI_SHARED_BASE:
+                // we want _promeki_clone() to be pure virtual so concrete
+                // leaves (with their own state) are forced at compile time
+                // to provide their own override.  PROMEKI_SHARED_BASE
+                // would synthesize a non-pure body that aborts at runtime
+                // for an abstract type, which is silently weaker.  Same
+                // approach used by MediaPayload and StringData.
                 RefCount             _promeki_refct;
                 virtual HttpHandler *_promeki_clone() const = 0;
 
@@ -116,7 +116,7 @@ class HttpHandler {
  * @ref HttpHandler::Ptr.
  */
 class HttpFunctionHandler : public HttpHandler {
-                PROMEKI_SHARED_DERIVED(HttpHandler, HttpFunctionHandler)
+                PROMEKI_SHARED_DERIVED(HttpFunctionHandler)
         public:
                 /**
                  * @brief Wraps @p func so it can be stored as an HttpHandler.

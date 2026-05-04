@@ -41,7 +41,7 @@ PROMEKI_NAMESPACE_BEGIN
  * exactly this reason.
  */
 class AudioMeter {
-                PROMEKI_SHARED_NOCOPY(AudioMeter)
+                PROMEKI_SHARED_BASE(AudioMeter)
         public:
                 /** @brief Shared-pointer alias.  Copy-on-write disabled — meters carry atomic state. */
                 using Ptr = SharedPtr<AudioMeter, /*CopyOnWrite=*/false>;
@@ -94,7 +94,7 @@ class AudioMeter {
  * SMPTE, K-weighted) don't pay a log they then have to undo.
  */
 class AudioPeakRmsMeter : public AudioMeter {
-                PROMEKI_SHARED_DERIVED_NOCOPY(AudioMeter, AudioPeakRmsMeter)
+                PROMEKI_SHARED_DERIVED(AudioPeakRmsMeter)
         public:
                 /** @brief Shared-pointer alias for @ref AudioPeakRmsMeter. */
                 using Ptr = SharedPtr<AudioPeakRmsMeter, /*CopyOnWrite=*/false>;
