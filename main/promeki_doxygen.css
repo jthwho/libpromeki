@@ -1,0 +1,32 @@
+/* libpromeki Doxygen overrides.
+ *
+ * Stays minimal on purpose: the goal is to make the project version
+ * (Doxygen's PROJECT_NUMBER) prominent in the page header instead of
+ * the tiny 50%-size default.  All other styling defers to Doxygen's
+ * built-in stylesheet.
+ */
+
+#projectname {
+    font-size: 220%;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+#projectnumber {
+    display: inline-block;
+    margin-left: 0.5em;
+    padding: 2px 10px;
+    font-family: Tahoma, Geneva, Arial, Helvetica, sans-serif;
+    font-size: 95%;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #1f6feb;
+    border-radius: 4px;
+    vertical-align: middle;
+}
+
+#projectbrief {
+    font-size: 100%;
+    font-style: italic;
+    color: #555;
+}
