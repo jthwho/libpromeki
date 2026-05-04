@@ -19,6 +19,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/audiobuffer.h>
 #include <promeki/buffer.h>
+#include <promeki/framerate.h>
 #include <promeki/timecode.h>
 #include <promeki/mutex.h>
 #include <promeki/list.h>
@@ -59,11 +60,15 @@ struct InspectorDiscontinuity {
                         /// LTC failed to decode in this frame's audio after a
                         /// previously-successful decode.
                         LtcDecodeFailure,
-                        /// The picture-vs-LTC sync offset moved by more than
-                        /// the configured tolerance from the previous frame.
-                        /// Audio and video are locked in pro workflows, so any
-                        /// change from a previously-stable offset is a real
-                        /// fault rather than a measurement artifact.
+                        /// The marker-based A/V sync offset (audio
+                        /// codeword position vs the rational-rate-
+                        /// predicted ideal, baseline-anchored on the
+                        /// first match) moved by more than the
+                        /// configured tolerance from the previous
+                        /// frame.  Audio and video are locked in pro
+                        /// workflows, so any change from a
+                        /// previously-stable offset is a real fault
+                        /// rather than a measurement artifact.
                         SyncOffsetChange,
                         /// Video essence arrived without a valid MediaTimeStamp
                         /// even though the Timestamp test is enabled (MediaIO
@@ -167,42 +172,59 @@ struct InspectorEvent {
                 /// first audio sample the inspector ever ingested; the
                 /// per-stream wall-clock time of any sample @c N is
                 /// @c audioStreamStartNs + N / sampleRate (in seconds).
-                ///
-                /// @note This was previously a within-chunk offset, valid
-                /// only when audio arrived on tidy per-frame boundaries.
-                /// The current value is in the absolute stream coordinate
-                /// system so the A/V sync check works correctly with
-                /// bursty / network-delivered audio that doesn't align to
-                /// video frame boundaries.
                 int64_t ltcSampleStart = 0;
 
-                // ---- A/V Sync (picture TC vs audio LTC) ----
+                // ---- A/V Sync (marker-based, baseline-anchored) ----
 
                 /// True if the inspector was able to compute an A/V sync
-                /// offset for this frame (both picture and LTC decoded
-                /// successfully, and the LTC carried a known frame rate).
+                /// offset for this frame: an audio codeword decoded
+                /// successfully, the picture data band on a frame
+                /// matching its 48-bit frame number is in history, and
+                /// the upstream frame rate is known.
                 bool avSyncValid = false;
-                /// Instantaneous A/V sync offset in audio samples between
-                /// the picture timecode anchor and the audio LTC sync
-                /// anchor.  This is the *current* misalignment between the
-                /// two sources on this specific frame, not a delta against
-                /// a previous frame.
+                /// Instantaneous A/V sync offset, in audio samples, of the
+                /// @ref AudioDataEncoder codeword carrying this frame's
+                /// 48-bit frame number, reported as a *deviation* from a
+                /// baseline phase the inspector latches on the first
+                /// successful marker match.  The raw phase is the
+                /// difference between the codeword's actual
+                /// stream-sample position and the rational-rate-
+                /// predicted position
+                /// (@ref FrameRate::cumulativeTicks at the inspector's
+                /// audio sample rate); the reported value is that raw
+                /// phase minus the baseline.
                 ///
-                /// Sign convention: positive = video leads audio (the
-                /// picture's TC anchor lands at an earlier wall-clock audio
-                /// sample than the LTC's TC anchor).  Negative = audio
-                /// leads video.
+                /// The baseline absorbs any constant phase the producer
+                /// happened to start with — a mid-stream join, a
+                /// non-zero first frame number, an SRC's constant
+                /// group delay, or any other one-time offset between
+                /// the producer's audio cadence and the rational
+                /// ideal.  None of those are real A/V sync errors, so
+                /// a clean cadenced run reports 0 every frame
+                /// regardless of rate, starting frame, or pipeline
+                /// shape.  Real changes in the codeword position
+                /// relative to its expected rational position
+                /// (codeword moved within a chunk, audio sample
+                /// dropped/inserted, audio path resampling drift)
+                /// still show up because they move the raw phase
+                /// away from the latched baseline.
                 ///
-                /// @note A small constant offset (a few samples — typically
-                /// 1-3 at common sample rates) is normal when the LTC is
-                /// produced by libvtc's encoder and decoded by libvtc's
-                /// decoder.  The encoder's raised-cosine transition ramp and
-                /// the decoder's hysteresis threshold combine to give the
-                /// decoder a fixed edge-detection latency relative to the
-                /// encoder's bit boundary.  The value is *constant* across
-                /// frames, so any movement does represent real drift — the
-                /// inspector flags such movement as a discontinuity (see
-                /// @ref MediaConfig::InspectorSyncOffsetToleranceSamples).
+                /// Sign convention: positive = audio codeword landed
+                /// at a *later* stream sample than the baseline
+                /// predicts, which means the audio is delayed
+                /// relative to the video — i.e. video leads audio.
+                /// Negative = audio leads video.
+                ///
+                /// @note Both encoders stamp the same
+                /// @c [stream:8][channel:8][frame:48] codeword, so the
+                /// frame-number lookup is sample-accurate end-to-end
+                /// when the audio path doesn't resample.  Any
+                /// frame-to-frame movement beyond
+                /// @ref MediaConfig::InspectorSyncOffsetToleranceSamples
+                /// is flagged as an
+                /// @ref InspectorDiscontinuity::SyncOffsetChange — and
+                /// because both the cadence and the baseline phase
+                /// are already removed, the tolerance defaults to 0.
                 int64_t avSyncOffsetSamples = 0;
 
                 // ---- Timestamps (per-essence MediaTimeStamps) ----
@@ -477,8 +499,8 @@ struct InspectorSnapshot {
  * configurable set of checks on each one.  The set of checks is
  * driven by @ref MediaConfig::InspectorTests — an EnumList of
  * @ref InspectorTest values.  The default carries every check that
- * the @ref TpgMediaIO default produces signal for; @c Ltc / @c TcSync
- * and @c CaptureStats are off by default and have to be opted in via
+ * the @ref TpgMediaIO default produces signal for; @c Ltc and
+ * @c CaptureStats are off by default and have to be opted in via
  * the config key.  Currently supported tests:
  *
  *  - @c ImageData   — pulls the two 64-bit payloads written by
@@ -508,17 +530,21 @@ struct InspectorSnapshot {
  *    @ref LtcDecoder and reports any timecodes recovered.
  *    *Off by default* — opt in when the upstream is configured
  *    to put @c AudioPattern::LTC on a channel.
- *  - @c TcSync      — with both decoders running, computes the
- *    per-frame offset between the picture timecode and the audio
- *    LTC, in audio samples and in fractional frames.  A constant
- *    offset across frames is healthy; any movement flags a
- *    discontinuity.  *Off by default* — implicitly turns on
- *    @c ImageData and @c Ltc when enabled.
+ *  - @c AvSync      — with @c ImageData and @c AudioData both
+ *    running, computes the per-frame A/V sync offset directly from
+ *    the shared frame-number marker the two encoders stamp.  The
+ *    audio side reports the stream-absolute sample position of the
+ *    codeword carrying frame N; the inspector compares it against
+ *    the rational-rate-predicted ideal and reports the deviation
+ *    from a baseline phase latched on the first match.  A constant
+ *    offset (always 0) is healthy; any movement flags a
+ *    discontinuity.  *Default-on* — implicitly turns on
+ *    @c ImageData and @c AudioData when enabled.
  *
  * Dependency relationships are auto-resolved at open time: enabling
- * @c TcSync implicitly turns on @c ImageData and @c Ltc; enabling
- * @c Continuity implicitly turns on @c ImageData.  The user does
- * not have to specify the upstream decoders explicitly.
+ * @c AvSync implicitly turns on @c ImageData and @c AudioData;
+ * enabling @c Continuity implicitly turns on @c ImageData.  The user
+ * does not have to specify the upstream decoders explicitly.
  *
  * @par Per-frame event delivery
  * The inspector exposes its results in three complementary ways:
@@ -549,7 +575,7 @@ struct InspectorSnapshot {
  * MediaIO::Config cfg = MediaIOFactory::defaultConfig("Inspector");
  * // Default is every test; narrow the list to run a subset:
  * EnumList tests = EnumList::forType<InspectorTest>();
- * tests.append(InspectorTest::TcSync);
+ * tests.append(InspectorTest::AvSync);
  * tests.append(InspectorTest::Continuity);
  * cfg.set(MediaConfig::InspectorTests, tests);
  * insp->setConfig(cfg);
@@ -633,7 +659,7 @@ class InspectorMediaIO : public SharedThreadMediaIO {
                 bool    _decodeImageData = false;
                 bool    _decodeAudioData = false;
                 bool    _decodeLtc = false;
-                bool    _checkTcSync = false;
+                bool    _checkAvSync = false;
                 bool    _checkContinuity = false;
                 bool    _checkTimestamp = false;
                 bool    _checkAudioSamples = false;
@@ -650,6 +676,28 @@ class InspectorMediaIO : public SharedThreadMediaIO {
                 /// open() from the upstream MediaDesc's frame rate).  Used
                 /// by the video PTS prediction.
                 double _videoFrameDurationNs = 0.0;
+                /// Upstream frame rate (rational form — 30000/1001 for
+                /// NTSC etc.).  Used by the marker-based A/V sync check
+                /// to predict the rational audio sample cadence via
+                /// @ref FrameRate::cumulativeTicks, so the reported
+                /// offset is cadence-free even on fractional rates.
+                /// Seeded from @c pendingMediaDesc at open time and
+                /// re-latched from @ref Metadata::FrameRate on each
+                /// frame so sources that learn the real rate after
+                /// open (e.g. NDI receivers, which default to a 30/1
+                /// placeholder until the first SDK frame arrives) end
+                /// up driving the cadence math against the real rate.
+                FrameRate _frameRate;
+                /// Whether @ref _frameRate has been confirmed by a
+                /// frame-level @ref Metadata::FrameRate value.  The
+                /// open-time value from @c pendingMediaDesc is
+                /// speculative (some backends only learn the real rate
+                /// from the first incoming frame), so the first
+                /// authoritative metadata-published rate that
+                /// disagrees silently relatches.  Subsequent mid-run
+                /// changes warn and reset the A/V sync baseline so
+                /// the cadence math runs against the new rate.
+                bool _frameRateConfirmed = false;
 
                 // ---- Decoder state (constructed lazily on the first frame
                 // because we need the actual ImageDesc and AudioDesc to
@@ -658,6 +706,33 @@ class InspectorMediaIO : public SharedThreadMediaIO {
                 AudioDataDecoder _audioDataDecoder;
                 LtcDecoder::UPtr _ltcDecoder;
                 bool             _decodersInitialized = false;
+
+                // ---- Video frame history (for marker-based A/V sync) ----
+                //
+                // Every successful @ref runImageDataCheck pushes a
+                // record into this ring so the audio-side codeword
+                // decode can look up the matching video frame's
+                // wall-clock anchor by 48-bit frame number.  Bounded
+                // at @ref kVideoFrameHistoryMax; older entries are
+                // evicted from the front when the ring fills.
+                struct VideoFrameRecord {
+                                /// 48-bit frame field from the picture
+                                /// data band (matches the audio codeword's
+                                /// @c bits 0..47).
+                                uint64_t frame48 = 0;
+                                /// 8-bit stream ID byte (matches the
+                                /// audio codeword's @c bits 56..63).
+                                uint8_t streamId = 0;
+                                /// Video MediaTimeStamp expressed in
+                                /// nanoseconds (timestamp + offset).
+                                int64_t videoWallNs = 0;
+                };
+                /// Bound on @ref _videoFrameHistory.  64 entries cover
+                /// any reasonable network buffering depth at common
+                /// frame rates while keeping the lookup O(N) cost
+                /// trivially small.
+                static constexpr size_t kVideoFrameHistoryMax = 64;
+                List<VideoFrameRecord>  _videoFrameHistory;
 
                 // ---- AudioData per-channel rolling accumulators ----
                 //
@@ -741,6 +816,21 @@ class InspectorMediaIO : public SharedThreadMediaIO {
                 /// the per-frame "did the offset change" check.
                 bool    _hasPreviousSyncOffset = false;
                 int64_t _previousSyncOffset = 0;
+                /// Baseline phase between the audio codeword's
+                /// stream-sample position and the rational-rate
+                /// prediction (@c cumulativeTicks).  Latched on the
+                /// first successful marker match: @c
+                /// streamSampleStart - @c cumulativeTicks(sampleRate,
+                /// frameNumber).  Subsequent samples report their
+                /// phase as a delta against this baseline so a stream
+                /// that joins mid-flight, runs through an SRC with
+                /// constant group delay, or simply doesn't start at
+                /// frame 0 still reports 0 sync offset for a clean
+                /// cadenced run.  Real changes in the codeword
+                /// position relative to its expected rational
+                /// position still show up.
+                bool    _avSyncBaselineSet = false;
+                int64_t _avSyncBaselinePhase = 0;
                 /// Cached average samples-per-frame for the picture
                 /// stream, captured the first time the A/V sync check
                 /// finds a working sample rate + frame rate pair.

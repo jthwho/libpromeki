@@ -11,6 +11,10 @@
 #include <chrono>
 #include <doctest/doctest.h>
 #include <promeki/framebridge.h>
+#include <promeki/framebridgemediaio.h>
+#include <promeki/mediaconfig.h>
+#include <promeki/mediaiofactory.h>
+#include <promeki/url.h>
 
 using namespace promeki;
 
@@ -45,4 +49,65 @@ TEST_CASE("FrameBridge::isAborted lifecycle on an unopened bridge") {
         // Idempotent: a second abort() call leaves the flag set.
         br.abort();
         CHECK(br.isAborted());
+}
+
+// ============================================================================
+// FrameBridgeFactory::urlToConfig accepts both pmfb://name and
+// pmfb:///name authority forms.
+//
+// Two forms are valid because the second one is a common typo by users
+// who reach for it by analogy with file:///.  Both should yield the
+// same FrameBridgeName; deeper paths and the empty-name corner cases
+// must be rejected so the bridge name stays a flat identifier safe to
+// embed in shm names and socket basenames.
+// ============================================================================
+
+TEST_CASE("FrameBridgeFactory::urlToConfig accepts both authority forms") {
+        const MediaIOFactory *f = MediaIOFactory::findByName(String("FrameBridge"));
+        REQUIRE(f != nullptr);
+
+        // Canonical: pmfb://test → FrameBridgeName="test"
+        {
+                Result<Url> parsed = Url::fromString(String("pmfb://test"));
+                REQUIRE(parsed.second().isOk());
+                MediaIO::Config cfg;
+                Error           err = f->urlToConfig(parsed.first(), &cfg);
+                CHECK(err.isOk());
+                CHECK(cfg.getAs<String>(MediaConfig::FrameBridgeName, String()) == String("test"));
+        }
+        // file:///-style: pmfb:///test → FrameBridgeName="test"
+        {
+                Result<Url> parsed = Url::fromString(String("pmfb:///test"));
+                REQUIRE(parsed.second().isOk());
+                MediaIO::Config cfg;
+                Error           err = f->urlToConfig(parsed.first(), &cfg);
+                CHECK(err.isOk());
+                CHECK(cfg.getAs<String>(MediaConfig::FrameBridgeName, String()) == String("test"));
+        }
+        // Trailing slash on the host form: pmfb://test/ → "test"
+        {
+                Result<Url> parsed = Url::fromString(String("pmfb://test/"));
+                REQUIRE(parsed.second().isOk());
+                MediaIO::Config cfg;
+                Error           err = f->urlToConfig(parsed.first(), &cfg);
+                CHECK(err.isOk());
+                CHECK(cfg.getAs<String>(MediaConfig::FrameBridgeName, String()) == String("test"));
+        }
+        // Empty everywhere: pmfb:// → reject (no name).
+        {
+                Result<Url> parsed = Url::fromString(String("pmfb://"));
+                REQUIRE(parsed.second().isOk());
+                MediaIO::Config cfg;
+                Error           err = f->urlToConfig(parsed.first(), &cfg);
+                CHECK(err == Error::InvalidArgument);
+        }
+        // Nested path on the empty-host form: pmfb:///a/b → reject
+        // (bridge names are flat identifiers, no slashes allowed).
+        {
+                Result<Url> parsed = Url::fromString(String("pmfb:///a/b"));
+                REQUIRE(parsed.second().isOk());
+                MediaIO::Config cfg;
+                Error           err = f->urlToConfig(parsed.first(), &cfg);
+                CHECK(err == Error::InvalidArgument);
+        }
 }

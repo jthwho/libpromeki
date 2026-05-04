@@ -111,19 +111,24 @@ MediaIOFactory::Config::SpecMap InspectorFactory::configSpecs() const {
                 specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
         };
         // Inspector defaults run every *in-memory* check out of the
-        // box that the TPG default produces signal for.  Excluded from
-        // the default list:
+        // box that the TPG default produces signal for.  Excluded
+        // from the default list:
         //   - @c CaptureStats — opens a file, so opt-in keeps a
         //     default-configured inspector side-effect free.
-        //   - @c Ltc / @c TcSync — the TPG default no longer puts
-        //     @c LTC on any channel (every channel carries a
-        //     @c PcmMarker), so a default inspector against a default
-        //     TPG would just count zeros.  Callers that pin a channel
-        //     to @c AudioPattern::LTC re-enable the LTC tests via the
+        //   - @c Ltc — the TPG default carries @c PcmMarker on
+        //     every channel rather than LTC, so a default inspector
+        //     against a default TPG would just count zeros for the
+        //     LTC test.  Callers that pin a channel to
+        //     @c AudioPattern::LTC re-enable the LTC test via the
         //     @ref MediaConfig::InspectorTests config key.
+        //
+        // @c AvSync IS in the default — its dependencies are
+        // @c ImageData + @c AudioData, both of which the TPG
+        // default produces.
         EnumList allTests = EnumList::forType<InspectorTest>();
         allTests.append(InspectorTest::ImageData);
         allTests.append(InspectorTest::AudioData);
+        allTests.append(InspectorTest::AvSync);
         allTests.append(InspectorTest::Continuity);
         allTests.append(InspectorTest::Timestamp);
         allTests.append(InspectorTest::AudioSamples);
@@ -177,6 +182,8 @@ void InspectorMediaIO::resetState() {
         _inferredPictureMode = Timecode::Mode();
         _hasPreviousSyncOffset = false;
         _previousSyncOffset = 0;
+        _avSyncBaselineSet = false;
+        _avSyncBaselinePhase = 0;
         _samplesPerFrame = 0.0;
         _hasPreviousVideoTimestamp = false;
         _hasPreviousAudioTimestamp = false;
@@ -188,6 +195,7 @@ void InspectorMediaIO::resetState() {
         _audioDataDecoder = AudioDataDecoder();
         _audioDataStreamStates.clear();
         _audioDataChannelActive.clear();
+        _videoFrameHistory.clear();
         _ltcDecoder.reset();
         _audioStream = AudioBuffer();
         _audioStreamReady = false;
@@ -199,6 +207,7 @@ void InspectorMediaIO::resetState() {
         _videoPtsAnchored = false;
         _videoPtsAnchorNs = 0;
         _videoPtsAnchorFrame = FrameNumber{0};
+        _frameRateConfirmed = false;
         _avBaselineSet = false;
         _avBaselineOffsetNs = 0;
         _hasLastAudioPtsForAv = false;
@@ -213,19 +222,23 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _dropFrames = cfg.getAs<bool>(MediaConfig::InspectorDropFrames, true);
         _imageDataRepeatLines = cfg.getAs<int>(MediaConfig::InspectorImageDataRepeatLines, 16);
         _ltcChannel = cfg.getAs<int>(MediaConfig::InspectorLtcChannel, 0);
-        _syncOffsetToleranceSamples = cfg.getAs<int>(MediaConfig::InspectorSyncOffsetToleranceSamples, 2);
+        _syncOffsetToleranceSamples = cfg.getAs<int>(MediaConfig::InspectorSyncOffsetToleranceSamples, 0);
         _audioPtsToleranceNs =
                 cfg.getAs<int64_t>(MediaConfig::InspectorAudioPtsToleranceNs, int64_t(5'000'000));
         _videoPtsToleranceNs =
                 cfg.getAs<int64_t>(MediaConfig::InspectorVideoPtsToleranceNs, int64_t(5'000'000));
         _logIntervalSec = cfg.getAs<double>(MediaConfig::InspectorLogIntervalSec, 1.0);
 
-        // Cache the nominal video frame duration in nanoseconds for the
-        // PTS prediction; if upstream didn't supply a frame rate the
-        // jitter check stays dormant (prediction is impossible).
-        const FrameRate fr = cmd.pendingMediaDesc.frameRate();
-        if (fr.isValid()) {
-                const Duration d = fr.frameDuration();
+        // Cache the upstream frame rate for both the per-essence PTS
+        // prediction and the marker-based A/V sync's cadence math —
+        // rational rates (29.97 NTSC, 59.94, 23.98) need the exact
+        // num/den pair to predict the audio sample cadence
+        // (1601/1602/1601/1602/1602 at 48k/29.97), which the wobble-
+        // free offset computation in @ref runAvSyncCheck subtracts
+        // out so a clean stream reports 0 regardless of rate.
+        _frameRate = cmd.pendingMediaDesc.frameRate();
+        if (_frameRate.isValid()) {
+                const Duration d = _frameRate.frameDuration();
                 _videoFrameDurationNs = static_cast<double>(d.nanoseconds());
         } else {
                 _videoFrameDurationNs = 0.0;
@@ -233,7 +246,7 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
 
         // Resolve the test selection.  The configured list drives
         // which tests run: each entry turns one test on, anything
-        // absent stays off.  Test dependencies (TcSync → ImageData
+        // absent stays off.  Test dependencies (AvSync → ImageData
         // + Ltc, Continuity → ImageData) are auto-added after the
         // explicit list has been interpreted so callers never have
         // to know about them.  The default config (set in
@@ -242,7 +255,7 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _decodeImageData = false;
         _decodeAudioData = false;
         _decodeLtc = false;
-        _checkTcSync = false;
+        _checkAvSync = false;
         _checkContinuity = false;
         _checkTimestamp = false;
         _checkAudioSamples = false;
@@ -254,8 +267,8 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                         _decodeImageData = true;
                 else if (v == InspectorTest::Ltc.value())
                         _decodeLtc = true;
-                else if (v == InspectorTest::TcSync.value())
-                        _checkTcSync = true;
+                else if (v == InspectorTest::AvSync.value())
+                        _checkAvSync = true;
                 else if (v == InspectorTest::Continuity.value())
                         _checkContinuity = true;
                 else if (v == InspectorTest::Timestamp.value())
@@ -267,9 +280,15 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 else if (v == InspectorTest::AudioData.value())
                         _decodeAudioData = true;
         }
-        if (_checkTcSync) {
+        if (_checkAvSync) {
+                // Marker-based A/V sync: compares the picture data
+                // band's frame number against the AudioDataEncoder
+                // codeword's frame number and uses the video
+                // MediaTimeStamp + audio stream sample anchor for the
+                // wall-clock conversion.  Both decoders are required;
+                // LTC is no longer involved.
                 _decodeImageData = true;
-                _decodeLtc = true;
+                _decodeAudioData = true;
         }
         if (_checkContinuity) {
                 _decodeImageData = true;
@@ -298,7 +317,7 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         promekiInfo("Audio data decode     = %s", _decodeAudioData ? "enabled" : "disabled");
         promekiInfo("LTC decode            = %s", _decodeLtc ? "enabled" : "disabled");
         promekiInfo("LTC channel           = %d", _ltcChannel);
-        promekiInfo("A/V sync check        = %s", _checkTcSync ? "enabled" : "disabled");
+        promekiInfo("A/V sync check        = %s", _checkAvSync ? "enabled" : "disabled");
         promekiInfo("A/V sync jitter tol   = %d samples", _syncOffsetToleranceSamples);
         promekiInfo("Continuity check      = %s", _checkContinuity ? "enabled" : "disabled");
         promekiInfo("Timestamp check       = %s", _checkTimestamp ? "enabled" : "disabled");
@@ -388,7 +407,7 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandClose &cmd) {
                 }
         }
 
-        if (_checkTcSync && snap.hasLastEvent && snap.lastEvent.avSyncValid) {
+        if (_checkAvSync && snap.hasLastEvent && snap.lastEvent.avSyncValid) {
                 const int64_t s = snap.lastEvent.avSyncOffsetSamples;
                 if (s == 0) {
                         promekiInfo("  A/V Sync: audio and video locked (0 samples)");
@@ -598,6 +617,36 @@ void InspectorMediaIO::decompressImages(Frame &frame) {
 }
 
 void InspectorMediaIO::initDecoders(const Frame &frame) {
+        // Frame-rate latch / re-latch from the per-frame
+        // @ref Metadata::FrameRate.  The open-time value pulled from
+        // @c pendingMediaDesc is speculative — backends like the NDI
+        // receiver only learn the real source rate after the first
+        // SDK frame arrives, so they publish a placeholder (30/1) at
+        // open time which would otherwise drive the cadence math off
+        // for the entire run on a 29.97 source.  The first authoritative
+        // metadata-published rate that disagrees silently relatches;
+        // any later mid-run change warns and resets the A/V sync
+        // baseline so the @ref FrameRate::cumulativeTicks math runs
+        // against the new rate.
+        {
+                const FrameRate fr = frame.mediaDesc().frameRate();
+                if (fr.isValid() && fr != _frameRate) {
+                        if (_frameRateConfirmed) {
+                                promekiWarn("InspectorMediaIO: upstream frame rate changed "
+                                            "mid-run: %s -> %s — resetting A/V sync baseline",
+                                            _frameRate.toString().cstr(), fr.toString().cstr());
+                                _avSyncBaselineSet = false;
+                                _avSyncBaselinePhase = 0;
+                                _hasPreviousSyncOffset = false;
+                                _previousSyncOffset = 0;
+                        }
+                        _frameRate = fr;
+                        _videoFrameDurationNs =
+                                static_cast<double>(fr.frameDuration().nanoseconds());
+                }
+                if (fr.isValid()) _frameRateConfirmed = true;
+        }
+
         // Picture decoder needs a valid image to learn the descriptor.
         // It can latch on the first frame with video; once latched we
         // skip this check on subsequent calls.
@@ -825,6 +874,27 @@ void InspectorMediaIO::runImageDataCheck(const Frame &frame, InspectorEvent &eve
         event.pictureStreamId = static_cast<uint32_t>((frameId >> 56) & 0xffu);
         event.pictureTimecode = rt.first();
         event.pictureDecoded = true;
+
+        // Record this frame in the marker-based A/V sync history.
+        // The audio-side codeword decode (which may lag by a few
+        // frames under bursty audio) looks the matching video frame
+        // up by the same 48-bit frame field + stream byte.  We push
+        // even when the video MediaTimeStamp is missing — the entry
+        // is still useful for *finding* a match later, and the sync
+        // computation downstream skips the offset calculation when
+        // the wall-clock anchor isn't present.
+        if (_checkAvSync) {
+                VideoFrameRecord rec;
+                rec.frame48 = frameId & 0x0000ffffffffffffULL;
+                rec.streamId = static_cast<uint8_t>((frameId >> 56) & 0xffu);
+                const MediaTimeStamp &vMts = vp->pts();
+                rec.videoWallNs =
+                        vMts.isValid() ? vMts.timeStamp().nanoseconds() + vMts.offset().nanoseconds() : 0;
+                _videoFrameHistory.pushToBack(rec);
+                while (_videoFrameHistory.size() > kVideoFrameHistoryMax) {
+                        _videoFrameHistory.remove(0);
+                }
+        }
 }
 
 void InspectorMediaIO::runAudioDataCheck(const Frame &frame, InspectorEvent &event) {
@@ -1083,83 +1153,101 @@ void InspectorMediaIO::runLtcCheck(InspectorEvent &event) {
 }
 
 void InspectorMediaIO::runAvSyncCheck(const Frame &frame, InspectorEvent &event) {
-        if (!_checkTcSync) return;
-        if (!event.pictureDecoded || !event.ltcDecoded) return;
-        if (!event.ltcTimecode.isValid()) return;
+        (void)frame;
+        if (!_checkAvSync) return;
         if (!_audioStreamAnchored || _audioSampleRate <= 0.0) return;
+        if (event.audioChannelMarkers.isEmpty()) return;
+        if (_videoFrameHistory.isEmpty()) return;
+        if (!_frameRate.isValid()) return;
 
-        // The picture-side BCD wire format only carries digits + the
-        // DF flag, so the picture timecode comes back from the decoder
-        // with no frame rate information.  The LTC side, on the other
-        // hand, was decoded by libvtc with a real format pointer (or
-        // 29.97 inferred from the DF flag).  Borrow LTC's mode for
-        // the picture so both can be converted to absolute frame
-        // numbers in the same coordinate system.
-        Timecode         pictureTc = event.pictureTimecode;
-        const VtcFormat *ltcVtc = event.ltcTimecode.mode().vtcFormat();
-        if (ltcVtc == nullptr) return;
-        pictureTc.setMode(event.ltcTimecode.mode());
-
-        FrameNumber picFrames = pictureTc.toFrameNumber();
-        FrameNumber ltcFrames = event.ltcTimecode.toFrameNumber();
-        if (!picFrames.isValid() || !ltcFrames.isValid()) return;
-
-        // Need the picture's MediaTimeStamp for the wall-clock anchor.
-        // Without it we can't put the picture timecode on a wall-clock
-        // axis — skip silently rather than reporting a meaningless value.
-        auto vids = frame.videoPayloads();
-        if (vids.isEmpty() || !vids[0].isValid()) return;
-        const MediaTimeStamp &vMts = vids[0]->pts();
-        if (!vMts.isValid()) return;
-        const int64_t picWallNs =
-                vMts.timeStamp().nanoseconds() + vMts.offset().nanoseconds();
-
-        // Average samples-per-frame from the LTC format's exact
-        // rational rate.  For integer rates (24, 25, 30, 60, …) this
-        // is an exact integer; for NTSC fractional rates (29.97,
-        // 59.94, 23.98, …) it's a non-integer average — the LTC
-        // encoder alternates between adjacent integer per-frame
-        // sample counts (e.g. 1601 / 1602 / 1601 / 1602 / 1602 …)
-        // to track the rational rate, but the long-run average is
-        // exact at sampleRate * den / num.  Doubles give us plenty
-        // of precision for converting samples ↔ fractional frames
-        // in the periodic log.
-        if (ltcVtc->rate.num <= 0 || ltcVtc->rate.den <= 0) return;
-        const double spf = _audioSampleRate * static_cast<double>(ltcVtc->rate.den) /
-                           static_cast<double>(ltcVtc->rate.num);
-        if (spf <= 0.0) return;
-        _samplesPerFrame = spf;
-
-        // Sign convention: positive = video leads audio (the picture's
-        // TC anchor lands at an earlier wall-clock time than the LTC's
-        // TC anchor).
+        // Marker-based A/V sync, cadence-aware and phase-anchored.
         //
-        // Derivation: each side gets normalized to "wall-clock at TC
-        // 00:00:00:00" by subtracting its TC's frame count expressed
-        // as wall-clock duration.
+        // Both the @ref ImageDataEncoder and the @ref AudioDataEncoder
+        // stamp the same @c [stream:8][channel:8][frame:48] codeword,
+        // so the 48-bit frame field uniquely identifies a frame
+        // across the two streams.  For each successful audio
+        // codeword we compute the raw phase between its actual
+        // stream sample position and the rational-rate-predicted
+        // ideal, then report the deviation from a baseline phase
+        // captured on the first match:
         //
-        //   picWallAtZero = picWallNs    - picFrames * frameDurNs
-        //   ltcWallAtZero = ltcWallNs    - ltcFrames * frameDurNs
-        //   offsetNs      = ltcWallAtZero - picWallAtZero
+        //   raw_phase = streamSampleStart -
+        //               _frameRate.cumulativeTicks(sampleRate, frame)
+        //   baseline  = raw_phase at first match (latched once)
+        //   offset    = raw_phase - baseline           (in samples)
         //
-        // ltcWallNs is the wall-clock of the LTC sync word, derived
-        // from the absolute audio sample position of the sync word
-        // (event.ltcSampleStart) and the audio stream anchor.  This
-        // makes the check independent of how the audio was chunked
-        // into per-frame payloads — bursty network audio works just
-        // as well as steady cadenced delivery.
-        const double  frameDurNs = 1.0e9 / (static_cast<double>(ltcVtc->rate.num) /
-                                             static_cast<double>(ltcVtc->rate.den));
-        const double  ltcWallNs = static_cast<double>(_audioStreamStartNs) +
-                                 static_cast<double>(event.ltcSampleStart) * 1.0e9 /
-                                         _audioSampleRate;
-        const double picWallAtZero =
-                static_cast<double>(picWallNs) - static_cast<double>(picFrames.value()) * frameDurNs;
-        const double ltcWallAtZero =
-                ltcWallNs - static_cast<double>(ltcFrames.value()) * frameDurNs;
-        const double offsetNs = ltcWallAtZero - picWallAtZero;
-        const double offsetSamples = offsetNs * _audioSampleRate / 1.0e9;
-        event.avSyncOffsetSamples = static_cast<int64_t>(std::llround(offsetSamples));
+        // The baseline absorbs any constant phase the producer
+        // happened to start with — a mid-stream join, a non-zero
+        // first frame number, an SRC's constant group delay, or any
+        // other one-time offset between the producer's audio
+        // cadence and the rational ideal.  All of those are stable
+        // properties of the stream and not real A/V sync errors.
+        // A clean cadenced run therefore reports offset = 0 across
+        // every frame regardless of rate, starting frame, or
+        // pipeline shape.
+        //
+        // Real changes in the codeword position relative to its
+        // expected rational position (codeword moved within a
+        // chunk, audio sample dropped/inserted, audio path
+        // resampling drift) still show up: they change raw_phase
+        // away from the latched baseline, the per-frame
+        // change-detection (see below) fires
+        // @ref InspectorDiscontinuity::SyncOffsetChange.
+        //
+        // Sign convention: positive = audio later than predicted →
+        // video leads audio.  Negative = audio earlier than
+        // predicted → audio leads video.
+        //
+        // We still gate on the matching @c VideoFrameRecord so the
+        // per-frame event reports an offset only for codewords
+        // whose video frame the inspector has actually seen.
+        bool    haveMatch = false;
+        int64_t latestMatchedSamplePos = -1;
+        int64_t matchedOffsetSamples = 0;
+        for (size_t i = 0; i < event.audioChannelMarkers.size(); ++i) {
+                const auto &m = event.audioChannelMarkers[i];
+                if (!m.decoded) continue;
+                if (m.streamSampleStart < 0) continue;
+
+                // Sanity-gate against the video frame history.
+                // Search from the back: the most recent record is
+                // the cheapest match under steady-state.
+                const VideoFrameRecord *match = nullptr;
+                for (size_t j = _videoFrameHistory.size(); j > 0; --j) {
+                        const VideoFrameRecord &rec = _videoFrameHistory[j - 1];
+                        if (rec.frame48 == m.frameNumber && rec.streamId == m.streamId) {
+                                match = &rec;
+                                break;
+                        }
+                }
+                if (match == nullptr) continue;
+
+                if (m.streamSampleStart > latestMatchedSamplePos) {
+                        const int64_t expectedSamplePos = _frameRate.cumulativeTicks(
+                                static_cast<int64_t>(_audioSampleRate),
+                                static_cast<int64_t>(m.frameNumber));
+                        const int64_t rawPhase = m.streamSampleStart - expectedSamplePos;
+                        if (!_avSyncBaselineSet) {
+                                _avSyncBaselinePhase = rawPhase;
+                                _avSyncBaselineSet = true;
+                        }
+                        matchedOffsetSamples = rawPhase - _avSyncBaselinePhase;
+                        latestMatchedSamplePos = m.streamSampleStart;
+                        haveMatch = true;
+                }
+        }
+
+        if (!haveMatch) return;
+
+        // Cache the average per-frame sample count for downstream
+        // reporting (periodic log + final report).  Exact rational
+        // average pulled from the upstream MediaDesc, which makes
+        // 29.97 and friends report correctly.
+        if (_videoFrameDurationNs > 0.0) {
+                _samplesPerFrame = _audioSampleRate * _videoFrameDurationNs / 1.0e9;
+        }
+
+        event.avSyncOffsetSamples = matchedOffsetSamples;
         event.avSyncValid = true;
 
         // In professional video the audio and video are locked to the
@@ -1502,8 +1590,8 @@ void InspectorMediaIO::emitPeriodicLogIfDue() {
         if (_decodeLtc) {
                 if (snap.lastEvent.ltcDecoded) {
                         promekiInfo("  LTC: decoded %lld / %lld frames (%.1f%%) — "
-                                    "most recent: TC %s, sync word at sample %lld "
-                                    "within chunk",
+                                    "most recent: TC %s, sync word at stream "
+                                    "sample %lld",
                                     static_cast<long long>(snap.framesWithLtc.value()),
                                     static_cast<long long>(snap.framesProcessed.value()),
                                     snap.framesProcessed.value() > 0
@@ -1519,7 +1607,7 @@ void InspectorMediaIO::emitPeriodicLogIfDue() {
                 }
         }
 
-        if (_checkTcSync) {
+        if (_checkAvSync) {
                 if (snap.lastEvent.avSyncValid) {
                         const int64_t s = snap.lastEvent.avSyncOffsetSamples;
                         if (s == 0) {
@@ -1531,8 +1619,9 @@ void InspectorMediaIO::emitPeriodicLogIfDue() {
                                 // so a QA reader can interpret the
                                 // value at whichever scale is more
                                 // useful.  Frames are computed from
-                                // the LTC's rational rate so 29.97
-                                // and friends report correctly.
+                                // the upstream MediaDesc's rational
+                                // frame rate so 29.97 and friends
+                                // report correctly.
                                 const int64_t absSamples = s < 0 ? -s : s;
                                 const double  frames = _samplesPerFrame > 0.0
                                                                ? static_cast<double>(absSamples) / _samplesPerFrame

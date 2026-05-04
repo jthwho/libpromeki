@@ -111,4 +111,69 @@ TEST_CASE("NdiDiscovery: waitForSource source-only pattern returns empty when no
         CHECK(ms < 500);
 }
 
+// ============================================================================
+// matchCanonical — pure function over a record snapshot, exercised
+// directly so the case-folding rules don't depend on having a live
+// SDK + a real sender on the network at test time.
+// ============================================================================
+
+namespace {
+        NdiDiscovery::Record makeRecord(const String &canonical) {
+                NdiDiscovery::Record r;
+                r.canonicalName = canonical;
+                return r;
+        }
+} // namespace
+
+TEST_CASE("NdiDiscovery::matchCanonical: full canonical exact match returns canonical") {
+        NdiDiscovery::RecordList recs;
+        recs.pushToBack(makeRecord(String("HILBERT (test)")));
+        String found = NdiDiscovery::matchCanonical(recs, String("HILBERT (test)"));
+        CHECK(found == String("HILBERT (test)"));
+}
+
+TEST_CASE("NdiDiscovery::matchCanonical: full canonical host match is case-insensitive") {
+        NdiDiscovery::RecordList recs;
+        recs.pushToBack(makeRecord(String("HILBERT (test)")));
+        // Probe carries the OS-reported lowercase hostname; SDK
+        // registry has the uppercased form.  Match must succeed and
+        // return the SDK's canonical (so downstream recv_create_v3
+        // sees the actual broadcasted name).
+        String found = NdiDiscovery::matchCanonical(recs, String("hilbert (test)"));
+        CHECK(found == String("HILBERT (test)"));
+}
+
+TEST_CASE("NdiDiscovery::matchCanonical: full canonical source name stays case-sensitive") {
+        // Source names are user-defined and must not collapse into
+        // each other across casing — `Test` and `test` are two
+        // different sources on the same machine.
+        NdiDiscovery::RecordList recs;
+        recs.pushToBack(makeRecord(String("HILBERT (test)")));
+        String found = NdiDiscovery::matchCanonical(recs, String("hilbert (Test)"));
+        CHECK(found.isEmpty());
+}
+
+TEST_CASE("NdiDiscovery::matchCanonical: source-only pattern matches any host") {
+        NdiDiscovery::RecordList recs;
+        recs.pushToBack(makeRecord(String("HILBERT (test)")));
+        recs.pushToBack(makeRecord(String("OtherHost (other)")));
+        String found = NdiDiscovery::matchCanonical(recs, String("test"));
+        CHECK(found == String("HILBERT (test)"));
+}
+
+TEST_CASE("NdiDiscovery::matchCanonical: empty registry returns empty") {
+        NdiDiscovery::RecordList recs;
+        CHECK(NdiDiscovery::matchCanonical(recs, String("anything (here)")).isEmpty());
+        CHECK(NdiDiscovery::matchCanonical(recs, String("source-only")).isEmpty());
+}
+
+TEST_CASE("NdiDiscovery::matchCanonical: malformed canonical pattern returns empty") {
+        NdiDiscovery::RecordList recs;
+        recs.pushToBack(makeRecord(String("HILBERT (test)")));
+        // No closing paren — pattern carries `(` so the matcher takes
+        // the full-canonical path, but the structural check rejects
+        // the pattern rather than degrading to a substring search.
+        CHECK(NdiDiscovery::matchCanonical(recs, String("hilbert (test")).isEmpty());
+}
+
 #endif // PROMEKI_ENABLE_NDI

@@ -148,8 +148,11 @@ class NdiDiscovery {
                  * empty @c String if the timeout elapses first.
                  *
                  * Two match forms are accepted:
-                 *  - Full canonical (contains `(`): exact match against the
-                 *    registry, as the SDK reports it.
+                 *  - Full canonical (contains `(`): host portion matched
+                 *    case-insensitively (DNS hostnames are case-folded per
+                 *    RFC 1035, and the NDI SDK can report a different host
+                 *    casing than the OS hostname); source portion matched
+                 *    exactly.
                  *  - Source-only (no `(`): matches any registry entry whose
                  *    canonical ends with `" (<nameOrPattern>)"` — i.e. any
                  *    machine on the network advertising that source name.
@@ -165,6 +168,18 @@ class NdiDiscovery {
                  *                      at 60 seconds defensively.
                  */
                 String waitForSource(const String &nameOrPattern, int timeoutMs);
+
+                /**
+                 * @brief Apply waitForSource's matching rules to a record snapshot.
+                 *
+                 * Pure function over a snapshot — no locking, no SDK
+                 * calls — so it's the testable core of @ref waitForSource.
+                 * Returns the canonical name of the first matching record,
+                 * or an empty @c String if nothing matches.  See
+                 * @ref waitForSource for the full match-rule docs.
+                 */
+                static String matchCanonical(const RecordList &records,
+                                             const String     &nameOrPattern);
 
                 /**
                  * @brief Set the worker's between-poll interval.

@@ -129,6 +129,34 @@ string emitted by any libpromeki executable at startup:
 Features: NETWORK PROAV ... NDI
 ```
 
+## URL form {#ndi_urls}
+
+The NDI MediaIO backend accepts two URL shapes for both source
+and sink mode:
+
+- `ndi://<host>/<name>` — `<name>` on `<host>`. For sink mode,
+  `<host>` must be the local machine (NDI senders advertise from
+  the local box); a non-local host is rejected at open with
+  `Error::InvalidArgument`. For source mode, `<host>` filters the
+  discovery match to that machine's canonical name.
+- `ndi:///<name>` — `<name>` on this machine. Equivalent to
+  `ndi://<this-host>/<name>`; the local hostname is filled in
+  automatically.
+
+The same URL is openable for either direction. Direction is
+selected by the caller:
+
+- `MediaIO::createForFileRead("ndi:///MyCamera")` opens a
+  receiver on `<this-host> (MyCamera)`.
+- `MediaIO::createForFileWrite("ndi:///MyOutput")` opens a
+  sender named `MyOutput`.
+- `MediaIO::createFromUrl("ndi:///MyCamera")` defaults to a
+  receiver; pass `?OpenMode=Write` to open as a sender.
+
+`NdiFactory::enumerate()` returns currently-advertised sources
+in `ndi://<host>/<name>` form, so each enumerated URL round-trips
+through `createForFileRead` to the same source.
+
 ## Troubleshooting {#ndi_troubleshoot}
 
 ### CMake cannot find the SDK {#ndi_trouble_sdk}

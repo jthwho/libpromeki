@@ -43,6 +43,7 @@
 #include <promeki/pcmaudiopayload.h>
 #include <promeki/pixelformat.h>
 #include <promeki/result.h>
+#include <promeki/system.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/url.h>
 
@@ -180,30 +181,112 @@ TEST_CASE("NdiFactory: source mode is supported") {
         CHECK(hasNdi);
 }
 
-TEST_CASE("NdiFactory: urlToConfig populates NdiSourceName from ndi:// URLs") {
+TEST_CASE("NdiFactory: urlToConfig populates NdiSourceName and NdiSendName from ndi:// URLs") {
         const MediaIOFactory *f = MediaIOFactory::findByName(String("Ndi"));
         REQUIRE(f != nullptr);
 
-        // ndi://Machine/Source → "Machine (Source)"
+        // ndi://Machine/Source → source canonical "Machine (Source)",
+        // sender name "Source" (the bare path component).
         {
                 Result<Url> parsed = Url::fromString(String("ndi://MyHost/Channel%201"));
                 REQUIRE(parsed.second().isOk());
                 MediaIO::Config cfg;
                 Error           err = f->urlToConfig(parsed.first(), &cfg);
                 CHECK(err.isOk());
-                String name = cfg.getAs<String>(MediaConfig::NdiSourceName, String());
-                CHECK(name == String("MyHost (Channel 1)"));
+                CHECK(cfg.getAs<String>(MediaConfig::NdiSourceName, String())
+                      == String("MyHost (Channel 1)"));
+                CHECK(cfg.getAs<String>(MediaConfig::NdiSendName, String())
+                      == String("Channel 1"));
         }
-        // ndi:///Source → "Source" (any machine)
+        // ndi:///Source → source canonical "<this machine> (Source)",
+        // sender name "Source".  The host is filled in from the
+        // local hostname so the source canonical round-trips through
+        // the discovery registry on this machine.
         {
                 Result<Url> parsed = Url::fromString(String("ndi:///GlobalSource"));
                 REQUIRE(parsed.second().isOk());
                 MediaIO::Config cfg;
                 Error           err = f->urlToConfig(parsed.first(), &cfg);
                 CHECK(err.isOk());
-                String name = cfg.getAs<String>(MediaConfig::NdiSourceName, String());
-                CHECK(name == String("GlobalSource"));
+                const String me = System::hostname();
+                const String expectedSrc = me.isEmpty()
+                        ? String("GlobalSource")
+                        : (me + String(" (GlobalSource)"));
+                CHECK(cfg.getAs<String>(MediaConfig::NdiSourceName, String()) == expectedSrc);
+                CHECK(cfg.getAs<String>(MediaConfig::NdiSendName, String()) == String("GlobalSource"));
         }
+        // urlToConfig must not stamp OpenMode itself — the precedence
+        // chain (defaults < createFromUrl hint < query) lives one
+        // level up.  Verifies the regression of the previous behavior
+        // (which forced Read and made sender URLs impossible).
+        {
+                Result<Url> parsed = Url::fromString(String("ndi:///AnyName"));
+                REQUIRE(parsed.second().isOk());
+                MediaIO::Config cfg;
+                cfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
+                Error err = f->urlToConfig(parsed.first(), &cfg);
+                CHECK(err.isOk());
+                Enum mode = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
+                CHECK(mode.value() == MediaIOOpenMode::Write.value());
+        }
+}
+
+TEST_CASE("MediaIO::createForFileWrite stamps OpenMode = Write on ndi:// URLs") {
+        // Driving createForFileWrite with an ndi:/// URL must produce
+        // a sink-mode MediaIO (NdiSendName populated, OpenMode = Write
+        // on the live config).  This is the user-visible end of the
+        // urlToConfig + createFromUrlInternal change — without the
+        // OpenMode hint the URL takeover would silently default to
+        // Read and try to open a receiver instead.
+        MediaIO *io = MediaIO::createForFileWrite(String("ndi:///PromekiUrlSinkProbe"));
+        REQUIRE(io != nullptr);
+        const MediaIO::Config &cfg = io->config();
+        Enum mode = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
+        CHECK(mode.value() == MediaIOOpenMode::Write.value());
+        CHECK(cfg.getAs<String>(MediaConfig::NdiSendName, String())
+              == String("PromekiUrlSinkProbe"));
+        delete io;
+}
+
+TEST_CASE("MediaIO::createForFileRead stamps OpenMode = Read on ndi:// URLs") {
+        MediaIO *io = MediaIO::createForFileRead(String("ndi:///PromekiUrlSourceProbe"));
+        REQUIRE(io != nullptr);
+        const MediaIO::Config &cfg = io->config();
+        Enum mode = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
+        CHECK(mode.value() == MediaIOOpenMode::Read.value());
+        // Source canonical includes the local hostname when the URL
+        // host is empty.
+        const String me = System::hostname();
+        const String expectedSrc = me.isEmpty()
+                ? String("PromekiUrlSourceProbe")
+                : (me + String(" (PromekiUrlSourceProbe)"));
+        CHECK(cfg.getAs<String>(MediaConfig::NdiSourceName, String()) == expectedSrc);
+        delete io;
+}
+
+TEST_CASE("NdiMediaIO: sink open rejects URL whose host is not this machine") {
+        if (!NdiLib::instance().isLoaded()) {
+                MESSAGE("NDI runtime not available; skipping non-local sink rejection test");
+                return;
+        }
+        // Build an ndi://<otherhost>/<name> URL so urlToConfig stashes
+        // a non-empty, non-local host on the live Url config.  open()
+        // must reject this with InvalidArgument before touching the
+        // SDK — NDI senders can only run on the local machine.
+        MediaIO *io = MediaIO::createForFileWrite(
+                String("ndi://not-this-machine.invalid/PromekiNonLocal"));
+        REQUIRE(io != nullptr);
+
+        ImageDesc imgDesc(Size2Du32(160, 120), PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709));
+        MediaDesc desc;
+        desc.setFrameRate(FrameRate(FrameRate::FPS_30));
+        desc.imageList().pushToBack(imgDesc);
+        REQUIRE(io->setPendingMediaDesc(desc).isOk());
+
+        Error err = io->open().wait();
+        CHECK(err == Error::InvalidArgument);
+        io->close().wait();
+        delete io;
 }
 
 TEST_CASE("NdiMediaIO: source mode requires a configured source name") {
@@ -400,6 +483,19 @@ TEST_CASE("NdiMediaIO: hermetic sender->receiver round-trip in one process") {
                         CHECK(ct.domain().id() == ClockDomain(ClockDomain::SystemMonotonic).id());
                         MESSAGE("Receiver local CaptureTime: " << ct.timeStamp().nanoseconds() << " ns");
                 }
+                // The receiver stamps @c Metadata::FrameRate on every
+                // emitted frame so downstream stages (e.g. the
+                // inspector's marker-based A/V sync check) see the
+                // real sender rate rather than the open-time placeholder.
+                // Without this, a 29.97 source would be predicted at
+                // a 30/1 cadence and accumulate ~1.6 sample/frame
+                // drift in the A/V sync offset.
+                REQUIRE(received->metadata().contains(Metadata::FrameRate));
+                FrameRate rxFr = received->metadata()
+                                         .get(Metadata::FrameRate)
+                                         .get<FrameRate>();
+                CHECK(rxFr.isValid());
+                CHECK(rxFr == FrameRate(FrameRate::FPS_30));
         }
 
         // Stop the sender thread first so writeFrame() doesn't race

@@ -29,21 +29,38 @@ PROMEKI_REGISTER_MEDIAIO_FACTORY(FrameBridgeFactory)
 //
 // Canonical form: pmfb://<name>[?FrameBridgeKey=value&...]
 //
-// The authority is the FrameBridge logical name (required).  All other
-// knobs travel through the URL query map with their canonical
-// MediaConfig key names (FrameBridgeRingDepth, FrameBridgeSyncMode,
-// ...) — MediaIO::applyQueryToConfig (called by createFromUrl after
-// this callback returns) handles the coercion and validation.
+// The authority is the FrameBridge logical name.  The `pmfb:///<name>`
+// form (empty authority, name in the path) is also accepted — many
+// users reach for it by analogy with `file:///`, and there's no other
+// useful interpretation of a pmfb URL with an empty host.
+//
+// All other knobs travel through the URL query map with their
+// canonical MediaConfig key names (FrameBridgeRingDepth,
+// FrameBridgeSyncMode, ...) — MediaIO::applyQueryToConfig (called by
+// createFromUrl after this callback returns) handles the coercion and
+// validation.
 // ---------------------------------------------------------------------------
 
 Error FrameBridgeFactory::urlToConfig(const Url &url, Config *outConfig) const {
-        if (url.host().isEmpty()) {
+        String name = url.host();
+        if (name.isEmpty()) {
+                // Fall back to the path, stripping a single leading '/'.
+                // pmfb names are flat identifiers (they're plugged
+                // directly into a shm name and a socket file basename),
+                // so any nested slashes are an outright bug in the URL.
+                String p = url.path();
+                if (!p.isEmpty() && p.cstr()[0] == '/') p = p.mid(1);
+                if (!p.isEmpty() && p.find('/') == String::npos) {
+                        name = p;
+                }
+        }
+        if (name.isEmpty()) {
                 promekiErr("pmfb URL requires a non-empty name "
-                           "(e.g. pmfb://my-bridge): got '%s'",
+                           "(e.g. pmfb://my-bridge or pmfb:///my-bridge): got '%s'",
                            url.toString().cstr());
                 return Error::InvalidArgument;
         }
-        outConfig->set(MediaConfig::FrameBridgeName, url.host());
+        outConfig->set(MediaConfig::FrameBridgeName, name);
         return Error::Ok;
 }
 

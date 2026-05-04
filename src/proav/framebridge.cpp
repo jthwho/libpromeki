@@ -239,9 +239,16 @@ struct FrameBridge::Impl {
 
                 uint64_t computeConfigHash() const {
                         // Hash over the stable shape fields that must match
-                        // between writer and reader.
+                        // between writer and reader.  autoGrow is essential:
+                        // a serialized MediaDesc with several ImageDesc
+                        // entries can comfortably exceed the initial 1024
+                        // byte estimate, and a silent truncation here would
+                        // produce a hash mismatch with the reader (which
+                        // serializes the same fields with autoGrow on the
+                        // shm-backed configBlob path).
                         Buffer         blob(1024);
                         BufferIODevice dev(&blob);
+                        dev.setAutoGrow(true);
                         dev.open(IODevice::ReadWrite);
                         DataStream ws = DataStream::createWriter(&dev);
                         ws << mediaDesc << audioDesc << static_cast<uint32_t>(ringDepth)
@@ -364,10 +371,17 @@ struct FrameBridge::Impl {
                                 return Error::FormatMismatch;
                         }
 
-                        // Send ACPT
+                        // Send ACPT.  autoGrow on: the serialized
+                        // mediaDesc + audioDesc payload routinely exceeds
+                        // the 512-byte preallocation (a 1080p MediaDesc
+                        // alone serializes past 600 bytes), and a silent
+                        // truncation here previously surfaced as a
+                        // bewildering "client handshake failed: IOError"
+                        // on the publisher with EndOfFile on the consumer.
                         Buffer acptBuf(512);
                         {
                                 BufferIODevice dev(&acptBuf);
+                                dev.setAutoGrow(true);
                                 dev.open(IODevice::ReadWrite);
                                 DataStream ws = DataStream::createWriter(&dev);
                                 ws << static_cast<uint32_t>(WireMajor) << static_cast<uint32_t>(WireMinor)
@@ -399,6 +413,7 @@ struct FrameBridge::Impl {
                 static void sendReject(KlvWriter &w, uint32_t code, const String &msg) {
                         Buffer         buf(256);
                         BufferIODevice dev(&buf);
+                        dev.setAutoGrow(true);
                         dev.open(IODevice::ReadWrite);
                         DataStream ws = DataStream::createWriter(&dev);
                         ws << code << msg;
@@ -411,10 +426,14 @@ struct FrameBridge::Impl {
                         KlvReader r(&client);
                         KlvWriter w(&client);
 
-                        // Send HELO
+                        // Send HELO.  autoGrow on for the same reason as
+                        // the ACPT path below — buildInfoString is
+                        // unbounded and a silent truncation would mangle
+                        // the on-wire frame.
                         Buffer buf(256);
                         {
                                 BufferIODevice dev(&buf);
+                                dev.setAutoGrow(true);
                                 dev.open(IODevice::ReadWrite);
                                 DataStream ws = DataStream::createWriter(&dev);
                                 ws << static_cast<uint32_t>(WireMajor) << static_cast<uint32_t>(WireMinor)
@@ -422,13 +441,23 @@ struct FrameBridge::Impl {
                                    << static_cast<uint8_t>(inputSyncMode ? 1 : 0);
                                 size_t n = static_cast<size_t>(dev.pos());
                                 Error  err = w.writeFrame(KeyHELO, buf.data(), static_cast<uint32_t>(n));
-                                if (err.isError()) return err;
+                                if (err.isError()) {
+                                        promekiErr("FrameBridge: input handshake: write HELO "
+                                                   "failed: %s",
+                                                   err.name().cstr());
+                                        return err;
+                                }
                         }
 
                         // Receive ACPT or RJCT
                         KlvFrame resp;
                         Error    err = r.readFrame(resp, MaxHandshakeValueBytes);
-                        if (err.isError()) return err;
+                        if (err.isError()) {
+                                promekiErr("FrameBridge: input handshake: read ACPT "
+                                           "failed: %s",
+                                           err.name().cstr());
+                                return err;
+                        }
                         if (resp.key == KeyRJCT) {
                                 uint32_t       code = 0;
                                 String         reason;
@@ -440,7 +469,15 @@ struct FrameBridge::Impl {
                                 promekiWarn("FrameBridge: rejected: code=%u, %s", code, reason.cstr());
                                 return Error::NotSupported;
                         }
-                        if (resp.key != KeyACPT) return Error::CorruptData;
+                        if (resp.key != KeyACPT) {
+                                const uint32_t kv = resp.key.value();
+                                const char     keyChars[5] = {static_cast<char>((kv >> 24) & 0xFF),
+                                                              static_cast<char>((kv >> 16) & 0xFF),
+                                                              static_cast<char>((kv >> 8) & 0xFF),
+                                                              static_cast<char>(kv & 0xFF), '\0'};
+                                promekiErr("FrameBridge: input handshake: expected ACPT, got '%s'", keyChars);
+                                return Error::CorruptData;
+                        }
 
                         uint32_t peerMajor = 0, peerMinor = 0;
                         String   peerBuild, shmNameIn;
@@ -455,7 +492,12 @@ struct FrameBridge::Impl {
                                 DataStream rs = DataStream::createReader(&dev);
                                 rs >> peerMajor >> peerMinor >> peerBuild >> shmNameIn >> shmSize >> hash >> peerUuid >>
                                         depth >> stride >> mediaDesc >> audioDesc;
-                                if (rs.status() != DataStream::Ok) return Error::CorruptData;
+                                if (rs.status() != DataStream::Ok) {
+                                        promekiErr("FrameBridge: input handshake: ACPT "
+                                                   "deserialization failed (status=%d)",
+                                                   static_cast<int>(rs.status()));
+                                        return Error::CorruptData;
+                                }
                         }
 
                         uuid = peerUuid;
@@ -467,14 +509,36 @@ struct FrameBridge::Impl {
 
                         // Map shm read-only.
                         err = shm.open(shmName, SharedMemory::ReadOnly);
-                        if (err.isError()) return err;
-                        if (shm.size() < sizeof(BridgeHeader)) return Error::CorruptData;
-                        const BridgeHeader *hdr = reinterpret_cast<const BridgeHeader *>(shm.data());
-                        if (std::memcmp(hdr->magic, ShmMagic, 4) != 0) {
+                        if (err.isError()) {
+                                promekiErr("FrameBridge: input handshake: shm.open('%s') "
+                                           "failed: %s",
+                                           shmName.cstr(), err.name().cstr());
+                                return err;
+                        }
+                        if (shm.size() < sizeof(BridgeHeader)) {
+                                promekiErr("FrameBridge: input handshake: shm too small "
+                                           "(%zu < %zu)",
+                                           shm.size(), sizeof(BridgeHeader));
                                 return Error::CorruptData;
                         }
-                        if (hdr->wireMajor != WireMajor) return Error::NotSupported;
-                        if (hdr->configHash != configHash) return Error::FormatMismatch;
+                        const BridgeHeader *hdr = reinterpret_cast<const BridgeHeader *>(shm.data());
+                        if (std::memcmp(hdr->magic, ShmMagic, 4) != 0) {
+                                promekiErr("FrameBridge: input handshake: shm magic mismatch");
+                                return Error::CorruptData;
+                        }
+                        if (hdr->wireMajor != WireMajor) {
+                                promekiErr("FrameBridge: input handshake: wire major "
+                                           "mismatch (shm=%u, us=%u)",
+                                           hdr->wireMajor, WireMajor);
+                                return Error::NotSupported;
+                        }
+                        if (hdr->configHash != configHash) {
+                                promekiErr("FrameBridge: input handshake: config hash "
+                                           "mismatch (shm=%llx, ACPT=%llx)",
+                                           static_cast<unsigned long long>(hdr->configHash),
+                                           static_cast<unsigned long long>(configHash));
+                                return Error::FormatMismatch;
+                        }
                         metadataReserveBytes = hdr->metadataReserveBytes;
                         audioCapacitySamples = hdr->audioCapacitySamples;
                         computeGeometry();   // uses mediaDesc from handshake
@@ -482,7 +546,12 @@ struct FrameBridge::Impl {
 
                         // Send REDY
                         err = w.writeFrame(KeyREDY);
-                        if (err.isError()) return err;
+                        if (err.isError()) {
+                                promekiErr("FrameBridge: input handshake: write REDY "
+                                           "failed: %s",
+                                           err.name().cstr());
+                                return err;
+                        }
                         return Error::Ok;
                 }
 

@@ -44,16 +44,20 @@ delete sink;
 
 That's enough to get every check running:
 
-- The TPG's default audio mode is `AudioPattern::AvSync`, which
-  embeds **continuous LTC on channel 0** alongside the click marker
-  on the other channels.
+- The TPG's default audio mode is `AudioPattern::PcmMarker` on
+  every channel, which stamps a Manchester-encoded 76-bit codeword
+  carrying `[stream:8][channel:8][frame:48]` into each chunk via
+  `AudioDataEncoder`.
 - The TPG's image data encoder pass is on by default and stamps two
   64-bit payloads (frame ID + BCD timecode) into the top of every
-  frame.
+  frame.  The frame ID uses the same `[stream:8][channel:8][frame:48]`
+  layout as the audio marker (with `channel = 0`), so the inspector
+  can correlate audio and video by the shared frame number.
 - The Inspector's default `MediaConfig::InspectorTests` list
-  carries every test (`ImageData`, `Ltc`, `TcSync`,
-  `Continuity`, `Timestamp`, `AudioSamples`), so the full
-  suite runs out of the box.
+  carries every default-on test (`ImageData`, `AudioData`,
+  `AvSync`, `Continuity`, `Timestamp`, `AudioSamples`), so the
+  full suite runs out of the box.  `Ltc` and `CaptureStats` are
+  off by default and have to be opted in.
 
 The default periodic log writes a multi-line report once per second
 of wall time, plus immediate warnings whenever a discontinuity is
@@ -61,18 +65,17 @@ detected. Sample output (1080p RGBA8 source, 30 fps, 48 kHz audio):
 
 ```
 config: image data decode  = enabled
-config: LTC decode         = enabled
-config: LTC channel        = 0
-config: A/V sync check     = enabled (auto-enables image data + LTC decode)
-config: A/V sync jitter tolerance = 0 samples (any frame-to-frame change beyond this fires a discontinuity warning; default = report any change at all)
+config: audio data decode  = enabled
+config: A/V sync check     = enabled (auto-enables image data + audio data decode)
+config: A/V sync jitter tolerance = 0 samples (any frame-to-frame change beyond this fires a discontinuity warning)
 config: continuity check    = enabled (auto-enables image data decode)
 config: image data band    = 16 scan lines per item, TPG-convention 2 items at top of frame
 config: drop frames         = yes (sink behaviour)
 config: periodic log every  = 1.00 seconds (wall time)
 Frame 30: report after 30 frames (1.00 s wall) — 30 total since open
 Frame 30: picture data band: decoded 30 / 30 frames (100.0%) — most recent: streamID 0x00000000, frameNo 29, TC 01:00:00:29
-Frame 30: audio LTC: decoded 30 / 30 frames (100.0%) — most recent: TC 01:00:00:29, sync word at sample 2 within chunk
-Frame 30: A/V Sync: Video leads audio by 2 samples, 0.0013 frames
+Frame 30: audio data: decoded 30 / 30 frames on every channel — most recent: streamID 0x00, frame 29
+Frame 30: A/V Sync: audio and video locked (0 samples)
 ```
 
 The continuity line is intentionally absent on a clean stream — the
@@ -93,8 +96,9 @@ you never have to list the upstream decoders explicitly.
 | Test                           | Enum value                       | Auto-enables                |
 |--------------------------------|----------------------------------|-----------------------------|
 | Decode picture data band       | `InspectorTest::ImageData`       | (no deps)                   |
+| Decode audio data marker       | `InspectorTest::AudioData`       | (no deps)                   |
 | Decode audio LTC               | `InspectorTest::Ltc`             | (no deps)                   |
-| A/V Sync (TC offset, samples)  | `InspectorTest::TcSync`          | `ImageData` + `Ltc`         |
+| A/V Sync (sample offset)       | `InspectorTest::AvSync`          | `ImageData` + `AudioData`   |
 | Continuity (TC / frame# / SID) | `InspectorTest::Continuity`      | `ImageData`                 |
 | Timestamp delta + actual FPS   | `InspectorTest::Timestamp`       | (no deps)                   |
 | Per-frame audio sample count   | `InspectorTest::AudioSamples`    | (no deps)                   |
@@ -104,10 +108,10 @@ Example — only run the timestamp and A/V sync checks:
 ```cpp
 EnumList tests = EnumList::forType<InspectorTest>();
 tests.append(InspectorTest::Timestamp);
-tests.append(InspectorTest::TcSync);
+tests.append(InspectorTest::AvSync);
 cfg.set(MediaConfig::InspectorTests, tests);
 // Or from the command line / string form:
-//   InspectorTests=Timestamp,TcSync
+//   InspectorTests=Timestamp,AvSync
 ```
 
 ### Picture data band decode {#inspector_check_picture}
@@ -157,33 +161,50 @@ accumulated enough biphase-mark transitions.
 
 ### A/V Sync {#inspector_check_avsync}
 
-The headline check. When both decoders are running and the LTC
-carries a known frame rate, the inspector computes the
-**instantaneous offset** between the picture timecode anchor and
-the audio LTC sync anchor on every frame, in audio samples. The
-value lives in `InspectorEvent::avSyncOffsetSamples`.
+The headline check. When both `ImageData` and `AudioData` are
+running, the inspector computes the **instantaneous offset**
+between the picture's video MediaTimeStamp and the audio chunk
+that carries the matching frame number's codeword, in audio
+samples. The value lives in
+`InspectorEvent::avSyncOffsetSamples`.
 
 **What this measures, exactly**
 
-For picture frame N, the audio chunk for that frame spans absolute
-audio samples `[N*spf, (N+1)*spf)`, where `spf` is the average
-samples-per-frame (computed exactly from the LTC mode's rational
-frame rate, so 29.97 NDF and friends are accurate). The picture's
-"TC anchor" is sample 0 of that chunk: the picture says we are at
-`picTC` starting here. The LTC's "TC anchor" is the sample at
-which the LTC sync word is detected for the recovered LTC frame:
-the LTC says we are at `ltcTC` starting there.
-
-If the two streams are perfectly aligned, both should agree on the
-same TC at the same sample. The inspector measures:
+Both `ImageDataEncoder` and `AudioDataEncoder` stamp the same
+`[stream:8][channel:8][frame:48]` codeword on every frame, so the
+48-bit frame number uniquely identifies a frame across the two
+streams. The inspector computes a raw phase from the codeword's
+actual stream-sample position vs the rational-rate-predicted
+ideal, then reports the deviation from a baseline phase it
+latches on the first successful match:
 
 ```
-offset = (ltcSampleStart - chunkStart) + (picFrames - ltcFrames) * spf
+raw_phase = streamSampleStart -
+            FrameRate::cumulativeTicks(sampleRate, frameNumber)
+baseline  = raw_phase at first match (latched once)
+offset    = raw_phase - baseline             (in audio samples)
 ```
 
-where `ltcSampleStart - chunkStart` is the LTC sync word's offset
-within this audio chunk and `picFrames - ltcFrames` is the
-difference between the two TCs converted to absolute frame counts.
+`streamSampleStart` is the codeword's leading-edge position in
+the absolute audio-sample coordinate system, decoupled from how
+the audio was chunked into per-frame payloads.
+`cumulativeTicks(sampleRate, frame)` is the exact integer-truncated
+audio sample position predicted by the upstream frame rate — for
+NTSC 29.97 at 48 kHz this is the same number the TPG used to size
+its audio chunks (1601/1602/1601/1602/1602...), so a clean
+cadenced run has the codeword landing at exactly the predicted
+sample and the raw phase reads 0.
+
+The baseline absorbs any constant phase the producer happened to
+start with — a mid-stream join (non-zero starting frame number),
+an SRC's constant group delay, network-buffering offsets, or any
+other one-time difference between the producer's audio cadence
+and the rational ideal. None of those are real A/V sync errors,
+so they shouldn't drive the reported value off 0; the baseline
+makes the offset robust to them. Real changes in the codeword
+position (codeword moved within a chunk, audio sample
+dropped/inserted, audio path resampling drift) still show up
+because they move the raw phase away from the latched baseline.
 
 **Sign convention**
 
@@ -196,44 +217,28 @@ Frame N: A/V Sync: Audio leads video by 5 samples, 0.0031 frames
 Frame N: A/V Sync: audio and video locked (0 samples)
 ```
 
-Internally, positive `avSyncOffsetSamples` means **video leads
-audio** (the picture's TC anchor lands at an earlier wall-clock
-audio sample than the LTC's TC anchor) and negative means **audio
-leads video**.
+Internally, positive `avSyncOffsetSamples` means the audio
+codeword landed at a later stream sample than predicted —
+i.e. the audio is delayed relative to video, so **video leads
+audio**. Negative = audio leads video.
 
 **What "in sync" actually looks like**
 
 In professional video the audio and video are locked to a common
-reference, so a healthy stream's offset is **constant** across
-frames — not necessarily zero, but not changing. Any movement
-from one frame to the next is a real fault. The inspector
-enforces that contract via the change-detection check (see
-[Continuity tracking](#inspector_check_continuity) below) with a
-configurable tolerance via
-`MediaConfig::InspectorSyncOffsetToleranceSamples`.
-
-**The libvtc baseline**
-
-> **Note:** When both encoder and decoder are libvtc (which is the
-> case for any TPG → Inspector pipeline you set up using libpromeki
-> factories), expect a **small constant offset** of 1-3 samples at
-> common audio rates — typically `+2` at 48 kHz / 30 fps. This is
-> not real misalignment. It comes from the libvtc encoder's
-> raised-cosine transition ramp combined with the decoder's
-> hysteresis threshold: the first detectable edge fires at the start
-> of the encoder's first **steady-state** sample, which is one or
-> two samples after the bit boundary. The same fixed phase
-> relationship holds for every frame, so the change-detection check
-> still passes (delta = 0 from frame to frame), and the absolute
-> value is rendered honestly so you can see what your pipeline is
-> actually doing.
-
-For real-world LTC sources (hardware generators, captured audio
-tracks, etc.), the libvtc decoder's edge-detection latency still
-applies but the encoder side is whatever the source happens to do,
-so the constant baseline will be different. Pick a tolerance band
-that matches your pipeline's known jitter and let the inspector
-flag deviations from that.
+reference, so a healthy stream's offset is **0** regardless of
+frame rate — the cadence-aware formulation removes the
+fractional-rate wobble that a simple wall-clock subtraction
+would produce. Any frame-to-frame change is a real audio-side
+fault: the codeword moved within its chunk, an audio sample was
+dropped or inserted, or the audio sample-rate is off. The
+inspector enforces that contract via the change-detection check
+(see [Continuity tracking](#inspector_check_continuity) below)
+with a configurable tolerance via
+`MediaConfig::InspectorSyncOffsetToleranceSamples`. The default
+tolerance is **0** — strict bit-exact lock — because the cadence
+is already mathematically subtracted out. Pipelines with
+known sub-sample jitter (e.g. an SRC re-clocking the audio) can
+raise it.
 
 ### Continuity tracking {#inspector_check_continuity}
 
@@ -241,15 +246,15 @@ Compares this frame's picture-side metadata against the previous
 frame's and emits an `InspectorDiscontinuity` for every property
 that changed in an unexpected way. Tracked properties:
 
-| Property              | Discontinuity kind                                     | What "unexpected" means                                                            |
-|-----------------------|--------------------------------------------------------|------------------------------------------------------------------------------------|
-| Frame number          | `InspectorDiscontinuity::FrameNumberJump`              | Did not advance by exactly 1                                                       |
-| Stream ID             | `InspectorDiscontinuity::StreamIdChange`               | Changed at all                                                                     |
-| Picture timecode      | `InspectorDiscontinuity::PictureTcJump`                | Did not advance by exactly 1 (uses LTC's mode if known, otherwise the check skips) |
-| LTC timecode          | `InspectorDiscontinuity::LtcTcJump`                    | Did not advance by exactly 1                                                       |
-| Picture decoded       | `InspectorDiscontinuity::ImageDataDecodeFailure`       | Failed to decode after a previously successful frame                               |
-| LTC decoded           | `InspectorDiscontinuity::LtcDecodeFailure`             | Failed to decode after a previously successful frame                               |
-| A/V sync offset       | `InspectorDiscontinuity::SyncOffsetChange`             | Moved more than `MediaConfig::InspectorSyncOffsetToleranceSamples`                 |
+| Property              | Discontinuity kind                                     | What "unexpected" means                                                                       |
+|-----------------------|--------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| Frame number          | `InspectorDiscontinuity::FrameNumberJump`              | Did not advance by exactly 1                                                                  |
+| Stream ID             | `InspectorDiscontinuity::StreamIdChange`               | Changed at all                                                                                |
+| Picture timecode      | `InspectorDiscontinuity::PictureTcJump`                | Did not advance by exactly 1 (uses an inferred mode if known, otherwise the check skips)      |
+| LTC timecode          | `InspectorDiscontinuity::LtcTcJump`                    | Did not advance by exactly 1                                                                  |
+| Picture decoded       | `InspectorDiscontinuity::ImageDataDecodeFailure`       | Failed to decode after a previously successful frame                                          |
+| LTC decoded           | `InspectorDiscontinuity::LtcDecodeFailure`             | Failed to decode after a previously successful frame                                          |
+| A/V sync offset       | `InspectorDiscontinuity::SyncOffsetChange`             | Moved more than `MediaConfig::InspectorSyncOffsetToleranceSamples`                            |
 
 Each discontinuity carries a pre-rendered description with the
 **previous and current values inline** so a QA reader can see the
@@ -404,10 +409,10 @@ Every line the inspector writes, in the order you'll see them.
 
 ```
 config: image data decode  = enabled
-config: LTC decode         = enabled
-config: LTC channel        = 0
-config: A/V sync check     = enabled (auto-enables image data + LTC decode)
-config: A/V sync jitter tolerance = 0 samples (any frame-to-frame change beyond this fires a discontinuity warning; default = report any change at all)
+config: audio data decode  = enabled
+config: LTC decode         = disabled
+config: A/V sync check     = enabled (auto-enables image data + audio data decode)
+config: A/V sync jitter tolerance = 0 samples (any frame-to-frame change beyond this fires a discontinuity warning)
 config: continuity check    = enabled (auto-enables image data decode)
 config: image data band    = 16 scan lines per item, TPG-convention 2 items at top of frame
 config: drop frames         = yes (sink behaviour)
@@ -423,8 +428,8 @@ still appear (so a forensics reader can see what wasn't enabled).
 ```
 Frame 30: report after 30 frames (1.00 s wall) — 30 total since open
 Frame 30: picture data band: decoded 30 / 30 frames (100.0%) — most recent: streamID 0xc0ffeeaa, frameNo 29, TC 01:00:00:29
-Frame 30: audio LTC: decoded 30 / 30 frames (100.0%) — most recent: TC 01:00:00:29, sync word at sample 2 within chunk
-Frame 30: A/V Sync: Video leads audio by 2 samples, 0.0013 frames
+Frame 30: audio data: decoded 30 / 30 frames on every channel — most recent: streamID 0xaa, frame 29
+Frame 30: A/V Sync: audio and video locked (0 samples)
 ```
 
 - **Header line**: how many frames were processed since the last
@@ -432,17 +437,16 @@ Frame 30: A/V Sync: Video leads audio by 2 samples, 0.0013 frames
   inspector opened.
 - **picture data band**: cumulative decode rate (X of Y frames),
   the most recently recovered stream ID, frame number, and
-  timecode. The TC is rendered using the LTC's mode if known
-  (with the proper drop-frame separator), otherwise as bare
-  digits. When the most recent frame failed to decode, the line
-  becomes a warning instead of an info line.
-- **audio LTC**: same shape — cumulative decode rate plus the most
-  recent timecode and the within-chunk sample offset of the sync
-  word.
+  timecode. When the most recent frame failed to decode, the
+  line becomes a warning instead of an info line.
+- **audio data**: cumulative decode rate plus the most recent
+  recovered stream ID and 48-bit frame number from any channel
+  carrying a `PcmMarker` codeword.
 - **A/V Sync**: the per-frame offset rendered in plain language
   plus both samples and fractional frames. Only emitted when the
-  sync check is enabled and a measurement was possible on the
-  most recent frame.
+  sync check is enabled and a marker-based measurement was
+  possible on the most recent frame (i.e. a video frame whose
+  frame number was matched by an audio codeword).
 
 Lines that aren't relevant (decoders disabled, etc.) are elided.
 

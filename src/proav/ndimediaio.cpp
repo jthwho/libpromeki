@@ -88,6 +88,31 @@ namespace {
                 return MediaTimeStamp(TimeStamp::now(), ClockDomain(ClockDomain::SystemMonotonic));
         }
 
+        // Strip everything from the first '.' onward so an FQDN like
+        // "machine.local" compares equal to a bare "machine".  NDI's
+        // canonical names use the bare hostname on every platform we
+        // care about, but URL authors commonly type the FQDN — both
+        // forms should resolve to the same machine.
+        String stripDomain(const String &s) {
+                size_t dot = s.find('.');
+                return dot == String::npos ? s : s.left(dot);
+        }
+
+        // True when @p host names this machine (or is empty, which
+        // means "this machine" by URL convention).  Compares
+        // case-insensitively against System::hostname() — bare and
+        // strip-domain forms both match.  Drives the sink-mode locality
+        // check: NDI senders can only run on the local box, so a
+        // non-local host in the URL is a hard error rather than a
+        // silent fallback to the local hostname.
+        bool isLocalNdiHost(const String &host) {
+                if (host.isEmpty()) return true;
+                const String me = System::hostname();
+                if (me.isEmpty()) return false;
+                if (host.toLower() == me.toLower()) return true;
+                return stripDomain(host).toLower() == stripDomain(me).toLower();
+        }
+
 } // namespace
 
 // ---------------------------------------------------------------------------
@@ -377,6 +402,18 @@ Error NdiMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 }
         }
 
+        // Stamp the live frame rate on the frame so downstream stages
+        // (e.g. the inspector's marker-based A/V sync check) see the
+        // real rational rate rather than the open-time placeholder.
+        // The capture thread keeps @c _frameRate updated from each
+        // SDK frame's @c frame_rate_N / @c frame_rate_D, so by the
+        // time we get here on a frame popped from the queue the rate
+        // has been refreshed.  Skip for an invalid rate (which would
+        // overwrite any FrameRate downstream may have derived).
+        if (_frameRate.isValid()) {
+                frame.modify()->metadata().set(Metadata::FrameRate, _frameRate);
+        }
+
         cmd.frame        = frame;
         cmd.currentFrame = FrameNumber{static_cast<int64_t>(_framesReceived.load(std::memory_order_relaxed))};
         return Error::Ok;
@@ -435,6 +472,21 @@ Error NdiMediaIO::openSink(const MediaIO::Config &cfg, const MediaDesc &md) {
         _extraIps       = cfg.getAs<String>(MediaConfig::NdiExtraIps, String());
         _sendClockVideo = cfg.getAs<bool>(MediaConfig::NdiSendClockVideo, true);
         _sendClockAudio = cfg.getAs<bool>(MediaConfig::NdiSendClockAudio, true);
+
+        // When the MediaIO was opened from an ndi:// URL, the URL host
+        // names the machine the sender must run on.  NDI senders can
+        // only advertise from the local box, so a non-local host is
+        // a hard error rather than a silent fallback.  An empty host
+        // (ndi:///<name> form) and a Url-less open (configured via
+        // MediaConfig::NdiSendName directly) both pass through.
+        const Url urlFromConfig = cfg.getAs<Url>(MediaConfig::Url, Url());
+        if (urlFromConfig.isValid() && !isLocalNdiHost(urlFromConfig.host())) {
+                promekiErr("NdiMediaIO: cannot open sink for URL '%s' — host '%s' is not "
+                           "this machine ('%s'); NDI senders can only run on the local box",
+                           urlFromConfig.toString().cstr(), urlFromConfig.host().cstr(),
+                           System::hostname().cstr());
+                return Error::InvalidArgument;
+        }
 
         // The pending MediaDesc tells us what video / audio shape the
         // caller intends to send.  We pin those at open time so
@@ -743,7 +795,9 @@ namespace {
 Error NdiMediaIO::openSource(const MediaIO::Config &cfg) {
         // Resolve the canonical NDI source name.  Either the caller
         // set NdiSourceName directly, or the URL parser populated it
-        // from a `ndi://Machine/Source` URL via NdiFactory::urlToConfig.
+        // from an `ndi://<host>/<name>` URL via NdiFactory::urlToConfig
+        // (which composes a full canonical "<host> (<name>)", filling
+        // in the local hostname for the `ndi:///<name>` form).
         const String sourceName = cfg.getAs<String>(MediaConfig::NdiSourceName, String());
         if (sourceName.isEmpty()) {
                 promekiErr("NdiMediaIO: NdiSourceName is empty — set it via the config "
@@ -754,12 +808,14 @@ Error NdiMediaIO::openSource(const MediaIO::Config &cfg) {
         // Wait for NdiDiscovery to confirm the source is currently
         // advertised.  This translates a configured-by-name reference
         // into the canonical NDIlib_source_t we hand to recv_create_v3.
-        // The configured name may be a full canonical (`Machine (Source)`,
-        // from `ndi://Machine/Source`) or a source-only pattern (from
-        // `ndi:///Source`); waitForSource resolves either form to the
-        // full canonical name actually registered by the SDK.  The
-        // wait timeout is the user's NdiFindWait key — set it higher
-        // when chasing a slow-to-appear source.
+        // URL-derived references arrive here as full canonicals
+        // ("<host> (<name>)"); a directly-configured NdiSourceName may
+        // be a full canonical or a source-only pattern (matches any
+        // machine on the network advertising that name).  waitForSource
+        // resolves either shape to the full canonical actually
+        // registered by the SDK.  The wait timeout is the user's
+        // NdiFindWait key — set it higher when chasing a slow-to-appear
+        // source.
         const Duration findWait    = cfg.getAs<Duration>(MediaConfig::NdiFindWait, Duration::fromSeconds(3));
         const int      findWaitMs  = static_cast<int>(findWait.milliseconds());
         const String   canonical   = NdiDiscovery::instance().waitForSource(sourceName, findWaitMs);
@@ -1252,21 +1308,43 @@ StringList NdiFactory::enumerate() const {
         // minimum-uptime gives a fresh process a chance to populate
         // the registry before the first probe; later calls (after
         // the discovery thread has been up for a while) return
-        // instantly.  Names are returned in `ndi:///<canonical>`
-        // form — the empty machine slot signals "any machine matching
-        // this canonical name", which is how URL-as-name lookup works.
+        // instantly.  Each canonical name "MACHINE (Source)" is split
+        // back into authority + path so the emitted URL round-trips
+        // through urlToConfig as the same source.
         StringList urls;
         for (const auto &r : NdiDiscovery::instance().sources(500)) {
-                urls.pushToBack(String("ndi:///") + r.canonicalName);
+                const String &canon = r.canonicalName;
+                size_t        open  = canon.find(" (");
+                if (open == String::npos || !canon.endsWith(String(")"))) {
+                        // Unexpected canonical shape — emit it under
+                        // the "this machine" form so it at least parses
+                        // and points at the right name on this box.
+                        urls.pushToBack(String("ndi:///") + canon);
+                        continue;
+                }
+                const String host   = canon.left(open);
+                const String name   = canon.substr(open + 2, canon.size() - open - 3);
+                urls.pushToBack(String("ndi://") + host + String("/") + name);
         }
         return urls;
 }
 
 Error NdiFactory::urlToConfig(const Url &url, Config *outConfig) const {
         if (outConfig == nullptr) return Error::InvalidArgument;
-        // ndi://Machine/Source → canonical "Machine (Source)"
-        // ndi:///Source        → canonical "Source"           (any machine)
-        // The URL parser splits authority (host) and path for us.
+        // URL forms (the path component is always the bare NDI source
+        // / sender name, never a canonical "Machine (Source)" string):
+        //   ndi://<host>/<name> → name on <host>
+        //   ndi:///<name>       → name on this machine
+        //
+        // Direction is taken from MediaConfig::OpenMode (Read or Write)
+        // — the same URL is openable for either direction:
+        //   Read  → resolves via NdiDiscovery against
+        //           "<host-or-this-machine> (<name>)".
+        //   Write → uses <name> as the NDI sender name; the URL host
+        //           must be empty or match this machine, since NDI
+        //           senders can only run on the local box.  The
+        //           sink-open path enforces that — urlToConfig just
+        //           plumbs both keys through.
         const String host = url.host();
         String       path = url.path();
         // url.path() includes the leading `/` for ndi://Host/Source
@@ -1274,20 +1352,20 @@ Error NdiFactory::urlToConfig(const Url &url, Config *outConfig) const {
         if (!path.isEmpty() && path[0] == '/') path = path.substr(1);
         if (path.isEmpty()) {
                 promekiErr("NdiMediaIO: URL '%s' is missing the source name "
-                           "(expected ndi://Machine/Source or ndi:///Source)",
+                           "(expected ndi://<host>/<name> or ndi:///<name>)",
                            url.toString().cstr());
                 return Error::InvalidArgument;
         }
-        String canonical;
-        if (!host.isEmpty()) {
-                canonical = host + " (" + path + ")";
-        } else {
-                canonical = path;
-        }
+        // Sender name is the bare path — NDI prefixes the local
+        // machine name itself when advertising the source.
+        outConfig->set(MediaConfig::NdiSendName, path);
+        // Source canonical: explicit host wins; otherwise this machine.
+        // NDI's discovery registry uses the bare hostname as the
+        // machine prefix, so System::hostname() is the right "any
+        // host" stand-in here.
+        const String resolvedHost = host.isEmpty() ? System::hostname() : host;
+        const String canonical    = resolvedHost.isEmpty() ? path : (resolvedHost + " (" + path + ")");
         outConfig->set(MediaConfig::NdiSourceName, canonical);
-        // URL implicitly opens for read — sender mode goes through
-        // explicit factory create with OpenMode = Write.
-        outConfig->set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Read));
         return Error::Ok;
 }
 

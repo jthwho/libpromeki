@@ -34,8 +34,11 @@ that history now lives in git. What remains here is the open work.
 - **FrameSyncMediaIO** — wraps `FrameSync` for cadence resync.
 - **InspectorMediaIO** — QA sink: image-data band decode, per-channel
   `AudioDataDecoder` marker decode (`InspectorTest::AudioData`,
-  default-on), audio LTC decode (opt-in), A/V sync offset, continuity
-  checks, `--filter` queries.
+  default-on), audio LTC decode (opt-in), marker-based A/V sync
+  (`InspectorTest::AvSync`, default-on — cadence-free, baseline-
+  anchored; per-frame `Metadata::FrameRate` relatch so NDI and other
+  late-rate backends drive the cadence math against the real rate),
+  continuity checks, `--filter` queries.
 - **VideoEncoderMediaIO** / **VideoDecoderMediaIO** — generic codec
   wrappers over the `VideoCodec` registry. JPEG, JPEG XS, NVENC,
   NVDEC backends are registered.
@@ -45,8 +48,16 @@ that history now lives in git. What remains here is the open work.
   metadata RTP, with SDP-driven auto-config.
 - **NdiMediaIO** — NDI Advanced source + sink with sender-anchored
   audio timeline (`AudioMarker` / `pushSilence`) and `PacingGate` for
-  external-clock pacing.
+  external-clock pacing. URL forms: `ndi://<host>/<name>` and
+  `ndi:///<name>` (local host); both readable and writable via
+  `createForFileRead` / `createForFileWrite`. Source stamps
+  `Metadata::FrameRate` on every emitted frame. Non-local sink host
+  rejected at open. `NdiDiscovery::matchCanonical` extracted as a
+  pure-function testable core.
 - **FrameBridgeMediaIO** — cross-process shared-memory frame transport.
+  URL forms: `pmfb://<name>` and `pmfb:///<name>` both accepted.
+  `autoGrow` enabled on all handshake serialization buffers to prevent
+  silent truncation of large `MediaDesc` payloads.
 - **DebugMediaMediaIO** (PMDF) — lossless debug container; companion
   CLI `pmdf-inspect`.
 - **MjpegStreamMediaIO** — rate-limited MJPEG HTTP preview sink.

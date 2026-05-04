@@ -1080,9 +1080,12 @@ inline const EUI64Format EUI64Format::IPv6{2};
  *
  * - @c ImageData  — decode the @c ImageDataEncoder bands carried in
  *                   the picture (frame number, stream ID, picture TC).
- * - @c Ltc        — decode LTC from the audio track.
- * - @c TcSync     — picture TC vs audio LTC offset in samples.
- *                   Implies @c ImageData + @c Ltc.
+ * - @c Ltc        — decode LTC from the audio track (independent
+ *                   feature; not required by @c AvSync).
+ * - @c AvSync     — A/V sync offset in samples, derived from the
+ *                   shared frame-number marker that
+ *                   @ref ImageDataEncoder and @ref AudioDataEncoder
+ *                   both stamp.  Implies @c ImageData + @c AudioData.
  * - @c Continuity — frame number / stream ID / TC continuity.
  *                   Implies @c ImageData.
  * - @c Timestamp    — per-essence @ref MediaTimeStamp existence
@@ -1106,7 +1109,7 @@ inline const EUI64Format EUI64Format::IPv6{2};
  */
 class InspectorTest : public TypedEnum<InspectorTest> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("InspectorTest", 0, {"ImageData", 0}, {"Ltc", 1}, {"TcSync", 2},
+                PROMEKI_REGISTER_ENUM_TYPE("InspectorTest", 0, {"ImageData", 0}, {"Ltc", 1}, {"AvSync", 2},
                                            {"Continuity", 3}, {"Timestamp", 4}, {"AudioSamples", 5},
                                            {"CaptureStats", 6}, {"AudioData", 7});
 
@@ -1114,7 +1117,7 @@ class InspectorTest : public TypedEnum<InspectorTest> {
 
                 static const InspectorTest ImageData;
                 static const InspectorTest Ltc;
-                static const InspectorTest TcSync;
+                static const InspectorTest AvSync;
                 static const InspectorTest Continuity;
                 static const InspectorTest Timestamp;
                 static const InspectorTest AudioSamples;
@@ -1124,7 +1127,7 @@ class InspectorTest : public TypedEnum<InspectorTest> {
 
 inline const InspectorTest InspectorTest::ImageData{0};
 inline const InspectorTest InspectorTest::Ltc{1};
-inline const InspectorTest InspectorTest::TcSync{2};
+inline const InspectorTest InspectorTest::AvSync{2};
 inline const InspectorTest InspectorTest::Continuity{3};
 inline const InspectorTest InspectorTest::Timestamp{4};
 inline const InspectorTest InspectorTest::AudioSamples{5};

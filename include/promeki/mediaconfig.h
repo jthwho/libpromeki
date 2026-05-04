@@ -502,32 +502,32 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                 /// tests to run.
                 ///
                 /// The default lists every known test
-                /// (@c ImageData, @c Ltc, @c TcSync, @c Continuity,
-                /// @c Timestamp, @c AudioSamples) so a default-
-                /// configured inspector runs the full suite.  Set to
-                /// a shorter list to disable tests; an empty list
-                /// disables every test.
-                /// Dependencies are still auto-resolved (e.g. asking
-                /// for @c TcSync implicitly also enables @c ImageData
-                /// and @c Ltc).
+                /// (@c ImageData, @c AudioData, @c AvSync,
+                /// @c Continuity, @c Timestamp, @c AudioSamples) so
+                /// a default-configured inspector runs the full
+                /// suite.  Set to a shorter list to disable tests;
+                /// an empty list disables every test.
+                /// Dependencies are still auto-resolved (e.g.
+                /// asking for @c AvSync implicitly also enables
+                /// @c ImageData and @c AudioData).
                 ///
                 /// @par Example
                 /// @code
                 /// // Only run the timestamp and A/V sync checks:
                 /// EnumList tests = EnumList::forType<InspectorTest>();
                 /// tests.append(InspectorTest::Timestamp);
-                /// tests.append(InspectorTest::TcSync);
+                /// tests.append(InspectorTest::AvSync);
                 /// cfg.set(MediaConfig::InspectorTests, tests);
                 /// // Equivalent string form on the command line:
-                /// //   InspectorTests=Timestamp,TcSync
+                /// //   InspectorTests=Timestamp,AvSync
                 /// @endcode
                 PROMEKI_DECLARE_ID(InspectorTests, VariantSpec()
                                                            .setType(Variant::TypeEnumList)
                                                            .setDefault([] {
                                                                    EnumList l = EnumList::forType<InspectorTest>();
                                                                    l.append(InspectorTest::ImageData);
-                                                                   l.append(InspectorTest::Ltc);
-                                                                   l.append(InspectorTest::TcSync);
+                                                                   l.append(InspectorTest::AudioData);
+                                                                   l.append(InspectorTest::AvSync);
                                                                    l.append(InspectorTest::Continuity);
                                                                    l.append(InspectorTest::Timestamp);
                                                                    l.append(InspectorTest::AudioSamples);
@@ -537,32 +537,34 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                            .setDescription("List of inspector tests to run."));
 
                 /// @brief int — maximum allowed sample-to-sample change in the
-                /// picture-vs-LTC sync offset before the inspector flags a
-                /// discontinuity.  Only meaningful when the @c TcSync test
+                /// marker-based A/V sync offset before the inspector flags a
+                /// discontinuity.  Only meaningful when the @c AvSync test
                 /// is enabled.
                 ///
-                /// Default 2: the libvtc LTC encoder's raised-cosine
-                /// transition ramp combined with the decoder's hysteresis
-                /// threshold gives the decoder a ±1 sample edge-detection
-                /// variance even on a perfectly stable input.  In practice
-                /// the offset alternates between two adjacent integer
-                /// values from frame to frame; flagging that as a
-                /// discontinuity drowns the log in false positives.  A
-                /// tolerance of 2 absorbs that natural jitter while still
-                /// catching real drift (≥3 samples between consecutive
-                /// frames).  Set to 0 to enforce strict bit-exact lock
-                /// (useful in synthesized-LTC test environments) or higher
-                /// if the upstream pipeline has known additional jitter
-                /// (e.g. an SRC re-clocking the audio).
+                /// Default 0: the inspector reports the offset as the
+                /// audio codeword's deviation from the rational-rate
+                /// cadence (computed via
+                /// @ref FrameRate::cumulativeTicks), so a clean stream
+                /// sits at exactly 0 regardless of NTSC cadence
+                /// (1601/1602/1601/1602/1602 at 48k @ 29.97 stops
+                /// wobbling the offset because both sides of the
+                /// formula are in the same audio-sample domain).
+                /// Strict (0-sample) tolerance is therefore the right
+                /// default and any frame-to-frame change reflects a
+                /// real audio-side shift (codeword moved within a
+                /// chunk, audio sample dropped/inserted).  Pipelines
+                /// with known sub-sample jitter (e.g. an SRC
+                /// re-clocking the audio) can raise this.
                 PROMEKI_DECLARE_ID(InspectorSyncOffsetToleranceSamples,
                                    VariantSpec()
                                            .setType(Variant::TypeS32)
-                                           .setDefault(int32_t(2))
+                                           .setDefault(int32_t(0))
                                            .setMin(int32_t(0))
                                            .setDescription("Max allowed sample-to-sample change in "
-                                                           "picture-vs-LTC sync offset before flagging "
-                                                           "a discontinuity (default 2 absorbs LTC "
-                                                           "edge-detection jitter)."));
+                                                           "the marker-based A/V sync offset before "
+                                                           "flagging a discontinuity (default 0 — "
+                                                           "the offset is cadence-free, so any "
+                                                           "movement is a real shift)."));
 
                 /// @brief int — scan lines per @ref ImageDataEncoder band.  Must
                 /// match the encoder's @ref TpgDataEncoderRepeatLines so the

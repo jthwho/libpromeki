@@ -105,6 +105,43 @@ NdiDiscovery::RecordList NdiDiscovery::sources(int minUptimeMs) const {
         return out;
 }
 
+String NdiDiscovery::matchCanonical(const RecordList &records, const String &nameOrPattern) {
+        // A full canonical name (`Machine (Source)`) matches on a
+        // case-insensitive host compare with an exact source-name
+        // compare — DNS hostnames are case-folded per RFC 1035 and the
+        // NDI SDK does not preserve the OS hostname's casing on every
+        // platform, while NDI source names are user-defined and stay
+        // case-sensitive.  A source-only pattern matches the
+        // parenthesised tail (case-sensitive) — used by the
+        // `ndi:///<source>` URL form when the host slot is filled in
+        // automatically and a one-host fallback would still want any
+        // machine advertising that source name.
+        const bool isFullCanonical = nameOrPattern.contains('(');
+        if (isFullCanonical) {
+                size_t open = nameOrPattern.find(" (");
+                if (open == String::npos || !nameOrPattern.endsWith(String(")"))) {
+                        return String();
+                }
+                const String wantHostLower = nameOrPattern.left(open).toLower();
+                const String wantSource    = nameOrPattern.substr(open + 2,
+                                                                  nameOrPattern.size() - open - 3);
+                for (const auto &r : records) {
+                        const String &canon = r.canonicalName;
+                        size_t        open2 = canon.find(" (");
+                        if (open2 == String::npos || !canon.endsWith(String(")"))) continue;
+                        if (canon.left(open2).toLower() != wantHostLower) continue;
+                        if (canon.substr(open2 + 2, canon.size() - open2 - 3) != wantSource) continue;
+                        return canon;
+                }
+                return String();
+        }
+        const String suffix = String(" (") + nameOrPattern + ")";
+        for (const auto &r : records) {
+                if (r.canonicalName.endsWith(suffix)) return r.canonicalName;
+        }
+        return String();
+}
+
 String NdiDiscovery::waitForSource(const String &nameOrPattern, int timeoutMs) {
         // The worker thread is started in the constructor when the
         // SDK is loaded; it may not have flipped @c _running on yet
@@ -117,24 +154,17 @@ String NdiDiscovery::waitForSource(const String &nameOrPattern, int timeoutMs) {
         if (timeoutMs < 0) timeoutMs = 0;
         if (timeoutMs > kMaxWaitMs) timeoutMs = kMaxWaitMs;
 
-        // A full canonical name (`Machine (Source)`) is matched
-        // exactly; a source-only name is matched against the
-        // parenthesised tail of every registered canonical, which
-        // is how `ndi:///<source>` resolves to "any machine".
-        const bool   isFullCanonical = nameOrPattern.contains('(');
-        const String suffix          = isFullCanonical ? String() : (String(" (") + nameOrPattern + ")");
-
+        // Snapshot-into-a-list adapter that runs the shared matcher
+        // against the current registry without copying the registry
+        // out (we already hold the lock).  Iterating the map directly
+        // keeps the hot path zero-allocation; the static
+        // matchCanonical sees a RecordList in tests but the same
+        // logic walks the map here.
         auto findMatch = [&]() -> String {
-                if (isFullCanonical) {
-                        auto it = _registry.find(nameOrPattern);
-                        return it != _registry.end() ? it->second.canonicalName : String();
-                }
-                for (const auto &kv : _registry) {
-                        if (kv.second.canonicalName.endsWith(suffix)) {
-                                return kv.second.canonicalName;
-                        }
-                }
-                return String();
+                RecordList snapshot;
+                snapshot.reserve(_registry.size());
+                for (const auto &kv : _registry) snapshot.pushToBack(kv.second);
+                return matchCanonical(snapshot, nameOrPattern);
         };
 
         TimeStamp     deadline = TimeStamp::now();

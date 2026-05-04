@@ -247,7 +247,17 @@ static const MediaIOFactory *tryResolveAsUrl(const String &maybeUrl, Url *outUrl
         return factory;
 }
 
-MediaIO *MediaIO::createFromUrl(const Url &url, ObjectBase *parent) {
+// Shared body for createFromUrl + the URL takeovers in
+// createForFileRead / createForFileWrite.  When @p openModeHint is
+// non-null, it is stamped onto the cfg between urlToConfig and
+// applyQueryToConfig, so the file-read/write API picks the right
+// direction *and* a query string can still override it explicitly
+// via `?OpenMode=...`.  Backends whose urlToConfig does not set
+// OpenMode (the recommended pattern) inherit the hint; backends
+// that do set it explicitly win against the hint, matching the
+// "spec defaults < urlToConfig < query" precedence chain.
+static MediaIO *createFromUrlInternal(const Url &url, const MediaIOOpenMode *openModeHint,
+                                      ObjectBase *parent) {
         if (!url.isValid()) {
                 promekiWarn("MediaIO::createFromUrl: invalid URL");
                 return nullptr;
@@ -261,7 +271,7 @@ MediaIO *MediaIO::createFromUrl(const Url &url, ObjectBase *parent) {
         // key has a value, then let the URL translator overwrite the
         // subset it cares about.  This matches the pattern used by
         // createForFileRead / createForFileWrite.
-        Config cfg = MediaIOFactory::defaultConfig(factory->name());
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig(factory->name());
         cfg.set(MediaConfig::Type, factory->name());
         // Seed the live config with the parsed URL so downstream
         // consumers (logs, --stats, introspection tools) can show
@@ -269,6 +279,14 @@ MediaIO *MediaIO::createFromUrl(const Url &url, ObjectBase *parent) {
         // factory having to hang a parallel string field off the
         // Config.
         cfg.set(MediaConfig::Url, url);
+
+        // Stamp the API-level direction hint *before* urlToConfig so
+        // the backend's URL translator can inspect the intended mode
+        // (and so a backend that does choose to set OpenMode itself
+        // wins against the hint, preserving the documented precedence).
+        if (openModeHint != nullptr) {
+                cfg.set(MediaConfig::OpenMode, *openModeHint);
+        }
 
         // The backend's callback owns the authority / path translation
         // — those bits are scheme-specific and cannot be generalized
@@ -293,9 +311,9 @@ MediaIO *MediaIO::createFromUrl(const Url &url, ObjectBase *parent) {
         // all fail the open — the open() error path is the right
         // place for URL-level bugs, not a silent default substitution.
         if (!url.query().isEmpty()) {
-                Config::SpecMap specs = factory->configSpecs();
+                MediaIO::Config::SpecMap specs = factory->configSpecs();
                 if (!specs.isEmpty()) {
-                        Error qerr = applyQueryToConfig(url, specs, &cfg);
+                        Error qerr = MediaIO::applyQueryToConfig(url, specs, &cfg);
                         if (qerr.isError()) {
                                 promekiWarn("MediaIO::createFromUrl: '%s' query "
                                             "application failed for '%s' (%s)",
@@ -306,6 +324,10 @@ MediaIO *MediaIO::createFromUrl(const Url &url, ObjectBase *parent) {
         }
 
         return factory->create(cfg, parent);
+}
+
+MediaIO *MediaIO::createFromUrl(const Url &url, ObjectBase *parent) {
+        return createFromUrlInternal(url, nullptr, parent);
 }
 
 MediaIO *MediaIO::createFromUrl(const String &url, ObjectBase *parent) {
@@ -331,7 +353,8 @@ MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) 
                                     urlFactory->name().cstr(), url.scheme().cstr());
                         return nullptr;
                 }
-                return createFromUrl(url, parent);
+                const MediaIOOpenMode mode = MediaIOOpenMode::Read;
+                return createFromUrlInternal(url, &mode, parent);
         }
 
         const MediaIOFactory *factory = findFactoryForFileRead(filename);
@@ -363,7 +386,8 @@ MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent)
                                     urlFactory->name().cstr(), url.scheme().cstr());
                         return nullptr;
                 }
-                return createFromUrl(url, parent);
+                const MediaIOOpenMode mode = MediaIOOpenMode::Write;
+                return createFromUrlInternal(url, &mode, parent);
         }
 
         const MediaIOFactory *factory = findFactoryByExtension(filename);

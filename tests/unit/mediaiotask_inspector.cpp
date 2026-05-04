@@ -117,17 +117,16 @@ namespace {
                 MediaIO::Config insCfg = MediaIOFactory::defaultConfig("Inspector");
                 insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.0); // disable periodic log in tests
                 insCfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
-                // The inspector default carries the @c PcmMarker /
-                // @c AudioData path, but most tests in this file rely
-                // on the buildRig override that puts @c LTC on ch0 and
-                // @c AvSync on ch1 — so we re-enable @c Ltc /
-                // @c TcSync / @c CaptureStats here to match the old
-                // "every test on" contract that those tests assume.
+                // Pin the test list explicitly to "every test on"
+                // (including @c Ltc, which the inspector factory
+                // default omits) so any test in this file gets the
+                // same uniform behaviour regardless of which audio
+                // channel modes the rig was configured with.
                 EnumList tests = EnumList::forType<InspectorTest>();
                 tests.append(InspectorTest::ImageData);
                 tests.append(InspectorTest::AudioData);
                 tests.append(InspectorTest::Ltc);
-                tests.append(InspectorTest::TcSync);
+                tests.append(InspectorTest::AvSync);
                 tests.append(InspectorTest::Continuity);
                 tests.append(InspectorTest::Timestamp);
                 tests.append(InspectorTest::AudioSamples);
@@ -280,36 +279,42 @@ TEST_CASE("Inspector flags a frame-number jump as a discontinuity") {
 
 // ============================================================================
 // Sync offset jitter detection: a synthetic 1-sample audio shift fires
-// a SyncOffsetChange discontinuity warning when the inspector is run
-// with strict (zero) tolerance.  The default tolerance is 2 to absorb
-// LTC's natural edge-detection variance — see
-// MediaConfig::InspectorSyncOffsetToleranceSamples — but we explicitly
-// override that here to validate the change-detection path itself.
+// a SyncOffsetChange discontinuity warning under the default (zero)
+// tolerance.  The marker-based offset is cadence-free, so any
+// frame-to-frame movement is a real shift.
 // ============================================================================
 
 TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         std::vector<InspectorEvent> events;
         Mutex                       eventsMutex;
         InspectorRig                rig;
-        buildRig(rig, 0xC0FFEEBBu, [&](const InspectorEvent &e) {
-                Mutex::Locker lk(eventsMutex);
-                events.push_back(e);
-        });
+        // Use a PcmMarker channel layout (matches TPG's own default)
+        // so the AudioData / ImageData marker-based A/V sync check
+        // produces a real offset value.  Channel 0 carries the
+        // codeword we'll shift to create a sync offset change.
+        EnumList pcmAll = EnumList::forType<AudioPattern>();
+        pcmAll.append(AudioPattern::PcmMarker);
+        pcmAll.append(AudioPattern::PcmMarker);
+        buildRig(
+                rig, 0xC0FFEEBBu,
+                [&](const InspectorEvent &e) {
+                        Mutex::Locker lk(eventsMutex);
+                        events.push_back(e);
+                },
+                /*audioEnabled=*/true, pcmAll, /*audioChannels=*/2);
         // Re-open the inspector with strict (0-sample) tolerance so a
-        // 1-sample shift in the LTC waveform actually trips the check.
+        // 1-sample shift in the marker waveform actually trips the check.
         rig.inspectorIo->close().wait();
         MediaIO::Config insCfg = MediaIOFactory::defaultConfig("Inspector");
         insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.0);
         insCfg.set(MediaConfig::InspectorSyncOffsetToleranceSamples, int32_t(0));
         insCfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
-        // The default inspector config does not run the LTC / TcSync
-        // tests (TPG default is PcmMarker on every channel).  This
-        // test feeds an LTC channel and explicitly checks for sync
-        // offset changes, so opt the LTC pipeline back in here.
+        // AvSync auto-resolves @c ImageData and @c AudioData via the
+        // dependency rules; we list them explicitly here for clarity.
         EnumList syncTests = EnumList::forType<InspectorTest>();
         syncTests.append(InspectorTest::ImageData);
-        syncTests.append(InspectorTest::Ltc);
-        syncTests.append(InspectorTest::TcSync);
+        syncTests.append(InspectorTest::AudioData);
+        syncTests.append(InspectorTest::AvSync);
         syncTests.append(InspectorTest::Continuity);
         insCfg.set(MediaConfig::InspectorTests, syncTests);
         rig.inspectorIo->setConfig(insCfg);
@@ -317,9 +322,9 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
 
         // Pump 10 clean frames first so the sync offset settles to its
         // natural constant value (no discontinuities expected).  Then
-        // build a synthetic frame whose LTC waveform has been
-        // left-shifted by 1 sample — under strict tolerance even that
-        // tiny shift must register.
+        // build a synthetic frame whose channel-0 PcmMarker codeword
+        // has been left-shifted by 1 sample — under strict tolerance
+        // even that tiny shift must register.
         for (int i = 0; i < 10; i++) {
                 Frame::Ptr frame;
                 REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
@@ -327,9 +332,9 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         }
 
         // Read frame 11, then mutate its audio in place to shift the
-        // LTC waveform by 1 sample.  The frame is freshly created
-        // by the TPG so we own the only reference and can write into
-        // its audio buffer directly.
+        // marker waveform by 1 sample on channel 0.  The frame is
+        // freshly created by the TPG so we own the only reference and
+        // can write into its audio buffer directly.
         Frame::Ptr shifted;
         REQUIRE(syncRead(rig.tpg->source(0), shifted).isOk());
         REQUIRE(shifted.isValid());
@@ -346,12 +351,28 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         REQUIRE(samples >= 4);
         REQUIRE(apRaw->planeCount() > 0);
         float *data = reinterpret_cast<float *>(apRaw->data()[0].data());
-        // Shift channel 0 (the LTC channel) left by one sample frame.
-        // Other channels are left alone.
-        for (size_t s = 0; s < samples - 1; s++) {
-                data[s * channels + 0] = data[(s + 1) * channels + 0];
+        // Right-shift every channel by one sample frame: insert
+        // silence at the very start and push every other sample one
+        // index later.  Both channels carry a PcmMarker codeword,
+        // and the marker-based sync uses whichever channel decodes
+        // successfully — so shifting just one channel would let the
+        // other's clean codeword keep producing the same offset and
+        // the discontinuity would never fire.
+        //
+        // Right-shift (rather than left-shift) preserves the
+        // codeword's full leading-edge sample run; a left-shift
+        // would clip the first +A sample, drop the leading run
+        // below the decoder's @c minRun threshold, and force
+        // findSync to skip past the codeword instead of measuring
+        // a small offset change.
+        for (size_t s = samples - 1; s > 0; --s) {
+                for (int ch = 0; ch < channels; ++ch) {
+                        data[s * channels + ch] = data[(s - 1) * channels + ch];
+                }
         }
-        data[(samples - 1) * channels + 0] = 0.0f;
+        for (int ch = 0; ch < channels; ++ch) {
+                data[0 * channels + ch] = 0.0f;
+        }
         // Replace the original audio payload on the frame with the
         // modified one so the writer sees our edits (the uap clone we
         // built via CoW-modify() isn't the one still in the frame's
@@ -391,6 +412,106 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
 }
 
 // ============================================================================
+// Frame-rate relatch from per-frame metadata — covers the case where a
+// source backend (e.g. an NDI receiver) opens with a placeholder
+// integer rate in @c pendingMediaDesc and only learns the real
+// rational rate (29.97, 23.976, 59.94) after the first frame arrives.
+// Before the relatch the inspector predicted at the placeholder
+// cadence and accumulated ~1.6 sample/frame drift in the A/V sync
+// offset on a 29.97 source.  With the relatch the cadence math runs
+// against the real rate and the offset reports 0.
+// ============================================================================
+
+TEST_CASE("Inspector relatches frame rate from per-frame metadata "
+          "when pendingMediaDesc carries a placeholder rate") {
+        // TPG configured at NTSC (29.97) — the audio cadence is
+        // 1601/1602/1601/1602/1602 samples/frame and frames carry
+        // @c Metadata::FrameRate = 30000/1001.  Use the PcmMarker
+        // pattern on every channel so the marker-based A/V sync
+        // check has a real codeword to lock onto (LTC + AvSync
+        // patterns target the standard buildRig path; this test
+        // wants a direct codeword channel).
+        EnumList pcmAll = EnumList::forType<AudioPattern>();
+        pcmAll.append(AudioPattern::PcmMarker);
+        pcmAll.append(AudioPattern::PcmMarker);
+        MediaIO::Config tpgCfg = MediaIOFactory::defaultConfig("TPG");
+        tpgCfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
+        tpgCfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
+        tpgCfg.set(MediaConfig::TimecodeStart, String("01:00:00:00"));
+        tpgCfg.set(MediaConfig::StreamID, uint32_t(0xFEEDC0DEu));
+        tpgCfg.set(MediaConfig::AudioEnabled, true);
+        tpgCfg.set(MediaConfig::AudioChannels, int32_t(2));
+        tpgCfg.set(MediaConfig::AudioChannelModes, pcmAll);
+        MediaIO *tpg = MediaIO::create(tpgCfg);
+        REQUIRE(tpg != nullptr);
+        REQUIRE(tpg->open().wait().isOk());
+
+        // Inspector opened with a 30/1 placeholder in
+        // @c pendingMediaDesc — this mirrors what an NDI receiver
+        // publishes at open time before its capture loop has seen
+        // the first SDK frame.  Without the per-frame relatch the
+        // inspector's A/V sync prediction would use this rate for
+        // the entire run.
+        std::vector<InspectorEvent> events;
+        Mutex                       eventsMutex;
+        InspectorMediaIO           *inspector = new InspectorMediaIO();
+        inspector->setEventCallback([&](const InspectorEvent &e) {
+                Mutex::Locker lk(eventsMutex);
+                events.push_back(e);
+        });
+        MediaIO::Config insCfg = MediaIOFactory::defaultConfig("Inspector");
+        insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.0);
+        insCfg.set(MediaConfig::InspectorSyncOffsetToleranceSamples, int32_t(0));
+        insCfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
+        EnumList syncTests = EnumList::forType<InspectorTest>();
+        syncTests.append(InspectorTest::ImageData);
+        syncTests.append(InspectorTest::AudioData);
+        syncTests.append(InspectorTest::AvSync);
+        syncTests.append(InspectorTest::Continuity);
+        insCfg.set(MediaConfig::InspectorTests, syncTests);
+        inspector->setConfig(insCfg);
+        // Stamp the placeholder rate explicitly so the relatch
+        // path has something to override.  setPendingMediaDesc
+        // populates @c MediaIOCommandOpen::pendingMediaDesc which
+        // the inspector reads at line 238 of inspectormediaio.cpp.
+        MediaDesc placeholder;
+        placeholder.setFrameRate(FrameRate(FrameRate::FPS_30));
+        REQUIRE(inspector->setPendingMediaDesc(placeholder).isOk());
+        REQUIRE(inspector->open().wait().isOk());
+
+        // Pump 20 frames.  TPG attaches @c Metadata::FrameRate =
+        // 30000/1001 to every frame; the inspector should relatch
+        // on the first frame and the A/V sync offset should stay
+        // at 0 for the rest of the run.  Without the relatch the
+        // offset accumulates roughly +1.6 samples/frame and trips
+        // a SyncOffsetChange discontinuity on every frame past the
+        // first match (at strict tolerance = 0).
+        for (int i = 0; i < 20; ++i) {
+                Frame::Ptr frame;
+                REQUIRE(syncRead(tpg->source(0), frame).isOk());
+                REQUIRE(inspector->sink(0)->writeFrame(frame).wait().isOk());
+        }
+
+        int syncOffsetChanges = 0;
+        {
+                Mutex::Locker lk(eventsMutex);
+                for (const auto &e : events) {
+                        for (const auto &d : e.discontinuities) {
+                                if (d.kind == InspectorDiscontinuity::SyncOffsetChange) {
+                                        ++syncOffsetChanges;
+                                }
+                        }
+                }
+        }
+        CHECK(syncOffsetChanges == 0);
+
+        inspector->close().wait();
+        delete inspector;
+        tpg->close().wait();
+        delete tpg;
+}
+
+// ============================================================================
 // LTC decoding + sync offset check (LTC audio enabled)
 // ============================================================================
 
@@ -427,32 +548,66 @@ TEST_CASE("Inspector periodic log fires when interval elapses") {
         CHECK(snap.framesProcessed == 10);
 }
 
-TEST_CASE("Inspector decodes LTC and reports A/V sync offset") {
-        std::vector<InspectorEvent> events;
-        Mutex                       eventsMutex;
-        InspectorRig                rig;
-        buildRig(rig, 0x55667788u, [&](const InspectorEvent &e) {
-                Mutex::Locker lk(eventsMutex);
-                events.push_back(e);
-        });
+TEST_CASE("Inspector decodes LTC from a TPG with an LTC channel") {
+        // Pure LTC-decode feature test.  The TPG carries LTC on ch0
+        // and AvSync on ch1 (the buildRig default).  The inspector's
+        // LTC decoder should lock and recover most frames' timecode.
+        // This test makes no claims about A/V sync — that path is
+        // driven by AudioData markers in this codebase, so a TPG
+        // configured with LTC instead of PcmMarker leaves the sync
+        // check dormant by design.
+        InspectorRig rig;
+        buildRig(rig, 0x55667788u);
         pumpFrames(rig, 40);
 
         InspectorSnapshot snap = rig.inspector->snapshot();
         CHECK(snap.framesProcessed == 40);
-        // The LTC decoder needs at least one full LTC frame to lock, so
-        // not every frame yields a result — but most should after the
-        // first second or so.
+        // The LTC decoder needs at least one full LTC frame to lock,
+        // so not every frame yields a result — but most should after
+        // the first second or so.
         CHECK(snap.framesWithPictureData == 40);
         CHECK(snap.framesWithLtc > 20);
+        REQUIRE(snap.hasLastEvent);
+        CHECK(snap.lastEvent.ltcDecoderEnabled);
+        // The most recent frame should carry a valid recovered
+        // timecode once the decoder has locked.
+        CHECK(snap.lastEvent.ltcDecoded);
+        CHECK(snap.lastEvent.ltcTimecode.isValid());
+}
 
-        // Find at least one frame where both decoded and the A/V
-        // sync offset was computed.  LTC and picture come from the
-        // same TPG TimecodeGenerator, so the offset is a fixed phase
-        // relation between the two streams (a small constant value
-        // reflecting the libvtc encoder ramp + decoder hysteresis
-        // edge-detection latency — typically 1-3 samples at 48 kHz).
-        // We assert it stays well under one frame's worth and is
-        // *constant* across frames once both decoders have locked.
+TEST_CASE("Inspector reports A/V sync offset via AudioData + ImageData markers") {
+        // AudioData / ImageData marker-based sync.  The TPG carries
+        // a PcmMarker on every channel (matches the TPG's own default,
+        // and what an AvSync-driven inspector now relies on); both
+        // encoders stamp the same 48-bit frame number, and the
+        // inspector cross-references them to derive the offset.
+        std::vector<InspectorEvent> events;
+        Mutex                       eventsMutex;
+        EnumList                    pcmAll = EnumList::forType<AudioPattern>();
+        pcmAll.append(AudioPattern::PcmMarker);
+        pcmAll.append(AudioPattern::PcmMarker);
+
+        InspectorRig rig;
+        buildRig(
+                rig, 0x55667788u,
+                [&](const InspectorEvent &e) {
+                        Mutex::Locker lk(eventsMutex);
+                        events.push_back(e);
+                },
+                /*audioEnabled=*/true, pcmAll, /*audioChannels=*/2);
+        pumpFrames(rig, 40);
+
+        InspectorSnapshot snap = rig.inspector->snapshot();
+        CHECK(snap.framesProcessed == 40);
+        CHECK(snap.framesWithPictureData == 40);
+
+        // Find at least one frame where the marker-based A/V sync
+        // produced an offset.  TPG-internal audio and video share
+        // the same MediaTimeStamp anchor, so the offset is a fixed
+        // small phase relation reflecting how the audio chunk's
+        // codeword leading edge lines up with the picture's PTS —
+        // typically zero at clean integer rates, and bounded well
+        // below one frame's samples otherwise.
         bool    foundOffset = false;
         int64_t maxAbsOffset = 0;
         int64_t firstOffset = 0;
@@ -476,17 +631,18 @@ TEST_CASE("Inspector decodes LTC and reports A/V sync offset") {
                 }
         }
         CHECK(foundOffset);
-        // 30 fps @ 48kHz = 1600 samples per frame.  TPG-internal LTC
-        // and picture should agree to within one frame.
+        // 30 fps @ 48kHz = 1600 samples per frame.  TPG-internal
+        // audio and video should agree to well within one frame.
         CHECK(maxAbsOffset < 1600);
-        // And the offset should not move from frame to frame: any
-        // change would mean the picture and LTC are drifting in time
-        // relative to each other, which is a real problem.
+        // The offset must not move from frame to frame on a clean
+        // stream.  Any change would mean the picture's MediaTimeStamp
+        // and the audio chunk for the same frame are drifting in
+        // time relative to each other.
         CHECK(offsetIsConstant);
 
-        // Because the offset is constant, the inspector's
-        // sync-offset-change detector (default tolerance 0 = report
-        // any change) must not have raised a single SyncOffsetChange
+        // Because the offset is constant, the inspector's sync-
+        // offset-change detector (default tolerance 0 = report any
+        // change) must not have raised a single SyncOffsetChange
         // discontinuity.  This verifies the change-detection code
         // path doesn't false-positive on a stable stream.
         int syncOffsetChangeCount = 0;
@@ -500,6 +656,105 @@ TEST_CASE("Inspector decodes LTC and reports A/V sync offset") {
                         }
                 }
         }
+        CHECK(syncOffsetChangeCount == 0);
+}
+
+// ============================================================================
+// A constant-phase offset between audio codewords and the rational
+// cadence — for example a stream that joins mid-flight, an upstream
+// SRC's constant group delay, or simply a non-zero starting frame
+// number — should not produce a non-zero A/V sync offset, and must
+// never fire a SyncOffsetChange discontinuity.  The inspector latches
+// the first observed phase as a baseline and reports subsequent
+// frames' deviation from it.
+//
+// We simulate the constant-phase case by uniformly right-shifting
+// every audio chunk's PcmMarker codeword by the same number of
+// samples; the codeword still lands at a stable position relative to
+// the chunk, just not at sample 0 the way the unmodified TPG would
+// stamp it.
+// ============================================================================
+
+TEST_CASE("Inspector baseline absorbs a constant phase between audio and video") {
+        std::vector<InspectorEvent> events;
+        Mutex                       eventsMutex;
+        EnumList                    pcmAll = EnumList::forType<AudioPattern>();
+        pcmAll.append(AudioPattern::PcmMarker);
+        pcmAll.append(AudioPattern::PcmMarker);
+
+        InspectorRig rig;
+        buildRig(
+                rig, 0xBA5E1100u,
+                [&](const InspectorEvent &e) {
+                        Mutex::Locker lk(eventsMutex);
+                        events.push_back(e);
+                },
+                /*audioEnabled=*/true, pcmAll, /*audioChannels=*/2);
+
+        // Constant phase: shift every chunk's audio right by the
+        // same N samples.  The codeword stays at a stable position
+        // relative to the chunk start (just N samples in instead of
+        // 0), so the inspector should latch that baseline once and
+        // then report 0 deviation on every subsequent frame.
+        const size_t kPhaseShift = 7;
+        for (int frameNo = 0; frameNo < 30; ++frameNo) {
+                Frame::Ptr frame;
+                REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
+                REQUIRE(frame.isValid());
+
+                auto auds = frame->audioPayloads();
+                REQUIRE(auds.size() == 1);
+                AudioPayload::Ptr apBase = auds[0];
+                REQUIRE(apBase.isValid());
+                auto uap = sharedPointerCast<PcmAudioPayload>(apBase);
+                REQUIRE(uap.isValid());
+                PcmAudioPayload *apRaw = uap.modify();
+                const int    channels = apRaw->desc().channels();
+                const size_t samples = apRaw->sampleCount();
+                REQUIRE(samples >= kPhaseShift + 1);
+                float *data = reinterpret_cast<float *>(apRaw->data()[0].data());
+                for (size_t s = samples - 1; s >= kPhaseShift; --s) {
+                        for (int ch = 0; ch < channels; ++ch) {
+                                data[s * channels + ch] = data[(s - kPhaseShift) * channels + ch];
+                        }
+                }
+                for (size_t s = 0; s < kPhaseShift; ++s) {
+                        for (int ch = 0; ch < channels; ++ch) {
+                                data[s * channels + ch] = 0.0f;
+                        }
+                }
+                for (MediaPayload::Ptr &p : frame.modify()->payloadList()) {
+                        if (p.isValid() && p->kind() == MediaPayloadKind::Audio) {
+                                p = uap;
+                                break;
+                        }
+                }
+
+                REQUIRE(rig.inspectorIo->sink(0)->writeFrame(frame).wait().isOk());
+        }
+
+        // Inspect captured events: every valid avSync measurement
+        // must be 0 (the baseline absorbed the constant phase),
+        // and no SyncOffsetChange discontinuities must have fired.
+        int  validCount = 0;
+        bool anyNonZero = false;
+        int  syncOffsetChangeCount = 0;
+        {
+                Mutex::Locker lk(eventsMutex);
+                for (const auto &e : events) {
+                        if (e.avSyncValid) {
+                                ++validCount;
+                                if (e.avSyncOffsetSamples != 0) anyNonZero = true;
+                        }
+                        for (const auto &d : e.discontinuities) {
+                                if (d.kind == InspectorDiscontinuity::SyncOffsetChange) {
+                                        ++syncOffsetChangeCount;
+                                }
+                        }
+                }
+        }
+        CHECK(validCount > 5);
+        CHECK_FALSE(anyNonZero);
         CHECK(syncOffsetChangeCount == 0);
 }
 
