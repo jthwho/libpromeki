@@ -8,5 +8,6 @@ var searchData=
   ['widget_5',['Widget',['../classpromeki_1_1Widget.html',1,'promeki']]],
   ['windowedstat_6',['WindowedStat',['../classpromeki_1_1WindowedStat.html',1,'promeki']]],
   ['windowedstatsbundle_7',['WindowedStatsBundle',['../classpromeki_1_1WindowedStatsBundle.html',1,'promeki']]],
-  ['writelocker_8',['WriteLocker',['../classpromeki_1_1ReadWriteLock_1_1WriteLocker.html',1,'promeki::ReadWriteLock']]]
+  ['wrappedhostbufferimpl_8',['WrappedHostBufferImpl',['../classpromeki_1_1WrappedHostBufferImpl.html',1,'promeki']]],
+  ['writelocker_9',['WriteLocker',['../classpromeki_1_1ReadWriteLock_1_1WriteLocker.html',1,'promeki::ReadWriteLock']]]
 ];

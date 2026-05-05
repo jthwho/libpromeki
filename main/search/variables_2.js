@@ -25,9 +25,10 @@ var searchData=
   ['buffercount_22',['BufferCount',['../classpromeki_1_1CSCContext.html#af295c88d2e0356eb73519326b3c06bd0',1,'promeki::CSCContext']]],
   ['build_23',['build',['../structpromeki_1_1BuildInfo.html#a76242cfcdcdae41d5997b1283d23b474',1,'promeki::BuildInfo']]],
   ['byteoffset_24',['byteOffset',['../structpromeki_1_1PixelMemLayout_1_1CompDesc.html#af0a9f2dbb1ddd11d22051b88e122bacb',1,'promeki::PixelMemLayout::CompDesc']]],
-  ['bytesperblock_25',['bytesperblock',['../structpromeki_1_1CSCPipeline_1_1Stage.html#afbd71509a332dc0440d7dc7a3648c9d0',1,'promeki::CSCPipeline::Stage::bytesPerBlock'],['../structpromeki_1_1PixelMemLayout_1_1Data.html#ae65d845f315227e77c2670a9c3d60090',1,'promeki::PixelMemLayout::Data::bytesPerBlock']]],
-  ['bytespersample_26',['bytespersample',['../structpromeki_1_1AudioFormat_1_1Data.html#a7faaec4a4052924054c92faac0ad4e0c',1,'promeki::AudioFormat::Data::bytesPerSample'],['../structpromeki_1_1PixelMemLayout_1_1PlaneDesc.html#ad65115b579c1bf9f5bc237f0a584819a',1,'promeki::PixelMemLayout::PlaneDesc::bytesPerSample']]],
-  ['bytespersecond_27',['bytespersecond',['../classpromeki_1_1BenchmarkResult.html#a725e0a303bd4db4453f3bbe19204b79e',1,'promeki::BenchmarkResult::bytesPerSecond'],['../classpromeki_1_1MediaIOStats.html#a46c5c7ccde2c86a79539759bfb4e2ae8',1,'promeki::MediaIOStats::BytesPerSecond']]],
-  ['bytesprocessed_28',['BytesProcessed',['../classpromeki_1_1MediaIOStats.html#a667df42068cf3b70b823aa7483a16319',1,'promeki::MediaIOStats']]],
-  ['byteswrittensignal_29',['bytesWrittenSignal',['../classpromeki_1_1IODevice.html#a844010f4e8ad9d4b083aba4add7f11ee',1,'promeki::IODevice']]]
+  ['bytes_25',['bytes',['../classpromeki_1_1BufferCopyCommand.html#a131d5c9ec93e5a5b5f5e31eb83c3048c',1,'promeki::BufferCopyCommand']]],
+  ['bytesperblock_26',['bytesperblock',['../structpromeki_1_1CSCPipeline_1_1Stage.html#afbd71509a332dc0440d7dc7a3648c9d0',1,'promeki::CSCPipeline::Stage::bytesPerBlock'],['../structpromeki_1_1PixelMemLayout_1_1Data.html#ae65d845f315227e77c2670a9c3d60090',1,'promeki::PixelMemLayout::Data::bytesPerBlock']]],
+  ['bytespersample_27',['bytespersample',['../structpromeki_1_1AudioFormat_1_1Data.html#a7faaec4a4052924054c92faac0ad4e0c',1,'promeki::AudioFormat::Data::bytesPerSample'],['../structpromeki_1_1PixelMemLayout_1_1PlaneDesc.html#ad65115b579c1bf9f5bc237f0a584819a',1,'promeki::PixelMemLayout::PlaneDesc::bytesPerSample']]],
+  ['bytespersecond_28',['bytespersecond',['../classpromeki_1_1BenchmarkResult.html#a725e0a303bd4db4453f3bbe19204b79e',1,'promeki::BenchmarkResult::bytesPerSecond'],['../classpromeki_1_1MediaIOStats.html#a46c5c7ccde2c86a79539759bfb4e2ae8',1,'promeki::MediaIOStats::BytesPerSecond']]],
+  ['bytesprocessed_29',['BytesProcessed',['../classpromeki_1_1MediaIOStats.html#a667df42068cf3b70b823aa7483a16319',1,'promeki::MediaIOStats']]],
+  ['byteswrittensignal_30',['bytesWrittenSignal',['../classpromeki_1_1IODevice.html#a844010f4e8ad9d4b083aba4add7f11ee',1,'promeki::IODevice']]]
 ];

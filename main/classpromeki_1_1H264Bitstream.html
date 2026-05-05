@@ -132,18 +132,18 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ab5095ae7409599e0a4b2d95c3e662ddd" id="r_ab5095ae7409599e0a4b2d95c3e662ddd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Error.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1H264Bitstream.html#ab5095ae7409599e0a4b2d95c3e662ddd">forEachAvccNal</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1BufferView.html">BufferView</a> &amp;in, <a class="el" href="classpromeki_1_1UniquePtr.html">uint8_t</a> <a class="el" href="classpromeki_1_1UniquePtr.html">lenSize</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1H264Bitstream.html#abdee695c6dc0f74a8839db6564a64e05">Visitor</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">visit</a>)</td></tr>
 <tr class="memdesc:ab5095ae7409599e0a4b2d95c3e662ddd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Iterates every NAL unit in a length-prefixed (AVCC) stream.  <br /></td></tr>
 <tr class="separator:ab5095ae7409599e0a4b2d95c3e662ddd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a505cd99061bd4bcd65543dbc48d628c6" id="r_a505cd99061bd4bcd65543dbc48d628c6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Error.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1H264Bitstream.html#a505cd99061bd4bcd65543dbc48d628c6">annexBToAvcc</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1BufferView.html">BufferView</a> &amp;in, <a class="el" href="classpromeki_1_1UniquePtr.html">uint8_t</a> <a class="el" href="classpromeki_1_1UniquePtr.html">lenSize</a>, <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">outBuf</a>)</td></tr>
-<tr class="memdesc:a505cd99061bd4bcd65543dbc48d628c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert an Annex-B byte stream to AVCC (length-prefixed) form.  <br /></td></tr>
-<tr class="separator:a505cd99061bd4bcd65543dbc48d628c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae5cff6875f5f5df14ca8f5f09e0393a7" id="r_ae5cff6875f5f5df14ca8f5f09e0393a7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Error.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1H264Bitstream.html#ae5cff6875f5f5df14ca8f5f09e0393a7">annexBToAvccFiltered</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1BufferView.html">BufferView</a> &amp;in, <a class="el" href="classpromeki_1_1UniquePtr.html">uint8_t</a> <a class="el" href="classpromeki_1_1UniquePtr.html">lenSize</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> std::function&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>(<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="structpromeki_1_1H264Bitstream_1_1NalUnit.html">NalUnit</a> &amp;)&gt; &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">keep</a>, <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">outBuf</a>)</td></tr>
-<tr class="memdesc:ae5cff6875f5f5df14ca8f5f09e0393a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert an Annex-B byte stream to AVCC form, keeping only NAL units for which <code>keep</code> returns <code>true</code>.  <br /></td></tr>
-<tr class="separator:ae5cff6875f5f5df14ca8f5f09e0393a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a805f8bea0749633a5c6fac21384eef1c" id="r_a805f8bea0749633a5c6fac21384eef1c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Error.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1H264Bitstream.html#a805f8bea0749633a5c6fac21384eef1c">avccToAnnexB</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1BufferView.html">BufferView</a> &amp;in, <a class="el" href="classpromeki_1_1UniquePtr.html">uint8_t</a> <a class="el" href="classpromeki_1_1UniquePtr.html">lenSize</a>, <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">outBuf</a>)</td></tr>
-<tr class="memdesc:a805f8bea0749633a5c6fac21384eef1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert an AVCC byte stream to Annex-B form with 4-byte start codes.  <br /></td></tr>
-<tr class="separator:a805f8bea0749633a5c6fac21384eef1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af1d8677093882bd12541f592bb496a07" id="r_af1d8677093882bd12541f592bb496a07"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Error.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1H264Bitstream.html#af1d8677093882bd12541f592bb496a07">wrapNalsAsAnnexB</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1List.html">List</a>&lt; <a class="el" href="classpromeki_1_1BufferView.html">BufferView</a> &gt; &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">nals</a>, <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">outBuf</a>)</td></tr>
-<tr class="memdesc:af1d8677093882bd12541f592bb496a07"><td class="mdescLeft">&#160;</td><td class="mdescRight">Build an Annex-B byte stream from a list of raw NAL payloads.  <br /></td></tr>
-<tr class="separator:af1d8677093882bd12541f592bb496a07"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8fe0e3f8c178cf838e88232da059144f" id="r_a8fe0e3f8c178cf838e88232da059144f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Error.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1H264Bitstream.html#a8fe0e3f8c178cf838e88232da059144f">annexBToAvcc</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1BufferView.html">BufferView</a> &amp;in, <a class="el" href="classpromeki_1_1UniquePtr.html">uint8_t</a> <a class="el" href="classpromeki_1_1UniquePtr.html">lenSize</a>, <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">outBuf</a>)</td></tr>
+<tr class="memdesc:a8fe0e3f8c178cf838e88232da059144f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert an Annex-B byte stream to AVCC (length-prefixed) form.  <br /></td></tr>
+<tr class="separator:a8fe0e3f8c178cf838e88232da059144f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adfc44d3e55b2531421dca9a58225e4f2" id="r_adfc44d3e55b2531421dca9a58225e4f2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Error.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1H264Bitstream.html#adfc44d3e55b2531421dca9a58225e4f2">annexBToAvccFiltered</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1BufferView.html">BufferView</a> &amp;in, <a class="el" href="classpromeki_1_1UniquePtr.html">uint8_t</a> <a class="el" href="classpromeki_1_1UniquePtr.html">lenSize</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> std::function&lt; <a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>(<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="structpromeki_1_1H264Bitstream_1_1NalUnit.html">NalUnit</a> &amp;)&gt; &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">keep</a>, <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">outBuf</a>)</td></tr>
+<tr class="memdesc:adfc44d3e55b2531421dca9a58225e4f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert an Annex-B byte stream to AVCC form, keeping only NAL units for which <code>keep</code> returns <code>true</code>.  <br /></td></tr>
+<tr class="separator:adfc44d3e55b2531421dca9a58225e4f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a004ffb42d4fba9f8dc2a4159e2fd48c5" id="r_a004ffb42d4fba9f8dc2a4159e2fd48c5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Error.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1H264Bitstream.html#a004ffb42d4fba9f8dc2a4159e2fd48c5">avccToAnnexB</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1BufferView.html">BufferView</a> &amp;in, <a class="el" href="classpromeki_1_1UniquePtr.html">uint8_t</a> <a class="el" href="classpromeki_1_1UniquePtr.html">lenSize</a>, <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">outBuf</a>)</td></tr>
+<tr class="memdesc:a004ffb42d4fba9f8dc2a4159e2fd48c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert an AVCC byte stream to Annex-B form with 4-byte start codes.  <br /></td></tr>
+<tr class="separator:a004ffb42d4fba9f8dc2a4159e2fd48c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a222770a415e2db8c8a8630408b469d14" id="r_a222770a415e2db8c8a8630408b469d14"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Error.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1H264Bitstream.html#a222770a415e2db8c8a8630408b469d14">wrapNalsAsAnnexB</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1List.html">List</a>&lt; <a class="el" href="classpromeki_1_1BufferView.html">BufferView</a> &gt; &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">nals</a>, <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">outBuf</a>)</td></tr>
+<tr class="memdesc:a222770a415e2db8c8a8630408b469d14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Build an Annex-B byte stream from a list of raw NAL payloads.  <br /></td></tr>
+<tr class="separator:a222770a415e2db8c8a8630408b469d14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Low-level H.264 / HEVC NAL-unit framing helpers. </p>
@@ -153,14 +153,14 @@ Static Public Member Functions</h2></td></tr>
 <li><b>AVCC</b> (a.k.a. length-prefixed): each NAL unit is preceded by a big-endian byte length of 1, 2, or 4 bytes that gives the NAL unit's size. This is the format used inside MP4 / <a class="el" href="classpromeki_1_1QuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a> <code>mdat</code> boxes, paired with a sample-description extension (<code>avcC</code> or <code>hvcC</code>) that declares the length-prefix size.</li>
 </ul>
 <p>Both formats share the same NAL payload — only the separator differs. H.264 and HEVC differ in how they interpret the first byte(s) of each NAL unit (NAL type, temporal layer, etc.), but the framing layer does not care: the helpers here work for either codec. Codec-specific classification (SPS / PPS / VPS / IDR detection) belongs in higher-layer parsers such as <a class="el" href="structpromeki_1_1AvcDecoderConfig.html">AvcDecoderConfig</a> and <a class="el" href="structpromeki_1_1HevcDecoderConfig.html">HevcDecoderConfig</a>.</p>
-<dl class="section user"><dt>Example — convert an Annex-B access unit from an encoder to</dt><dd>MP4-friendly AVCC bytes: <div class="fragment"><div class="line"><a class="code hl_class" href="classpromeki_1_1SharedPtr.html">Buffer::Ptr</a> <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">annexBBytes</a> = <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">encoderOutput</a>();   <span class="comment">// 00 00 00 01 | NAL | ...</span></div>
-<div class="line"><span class="keyword">auto</span> [<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">avccBytes</a>, <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">err</a>] = <a class="code hl_function" href="classpromeki_1_1H264Bitstream.html#a505cd99061bd4bcd65543dbc48d628c6">H264Bitstream::annexBToAvcc</a>(</div>
-<div class="line">        <a class="code hl_class" href="classpromeki_1_1BufferView.html">BufferView</a>(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">annexBBytes</a>, 0, <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">annexBBytes</a>-&gt;size()));</div>
+<dl class="section user"><dt>Example — convert an Annex-B access unit from an encoder to</dt><dd>MP4-friendly AVCC bytes: <div class="fragment"><div class="line"><a class="code hl_class" href="classpromeki_1_1Buffer.html">Buffer</a> <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">annexBBytes</a> = <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">encoderOutput</a>();   <span class="comment">// 00 00 00 01 | NAL | ...</span></div>
+<div class="line"><span class="keyword">auto</span> [<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">avccBytes</a>, <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">err</a>] = <a class="code hl_function" href="classpromeki_1_1H264Bitstream.html#a8fe0e3f8c178cf838e88232da059144f">H264Bitstream::annexBToAvcc</a>(</div>
+<div class="line">        <a class="code hl_class" href="classpromeki_1_1BufferView.html">BufferView</a>(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">annexBBytes</a>, 0, <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">annexBBytes</a>.size()));</div>
 <div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">err</a>.isError()) <span class="keywordflow">return</span> <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">err</a>;</div>
 <div class="line"><a class="code hl_class" href="classpromeki_1_1UniquePtr.html">qtWriter</a>.writeSample(trackId, <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">avccBytes</a>);</div>
 <div class="ttc" id="aclasspromeki_1_1BufferView_html"><div class="ttname"><a href="classpromeki_1_1BufferView.html">promeki::BufferView</a></div><div class="ttdoc">Ordered list of (offset, size) views over a deduplicated set of backing Buffer objects.</div><div class="ttdef"><b>Definition</b> bufferview.h:74</div></div>
-<div class="ttc" id="aclasspromeki_1_1H264Bitstream_html_a505cd99061bd4bcd65543dbc48d628c6"><div class="ttname"><a href="classpromeki_1_1H264Bitstream.html#a505cd99061bd4bcd65543dbc48d628c6">promeki::H264Bitstream::annexBToAvcc</a></div><div class="ttdeci">static Error annexBToAvcc(const BufferView &amp;in, uint8_t lenSize, Buffer::Ptr &amp;outBuf)</div><div class="ttdoc">Convert an Annex-B byte stream to AVCC (length-prefixed) form.</div></div>
-<div class="ttc" id="aclasspromeki_1_1SharedPtr_html"><div class="ttname"><a href="classpromeki_1_1SharedPtr.html">promeki::SharedPtr&lt; Buffer &gt;</a></div></div>
+<div class="ttc" id="aclasspromeki_1_1Buffer_html"><div class="ttname"><a href="classpromeki_1_1Buffer.html">promeki::Buffer</a></div><div class="ttdoc">Generic memory buffer descriptor with alignment and memory space support.</div><div class="ttdef"><b>Definition</b> buffer.h:97</div></div>
+<div class="ttc" id="aclasspromeki_1_1H264Bitstream_html_a8fe0e3f8c178cf838e88232da059144f"><div class="ttname"><a href="classpromeki_1_1H264Bitstream.html#a8fe0e3f8c178cf838e88232da059144f">promeki::H264Bitstream::annexBToAvcc</a></div><div class="ttdeci">static Error annexBToAvcc(const BufferView &amp;in, uint8_t lenSize, Buffer &amp;outBuf)</div><div class="ttdoc">Convert an Annex-B byte stream to AVCC (length-prefixed) form.</div></div>
 <div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="section user"><dt>Example — walk NAL units in an Annex-B stream to extract</dt><dd>SPS and PPS payloads: <div class="fragment"><div class="line"><a class="code hl_function" href="classpromeki_1_1H264Bitstream.html#a709e4db42743ddae22fcd68674c82f08">H264Bitstream::forEachAnnexBNal</a>(view,</div>
@@ -193,8 +193,8 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a505cd99061bd4bcd65543dbc48d628c6" name="a505cd99061bd4bcd65543dbc48d628c6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a505cd99061bd4bcd65543dbc48d628c6">&#9670;&#160;</a></span>annexBToAvcc()</h2>
+<a id="a8fe0e3f8c178cf838e88232da059144f" name="a8fe0e3f8c178cf838e88232da059144f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8fe0e3f8c178cf838e88232da059144f">&#9670;&#160;</a></span>annexBToAvcc()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -217,7 +217,7 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;&#160;</td>
           <td class="paramname"><em>outBuf</em>&#160;</td>
         </tr>
         <tr>
@@ -247,8 +247,8 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ae5cff6875f5f5df14ca8f5f09e0393a7" name="ae5cff6875f5f5df14ca8f5f09e0393a7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae5cff6875f5f5df14ca8f5f09e0393a7">&#9670;&#160;</a></span>annexBToAvccFiltered()</h2>
+<a id="adfc44d3e55b2531421dca9a58225e4f2" name="adfc44d3e55b2531421dca9a58225e4f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adfc44d3e55b2531421dca9a58225e4f2">&#9670;&#160;</a></span>annexBToAvccFiltered()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -277,7 +277,7 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;&#160;</td>
           <td class="paramname"><em>outBuf</em>&#160;</td>
         </tr>
         <tr>
@@ -308,8 +308,8 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a805f8bea0749633a5c6fac21384eef1c" name="a805f8bea0749633a5c6fac21384eef1c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a805f8bea0749633a5c6fac21384eef1c">&#9670;&#160;</a></span>avccToAnnexB()</h2>
+<a id="a004ffb42d4fba9f8dc2a4159e2fd48c5" name="a004ffb42d4fba9f8dc2a4159e2fd48c5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a004ffb42d4fba9f8dc2a4159e2fd48c5">&#9670;&#160;</a></span>avccToAnnexB()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -332,7 +332,7 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;&#160;</td>
           <td class="paramname"><em>outBuf</em>&#160;</td>
         </tr>
         <tr>
@@ -461,8 +461,8 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="af1d8677093882bd12541f592bb496a07" name="af1d8677093882bd12541f592bb496a07"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af1d8677093882bd12541f592bb496a07">&#9670;&#160;</a></span>wrapNalsAsAnnexB()</h2>
+<a id="a222770a415e2db8c8a8630408b469d14" name="a222770a415e2db8c8a8630408b469d14"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a222770a415e2db8c8a8630408b469d14">&#9670;&#160;</a></span>wrapNalsAsAnnexB()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -479,7 +479,7 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;&#160;</td>
           <td class="paramname"><em>outBuf</em>&#160;</td>
         </tr>
         <tr>
@@ -518,7 +518,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1H264Bitstream.html">H264Bitstream</a></li>
-    <li class="footer">Generated on 2026-05-04 19:45:16 from commit c353e07 (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-05 00:43:16 from commit ef07c0f (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

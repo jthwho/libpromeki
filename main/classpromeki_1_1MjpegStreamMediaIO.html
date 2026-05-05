@@ -182,9 +182,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a35c4833af4f8f041eae13ee04d3e7329" id="r_a35c4833af4f8f041eae13ee04d3e7329"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MjpegStreamMediaIO.html#a35c4833af4f8f041eae13ee04d3e7329">isStreaming</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
 <tr class="memdesc:a35c4833af4f8f041eae13ee04d3e7329"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns <code>true</code> between successful <code>open</code> and the next <code>close</code> on the sink.  <br /></td></tr>
 <tr class="separator:a35c4833af4f8f041eae13ee04d3e7329"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28fa27bc24cc00acd9665f75aa73d7f0" id="r_a28fa27bc24cc00acd9665f75aa73d7f0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MjpegStreamMediaIO.html#a28fa27bc24cc00acd9665f75aa73d7f0">latestJpeg</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:a28fa27bc24cc00acd9665f75aa73d7f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the most recently encoded JPEG buffer.  <br /></td></tr>
-<tr class="separator:a28fa27bc24cc00acd9665f75aa73d7f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af00981bfb93eef7f8160d9841315d2d0" id="r_af00981bfb93eef7f8160d9841315d2d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Buffer.html">Buffer</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MjpegStreamMediaIO.html#af00981bfb93eef7f8160d9841315d2d0">latestJpeg</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:af00981bfb93eef7f8160d9841315d2d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the most recently encoded JPEG buffer.  <br /></td></tr>
+<tr class="separator:af00981bfb93eef7f8160d9841315d2d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1362f98ff6ea096d4faaa905fd5c3abf" id="r_a1362f98ff6ea096d4faaa905fd5c3abf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1TimeStamp.html">TimeStamp</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MjpegStreamMediaIO.html#a1362f98ff6ea096d4faaa905fd5c3abf">latestJpegTimestamp</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
 <tr class="memdesc:a1362f98ff6ea096d4faaa905fd5c3abf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the wall-clock timestamp of the most recently encoded frame.  <br /></td></tr>
 <tr class="separator:a1362f98ff6ea096d4faaa905fd5c3abf"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -890,14 +890,14 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a28fa27bc24cc00acd9665f75aa73d7f0" name="a28fa27bc24cc00acd9665f75aa73d7f0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a28fa27bc24cc00acd9665f75aa73d7f0">&#9670;&#160;</a></span>latestJpeg()</h2>
+<a id="af00981bfb93eef7f8160d9841315d2d0" name="af00981bfb93eef7f8160d9841315d2d0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af00981bfb93eef7f8160d9841315d2d0">&#9670;&#160;</a></span>latestJpeg()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> promeki::MjpegStreamMediaIO::latestJpeg </td>
+          <td class="memname"><a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> promeki::MjpegStreamMediaIO::latestJpeg </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -906,10 +906,11 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the most recently encoded JPEG buffer. </p>
-<p>Returns an empty (invalid) <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> when the sink is closed or no frames have been encoded since the last <code>open</code>. The returned pointer shares ownership with the ring entry it was sampled from — no copy is performed.</p>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classpromeki_1_1SharedPtr.html">Buffer::Ptr</a> jpeg = <a class="code hl_function" href="classpromeki_1_1MediaIO.html#a5e8320c3a991786036d8b95e27c30aca">sink</a>-&gt;latestJpeg();</div>
-<div class="line"><span class="keywordflow">if</span>(jpeg.isValid()) <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">writeOut</a>(*jpeg);</div>
-<div class="ttc" id="aclasspromeki_1_1SharedPtr_html"><div class="ttname"><a href="classpromeki_1_1SharedPtr.html">promeki::SharedPtr&lt; Buffer &gt;</a></div></div>
+<p>Returns an empty (invalid) <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> when the sink is closed or no frames have been encoded since the last <code>open</code>. The returned pointer shares ownership with the ring entry it was sampled from — no copy is performed.</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classpromeki_1_1Buffer.html">Buffer</a> jpeg = <a class="code hl_function" href="classpromeki_1_1MediaIO.html#a5e8320c3a991786036d8b95e27c30aca">sink</a>-&gt;latestJpeg();</div>
+<div class="line"><span class="keywordflow">if</span>(jpeg.<a class="code hl_function" href="classpromeki_1_1Buffer.html#aabe51189844d7db27d373fcd70d37116">isValid</a>()) <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">writeOut</a>(*jpeg);</div>
+<div class="ttc" id="aclasspromeki_1_1Buffer_html"><div class="ttname"><a href="classpromeki_1_1Buffer.html">promeki::Buffer</a></div><div class="ttdoc">Generic memory buffer descriptor with alignment and memory space support.</div><div class="ttdef"><b>Definition</b> buffer.h:97</div></div>
+<div class="ttc" id="aclasspromeki_1_1Buffer_html_aabe51189844d7db27d373fcd70d37116"><div class="ttname"><a href="classpromeki_1_1Buffer.html#aabe51189844d7db27d373fcd70d37116">promeki::Buffer::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdoc">Returns true once the backing storage is allocated.</div><div class="ttdef"><b>Definition</b> buffer.h:167</div></div>
 </div><!-- fragment --> </dd></dl>
 
 </div>
@@ -1015,7 +1016,7 @@ Additional Inherited Members</h2></td></tr>
 <p>Registers a HTTP route on <code>server</code> at <code>path</code> that serves a continuous MJPEG stream. </p>
 <p>The route responds with <code>"Content-Type: multipart/x-mixed-replace;
 boundary=&lt;HttpBoundary&gt;"</code>. Each newly-encoded frame is emitted as one <code>image/jpeg</code> part with its own <code>Content-Length</code> header. Browsers consume this format natively via <code>&lt;img</code> <code>src&gt;</code>; no polling is required.</p>
-<p>Implementation: the route allocates a per-connection <a class="el" href="classpromeki_1_1AsyncBufferQueue.html">AsyncBufferQueue</a> and a per-connection <a class="el" href="classpromeki_1_1MjpegStreamSubscriber.html">MjpegStreamSubscriber</a> adapter that pushes boundary + headers + the encoded JPEG into the queue as <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> segments. The connection pumps the queue with <code>Transfer-Encoding</code>: chunked and parks on the queue's <code>readyRead</code> between frames — no busy-wait, no event-loop blocking.</p>
+<p>Implementation: the route allocates a per-connection <a class="el" href="classpromeki_1_1AsyncBufferQueue.html">AsyncBufferQueue</a> and a per-connection <a class="el" href="classpromeki_1_1MjpegStreamSubscriber.html">MjpegStreamSubscriber</a> adapter that pushes boundary + headers + the encoded JPEG into the queue as <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> segments. The connection pumps the queue with <code>Transfer-Encoding</code>: chunked and parks on the queue's <code>readyRead</code> between frames — no busy-wait, no event-loop blocking.</p>
 <p>On client disconnect the connection's body stream is destroyed, which detaches the subscriber and closes the queue's writer side; on sink close, the subscriber receives <a class="el" href="classpromeki_1_1MjpegStreamSubscriber.html#acf8e3c2a16fa2b84f69f5d0af0c9b198">MjpegStreamSubscriber::onClosed</a> and the queue's writer side is closed so the connection drains and finishes cleanly.</p>
 <p>If a primer frame is already in the ring when a client connects, that frame is pushed inside <code>attachSubscriber</code> so the browser shows something within milliseconds of connecting.</p>
 <p>Multiple servers / paths can be registered; each keeps its own per-route capture state. When the sink is not open (or has been closed) at request time, the route returns <code>503</code> with a short plain-text body.</p>
@@ -1062,7 +1063,7 @@ boundary=&lt;HttpBoundary&gt;"</code>. Each newly-encoded frame is emitted as on
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1MjpegStreamMediaIO.html">MjpegStreamMediaIO</a></li>
-    <li class="footer">Generated on 2026-05-04 19:45:16 from commit c353e07 (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-05 00:43:16 from commit ef07c0f (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

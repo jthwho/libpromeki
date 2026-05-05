@@ -1,7 +1,7 @@
 var structpromeki_1_1HevcDecoderConfig =
 [
-    [ "serialize", "structpromeki_1_1HevcDecoderConfig.html#ac38289673db5e99b6c0a5880e1e1520f", null ],
-    [ "toAnnexB", "structpromeki_1_1HevcDecoderConfig.html#a4e4e22a45ad7a671876694ed3501536c", null ],
+    [ "serialize", "structpromeki_1_1HevcDecoderConfig.html#a3ea4ebda5e2a1cd5a36bff463bc8bb02", null ],
+    [ "toAnnexB", "structpromeki_1_1HevcDecoderConfig.html#a5e6b1048aaa1af863c3e666a1f733770", null ],
     [ "avgFrameRate", "structpromeki_1_1HevcDecoderConfig.html#abd083fe3d64f0d61c8c31f0375863d0f", null ],
     [ "bitDepthChromaMinus8", "structpromeki_1_1HevcDecoderConfig.html#a1781468f2e18c93308b161edf86420a6", null ],
     [ "bitDepthLumaMinus8", "structpromeki_1_1HevcDecoderConfig.html#a5b639e4e22f7932d188e7d7c3d77b5ab", null ],
@@ -18,8 +18,8 @@ var structpromeki_1_1HevcDecoderConfig =
     [ "minSpatialSegmentationIdc", "structpromeki_1_1HevcDecoderConfig.html#a0c55b4e7123e8814ba73f6dd13929b01", null ],
     [ "numTemporalLayers", "structpromeki_1_1HevcDecoderConfig.html#abcd9c75042b0071889227413b6dfb241", null ],
     [ "parallelismType", "structpromeki_1_1HevcDecoderConfig.html#a69a11c698b0122c37c3979b37a69e83b", null ],
-    [ "pps", "structpromeki_1_1HevcDecoderConfig.html#af883755ab2165752fddb4b65ee86f7f6", null ],
-    [ "sps", "structpromeki_1_1HevcDecoderConfig.html#ae52dc8d3926a6240a026b518e213850a", null ],
+    [ "pps", "structpromeki_1_1HevcDecoderConfig.html#a3a5f56882e5a55e432607bf4a4737e40", null ],
+    [ "sps", "structpromeki_1_1HevcDecoderConfig.html#ab4440efcbc0976e012aaff77085ea4a4", null ],
     [ "temporalIdNested", "structpromeki_1_1HevcDecoderConfig.html#ad830619fd413d5c0b5e80af0f2838835", null ],
-    [ "vps", "structpromeki_1_1HevcDecoderConfig.html#add517666a9f55a1d240279b6812ea49c", null ]
+    [ "vps", "structpromeki_1_1HevcDecoderConfig.html#aeea6b31a49e189793629fe39a7d2d3bf", null ]
 ];

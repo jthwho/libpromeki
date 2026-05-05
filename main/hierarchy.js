@@ -59,7 +59,20 @@ var hierarchy =
     [ "promeki::BenchmarkState", "classpromeki_1_1BenchmarkState.html", null ],
     [ "promeki::MemPool::Block", "classpromeki_1_1MemPool_1_1Block.html", null ],
     [ "promeki::Buffer", "classpromeki_1_1Buffer.html", null ],
+    [ "promeki::BufferCommand", "classpromeki_1_1BufferCommand.html", [
+      [ "promeki::BufferCopyCommand", "classpromeki_1_1BufferCopyCommand.html", null ],
+      [ "promeki::BufferMapCommand", "classpromeki_1_1BufferMapCommand.html", null ],
+      [ "promeki::BufferUnmapCommand", "classpromeki_1_1BufferUnmapCommand.html", null ]
+    ] ],
+    [ "promeki::BufferImpl", "classpromeki_1_1BufferImpl.html", [
+      [ "promeki::HostMappedBufferImpl", "classpromeki_1_1HostMappedBufferImpl.html", [
+        [ "promeki::HostBufferImpl", "classpromeki_1_1HostBufferImpl.html", null ],
+        [ "promeki::HostSecureBufferImpl", "classpromeki_1_1HostSecureBufferImpl.html", null ],
+        [ "promeki::WrappedHostBufferImpl", "classpromeki_1_1WrappedHostBufferImpl.html", null ]
+      ] ]
+    ] ],
     [ "promeki::BufferPool", "classpromeki_1_1BufferPool.html", null ],
+    [ "promeki::BufferRequest", "classpromeki_1_1BufferRequest.html", null ],
     [ "promeki::BufferView", "classpromeki_1_1BufferView.html", [
       [ "promeki::RtpPacket", "classpromeki_1_1RtpPacket.html", null ]
     ] ],
@@ -101,6 +114,7 @@ var hierarchy =
     [ "promeki::AudioCodec::Data", "structpromeki_1_1AudioCodec_1_1Data.html", null ],
     [ "promeki::AudioFormat::Data", "structpromeki_1_1AudioFormat_1_1Data.html", null ],
     [ "promeki::ColorModel::Data", "structpromeki_1_1ColorModel_1_1Data.html", null ],
+    [ "promeki::MemDomain::Data", "structpromeki_1_1MemDomain_1_1Data.html", null ],
     [ "promeki::PixelFormat::Data", "structpromeki_1_1PixelFormat_1_1Data.html", null ],
     [ "promeki::PixelMemLayout::Data", "structpromeki_1_1PixelMemLayout_1_1Data.html", null ],
     [ "promeki::VideoCodec::Data", "structpromeki_1_1VideoCodec_1_1Data.html", null ],
@@ -358,6 +372,7 @@ var hierarchy =
     [ "promeki::List< T >", "classpromeki_1_1List.html", null ],
     [ "promeki::List< Attribute >", "classpromeki_1_1List.html", null ],
     [ "promeki::List< AudioDesc >", "classpromeki_1_1List.html", null ],
+    [ "promeki::List< Buffer >", "classpromeki_1_1List.html", null ],
     [ "promeki::List< ChannelRole >", "classpromeki_1_1List.html", null ],
     [ "promeki::List< Cleanup >", "classpromeki_1_1List.html", null ],
     [ "promeki::List< DecodedTimecode >", "classpromeki_1_1List.html", null ],
@@ -422,7 +437,6 @@ var hierarchy =
     [ "promeki::List< SdpMediaDescription >", "classpromeki_1_1List.html", null ],
     [ "promeki::List< Segment >", "classpromeki_1_1List.html", null ],
     [ "promeki::List< ServerEntry >", "classpromeki_1_1List.html", null ],
-    [ "promeki::List< SharedPtr< Buffer > >", "classpromeki_1_1List.html", null ],
     [ "promeki::List< SharedPtr< MediaIOCommand, false > >", "classpromeki_1_1List.html", null ],
     [ "promeki::List< SignalMeta * >", "classpromeki_1_1List.html", null ],
     [ "promeki::List< SinkState >", "classpromeki_1_1List.html", null ],
@@ -457,6 +471,7 @@ var hierarchy =
     [ "promeki::Map< int, Subscriber >", "classpromeki_1_1Map.html", null ],
     [ "promeki::Map< KeyType, StructType >", "classpromeki_1_1Map.html", null ],
     [ "promeki::Map< MediaIOCommand::Kind, WindowedStatsBundle >", "classpromeki_1_1Map.html", null ],
+    [ "promeki::Map< MemDomain::ID, int >", "classpromeki_1_1Map.html", null ],
     [ "promeki::Map< promeki::String, double >", "classpromeki_1_1Map.html", null ],
     [ "promeki::Map< promeki::String, Params >", "classpromeki_1_1Map.html", null ],
     [ "promeki::Map< promeki::String, promeki::CmdLineParser::Option >", "classpromeki_1_1Map.html", null ],
@@ -533,6 +548,7 @@ var hierarchy =
     [ "promeki::MediaPipelineStats", "classpromeki_1_1MediaPipelineStats.html", null ],
     [ "promeki::MediaTimeStamp", "classpromeki_1_1MediaTimeStamp.html", null ],
     [ "promeki::MemAllocation", "structpromeki_1_1MemAllocation.html", null ],
+    [ "promeki::MemDomain", "classpromeki_1_1MemDomain.html", null ],
     [ "promeki::MemPool", "classpromeki_1_1MemPool.html", null ],
     [ "promeki::MemSpace", "classpromeki_1_1MemSpace.html", null ],
     [ "promeki::ObjectBase::MetaInfo", "classpromeki_1_1ObjectBase_1_1MetaInfo.html", null ],
@@ -734,7 +750,8 @@ var hierarchy =
     [ "promeki::SharedMemory", "classpromeki_1_1SharedMemory.html", null ],
     [ "promeki::SharedPtr< T, CopyOnWrite, ST >", "classpromeki_1_1SharedPtr.html", null ],
     [ "promeki::SharedPtr< AudioMeter, false >", "classpromeki_1_1SharedPtr.html", null ],
-    [ "promeki::SharedPtr< Buffer >", "classpromeki_1_1SharedPtr.html", null ],
+    [ "promeki::SharedPtr< BufferCommand, false >", "classpromeki_1_1SharedPtr.html", null ],
+    [ "promeki::SharedPtr< BufferImpl, false >", "classpromeki_1_1SharedPtr.html", null ],
     [ "promeki::SharedPtr< Clock, false, Clock >", "classpromeki_1_1SharedPtr.html", null ],
     [ "promeki::SharedPtr< Data >", "classpromeki_1_1SharedPtr.html", null ],
     [ "promeki::SharedPtr< Frame >", "classpromeki_1_1SharedPtr.html", null ],
@@ -757,6 +774,7 @@ var hierarchy =
     [ "promeki::Signal< int64_t >", "classpromeki_1_1Signal.html", null ],
     [ "promeki::Signal< promeki::AudioBlock *, size_t >", "classpromeki_1_1Signal.html", null ],
     [ "promeki::Signal< promeki::Buffer >", "classpromeki_1_1Signal.html", null ],
+    [ "promeki::Signal< promeki::Buffer, promeki::SocketAddress >", "classpromeki_1_1Signal.html", null ],
     [ "promeki::Signal< promeki::Buffer, uint32_t, uint8_t, bool >", "classpromeki_1_1Signal.html", null ],
     [ "promeki::Signal< promeki::Error >", "classpromeki_1_1Signal.html", null ],
     [ "promeki::Signal< promeki::HttpRequest >", "classpromeki_1_1Signal.html", null ],
@@ -769,7 +787,6 @@ var hierarchy =
     [ "promeki::Signal< promeki::String >", "classpromeki_1_1Signal.html", null ],
     [ "promeki::Signal< promeki::String, promeki::Error >", "classpromeki_1_1Signal.html", null ],
     [ "promeki::Signal< promeki::StringList >", "classpromeki_1_1Signal.html", null ],
-    [ "promeki::Signal< SharedPtr< Buffer >, promeki::SocketAddress >", "classpromeki_1_1Signal.html", null ],
     [ "promeki::Signal< SharedPtr< MediaIOCommand, false > >", "classpromeki_1_1Signal.html", null ],
     [ "promeki::Signal< SocketState >", "classpromeki_1_1Signal.html", null ],
     [ "promeki::Signal< uint32_t >", "classpromeki_1_1Signal.html", null ],

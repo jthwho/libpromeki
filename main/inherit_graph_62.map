@@ -1,3 +1,9 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classpromeki_1_1BufferPool.html" title="Simple fixed&#45;geometry buffer pool for hot&#45;path allocations." alt="" coords="5,5,156,31"/>
+<area shape="rect" id="Node000000" href="$classpromeki_1_1BufferCommand.html" title="Base class for asynchronous Buffer operations." alt="" coords="5,55,196,80"/>
+<area shape="rect" id="Node000001" href="$classpromeki_1_1BufferCopyCommand.html" title="Command to copy a byte range from one Buffer to another." alt="" coords="251,5,474,31"/>
+<area shape="poly" id="edge2_Node000000_Node000001" title=" " alt="" coords="182,49,294,28,295,33,183,55"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1BufferMapCommand.html" title="Command to map a Buffer for access from a specific MemDomain." alt="" coords="253,55,472,80"/>
+<area shape="poly" id="edge3_Node000000_Node000002" title=" " alt="" coords="210,65,253,65,253,70,210,70"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1BufferUnmapCommand.html" title="Command to release a previously&#45;acquired domain mapping." alt="" coords="244,104,481,129"/>
+<area shape="poly" id="edge4_Node000000_Node000003" title=" " alt="" coords="183,80,295,101,294,107,182,85"/>
 </map>

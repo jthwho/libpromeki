@@ -104,7 +104,7 @@ $(document).ready(function(){initNavTree('classpromeki_1_1Buffer.html',''); init
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classpromeki_1_1Buffer-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">promeki::Buffer Class Reference<div class="ingroups"><a class="el" href="group__media.html">Media</a></div></div></div>
+  <div class="headertitle"><div class="title">promeki::Buffer Class Reference<div class="ingroups"><a class="el" href="group__util.html">Utilities</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -115,52 +115,25 @@ $(document).ready(function(){initNavTree('classpromeki_1_1Buffer.html',''); init
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:af57dee9fb94cf40a92eb5a39e390f872" id="r_af57dee9fb94cf40a92eb5a39e390f872"><td class="memItemLeft" align="right" valign="top"><a id="af57dee9fb94cf40a92eb5a39e390f872" name="af57dee9fb94cf40a92eb5a39e390f872"></a>
-<a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Ptr</b> = <a class="el" href="classpromeki_1_1SharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &gt;</td></tr>
-<tr class="memdesc:af57dee9fb94cf40a92eb5a39e390f872"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shared pointer type for <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>. <br /></td></tr>
-<tr class="separator:af57dee9fb94cf40a92eb5a39e390f872"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aba78ee70e910ee96d25bd6545e0fbe4e" id="r_aba78ee70e910ee96d25bd6545e0fbe4e"><td class="memItemLeft" align="right" valign="top"><a id="aba78ee70e910ee96d25bd6545e0fbe4e" name="aba78ee70e910ee96d25bd6545e0fbe4e"></a>
 <a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>List</b> = <a class="el" href="classpromeki_1_1List.html">::promeki::List</a>&lt; <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &gt;</td></tr>
-<tr class="memdesc:aba78ee70e910ee96d25bd6545e0fbe4e"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1List.html" title="Dynamic array container wrapping std::vector.">List</a> of <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> values. <br /></td></tr>
+<tr class="memdesc:aba78ee70e910ee96d25bd6545e0fbe4e"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1List.html" title="Dynamic array container wrapping std::vector.">List</a> of Buffers (value semantics — handles share backing). <br /></td></tr>
 <tr class="separator:aba78ee70e910ee96d25bd6545e0fbe4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad8a738e9858f588a5f0e45b75908839e" id="r_ad8a738e9858f588a5f0e45b75908839e"><td class="memItemLeft" align="right" valign="top"><a id="ad8a738e9858f588a5f0e45b75908839e" name="ad8a738e9858f588a5f0e45b75908839e"></a>
-<a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>PtrList</b> = <a class="el" href="classpromeki_1_1List.html">::promeki::List</a>&lt; <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Ptr</a> &gt;</td></tr>
-<tr class="memdesc:ad8a738e9858f588a5f0e45b75908839e"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1List.html" title="Dynamic array container wrapping std::vector.">List</a> of shared <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> pointers. <br /></td></tr>
-<tr class="separator:ad8a738e9858f588a5f0e45b75908839e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a46c820e8403d1ab8217fb3a32ef74687" id="r_a46c820e8403d1ab8217fb3a32ef74687"><td class="memItemLeft" align="right" valign="top"><a id="a46c820e8403d1ab8217fb3a32ef74687" name="a46c820e8403d1ab8217fb3a32ef74687"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Buffer</b> ()=<a class="el" href="classpromeki_1_1UniquePtr.html">default</a></td></tr>
-<tr class="memdesc:a46c820e8403d1ab8217fb3a32ef74687"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an invalid (empty) buffer. <br /></td></tr>
+<tr class="memdesc:a46c820e8403d1ab8217fb3a32ef74687"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an invalid (empty) <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>. <br /></td></tr>
 <tr class="separator:a46c820e8403d1ab8217fb3a32ef74687"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7442575e50c8ff3add9a5f835cb31f3f" id="r_a7442575e50c8ff3add9a5f835cb31f3f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a7442575e50c8ff3add9a5f835cb31f3f">Buffer</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> <a class="el" href="classpromeki_1_1UniquePtr.html">sz</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> <a class="el" href="classpromeki_1_1UniquePtr.html">an</a>=<a class="el" href="classpromeki_1_1Buffer.html#af2fca78761943634adeac4894e62d689">DefaultAlign</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1MemSpace.html">MemSpace</a> &amp;ms=<a class="el" href="classpromeki_1_1MemSpace.html#afa501c8062876d0f522c813e494d752da0bb62bf04f85af24d063bead73f77d8b">MemSpace::Default</a>)</td></tr>
 <tr class="memdesc:a7442575e50c8ff3add9a5f835cb31f3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocates a buffer of the given size.  <br /></td></tr>
 <tr class="separator:a7442575e50c8ff3add9a5f835cb31f3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abf7d9cbe217707f908d3100a52709cd2" id="r_abf7d9cbe217707f908d3100a52709cd2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#abf7d9cbe217707f908d3100a52709cd2">Buffer</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">o</a>)</td></tr>
-<tr class="memdesc:abf7d9cbe217707f908d3100a52709cd2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor.  <br /></td></tr>
-<tr class="separator:abf7d9cbe217707f908d3100a52709cd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab274a4c101b824f0257ca13f16ca963c" id="r_ab274a4c101b824f0257ca13f16ca963c"><td class="memItemLeft" align="right" valign="top"><a id="ab274a4c101b824f0257ca13f16ca963c" name="ab274a4c101b824f0257ca13f16ca963c"></a>
-<a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">o</a>)</td></tr>
-<tr class="memdesc:ab274a4c101b824f0257ca13f16ca963c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy assignment operator. Performs a deep copy. <br /></td></tr>
-<tr class="separator:ab274a4c101b824f0257ca13f16ca963c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a760f3e6dadac95c4a9642a786706bbe7" id="r_a760f3e6dadac95c4a9642a786706bbe7"><td class="memItemLeft" align="right" valign="top"><a id="a760f3e6dadac95c4a9642a786706bbe7" name="a760f3e6dadac95c4a9642a786706bbe7"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Buffer</b> (<a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;&amp;<a class="el" href="classpromeki_1_1UniquePtr.html">o</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:a760f3e6dadac95c4a9642a786706bbe7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move constructor. Transfers ownership from the source buffer. <br /></td></tr>
-<tr class="separator:a760f3e6dadac95c4a9642a786706bbe7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa7f93c81672381bf74269ae3e04e2c7f" id="r_aa7f93c81672381bf74269ae3e04e2c7f"><td class="memItemLeft" align="right" valign="top"><a id="aa7f93c81672381bf74269ae3e04e2c7f" name="aa7f93c81672381bf74269ae3e04e2c7f"></a>
-<a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;&amp;<a class="el" href="classpromeki_1_1UniquePtr.html">o</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">noexcept</a></td></tr>
-<tr class="memdesc:aa7f93c81672381bf74269ae3e04e2c7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move assignment operator. Transfers ownership from the source buffer. <br /></td></tr>
-<tr class="separator:aa7f93c81672381bf74269ae3e04e2c7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa7217fb99b1865829b839b79a63d28b" id="r_afa7217fb99b1865829b839b79a63d28b"><td class="memItemLeft" align="right" valign="top"><a id="afa7217fb99b1865829b839b79a63d28b" name="afa7217fb99b1865829b839b79a63d28b"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>~Buffer</b> ()</td></tr>
-<tr class="memdesc:afa7217fb99b1865829b839b79a63d28b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. Releases owned memory. <br /></td></tr>
-<tr class="separator:afa7217fb99b1865829b839b79a63d28b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aabe51189844d7db27d373fcd70d37116" id="r_aabe51189844d7db27d373fcd70d37116"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#aabe51189844d7db27d373fcd70d37116">isValid</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:aabe51189844d7db27d373fcd70d37116"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the buffer has been allocated or assigned memory.  <br /></td></tr>
+<tr class="memdesc:aabe51189844d7db27d373fcd70d37116"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true once the backing storage is allocated.  <br /></td></tr>
 <tr class="separator:aabe51189844d7db27d373fcd70d37116"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad4f818768779bfbdba6f59ef21fb2b36" id="r_ad4f818768779bfbdba6f59ef21fb2b36"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36">data</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:ad4f818768779bfbdba6f59ef21fb2b36"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a pointer to the buffer data.  <br /></td></tr>
+<tr class="memdesc:ad4f818768779bfbdba6f59ef21fb2b36"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current host data pointer.  <br /></td></tr>
 <tr class="separator:ad4f818768779bfbdba6f59ef21fb2b36"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf6ce3d4d811aba438334815c395f621" id="r_acf6ce3d4d811aba438334815c395f621"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#acf6ce3d4d811aba438334815c395f621">odata</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
 <tr class="memdesc:acf6ce3d4d811aba438334815c395f621"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the original allocation pointer.  <br /></td></tr>
@@ -172,81 +145,122 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:afa9d51c4025ac7cb1ae7ec50e74c6292"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the logical content size.  <br /></td></tr>
 <tr class="separator:afa9d51c4025ac7cb1ae7ec50e74c6292"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6a8d0904213ae193ec0c6104c68d6893" id="r_a6a8d0904213ae193ec0c6104c68d6893"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a6a8d0904213ae193ec0c6104c68d6893">availSize</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:a6a8d0904213ae193ec0c6104c68d6893"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the available space from <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36" title="Returns a pointer to the buffer data.">data()</a> to the end of the allocation.  <br /></td></tr>
+<tr class="memdesc:a6a8d0904213ae193ec0c6104c68d6893"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the available space from <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36" title="Returns the current host data pointer.">data()</a> to the end of the allocation.  <br /></td></tr>
 <tr class="separator:a6a8d0904213ae193ec0c6104c68d6893"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a538466ddd2156442ac54a1b1949317c0" id="r_a538466ddd2156442ac54a1b1949317c0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a538466ddd2156442ac54a1b1949317c0">allocSize</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:a538466ddd2156442ac54a1b1949317c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total allocation size in bytes.  <br /></td></tr>
+<tr class="memitem:a538466ddd2156442ac54a1b1949317c0" id="r_a538466ddd2156442ac54a1b1949317c0"><td class="memItemLeft" align="right" valign="top"><a id="a538466ddd2156442ac54a1b1949317c0" name="a538466ddd2156442ac54a1b1949317c0"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>allocSize</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a538466ddd2156442ac54a1b1949317c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total allocation size in bytes. <br /></td></tr>
 <tr class="separator:a538466ddd2156442ac54a1b1949317c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80879cfffd7d4cd271329809082c9f1d" id="r_a80879cfffd7d4cd271329809082c9f1d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a80879cfffd7d4cd271329809082c9f1d">align</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:a80879cfffd7d4cd271329809082c9f1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the alignment of the buffer in bytes.  <br /></td></tr>
+<tr class="memitem:a80879cfffd7d4cd271329809082c9f1d" id="r_a80879cfffd7d4cd271329809082c9f1d"><td class="memItemLeft" align="right" valign="top"><a id="a80879cfffd7d4cd271329809082c9f1d" name="a80879cfffd7d4cd271329809082c9f1d"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>align</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a80879cfffd7d4cd271329809082c9f1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the alignment of the buffer in bytes. <br /></td></tr>
 <tr class="separator:a80879cfffd7d4cd271329809082c9f1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3f01b9f68d0e659e80b96c52e7be9abe" id="r_a3f01b9f68d0e659e80b96c52e7be9abe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1MemSpace.html">MemSpace</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a3f01b9f68d0e659e80b96c52e7be9abe">memSpace</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:a3f01b9f68d0e659e80b96c52e7be9abe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the memory space this buffer was allocated from.  <br /></td></tr>
-<tr class="separator:a3f01b9f68d0e659e80b96c52e7be9abe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5e73c4f50c66e932f65fe301089c0298" id="r_a5e73c4f50c66e932f65fe301089c0298"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="structpromeki_1_1MemAllocation.html">MemAllocation</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a5e73c4f50c66e932f65fe301089c0298">allocation</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:a5e73c4f50c66e932f65fe301089c0298"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the underlying allocation descriptor.  <br /></td></tr>
-<tr class="separator:a5e73c4f50c66e932f65fe301089c0298"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2dcd4f2f1fc2851e0e1c4e69e3270d09" id="r_a2dcd4f2f1fc2851e0e1c4e69e3270d09"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1MemSpace.html">MemSpace</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a2dcd4f2f1fc2851e0e1c4e69e3270d09">memSpace</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a2dcd4f2f1fc2851e0e1c4e69e3270d09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the memory space this buffer was allocated from.  <br /></td></tr>
+<tr class="separator:a2dcd4f2f1fc2851e0e1c4e69e3270d09"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a30818eeb5b808a6e74e367ca25a55b16" id="r_a30818eeb5b808a6e74e367ca25a55b16"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a30818eeb5b808a6e74e367ca25a55b16">shiftData</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> bytes)</td></tr>
 <tr class="memdesc:a30818eeb5b808a6e74e367ca25a55b16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shifts the data pointer forward from the allocation base.  <br /></td></tr>
 <tr class="separator:a30818eeb5b808a6e74e367ca25a55b16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76744f18f1812ed8feceb2d356cd717c" id="r_a76744f18f1812ed8feceb2d356cd717c"><td class="memItemLeft" align="right" valign="top"><a id="a76744f18f1812ed8feceb2d356cd717c" name="a76744f18f1812ed8feceb2d356cd717c"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>shift</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a76744f18f1812ed8feceb2d356cd717c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the data shift in bytes (offset from the allocation base). <br /></td></tr>
+<tr class="separator:a76744f18f1812ed8feceb2d356cd717c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ab0fcc88e09d7c33190d215cce983cc" id="r_a9ab0fcc88e09d7c33190d215cce983cc"><td class="memItemLeft" align="right" valign="top"><a id="a9ab0fcc88e09d7c33190d215cce983cc" name="a9ab0fcc88e09d7c33190d215cce983cc"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isMapped</b> (<a class="el" href="classpromeki_1_1MemDomain.html">MemDomain</a> domain=<a class="el" href="classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3a0ca0131e2d6a608d2b769204c9180823">MemDomain::Host</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a9ab0fcc88e09d7c33190d215cce983cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when the buffer is currently mapped to <code>domain</code>. <br /></td></tr>
+<tr class="separator:a9ab0fcc88e09d7c33190d215cce983cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a08f865e4356346ad971fdfa282bee9f7" id="r_a08f865e4356346ad971fdfa282bee9f7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a08f865e4356346ad971fdfa282bee9f7">isHostAccessible</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:a08f865e4356346ad971fdfa282bee9f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the buffer memory is directly accessible from the host CPU.  <br /></td></tr>
+<tr class="memdesc:a08f865e4356346ad971fdfa282bee9f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when the buffer is host-mapped.  <br /></td></tr>
 <tr class="separator:a08f865e4356346ad971fdfa282bee9f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a917e3b3b914b4577573c1d5bb53aaf81" id="r_a917e3b3b914b4577573c1d5bb53aaf81"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1BufferRequest.html">BufferRequest</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a917e3b3b914b4577573c1d5bb53aaf81">mapAcquire</a> (<a class="el" href="classpromeki_1_1MemDomain.html">MemDomain</a> domain=<a class="el" href="classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3a0ca0131e2d6a608d2b769204c9180823">MemDomain::Host</a>, <a class="el" href="group__util.html#ga65fdda715e50212d261db87dcc6d3574">MapFlags</a> flags=<a class="el" href="group__util.html#gga65fdda715e50212d261db87dcc6d3574a7a1a5f3e79fdc91edf2f5ead9d66abb4">MapFlags::Read</a>)</td></tr>
+<tr class="memdesc:a917e3b3b914b4577573c1d5bb53aaf81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquires a mapping in <code>domain</code>.  <br /></td></tr>
+<tr class="separator:a917e3b3b914b4577573c1d5bb53aaf81"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a357186279f8830a1d3d00c4daa182043" id="r_a357186279f8830a1d3d00c4daa182043"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1BufferRequest.html">BufferRequest</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a357186279f8830a1d3d00c4daa182043">mapRelease</a> (<a class="el" href="classpromeki_1_1MemDomain.html">MemDomain</a> domain=<a class="el" href="classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3a0ca0131e2d6a608d2b769204c9180823">MemDomain::Host</a>)</td></tr>
+<tr class="memdesc:a357186279f8830a1d3d00c4daa182043"><td class="mdescLeft">&#160;</td><td class="mdescRight">Releases a previously-acquired <code>domain</code> mapping.  <br /></td></tr>
+<tr class="separator:a357186279f8830a1d3d00c4daa182043"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a97b3c39c6390c7f437557140592934a8" id="r_a97b3c39c6390c7f437557140592934a8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Error.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a97b3c39c6390c7f437557140592934a8">fill</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">char</a> <a class="el" href="result_8h.html#ae7945fdfc9992c2d471326b149ecae5a">value</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
 <tr class="memdesc:a97b3c39c6390c7f437557140592934a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fills the entire buffer with the given byte value.  <br /></td></tr>
 <tr class="separator:a97b3c39c6390c7f437557140592934a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6770d31cee6ffd5293a654ba34bddd34" id="r_a6770d31cee6ffd5293a654ba34bddd34"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Error.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a6770d31cee6ffd5293a654ba34bddd34">copyFrom</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">void</a> *<a class="el" href="classpromeki_1_1UniquePtr.html">src</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> bytes, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> offset=0) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:a6770d31cee6ffd5293a654ba34bddd34"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copies data from an external source into the buffer.  <br /></td></tr>
+<tr class="memdesc:a6770d31cee6ffd5293a654ba34bddd34"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copies host-resident data into the buffer.  <br /></td></tr>
 <tr class="separator:a6770d31cee6ffd5293a654ba34bddd34"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a68e30828356f02703f9f1af5c872b728" id="r_a68e30828356f02703f9f1af5c872b728"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1BufferRequest.html">BufferRequest</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a68e30828356f02703f9f1af5c872b728">copyTo</a> (<a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">dst</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> bytes, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> srcOffset=0, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> dstOffset=0) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a68e30828356f02703f9f1af5c872b728"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copies <code>bytes</code> from this buffer into <code>dst</code>.  <br /></td></tr>
+<tr class="separator:a68e30828356f02703f9f1af5c872b728"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0c2c675450bc4605f55ff4085a7c174" id="r_ac0c2c675450bc4605f55ff4085a7c174"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#ac0c2c675450bc4605f55ff4085a7c174">ensureExclusive</a> ()</td></tr>
+<tr class="memdesc:ac0c2c675450bc4605f55ff4085a7c174"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ensures this <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> is the sole holder of its backing storage.  <br /></td></tr>
+<tr class="separator:ac0c2c675450bc4605f55ff4085a7c174"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad61e3ad7181bdd9d3c5f3096be3a59fe" id="r_ad61e3ad7181bdd9d3c5f3096be3a59fe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1Error.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#ad61e3ad7181bdd9d3c5f3096be3a59fe">ensureExclusiveError</a> ()</td></tr>
+<tr class="memdesc:ad61e3ad7181bdd9d3c5f3096be3a59fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Detach variant that surfaces a non-clonable backend as an error.  <br /></td></tr>
+<tr class="separator:ad61e3ad7181bdd9d3c5f3096be3a59fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52e186282e211e37aad202c2569ccc64" id="r_a52e186282e211e37aad202c2569ccc64"><td class="memItemLeft" align="right" valign="top"><a id="a52e186282e211e37aad202c2569ccc64" name="a52e186282e211e37aad202c2569ccc64"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isExclusive</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a52e186282e211e37aad202c2569ccc64"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when this <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> is the sole holder of its backing storage. <br /></td></tr>
+<tr class="separator:a52e186282e211e37aad202c2569ccc64"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a80e235e1a2ba9af8d5a72b83eafd9372" id="r_a80e235e1a2ba9af8d5a72b83eafd9372"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="group__util.html#gabc225a3130872dbbd1885112855efaa1">BufferImplPtr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a80e235e1a2ba9af8d5a72b83eafd9372">impl</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a80e235e1a2ba9af8d5a72b83eafd9372"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the underlying <a class="el" href="classpromeki_1_1BufferImpl.html" title="Polymorphic backend for Buffer.">BufferImpl</a> handle.  <br /></td></tr>
+<tr class="separator:a80e235e1a2ba9af8d5a72b83eafd9372"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d9785304e49c0468852fe29863f24f2" id="r_a4d9785304e49c0468852fe29863f24f2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a4d9785304e49c0468852fe29863f24f2">operator==</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">o</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a4d9785304e49c0468852fe29863f24f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Equality on backing-storage identity.  <br /></td></tr>
+<tr class="separator:a4d9785304e49c0468852fe29863f24f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d4952aae8e45631b5c1cb27164fc49b" id="r_a4d4952aae8e45631b5c1cb27164fc49b"><td class="memItemLeft" align="right" valign="top"><a id="a4d4952aae8e45631b5c1cb27164fc49b" name="a4d4952aae8e45631b5c1cb27164fc49b"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">o</a>) <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a4d4952aae8e45631b5c1cb27164fc49b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inequality. <br /></td></tr>
+<tr class="separator:a4d4952aae8e45631b5c1cb27164fc49b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a804b0aab546c638342bf1eef26a05abc" id="r_a804b0aab546c638342bf1eef26a05abc"><td class="memItemLeft" align="right" valign="top"><a id="a804b0aab546c638342bf1eef26a05abc" name="a804b0aab546c638342bf1eef26a05abc"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>operator bool</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a804b0aab546c638342bf1eef26a05abc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when the handle is non-null. <br /></td></tr>
+<tr class="separator:a804b0aab546c638342bf1eef26a05abc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:abf8fb20803a116b675397bbfeef88ff4" id="r_abf8fb20803a116b675397bbfeef88ff4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#abf8fb20803a116b675397bbfeef88ff4">getPageSize</a> ()</td></tr>
 <tr class="memdesc:abf8fb20803a116b675397bbfeef88ff4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the system memory page size in bytes.  <br /></td></tr>
 <tr class="separator:abf8fb20803a116b675397bbfeef88ff4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5e80426a64cb6e3cd2c33c9b0788bad6" id="r_a5e80426a64cb6e3cd2c33c9b0788bad6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#a5e80426a64cb6e3cd2c33c9b0788bad6">wrap</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">void</a> *p, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> <a class="el" href="classpromeki_1_1UniquePtr.html">sz</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> <a class="el" href="classpromeki_1_1UniquePtr.html">an</a>=0, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1MemSpace.html">MemSpace</a> &amp;ms=<a class="el" href="classpromeki_1_1MemSpace.html#afa501c8062876d0f522c813e494d752da0bb62bf04f85af24d063bead73f77d8b">MemSpace::Default</a>)</td></tr>
-<tr class="memdesc:a5e80426a64cb6e3cd2c33c9b0788bad6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wraps an existing memory pointer as a non-owning <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> view.  <br /></td></tr>
-<tr class="separator:a5e80426a64cb6e3cd2c33c9b0788bad6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab60fa764415c0d8f813e9f2dfec17d69" id="r_ab60fa764415c0d8f813e9f2dfec17d69"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#ab60fa764415c0d8f813e9f2dfec17d69">wrapHost</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">void</a> *p, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> <a class="el" href="classpromeki_1_1UniquePtr.html">sz</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> <a class="el" href="classpromeki_1_1UniquePtr.html">an</a>=0, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1MemSpace.html">MemSpace</a> &amp;ms=<a class="el" href="classpromeki_1_1MemSpace.html#afa501c8062876d0f522c813e494d752da0bb62bf04f85af24d063bead73f77d8b">MemSpace::Default</a>)</td></tr>
+<tr class="memdesc:ab60fa764415c0d8f813e9f2dfec17d69"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wraps an existing host pointer as a non-owning <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>.  <br /></td></tr>
+<tr class="separator:ab60fa764415c0d8f813e9f2dfec17d69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adac7ec1ba2dcaabd2765eaf50adbf7df" id="r_adac7ec1ba2dcaabd2765eaf50adbf7df"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html#adac7ec1ba2dcaabd2765eaf50adbf7df">fromImpl</a> (<a class="el" href="classpromeki_1_1BufferImpl.html">BufferImpl</a> *<a class="el" href="classpromeki_1_1Buffer.html#a80e235e1a2ba9af8d5a72b83eafd9372">impl</a>)</td></tr>
+<tr class="memdesc:adac7ec1ba2dcaabd2765eaf50adbf7df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> that takes ownership of an externally-built <a class="el" href="classpromeki_1_1BufferImpl.html" title="Polymorphic backend for Buffer.">BufferImpl</a>.  <br /></td></tr>
+<tr class="separator:adac7ec1ba2dcaabd2765eaf50adbf7df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:af2fca78761943634adeac4894e62d689" id="r_af2fca78761943634adeac4894e62d689"><td class="memItemLeft" align="right" valign="top"><a id="af2fca78761943634adeac4894e62d689" name="af2fca78761943634adeac4894e62d689"></a>
 <a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>DefaultAlign</b></td></tr>
-<tr class="memdesc:af2fca78761943634adeac4894e62d689"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default memory alignment in bytes. <br /></td></tr>
+<tr class="memdesc:af2fca78761943634adeac4894e62d689"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default memory alignment in bytes (matches the page size). <br /></td></tr>
 <tr class="separator:af2fca78761943634adeac4894e62d689"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Generic memory buffer descriptor with alignment and memory space support. </p>
-<p><a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> is a uniform tracking object for contiguous memory regions that may reside in different address spaces: local system RAM, GPU device memory, or even remote memory on another machine (e.g. RDMA). It does not assume the memory is host-accessible — use <a class="el" href="classpromeki_1_1Buffer.html#a08f865e4356346ad971fdfa282bee9f7" title="Returns true if the buffer memory is directly accessible from the host CPU.">isHostAccessible()</a> before dereferencing <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36" title="Returns a pointer to the buffer data.">data()</a>. All memory operations (allocation, release, copy, fill) are delegated through the buffer's <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a>, allowing each memory space to provide appropriate implementations.</p>
-<dl class="section user"><dt>Allocation and ownership</dt><dd>Buffers can be allocated from any <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a>, or can wrap existing memory pointers without taking ownership. Owned buffers are released through their <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a> on destruction. The <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a>'s release implementation handles any space-specific cleanup (e.g. SystemSecure performs secure zeroing and page unlocking before freeing).</dd></dl>
+<p><a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> is a value-type handle to a polymorphic <a class="el" href="classpromeki_1_1BufferImpl.html">BufferImpl</a> backend. The handle wraps a <code><a class="el" href="classpromeki_1_1SharedPtr.html">SharedPtr&lt;BufferImpl, false&gt;</a></code> so copies are cheap (refcount increment, no deep copy) and a single <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> can be passed by value through pipelines without inflating the refcount on every copy. Backends can be host-resident (<a class="el" href="classpromeki_1_1HostBufferImpl.html" title="BufferImpl backed by std::aligned_alloc / std::free.">HostBufferImpl</a>, <a class="el" href="classpromeki_1_1HostSecureBufferImpl.html" title="HostBufferImpl variant with page locking and secure zeroing.">HostSecureBufferImpl</a>, <a class="el" href="classpromeki_1_1WrappedHostBufferImpl.html" title="Non-owning HostMappedBufferImpl over an external host pointer.">WrappedHostBufferImpl</a>, CudaHostBufferImpl), device-resident (CudaDeviceBufferImpl), or exotic (FPGA buffer indices, RDMA registrations, mmap'd regions).</p>
+<dl class="section user"><dt>Domain-directed mapping</dt><dd>Memory may not be host-accessible. Callers that need to dereference a buffer in a particular <a class="el" href="classpromeki_1_1MemDomain.html">MemDomain</a> call <a class="el" href="classpromeki_1_1Buffer.html#a917e3b3b914b4577573c1d5bb53aaf81">mapAcquire</a> on that domain; the request resolves once the backing memory is reachable from there. Host-resident backends resolve <code>mapAcquire(Host)</code> inline; device-resident backends stage a copy and resolve asynchronously. Mappings are refcounted per domain — multiple call sites can hold a mapping concurrently; the mapping releases when every matching <a class="el" href="classpromeki_1_1Buffer.html#a357186279f8830a1d3d00c4daa182043">mapRelease</a> has run.</dd></dl>
 <dl class="section user"><dt>Buffer sizes</dt><dd><a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> tracks three distinct sizes:<ul>
-<li><a class="el" href="classpromeki_1_1Buffer.html#a538466ddd2156442ac54a1b1949317c0" title="Returns the total allocation size in bytes.">allocSize()</a> — the total allocation size, always constant.</li>
-<li><a class="el" href="classpromeki_1_1Buffer.html#a6a8d0904213ae193ec0c6104c68d6893" title="Returns the available space from data() to the end of the allocation.">availSize()</a> — the usable space from <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36" title="Returns a pointer to the buffer data.">data()</a> to the end of the allocation (allocSize minus any data shift). This is the maximum amount of content the buffer can hold at the current shift.</li>
-<li><a class="el" href="classpromeki_1_1Buffer.html#a77f4fdff945a3dee15f4132dac9136d2" title="Returns the logical content size in bytes.">size()</a> — the logical content size, tracking how many bytes of meaningful data are in the buffer. Defaults to 0 after allocation (the buffer has capacity but no content yet). <a class="el" href="classpromeki_1_1Set.html" title="Ordered unique-element container wrapping std::set.">Set</a> via <a class="el" href="classpromeki_1_1Buffer.html#afa9d51c4025ac7cb1ae7ec50e74c6292" title="Sets the logical content size.">setSize()</a>.</li>
+<li><a class="el" href="classpromeki_1_1Buffer.html#a538466ddd2156442ac54a1b1949317c0">allocSize</a> — the total allocation size, always constant.</li>
+<li><a class="el" href="classpromeki_1_1Buffer.html#a6a8d0904213ae193ec0c6104c68d6893">availSize</a> — the usable space from <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36" title="Returns the current host data pointer.">data()</a> to the end of the allocation (allocSize minus any data shift).</li>
+<li><a class="el" href="classpromeki_1_1Buffer.html#a77f4fdff945a3dee15f4132dac9136d2">size</a> — the logical content size, set via <a class="el" href="classpromeki_1_1Buffer.html#afa9d51c4025ac7cb1ae7ec50e74c6292">setSize</a>.</li>
 </ul>
 </dd></dl>
-<dl class="section user"><dt>Data shifting</dt><dd>The <a class="el" href="classpromeki_1_1Buffer.html#a30818eeb5b808a6e74e367ca25a55b16" title="Shifts the data pointer forward from the allocation base.">shiftData()</a> method offsets the user-visible data pointer from the allocation base. This is primarily used for O_DIRECT I/O, where the underlying allocation must be page-aligned but the actual content starts at some offset within that allocation. The shift is always relative to the allocation base (not accumulating). After a shift, <a class="el" href="classpromeki_1_1Buffer.html#a6a8d0904213ae193ec0c6104c68d6893" title="Returns the available space from data() to the end of the allocation.">availSize()</a> returns the remaining usable bytes and <a class="el" href="classpromeki_1_1Buffer.html#a77f4fdff945a3dee15f4132dac9136d2" title="Returns the logical content size in bytes.">size()</a> is reset to 0. Calling shiftData(0) resets the view to the base.</dd></dl>
-<dl class="section user"><dt>Copy semantics</dt><dd>Copying a buffer performs a deep copy through the <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a>'s copy operation, preserving any data shift offset. The copy inherits the source's <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a>, so copies of a SystemSecure buffer remain secure. For memory spaces where deep copy is expensive or impossible (large GPU framebuffers, remote RDMA regions), use <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872" title="Shared pointer type for Buffer.">Buffer::Ptr</a> for shared ownership instead.</dd></dl>
-<dl class="section user"><dt>Shared ownership</dt><dd>When shared ownership is needed, use <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872" title="Shared pointer type for Buffer.">Buffer::Ptr</a> (<a class="el" href="classpromeki_1_1SharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>&lt;<a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>&gt;). This is the recommended approach for large buffers or buffers in non-host-accessible memory spaces, as it avoids deep copies.</dd></dl>
-<dl class="section user"><dt>Thread Safety</dt><dd>Distinct <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> instances may be used concurrently — the underlying refcount on <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872" title="Shared pointer type for Buffer.">Buffer::Ptr</a> is atomic, so copying a <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872" title="Shared pointer type for Buffer.">Buffer::Ptr</a> across threads is safe even when the source is in use elsewhere. Concurrent mutation of a single instance (write, setSize, shiftData, fill, copyFrom) must be externally synchronized. The <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a> operations themselves are thread-safe per the <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a> contract.</dd></dl>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="comment">// Allocate a 4 KB page-aligned buffer</span></div>
+<dl class="section user"><dt>Data shifting</dt><dd>The <a class="el" href="classpromeki_1_1Buffer.html#a30818eeb5b808a6e74e367ca25a55b16">shiftData</a> method offsets the user-visible data pointer from the allocation base. This is primarily used for O_DIRECT I/O, where the underlying allocation must be page-aligned but the actual content starts at some offset within that allocation. Calling <code>shiftData(0)</code> resets the view to the base and zeroes the logical content size.</dd></dl>
+<dl class="section user"><dt>Copy semantics</dt><dd>Copying a <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> copies the handle — both copies refer to the same backing storage. This matches the behavior the previous <code>Buffer-shared</code> call sites rely on, while removing the <code>::Ptr</code> / <code>::PtrList</code> ceremony from public APIs. Code that needs a private copy calls <a class="el" href="classpromeki_1_1Buffer.html#ac0c2c675450bc4605f55ff4085a7c174">ensureExclusive</a> before mutating; backends that cannot be cloned (mmap'd regions, FPGA indices) surface <a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a19df9ccace883004749906b2f8158d25">Error::NotSupported</a> through <a class="el" href="classpromeki_1_1Buffer.html#ad61e3ad7181bdd9d3c5f3096be3a59fe">ensureExclusiveError</a> rather than aborting.</dd></dl>
+<dl class="section user"><dt>Thread Safety</dt><dd>Distinct <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> instances may be used concurrently — the underlying refcount on the <a class="el" href="classpromeki_1_1BufferImpl.html">BufferImpl</a> is atomic, so copying a <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> across threads is safe even when the source is in use elsewhere. Concurrent mutation of a single instance (write through <code><a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36" title="Returns the current host data pointer.">data()</a></code>, <a class="el" href="classpromeki_1_1Buffer.html#afa9d51c4025ac7cb1ae7ec50e74c6292">setSize</a>, <a class="el" href="classpromeki_1_1Buffer.html#a30818eeb5b808a6e74e367ca25a55b16">shiftData</a>, <a class="el" href="classpromeki_1_1Buffer.html#a97b3c39c6390c7f437557140592934a8">fill</a>, <a class="el" href="classpromeki_1_1Buffer.html#a6770d31cee6ffd5293a654ba34bddd34">copyFrom</a>) must be externally synchronized.</dd></dl>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="comment">// Allocate a 4 KB page-aligned buffer.</span></div>
 <div class="line"><a class="code hl_class" href="classpromeki_1_1Buffer.html">Buffer</a> <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">buf</a>(4096);</div>
 <div class="line"><a class="code hl_class" href="classpromeki_1_1UniquePtr.html">buf</a>.fill(0);</div>
-<div class="line"><a class="code hl_class" href="classpromeki_1_1UniquePtr.html">buf</a>.setSize(128);  <span class="comment">// 128 bytes of content written</span></div>
+<div class="line"><a class="code hl_class" href="classpromeki_1_1UniquePtr.html">buf</a>.setSize(128);</div>
 <div class="line"> </div>
-<div class="line"><span class="comment">// Shared ownership for zero-copy passing</span></div>
-<div class="line"><a class="code hl_class" href="classpromeki_1_1SharedPtr.html">Buffer::Ptr</a> <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">shared</a> = Buffer::Ptr::create(1920 * 1080 * 4);</div>
+<div class="line"><span class="comment">// Copy by value — both handles share the same backing.</span></div>
+<div class="line"><a class="code hl_class" href="classpromeki_1_1Buffer.html">Buffer</a> <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">alias</a> = <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">buf</a>;</div>
+<div class="line"><a class="code hl_class" href="classpromeki_1_1UniquePtr.html">assert</a>(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">alias</a>.data() == <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">buf</a>.data());</div>
 <div class="line"> </div>
-<div class="line"><span class="comment">// Copy external data into the buffer</span></div>
-<div class="line"><span class="keyword">const</span> <span class="keywordtype">char</span> *<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">src</a> = <span class="stringliteral">&quot;hello&quot;</span>;</div>
-<div class="line"><a class="code hl_class" href="classpromeki_1_1UniquePtr.html">buf</a>.copyFrom(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">src</a>, 5);</div>
-<div class="ttc" id="aclasspromeki_1_1Buffer_html"><div class="ttname"><a href="classpromeki_1_1Buffer.html">promeki::Buffer</a></div><div class="ttdoc">Generic memory buffer descriptor with alignment and memory space support.</div><div class="ttdef"><b>Definition</b> buffer.h:94</div></div>
-<div class="ttc" id="aclasspromeki_1_1SharedPtr_html"><div class="ttname"><a href="classpromeki_1_1SharedPtr.html">promeki::SharedPtr&lt; Buffer &gt;</a></div></div>
+<div class="line"><span class="comment">// Detach for private mutation.</span></div>
+<div class="line"><a class="code hl_class" href="classpromeki_1_1UniquePtr.html">alias</a>.ensureExclusive();</div>
+<div class="ttc" id="aclasspromeki_1_1Buffer_html"><div class="ttname"><a href="classpromeki_1_1Buffer.html">promeki::Buffer</a></div><div class="ttdoc">Generic memory buffer descriptor with alignment and memory space support.</div><div class="ttdef"><b>Definition</b> buffer.h:97</div></div>
 <div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a7442575e50c8ff3add9a5f835cb31f3f" name="a7442575e50c8ff3add9a5f835cb31f3f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7442575e50c8ff3add9a5f835cb31f3f">&#9670;&#160;</a></span>Buffer() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a7442575e50c8ff3add9a5f835cb31f3f">&#9670;&#160;</a></span>Buffer()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -286,132 +300,20 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Allocates a buffer of the given size. </p>
+<p>Dispatches through <a class="el" href="bufferfactory_8h.html#a0290f36db58530011df7fc54df672525">makeBufferImpl</a>, which routes the allocation to the <a class="el" href="classpromeki_1_1BufferImpl.html" title="Polymorphic backend for Buffer.">BufferImpl</a> factory registered for <code>ms.id</code>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">sz</td><td>Size in bytes to allocate. </td></tr>
-    <tr><td class="paramname">an</td><td>Alignment in bytes (defaults to DefaultAlign). </td></tr>
+    <tr><td class="paramname">an</td><td>Alignment in bytes (defaults to <a class="el" href="classpromeki_1_1Buffer.html#af2fca78761943634adeac4894e62d689">DefaultAlign</a>). </td></tr>
     <tr><td class="paramname">ms</td><td>Memory space to allocate from.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>This allocates the buffer of a given size, but does not set the logical size (it is initialized to 0). </dd></dl>
-
-</div>
-</div>
-<a id="abf7d9cbe217707f908d3100a52709cd2" name="abf7d9cbe217707f908d3100a52709cd2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abf7d9cbe217707f908d3100a52709cd2">&#9670;&#160;</a></span>Buffer() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">promeki::Buffer::Buffer </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;&#160;</td>
-          <td class="paramname"><em>o</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Copy constructor. </p>
-<p>Performs a deep copy of the buffer data, including any data shift offset and the logical size. </p>
+<dl class="section note"><dt>Note</dt><dd>The allocation is sized for <code>sz</code> bytes; the logical content size is initialized to 0. Call <a class="el" href="classpromeki_1_1Buffer.html#afa9d51c4025ac7cb1ae7ec50e74c6292">setSize</a> to record meaningful content. </dd></dl>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a80879cfffd7d4cd271329809082c9f1d" name="a80879cfffd7d4cd271329809082c9f1d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a80879cfffd7d4cd271329809082c9f1d">&#9670;&#160;</a></span>align()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> promeki::Buffer::align </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns the alignment of the buffer in bytes. </p>
-<dl class="section return"><dt>Returns</dt><dd>The alignment value. </dd></dl>
-
-</div>
-</div>
-<a id="a5e73c4f50c66e932f65fe301089c0298" name="a5e73c4f50c66e932f65fe301089c0298"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5e73c4f50c66e932f65fe301089c0298">&#9670;&#160;</a></span>allocation()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="structpromeki_1_1MemAllocation.html">MemAllocation</a> &amp; promeki::Buffer::allocation </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns the underlying allocation descriptor. </p>
-<dl class="section return"><dt>Returns</dt><dd>A const reference to the <a class="el" href="structpromeki_1_1MemAllocation.html" title="Describes a memory allocation from a MemSpace.">MemAllocation</a>. </dd></dl>
-
-</div>
-</div>
-<a id="a538466ddd2156442ac54a1b1949317c0" name="a538466ddd2156442ac54a1b1949317c0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a538466ddd2156442ac54a1b1949317c0">&#9670;&#160;</a></span>allocSize()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> promeki::Buffer::allocSize </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns the total allocation size in bytes. </p>
-<p>This always returns the full allocation size regardless of any <a class="el" href="classpromeki_1_1Buffer.html#a30818eeb5b808a6e74e367ca25a55b16" title="Shifts the data pointer forward from the allocation base.">shiftData()</a> calls or the logical content size. </p><dl class="section return"><dt>Returns</dt><dd>The allocation size. </dd></dl>
-
-</div>
-</div>
 <a id="a6a8d0904213ae193ec0c6104c68d6893" name="a6a8d0904213ae193ec0c6104c68d6893"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6a8d0904213ae193ec0c6104c68d6893">&#9670;&#160;</a></span>availSize()</h2>
 
@@ -435,9 +337,8 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns the available space from <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36" title="Returns a pointer to the buffer data.">data()</a> to the end of the allocation. </p>
-<p>This is the maximum number of bytes that can be stored starting from <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36" title="Returns a pointer to the buffer data.">data()</a>. Equal to <a class="el" href="classpromeki_1_1Buffer.html#a538466ddd2156442ac54a1b1949317c0" title="Returns the total allocation size in bytes.">allocSize()</a> minus any data shift.</p>
-<dl class="section return"><dt>Returns</dt><dd>The available buffer space in bytes. </dd></dl>
+<p>Returns the available space from <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36" title="Returns the current host data pointer.">data()</a> to the end of the allocation. </p>
+<p>Equal to <a class="el" href="classpromeki_1_1Buffer.html#a538466ddd2156442ac54a1b1949317c0">allocSize</a> minus any current data shift. </p>
 
 </div>
 </div>
@@ -473,17 +374,69 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Copies data from an external source into the buffer. </p>
-<p>Copies <code>bytes</code> from <code>src</code> into the buffer starting at <code>offset</code> bytes from <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36" title="Returns a pointer to the buffer data.">data()</a>. The buffer must be valid and host-accessible, and <code>offset</code> + <code>bytes</code> must not exceed <a class="el" href="classpromeki_1_1Buffer.html#a6a8d0904213ae193ec0c6104c68d6893" title="Returns the available space from data() to the end of the allocation.">availSize()</a>.</p>
+<p>Copies host-resident data into the buffer. </p>
+<p>Copies <code>bytes</code> from <code>src</code> into the buffer starting <code>offset</code> bytes after <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36">data</a>. The buffer must be valid; <code>offset</code> + <code>bytes</code> must not exceed <a class="el" href="classpromeki_1_1Buffer.html#a6a8d0904213ae193ec0c6104c68d6893">availSize</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">src</td><td>Pointer to the source data. </td></tr>
+    <tr><td class="paramname">src</td><td>Pointer to the host source data. </td></tr>
     <tr><td class="paramname">bytes</td><td>Number of bytes to copy. </td></tr>
-    <tr><td class="paramname">offset</td><td>Destination offset from <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36" title="Returns a pointer to the buffer data.">data()</a> (default 0). </td></tr>
+    <tr><td class="paramname">offset</td><td>Destination offset from <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36">data</a> (default 0). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4aa1d4e58e1f6bcb07de7b2aa675c60cc6" title="No error.">Error::Ok</a> on success, or an appropriate error code. </dd></dl>
+
+</div>
+</div>
+<a id="a68e30828356f02703f9f1af5c872b728" name="a68e30828356f02703f9f1af5c872b728"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a68e30828356f02703f9f1af5c872b728">&#9670;&#160;</a></span>copyTo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1BufferRequest.html">BufferRequest</a> promeki::Buffer::copyTo </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;&#160;</td>
+          <td class="paramname"><em>dst</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td>
+          <td class="paramname"><em>bytes</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td>
+          <td class="paramname"><em>srcOffset</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td>
+          <td class="paramname"><em>dstOffset</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Copies <code>bytes</code> from this buffer into <code>dst</code>. </p>
+<p>Looks up the registered copy function for the <code></code>(<a class="el" href="classpromeki_1_1Buffer.html#a2dcd4f2f1fc2851e0e1c4e69e3270d09" title="Returns the memory space this buffer was allocated from.">memSpace()</a>.id(), dst.memSpace().id()) pair via <a class="el" href="bufferfactory_8h.html#a4f0115782d02efbef61441b600ead092">lookupBufferCopy</a>. When no entry is registered but both buffers are currently host-mapped, the framework falls through to a host-side memcpy. Otherwise the returned request resolves with <a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a19df9ccace883004749906b2f8158d25">Error::NotSupported</a>.</p>
+<p>Both <code>srcOffset</code> / <code>dstOffset</code> are byte offsets from the respective buffer's <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36">data</a> base. The request is resolved synchronously by every currently-registered backend, so callers can call <code>req.wait()</code> and observe the outcome immediately.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dst</td><td>Destination buffer. </td></tr>
+    <tr><td class="paramname">bytes</td><td>Number of bytes to copy. </td></tr>
+    <tr><td class="paramname">srcOffset</td><td>Byte offset within this buffer (default 0). </td></tr>
+    <tr><td class="paramname">dstOffset</td><td>Byte offset within <code>dst</code> (default 0). </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -510,8 +463,64 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns a pointer to the buffer data. </p>
-<dl class="section return"><dt>Returns</dt><dd>The current data pointer (may be shifted from the original allocation). </dd></dl>
+<p>Returns the current host data pointer. </p>
+<p>For host-resident backends this is the (possibly shifted) host pointer; for backends that are not currently host-mapped this returns <code>nullptr</code>. Callers that need a host pointer for non-host backends call mapAcquire(MemDomain::Host) first. </p>
+
+</div>
+</div>
+<a id="ac0c2c675450bc4605f55ff4085a7c174" name="ac0c2c675450bc4605f55ff4085a7c174"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac0c2c675450bc4605f55ff4085a7c174">&#9670;&#160;</a></span>ensureExclusive()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a> promeki::Buffer::ensureExclusive </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Ensures this <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> is the sole holder of its backing storage. </p>
+<p>If the underlying <a class="el" href="classpromeki_1_1BufferImpl.html">BufferImpl</a> is shared with other handles, clones it via <a class="el" href="classpromeki_1_1BufferImpl.html#af60c70afcb47f034517f9d2e83d95b8c">BufferImpl::canClone</a> and detaches. When the backend cannot be cloned (mmap'd regions, FPGA indices), this method has no effect — call <a class="el" href="classpromeki_1_1Buffer.html#ad61e3ad7181bdd9d3c5f3096be3a59fe">ensureExclusiveError</a> if you need to surface the inability as an explicit error. </p>
+
+</div>
+</div>
+<a id="ad61e3ad7181bdd9d3c5f3096be3a59fe" name="ad61e3ad7181bdd9d3c5f3096be3a59fe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad61e3ad7181bdd9d3c5f3096be3a59fe">&#9670;&#160;</a></span>ensureExclusiveError()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1Error.html">Error</a> promeki::Buffer::ensureExclusiveError </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Detach variant that surfaces a non-clonable backend as an error. </p>
+<p>Mirrors <a class="el" href="classpromeki_1_1Buffer.html#ac0c2c675450bc4605f55ff4085a7c174">ensureExclusive</a> but returns <a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a19df9ccace883004749906b2f8158d25">Error::NotSupported</a> when the backend's <a class="el" href="classpromeki_1_1BufferImpl.html#af60c70afcb47f034517f9d2e83d95b8c">BufferImpl::canClone</a> reports false. Callers that genuinely require a private copy use this overload instead of the no-op variant. </p>
 
 </div>
 </div>
@@ -540,13 +549,36 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Fills the entire buffer with the given byte value. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">value</td><td>The byte value to fill with. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4aa1d4e58e1f6bcb07de7b2aa675c60cc6" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
+<p>The fill covers <a class="el" href="classpromeki_1_1Buffer.html#a6a8d0904213ae193ec0c6104c68d6893">availSize</a> starting at <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36">data</a>; for backends that route through the host (the common case) this is a memset, but device-resident backends may dispatch a fill kernel instead. </p>
+
+</div>
+</div>
+<a id="adac7ec1ba2dcaabd2765eaf50adbf7df" name="adac7ec1ba2dcaabd2765eaf50adbf7df"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adac7ec1ba2dcaabd2765eaf50adbf7df">&#9670;&#160;</a></span>fromImpl()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> promeki::Buffer::fromImpl </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1BufferImpl.html">BufferImpl</a> *&#160;</td>
+          <td class="paramname"><em>impl</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Constructs a <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> that takes ownership of an externally-built <a class="el" href="classpromeki_1_1BufferImpl.html" title="Polymorphic backend for Buffer.">BufferImpl</a>. </p>
+<p>Used by custom backends (FPGA, RDMA, mmap) and by tests that want to inject a stub <a class="el" href="classpromeki_1_1BufferImpl.html" title="Polymorphic backend for Buffer.">BufferImpl</a>. </p>
 
 </div>
 </div>
@@ -578,6 +610,34 @@ Static Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a80e235e1a2ba9af8d5a72b83eafd9372" name="a80e235e1a2ba9af8d5a72b83eafd9372"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a80e235e1a2ba9af8d5a72b83eafd9372">&#9670;&#160;</a></span>impl()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="group__util.html#gabc225a3130872dbbd1885112855efaa1">BufferImplPtr</a> &amp; promeki::Buffer::impl </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the underlying <a class="el" href="classpromeki_1_1BufferImpl.html" title="Polymorphic backend for Buffer.">BufferImpl</a> handle. </p>
+<p>Used by <a class="el" href="classpromeki_1_1BufferView.html">BufferView</a>'s deduplication table to compare backing storage identity across slices. Most callers should never need this. </p>
+
+</div>
+</div>
 <a id="a08f865e4356346ad971fdfa282bee9f7" name="a08f865e4356346ad971fdfa282bee9f7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a08f865e4356346ad971fdfa282bee9f7">&#9670;&#160;</a></span>isHostAccessible()</h2>
 
@@ -601,8 +661,8 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns true if the buffer memory is directly accessible from the host CPU. </p>
-<dl class="section return"><dt>Returns</dt><dd>True for system memory, false for device or remote memory. </dd></dl>
+<p>Returns true when the buffer is host-mapped. </p>
+<p>Convenience for the common <code>isMapped(Host)</code> check. </p>
 
 </div>
 </div>
@@ -629,13 +689,13 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns true if the buffer has been allocated or assigned memory. </p>
-<dl class="section return"><dt>Returns</dt><dd>true if the internal data pointer is non-null. </dd></dl>
+<p>Returns true once the backing storage is allocated. </p>
+<p>False on default-constructed Buffers and on Buffers whose underlying allocation failed. </p>
 
 </div>
 </div>
-<a id="a3f01b9f68d0e659e80b96c52e7be9abe" name="a3f01b9f68d0e659e80b96c52e7be9abe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3f01b9f68d0e659e80b96c52e7be9abe">&#9670;&#160;</a></span>memSpace()</h2>
+<a id="a917e3b3b914b4577573c1d5bb53aaf81" name="a917e3b3b914b4577573c1d5bb53aaf81"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a917e3b3b914b4577573c1d5bb53aaf81">&#9670;&#160;</a></span>mapAcquire()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -644,7 +704,75 @@ Static Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1MemSpace.html">MemSpace</a> &amp; promeki::Buffer::memSpace </td>
+          <td class="memname"><a class="el" href="classpromeki_1_1BufferRequest.html">BufferRequest</a> promeki::Buffer::mapAcquire </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1MemDomain.html">MemDomain</a>&#160;</td>
+          <td class="paramname"><em>domain</em> = <code><a class="el" href="classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3a0ca0131e2d6a608d2b769204c9180823">MemDomain::Host</a></code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__util.html#ga65fdda715e50212d261db87dcc6d3574">MapFlags</a>&#160;</td>
+          <td class="paramname"><em>flags</em> = <code><a class="el" href="group__util.html#gga65fdda715e50212d261db87dcc6d3574a7a1a5f3e79fdc91edf2f5ead9d66abb4">MapFlags::Read</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Acquires a mapping in <code>domain</code>. </p>
+<p>Backends that already hold an open mapping resolve the request inline (refcount bump only); backends that need to stage a copy or perform a DMA dispatch to a worker / strand and return the in-flight handle. Returns a request resolved with <a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a19df9ccace883004749906b2f8158d25">Error::NotSupported</a> when the backend cannot map to <code>domain</code> at all. </p>
+
+</div>
+</div>
+<a id="a357186279f8830a1d3d00c4daa182043" name="a357186279f8830a1d3d00c4daa182043"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a357186279f8830a1d3d00c4daa182043">&#9670;&#160;</a></span>mapRelease()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1BufferRequest.html">BufferRequest</a> promeki::Buffer::mapRelease </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1MemDomain.html">MemDomain</a>&#160;</td>
+          <td class="paramname"><em>domain</em> = <code><a class="el" href="classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3a0ca0131e2d6a608d2b769204c9180823">MemDomain::Host</a></code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Releases a previously-acquired <code>domain</code> mapping. </p>
+<p>Decrements the per-domain refcount; when the count reaches zero the backend tears down the mapping (writing back any caller-modified bytes when the acquire was Write or ReadWrite). Returns <a class="el" href="classpromeki_1_1Error.html#a1839803815f90dbf714f8d0a31b73ea4a6dd90c21b0a2441b67dccc6cbbb25da8">Error::Invalid</a> when the domain was never mapped. </p>
+
+</div>
+</div>
+<a id="a2dcd4f2f1fc2851e0e1c4e69e3270d09" name="a2dcd4f2f1fc2851e0e1c4e69e3270d09"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2dcd4f2f1fc2851e0e1c4e69e3270d09">&#9670;&#160;</a></span>memSpace()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1MemSpace.html">MemSpace</a> promeki::Buffer::memSpace </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -658,7 +786,7 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the memory space this buffer was allocated from. </p>
-<dl class="section return"><dt>Returns</dt><dd>A const reference to the <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a>. </dd></dl>
+<p>Returns the <a class="el" href="classpromeki_1_1System.html" title="Provides system-level utility functions.">System</a> <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a> as a default for invalid buffers so the call always has a usable result. </p>
 
 </div>
 </div>
@@ -686,8 +814,36 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the original allocation pointer. </p>
-<p>Unlike <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36" title="Returns a pointer to the buffer data.">data()</a>, this always points to the start of the allocated region regardless of any <a class="el" href="classpromeki_1_1Buffer.html#a30818eeb5b808a6e74e367ca25a55b16" title="Shifts the data pointer forward from the allocation base.">shiftData()</a> calls. This is the pointer that was returned by the <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a> allocator.</p>
-<dl class="section return"><dt>Returns</dt><dd>The original allocation pointer. </dd></dl>
+<p>Unlike <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36">data</a>, this always points to the base of the allocation, regardless of any shift. Returns <code>nullptr</code> when the buffer is not host-mapped. </p>
+
+</div>
+</div>
+<a id="a4d9785304e49c0468852fe29863f24f2" name="a4d9785304e49c0468852fe29863f24f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4d9785304e49c0468852fe29863f24f2">&#9670;&#160;</a></span>operator==()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">bool</a> promeki::Buffer::operator== </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;&#160;</td>
+          <td class="paramname"><em>o</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Equality on backing-storage identity. </p>
+<p>Two Buffers compare equal iff they share the same underlying <a class="el" href="classpromeki_1_1BufferImpl.html">BufferImpl</a> (refcount sharing). Two separate allocations of identical content are <em>not</em> equal. </p>
 
 </div>
 </div>
@@ -716,13 +872,7 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Sets the logical content size. </p>
-<p>Indicates how many bytes of meaningful data are in the buffer, starting from <a class="el" href="classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36" title="Returns a pointer to the buffer data.">data()</a>. The value must not exceed <a class="el" href="classpromeki_1_1Buffer.html#a6a8d0904213ae193ec0c6104c68d6893" title="Returns the available space from data() to the end of the allocation.">availSize()</a>.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">s</td><td>The new logical content size. </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>The value must not exceed <a class="el" href="classpromeki_1_1Buffer.html#a6a8d0904213ae193ec0c6104c68d6893">availSize</a>. Marked <code>const</code> so call sites that hold a <code>"const Buffer &amp;"</code> can still record the size after a successful read, matching the previous <code><a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a></code> behavior. </p>
 
 </div>
 </div>
@@ -751,7 +901,8 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Shifts the data pointer forward from the allocation base. </p>
-<p>Sets the data pointer to allocation base + bytes, creating a sub-buffer view. The shift is always relative to the original allocation pointer, not the current data pointer. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Sets the data pointer to allocation base + bytes, creating a sub-buffer view. The shift is always relative to the original allocation base, not the current data pointer. Resets the logical content size to zero.</p>
+<dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">bytes</td><td>Number of bytes from the allocation base. </td></tr>
   </table>
@@ -784,13 +935,12 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the logical content size in bytes. </p>
-<p>This is the user-set content size, tracking how many bytes of meaningful data are in the buffer. Defaults to 0 after allocation (the buffer has capacity but no content yet). <a class="el" href="classpromeki_1_1Set.html" title="Ordered unique-element container wrapping std::set.">Set</a> via <a class="el" href="classpromeki_1_1Buffer.html#afa9d51c4025ac7cb1ae7ec50e74c6292" title="Sets the logical content size.">setSize()</a>.</p>
-<dl class="section return"><dt>Returns</dt><dd>The logical content size. </dd></dl>
+<p>Defaults to 0 after allocation (the buffer has capacity but no content yet). <a class="el" href="classpromeki_1_1Set.html" title="Ordered unique-element container wrapping std::set.">Set</a> via <a class="el" href="classpromeki_1_1Buffer.html#afa9d51c4025ac7cb1ae7ec50e74c6292">setSize</a>. </p>
 
 </div>
 </div>
-<a id="a5e80426a64cb6e3cd2c33c9b0788bad6" name="a5e80426a64cb6e3cd2c33c9b0788bad6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5e80426a64cb6e3cd2c33c9b0788bad6">&#9670;&#160;</a></span>wrap()</h2>
+<a id="ab60fa764415c0d8f813e9f2dfec17d69" name="ab60fa764415c0d8f813e9f2dfec17d69"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab60fa764415c0d8f813e9f2dfec17d69">&#9670;&#160;</a></span>wrapHost()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -799,7 +949,7 @@ Static Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> promeki::Buffer::wrap </td>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">static</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> promeki::Buffer::wrapHost </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">void</a> *&#160;</td>
           <td class="paramname"><em>p</em>, </td>
@@ -830,17 +980,16 @@ Static Public Attributes</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Wraps an existing memory pointer as a non-owning <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> view. </p>
-<p>The returned <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> references <code>p</code> but never frees it; the caller retains responsibility for the lifetime of the underlying allocation. Use this to expose external memory (mmap regions, hardware DMA staging buffers, stack arrays) through the <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> API without copying.</p>
-<p>The logical content <code><a class="el" href="classpromeki_1_1Buffer.html#a77f4fdff945a3dee15f4132dac9136d2" title="Returns the logical content size in bytes.">size()</a></code> is initialized to 0; call <code><a class="el" href="classpromeki_1_1Buffer.html#afa9d51c4025ac7cb1ae7ec50e74c6292" title="Sets the logical content size.">setSize()</a></code> if the wrapped region already holds meaningful data.</p>
+<p>Wraps an existing host pointer as a non-owning <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>. </p>
+<p>The returned <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> references <code>p</code> but never frees it; the caller retains responsibility for the lifetime of the underlying allocation. The logical content size is initialized to 0; call <a class="el" href="classpromeki_1_1Buffer.html#afa9d51c4025ac7cb1ae7ec50e74c6292">setSize</a> if the wrapped region already holds meaningful data.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">p</td><td>Pointer to existing memory. Must remain valid for the lifetime of the returned <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>. </td></tr>
+    <tr><td class="paramname">p</td><td>Pointer to existing memory. </td></tr>
     <tr><td class="paramname">sz</td><td>Size of the memory region in bytes. </td></tr>
     <tr><td class="paramname">an</td><td>Alignment of the pointer (0 if unknown). </td></tr>
     <tr><td class="paramname">ms</td><td>Memory space the pointer belongs to. </td></tr>
@@ -861,7 +1010,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1Buffer.html">Buffer</a></li>
-    <li class="footer">Generated on 2026-05-04 19:45:16 from commit c353e07 (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-05 00:43:16 from commit ef07c0f (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

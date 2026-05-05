@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['data_0',['data',['../structpromeki_1_1AudioFormat_1_1Data.html',1,'promeki::AudioFormat::Data'],['../structpromeki_1_1ColorModel_1_1Data.html',1,'promeki::ColorModel::Data'],['../structpromeki_1_1PixelFormat_1_1Data.html',1,'promeki::PixelFormat::Data'],['../structpromeki_1_1PixelMemLayout_1_1Data.html',1,'promeki::PixelMemLayout::Data'],['../structpromeki_1_1VideoCodec_1_1Data.html',1,'promeki::VideoCodec::Data'],['../structpromeki_1_1AudioCodec_1_1Data.html',1,'promeki::AudioCodec::Data']]],
+  ['data_0',['data',['../structpromeki_1_1AudioFormat_1_1Data.html',1,'promeki::AudioFormat::Data'],['../structpromeki_1_1ColorModel_1_1Data.html',1,'promeki::ColorModel::Data'],['../structpromeki_1_1MemDomain_1_1Data.html',1,'promeki::MemDomain::Data'],['../structpromeki_1_1PixelFormat_1_1Data.html',1,'promeki::PixelFormat::Data'],['../structpromeki_1_1PixelMemLayout_1_1Data.html',1,'promeki::PixelMemLayout::Data'],['../structpromeki_1_1VideoCodec_1_1Data.html',1,'promeki::VideoCodec::Data'],['../structpromeki_1_1AudioCodec_1_1Data.html',1,'promeki::AudioCodec::Data']]],
   ['datagram_1',['datagram',['../structpromeki_1_1PacketTransport_1_1Datagram.html',1,'promeki::PacketTransport::Datagram'],['../structpromeki_1_1UdpSocket_1_1Datagram.html',1,'promeki::UdpSocket::Datagram']]],
   ['datastream_2',['DataStream',['../classpromeki_1_1DataStream.html',1,'promeki']]],
   ['datetime_3',['DateTime',['../classpromeki_1_1DateTime.html',1,'promeki']]],

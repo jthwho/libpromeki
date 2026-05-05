@@ -1,0 +1,9 @@
+<map id="promeki::HostBufferImpl" name="promeki::HostBufferImpl">
+<area shape="rect" id="Node000001" title="BufferImpl backed by std::aligned_alloc / std::free." alt="" coords="79,168,262,193"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1HostMappedBufferImpl.html" title="Abstract intermediate base for backends backed by host memory." alt="" coords="53,93,288,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,133,173,168,168,168,168,133"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1BufferImpl.html" title="Polymorphic backend for Buffer." alt="" coords="5,5,157,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="105,38,160,91,156,95,101,42"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces." alt="" coords="182,5,338,31"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="240,42,185,95,181,91,236,38"/>
+</map>

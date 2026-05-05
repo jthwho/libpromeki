@@ -653,16 +653,16 @@ var group__proav =
       [ "CompressedAudioPayload", "classpromeki_1_1CompressedAudioPayload.html#a71112d66c3d7a555e6d232144f5fcf33", null ],
       [ "CompressedAudioPayload", "classpromeki_1_1CompressedAudioPayload.html#a48ec22a6838aa22040a818c88634c014", null ],
       [ "CompressedAudioPayload", "classpromeki_1_1CompressedAudioPayload.html#a22db9cf3f7578b6e1a664d78591e33a1", null ],
-      [ "CompressedAudioPayload", "classpromeki_1_1CompressedAudioPayload.html#a1337644a42458d5eb088c003b82826cf", null ],
+      [ "CompressedAudioPayload", "classpromeki_1_1CompressedAudioPayload.html#a7f382c232a544fc1b4979e19f528a5a3", null ],
       [ "deserialisePayload", "classpromeki_1_1CompressedAudioPayload.html#add646946de4652b8db4a527184975ef9", null ],
       [ "ensureExclusiveExtras", "classpromeki_1_1CompressedAudioPayload.html#aefbadf97c079502614bbb668972cd42a", null ],
-      [ "inBandCodecData", "classpromeki_1_1CompressedAudioPayload.html#a7c98283c89c42b61a08b215839df85aa", null ],
+      [ "inBandCodecData", "classpromeki_1_1CompressedAudioPayload.html#a788455c04eec3b2b1223976e1d9bf82d", null ],
       [ "isCompressed", "classpromeki_1_1CompressedAudioPayload.html#aa57bf4349b3d405d207407cf80e04cba", null ],
       [ "isExclusiveExtras", "classpromeki_1_1CompressedAudioPayload.html#a70d33dc84f0d5ca280f22e6ac89ac122", null ],
       [ "isSafeCutPoint", "classpromeki_1_1CompressedAudioPayload.html#a9cffc3d944d8dc5c962ade09bc5c59f5", null ],
       [ "isValid", "classpromeki_1_1CompressedAudioPayload.html#ad4a9a8876ebe78ed6c24744ade6ecfa5", null ],
       [ "serialisePayload", "classpromeki_1_1CompressedAudioPayload.html#af815ae72a756bd7c1b64cb5b5bdfae75", null ],
-      [ "setInBandCodecData", "classpromeki_1_1CompressedAudioPayload.html#a4e1a19e66f7a02bc6ed8366662ea7c1d", null ],
+      [ "setInBandCodecData", "classpromeki_1_1CompressedAudioPayload.html#a77334eab32cc84de425a73bcc864f41e", null ],
       [ "subclassFourCC", "classpromeki_1_1CompressedAudioPayload.html#a200b158b508a21f14265196affde0890", null ]
     ] ],
     [ "promeki::CompressedVideoPayload", "classpromeki_1_1CompressedVideoPayload.html", [
@@ -675,11 +675,11 @@ var group__proav =
       [ "CompressedVideoPayload", "classpromeki_1_1CompressedVideoPayload.html#ae2ac5766dfe54adb340cd96df0abd334", null ],
       [ "CompressedVideoPayload", "classpromeki_1_1CompressedVideoPayload.html#a937ef6d2435c9bd325994fb7a7ed784e", null ],
       [ "CompressedVideoPayload", "classpromeki_1_1CompressedVideoPayload.html#aee053e1d8f44dd411d2b177cd0136a5a", null ],
-      [ "CompressedVideoPayload", "classpromeki_1_1CompressedVideoPayload.html#ad8ac8ccbca84467866153e76834e1599", null ],
+      [ "CompressedVideoPayload", "classpromeki_1_1CompressedVideoPayload.html#af986d29b7420d6e97e8df80bda0d5d45", null ],
       [ "deserialisePayload", "classpromeki_1_1CompressedVideoPayload.html#a35a4758136aad7ad435d0b3e69ba199f", null ],
       [ "ensureExclusiveExtras", "classpromeki_1_1CompressedVideoPayload.html#a3c3af9116a1a25a0b4a071e9c0299f7b", null ],
       [ "frameType", "classpromeki_1_1CompressedVideoPayload.html#ab3b1423846b6e470660cff73453bda6f", null ],
-      [ "inBandCodecData", "classpromeki_1_1CompressedVideoPayload.html#a3ac071b23357b0c39830f094f8ee8c8d", null ],
+      [ "inBandCodecData", "classpromeki_1_1CompressedVideoPayload.html#aef90a7c8357b5165962bf2c4f3330998", null ],
       [ "isCompressed", "classpromeki_1_1CompressedVideoPayload.html#aeb7c0858ae7bc881163f18ebcb81d5bd", null ],
       [ "isExclusiveExtras", "classpromeki_1_1CompressedVideoPayload.html#a4f67c1e1c451cdf3146b94c267811cdd", null ],
       [ "isParameterSet", "classpromeki_1_1CompressedVideoPayload.html#a9cd4c77b7cf564f25829ee459d85638e", null ],
@@ -688,7 +688,7 @@ var group__proav =
       [ "markParameterSet", "classpromeki_1_1CompressedVideoPayload.html#a64d0340606b97e9cb08fd90ea7238591", null ],
       [ "serialisePayload", "classpromeki_1_1CompressedVideoPayload.html#aa5496dbf6fd1b22caa0f61ea75f76ddb", null ],
       [ "setFrameType", "classpromeki_1_1CompressedVideoPayload.html#acc08c719920be207a8c542b62a281196", null ],
-      [ "setInBandCodecData", "classpromeki_1_1CompressedVideoPayload.html#a8da9f81bb9077fea42a300ed6c62c037", null ],
+      [ "setInBandCodecData", "classpromeki_1_1CompressedVideoPayload.html#ac2d563e78533b1cfb472ce5375a7b554", null ],
       [ "subclassFourCC", "classpromeki_1_1CompressedVideoPayload.html#aeb8bc128d63c49987e54126d7f987b43", null ]
     ] ],
     [ "promeki::CSCContext", "classpromeki_1_1CSCContext.html", [
@@ -1398,7 +1398,7 @@ var group__proav =
     [ "promeki::MjpegStreamSubscriber", "classpromeki_1_1MjpegStreamSubscriber.html", [
       [ "~MjpegStreamSubscriber", "classpromeki_1_1MjpegStreamSubscriber.html#a0cb07d608cc3990517e9cbdee0ab1145", null ],
       [ "onClosed", "classpromeki_1_1MjpegStreamSubscriber.html#acf8e3c2a16fa2b84f69f5d0af0c9b198", null ],
-      [ "onFrame", "classpromeki_1_1MjpegStreamSubscriber.html#a490815bdd874d7f17e2bd2b27ed7bd37", null ]
+      [ "onFrame", "classpromeki_1_1MjpegStreamSubscriber.html#a9f76de6fc8889ae95cb8292e709c2481", null ]
     ] ],
     [ "promeki::MjpegStreamSnapshot", "structpromeki_1_1MjpegStreamSnapshot.html", [
       [ "encodeSamples", "structpromeki_1_1MjpegStreamSnapshot.html#ab3752e7a80391951d78806d0ffea0e8d", null ],
@@ -1419,7 +1419,7 @@ var group__proav =
       [ "executeCmd", "classpromeki_1_1MjpegStreamMediaIO.html#a8035f3af7b5b717ba48b6cb3780e8ea8", null ],
       [ "executeCmd", "classpromeki_1_1MjpegStreamMediaIO.html#a9723184fc9162935d151623bbd64f68f", null ],
       [ "isStreaming", "classpromeki_1_1MjpegStreamMediaIO.html#a35c4833af4f8f041eae13ee04d3e7329", null ],
-      [ "latestJpeg", "classpromeki_1_1MjpegStreamMediaIO.html#a28fa27bc24cc00acd9665f75aa73d7f0", null ],
+      [ "latestJpeg", "classpromeki_1_1MjpegStreamMediaIO.html#af00981bfb93eef7f8160d9841315d2d0", null ],
       [ "latestJpegTimestamp", "classpromeki_1_1MjpegStreamMediaIO.html#a1362f98ff6ea096d4faaa905fd5c3abf", null ],
       [ "proposeInput", "classpromeki_1_1MjpegStreamMediaIO.html#abe1924c581b45e12a6e1ab14e71f691f", null ],
       [ "registerHttpRoute", "classpromeki_1_1MjpegStreamMediaIO.html#a55777f08be19a453bb9726baaf420d4e", null ],
@@ -1877,7 +1877,7 @@ var group__proav =
         [ "writeSample", "classpromeki_1_1QuickTime_1_1Impl.html#aaeafcf1e5a2af7dccc3abd5822e7868e", null ]
       ] ],
       [ "Sample", "structpromeki_1_1QuickTime_1_1Sample.html", [
-        [ "data", "structpromeki_1_1QuickTime_1_1Sample.html#acbd99b823c08f3d38b2899e281591432", null ],
+        [ "data", "structpromeki_1_1QuickTime_1_1Sample.html#a41bcc119132108e517445f2de8340292", null ],
         [ "dts", "structpromeki_1_1QuickTime_1_1Sample.html#a438cbb0655503e266aa806afd7d95e72", null ],
         [ "duration", "structpromeki_1_1QuickTime_1_1Sample.html#a7244e039e3fd85d73c1d8a4c6478cf8e", null ],
         [ "index", "structpromeki_1_1QuickTime_1_1Sample.html#a5bc7ebd220b6ca162d59727777d4aa7b", null ],
@@ -1888,7 +1888,7 @@ var group__proav =
       [ "Track", "classpromeki_1_1QuickTime_1_1Track.html", [
         [ "Track", "classpromeki_1_1QuickTime_1_1Track.html#a5f261ee30576a28d6efb56faddb113a9", null ],
         [ "audioDesc", "classpromeki_1_1QuickTime_1_1Track.html#ae578fd9036237ccbf17645e332643d4c", null ],
-        [ "codecConfig", "classpromeki_1_1QuickTime_1_1Track.html#a8e0848f626578ee258bf9a018c63284e", null ],
+        [ "codecConfig", "classpromeki_1_1QuickTime_1_1Track.html#a795fb34de962fb789c3bf273f468eacb", null ],
         [ "codecConfigType", "classpromeki_1_1QuickTime_1_1Track.html#a3879605e153658943eae68fa3107e1a3", null ],
         [ "duration", "classpromeki_1_1QuickTime_1_1Track.html#aa387fd22d4e14815d977dd535f3553bd", null ],
         [ "editStartOffset", "classpromeki_1_1QuickTime_1_1Track.html#abff692dd5304b223305c7af25a78bc46", null ],
@@ -1902,7 +1902,7 @@ var group__proav =
         [ "pixelFormat", "classpromeki_1_1QuickTime_1_1Track.html#ad51783c2cb82c618836a5fa77608aac7", null ],
         [ "sampleCount", "classpromeki_1_1QuickTime_1_1Track.html#a7fa6213516d72196cf5cbe2a0acddea8", null ],
         [ "setAudioDesc", "classpromeki_1_1QuickTime_1_1Track.html#aecd4aab80647977ce6a7c3a7fcb7a236", null ],
-        [ "setCodecConfig", "classpromeki_1_1QuickTime_1_1Track.html#a17b871f4e20b5746ef10b161f5a050c1", null ],
+        [ "setCodecConfig", "classpromeki_1_1QuickTime_1_1Track.html#ae1de2d2e0b7b8449119412d0e921684b", null ],
         [ "setCodecConfigType", "classpromeki_1_1QuickTime_1_1Track.html#a90975a5b270772262a886a9734db6bca", null ],
         [ "setDuration", "classpromeki_1_1QuickTime_1_1Track.html#a6c391d508f5f7e24b654f6eff5aa1d47", null ],
         [ "setEditStartOffset", "classpromeki_1_1QuickTime_1_1Track.html#a8d95b9d626e57f5f1b2678be9cc69e1e", null ],

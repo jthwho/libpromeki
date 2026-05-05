@@ -9,7 +9,7 @@ var classpromeki_1_1MjpegStreamMediaIO =
     [ "executeCmd", "classpromeki_1_1MjpegStreamMediaIO.html#a8035f3af7b5b717ba48b6cb3780e8ea8", null ],
     [ "executeCmd", "classpromeki_1_1MjpegStreamMediaIO.html#a9723184fc9162935d151623bbd64f68f", null ],
     [ "isStreaming", "classpromeki_1_1MjpegStreamMediaIO.html#a35c4833af4f8f041eae13ee04d3e7329", null ],
-    [ "latestJpeg", "classpromeki_1_1MjpegStreamMediaIO.html#a28fa27bc24cc00acd9665f75aa73d7f0", null ],
+    [ "latestJpeg", "classpromeki_1_1MjpegStreamMediaIO.html#af00981bfb93eef7f8160d9841315d2d0", null ],
     [ "latestJpegTimestamp", "classpromeki_1_1MjpegStreamMediaIO.html#a1362f98ff6ea096d4faaa905fd5c3abf", null ],
     [ "proposeInput", "classpromeki_1_1MjpegStreamMediaIO.html#abe1924c581b45e12a6e1ab14e71f691f", null ],
     [ "registerHttpRoute", "classpromeki_1_1MjpegStreamMediaIO.html#a55777f08be19a453bb9726baaf420d4e", null ],

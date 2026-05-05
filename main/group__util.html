@@ -159,8 +159,29 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1BenchmarkRunner.html">promeki::BenchmarkRunner</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drives registered <a class="el" href="classpromeki_1_1BenchmarkCase.html" title="A single registered benchmark case.">BenchmarkCase</a> instances and collects results.  <a href="classpromeki_1_1BenchmarkRunner.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Buffer.html">promeki::Buffer</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generic memory buffer descriptor with alignment and memory space support.  <a href="classpromeki_1_1Buffer.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1BufferCommand.html">promeki::BufferCommand</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for asynchronous <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> operations.  <a href="classpromeki_1_1BufferCommand.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1BufferMapCommand.html">promeki::BufferMapCommand</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Command to map a <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> for access from a specific <a class="el" href="classpromeki_1_1MemDomain.html" title="Coarse classification of memory address spaces.">MemDomain</a>.  <a href="classpromeki_1_1BufferMapCommand.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1BufferCopyCommand.html">promeki::BufferCopyCommand</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Command to copy a byte range from one <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> to another.  <a href="classpromeki_1_1BufferCopyCommand.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1BufferUnmapCommand.html">promeki::BufferUnmapCommand</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Command to release a previously-acquired domain mapping.  <a href="classpromeki_1_1BufferUnmapCommand.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1BufferImpl.html">promeki::BufferImpl</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Polymorphic backend for <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a>.  <a href="classpromeki_1_1BufferImpl.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1BufferPool.html">promeki::BufferPool</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simple fixed-geometry buffer pool for hot-path allocations.  <a href="classpromeki_1_1BufferPool.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1BufferRequest.html">promeki::BufferRequest</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Asynchronous handle for a <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> mapping operation.  <a href="classpromeki_1_1BufferRequest.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1BuildInfo.html">promeki::BuildInfo</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Holds compile-time build information for the library.  <a href="structpromeki_1_1BuildInfo.html#details">More...</a><br /></td></tr>
@@ -189,6 +210,18 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1FourCC.html">promeki::FourCC</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A four-character code (<a class="el" href="classpromeki_1_1FourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a>) identifier.  <a href="classpromeki_1_1FourCC.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1HostMappedBufferImpl.html">promeki::HostMappedBufferImpl</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract intermediate base for backends backed by host memory.  <a href="classpromeki_1_1HostMappedBufferImpl.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1HostBufferImpl.html">promeki::HostBufferImpl</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1BufferImpl.html" title="Polymorphic backend for Buffer.">BufferImpl</a> backed by std::aligned_alloc / std::free.  <a href="classpromeki_1_1HostBufferImpl.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1HostSecureBufferImpl.html">promeki::HostSecureBufferImpl</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classpromeki_1_1HostBufferImpl.html" title="BufferImpl backed by std::aligned_alloc / std::free.">HostBufferImpl</a> variant with page locking and secure zeroing.  <a href="classpromeki_1_1HostSecureBufferImpl.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1WrappedHostBufferImpl.html">promeki::WrappedHostBufferImpl</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Non-owning <a class="el" href="classpromeki_1_1HostMappedBufferImpl.html" title="Abstract intermediate base for backends backed by host memory.">HostMappedBufferImpl</a> over an external host pointer.  <a href="classpromeki_1_1WrappedHostBufferImpl.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1JsonObject.html">promeki::JsonObject</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">JSON object container wrapping nlohmann::json.  <a href="classpromeki_1_1JsonObject.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -200,6 +233,9 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1Logger.html">promeki::Logger</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Asynchronous thread-safe logging facility.  <a href="classpromeki_1_1Logger.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MemDomain.html">promeki::MemDomain</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coarse classification of memory address spaces.  <a href="classpromeki_1_1MemDomain.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MemPool.html">promeki::MemPool</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Thread-safe memory pool allocator with external metadata.  <a href="classpromeki_1_1MemPool.html#details">More...</a><br /></td></tr>
@@ -297,6 +333,9 @@ Macros</h2></td></tr>
 <tr class="memitem:ga70723073a3da0b313289ae73f693b7a2" id="r_ga70723073a3da0b313289ae73f693b7a2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga70723073a3da0b313289ae73f693b7a2">PROMEKI_REGISTER_BENCHMARK</a>(Suite,  Name,  Description,  Fn)</td></tr>
 <tr class="memdesc:ga70723073a3da0b313289ae73f693b7a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a benchmark case at static initialization time.  <br /></td></tr>
 <tr class="separator:ga70723073a3da0b313289ae73f693b7a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad955d6242a15da530cf567cd3e4e92bd" id="r_gad955d6242a15da530cf567cd3e4e92bd"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gad955d6242a15da530cf567cd3e4e92bd">PROMEKI_BUFFER_COMMAND</a>(NAME,  KIND_TAG)</td></tr>
+<tr class="memdesc:gad955d6242a15da530cf567cd3e4e92bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Boilerplate macro for concrete BufferCommand subclasses.  <br /></td></tr>
+<tr class="separator:gad955d6242a15da530cf567cd3e4e92bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gad8f5b041efeaee084ccff55a8e187e33" id="r_gad8f5b041efeaee084ccff55a8e187e33"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gad8f5b041efeaee084ccff55a8e187e33">PROMEKI_REGISTER_ENUM_TYPE</a>(TypeName,  Default, ...)</td></tr>
 <tr class="memdesc:gad8f5b041efeaee084ccff55a8e187e33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declares an <a class="el" href="classpromeki_1_1Enum.html">promeki::Enum</a> type with a table placed in rodata.  <br /></td></tr>
 <tr class="separator:gad8f5b041efeaee084ccff55a8e187e33"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -315,6 +354,15 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
+<tr class="memitem:gabc225a3130872dbbd1885112855efaa1" id="r_gabc225a3130872dbbd1885112855efaa1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gabc225a3130872dbbd1885112855efaa1">promeki::BufferImplPtr</a> = <a class="el" href="classpromeki_1_1SharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classpromeki_1_1BufferImpl.html">BufferImpl</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">false</a> &gt;</td></tr>
+<tr class="memdesc:gabc225a3130872dbbd1885112855efaa1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience type for a <a class="el" href="classpromeki_1_1SharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a> to a polymorphic <a class="el" href="classpromeki_1_1BufferImpl.html" title="Polymorphic backend for Buffer.">BufferImpl</a>.  <br /></td></tr>
+<tr class="separator:gabc225a3130872dbbd1885112855efaa1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaef29d34eba5498ecc646cda90f3d62b0" id="r_gaef29d34eba5498ecc646cda90f3d62b0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gaef29d34eba5498ecc646cda90f3d62b0">promeki::BufferImplFactory</a> = <a class="el" href="group__util.html#gabc225a3130872dbbd1885112855efaa1">BufferImplPtr</a>(*)(<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1MemSpace.html">MemSpace</a> &amp;ms, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> bytes, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> align)</td></tr>
+<tr class="memdesc:gaef29d34eba5498ecc646cda90f3d62b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function pointer type for constructing a <a class="el" href="classpromeki_1_1BufferImpl.html" title="Polymorphic backend for Buffer.">BufferImpl</a> for a <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a>.  <br /></td></tr>
+<tr class="separator:gaef29d34eba5498ecc646cda90f3d62b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac17726f31a9a9ccd0cbf05dbb7ce0f58" id="r_gac17726f31a9a9ccd0cbf05dbb7ce0f58"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gac17726f31a9a9ccd0cbf05dbb7ce0f58">promeki::BufferCopyFn</a> = <a class="el" href="classpromeki_1_1Error.html">Error</a>(*)(<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">src</a>, <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">dst</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> bytes, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> srcOffset, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> dstOffset)</td></tr>
+<tr class="memdesc:gac17726f31a9a9ccd0cbf05dbb7ce0f58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function pointer type for an inter-MemSpace copy.  <br /></td></tr>
+<tr class="separator:gac17726f31a9a9ccd0cbf05dbb7ce0f58"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gae5b45ec5127c3eb4cd0443a7c7ea30f4" id="r_gae5b45ec5127c3eb4cd0443a7c7ea30f4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gae5b45ec5127c3eb4cd0443a7c7ea30f4">promeki::Config</a> = <a class="el" href="classpromeki_1_1VariantDatabase.html">VariantDatabase</a>&lt;&quot;Config&quot;&gt;</td></tr>
 <tr class="memdesc:gae5b45ec5127c3eb4cd0443a7c7ea30f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configuration database mapping named options to <a class="el" href="classpromeki_1_1Variant.html" title="Concrete Variant type used throughout promeki.">Variant</a> values.  <br /></td></tr>
 <tr class="separator:gae5b45ec5127c3eb4cd0443a7c7ea30f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -325,6 +373,13 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
+<tr class="memitem:ga65fdda715e50212d261db87dcc6d3574" id="r_ga65fdda715e50212d261db87dcc6d3574"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga65fdda715e50212d261db87dcc6d3574">promeki::MapFlags</a> { <a class="el" href="group__util.html#gga65fdda715e50212d261db87dcc6d3574a6adf97f83acf6453d4a6a4b1070f3754">MapFlags::None</a> = 0
+, <a class="el" href="group__util.html#gga65fdda715e50212d261db87dcc6d3574a7a1a5f3e79fdc91edf2f5ead9d66abb4">MapFlags::Read</a> = 1
+, <a class="el" href="group__util.html#gga65fdda715e50212d261db87dcc6d3574a1129c0e4d43f2d121652a7302712cff6">MapFlags::Write</a> = 2
+, <a class="el" href="group__util.html#gga65fdda715e50212d261db87dcc6d3574a70a2a84088d405a2e3f1e3accaa16723">MapFlags::ReadWrite</a> = Read | Write
+ }</td></tr>
+<tr class="memdesc:ga65fdda715e50212d261db87dcc6d3574"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access mode requested when mapping a Buffer to a domain.  <a href="group__util.html#ga65fdda715e50212d261db87dcc6d3574">More...</a><br /></td></tr>
+<tr class="separator:ga65fdda715e50212d261db87dcc6d3574"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga08755a2815a7bc1bc50781273e11ad17" id="r_ga08755a2815a7bc1bc50781273e11ad17"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga08755a2815a7bc1bc50781273e11ad17">promeki::BuildStage</a> { <a class="el" href="group__util.html#gga08755a2815a7bc1bc50781273e11ad17ab8e7b465df7c5979dc731d06e84ce2cf">BuildStage::Release</a> = 0
 , <a class="el" href="group__util.html#gga08755a2815a7bc1bc50781273e11ad17a6132295fcf5570fb8b0a944ef322a598">BuildStage::Alpha</a> = 1
 , <a class="el" href="group__util.html#gga08755a2815a7bc1bc50781273e11ad17a0b87d66b88c72957dfea8c9605016442">BuildStage::Beta</a> = 2
@@ -387,6 +442,52 @@ Functions</h2></td></tr>
 <p>Variant type, Error reporting, UUID generation, FourCC codes, Metadata key-value store, environment access, command-line parsing, logging, memory pools, platform detection, terminal I/O, and more.</p>
 <p>See <a class="el" href="debugging.html">Debugging and Diagnostics</a> for build types, per-module debug logging, and crash handling. </p>
 <h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="gad955d6242a15da530cf567cd3e4e92bd" name="gad955d6242a15da530cf567cd3e4e92bd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gad955d6242a15da530cf567cd3e4e92bd">&#9670;&#160;</a></span>PROMEKI_BUFFER_COMMAND</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define PROMEKI_BUFFER_COMMAND</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">NAME, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">KIND_TAG&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line"><span class="keyword">public</span>:                                                                                                                \</div>
+<div class="line">        Kind kind()<span class="keyword"> const override </span>{                                                                                   \</div>
+<div class="line">                <span class="keywordflow">return</span> KIND_TAG;                                                                                       \</div>
+<div class="line">        }                                                                                                              \</div>
+<div class="line">        NAME *_promeki_clone()<span class="keyword"> const </span>{                                                                                 \</div>
+<div class="line">                assert(<span class="keyword">false</span> &amp;&amp; #NAME <span class="stringliteral">&quot; should not be cloned&quot;</span>);                                                        \</div>
+<div class="line">                <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;                                                                                        \</div>
+<div class="line">        }</div>
+</div><!-- fragment -->
+<p>Boilerplate macro for concrete BufferCommand subclasses. </p>
+<p>Injects the <code>kind()</code> override and an asserting <code>_promeki_clone</code> required by the SharedPtr proxy machinery. Use it as the first line of every concrete BufferCommand class.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">NAME</td><td>The class name. </td></tr>
+    <tr><td class="paramname">KIND_TAG</td><td>The BufferCommand::Kind enum value. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="ga155b8e018cd70514a008a09951cf033e" name="ga155b8e018cd70514a008a09951cf033e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ga155b8e018cd70514a008a09951cf033e">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID</h2>
 
@@ -779,6 +880,58 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Typedef Documentation</h2>
+<a id="gac17726f31a9a9ccd0cbf05dbb7ce0f58" name="gac17726f31a9a9ccd0cbf05dbb7ce0f58"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gac17726f31a9a9ccd0cbf05dbb7ce0f58">&#9670;&#160;</a></span>BufferCopyFn</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a> <a class="el" href="group__util.html#gac17726f31a9a9ccd0cbf05dbb7ce0f58">promeki::BufferCopyFn</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">typedef</a> <a class="el" href="classpromeki_1_1Error.html">Error</a> (*)(<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">src</a>, <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;<a class="el" href="classpromeki_1_1UniquePtr.html">dst</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> bytes, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> srcOffset, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> dstOffset)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Function pointer type for an inter-MemSpace copy. </p>
+<p>The registered function is responsible for copying <code>bytes</code> from <code>src</code> + <code>srcOffset</code> to <code>dst</code> + <code>dstOffset</code>. Both buffers remain valid for the duration of the call. The function should complete the transfer synchronously and return an <a class="el" href="classpromeki_1_1Error.html">Error</a> indicating success or failure.</p>
+<p><code><a class="el" href="classpromeki_1_1Buffer.html#a68e30828356f02703f9f1af5c872b728" title="Copies bytes from this buffer into dst.">Buffer::copyTo</a></code> wraps the call in a <a class="el" href="classpromeki_1_1BufferRequest.html">BufferRequest</a> after dispatching through this function pointer; backends that need truly-async transfer (long-haul RDMA, multi-GPU staging) can override <code><a class="el" href="classpromeki_1_1Buffer.html#a68e30828356f02703f9f1af5c872b728" title="Copies bytes from this buffer into dst.">Buffer::copyTo</a></code> directly through a custom <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a> shim, but the registry path is always synchronous. </p>
+
+</div>
+</div>
+<a id="gaef29d34eba5498ecc646cda90f3d62b0" name="gaef29d34eba5498ecc646cda90f3d62b0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaef29d34eba5498ecc646cda90f3d62b0">&#9670;&#160;</a></span>BufferImplFactory</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a> <a class="el" href="group__util.html#gaef29d34eba5498ecc646cda90f3d62b0">promeki::BufferImplFactory</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">typedef</a> <a class="el" href="group__util.html#gabc225a3130872dbbd1885112855efaa1">BufferImplPtr</a> (*)(<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1MemSpace.html">MemSpace</a> &amp;ms, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> bytes, <a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a> align)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Function pointer type for constructing a <a class="el" href="classpromeki_1_1BufferImpl.html" title="Polymorphic backend for Buffer.">BufferImpl</a> for a <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a>. </p>
+<p>The factory receives the originating <a class="el" href="classpromeki_1_1MemSpace.html">MemSpace</a> plus the size and alignment requested by the caller. It returns a fully- constructed <a class="el" href="classpromeki_1_1BufferImpl.html" title="Polymorphic backend for Buffer.">BufferImpl</a> wrapped in a <a class="el" href="classpromeki_1_1SharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>. Returns an empty <a class="el" href="group__util.html#gabc225a3130872dbbd1885112855efaa1">BufferImplPtr</a> on failure (the underlying alloc returned nullptr); the registered <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a> stats already record the failure count. </p>
+
+</div>
+</div>
+<a id="gabc225a3130872dbbd1885112855efaa1" name="gabc225a3130872dbbd1885112855efaa1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gabc225a3130872dbbd1885112855efaa1">&#9670;&#160;</a></span>BufferImplPtr</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">using</a> <a class="el" href="group__util.html#gabc225a3130872dbbd1885112855efaa1">promeki::BufferImplPtr</a> = <a class="el" href="classpromeki_1_1UniquePtr.html">typedef</a> <a class="el" href="classpromeki_1_1SharedPtr.html">SharedPtr</a>&lt;<a class="el" href="classpromeki_1_1BufferImpl.html">BufferImpl</a>, <a class="el" href="classpromeki_1_1UniquePtr.html">false</a>&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Convenience type for a <a class="el" href="classpromeki_1_1SharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a> to a polymorphic <a class="el" href="classpromeki_1_1BufferImpl.html" title="Polymorphic backend for Buffer.">BufferImpl</a>. </p>
+<p><code><a class="el" href="classpromeki_1_1SharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a></code> is parameterized with COW disabled — concrete <a class="el" href="classpromeki_1_1BufferImpl.html" title="Polymorphic backend for Buffer.">BufferImpl</a> subclasses are never cloned through the <a class="el" href="classpromeki_1_1SharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>; <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>'s <code>ensureExclusive</code> uses a deliberate detach path that routes through <a class="el" href="classpromeki_1_1BufferImpl.html#af60c70afcb47f034517f9d2e83d95b8c">BufferImpl::canClone</a> instead. </p>
+
+</div>
+</div>
 <a id="gae5b45ec5127c3eb4cd0443a7c7ea30f4" name="gae5b45ec5127c3eb4cd0443a7c7ea30f4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#gae5b45ec5127c3eb4cd0443a7c7ea30f4">&#9670;&#160;</a></span>Config</h2>
 
@@ -866,6 +1019,41 @@ template&lt;<a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> <a 
 <tr><td class="fieldname"><a id="gga08755a2815a7bc1bc50781273e11ad17a0b87d66b88c72957dfea8c9605016442" name="gga08755a2815a7bc1bc50781273e11ad17a0b87d66b88c72957dfea8c9605016442"></a>Beta&#160;</td><td class="fielddoc"><p>In testing. VERSION suffix <code>-betaN</code>, N &gt;= 1. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="gga08755a2815a7bc1bc50781273e11ad17a75b9a229bb1873d751a1e0f775ceb2aa" name="gga08755a2815a7bc1bc50781273e11ad17a75b9a229bb1873d751a1e0f775ceb2aa"></a>RC&#160;</td><td class="fielddoc"><p>Release candidate. VERSION suffix <code>-rcN</code>, N &gt;= 1. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<a id="ga65fdda715e50212d261db87dcc6d3574" name="ga65fdda715e50212d261db87dcc6d3574"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga65fdda715e50212d261db87dcc6d3574">&#9670;&#160;</a></span>MapFlags</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">enum</a> <a class="el" href="classpromeki_1_1UniquePtr.html">class</a> <a class="el" href="group__util.html#ga65fdda715e50212d261db87dcc6d3574">promeki::MapFlags</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Access mode requested when mapping a <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> to a domain. </p>
+<p>Backends use the requested flags to decide whether a write-back is required on <code><a class="el" href="classpromeki_1_1Buffer.html#a357186279f8830a1d3d00c4daa182043" title="Releases a previously-acquired domain mapping.">Buffer::mapRelease</a></code>. A read-only mapping of a device-resident buffer can skip the upload phase; a write-only mapping can skip the download phase. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="gga65fdda715e50212d261db87dcc6d3574a6adf97f83acf6453d4a6a4b1070f3754" name="gga65fdda715e50212d261db87dcc6d3574a6adf97f83acf6453d4a6a4b1070f3754"></a>None&#160;</td><td class="fielddoc"><p>No access requested (used by tests / sentinel paths). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="gga65fdda715e50212d261db87dcc6d3574a7a1a5f3e79fdc91edf2f5ead9d66abb4" name="gga65fdda715e50212d261db87dcc6d3574a7a1a5f3e79fdc91edf2f5ead9d66abb4"></a>Read&#160;</td><td class="fielddoc"><p>Read access. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="gga65fdda715e50212d261db87dcc6d3574a1129c0e4d43f2d121652a7302712cff6" name="gga65fdda715e50212d261db87dcc6d3574a1129c0e4d43f2d121652a7302712cff6"></a>Write&#160;</td><td class="fielddoc"><p>Write access. Mapped data may be modified by the caller. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="gga65fdda715e50212d261db87dcc6d3574a70a2a84088d405a2e3f1e3accaa16723" name="gga65fdda715e50212d261db87dcc6d3574a70a2a84088d405a2e3f1e3accaa16723"></a>ReadWrite&#160;</td><td class="fielddoc"><p>Both read and write access. </p>
 </td></tr>
 </table>
 
@@ -1391,7 +1579,7 @@ template&lt;<a class="el" href="classpromeki_1_1UniquePtr.html">typename</a> <a 
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-05-04 19:45:16 from commit c353e07 (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-05 00:43:16 from commit ef07c0f (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

@@ -1,9 +1,9 @@
 var searchData=
 [
   ['callback_0',['callback',['../classpromeki_1_1CmdLineParser_1_1Option.html#ad8a7fc8a3c02d2cdcf08d8c796aa40ce',1,'promeki::CmdLineParser::Option']]],
-  ['cancelled_1',['cancelled',['../classpromeki_1_1MediaIOCommand.html#acf917d52b46e974d04aba03793e4dd03',1,'promeki::MediaIOCommand']]],
-  ['canseek_2',['canseek',['../structpromeki_1_1MediaIOPortGroupDescription.html#a8791fcde9f3dc529f7ef6e99096b07d1',1,'promeki::MediaIOPortGroupDescription::canSeek'],['../classpromeki_1_1MediaIOCommandOpen.html#a0727ec567667deb0faeafba881254e78',1,'promeki::MediaIOCommandOpen::canSeek']]],
-  ['capacity_3',['capacity',['../classpromeki_1_1MediaConfig.html#a09f80c31ceeb580e0a76e7d2bda116cf',1,'promeki::MediaConfig::Capacity'],['../structpromeki_1_1WindowedStat_1_1Stats.html#a527d82593e7b59ddffb975d31dc93efa',1,'promeki::WindowedStat::Stats::capacity']]],
+  ['cancelled_1',['cancelled',['../classpromeki_1_1BufferCommand.html#a58bdbc674d57b4710da6daa20dd43e88',1,'promeki::BufferCommand::cancelled'],['../classpromeki_1_1MediaIOCommand.html#acf917d52b46e974d04aba03793e4dd03',1,'promeki::MediaIOCommand::cancelled']]],
+  ['canseek_2',['canseek',['../classpromeki_1_1MediaIOCommandOpen.html#a0727ec567667deb0faeafba881254e78',1,'promeki::MediaIOCommandOpen::canSeek'],['../structpromeki_1_1MediaIOPortGroupDescription.html#a8791fcde9f3dc529f7ef6e99096b07d1',1,'promeki::MediaIOPortGroupDescription::canSeek']]],
+  ['capacity_3',['capacity',['../structpromeki_1_1WindowedStat_1_1Stats.html#a527d82593e7b59ddffb975d31dc93efa',1,'promeki::WindowedStat::Stats::capacity'],['../classpromeki_1_1MediaConfig.html#a09f80c31ceeb580e0a76e7d2bda116cf',1,'promeki::MediaConfig::Capacity']]],
   ['captureenvironment_4',['CaptureEnvironment',['../classpromeki_1_1LibraryOptions.html#a24c8362c4b283ed565c0e15c5c9541a9',1,'promeki::LibraryOptions']]],
   ['capturetime_5',['CaptureTime',['../classpromeki_1_1Metadata.html#a321df8dfcf69205ffb28303930bbfac7',1,'promeki::Metadata']]],
   ['ch_6',['ch',['../structpromeki_1_1TuiCell.html#a8b0cd16a396cff18f331fbc6aaaefb0b',1,'promeki::TuiCell']]],
@@ -19,7 +19,7 @@ var searchData=
   ['clampedregressions_16',['clampedRegressions',['../structpromeki_1_1SDLAudioClock_1_1Stats.html#a0c2afb92c1bdc09ee761dd1fef392b21',1,'promeki::SDLAudioClock::Stats']]],
   ['clock_17',['clock',['../classpromeki_1_1MediaIOCommandSetClock.html#aadb54c942e6684e8ecb6c8b5082972e9',1,'promeki::MediaIOCommandSetClock']]],
   ['clockdescription_18',['clockDescription',['../structpromeki_1_1MediaIOPortGroupDescription.html#a467312cfe55c4b75a0408ba3138d8fa6',1,'promeki::MediaIOPortGroupDescription']]],
-  ['clockrate_19',['clockrate',['../classpromeki_1_1RtpPayloadJpegXs.html#aac38b39455e950a681ff955a272145e8',1,'promeki::RtpPayloadJpegXs::ClockRate'],['../structpromeki_1_1SdpMediaDescription_1_1RtpMap.html#a98002bd2746d881de7ee80df0dacc1f7',1,'promeki::SdpMediaDescription::RtpMap::clockRate']]],
+  ['clockrate_19',['clockrate',['../structpromeki_1_1SdpMediaDescription_1_1RtpMap.html#a98002bd2746d881de7ee80df0dacc1f7',1,'promeki::SdpMediaDescription::RtpMap::clockRate'],['../classpromeki_1_1RtpPayloadJpegXs.html#aac38b39455e950a681ff955a272145e8',1,'promeki::RtpPayloadJpegXs::ClockRate']]],
   ['closedsignal_20',['closedsignal',['../classpromeki_1_1HttpConnection.html#a78fd0f123924c1550808b9bdc2f1908d',1,'promeki::HttpConnection::closedSignal'],['../classpromeki_1_1MediaIO.html#a6cc1b4e2bfefe5bfa1d6b5de7792c546',1,'promeki::MediaIO::closedSignal'],['../classpromeki_1_1MediaPipeline.html#a692929b84963334b487d54f9f65f94b6',1,'promeki::MediaPipeline::closedSignal']]],
   ['codecavgmotionvectorx_21',['CodecAvgMotionVectorX',['../classpromeki_1_1Metadata.html#aa35890e54253a0c6bbad5a6fa5de2932',1,'promeki::Metadata']]],
   ['codecavgmotionvectory_22',['CodecAvgMotionVectorY',['../classpromeki_1_1Metadata.html#adf80d3deba116f0f54e8c2d6234c0c15',1,'promeki::Metadata']]],

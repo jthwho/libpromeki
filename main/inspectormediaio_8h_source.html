@@ -406,7 +406,7 @@ $(document).ready(function(){initNavTree('inspectormediaio_8h_source.html',''); 
 <div class="line"><a id="l00784" name="l00784"></a><span class="lineno">  784</span>                <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">int64_t</a> _audioStreamStartNs = 0;</div>
 <div class="line"><a id="l00786" name="l00786"></a><span class="lineno">  786</span>                <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">int64_t</a> _audioCumulativeIn = 0;</div>
 <div class="line"><a id="l00792" name="l00792"></a><span class="lineno">  792</span>                <a class="code hl_class" href="classpromeki_1_1UniquePtr.html">int64_t</a> _audioCumulativeAnalyzed = 0;</div>
-<div class="line"><a id="l00797" name="l00797"></a><span class="lineno">  797</span>                <a class="code hl_class" href="classpromeki_1_1SharedPtr.html">Buffer::Ptr</a> _audioDrainScratch;</div>
+<div class="line"><a id="l00797" name="l00797"></a><span class="lineno">  797</span>                <a class="code hl_class" href="classpromeki_1_1Buffer.html">Buffer</a> _audioDrainScratch;</div>
 <div class="line"><a id="l00798" name="l00798"></a><span class="lineno">  798</span> </div>
 <div class="line"><a id="l00799" name="l00799"></a><span class="lineno">  799</span>                <span class="comment">// ---- Continuity tracking ----</span></div>
 <div class="line"><a id="l00800" name="l00800"></a><span class="lineno">  800</span>                <span class="keywordtype">bool</span>     _hasPreviousPicture = <span class="keyword">false</span>;</div>
@@ -498,6 +498,7 @@ $(document).ready(function(){initNavTree('inspectormediaio_8h_source.html',''); 
 <div class="ttc" id="abuffer_8h_html"><div class="ttname"><a href="buffer_8h.html">buffer.h</a></div></div>
 <div class="ttc" id="aclasspromeki_1_1AudioBuffer_html"><div class="ttname"><a href="classpromeki_1_1AudioBuffer.html">promeki::AudioBuffer</a></div><div class="ttdoc">Thread-safe ring-buffered audio sample FIFO with format conversion on push.</div><div class="ttdef"><b>Definition</b> audiobuffer.h:143</div></div>
 <div class="ttc" id="aclasspromeki_1_1AudioDataDecoder_html"><div class="ttname"><a href="classpromeki_1_1AudioDataDecoder.html">promeki::AudioDataDecoder</a></div><div class="ttdoc">Sample-domain binary data decoder for PCM audio payloads.</div><div class="ttdef"><b>Definition</b> audiodatadecoder.h:77</div></div>
+<div class="ttc" id="aclasspromeki_1_1Buffer_html"><div class="ttname"><a href="classpromeki_1_1Buffer.html">promeki::Buffer</a></div><div class="ttdoc">Generic memory buffer descriptor with alignment and memory space support.</div><div class="ttdef"><b>Definition</b> buffer.h:97</div></div>
 <div class="ttc" id="aclasspromeki_1_1Error_html"><div class="ttname"><a href="classpromeki_1_1Error.html">promeki::Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:43</div></div>
 <div class="ttc" id="aclasspromeki_1_1FrameCount_html"><div class="ttname"><a href="classpromeki_1_1FrameCount.html">promeki::FrameCount</a></div><div class="ttdoc">Count of frames, optionally empty, unknown, or infinite.</div><div class="ttdef"><b>Definition</b> framecount.h:71</div></div>
 <div class="ttc" id="aclasspromeki_1_1FrameNumber_html"><div class="ttname"><a href="classpromeki_1_1FrameNumber.html">promeki::FrameNumber</a></div><div class="ttdoc">Absolute frame index along a media timeline.</div><div class="ttdef"><b>Definition</b> framenumber.h:60</div></div>
@@ -527,7 +528,6 @@ $(document).ready(function(){initNavTree('inspectormediaio_8h_source.html',''); 
 <div class="ttc" id="aclasspromeki_1_1MediaIOFactory_html"><div class="ttname"><a href="classpromeki_1_1MediaIOFactory.html">promeki::MediaIOFactory</a></div><div class="ttdoc">Polymorphic factory that creates MediaIO instances for a given backend identity.</div><div class="ttdef"><b>Definition</b> mediaiofactory.h:63</div></div>
 <div class="ttc" id="aclasspromeki_1_1MediaIO_html"><div class="ttname"><a href="classpromeki_1_1MediaIO.html">promeki::MediaIO</a></div><div class="ttdoc">Abstract controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:109</div></div>
 <div class="ttc" id="aclasspromeki_1_1ObjectBase_html"><div class="ttname"><a href="classpromeki_1_1ObjectBase.html">promeki::ObjectBase</a></div><div class="ttdoc">Base object for promeki.</div><div class="ttdef"><b>Definition</b> objectbase.h:176</div></div>
-<div class="ttc" id="aclasspromeki_1_1SharedPtr_html"><div class="ttname"><a href="classpromeki_1_1SharedPtr.html">promeki::SharedPtr&lt; Buffer &gt;</a></div></div>
 <div class="ttc" id="aclasspromeki_1_1SharedThreadMediaIO_html"><div class="ttname"><a href="classpromeki_1_1SharedThreadMediaIO.html">promeki::SharedThreadMediaIO</a></div><div class="ttdoc">Strategy class that runs commands on a shared-pool strand.</div><div class="ttdef"><b>Definition</b> sharedthreadmediaio.h:45</div></div>
 <div class="ttc" id="aclasspromeki_1_1String_html"><div class="ttname"><a href="classpromeki_1_1String.html">promeki::String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:64</div></div>
 <div class="ttc" id="aclasspromeki_1_1Timecode_1_1Mode_html"><div class="ttname"><a href="classpromeki_1_1Timecode_1_1Mode.html">promeki::Timecode::Mode</a></div><div class="ttdoc">Describes the timecode mode (frame rate and drop-frame status).</div><div class="ttdef"><b>Definition</b> timecode.h:73</div></div>
@@ -582,7 +582,7 @@ $(document).ready(function(){initNavTree('inspectormediaio_8h_source.html',''); 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="inspectormediaio_8h.html">inspectormediaio.h</a></li>
-    <li class="footer">Generated on 2026-05-04 19:45:16 from commit c353e07 (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-05 00:43:16 from commit ef07c0f (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

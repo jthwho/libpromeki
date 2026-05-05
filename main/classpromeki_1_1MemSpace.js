@@ -15,6 +15,7 @@ var classpromeki_1_1MemSpace =
     [ "alloc", "classpromeki_1_1MemSpace.html#a8abe08b7d0f5865e1e3fbe9eff4aff23", null ],
     [ "copy", "classpromeki_1_1MemSpace.html#a26771e1ff297b472406bf0c17fbbf707", null ],
     [ "data", "classpromeki_1_1MemSpace.html#a6673bb461f070ed819ded7c5893a41d6", null ],
+    [ "domain", "classpromeki_1_1MemSpace.html#a7e04412a86b6b9129b68b03a0f74f469", null ],
     [ "fill", "classpromeki_1_1MemSpace.html#ad07cc705236834af0e915c71ae3db291", null ],
     [ "id", "classpromeki_1_1MemSpace.html#a0619a93ecfe69155fea7bbca5455be16", null ],
     [ "isHostAccessible", "classpromeki_1_1MemSpace.html#a2069f03dce343c880a0f82d18180068a", null ],

@@ -132,19 +132,19 @@ $(document).ready(function(){initNavTree('csccontext_8h_source.html',''); initRe
 <div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>        <span class="keyword">private</span>:</div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>                <span class="keywordtype">size_t</span>      _maxWidth = 0;</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>                <a class="code hl_class" href="classpromeki_1_1SharedPtr.html">Buffer::Ptr</a> _buffers[BufferCount];</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>                <a class="code hl_class" href="classpromeki_1_1Buffer.html">Buffer</a> _buffers[BufferCount];</div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>};</div>
 </div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
 <div class="ttc" id="abuffer_8h_html"><div class="ttname"><a href="buffer_8h.html">buffer.h</a></div></div>
+<div class="ttc" id="aclasspromeki_1_1Buffer_html"><div class="ttname"><a href="classpromeki_1_1Buffer.html">promeki::Buffer</a></div><div class="ttdoc">Generic memory buffer descriptor with alignment and memory space support.</div><div class="ttdef"><b>Definition</b> buffer.h:97</div></div>
 <div class="ttc" id="aclasspromeki_1_1CSCContext_html"><div class="ttname"><a href="classpromeki_1_1CSCContext.html">promeki::CSCContext</a></div><div class="ttdoc">Per-invocation scratch space for CSC pipeline execution.</div><div class="ttdef"><b>Definition</b> csccontext.h:38</div></div>
 <div class="ttc" id="aclasspromeki_1_1CSCContext_html_a0f318209e06840edd5ab41f248458208"><div class="ttname"><a href="classpromeki_1_1CSCContext.html#a0f318209e06840edd5ab41f248458208">promeki::CSCContext::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdoc">Returns true if the context has been allocated.</div><div class="ttdef"><b>Definition</b> csccontext.h:63</div></div>
 <div class="ttc" id="aclasspromeki_1_1CSCContext_html_aaf94a4f1febb8265958bf78ddcfe591e"><div class="ttname"><a href="classpromeki_1_1CSCContext.html#aaf94a4f1febb8265958bf78ddcfe591e">promeki::CSCContext::CSCContext</a></div><div class="ttdeci">CSCContext()=default</div><div class="ttdoc">Constructs an invalid context.</div></div>
 <div class="ttc" id="aclasspromeki_1_1CSCContext_html_ab49e485f03502cf74e0bf4fefc7a9c77"><div class="ttname"><a href="classpromeki_1_1CSCContext.html#ab49e485f03502cf74e0bf4fefc7a9c77">promeki::CSCContext::CSCContext</a></div><div class="ttdeci">CSCContext(size_t maxWidth)</div><div class="ttdoc">Constructs a context sized for the given maximum line width.</div></div>
 <div class="ttc" id="aclasspromeki_1_1CSCContext_html_ac940be406add4494424cf1b824d5245f"><div class="ttname"><a href="classpromeki_1_1CSCContext.html#ac940be406add4494424cf1b824d5245f">promeki::CSCContext::buffer</a></div><div class="ttdeci">float * buffer(int index) const</div><div class="ttdoc">Returns a pointer to the specified float buffer.</div></div>
 <div class="ttc" id="aclasspromeki_1_1CSCContext_html_ad9fbf1a42b2a45c9ba9633bd501ff2ed"><div class="ttname"><a href="classpromeki_1_1CSCContext.html#ad9fbf1a42b2a45c9ba9633bd501ff2ed">promeki::CSCContext::maxWidth</a></div><div class="ttdeci">size_t maxWidth() const</div><div class="ttdoc">Returns the maximum width this context supports.</div><div class="ttdef"><b>Definition</b> csccontext.h:69</div></div>
-<div class="ttc" id="aclasspromeki_1_1SharedPtr_html"><div class="ttname"><a href="classpromeki_1_1SharedPtr.html">promeki::SharedPtr&lt; Buffer &gt;</a></div></div>
 <div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:14</div></div>
@@ -158,7 +158,7 @@ $(document).ready(function(){initNavTree('csccontext_8h_source.html',''); initRe
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="csccontext_8h.html">csccontext.h</a></li>
-    <li class="footer">Generated on 2026-05-04 19:45:16 from commit c353e07 (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-05 00:43:16 from commit ef07c0f (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

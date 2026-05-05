@@ -7,7 +7,7 @@ var group__io =
       [ "bytesAvailable", "classpromeki_1_1AsyncBufferQueue.html#a71c476b63e9e1b0c82de1fe6f7b2a37b", null ],
       [ "close", "classpromeki_1_1AsyncBufferQueue.html#a05c1715dcadf63bbcc5f43ee45b41faf", null ],
       [ "closeWriting", "classpromeki_1_1AsyncBufferQueue.html#ab312aad39ca0cd9d7b92ded876ae2c5e", null ],
-      [ "enqueue", "classpromeki_1_1AsyncBufferQueue.html#a382fd2004902002348d8f705070ba315", null ],
+      [ "enqueue", "classpromeki_1_1AsyncBufferQueue.html#aa92b854a109a23459da4362b4131e12d", null ],
       [ "isOpen", "classpromeki_1_1AsyncBufferQueue.html#a2d9d22475246bacbd7ccafd15bf179c3", null ],
       [ "isSequential", "classpromeki_1_1AsyncBufferQueue.html#a6cda65d5c5314038942ff966aba02939", null ],
       [ "isWritingClosed", "classpromeki_1_1AsyncBufferQueue.html#a3e49a31527aac47889da1a108d46f9eb", null ],

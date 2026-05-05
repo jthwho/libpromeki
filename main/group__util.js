@@ -100,6 +100,90 @@ var group__util =
       [ "warmupMs", "classpromeki_1_1BenchmarkRunner.html#a9639734439f4a9da878bdd63006aa5c1", null ],
       [ "writeJson", "classpromeki_1_1BenchmarkRunner.html#af295152a1dbd758ad588651070374459", null ]
     ] ],
+    [ "promeki::Buffer", "classpromeki_1_1Buffer.html", [
+      [ "List", "classpromeki_1_1Buffer.html#aba78ee70e910ee96d25bd6545e0fbe4e", null ],
+      [ "Buffer", "classpromeki_1_1Buffer.html#a46c820e8403d1ab8217fb3a32ef74687", null ],
+      [ "Buffer", "classpromeki_1_1Buffer.html#a7442575e50c8ff3add9a5f835cb31f3f", null ],
+      [ "align", "classpromeki_1_1Buffer.html#a80879cfffd7d4cd271329809082c9f1d", null ],
+      [ "allocSize", "classpromeki_1_1Buffer.html#a538466ddd2156442ac54a1b1949317c0", null ],
+      [ "availSize", "classpromeki_1_1Buffer.html#a6a8d0904213ae193ec0c6104c68d6893", null ],
+      [ "copyFrom", "classpromeki_1_1Buffer.html#a6770d31cee6ffd5293a654ba34bddd34", null ],
+      [ "copyTo", "classpromeki_1_1Buffer.html#a68e30828356f02703f9f1af5c872b728", null ],
+      [ "data", "classpromeki_1_1Buffer.html#ad4f818768779bfbdba6f59ef21fb2b36", null ],
+      [ "ensureExclusive", "classpromeki_1_1Buffer.html#ac0c2c675450bc4605f55ff4085a7c174", null ],
+      [ "ensureExclusiveError", "classpromeki_1_1Buffer.html#ad61e3ad7181bdd9d3c5f3096be3a59fe", null ],
+      [ "fill", "classpromeki_1_1Buffer.html#a97b3c39c6390c7f437557140592934a8", null ],
+      [ "impl", "classpromeki_1_1Buffer.html#a80e235e1a2ba9af8d5a72b83eafd9372", null ],
+      [ "isExclusive", "classpromeki_1_1Buffer.html#a52e186282e211e37aad202c2569ccc64", null ],
+      [ "isHostAccessible", "classpromeki_1_1Buffer.html#a08f865e4356346ad971fdfa282bee9f7", null ],
+      [ "isMapped", "classpromeki_1_1Buffer.html#a9ab0fcc88e09d7c33190d215cce983cc", null ],
+      [ "isValid", "classpromeki_1_1Buffer.html#aabe51189844d7db27d373fcd70d37116", null ],
+      [ "mapAcquire", "classpromeki_1_1Buffer.html#a917e3b3b914b4577573c1d5bb53aaf81", null ],
+      [ "mapRelease", "classpromeki_1_1Buffer.html#a357186279f8830a1d3d00c4daa182043", null ],
+      [ "memSpace", "classpromeki_1_1Buffer.html#a2dcd4f2f1fc2851e0e1c4e69e3270d09", null ],
+      [ "odata", "classpromeki_1_1Buffer.html#acf6ce3d4d811aba438334815c395f621", null ],
+      [ "operator bool", "classpromeki_1_1Buffer.html#a804b0aab546c638342bf1eef26a05abc", null ],
+      [ "operator!=", "classpromeki_1_1Buffer.html#a4d4952aae8e45631b5c1cb27164fc49b", null ],
+      [ "operator==", "classpromeki_1_1Buffer.html#a4d9785304e49c0468852fe29863f24f2", null ],
+      [ "setSize", "classpromeki_1_1Buffer.html#afa9d51c4025ac7cb1ae7ec50e74c6292", null ],
+      [ "shift", "classpromeki_1_1Buffer.html#a76744f18f1812ed8feceb2d356cd717c", null ],
+      [ "shiftData", "classpromeki_1_1Buffer.html#a30818eeb5b808a6e74e367ca25a55b16", null ],
+      [ "size", "classpromeki_1_1Buffer.html#a77f4fdff945a3dee15f4132dac9136d2", null ]
+    ] ],
+    [ "promeki::BufferCommand", "classpromeki_1_1BufferCommand.html", [
+      [ "Ptr", "classpromeki_1_1BufferCommand.html#a32b3ca02f6df7b998ce2f5639b224841", null ],
+      [ "Kind", "classpromeki_1_1BufferCommand.html#a9005fce8b69ff28150fe3400dc169558", [
+        [ "Map", "classpromeki_1_1BufferCommand.html#a9005fce8b69ff28150fe3400dc169558a577746e6938bc2bf97204c195bd38b4e", null ],
+        [ "Unmap", "classpromeki_1_1BufferCommand.html#a9005fce8b69ff28150fe3400dc169558ae84bc377b4f73c8d4959f5d54214ed27", null ],
+        [ "Copy", "classpromeki_1_1BufferCommand.html#a9005fce8b69ff28150fe3400dc169558a2705ad955fc93db056356d0b2f4a6642", null ]
+      ] ],
+      [ "_promeki_clone", "classpromeki_1_1BufferCommand.html#aca6fb6f32c6c4fcb1e702cfb6af2e1ab", null ],
+      [ "isCompleted", "classpromeki_1_1BufferCommand.html#a1f866f123a80b1aed10e2e28cd760011", null ],
+      [ "kind", "classpromeki_1_1BufferCommand.html#aaef9126df9d1d2ba325f6a79367b7dd5", null ],
+      [ "kindName", "classpromeki_1_1BufferCommand.html#adcb7feb54210eb2e630d45f9870d4b05", null ],
+      [ "markCompleted", "classpromeki_1_1BufferCommand.html#a822eb7b5953889ea5ac661ed4030ab48", null ],
+      [ "setCompletionCallback", "classpromeki_1_1BufferCommand.html#abaee2b9caef7138a45ad325e7bcc0aa9", null ],
+      [ "waitForCompletion", "classpromeki_1_1BufferCommand.html#ad498c3692c425770e9a56edab3ffb776", null ],
+      [ "cancelled", "classpromeki_1_1BufferCommand.html#a58bdbc674d57b4710da6daa20dd43e88", null ],
+      [ "result", "classpromeki_1_1BufferCommand.html#afe426bbca0f5fd61aa02c01cb49d1dab", null ]
+    ] ],
+    [ "promeki::BufferMapCommand", "classpromeki_1_1BufferMapCommand.html", [
+      [ "kind", "classpromeki_1_1BufferMapCommand.html#a2655fb93d2bf1a3fe83e5bdeff169a88", null ],
+      [ "flags", "classpromeki_1_1BufferMapCommand.html#acd9ed3a545a5cc913a60b043004408d0", null ],
+      [ "hostPtr", "classpromeki_1_1BufferMapCommand.html#a4af9afa3558ea59d08f8fcd7d8624f7e", null ],
+      [ "target", "classpromeki_1_1BufferMapCommand.html#a38923b9f9eec31490419ac0d43869e12", null ]
+    ] ],
+    [ "promeki::BufferCopyCommand", "classpromeki_1_1BufferCopyCommand.html", [
+      [ "kind", "classpromeki_1_1BufferCopyCommand.html#a3348f49d202c19178715a099292e7187", null ],
+      [ "bytes", "classpromeki_1_1BufferCopyCommand.html#a131d5c9ec93e5a5b5f5e31eb83c3048c", null ],
+      [ "dstOffset", "classpromeki_1_1BufferCopyCommand.html#a88a7890d301b15d2577f98757a37889b", null ],
+      [ "srcOffset", "classpromeki_1_1BufferCopyCommand.html#a9232971129bd06a9e7e662a5923e001d", null ]
+    ] ],
+    [ "promeki::BufferUnmapCommand", "classpromeki_1_1BufferUnmapCommand.html", [
+      [ "kind", "classpromeki_1_1BufferUnmapCommand.html#ad71bdb9989b0d391bada05d1512f84bc", null ],
+      [ "target", "classpromeki_1_1BufferUnmapCommand.html#a1846f5cc2333439bfe9f2a1b23f90679", null ]
+    ] ],
+    [ "promeki::BufferImpl", "classpromeki_1_1BufferImpl.html", [
+      [ "BufferImpl", "classpromeki_1_1BufferImpl.html#a298b5eeee43a1911d2f0159a6f982368", null ],
+      [ "align", "classpromeki_1_1BufferImpl.html#ad19b22c8a55aaee4f8302a386223cb3c", null ],
+      [ "allocSize", "classpromeki_1_1BufferImpl.html#af44f01accf293369daad0eef21613f3f", null ],
+      [ "canClone", "classpromeki_1_1BufferImpl.html#af60c70afcb47f034517f9d2e83d95b8c", null ],
+      [ "copyFromHost", "classpromeki_1_1BufferImpl.html#aa5a227a4ed97a291d55ce07bd7ac64e3", null ],
+      [ "decrementMapRefcount", "classpromeki_1_1BufferImpl.html#ad2323af8ed0fce70918a92495c0c2afa", null ],
+      [ "fill", "classpromeki_1_1BufferImpl.html#ae550c2841d122e8eaa8363abb9e3e9b2", null ],
+      [ "incrementMapRefcount", "classpromeki_1_1BufferImpl.html#a19b03917987d0fe9feab085a20913308", null ],
+      [ "isMapped", "classpromeki_1_1BufferImpl.html#a9c10ddbbfaa77a1c1314c62c987beb12", null ],
+      [ "logicalSize", "classpromeki_1_1BufferImpl.html#acd63d4a476e8a44b556a938eeae58bed", null ],
+      [ "mapAcquire", "classpromeki_1_1BufferImpl.html#af781632ca7998512ebfdaf6042a326e8", null ],
+      [ "mappedHostData", "classpromeki_1_1BufferImpl.html#a67503274f583416d8976bed1deb768ec", null ],
+      [ "mapRefcount", "classpromeki_1_1BufferImpl.html#a8cdf261c6f8d0ee1751b927c22730e9d", null ],
+      [ "mapRelease", "classpromeki_1_1BufferImpl.html#a9a413ce25fa538cc9d0fcd88a6fb87a3", null ],
+      [ "memSpace", "classpromeki_1_1BufferImpl.html#aeb9d9dbfa8a2fb7de28c234d9e2cb2f8", null ],
+      [ "seedMapRefcount", "classpromeki_1_1BufferImpl.html#a52f25c6cc13b24569899210339930481", null ],
+      [ "setLogicalSize", "classpromeki_1_1BufferImpl.html#a3ad3037a930a8b56b6e39b315dff3fd7", null ],
+      [ "setShift", "classpromeki_1_1BufferImpl.html#a4c36e5b8b4561036fdb53d40682be43a", null ],
+      [ "shift", "classpromeki_1_1BufferImpl.html#a4da9039001ca309e8400e3ae184a69dd", null ]
+    ] ],
     [ "promeki::BufferPool", "classpromeki_1_1BufferPool.html", [
       [ "BufferPool", "classpromeki_1_1BufferPool.html#ac5b1c8f99a8e5e9db3b1fea4055b6b89", null ],
       [ "BufferPool", "classpromeki_1_1BufferPool.html#a0234c322f9ec11e515cbf54ba10ba466", null ],
@@ -111,6 +195,19 @@ var group__util =
       [ "clear", "classpromeki_1_1BufferPool.html#a9a854e61bc8485aa118d722d72c9026e", null ],
       [ "release", "classpromeki_1_1BufferPool.html#a4c1f3f31a3ed285dce0b7cd82a5849a1", null ],
       [ "reserve", "classpromeki_1_1BufferPool.html#a8bb654d6d90606a4f1baf969bf516fa1", null ]
+    ] ],
+    [ "promeki::BufferRequest", "classpromeki_1_1BufferRequest.html", [
+      [ "Callback", "classpromeki_1_1BufferRequest.html#ab69a0a47f067b8bb884524f2a4bc3520", null ],
+      [ "BufferRequest", "classpromeki_1_1BufferRequest.html#a0014f1ccced1ddb1517aeae2fc58e2b6", null ],
+      [ "BufferRequest", "classpromeki_1_1BufferRequest.html#a12c4c749efadf816b5559c082f18e79f", null ],
+      [ "cancel", "classpromeki_1_1BufferRequest.html#a5cc326f7d876ad93f52174f511f8c231", null ],
+      [ "command", "classpromeki_1_1BufferRequest.html#afd484257972fadb7e16c7062a7a4fd9b", null ],
+      [ "commandAs", "classpromeki_1_1BufferRequest.html#ab5d8513bdf72ff6aacfec11f947906bf", null ],
+      [ "isCancelled", "classpromeki_1_1BufferRequest.html#a0ab75e2f0d82c967f4a443d0a72acf58", null ],
+      [ "isReady", "classpromeki_1_1BufferRequest.html#ae40e8baecdc9adee6f1999fdcf612f62", null ],
+      [ "isValid", "classpromeki_1_1BufferRequest.html#a005768d2d053f9c643d3102ebda087f8", null ],
+      [ "then", "classpromeki_1_1BufferRequest.html#a4144f08a15cdd2e0c6e59b6ccb7a1ee9", null ],
+      [ "wait", "classpromeki_1_1BufferRequest.html#aab976d8a5ee10f8691ba5d02921a0f95", null ]
     ] ],
     [ "promeki::BuildInfo", "structpromeki_1_1BuildInfo.html", [
       [ "build", "structpromeki_1_1BuildInfo.html#a76242cfcdcdae41d5997b1283d23b474", null ],
@@ -324,6 +421,32 @@ var group__util =
       [ "operator>", "classpromeki_1_1FourCC.html#ac98b4a85ccaa8d136bfbe9580023ace4", null ],
       [ "operator>=", "classpromeki_1_1FourCC.html#a6bf67c20fcfeb0c9ecb5d26c2d7ebd44", null ]
     ] ],
+    [ "promeki::HostMappedBufferImpl", "classpromeki_1_1HostMappedBufferImpl.html", [
+      [ "HostMappedBufferImpl", "classpromeki_1_1HostMappedBufferImpl.html#a532a20dac7333ae9ab78622bdbc67e9c", null ],
+      [ "align", "classpromeki_1_1HostMappedBufferImpl.html#a34b48c2fee47fca5237ca9633b7cd1a5", null ],
+      [ "allocSize", "classpromeki_1_1HostMappedBufferImpl.html#af7af264066243459cfff09d127f4dbf3", null ],
+      [ "copyFromHost", "classpromeki_1_1HostMappedBufferImpl.html#a2985d3cdea8a8e6292e66aaf72cc166c", null ],
+      [ "fill", "classpromeki_1_1HostMappedBufferImpl.html#a85b2565f161d69d8102b130c1fb2aa16", null ],
+      [ "mapAcquire", "classpromeki_1_1HostMappedBufferImpl.html#afd3a6cc4f0d2b68cd274ac83109d7fc9", null ],
+      [ "mappedHostData", "classpromeki_1_1HostMappedBufferImpl.html#aa0beaf98885449a373550578702a589c", null ],
+      [ "mapRelease", "classpromeki_1_1HostMappedBufferImpl.html#a9193bf793b1c3d3217f25f681e6d23c0", null ],
+      [ "memSpace", "classpromeki_1_1HostMappedBufferImpl.html#a56cdbf2f65e79ab17d74fa9670402b7a", null ]
+    ] ],
+    [ "promeki::HostBufferImpl", "classpromeki_1_1HostBufferImpl.html", [
+      [ "HostBufferImpl", "classpromeki_1_1HostBufferImpl.html#a840059dd8817da5959191ae858c3d88f", null ],
+      [ "~HostBufferImpl", "classpromeki_1_1HostBufferImpl.html#a39d176c1a1ab32d2c53c7d59f9829750", null ],
+      [ "_promeki_clone", "classpromeki_1_1HostBufferImpl.html#a3a5728d9b94d20812e734b7f9c4260a0", null ]
+    ] ],
+    [ "promeki::HostSecureBufferImpl", "classpromeki_1_1HostSecureBufferImpl.html", [
+      [ "HostSecureBufferImpl", "classpromeki_1_1HostSecureBufferImpl.html#a2ed8695902f405386f8a1ce34470a535", null ],
+      [ "~HostSecureBufferImpl", "classpromeki_1_1HostSecureBufferImpl.html#a3c97f69e861afd3ce7e408f79587bff5", null ],
+      [ "_promeki_clone", "classpromeki_1_1HostSecureBufferImpl.html#a917a676c4b24f6a520094593b4602cb4", null ]
+    ] ],
+    [ "promeki::WrappedHostBufferImpl", "classpromeki_1_1WrappedHostBufferImpl.html", [
+      [ "WrappedHostBufferImpl", "classpromeki_1_1WrappedHostBufferImpl.html#a12e9c8e465d0dee6f0fc69d18d5d8dbe", null ],
+      [ "~WrappedHostBufferImpl", "classpromeki_1_1WrappedHostBufferImpl.html#a317ebbfb30694293833ac78e24b05d1c", null ],
+      [ "canClone", "classpromeki_1_1WrappedHostBufferImpl.html#a9c8aa2ae6b814e8a218daafdb1c25c6c", null ]
+    ] ],
     [ "promeki::JsonObject", "classpromeki_1_1JsonObject.html", [
       [ "Ptr", "classpromeki_1_1JsonObject.html#ae8d0718664f4da89b722d6f77d8ba5b8", null ],
       [ "JsonObject", "classpromeki_1_1JsonObject.html#a12fb5bc84ff1eaf57fcf0221f1fbf26f", null ],
@@ -448,6 +571,25 @@ var group__util =
       [ "setLogLevel", "classpromeki_1_1Logger.html#ac52a6d070dd3ddf6e7259253a278b2e5", null ],
       [ "sync", "classpromeki_1_1Logger.html#ac207bf6d6fdae7d846d0fa1906d51219", null ]
     ] ],
+    [ "promeki::MemDomain", "classpromeki_1_1MemDomain.html", [
+      [ "Data", "structpromeki_1_1MemDomain_1_1Data.html", [
+        [ "id", "structpromeki_1_1MemDomain_1_1Data.html#af14e66fdb6ac1eeb4f09bcfd3e90bc2f", null ],
+        [ "name", "structpromeki_1_1MemDomain_1_1Data.html#a4c758baa682c3d6a99e515566e7a6478", null ]
+      ] ],
+      [ "IDList", "classpromeki_1_1MemDomain.html#af8b7574733e6bc4118ce6ffe3598aad8", null ],
+      [ "ID", "classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3", [
+        [ "Host", "classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3a0ca0131e2d6a608d2b769204c9180823", null ],
+        [ "CudaDevice", "classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3a8aef89ad0d56b4447f164a45308f8572", null ],
+        [ "FpgaDevice", "classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3a6985fd15224fbcec9968eefeae7dc943", null ],
+        [ "Default", "classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3af00a1c5c9758dee1f4c9e35d5b8082b2", null ],
+        [ "UserDefined", "classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3a35284dbf8378629dba7823797c8dd3f4", null ]
+      ] ],
+      [ "MemDomain", "classpromeki_1_1MemDomain.html#ade2a205cb2cafb082916e710bcae623c", null ],
+      [ "id", "classpromeki_1_1MemDomain.html#a55718f3eda3fea74f6539ba74c19f230", null ],
+      [ "name", "classpromeki_1_1MemDomain.html#a885fa18043f6bfd5ef46ce9421d91967", null ],
+      [ "operator!=", "classpromeki_1_1MemDomain.html#aea88b3190ed483f82a8968c9676ed5c0", null ],
+      [ "operator==", "classpromeki_1_1MemDomain.html#a88e7040e8b059bc5a06ef5e22481139b", null ]
+    ] ],
     [ "promeki::MemPool", "classpromeki_1_1MemPool.html", [
       [ "Block", "classpromeki_1_1MemPool_1_1Block.html", [
         [ "alignedAddress", "classpromeki_1_1MemPool_1_1Block.html#a69a1203ad8162b8cfe16e9890a8b577e", null ],
@@ -485,6 +627,7 @@ var group__util =
       [ "Ops", "structpromeki_1_1MemSpace_1_1Ops.html", [
         [ "alloc", "structpromeki_1_1MemSpace_1_1Ops.html#afe1d7e2395e81b90c7660d03a084475b", null ],
         [ "copy", "structpromeki_1_1MemSpace_1_1Ops.html#a5c0534422e0336119cc9ac0810434f23", null ],
+        [ "domainId", "structpromeki_1_1MemSpace_1_1Ops.html#aed4a88dd867351bb2f0a64e0b1c6f90e", null ],
         [ "fill", "structpromeki_1_1MemSpace_1_1Ops.html#afe22eb2c195fda44b38261051720f8f8", null ],
         [ "id", "structpromeki_1_1MemSpace_1_1Ops.html#a44323fc0867f7a5dc98620becb2bc829", null ],
         [ "isHostAccessible", "structpromeki_1_1MemSpace_1_1Ops.html#a5df111a6bd17c04ec6db88811d1c63d0", null ],
@@ -543,6 +686,7 @@ var group__util =
       [ "alloc", "classpromeki_1_1MemSpace.html#a8abe08b7d0f5865e1e3fbe9eff4aff23", null ],
       [ "copy", "classpromeki_1_1MemSpace.html#a26771e1ff297b472406bf0c17fbbf707", null ],
       [ "data", "classpromeki_1_1MemSpace.html#a6673bb461f070ed819ded7c5893a41d6", null ],
+      [ "domain", "classpromeki_1_1MemSpace.html#a7e04412a86b6b9129b68b03a0f74f469", null ],
       [ "fill", "classpromeki_1_1MemSpace.html#ad07cc705236834af0e915c71ae3db291", null ],
       [ "id", "classpromeki_1_1MemSpace.html#a0619a93ecfe69155fea7bbca5455be16", null ],
       [ "isHostAccessible", "classpromeki_1_1MemSpace.html#a2069f03dce343c880a0f82d18180068a", null ],
@@ -1062,12 +1206,16 @@ var group__util =
       [ "toString", "classpromeki_1_1WindowedStat.html#a7b49ab756c2ea2537ce120414e02e324", null ],
       [ "values", "classpromeki_1_1WindowedStat.html#a48c348570022b90edf823ad610595709", null ]
     ] ],
+    [ "PROMEKI_BUFFER_COMMAND", "group__util.html#gad955d6242a15da530cf567cd3e4e92bd", null ],
     [ "PROMEKI_DECLARE_ID", "group__util.html#ga155b8e018cd70514a008a09951cf033e", null ],
     [ "PROMEKI_LOOKUP_REGISTER", "group__util.html#ga5cbdbf7bece870dee46af061c78a716a", null ],
     [ "PROMEKI_REGISTER_BENCHMARK", "group__util.html#ga70723073a3da0b313289ae73f693b7a2", null ],
     [ "PROMEKI_REGISTER_ENUM_TYPE", "group__util.html#gad8f5b041efeaee084ccff55a8e187e33", null ],
     [ "PROMEKI_SHARED_BASE", "group__util.html#ga5a5bd32ebb10b22038b142ced20e07aa", null ],
     [ "PROMEKI_VARIANT_TYPES_NETWORK", "group__util.html#gadd038fa9fc95b7e756cc1f175a180eb2", null ],
+    [ "promeki::BufferCopyFn", "group__util.html#gac17726f31a9a9ccd0cbf05dbb7ce0f58", null ],
+    [ "promeki::BufferImplFactory", "group__util.html#gaef29d34eba5498ecc646cda90f3d62b0", null ],
+    [ "promeki::BufferImplPtr", "group__util.html#gabc225a3130872dbbd1885112855efaa1", null ],
     [ "promeki::Config", "group__util.html#gae5b45ec5127c3eb4cd0443a7c7ea30f4", null ],
     [ "promeki::Result", "group__util.html#ga6f85490305e94fea49721c4707fd6437", null ],
     [ "promeki::BuildStage", "group__util.html#ga08755a2815a7bc1bc50781273e11ad17", [
@@ -1075,6 +1223,12 @@ var group__util =
       [ "promeki::BuildStage::Alpha", "group__util.html#gga08755a2815a7bc1bc50781273e11ad17a6132295fcf5570fb8b0a944ef322a598", null ],
       [ "promeki::BuildStage::Beta", "group__util.html#gga08755a2815a7bc1bc50781273e11ad17a0b87d66b88c72957dfea8c9605016442", null ],
       [ "promeki::BuildStage::RC", "group__util.html#gga08755a2815a7bc1bc50781273e11ad17a75b9a229bb1873d751a1e0f775ceb2aa", null ]
+    ] ],
+    [ "promeki::MapFlags", "group__util.html#ga65fdda715e50212d261db87dcc6d3574", [
+      [ "promeki::MapFlags::None", "group__util.html#gga65fdda715e50212d261db87dcc6d3574a6adf97f83acf6453d4a6a4b1070f3754", null ],
+      [ "promeki::MapFlags::Read", "group__util.html#gga65fdda715e50212d261db87dcc6d3574a7a1a5f3e79fdc91edf2f5ead9d66abb4", null ],
+      [ "promeki::MapFlags::Write", "group__util.html#gga65fdda715e50212d261db87dcc6d3574a1129c0e4d43f2d121652a7302712cff6", null ],
+      [ "promeki::MapFlags::ReadWrite", "group__util.html#gga65fdda715e50212d261db87dcc6d3574a70a2a84088d405a2e3f1e3accaa16723", null ]
     ] ],
     [ "promeki::SpecValidation", "group__util.html#gae7802b0c6c30706f689bfee2a4b6da08", [
       [ "promeki::SpecValidation::None", "group__util.html#ggae7802b0c6c30706f689bfee2a4b6da08a6adf97f83acf6453d4a6a4b1070f3754", null ],

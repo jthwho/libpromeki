@@ -20,5 +20,6 @@ var searchData=
   ['cscmediaio_2eh_17',['cscmediaio.h',['../cscmediaio_8h.html',1,'']]],
   ['cscpipeline_2eh_18',['cscpipeline.h',['../cscpipeline_8h.html',1,'']]],
   ['cscregistry_2eh_19',['cscregistry.h',['../cscregistry_8h.html',1,'']]],
-  ['cuda_2eh_20',['cuda.h',['../cuda_8h.html',1,'']]]
+  ['cuda_2eh_20',['cuda.h',['../cuda_8h.html',1,'']]],
+  ['cudabufferimpl_2eh_21',['cudabufferimpl.h',['../cudabufferimpl_8h.html',1,'']]]
 ];

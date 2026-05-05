@@ -166,7 +166,7 @@ Public Member Functions</h2></td></tr>
 <p>Maintains a small list of pre-allocated <code><a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a></code> objects of a fixed size + alignment, handing them out via <code><a class="el" href="classpromeki_1_1BufferPool.html#a635466e9e7dae3bf127621ceff1384c7" title="Acquires a buffer from the pool.">acquire()</a></code> and receiving them back via <code><a class="el" href="classpromeki_1_1BufferPool.html#a4c1f3f31a3ed285dce0b7cd82a5849a1" title="Returns a previously-acquired buffer to the pool.">release()</a></code>. Designed for realtime read/write loops that repeatedly need a scratch buffer of the same shape — e.g. a video reader pulling one uncompressed frame per vsync.</p>
 <dl class="section user"><dt>Thread Safety</dt><dd>Conditionally thread-safe. Distinct instances may be used concurrently. A single <a class="el" href="classpromeki_1_1BufferPool.html" title="Simple fixed-geometry buffer pool for hot-path allocations.">BufferPool</a> is single-threaded — callers must ensure <code>acquire</code> / <code>release</code> happen from the same thread (or be externally synchronized).</dd></dl>
 <dl class="section user"><dt>Design notes</dt><dd></dd></dl>
-<p>This is a simple explicit-release pool, not a smart-pointer-backed one. That's deliberate: <code><a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872" title="Shared pointer type for Buffer.">Buffer::Ptr</a></code> (<a class="el" href="classpromeki_1_1SharedPtr.html">SharedPtr&lt;Buffer&gt;</a>) doesn't have a user-defined deleter hook, so wrapping a pool-backed buffer in a shared pointer would require a separate layer. For the expected hot-path use case (read one sample, use it, pop the next), explicit release is clearer.</p>
+<p>This is a simple explicit-release pool, not a smart-pointer-backed one. That's deliberate: <code><a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a></code> is a value-type handle wrapping an internally shared <a class="el" href="classpromeki_1_1BufferImpl.html">BufferImpl</a>, with no user-defined deleter hook to recycle the impl on last-handle drop. Wrapping a pool- backed buffer in a smart-pointer release path would require a separate layer. For the expected hot-path use case (read one sample, use it, pop the next), explicit release is clearer.</p>
 <dl class="section user"><dt>Growth</dt><dd></dd></dl>
 <p>When <code><a class="el" href="classpromeki_1_1BufferPool.html#a635466e9e7dae3bf127621ceff1384c7" title="Acquires a buffer from the pool.">acquire()</a></code> is called and the pool is empty, a new buffer is allocated. The pool never shrinks — returned buffers stay in the free list until the pool is destroyed. If you're worried about memory footprint, call <code><a class="el" href="classpromeki_1_1BufferPool.html#a9a854e61bc8485aa118d722d72c9026e" title="Drops all pooled buffers.">clear()</a></code> periodically.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classpromeki_1_1BufferPool.html">BufferPool</a> pool(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">imageBytes</a>, 4096);  <span class="comment">// page-aligned, 4K tall stack</span></div>
@@ -178,8 +178,8 @@ Public Member Functions</h2></td></tr>
 <div class="line">    <span class="comment">// ... use buf ...</span></div>
 <div class="line">    pool.<a class="code hl_function" href="classpromeki_1_1UniquePtr.html#a5156c0785f58f6be3c3d5c071e747121">release</a>(std::move(<a class="code hl_class" href="classpromeki_1_1UniquePtr.html">buf</a>));</div>
 <div class="line">}</div>
-<div class="ttc" id="aclasspromeki_1_1BufferPool_html"><div class="ttname"><a href="classpromeki_1_1BufferPool.html">promeki::BufferPool</a></div><div class="ttdoc">Simple fixed-geometry buffer pool for hot-path allocations.</div><div class="ttdef"><b>Definition</b> bufferpool.h:63</div></div>
-<div class="ttc" id="aclasspromeki_1_1Buffer_html"><div class="ttname"><a href="classpromeki_1_1Buffer.html">promeki::Buffer</a></div><div class="ttdoc">Generic memory buffer descriptor with alignment and memory space support.</div><div class="ttdef"><b>Definition</b> buffer.h:94</div></div>
+<div class="ttc" id="aclasspromeki_1_1BufferPool_html"><div class="ttname"><a href="classpromeki_1_1BufferPool.html">promeki::BufferPool</a></div><div class="ttdoc">Simple fixed-geometry buffer pool for hot-path allocations.</div><div class="ttdef"><b>Definition</b> bufferpool.h:64</div></div>
+<div class="ttc" id="aclasspromeki_1_1Buffer_html"><div class="ttname"><a href="classpromeki_1_1Buffer.html">promeki::Buffer</a></div><div class="ttdoc">Generic memory buffer descriptor with alignment and memory space support.</div><div class="ttdef"><b>Definition</b> buffer.h:97</div></div>
 <div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
 <div class="ttc" id="aclasspromeki_1_1UniquePtr_html_a5156c0785f58f6be3c3d5c071e747121"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html#a5156c0785f58f6be3c3d5c071e747121">promeki::UniquePtr::release</a></div><div class="ttdeci">T * release()</div><div class="ttdoc">Releases ownership and returns the raw pointer.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:158</div></div>
 </div><!-- fragment --> </dd></dl>
@@ -220,7 +220,7 @@ Public Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">bufferSize</td><td>Size of each buffer in bytes. </td></tr>
-    <tr><td class="paramname">alignment</td><td>Alignment in bytes (defaults to <code><a class="el" href="classpromeki_1_1Buffer.html#af2fca78761943634adeac4894e62d689" title="Default memory alignment in bytes.">Buffer::DefaultAlign</a></code>). </td></tr>
+    <tr><td class="paramname">alignment</td><td>Alignment in bytes (defaults to <code><a class="el" href="classpromeki_1_1Buffer.html#af2fca78761943634adeac4894e62d689" title="Default memory alignment in bytes (matches the page size).">Buffer::DefaultAlign</a></code>). </td></tr>
     <tr><td class="paramname">ms</td><td>Memory space to allocate from. </td></tr>
   </table>
   </dd>
@@ -308,7 +308,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1BufferPool.html">BufferPool</a></li>
-    <li class="footer">Generated on 2026-05-04 19:45:16 from commit c353e07 (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-05 00:43:16 from commit ef07c0f (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

@@ -1,3 +1,5 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$structpromeki_1_1BuildInfo.html" title="Holds compile&#45;time build information for the library." alt="" coords="5,5,148,31"/>
+<area shape="rect" id="Node000000" href="$classpromeki_1_1BufferView.html" title="Ordered list of (offset, size) views over a deduplicated set of backing Buffer objects." alt="" coords="5,5,160,31"/>
+<area shape="rect" id="Node000001" href="$classpromeki_1_1RtpPacket.html" title="A BufferView that interprets its data as an RTP packet." alt="" coords="208,5,356,31"/>
+<area shape="poly" id="edge9_Node000000_Node000001" title=" " alt="" coords="174,15,207,15,207,21,174,21"/>
 </map>

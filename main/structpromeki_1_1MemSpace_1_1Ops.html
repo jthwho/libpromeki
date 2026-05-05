@@ -159,6 +159,9 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:aa20822a648ce637f6eef17b47cf43ec6" id="r_aa20822a648ce637f6eef17b47cf43ec6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structpromeki_1_1MemSpace_1_1Stats.html">Stats</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1MemSpace_1_1Ops.html#aa20822a648ce637f6eef17b47cf43ec6">stats</a></td></tr>
 <tr class="memdesc:aa20822a648ce637f6eef17b47cf43ec6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runtime counters; owned by the registry, auto-created by <a class="el" href="classpromeki_1_1MemSpace.html#a0f4cb7b83ff1424b3ab582aefb3ca554" title="Registers an Ops record in the registry.">registerData()</a> if null.  <br /></td></tr>
 <tr class="separator:aa20822a648ce637f6eef17b47cf43ec6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed4a88dd867351bb2f0a64e0b1c6f90e" id="r_aed4a88dd867351bb2f0a64e0b1c6f90e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3">MemDomain::ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpromeki_1_1MemSpace_1_1Ops.html#aed4a88dd867351bb2f0a64e0b1c6f90e">domainId</a></td></tr>
+<tr class="memdesc:aed4a88dd867351bb2f0a64e0b1c6f90e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Domain this <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a> belongs to; defaults to Host.  <br /></td></tr>
+<tr class="separator:aed4a88dd867351bb2f0a64e0b1c6f90e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Function table for memory space operations. </p>
@@ -169,6 +172,25 @@ Public Attributes</h2></td></tr>
 <li><code>fill:</code> <code>ptr</code> != nullptr. </li>
 </ul>
 </div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="aed4a88dd867351bb2f0a64e0b1c6f90e" name="aed4a88dd867351bb2f0a64e0b1c6f90e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aed4a88dd867351bb2f0a64e0b1c6f90e">&#9670;&#160;</a></span>domainId</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3">MemDomain::ID</a> promeki::MemSpace::Ops::domainId</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">                                        <a class="code hl_enumvalue" href="classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3a0ca0131e2d6a608d2b769204c9180823">MemDomain::Host</a></div>
+<div class="ttc" id="aclasspromeki_1_1MemDomain_html_a8ae8e50c2926de1f0353a3ad0086fce3a0ca0131e2d6a608d2b769204c9180823"><div class="ttname"><a href="classpromeki_1_1MemDomain.html#a8ae8e50c2926de1f0353a3ad0086fce3a0ca0131e2d6a608d2b769204c9180823">promeki::MemDomain::Host</a></div><div class="ttdeci">@ Host</div><div class="ttdoc">Host CPU memory (system RAM, including page-locked / secure variants).</div><div class="ttdef"><b>Definition</b> memdomain.h:50</div></div>
+</div><!-- fragment -->
+<p>Domain this <a class="el" href="classpromeki_1_1MemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a> belongs to; defaults to Host. </p>
+
+</div>
+</div>
 <a id="aa20822a648ce637f6eef17b47cf43ec6" name="aa20822a648ce637f6eef17b47cf43ec6"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa20822a648ce637f6eef17b47cf43ec6">&#9670;&#160;</a></span>stats</h2>
 
@@ -197,7 +219,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1MemSpace.html">MemSpace</a></li><li class="navelem"><a class="el" href="structpromeki_1_1MemSpace_1_1Ops.html">Ops</a></li>
-    <li class="footer">Generated on 2026-05-04 19:45:16 from commit c353e07 (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-05 00:43:16 from commit ef07c0f (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

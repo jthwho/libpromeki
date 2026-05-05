@@ -688,7 +688,7 @@ has been stamped yet" — <a class="el" href="classpromeki_1_1MediaIO.html">Medi
 </div><div class="memdoc">
 
 <p>Detaches every plane's backing <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> so writes through this payload don't propagate to other holders of the same <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a>. </p>
-<p>Walks <a class="el" href="classpromeki_1_1MediaPayload.html#a50636b93739914f2375dc6540f1a35fb">data()</a> and, when a plane's backing <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> is shared (reference count &gt; 1), clones it via <code>Buffer::Ptr::modify</code>. Whole- buffer views keep their <code>offset=0</code>, <code>size=full</code> invariant; sub-range views retain offset and size but point at the exclusive clone.</p>
+<p>Walks <a class="el" href="classpromeki_1_1MediaPayload.html#a50636b93739914f2375dc6540f1a35fb">data()</a> and, when a plane's backing <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> is shared (reference count &gt; 1), clones it via <code>Buffer::modify</code>. Whole- buffer views keep their <code>offset=0</code>, <code>size=full</code> invariant; sub-range views retain offset and size but point at the exclusive clone.</p>
 <p>Calls <a class="el" href="classpromeki_1_1MediaPayload.html#aafd0d3953b439bb868ee80c2ab91a232">ensureExclusiveExtras</a> after the plane detach so subclasses can CoW-detach any extra <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> fields they own (codec private data, auxiliary metadata buffers, …). </p>
 
 </div>
@@ -717,7 +717,7 @@ has been stamped yet" — <a class="el" href="classpromeki_1_1MediaIO.html">Medi
 </div><div class="memdoc">
 
 <p>Hook for subclasses to CoW-detach their extra buffers. </p>
-<p>Default: no-op. Subclasses override and call <code>Buffer::Ptr::modify</code> on each extra field that holds a shared <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a>. </p>
+<p>Default: no-op. Subclasses override and call <code>Buffer::modify</code> on each extra field that holds a shared <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a>. </p>
 
 <p>Reimplemented in <a class="el" href="classpromeki_1_1CompressedAudioPayload.html#aefbadf97c079502614bbb668972cd42a">promeki::CompressedAudioPayload</a>, and <a class="el" href="classpromeki_1_1CompressedVideoPayload.html#a3c3af9116a1a25a0b4a071e9c0299f7b">promeki::CompressedVideoPayload</a>.</p>
 
@@ -865,7 +865,7 @@ has been stamped yet" — <a class="el" href="classpromeki_1_1MediaIO.html">Medi
 </div><div class="memdoc">
 
 <p>Hook for subclasses to report whether their extra buffers are exclusive. </p>
-<p>Default: no extras, returns <code>true</code>. Subclasses that own additional <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> fields (e.g. <a class="el" href="classpromeki_1_1CompressedVideoPayload.html#a3ac071b23357b0c39830f094f8ee8c8d">CompressedVideoPayload::inBandCodecData</a>) override and return <code>false</code> when any of those fields is shared. </p>
+<p>Default: no extras, returns <code>true</code>. Subclasses that own additional <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> fields (e.g. <a class="el" href="classpromeki_1_1CompressedVideoPayload.html#aef90a7c8357b5165962bf2c4f3330998">CompressedVideoPayload::inBandCodecData</a>) override and return <code>false</code> when any of those fields is shared. </p>
 
 <p>Reimplemented in <a class="el" href="classpromeki_1_1CompressedAudioPayload.html#a70d33dc84f0d5ca280f22e6ac89ac122">promeki::CompressedAudioPayload</a>, and <a class="el" href="classpromeki_1_1CompressedVideoPayload.html#a4f67c1e1c451cdf3146b94c267811cdd">promeki::CompressedVideoPayload</a>.</p>
 
@@ -1507,7 +1507,7 @@ plane." </p>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1MediaPayload.html">MediaPayload</a></li>
-    <li class="footer">Generated on 2026-05-04 19:45:16 from commit c353e07 (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-05 00:43:16 from commit ef07c0f (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

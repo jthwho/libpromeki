@@ -1,0 +1,11 @@
+<map id="promeki::BufferImpl" name="promeki::BufferImpl">
+<area shape="rect" id="Node000001" title="Polymorphic backend for Buffer." alt="" coords="5,55,157,80"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1HostMappedBufferImpl.html" title="Abstract intermediate base for backends backed by host memory." alt="" coords="205,55,440,80"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,65,205,65,205,70,171,70"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1HostBufferImpl.html" title="BufferImpl backed by std::aligned_alloc / std::free." alt="" coords="517,5,699,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="410,50,533,28,534,33,411,55"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1HostSecureBufferImpl.html" title="HostBufferImpl variant with page locking and secure zeroing." alt="" coords="495,55,721,80"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="454,65,495,65,495,70,454,70"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1WrappedHostBufferImpl.html" title="Non&#45;owning HostMappedBufferImpl over an external host pointer." alt="" coords="488,104,728,129"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="411,80,534,101,533,107,410,85"/>
+</map>

@@ -1,7 +1,3 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classpromeki_1_1VideoDecoder.html" title="Abstract base class for stateful video decoders." alt="" coords="5,31,180,56"/>
-<area shape="rect" id="Node000001" href="$classpromeki_1_1JpegVideoDecoder.html" title="JPEG VideoDecoder built on libjpeg&#45;turbo." alt="" coords="236,5,439,31"/>
-<area shape="poly" id="edge231_Node000000_Node000001" title=" " alt="" coords="193,30,236,26,236,31,194,36"/>
-<area shape="rect" id="Node000002" href="$classpromeki_1_1JpegXsVideoDecoder.html" title="JPEG XS VideoDecoder built on SVT&#45;JPEG&#45;XS." alt="" coords="228,55,447,80"/>
-<area shape="poly" id="edge232_Node000000_Node000002" title=" " alt="" coords="194,51,228,54,228,59,193,56"/>
+<area shape="rect" id="Node000000" href="$classpromeki_1_1VariantLookup_1_1Registrar.html" title="Fluent builder returned by registrar." alt="" coords="5,5,181,45"/>
 </map>

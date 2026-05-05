@@ -2,7 +2,7 @@ var classpromeki_1_1QuickTime_1_1Track =
 [
     [ "Track", "classpromeki_1_1QuickTime_1_1Track.html#a5f261ee30576a28d6efb56faddb113a9", null ],
     [ "audioDesc", "classpromeki_1_1QuickTime_1_1Track.html#ae578fd9036237ccbf17645e332643d4c", null ],
-    [ "codecConfig", "classpromeki_1_1QuickTime_1_1Track.html#a8e0848f626578ee258bf9a018c63284e", null ],
+    [ "codecConfig", "classpromeki_1_1QuickTime_1_1Track.html#a795fb34de962fb789c3bf273f468eacb", null ],
     [ "codecConfigType", "classpromeki_1_1QuickTime_1_1Track.html#a3879605e153658943eae68fa3107e1a3", null ],
     [ "duration", "classpromeki_1_1QuickTime_1_1Track.html#aa387fd22d4e14815d977dd535f3553bd", null ],
     [ "editStartOffset", "classpromeki_1_1QuickTime_1_1Track.html#abff692dd5304b223305c7af25a78bc46", null ],
@@ -16,7 +16,7 @@ var classpromeki_1_1QuickTime_1_1Track =
     [ "pixelFormat", "classpromeki_1_1QuickTime_1_1Track.html#ad51783c2cb82c618836a5fa77608aac7", null ],
     [ "sampleCount", "classpromeki_1_1QuickTime_1_1Track.html#a7fa6213516d72196cf5cbe2a0acddea8", null ],
     [ "setAudioDesc", "classpromeki_1_1QuickTime_1_1Track.html#aecd4aab80647977ce6a7c3a7fcb7a236", null ],
-    [ "setCodecConfig", "classpromeki_1_1QuickTime_1_1Track.html#a17b871f4e20b5746ef10b161f5a050c1", null ],
+    [ "setCodecConfig", "classpromeki_1_1QuickTime_1_1Track.html#ae1de2d2e0b7b8449119412d0e921684b", null ],
     [ "setCodecConfigType", "classpromeki_1_1QuickTime_1_1Track.html#a90975a5b270772262a886a9734db6bca", null ],
     [ "setDuration", "classpromeki_1_1QuickTime_1_1Track.html#a6c391d508f5f7e24b654f6eff5aa1d47", null ],
     [ "setEditStartOffset", "classpromeki_1_1QuickTime_1_1Track.html#a8d95b9d626e57f5f1b2678be9cc69e1e", null ],

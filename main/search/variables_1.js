@@ -29,7 +29,7 @@ var searchData=
   ['audiochirpdurationsec_26',['AudioChirpDurationSec',['../classpromeki_1_1MediaConfig.html#a58f55050dc669a7918a9e8bcfd49f15e',1,'promeki::MediaConfig']]],
   ['audiochirpendfreq_27',['AudioChirpEndFreq',['../classpromeki_1_1MediaConfig.html#aca65219e63b4956583f1a050f2b285ff',1,'promeki::MediaConfig']]],
   ['audiochirpstartfreq_28',['AudioChirpStartFreq',['../classpromeki_1_1MediaConfig.html#acc51f3f2213770ef2f732dd6d11114dc',1,'promeki::MediaConfig']]],
-  ['audiocodec_29',['audiocodec',['../classpromeki_1_1MediaConfig.html#add86219fdf376585d137aaca58954e40',1,'promeki::MediaConfig::AudioCodec'],['../structpromeki_1_1AudioFormat_1_1Data.html#a68c22fd8b9bc6997c0dc497c502f4470',1,'promeki::AudioFormat::Data::audioCodec']]],
+  ['audiocodec_29',['audiocodec',['../structpromeki_1_1AudioFormat_1_1Data.html#a68c22fd8b9bc6997c0dc497c502f4470',1,'promeki::AudioFormat::Data::audioCodec'],['../classpromeki_1_1MediaConfig.html#add86219fdf376585d137aaca58954e40',1,'promeki::MediaConfig::AudioCodec']]],
   ['audiodatadecoded_30',['audioDataDecoded',['../structpromeki_1_1InspectorEvent.html#a768cf4faadf7a6701e19ee33f0f9912d',1,'promeki::InspectorEvent']]],
   ['audiodatadecoderenabled_31',['audioDataDecoderEnabled',['../structpromeki_1_1InspectorEvent.html#a7bdd266f95d564970ed1e044a803e3d4',1,'promeki::InspectorEvent']]],
   ['audiodeltaavgns_32',['audioDeltaAvgNs',['../structpromeki_1_1InspectorSnapshot.html#ad55ccb83c990d594279095aa11910df3',1,'promeki::InspectorSnapshot']]],

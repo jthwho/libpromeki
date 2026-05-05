@@ -1,0 +1,11 @@
+<map id="promeki::BufferCopyCommand" name="promeki::BufferCopyCommand">
+<area shape="rect" id="Node000001" title="Command to copy a byte range from one Buffer to another." alt="" coords="157,168,379,193"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1BufferCommand.html" title="Base class for asynchronous Buffer operations." alt="" coords="173,93,363,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="271,133,271,168,265,168,265,133"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1RefCount.html" title="An atomic reference count object." alt="" coords="5,5,149,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,36,161,67,227,91,225,96,159,72,104,41"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1Atomic.html" title=" " alt="" coords="174,5,362,31"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="271,45,271,93,265,93,265,45"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Error.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="387,5,501,31"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="409,39,293,95,291,91,407,34"/>
+</map>

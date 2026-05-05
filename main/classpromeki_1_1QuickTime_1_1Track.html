@@ -172,10 +172,10 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>editStartOffset</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
 <tr class="memdesc:abff692dd5304b223305c7af25a78bc46"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the elst start offset (in this track's timescale). <br /></td></tr>
 <tr class="separator:abff692dd5304b223305c7af25a78bc46"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8e0848f626578ee258bf9a018c63284e" id="r_a8e0848f626578ee258bf9a018c63284e"><td class="memItemLeft" align="right" valign="top"><a id="a8e0848f626578ee258bf9a018c63284e" name="a8e0848f626578ee258bf9a018c63284e"></a>
-<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>codecConfig</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:a8e0848f626578ee258bf9a018c63284e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec-specific configuration record payload (e.g. the bytes inside the <code>avcC</code> / <code>hvcC</code> box), or an empty <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872" title="Shared pointer type for Buffer.">Buffer::Ptr</a> if the track has no such record. <br /></td></tr>
-<tr class="separator:a8e0848f626578ee258bf9a018c63284e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a795fb34de962fb789c3bf273f468eacb" id="r_a795fb34de962fb789c3bf273f468eacb"><td class="memItemLeft" align="right" valign="top"><a id="a795fb34de962fb789c3bf273f468eacb" name="a795fb34de962fb789c3bf273f468eacb"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>codecConfig</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a795fb34de962fb789c3bf273f468eacb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec-specific configuration record payload (e.g. the bytes inside the <code>avcC</code> / <code>hvcC</code> box), or an empty <a class="el" href="classpromeki_1_1Buffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> if the track has no such record. <br /></td></tr>
+<tr class="separator:a795fb34de962fb789c3bf273f468eacb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3879605e153658943eae68fa3107e1a3" id="r_a3879605e153658943eae68fa3107e1a3"><td class="memItemLeft" align="right" valign="top"><a id="a3879605e153658943eae68fa3107e1a3" name="a3879605e153658943eae68fa3107e1a3"></a>
 <a class="el" href="classpromeki_1_1FourCC.html">FourCC</a>&#160;</td><td class="memItemRight" valign="bottom"><b>codecConfigType</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
 <tr class="memdesc:a3879605e153658943eae68fa3107e1a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classpromeki_1_1FourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> type of the codec configuration record (<code>avcC</code>, <code>hvcC</code>, etc.) or zero when absent. <br /></td></tr>
@@ -232,10 +232,10 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setEditStartOffset</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">int64_t</a> v)</td></tr>
 <tr class="memdesc:a8d95b9d626e57f5f1b2678be9cc69e1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the elst start offset (in this track's timescale). <br /></td></tr>
 <tr class="separator:a8d95b9d626e57f5f1b2678be9cc69e1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a17b871f4e20b5746ef10b161f5a050c1" id="r_a17b871f4e20b5746ef10b161f5a050c1"><td class="memItemLeft" align="right" valign="top"><a id="a17b871f4e20b5746ef10b161f5a050c1" name="a17b871f4e20b5746ef10b161f5a050c1"></a>
-<a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setCodecConfig</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> &amp;b)</td></tr>
-<tr class="memdesc:a17b871f4e20b5746ef10b161f5a050c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the codec configuration record payload. <br /></td></tr>
-<tr class="separator:a17b871f4e20b5746ef10b161f5a050c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1de2d2e0b7b8449119412d0e921684b" id="r_ae1de2d2e0b7b8449119412d0e921684b"><td class="memItemLeft" align="right" valign="top"><a id="ae1de2d2e0b7b8449119412d0e921684b" name="ae1de2d2e0b7b8449119412d0e921684b"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setCodecConfig</b> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;b)</td></tr>
+<tr class="memdesc:ae1de2d2e0b7b8449119412d0e921684b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the codec configuration record payload. <br /></td></tr>
+<tr class="separator:ae1de2d2e0b7b8449119412d0e921684b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a90975a5b270772262a886a9734db6bca" id="r_a90975a5b270772262a886a9734db6bca"><td class="memItemLeft" align="right" valign="top"><a id="a90975a5b270772262a886a9734db6bca" name="a90975a5b270772262a886a9734db6bca"></a>
 <a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setCodecConfigType</b> (<a class="el" href="classpromeki_1_1FourCC.html">FourCC</a> <a class="el" href="classpromeki_1_1UniquePtr.html">t</a>)</td></tr>
 <tr class="memdesc:a90975a5b270772262a886a9734db6bca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the <a class="el" href="classpromeki_1_1FourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> type of the codec configuration record. <br /></td></tr>
@@ -254,7 +254,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1QuickTime.html">QuickTime</a></li><li class="navelem"><a class="el" href="classpromeki_1_1QuickTime_1_1Track.html">Track</a></li>
-    <li class="footer">Generated on 2026-05-04 19:45:16 from commit c353e07 (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-05 00:43:16 from commit ef07c0f (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

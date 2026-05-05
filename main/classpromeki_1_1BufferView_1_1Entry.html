@@ -117,10 +117,10 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Entry</b> ()=<a class="el" href="classpromeki_1_1UniquePtr.html">default</a></td></tr>
 <tr class="memdesc:a4dbc1d9b2cf50408d1b48399f692dbd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default-constructs a null <a class="el" href="classpromeki_1_1BufferView_1_1Entry.html" title="Non-owning proxy for a single slice in the list.">Entry</a>. <br /></td></tr>
 <tr class="separator:a4dbc1d9b2cf50408d1b48399f692dbd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af958fdfff67339d30a8df1cb9ae51f5a" id="r_af958fdfff67339d30a8df1cb9ae51f5a"><td class="memItemLeft" align="right" valign="top"><a id="af958fdfff67339d30a8df1cb9ae51f5a" name="af958fdfff67339d30a8df1cb9ae51f5a"></a>
-<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>buffer</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
-<tr class="memdesc:af958fdfff67339d30a8df1cb9ae51f5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the shared backing buffer. <br /></td></tr>
-<tr class="separator:af958fdfff67339d30a8df1cb9ae51f5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32487c48c55e0b6038f70c7dfe7ff2a2" id="r_a32487c48c55e0b6038f70c7dfe7ff2a2"><td class="memItemLeft" align="right" valign="top"><a id="a32487c48c55e0b6038f70c7dfe7ff2a2" name="a32487c48c55e0b6038f70c7dfe7ff2a2"></a>
+<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>buffer</b> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
+<tr class="memdesc:a32487c48c55e0b6038f70c7dfe7ff2a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the shared backing buffer. <br /></td></tr>
+<tr class="separator:a32487c48c55e0b6038f70c7dfe7ff2a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aacf02efbc2f581971b4c2915e22f442e" id="r_aacf02efbc2f581971b4c2915e22f442e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1BufferView_1_1Entry.html#aacf02efbc2f581971b4c2915e22f442e">bufferIndex</a> () <a class="el" href="classpromeki_1_1UniquePtr.html">const</a></td></tr>
 <tr class="memdesc:aacf02efbc2f581971b4c2915e22f442e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the index of the backing buffer in the parent's deduplicated buffer table.  <br /></td></tr>
 <tr class="separator:aacf02efbc2f581971b4c2915e22f442e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -152,7 +152,7 @@ Friends</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Non-owning proxy for a single slice in the list. </p>
-<p><a class="el" href="classpromeki_1_1BufferView_1_1Entry.html" title="Non-owning proxy for a single slice in the list.">Entry</a> carries a parent pointer and an index; it never owns a <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a>. All accessors go back through the parent's buffer table and view record. <a class="el" href="classpromeki_1_1BufferView_1_1Entry.html" title="Non-owning proxy for a single slice in the list.">Entry</a> is cheap to copy and safe to pass by value within a single expression; do not store an <a class="el" href="classpromeki_1_1BufferView_1_1Entry.html" title="Non-owning proxy for a single slice in the list.">Entry</a> beyond the lifetime of its parent <a class="el" href="classpromeki_1_1BufferView.html">BufferView</a>. </p>
+<p><a class="el" href="classpromeki_1_1BufferView_1_1Entry.html" title="Non-owning proxy for a single slice in the list.">Entry</a> carries a parent pointer and an index; it never owns a <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a>. All accessors go back through the parent's buffer table and view record. <a class="el" href="classpromeki_1_1BufferView_1_1Entry.html" title="Non-owning proxy for a single slice in the list.">Entry</a> is cheap to copy and safe to pass by value within a single expression; do not store an <a class="el" href="classpromeki_1_1BufferView_1_1Entry.html" title="Non-owning proxy for a single slice in the list.">Entry</a> beyond the lifetime of its parent <a class="el" href="classpromeki_1_1BufferView.html">BufferView</a>. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="aacf02efbc2f581971b4c2915e22f442e" name="aacf02efbc2f581971b4c2915e22f442e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aacf02efbc2f581971b4c2915e22f442e">&#9670;&#160;</a></span>bufferIndex()</h2>
@@ -204,7 +204,7 @@ Friends</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1BufferView.html">BufferView</a></li><li class="navelem"><a class="el" href="classpromeki_1_1BufferView_1_1Entry.html">Entry</a></li>
-    <li class="footer">Generated on 2026-05-04 19:45:16 from commit c353e07 (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-05 00:43:16 from commit ef07c0f (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>

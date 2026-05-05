@@ -1,0 +1,13 @@
+<map id="promeki::BufferMapCommand" name="promeki::BufferMapCommand">
+<area shape="rect" id="Node000001" title="Command to map a Buffer for access from a specific MemDomain." alt="" coords="260,181,479,207"/>
+<area shape="rect" id="Node000002" href="$classpromeki_1_1BufferCommand.html" title="Base class for asynchronous Buffer operations." alt="" coords="173,93,363,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="294,126,357,179,354,183,291,130"/>
+<area shape="rect" id="Node000003" href="$classpromeki_1_1RefCount.html" title="An atomic reference count object." alt="" coords="5,5,149,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,36,161,67,227,91,225,96,159,72,104,41"/>
+<area shape="rect" id="Node000004" href="$classpromeki_1_1Atomic.html" title=" " alt="" coords="174,5,362,31"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="271,45,271,93,265,93,265,45"/>
+<area shape="rect" id="Node000005" href="$classpromeki_1_1Error.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="387,5,501,31"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="409,39,293,95,291,91,407,34"/>
+<area shape="rect" id="Node000006" href="$classpromeki_1_1MemDomain.html" title="Coarse classification of memory address spaces." alt="" coords="388,93,556,119"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="449,130,385,183,382,179,446,126"/>
+</map>

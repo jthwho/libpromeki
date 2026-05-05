@@ -116,9 +116,9 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classpromeki_1_1UniquePtr.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~MjpegStreamSubscriber</b> ()=<a class="el" href="classpromeki_1_1UniquePtr.html">default</a></td></tr>
 <tr class="memdesc:a0cb07d608cc3990517e9cbdee0ab1145"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor. <br /></td></tr>
 <tr class="separator:a0cb07d608cc3990517e9cbdee0ab1145"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a490815bdd874d7f17e2bd2b27ed7bd37" id="r_a490815bdd874d7f17e2bd2b27ed7bd37"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">virtual</a> <a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MjpegStreamSubscriber.html#a490815bdd874d7f17e2bd2b27ed7bd37">onFrame</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> &amp;jpeg, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1TimeStamp.html">TimeStamp</a> &amp;ts)=0</td></tr>
-<tr class="memdesc:a490815bdd874d7f17e2bd2b27ed7bd37"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called once per newly-encoded JPEG frame.  <br /></td></tr>
-<tr class="separator:a490815bdd874d7f17e2bd2b27ed7bd37"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f76de6fc8889ae95cb8292e709c2481" id="r_a9f76de6fc8889ae95cb8292e709c2481"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">virtual</a> <a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MjpegStreamSubscriber.html#a9f76de6fc8889ae95cb8292e709c2481">onFrame</a> (<a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;jpeg, <a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1TimeStamp.html">TimeStamp</a> &amp;ts)=0</td></tr>
+<tr class="memdesc:a9f76de6fc8889ae95cb8292e709c2481"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called once per newly-encoded JPEG frame.  <br /></td></tr>
+<tr class="separator:a9f76de6fc8889ae95cb8292e709c2481"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf8e3c2a16fa2b84f69f5d0af0c9b198" id="r_acf8e3c2a16fa2b84f69f5d0af0c9b198"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpromeki_1_1UniquePtr.html">virtual</a> <a class="el" href="classpromeki_1_1UniquePtr.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpromeki_1_1MjpegStreamSubscriber.html#acf8e3c2a16fa2b84f69f5d0af0c9b198">onClosed</a> ()=0</td></tr>
 <tr class="memdesc:acf8e3c2a16fa2b84f69f5d0af0c9b198"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called once when the subscription terminates.  <br /></td></tr>
 <tr class="separator:acf8e3c2a16fa2b84f69f5d0af0c9b198"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -137,7 +137,7 @@ Public Member Functions</h2></td></tr>
 <div class="line"><span class="keywordtype">int</span> <span class="keywordtype">id</span> = sink-&gt;attachSubscriber(&amp;sub);</div>
 <div class="line"><span class="comment">// ... encode some frames ...</span></div>
 <div class="line">sink-&gt;detachSubscriber(<span class="keywordtype">id</span>);</div>
-<div class="ttc" id="aclasspromeki_1_1Buffer_html"><div class="ttname"><a href="classpromeki_1_1Buffer.html">promeki::Buffer</a></div><div class="ttdoc">Generic memory buffer descriptor with alignment and memory space support.</div><div class="ttdef"><b>Definition</b> buffer.h:94</div></div>
+<div class="ttc" id="aclasspromeki_1_1Buffer_html"><div class="ttname"><a href="classpromeki_1_1Buffer.html">promeki::Buffer</a></div><div class="ttdoc">Generic memory buffer descriptor with alignment and memory space support.</div><div class="ttdef"><b>Definition</b> buffer.h:97</div></div>
 <div class="ttc" id="aclasspromeki_1_1MjpegStreamSubscriber_html"><div class="ttname"><a href="classpromeki_1_1MjpegStreamSubscriber.html">promeki::MjpegStreamSubscriber</a></div><div class="ttdoc">Subscriber interface for MjpegStreamMediaIO.</div><div class="ttdef"><b>Definition</b> mjpegstreammediaio.h:66</div></div>
 <div class="ttc" id="aclasspromeki_1_1TimeStamp_html"><div class="ttname"><a href="classpromeki_1_1TimeStamp.html">promeki::TimeStamp</a></div><div class="ttdoc">A monotonic timestamp based on std::chrono::steady_clock.</div><div class="ttdef"><b>Definition</b> timestamp.h:39</div></div>
 <div class="ttc" id="aclasspromeki_1_1UniquePtr_html"><div class="ttname"><a href="classpromeki_1_1UniquePtr.html">promeki::UniquePtr</a></div><div class="ttdoc">A move-only smart pointer with exclusive ownership semantics.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:58</div></div>
@@ -167,12 +167,12 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Called once when the subscription terminates. </p>
-<p>Fires either because the sink closed (every still- attached subscriber is notified) or because <a class="el" href="classpromeki_1_1MjpegStreamMediaIO.html#a1eb0f76c3f9bcb87343ed371a4c50c22">MjpegStreamMediaIO::detachSubscriber</a> was called for this subscriber. No further <a class="el" href="classpromeki_1_1MjpegStreamSubscriber.html#a490815bdd874d7f17e2bd2b27ed7bd37">onFrame</a> callbacks will arrive after <a class="el" href="classpromeki_1_1MjpegStreamSubscriber.html#acf8e3c2a16fa2b84f69f5d0af0c9b198">onClosed</a> has run. </p>
+<p>Fires either because the sink closed (every still- attached subscriber is notified) or because <a class="el" href="classpromeki_1_1MjpegStreamMediaIO.html#a1eb0f76c3f9bcb87343ed371a4c50c22">MjpegStreamMediaIO::detachSubscriber</a> was called for this subscriber. No further <a class="el" href="classpromeki_1_1MjpegStreamSubscriber.html#a9f76de6fc8889ae95cb8292e709c2481">onFrame</a> callbacks will arrive after <a class="el" href="classpromeki_1_1MjpegStreamSubscriber.html#acf8e3c2a16fa2b84f69f5d0af0c9b198">onClosed</a> has run. </p>
 
 </div>
 </div>
-<a id="a490815bdd874d7f17e2bd2b27ed7bd37" name="a490815bdd874d7f17e2bd2b27ed7bd37"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a490815bdd874d7f17e2bd2b27ed7bd37">&#9670;&#160;</a></span>onFrame()</h2>
+<a id="a9f76de6fc8889ae95cb8292e709c2481" name="a9f76de6fc8889ae95cb8292e709c2481"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f76de6fc8889ae95cb8292e709c2481">&#9670;&#160;</a></span>onFrame()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -183,7 +183,7 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classpromeki_1_1UniquePtr.html">virtual</a> <a class="el" href="classpromeki_1_1UniquePtr.html">void</a> promeki::MjpegStreamSubscriber::onFrame </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classpromeki_1_1UniquePtr.html">const</a> <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> &amp;&#160;</td>
           <td class="paramname"><em>jpeg</em>, </td>
         </tr>
         <tr>
@@ -206,8 +206,8 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Called once per newly-encoded JPEG frame. </p>
-<p>Runs on the sink's encoder strand. Implementations must not block — capture the <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> (it shares ownership; no copy required) or hand it to a queue, and return.</p>
-<p>The same <a class="el" href="classpromeki_1_1Buffer.html#af57dee9fb94cf40a92eb5a39e390f872">Buffer::Ptr</a> is dispatched to every attached subscriber, so the encoder allocates the JPEG bytes exactly once per encode.</p>
+<p>Runs on the sink's encoder strand. Implementations must not block — capture the <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> (it shares ownership; no copy required) or hand it to a queue, and return.</p>
+<p>The same <a class="el" href="classpromeki_1_1Buffer.html">Buffer</a> is dispatched to every attached subscriber, so the encoder allocates the JPEG bytes exactly once per encode.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">jpeg</td><td>The JPEG-encoded bytes, shared by pointer. </td></tr>
@@ -228,7 +228,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>promeki</b></li><li class="navelem"><a class="el" href="classpromeki_1_1MjpegStreamSubscriber.html">MjpegStreamSubscriber</a></li>
-    <li class="footer">Generated on 2026-05-04 19:45:16 from commit c353e07 (1.0.0-alpha).</li>
+    <li class="footer">Generated on 2026-05-05 00:43:16 from commit ef07c0f (1.0.0-alpha).</li>
   </ul>
 </div>
 </body>
