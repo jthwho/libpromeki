@@ -22,6 +22,7 @@
 #include <promeki/videopayload.h>
 #include <promeki/audiopayload.h>
 #include <promeki/clockdomain.h>
+#include <promeki/enums.h>
 
 using namespace promeki;
 
@@ -205,4 +206,37 @@ TEST_CASE("MediaIO: defaultConfig round-trips losslessly through JSON for every 
                         CHECK(verr.isOk());
                 }
         }
+}
+
+// ============================================================================
+// createForFileRead / createForFileWrite stamp OpenMode on the live config
+//
+// Before this fix (2026-05-05) both helpers forgot to call
+//   cfg.set(MediaConfig::OpenMode, ...)
+// for the file-extension dispatch path.  The spec default for OpenMode
+// is Read, so createForFileWrite silently produced a Read-mode config
+// and any backend that consulted MediaConfig::OpenMode at open() time
+// routed the write path through the reader, making every MediaPipeline-
+// driven write a no-op.  These tests pin the invariant so it cannot
+// regress.
+// ============================================================================
+
+TEST_CASE("MediaIO::createForFileRead stamps OpenMode = Read for file-extension path") {
+        // We use a .dpx path — the file does not need to exist; create()
+        // only builds the config object and hands it to the factory.
+        MediaIO *io = MediaIO::createForFileRead(String("/nonexistent/probe.dpx"));
+        REQUIRE(io != nullptr);
+        const MediaIO::Config &cfg = io->config();
+        Enum mode = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
+        CHECK(mode.value() == MediaIOOpenMode::Read.value());
+        delete io;
+}
+
+TEST_CASE("MediaIO::createForFileWrite stamps OpenMode = Write for file-extension path") {
+        MediaIO *io = MediaIO::createForFileWrite(String("/nonexistent/probe.dpx"));
+        REQUIRE(io != nullptr);
+        const MediaIO::Config &cfg = io->config();
+        Enum mode = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
+        CHECK(mode.value() == MediaIOOpenMode::Write.value());
+        delete io;
 }

@@ -151,6 +151,10 @@ class MediaIO : public ObjectBase {
                  * as a filesystem path and picks a backend by path
                  * probe, extension, or content probe (in that order).
                  *
+                 * The resulting config always has @c MediaConfig::OpenMode
+                 * set to @c MediaIOOpenMode::Read, regardless of which
+                 * dispatch path is taken.
+                 *
                  * @param filename The path or URL to the media resource.
                  * @param parent Optional parent object.
                  * @return A new MediaIO instance, or nullptr on failure.
@@ -162,6 +166,10 @@ class MediaIO : public ObjectBase {
                  *
                  * URL strings are dispatched identically to
                  * @ref createForFileRead but in @ref MediaIOSink mode.
+                 *
+                 * The resulting config always has @c MediaConfig::OpenMode
+                 * set to @c MediaIOOpenMode::Write, regardless of which
+                 * dispatch path is taken.
                  *
                  * @param filename The path or URL to the media resource.
                  * @param parent Optional parent object.

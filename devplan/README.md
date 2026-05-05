@@ -40,6 +40,7 @@ devplan/
 │   └── widgets.md       TUI widgets to build
 ├── infra/               Cross-cutting infrastructure
 │   ├── benchmarking.md  BenchmarkRunner / promeki-bench remaining suites
+│   ├── promeki-test.md  Functional test runner (shipped 2026-05-05)
 │   ├── audit.md         2026-04-25 audit findings register (90 open)
 │   └── valgrind.md      COMPLETE; stub retained
 └── demos/
@@ -49,10 +50,13 @@ devplan/
 ## Current focus
 
 1. **MediaPipeline polish** — `docs/mediapipeline.dox` authoring
-   guide, `docs/mediaplay.dox` grammar reference, and golden-data
-   integration tests under `tests/func/mediaplay/`. See
-   [proav/pipeline.md](proav/pipeline.md) and
-   [proav/backends.md](proav/backends.md).
+   guide, `docs/mediaplay.dox` grammar reference. The functional test
+   runner (`utils/promeki-test/`) is shipped and covers roundtrip,
+   codec, audio, RTP, and FrameBridge suites; CI integration and the
+   FrameBridge `acceptPending` bug remain open. See
+   [proav/pipeline.md](proav/pipeline.md),
+   [proav/backends.md](proav/backends.md), and
+   [infra/promeki-test.md](infra/promeki-test.md).
 2. **RTP follow-ups** — mid-stream descriptor discovery, RTP
    timestamp wrap, ST 2110-20 10/12-bit pgroup, L24, ST 2110-40,
    per-packet `SCM_TXTIME` deadlines via `RtpPacingMode::TxTime`.

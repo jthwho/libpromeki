@@ -40,3 +40,14 @@ config forwarding) live in git history and in `docs/mediaio.dox`.
   `Color`, `SocketAddress`, `UUID`, `UMID`, …) round-trips through
   `Variant → JSON → Variant`. See
   [core/utilities.md](../core/utilities.md) → Variant Enhancements.
+
+## Functional test runner — SHIPPED
+
+`utils/promeki-test/` (shipped 2026-05-05) replaces the legacy
+`tests/func/roundtrip/` single-binary approach with a
+self-registering, regex-filterable matrix.  Suites: roundtrip (file
+I/O), codec (in-memory encode→decode), audio (AudioFile), RTP
+(loopback), FrameBridge (single-process).  Per-test scratch folder,
+`result.json` (with post-autoplan pipeline JSON), and run-level
+`summary.json`.  See [infra/promeki-test.md](../infra/promeki-test.md)
+for open items (CI wiring, FrameBridge bug, NDI suite).

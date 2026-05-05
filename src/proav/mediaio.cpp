@@ -373,6 +373,7 @@ MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) 
         Config cfg = MediaIOFactory::defaultConfig(factory->name());
         cfg.set(MediaConfig::Type, factory->name());
         cfg.set(MediaConfig::Filename, filename);
+        cfg.set(MediaConfig::OpenMode, MediaIOOpenMode::Read);
         return factory->create(cfg, parent);
 }
 
@@ -402,10 +403,15 @@ MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent)
         // Same rationale as createForFileRead: seed the live config
         // with the backend's full default schema plus the type and
         // filename so callers that read io->config() back out see a
-        // complete, discoverable picture.
+        // complete, discoverable picture.  OpenMode is stamped
+        // explicitly here — backends consult MediaConfig::OpenMode
+        // to decide read-vs-write, and the spec default is Read, so
+        // a missing key would silently route a write path through
+        // the reader.
         Config cfg = MediaIOFactory::defaultConfig(factory->name());
         cfg.set(MediaConfig::Type, factory->name());
         cfg.set(MediaConfig::Filename, filename);
+        cfg.set(MediaConfig::OpenMode, MediaIOOpenMode::Write);
         return factory->create(cfg, parent);
 }
 
