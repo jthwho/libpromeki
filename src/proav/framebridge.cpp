@@ -273,7 +273,7 @@ struct FrameBridge::Impl {
                 }
 
                 Error readConfigBlob(const uint8_t *at, size_t size) {
-                        Buffer wrapper = Buffer::wrap(const_cast<uint8_t *>(at), size, 0);
+                        Buffer wrapper = Buffer::wrapHost(const_cast<uint8_t *>(at), size, 0);
                         wrapper.setSize(size);
                         BufferIODevice dev(&wrapper);
                         dev.open(IODevice::ReadOnly);
@@ -694,7 +694,7 @@ struct FrameBridge::Impl {
                                 // Metadata
                                 Metadata meta;
                                 if (metaSize > 0) {
-                                        Buffer tmp = Buffer::wrap(static_cast<uint8_t *>(const_cast<uint8_t *>(
+                                        Buffer tmp = Buffer::wrapHost(static_cast<uint8_t *>(const_cast<uint8_t *>(
                                                                           base + slotOff.metadataOff)),
                                                                   metaSize, 0);
                                         tmp.setSize(metaSize);
@@ -713,10 +713,10 @@ struct FrameBridge::Impl {
                                         int              n = id.planeCount();
                                         for (int p = 0; p < n && p < static_cast<int>(planeSizes.size()); ++p) {
                                                 size_t sz = planeSizes[p];
-                                                auto   buf = Buffer::Ptr::create(sz);
-                                                buf.modify()->setSize(sz);
+                                                auto   buf = Buffer(sz);
+                                                buf.setSize(sz);
                                                 if (sz > 0) {
-                                                        std::memcpy(buf.modify()->data(), base + off, sz);
+                                                        std::memcpy(buf.data(), base + off, sz);
                                                 }
                                                 planes.pushToBack(buf, 0, sz);
                                                 off += sz;
@@ -728,9 +728,9 @@ struct FrameBridge::Impl {
                                 PcmAudioPayload::Ptr audioPayload;
                                 if (audioSamples > 0) {
                                         size_t bytes = audioDesc.bufferSize(static_cast<size_t>(audioSamples));
-                                        auto   buf = Buffer::Ptr::create(bytes);
-                                        buf.modify()->setSize(bytes);
-                                        std::memcpy(buf.modify()->data(), base + slotOff.audioOff, bytes);
+                                        auto   buf = Buffer(bytes);
+                                        buf.setSize(bytes);
+                                        std::memcpy(buf.data(), base + slotOff.audioOff, bytes);
                                         BufferView planes;
                                         planes.pushToBack(buf, 0, bytes);
                                         audioPayload = PcmAudioPayload::Ptr::create(

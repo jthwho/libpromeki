@@ -119,8 +119,8 @@ class CompressedVideoPayload : public VideoPayload {
                  * @brief Constructs a compressed video payload that owns
                  *        a whole buffer as its single-plane payload.
                  */
-                CompressedVideoPayload(const ImageDesc &desc, Buffer::Ptr buffer)
-                    : VideoPayload(desc, buffer ? BufferView(buffer, 0, buffer->size()) : BufferView()) {}
+                CompressedVideoPayload(const ImageDesc &desc, Buffer buffer)
+                    : VideoPayload(desc, buffer ? BufferView(buffer, 0, buffer.size()) : BufferView()) {}
 
                 /**
                  * @brief Always returns @c true — this class only models
@@ -200,10 +200,10 @@ class CompressedVideoPayload : public VideoPayload {
                  * this buffer carries an in-band update that applies to
                  * the current access unit.
                  */
-                const Buffer::Ptr &inBandCodecData() const { return _inBandCodecData; }
+                const Buffer &inBandCodecData() const { return _inBandCodecData; }
 
                 /** @brief Replaces the per-payload codec-private data buffer. */
-                void setInBandCodecData(Buffer::Ptr b) { _inBandCodecData = std::move(b); }
+                void setInBandCodecData(Buffer b) { _inBandCodecData = std::move(b); }
 
         protected:
                 /**
@@ -217,7 +217,7 @@ class CompressedVideoPayload : public VideoPayload {
                  * exclusive.
                  */
                 bool isExclusiveExtras() const override {
-                        return !_inBandCodecData.isValid() || _inBandCodecData.referenceCount() <= 1;
+                        return !_inBandCodecData.isValid() || _inBandCodecData.impl().referenceCount() <= 1;
                 }
 
                 /**
@@ -225,8 +225,8 @@ class CompressedVideoPayload : public VideoPayload {
                  *        the plane buffers.
                  */
                 void ensureExclusiveExtras() override {
-                        if (_inBandCodecData.isValid() && _inBandCodecData.referenceCount() > 1) {
-                                _inBandCodecData.modify();
+                        if (_inBandCodecData.isValid() && _inBandCodecData.impl().referenceCount() > 1) {
+                                _inBandCodecData.ensureExclusive();
                         }
                 }
 
@@ -249,7 +249,7 @@ class CompressedVideoPayload : public VideoPayload {
 
         private:
                 FrameType   _frameType;
-                Buffer::Ptr _inBandCodecData;
+                Buffer _inBandCodecData;
 };
 
 PROMEKI_NAMESPACE_END

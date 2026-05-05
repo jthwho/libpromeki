@@ -91,7 +91,7 @@ TEST_CASE("RtpPayloadL24") {
 
                 // All packets should share the same buffer
                 for (size_t i = 1; i < packets.size(); i++) {
-                        CHECK(packets[i].buffer().ptr() == packets[0].buffer().ptr());
+                        CHECK(packets[i].buffer().impl().ptr() == packets[0].buffer().impl().ptr());
                 }
         }
 
@@ -240,7 +240,7 @@ TEST_CASE("RtpPayloadRawVideo") {
 
                 auto packets = payload.pack(data.data(), frameSize);
                 for (size_t i = 1; i < packets.size(); i++) {
-                        CHECK(packets[i].buffer().ptr() == packets[0].buffer().ptr());
+                        CHECK(packets[i].buffer().impl().ptr() == packets[0].buffer().impl().ptr());
                 }
         }
 
@@ -346,7 +346,7 @@ TEST_CASE("RtpPayloadJpeg") {
 
                 // All packets share one backing buffer
                 for (size_t i = 1; i < packets.size(); i++) {
-                        CHECK(packets[i].buffer().ptr() == packets[0].buffer().ptr());
+                        CHECK(packets[i].buffer().impl().ptr() == packets[0].buffer().impl().ptr());
                 }
         }
 
@@ -531,7 +531,7 @@ TEST_CASE("RtpPayloadJpegXs") {
 
                 // Shared buffer (same pattern as JPEG / raw paths).
                 for (size_t i = 1; i < packets.size(); i++) {
-                        CHECK(packets[i].buffer().ptr() == packets[0].buffer().ptr());
+                        CHECK(packets[i].buffer().impl().ptr() == packets[0].buffer().impl().ptr());
                 }
 
                 // Non-last packets must have L=0 and strictly-increasing

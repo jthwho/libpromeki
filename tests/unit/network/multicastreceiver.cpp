@@ -136,7 +136,7 @@ TEST_CASE("MulticastReceiver") {
                 MulticastReceiver rx;
                 rx.setLocalAddress(SocketAddress::any(0));
                 rx.setReceiveTimeout(20);
-                rx.setDatagramCallback([](Buffer::Ptr, const SocketAddress &) {});
+                rx.setDatagramCallback([](Buffer, const SocketAddress &) {});
                 Error err = rx.start();
                 REQUIRE(err.isOk());
                 CHECK(rx.isActive());
@@ -159,10 +159,10 @@ TEST_CASE("MulticastReceiver") {
                 std::atomic<size_t> lastSize{0};
                 uint8_t             lastFirstByte = 0;
                 std::atomic<bool>   sawData{false};
-                rx.setDatagramCallback([&](Buffer::Ptr data, const SocketAddress &) {
-                        lastSize.store(data->size());
-                        if (data->size() > 0) {
-                                lastFirstByte = static_cast<const uint8_t *>(data->data())[0];
+                rx.setDatagramCallback([&](Buffer data, const SocketAddress &) {
+                        lastSize.store(data.size());
+                        if (data.size() > 0) {
+                                lastFirstByte = static_cast<const uint8_t *>(data.data())[0];
                         }
                         sawData.store(true);
                         count.fetch_add(1);
@@ -201,7 +201,7 @@ TEST_CASE("MulticastReceiver") {
         SUBCASE("stop is idempotent") {
                 MulticastReceiver rx;
                 rx.setLocalAddress(SocketAddress::any(0));
-                rx.setDatagramCallback([](Buffer::Ptr, const SocketAddress &) {});
+                rx.setDatagramCallback([](Buffer, const SocketAddress &) {});
                 REQUIRE(rx.start().isOk());
                 rx.stop();
                 rx.stop(); // second call is a no-op
@@ -212,7 +212,7 @@ TEST_CASE("MulticastReceiver") {
                 MulticastReceiver rx;
                 rx.setLocalAddress(SocketAddress::any(0));
                 rx.setReceiveTimeout(20);
-                rx.setDatagramCallback([](Buffer::Ptr, const SocketAddress &) {});
+                rx.setDatagramCallback([](Buffer, const SocketAddress &) {});
                 REQUIRE(rx.start().isOk());
                 rx.stop();
                 REQUIRE(rx.start().isOk());

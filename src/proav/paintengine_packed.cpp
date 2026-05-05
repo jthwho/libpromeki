@@ -28,7 +28,7 @@ template <bool MethodB> class PaintEngine_DPX : public PaintEngine::Impl {
         public:
                 static constexpr int MaxCompValue = 1023;
 
-                Buffer::Ptr _plane0;
+                Buffer _plane0;
                 Size2Du32   _size;
                 uint8_t    *_buf;
                 size_t      _stride;
@@ -383,7 +383,7 @@ class PaintEngine_v210 : public PaintEngine::Impl {
                 static constexpr V210Addr CbAddr[3] = {{0, 0}, {1, 10}, {2, 20}};
                 static constexpr V210Addr CrAddr[3] = {{0, 20}, {2, 0}, {3, 10}};
 
-                Buffer::Ptr _plane0;
+                Buffer _plane0;
                 Size2Du32   _size;
                 uint8_t    *_buf;
                 size_t      _stride;

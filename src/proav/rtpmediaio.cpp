@@ -1082,7 +1082,7 @@ void RtpMediaIO::onVideoPacket(const RtpPacket &pkt) {
         // Copy the packet into our reassembly list.  The incoming
         // RtpPacket is a view onto the receive thread's scratch
         // buffer, which is freshly allocated per packet, so we can
-        // just take ownership of its backing Buffer::Ptr by
+        // just take ownership of its backing Buffer by
         // referencing the same RtpPacket.
         _video.reasmPackets.pushToBack(pkt);
         _video.reasmTimestamp = pkt.timestamp();
@@ -1205,11 +1205,11 @@ void RtpMediaIO::emitVideoFrame() {
 
         // Build a payload from the reassembled buffer.  Both the
         // compressed and uncompressed paths copy the reassembled
-        // bytes into a fresh Buffer::Ptr that the payload adopts as
+        // bytes into a fresh Buffer that the payload adopts as
         // plane 0.
-        Buffer::Ptr plane = Buffer::Ptr::create(reassembled.size());
-        std::memcpy(plane->data(), reassembled.data(), reassembled.size());
-        plane->setSize(reassembled.size());
+        Buffer plane = Buffer(reassembled.size());
+        std::memcpy(plane.data(), reassembled.data(), reassembled.size());
+        plane.setSize(reassembled.size());
         const PixelFormat &pd = _video.readerImageDesc.pixelFormat();
 
         _video.framesReceived++;
@@ -1256,7 +1256,7 @@ void RtpMediaIO::emitVideoFrame() {
                 videoPayload = cvp;
         } else {
                 BufferView planes;
-                planes.pushToBack(plane, 0, plane->size());
+                planes.pushToBack(plane, 0, plane.size());
                 auto uvp = UncompressedVideoPayload::Ptr::create(idesc, planes);
                 uvp.modify()->setPts(capMts);
                 videoPayload = uvp;
@@ -1290,12 +1290,12 @@ void RtpMediaIO::emitVideoFrame() {
                         static_cast<int64_t>(_audio.readerAudioDesc.sampleRate()), _readerAgg.videoFrameIndex.value());
                 if (needed > 0) {
                         size_t      bufBytes = _audio.readerAudioDesc.bufferSize(needed);
-                        Buffer::Ptr pcm = Buffer::Ptr::create(bufBytes);
+                        Buffer pcm = Buffer(bufBytes);
                         auto [got, err] = _readerAgg.audioFifo.popWait(
-                                pcm.modify()->data(), needed, static_cast<unsigned int>(_readerAgg.audioTimeoutMs));
+                                pcm.data(), needed, static_cast<unsigned int>(_readerAgg.audioTimeoutMs));
                         if (got > 0) {
                                 size_t usedBytes = _audio.readerAudioDesc.bufferSize(got);
-                                pcm.modify()->setSize(usedBytes);
+                                pcm.setSize(usedBytes);
                                 BufferView view(pcm, 0, usedBytes);
                                 auto audioPayload = PcmAudioPayload::Ptr::create(_audio.readerAudioDesc, got, view);
                                 ClockDomain audioCd =
@@ -1372,11 +1372,11 @@ void RtpMediaIO::onAudioPacket(const RtpPacket &pkt) {
                 if (spf == 0) return;
                 while (_audioState.fifo.available() >= spf) {
                         size_t      bufBytes = _audio.readerAudioDesc.bufferSize(spf);
-                        Buffer::Ptr pcm = Buffer::Ptr::create(bufBytes);
-                        auto [got, popErr] = _audioState.fifo.pop(pcm.modify()->data(), spf);
+                        Buffer pcm = Buffer(bufBytes);
+                        auto [got, popErr] = _audioState.fifo.pop(pcm.data(), spf);
                         if (popErr.isError() || got == 0) break;
                         size_t usedBytes = _audio.readerAudioDesc.bufferSize(got);
-                        pcm.modify()->setSize(usedBytes);
+                        pcm.setSize(usedBytes);
                         BufferView     view(pcm, 0, usedBytes);
                         auto           audioPayload = PcmAudioPayload::Ptr::create(_audio.readerAudioDesc, got, view);
                         MediaTimeStamp capMts(TimeStamp::now(), _audio.clockDomain);

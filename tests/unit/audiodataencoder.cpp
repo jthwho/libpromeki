@@ -26,9 +26,9 @@ namespace {
         // dictated by AudioDesc::bufferSize and channelBufferOffset.
         PcmAudioPayload::Ptr makePayload(const AudioDesc &desc, size_t samples) {
                 const size_t bytes = desc.bufferSize(samples);
-                Buffer::Ptr  buf = Buffer::Ptr::create(bytes);
-                buf.modify()->setSize(bytes);
-                std::memset(buf.modify()->data(), 0, bytes);
+                Buffer  buf = Buffer(bytes);
+                buf.setSize(bytes);
+                std::memset(buf.data(), 0, bytes);
                 BufferView view(buf, 0, bytes);
                 return PcmAudioPayload::Ptr::create(desc, samples, view);
         }

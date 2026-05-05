@@ -200,14 +200,14 @@ TEST_CASE("QuickTime: readSample on uncompressed UYVY returns expected size") {
         QuickTime::Sample s0;
         REQUIRE(qt.readSample(0, 0, s0) == Error::Ok);
         REQUIRE(s0.data.isValid());
-        CHECK(s0.data->size() == 512);
+        CHECK(s0.data.size() == 512);
         CHECK(s0.index == 0);
         CHECK(s0.keyframe == true);
 
         QuickTime::Sample s1;
         REQUIRE(qt.readSample(0, 1, s1) == Error::Ok);
         REQUIRE(s1.data.isValid());
-        CHECK(s1.data->size() == 512);
+        CHECK(s1.data.size() == 512);
         CHECK(s1.index == 1);
         CHECK(s1.dts > s0.dts);
 }
@@ -221,7 +221,7 @@ TEST_CASE("QuickTime: readSample bytes match a direct file read at the computed 
         QuickTime::Sample s;
         REQUIRE(qt.readSample(0, 0, s) == Error::Ok);
         REQUIRE(s.data.isValid());
-        REQUIRE(s.data->size() > 0);
+        REQUIRE(s.data.size() > 0);
 
         // The reader should yield bytes that match what we get if we
         // search for the prores frame magic in the file. ProRes frames
@@ -230,10 +230,10 @@ TEST_CASE("QuickTime: readSample bytes match a direct file read at the computed 
         // reading sample 0 twice yields identical bytes (round-trip).
         QuickTime::Sample s2;
         REQUIRE(qt.readSample(0, 0, s2) == Error::Ok);
-        REQUIRE(s2.data->size() == s.data->size());
-        for (size_t i = 0; i < s.data->size(); ++i) {
-                REQUIRE(static_cast<const uint8_t *>(s.data->data())[i] ==
-                        static_cast<const uint8_t *>(s2.data->data())[i]);
+        REQUIRE(s2.data.size() == s.data.size());
+        for (size_t i = 0; i < s.data.size(); ++i) {
+                REQUIRE(static_cast<const uint8_t *>(s.data.data())[i] ==
+                        static_cast<const uint8_t *>(s2.data.data())[i]);
         }
 }
 
@@ -256,7 +256,7 @@ TEST_CASE("QuickTime: H.264 + PCM sample reads expose video, audio, keyframe fla
         QuickTime::Sample v0;
         REQUIRE(qt.readSample(videoIdx, 0, v0) == Error::Ok);
         REQUIRE(v0.data.isValid());
-        CHECK(v0.data->size() > 0);
+        CHECK(v0.data.size() > 0);
         CHECK(v0.keyframe == true);
 
         // Audio sample 0 must read with a non-zero size matching the per-sample
@@ -264,7 +264,7 @@ TEST_CASE("QuickTime: H.264 + PCM sample reads expose video, audio, keyframe fla
         QuickTime::Sample a0;
         REQUIRE(qt.readSample(audioIdx, 0, a0) == Error::Ok);
         REQUIRE(a0.data.isValid());
-        CHECK(a0.data->size() > 0);
+        CHECK(a0.data.size() > 0);
 }
 
 TEST_CASE("QuickTime: out-of-range sample index returns OutOfRange") {
@@ -311,7 +311,7 @@ TEST_CASE("QuickTime: fragmented MP4 sample reads return non-empty payloads") {
                 Error             err = qt.readSample(0, i, s);
                 REQUIRE(err == Error::Ok);
                 REQUIRE(s.data.isValid());
-                CHECK(s.data->size() > 0);
+                CHECK(s.data.size() > 0);
                 CHECK(s.index == i);
                 // Every sample is a keyframe (we built the fixture with -g 1).
                 CHECK(s.keyframe == true);
@@ -338,12 +338,12 @@ TEST_CASE("QuickTime: fragmented MP4 dts is monotonically increasing") {
 
 namespace {
 
-        /** @brief Allocates a Buffer::Ptr filled with @p byte and sized to @p size. */
-        Buffer::Ptr makeFilledBuffer(size_t size, uint8_t byte) {
+        /** @brief Allocates a Buffer filled with @p byte and sized to @p size. */
+        Buffer makeFilledBuffer(size_t size, uint8_t byte) {
                 Buffer b(size);
                 std::memset(b.data(), byte, size);
                 b.setSize(size);
-                return Buffer::Ptr::create(std::move(b));
+                return Buffer(std::move(b));
         }
 
 } // namespace
@@ -390,8 +390,8 @@ TEST_CASE("QuickTimeWriter: round-trip uncompressed UYVY video") {
                         QuickTime::Sample s;
                         REQUIRE(qt.readSample(0, i, s) == Error::Ok);
                         REQUIRE(s.data.isValid());
-                        CHECK(s.data->size() == 512);
-                        const uint8_t *bytes = static_cast<const uint8_t *>(s.data->data());
+                        CHECK(s.data.size() == 512);
+                        const uint8_t *bytes = static_cast<const uint8_t *>(s.data.data());
                         for (size_t k = 0; k < 512; ++k) {
                                 REQUIRE(bytes[k] == 0x10 + i);
                         }
@@ -442,9 +442,9 @@ TEST_CASE("QuickTimeWriter: round-trip ProRes pass-through video") {
                         QuickTime::Sample s;
                         REQUIRE(qt.readSample(0, i, s) == Error::Ok);
                         REQUIRE(s.data.isValid());
-                        CHECK(s.data->size() == expectedSizes[i]);
-                        const uint8_t *bytes = static_cast<const uint8_t *>(s.data->data());
-                        for (size_t k = 0; k < s.data->size(); ++k) {
+                        CHECK(s.data.size() == expectedSizes[i]);
+                        const uint8_t *bytes = static_cast<const uint8_t *>(s.data.data());
+                        for (size_t k = 0; k < s.data.size(); ++k) {
                                 REQUIRE(bytes[k] == 0xA0 + i);
                         }
                 }
@@ -584,8 +584,8 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video only)") {
                         QuickTime::Sample s;
                         REQUIRE(qt.readSample(0, i, s) == Error::Ok);
                         REQUIRE(s.data.isValid());
-                        CHECK(s.data->size() == 512);
-                        const uint8_t *bytes = static_cast<const uint8_t *>(s.data->data());
+                        CHECK(s.data.size() == 512);
+                        const uint8_t *bytes = static_cast<const uint8_t *>(s.data.data());
                         for (size_t k = 0; k < 512; ++k) {
                                 REQUIRE(bytes[k] == 0x30 + i);
                         }
@@ -656,8 +656,8 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video + audio)") {
                         QuickTime::Sample s;
                         REQUIRE(qt.readSample(videoIdx, i, s) == Error::Ok);
                         REQUIRE(s.data.isValid());
-                        CHECK(s.data->size() == 512);
-                        const uint8_t *b = static_cast<const uint8_t *>(s.data->data());
+                        CHECK(s.data.size() == 512);
+                        const uint8_t *b = static_cast<const uint8_t *>(s.data.data());
                         CHECK(b[0] == 0x40 + i);
                         CHECK(b[511] == 0x40 + i);
                 }
@@ -667,8 +667,8 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video + audio)") {
                         QuickTime::Sample range;
                         REQUIRE(qt.readSampleRange(audioIdx, i * samplesPerFrame, samplesPerFrame, range) == Error::Ok);
                         REQUIRE(range.data.isValid());
-                        CHECK(range.data->size() == audioBytesPerFrame);
-                        const uint8_t *b = static_cast<const uint8_t *>(range.data->data());
+                        CHECK(range.data.size() == audioBytesPerFrame);
+                        const uint8_t *b = static_cast<const uint8_t *>(range.data.data());
                         CHECK(b[0] == 0x80 + i);
                         CHECK(b[audioBytesPerFrame - 1] == 0x80 + i);
                 }
@@ -761,8 +761,8 @@ TEST_CASE("QuickTimeWriter: fragmented file is playable after simulated crash") 
                         QuickTime::Sample s;
                         REQUIRE(qt.readSample(0, i, s) == Error::Ok);
                         REQUIRE(s.data.isValid());
-                        CHECK(s.data->size() == 512);
-                        const uint8_t *b = static_cast<const uint8_t *>(s.data->data());
+                        CHECK(s.data.size() == 512);
+                        const uint8_t *b = static_cast<const uint8_t *>(s.data.data());
                         CHECK(b[0] == 0x50 + i);
                 }
         }
@@ -1054,12 +1054,12 @@ namespace {
                 return au;
         }
 
-        /** @brief Wrap a vector of bytes as a shared Buffer::Ptr. */
-        Buffer::Ptr bufferFromBytes(const std::vector<uint8_t> &bytes) {
+        /** @brief Wrap a vector of bytes as a shared Buffer. */
+        Buffer bufferFromBytes(const std::vector<uint8_t> &bytes) {
                 Buffer b(bytes.size());
                 std::memcpy(b.data(), bytes.data(), bytes.size());
                 b.setSize(bytes.size());
-                return Buffer::Ptr::create(std::move(b));
+                return Buffer(std::move(b));
         }
 
         /** @brief Returns the full file contents of @p path as a byte vector. */
@@ -1146,9 +1146,9 @@ TEST_CASE("QuickTimeWriter: H.264 Annex-B input is stored as AVCC with avcC box"
                 const QuickTime::Track &v = qt.tracks()[0];
                 REQUIRE(v.codecConfig().isValid());
                 CHECK(v.codecConfigType() == FourCC("avcC"));
-                const Buffer::Ptr &cfg = v.codecConfig();
-                REQUIRE(cfg->size() >= 5);
-                const uint8_t *p = static_cast<const uint8_t *>(cfg->data());
+                const Buffer &cfg = v.codecConfig();
+                REQUIRE(cfg.size() >= 5);
+                const uint8_t *p = static_cast<const uint8_t *>(cfg.data());
                 CHECK(p[0] == 0x01); // configurationVersion
                 CHECK(p[1] == 0x42); // profile_idc (Baseline)
                 CHECK(p[2] == 0xe0); // profile_compatibility
@@ -1165,12 +1165,12 @@ TEST_CASE("QuickTimeWriter: H.264 Annex-B input is stored as AVCC with avcC box"
                 QuickTime::Sample s;
                 REQUIRE(qt.readSample(0, 0, s) == Error::Ok);
                 REQUIRE(s.data.isValid());
-                REQUIRE(s.data->size() >= 4);
-                const uint8_t *p = static_cast<const uint8_t *>(s.data->data());
+                REQUIRE(s.data.size() >= 4);
+                const uint8_t *p = static_cast<const uint8_t *>(s.data.data());
                 // First 4 bytes must be a sensible length (< total size).
                 uint32_t firstLen = (static_cast<uint32_t>(p[0]) << 24) | (static_cast<uint32_t>(p[1]) << 16) |
                                     (static_cast<uint32_t>(p[2]) << 8) | (static_cast<uint32_t>(p[3]));
-                CHECK(firstLen < s.data->size());
+                CHECK(firstLen < s.data.size());
                 CHECK(firstLen > 0);
                 // And must not be a start code: the first NAL byte that
                 // follows the prefix cannot be 0x00.  Since parameter

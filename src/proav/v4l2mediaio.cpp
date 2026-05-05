@@ -1107,9 +1107,9 @@ void V4l2MediaIO::videoCaptureLoop() {
                 TimeStamp captureTime{TimeStamp::Clock::time_point{std::chrono::nanoseconds{captureNs}}};
 
                 PixelFormat pd(_imageDesc.pixelFormat());
-                Buffer::Ptr imgBuf = Buffer::Ptr::create(bytesUsed);
-                std::memcpy(imgBuf->data(), src, bytesUsed);
-                imgBuf->setSize(bytesUsed);
+                Buffer imgBuf = Buffer(bytesUsed);
+                std::memcpy(imgBuf.data(), src, bytesUsed);
+                imgBuf.setSize(bytesUsed);
 
                 // Re-queue the buffer immediately
                 if (xioctl(_fd, VIDIOC_QBUF, &vbuf) < 0) {
@@ -1142,7 +1142,7 @@ void V4l2MediaIO::videoCaptureLoop() {
                         // Uncompressed: adopt the kernel buffer as
                         // plane 0 of an UncompressedVideoPayload.
                         BufferView planes;
-                        planes.pushToBack(imgBuf, 0, imgBuf->size());
+                        planes.pushToBack(imgBuf, 0, imgBuf.size());
                         auto uvp = UncompressedVideoPayload::Ptr::create(capDesc, planes);
                         uvp.modify()->setPts(captureMts);
                         payload = uvp;
@@ -1497,11 +1497,11 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 if (avail > 0) {
                         AudioDesc   nativeDesc = _audioRing.format();
                         size_t      bufBytes = nativeDesc.bufferSize(avail);
-                        Buffer::Ptr pcm = Buffer::Ptr::create(bufBytes);
-                        auto [got, err] = _audioRing.pop(pcm.modify()->data(), avail);
+                        Buffer pcm = Buffer(bufBytes);
+                        auto [got, err] = _audioRing.pop(pcm.data(), avail);
                         if (err.isError()) return err;
                         size_t usedBytes = nativeDesc.bufferSize(got);
-                        pcm.modify()->setSize(usedBytes);
+                        pcm.setSize(usedBytes);
                         BufferView view(pcm, 0, usedBytes);
                         auto       audioPayload = PcmAudioPayload::Ptr::create(nativeDesc, got, view);
 

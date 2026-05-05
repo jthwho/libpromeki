@@ -53,7 +53,7 @@ TEST_CASE("Buffer_AllocateWithAlign") {
 
 TEST_CASE("Buffer_External") {
         char   mem[256];
-        Buffer b = Buffer::wrap(mem, sizeof(mem), 1);
+        Buffer b = Buffer::wrapHost(mem, sizeof(mem), 1);
         CHECK(b.isValid());
         CHECK(b.data() == mem);
         CHECK(b.size() == 0);
@@ -84,46 +84,54 @@ TEST_CASE("Buffer_FillZero") {
 }
 
 // ============================================================================
-// Copy semantics (deep copy, independent buffers)
+// Copy semantics — refcount-shared by default, ensureExclusive detaches
 // ============================================================================
 
-TEST_CASE("Buffer_CopyIsIndependent") {
+TEST_CASE("Buffer_CopyIsRefcountShared") {
         Buffer b1(256);
         b1.setSize(256);
         CHECK(b1.fill(0x42).isOk());
 
         Buffer b2 = b1;
-        // Deep copy — different memory, same content and size
+        // Both handles point at the same backing storage.
         CHECK(b2.isValid());
         CHECK(b2.size() == b1.size());
         CHECK(b2.availSize() == b1.availSize());
+        CHECK(b2.data() == b1.data());
+        CHECK(b1.impl().referenceCount() == 2);
+
+        // After ensureExclusive on b2, b1 keeps the original; b2 has a private clone.
+        b2.ensureExclusive();
+        CHECK(b1.impl().referenceCount() == 1);
+        CHECK(b2.impl().referenceCount() == 1);
         CHECK(b2.data() != b1.data());
 
+        // Contents were carried across the clone.
         const uint8_t *p1 = static_cast<const uint8_t *>(b1.data());
         const uint8_t *p2 = static_cast<const uint8_t *>(b2.data());
         CHECK(p2[0] == 0x42);
         CHECK(p2[255] == 0x42);
 
-        // Mutating b2 does not affect b1
+        // Mutating the now-private b2 does not affect b1.
         b2.fill(0x00);
         CHECK(p1[0] == 0x42);
         CHECK(p2[0] == 0x00);
 }
 
 // ============================================================================
-// Shared ownership via Buffer::Ptr
+// Shared ownership via Buffer
 // ============================================================================
 
 TEST_CASE("Buffer_SharedPtr") {
-        auto b1 = Buffer::Ptr::create(256);
-        CHECK(b1->fill(0x42).isOk());
-        CHECK(b1.referenceCount() == 1);
+        auto b1 = Buffer(256);
+        CHECK(b1.fill(0x42).isOk());
+        CHECK(b1.impl().referenceCount() == 1);
 
-        Buffer::Ptr b2 = b1;
-        CHECK(b1.referenceCount() == 2);
-        CHECK(b2.referenceCount() == 2);
+        Buffer b2 = b1;
+        CHECK(b1.impl().referenceCount() == 2);
+        CHECK(b2.impl().referenceCount() == 2);
         // Both point to the same buffer
-        CHECK(b1->data() == b2->data());
+        CHECK(b1.data() == b2.data());
 }
 
 // ============================================================================
@@ -224,7 +232,7 @@ TEST_CASE("Buffer_IsHostAccessible") {
 
 TEST_CASE("Buffer_Wrap") {
         char   mem[64];
-        Buffer b = Buffer::wrap(mem, sizeof(mem), 1);
+        Buffer b = Buffer::wrapHost(mem, sizeof(mem), 1);
         CHECK(b.isValid());
         CHECK(b.data() == mem);
         CHECK(b.allocSize() == sizeof(mem));
@@ -267,18 +275,18 @@ TEST_CASE("Buffer_DefaultAlign") {
 }
 
 // ============================================================================
-// PtrList type (List<Buffer::Ptr>)
+// PtrList type (List<Buffer>)
 // ============================================================================
 
-TEST_CASE("Buffer_PtrList") {
-        Buffer::PtrList list;
-        list.pushToBack(Buffer::Ptr::create(64));
-        list.pushToBack(Buffer::Ptr::create(128));
-        list.pushToBack(Buffer::Ptr::create(256));
+TEST_CASE("Buffer_List") {
+        Buffer::List list;
+        list.pushToBack(Buffer(64));
+        list.pushToBack(Buffer(128));
+        list.pushToBack(Buffer(256));
         CHECK(list.size() == 3);
-        CHECK(list[0]->availSize() == 64);
-        CHECK(list[1]->availSize() == 128);
-        CHECK(list[2]->availSize() == 256);
+        CHECK(list[0].availSize() == 64);
+        CHECK(list[1].availSize() == 128);
+        CHECK(list[2].availSize() == 256);
 }
 
 // ============================================================================

@@ -37,8 +37,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @code
  * AudioDesc desc(AudioFormat::PCMI_Float32LE, 48000, 2);
  * size_t samples = 1024;
- * auto buf = Buffer::Ptr::create(desc.bufferSize(samples));
- * BufferView plane0(buf, 0, buf->size());
+ * auto buf = Buffer(desc.bufferSize(samples));
+ * BufferView plane0(buf, 0, buf.size());
  * auto payload = PcmAudioPayload::Ptr::create(
  *         desc, samples, plane0);
  * @endcode

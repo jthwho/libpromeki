@@ -224,13 +224,13 @@ DataStream &operator>>(DataStream &s, MediaPayload::Ptr &p) {
         }
         BufferView planes;
         for (uint32_t i = 0; i < planeCount; ++i) {
-                Buffer::Ptr buf = Buffer::Ptr::create();
-                s >> *buf.modify();
+                Buffer buf;
+                s >> buf;
                 if (s.status() != DataStream::Ok) {
                         p = MediaPayload::Ptr();
                         return s;
                 }
-                const size_t sz = buf->size();
+                const size_t sz = buf.size();
                 planes.pushToBack(buf, 0, sz);
         }
         raw->setData(planes);
@@ -316,7 +316,7 @@ void CompressedVideoPayload::deserialisePayload(DataStream &s) {
         bool hasCodec = false;
         s >> hasCodec;
         if (s.status() == DataStream::Ok && hasCodec) {
-                Buffer::Ptr b;
+                Buffer b;
                 s >> b;
                 if (s.status() == DataStream::Ok) _inBandCodecData = b;
         }
@@ -357,7 +357,7 @@ void CompressedAudioPayload::deserialisePayload(DataStream &s) {
         bool hasCodec = false;
         s >> hasCodec;
         if (s.status() == DataStream::Ok && hasCodec) {
-                Buffer::Ptr b;
+                Buffer b;
                 s >> b;
                 if (s.status() == DataStream::Ok) _inBandCodecData = b;
         }
@@ -515,7 +515,7 @@ PROMEKI_LOOKUP_REGISTER(CompressedVideoPayload)
                 })
         .scalar("InBandCodecDataSize", [](const CompressedVideoPayload &p) -> std::optional<Variant> {
                 const auto &b = p.inBandCodecData();
-                return Variant(static_cast<uint64_t>(b.isValid() ? b->size() : 0u));
+                return Variant(static_cast<uint64_t>(b.isValid() ? b.size() : 0u));
         });
 
 PROMEKI_LOOKUP_REGISTER(CompressedAudioPayload)
@@ -526,7 +526,7 @@ PROMEKI_LOOKUP_REGISTER(CompressedAudioPayload)
                 })
         .scalar("InBandCodecDataSize", [](const CompressedAudioPayload &p) -> std::optional<Variant> {
                 const auto &b = p.inBandCodecData();
-                return Variant(static_cast<uint64_t>(b.isValid() ? b->size() : 0u));
+                return Variant(static_cast<uint64_t>(b.isValid() ? b.size() : 0u));
         });
 
 PROMEKI_NAMESPACE_END

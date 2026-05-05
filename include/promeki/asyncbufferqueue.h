@@ -21,9 +21,9 @@ PROMEKI_NAMESPACE_BEGIN
  *        semantics.
  * @ingroup io
  *
- * @c AsyncBufferQueue holds a thread-safe queue of @ref Buffer::Ptr
+ * @c AsyncBufferQueue holds a thread-safe queue of @ref Buffer
  * segments alongside a "writer side closed" latch.  The producer enqueues
- * @ref Buffer::Ptr segments via @ref enqueue and signals end-of-stream via
+ * @ref Buffer segments via @ref enqueue and signals end-of-stream via
  * @ref closeWriting.  The consumer drains via @ref read on whichever
  * thread owns the device.
  *
@@ -99,7 +99,7 @@ class AsyncBufferQueue : public IODevice {
                 /**
                  * @brief Writes are not supported on the consumer side.
                  *
-                 * The producer enqueues whole @ref Buffer::Ptr segments
+                 * The producer enqueues whole @ref Buffer segments
                  * via @ref enqueue.  A direct @ref write would force a
                  * copy into a freshly-allocated buffer for every byte
                  * range, defeating the share-by-pointer design.
@@ -164,7 +164,7 @@ class AsyncBufferQueue : public IODevice {
                  *         closed (or @ref closeWriting was already
                  *         called).
                  */
-                Error enqueue(const Buffer::Ptr &segment);
+                Error enqueue(const Buffer &segment);
 
                 /**
                  * @brief Latches the writer side closed.
@@ -186,7 +186,7 @@ class AsyncBufferQueue : public IODevice {
 
         private:
                 struct Segment {
-                                Buffer::Ptr buffer;
+                                Buffer buffer;
                                 size_t      offset = 0; ///< Bytes already drained from this segment.
                 };
 

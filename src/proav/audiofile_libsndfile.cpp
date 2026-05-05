@@ -426,9 +426,9 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                 return Error::NotOpen;
                         }
                         const size_t bytes = _desc.bufferSize(samples);
-                        auto         buf = Buffer::Ptr::create(bytes);
-                        buf.modify()->setSize(bytes);
-                        void *raw = buf.modify()->data();
+                        auto         buf = Buffer(bytes);
+                        buf.setSize(bytes);
+                        void *raw = buf.data();
 
                         sf_count_t ct = 0;
                         switch (_desc.format().id()) {
@@ -454,7 +454,7 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                         }
                         if (ct == 0) return Error::EndOfFile;
                         const size_t actualBytes = _desc.bufferSize(static_cast<size_t>(ct));
-                        buf.modify()->setSize(actualBytes);
+                        buf.setSize(actualBytes);
                         BufferView planes;
                         planes.pushToBack(buf, 0, actualBytes);
                         out = PcmAudioPayload::Ptr::create(_desc, static_cast<size_t>(ct), planes);

@@ -28,11 +28,11 @@ namespace {
         }
 
         /** @brief Deep-copies a BufferView's bytes into a freshly allocated Buffer. */
-        Buffer::Ptr copyView(const BufferView &v) {
-                Buffer::Ptr buf = Buffer::Ptr::create(v.size());
+        Buffer copyView(const BufferView &v) {
+                Buffer buf = Buffer(v.size());
                 if (!buf) return buf;
-                if (v.size() > 0) std::memcpy(buf->data(), v.data(), v.size());
-                buf->setSize(v.size());
+                if (v.size() > 0) std::memcpy(buf.data(), v.data(), v.size());
+                buf.setSize(v.size());
                 return buf;
         }
 
@@ -98,7 +98,7 @@ Error HevcDecoderConfig::fromAnnexB(const BufferView &au, HevcDecoderConfig &out
         bool  haveProfile = false;
         Error iterErr = H264Bitstream::forEachAnnexBNal(au, [&](const H264Bitstream::NalUnit &nal) -> Error {
                 uint8_t     t = hevcNalType(nal.header0);
-                Buffer::Ptr copy;
+                Buffer copy;
                 switch (t) {
                         case HevcNalTypeVps:
                                 copy = copyView(nal.view);
@@ -168,7 +168,7 @@ Error HevcDecoderConfig::parse(const BufferView &payload, HevcDecoderConfig &out
                 uint16_t numNalus = static_cast<uint16_t>(readBE(data + pos + 1, 2));
                 pos += 3;
 
-                List<Buffer::Ptr> *bucket = nullptr;
+                List<Buffer> *bucket = nullptr;
                 if (nalType == HevcNalTypeVps)
                         bucket = &out.vps;
                 else if (nalType == HevcNalTypeSps)
@@ -182,7 +182,7 @@ Error HevcDecoderConfig::parse(const BufferView &payload, HevcDecoderConfig &out
                         pos += 2;
                         if (!need(nalLen)) return Error::CorruptData;
                         if (bucket != nullptr) {
-                                Buffer::Ptr buf =
+                                Buffer buf =
                                         copyView(BufferView(payload.buffer(), payload.offset() + pos, nalLen));
                                 if (!buf) return Error::NoMem;
                                 bucket->pushToBack(buf);
@@ -193,12 +193,12 @@ Error HevcDecoderConfig::parse(const BufferView &payload, HevcDecoderConfig &out
         return Error::Ok;
 }
 
-Error HevcDecoderConfig::serialize(Buffer::Ptr &outBuf) const {
+Error HevcDecoderConfig::serialize(Buffer &outBuf) const {
         // Determine which arrays are populated so we can emit only
         // those (empty arrays are legal but wasteful).
         struct ArrayRef {
                         uint8_t                  nalType;
-                        const List<Buffer::Ptr> *nals;
+                        const List<Buffer> *nals;
         };
         ArrayRef arrays[] = {
                 {HevcNalTypeVps, &vps},
@@ -212,17 +212,17 @@ Error HevcDecoderConfig::serialize(Buffer::Ptr &outBuf) const {
                 if (a.nals->isEmpty()) continue;
                 ++numArrays;
                 total += 3; // per-array header (flags+type, numNalus BE16)
-                for (const Buffer::Ptr &n : *a.nals) {
+                for (const Buffer &n : *a.nals) {
                         if (!n) return Error::InvalidArgument;
-                        if (n->size() > 0xffff) return Error::InvalidArgument;
-                        total += 2 + n->size();
+                        if (n.size() > 0xffff) return Error::InvalidArgument;
+                        total += 2 + n.size();
                 }
                 if (a.nals->size() > 0xffff) return Error::InvalidArgument;
         }
 
-        Buffer::Ptr buf = Buffer::Ptr::create(total);
+        Buffer buf = Buffer(total);
         if (!buf) return Error::NoMem;
-        uint8_t *dst = static_cast<uint8_t *>(buf->data());
+        uint8_t *dst = static_cast<uint8_t *>(buf.data());
 
         dst[0] = configurationVersion;
         dst[1] = static_cast<uint8_t>(((generalProfileSpace & 0x03) << 6) | ((generalTierFlag & 0x01) << 5) |
@@ -249,25 +249,25 @@ Error HevcDecoderConfig::serialize(Buffer::Ptr &outBuf) const {
                 dst[cursor++] = static_cast<uint8_t>(0x80 | (a.nalType & 0x3f));
                 writeBE(dst + cursor, static_cast<uint64_t>(a.nals->size()), 2);
                 cursor += 2;
-                for (const Buffer::Ptr &n : *a.nals) {
-                        uint16_t nlen = static_cast<uint16_t>(n->size());
+                for (const Buffer &n : *a.nals) {
+                        uint16_t nlen = static_cast<uint16_t>(n.size());
                         writeBE(dst + cursor, nlen, 2);
                         cursor += 2;
-                        if (nlen > 0) std::memcpy(dst + cursor, n->data(), nlen);
+                        if (nlen > 0) std::memcpy(dst + cursor, n.data(), nlen);
                         cursor += nlen;
                 }
         }
 
-        buf->setSize(total);
+        buf.setSize(total);
         outBuf = buf;
         return Error::Ok;
 }
 
-Error HevcDecoderConfig::toAnnexB(Buffer::Ptr &outBuf) const {
+Error HevcDecoderConfig::toAnnexB(Buffer &outBuf) const {
         List<BufferView> nals;
-        auto             append = [&](const List<Buffer::Ptr> &list) {
-                for (const Buffer::Ptr &p : list) {
-                        nals.pushToBack(BufferView(p, 0, p ? p->size() : 0));
+        auto             append = [&](const List<Buffer> &list) {
+                for (const Buffer &p : list) {
+                        nals.pushToBack(BufferView(p, 0, p ? p.size() : 0));
                 }
         };
         append(vps);

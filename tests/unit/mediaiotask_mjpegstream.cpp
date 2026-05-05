@@ -51,10 +51,10 @@ namespace {
                         std::atomic<int> frames{0};
                         std::atomic<int> closed{0};
                         Mutex            mtx;
-                        Buffer::Ptr      lastJpeg;
+                        Buffer      lastJpeg;
                         TimeStamp        lastTs;
 
-                        void onFrame(const Buffer::Ptr &jpeg, const TimeStamp &ts) override {
+                        void onFrame(const Buffer &jpeg, const TimeStamp &ts) override {
                                 Mutex::Locker lk(mtx);
                                 lastJpeg = jpeg;
                                 lastTs = ts;
@@ -62,7 +62,7 @@ namespace {
                         }
                         void onClosed() override { closed.fetch_add(1); }
 
-                        Buffer::Ptr snapshotJpeg() {
+                        Buffer snapshotJpeg() {
                                 Mutex::Locker lk(mtx);
                                 return lastJpeg;
                         }
@@ -149,10 +149,10 @@ namespace {
         // Verifies a JPEG bitstream begins with SOI (FFD8) and ends with EOI
         // (FFD9).  Both markers must be present for the buffer to count as a
         // well-formed JPEG.
-        bool hasSoiEoi(const Buffer::Ptr &b) {
-                if (!b.isValid() || b->size() < 4) return false;
-                const uint8_t *p = static_cast<const uint8_t *>(b->data());
-                const size_t   n = b->size();
+        bool hasSoiEoi(const Buffer &b) {
+                if (!b.isValid() || b.size() < 4) return false;
+                const uint8_t *p = static_cast<const uint8_t *>(b.data());
+                const size_t   n = b.size();
                 if (p[0] != 0xFF || p[1] != 0xD8) return false;
                 if (p[n - 2] != 0xFF || p[n - 1] != 0xD9) return false;
                 return true;
@@ -226,7 +226,7 @@ TEST_CASE("MjpegStreamMediaIO_SubscriberReceivesValidJpegs") {
 
         // The last JPEG buffer the subscriber saw must carry valid
         // SOI / EOI markers.
-        const Buffer::Ptr last = sub.snapshotJpeg();
+        const Buffer last = sub.snapshotJpeg();
         CHECK(hasSoiEoi(last));
 }
 
@@ -331,7 +331,7 @@ TEST_CASE("MjpegStreamMediaIO_LatestAccessorsTrackRingTail") {
         CHECK_FALSE(rig.sink->latestJpeg().isValid());
 
         pumpForMs(rig, 200);
-        const Buffer::Ptr latest = rig.sink->latestJpeg();
+        const Buffer latest = rig.sink->latestJpeg();
         CHECK(latest.isValid());
         CHECK(hasSoiEoi(latest));
 }

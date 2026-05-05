@@ -13,6 +13,7 @@
 #include <promeki/stringlist.h>
 #include <promeki/list.h>
 #include <promeki/error.h>
+#include <promeki/memdomain.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -203,6 +204,8 @@ class MemSpace {
                                         char value); ///< Fill memory with a byte value. Called only when ptr != nullptr.
                                 Stats *stats =
                                         nullptr; ///< Runtime counters; owned by the registry, auto-created by registerData() if null.
+                                MemDomain::ID domainId =
+                                        MemDomain::Host; ///< Domain this MemSpace belongs to; defaults to Host.
                 };
 
                 /**
@@ -282,6 +285,18 @@ class MemSpace {
                  * @return The ID.
                  */
                 ID id() const { return d->id; }
+
+                /**
+                 * @brief Returns the domain this memory space belongs to.
+                 *
+                 * Multiple MemSpaces can share a domain (e.g. System,
+                 * SystemSecure, and CudaPinnedHost all live in
+                 * @ref MemDomain::Host).  Used by Buffer's
+                 * domain-directed mapping to decide whether the
+                 * request can be satisfied directly or requires a
+                 * cross-domain transfer.
+                 */
+                MemDomain domain() const { return MemDomain(d->domainId); }
 
                 /**
                  * @brief Returns true if the given allocation is directly accessible from the host CPU.

@@ -15,7 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 // see the bottom of this file for the Entry-scoped scalars.
 
 // Sentinel for "no buffer" slices.  Stored in View::bufferIdx when the
-// slice carries a null Buffer::Ptr — no entry is inserted into
+// slice carries a null Buffer — no entry is inserted into
 // _buffers in that case.
 static constexpr size_t kNoBuffer = std::numeric_limits<size_t>::max();
 
@@ -23,8 +23,8 @@ static constexpr size_t kNoBuffer = std::numeric_limits<size_t>::max();
 // Entry
 // ---------------------------------------------------------------------------
 
-const Buffer::Ptr &BufferView::Entry::buffer() const {
-        static const Buffer::Ptr kNull;
+const Buffer &BufferView::Entry::buffer() const {
+        static const Buffer kNull;
         if (_list == nullptr) return kNull;
         const View &v = _list->_views[_idx];
         if (v.bufferIdx == kNoBuffer) return kNull;
@@ -34,7 +34,7 @@ const Buffer::Ptr &BufferView::Entry::buffer() const {
 size_t BufferView::Entry::bufferIndex() const {
         // Surface the internal deduplication index so callers can
         // tell "do these two slices share a backing buffer?" without
-        // reaching for Buffer::Ptr equality — useful for dump /
+        // reaching for Buffer equality — useful for dump /
         // query paths that want a compact integer handle.
         if (_list == nullptr) return kNoBuffer;
         return _list->_views[_idx].bufferIdx;
@@ -51,9 +51,9 @@ size_t BufferView::Entry::size() const {
 }
 
 uint8_t *BufferView::Entry::data() const {
-        const Buffer::Ptr &b = buffer();
+        const Buffer &b = buffer();
         if (!b.isValid()) return nullptr;
-        return static_cast<uint8_t *>(b->data()) + offset();
+        return static_cast<uint8_t *>(b.data()) + offset();
 }
 
 bool BufferView::Entry::isValid() const {
@@ -67,7 +67,7 @@ bool BufferView::Entry::isValid() const {
 // BufferView — construction
 // ---------------------------------------------------------------------------
 
-BufferView::BufferView(Buffer::Ptr buf, size_t offset, size_t size) {
+BufferView::BufferView(Buffer buf, size_t offset, size_t size) {
         pushToBack(std::move(buf), offset, size);
 }
 
@@ -79,11 +79,12 @@ BufferView::BufferView(std::initializer_list<BufferView> init) {
 // BufferView — buffer interning
 // ---------------------------------------------------------------------------
 
-size_t BufferView::internBuffer(const Buffer::Ptr &buf) {
+size_t BufferView::internBuffer(const Buffer &buf) {
         if (!buf.isValid()) return kNoBuffer;
-        const Buffer *key = buf.ptr();
+        // Identity check: two Buffer handles point at the same backing
+        // BufferImpl iff their internal SharedPtrs compare equal.
         for (size_t i = 0; i < _buffers.size(); ++i) {
-                if (_buffers[i].ptr() == key) return i;
+                if (_buffers[i] == buf) return i;
         }
         _buffers.pushToBack(buf);
         return _buffers.size() - 1;
@@ -93,7 +94,7 @@ size_t BufferView::internBuffer(const Buffer::Ptr &buf) {
 // BufferView — mutation
 // ---------------------------------------------------------------------------
 
-void BufferView::pushToBack(Buffer::Ptr buf, size_t offset, size_t size) {
+void BufferView::pushToBack(Buffer buf, size_t offset, size_t size) {
         View v;
         v.bufferIdx = internBuffer(buf);
         v.offset = offset;
@@ -104,7 +105,7 @@ void BufferView::pushToBack(Buffer::Ptr buf, size_t offset, size_t size) {
 void BufferView::append(const BufferView &other) {
         for (size_t i = 0; i < other._views.size(); ++i) {
                 const View        &ov = other._views[i];
-                const Buffer::Ptr &ob = (ov.bufferIdx == kNoBuffer) ? Buffer::Ptr() : other._buffers[ov.bufferIdx];
+                const Buffer &ob = (ov.bufferIdx == kNoBuffer) ? Buffer() : other._buffers[ov.bufferIdx];
                 pushToBack(ob, ov.offset, ov.size);
         }
 }
@@ -133,8 +134,8 @@ size_t BufferView::size() const {
 // per-view BufferView API so callers that only ever deal with a single
 // slice stay readable after the list-ification.
 
-const Buffer::Ptr &BufferView::buffer() const {
-        static const Buffer::Ptr kNull;
+const Buffer &BufferView::buffer() const {
+        static const Buffer kNull;
         if (_views.isEmpty()) return kNull;
         const View &v = _views[0];
         if (v.bufferIdx == kNoBuffer) return kNull;
@@ -147,9 +148,9 @@ size_t BufferView::offset() const {
 }
 
 uint8_t *BufferView::data() const {
-        const Buffer::Ptr &b = buffer();
+        const Buffer &b = buffer();
         if (!b.isValid()) return nullptr;
-        return static_cast<uint8_t *>(b->data()) + offset();
+        return static_cast<uint8_t *>(b.data()) + offset();
 }
 
 bool BufferView::isValid() const {
@@ -161,12 +162,14 @@ bool BufferView::isValid() const {
 
 bool BufferView::isExclusive() const {
         // Each unique buffer appears exactly once in _buffers, and the
-        // list holds exactly one Buffer::Ptr reference to it.  Any
-        // refcount above 1 means an external holder exists.
+        // list holds exactly one Buffer reference to it.  Any
+        // refcount above 1 means an external holder exists.  We reach
+        // through Buffer::impl() to read the shared BufferImpl's own
+        // refcount.
         for (size_t i = 0; i < _buffers.size(); ++i) {
-                const Buffer::Ptr &b = _buffers[i];
+                const Buffer &b = _buffers[i];
                 if (!b.isValid()) continue;
-                if (b.referenceCount() > 1) return false;
+                if (b.impl().referenceCount() > 1) return false;
         }
         return true;
 }
@@ -176,12 +179,9 @@ void BufferView::ensureExclusive() {
         // don't change because bufferIdx still resolves to the same
         // (now-exclusive) clone in _buffers.
         for (size_t i = 0; i < _buffers.size(); ++i) {
-                Buffer::Ptr &b = _buffers[i];
+                Buffer &b = _buffers[i];
                 if (!b.isValid()) continue;
-                // referenceCount() == 1 means this list is the only
-                // holder; >1 means someone outside also has a ref,
-                // so clone to get private storage.
-                if (b.referenceCount() > 1) b.modify();
+                if (b.impl().referenceCount() > 1) b.ensureExclusive();
         }
 }
 
@@ -210,8 +210,8 @@ PROMEKI_LOOKUP_REGISTER(BufferView::Entry)
                 })
         .scalar("BufferSize",
                 [](const BufferView::Entry &e) -> std::optional<Variant> {
-                        const Buffer::Ptr &b = e.buffer();
-                        return Variant(static_cast<uint64_t>(b.isValid() ? b->size() : 0u));
+                        const Buffer &b = e.buffer();
+                        return Variant(static_cast<uint64_t>(b.isValid() ? b.size() : 0u));
                 })
         .scalar("IsValid", [](const BufferView::Entry &e) -> std::optional<Variant> { return Variant(e.isValid()); });
 

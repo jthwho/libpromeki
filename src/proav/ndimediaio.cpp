@@ -352,11 +352,11 @@ Error NdiMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 if (avail > 0 && _audioRing.format().isValid()) {
                         AudioDesc   nativeDesc = _audioRing.format();
                         size_t      bufBytes   = nativeDesc.bufferSize(avail);
-                        Buffer::Ptr pcm        = Buffer::Ptr::create(bufBytes);
-                        auto [got, err]        = _audioRing.pop(pcm.modify()->data(), avail);
+                        Buffer pcm        = Buffer(bufBytes);
+                        auto [got, err]        = _audioRing.pop(pcm.data(), avail);
                         if (err.isOk() && got > 0) {
                                 size_t     usedBytes = nativeDesc.bufferSize(got);
-                                pcm.modify()->setSize(usedBytes);
+                                pcm.setSize(usedBytes);
                                 BufferView view(pcm, 0, usedBytes);
                                 auto       audioPayload = PcmAudioPayload::Ptr::create(nativeDesc, got, view);
                                 // PTS = sender-anchored time of the
@@ -1177,8 +1177,8 @@ void NdiMediaIO::captureLoop() {
                                         totalBytes = static_cast<size_t>(vframe.line_stride_in_bytes) *
                                                      static_cast<size_t>(vframe.yres);
                                 }
-                                Buffer::Ptr buf = Buffer::Ptr::create(totalBytes);
-                                std::memcpy(buf.modify()->data(), vframe.p_data, totalBytes);
+                                Buffer buf = Buffer(totalBytes);
+                                std::memcpy(buf.data(), vframe.p_data, totalBytes);
                                 BufferView                    view(buf, 0, totalBytes);
                                 UncompressedVideoPayload::Ptr vp =
                                         UncompressedVideoPayload::Ptr::create(desc, view);

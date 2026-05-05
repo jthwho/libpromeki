@@ -130,7 +130,7 @@ Buffer Resource::data(const String &path, Error *err) {
         // Non-owning view over the .rodata bytes. Buffer::wrap leaves
         // _size at 0 — we set it explicitly to the resource size so
         // callers can read size() directly.
-        Buffer buf = Buffer::wrap(const_cast<unsigned char *>(file->data), file->size, /*align*/ 0);
+        Buffer buf = Buffer::wrapHost(const_cast<unsigned char *>(file->data), file->size, /*align*/ 0);
         buf.setSize(file->size);
         if (err != nullptr) *err = Error(Error::Ok);
         return buf;

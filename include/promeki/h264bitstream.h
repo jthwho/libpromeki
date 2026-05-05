@@ -47,9 +47,9 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Example — convert an Annex-B access unit from an encoder to
  *      MP4-friendly AVCC bytes:
  * @code
- * Buffer::Ptr annexBBytes = encoderOutput();   // 00 00 00 01 | NAL | ...
+ * Buffer annexBBytes = encoderOutput();   // 00 00 00 01 | NAL | ...
  * auto [avccBytes, err] = H264Bitstream::annexBToAvcc(
- *         BufferView(annexBBytes, 0, annexBBytes->size()));
+ *         BufferView(annexBBytes, 0, annexBBytes.size()));
  * if(err.isError()) return err;
  * qtWriter.writeSample(trackId, avccBytes);
  * @endcode
@@ -151,7 +151,7 @@ class H264Bitstream {
                  *         @ref Error::CorruptData if a NAL payload
                  *         does not fit in @p lenSize bytes.
                  */
-                static Error annexBToAvcc(const BufferView &in, uint8_t lenSize, Buffer::Ptr &outBuf);
+                static Error annexBToAvcc(const BufferView &in, uint8_t lenSize, Buffer &outBuf);
 
                 /**
                  * @brief Convert an Annex-B byte stream to AVCC form,
@@ -181,7 +181,7 @@ class H264Bitstream {
                  */
                 static Error annexBToAvccFiltered(const BufferView &in, uint8_t lenSize,
                                                   const std::function<bool(const NalUnit &)> &keep,
-                                                  Buffer::Ptr                                &outBuf);
+                                                  Buffer                                &outBuf);
 
                 /**
                  * @brief Convert an AVCC byte stream to Annex-B form
@@ -197,7 +197,7 @@ class H264Bitstream {
                  *         @ref Error::CorruptData if a length prefix
                  *         implies a NAL that runs past the input end.
                  */
-                static Error avccToAnnexB(const BufferView &in, uint8_t lenSize, Buffer::Ptr &outBuf);
+                static Error avccToAnnexB(const BufferView &in, uint8_t lenSize, Buffer &outBuf);
 
                 /**
                  * @brief Build an Annex-B byte stream from a list of
@@ -216,7 +216,7 @@ class H264Bitstream {
                  *                 bytes.  Empty if @p nals is empty.
                  * @return @ref Error::Ok, or an allocation failure.
                  */
-                static Error wrapNalsAsAnnexB(const List<BufferView> &nals, Buffer::Ptr &outBuf);
+                static Error wrapNalsAsAnnexB(const List<BufferView> &nals, Buffer &outBuf);
 };
 
 /**
@@ -235,7 +235,7 @@ class H264Bitstream {
  * // build the avcC record to place inside the stsd entry.
  * AvcDecoderConfig cfg;
  * H264Bitstream::fromAnnexB(idrAccessUnit, cfg);  // not here; see fromAnnexB
- * Buffer::Ptr avccPayload;
+ * Buffer avccPayload;
  * cfg.serialize(avccPayload);
  * qtWriter.setTrackAvcC(trackId, avccPayload);
  * @endcode
@@ -247,7 +247,7 @@ class H264Bitstream {
  * // them before the first VCL packet.
  * AvcDecoderConfig cfg;
  * AvcDecoderConfig::parse(avccPayload, cfg);
- * Buffer::Ptr psAnnexB;
+ * Buffer psAnnexB;
  * cfg.toAnnexB(psAnnexB);
  * decoder.submitPayload(CompressedVideoPayload(psAnnexB, PixelFormat::H264,
  *                                               CompressedVideoPayload::ParameterSet));
@@ -268,8 +268,8 @@ struct AvcDecoderConfig {
                 uint8_t           profileCompatibility = 0; ///< SPS byte 2 (constraint flags + reserved).
                 uint8_t           avcLevelIndication = 0;   ///< SPS byte 3 (level_idc).
                 uint8_t           lengthSizeMinusOne = 3;   ///< NAL length prefix size minus 1; 3 = 4-byte.
-                List<Buffer::Ptr> sps; ///< Sequence parameter set NALs (payload only, no start code or length prefix).
-                List<Buffer::Ptr> pps; ///< Picture parameter set NALs.
+                List<Buffer> sps; ///< Sequence parameter set NALs (payload only, no start code or length prefix).
+                List<Buffer> pps; ///< Picture parameter set NALs.
 
                 /**
          * @brief Populate an @c AvcDecoderConfig from an Annex-B
@@ -280,7 +280,7 @@ struct AvcDecoderConfig {
          * Extracts @c avcProfileIndication / @c profileCompatibility
          * / @c avcLevelIndication from bytes 1-3 of the first SPS
          * found.  Parameter sets are stored as freshly allocated
-         * Buffer::Ptr copies so the result outlives @p au.
+         * Buffer copies so the result outlives @p au.
          *
          * @param au   An Annex-B access unit that contains at least
          *             one SPS and one PPS — typically the access
@@ -318,7 +318,7 @@ struct AvcDecoderConfig {
          * @param outBuf  Receives the freshly allocated payload
          *                buffer.
          */
-                Error serialize(Buffer::Ptr &outBuf) const;
+                Error serialize(Buffer &outBuf) const;
 
                 /**
          * @brief Concatenate @c sps and @c pps as an Annex-B byte
@@ -328,7 +328,7 @@ struct AvcDecoderConfig {
          * expects Annex-B (e.g. NVDec) after parsing an @c avcC
          * record out of an MP4 container.
          */
-                Error toAnnexB(Buffer::Ptr &outBuf) const;
+                Error toAnnexB(Buffer &outBuf) const;
 };
 
 PROMEKI_NAMESPACE_END

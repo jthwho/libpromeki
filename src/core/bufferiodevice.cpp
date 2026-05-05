@@ -75,7 +75,10 @@ int64_t BufferIODevice::write(const void *data, int64_t maxSize) {
                 while (newCap < needed) newCap *= 2;
                 Buffer grown(newCap);
                 if (_buffer->size() > 0) {
-                        _buffer->memSpace().copy(_buffer->allocation(), grown.allocation(), _buffer->size());
+                        // Both buffers are host-mapped (same MemSpace::System
+                        // / SystemSecure family) so a direct memcpy works
+                        // without going through a cross-space copy registry.
+                        std::memcpy(grown.data(), _buffer->data(), _buffer->size());
                 }
                 grown.setSize(_buffer->size());
                 *_buffer = std::move(grown);

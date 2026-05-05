@@ -513,8 +513,6 @@ class DataStream {
                 DataStream &operator<<(const String &val);
                 /** @brief Writes a Buffer as length-prefixed raw bytes. */
                 DataStream &operator<<(const Buffer &val);
-                /** @brief Writes a shared Buffer as length-prefixed raw bytes. */
-                DataStream &operator<<(const Buffer::Ptr &val);
                 /** @brief Writes a Variant using the same tag as the value's direct form. */
                 DataStream &operator<<(const Variant &val);
 
@@ -609,8 +607,6 @@ class DataStream {
                 DataStream &operator>>(String &val);
                 /** @brief Reads a Buffer from length-prefixed raw bytes. */
                 DataStream &operator>>(Buffer &val);
-                /** @brief Reads a shared Buffer, allocating a new Buffer and wrapping it. */
-                DataStream &operator>>(Buffer::Ptr &val);
                 /** @brief Reads any value into a Variant, dispatching on the tag. */
                 DataStream &operator>>(Variant &val);
 

@@ -567,7 +567,7 @@ class MediaPayload {
                  *
                  * Walks @ref data() and, when a plane's backing
                  * @ref Buffer is shared (reference count &gt; 1),
-                 * clones it via @c Buffer::Ptr::modify.  Whole-
+                 * clones it via @c Buffer::modify.  Whole-
                  * buffer views keep their @c offset=0, @c size=full
                  * invariant; sub-range views retain offset and size
                  * but point at the exclusive clone.
@@ -668,7 +668,7 @@ class MediaPayload {
                  *        buffers.
                  *
                  * Default: no-op.  Subclasses override and call
-                 * @c Buffer::Ptr::modify on each extra field that
+                 * @c Buffer::modify on each extra field that
                  * holds a shared @ref Buffer.
                  */
                 virtual void ensureExclusiveExtras() {}

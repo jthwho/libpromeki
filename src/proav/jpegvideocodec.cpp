@@ -273,9 +273,9 @@ namespace {
                 PixelFormat::ID jpegPd = jpegPixelFormatFor(pd.id());
                 ImageDesc       cdesc(Size2Du32(width, height), PixelFormat(jpegPd));
                 cdesc.metadata() = idesc.metadata();
-                Buffer::Ptr buf = Buffer::Ptr::create(outSize);
-                std::memcpy(buf.modify()->data(), outBuffer, outSize);
-                buf.modify()->setSize(outSize);
+                Buffer buf = Buffer(outSize);
+                std::memcpy(buf.data(), outBuffer, outSize);
+                buf.setSize(outSize);
                 free(outBuffer);
                 BufferView view(buf, 0, outSize);
                 auto       cvp = CompressedVideoPayload::Ptr::create(cdesc, view);
@@ -438,9 +438,9 @@ namespace {
                 PixelFormat::ID jpegPd = jpegPixelFormatFor(idesc.pixelFormat().id());
                 ImageDesc       cdesc(Size2Du32(width, height), PixelFormat(jpegPd));
                 cdesc.metadata() = idesc.metadata();
-                Buffer::Ptr buf = Buffer::Ptr::create(outSize);
-                std::memcpy(buf.modify()->data(), outBuffer, outSize);
-                buf.modify()->setSize(outSize);
+                Buffer buf = Buffer(outSize);
+                std::memcpy(buf.data(), outBuffer, outSize);
+                buf.setSize(outSize);
                 free(outBuffer);
                 BufferView view(buf, 0, outSize);
                 auto       cvp = CompressedVideoPayload::Ptr::create(cdesc, view);

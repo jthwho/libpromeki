@@ -272,9 +272,9 @@ CompressedVideoPayload::Ptr JpegXsVideoEncoder::Impl::encodeFrame(const Uncompre
         // as a CompressedVideoPayload.
         ImageDesc cdesc(Size2Du32(width, height), PixelFormat(layout.compressed));
         cdesc.metadata() = idesc.metadata();
-        Buffer::Ptr buf = Buffer::Ptr::create(outFrame.bitstream.used_size);
-        std::memcpy(buf.modify()->data(), outFrame.bitstream.buffer, outFrame.bitstream.used_size);
-        buf.modify()->setSize(outFrame.bitstream.used_size);
+        Buffer buf = Buffer(outFrame.bitstream.used_size);
+        std::memcpy(buf.data(), outFrame.bitstream.buffer, outFrame.bitstream.used_size);
+        buf.setSize(outFrame.bitstream.used_size);
         BufferView view(buf, 0, outFrame.bitstream.used_size);
         auto       cvp = CompressedVideoPayload::Ptr::create(cdesc, view);
         cvp.modify()->metadata() = idesc.metadata();

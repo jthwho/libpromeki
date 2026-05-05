@@ -73,9 +73,9 @@ class RtpSession::ReceiveThread : public Thread {
                         }
 
                         while (!_stopRequested.value()) {
-                                Buffer::Ptr   buf = Buffer::Ptr::create(kMaxPacketSize);
+                                Buffer   buf = Buffer(kMaxPacketSize);
                                 SocketAddress sender;
-                                ssize_t n = _session->_transport->receivePacket(buf->data(), kMaxPacketSize, &sender);
+                                ssize_t n = _session->_transport->receivePacket(buf.data(), kMaxPacketSize, &sender);
                                 if (n <= 0) {
                                         // Timeout (EAGAIN on UDP),
                                         // transient error, or empty
@@ -87,7 +87,7 @@ class RtpSession::ReceiveThread : public Thread {
                                         // fixed RTP header; drop.
                                         continue;
                                 }
-                                buf->setSize(static_cast<size_t>(n));
+                                buf.setSize(static_cast<size_t>(n));
 
                                 RtpPacket pkt(buf, 0, static_cast<size_t>(n));
                                 if (!pkt.isValid()) {
@@ -100,7 +100,7 @@ class RtpSession::ReceiveThread : public Thread {
                                 if (_session->_receiveCallback) {
                                         _session->_receiveCallback(pkt, sender);
                                 }
-                                _session->packetReceivedSignal.emit(Buffer(*buf), pkt.timestamp(), pkt.payloadType(),
+                                _session->packetReceivedSignal.emit(buf, pkt.timestamp(), pkt.payloadType(),
                                                                     pkt.marker());
                         }
                 }

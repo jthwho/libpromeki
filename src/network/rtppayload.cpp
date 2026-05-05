@@ -35,13 +35,13 @@ RtpPacket::List RtpPayloadL24::pack(const void *mediaData, size_t size) {
 
         const size_t numPackets = packetCount(size, alignedPayload);
         const size_t totalBufSize = numPackets * (RtpPacket::HeaderSize + alignedPayload);
-        auto         buf = Buffer::Ptr::create(totalBufSize);
-        buf->setSize(totalBufSize);
+        auto         buf = Buffer(totalBufSize);
+        buf.setSize(totalBufSize);
 
         const uint8_t *src = static_cast<const uint8_t *>(mediaData);
         size_t         remaining = size;
         size_t         bufOffset = 0;
-        uint8_t       *bufData = static_cast<uint8_t *>(buf->data());
+        uint8_t       *bufData = static_cast<uint8_t *>(buf.data());
 
         for (size_t i = 0; i < numPackets; i++) {
                 size_t payloadSize = std::min(alignedPayload, remaining);
@@ -99,13 +99,13 @@ RtpPacket::List RtpPayloadL16::pack(const void *mediaData, size_t size) {
 
         const size_t numPackets = packetCount(size, alignedPayload);
         const size_t totalBufSize = numPackets * (RtpPacket::HeaderSize + alignedPayload);
-        auto         buf = Buffer::Ptr::create(totalBufSize);
-        buf->setSize(totalBufSize);
+        auto         buf = Buffer(totalBufSize);
+        buf.setSize(totalBufSize);
 
         const uint8_t *src = static_cast<const uint8_t *>(mediaData);
         size_t         remaining = size;
         size_t         bufOffset = 0;
-        uint8_t       *bufData = static_cast<uint8_t *>(buf->data());
+        uint8_t       *bufData = static_cast<uint8_t *>(buf.data());
 
         for (size_t i = 0; i < numPackets; i++) {
                 size_t payloadSize = std::min(alignedPayload, remaining);
@@ -188,9 +188,9 @@ RtpPacket::List RtpPayloadRawVideo::pack(const void *mediaData, size_t size) {
 
         // Allocate single shared buffer
         const size_t maxPktSize = RtpPacket::HeaderSize + overhead + maxChunkBytes;
-        auto         buf = Buffer::Ptr::create(totalPackets * maxPktSize);
-        buf->setSize(totalPackets * maxPktSize);
-        uint8_t *bufData = static_cast<uint8_t *>(buf->data());
+        auto         buf = Buffer(totalPackets * maxPktSize);
+        buf.setSize(totalPackets * maxPktSize);
+        uint8_t *bufData = static_cast<uint8_t *>(buf.data());
 
         const uint8_t *src = static_cast<const uint8_t *>(mediaData);
         size_t         bufOffset = 0;
@@ -409,9 +409,9 @@ RtpPacket::List RtpPayloadJpeg::pack(const void *mediaData, size_t size) {
         if (restSize > 0) numPackets += packetCount(restSize, maxJpegRest);
 
         const size_t maxPktSize = RtpPacket::HeaderSize + maxPayload;
-        auto         buf = Buffer::Ptr::create(numPackets * maxPktSize);
-        buf->setSize(numPackets * maxPktSize);
-        uint8_t *bufData = static_cast<uint8_t *>(buf->data());
+        auto         buf = Buffer(numPackets * maxPktSize);
+        buf.setSize(numPackets * maxPktSize);
+        uint8_t *bufData = static_cast<uint8_t *>(buf.data());
 
         uint8_t w8 = static_cast<uint8_t>(std::min(_width / 8, 255));
         uint8_t h8 = static_cast<uint8_t>(std::min(_height / 8, 255));
@@ -824,9 +824,9 @@ RtpPacket::List RtpPayloadJpegXs::pack(const void *mediaData, size_t size) {
         // Single shared buffer for all packets so the RtpSession can
         // emit them without additional copies — same pattern as
         // RtpPayloadJpeg / RtpPayloadRawVideo.
-        auto buf = Buffer::Ptr::create(numPackets * maxPktSize);
-        buf->setSize(numPackets * maxPktSize);
-        uint8_t *bufData = static_cast<uint8_t *>(buf->data());
+        auto buf = Buffer(numPackets * maxPktSize);
+        buf.setSize(numPackets * maxPktSize);
+        uint8_t *bufData = static_cast<uint8_t *>(buf.data());
 
         // Frame counter is per-frame state on the payload instance.
         // Advances once per successful pack() call so each frame gets
@@ -931,13 +931,13 @@ RtpPacket::List RtpPayloadJson::pack(const void *mediaData, size_t size) {
         // to maxPayload of JSON bytes.  A single shared buffer holds
         // the whole batch.
         const size_t totalBufSize = numPackets * (RtpPacket::HeaderSize + maxPayload);
-        auto         buf = Buffer::Ptr::create(totalBufSize);
-        buf->setSize(totalBufSize);
+        auto         buf = Buffer(totalBufSize);
+        buf.setSize(totalBufSize);
 
         const uint8_t *src = static_cast<const uint8_t *>(mediaData);
         size_t         remaining = size;
         size_t         bufOffset = 0;
-        uint8_t       *bufData = static_cast<uint8_t *>(buf->data());
+        uint8_t       *bufData = static_cast<uint8_t *>(buf.data());
 
         for (size_t i = 0; i < numPackets; i++) {
                 const size_t chunk = std::min(maxPayload, remaining);

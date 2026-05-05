@@ -72,11 +72,11 @@ class MjpegStreamSubscriber {
                  * @brief Called once per newly-encoded JPEG frame.
                  *
                  * Runs on the sink's encoder strand.  Implementations
-                 * must not block — capture the @ref Buffer::Ptr (it
+                 * must not block — capture the @ref Buffer (it
                  * shares ownership; no copy required) or hand it to a
                  * queue, and return.
                  *
-                 * The same @ref Buffer::Ptr is dispatched to every
+                 * The same @ref Buffer is dispatched to every
                  * attached subscriber, so the encoder allocates the
                  * JPEG bytes exactly once per encode.
                  *
@@ -84,7 +84,7 @@ class MjpegStreamSubscriber {
                  * @param ts   Wall-clock timestamp at the moment the
                  *             frame finished encoding.
                  */
-                virtual void onFrame(const Buffer::Ptr &jpeg, const TimeStamp &ts) = 0;
+                virtual void onFrame(const Buffer &jpeg, const TimeStamp &ts) = 0;
 
                 /**
                  * @brief Called once when the subscription terminates.
@@ -271,7 +271,7 @@ class MjpegStreamMediaIO : public DedicatedThreadMediaIO {
                 /**
                  * @brief Returns the most recently encoded JPEG buffer.
                  *
-                 * Returns an empty (invalid) @ref Buffer::Ptr when the
+                 * Returns an empty (invalid) @ref Buffer when the
                  * sink is closed or no frames have been encoded since
                  * the last @c open.  The returned pointer shares
                  * ownership with the ring entry it was sampled from —
@@ -279,11 +279,11 @@ class MjpegStreamMediaIO : public DedicatedThreadMediaIO {
                  *
                  * @par Example
                  * @code
-                 * Buffer::Ptr jpeg = sink->latestJpeg();
+                 * Buffer jpeg = sink->latestJpeg();
                  * if(jpeg.isValid()) writeOut(*jpeg);
                  * @endcode
                  */
-                Buffer::Ptr latestJpeg() const;
+                Buffer latestJpeg() const;
 
                 /**
                  * @brief Returns the wall-clock timestamp of the most
@@ -327,7 +327,7 @@ class MjpegStreamMediaIO : public DedicatedThreadMediaIO {
                  * @ref AsyncBufferQueue and a per-connection
                  * @ref MjpegStreamSubscriber adapter that pushes
                  * boundary + headers + the encoded JPEG into the
-                 * queue as @ref Buffer::Ptr segments.  The connection
+                 * queue as @ref Buffer segments.  The connection
                  * pumps the queue with @c Transfer-Encoding: chunked
                  * and parks on the queue's @c readyRead between
                  * frames — no busy-wait, no event-loop blocking.
@@ -397,13 +397,13 @@ class MjpegStreamMediaIO : public DedicatedThreadMediaIO {
         private:
 
                 /// @brief Encodes @p frame's first uncompressed video payload.
-                Error encodeFrame(const Frame &frame, Buffer::Ptr *out, TimeStamp *ts);
+                Error encodeFrame(const Frame &frame, Buffer *out, TimeStamp *ts);
 
                 /// @brief Snapshots the most recent ring entry without holding the lock.
-                bool latestRingEntry(Buffer::Ptr *out, TimeStamp *outTs) const;
+                bool latestRingEntry(Buffer *out, TimeStamp *outTs) const;
 
                 /// @brief Pushes @p jpeg/@p ts into the ring + dispatches subscribers.
-                void publishEncoded(const Buffer::Ptr &jpeg, const TimeStamp &ts);
+                void publishEncoded(const Buffer &jpeg, const TimeStamp &ts);
 
                 // ---- Resolved configuration (latched at open time) ----
                 FrameRate _maxRate;
@@ -424,7 +424,7 @@ class MjpegStreamMediaIO : public DedicatedThreadMediaIO {
 
                 // ---- Ring + subscribers (mutex-guarded) ----
                 struct RingEntry {
-                                Buffer::Ptr jpeg; ///< Shared, encode-once JPEG buffer.
+                                Buffer jpeg; ///< Shared, encode-once JPEG buffer.
                                 TimeStamp   timestamp;
                 };
 

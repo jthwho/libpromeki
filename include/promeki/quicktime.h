@@ -154,10 +154,10 @@ class QuickTime {
                                  *        configuration record payload
                                  *        (e.g. the bytes inside the
                                  *        @c avcC / @c hvcC box), or
-                                 *        an empty Buffer::Ptr if the
+                                 *        an empty Buffer if the
                                  *        track has no such record.
                                  */
-                                const Buffer::Ptr &codecConfig() const { return _codecConfig; }
+                                const Buffer &codecConfig() const { return _codecConfig; }
                                 /**
                                  * @brief Returns the FourCC type of
                                  *        the codec configuration
@@ -193,7 +193,7 @@ class QuickTime {
                                 /** @brief Sets the elst start offset (in this track's timescale). */
                                 void setEditStartOffset(int64_t v) { _editStartOffset = v; }
                                 /** @brief Sets the codec configuration record payload. */
-                                void setCodecConfig(const Buffer::Ptr &b) { _codecConfig = b; }
+                                void setCodecConfig(const Buffer &b) { _codecConfig = b; }
                                 /** @brief Sets the FourCC type of the codec configuration record. */
                                 void setCodecConfigType(FourCC t) { _codecConfigType = t; }
 
@@ -211,7 +211,7 @@ class QuickTime {
                                 AudioDesc   _audioDesc;
                                 Metadata    _metadata;
                                 int64_t     _editStartOffset = 0;
-                                Buffer::Ptr _codecConfig;
+                                Buffer _codecConfig;
                                 FourCC      _codecConfigType{'\0', '\0', '\0', '\0'};
                 };
 
@@ -233,7 +233,7 @@ class QuickTime {
                                 int64_t     pts = 0;          ///< Presentation timestamp (dts + ctts offset).
                                 uint64_t    duration = 0;     ///< Sample duration in track timescale.
                                 bool        keyframe = false; ///< True if this is a sync (key) sample.
-                                Buffer::Ptr data;             ///< Raw encoded payload bytes.
+                                Buffer data;             ///< Raw encoded payload bytes.
                 };
 
                 /**

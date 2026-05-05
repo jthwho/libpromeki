@@ -217,8 +217,10 @@ class RtpSession : public ObjectBase {
                  * view references a Buffer owned by the session; its
                  * backing memory is valid only for the duration of
                  * the call.  Consumers that need to retain the bytes
-                 * should copy them or take a fresh @ref Buffer::Ptr
-                 * copy.
+                 * must copy them into an independent allocation
+                 * (storing the @ref Buffer by value is not enough —
+                 * subsequent datagrams reuse the same backing
+                 * storage).
                  *
                  * @param packet The parsed RTP packet.
                  * @param sender The datagram sender's address.

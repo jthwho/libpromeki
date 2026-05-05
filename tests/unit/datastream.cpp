@@ -1690,14 +1690,14 @@ TEST_CASE("DataStream: Variant write can be read as direct type") {
 }
 
 // ============================================================================
-// Buffer::Ptr round-trip (shared buffer)
+// Buffer round-trip (shared buffer)
 // ============================================================================
 
-TEST_CASE("DataStream: round-trip Buffer::Ptr") {
+TEST_CASE("DataStream: round-trip Buffer") {
         WriterFixture f;
-        Buffer::Ptr   src = Buffer::Ptr::create(32);
-        std::memset(src->data(), 0xCD, 32);
-        src->setSize(32);
+        Buffer   src = Buffer(32);
+        std::memset(src.data(), 0xCD, 32);
+        src.setSize(32);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << src;
@@ -1706,19 +1706,19 @@ TEST_CASE("DataStream: round-trip Buffer::Ptr") {
         f.dev.seek(0);
         {
                 DataStream  rs = DataStream::createReader(&f.dev);
-                Buffer::Ptr out;
+                Buffer out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 REQUIRE(out);
-                CHECK(out->size() == 32);
-                CHECK(static_cast<uint8_t *>(out->data())[0] == 0xCD);
-                CHECK(static_cast<uint8_t *>(out->data())[31] == 0xCD);
+                CHECK(out.size() == 32);
+                CHECK(static_cast<uint8_t *>(out.data())[0] == 0xCD);
+                CHECK(static_cast<uint8_t *>(out.data())[31] == 0xCD);
         }
 }
 
-TEST_CASE("DataStream: null Buffer::Ptr round-trips as null") {
+TEST_CASE("DataStream: null Buffer round-trips as null") {
         WriterFixture f;
-        Buffer::Ptr   nullPtr;
+        Buffer   nullPtr;
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << nullPtr;
@@ -1726,45 +1726,32 @@ TEST_CASE("DataStream: null Buffer::Ptr round-trips as null") {
         f.dev.seek(0);
         {
                 DataStream  rs = DataStream::createReader(&f.dev);
-                Buffer::Ptr out = Buffer::Ptr::create(4); // pre-set to non-null
+                Buffer out = Buffer(4); // pre-set to non-null
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK_FALSE(out); // remains null after read
         }
 }
 
-TEST_CASE("DataStream: null Buffer::Ptr is distinct from empty Buffer::Ptr") {
+TEST_CASE("DataStream: empty Buffer round-trips as invalid") {
+        // After the value-type Buffer refactor, Buffer(0) is reported
+        // as !isValid() (allocSize == 0).  The wire form encodes a
+        // null Buffer the same way regardless of whether it was
+        // default-constructed or zero-allocated, and the reader
+        // surfaces both as an invalid Buffer.
         WriterFixture f;
-        Buffer::Ptr   empty = Buffer::Ptr::create(0);
+        Buffer        empty(0);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << empty;
         }
         f.dev.seek(0);
         {
-                DataStream  rs = DataStream::createReader(&f.dev);
-                Buffer::Ptr out;
-                rs >> out;
-                CHECK(rs.status() == DataStream::Ok);
-                // Empty-but-allocated Ptr reads back as a non-null Ptr
-                REQUIRE(out);
-        }
-}
-
-TEST_CASE("DataStream: direct Buffer read rejects null Buffer::Ptr wire form") {
-        // A null Buffer::Ptr writes a TypeInvalid tag, which the direct
-        // Buffer reader must not accept silently.
-        WriterFixture f;
-        {
-                DataStream ws = DataStream::createWriter(&f.dev);
-                ws << Buffer::Ptr();
-        }
-        f.dev.seek(0);
-        {
                 DataStream rs = DataStream::createReader(&f.dev);
                 Buffer     out;
                 rs >> out;
-                CHECK(rs.status() == DataStream::ReadCorruptData);
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK_FALSE(out);
         }
 }
 
@@ -2584,32 +2571,32 @@ TEST_CASE("DataStream: round-trip VariantList") {
 }
 
 // ============================================================================
-// List<Buffer::Ptr>
+// List<Buffer>
 // ============================================================================
 
-TEST_CASE("DataStream: round-trip List<Buffer::Ptr> with shared buffers") {
+TEST_CASE("DataStream: round-trip List<Buffer> with shared buffers") {
         WriterFixture     f;
-        List<Buffer::Ptr> list;
+        List<Buffer> list;
         // Three distinct buffers with identifiable payloads.
         {
-                Buffer::Ptr a = Buffer::Ptr::create(4);
-                std::memset(a->data(), 0xAA, 4);
-                a->setSize(4);
+                Buffer a = Buffer(4);
+                std::memset(a.data(), 0xAA, 4);
+                a.setSize(4);
                 list.pushToBack(std::move(a));
         }
         {
-                Buffer::Ptr b = Buffer::Ptr::create(8);
-                std::memset(b->data(), 0xBB, 8);
-                b->setSize(8);
+                Buffer b = Buffer(8);
+                std::memset(b.data(), 0xBB, 8);
+                b.setSize(8);
                 list.pushToBack(std::move(b));
         }
         // A null entry in the middle to confirm null preservation inside
         // a container.
-        list.pushToBack(Buffer::Ptr());
+        list.pushToBack(Buffer());
         {
-                Buffer::Ptr c = Buffer::Ptr::create(2);
-                std::memset(c->data(), 0xCC, 2);
-                c->setSize(2);
+                Buffer c = Buffer(2);
+                std::memset(c.data(), 0xCC, 2);
+                c.setSize(2);
                 list.pushToBack(std::move(c));
         }
         {
@@ -2620,20 +2607,20 @@ TEST_CASE("DataStream: round-trip List<Buffer::Ptr> with shared buffers") {
         f.dev.seek(0);
         {
                 DataStream        rs = DataStream::createReader(&f.dev);
-                List<Buffer::Ptr> out;
+                List<Buffer> out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
                 REQUIRE(out.size() == 4);
                 REQUIRE(out[0]);
-                CHECK(out[0]->size() == 4);
-                CHECK(static_cast<uint8_t *>(out[0]->data())[0] == 0xAA);
+                CHECK(out[0].size() == 4);
+                CHECK(static_cast<uint8_t *>(out[0].data())[0] == 0xAA);
                 REQUIRE(out[1]);
-                CHECK(out[1]->size() == 8);
-                CHECK(static_cast<uint8_t *>(out[1]->data())[0] == 0xBB);
+                CHECK(out[1].size() == 8);
+                CHECK(static_cast<uint8_t *>(out[1].data())[0] == 0xBB);
                 CHECK_FALSE(out[2]); // null preserved
                 REQUIRE(out[3]);
-                CHECK(out[3]->size() == 2);
-                CHECK(static_cast<uint8_t *>(out[3]->data())[0] == 0xCC);
+                CHECK(out[3].size() == 2);
+                CHECK(static_cast<uint8_t *>(out[3].data())[0] == 0xCC);
         }
 }
 

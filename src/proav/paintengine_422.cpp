@@ -28,7 +28,7 @@ template <typename CompType, int BitsPerComp, bool IsUYVY> class PaintEngine_422
                 static constexpr int Cb_off = IsUYVY ? 0 : BytesPerComp;
                 static constexpr int Cr_off = IsUYVY ? 2 * BytesPerComp : 3 * BytesPerComp;
 
-                Buffer::Ptr _plane0;
+                Buffer _plane0;
                 Size2Du32   _size;
                 uint8_t    *_buf;
                 size_t      _stride;

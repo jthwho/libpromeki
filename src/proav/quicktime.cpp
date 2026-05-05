@@ -56,14 +56,14 @@ Error QuickTime::Impl::readSampleRange(size_t trackIndex, uint64_t startSampleIn
         }
 
         // Compute total size by reading each sample up-front (slow path).
-        size_t                  totalBytes = first.data.isValid() ? first.data->size() : 0;
+        size_t                  totalBytes = first.data.isValid() ? first.data.size() : 0;
         List<QuickTime::Sample> samples;
         samples.pushToBack(first);
         for (uint64_t i = 1; i < count; ++i) {
                 QuickTime::Sample s;
                 err = readSample(trackIndex, startSampleIndex + i, s);
                 if (err.isError()) return err;
-                totalBytes += s.data.isValid() ? s.data->size() : 0;
+                totalBytes += s.data.isValid() ? s.data.size() : 0;
                 samples.pushToBack(s);
         }
 
@@ -72,13 +72,13 @@ Error QuickTime::Impl::readSampleRange(size_t trackIndex, uint64_t startSampleIn
         size_t   pos = 0;
         for (const auto &s : samples) {
                 if (!s.data.isValid()) continue;
-                std::memcpy(dst + pos, s.data->data(), s.data->size());
-                pos += s.data->size();
+                std::memcpy(dst + pos, s.data.data(), s.data.size());
+                pos += s.data.size();
         }
         cat.setSize(pos);
 
         out = first;
-        out.data = Buffer::Ptr::create(std::move(cat));
+        out.data = Buffer(std::move(cat));
         return Error::Ok;
 }
 

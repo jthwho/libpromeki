@@ -283,9 +283,9 @@ namespace {
 
                         void flushOneFrameS16() {
                                 size_t     n = framePcmSamples();
-                                auto       buf = Buffer::Ptr::create(kMaxPacketBytes);
+                                auto       buf = Buffer(kMaxPacketBytes);
                                 opus_int32 wrote = opus_encode(_enc, _pendingS16.data(), static_cast<int>(n),
-                                                               static_cast<unsigned char *>(buf.modify()->data()),
+                                                               static_cast<unsigned char *>(buf.data()),
                                                                kMaxPacketBytes);
                                 size_t     consumed = n * _channels;
                                 if (wrote < 0) {
@@ -294,16 +294,16 @@ namespace {
                                         _pendingS16.erase(_pendingS16.begin(), _pendingS16.begin() + consumed);
                                         return;
                                 }
-                                buf.modify()->setSize(static_cast<size_t>(wrote));
+                                buf.setSize(static_cast<size_t>(wrote));
                                 emitPacket(buf, n);
                                 _pendingS16.erase(_pendingS16.begin(), _pendingS16.begin() + consumed);
                         }
 
                         void flushOneFrameFloat() {
                                 size_t     n = framePcmSamples();
-                                auto       buf = Buffer::Ptr::create(kMaxPacketBytes);
+                                auto       buf = Buffer(kMaxPacketBytes);
                                 opus_int32 wrote = opus_encode_float(_enc, _pendingFloat.data(), static_cast<int>(n),
-                                                                     static_cast<unsigned char *>(buf.modify()->data()),
+                                                                     static_cast<unsigned char *>(buf.data()),
                                                                      kMaxPacketBytes);
                                 size_t     consumed = n * _channels;
                                 if (wrote < 0) {
@@ -312,12 +312,12 @@ namespace {
                                         _pendingFloat.erase(_pendingFloat.begin(), _pendingFloat.begin() + consumed);
                                         return;
                                 }
-                                buf.modify()->setSize(static_cast<size_t>(wrote));
+                                buf.setSize(static_cast<size_t>(wrote));
                                 emitPacket(buf, n);
                                 _pendingFloat.erase(_pendingFloat.begin(), _pendingFloat.begin() + consumed);
                         }
 
-                        void emitPacket(const Buffer::Ptr &buf, size_t framePcmSamplesValue) {
+                        void emitPacket(const Buffer &buf, size_t framePcmSamplesValue) {
                                 // Build a compressed audio payload whose single
                                 // plane covers the whole encoded Opus frame
                                 // buffer.  The descriptor identifies the
@@ -325,7 +325,7 @@ namespace {
                                 // consumers of this @ref CompressedAudioPayload
                                 // see the correct @ref AudioCodec.
                                 AudioDesc  desc(AudioFormat(AudioFormat::Opus), _sampleRate, _channels);
-                                BufferView view(buf, 0, buf->size());
+                                BufferView view(buf, 0, buf.size());
                                 auto       cvp = CompressedAudioPayload::Ptr::create(desc, view, framePcmSamplesValue);
                                 cvp.modify()->setPts(ptsForCurrentFrame());
                                 _outQueue.pushToBack(cvp);
@@ -392,10 +392,10 @@ namespace {
                                 constexpr int kMaxPcmSamplesPerChannel = 5760;
                                 AudioDesc     outDesc(AudioFormat::PCMI_S16LE, _outRate, _outChannels);
                                 size_t        pcmCap = outDesc.bufferSize(kMaxPcmSamplesPerChannel);
-                                auto          pcmBuf = Buffer::Ptr::create(pcmCap);
+                                auto          pcmBuf = Buffer(pcmCap);
                                 int decoded = opus_decode(_dec, static_cast<const unsigned char *>(view.data()),
                                                           static_cast<opus_int32>(view.size()),
-                                                          static_cast<opus_int16 *>(pcmBuf.modify()->data()),
+                                                          static_cast<opus_int16 *>(pcmBuf.data()),
                                                           kMaxPcmSamplesPerChannel,
                                                           /* decode_fec = */ 0);
                                 if (decoded < 0) {
@@ -404,9 +404,9 @@ namespace {
                                         return _lastError;
                                 }
                                 size_t actualBytes = static_cast<size_t>(decoded) * _outChannels * sizeof(int16_t);
-                                pcmBuf.modify()->setSize(actualBytes);
+                                pcmBuf.setSize(actualBytes);
                                 BufferView planes;
-                                planes.pushToBack(pcmBuf, 0, pcmBuf->size());
+                                planes.pushToBack(pcmBuf, 0, pcmBuf.size());
                                 auto uap = PcmAudioPayload::Ptr::create(outDesc, static_cast<size_t>(decoded), planes);
                                 uap.modify()->setPts(payload->pts());
                                 _frames.pushToBack(std::move(uap));

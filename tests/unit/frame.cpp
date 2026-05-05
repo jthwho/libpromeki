@@ -77,9 +77,9 @@ TEST_CASE("Frame::dump: video + audio payload subdumps") {
 
         AudioDesc    adesc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
         const size_t samples = 32;
-        Buffer::Ptr  abuf = Buffer::Ptr::create(adesc.bufferSize(samples));
-        abuf.modify()->setSize(adesc.bufferSize(samples));
-        BufferView           aview(abuf, 0, abuf->size());
+        Buffer  abuf = Buffer(adesc.bufferSize(samples));
+        abuf.setSize(adesc.bufferSize(samples));
+        BufferView           aview(abuf, 0, abuf.size());
         PcmAudioPayload::Ptr ap = PcmAudioPayload::Ptr::create(adesc, samples, aview);
         REQUIRE(ap.isValid());
         f.modify()->addPayload(ap);
@@ -126,9 +126,9 @@ namespace {
 
         PcmAudioPayload::Ptr makeAudioPayload(size_t samples = 32) {
                 AudioDesc   adesc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
-                Buffer::Ptr buf = Buffer::Ptr::create(adesc.bufferSize(samples));
-                buf.modify()->setSize(adesc.bufferSize(samples));
-                BufferView view(buf, 0, buf->size());
+                Buffer buf = Buffer(adesc.bufferSize(samples));
+                buf.setSize(adesc.bufferSize(samples));
+                BufferView view(buf, 0, buf.size());
                 return PcmAudioPayload::Ptr::create(adesc, samples, view);
         }
 
@@ -352,10 +352,10 @@ TEST_CASE("Frame VariantLookup: Buffer[N] sees sliced multi-plane payloads") {
         // slice 2 lives in a second buffer.  Buffer[N].Index should
         // report 0 / 0 / 1 — the user's primary motivation for
         // exposing bufferIdx.
-        Buffer::Ptr sharedBuf = Buffer::Ptr::create(256);
-        sharedBuf.modify()->setSize(256);
-        Buffer::Ptr secondBuf = Buffer::Ptr::create(128);
-        secondBuf.modify()->setSize(128);
+        Buffer sharedBuf(256);
+        sharedBuf.setSize(256);
+        Buffer secondBuf(128);
+        secondBuf.setSize(128);
 
         BufferView view;
         view.pushToBack(sharedBuf, 0, 100);
@@ -392,8 +392,8 @@ TEST_CASE("Frame VariantLookup: Buffer[N] sees sliced multi-plane payloads") {
 }
 
 TEST_CASE("Frame::dump: Buffer[N] sub-sections appear for every plane") {
-        Buffer::Ptr b = Buffer::Ptr::create(64);
-        b.modify()->setSize(64);
+        Buffer b = Buffer(64);
+        b.setSize(64);
         BufferView view;
         view.pushToBack(b, 0, 32);
         view.pushToBack(b, 32, 32);

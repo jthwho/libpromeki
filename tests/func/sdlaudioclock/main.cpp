@@ -101,10 +101,10 @@ namespace {
         void feedSilence(SDLAudioOutput *out, std::atomic<bool> *running) {
                 const AudioDesc desc = out->desc();
                 while (running->load(std::memory_order_relaxed)) {
-                        size_t      sz = desc.bufferSize(kChunkSamples);
-                        Buffer::Ptr pcm = Buffer::Ptr::create(sz);
-                        pcm.modify()->setSize(sz);
-                        std::memset(pcm.modify()->data(), 0, sz);
+                        size_t sz = desc.bufferSize(kChunkSamples);
+                        Buffer pcm(sz);
+                        pcm.setSize(sz);
+                        std::memset(pcm.data(), 0, sz);
                         BufferView view(pcm, 0, sz);
                         auto       silence = PcmAudioPayload::Ptr::create(desc, kChunkSamples, view);
                         out->pushAudio(*silence);

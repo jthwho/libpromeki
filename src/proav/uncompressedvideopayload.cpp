@@ -55,8 +55,8 @@ UncompressedVideoPayload::Ptr UncompressedVideoPayload::allocate(const ImageDesc
         for (int i = 0; i < planeCount; ++i) {
                 const size_t bytes = pd.planeSize(static_cast<size_t>(i), desc);
                 if (bytes == 0) return Ptr();
-                auto buf = Buffer::Ptr::create(bytes);
-                buf.modify()->setSize(bytes);
+                auto buf = Buffer(bytes);
+                buf.setSize(bytes);
                 planes.pushToBack(buf, 0, bytes);
         }
         return Ptr::create(desc, planes);

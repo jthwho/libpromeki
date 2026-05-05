@@ -1412,9 +1412,9 @@ class NvencVideoEncoder::Impl {
                                 return CompressedVideoPayload::Ptr();
                         }
 
-                        auto buf = Buffer::Ptr::create(lb.bitstreamSizeInBytes);
-                        std::memcpy(buf.modify()->data(), lb.bitstreamBufferPtr, lb.bitstreamSizeInBytes);
-                        buf.modify()->setSize(lb.bitstreamSizeInBytes);
+                        auto buf = Buffer(lb.bitstreamSizeInBytes);
+                        std::memcpy(buf.data(), lb.bitstreamBufferPtr, lb.bitstreamSizeInBytes);
+                        buf.setSize(lb.bitstreamSizeInBytes);
                         const FrameType ft = toFrameType(lb.pictureType);
                         // Random-access keyframes are only true IDR or
                         // I pictures — INTRA_REFRESH is intra-coded but

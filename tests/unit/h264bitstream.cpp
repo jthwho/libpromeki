@@ -14,25 +14,25 @@ using namespace promeki;
 
 namespace {
 
-        /** @brief Builds a Buffer::Ptr containing the given bytes. */
-        Buffer::Ptr makeBuffer(const std::vector<uint8_t> &bytes) {
-                auto buf = Buffer::Ptr::create(bytes.size());
-                if (!bytes.empty()) std::memcpy(buf->data(), bytes.data(), bytes.size());
-                buf->setSize(bytes.size());
+        /** @brief Builds a Buffer containing the given bytes. */
+        Buffer makeBuffer(const std::vector<uint8_t> &bytes) {
+                auto buf = Buffer(bytes.size());
+                if (!bytes.empty()) std::memcpy(buf.data(), bytes.data(), bytes.size());
+                buf.setSize(bytes.size());
                 return buf;
         }
 
-        /** @brief Wraps a Buffer::Ptr in a BufferView spanning its content. */
-        BufferView viewOf(const Buffer::Ptr &buf) {
-                return BufferView(buf, 0, buf ? buf->size() : 0);
+        /** @brief Wraps a Buffer in a BufferView spanning its content. */
+        BufferView viewOf(const Buffer &buf) {
+                return BufferView(buf, 0, buf ? buf.size() : 0);
         }
 
-        /** @brief Returns a vector copy of the bytes in @p buf, up to buf->size(). */
-        std::vector<uint8_t> bytesOf(const Buffer::Ptr &buf) {
+        /** @brief Returns a vector copy of the bytes in @p buf, up to buf.size(). */
+        std::vector<uint8_t> bytesOf(const Buffer &buf) {
                 std::vector<uint8_t> v;
                 if (!buf) return v;
-                v.resize(buf->size());
-                if (!v.empty()) std::memcpy(v.data(), buf->data(), buf->size());
+                v.resize(buf.size());
+                if (!v.empty()) std::memcpy(v.data(), buf.data(), buf.size());
                 return v;
         }
 
@@ -183,7 +183,7 @@ TEST_CASE("H264Bitstream — Annex-B ↔ AVCC round trip") {
         SUBCASE("Annex-B → AVCC with 4-byte length") {
                 auto in = makeBuffer({0x00, 0x00, 0x00, 0x01, 0x67, 0x42, 0xc0, 0x00, 0x00, 0x00, 0x01, 0x68, 0xce,
                                       0x00, 0x00, 0x00, 0x01, 0x65, 0x88});
-                Buffer::Ptr out;
+                Buffer out;
                 Error       err = H264Bitstream::annexBToAvcc(viewOf(in), 4, out);
                 CHECK(err == Error::Ok);
                 REQUIRE(out);
@@ -194,7 +194,7 @@ TEST_CASE("H264Bitstream — Annex-B ↔ AVCC round trip") {
 
         SUBCASE("AVCC → Annex-B emits 4-byte start codes") {
                 auto in = makeBuffer({0x00, 0x00, 0x00, 0x02, 0xaa, 0xbb, 0x00, 0x00, 0x00, 0x03, 0xcc, 0xdd, 0xee});
-                Buffer::Ptr out;
+                Buffer out;
                 Error       err = H264Bitstream::avccToAnnexB(viewOf(in), 4, out);
                 CHECK(err == Error::Ok);
                 REQUIRE(out);
@@ -209,10 +209,10 @@ TEST_CASE("H264Bitstream — Annex-B ↔ AVCC round trip") {
                 // 3-byte start codes to 4-byte on the way back.
                 auto        original = makeBuffer({0x00, 0x00, 0x00, 0x01, 0x67, 0x42, 0xc0, 0x00, 0x00, 0x00, 0x01,
                                                    0x68, 0xce, 0x01, 0x00, 0x00, 0x00, 0x01, 0x65, 0x88, 0x11, 0x22});
-                Buffer::Ptr avcc;
+                Buffer avcc;
                 Error       err = H264Bitstream::annexBToAvcc(viewOf(original), 4, avcc);
                 REQUIRE(err == Error::Ok);
-                Buffer::Ptr back;
+                Buffer back;
                 err = H264Bitstream::avccToAnnexB(viewOf(avcc), 4, back);
                 REQUIRE(err == Error::Ok);
                 CHECK(bytesOf(back) == bytesOf(original));
@@ -223,7 +223,7 @@ TEST_CASE("H264Bitstream — Annex-B ↔ AVCC round trip") {
                 // framing converter must copy it verbatim; it's the higher
                 // layer's job to insert/remove those bytes if needed.
                 auto        in = makeBuffer({0x00, 0x00, 0x00, 0x01, 0x67, 0x00, 0x00, 0x03, 0x01, 0x42});
-                Buffer::Ptr avcc;
+                Buffer avcc;
                 Error       err = H264Bitstream::annexBToAvcc(viewOf(in), 4, avcc);
                 REQUIRE(err == Error::Ok);
                 std::vector<uint8_t> expected = {0x00, 0x00, 0x00, 0x06, 0x67, 0x00, 0x00, 0x03, 0x01, 0x42};
@@ -238,7 +238,7 @@ TEST_CASE("H264Bitstream — Annex-B ↔ AVCC round trip") {
                 bytes[2] = 0x00;
                 bytes[3] = 0x01;
                 auto        in = makeBuffer(bytes);
-                Buffer::Ptr out;
+                Buffer out;
                 Error       err = H264Bitstream::annexBToAvcc(viewOf(in), 1, out);
                 CHECK(err == Error::CorruptData);
         }
@@ -306,7 +306,7 @@ TEST_CASE("AvcDecoderConfig — serialize / parse round trip") {
                 cfg.sps.pushToBack(makeBuffer({0x67, 0x64, 0x00, 0x28, 0xac}));
                 cfg.pps.pushToBack(makeBuffer({0x68, 0xee, 0x3c, 0x80}));
 
-                Buffer::Ptr payload;
+                Buffer payload;
                 CHECK(cfg.serialize(payload) == Error::Ok);
                 REQUIRE(payload);
 
@@ -334,7 +334,7 @@ TEST_CASE("AvcDecoderConfig — serialize / parse round trip") {
                 cfg.pps.pushToBack(makeBuffer({0x68, 0xce, 0xa2}));
                 cfg.pps.pushToBack(makeBuffer({0x68, 0xce, 0xa3}));
 
-                Buffer::Ptr payload;
+                Buffer payload;
                 CHECK(cfg.serialize(payload) == Error::Ok);
 
                 AvcDecoderConfig parsed;
@@ -348,7 +348,7 @@ TEST_CASE("AvcDecoderConfig — serialize / parse round trip") {
         SUBCASE("reserved bits in length-size byte set to 1") {
                 AvcDecoderConfig cfg;
                 cfg.sps.pushToBack(makeBuffer({0x67, 0x42, 0xc0, 0x1f}));
-                Buffer::Ptr payload;
+                Buffer payload;
                 CHECK(cfg.serialize(payload) == Error::Ok);
                 // Byte 4: top 6 bits reserved = 111111, low 2 bits =
                 // lengthSizeMinusOne (3 → 0xff).
@@ -379,7 +379,7 @@ TEST_CASE("AvcDecoderConfig::toAnnexB") {
         AvcDecoderConfig cfg;
         cfg.sps.pushToBack(makeBuffer({0x67, 0x42, 0xe0, 0x1e}));
         cfg.pps.pushToBack(makeBuffer({0x68, 0xce, 0x3c, 0x80}));
-        Buffer::Ptr annexB;
+        Buffer annexB;
         CHECK(cfg.toAnnexB(annexB) == Error::Ok);
         std::vector<uint8_t> expected = {0x00, 0x00, 0x00, 0x01, 0x67, 0x42, 0xe0, 0x1e,
                                          0x00, 0x00, 0x00, 0x01, 0x68, 0xce, 0x3c, 0x80};
@@ -396,12 +396,12 @@ TEST_CASE("H264Bitstream::annexBToAvccFiltered") {
                         0x00, 0x00, 0x00, 0x01, 0x68, 0xce,       // PPS
                         0x00, 0x00, 0x00, 0x01, 0x65, 0x88, 0x11  // IDR
                 });
-                Buffer::Ptr out;
+                Buffer out;
                 auto        filter = [](const H264Bitstream::NalUnit &nal) {
                         uint8_t t = nal.header0 & 0x1f;
                         return t != 7 && t != 8; // drop SPS + PPS
                 };
-                Error err = H264Bitstream::annexBToAvccFiltered(BufferView(in, 0, in->size()), 4, filter, out);
+                Error err = H264Bitstream::annexBToAvccFiltered(BufferView(in, 0, in.size()), 4, filter, out);
                 CHECK(err == Error::Ok);
                 REQUIRE(out);
                 // Only IDR NAL survives: 4-byte length(3) + 65 88 11
@@ -411,26 +411,26 @@ TEST_CASE("H264Bitstream::annexBToAvccFiltered") {
 
         SUBCASE("keep-all filter is equivalent to annexBToAvcc") {
                 auto in = makeBuffer({0x00, 0x00, 0x00, 0x01, 0x67, 0x42, 0xc0, 0x00, 0x00, 0x00, 0x01, 0x65, 0x88});
-                Buffer::Ptr viaFilter;
+                Buffer viaFilter;
                 Error       err = H264Bitstream::annexBToAvccFiltered(
-                        BufferView(in, 0, in->size()), 4, [](const H264Bitstream::NalUnit &) { return true; },
+                        BufferView(in, 0, in.size()), 4, [](const H264Bitstream::NalUnit &) { return true; },
                         viaFilter);
                 CHECK(err == Error::Ok);
 
-                Buffer::Ptr viaPlain;
-                CHECK(H264Bitstream::annexBToAvcc(BufferView(in, 0, in->size()), 4, viaPlain) == Error::Ok);
+                Buffer viaPlain;
+                CHECK(H264Bitstream::annexBToAvcc(BufferView(in, 0, in.size()), 4, viaPlain) == Error::Ok);
 
                 CHECK(bytesOf(viaFilter) == bytesOf(viaPlain));
         }
 
         SUBCASE("drop-all filter produces empty buffer") {
                 auto in = makeBuffer({0x00, 0x00, 0x00, 0x01, 0x67, 0x42, 0xc0, 0x00, 0x00, 0x00, 0x01, 0x65, 0x88});
-                Buffer::Ptr out;
+                Buffer out;
                 Error       err = H264Bitstream::annexBToAvccFiltered(
-                        BufferView(in, 0, in->size()), 4, [](const H264Bitstream::NalUnit &) { return false; }, out);
+                        BufferView(in, 0, in.size()), 4, [](const H264Bitstream::NalUnit &) { return false; }, out);
                 CHECK(err == Error::Ok);
                 REQUIRE(out);
-                CHECK(out->size() == 0);
+                CHECK(out.size() == 0);
         }
 }
 
@@ -438,20 +438,20 @@ TEST_CASE("H264Bitstream::wrapNalsAsAnnexB") {
 
         SUBCASE("empty input yields empty output") {
                 List<BufferView> empty;
-                Buffer::Ptr      out;
+                Buffer      out;
                 Error            err = H264Bitstream::wrapNalsAsAnnexB(empty, out);
                 CHECK(err == Error::Ok);
                 REQUIRE(out);
-                CHECK(out->size() == 0);
+                CHECK(out.size() == 0);
         }
 
         SUBCASE("concatenates NALs with 4-byte start codes") {
                 auto             buf1 = makeBuffer({0x67, 0x42, 0xc0});
                 auto             buf2 = makeBuffer({0x68, 0xce});
                 List<BufferView> nals;
-                nals.pushToBack(BufferView(buf1, 0, buf1->size()));
-                nals.pushToBack(BufferView(buf2, 0, buf2->size()));
-                Buffer::Ptr out;
+                nals.pushToBack(BufferView(buf1, 0, buf1.size()));
+                nals.pushToBack(BufferView(buf2, 0, buf2.size()));
+                Buffer out;
                 Error       err = H264Bitstream::wrapNalsAsAnnexB(nals, out);
                 CHECK(err == Error::Ok);
                 std::vector<uint8_t> expected = {0x00, 0x00, 0x00, 0x01, 0x67, 0x42, 0xc0,

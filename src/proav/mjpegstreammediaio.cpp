@@ -69,23 +69,22 @@ namespace {
                 return PixelFormat(PixelFormat::RGBA8_sRGB);
         }
 
-        Buffer::Ptr copyPayloadToBuffer(const CompressedVideoPayload &cvp) {
+        Buffer copyPayloadToBuffer(const CompressedVideoPayload &cvp) {
                 const size_t total = cvp.size();
-                Buffer::Ptr  out = Buffer::Ptr::create(total);
+                Buffer  out = Buffer(total);
                 if (!out.isValid() || total == 0) {
-                        if (out.isValid()) out.modify()->setSize(0);
+                        if (out.isValid()) out.setSize(0);
                         return out;
                 }
-                Buffer     *raw = out.modify();
                 size_t      cursor = 0;
                 const auto &view = cvp.data();
                 for (size_t i = 0; i < view.count(); ++i) {
                         const auto entry = view[i];
                         if (entry.size() == 0 || entry.data() == nullptr) continue;
-                        std::memcpy(static_cast<uint8_t *>(raw->data()) + cursor, entry.data(), entry.size());
+                        std::memcpy(static_cast<uint8_t *>(out.data()) + cursor, entry.data(), entry.size());
                         cursor += entry.size();
                 }
-                raw->setSize(cursor);
+                out.setSize(cursor);
                 return out;
         }
 
@@ -143,7 +142,7 @@ MjpegStreamMediaIO::~MjpegStreamMediaIO() {
 
 int MjpegStreamMediaIO::attachSubscriber(MjpegStreamSubscriber *s) {
         if (s == nullptr) return -1;
-        Buffer::Ptr primer;
+        Buffer primer;
         TimeStamp   primerTs;
         bool        hasPrimer = false;
         int         id = -1;
@@ -153,7 +152,7 @@ int MjpegStreamMediaIO::attachSubscriber(MjpegStreamSubscriber *s) {
                 _subscribers.insert(id, s);
                 if (!_ring.isEmpty()) {
                         const RingEntry &back = _ring[_ring.size() - 1];
-                        if (back.jpeg.isValid() && back.jpeg->size() > 0) {
+                        if (back.jpeg.isValid() && back.jpeg.size() > 0) {
                                 primer = back.jpeg;
                                 primerTs = back.timestamp;
                                 hasPrimer = true;
@@ -180,15 +179,15 @@ void MjpegStreamMediaIO::detachSubscriber(int id) {
         if (removed != nullptr) removed->onClosed();
 }
 
-Buffer::Ptr MjpegStreamMediaIO::latestJpeg() const {
-        Buffer::Ptr jpeg;
+Buffer MjpegStreamMediaIO::latestJpeg() const {
+        Buffer jpeg;
         TimeStamp   ts;
         latestRingEntry(&jpeg, &ts);
         return jpeg;
 }
 
 TimeStamp MjpegStreamMediaIO::latestJpegTimestamp() const {
-        Buffer::Ptr jpeg;
+        Buffer jpeg;
         TimeStamp   ts;
         latestRingEntry(&jpeg, &ts);
         return ts;
@@ -204,7 +203,7 @@ bool MjpegStreamMediaIO::isStreaming() const {
         return _isStreaming;
 }
 
-bool MjpegStreamMediaIO::latestRingEntry(Buffer::Ptr *out, TimeStamp *outTs) const {
+bool MjpegStreamMediaIO::latestRingEntry(Buffer *out, TimeStamp *outTs) const {
         Mutex::Locker lk(_stateMutex);
         if (_ring.isEmpty()) return false;
         const RingEntry &back = _ring[_ring.size() - 1];
@@ -347,7 +346,7 @@ Error MjpegStreamMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                 }
         }
 
-        Buffer::Ptr jpeg;
+        Buffer jpeg;
         TimeStamp   encodedAt;
         Error       err = encodeFrame(*cmd.frame, &jpeg, &encodedAt);
         if (err.isError()) {
@@ -362,7 +361,7 @@ Error MjpegStreamMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         const Duration  encDur = Duration::fromNanoseconds(
                 std::chrono::duration_cast<std::chrono::nanoseconds>(drain.value() - arrival.value()).count());
         const int64_t encUs = encDur.microseconds();
-        const int64_t bytes = jpeg.isValid() ? static_cast<int64_t>(jpeg->size()) : 0;
+        const int64_t bytes = jpeg.isValid() ? static_cast<int64_t>(jpeg.size()) : 0;
 
         publishEncoded(jpeg, encodedAt);
 
@@ -434,7 +433,7 @@ Error MjpegStreamMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *pref
 // Encode + publish helpers
 // ---------------------------------------------------------------------------
 
-Error MjpegStreamMediaIO::encodeFrame(const Frame &frame, Buffer::Ptr *out, TimeStamp *ts) {
+Error MjpegStreamMediaIO::encodeFrame(const Frame &frame, Buffer *out, TimeStamp *ts) {
         if (!_encoder.isValid()) return Error::NotOpen;
         const auto videos = frame.videoPayloads();
         if (videos.isEmpty()) return Error::NotSupported;
@@ -456,15 +455,15 @@ Error MjpegStreamMediaIO::encodeFrame(const Frame &frame, Buffer::Ptr *out, Time
         CompressedVideoPayload::Ptr cvp = _encoder->receiveCompressedPayload();
         if (!cvp.isValid()) return Error::TryAgain;
 
-        Buffer::Ptr flat = copyPayloadToBuffer(*cvp);
-        if (!flat.isValid() || flat->size() < 4) return Error::ConversionFailed;
+        Buffer flat = copyPayloadToBuffer(*cvp);
+        if (!flat.isValid() || flat.size() < 4) return Error::ConversionFailed;
 
         // libjpeg-turbo emits a complete JPEG bitstream; verify SOI/EOI
         // markers so a malformed encode surfaces here rather than at
         // the subscriber.
-        const uint8_t *bytes = static_cast<const uint8_t *>(flat->data());
+        const uint8_t *bytes = static_cast<const uint8_t *>(flat.data());
         if (bytes[0] != 0xFF || bytes[1] != 0xD8) return Error::ConversionFailed;
-        const size_t end = flat->size();
+        const size_t end = flat.size();
         if (bytes[end - 2] != 0xFF || bytes[end - 1] != 0xD9) {
                 return Error::ConversionFailed;
         }
@@ -474,10 +473,10 @@ Error MjpegStreamMediaIO::encodeFrame(const Frame &frame, Buffer::Ptr *out, Time
         return Error::Ok;
 }
 
-void MjpegStreamMediaIO::publishEncoded(const Buffer::Ptr &jpeg, const TimeStamp &ts) {
+void MjpegStreamMediaIO::publishEncoded(const Buffer &jpeg, const TimeStamp &ts) {
         // Snapshot the subscriber list under the lock then dispatch
         // outside it so a slow subscriber can't block another
-        // subscription's attach/detach.  The Buffer::Ptr is the same
+        // subscription's attach/detach.  The Buffer is the same
         // pointer pushed into the ring and dispatched to every
         // subscriber — encode-once, share-by-pointer, no copies.
         List<MjpegStreamSubscriber *> recipients;
@@ -535,9 +534,9 @@ namespace {
 
                         void setSubId(int id) { _subId = id; }
 
-                        void onFrame(const Buffer::Ptr &jpeg, const TimeStamp &) override {
+                        void onFrame(const Buffer &jpeg, const TimeStamp &) override {
                                 if (_queue == nullptr || !jpeg.isValid()) return;
-                                const size_t n = jpeg->size();
+                                const size_t n = jpeg.size();
                                 if (n == 0) return;
 
                                 // Frame the JPEG in a single multipart part:
@@ -547,7 +546,7 @@ namespace {
                                 //   \r\n
                                 //   <jpeg bytes>
                                 //   \r\n
-                                // Header is its own Buffer::Ptr so the JPEG
+                                // Header is its own Buffer so the JPEG
                                 // payload itself is shared by pointer (not
                                 // copied) into the queue.
                                 const String header =
@@ -556,13 +555,13 @@ namespace {
                                         "\r\nContent-Length: " + String::number(static_cast<int64_t>(n)) + "\r\n\r\n";
                                 const String trailer("\r\n");
 
-                                Buffer::Ptr hdr = Buffer::Ptr::create(header.byteCount());
-                                std::memcpy(hdr.modify()->data(), header.cstr(), header.byteCount());
-                                hdr.modify()->setSize(header.byteCount());
+                                Buffer hdr = Buffer(header.byteCount());
+                                std::memcpy(hdr.data(), header.cstr(), header.byteCount());
+                                hdr.setSize(header.byteCount());
 
-                                Buffer::Ptr tl = Buffer::Ptr::create(trailer.byteCount());
-                                std::memcpy(tl.modify()->data(), trailer.cstr(), trailer.byteCount());
-                                tl.modify()->setSize(trailer.byteCount());
+                                Buffer tl = Buffer(trailer.byteCount());
+                                std::memcpy(tl.data(), trailer.cstr(), trailer.byteCount());
+                                tl.setSize(trailer.byteCount());
 
                                 _queue->enqueue(hdr);
                                 _queue->enqueue(jpeg);

@@ -76,7 +76,7 @@ class RtpPacket : public BufferView {
                  * @param offset Byte offset into the buffer where this packet begins.
                  * @param size Byte size of this packet.
                  */
-                RtpPacket(Buffer::Ptr buf, size_t offset, size_t size) : BufferView(std::move(buf), offset, size) {}
+                RtpPacket(Buffer buf, size_t offset, size_t size) : BufferView(std::move(buf), offset, size) {}
 
                 /**
                  * @brief Returns true if the buffer pointer is null.
@@ -109,7 +109,7 @@ class RtpPacket : public BufferView {
                  * allocates a separate buffer per packet — for bulk packet
                  * construction, prefer createList().
                  */
-                explicit RtpPacket(size_t packetSize) : BufferView(Buffer::Ptr::create(packetSize), 0, packetSize) {
+                explicit RtpPacket(size_t packetSize) : BufferView(Buffer(packetSize), 0, packetSize) {
                         std::memset(data(), 0, packetSize);
                         setVersion(2);
                 }
@@ -128,8 +128,8 @@ class RtpPacket : public BufferView {
                         List ret;
                         if (count == 0 || packetSize == 0) return ret;
                         size_t totalSize = count * packetSize;
-                        auto   buf = Buffer::Ptr::create(totalSize);
-                        std::memset(buf->data(), 0, totalSize);
+                        auto   buf = Buffer(totalSize);
+                        std::memset(buf.data(), 0, totalSize);
                         ret.reserve(count);
                         for (size_t i = 0; i < count; ++i) {
                                 RtpPacket pkt(buf, i * packetSize, packetSize);
@@ -155,8 +155,8 @@ class RtpPacket : public BufferView {
                         size_t totalSize = 0;
                         for (size_t i = 0; i < sizes.size(); ++i) totalSize += sizes[i];
                         if (totalSize == 0) return ret;
-                        auto buf = Buffer::Ptr::create(totalSize);
-                        std::memset(buf->data(), 0, totalSize);
+                        auto buf = Buffer(totalSize);
+                        std::memset(buf.data(), 0, totalSize);
                         ret.reserve(sizes.size());
                         size_t offset = 0;
                         for (size_t i = 0; i < sizes.size(); ++i) {

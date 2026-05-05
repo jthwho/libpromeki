@@ -27,15 +27,15 @@ TEST_CASE("RtpPacket") {
                 CHECK_FALSE(null.isValid());
 
                 // Has buffer but too small for header
-                auto smallBuf = Buffer::Ptr::create(8);
-                std::memset(smallBuf->data(), 0, 8);
+                auto smallBuf = Buffer(8);
+                std::memset(smallBuf.data(), 0, 8);
                 RtpPacket tooSmall(smallBuf, 0, 8);
                 CHECK_FALSE(tooSmall.isNull());
                 CHECK_FALSE(tooSmall.isValid());
 
                 // Has buffer, large enough, but wrong version
-                auto buf = Buffer::Ptr::create(64);
-                std::memset(buf->data(), 0, 64);
+                auto buf = Buffer(64);
+                std::memset(buf.data(), 0, 64);
                 RtpPacket wrongVer(buf, 0, 64);
                 // Version is 0 (zeroed buffer) — not valid
                 CHECK_FALSE(wrongVer.isNull());
@@ -58,9 +58,9 @@ TEST_CASE("RtpPacket") {
         }
 
         SUBCASE("inherits BufferView") {
-                auto buf = Buffer::Ptr::create(1024);
-                buf->setSize(1024);
-                std::memset(buf->data(), 0, 1024);
+                auto buf = Buffer(1024);
+                buf.setSize(1024);
+                std::memset(buf.data(), 0, 1024);
                 RtpPacket pkt(buf, 100, 500);
                 pkt.setVersion(2);
                 CHECK(pkt.isValid());
@@ -85,9 +85,9 @@ TEST_CASE("RtpPacket") {
         }
 
         SUBCASE("header read/write round-trip") {
-                auto buf = Buffer::Ptr::create(256);
-                buf->setSize(256);
-                std::memset(buf->data(), 0, 256);
+                auto buf = Buffer(256);
+                buf.setSize(256);
+                std::memset(buf.data(), 0, 256);
 
                 RtpPacket pkt(buf, 0, 256);
                 pkt.setVersion(2);
@@ -106,9 +106,9 @@ TEST_CASE("RtpPacket") {
         }
 
         SUBCASE("fields are independent") {
-                auto buf = Buffer::Ptr::create(64);
-                buf->setSize(64);
-                std::memset(buf->data(), 0, 64);
+                auto buf = Buffer(64);
+                buf.setSize(64);
+                std::memset(buf.data(), 0, 64);
 
                 RtpPacket pkt(buf, 0, 64);
 
@@ -131,9 +131,9 @@ TEST_CASE("RtpPacket") {
         }
 
         SUBCASE("payload accessors") {
-                auto buf = Buffer::Ptr::create(100);
-                buf->setSize(100);
-                std::memset(buf->data(), 0, 100);
+                auto buf = Buffer(100);
+                buf.setSize(100);
+                std::memset(buf.data(), 0, 100);
 
                 RtpPacket pkt(buf, 0, 100);
                 pkt.setVersion(2);
@@ -146,8 +146,8 @@ TEST_CASE("RtpPacket") {
         }
 
         SUBCASE("payload on undersized packet") {
-                auto buf = Buffer::Ptr::create(8);
-                buf->setSize(8);
+                auto buf = Buffer(8);
+                buf.setSize(8);
                 RtpPacket pkt(buf, 0, 8);
                 CHECK(pkt.payload() == nullptr);
                 CHECK(pkt.payloadSize() == 0);
@@ -186,8 +186,8 @@ TEST_CASE("RtpPacket") {
 
         SUBCASE("headerSize returns 0 for truncated extension") {
                 // Packet claims extension but is too small to hold it
-                auto buf = Buffer::Ptr::create(14);
-                std::memset(buf->data(), 0, 14);
+                auto buf = Buffer(14);
+                std::memset(buf.data(), 0, 14);
                 RtpPacket pkt(buf, 0, 14);
                 pkt.setVersion(2);
                 pkt.setExtension(true);
@@ -198,9 +198,9 @@ TEST_CASE("RtpPacket") {
         }
 
         SUBCASE("reads from wire bytes") {
-                auto buf = Buffer::Ptr::create(RtpPacket::HeaderSize);
-                buf->setSize(RtpPacket::HeaderSize);
-                uint8_t *d = static_cast<uint8_t *>(buf->data());
+                auto buf = Buffer(RtpPacket::HeaderSize);
+                buf.setSize(RtpPacket::HeaderSize);
+                uint8_t *d = static_cast<uint8_t *>(buf.data());
 
                 // Manually construct: V=2, P=0, X=0, CC=0, M=1, PT=97
                 d[0] = 0x80;      // V=2
@@ -226,9 +226,9 @@ TEST_CASE("RtpPacket") {
         }
 
         SUBCASE("multiple packets sharing one buffer") {
-                auto buf = Buffer::Ptr::create(4200);
-                buf->setSize(4200);
-                std::memset(buf->data(), 0, 4200);
+                auto buf = Buffer(4200);
+                buf.setSize(4200);
+                std::memset(buf.data(), 0, 4200);
 
                 RtpPacket pkt1(buf, 0, 1400);
                 RtpPacket pkt2(buf, 1400, 1400);
@@ -242,7 +242,7 @@ TEST_CASE("RtpPacket") {
                 pkt3.setSequenceNumber(2);
                 pkt3.setMarker(true);
 
-                CHECK(pkt1.buffer().ptr() == pkt3.buffer().ptr());
+                CHECK(pkt1.buffer().impl().ptr() == pkt3.buffer().impl().ptr());
                 CHECK(pkt1.sequenceNumber() == 0);
                 CHECK(pkt2.sequenceNumber() == 1);
                 CHECK(pkt3.sequenceNumber() == 2);
@@ -256,7 +256,7 @@ TEST_CASE("RtpPacket") {
 
                 // All share the same buffer
                 for (size_t i = 1; i < pkts.size(); ++i) {
-                        CHECK(pkts[i].buffer().ptr() == pkts[0].buffer().ptr());
+                        CHECK(pkts[i].buffer().impl().ptr() == pkts[0].buffer().impl().ptr());
                 }
 
                 // Each packet is independent and pre-initialized
@@ -290,7 +290,7 @@ TEST_CASE("RtpPacket") {
 
                 // All share the same buffer
                 for (size_t i = 1; i < pkts.size(); ++i) {
-                        CHECK(pkts[i].buffer().ptr() == pkts[0].buffer().ptr());
+                        CHECK(pkts[i].buffer().impl().ptr() == pkts[0].buffer().impl().ptr());
                 }
 
                 // Each packet has the right size and offset

@@ -813,22 +813,15 @@ DataStream &DataStream::operator<<(const String &val) {
 }
 
 DataStream &DataStream::operator<<(const Buffer &val) {
-        writeTag(TypeBuffer);
-        writeBufferData(val);
-        return *this;
-}
-
-DataStream &DataStream::operator<<(const Buffer::Ptr &val) {
-        // Null Buffer::Ptr is encoded as a TypeInvalid marker so it
-        // round-trips as null (not as an empty Buffer). Non-null uses
-        // the same TypeBuffer framing as direct Buffer, so interop with
-        // a direct Buffer read still works for the non-null case.
+        // Null (default-constructed) Buffer is encoded as TypeInvalid
+        // so it round-trips as null rather than as an empty Buffer.
+        // Non-null uses the TypeBuffer framing.
         if (!val) {
                 writeTag(TypeInvalid);
                 return *this;
         }
         writeTag(TypeBuffer);
-        writeBufferData(*val);
+        writeBufferData(val);
         return *this;
 }
 
@@ -1187,24 +1180,15 @@ DataStream &DataStream::operator>>(String &val) {
 }
 
 DataStream &DataStream::operator>>(Buffer &val) {
-        if (!readTag(TypeBuffer)) {
-                val = Buffer();
-                return *this;
-        }
-        val = readBufferData();
-        return *this;
-}
-
-DataStream &DataStream::operator>>(Buffer::Ptr &val) {
-        // Peek the tag: TypeInvalid → null Ptr, TypeBuffer → allocated Ptr,
+        // Peek the tag: TypeInvalid → null Buffer, TypeBuffer → allocated Buffer,
         // anything else → ReadCorruptData.
         uint16_t tag = readAnyTag();
         if (_status != Ok) {
-                val = Buffer::Ptr();
+                val = Buffer();
                 return *this;
         }
         if (tag == TypeInvalid) {
-                val = Buffer::Ptr();
+                val = Buffer();
                 return *this;
         }
         if (tag != TypeBuffer) {
@@ -1212,15 +1196,10 @@ DataStream &DataStream::operator>>(Buffer::Ptr &val) {
                          String::sprintf("expected tag 0x%04X (TypeBuffer) or 0x%04X (TypeInvalid), got 0x%04X",
                                          static_cast<unsigned>(TypeBuffer), static_cast<unsigned>(TypeInvalid),
                                          static_cast<unsigned>(tag)));
-                val = Buffer::Ptr();
+                val = Buffer();
                 return *this;
         }
-        Buffer buf = readBufferData();
-        if (_status != Ok) {
-                val = Buffer::Ptr();
-                return *this;
-        }
-        val = Buffer::Ptr::create(std::move(buf));
+        val = readBufferData();
         return *this;
 }
 

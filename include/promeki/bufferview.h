@@ -52,13 +52,13 @@ PROMEKI_NAMESPACE_BEGIN
  * Distinct instances may be used concurrently.  A single instance
  * is conditionally thread-safe — concurrent mutation (pushToBack,
  * ensureExclusive, clear) must be externally synchronized.  The
- * underlying @ref Buffer::Ptr refcounts are atomic so passing a
+ * underlying @ref Buffer refcounts are atomic so passing a
  * BufferView by copy across threads is safe.
  *
  * @par Example
  * @code
  * // Single-slice view over a buffer:
- * auto buf = Buffer::Ptr::create(65536);
+ * auto buf = Buffer::create(65536);
  * BufferView slice(buf, 0, 1400);
  * CHECK(slice.count() == 1);
  * CHECK(slice[0].buffer() == buf);
@@ -79,7 +79,7 @@ class BufferView {
                  * @brief Non-owning proxy for a single slice in the list.
                  *
                  * Entry carries a parent pointer and an index; it never
-                 * owns a @ref Buffer::Ptr.  All accessors go back
+                 * owns a @ref Buffer.  All accessors go back
                  * through the parent's buffer table and view record.
                  * Entry is cheap to copy and safe to pass by value
                  * within a single expression; do not store an Entry
@@ -93,7 +93,7 @@ class BufferView {
                                 Entry() = default;
 
                                 /** @brief Returns the shared backing buffer. */
-                                const Buffer::Ptr &buffer() const;
+                                const Buffer &buffer() const;
 
                                 /**
                                  * @brief Returns the index of the backing
@@ -181,7 +181,7 @@ class BufferView {
                  *       does not exceed the buffer's allocated size.
                  *       No bounds checking is performed.
                  */
-                BufferView(Buffer::Ptr buf, size_t offset, size_t size);
+                BufferView(Buffer buf, size_t offset, size_t size);
 
                 /**
                  * @brief Constructs a list by concatenating every
@@ -219,7 +219,7 @@ class BufferView {
                 // iteration rather than these helpers.
 
                 /** @brief Returns the backing buffer of the first slice. */
-                const Buffer::Ptr &buffer() const;
+                const Buffer &buffer() const;
 
                 /** @brief Returns the byte offset of the first slice. */
                 size_t offset() const;
@@ -243,7 +243,7 @@ class BufferView {
                  * slices already in the list; pushing N slices that
                  * all share the same buffer stores the buffer once.
                  */
-                void pushToBack(Buffer::Ptr buf, size_t offset, size_t size);
+                void pushToBack(Buffer buf, size_t offset, size_t size);
 
                 /**
                  * @brief Appends every slice from @p other to the end
@@ -300,13 +300,13 @@ class BufferView {
                                 size_t size = 0;
                 };
 
-                Buffer::PtrList _buffers;
+                Buffer::List _buffers;
                 List<View>      _views;
 
                 // Returns the index of @p buf in @c _buffers, inserting if not found.
                 // When @p buf is null, returns the largest representable size_t
                 // (conceptually "no buffer"); no null entry is stored.
-                size_t internBuffer(const Buffer::Ptr &buf);
+                size_t internBuffer(const Buffer &buf);
 };
 
 PROMEKI_NAMESPACE_END

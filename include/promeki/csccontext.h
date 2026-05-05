@@ -77,7 +77,7 @@ class CSCContext {
 
         private:
                 size_t      _maxWidth = 0;
-                Buffer::Ptr _buffers[BufferCount];
+                Buffer _buffers[BufferCount];
 };
 
 PROMEKI_NAMESPACE_END

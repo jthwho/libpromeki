@@ -794,7 +794,7 @@ class InspectorMediaIO : public SharedThreadMediaIO {
                 /// borrow it without copying) for pulling samples out of
                 /// the audio stream during analysis; held as a member so
                 /// steady-state drains avoid per-call reallocation.
-                Buffer::Ptr _audioDrainScratch;
+                Buffer _audioDrainScratch;
 
                 // ---- Continuity tracking ----
                 bool     _hasPreviousPicture = false;

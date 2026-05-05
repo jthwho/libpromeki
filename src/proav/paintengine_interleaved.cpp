@@ -74,10 +74,10 @@ class PaintEngine_Interleaved : public PaintEngine::Impl {
                 static constexpr int B = Map[2];
                 static constexpr int A = Map[3];
 
-                // Hold a Buffer::Ptr to the single interleaved plane
+                // Hold a Buffer to the single interleaved plane
                 // so the payload's backing memory survives the life of
                 // the engine, even if the original payload is dropped.
-                Buffer::Ptr _plane0;
+                Buffer _plane0;
                 Size2Du32   _size;
                 uint8_t    *_buf;
                 size_t      _stride;

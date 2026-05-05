@@ -48,9 +48,9 @@ namespace {
 
         // Returns true when the first 4 bytes start with a H.264/HEVC Annex-B
         // NAL unit start code (0x00000001) or 3-byte variant (0x000001).
-        bool looksLikeAnnexB(const Buffer::Ptr &b) {
-                if (!b || b->size() < 4) return false;
-                const auto *p = static_cast<const uint8_t *>(b->data());
+        bool looksLikeAnnexB(const Buffer &b) {
+                if (!b || b.size() < 4) return false;
+                const auto *p = static_cast<const uint8_t *>(b.data());
                 if (p[0] == 0x00 && p[1] == 0x00 && p[2] == 0x00 && p[3] == 0x01) return true;
                 if (p[0] == 0x00 && p[1] == 0x00 && p[2] == 0x01) return true;
                 return false;

@@ -403,18 +403,18 @@ const List<float> &AudioTestPattern::avSyncBurst(size_t samples) const {
 PcmAudioPayload::Ptr AudioTestPattern::createPayload(size_t samples, const Timecode &tc) const {
         // Allocate a fresh Buffer, fill it with the pattern, then
         // hand it off to the payload.  Writing *before* wrapping
-        // keeps us off the CoW detach path — once the Buffer::Ptr
+        // keeps us off the CoW detach path — once the Buffer
         // is also held by the BufferView inside the payload, any
-        // later @c modify() on the local Buffer::Ptr would detach
+        // later @c modify() on the local Buffer would detach
         // and the payload would see the untouched zero buffer.
         AudioDesc   workingDesc = _desc.workingDesc();
         size_t      bufBytes = workingDesc.bufferSize(samples);
-        Buffer::Ptr buf = Buffer::Ptr::create(bufBytes);
-        buf.modify()->setSize(bufBytes);
-        std::memset(buf.modify()->data(), 0, bufBytes);
+        Buffer buf = Buffer(bufBytes);
+        buf.setSize(bufBytes);
+        std::memset(buf.data(), 0, bufBytes);
 
         if (_desc.channels() > 0) {
-                float *out = reinterpret_cast<float *>(buf.modify()->data());
+                float *out = reinterpret_cast<float *>(buf.data());
                 writePattern(out, samples, tc);
         }
 

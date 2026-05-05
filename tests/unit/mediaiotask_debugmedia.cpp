@@ -47,9 +47,9 @@ namespace {
 
                 AudioDesc    adesc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
                 const size_t samples = 32;
-                Buffer::Ptr  abuf = Buffer::Ptr::create(adesc.bufferSize(samples));
-                abuf.modify()->setSize(adesc.bufferSize(samples));
-                BufferView           aview(abuf, 0, abuf->size());
+                Buffer  abuf = Buffer(adesc.bufferSize(samples));
+                abuf.setSize(adesc.bufferSize(samples));
+                BufferView           aview(abuf, 0, abuf.size());
                 PcmAudioPayload::Ptr ap = PcmAudioPayload::Ptr::create(adesc, samples, aview);
                 if (!ap.isValid()) return Frame::Ptr();
                 f.modify()->addPayload(ap);

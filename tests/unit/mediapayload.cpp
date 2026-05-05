@@ -75,9 +75,9 @@ TEST_CASE("UncompressedVideoPayload: default-constructed is invalid") {
 
 TEST_CASE("UncompressedVideoPayload: desc + plane list round-trips") {
         ImageDesc desc(1920, 1080, PixelFormat(PixelFormat::RGBA8_sRGB));
-        auto      buf = Buffer::Ptr::create(1920 * 1080 * 4);
-        buf.modify()->setSize(1920 * 1080 * 4);
-        BufferView plane0(buf, 0, buf->size());
+        auto      buf = Buffer(1920 * 1080 * 4);
+        buf.setSize(1920 * 1080 * 4);
+        BufferView plane0(buf, 0, buf.size());
 
         UncompressedVideoPayload p(desc, plane0);
         CHECK(p.isValid());
@@ -96,8 +96,8 @@ TEST_CASE("UncompressedVideoPayload: multi-plane planar layout") {
         size_t yBytes = 1920 * 1080;
         size_t uBytes = 1920 * 1080 / 4;
         size_t vBytes = 1920 * 1080 / 4;
-        auto   buf = Buffer::Ptr::create(yBytes + uBytes + vBytes);
-        buf.modify()->setSize(yBytes + uBytes + vBytes);
+        auto   buf = Buffer(yBytes + uBytes + vBytes);
+        buf.setSize(yBytes + uBytes + vBytes);
 
         BufferView y(buf, 0, yBytes);
         BufferView u(buf, yBytes, uBytes);
@@ -138,8 +138,8 @@ TEST_CASE("CompressedVideoPayload: default-constructed is invalid") {
 
 TEST_CASE("CompressedVideoPayload: buffer ctor wraps the whole buffer as one plane") {
         ImageDesc desc(1920, 1080, PixelFormat(PixelFormat::H264));
-        auto      buf = Buffer::Ptr::create(4096);
-        buf.modify()->setSize(2048);
+        auto      buf = Buffer(4096);
+        buf.setSize(2048);
 
         CompressedVideoPayload p(desc, buf);
         CHECK(p.isValid());
@@ -154,7 +154,7 @@ TEST_CASE("CompressedVideoPayload: buffer ctor wraps the whole buffer as one pla
 
 TEST_CASE("CompressedVideoPayload: frameType falls through to IDR when Keyframe is set") {
         ImageDesc              desc(1280, 720, PixelFormat(PixelFormat::H264));
-        CompressedVideoPayload p(desc, Buffer::Ptr::create(32));
+        CompressedVideoPayload p(desc, Buffer(32));
         // Default: no explicit frame type, no keyframe flag.
         CHECK(p.frameType() == FrameType::Unknown);
 
@@ -167,7 +167,7 @@ TEST_CASE("CompressedVideoPayload: frameType falls through to IDR when Keyframe 
 
 TEST_CASE("CompressedVideoPayload: parameter-set flag lives in high bits") {
         ImageDesc              desc(1920, 1080, PixelFormat(PixelFormat::H264));
-        CompressedVideoPayload p(desc, Buffer::Ptr::create(16));
+        CompressedVideoPayload p(desc, Buffer(16));
         CHECK_FALSE(p.isParameterSet());
 
         p.markParameterSet();
@@ -186,17 +186,17 @@ TEST_CASE("CompressedVideoPayload: parameter-set flag lives in high bits") {
 TEST_CASE("CompressedVideoPayload: inBandCodecData round-trips") {
         ImageDesc              desc(1920, 1080, PixelFormat(PixelFormat::H264));
         CompressedVideoPayload p(desc);
-        CHECK(p.inBandCodecData().isNull());
+        CHECK(!p.inBandCodecData().isValid());
 
-        auto sps = Buffer::Ptr::create(32);
+        auto sps = Buffer(32);
         p.setInBandCodecData(sps);
         CHECK(p.inBandCodecData() == sps);
 }
 
 TEST_CASE("CompressedVideoPayload: invalid when pixel format is not compressed") {
         ImageDesc desc(1920, 1080, PixelFormat(PixelFormat::RGBA8_sRGB));
-        auto      buf = Buffer::Ptr::create(16);
-        buf.modify()->setSize(16);
+        auto      buf = Buffer(16);
+        buf.setSize(16);
         CompressedVideoPayload p(desc, buf);
         // Bytes present, descriptor valid — but the format is raster,
         // not compressed, so this fails the compressed-specific tighten.
@@ -219,10 +219,10 @@ TEST_CASE("PcmAudioPayload: default-constructed is invalid") {
 TEST_CASE("PcmAudioPayload: desc + sample count + plane list") {
         AudioDesc desc(AudioFormat(AudioFormat::PCMI_Float32LE), 48000.0f, 2);
         size_t    samples = 1024;
-        auto      buf = Buffer::Ptr::create(desc.bufferSize(samples));
-        buf.modify()->setSize(desc.bufferSize(samples));
+        auto      buf = Buffer(desc.bufferSize(samples));
+        buf.setSize(desc.bufferSize(samples));
 
-        PcmAudioPayload p(desc, samples, BufferView({BufferView(buf, 0, buf->size())}));
+        PcmAudioPayload p(desc, samples, BufferView({BufferView(buf, 0, buf.size())}));
         CHECK(p.isValid());
         CHECK(p.sampleCount() == samples);
         CHECK(p.desc().sampleRate() == 48000.0f);
@@ -236,8 +236,8 @@ TEST_CASE("PcmAudioPayload: desc + sample count + plane list") {
 
 TEST_CASE("CompressedAudioPayload: desc + buffer round-trips") {
         AudioDesc desc(AudioFormat(AudioFormat::Opus), 48000.0f, 2);
-        auto      buf = Buffer::Ptr::create(256);
-        buf.modify()->setSize(200);
+        auto      buf = Buffer(256);
+        buf.setSize(200);
 
         CompressedAudioPayload p(desc, buf);
         CHECK(p.isValid());
@@ -250,8 +250,8 @@ TEST_CASE("CompressedAudioPayload: desc + buffer round-trips") {
 
 TEST_CASE("CompressedAudioPayload: invalid when format is PCM") {
         AudioDesc desc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
-        auto      buf = Buffer::Ptr::create(32);
-        buf.modify()->setSize(32);
+        auto      buf = Buffer(32);
+        buf.setSize(32);
         CompressedAudioPayload p(desc, buf);
         // Bytes present, descriptor valid — but the format is PCM, so
         // the compressed-specific tighten fails.
@@ -434,8 +434,8 @@ TEST_CASE("MediaPayload: stream index") {
 }
 
 TEST_CASE("MediaPayload: setData(BufferView) single-view convenience") {
-        auto buf = Buffer::Ptr::create(16);
-        buf.modify()->setSize(16);
+        auto buf = Buffer(16);
+        buf.setSize(16);
         UncompressedVideoPayload p;
         p.setData(BufferView(buf, 0, 16));
         CHECK(p.planeCount() == 1);
@@ -444,11 +444,11 @@ TEST_CASE("MediaPayload: setData(BufferView) single-view convenience") {
 
 TEST_CASE("MediaPayload::Ptr: implicit upcast from UncompressedVideoPayload::Ptr") {
         ImageDesc desc(1920, 1080, PixelFormat(PixelFormat::RGBA8_sRGB));
-        auto      buf = Buffer::Ptr::create(1920 * 1080 * 4);
-        buf.modify()->setSize(1920 * 1080 * 4);
+        auto      buf = Buffer(1920 * 1080 * 4);
+        buf.setSize(1920 * 1080 * 4);
 
         UncompressedVideoPayload::Ptr vp =
-                UncompressedVideoPayload::Ptr::create(desc, BufferView({BufferView(buf, 0, buf->size())}));
+                UncompressedVideoPayload::Ptr::create(desc, BufferView({BufferView(buf, 0, buf.size())}));
 
         MediaPayload::Ptr mp = vp;
         REQUIRE(mp.isValid());
@@ -459,7 +459,7 @@ TEST_CASE("MediaPayload::Ptr: implicit upcast from UncompressedVideoPayload::Ptr
 
 TEST_CASE("MediaPayload::Ptr: implicit upcast from CompressedAudioPayload::Ptr") {
         AudioDesc                   desc(AudioFormat(AudioFormat::Opus), 48000.0f, 2);
-        CompressedAudioPayload::Ptr ap = CompressedAudioPayload::Ptr::create(desc, Buffer::Ptr::create(16));
+        CompressedAudioPayload::Ptr ap = CompressedAudioPayload::Ptr::create(desc, Buffer(16));
 
         MediaPayload::Ptr mp = ap;
         REQUIRE(mp.isValid());
@@ -470,7 +470,7 @@ TEST_CASE("MediaPayload::Ptr: implicit upcast from CompressedAudioPayload::Ptr")
 
 TEST_CASE("sharedPointerCast: downcasts MediaPayload::Ptr to the concrete leaf") {
         ImageDesc         desc(1920, 1080, PixelFormat(PixelFormat::H264));
-        MediaPayload::Ptr mp = CompressedVideoPayload::Ptr::create(desc, Buffer::Ptr::create(16));
+        MediaPayload::Ptr mp = CompressedVideoPayload::Ptr::create(desc, Buffer(16));
         REQUIRE(mp.isValid());
 
         auto cvp = sharedPointerCast<CompressedVideoPayload>(mp);
@@ -496,7 +496,7 @@ TEST_CASE("MediaPayload::as<T>: dynamic downcast returns null on miss") {
 
 TEST_CASE("CompressedVideoPayload: clone preserves derived type") {
         ImageDesc desc(1920, 1080, PixelFormat(PixelFormat::HEVC));
-        auto      orig = CompressedVideoPayload::Ptr::create(desc, Buffer::Ptr::create(32));
+        auto      orig = CompressedVideoPayload::Ptr::create(desc, Buffer(32));
         orig.modify()->addFlag(MediaPayload::Keyframe);
         orig.modify()->setFrameType(FrameType::IDR);
         orig.modify()->markCorrupt(String("bad slice"));
@@ -537,8 +537,8 @@ TEST_CASE("isSafeCutPoint: uncompressed audio is always safe") {
 TEST_CASE("isSafeCutPoint: compressed intra-only video is always safe") {
         // JPEG is intra-only (every image is its own access unit).
         ImageDesc desc(1920, 1080, PixelFormat(PixelFormat::JPEG_RGB8_sRGB));
-        auto      buf = Buffer::Ptr::create(256);
-        buf.modify()->setSize(200);
+        auto      buf = Buffer(256);
+        buf.setSize(200);
         CompressedVideoPayload p(desc, buf);
         REQUIRE(p.isValid());
         // No keyframe flag set — still safe because intra-only.
@@ -548,8 +548,8 @@ TEST_CASE("isSafeCutPoint: compressed intra-only video is always safe") {
 
 TEST_CASE("isSafeCutPoint: compressed temporal video requires keyframe flag") {
         ImageDesc desc(1920, 1080, PixelFormat(PixelFormat::H264));
-        auto      buf = Buffer::Ptr::create(256);
-        buf.modify()->setSize(256);
+        auto      buf = Buffer(256);
+        buf.setSize(256);
         CompressedVideoPayload p(desc, buf);
         REQUIRE(p.isValid());
 
@@ -571,8 +571,8 @@ TEST_CASE("isSafeCutPoint: invalid compressed video payload is never safe") {
 TEST_CASE("isSafeCutPoint: compressed audio honours codec PacketIndependence") {
         // Opus: every packet decodes standalone → always safe.
         AudioDesc opusDesc(AudioFormat(AudioFormat::Opus), 48000.0f, 2);
-        auto      buf = Buffer::Ptr::create(64);
-        buf.modify()->setSize(64);
+        auto      buf = Buffer(64);
+        buf.setSize(64);
         CompressedAudioPayload opus(opusDesc, buf);
         REQUIRE(opus.isValid());
         // AudioCodec::Opus is known to have PacketIndependenceEvery.
@@ -585,8 +585,8 @@ TEST_CASE("isSafeCutPoint: isKeyframe stays orthogonal to cut semantics") {
         // isKeyframe() of whatever the flag says, but isSafeCutPoint
         // is false because we can't reason about the codec.
         ImageDesc desc(1920, 1080, PixelFormat(PixelFormat::H264));
-        auto      buf = Buffer::Ptr::create(16);
-        buf.modify()->setSize(16);
+        auto      buf = Buffer(16);
+        buf.setSize(16);
         CompressedVideoPayload p(desc, buf);
         p.addFlag(MediaPayload::Keyframe);
         CHECK(p.isKeyframe());
@@ -601,15 +601,15 @@ TEST_CASE("isSafeCutPoint: isKeyframe stays orthogonal to cut semantics") {
 TEST_CASE("MediaPayload::PtrList: mixed payloads in one list") {
         ImageDesc vdesc(1920, 1080, PixelFormat(PixelFormat::RGBA8_sRGB));
         AudioDesc adesc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
-        auto      vbuf = Buffer::Ptr::create(1920 * 1080 * 4);
-        vbuf.modify()->setSize(1920 * 1080 * 4);
-        auto abuf = Buffer::Ptr::create(adesc.bufferSize(1024));
-        abuf.modify()->setSize(adesc.bufferSize(1024));
+        auto      vbuf = Buffer(1920 * 1080 * 4);
+        vbuf.setSize(1920 * 1080 * 4);
+        auto abuf = Buffer(adesc.bufferSize(1024));
+        abuf.setSize(adesc.bufferSize(1024));
 
         MediaPayload::PtrList list;
-        list.pushToBack(UncompressedVideoPayload::Ptr::create(vdesc, BufferView({BufferView(vbuf, 0, vbuf->size())})));
+        list.pushToBack(UncompressedVideoPayload::Ptr::create(vdesc, BufferView({BufferView(vbuf, 0, vbuf.size())})));
         list.pushToBack(
-                PcmAudioPayload::Ptr::create(adesc, size_t(1024), BufferView({BufferView(abuf, 0, abuf->size())})));
+                PcmAudioPayload::Ptr::create(adesc, size_t(1024), BufferView({BufferView(abuf, 0, abuf.size())})));
 
         REQUIRE(list.size() == 2);
         CHECK(list[0]->kind() == MediaPayloadKind::Video);

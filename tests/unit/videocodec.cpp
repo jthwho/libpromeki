@@ -218,9 +218,9 @@ namespace {
         UncompressedVideoPayload::Ptr makeTestPayload(int width, int height, uint8_t fill) {
                 PixelFormat  pd(PixelFormat::RGB8_sRGB);
                 const size_t bytes = pd.memLayout().planeSize(0, width, height);
-                auto         buf = Buffer::Ptr::create(bytes);
-                buf.modify()->fill(static_cast<char>(fill));
-                buf.modify()->setSize(bytes);
+                auto         buf = Buffer(bytes);
+                buf.fill(static_cast<char>(fill));
+                buf.setSize(bytes);
                 ImageDesc desc(Size2Du32(width, height), pd);
                 auto      payload = UncompressedVideoPayload::Ptr::create(desc);
                 payload.modify()->data().pushToBack(buf, 0, bytes);

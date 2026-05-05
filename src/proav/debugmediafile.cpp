@@ -120,7 +120,7 @@ namespace {
         // Serialise the MediaPayload-base fields (timing + duration) into a
         // DataStream block.  The buffer payload travels with the enclosing
         // plane / audio buffer so payload references can share the same
-        // backing Buffer::Ptr on round-trip.
+        // backing Buffer on round-trip.
 } // namespace
 
 // ============================================================

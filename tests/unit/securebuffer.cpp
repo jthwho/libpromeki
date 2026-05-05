@@ -75,15 +75,22 @@ TEST_CASE("SecureBuffer_Fill") {
 // Copy semantics — copies inherit the MemSpace
 // ============================================================================
 
-TEST_CASE("SecureBuffer_CopyIsIndependent") {
+TEST_CASE("SecureBuffer_CopyIsRefcountShared") {
         Buffer b1(256, Buffer::DefaultAlign, Secure);
         CHECK(b1.fill(0x42).isOk());
 
         Buffer b2 = b1;
         CHECK(b2.isValid());
         CHECK(b2.availSize() == b1.availSize());
-        CHECK(b2.data() != b1.data());
+        // Refcount-shared copy: same backing storage, same MemSpace.
+        CHECK(b2.data() == b1.data());
         CHECK(b2.memSpace().id() == MemSpace::SystemSecure);
+
+        // Detach b2 with ensureExclusive — clones the secure region,
+        // preserves the SystemSecure MemSpace.
+        b2.ensureExclusive();
+        CHECK(b2.memSpace().id() == MemSpace::SystemSecure);
+        CHECK(b2.data() != b1.data());
 
         const uint8_t *p1 = static_cast<const uint8_t *>(b1.data());
         const uint8_t *p2 = static_cast<const uint8_t *>(b2.data());
@@ -132,27 +139,27 @@ TEST_CASE("SecureBuffer_Assignment") {
 // SharedPtr support
 // ============================================================================
 
-TEST_CASE("SecureBuffer_SharedPtr") {
-        auto p1 = Buffer::Ptr::create(256, Buffer::DefaultAlign, Secure);
-        CHECK(p1->isValid());
-        CHECK(p1->availSize() == 256);
-        CHECK(p1->memSpace().id() == MemSpace::SystemSecure);
-        CHECK(p1.referenceCount() == 1);
+TEST_CASE("SecureBuffer_SharedHandle") {
+        Buffer p1(256, Buffer::DefaultAlign, Secure);
+        CHECK(p1.isValid());
+        CHECK(p1.availSize() == 256);
+        CHECK(p1.memSpace().id() == MemSpace::SystemSecure);
+        CHECK(p1.impl().referenceCount() == 1);
 
-        Buffer::Ptr p2 = p1;
-        CHECK(p1.referenceCount() == 2);
-        CHECK(p1->data() == p2->data());
+        Buffer p2 = p1;
+        CHECK(p1.impl().referenceCount() == 2);
+        CHECK(p1.data() == p2.data());
 }
 
 // ============================================================================
-// PtrList
+// List<Buffer>
 // ============================================================================
 
-TEST_CASE("SecureBuffer_PtrList") {
-        Buffer::PtrList list;
-        list.pushToBack(Buffer::Ptr::create(64, Buffer::DefaultAlign, Secure));
-        list.pushToBack(Buffer::Ptr::create(128, Buffer::DefaultAlign, Secure));
+TEST_CASE("SecureBuffer_List") {
+        Buffer::List list;
+        list.pushToBack(Buffer(64, Buffer::DefaultAlign, Secure));
+        list.pushToBack(Buffer(128, Buffer::DefaultAlign, Secure));
         CHECK(list.size() == 2);
-        CHECK(list[0]->availSize() == 64);
-        CHECK(list[1]->availSize() == 128);
+        CHECK(list[0].availSize() == 64);
+        CHECK(list[1].availSize() == 128);
 }

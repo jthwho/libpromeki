@@ -211,11 +211,11 @@ void MulticastReceiver::stop() {
 void MulticastReceiver::run() {
         // Receive loop.  We allocate a small reusable buffer for
         // readDatagram() to recv into, then copy each datagram into
-        // a fresh Buffer::Ptr so the callback can outlive the loop
+        // a fresh Buffer so the callback can outlive the loop
         // iteration (for example by posting the pointer onto a
         // consumer's queue).  An alternative design would be to hand
         // the callback a raw pointer + size for zero-copy, but the
-        // Buffer::Ptr approach keeps the signal and callback shapes
+        // Buffer approach keeps the signal and callback shapes
         // uniform and lets the callback stash the pointer without
         // an extra copy.
         List<uint8_t> scratch;
@@ -236,13 +236,13 @@ void MulticastReceiver::run() {
                         continue;
                 }
 
-                // Copy into an owned Buffer::Ptr.  One allocation +
+                // Copy into an owned Buffer.  One allocation +
                 // one memcpy per packet; profile if this ever becomes
                 // a bottleneck (it won't for SAP / mDNS, and RTP goes
                 // through a different path inside the task).
-                Buffer::Ptr datagram = Buffer::Ptr::create(static_cast<size_t>(n));
-                std::memcpy(datagram->data(), scratch.data(), static_cast<size_t>(n));
-                datagram->setSize(static_cast<size_t>(n));
+                Buffer datagram = Buffer(static_cast<size_t>(n));
+                std::memcpy(datagram.data(), scratch.data(), static_cast<size_t>(n));
+                datagram.setSize(static_cast<size_t>(n));
 
                 _datagramCount.setValue(_datagramCount.value() + 1);
                 _byteCount.setValue(_byteCount.value() + static_cast<uint64_t>(n));

@@ -77,9 +77,9 @@ struct HevcDecoderConfig {
                 uint8_t           numTemporalLayers = 1;                ///< 3 bits; at least 1.
                 uint8_t           temporalIdNested = 0;                 ///< 1 bit.
                 uint8_t           lengthSizeMinusOne = 3;               ///< 2 bits; 3 = 4-byte prefix.
-                List<Buffer::Ptr> vps; ///< Video parameter set NAL payloads (no start code, no length prefix).
-                List<Buffer::Ptr> sps; ///< Sequence parameter set NAL payloads.
-                List<Buffer::Ptr> pps; ///< Picture parameter set NAL payloads.
+                List<Buffer> vps; ///< Video parameter set NAL payloads (no start code, no length prefix).
+                List<Buffer> sps; ///< Sequence parameter set NAL payloads.
+                List<Buffer> pps; ///< Picture parameter set NAL payloads.
 
                 /**
          * @brief Populate an @c HevcDecoderConfig from an Annex-B
@@ -110,14 +110,14 @@ struct HevcDecoderConfig {
                 static Error parse(const BufferView &payload, HevcDecoderConfig &out);
 
                 /** @brief Serialize this configuration to an @c hvcC payload. */
-                Error serialize(Buffer::Ptr &outBuf) const;
+                Error serialize(Buffer &outBuf) const;
 
                 /**
          * @brief Concatenate @c vps, @c sps, and @c pps as an
          *        Annex-B byte stream with 4-byte start codes, in
          *        that order.
          */
-                Error toAnnexB(Buffer::Ptr &outBuf) const;
+                Error toAnnexB(Buffer &outBuf) const;
 };
 
 PROMEKI_NAMESPACE_END

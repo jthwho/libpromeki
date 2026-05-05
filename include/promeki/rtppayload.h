@@ -46,7 +46,7 @@ class RtpPayload {
                  * Each returned RtpPacket includes space for the 12-byte RTP
                  * header at the start, followed by any payload-specific header,
                  * followed by the media data fragment. All returned packets
-                 * share a single Buffer::Ptr.
+                 * share a single Buffer.
                  *
                  * @param mediaData Pointer to the media data.
                  * @param size Size of the media data in bytes.

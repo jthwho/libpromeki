@@ -48,7 +48,7 @@ struct QuickTimeWriterTrack {
          * layout: at @c ensureInitMoovWritten()).  Empty for codecs
          * that do not need an out-of-band configuration record.
          */
-                Buffer::Ptr codecConfigBox;
+                Buffer codecConfigBox;
                 FourCC      codecConfigType{'\0', '\0', '\0',
                                        '\0'}; ///< @c avcC, @c hvcC, ... (zero FourCC when @c codecConfigBox is empty).
                 // Audio specifics:

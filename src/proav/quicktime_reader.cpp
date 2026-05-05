@@ -1008,11 +1008,11 @@ Error QuickTimeReader::parseVideoSampleEntry(quicktime_atom::ReadStream &stream,
                 Error cbErr = readBoxHeader(stream, childBox, entryPayloadEnd);
                 if (cbErr.isError()) break;
                 if (childBox.type == FourCC("avcC") || childBox.type == FourCC("hvcC")) {
-                        Buffer::Ptr payload = Buffer::Ptr::create(static_cast<size_t>(childBox.payloadSize));
+                        Buffer payload = Buffer(static_cast<size_t>(childBox.payloadSize));
                         if (payload && childBox.payloadSize > 0) {
-                                Error rd = stream.readBytes(payload->data(), childBox.payloadSize);
+                                Error rd = stream.readBytes(payload.data(), childBox.payloadSize);
                                 if (rd.isError()) return rd;
-                                payload->setSize(static_cast<size_t>(childBox.payloadSize));
+                                payload.setSize(static_cast<size_t>(childBox.payloadSize));
                                 track.setCodecConfig(payload);
                                 track.setCodecConfigType(childBox.type);
                         } else {
@@ -1055,9 +1055,9 @@ Error QuickTimeReader::resolveStartTimecode() {
         QuickTime::Sample s;
         Error             err = readSample(_tmcdInfo.trackIndex, 0, s);
         if (err.isError()) return err;
-        if (!s.data.isValid() || s.data->size() < 4) return Error::CorruptData;
+        if (!s.data.isValid() || s.data.size() < 4) return Error::CorruptData;
 
-        const uint8_t *bytes = static_cast<const uint8_t *>(s.data->data());
+        const uint8_t *bytes = static_cast<const uint8_t *>(s.data.data());
         uint32_t       startFrame = (static_cast<uint32_t>(bytes[0]) << 24) | (static_cast<uint32_t>(bytes[1]) << 16) |
                               (static_cast<uint32_t>(bytes[2]) << 8) | static_cast<uint32_t>(bytes[3]);
 
@@ -1134,7 +1134,7 @@ Error QuickTimeReader::readSample(size_t trackIndex, uint64_t sampleIndex, Quick
                                     static_cast<unsigned long long>(sampleIndex));
                         return Error::IOError;
                 }
-                out.data = Buffer::Ptr::create(std::move(buf));
+                out.data = Buffer(std::move(buf));
                 return Error::Ok;
         }
 
@@ -1150,7 +1150,7 @@ Error QuickTimeReader::readSample(size_t trackIndex, uint64_t sampleIndex, Quick
                 return Error::IOError;
         }
         buf.setSize(sz);
-        out.data = Buffer::Ptr::create(std::move(buf));
+        out.data = Buffer(std::move(buf));
         return Error::Ok;
 }
 
@@ -1221,7 +1221,7 @@ Error QuickTimeReader::readSampleRange(size_t trackIndex, uint64_t startSampleIn
         out.pts = idx.audioCompact ? firstDts : idx.pts[startSampleIndex];
         out.duration = idx.audioCompact ? idx.audioSampleDelta : idx.duration[startSampleIndex];
         out.keyframe = idx.audioCompact ? true : (idx.keyframe[startSampleIndex] != 0);
-        out.data = Buffer::Ptr::create(std::move(out_buf));
+        out.data = Buffer(std::move(out_buf));
         return Error::Ok;
 }
 

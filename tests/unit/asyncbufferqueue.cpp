@@ -16,11 +16,11 @@ using namespace promeki;
 
 namespace {
 
-        // Helper: build a Buffer::Ptr containing the given byte sequence.
-        Buffer::Ptr makeSegment(const char *bytes, size_t n) {
-                Buffer::Ptr ptr = Buffer::Ptr::create(n);
-                if (n > 0) std::memcpy(ptr.modify()->data(), bytes, n);
-                ptr.modify()->setSize(n);
+        // Helper: build a Buffer containing the given byte sequence.
+        Buffer makeSegment(const char *bytes, size_t n) {
+                Buffer ptr(n);
+                if (n > 0) std::memcpy(ptr.data(), bytes, n);
+                ptr.setSize(n);
                 return ptr;
         }
 
@@ -90,7 +90,7 @@ TEST_CASE("AsyncBufferQueue_ZeroLengthAndInvalidSegmentsAreIgnored") {
         q.readyReadSignal.connect([&]() { readyCount.fetch_add(1); });
 
         // Empty pointer.
-        CHECK(q.enqueue(Buffer::Ptr()).isOk());
+        CHECK(q.enqueue(Buffer()).isOk());
         // Zero-byte buffer.
         CHECK(q.enqueue(makeSegment("", 0)).isOk());
         CHECK(readyCount.load() == 0);

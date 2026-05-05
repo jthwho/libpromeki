@@ -34,11 +34,12 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Design notes
  *
  * This is a simple explicit-release pool, not a smart-pointer-backed
- * one. That's deliberate: @c Buffer::Ptr (SharedPtr<Buffer>) doesn't
- * have a user-defined deleter hook, so wrapping a pool-backed buffer
- * in a shared pointer would require a separate layer. For the
- * expected hot-path use case (read one sample, use it, pop the next),
- * explicit release is clearer.
+ * one.  That's deliberate: @c Buffer is a value-type handle wrapping
+ * an internally shared @ref BufferImpl, with no user-defined deleter
+ * hook to recycle the impl on last-handle drop.  Wrapping a pool-
+ * backed buffer in a smart-pointer release path would require a
+ * separate layer.  For the expected hot-path use case (read one
+ * sample, use it, pop the next), explicit release is clearer.
  *
  * @par Growth
  *

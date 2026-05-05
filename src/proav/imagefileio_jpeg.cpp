@@ -168,13 +168,11 @@ Error ImageFileIO_JPEG::load(ImageFile &imageFile, const MediaConfig &config) co
         }
 
         // Single-buffer slurp.  JPEG headers can only be parsed from a
-        // contiguous memory block, and the bitstream we want to hand to
-        // the CompressedVideoPayload has to live in one Buffer anyway.
-        // Use Buffer::Ptr::modify() so readBulk() sees a non-const
-        // reference — the buffer has exclusive ownership at this point,
-        // so modify() is just an unwrap.
-        Buffer::Ptr fileBuf = Buffer::Ptr::create(static_cast<size_t>(fileSize));
-        err = file.readBulk(*fileBuf.modify(), fileSize);
+        // contiguous memory block, and the bitstream we want to hand
+        // to the CompressedVideoPayload has to live in one Buffer
+        // anyway.
+        Buffer fileBuf = Buffer(static_cast<size_t>(fileSize));
+        err = file.readBulk(fileBuf, fileSize);
         file.close();
         if (err.isError()) {
                 promekiErr("JPEG load '%s': read failed: %s", filename.cstr(), err.name().cstr());
@@ -182,14 +180,14 @@ Error ImageFileIO_JPEG::load(ImageFile &imageFile, const MediaConfig &config) co
         }
         // readBulk leaves size() reflecting the actual number of bytes
         // read.  If it came up short, downstream probes will catch it.
-        if (fileBuf->size() < 4) {
-                promekiErr("JPEG load '%s': short read (%zu bytes)", filename.cstr(), fileBuf->size());
+        if (fileBuf.size() < 4) {
+                promekiErr("JPEG load '%s': short read (%zu bytes)", filename.cstr(), fileBuf.size());
                 return Error::CorruptData;
         }
 
         size_t          width = 0;
         size_t          height = 0;
-        PixelFormat::ID pdId = probeJpegHeader(fileBuf->data(), fileBuf->size(), width, height);
+        PixelFormat::ID pdId = probeJpegHeader(fileBuf.data(), fileBuf.size(), width, height);
         if (pdId == PixelFormat::Invalid) {
                 promekiErr("JPEG load '%s': header probe failed", filename.cstr());
                 return Error::CorruptData;

@@ -394,12 +394,12 @@ Error QuickTimeMediaIO::readVideoFrame(const FrameNumber &frameIndex, Frame::Ptr
         MediaPayload::Ptr videoPayload;
 
         if (samplePd.isCompressed()) {
-                Buffer::Ptr bitstream = s.data;
+                Buffer bitstream = s.data;
                 const bool  isH264 = (samplePd.id() == PixelFormat::H264);
                 const bool  isHEVC = (samplePd.id() == PixelFormat::HEVC);
                 if ((isH264 || isHEVC) && vt.codecConfig().isValid()) {
-                        Buffer::Ptr annexB;
-                        Error cerr = H264Bitstream::avccToAnnexB(BufferView(s.data, 0, s.data->size()), 4, annexB);
+                        Buffer annexB;
+                        Error cerr = H264Bitstream::avccToAnnexB(BufferView(s.data, 0, s.data.size()), 4, annexB);
                         if (cerr.isError()) {
                                 promekiWarn("QuickTimeMediaIO: AVCC->Annex-B failed for sample %lld: %s",
                                             static_cast<long long>(frameIndex.value()), cerr.name().cstr());
@@ -407,8 +407,8 @@ Error QuickTimeMediaIO::readVideoFrame(const FrameNumber &frameIndex, Frame::Ptr
                         } else {
                                 bitstream = annexB;
                                 if (s.keyframe) {
-                                        Buffer::Ptr psAnnexB;
-                                        BufferView  cfgView(vt.codecConfig(), 0, vt.codecConfig()->size());
+                                        Buffer psAnnexB;
+                                        BufferView  cfgView(vt.codecConfig(), 0, vt.codecConfig().size());
                                         Error       pe;
                                         if (isH264) {
                                                 AvcDecoderConfig cfg;
@@ -419,15 +419,15 @@ Error QuickTimeMediaIO::readVideoFrame(const FrameNumber &frameIndex, Frame::Ptr
                                                 pe = HevcDecoderConfig::parse(cfgView, cfg);
                                                 if (!pe.isError()) pe = cfg.toAnnexB(psAnnexB);
                                         }
-                                        if (!pe.isError() && psAnnexB && psAnnexB->size() > 0) {
-                                                const size_t total = psAnnexB->size() + annexB->size();
-                                                auto         merged = Buffer::Ptr::create(total);
+                                        if (!pe.isError() && psAnnexB && psAnnexB.size() > 0) {
+                                                const size_t total = psAnnexB.size() + annexB.size();
+                                                auto         merged = Buffer(total);
                                                 if (merged) {
-                                                        std::memcpy(merged->data(), psAnnexB->data(), psAnnexB->size());
-                                                        std::memcpy(static_cast<uint8_t *>(merged->data()) +
-                                                                            psAnnexB->size(),
-                                                                    annexB->data(), annexB->size());
-                                                        merged->setSize(total);
+                                                        std::memcpy(merged.data(), psAnnexB.data(), psAnnexB.size());
+                                                        std::memcpy(static_cast<uint8_t *>(merged.data()) +
+                                                                            psAnnexB.size(),
+                                                                    annexB.data(), annexB.size());
+                                                        merged.setSize(total);
                                                         bitstream = merged;
                                                 }
                                         }
@@ -440,12 +440,12 @@ Error QuickTimeMediaIO::readVideoFrame(const FrameNumber &frameIndex, Frame::Ptr
         } else if (samplePd.planeCount() > 1) {
                 auto uvp = UncompressedVideoPayload::allocate(idesc);
                 if (uvp.isValid()) {
-                        const uint8_t *src = static_cast<const uint8_t *>(s.data->data());
+                        const uint8_t *src = static_cast<const uint8_t *>(s.data.data());
                         size_t         off = 0;
                         bool           ok = true;
                         for (size_t p = 0; p < samplePd.planeCount(); ++p) {
                                 const size_t psz = samplePd.planeSize(p, idesc);
-                                if (off + psz > s.data->size()) {
+                                if (off + psz > s.data.size()) {
                                         ok = false;
                                         break;
                                 }
@@ -456,7 +456,7 @@ Error QuickTimeMediaIO::readVideoFrame(const FrameNumber &frameIndex, Frame::Ptr
                 }
         } else {
                 BufferView planes;
-                planes.pushToBack(s.data, 0, s.data->size());
+                planes.pushToBack(s.data, 0, s.data.size());
                 videoPayload = UncompressedVideoPayload::Ptr::create(idesc, planes);
         }
 
@@ -496,7 +496,7 @@ Error QuickTimeMediaIO::readAudioSlice(uint64_t startSample, size_t samples, Med
         if (err.isError()) return err;
         if (!range.data.isValid()) return Error::IOError;
 
-        const size_t rangeSize = range.data->size();
+        const size_t rangeSize = range.data.size();
         BufferView   view(range.data, 0, rangeSize);
 
         if (_audioDesc.isCompressed()) {
@@ -653,7 +653,7 @@ Error QuickTimeMediaIO::drainWriterAudio(bool flush) {
 
         QuickTime::Sample s;
         s.trackId = _writerAudioTrackId;
-        s.data = Buffer::Ptr::create(std::move(buf));
+        s.data = Buffer(std::move(buf));
         s.duration = 0;
         s.keyframe = true;
         return _qt.writeSample(_writerAudioTrackId, s);
@@ -691,14 +691,14 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                         promekiWarn("QuickTimeMediaIO: payload plane has no bytes; skipping");
                         return Error::InvalidArgument;
                 }
-                const Buffer::Ptr &backing = view.buffer();
-                if (backing && view.offset() == 0 && view.size() == backing->size()) {
+                const Buffer &backing = view.buffer();
+                if (backing && view.offset() == 0 && view.size() == backing.size()) {
                         s.data = backing;
                 } else {
                         Buffer copy(view.size());
                         std::memcpy(copy.data(), view.data(), view.size());
                         copy.setSize(view.size());
-                        s.data = Buffer::Ptr::create(std::move(copy));
+                        s.data = Buffer(std::move(copy));
                 }
                 s.keyframe = cvp->isKeyframe();
         } else if (const auto *uvp = vp.as<UncompressedVideoPayload>()) {
@@ -718,21 +718,21 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                                 off += pv.size();
                         }
                         concat.setSize(total);
-                        s.data = Buffer::Ptr::create(std::move(concat));
+                        s.data = Buffer(std::move(concat));
                 } else {
                         auto pv = uvp->plane(0);
                         if (!pv.isValid() || pv.size() == 0) {
                                 promekiWarn("QuickTimeMediaIO: uncompressed plane is empty");
                                 return Error::InvalidArgument;
                         }
-                        const Buffer::Ptr &backing = pv.buffer();
-                        if (backing && pv.offset() == 0 && pv.size() == backing->size()) {
+                        const Buffer &backing = pv.buffer();
+                        if (backing && pv.offset() == 0 && pv.size() == backing.size()) {
                                 s.data = backing;
                         } else {
                                 Buffer copy(pv.size());
                                 std::memcpy(copy.data(), pv.data(), pv.size());
                                 copy.setSize(pv.size());
-                                s.data = Buffer::Ptr::create(std::move(copy));
+                                s.data = Buffer(std::move(copy));
                         }
                 }
                 if (frame.metadata().contains(Metadata::FrameKeyframe)) {

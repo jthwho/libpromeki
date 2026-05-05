@@ -120,11 +120,11 @@ namespace {
                 return appended;
         }
 
-        // Builds a Buffer::Ptr containing the given byte sequence.
-        Buffer::Ptr makeSegment(const char *bytes, size_t n) {
-                Buffer::Ptr ptr = Buffer::Ptr::create(n);
-                if (n > 0) std::memcpy(ptr.modify()->data(), bytes, n);
-                ptr.modify()->setSize(n);
+        // Builds a Buffer containing the given byte sequence.
+        Buffer makeSegment(const char *bytes, size_t n) {
+                Buffer ptr = Buffer(n);
+                if (n > 0) std::memcpy(ptr.data(), bytes, n);
+                ptr.setSize(n);
                 return ptr;
         }
 

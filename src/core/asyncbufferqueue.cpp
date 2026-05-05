@@ -66,19 +66,19 @@ int64_t AsyncBufferQueue::read(void *data, int64_t maxSize) {
         // atEnd() to disambiguate "more coming" vs "stream ended".
         while (total < maxSize && !_segments.isEmpty()) {
                 Segment      &front = _segments[0];
-                const Buffer *buf = front.buffer.ptr();
-                if (buf == nullptr || !buf->isValid() || buf->size() == 0) {
+                const Buffer &buf = front.buffer;
+                if (!buf.isValid() || buf.size() == 0) {
                         // Defensively drop any empty / invalid head — the
                         // public enqueue() filters these but a future
                         // sub-class might bypass that check.
                         _segments.remove(static_cast<size_t>(0));
                         continue;
                 }
-                const size_t bufSize = buf->size();
+                const size_t bufSize = buf.size();
                 const size_t avail = bufSize - front.offset;
                 const size_t take =
                         (avail > static_cast<size_t>(maxSize - total)) ? static_cast<size_t>(maxSize - total) : avail;
-                const uint8_t *src = static_cast<const uint8_t *>(buf->data()) + front.offset;
+                const uint8_t *src = static_cast<const uint8_t *>(buf.data()) + front.offset;
                 std::memcpy(dst + total, src, take);
                 total += static_cast<int64_t>(take);
                 front.offset += take;
@@ -94,7 +94,7 @@ int64_t AsyncBufferQueue::read(void *data, int64_t maxSize) {
 int64_t AsyncBufferQueue::write(const void *data, int64_t maxSize) {
         (void)data;
         (void)maxSize;
-        // The whole point of the queue is to share Buffer::Ptr by
+        // The whole point of the queue is to share Buffer by
         // reference; a generic write() would force a copy.  Producers
         // must use enqueue().  Set the device error state so a caller
         // that forgot to check the -1 return can still observe the
@@ -142,9 +142,9 @@ bool AsyncBufferQueue::atEnd() const {
 // Producer-side API
 // ----------------------------------------------------------------------------
 
-Error AsyncBufferQueue::enqueue(const Buffer::Ptr &segment) {
+Error AsyncBufferQueue::enqueue(const Buffer &segment) {
         if (!segment.isValid()) return Error::Ok; // tolerate empty pushes
-        if (segment->size() == 0) return Error::Ok;
+        if (segment.size() == 0) return Error::Ok;
         {
                 Mutex::Locker lk(_mutex);
                 if (_writingClosed) return Error(Error::NotOpen);
@@ -152,7 +152,7 @@ Error AsyncBufferQueue::enqueue(const Buffer::Ptr &segment) {
                 s.buffer = segment;
                 s.offset = 0;
                 _segments.pushToBack(s);
-                _queuedBytes += static_cast<int64_t>(segment->size());
+                _queuedBytes += static_cast<int64_t>(segment.size());
         }
         readyReadSignal.emit();
         return Error::Ok;

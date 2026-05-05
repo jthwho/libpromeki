@@ -136,9 +136,9 @@ TEST_CASE("LtcDecoder_DecodeAudio_Float32Stereo") {
         // TPG produces when AudioMode == LTC.
         AudioDesc   stereoDesc(AudioFormat::PCMI_Float32LE, 48000.0f, 2);
         size_t      stereoBytes = stereoDesc.bufferSize(mono.size());
-        Buffer::Ptr stereoBuf = Buffer::Ptr::create(stereoBytes);
-        stereoBuf.modify()->setSize(stereoBytes);
-        float *out = reinterpret_cast<float *>(stereoBuf.modify()->data());
+        Buffer stereoBuf = Buffer(stereoBytes);
+        stereoBuf.setSize(stereoBytes);
+        float *out = reinterpret_cast<float *>(stereoBuf.data());
         for (size_t s = 0; s < mono.size(); s++) {
                 out[s * 2 + 0] = static_cast<float>(mono[s]) / 127.0f;
                 out[s * 2 + 1] = 0.0f;
@@ -163,8 +163,8 @@ TEST_CASE("LtcDecoder_DecodeAudio_RejectsMismatchedSampleRate") {
         LtcDecoder  dec(48000);
         AudioDesc   desc(AudioFormat::PCMI_Float32LE, 44100.0f, 2);
         size_t      sz = desc.bufferSize(1024);
-        Buffer::Ptr buf = Buffer::Ptr::create(sz);
-        buf.modify()->setSize(sz);
+        Buffer buf = Buffer(sz);
+        buf.setSize(sz);
         BufferView view(buf, 0, sz);
         auto       audio = PcmAudioPayload::Ptr::create(desc, 1024, view);
         auto       results = dec.decode(*audio, 0);
@@ -175,8 +175,8 @@ TEST_CASE("LtcDecoder_DecodeAudio_RejectsBadChannelIndex") {
         LtcDecoder  dec(48000);
         AudioDesc   desc(AudioFormat::PCMI_Float32LE, 48000.0f, 2);
         size_t      sz = desc.bufferSize(1024);
-        Buffer::Ptr buf = Buffer::Ptr::create(sz);
-        buf.modify()->setSize(sz);
+        Buffer buf = Buffer(sz);
+        buf.setSize(sz);
         BufferView view(buf, 0, sz);
         auto       audio = PcmAudioPayload::Ptr::create(desc, 1024, view);
         auto       results = dec.decode(*audio, 5); // out-of-range

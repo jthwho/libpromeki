@@ -36,9 +36,9 @@ namespace {
                                                      float freqHz, double phase) {
                 AudioDesc    desc(AudioFormat::PCMI_S16LE, sampleRate, channels);
                 const size_t bytes = desc.bufferSize(samplesPerChannel);
-                auto         buf = Buffer::Ptr::create(bytes);
-                buf.modify()->setSize(bytes);
-                auto *p = static_cast<int16_t *>(buf.modify()->data());
+                auto         buf = Buffer(bytes);
+                buf.setSize(bytes);
+                auto *p = static_cast<int16_t *>(buf.data());
                 for (size_t i = 0; i < samplesPerChannel; ++i) {
                         double  t = static_cast<double>(i) / sampleRate;
                         double  s = std::sin(2.0 * M_PI * freqHz * t + phase) * 0.7;
@@ -200,8 +200,8 @@ TEST_CASE("Opus: encoder rejects unsupported sample rates") {
         // 44.1 kHz is not in libopus's allowed set (8/12/16/24/48 kHz).
         AudioDesc    badDesc(AudioFormat::PCMI_S16LE, 44100.0f, 2);
         const size_t bytes = badDesc.bufferSize(960);
-        auto         buf = Buffer::Ptr::create(bytes);
-        buf.modify()->setSize(bytes);
+        auto         buf = Buffer(bytes);
+        buf.setSize(bytes);
         BufferView planes;
         planes.pushToBack(buf, 0, bytes);
         auto bad = PcmAudioPayload::Ptr::create(badDesc, 960, planes);
@@ -283,8 +283,8 @@ TEST_CASE("Opus: encoder rejects unsupported channel count") {
         // Opus encoder accepts 1 or 2 channels only — feed it 6.
         AudioDesc    badDesc(AudioFormat::PCMI_S16LE, 48000.0f, 6);
         const size_t bytes = badDesc.bufferSize(960);
-        auto         buf = Buffer::Ptr::create(bytes);
-        buf.modify()->setSize(bytes);
+        auto         buf = Buffer(bytes);
+        buf.setSize(bytes);
         BufferView planes;
         planes.pushToBack(buf, 0, bytes);
         auto  bad = PcmAudioPayload::Ptr::create(badDesc, 960, planes);
@@ -363,7 +363,7 @@ TEST_CASE("Opus: decoder rejects null and empty packets") {
         AudioFormat opusFmt = opusCompressedFormat();
         REQUIRE(opusFmt.isValid());
         AudioDesc   cdesc(opusFmt, 48000.0f, 2);
-        Buffer::Ptr empty = Buffer::Ptr::create(0);
+        Buffer empty = Buffer(0);
         auto        pkt = CompressedAudioPayload::Ptr::create(cdesc, BufferView(empty, 0, 0));
         Error       err2 = dec->submitPayload(pkt);
         CHECK(err2 == promeki::Error::Invalid);
@@ -384,9 +384,9 @@ TEST_CASE("Opus: decoder rejects unsupported sample rate") {
         AudioFormat opusFmt = opusCompressedFormat();
         REQUIRE(opusFmt.isValid());
         AudioDesc   cdesc(opusFmt, 44100.0f, 2);
-        Buffer::Ptr buf = Buffer::Ptr::create(8);
-        buf.modify()->fill(0x00);
-        buf.modify()->setSize(8);
+        Buffer buf = Buffer(8);
+        buf.fill(0x00);
+        buf.setSize(8);
         auto  pkt = CompressedAudioPayload::Ptr::create(cdesc, BufferView(buf, 0, 8));
         Error err = dec->submitPayload(pkt);
         CHECK(err == promeki::Error::Invalid);
@@ -407,9 +407,9 @@ TEST_CASE("Opus: decoder rejects unsupported channel count") {
         AudioFormat opusFmt = opusCompressedFormat();
         REQUIRE(opusFmt.isValid());
         AudioDesc   cdesc(opusFmt, 48000.0f, 6);
-        Buffer::Ptr buf = Buffer::Ptr::create(8);
-        buf.modify()->fill(0x00);
-        buf.modify()->setSize(8);
+        Buffer buf = Buffer(8);
+        buf.fill(0x00);
+        buf.setSize(8);
         auto  pkt = CompressedAudioPayload::Ptr::create(cdesc, BufferView(buf, 0, 8));
         Error err = dec->submitPayload(pkt);
         CHECK(err == promeki::Error::Invalid);
@@ -451,9 +451,9 @@ TEST_CASE("Opus: encoder Float32LE input path") {
         // Build a Float32LE payload of zeros (silence).
         AudioDesc    desc(AudioFormat::PCMI_Float32LE, sr, ch);
         const size_t bytes = desc.bufferSize(chunk);
-        auto         buf = Buffer::Ptr::create(bytes);
-        buf.modify()->setSize(bytes);
-        std::memset(buf.modify()->data(), 0, bytes);
+        auto         buf = Buffer(bytes);
+        buf.setSize(bytes);
+        std::memset(buf.data(), 0, bytes);
         BufferView planes;
         planes.pushToBack(buf, 0, bytes);
         auto frame = PcmAudioPayload::Ptr::create(desc, chunk, planes);
@@ -486,9 +486,9 @@ TEST_CASE("Opus: configure with OpusApplication::Voip is accepted") {
         // applicationFromEnum) to actually run — mono silence payload.
         AudioDesc    monoDesc(AudioFormat::PCMI_S16LE, 48000.0f, 1);
         const size_t bytes = monoDesc.bufferSize(960);
-        auto         buf = Buffer::Ptr::create(bytes);
-        buf.modify()->setSize(bytes);
-        std::memset(buf.modify()->data(), 0, bytes);
+        auto         buf = Buffer(bytes);
+        buf.setSize(bytes);
+        std::memset(buf.data(), 0, bytes);
         BufferView planes;
         planes.pushToBack(buf, 0, bytes);
         auto  mono = PcmAudioPayload::Ptr::create(monoDesc, 960, planes);
@@ -508,9 +508,9 @@ TEST_CASE("Opus: configure with OpusApplication::LowDelay is accepted") {
         // A 5 ms frame at 48 kHz is 240 samples.
         AudioDesc    desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         const size_t bytes = desc.bufferSize(240);
-        auto         buf = Buffer::Ptr::create(bytes);
-        buf.modify()->setSize(bytes);
-        std::memset(buf.modify()->data(), 0, bytes);
+        auto         buf = Buffer(bytes);
+        buf.setSize(bytes);
+        std::memset(buf.data(), 0, bytes);
         BufferView planes;
         planes.pushToBack(buf, 0, bytes);
         auto  frame = PcmAudioPayload::Ptr::create(desc, 240, planes);

@@ -240,9 +240,9 @@ namespace {
         PcmAudioPayload::Ptr makePcmPayload(size_t samples, uint8_t fill,
                                             const AudioDesc &desc = AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 2)) {
                 const size_t bytes = desc.bufferSize(samples);
-                auto         buf = Buffer::Ptr::create(bytes);
-                buf.modify()->fill(static_cast<char>(fill));
-                buf.modify()->setSize(bytes);
+                auto         buf = Buffer(bytes);
+                buf.fill(static_cast<char>(fill));
+                buf.setSize(bytes);
                 BufferView planes;
                 planes.pushToBack(buf, 0, bytes);
                 return PcmAudioPayload::Ptr::create(desc, samples, planes);

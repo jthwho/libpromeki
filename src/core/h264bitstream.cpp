@@ -151,7 +151,7 @@ Error H264Bitstream::forEachAvccNal(const BufferView &in, uint8_t lenSize, const
 // Conversion
 // ---------------------------------------------------------------------------
 
-Error H264Bitstream::annexBToAvcc(const BufferView &in, uint8_t lenSize, Buffer::Ptr &outBuf) {
+Error H264Bitstream::annexBToAvcc(const BufferView &in, uint8_t lenSize, Buffer &outBuf) {
         if (!isValidLenSize(lenSize)) return Error::InvalidArgument;
 
         // Two-pass: first walk the input to compute the total output
@@ -168,9 +168,9 @@ Error H264Bitstream::annexBToAvcc(const BufferView &in, uint8_t lenSize, Buffer:
         Error err = forEachAnnexBNal(in, sizingVisitor);
         if (err.isError()) return err;
 
-        Buffer::Ptr buf = Buffer::Ptr::create(totalSize);
+        Buffer buf = Buffer(totalSize);
         if (!buf) return Error::NoMem;
-        uint8_t *dst = static_cast<uint8_t *>(buf->data());
+        uint8_t *dst = static_cast<uint8_t *>(buf.data());
         size_t   cursor = 0;
         auto     copyVisitor = [&](const NalUnit &nal) -> Error {
                 writeBE(dst + cursor, static_cast<uint64_t>(nal.view.size()), lenSize);
@@ -183,13 +183,13 @@ Error H264Bitstream::annexBToAvcc(const BufferView &in, uint8_t lenSize, Buffer:
         };
         err = forEachAnnexBNal(in, copyVisitor);
         if (err.isError()) return err;
-        buf->setSize(totalSize);
+        buf.setSize(totalSize);
         outBuf = buf;
         return Error::Ok;
 }
 
 Error H264Bitstream::annexBToAvccFiltered(const BufferView &in, uint8_t lenSize,
-                                          const std::function<bool(const NalUnit &)> &keep, Buffer::Ptr &outBuf) {
+                                          const std::function<bool(const NalUnit &)> &keep, Buffer &outBuf) {
         if (!isValidLenSize(lenSize)) return Error::InvalidArgument;
 
         size_t         totalSize = 0;
@@ -203,9 +203,9 @@ Error H264Bitstream::annexBToAvccFiltered(const BufferView &in, uint8_t lenSize,
         Error err = forEachAnnexBNal(in, sizingVisitor);
         if (err.isError()) return err;
 
-        Buffer::Ptr buf = Buffer::Ptr::create(totalSize);
+        Buffer buf = Buffer(totalSize);
         if (!buf) return Error::NoMem;
-        uint8_t *dst = static_cast<uint8_t *>(buf->data());
+        uint8_t *dst = static_cast<uint8_t *>(buf.data());
         size_t   cursor = 0;
         auto     copyVisitor = [&](const NalUnit &nal) -> Error {
                 if (!keep(nal)) return Error::Ok;
@@ -219,12 +219,12 @@ Error H264Bitstream::annexBToAvccFiltered(const BufferView &in, uint8_t lenSize,
         };
         err = forEachAnnexBNal(in, copyVisitor);
         if (err.isError()) return err;
-        buf->setSize(totalSize);
+        buf.setSize(totalSize);
         outBuf = buf;
         return Error::Ok;
 }
 
-Error H264Bitstream::avccToAnnexB(const BufferView &in, uint8_t lenSize, Buffer::Ptr &outBuf) {
+Error H264Bitstream::avccToAnnexB(const BufferView &in, uint8_t lenSize, Buffer &outBuf) {
         if (!isValidLenSize(lenSize)) return Error::InvalidArgument;
 
         // Output size = sum over NALs of (4 start-code bytes + NAL payload).
@@ -236,9 +236,9 @@ Error H264Bitstream::avccToAnnexB(const BufferView &in, uint8_t lenSize, Buffer:
         Error err = forEachAvccNal(in, lenSize, sizingVisitor);
         if (err.isError()) return err;
 
-        Buffer::Ptr buf = Buffer::Ptr::create(totalSize);
+        Buffer buf = Buffer(totalSize);
         if (!buf) return Error::NoMem;
-        uint8_t *dst = static_cast<uint8_t *>(buf->data());
+        uint8_t *dst = static_cast<uint8_t *>(buf.data());
         size_t   cursor = 0;
         auto     copyVisitor = [&](const NalUnit &nal) -> Error {
                 dst[cursor + 0] = 0x00;
@@ -254,7 +254,7 @@ Error H264Bitstream::avccToAnnexB(const BufferView &in, uint8_t lenSize, Buffer:
         };
         err = forEachAvccNal(in, lenSize, copyVisitor);
         if (err.isError()) return err;
-        buf->setSize(totalSize);
+        buf.setSize(totalSize);
         outBuf = buf;
         return Error::Ok;
 }
@@ -278,12 +278,12 @@ namespace {
         }
 
         /** @brief Deep-copies a BufferView's single-slice bytes into a freshly allocated Buffer. */
-        Buffer::Ptr copyView(const BufferView &v) {
+        Buffer copyView(const BufferView &v) {
                 auto        slice = v[0];
-                Buffer::Ptr buf = Buffer::Ptr::create(slice.size());
+                Buffer buf = Buffer(slice.size());
                 if (!buf) return buf;
-                if (slice.size() > 0) std::memcpy(buf->data(), slice.data(), slice.size());
-                buf->setSize(slice.size());
+                if (slice.size() > 0) std::memcpy(buf.data(), slice.data(), slice.size());
+                buf.setSize(slice.size());
                 return buf;
         }
 
@@ -311,11 +311,11 @@ Error AvcDecoderConfig::fromAnnexB(const BufferView &au, AvcDecoderConfig &out) 
                                 out.avcLevelIndication = nalSlice.data()[3];
                                 haveProfile = true;
                         }
-                        Buffer::Ptr copy = copyView(nal.view);
+                        Buffer copy = copyView(nal.view);
                         if (!copy) return Error(Error::NoMem);
                         out.sps.pushToBack(copy);
                 } else if (t == H264NalTypePps) {
-                        Buffer::Ptr copy = copyView(nal.view);
+                        Buffer copy = copyView(nal.view);
                         if (!copy) return Error(Error::NoMem);
                         out.pps.pushToBack(copy);
                 }
@@ -352,7 +352,7 @@ Error AvcDecoderConfig::parse(const BufferView &payload, AvcDecoderConfig &out) 
                 uint16_t spsLen = static_cast<uint16_t>((data[pos] << 8) | data[pos + 1]);
                 pos += 2;
                 if (!need(spsLen)) return Error::CorruptData;
-                Buffer::Ptr buf = copyView(BufferView(slice.buffer(), slice.offset() + pos, spsLen));
+                Buffer buf = copyView(BufferView(slice.buffer(), slice.offset() + pos, spsLen));
                 if (!buf) return Error::NoMem;
                 out.sps.pushToBack(buf);
                 pos += spsLen;
@@ -365,7 +365,7 @@ Error AvcDecoderConfig::parse(const BufferView &payload, AvcDecoderConfig &out) 
                 uint16_t ppsLen = static_cast<uint16_t>((data[pos] << 8) | data[pos + 1]);
                 pos += 2;
                 if (!need(ppsLen)) return Error::CorruptData;
-                Buffer::Ptr buf = copyView(BufferView(slice.buffer(), slice.offset() + pos, ppsLen));
+                Buffer buf = copyView(BufferView(slice.buffer(), slice.offset() + pos, ppsLen));
                 if (!buf) return Error::NoMem;
                 out.pps.pushToBack(buf);
                 pos += ppsLen;
@@ -373,7 +373,7 @@ Error AvcDecoderConfig::parse(const BufferView &payload, AvcDecoderConfig &out) 
         return Error::Ok;
 }
 
-Error AvcDecoderConfig::serialize(Buffer::Ptr &outBuf) const {
+Error AvcDecoderConfig::serialize(Buffer &outBuf) const {
         // Reject oversize parameter-set lists up front — the avcC
         // record uses a 5-bit SPS count and an 8-bit PPS count.
         if (sps.size() > 0x1f) return Error::InvalidArgument;
@@ -382,21 +382,21 @@ Error AvcDecoderConfig::serialize(Buffer::Ptr &outBuf) const {
         // Compute output size: 6-byte header, then per-SPS (2 + len),
         // 1-byte numPps, per-PPS (2 + len).
         size_t total = 6;
-        for (const Buffer::Ptr &s : sps) {
+        for (const Buffer &s : sps) {
                 if (!s) return Error::InvalidArgument;
-                if (s->size() > 0xffff) return Error::InvalidArgument;
-                total += 2 + s->size();
+                if (s.size() > 0xffff) return Error::InvalidArgument;
+                total += 2 + s.size();
         }
         total += 1;
-        for (const Buffer::Ptr &p : pps) {
+        for (const Buffer &p : pps) {
                 if (!p) return Error::InvalidArgument;
-                if (p->size() > 0xffff) return Error::InvalidArgument;
-                total += 2 + p->size();
+                if (p.size() > 0xffff) return Error::InvalidArgument;
+                total += 2 + p.size();
         }
 
-        Buffer::Ptr buf = Buffer::Ptr::create(total);
+        Buffer buf = Buffer(total);
         if (!buf) return Error::NoMem;
-        uint8_t *dst = static_cast<uint8_t *>(buf->data());
+        uint8_t *dst = static_cast<uint8_t *>(buf.data());
         size_t   cursor = 0;
 
         dst[cursor++] = configurationVersion;
@@ -405,45 +405,45 @@ Error AvcDecoderConfig::serialize(Buffer::Ptr &outBuf) const {
         dst[cursor++] = avcLevelIndication;
         dst[cursor++] = static_cast<uint8_t>(0xfc | (lengthSizeMinusOne & 0x03));
         dst[cursor++] = static_cast<uint8_t>(0xe0 | (sps.size() & 0x1f));
-        for (const Buffer::Ptr &s : sps) {
-                uint16_t n = static_cast<uint16_t>(s->size());
+        for (const Buffer &s : sps) {
+                uint16_t n = static_cast<uint16_t>(s.size());
                 dst[cursor++] = static_cast<uint8_t>((n >> 8) & 0xff);
                 dst[cursor++] = static_cast<uint8_t>(n & 0xff);
-                if (n > 0) std::memcpy(dst + cursor, s->data(), n);
+                if (n > 0) std::memcpy(dst + cursor, s.data(), n);
                 cursor += n;
         }
         dst[cursor++] = static_cast<uint8_t>(pps.size());
-        for (const Buffer::Ptr &p : pps) {
-                uint16_t n = static_cast<uint16_t>(p->size());
+        for (const Buffer &p : pps) {
+                uint16_t n = static_cast<uint16_t>(p.size());
                 dst[cursor++] = static_cast<uint8_t>((n >> 8) & 0xff);
                 dst[cursor++] = static_cast<uint8_t>(n & 0xff);
-                if (n > 0) std::memcpy(dst + cursor, p->data(), n);
+                if (n > 0) std::memcpy(dst + cursor, p.data(), n);
                 cursor += n;
         }
-        buf->setSize(total);
+        buf.setSize(total);
         outBuf = buf;
         return Error::Ok;
 }
 
-Error AvcDecoderConfig::toAnnexB(Buffer::Ptr &outBuf) const {
+Error AvcDecoderConfig::toAnnexB(Buffer &outBuf) const {
         List<BufferView> nals;
-        for (const Buffer::Ptr &s : sps) {
-                nals.pushToBack(BufferView(s, 0, s ? s->size() : 0));
+        for (const Buffer &s : sps) {
+                nals.pushToBack(BufferView(s, 0, s ? s.size() : 0));
         }
-        for (const Buffer::Ptr &p : pps) {
-                nals.pushToBack(BufferView(p, 0, p ? p->size() : 0));
+        for (const Buffer &p : pps) {
+                nals.pushToBack(BufferView(p, 0, p ? p.size() : 0));
         }
         return H264Bitstream::wrapNalsAsAnnexB(nals, outBuf);
 }
 
-Error H264Bitstream::wrapNalsAsAnnexB(const List<BufferView> &nals, Buffer::Ptr &outBuf) {
+Error H264Bitstream::wrapNalsAsAnnexB(const List<BufferView> &nals, Buffer &outBuf) {
         size_t totalSize = 0;
         for (const BufferView &v : nals) {
                 totalSize += 4 + v.size();
         }
-        Buffer::Ptr buf = Buffer::Ptr::create(totalSize);
+        Buffer buf = Buffer(totalSize);
         if (!buf) return Error::NoMem;
-        uint8_t *dst = static_cast<uint8_t *>(buf->data());
+        uint8_t *dst = static_cast<uint8_t *>(buf.data());
         size_t   cursor = 0;
         for (const BufferView &v : nals) {
                 dst[cursor + 0] = 0x00;
@@ -456,7 +456,7 @@ Error H264Bitstream::wrapNalsAsAnnexB(const List<BufferView> &nals, Buffer::Ptr 
                         cursor += v.size();
                 }
         }
-        buf->setSize(totalSize);
+        buf.setSize(totalSize);
         outBuf = buf;
         return Error::Ok;
 }

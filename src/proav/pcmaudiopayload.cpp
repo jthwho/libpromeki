@@ -51,11 +51,11 @@ PcmAudioPayload::Ptr PcmAudioPayload::convert(const AudioFormat &dstFormat) cons
         const size_t channels = srcDesc.channels();
         const size_t dstBytes = dstDesc.bufferSize(samples);
 
-        auto dstBuf = Buffer::Ptr::create(dstBytes);
-        dstBuf.modify()->setSize(dstBytes);
+        auto dstBuf = Buffer(dstBytes);
+        dstBuf.setSize(dstBytes);
 
         const uint8_t *srcBytes = static_cast<const uint8_t *>(srcView.data());
-        uint8_t       *dstBytesPtr = static_cast<uint8_t *>(dstBuf.modify()->data());
+        uint8_t       *dstBytesPtr = static_cast<uint8_t *>(dstBuf.data());
 
         // Hand the whole conversion to AudioFormat — its channel-aware
         // overload handles direct-table fast paths, via-float for

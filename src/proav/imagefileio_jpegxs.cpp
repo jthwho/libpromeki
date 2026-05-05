@@ -157,21 +157,21 @@ Error ImageFileIO_JpegXS::load(ImageFile &imageFile, const MediaConfig &config) 
         // requirement.
         auto         alignResult = file.directIOAlignment();
         const size_t bufAlign = isOk(alignResult) ? value(alignResult) : Buffer::DefaultAlign;
-        Buffer::Ptr  fileBuf = Buffer::Ptr::create(static_cast<size_t>(fileSize) + bufAlign, bufAlign);
-        err = file.readBulk(*fileBuf.modify(), fileSize);
+        Buffer  fileBuf = Buffer(static_cast<size_t>(fileSize) + bufAlign, bufAlign);
+        err = file.readBulk(fileBuf, fileSize);
         file.close();
         if (err.isError()) {
                 promekiErr("JPEG XS load '%s': read failed: %s", filename.cstr(), err.name().cstr());
                 return err;
         }
-        if (fileBuf->size() < 4) {
-                promekiErr("JPEG XS load '%s': short read (%zu bytes)", filename.cstr(), fileBuf->size());
+        if (fileBuf.size() < 4) {
+                promekiErr("JPEG XS load '%s': short read (%zu bytes)", filename.cstr(), fileBuf.size());
                 return Error::CorruptData;
         }
 
         size_t          width = 0;
         size_t          height = 0;
-        PixelFormat::ID pdId = probeJpegXsHeader(fileBuf->data(), fileBuf->size(), width, height);
+        PixelFormat::ID pdId = probeJpegXsHeader(fileBuf.data(), fileBuf.size(), width, height);
         if (pdId == PixelFormat::Invalid) {
                 promekiErr("JPEG XS load '%s': header probe failed", filename.cstr());
                 return Error::CorruptData;

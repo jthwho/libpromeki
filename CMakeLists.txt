@@ -1490,10 +1490,13 @@ set(PROMEKI_SOURCES
     src/core/benchmark.cpp
     src/core/benchmarkrunner.cpp
     src/core/buffer.cpp
+    src/core/buffercommand.cpp
+    src/core/bufferfactory.cpp
     src/core/bufferview.cpp
     src/core/bufferediodevice.cpp
     src/core/bufferiodevice.cpp
     src/core/bufferpool.cpp
+    src/core/hostbufferimpl.cpp
     src/core/char.cpp
     src/core/ciepoint.cpp
     src/core/clock.cpp
@@ -1510,6 +1513,7 @@ set(PROMEKI_SOURCES
     src/core/crashhandler.cpp
     src/core/crc.cpp
     src/core/cuda.cpp
+    src/core/cudabufferimpl.cpp
     src/core/videocodec.cpp
     src/core/datastream.cpp
     src/core/datetime.cpp
@@ -1546,6 +1550,7 @@ set(PROMEKI_SOURCES
     src/core/mediatimestamp.cpp
     src/core/md5.cpp
     src/core/mempool.cpp
+    src/core/memdomain.cpp
     src/core/memspace.cpp
     src/core/metadata.cpp
     src/core/mouseevent.cpp
@@ -2493,10 +2498,14 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/typeregistry_isolation.cpp
         tests/unit/benchmarkrunner.cpp
         tests/unit/buffer.cpp
+        tests/unit/buffercommand.cpp
+        tests/unit/buffercopy.cpp
         tests/unit/bufferediodevice.cpp
         tests/unit/bufferiodevice.cpp
+        tests/unit/buffermap.cpp
         tests/unit/bufferpool.cpp
         tests/unit/bufferview.cpp
+        tests/unit/memdomain.cpp
         tests/unit/buildinfo.cpp
         tests/unit/bytearray.cpp
         tests/unit/ciepoint.cpp

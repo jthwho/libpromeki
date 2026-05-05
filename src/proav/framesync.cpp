@@ -499,10 +499,10 @@ PcmAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
         // different sample format convert via PcmAudioPayload::convert.
         AudioDesc    outDesc(AudioFormat::NativeFloat, targetRate, channels);
         const size_t outBytes = outDesc.bufferSize(targetSamples);
-        auto         outBuf = Buffer::Ptr::create(outBytes);
-        outBuf.modify()->setSize(outBytes);
-        std::memset(outBuf.modify()->data(), 0, outBytes);
-        float *outPtr = static_cast<float *>(outBuf.modify()->data());
+        auto         outBuf = Buffer(outBytes);
+        outBuf.setSize(outBytes);
+        std::memset(outBuf.data(), 0, outBytes);
+        float *outPtr = static_cast<float *>(outBuf.data());
 
         long outWritten = 0;
         while (outWritten < (long)targetSamples) {

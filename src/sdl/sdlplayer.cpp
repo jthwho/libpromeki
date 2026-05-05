@@ -220,9 +220,9 @@ Error SDLPlayerMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                         // more than the allocated buffer regardless
                         // of sample stride.
                         size_t      sz = adesc.bufferSize(prerollSamples);
-                        Buffer::Ptr pcm = Buffer::Ptr::create(sz);
-                        pcm.modify()->setSize(sz);
-                        std::memset(pcm.modify()->data(), 0, sz);
+                        Buffer pcm = Buffer(sz);
+                        pcm.setSize(sz);
+                        std::memset(pcm.data(), 0, sz);
                         BufferView view(pcm, 0, sz);
                         auto       silence = PcmAudioPayload::Ptr::create(adesc, prerollSamples, view);
                         _audioOutput->pushAudio(*silence);

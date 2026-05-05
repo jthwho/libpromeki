@@ -54,10 +54,13 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * The datagram callback is invoked from the receive thread.  It
  * receives:
- *  - a @ref Buffer "Buffer::Ptr" whose backing allocation is owned
+ *  - a @ref Buffer "Buffer" whose backing allocation is owned
  *    by the receiver and valid only for the duration of the call —
  *    if the consumer needs to keep the bytes longer it must copy
- *    them or take a fresh @c Buffer::Ptr::create copy of the data.
+ *    them into an independent allocation (e.g. a freshly-sized
+ *    @ref Buffer plus @ref Buffer::copyFrom).  Storing the handle
+ *    by value is not enough; subsequent datagrams reuse the same
+ *    backing storage.
  *  - the sender's @ref SocketAddress.
  *
  * Callbacks should be fast and non-blocking.  Work that cannot
@@ -69,7 +72,7 @@ PROMEKI_NAMESPACE_BEGIN
  * MulticastReceiver rx;
  * rx.setLocalAddress(SocketAddress::any(9875));
  * rx.setThreadName("sap-rx");
- * rx.setDatagramCallback([](Buffer::Ptr data, const SocketAddress &sender) {
+ * rx.setDatagramCallback([](Buffer data, const SocketAddress &sender) {
  *     // Parse the SAP PDU; hand the embedded SDP to the app.
  * });
  * Error err = rx.addGroup(SocketAddress(Ipv4Address(224, 2, 127, 254), 9875));
@@ -100,14 +103,14 @@ class MulticastReceiver : public Thread {
                 /**
                  * @brief Signature of the user callback invoked for each datagram.
                  *
-                 * @param data   The received datagram bytes.  The @ref Buffer::Ptr
+                 * @param data   The received datagram bytes.  The @ref Buffer
                  *               owns its allocation; the backing memory is valid
                  *               for the duration of the call.  Consumers that need
                  *               to retain the bytes should either keep the shared
                  *               pointer or copy the data out.
                  * @param sender The sender's address and port.
                  */
-                using DatagramCallback = std::function<void(Buffer::Ptr data, const SocketAddress &sender)>;
+                using DatagramCallback = std::function<void(Buffer data, const SocketAddress &sender)>;
 
                 /**
                  * @brief Describes one group membership request.
@@ -314,7 +317,7 @@ class MulticastReceiver : public Thread {
                  *
                  * @signal
                  */
-                PROMEKI_SIGNAL(datagramReceived, Buffer::Ptr, SocketAddress);
+                PROMEKI_SIGNAL(datagramReceived, Buffer, SocketAddress);
 
                 /** @brief Emitted when a non-timeout receive error occurs. @signal */
                 PROMEKI_SIGNAL(receiveError, Error);

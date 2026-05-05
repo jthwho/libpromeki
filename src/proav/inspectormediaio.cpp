@@ -1105,11 +1105,11 @@ void InspectorMediaIO::runLtcCheck(InspectorEvent &event) {
         const AudioDesc bufDesc = _audioStream.format();
         if (!bufDesc.isValid()) return;
         const size_t bytes = bufDesc.bufferSize(available);
-        if (!_audioDrainScratch.isValid() || _audioDrainScratch->size() < bytes) {
-                _audioDrainScratch = Buffer::Ptr::create(bytes);
+        if (!_audioDrainScratch.isValid() || _audioDrainScratch.size() < bytes) {
+                _audioDrainScratch = Buffer(bytes);
                 if (!_audioDrainScratch.isValid()) return;
         }
-        auto [got, popErr] = _audioStream.pop(_audioDrainScratch.modify()->data(), available);
+        auto [got, popErr] = _audioStream.pop(_audioDrainScratch.data(), available);
         if (popErr.isError() || got == 0) return;
 
         // The LTC decoder reports sampleStart in *its* internal counter,

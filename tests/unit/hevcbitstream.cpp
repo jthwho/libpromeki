@@ -14,22 +14,22 @@ using namespace promeki;
 
 namespace {
 
-        Buffer::Ptr makeBuffer(const std::vector<uint8_t> &bytes) {
-                auto buf = Buffer::Ptr::create(bytes.size());
-                if (!bytes.empty()) std::memcpy(buf->data(), bytes.data(), bytes.size());
-                buf->setSize(bytes.size());
+        Buffer makeBuffer(const std::vector<uint8_t> &bytes) {
+                auto buf = Buffer(bytes.size());
+                if (!bytes.empty()) std::memcpy(buf.data(), bytes.data(), bytes.size());
+                buf.setSize(bytes.size());
                 return buf;
         }
 
-        BufferView viewOf(const Buffer::Ptr &buf) {
-                return BufferView(buf, 0, buf ? buf->size() : 0);
+        BufferView viewOf(const Buffer &buf) {
+                return BufferView(buf, 0, buf ? buf.size() : 0);
         }
 
-        std::vector<uint8_t> bytesOf(const Buffer::Ptr &buf) {
+        std::vector<uint8_t> bytesOf(const Buffer &buf) {
                 std::vector<uint8_t> v;
                 if (!buf) return v;
-                v.resize(buf->size());
-                if (!v.empty()) std::memcpy(v.data(), buf->data(), buf->size());
+                v.resize(buf.size());
+                if (!v.empty()) std::memcpy(v.data(), buf.data(), buf.size());
                 return v;
         }
 
@@ -147,7 +147,7 @@ TEST_CASE("HevcDecoderConfig — serialize / parse round trip") {
                 cfg.sps.pushToBack(makeBuffer(cannedHevcSps()));
                 cfg.pps.pushToBack(makeBuffer({0x44, 0x01, 0xc1, 0x62}));
 
-                Buffer::Ptr payload;
+                Buffer payload;
                 CHECK(cfg.serialize(payload) == Error::Ok);
                 REQUIRE(payload);
 
@@ -188,7 +188,7 @@ TEST_CASE("HevcDecoderConfig — serialize / parse round trip") {
                 HevcDecoderConfig cfg;
                 cfg.sps.pushToBack(makeBuffer({0x42, 0x01, 0xaa}));
                 cfg.pps.pushToBack(makeBuffer({0x44, 0x01, 0xbb}));
-                Buffer::Ptr payload;
+                Buffer payload;
                 CHECK(cfg.serialize(payload) == Error::Ok);
                 // numOfArrays byte (index 22) should be 2.
                 CHECK(bytesOf(payload)[22] == 2);
@@ -233,7 +233,7 @@ TEST_CASE("HevcDecoderConfig::toAnnexB") {
         cfg.vps.pushToBack(makeBuffer({0x40, 0x01, 0xaa}));
         cfg.sps.pushToBack(makeBuffer({0x42, 0x01, 0xbb}));
         cfg.pps.pushToBack(makeBuffer({0x44, 0x01, 0xcc}));
-        Buffer::Ptr annexB;
+        Buffer annexB;
         CHECK(cfg.toAnnexB(annexB) == Error::Ok);
         std::vector<uint8_t> expected = {0x00, 0x00, 0x00, 0x01, 0x40, 0x01, 0xaa, 0x00, 0x00, 0x00, 0x01,
                                          0x42, 0x01, 0xbb, 0x00, 0x00, 0x00, 0x01, 0x44, 0x01, 0xcc};

@@ -692,9 +692,9 @@ static PcmAudioPayload::Ptr readEmbeddedAudio(const Buffer &buf) {
                 if (dataBytes == 0 || buf.size() < headerBytes + dataBytes) {
                         return PcmAudioPayload::Ptr();
                 }
-                Buffer::Ptr pcm = Buffer::Ptr::create(dataBytes);
-                std::memcpy(pcm.modify()->data(), static_cast<const uint8_t *>(buf.data()) + headerBytes, dataBytes);
-                pcm.modify()->setSize(dataBytes);
+                Buffer pcm = Buffer(dataBytes);
+                std::memcpy(pcm.data(), static_cast<const uint8_t *>(buf.data()) + headerBytes, dataBytes);
+                pcm.setSize(dataBytes);
                 BufferView view(pcm, 0, dataBytes);
                 return PcmAudioPayload::Ptr::create(desc, samples, view);
         };

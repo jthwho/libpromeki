@@ -238,9 +238,9 @@ namespace {
                         // Codec-specific extension boxes (e.g. avcC / hvcC).
                         // Live as child boxes of the visual sample entry, so
                         // they must be written before vse is closed.
-                        if (t.codecConfigBox && t.codecConfigBox->size() > 0 && t.codecConfigType.value() != 0) {
+                        if (t.codecConfigBox && t.codecConfigBox.size() > 0 && t.codecConfigType.value() != 0) {
                                 auto cfgBox = w.beginBox(t.codecConfigType);
-                                w.writeBytes(t.codecConfigBox->data(), t.codecConfigBox->size());
+                                w.writeBytes(t.codecConfigBox.data(), t.codecConfigBox.size());
                                 w.endBox(cfgBox);
                         }
                         w.endBox(vse);
@@ -513,7 +513,7 @@ void QuickTimeWriter::setContainerMetadata(const Metadata &meta) {
 
 Error QuickTimeWriter::writeSample(uint32_t trackId, const QuickTime::Sample &sample) {
         if (!_isOpen) return Error::NotOpen;
-        if (!sample.data.isValid() || sample.data->size() == 0) return Error::InvalidArgument;
+        if (!sample.data.isValid() || sample.data.size() == 0) return Error::InvalidArgument;
 
         // Find the track.
         size_t idx = SIZE_MAX;
@@ -532,13 +532,13 @@ Error QuickTimeWriter::writeSample(uint32_t trackId, const QuickTime::Sample &sa
         // mdat.  Both steps run before @c ensureInitMoovWritten() so
         // that the fragmented-layout init moov carries the populated
         // @c codecConfigBox in its stsd entry.
-        Buffer::Ptr convertedPayload;
+        Buffer convertedPayload;
         const bool  isH264 = (t.type == QuickTime::Video && t.pixelFormat.id() == PixelFormat::H264);
         const bool  isHEVC = (t.type == QuickTime::Video && t.pixelFormat.id() == PixelFormat::HEVC);
         if (isH264 || isHEVC) {
-                BufferView srcView(sample.data, 0, sample.data->size());
+                BufferView srcView(sample.data, 0, sample.data.size());
                 if (!t.codecConfigBox && sample.keyframe) {
-                        Buffer::Ptr cfgPayload;
+                        Buffer cfgPayload;
                         FourCC      cfgType = isH264 ? FourCC("avcC") : FourCC("hvcC");
                         Error       cfgErr;
                         if (isH264) {
@@ -599,11 +599,11 @@ Error QuickTimeWriter::writeSample(uint32_t trackId, const QuickTime::Sample &sa
         const uint8_t *bytes;
         int64_t        payloadSize;
         if (convertedPayload) {
-                bytes = static_cast<const uint8_t *>(convertedPayload->data());
-                payloadSize = static_cast<int64_t>(convertedPayload->size());
+                bytes = static_cast<const uint8_t *>(convertedPayload.data());
+                payloadSize = static_cast<int64_t>(convertedPayload.size());
         } else {
-                bytes = static_cast<const uint8_t *>(sample.data->data());
-                payloadSize = static_cast<int64_t>(sample.data->size());
+                bytes = static_cast<const uint8_t *>(sample.data.data());
+                payloadSize = static_cast<int64_t>(sample.data.size());
         }
 
         if (_layout == QuickTime::LayoutFragmented) {

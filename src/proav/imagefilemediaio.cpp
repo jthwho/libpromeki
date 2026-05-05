@@ -1059,9 +1059,9 @@ Error ImageFileMediaIO::writeSequence(MediaIOCommandWrite &cmd) {
                 } else {
                         size_t       spf = _sidecarFrameRate.samplesPerFrame(_sidecarSampleRate, _writeCount.value());
                         const size_t bytes = _sidecarAudioDesc.bufferSize(spf);
-                        auto         buf = Buffer::Ptr::create(bytes);
-                        buf.modify()->setSize(bytes);
-                        std::memset(buf.modify()->data(), 0, bytes);
+                        auto         buf = Buffer(bytes);
+                        buf.setSize(bytes);
+                        std::memset(buf.data(), 0, bytes);
                         BufferView planes;
                         planes.pushToBack(buf, 0, bytes);
                         auto  silence = PcmAudioPayload::Ptr::create(_sidecarAudioDesc, spf, planes);

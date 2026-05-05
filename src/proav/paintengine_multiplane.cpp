@@ -38,10 +38,10 @@ template <typename CompType, int BitsPerComp> class PaintEngine_MultiPlane : pub
                                 float  scale;
                 };
 
-                // Hold the per-plane Buffer::Ptrs so the payload's
+                // Hold the per-plane Buffers so the payload's
                 // backing memory survives for the lifetime of the
                 // engine, independent of the payload shared pointer.
-                Buffer::Ptr _planeBufs[PixelMemLayout::MaxPlanes];
+                Buffer _planeBufs[PixelMemLayout::MaxPlanes];
                 Size2Du32   _size;
                 PixelFormat _pixDesc;
                 size_t      _compCount = 0;

@@ -12,6 +12,12 @@
 #include <cstring>
 
 #if PROMEKI_ENABLE_CUDA
+#include <promeki/buffer.h>
+#include <promeki/bufferfactory.h>
+#include <promeki/cudabufferimpl.h>
+#endif
+
+#if PROMEKI_ENABLE_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -258,6 +264,7 @@ Error CudaBootstrap::ensureRegistered() {
                 MemSpace::Ops ops{};
                 ops.id = MemSpace::CudaDevice;
                 ops.name = "CudaDevice";
+                ops.domainId = MemDomain::CudaDevice;
                 ops.isHostAccessible = cudaDeviceIsHostAccessible;
                 ops.alloc = cudaDeviceAlloc;
                 ops.release = cudaDeviceRelease;
@@ -269,6 +276,7 @@ Error CudaBootstrap::ensureRegistered() {
                 MemSpace::Ops ops{};
                 ops.id = MemSpace::CudaHost;
                 ops.name = "CudaHost";
+                ops.domainId = MemDomain::Host;
                 ops.isHostAccessible = cudaHostIsHostAccessible;
                 ops.alloc = cudaHostAlloc;
                 ops.release = cudaHostRelease;
@@ -276,6 +284,82 @@ Error CudaBootstrap::ensureRegistered() {
                 ops.fill = cudaHostFill;
                 MemSpace::registerData(std::move(ops));
         }
+
+        // Register the polymorphic-backend factories for the CUDA
+        // memory spaces.  These run alongside the existing Ops
+        // registration during Phase 2 — Phase 3 rewires Buffer to
+        // construct through the factory and the legacy Ops fields
+        // become dead.
+        registerBufferImplFactory(MemSpace::CudaDevice,
+                                  [](const MemSpace &ms, size_t bytes, size_t align) -> BufferImplPtr {
+                                          return BufferImplPtr::takeOwnership(new CudaDeviceBufferImpl(ms, bytes, align));
+                                  });
+        registerBufferImplFactory(MemSpace::CudaHost,
+                                  [](const MemSpace &ms, size_t bytes, size_t align) -> BufferImplPtr {
+                                          return BufferImplPtr::takeOwnership(new CudaHostBufferImpl(ms, bytes, align));
+                                  });
+
+        // Register inter-MemSpace copy entries for every host ↔ CUDA
+        // pair we care about.  Each entry uses cudaMemcpy with the
+        // explicit kind so the runtime takes the right code path
+        // (peer-to-peer DMA for DtoD, mapped pinned access for
+        // host↔device, plain memcpy for host↔host).  Buffer::copyTo
+        // surfaces the Error returned by the lambda.
+        auto cudaCopy = +[](const Buffer &src, Buffer &dst, size_t bytes, size_t srcOffset,
+                            size_t dstOffset) -> Error {
+                // Resolves a Buffer endpoint to a raw byte pointer
+                // suitable for cudaMemcpy.  For host-resident MemSpaces
+                // (System, SystemSecure, CudaHost) the host pointer
+                // from Buffer::data() already includes the buffer's
+                // shift.  CudaDevice buffers have no host mapping, so
+                // we go through the CudaDeviceBufferImpl back door for
+                // the raw device pointer and apply the shift ourselves.
+                auto endpointPtr = [](const Buffer &b) -> void * {
+                        if (b.memSpace().id() == MemSpace::CudaDevice) {
+                                if (!b.impl().isValid()) return nullptr;
+                                const auto *dimpl = dynamic_cast<const CudaDeviceBufferImpl *>(
+                                        b.impl().ptr());
+                                if (dimpl == nullptr) return nullptr;
+                                void *base = dimpl->devicePtr();
+                                if (base == nullptr) return nullptr;
+                                return static_cast<uint8_t *>(base) + dimpl->shift();
+                        }
+                        return b.data();
+                };
+                void *srcBase = endpointPtr(src);
+                void *dstBase = endpointPtr(dst);
+                if (srcBase == nullptr || dstBase == nullptr) return Error::Invalid;
+                const void *srcPtr = static_cast<const uint8_t *>(srcBase) + srcOffset;
+                void       *dstPtr = static_cast<uint8_t *>(dstBase) + dstOffset;
+                const MemSpace::ID sid = src.memSpace().id();
+                const MemSpace::ID did = dst.memSpace().id();
+                const bool         srcDev = (sid == MemSpace::CudaDevice);
+                const bool         dstDev = (did == MemSpace::CudaDevice);
+                cudaMemcpyKind     kind;
+                if (srcDev && dstDev)
+                        kind = cudaMemcpyDeviceToDevice;
+                else if (srcDev)
+                        kind = cudaMemcpyDeviceToHost;
+                else if (dstDev)
+                        kind = cudaMemcpyHostToDevice;
+                else
+                        kind = cudaMemcpyHostToHost;
+                cudaError_t e = cudaMemcpy(dstPtr, srcPtr, bytes, kind);
+                if (e != cudaSuccess) {
+                        logCudaError("cudaMemcpy", e);
+                        return mapCudaError(e);
+                }
+                return Error::Ok;
+        };
+        // Device <-> host pairs (every host MemSpace we ship paired
+        // with the device space).
+        registerBufferCopy(MemSpace::CudaDevice, MemSpace::CudaDevice, cudaCopy);
+        registerBufferCopy(MemSpace::CudaDevice, MemSpace::System, cudaCopy);
+        registerBufferCopy(MemSpace::CudaDevice, MemSpace::SystemSecure, cudaCopy);
+        registerBufferCopy(MemSpace::CudaDevice, MemSpace::CudaHost, cudaCopy);
+        registerBufferCopy(MemSpace::System, MemSpace::CudaDevice, cudaCopy);
+        registerBufferCopy(MemSpace::SystemSecure, MemSpace::CudaDevice, cudaCopy);
+        registerBufferCopy(MemSpace::CudaHost, MemSpace::CudaDevice, cudaCopy);
 
         _cudaRegistered.store(true, std::memory_order_release);
         inFlight.clear(std::memory_order_release);

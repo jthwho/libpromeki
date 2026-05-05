@@ -44,8 +44,8 @@ class PaintEngine;
  * @par Example — allocating from a descriptor
  * @code
  * ImageDesc desc(1920, 1080, PixelFormat::RGBA8_sRGB);
- * auto buf = Buffer::Ptr::create(desc.pixelFormat().planeSize(0, desc));
- * BufferView plane0(buf, 0, buf->size());
+ * auto buf = Buffer(desc.pixelFormat().planeSize(0, desc));
+ * BufferView plane0(buf, 0, buf.size());
  * auto payload = UncompressedVideoPayload::Ptr::create(
  *         desc, plane0);
  * @endcode
