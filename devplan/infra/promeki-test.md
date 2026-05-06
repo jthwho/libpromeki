@@ -48,17 +48,27 @@ uses for microbenchmarks.
   file-extension dispatch path — the omission had silently turned every
   `MediaPipeline`-driven file write into a no-op.
 
+**Shipped additions (2026-05-05):**
+
+- **FrameBridge `acceptPending` bug fixed** — `FrameBridge` now spins
+  up an `AcceptWorker` thread at `openOutput()` time that services
+  `accept()` + handshakes off the write strand.  The RX-side planner's
+  brief-open probe no longer needs the TX side to be actively calling
+  `writeFrame`.  The 1 s workaround sleep in `runDualPhase` has been
+  removed; `rxAutoplan=false` override in `framebridge.cpp` is no
+  longer needed and has been reverted to `true`.  Event-loop quit guard
+  added to `runPhase` / `runDualPhase` `closedSignal` handlers
+  (prevents stale `QuitItem` leaking into the next test's `exec()`).
+- **NDI suite registered** — `registerNdiCases()` wired in `main.cpp`
+  and `cases/ndi.cpp` added to `CMakeLists.txt`.  When
+  `PROMEKI_ENABLE_NDI` is off the function registers nothing.
+
 ## Remaining work
 
-- [ ] **FrameBridge `acceptPending` bug** — the bridge's pending-accept
-  loop only runs inside `writeFrame`, so the planner's brief-open probe
-  (which reads the MediaDesc without writing a frame) races against the
-  TX side and the RX open times out.  Fix the library, then re-enable
-  the `framebridge.*` cases.
 - [ ] **CI integration** — run `promeki-test -k '^roundtrip\.' -k
   '^codec\.' -k '^audio\.'` as part of the CI gate (the `check` target
-  or a new `functest` target).  RTP and FrameBridge cases may need
-  special consideration (network availability, the open bug above).
+  or a new `functest` target).  RTP cases may need special consideration
+  (network availability, PTS-tolerance tuning already landed).
 - [ ] **PMDF backend roundtrip cases** — PMDF is wired but may need
   `createForFileRead` / `createForFileWrite` verified in the runner.
 - [ ] **NDI roundtrip case** — blocked on NDI SDK availability in the

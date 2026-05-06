@@ -5,6 +5,8 @@
 
 All socket classes implemented, tested, and merged: SocketAddress, AbstractSocket, TcpSocket, TcpServer, UdpSocket, RawSocket. Raw POSIX sockets, no libuv/asio. Virtual/abstract interfaces for future WASM backends and SrtSocket subclass.
 
+**UdpSocket additions:** `setReceiveBufferSize(int bytes)` / `setSendBufferSize(int bytes)` set `SO_RCVBUF` / `SO_SNDBUF` on an open socket; pass 0 to leave the kernel default. Both return `Error::NotOpen` on a closed socket and `Error::Ok` for zero bytes (no-op). See `tests/unit/network/udpsocket.cpp` for coverage.
+
 ---
 
 ## Deferred Items

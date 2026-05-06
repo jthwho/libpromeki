@@ -336,6 +336,20 @@ Error RtpSession::sendPacketsPaced(RtpPacket::List &packets, uint32_t timestamp,
         const TimeStamp endTime = startTime + spreadInterval;
 
         const int64_t n = static_cast<int64_t>(packets.size());
+        // Skip the sleepUntil() syscall when the deadline is so close
+        // that the kernel will overshoot it anyway.  On a normally-
+        // loaded Linux box @c std::this_thread::sleep_until granularity
+        // is ~50 µs even with high-resolution timers, so per-packet
+        // pacing for high-rate streams (raw RFC 4175 video at 60 fps —
+        // ~2300 packets per frame, ~7 µs target spacing) ends up
+        // calling sleep_until ~2300 times per frame and burning
+        // millisecond-scale syscall overhead on deadlines that are
+        // already past.  The threshold here is the empirical minimum
+        // wakeup overhead; sleep_until still pays its cost for any
+        // gap larger than that, and short gaps are absorbed by the
+        // natural overhead of @c sendto + the loop body.
+        constexpr int64_t kSleepThresholdUs = 100;
+        const Duration    sleepThreshold = Duration::fromMicroseconds(kSleepThresholdUs);
         for (int64_t i = 0; i < n; i++) {
                 auto &pkt = packets[i];
                 if (pkt.isNull() || pkt.size() < RtpPacket::HeaderSize) continue;
@@ -345,10 +359,14 @@ Error RtpSession::sendPacketsPaced(RtpPacket::List &packets, uint32_t timestamp,
 
                 // Absolute per-packet deadline = startTime + i*(interval/n).
                 // The first packet (i=0) goes out immediately;
-                // subsequent packets sleep until their slot.
+                // subsequent packets sleep until their slot, but only
+                // when the gap is large enough to be worth the syscall.
                 if (i > 0) {
                         const TimeStamp pktDeadline = startTime + (spreadInterval * i) / n;
-                        pktDeadline.sleepUntil();
+                        const Duration  remaining = pktDeadline - TimeStamp::now();
+                        if (remaining > sleepThreshold) {
+                                pktDeadline.sleepUntil();
+                        }
                 }
 
                 ssize_t sent = _transport->sendPacket(pkt.data(), pkt.size(), _remote);

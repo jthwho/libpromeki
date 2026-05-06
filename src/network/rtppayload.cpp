@@ -349,6 +349,21 @@ static size_t extractDqtTables(const uint8_t *data, size_t size, uint8_t *out, s
         return written;
 }
 
+// Detect chroma subsampling from the JPEG's SOF0 marker.  Returns
+// true when the first component's sampling factor is 0x22 (Y h=2/v=2)
+// — i.e. the bitstream is 4:2:0.  Defaults to false (4:2:2) when the
+// marker is missing or malformed; the caller passes that as the safer
+// fallback for our default encoder configuration.
+static bool jpegIs420(const uint8_t *data, size_t size) {
+        size_t pos = findJpegMarker(data, size, JpegSOF0);
+        if (pos >= size) return false;
+        // SOF0: FF C0 | LL LL | P | H1 H2 | W1 W2 | Nf | (Ci Hi/Vi Tqi)*Nf
+        // We need the first component's sampling factor at offset +11.
+        if (pos + 12 >= size) return false;
+        uint8_t ySamp = data[pos + 11];
+        return ySamp == 0x22;
+}
+
 // Find the byte offset of the entropy-coded data (immediately after the SOS
 // marker's header).  This is the data that RFC 2435 transmits.
 static size_t findEntropyCoded(const uint8_t *data, size_t size) {
@@ -436,11 +451,18 @@ RtpPacket::List RtpPayloadJpeg::pack(const void *mediaData, size_t size) {
                 pkt[hdr + 2] = static_cast<uint8_t>((fragmentOffset >> 8) & 0xFF);
                 pkt[hdr + 3] = static_cast<uint8_t>(fragmentOffset & 0xFF);
                 // RFC 2435 says Type 0 = 4:2:0, Type 1 = 4:2:2.
-                // FFmpeg's rtpdec_jpeg.c has these reversed: it maps
+                // FFmpeg's rtpdec_jpeg.c (and most real-world receivers,
+                // notably GStreamer and Live555) have these reversed:
                 // Type 0 → Y(2x1) = 4:2:2, Type 1 → Y(2x2) = 4:2:0.
-                // We use Type 0 here for FFmpeg compatibility since our
-                // encoder produces 4:2:2 JPEG.
-                pkt[hdr + 4] = 0;   // Type 0 (FFmpeg: 4:2:2)
+                // We follow the FFmpeg convention so interop with the
+                // ecosystem works, and so our own unpacker (which uses
+                // the same convention) round-trips correctly.  Probe
+                // the SOF0 sampling factor to pick the right Type byte
+                // — encoding it from a precomputed setting at
+                // construction time was too brittle (the encoder
+                // chooses subsampling per-frame from its input pixel
+                // format, which the RTP layer does not see).
+                pkt[hdr + 4] = jpegIs420(jpeg, size) ? 1 : 0;
                 pkt[hdr + 5] = 255; // Q=255: quantization tables in first packet
                 pkt[hdr + 6] = w8;
                 pkt[hdr + 7] = h8;

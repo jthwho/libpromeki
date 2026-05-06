@@ -299,6 +299,35 @@ namespace promekitest {
                         {
                                 MediaIO::Config inspCfg = MediaIOFactory::defaultConfig("Inspector");
                                 inspCfg.set(MediaConfig::Type, String("Inspector"));
+                                // Loosen the per-frame PTS-divergence
+                                // tolerance for RTP loopback.  The RTP
+                                // sender paces packets in user space —
+                                // 17 ms / N packets per frame — and on
+                                // a normally-loaded host @c sleep_until
+                                // overshoots its deadline by tens of
+                                // microseconds per packet, which on a
+                                // 2300-packet raw-video frame
+                                // accumulates to ~1 ms of slip per
+                                // frame relative to the announced rate.
+                                // The receiver stamps PTS from the
+                                // wall-clock arrival of the first
+                                // packet, so that slip drifts the
+                                // observed PTS away from the
+                                // (anchor + i × period) prediction
+                                // monotonically.  The inspector's
+                                // default 5 ms tolerance is calibrated
+                                // for hardware-paced sources (NDI,
+                                // ST 2110 NICs); using it here would
+                                // flag every userspace-pacing overshoot
+                                // as a discontinuity even though the
+                                // round-trip is otherwise healthy.
+                                // 75 ms accommodates the worst-case
+                                // cumulative drift over a 30-frame
+                                // run on a busy CI box while still
+                                // catching a real stall (a frame
+                                // entirely missing).
+                                inspCfg.set(MediaConfig::InspectorVideoPtsToleranceNs, int64_t(75'000'000));
+                                inspCfg.set(MediaConfig::InspectorAudioPtsToleranceNs, int64_t(75'000'000));
                                 insp->setConfig(inspCfg);
                                 insp->setName(String("insp"));
                         }

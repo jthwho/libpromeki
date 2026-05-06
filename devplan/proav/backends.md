@@ -58,6 +58,11 @@ that history now lives in git. What remains here is the open work.
   URL forms: `pmfb://<name>` and `pmfb:///<name>` both accepted.
   `autoGrow` enabled on all handshake serialization buffers to prevent
   silent truncation of large `MediaDesc` payloads.
+  **AcceptWorker** (2026-05-05): `FrameBridge::openOutput()` now spawns
+  a dedicated `AcceptWorker` thread that services `accept()` +
+  handshakes off the write strand.  Consumers that open before the
+  producer calls `writeFrame` are now correctly accepted within the
+  poll cadence (~100 ms) rather than timing out.
 - **DebugMediaMediaIO** (PMDF) — lossless debug container; companion
   CLI `pmdf-inspect`.
 - **MjpegStreamMediaIO** — rate-limited MJPEG HTTP preview sink.

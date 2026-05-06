@@ -374,3 +374,72 @@ TEST_CASE("ImageDesc_fromSdp_MissingRtpmapReturnsInvalid") {
         ImageDesc img = ImageDesc::fromSdp(md);
         CHECK_FALSE(img.isValid());
 }
+
+// ============================================================================
+// MJPEG (RFC 2435) SDP with x-dimensions extension
+// ============================================================================
+
+TEST_CASE("ImageDesc_fromSdp_Jpeg_xDimensionsComma") {
+        // ImageDesc::toSdp emits x-dimensions=W,H for MJPEG so that
+        // downstream planners have dimensions before the first packet.
+        // fromSdp should parse the comma form back to a valid ImageDesc.
+        SdpMediaDescription md;
+        md.setMediaType("video");
+        md.addPayloadType(26);
+        md.setAttribute("rtpmap", "26 JPEG/90000");
+        md.setAttribute("fmtp", "26 x-dimensions=1920,1080");
+        ImageDesc img = ImageDesc::fromSdp(md);
+        CHECK(img.isValid());
+        CHECK(img.width() == 1920);
+        CHECK(img.height() == 1080);
+}
+
+TEST_CASE("ImageDesc_fromSdp_Jpeg_xDimensionsXSeparator") {
+        // Some senders use "WxH" rather than "W,H"; fromSdp handles both.
+        SdpMediaDescription md;
+        md.setMediaType("video");
+        md.addPayloadType(26);
+        md.setAttribute("rtpmap", "26 JPEG/90000");
+        md.setAttribute("fmtp", "26 x-dimensions=1280x720");
+        ImageDesc img = ImageDesc::fromSdp(md);
+        CHECK(img.isValid());
+        CHECK(img.width() == 1280);
+        CHECK(img.height() == 720);
+}
+
+TEST_CASE("ImageDesc_fromSdp_Jpeg_NoXDimensionsReturnsInvalid") {
+        // Without x-dimensions, geometry is in-band only; fromSdp returns
+        // invalid so the caller defers to the first RTP packet.
+        SdpMediaDescription md;
+        md.setMediaType("video");
+        md.addPayloadType(26);
+        md.setAttribute("rtpmap", "26 JPEG/90000");
+        ImageDesc img = ImageDesc::fromSdp(md);
+        CHECK_FALSE(img.isValid());
+}
+
+TEST_CASE("ImageDesc_toSdp_Jpeg_emitsXDimensions") {
+        // toSdp for a JPEG pixel format must emit the x-dimensions fmtp
+        // parameter so the far end can recover geometry from SDP alone.
+        ImageDesc img(Size2Du32(1920, 1080), PixelFormat(PixelFormat::JPEG_YUV8_422_Rec709));
+        SdpMediaDescription md = img.toSdp(26);
+        String fmtp;
+        for (size_t i = 0; i < md.attributes().size(); i++) {
+                if (md.attributes()[i].first() == "fmtp") fmtp = md.attributes()[i].second();
+        }
+        CHECK(fmtp.contains("x-dimensions="));
+        CHECK(fmtp.contains("1920"));
+        CHECK(fmtp.contains("1080"));
+}
+
+TEST_CASE("ImageDesc_toSdp_fromSdp_Jpeg_roundtrip") {
+        // A full toSdp → fromSdp round-trip must recover the same
+        // raster dimensions.  Pixel format is best-effort (4:2:2 default);
+        // we just verify the geometry is preserved.
+        ImageDesc            src(Size2Du32(640, 480), PixelFormat(PixelFormat::JPEG_YUV8_422_Rec709));
+        SdpMediaDescription  md = src.toSdp(26);
+        ImageDesc            recovered = ImageDesc::fromSdp(md);
+        CHECK(recovered.isValid());
+        CHECK(recovered.width() == 640);
+        CHECK(recovered.height() == 480);
+}

@@ -139,6 +139,32 @@ class UdpSocketTransport : public PacketTransport {
                 bool reuseAddress() const { return _reuseAddress; }
 
                 /**
+                 * @brief Sets the desired kernel receive buffer size.
+                 *
+                 * Applied at @ref open() time via @ref UdpSocket::setReceiveBufferSize().
+                 * Pass 0 (the default) to leave the kernel default in place.
+                 *
+                 * @param bytes Desired receive buffer size in bytes.
+                 */
+                void setReceiveBufferSize(int bytes) { _recvBufferSize = bytes; }
+
+                /** @brief Returns the configured receive buffer size (0 = kernel default). */
+                int receiveBufferSize() const { return _recvBufferSize; }
+
+                /**
+                 * @brief Sets the desired kernel send buffer size.
+                 *
+                 * Applied at @ref open() time via @ref UdpSocket::setSendBufferSize().
+                 * Pass 0 (the default) to leave the kernel default in place.
+                 *
+                 * @param bytes Desired send buffer size in bytes.
+                 */
+                void setSendBufferSize(int bytes) { _sendBufferSize = bytes; }
+
+                /** @brief Returns the configured send buffer size (0 = kernel default). */
+                int sendBufferSize() const { return _sendBufferSize; }
+
+                /**
                  * @brief Returns the underlying UdpSocket (valid only after @ref open()).
                  *
                  * Exposed for callers that need to configure a socket
@@ -179,6 +205,8 @@ class UdpSocketTransport : public PacketTransport {
                 UdpSocket::UPtr _socket;
                 SocketAddress   _localAddress;
                 String          _multicastInterface;
+                int             _recvBufferSize = 0;
+                int             _sendBufferSize = 0;
                 uint8_t         _dscp = 0;
                 int             _multicastTTL = 0;
                 bool            _ipv6 = false;

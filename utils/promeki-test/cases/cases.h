@@ -87,6 +87,23 @@ namespace promekitest {
          */
         void registerRtpCases();
 
+        /**
+         * @brief Registers NDI transport roundtrip cases.
+         *
+         * Each case runs two pipelines on the main event loop —
+         * TPG → @ref NdiMediaIO (sink) on the TX side and
+         * @ref NdiMediaIO (source) → @ref InspectorMediaIO on the RX
+         * side — connected through NDI's mDNS-based discovery on the
+         * loopback interface.  The receiver is expected to miss the
+         * leading frames while discovery is converging; the test
+         * deliberately asserts only that the frames RX *did* see
+         * were sequential and self-consistent (zero discontinuities)
+         * and that RX received at least half of its configured frame
+         * budget.  When @c PROMEKI_ENABLE_NDI is off this function
+         * registers nothing.
+         */
+        void registerNdiCases();
+
 } // namespace promekitest
 
 PROMEKI_NAMESPACE_END

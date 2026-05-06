@@ -207,3 +207,81 @@ TEST_CASE("MediaDesc_fromSdp_multiple_video_tracks") {
         CHECK(md.imageList()[1].width() == 960);
         CHECK(md.imageList()[1].height() == 540);
 }
+
+// ============================================================================
+// MediaDesc::toSdp / fromSdp frame-rate round-trip (a=framerate)
+// ============================================================================
+
+TEST_CASE("MediaDesc_toSdp_emits_framerate_on_video_section") {
+        // MediaDesc::toSdp must stamp a=framerate on every video m= section
+        // so RFC 2435 / RFC 4175 receivers can recover the cadence from SDP
+        // without waiting for the first RTP packet.
+        MediaDesc md;
+        md.setFrameRate(FrameRate(FrameRate::FPS_29_97));
+        md.imageList().pushToBack(ImageDesc(1920, 1080, PixelFormat::JPEG_XS_YUV10_422_Rec709));
+        md.audioList().pushToBack(AudioDesc(48000.0f, 2));
+
+        SdpSession sdp = md.toSdp(96);
+        bool       foundFramerate = false;
+        for (size_t i = 0; i < sdp.mediaDescriptions().size(); i++) {
+                const SdpMediaDescription &m = sdp.mediaDescriptions()[i];
+                if (m.mediaType() == "video") {
+                        String fr = m.attribute("framerate");
+                        CHECK_FALSE(fr.isEmpty());
+                        foundFramerate = true;
+                }
+        }
+        CHECK(foundFramerate);
+}
+
+TEST_CASE("MediaDesc_fromSdp_recovers_framerate_from_video_section") {
+        // fromSdp must read a=framerate from the video m= section and
+        // populate MediaDesc::frameRate so downstream code (e.g. the RTP
+        // audio aggregator) does not fall back to a hardcoded default.
+        SdpSession sdp;
+        SdpMediaDescription video;
+        video.setMediaType("video");
+        video.setPort(5004);
+        video.setProtocol("RTP/AVP");
+        video.addPayloadType(96);
+        video.setAttribute("rtpmap", "96 jxsv/90000");
+        video.setAttribute("fmtp", "96 sampling=YCbCr-4:2:2;depth=10;width=1920;height=1080");
+        video.setAttribute("framerate", "60000/1001");
+        sdp.addMediaDescription(video);
+
+        MediaDesc md = MediaDesc::fromSdp(sdp);
+        CHECK(md.frameRate().isValid());
+        CHECK(md.frameRate().numerator() == 60000);
+        CHECK(md.frameRate().denominator() == 1001);
+}
+
+TEST_CASE("MediaDesc_toSdp_fromSdp_framerate_roundtrip_NTSC") {
+        // A full toSdp → fromSdp round-trip must preserve NTSC frame rates
+        // exactly (rational form avoids decimal precision loss).
+        MediaDesc src;
+        src.setFrameRate(FrameRate(FrameRate::FPS_59_94));
+        src.imageList().pushToBack(ImageDesc(1920, 1080, PixelFormat::JPEG_XS_YUV10_422_Rec709));
+
+        SdpSession recovered_sdp = src.toSdp(96);
+        MediaDesc  dst = MediaDesc::fromSdp(recovered_sdp);
+
+        REQUIRE(dst.frameRate().isValid());
+        CHECK(dst.frameRate().numerator() == src.frameRate().numerator());
+        CHECK(dst.frameRate().denominator() == src.frameRate().denominator());
+}
+
+TEST_CASE("MediaDesc_fromSdp_no_framerate_leaves_frameRate_invalid") {
+        // When a=framerate is absent, fromSdp must not invent a default;
+        // the caller is responsible for falling back.
+        SdpSession sdp;
+        SdpMediaDescription video;
+        video.setMediaType("video");
+        video.addPayloadType(96);
+        video.setAttribute("rtpmap", "96 jxsv/90000");
+        video.setAttribute("fmtp", "96 sampling=YCbCr-4:2:2;depth=10;width=1920;height=1080");
+        // No a=framerate
+        sdp.addMediaDescription(video);
+
+        MediaDesc md = MediaDesc::fromSdp(sdp);
+        CHECK_FALSE(md.frameRate().isValid());
+}

@@ -502,4 +502,44 @@ TEST_CASE("UdpSocket") {
                 CHECK(err == Error::NotSupported);
 #endif
         }
+
+        SUBCASE("setReceiveBufferSize on open socket") {
+                UdpSocket sock;
+                sock.open(IODevice::ReadWrite);
+                // 256 KiB — well within typical rmem_max defaults.
+                Error err = sock.setReceiveBufferSize(256 * 1024);
+                CHECK(err.isOk());
+        }
+
+        SUBCASE("setReceiveBufferSize on closed socket returns NotOpen") {
+                UdpSocket sock;
+                CHECK(sock.setReceiveBufferSize(256 * 1024) == Error::NotOpen);
+        }
+
+        SUBCASE("setReceiveBufferSize with zero is a no-op") {
+                UdpSocket sock;
+                sock.open(IODevice::ReadWrite);
+                // 0 means "leave kernel default"; implementation returns Ok.
+                Error err = sock.setReceiveBufferSize(0);
+                CHECK(err.isOk());
+        }
+
+        SUBCASE("setSendBufferSize on open socket") {
+                UdpSocket sock;
+                sock.open(IODevice::ReadWrite);
+                Error err = sock.setSendBufferSize(256 * 1024);
+                CHECK(err.isOk());
+        }
+
+        SUBCASE("setSendBufferSize on closed socket returns NotOpen") {
+                UdpSocket sock;
+                CHECK(sock.setSendBufferSize(256 * 1024) == Error::NotOpen);
+        }
+
+        SUBCASE("setSendBufferSize with zero is a no-op") {
+                UdpSocket sock;
+                sock.open(IODevice::ReadWrite);
+                Error err = sock.setSendBufferSize(0);
+                CHECK(err.isOk());
+        }
 }

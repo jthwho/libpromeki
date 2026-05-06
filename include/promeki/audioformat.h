@@ -507,7 +507,14 @@ class AudioFormat {
                 /**
                  * @brief Converts an integer sample value to a normalized float in [-1, 1].
                  *
-                 * Maps @p [Min, Max] linearly onto @c [-1.0, 1.0].
+                 * For **signed** ranges (@c Min < 0) scales by
+                 * @c max(|Min|, Max) so that integer 0 maps to exactly
+                 * @c 0.0f.  This preserves silence through
+                 * integer ↔ float round-trips and avoids the DC bias
+                 * introduced by an asymmetric linear mapping.
+                 *
+                 * For **unsigned** ranges (@c Min >= 0) maps
+                 * @p [Min, Max] linearly onto @c [-1.0, 1.0].
                  *
                  * @tparam IntegerType The integer sample type.
                  * @tparam Min         Minimum value of the integer range.
@@ -518,9 +525,23 @@ class AudioFormat {
                 template <typename IntegerType, IntegerType Min, IntegerType Max>
                 static float integerToFloat(IntegerType value) {
                         static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
-                        constexpr float min = static_cast<float>(Min);
-                        constexpr float max = static_cast<float>(Max);
-                        return ((static_cast<float>(value) - min) * 2.0f / (max - min)) - 1.0f;
+                        if constexpr (Min < 0) {
+                                // Signed range: divide by max(|Min|, Max) so an
+                                // integer 0 maps to exactly 0.0f.  Standard audio
+                                // convention; preserves silence through int↔float
+                                // round-trips, which the linear-interp asymmetric
+                                // mapping does not (it pushes 0 to ~1/(Max-Min)
+                                // and that DC bias derails sync detectors that
+                                // expect zero-mean silence between codewords).
+                                constexpr float scaleNeg = -static_cast<float>(Min);
+                                constexpr float scalePos = static_cast<float>(Max);
+                                constexpr float scale = scaleNeg > scalePos ? scaleNeg : scalePos;
+                                return static_cast<float>(value) / scale;
+                        } else {
+                                constexpr float min = static_cast<float>(Min);
+                                constexpr float max = static_cast<float>(Max);
+                                return ((static_cast<float>(value) - min) * 2.0f / (max - min)) - 1.0f;
+                        }
                 }
 
                 /**
@@ -538,8 +559,14 @@ class AudioFormat {
                 /**
                  * @brief Converts a normalized float in [-1, 1] to an integer sample value.
                  *
-                 * Maps @c [-1.0, 1.0] linearly onto @p [Min, Max]; out-of-range
-                 * floats clamp to the endpoints.
+                 * Symmetric inverse of @ref integerToFloat.  Out-of-range floats
+                 * clamp to the endpoints.
+                 *
+                 * For **signed** ranges (@c Min < 0) scales by
+                 * @c max(|Min|, Max) so that @c 0.0f maps to integer 0 exactly.
+                 *
+                 * For **unsigned** ranges (@c Min >= 0) maps
+                 * @c [-1.0, 1.0] linearly onto @p [Min, Max].
                  *
                  * @tparam IntegerType The integer sample type.
                  * @tparam Min         Minimum value of the integer range.
@@ -550,13 +577,21 @@ class AudioFormat {
                 template <typename IntegerType, IntegerType Min, IntegerType Max>
                 static IntegerType floatToInteger(float value) {
                         static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
-                        const float min = static_cast<float>(Min);
-                        const float max = static_cast<float>(Max);
-                        if (value <= -1.0f)
-                                return Min;
-                        else if (value >= 1.0f)
-                                return Max;
-                        return static_cast<IntegerType>((value + 1.0f) * 0.5f * (max - min) + min);
+                        if (value <= -1.0f) return Min;
+                        if (value >= 1.0f) return Max;
+                        if constexpr (Min < 0) {
+                                // Symmetric inverse of integerToFloat: scale by
+                                // max(|Min|, Max) so 0.0f maps to 0 exactly and
+                                // float→int→float round-trips zero without bias.
+                                constexpr float scaleNeg = -static_cast<float>(Min);
+                                constexpr float scalePos = static_cast<float>(Max);
+                                constexpr float scale = scaleNeg > scalePos ? scaleNeg : scalePos;
+                                return static_cast<IntegerType>(value * scale);
+                        } else {
+                                const float min = static_cast<float>(Min);
+                                const float max = static_cast<float>(Max);
+                                return static_cast<IntegerType>((value + 1.0f) * 0.5f * (max - min) + min);
+                        }
                 }
 
                 /**

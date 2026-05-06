@@ -155,6 +155,8 @@ RtpFactory::Config::SpecMap RtpFactory::configSpecs() const {
         s(MediaConfig::RtpSdp, String());
         s(MediaConfig::RtpJitterMs, int32_t(50));
         s(MediaConfig::RtpMaxReadQueueDepth, int32_t(4));
+        s(MediaConfig::RtpRecvBufferBytes, int32_t(8 * 1024 * 1024));
+        s(MediaConfig::RtpSendBufferBytes, int32_t(8 * 1024 * 1024));
         // Per-stream defaults.
         s(MediaConfig::VideoRtpDestination, SocketAddress());
         s(MediaConfig::VideoRtpPayloadType, int32_t(96));
@@ -305,6 +307,8 @@ Error RtpMediaIO::openStream(Stream &s, bool enableMulticastLoopback) {
                 s.transport->setMulticastInterface(_multicastInterface);
         }
         if (enableMulticastLoopback) s.transport->setMulticastLoopback(true);
+        s.transport->setSendBufferSize(_sendBufferBytes);
+        s.transport->setReceiveBufferSize(_recvBufferBytes);
 
         Error err = s.transport->open();
         if (err.isError()) {
@@ -385,6 +389,8 @@ Error RtpMediaIO::openReaderStream(Stream &s, bool /*enableMulticastLoopback*/) 
         if (!_multicastInterface.isEmpty()) {
                 s.transport->setMulticastInterface(_multicastInterface);
         }
+        s.transport->setReceiveBufferSize(_recvBufferBytes);
+        s.transport->setSendBufferSize(_sendBufferBytes);
         // Loopback is a sender-side concept for multicast; receivers
         // always see their own host's outgoing packets as long as the
         // sender enabled loopback, so nothing to configure here.
@@ -796,6 +802,15 @@ void RtpMediaIO::buildSdp() {
                 if (!s.fmtp.isEmpty()) {
                         md.setAttribute("fmtp", String::number(s.payloadType) + String(" ") + s.fmtp);
                 }
+                // Stamp frame rate on the video m= section so the RX
+                // side can recover the cadence — RFC 2435 and RFC 4175
+                // leave it out of @c rtpmap, and the planner / audio
+                // aggregator silently fall back to 29.97 without it.
+                // Rational form is used so NTSC rates (60000/1001 etc.)
+                // round-trip exactly.
+                if (s.mediaType == "video" && _frameRate.isValid()) {
+                        md.setAttribute("framerate", _frameRate.toString());
+                }
                 // RFC 5761 rtcp-mux: tells receivers that RTP and
                 // RTCP share a single port for this stream, so the
                 // receiver does not open a separate socket at RTP
@@ -876,6 +891,17 @@ Error RtpMediaIO::applySdp(const SdpSession &sdp, MediaIO::Config &cfg, MediaDes
                 for (size_t i = 0; i < sdpMd.audioList().size(); i++) {
                         mediaDesc.audioList().pushToBack(sdpMd.audioList()[i]);
                 }
+        }
+        // Frame rate: prefer the SDP-derived rate over whatever the
+        // caller's pendingMediaDesc started with.  RFC 2435 / RFC 4175
+        // do not carry frame rate in their @c rtpmap; @ref MediaDesc::toSdp
+        // emits @c a=framerate so a same-host RX can recover it
+        // exactly, but the only signal the caller has at open time is
+        // the config default (29.97), which is wrong for any non-29.97
+        // stream and silently breaks the per-frame audio aggregation
+        // math downstream.
+        if (sdpMd.frameRate().isValid()) {
+                mediaDesc.setFrameRate(sdpMd.frameRate());
         }
 
         // Walk the m= sections a second time for the RTP-transport
@@ -1279,20 +1305,25 @@ void RtpMediaIO::emitVideoFrame() {
         f->addPayload(std::move(videoPayload));
 
         // Aggregate audio: drain one frame's worth of samples from
-        // the FIFO that the audio RX thread is filling.  If the
-        // samples haven't arrived yet, wait up to the configured
-        // jitter timeout (typically ~50 ms) for the audio RX thread
-        // to push them.  If they still aren't there after the wait,
-        // emit the frame with whatever audio is available (possibly
-        // none) rather than stalling the video clock.
+        // the FIFO that the audio RX thread is filling.  This runs
+        // on the video receive thread, so any blocking here also
+        // blocks @c recvfrom() on the video socket — long enough
+        // for the kernel's UDP ring to overflow and eat upstream
+        // packets.  At the cadence we run (audio packets every 1 ms,
+        // video frames every ~17 ms) the audio FIFO is normally
+        // already populated by the time the video marker arrives, so
+        // a non-blocking pop suffices.  If samples are short — the
+        // first frame of a stream is the obvious case — we emit the
+        // frame video-only rather than wait, leaving downstream
+        // consumers to notice the missing audio chunk via the
+        // standard "no audio payload" path.
         if (_audio.active && _audio.readerAudioDesc.isValid()) {
                 const size_t needed = _frameRate.samplesPerFrame(
                         static_cast<int64_t>(_audio.readerAudioDesc.sampleRate()), _readerAgg.videoFrameIndex.value());
-                if (needed > 0) {
-                        size_t      bufBytes = _audio.readerAudioDesc.bufferSize(needed);
+                if (needed > 0 && _readerAgg.audioFifo.available() >= needed) {
+                        size_t bufBytes = _audio.readerAudioDesc.bufferSize(needed);
                         Buffer pcm = Buffer(bufBytes);
-                        auto [got, err] = _readerAgg.audioFifo.popWait(
-                                pcm.data(), needed, static_cast<unsigned int>(_readerAgg.audioTimeoutMs));
+                        auto [got, err] = _readerAgg.audioFifo.pop(pcm.data(), needed);
                         if (got > 0) {
                                 size_t usedBytes = _audio.readerAudioDesc.bufferSize(got);
                                 pcm.setSize(usedBytes);
@@ -1489,6 +1520,18 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _multicastTTL = cfg.getAs<int>(MediaConfig::RtpMulticastTTL, 64);
         _multicastInterface = cfg.getAs<String>(MediaConfig::RtpMulticastInterface, String());
         _sdpPath = cfg.getAs<String>(MediaConfig::RtpSaveSdpPath, String());
+
+        // Kernel socket-buffer sizing.  Default to 8 MiB on each side
+        // — large enough to absorb a frame-sized burst of RFC 4175
+        // raw video at 1080p60, but small enough that the kernel will
+        // happily honour it when @c net.core.rmem_max / @c wmem_max is
+        // raised to a typical broadcast-grade value (16 MiB).  Linux
+        // silently doubles the requested SO_RCVBUF / SO_SNDBUF, then
+        // clamps to the sysctl ceiling — under-provisioned hosts will
+        // see a smaller actual buffer but no error.  Callers that need
+        // more (or less) override via the dedicated config keys.
+        _recvBufferBytes = cfg.getAs<int>(MediaConfig::RtpRecvBufferBytes, 8 * 1024 * 1024);
+        _sendBufferBytes = cfg.getAs<int>(MediaConfig::RtpSendBufferBytes, 8 * 1024 * 1024);
 
         Error pmErr;
         _pacingMode = cfg.get(MediaConfig::RtpPacingMode).asEnum(RtpPacingMode::Type, &pmErr);

@@ -17,11 +17,15 @@
 #include <promeki/dir.h>
 #include <promeki/fourcc.h>
 #include <promeki/buildinfo.h>
+#include <promeki/atomic.h>
+#include <promeki/list.h>
+#include <promeki/mutex.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/pcmaudiopayload.h>
 #include <promeki/metadata.h>
 #include <promeki/pixelformat.h>
 #include <promeki/thread.h>
+#include <promeki/uniqueptr.h>
 
 #include <atomic>
 #include <chrono>
@@ -29,8 +33,6 @@
 #include <cstring>
 #include <cstddef>
 #include <memory>
-#include <thread>
-#include <vector>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -173,18 +175,64 @@ struct FrameBridge::Impl {
                                 LocalSocket::UPtr sock;
                                 bool              syncMode = true;
                 };
-                std::vector<Client> clients;
-                uint64_t            nextFrameNumber = 0;
-                uint64_t            slotIndex = 0;           // which slot to write next
-                uint64_t            currentSeq = 0;          // seqlock: incremented by 2 per publish
-                TimeStamp           lastPublishTs;           // captured at publish time
-                bool                waitForConsumer = false; // output-side config flag
+
+                // Worker that owns the accept side of the output socket.
+                // Without it, accept-pending only ran inside writeFrame,
+                // so an input that opened before the producer had pushed
+                // its first frame would deadlock waiting for ACPT — which
+                // surfaces immediately under a single-threaded shared
+                // strand pool, but is also a latent bug at any pool size.
+                // The worker handshakes new clients off the strand and
+                // parks them in pendingClients for the writer to pick up.
+                class AcceptWorker : public Thread {
+                        public:
+                                AcceptWorker(Impl *parent, const String &name) : _parent(parent) {
+                                        _stopRequested.setValue(false);
+                                        Thread::setName(name);
+                                }
+                                ~AcceptWorker() override {
+                                        requestStop();
+                                        // Mirror the MulticastReceiver /
+                                        // RtpSession::ReceiveThread shape: join
+                                        // before the vtable slice from
+                                        // ~AcceptWorker → ~Thread takes effect.
+                                        if (!isCurrentThread()) wait();
+                                }
+                                void requestStop() { _stopRequested.setValue(true); }
+
+                        protected:
+                                void run() override;
+
+                        private:
+                                Impl        *_parent;
+                                Atomic<bool> _stopRequested;
+                };
+
+                using AcceptWorkerPtr = UniquePtr<AcceptWorker>;
+
+                // ``clients`` is touched only by the writer thread (the
+                // strand that calls writeFrame).  Newly-handshake'd
+                // clients are parked in ``pendingClients`` (guarded by
+                // ``pendingMutex``) by the AcceptWorker, and the writer
+                // drains them across at the top of writeFrame.  This
+                // keeps per-client socket I/O — emit TICK, read ACK,
+                // emit BYE, prune on disconnect — single-threaded
+                // without forcing accept to wait on the writer.
+                List<Client>    clients;
+                List<Client>    pendingClients;
+                mutable Mutex   pendingMutex;
+                AcceptWorkerPtr acceptWorker;
+                uint64_t        nextFrameNumber = 0;
+                uint64_t        slotIndex = 0;           // which slot to write next
+                uint64_t        currentSeq = 0;          // seqlock: incremented by 2 per publish
+                TimeStamp       lastPublishTs;           // captured at publish time
+                bool            waitForConsumer = false; // output-side config flag
 
                 // Thread-safe abort flag.  Set from any thread by
                 // FrameBridge::abort() (or as a side effect of close()); checked
                 // inside the writeFrame wait loops so a blocking publisher can
                 // be woken up promptly for shutdown.
-                std::atomic<bool> abortFlag{false};
+                Atomic<bool> abortFlag;
 
                 // Input-only
                 LocalSocket client;
@@ -814,11 +862,11 @@ struct FrameBridge::Impl {
                 // dead (dropped).  No-op when no sync clients are attached.
                 void waitForAcks(uint64_t seq) {
                         for (auto it = clients.begin(); it != clients.end();) {
-                                if (abortFlag.load(std::memory_order_acquire)) return;
+                                if (abortFlag.value()) return;
                                 Client &cl = *it;
                                 if (!cl.sock || !cl.sock->isConnected()) {
                                         if (owner) owner->peerDisconnectedSignal.emit();
-                                        it = clients.erase(it);
+                                        it = clients.remove(it);
                                         continue;
                                 }
                                 if (!cl.syncMode) {
@@ -844,7 +892,7 @@ struct FrameBridge::Impl {
                                 bool      dead = false;
                                 const int maxAttempts = std::max(1, static_cast<int>(SyncAckTimeoutMs / pollMs));
                                 for (int tries = 0; tries < maxAttempts && !acked && !dead; ++tries) {
-                                        if (abortFlag.load(std::memory_order_acquire)) {
+                                        if (abortFlag.value()) {
                                                 return;
                                         }
                                         KlvFrame f;
@@ -872,7 +920,7 @@ struct FrameBridge::Impl {
                                 }
                                 if (!acked || dead) {
                                         if (owner) owner->peerDisconnectedSignal.emit();
-                                        it = clients.erase(it);
+                                        it = clients.remove(it);
                                 } else {
                                         ++it;
                                 }
@@ -880,24 +928,19 @@ struct FrameBridge::Impl {
                 }
 
                 // -------------- Connection servicing --------------
-                void acceptPending() {
-                        while (server.hasPendingConnections()) {
-                                LocalSocket *ps = server.nextPendingConnection();
-                                if (ps == nullptr) break;
-                                LocalSocket::UPtr s = LocalSocket::UPtr::takeOwnership(ps);
-                                bool              sync = true;
-                                Error             err = handshakeWithClient(*s, sync);
-                                if (err.isError()) {
-                                        promekiInfo("FrameBridge: client handshake "
-                                                    "failed: %s",
-                                                    err.name().cstr());
-                                        continue;
-                                }
-                                Client cl;
-                                cl.sock = std::move(s);
-                                cl.syncMode = sync;
-                                clients.push_back(std::move(cl));
+                //
+                // The AcceptWorker handshakes new inputs off the strand
+                // and parks them in pendingClients.  drainPending moves
+                // them into the writer-thread-owned clients list at the
+                // top of every writeFrame iteration so subsequent TICK
+                // emission and ACK reads see the freshly-joined consumer.
+                void drainPending() {
+                        Mutex::Locker locker(pendingMutex);
+                        if (pendingClients.isEmpty()) return;
+                        for (auto &cl : pendingClients) {
+                                clients.pushToBack(std::move(cl));
                         }
+                        pendingClients.clear();
                 }
 
                 void pruneDeadClients() {
@@ -906,11 +949,56 @@ struct FrameBridge::Impl {
                                         ++it;
                                 } else {
                                         if (owner) owner->peerDisconnectedSignal.emit();
-                                        it = clients.erase(it);
+                                        it = clients.remove(it);
                                 }
                         }
                 }
 };
+
+// ============================================================================
+// AcceptWorker — defined out of line because it touches Impl members
+// (server, pendingMutex, pendingClients) and Impl is the type itself.
+// ============================================================================
+void FrameBridge::Impl::AcceptWorker::run() {
+        // Poll cadence: short enough that close() returns promptly,
+        // long enough not to be a busy-loop on an idle bridge.  The
+        // socket's accept FD is the only thing being polled, so a
+        // 100 ms tick is well below human-perceptible latency for a
+        // newly-arriving consumer.
+        constexpr unsigned int PollMs = 100;
+        while (!_stopRequested.value()) {
+                Error err = _parent->server.waitForNewConnection(PollMs);
+                if (_stopRequested.value()) break;
+                if (err.isError()) {
+                        // Timeout (Error::Timeout) is the common case; any
+                        // other error means the listening FD is gone, which
+                        // is normal during close — the next loop iteration
+                        // will see _stopRequested and exit.
+                        continue;
+                }
+                // Drain everything ::accept can give us this tick before
+                // re-polling — a burst of inputs would otherwise pay one
+                // poll cycle per accept.
+                while (_parent->server.hasPendingConnections() && !_stopRequested.value()) {
+                        LocalSocket *ps = _parent->server.nextPendingConnection();
+                        if (ps == nullptr) break;
+                        LocalSocket::UPtr s = LocalSocket::UPtr::takeOwnership(ps);
+                        bool              sync = true;
+                        Error             herr = _parent->handshakeWithClient(*s, sync);
+                        if (herr.isError()) {
+                                promekiInfo("FrameBridge: client handshake "
+                                            "failed: %s",
+                                            herr.name().cstr());
+                                continue;
+                        }
+                        Mutex::Locker locker(_parent->pendingMutex);
+                        Impl::Client  cl;
+                        cl.sock = std::move(s);
+                        cl.syncMode = sync;
+                        _parent->pendingClients.pushToBack(std::move(cl));
+                }
+        }
+}
 
 // ============================================================================
 // FrameBridge public
@@ -935,7 +1023,7 @@ Error FrameBridge::openOutput(const String &name, const Config &config) {
         _d->metadataReserveBytes = config.metadataReserveBytes;
         _d->uuid = UUID::generateV4();
         _d->waitForConsumer = config.waitForConsumer;
-        _d->abortFlag.store(false, std::memory_order_release);
+        _d->abortFlag.setValue(false);
         _d->audioCapacitySamples = _d->worstCaseAudioSamples(config.audioHeadroomFraction);
 
         Error err = _d->computeGeometry();
@@ -1019,6 +1107,14 @@ Error FrameBridge::openOutput(const String &name, const Config &config) {
                 close();
                 return err;
         }
+
+        // Spin up the AcceptWorker only after the listening socket is
+        // live.  The worker handles every connection handshake off the
+        // strand so an input that opens before the producer reaches
+        // its first writeFrame still gets ACPT'd within poll cadence.
+        _d->acceptWorker = Impl::AcceptWorkerPtr::create(
+                _d.ptr(), String("framebridge-accept"));
+        _d->acceptWorker->start();
         return Error::Ok;
 }
 
@@ -1028,7 +1124,7 @@ Error FrameBridge::openInput(const String &name, bool sync) {
         _d->role = Impl::RoleInput;
         _d->name = name;
         _d->inputSyncMode = sync;
-        _d->abortFlag.store(false, std::memory_order_release);
+        _d->abortFlag.setValue(false);
         _d->socketPath = Impl::makeSocketPath(name);
 
         Error err = _d->client.connectTo(_d->socketPath);
@@ -1058,8 +1154,17 @@ void FrameBridge::close() {
         // turn lets the caller reach this close() — most commonly via
         // a MediaIO worker that would otherwise be gated behind
         // the blocked write.
-        _d->abortFlag.store(true, std::memory_order_release);
+        _d->abortFlag.setValue(true);
         if (_d->role == Impl::RoleOutput) {
+                // Stop the accept worker before tearing down the
+                // listening socket so its run loop doesn't race with
+                // server.close().  The worker polls every ~100 ms and
+                // the destructor joins, so this returns within a tick.
+                _d->acceptWorker.reset();
+                // Drain any clients the worker handshake'd but the
+                // writer never picked up — they get a BYE alongside
+                // the in-flight clients below.
+                _d->drainPending();
                 // Say goodbye to each client (best-effort).
                 for (auto &c : _d->clients) {
                         if (c.sock) {
@@ -1134,11 +1239,11 @@ int FrameBridge::ringDepth() const {
 }
 
 void FrameBridge::abort() {
-        _d->abortFlag.store(true, std::memory_order_release);
+        _d->abortFlag.setValue(true);
 }
 
 bool FrameBridge::isAborted() const {
-        return _d->abortFlag.load(std::memory_order_acquire);
+        return _d->abortFlag.value();
 }
 
 bool FrameBridge::isSyncInput() const {
@@ -1154,7 +1259,7 @@ TimeStamp FrameBridge::lastFrameTimeStamp() const {
 
 void FrameBridge::service() {
         if (_d->role != Impl::RoleOutput) return;
-        _d->acceptPending();
+        _d->drainPending();
         _d->pruneDeadClients();
 }
 
@@ -1164,34 +1269,42 @@ size_t FrameBridge::connectionCount() const {
         for (const auto &c : _d->clients) {
                 if (c.sock && c.sock->isConnected()) ++n;
         }
+        // Include freshly-handshake'd clients the writer hasn't drained
+        // yet — from an external observer's perspective they are
+        // attached the moment the AcceptWorker finishes the handshake.
+        Mutex::Locker locker(_d->pendingMutex);
+        for (const auto &c : _d->pendingClients) {
+                if (c.sock && c.sock->isConnected()) ++n;
+        }
         return n;
 }
 
 Error FrameBridge::writeFrame(const Frame::Ptr &frame) {
         if (_d->role != Impl::RoleOutput) return Error::NotOpen;
         if (!frame) return Error::Invalid;
-        if (_d->abortFlag.load(std::memory_order_acquire)) {
+        if (_d->abortFlag.value()) {
                 return Error::Cancelled;
         }
 
-        // Service the control plane before the data plane.
-        _d->acceptPending();
+        // Pick up any clients the AcceptWorker handshake'd in the
+        // background and drop ones that have since dropped.
+        _d->drainPending();
         _d->pruneDeadClients();
-        if (_d->clients.empty()) {
+        if (_d->clients.isEmpty()) {
                 if (_d->waitForConsumer) {
                         // Block until a consumer attaches.  Poll at a
-                        // modest interval so the accept path + dead-peer
-                        // pruning stay responsive; abort the wait if
-                        // close() flips us out of output role or the
-                        // caller invoked FrameBridge::abort() from
-                        // another thread.
-                        while (_d->role == Impl::RoleOutput && !_d->abortFlag.load(std::memory_order_acquire) &&
-                               _d->clients.empty()) {
+                        // modest interval so newly-handshake'd peers
+                        // surface promptly; abort the wait if close()
+                        // flips us out of output role or the caller
+                        // invoked FrameBridge::abort() from another
+                        // thread.
+                        while (_d->role == Impl::RoleOutput && !_d->abortFlag.value() &&
+                               _d->clients.isEmpty()) {
                                 Thread::sleepMs(10);
-                                _d->acceptPending();
+                                _d->drainPending();
                                 _d->pruneDeadClients();
                         }
-                        if (_d->abortFlag.load(std::memory_order_acquire)) {
+                        if (_d->abortFlag.value()) {
                                 return Error::Cancelled;
                         }
                         if (_d->role != Impl::RoleOutput) {
@@ -1222,7 +1335,7 @@ Error FrameBridge::writeFrame(const Frame::Ptr &frame) {
                         ++it;
                 } else {
                         if (_d->owner) _d->owner->peerDisconnectedSignal.emit();
-                        it = _d->clients.erase(it);
+                        it = _d->clients.remove(it);
                 }
         }
 

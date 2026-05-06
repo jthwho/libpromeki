@@ -293,19 +293,24 @@ void MediaIOPortConnection::pump() {
         // Consumed (or about to be classified as EOF/error) —
         // clear so the next pump invocation grabs a fresh request.
         _pendingRead = MediaIORequest();
-        // Both @c EndOfFile and @c NotOpen surface to the connection
-        // as a clean "no more frames from this upstream" signal.
-        // @c EndOfFile is the trailing synthetic that
-        // @ref MediaIO::completeCommand pushes when a Close cmd
-        // resolves; @c NotOpen surfaces from
-        // @ref MediaIOSource::readFrame when @c io->isClosing() is
-        // already latched but the synthetic EOS has not yet been
-        // pushed (the strand has the Close queued behind in-flight
-        // work).  Without this branch a cascade that races the
-        // strand here would surface @c NotOpen as a generic error,
-        // stop the connection, and starve the downstream cascade
-        // of the @c upstreamDone edge it needs to propagate close.
-        if (rerr == Error::EndOfFile || rerr == Error::NotOpen) {
+        // EndOfFile, NotOpen, and Cancelled all surface to the
+        // connection as a clean "no more frames from this upstream"
+        // signal during a graceful close.  EndOfFile is the trailing
+        // synthetic that MediaIO::completeCommand pushes when a Close
+        // cmd resolves; NotOpen surfaces from MediaIOSource::readFrame
+        // when io->isClosing() is already latched but the synthetic
+        // EOS has not yet been pushed (the strand has the Close
+        // queued behind in-flight work); Cancelled surfaces when the
+        // backend's executeCmd(Read) returned mid-blocking-call after
+        // close()'s cancelBlockingWork hook tripped (e.g. RtpMediaIO's
+        // pop loop noticing _readCancelled before the strand processes
+        // the Close).  Without including Cancelled here, the
+        // cascade-trigger Close on a blocking source would land the
+        // mid-flight Read with Cancelled, take the generic-error
+        // branch below, kill the connection, and strand the
+        // downstream stages waiting for an upstreamDoneSignal that
+        // would never come.
+        if (rerr == Error::EndOfFile || rerr == Error::NotOpen || rerr == Error::Cancelled) {
                 if (!_upstreamDone) {
                         _upstreamDone = true;
                         upstreamDoneSignal.emit();
@@ -396,6 +401,21 @@ void MediaIOPortConnection::pump() {
                         }
                         ss.framesWritten++;
                         deliveredAny = true;
+                        // Fire the cap signal as soon as the sink has
+                        // accepted exactly @c frameLimit frames — the
+                        // pre-write check above only triggers on the
+                        // (limit+1)-th submission, which strands a
+                        // bounded source like an RTP receiver that has
+                        // no Nth+1 frame to deliver and leaves the
+                        // pipeline parked until the close watchdog
+                        // forces it down.  Catching the cap on the
+                        // limit-th write closes the pipeline as soon
+                        // as the last expected frame has landed.
+                        if (ss.frameLimit.isFinite() && !ss.frameLimit.isEmpty() &&
+                            ss.framesWritten >= ss.frameLimit.value() && frame->isSafeCutPoint()) {
+                                ss.doneByLimit = true;
+                                sinkLimitReachedSignal.emit(ss.sink);
+                        }
                 }
 
                 if (deliveredAny) _framesTransferred.fetchAndAdd(1);

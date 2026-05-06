@@ -871,3 +871,123 @@ TEST_CASE("MediaIOPortConnection drives multiple frames past a slow first read")
         (void)source.close().wait();
         (void)sink.close().wait();
 }
+
+// ============================================================================
+// Cancelled mid-flight Read maps to upstreamDone (not errorOccurred)
+//
+// When cancelBlockingWork() interrupts a DedicatedThreadMediaIO's
+// executeCmd(Read) the backend returns Error::Cancelled.  The
+// connection pump must treat this identically to EndOfFile / NotOpen:
+// emit upstreamDoneSignal so the cascade can proceed rather than
+// firing errorOccurredSignal and stalling the pipeline.
+//
+// Modelled with a PausedTestMediaIO whose Read hook returns
+// Error::Cancelled directly — the same return value a backend's
+// cancelBlockingWork hook would produce.
+// ============================================================================
+
+namespace {
+
+class CancelledReadSourceMediaIO : public PausedTestMediaIO {
+                PROMEKI_OBJECT(CancelledReadSourceMediaIO, PausedTestMediaIO)
+        public:
+                CancelledReadSourceMediaIO(ObjectBase *parent = nullptr) : PausedTestMediaIO(parent) {
+                        onRead = [this](MediaIOCommandRead &cmd) -> Error {
+                                (void)cmd;
+                                if (_cancelOnNext.load()) return Error::Cancelled;
+                                cmd.frame = Frame::Ptr::takeOwnership(new Frame());
+                                cmd.currentFrame = FrameNumber(_frameNum++);
+                                return Error::Ok;
+                        };
+                }
+
+                void setCancelOnNext(bool v) { _cancelOnNext.store(v); }
+
+        protected:
+                Error executeCmd(MediaIOCommandOpen &cmd) override {
+                        MediaIOPortGroup *group = addPortGroup("cancel-read-src");
+                        if (group == nullptr) return Error::Invalid;
+                        if (addSource(group, MediaDesc()) == nullptr) return Error::Invalid;
+                        return PausedTestMediaIO::executeCmd(cmd);
+                }
+
+        private:
+                int64_t           _frameNum = 1;
+                std::atomic<bool> _cancelOnNext{false};
+};
+
+class CancelledReadSinkMediaIO : public PausedTestMediaIO {
+                PROMEKI_OBJECT(CancelledReadSinkMediaIO, PausedTestMediaIO)
+        public:
+                CancelledReadSinkMediaIO(ObjectBase *parent = nullptr) : PausedTestMediaIO(parent) {}
+
+        protected:
+                Error executeCmd(MediaIOCommandOpen &cmd) override {
+                        MediaIOPortGroup *group = addPortGroup("cancel-read-sink");
+                        if (group == nullptr) return Error::Invalid;
+                        if (addSink(group, makeFakeMediaDesc()) == nullptr) return Error::Invalid;
+                        return PausedTestMediaIO::executeCmd(cmd);
+                }
+                Error executeCmd(MediaIOCommandWrite &cmd) override {
+                        (void)cmd;
+                        return Error::Ok;
+                }
+};
+
+} // namespace
+
+TEST_CASE("MediaIOPortConnection treats Cancelled mid-flight as upstreamDone") {
+        // Regression guard for the blocking-read cancelBlockingWork path:
+        // Error::Cancelled returned by executeCmd(Read) must route to
+        // upstreamDoneSignal, not errorOccurredSignal.
+        //
+        // Strategy: arm cancelOnNext before the connection is started so
+        // the very first Read the cache issues returns Cancelled.  This
+        // is the simplest reproducible path; it does not need warmup
+        // frames and avoids the timing complexity of arming mid-stream.
+
+        EventLoop loop;
+
+        CancelledReadSourceMediaIO source;
+        // Arm cancellation before the connection can issue a Read.
+        source.setCancelOnNext(true);
+
+        MediaIORequest srcOpen = source.open();
+        source.processAll();
+        REQUIRE(srcOpen.wait().isOk());
+
+        CancelledReadSinkMediaIO sink;
+        MediaIORequest           sinkOpen = sink.open();
+        sink.processAll();
+        REQUIRE(sinkOpen.wait().isOk());
+
+        MediaIOPortConnection conn(source.source(0), sink.sink(0));
+        std::atomic<int>      doneCount{0};
+        std::atomic<int>      errorCount{0};
+        conn.upstreamDoneSignal.connect([&doneCount]() { doneCount.fetch_add(1); }, &conn);
+        conn.errorOccurredSignal.connect([&errorCount](Error) { errorCount.fetch_add(1); }, &conn);
+
+        REQUIRE(conn.start().isOk());
+
+        // The cache immediately issues a Read; dispatch it (returns Cancelled).
+        REQUIRE(pumpUntil(loop, [&]() { return source.pending() > 0; }, 1000));
+        source.processAll();
+
+        // The connection's pump should convert Cancelled → upstreamDone.
+        REQUIRE(pumpUntil(loop, [&]() { return doneCount.load() > 0 || errorCount.load() > 0; }, 1000));
+        CHECK(doneCount.load() == 1);
+        CHECK(errorCount.load() == 0);
+        CHECK(conn.upstreamDone());
+
+        conn.stop();
+        {
+                MediaIORequest req = source.close();
+                source.processAll();
+                (void)req.wait();
+        }
+        {
+                MediaIORequest req = sink.close();
+                sink.processAll();
+                (void)req.wait();
+        }
+}

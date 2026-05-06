@@ -227,12 +227,11 @@ namespace promekitest {
          *     be bound and listening before TX emits anything.
          *
          *   - @c TxStartFirst — open and start TX, then build / open /
-         *     start RX.  Right for transports where the TX must be
-         *     actively servicing its control plane before the RX can
-         *     even build (FrameBridge: the planner opens the RX
-         *     briefly to read its MediaDesc, which triggers the
-         *     handshake; the TX side accepts handshakes only while
-         *     its worker thread is running).
+         *     start RX.  Right for transports where the TX must have
+         *     opened (and therefore listed its socket / written its
+         *     SDP / etc.) before the RX-side planner can build —
+         *     FrameBridge in particular wants its listening socket
+         *     up before the RX planner's brief-open probe runs.
          */
         enum class DualPhaseSequence {
                 RxStartFirst,
@@ -256,13 +255,6 @@ namespace promekitest {
          * @param sequence    Sequencing strategy; see @ref DualPhaseSequence.
          * @param txAutoplan  Pass to @c MediaPipeline::build for the TX pipeline.
          * @param rxAutoplan  Pass to @c MediaPipeline::build for the RX pipeline.
-         *                    Disable this when the planner's brief-open
-         *                    probe of the RX source would deadlock against
-         *                    a not-yet-pumping TX (e.g. FrameBridge —
-         *                    the output's accept loop only runs inside
-         *                    writeFrame, so the planner can't probe the
-         *                    source until the TX side has actually
-         *                    started pushing frames).
          */
         void runDualPhase(MediaPipeline &txPipe, const MediaPipelineConfig &txCfg, MediaPipeline &rxPipe,
                           const MediaPipelineConfig &rxCfg, EventLoop *loop, unsigned int timeoutMs,

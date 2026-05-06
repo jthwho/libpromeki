@@ -16,6 +16,19 @@ SdpSession MediaDesc::toSdp(uint8_t videoPayloadType) const {
         for (size_t i = 0; i < _imageList.size(); i++) {
                 SdpMediaDescription md = _imageList[i].toSdp(pt);
                 if (md.mediaType().isEmpty()) continue;
+                // Stamp the session-level frame rate onto each video
+                // m= section as @c a=framerate (RFC 4566 §6).  Without
+                // this, an RFC 2435 / RFC 4175 SDP — neither of which
+                // carries the rate in @c rtpmap or @c fmtp — leaves
+                // the receiver guessing, which collapses any
+                // per-frame audio aggregation that depends on
+                // samples-per-frame math.
+                if (_frameRate.isValid()) {
+                        // Rational form (e.g. "60000/1001") roundtrips
+                        // cleanly through @ref FrameRate::fromString;
+                        // a decimal would lose precision on NTSC rates.
+                        md.setAttribute("framerate", _frameRate.toString());
+                }
                 session.addMediaDescription(md);
                 pt++;
         }
@@ -35,6 +48,17 @@ MediaDesc MediaDesc::fromSdp(const SdpSession &session) {
                 if (sm.mediaType() == "video") {
                         ImageDesc img = ImageDesc::fromSdp(sm);
                         if (img.isValid()) md.imageList().pushToBack(img);
+                        // First valid framerate attribute on a video
+                        // m= section sets the session-level rate.
+                        if (!md.frameRate().isValid()) {
+                                String fr = sm.attribute("framerate");
+                                if (!fr.isEmpty()) {
+                                        Result<FrameRate> parsed = FrameRate::fromString(fr);
+                                        if (parsed.second().isOk() && parsed.first().isValid()) {
+                                                md.setFrameRate(parsed.first());
+                                        }
+                                }
+                        }
                 } else if (sm.mediaType() == "audio") {
                         AudioDesc aud = AudioDesc::fromSdp(sm);
                         if (aud.isValid()) md.audioList().pushToBack(aud);

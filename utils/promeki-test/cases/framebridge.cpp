@@ -194,21 +194,19 @@ namespace promekitest {
                                         injectError = ie;
                                 } else {
                                         // FrameBridge needs TX's
-                                        // worker thread running before
+                                        // listening socket up before
                                         // the RX-side handshake — see
                                         // @ref DualPhaseSequence::TxStartFirst.
-                                        // Also disable RX autoplan so
-                                        // the planner doesn't try to
-                                        // probe the bridge with a
-                                        // brief-open before TX has
-                                        // pushed its first frame —
-                                        // that probe would always
-                                        // time out on the bridge's
-                                        // 2 s handshake deadline.
+                                        // The bridge's AcceptWorker
+                                        // services handshakes off the
+                                        // strand the moment openOutput
+                                        // returns, so RX autoplan's
+                                        // brief-open probe of the
+                                        // source no longer needs a
+                                        // running producer to ACPT.
                                         runDualPhase(txPipe, txCfg, rxPipe, rxCfg, loop,
                                                      (unsigned int)timeoutMs, dp,
-                                                     DualPhaseSequence::TxStartFirst,
-                                                     /*txAutoplan=*/true, /*rxAutoplan=*/false);
+                                                     DualPhaseSequence::TxStartFirst);
 
                                         InspectorSnapshot snap = insp->snapshot();
                                         framesProcessed = snap.framesProcessed.value();

@@ -34,6 +34,24 @@ Error UdpSocketTransport::open() {
                 }
         }
 
+        // Buffer sizing applies before bind so the kernel allocates
+        // the requested ring on the very first incoming packet rather
+        // than starting from the default and racing with the producer.
+        if (_recvBufferSize > 0) {
+                err = _socket->setReceiveBufferSize(_recvBufferSize);
+                if (err.isError()) {
+                        close();
+                        return err;
+                }
+        }
+        if (_sendBufferSize > 0) {
+                err = _socket->setSendBufferSize(_sendBufferSize);
+                if (err.isError()) {
+                        close();
+                        return err;
+                }
+        }
+
         err = _socket->bind(_localAddress);
         if (err.isError()) {
                 close();

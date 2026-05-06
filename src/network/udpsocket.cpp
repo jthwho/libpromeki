@@ -378,6 +378,18 @@ Error UdpSocket::setDscp(uint8_t dscp) {
         return setSocketOption(IPPROTO_IP, IP_TOS, tos);
 }
 
+Error UdpSocket::setReceiveBufferSize(int bytes) {
+        if (_fd < 0) return Error::NotOpen;
+        if (bytes <= 0) return Error::Ok;
+        return setSocketOption(SOL_SOCKET, SO_RCVBUF, bytes);
+}
+
+Error UdpSocket::setSendBufferSize(int bytes) {
+        if (_fd < 0) return Error::NotOpen;
+        if (bytes <= 0) return Error::Ok;
+        return setSocketOption(SOL_SOCKET, SO_SNDBUF, bytes);
+}
+
 PROMEKI_NAMESPACE_END
 
 #endif // !PROMEKI_PLATFORM_EMSCRIPTEN

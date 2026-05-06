@@ -6,6 +6,7 @@ add_executable(promeki-test
     cases/audio.cpp
     cases/codec.cpp
     cases/framebridge.cpp
+    cases/ndi.cpp
     cases/roundtrip.cpp
     cases/rtp.cpp
 )

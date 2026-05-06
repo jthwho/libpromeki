@@ -334,6 +334,44 @@ class UdpSocket : public AbstractSocket {
                  */
                 Error setDscp(uint8_t dscp);
 
+                /**
+                 * @brief Requests a kernel receive buffer size.
+                 *
+                 * Sets @c SO_RCVBUF on the socket.  The Linux kernel
+                 * silently doubles the requested value (to account for
+                 * its bookkeeping overhead) and clamps it to
+                 * @c net.core.rmem_max.  A larger buffer absorbs
+                 * receive-side bursts (e.g. one frame's worth of
+                 * 1500-byte raw video packets arriving back-to-back)
+                 * without dropping packets when the userspace receiver
+                 * is briefly delayed.
+                 *
+                 * For high-bitrate uncompressed RTP video the kernel
+                 * default (typically 208 KiB) is too small; production
+                 * deployments should also raise @c rmem_max via sysctl.
+                 *
+                 * @param bytes Desired receive buffer size in bytes.
+                 *              Pass 0 to leave the kernel default in place.
+                 * @return Error::Ok on success, or an error on failure.
+                 */
+                Error setReceiveBufferSize(int bytes);
+
+                /**
+                 * @brief Requests a kernel send buffer size.
+                 *
+                 * Sets @c SO_SNDBUF on the socket.  Symmetric to
+                 * @ref setReceiveBufferSize(): the kernel silently
+                 * doubles the requested value and clamps to
+                 * @c net.core.wmem_max.  A larger send buffer
+                 * keeps @c sendto() / @c sendmmsg() from blocking when
+                 * the kernel hasn't yet drained earlier bursts.
+                 *
+                 * @param bytes Desired send buffer size in bytes.  Pass
+                 *              0 to leave the kernel default in place.
+                 * @return Error::Ok on success, or an error on failure.
+                 */
+                Error setSendBufferSize(int bytes);
+
         private:
                 int _domain = 0; ///< Address family (AF_INET or AF_INET6).
 };

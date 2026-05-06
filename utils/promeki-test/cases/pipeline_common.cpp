@@ -108,7 +108,17 @@ namespace promekitest {
                 pipe.closedSignal.connect(
                         [&p, loop](Error err) {
                                 p.closeError = err;
-                                loop->quit(0);
+                                // Gate the quit on the loop being
+                                // inside exec() — same reason as
+                                // runDualPhase: if a build/open/start
+                                // failure exits this function before
+                                // exec() is reached, the pipe's
+                                // destructor still fires closedSignal,
+                                // and an unconditional quit here would
+                                // queue a stale QuitItem the *next*
+                                // test's exec() would consume on
+                                // entry.
+                                if (loop->isRunning()) loop->quit(0);
                         },
                         &pipe);
 
@@ -184,13 +194,24 @@ namespace promekitest {
                 txPipe.closedSignal.connect(
                         [&out, loop](Error err) {
                                 out.tx.closeError = err;
-                                if (++out.closedCount == 2) loop->quit(0);
+                                // Gate the loop-quit on the loop
+                                // actually being inside @c exec() —
+                                // when build / open / start fails
+                                // before runDualPhase enters
+                                // @c loop->exec(), the cleanup
+                                // @c close() calls below still fire
+                                // closedSignal asynchronously, and
+                                // an unconditional @c quit here would
+                                // enqueue a stale QuitItem that the
+                                // next test's @c exec() picks up and
+                                // exits on immediately.
+                                if (++out.closedCount == 2 && loop->isRunning()) loop->quit(0);
                         },
                         &txPipe);
                 rxPipe.closedSignal.connect(
                         [&out, loop](Error err) {
                                 out.rx.closeError = err;
-                                if (++out.closedCount == 2) loop->quit(0);
+                                if (++out.closedCount == 2 && loop->isRunning()) loop->quit(0);
                         },
                         &rxPipe);
 
@@ -217,25 +238,12 @@ namespace promekitest {
                 // For TxStartFirst transports (FrameBridge): start
                 // TX before building RX.  The RX-side planner can
                 // then probe the source via a brief open / close
-                // cycle — that probe runs the handshake, which
-                // requires TX's worker thread to be actively
-                // servicing.  Sink-side waitForConsumer keeps TX's
-                // first frame parked until RX attaches, so no
-                // frames are lost while RX is building.
-                //
-                // The 200 ms sleep is a workaround for a real
-                // FrameBridge limitation: the output side's
-                // accept-pending loop only runs inside the bridge's
-                // writeFrame call, so we have to wait until TPG has
-                // actually pushed its first frame at the sink before
-                // RX can complete a handshake.  Without the wait the
-                // RX planner's brief-open hits a 2 s handshake
-                // timeout because the kernel-level connect succeeds
-                // but TX never user-level-accepts.  Long-term, the
-                // FrameBridge backend should service its accept queue
-                // independently of writeFrame (e.g. via a periodic
-                // task on its SharedThread); when that lands, this
-                // sleep can come out.
+                // cycle — that probe runs the handshake, which the
+                // FrameBridge AcceptWorker services off the strand
+                // the moment openOutput returns.  Sink-side
+                // waitForConsumer keeps TX's first frame parked
+                // until RX attaches, so no frames are lost while RX
+                // is building.
                 if (sequence == DualPhaseSequence::TxStartFirst) {
                         out.tx.startError = txPipe.start();
                         if (out.tx.startError.isError()) {
@@ -243,7 +251,6 @@ namespace promekitest {
                                 return;
                         }
                         out.tx.started = true;
-                        Thread::sleepMs(1000);
                 }
 
                 out.rx.buildError = rxPipe.build(rxCfg, rxAutoplan);

@@ -1583,6 +1583,26 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setMin(int32_t(1))
                                            .setDescription("Reader output frame queue capacity."));
 
+                /// @brief int — desired kernel @c SO_RCVBUF size in bytes.
+                PROMEKI_DECLARE_ID(
+                        RtpRecvBufferBytes,
+                        VariantSpec()
+                                .setType(Variant::TypeS32)
+                                .setDefault(int32_t(8 * 1024 * 1024))
+                                .setMin(int32_t(0))
+                                .setDescription("Kernel SO_RCVBUF size for each RTP UDP socket "
+                                                "(0 = leave kernel default; Linux clamps to net.core.rmem_max)."));
+
+                /// @brief int — desired kernel @c SO_SNDBUF size in bytes.
+                PROMEKI_DECLARE_ID(
+                        RtpSendBufferBytes,
+                        VariantSpec()
+                                .setType(Variant::TypeS32)
+                                .setDefault(int32_t(8 * 1024 * 1024))
+                                .setMin(int32_t(0))
+                                .setDescription("Kernel SO_SNDBUF size for each RTP UDP socket "
+                                                "(0 = leave kernel default; Linux clamps to net.core.wmem_max)."));
+
                 // --- Video stream ---
 
                 /// @brief SocketAddress — destination for the video stream. Empty = disabled.

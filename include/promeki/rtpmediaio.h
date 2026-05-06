@@ -568,6 +568,8 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 String        _sessionOrigin;
                 String        _multicastInterface;
                 int           _multicastTTL = 0;
+                int           _recvBufferBytes = 0;
+                int           _sendBufferBytes = 0;
                 Enum          _pacingMode;
                 Enum          _dataFormat;
 

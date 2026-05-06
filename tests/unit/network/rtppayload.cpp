@@ -440,6 +440,66 @@ TEST_CASE("RtpPayloadJpeg") {
                 Buffer          result = payload.unpack(empty);
                 CHECK(result.size() == 0);
         }
+
+        SUBCASE("4:2:2 JPEG sets Type=0 (FFmpeg convention)") {
+                // The minimal JPEG built by buildMinimalJpeg has no SOF0
+                // marker, so jpegIs420() returns false → Type byte must be
+                // 0 (FFmpeg convention for 4:2:2).
+                RtpPayloadJpeg payload(320, 240);
+                auto           jpeg = buildMinimalJpeg(100);
+                auto           packets = payload.pack(jpeg.data(), jpeg.size());
+                REQUIRE(packets.size() >= 1);
+                // RTP/JPEG header starts at byte 12 (after 12-byte RTP header).
+                // Type is at offset 4 within the JPEG header, i.e. byte 16.
+                CHECK(packets[0].data()[16] == 0);
+        }
+
+        SUBCASE("4:2:0 JPEG (SOF0 Y sampling=0x22) sets Type=1 (FFmpeg convention)") {
+                // Build a JPEG that has an SOF0 marker with Y sampling
+                // factor = 0x22 (h=2, v=2) so jpegIs420() returns true.
+                // RFC 2435 / FFmpeg convention: 4:2:0 → Type = 1.
+                //
+                // SOF0 layout (JFIF §B.2.2):
+                //   FF C0 | Lf(2B) | P(1B) | Y(2B) | X(2B) | Nf(1B)
+                //   per-component: Ci(1B) Hi/Vi(1B) Tqi(1B)
+                // We only need the first component's Hi/Vi at byte 11
+                // (0-indexed from the marker's first byte, inclusive).
+                std::vector<uint8_t> jpeg;
+                // SOI
+                jpeg.push_back(0xFF); jpeg.push_back(0xD8);
+                // SOF0: FF C0, length=17 (2+6+3*3), P=8, H=240, W=320, Nf=3
+                jpeg.push_back(0xFF); jpeg.push_back(0xC0);
+                jpeg.push_back(0x00); jpeg.push_back(0x11); // Lf = 17
+                jpeg.push_back(0x08);                       // P = 8 bits
+                jpeg.push_back(0x00); jpeg.push_back(0xF0); // Y = 240
+                jpeg.push_back(0x01); jpeg.push_back(0x40); // X = 320
+                jpeg.push_back(0x03);                       // Nf = 3 components
+                // Component 1 (Y): Ci=1, Hi=2/Vi=2 (=0x22 → 4:2:0), Tq=0
+                jpeg.push_back(0x01); jpeg.push_back(0x22); jpeg.push_back(0x00);
+                // Component 2 (Cb): Ci=2, Hi=1/Vi=1 (=0x11), Tq=1
+                jpeg.push_back(0x02); jpeg.push_back(0x11); jpeg.push_back(0x01);
+                // Component 3 (Cr): same
+                jpeg.push_back(0x03); jpeg.push_back(0x11); jpeg.push_back(0x01);
+                // DQT marker
+                jpeg.push_back(0xFF); jpeg.push_back(0xDB);
+                jpeg.push_back(0x00); jpeg.push_back(0x43); // length = 67
+                jpeg.push_back(0x00);                       // Pq/Tq
+                for (int i = 0; i < 64; i++) jpeg.push_back(static_cast<uint8_t>(i + 1));
+                // SOS marker (minimal 1-component)
+                jpeg.push_back(0xFF); jpeg.push_back(0xDA);
+                jpeg.push_back(0x00); jpeg.push_back(0x08);
+                jpeg.push_back(0x01); // Ns=1
+                jpeg.push_back(0x01); jpeg.push_back(0x00);
+                jpeg.push_back(0x00); jpeg.push_back(0x3F); jpeg.push_back(0x00);
+                // Entropy-coded data
+                for (int i = 0; i < 50; i++) jpeg.push_back(static_cast<uint8_t>((i & 0x7F) + 1));
+
+                RtpPayloadJpeg payload(320, 240);
+                auto           packets = payload.pack(jpeg.data(), jpeg.size());
+                REQUIRE(packets.size() >= 1);
+                // Type byte is at offset 16 in the packet (byte 4 of JPEG header).
+                CHECK(packets[0].data()[16] == 1);
+        }
 }
 
 // ============================================================================

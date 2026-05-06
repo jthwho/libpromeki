@@ -150,9 +150,35 @@ ImageDesc ImageDesc::fromSdp(const SdpMediaDescription &md) {
                 return ImageDesc(Size2Du32(static_cast<uint32_t>(w), static_cast<uint32_t>(h)), PixelFormat(pdId));
         }
 
-        // "JPEG" (RFC 2435) carries geometry in the packet header,
-        // not SDP.  Return invalid so the caller knows to look
-        // elsewhere (deferred geometry in the RTP reader).
+        if (rm.encoding == "JPEG" || rm.encoding == "jpeg") {
+                // RFC 2435 MJPEG.  Geometry is normally in the per-
+                // packet RTP/JPEG header, so the SDP-derived ImageDesc
+                // is best-effort.  We honour the @c x-dimensions
+                // extension (emitted by @ref ImageDesc::toSdp and
+                // recognised by ffmpeg / GStreamer / Live555) when
+                // present so a downstream pipeline planner has a
+                // valid ImageDesc to plan against without waiting
+                // for the first packet.  Subsampling is not in the
+                // SDP — we pick a safe default (4:2:2) and let the
+                // RTP reader refine the PixelFormat from the in-band
+                // Type byte and SOF0 marker once packets arrive.
+                auto params = md.fmtpParameters();
+                String dims = params.value("x-dimensions");
+                if (dims.isEmpty()) return ImageDesc();
+                StringList parts = dims.split(",");
+                if (parts.size() != 2) parts = dims.split("x");
+                if (parts.size() != 2) return ImageDesc();
+                int w = parts[0].trim().toInt();
+                int h = parts[1].trim().toInt();
+                if (w <= 0 || h <= 0) return ImageDesc();
+
+                String          colorimetry = params.value("colorimetry");
+                String          range = params.value("RANGE");
+                PixelFormat::ID pdId =
+                        jpegPixelFormatFromColorimetry(colorimetry, range, /*is420=*/false, /*isRgb=*/false);
+                return ImageDesc(Size2Du32(static_cast<uint32_t>(w), static_cast<uint32_t>(h)), PixelFormat(pdId));
+        }
+
         return ImageDesc();
 }
 
@@ -176,27 +202,32 @@ SdpMediaDescription ImageDesc::toSdp(uint8_t payloadType) const {
         int h = static_cast<int>(height());
 
         if (pd.isCompressed() && pd.videoCodec().id() == VideoCodec::JPEG) {
-                // RFC 2435 MJPEG.  Geometry is in-band (packet
-                // header), so the rtpmap is just JPEG/90000.  We
-                // emit colorimetry and RANGE as fmtp extensions
-                // following the ST 2110-20 convention so receivers
-                // that understand them can apply the correct
-                // matrix and quantization range.
+                // RFC 2435 MJPEG.  The wire format puts width/height
+                // (capped at 2040) and subsampling in the per-packet
+                // RTP/JPEG header, so the rtpmap is just JPEG/90000
+                // and the SDP doesn't strictly need geometry.  We
+                // still emit @c x-dimensions=W,H — a widely-used
+                // RFC 2435 fmtp extension (ffmpeg/GStreamer/Live555
+                // all read it) — so an end-to-end planner has
+                // dimensions before the first packet arrives, and so
+                // we don't lose precision for >2040-pixel rasters
+                // that the in-band header has to round-trip via the
+                // SOF0 fallback.  Colorimetry + RANGE follow the
+                // ST 2110-20 convention so receivers that understand
+                // them can apply the correct matrix and quantization
+                // range; subsampling is left to the in-band Type byte.
                 uint8_t pt = payloadType;
                 if (pt == 96) pt = 26; // static PT for JPEG
                 md.addPayloadType(pt);
                 md.setAttribute("rtpmap", String::number(pt) + String(" JPEG/90000"));
-                String fmtp;
+                String fmtp = String("x-dimensions=") + String::number(w) + String(",") + String::number(h);
                 if (colorimetry != nullptr) {
-                        fmtp += String("colorimetry=") + String(colorimetry);
+                        fmtp += String(";colorimetry=") + String(colorimetry);
                 }
                 if (range != nullptr) {
-                        if (!fmtp.isEmpty()) fmtp += String(";");
-                        fmtp += String("RANGE=") + String(range);
+                        fmtp += String(";RANGE=") + String(range);
                 }
-                if (!fmtp.isEmpty()) {
-                        md.setAttribute("fmtp", String::number(pt) + String(" ") + fmtp);
-                }
+                md.setAttribute("fmtp", String::number(pt) + String(" ") + fmtp);
         } else if (pd.isCompressed() && pd.videoCodec().id() == VideoCodec::JPEG_XS) {
                 // RFC 9134 JPEG XS.
                 md.addPayloadType(payloadType);

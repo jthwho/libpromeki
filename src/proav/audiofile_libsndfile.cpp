@@ -329,6 +329,21 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                                 promekiWarn("open: Can't write, format not supported");
                                                 return Error::NotSupported;
                                         }
+                                        // sf_format_check() reports whether this libsndfile
+                                        // build can actually encode the requested major+sub
+                                        // format combo.  Optional codecs (Vorbis, FLAC,
+                                        // Opus, …) are compile-time toggles in libsndfile,
+                                        // so a perfectly-formed format mask can still come
+                                        // back as unsupported on a stripped-down build.
+                                        // Distinguishing this here lets callers treat it as
+                                        // a planner gap (NotSupported) instead of a generic
+                                        // open failure.
+                                        if (sf_format_check(&_info) == 0) {
+                                                promekiWarn("open: libsndfile build does not support "
+                                                            "format 0x%x for write",
+                                                            _info.format);
+                                                return Error::NotSupported;
+                                        }
                                 } break;
 
                                 default:
@@ -470,7 +485,45 @@ class AudioFileFactory_LibSndFile : public AudioFileFactory {
         public:
                 AudioFileFactory_LibSndFile() {
                         _name = "libsndfile";
-                        _exts = {"wav", "bwf", "aiff", "aif", "ogg"};
+                        // libsndfile's optional codecs (Vorbis, FLAC, Opus, …)
+                        // are compile-time toggles; a stripped build still
+                        // declares the extensions in its headers but won't
+                        // actually open them.  Build _exts by intersecting
+                        // the formats this code knows how to drive against
+                        // the major-format list libsndfile reports for the
+                        // running build.  The result is that callers see a
+                        // clean lookup miss (and a planner Skip) instead of
+                        // a runtime open failure for codecs that simply
+                        // aren't there.
+                        StringList candidates = {"wav", "bwf", "aiff", "aif", "ogg"};
+                        StringList majors = enumerateLibSndMajorExts();
+                        for (const auto &ext : candidates) {
+                                // bwf is libsndfile's WAV major with the
+                                // BWF extension chunks layered on top, so
+                                // it inherits wav's availability.
+                                String probe = (ext == "bwf") ? String("wav") : ext;
+                                if (majors.contains(probe)) _exts.pushToBack(ext);
+                        }
+                }
+
+                static StringList enumerateLibSndMajorExts() {
+                        StringList out;
+                        int        count = 0;
+                        if (sf_command(nullptr, SFC_GET_FORMAT_MAJOR_COUNT, &count, sizeof(count)) != 0) {
+                                return out;
+                        }
+                        for (int i = 0; i < count; ++i) {
+                                SF_FORMAT_INFO info;
+                                std::memset(&info, 0, sizeof(info));
+                                info.format = i;
+                                if (sf_command(nullptr, SFC_GET_FORMAT_MAJOR, &info, sizeof(info)) != 0) {
+                                        continue;
+                                }
+                                if (info.extension == nullptr) continue;
+                                String ext = String(info.extension).toLower();
+                                if (!out.contains(ext)) out.pushToBack(ext);
+                        }
+                        return out;
                 }
 
                 ~AudioFileFactory_LibSndFile() {}

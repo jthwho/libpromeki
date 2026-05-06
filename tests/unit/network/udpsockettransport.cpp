@@ -185,4 +185,34 @@ TEST_CASE("UdpSocketTransport") {
                 batch.pushToBack(d);
                 CHECK(t.sendPackets(batch) == -1);
         }
+
+        SUBCASE("buffer size accessors default to zero") {
+                UdpSocketTransport t;
+                CHECK(t.receiveBufferSize() == 0);
+                CHECK(t.sendBufferSize() == 0);
+        }
+
+        SUBCASE("setReceiveBufferSize stores value and reports it back") {
+                UdpSocketTransport t;
+                t.setReceiveBufferSize(512 * 1024);
+                CHECK(t.receiveBufferSize() == 512 * 1024);
+        }
+
+        SUBCASE("setSendBufferSize stores value and reports it back") {
+                UdpSocketTransport t;
+                t.setSendBufferSize(1024 * 1024);
+                CHECK(t.sendBufferSize() == 1024 * 1024);
+        }
+
+        SUBCASE("buffer sizes applied on open — kernel accepts request") {
+                // Ask for 256 KiB on each side.  The kernel may round up or
+                // clamp to rmem_max / wmem_max, but it must not fail the open.
+                UdpSocketTransport t;
+                t.setReceiveBufferSize(256 * 1024);
+                t.setSendBufferSize(256 * 1024);
+                Error err = t.open();
+                CHECK(err.isOk());
+                CHECK(t.isOpen());
+                t.close();
+        }
 }
