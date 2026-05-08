@@ -2000,6 +2000,28 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                         break;
                 }
 #endif
+                case TypeXmlDocument: {
+                        // operator<<(DataStream&, const XmlDocument&) writes the
+                        // body as a tagged String (TypeString length-prefix), so
+                        // we must consume the TypeString tag here too — not call
+                        // readStringData() directly.
+                        String s;
+                        *this >> s;
+                        if (_status != Ok) {
+                                val = Variant();
+                                break;
+                        }
+                        XmlParseError perr;
+                        XmlDocument   doc = XmlDocument::parse(s, &perr);
+                        if (!perr) {
+                                setError(ReadCorruptData,
+                                         String("XmlDocument::parse failed: ") + perr.toString());
+                                val = Variant();
+                                break;
+                        }
+                        val = std::move(doc);
+                        break;
+                }
                 default:
                         setError(ReadCorruptData,
                                  String::sprintf("Variant::read: tag 0x%04X is not Variant-representable",
@@ -2097,6 +2119,8 @@ namespace {
         template <> struct has_free_read<VariantList> : std::true_type {};
         template <> struct has_free_write<VariantMap> : std::true_type {};
         template <> struct has_free_read<VariantMap> : std::true_type {};
+        template <> struct has_free_write<XmlDocument> : std::true_type {};
+        template <> struct has_free_read<XmlDocument> : std::true_type {};
 
         template <typename T>
         inline constexpr bool has_datastream_write_v = has_member_write<T>::value || has_free_write<T>::value;

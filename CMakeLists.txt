@@ -452,6 +452,7 @@ option(PROMEKI_USE_SYSTEM_SNDFILE       "Use system libsndfile instead of vendor
 option(PROMEKI_USE_SYSTEM_OPUS          "Use system libopus instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_SAMPLERATE   "Use system libsamplerate instead of vendored"  OFF)
 option(PROMEKI_USE_SYSTEM_NLOHMANN_JSON "Use system nlohmann_json instead of vendored"  OFF)
+option(PROMEKI_USE_SYSTEM_PUGIXML       "Use system pugixml instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_VTC           "Use system libvtc instead of vendored"         OFF)
 option(PROMEKI_USE_SYSTEM_HIGHWAY      "Use system Highway instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_CIRF          "Use system cirf instead of vendored"           OFF)
@@ -873,6 +874,25 @@ else()
     set(JSON_Install OFF CACHE INTERNAL "")
     set(JSON_SystemInclude ON CACHE INTERNAL "")
     add_subdirectory(thirdparty/nlohmann-json EXCLUDE_FROM_ALL)
+endif()
+
+# --- pugixml ---
+# pugixml is a small, fast XML DOM parser used as the backing store for
+# XmlDocument / XmlElement / XmlNode / XmlAttribute. We always build the
+# static variant with -fPIC so it links cleanly into the promeki shared
+# library; pugixml's own install rules are disabled because we install
+# its public header under promeki/thirdparty/ alongside our own.
+if(PROMEKI_USE_SYSTEM_PUGIXML)
+    find_package(pugixml REQUIRED)
+    set(PROMEKI_PUGIXML_TARGET pugixml::pugixml)
+else()
+    set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
+    set(PUGIXML_BUILD_TESTS OFF CACHE INTERNAL "")
+    set(PUGIXML_INSTALL OFF CACHE INTERNAL "")
+    set(PUGIXML_BUILD_SHARED_AND_STATIC_LIBS OFF CACHE INTERNAL "")
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+    add_subdirectory(thirdparty/pugixml EXCLUDE_FROM_ALL)
+    set(PROMEKI_PUGIXML_TARGET pugixml-static)
 endif()
 
 # --- libvtc ---
@@ -1477,6 +1497,7 @@ set(PROMEKI_HEADERS
     include/promeki/videoformat.h
     include/promeki/waitcondition.h
     include/promeki/widget.h
+    include/promeki/xml.h
     include/promeki/xyzcolor.h
 )
 
@@ -1606,6 +1627,7 @@ set(PROMEKI_SOURCES
     src/core/videoformat.cpp
     src/core/widget.cpp
     src/core/windowedstat.cpp
+    src/core/xml.cpp
     src/core/xyzcolor.cpp
 )
 
@@ -2013,6 +2035,21 @@ else()
     )
 endif()
 
+# pugixml include paths (headers use #include <pugixml.hpp>)
+# xml.h embeds pugi::xml_document by value inside XmlData, so consumers
+# need the pugi headers on their include path. The static archive
+# carries pugi's symbols into libpromeki; consumers do not link pugixml
+# separately.
+if(PROMEKI_USE_SYSTEM_PUGIXML)
+    target_link_libraries(promeki PUBLIC ${PROMEKI_PUGIXML_TARGET})
+else()
+    target_include_directories(promeki PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml/src>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty>
+    )
+    target_link_libraries(promeki PRIVATE ${PROMEKI_PUGIXML_TARGET})
+endif()
+
 # libvtc include paths
 if(PROMEKI_USE_SYSTEM_VTC)
     target_link_libraries(promeki PRIVATE ${PROMEKI_VTC_TARGET})
@@ -2404,6 +2441,15 @@ if(NOT PROMEKI_USE_SYSTEM_NLOHMANN_JSON)
     )
 endif()
 
+# Install vendored pugixml headers (needed by consumers) unless using system
+if(NOT PROMEKI_USE_SYSTEM_PUGIXML)
+    install(FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml/src/pugixml.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml/src/pugiconfig.hpp
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty
+    )
+endif()
+
 # Install vendored libvtc headers (needed by consumers) unless using system
 if(NOT PROMEKI_USE_SYSTEM_VTC)
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libvtc/include/
@@ -2629,6 +2675,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/waitcondition.cpp
         tests/unit/windowedstat.cpp
         tests/unit/windowedstatsbundle.cpp
+        tests/unit/xml.cpp
         tests/unit/xyzcolor.cpp
     )
 

@@ -53,6 +53,7 @@
 #include <promeki/enumlist.h>
 #include <promeki/url.h>
 #include <promeki/windowedstat.h>
+#include <promeki/xml.h>
 #if PROMEKI_ENABLE_NETWORK
 #include <promeki/socketaddress.h>
 #include <promeki/sdpsession.h>
@@ -122,6 +123,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeWindowedStat | `WindowedStat`   |
  * | TypeVariantList | `VariantList`     |
  * | TypeVariantMap  | `VariantMap`      |
+ * | TypeXmlDocument | `XmlDocument`     |
  *
  * When @c PROMEKI_ENABLE_NETWORK is true, the following types are also available:
  *
@@ -190,6 +192,7 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeWindowedStat, WindowedStat)                                                                              \
         X(TypeVariantList, VariantList)                                                                                \
         X(TypeVariantMap, VariantMap)                                                                                  \
+        X(TypeXmlDocument, XmlDocument)                                                                                \
         PROMEKI_VARIANT_TYPES_NETWORK
 
 namespace detail {

@@ -32,6 +32,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 class JsonObject;
 class JsonArray;
+class XmlDocument;
+class XmlElement;
 class MediaTimeStamp;
 class MacAddress;
 class EUI64;
@@ -328,6 +330,8 @@ class DataStream {
                                 0x53, ///< @brief VariantList (uint32 count + N tagged Variants — same wire as List<Variant>)
                         TypeVariantMap =
                                 0x54, ///< @brief VariantMap (uint32 count + N (String key, Variant value) — same wire as Map<String,Variant>)
+                        TypeXmlDocument = 0x55, ///< @brief XmlDocument (length-prefixed serialized XML form)
+                        TypeXmlElement = 0x56,  ///< @brief XmlElement (length-prefixed serialized XML form)
                 };
 
                 /**

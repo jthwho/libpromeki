@@ -63,6 +63,8 @@ only obscures the model.
 | `Frame` | Pipeline-wide container of payloads + metadata |
 | `JsonObject` | JSON object container wrapping `nlohmann::json` |
 | `JsonArray` | JSON array container wrapping `nlohmann::json` |
+| `XmlDocument` | XML document handle backed by pugixml |
+| `XmlElement` | XML element subtree backed by pugixml (each handle is its own pugi document holding one root element) |
 
 ```cpp
 // All of these are O(1) — no deep copy until someone mutates.
@@ -116,20 +118,20 @@ Data objects are not internally thread-safe. Concurrent reads and writes
 to the same instance require external synchronization. The recommended
 pattern for sharing data between threads depends on whether the object
 already manages internal copy-on-write storage (`Frame`, `String`,
-`VariantDatabase`, `Metadata`, `Buffer`, `JsonObject`, `JsonArray`) or
-exposes a `Ptr` type for explicit shared ownership: once you pass a
-value or `Ptr` to another thread, do not mutate the underlying object
-from the original thread.
+`VariantDatabase`, `Metadata`, `Buffer`, `JsonObject`, `JsonArray`,
+`XmlDocument`, `XmlElement`) or exposes a `Ptr` type for explicit
+shared ownership: once you pass a value or `Ptr` to another thread,
+do not mutate the underlying object from the original thread.
 
 ### Pattern 1: Share an internally-CoW object by value {#thread_value_cow}
 
 `Frame`, `Buffer`, `String`, `VariantDatabase` (and its `Metadata`
-subclass), `JsonObject`, and `JsonArray` are value-type handles that
-wrap an internal `SharedPtr<Data>`. Copying one is an atomic refcount
-bump, so a value-typed `Frame` (for example) is just as cheap to pass
-between threads as a raw `Frame::Ptr` was — and the mutators do
-copy-on-write internally so each consumer gets its own private clone
-the first time it writes.
+subclass), `JsonObject`, `JsonArray`, `XmlDocument`, and `XmlElement`
+are value-type handles that wrap an internal `SharedPtr<Data>`.
+Copying one is an atomic refcount bump, so a value-typed `Frame`
+(for example) is just as cheap to pass between threads as a raw
+`Frame::Ptr` was — and the mutators do copy-on-write internally so
+each consumer gets its own private clone the first time it writes.
 
 ```cpp
 // Producer thread
