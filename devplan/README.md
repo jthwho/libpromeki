@@ -20,7 +20,8 @@ devplan/
 │   └── logger_ring_buffer.md  Crash-handler-readable retained log
 ├── network/             Network library work
 │   ├── sockets.md       Phase 3A — complete; deferred items
-│   └── avoverip.md      Phase 3C — PtpClock + RTP follow-ups
+│   ├── avoverip.md      Phase 3C — PtpClock + RTP follow-ups
+│   └── srt.md           Phase 3D — SRT shipped; MediaIO backend + bonded listener deferred
 ├── proav/               ProAV / MediaIO subsystem
 │   ├── pipeline.md      MediaPipeline class follow-ups
 │   ├── planner.md       MediaPipelinePlanner future work
@@ -82,6 +83,7 @@ devplan/
 | 3A    | Sockets                              | COMPLETE                            |
 | 3B    | HTTP / WebSocket / TLS               | COMPLETE                            |
 | 3C    | AV-over-IP (RTP / SDP / multicast)   | mostly complete; PtpClock pending   |
+| 3D    | SRT (Secure Reliable Transport)      | shipped; SrtMediaIO backend deferred |
 | 4     | ProAV — MediaIO framework + backends | framework + 18 backends shipped;<br>follow-ups in `proav/` |
 | 4A    | MediaPipeline                        | shipped; docs + tests pending       |
 | 4M    | MediaPipelinePlanner                 | shipped (single-hop + 2-hop codec)  |
@@ -93,7 +95,8 @@ devplan/
 
 ```
 Phase 1 ──┬─► Phase 2 ──┬─► Phase 3A ─► Phase 3B
-          │             │              └► Phase 3C ── PtpClock (open)
+          │             │              ├► Phase 3C ── PtpClock (open)
+          │             │              └► Phase 3D (SRT) ── SrtMediaIO backend (open)
           │             │
           │             ├─► Phase 4 (MediaIO + backends + MediaPipeline)
           │             │       │

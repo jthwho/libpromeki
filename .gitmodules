@@ -43,3 +43,9 @@
 [submodule "thirdparty/pugixml"]
 	path = thirdparty/pugixml
 	url = https://github.com/zeux/pugixml.git
+[submodule "thirdparty/srt"]
+	path = thirdparty/srt
+	url = https://github.com/Haivision/srt.git
+[submodule "thirdparty/srt-mbedtls"]
+	path = thirdparty/srt-mbedtls
+	url = https://github.com/Mbed-TLS/mbedtls.git

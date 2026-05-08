@@ -285,6 +285,7 @@ set(PROMEKI_SANITIZER "" CACHE STRING
 option(PROMEKI_ENABLE_NETWORK  "Include networking support"             ON)
 option(PROMEKI_ENABLE_HTTP     "Include HTTP server / client (vendored llhttp)" ON)
 option(PROMEKI_ENABLE_TLS      "Include TLS support (vendored mbedTLS)"  ON)
+option(PROMEKI_ENABLE_SRT      "Include SRT (Secure Reliable Transport) support (vendored libsrt + isolated mbedTLS-3.6)" ON)
 option(PROMEKI_ENABLE_PROAV    "Include pro A/V support"                ON)
 option(PROMEKI_ENABLE_MUSIC    "Include music support"                  ON)
 option(PROMEKI_ENABLE_PNG      "Include PNG image I/O"                  ON)
@@ -458,6 +459,7 @@ option(PROMEKI_USE_SYSTEM_HIGHWAY      "Use system Highway instead of vendored" 
 option(PROMEKI_USE_SYSTEM_CIRF          "Use system cirf instead of vendored"           OFF)
 option(PROMEKI_USE_SYSTEM_LLHTTP        "Use system llhttp instead of vendored"         OFF)
 option(PROMEKI_USE_SYSTEM_MBEDTLS       "Use system mbedTLS instead of vendored"        OFF)
+option(PROMEKI_USE_SYSTEM_SRT           "Use system libsrt instead of vendored"         OFF)
 
 # Build statistics wrapper #####################################################
 # When PROMEKI_BUILD_STATS is ON and the platform has GNU `/usr/bin/time -v`,
@@ -548,6 +550,14 @@ if(PROMEKI_ENABLE_HTTP AND NOT PROMEKI_ENABLE_NETWORK)
 endif()
 if(PROMEKI_ENABLE_TLS AND NOT PROMEKI_ENABLE_NETWORK)
     message(FATAL_ERROR "PROMEKI_ENABLE_TLS requires PROMEKI_ENABLE_NETWORK")
+endif()
+if(PROMEKI_ENABLE_SRT AND NOT PROMEKI_ENABLE_NETWORK)
+    message(FATAL_ERROR "PROMEKI_ENABLE_SRT requires PROMEKI_ENABLE_NETWORK")
+endif()
+if(PROMEKI_ENABLE_SRT AND NOT PROMEKI_ENABLE_TLS)
+    # libsrt requires a crypto backend for handshake auth + AES; we always
+    # ride on the same vendored mbedTLS that the rest of the library uses.
+    message(FATAL_ERROR "PROMEKI_ENABLE_SRT requires PROMEKI_ENABLE_TLS (vendored mbedTLS)")
 endif()
 if(PROMEKI_ENABLE_SRC AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_SRC requires PROMEKI_ENABLE_PROAV")
@@ -1074,6 +1084,182 @@ if(PROMEKI_ENABLE_TLS)
         else()
             set(PROMEKI_MBEDCRYPTO_TARGET mbedcrypto)
         endif()
+    endif()
+endif()
+
+# --- libsrt (Haivision SRT, vendored as thirdparty/srt) ---
+# SRT 1.5.5 still uses the legacy mbedTLS ≤3.x crypto API
+# (mbedtls/aes.h, ctr_drbg.h, …), which mbedTLS 4.x relocates under
+# mbedtls/private/ — so SRT cannot ride on the project's main vendored
+# mbedTLS 4.x stack.  We solve this by pinning a *second* mbedTLS, the
+# 3.6 LTS branch, under thirdparty/srt-mbedtls/, and building both it
+# and SRT in a fully isolated prefix via ExternalProject_Add.  After
+# the isolated build we partial-link libsrt.a together with the three
+# 3.6-mbedtls .a's into a single object, then run `objcopy
+# --localize-symbol` on every symbol the mbedTLS-3.6 archives define.
+# The result is a single static archive (libpromeki_srt_bundle.a) in
+# which:
+#   * the public SRT C/C++ API stays GLOBAL (consumers can call srt_*),
+#   * every mbedtls_* / psa_* symbol is LOCAL — invisible to the
+#     subsequent link of promeki.so, so it cannot collide with the
+#     main mbedTLS 4.x copy that the rest of the library uses.
+# The bundle is then linked PRIVATE into promeki.so as a normal static
+# dep.  No SRT or mbedTLS-3.6 symbol leaks out of libpromeki.so.
+if(PROMEKI_ENABLE_SRT)
+    if(PROMEKI_USE_SYSTEM_SRT)
+        find_package(SRT QUIET CONFIG)
+        if(SRT_FOUND)
+            set(PROMEKI_SRT_TARGET SRT::srt)
+        else()
+            find_package(PkgConfig REQUIRED)
+            pkg_check_modules(SRT REQUIRED IMPORTED_TARGET srt)
+            set(PROMEKI_SRT_TARGET PkgConfig::SRT)
+        endif()
+    else()
+        # Threads::Threads is referenced below; ensure it is found
+        # regardless of where elsewhere in the file find_package(Threads)
+        # might also be called — find_package is idempotent.
+        find_package(Threads REQUIRED)
+        # Isolated prefix — never shared with the main thirdparty install
+        # tree (which is reserved for libraries the rest of promeki sees
+        # at compile time, e.g. zlib-ng, libjpeg-turbo).  All SRT
+        # artefacts live here and never escape.
+        set(PROMEKI_SRT_PREFIX        ${CMAKE_BINARY_DIR}/srt-prefix)
+        set(PROMEKI_SRT_INCLUDE_DIR   ${PROMEKI_SRT_PREFIX}/include)
+        set(PROMEKI_SRT_LIBDIR        ${PROMEKI_SRT_PREFIX}/lib)
+        # Standard libdir varies by platform / distro (lib vs lib64); we
+        # force `lib` via -DCMAKE_INSTALL_LIBDIR for both subprojects so
+        # downstream paths stay deterministic.
+        set(PROMEKI_SRT_MBEDTLS_LIBA  ${PROMEKI_SRT_LIBDIR}/libmbedtls.a)
+        set(PROMEKI_SRT_MBEDX509_LIBA ${PROMEKI_SRT_LIBDIR}/libmbedx509.a)
+        set(PROMEKI_SRT_MBEDCRYPTO_LIBA ${PROMEKI_SRT_LIBDIR}/libmbedcrypto.a)
+        set(PROMEKI_SRT_LIBA          ${PROMEKI_SRT_LIBDIR}/libsrt.a)
+        set(PROMEKI_SRT_BUNDLE_OBJ    ${CMAKE_BINARY_DIR}/srt-bundle/libpromeki_srt_bundle.o)
+        set(PROMEKI_SRT_BUNDLE_LIB    ${CMAKE_BINARY_DIR}/srt-bundle/libpromeki_srt_bundle.a)
+        set(PROMEKI_SRT_BUNDLE_LOCALSYMS ${CMAKE_BINARY_DIR}/srt-bundle/localize-syms.txt)
+
+        file(MAKE_DIRECTORY ${PROMEKI_SRT_PREFIX}/include
+                            ${PROMEKI_SRT_LIBDIR}
+                            ${CMAKE_BINARY_DIR}/srt-bundle)
+
+        # Build mbedTLS 3.6 LTS into the isolated prefix.  Compiled with
+        # -fvisibility=hidden so even before the symbol-localization
+        # pass, none of its symbols leak into the dynsym of any consumer
+        # that mistakenly forwards them.  EXCLUDE_FROM_ALL keeps it from
+        # being built unless something pulls it in.
+        ExternalProject_Add(
+            srt_mbedtls_ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/srt-mbedtls
+            CMAKE_ARGS
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_SRT_PREFIX}
+                -DCMAKE_INSTALL_LIBDIR:PATH=lib
+                -DCMAKE_BUILD_TYPE=Release
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DCMAKE_C_VISIBILITY_PRESET=hidden
+                -DCMAKE_CXX_VISIBILITY_PRESET=hidden
+                -DCMAKE_VISIBILITY_INLINES_HIDDEN=ON
+                -DENABLE_PROGRAMS=OFF
+                -DENABLE_TESTING=OFF
+                -DMBEDTLS_FATAL_WARNINGS=OFF
+                -DUSE_STATIC_MBEDTLS_LIBRARY=ON
+                -DUSE_SHARED_MBEDTLS_LIBRARY=OFF
+                -DDISABLE_PACKAGE_CONFIG_AND_INSTALL=OFF
+            BUILD_BYPRODUCTS
+                ${PROMEKI_SRT_MBEDTLS_LIBA}
+                ${PROMEKI_SRT_MBEDX509_LIBA}
+                ${PROMEKI_SRT_MBEDCRYPTO_LIBA}
+        )
+
+        # Build SRT against the isolated mbedTLS 3.6 install above.
+        # Trimmed to the library only: no apps, no shared lib, no unit
+        # tests, no bonding / heavy-logging.  ENABLE_STDCXX_SYNC=ON to
+        # use C++11 chrono / threads instead of pthreads.
+        ExternalProject_Add(
+            srt_ep
+            DEPENDS srt_mbedtls_ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/srt
+            CMAKE_ARGS
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_SRT_PREFIX}
+                -DCMAKE_INSTALL_LIBDIR:PATH=lib
+                -DCMAKE_PREFIX_PATH:PATH=${PROMEKI_SRT_PREFIX}
+                -DCMAKE_BUILD_TYPE=Release
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DCMAKE_C_VISIBILITY_PRESET=hidden
+                -DCMAKE_CXX_VISIBILITY_PRESET=hidden
+                -DCMAKE_VISIBILITY_INLINES_HIDDEN=ON
+                -DENABLE_APPS=OFF
+                -DENABLE_SHARED=OFF
+                -DENABLE_STATIC=ON
+                -DENABLE_UNITTESTS=OFF
+                -DENABLE_BONDING=ON
+                -DENABLE_LOGGING=ON
+                -DENABLE_HEAVY_LOGGING=OFF
+                -DENABLE_ENCRYPTION=ON
+                -DENABLE_STDCXX_SYNC=ON
+                -DENABLE_MONOTONIC_CLOCK=ON
+                -DUSE_ENCLIB=mbedtls
+                -DMBEDTLS_PREFIX:PATH=${PROMEKI_SRT_PREFIX}
+            BUILD_BYPRODUCTS
+                ${PROMEKI_SRT_LIBA}
+        )
+
+        # Symbol-localization pass.  ar -t lists each archive's object
+        # members; nm -g --defined-only on each member emits the global
+        # symbols that member defines.  We collect every global symbol
+        # from the three mbedTLS-3.6 archives into a file and feed it
+        # to objcopy --localize-symbols=<file>.  All SRT C/C++ public
+        # symbols stay GLOBAL.  The result is a single .o that contains
+        # the union of libsrt + libmbedtls/x509/crypto, with every
+        # mbedTLS-3.6 symbol marked LOCAL — invisible to the linker
+        # that later builds promeki.so.
+        find_program(PROMEKI_LD       NAMES ld         REQUIRED)
+        find_program(PROMEKI_OBJCOPY  NAMES objcopy    REQUIRED)
+        find_program(PROMEKI_AR       NAMES ar         REQUIRED)
+        find_program(PROMEKI_NM       NAMES nm         REQUIRED)
+
+        add_custom_command(
+            OUTPUT ${PROMEKI_SRT_BUNDLE_LIB}
+            DEPENDS srt_ep srt_mbedtls_ep
+                    ${PROMEKI_SRT_LIBA}
+                    ${PROMEKI_SRT_MBEDTLS_LIBA}
+                    ${PROMEKI_SRT_MBEDX509_LIBA}
+                    ${PROMEKI_SRT_MBEDCRYPTO_LIBA}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/promeki_srt_bundle.cmake
+            COMMAND ${CMAKE_COMMAND}
+                -DBUNDLE_OBJ=${PROMEKI_SRT_BUNDLE_OBJ}
+                -DBUNDLE_LIB=${PROMEKI_SRT_BUNDLE_LIB}
+                -DLOCALSYMS_FILE=${PROMEKI_SRT_BUNDLE_LOCALSYMS}
+                -DSRT_LIBA=${PROMEKI_SRT_LIBA}
+                -DMBEDTLS_LIBA=${PROMEKI_SRT_MBEDTLS_LIBA}
+                -DMBEDX509_LIBA=${PROMEKI_SRT_MBEDX509_LIBA}
+                -DMBEDCRYPTO_LIBA=${PROMEKI_SRT_MBEDCRYPTO_LIBA}
+                -DLD_TOOL=${PROMEKI_LD}
+                -DOBJCOPY_TOOL=${PROMEKI_OBJCOPY}
+                -DAR_TOOL=${PROMEKI_AR}
+                -DNM_TOOL=${PROMEKI_NM}
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/promeki_srt_bundle.cmake
+            COMMENT "Bundling SRT + isolated mbedTLS-3.6 into ${PROMEKI_SRT_BUNDLE_LIB} (mbedtls symbols localized)"
+            VERBATIM
+        )
+        add_custom_target(promeki_srt_bundle_target
+            DEPENDS ${PROMEKI_SRT_BUNDLE_LIB})
+
+        # Wrap the bundle as an INTERFACE target so the rest of CMake
+        # can treat it like any other promeki dep — link via
+        # PROMEKI_SRT_TARGET, picks up include dirs automatically.  The
+        # bundle is still a static archive at link time.
+        add_library(promeki_srt_bundle INTERFACE)
+        add_dependencies(promeki_srt_bundle promeki_srt_bundle_target)
+        target_link_libraries(promeki_srt_bundle INTERFACE
+            ${PROMEKI_SRT_BUNDLE_LIB})
+        target_include_directories(promeki_srt_bundle SYSTEM INTERFACE
+            ${PROMEKI_SRT_INCLUDE_DIR})
+        # SRT references pthread / atomic at link time, even with
+        # ENABLE_STDCXX_SYNC=ON (haicrypt and the C++ stdlib still pull
+        # them in through libstdc++).
+        target_link_libraries(promeki_srt_bundle INTERFACE
+            Threads::Threads)
+        set(PROMEKI_SRT_TARGET promeki_srt_bundle)
     endif()
 endif()
 
@@ -1702,6 +1888,26 @@ if(PROMEKI_ENABLE_TLS)
     )
 endif()
 
+# SRT sources (subset of network; vendored libsrt + isolated mbedTLS-3.6).
+# Headers reference an opaque @c int handle so the public surface does
+# not pull in @c <srt/srt.h>; only the @c .cpp files do.
+if(PROMEKI_ENABLE_SRT)
+    list(APPEND PROMEKI_HEADERS
+        include/promeki/srtsocket.h
+        include/promeki/srtserver.h
+        include/promeki/srtsockettransport.h
+        include/promeki/srtepoll.h
+        include/promeki/srtgroup.h
+    )
+    list(APPEND PROMEKI_SOURCES
+        src/network/srtsocket.cpp
+        src/network/srtserver.cpp
+        src/network/srtsockettransport.cpp
+        src/network/srtepoll.cpp
+        src/network/srtgroup.cpp
+    )
+endif()
+
 # HTTP sources (subset of network; vendored llhttp parser)
 if(PROMEKI_ENABLE_HTTP)
     list(APPEND PROMEKI_HEADERS
@@ -2270,6 +2476,29 @@ if(PROMEKI_ENABLE_TLS)
     target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_TLS)
 endif()
 
+# SRT stack — depends only on PROMEKI_ENABLE_NETWORK + _TLS.  The
+# bundle is a single static archive whose internal mbedTLS-3.6 symbols
+# are LOCAL-marked (see promeki_srt_bundle.cmake), so it cannot
+# collide with the main mbedTLS-4.x in this same .so.  Linked PRIVATE
+# — SRT is an implementation detail of our network module, not part
+# of the public API.
+#
+# --exclude-libs=libpromeki_srt_bundle.a localizes every remaining
+# global symbol the bundle still exports (srt_*, haicrypt_*, plus the
+# couple of hardcoded `__attribute__((visibility("default")))` SRT
+# adornments that survived -fvisibility=hidden) so they stay
+# resolvable inside libpromeki.so but never reach the .dynsym table.
+# Without this, dlsym(libpromeki, "srt_socket") would still hand a
+# caller our private libsrt entry points.
+if(PROMEKI_ENABLE_SRT)
+    target_link_libraries(promeki PRIVATE ${PROMEKI_SRT_TARGET})
+    target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_SRT)
+    if(NOT PROMEKI_USE_SYSTEM_SRT AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        target_link_options(promeki PRIVATE
+            "LINKER:--exclude-libs=libpromeki_srt_bundle.a")
+    endif()
+endif()
+
 # TUI Library ##################################################################
 
 if(PROMEKI_BUILD_TUI)
@@ -2716,6 +2945,12 @@ if(PROMEKI_BUILD_TESTS)
                 tests/unit/network/httptls.cpp
             )
         endif()
+    endif()
+
+    if(PROMEKI_ENABLE_SRT)
+        list(APPEND UNITTEST_SOURCES
+            tests/unit/network/srtsocket.cpp
+        )
     endif()
 
     if(PROMEKI_ENABLE_HTTP)

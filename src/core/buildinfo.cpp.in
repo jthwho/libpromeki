@@ -220,6 +220,9 @@ String buildFeatureString() {
 #if PROMEKI_ENABLE_NDI
         features += "NDI";
 #endif
+#if PROMEKI_ENABLE_SRT
+        features += "SRT";
+#endif
         return String::sprintf("Features: %s",
                 features.isEmpty() ? "(none)" : features.join(" ").cstr());
 }
