@@ -81,14 +81,48 @@ TEST_SUITE("MediaIOClock") {
                 delete io;
         }
 
-        TEST_CASE("cannot be paused") {
+        TEST_CASE("pause freezes now while raw keeps reflecting frame counter") {
                 MediaIO          *io = makeOpenTPG(FrameRate(FrameRate::FPS_25));
                 MediaIOPortGroup *group = io->portGroup(0);
                 REQUIRE(group != nullptr);
                 Clock::Ptr clock = group->clock();
                 REQUIRE(clock.isValid());
-                CHECK(clock->canPause() == false);
-                CHECK(clock.modify()->setPause(true) == Error::NotSupported);
+
+                CHECK(clock->canPause() == true);
+                CHECK(clock->pauseMode() == ClockPauseMode::PausesRawKeepsRunning);
+                CHECK(clock->isPaused() == false);
+
+                // Read a frame so the group's currentFrame advances and
+                // we have a non-zero baseline for now().
+                io->source(0)->readFrame().wait();
+                auto beforePauseRes = clock->nowNs();
+                REQUIRE(isOk(beforePauseRes));
+                int64_t beforePause = value(beforePauseRes);
+
+                // Pause: setPause must succeed and isPaused flips true.
+                Error err = clock.modify()->setPause(true);
+                CHECK(err == Error::Ok);
+                CHECK(clock->isPaused() == true);
+
+                // Advance the underlying group counter while paused;
+                // now() must hold steady because the pause-bookkeeping
+                // offset cancels the raw advance.
+                io->source(0)->readFrame().wait();
+                auto duringPauseRes = clock->nowNs();
+                REQUIRE(isOk(duringPauseRes));
+                CHECK(value(duringPauseRes) == beforePause);
+
+                // Resume: post-resume reads of now() pick up further
+                // raw advances.
+                err = clock.modify()->setPause(false);
+                CHECK(err == Error::Ok);
+                CHECK(clock->isPaused() == false);
+
+                io->source(0)->readFrame().wait();
+                auto afterResumeRes = clock->nowNs();
+                REQUIRE(isOk(afterResumeRes));
+                CHECK(value(afterResumeRes) > beforePause);
+
                 io->close().wait();
                 delete io;
         }

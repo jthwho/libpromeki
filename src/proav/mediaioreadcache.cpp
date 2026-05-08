@@ -173,7 +173,7 @@ MediaIOCommand::Ptr MediaIOReadCache::submitOneLocked() {
         if (g->atEnd()) return MediaIOCommand::Ptr();
 
         auto *cmdRead = new MediaIOCommandRead();
-        cmdRead->step = g->_step;
+        cmdRead->rate = g->_rate;
         cmdRead->group = g;
         MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdRead);
 

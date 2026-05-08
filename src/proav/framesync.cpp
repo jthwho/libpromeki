@@ -179,16 +179,16 @@ void FrameSync::reset(int64_t originNs) {
 // Producer
 // ============================================================================
 
-Error FrameSync::pushFrame(const Frame::Ptr &frame) {
+Error FrameSync::pushFrame(const Frame &frame) {
         if (!frame.isValid()) return Error::InvalidArgument;
 
         QueuedFrame qf;
         qf.frame = frame;
-        auto vids = frame->videoPayloads();
+        auto vids = frame.videoPayloads();
         if (!vids.isEmpty() && vids[0].isValid()) {
                 qf.hasVideoTs = firstTimestampNs(*vids[0], qf.videoTsNs);
         }
-        auto auds = frame->audioPayloads();
+        auto auds = frame.audioPayloads();
         if (!auds.isEmpty() && auds[0].isValid()) {
                 qf.hasAudioTs = firstTimestampNs(*auds[0], qf.audioTsNs);
         }
@@ -422,7 +422,7 @@ void FrameSync::selectVideo(int64_t sourceTimeNs, int64_t /*nextSourceTimeNs*/, 
                 }
 
                 VideoPayload::Ptr vp;
-                auto              vids = front.frame->videoPayloads();
+                auto              vids = front.frame.videoPayloads();
                 if (!vids.isEmpty() && vids[0].isValid()) {
                         vp = vids[0];
                 }
@@ -708,7 +708,7 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
         // Stamp essences with output timestamps in the destination domain.
         MediaTimeStamp outStamp = stampAt(deadlineNs, _clock->domain());
 
-        Frame::Ptr outFrame = Frame::Ptr::create();
+        Frame outFrame = Frame();
         if (outVideo.isValid()) {
                 // modify() CoW-clones the payload so our output stamp
                 // doesn't overwrite the source payload's timestamp
@@ -716,21 +716,21 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
                 // repeats.
                 auto stamped = outVideo;
                 stamped.modify()->setPts(outStamp);
-                outFrame.modify()->addPayload(stamped);
+                outFrame.addPayload(stamped);
         }
         if (outAudio.isValid()) {
                 outAudio.modify()->setPts(outStamp);
-                outFrame.modify()->addPayload(outAudio);
+                outFrame.addPayload(outAudio);
         }
-        outFrame.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(currentIndex));
+        outFrame.metadata().set(Metadata::FrameNumber, FrameNumber(currentIndex));
         // FrameSyncDrop/FrameSyncRepeat are declared as int32 in the
         // Metadata schema; clamp here so an unexpectedly large
         // accumulated drop count (e.g. a badly stalled pipeline) does
         // not silently wrap or truncate on the 64→32-bit cast.
         constexpr int64_t kMaxS32 = static_cast<int64_t>(INT32_MAX);
-        outFrame.modify()->metadata().set(Metadata::FrameSyncDrop,
+        outFrame.metadata().set(Metadata::FrameSyncDrop,
                                           static_cast<int32_t>(std::min(frameSyncDrop, kMaxS32)));
-        outFrame.modify()->metadata().set(Metadata::FrameSyncRepeat,
+        outFrame.metadata().set(Metadata::FrameSyncRepeat,
                                           static_cast<int32_t>(std::min(frameSyncRepeat, kMaxS32)));
 
         // Advance the synthetic clock in lockstep so its nowNs() tracks

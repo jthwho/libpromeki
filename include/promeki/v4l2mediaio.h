@@ -117,7 +117,7 @@ PROMEKI_NAMESPACE_BEGIN
  * cfg.set(MediaConfig::V4l2AudioDevice, String("hw:1,0"));
  * MediaIO *io = MediaIO::create(cfg);
  * io->open(MediaIO::Source);
- * Frame::Ptr frame;
+ * Frame frame;
  * io->readFrame(frame);
  * io->close();
  * delete io;

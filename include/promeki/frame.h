@@ -41,43 +41,72 @@ class MediaDesc;
  * @ref CompressedVideoPayload or @ref CompressedAudioPayload entries
  * in the same list.
  *
+ * @par Copy semantics
+ * Frame is a value-type handle wrapping a @c SharedPtr<Data> so
+ * copies are O(1) (refcount increment, no deep copy) and a single
+ * Frame can flow through pipeline strands by value.  Mutation
+ * triggers copy-on-write — the @c Data block is detached the
+ * first time a mutator runs against a shared instance.  This is
+ * the same pattern @ref String and @ref VariantDatabase use.
+ *
  * @par Thread Safety
- * Distinct instances may be used concurrently — Frame is a
- * value-with-COW container (PROMEKI_SHARED_FINAL) and copies
- * share underlying payloads via atomic refcount.  A single
- * instance is conditionally thread-safe: const accessors are
- * safe; mutators (@c addPayload, @c setMetadata, ...) require
- * external synchronization.
+ * Distinct instances may be used concurrently — the underlying
+ * refcount on the shared @c Data is atomic, so copying a Frame
+ * across threads is safe even when the source is in use elsewhere.
+ * Concurrent mutation of a single instance (@c addPayload,
+ * @c metadata(), @c setConfigUpdate, ...) must be externally
+ * synchronized.
  */
 class Frame {
-                PROMEKI_SHARED_FINAL(Frame)
         public:
-                /** @brief Shared pointer type for Frame. */
-                using Ptr = SharedPtr<Frame>;
                 /** @brief Plain value list of Frame objects. */
                 using List = ::promeki::List<Frame>;
-                /** @brief List of shared pointers to Frame objects. */
-                using PtrList = ::promeki::List<Ptr>;
 
                 /** @brief Constructs an empty frame with no images, audio, or metadata. */
                 Frame() = default;
 
                 /**
+                 * @brief Returns true when this Frame is in a valid state.
+                 *
+                 * Mirrors the historical @c Frame::Ptr null-check — a
+                 * Frame whose internal storage handle has been built
+                 * (the default constructor's behaviour) reports
+                 * @c true regardless of whether any payloads or
+                 * metadata have been added yet.  This preserves the
+                 * intent of upstream guards like @c if(!frame.isValid())
+                 * which used to mean "the producer did not hand me a
+                 * Frame" rather than "the Frame is empty".
+                 *
+                 * A Frame with a null storage handle (only reachable
+                 * via @c Frame f; f = Frame::makeNull(); or after a
+                 * @c std::move that replaced the source with a moved-
+                 * from null state) reports @c false.  Empty payload
+                 * lists, empty metadata, and an empty config update
+                 * are otherwise all valid Frame states.
+                 */
+                bool isValid() const { return _d.isValid(); }
+
+                /**
                  * @brief Returns a const reference to the list of media payloads.
                  * @return The payload pointer list.
                  */
-                const MediaPayload::PtrList &payloadList() const { return _payloads; }
+                const MediaPayload::PtrList &payloadList() const { return _d->_payloads; }
 
                 /**
                  * @brief Returns a mutable reference to the list of media payloads.
+                 *
+                 * Triggers copy-on-write — the underlying @c Data
+                 * is detached if it is currently shared with other
+                 * Frame handles.
+                 *
                  * @return The payload pointer list.
                  */
-                MediaPayload::PtrList &payloadList() { return _payloads; }
+                MediaPayload::PtrList &payloadList() { return _d.modify()->_payloads; }
 
                 /**
                  * @brief Appends a payload to @ref payloadList.
                  */
-                void addPayload(MediaPayload::Ptr p) { _payloads.pushToBack(std::move(p)); }
+                void addPayload(MediaPayload::Ptr p) { _d.modify()->_payloads.pushToBack(std::move(p)); }
 
                 /**
                  * @brief Returns the Video-kind entries from
@@ -115,13 +144,17 @@ class Frame {
                  * @brief Returns a const reference to the frame metadata.
                  * @return The metadata container.
                  */
-                const Metadata &metadata() const { return _metadata; }
+                const Metadata &metadata() const { return _d->_metadata; }
 
                 /**
                  * @brief Returns a mutable reference to the frame metadata.
+                 *
+                 * Triggers copy-on-write — the underlying @c Data
+                 * is detached if it is currently shared.
+                 *
                  * @return The metadata container.
                  */
-                Metadata &metadata() { return _metadata; }
+                Metadata &metadata() { return _d.modify()->_metadata; }
 
                 /**
                  * @brief Returns the VideoFormat for the image at @p index.
@@ -168,13 +201,13 @@ class Frame {
                  * through the strand queue, so a flush can never
                  * separate a config change from its frame.
                  */
-                const MediaConfig &configUpdate() const { return _configUpdate; }
+                const MediaConfig &configUpdate() const { return _d->_configUpdate; }
 
                 /** @brief Returns a mutable reference to the config update delta. */
-                MediaConfig &configUpdate() { return _configUpdate; }
+                MediaConfig &configUpdate() { return _d.modify()->_configUpdate; }
 
                 /** @brief Replaces the config update delta. */
-                void setConfigUpdate(MediaConfig cfg) { _configUpdate = std::move(cfg); }
+                void setConfigUpdate(MediaConfig cfg) { _d.modify()->_configUpdate = std::move(cfg); }
 
                 /**
                  * @brief Essence scope for @ref isSafeCutPoint.
@@ -243,9 +276,24 @@ class Frame {
                 StringList dump(const String &indent = String()) const;
 
         private:
-                MediaPayload::PtrList _payloads;
-                Metadata              _metadata;
-                MediaConfig           _configUpdate;
+                /**
+                 * @brief Internal CoW storage for the frame's payloads,
+                 *        metadata, and config-update delta.
+                 *
+                 * Held via @c SharedPtr<Data> so copying a Frame is
+                 * O(1) and the contents are only deep-copied when one
+                 * of the aliased handles is mutated.  The fields keep
+                 * their leading-underscore names from the pre-refactor
+                 * @c Frame layout so the diff against history stays
+                 * easy to read.
+                 */
+                struct Data {
+                                PROMEKI_SHARED_FINAL(Data)
+                                MediaPayload::PtrList _payloads;
+                                Metadata              _metadata;
+                                MediaConfig           _configUpdate;
+                };
+                SharedPtr<Data> _d = SharedPtr<Data>::create();
 };
 
 PROMEKI_NAMESPACE_END

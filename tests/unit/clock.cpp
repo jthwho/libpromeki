@@ -304,4 +304,34 @@ TEST_SUITE("SyntheticClock") {
                 CHECK(value(r) == 1000000000LL - 100000000LL);
         }
 
+        TEST_CASE("pause mode is PausesRawKeepsRunning and freezes now") {
+                SyntheticClock clock(FrameRate(FrameRate::FPS_25));
+                CHECK(clock.canPause());
+                CHECK(clock.pauseMode() == ClockPauseMode::PausesRawKeepsRunning);
+
+                clock.setCurrentFrame(25); // 1.0 s into the timeline
+                auto pre = clock.nowNs();
+                REQUIRE(isOk(pre));
+                CHECK(value(pre) == 1000000000LL);
+
+                CHECK(clock.setPause(true) == Error::Ok);
+                CHECK(clock.isPaused());
+
+                // Underlying counter advances while paused; now() must
+                // hold steady because the pause-bookkeeping offset
+                // cancels the raw advance.
+                clock.advance(25); // raw would jump +1.0 s
+                auto held = clock.nowNs();
+                REQUIRE(isOk(held));
+                CHECK(value(held) == value(pre));
+
+                // Resume: post-resume now() picks up further advances.
+                CHECK(clock.setPause(false) == Error::Ok);
+                CHECK_FALSE(clock.isPaused());
+                clock.advance(25); // another +1.0 s after resume
+                auto post = clock.nowNs();
+                REQUIRE(isOk(post));
+                CHECK(value(post) == value(pre) + 1000000000LL);
+        }
+
 } // TEST_SUITE

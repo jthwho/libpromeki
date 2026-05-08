@@ -146,24 +146,23 @@ Error SrcMediaIO::executeCmd(MediaIOCommandClose &cmd) {
         return Error::Ok;
 }
 
-Error SrcMediaIO::convertFrame(const Frame::Ptr &input, Frame::Ptr &output) {
+Error SrcMediaIO::convertFrame(const Frame &input, Frame &output) {
         if (!input.isValid()) {
                 return Error::Invalid;
         }
 
-        Frame::Ptr outFrame = Frame::Ptr::create();
-        Frame     *outRaw = outFrame.modify();
-        outRaw->metadata() = input->metadata();
+        Frame outFrame = Frame();
+        outFrame.metadata() = input.metadata();
 
         // Video is pass-through — just forward the payload pointers.
-        for (const VideoPayload::Ptr &srcVp : input->videoPayloads()) {
-                if (srcVp.isValid()) outRaw->addPayload(srcVp);
+        for (const VideoPayload::Ptr &srcVp : input.videoPayloads()) {
+                if (srcVp.isValid()) outFrame.addPayload(srcVp);
         }
 
         // Audio processing runs through the payload-native
         // @ref PcmAudioPayload::convert; push the converted
         // payload directly, no legacy bridge round-trip.
-        for (const AudioPayload::Ptr &srcAp : input->audioPayloads()) {
+        for (const AudioPayload::Ptr &srcAp : input.audioPayloads()) {
                 if (!srcAp.isValid()) continue;
                 const auto *srcUap = srcAp->as<PcmAudioPayload>();
                 if (srcUap == nullptr) {
@@ -182,7 +181,7 @@ Error SrcMediaIO::convertFrame(const Frame::Ptr &input, Frame::Ptr &output) {
                 } else {
                         dstPayload = PcmAudioPayload::Ptr::create(*srcUap);
                 }
-                outRaw->addPayload(dstPayload);
+                outFrame.addPayload(dstPayload);
         }
 
         output = std::move(outFrame);
@@ -201,7 +200,7 @@ Error SrcMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                 _capacityWarned = true;
         }
 
-        Frame::Ptr outFrame;
+        Frame outFrame;
         Error      err = convertFrame(cmd.frame, outFrame);
         if (err.isError()) {
                 return err;
@@ -220,7 +219,7 @@ Error SrcMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 return Error::TryAgain;
         }
 
-        Frame::Ptr frame = std::move(_outputQueue.front());
+        Frame frame = std::move(_outputQueue.front());
         _outputQueue.remove(0);
         _readCount++;
         cmd.frame = std::move(frame);

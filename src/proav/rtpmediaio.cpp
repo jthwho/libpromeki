@@ -1300,9 +1300,8 @@ void RtpMediaIO::emitVideoFrame() {
                 return;
         }
 
-        Frame::Ptr frame = Frame::Ptr::create();
-        Frame     *f = frame.modify();
-        f->addPayload(std::move(videoPayload));
+        Frame frame = Frame();
+        frame.addPayload(std::move(videoPayload));
 
         // Aggregate audio: drain one frame's worth of samples from
         // the FIFO that the audio RX thread is filling.  This runs
@@ -1334,7 +1333,7 @@ void RtpMediaIO::emitVideoFrame() {
                                 MediaTimeStamp audMts(_video.rxFrameStartTime, audioCd);
                                 audioPayload.modify()->desc().metadata().set(Metadata::CaptureTime, audMts);
                                 audioPayload.modify()->setPts(audMts);
-                                f->addPayload(audioPayload);
+                                frame.addPayload(audioPayload);
                         }
                 }
         }
@@ -1345,7 +1344,7 @@ void RtpMediaIO::emitVideoFrame() {
         if (_data.active) {
                 Mutex::Locker lock(_readerAgg.dataMutex);
                 if (_readerAgg.hasMetadata) {
-                        f->metadata() = _readerAgg.pendingMetadata;
+                        frame.metadata() = _readerAgg.pendingMetadata;
                         _readerAgg.hasMetadata = false;
                 }
         }
@@ -1414,8 +1413,8 @@ void RtpMediaIO::onAudioPacket(const RtpPacket &pkt) {
                         audioPayload.modify()->desc().metadata().set(Metadata::CaptureTime, capMts);
                         audioPayload.modify()->setPts(capMts);
                         _audio.framesReceived++;
-                        Frame::Ptr frame = Frame::Ptr::create();
-                        frame.modify()->addPayload(audioPayload);
+                        Frame frame = Frame();
+                        frame.addPayload(audioPayload);
                         pushReaderFrame(std::move(frame));
                 }
         }
@@ -1479,18 +1478,18 @@ void RtpMediaIO::emitDataMessage() {
                 _readerAgg.pendingMetadata = m;
                 _readerAgg.hasMetadata = true;
         } else {
-                Frame::Ptr frame = Frame::Ptr::create();
-                frame.modify()->metadata() = m;
+                Frame frame = Frame();
+                frame.metadata() = m;
                 pushReaderFrame(std::move(frame));
         }
 }
 
-void RtpMediaIO::pushReaderFrame(Frame::Ptr frame) {
-        if (!frame) return;
+void RtpMediaIO::pushReaderFrame(Frame frame) {
+        if (!frame.isValid()) return;
         // Enforce the configured reader queue depth by dropping the
         // oldest frame when the queue is full.  The producer side
         // is our own RX thread, and stalling it would mean dropped
-        // wire packets — dropping at the Frame::Ptr boundary is the
+        // wire packets — dropping at the Frame boundary is the
         // safer failure mode for live streams.
         if (_readerMaxDepth > 0 && static_cast<int>(_readerQueue.size()) >= _readerMaxDepth) {
                 (void)_readerQueue.tryPop();
@@ -1877,7 +1876,7 @@ Error RtpMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         // condvar-driven so the cadence does not bound throughput.
         constexpr unsigned int kReadPollMs = 100;
         for (;;) {
-                Result<Frame::Ptr> result = _readerQueue.pop(kReadPollMs);
+                Result<Frame> result = _readerQueue.pop(kReadPollMs);
                 if (result.second().isOk()) {
                         cmd.frame = result.first();
                         ++_frameCount;
@@ -2147,8 +2146,8 @@ Error RtpMediaIO::sendData(const Metadata &metadata, const FrameNumber &frameInd
 }
 
 Error RtpMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
-        if (cmd.frame.isNull()) return Error::InvalidArgument;
-        const Frame &frame = *cmd.frame;
+        if (!cmd.frame.isValid()) return Error::InvalidArgument;
+        const Frame &frame = cmd.frame;
 
         // Capture the current frame index up-front so each worker
         // sees the same value.  _frameCount is owned by this strand

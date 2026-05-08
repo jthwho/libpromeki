@@ -372,7 +372,7 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandClose &cmd) {
 // Read
 // ============================================================================
 
-Error QuickTimeMediaIO::readVideoFrame(const FrameNumber &frameIndex, Frame::Ptr &outFrame) {
+Error QuickTimeMediaIO::readVideoFrame(const FrameNumber &frameIndex, Frame &outFrame) {
         if (_videoTrackIndex < 0) return Error::NotSupported;
         if (!frameIndex.isValid()) return Error::IllegalSeek;
 
@@ -383,7 +383,7 @@ Error QuickTimeMediaIO::readVideoFrame(const FrameNumber &frameIndex, Frame::Ptr
 
         const QuickTime::Track &vt = _qt.tracks()[_videoTrackIndex];
 
-        Frame::Ptr frame = Frame::Ptr::create();
+        Frame frame = Frame();
 
         const PixelFormat &samplePd = vt.pixelFormat();
         const size_t       sampleWidth = vt.size().width();
@@ -466,9 +466,9 @@ Error QuickTimeMediaIO::readVideoFrame(const FrameNumber &frameIndex, Frame::Ptr
                 return Error::DecodeFailed;
         }
 
-        frame.modify()->addPayload(videoPayload);
+        frame.addPayload(videoPayload);
 
-        Metadata &fmeta = frame.modify()->metadata();
+        Metadata &fmeta = frame.metadata();
         fmeta.set(Metadata::FrameNumber, frameIndex);
         fmeta.set(Metadata::FrameKeyframe, s.keyframe);
         if (_anchorTimecode.isValid()) {
@@ -523,7 +523,7 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 return Error::EndOfFile;
         }
 
-        Frame::Ptr frame;
+        Frame frame;
         Error      err = readVideoFrame(_currentFrame, frame);
         if (err.isError()) {
                 cmd.result = err;
@@ -550,7 +550,7 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                         MediaPayload::Ptr audioPayload;
                         Error             aerr = readAudioSlice(_audioSampleCursor, toRead, audioPayload);
                         if (!aerr.isError() && audioPayload.isValid()) {
-                                frame.modify()->addPayload(audioPayload);
+                                frame.addPayload(audioPayload);
                         }
                         _audioSampleCursor += toRead;
                 }
@@ -559,7 +559,7 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         cmd.frame = frame;
         cmd.currentFrame = _currentFrame;
 
-        int s = cmd.step;
+        const int s = (cmd.group != nullptr) ? cmd.group->nextStep() : 1;
         _currentFrame += s;
         if (!_currentFrame.isValid()) _currentFrame = FrameNumber(0);
         return Error::Ok;
@@ -662,7 +662,7 @@ Error QuickTimeMediaIO::drainWriterAudio(bool flush) {
 Error QuickTimeMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         if (!_isOpen || !_isWrite) return Error::NotOpen;
         if (!cmd.frame.isValid()) return Error::InvalidArgument;
-        const Frame &frame = *cmd.frame;
+        const Frame &frame = cmd.frame;
 
         Error err = setupWriterFromFrame(frame);
         if (err.isError()) {

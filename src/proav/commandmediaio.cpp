@@ -57,8 +57,8 @@ Error CommandMediaIO::dispatch(MediaIOCommand::Ptr cmd) {
                         // Apply any per-frame config update before the
                         // backend processes the frame so the backend
                         // sees the new config when it calls executeCmd.
-                        if (cw->frame.isValid() && !cw->frame->configUpdate().isEmpty()) {
-                                configChanged(cw->frame->configUpdate());
+                        if (cw->frame.isValid() && !cw->frame.configUpdate().isEmpty()) {
+                                configChanged(cw->frame.configUpdate());
                         }
                         result = executeCmd(*cw);
                         break;

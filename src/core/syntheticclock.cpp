@@ -9,10 +9,12 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-SyntheticClock::SyntheticClock(const ClockDomain &domain) : Clock(domain) {}
+SyntheticClock::SyntheticClock(const ClockDomain &domain)
+    : Clock(domain, Duration(), ClockPauseMode::PausesRawKeepsRunning) {}
 
 SyntheticClock::SyntheticClock(const FrameRate &frameRate, const ClockDomain &domain)
-    : Clock(domain), _frameRate(frameRate) {
+    : Clock(domain, Duration(), ClockPauseMode::PausesRawKeepsRunning),
+      _frameRate(frameRate) {
         recomputePeriod();
 }
 

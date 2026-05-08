@@ -115,7 +115,7 @@ class FrameSync {
                  */
                 struct PullResult {
                                 /** @brief Synthesised output frame. */
-                                Frame::Ptr frame;
+                                Frame frame;
 
                                 /** @brief Zero-based output frame index since reset. */
                                 FrameNumber frameIndex{0};
@@ -249,7 +249,7 @@ class FrameSync {
                  *              metadata carrying a MediaTimeStamp).
                  * @return Error::Ok on success.
                  */
-                Error pushFrame(const Frame::Ptr &frame);
+                Error pushFrame(const Frame &frame);
 
                 /**
                  * @brief Signals end-of-stream to the consumer.
@@ -353,7 +353,7 @@ class FrameSync {
 
         private:
                 struct QueuedFrame {
-                                Frame::Ptr frame;
+                                Frame frame;
                                 int64_t    videoTsNs = 0; // source video timestamp
                                 bool       hasVideoTs = false;
                                 int64_t    audioTsNs = 0; // first audio timestamp

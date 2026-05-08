@@ -1755,6 +1755,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/mediapipelineconfig.h
         include/promeki/mediapipelineplanner.h
         include/promeki/mediapipelinestats.h
+        include/promeki/mediapipelinetrigger.h
         include/promeki/pipelineevent.h
         include/promeki/mediapayload.h
         include/promeki/videopayload.h
@@ -1828,6 +1829,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediaioportconnection.cpp
         src/proav/mediapipeline.cpp
         src/proav/mediapipelineconfig.cpp
+        src/proav/mediapipelinetrigger.cpp
         src/proav/mediapipelineplanner.cpp
         src/proav/mediapipelinestats.cpp
         src/proav/windowedstatsbundle.cpp
@@ -2723,6 +2725,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediaio.cpp
             tests/unit/mediaioclock.cpp
             tests/unit/mediaiodescription.cpp
+            tests/unit/mediaioportgroup.cpp
             tests/unit/mediaiorequest.cpp
             tests/unit/mediaio_bridges.cpp
             tests/unit/mediaio_identifiers.cpp

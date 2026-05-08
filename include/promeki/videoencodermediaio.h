@@ -87,9 +87,9 @@ PROMEKI_NAMESPACE_BEGIN
  * enc->setExpectedDesc(upstreamDesc);
  * enc->open(MediaIO::Transform);
  * enc->writeFrame(nv12Frame);
- * Frame::Ptr encoded;
+ * Frame encoded;
  * enc->readFrame(encoded);
- * // encoded->videoPayloads()[0] is a CompressedVideoPayload
+ * // encoded.videoPayloads()[0] is a CompressedVideoPayload
  * // carrying the H.264 bitstream.
  * enc->close();
  * @endcode
@@ -136,7 +136,7 @@ class VideoEncoderMediaIO : public SharedThreadMediaIO {
                 VideoCodec         _codec;
                 VideoEncoder::UPtr _encoder;
                 int                _capacity = 8;
-                List<Frame::Ptr>   _outputQueue;
+                Frame::List   _outputQueue;
 
                 // FIFO of submitted source Frames awaiting a matching
                 // packet from the encoder.  One entry is pushed per
@@ -147,7 +147,7 @@ class VideoEncoderMediaIO : public SharedThreadMediaIO {
                 // source frame's metadata + audio across the
                 // NEED_MORE_INPUT case where submit N's packet emerges
                 // during submit N+1.
-                List<Frame::Ptr> _pendingSrcFrames;
+                Frame::List _pendingSrcFrames;
                 FrameCount       _frameCount{0};
                 int64_t          _readCount = 0;
                 FrameCount       _framesEncoded{0};

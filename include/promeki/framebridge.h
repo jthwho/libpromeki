@@ -308,7 +308,7 @@ class FrameBridge : public ObjectBase {
                  *         when audio or metadata exceeds slot capacity,
                  *         or another error.
                  */
-                Error writeFrame(const Frame::Ptr &frame);
+                Error writeFrame(const Frame &frame);
 
                 /** @brief Returns the number of currently-connected inputs. */
                 size_t connectionCount() const;
@@ -338,7 +338,7 @@ class FrameBridge : public ObjectBase {
                  * @param err Optional error output.
                  * @return The frame, or a null Ptr.
                  */
-                Frame::Ptr readFrame(Error *err = nullptr);
+                Frame readFrame(Error *err = nullptr);
 
                 /**
                  * @brief Signal emitted each time a TICK is received.

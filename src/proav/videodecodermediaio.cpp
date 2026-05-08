@@ -212,7 +212,7 @@ Error VideoDecoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                 return Error::InvalidArgument;
         }
 
-        const Frame &frame = *cmd.frame;
+        const Frame &frame = cmd.frame;
 
         // Collect every compressed video payload on the Frame.  The
         // decoder's payload-native @ref submitPayload entry delivers
@@ -291,21 +291,20 @@ void VideoDecoderMediaIO::drainDecoderInto() {
                 // queue is a best-effort fallback (shouldn't happen
                 // for I/P-only streams but leaves the payload intact
                 // for any other).
-                Frame::Ptr origin;
+                Frame origin;
                 if (!_pendingSrcFrames.isEmpty()) {
                         origin = _pendingSrcFrames.front();
                         _pendingSrcFrames.remove(0);
                 }
 
-                Frame::Ptr outFrame = Frame::Ptr::create();
-                Frame     *out = outFrame.modify();
+                Frame outFrame = Frame();
                 if (origin.isValid()) {
-                        out->metadata() = origin->metadata();
-                        for (const AudioPayload::Ptr &ap : origin->audioPayloads()) {
-                                if (ap.isValid()) out->addPayload(ap);
+                        outFrame.metadata() = origin.metadata();
+                        for (const AudioPayload::Ptr &ap : origin.audioPayloads()) {
+                                if (ap.isValid()) outFrame.addPayload(ap);
                         }
                 }
-                out->addPayload(outPayload);
+                outFrame.addPayload(outPayload);
                 _outputQueue.pushToBack(std::move(outFrame));
                 _imagesOut++;
         }
@@ -315,7 +314,7 @@ Error VideoDecoderMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         if (_outputQueue.isEmpty()) {
                 return _closed ? Error::EndOfFile : Error::TryAgain;
         }
-        Frame::Ptr frame = std::move(_outputQueue.front());
+        Frame frame = std::move(_outputQueue.front());
         _outputQueue.remove(0);
         _readCount++;
         cmd.frame = std::move(frame);

@@ -130,10 +130,10 @@ Error DebugMediaMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 // sees the peeked frame.
                 FrameCount fc = _file->frameCount();
                 if (fc.isFinite() && fc.value() > 0) {
-                        Frame::Ptr firstFrame;
+                        Frame firstFrame;
                         Error      pe = _file->readFrameAt(FrameNumber(0), firstFrame);
                         if (pe.isOk() && firstFrame.isValid()) {
-                                resolvedDesc = firstFrame->mediaDesc();
+                                resolvedDesc = firstFrame.mediaDesc();
                                 resolvedFps = resolvedDesc.frameRate();
                                 // Rewind — readFrame() advanced past the peek;
                                 // seek back so the first real read returns frame 0.
@@ -177,7 +177,7 @@ Error DebugMediaMediaIO::executeCmd(MediaIOCommandClose &cmd) {
 Error DebugMediaMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         if (!_isOpen || _isWrite || !_file) return Error::NotOpen;
 
-        Frame::Ptr frame;
+        Frame frame;
         Error      e = _file->readFrame(frame);
         if (e == Error::EndOfFile) {
                 return Error::EndOfFile;

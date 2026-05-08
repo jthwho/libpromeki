@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/clock.h>
 #include <promeki/duration.h>
 #include <promeki/error.h>
 #include <promeki/frame.h>
@@ -16,8 +17,10 @@
 #include <promeki/map.h>
 #include <promeki/mediaio.h>
 #include <promeki/mediaioportconnection.h>
+#include <promeki/mediaioportgroup.h>
 #include <promeki/mediapipelineconfig.h>
 #include <promeki/mediapipelinestats.h>
+#include <promeki/mediapipelinetrigger.h>
 #include <promeki/mutex.h>
 #include <promeki/namespace.h>
 #include <promeki/objectbase.h>
@@ -85,6 +88,44 @@ class MediaPipeline : public ObjectBase {
                         Running, ///< @brief Signals connected and draining.
                         Stopped, ///< @brief Drain halted; stages still open.
                         Closed   ///< @brief Stages closed and released.
+                };
+
+                /**
+                 * @brief Playback transport state, orthogonal to @ref State.
+                 *
+                 * Only meaningful while the pipeline is @ref State::Running
+                 * and the configured @ref MediaPipelineConfig::Kind is
+                 * @ref MediaPipelineConfig::Kind::Playback.  Transport
+                 * controls (@ref play, @ref pause) drive transitions
+                 * between Playing and Paused; @ref Seeking is reserved
+                 * for the Phase 3 seek API and unused today; @ref Ended
+                 * latches when the source naturally hits EOS.
+                 */
+                enum class PlaybackState {
+                        Idle,    ///< @brief Pre-Running or post-Stopped — transport inactive.
+                        Playing, ///< @brief Pacing clock running, frames flowing.
+                        Paused,  ///< @brief Pacing clock paused; current frame held.
+                        Seeking, ///< @brief Seek in flight (reserved for Phase 3).
+                        Ended    ///< @brief Source EOS reached at current rate.
+                };
+
+                /**
+                 * @brief Capture transport state, orthogonal to @ref State.
+                 *
+                 * Only meaningful while the pipeline is @ref State::Running
+                 * and the configured @ref MediaPipelineConfig::Kind is
+                 * @ref MediaPipelineConfig::Kind::Capture.  Capture
+                 * controls (@ref armCapture, @ref startCapture,
+                 * @ref pauseCapture, @ref resumeCapture, @ref stopCapture)
+                 * drive the transitions; @ref setCaptureTrigger optionally
+                 * defers the @c Armed → @c Recording transition until a
+                 * per-frame predicate matches.
+                 */
+                enum class CaptureState {
+                        Idle,      ///< @brief Capture sink gate closed; no trigger armed.
+                        Armed,     ///< @brief Trigger armed; sink gate closed until match.
+                        Recording, ///< @brief Sink gate open; frames flow to the capture sink.
+                        Paused     ///< @brief Mid-recording pause; first post-resume frame stamped ForceKeyframe.
                 };
 
                 /**
@@ -278,6 +319,262 @@ class MediaPipeline : public ObjectBase {
                 State state() const { return _state; }
 
                 // ------------------------------------------------------------
+                // Playback transport
+                // ------------------------------------------------------------
+
+                /**
+                 * @brief Returns the current playback-transport state.
+                 *
+                 * @ref PlaybackState::Idle outside @ref State::Running.
+                 * Inside @ref State::Running for a Playback pipeline,
+                 * follows the actual pacing clock's pause flag plus
+                 * any seek / EOS latches.
+                 */
+                PlaybackState playbackState() const { return _playbackState; }
+
+                /**
+                 * @brief Transitions the playback transport to Playing.
+                 *
+                 * Resumes the pacing-stage clock if paused.  Pre-conditions:
+                 * pipeline is @ref State::Running, kind is Playback.
+                 *
+                 * @return @c Error::Ok on success.  @c Error::NotSupported
+                 *         when called on a Capture pipeline.  @c Error::NotOpen
+                 *         when the pipeline is not Running.  Backend errors
+                 *         from @ref Clock::setPause are propagated.
+                 */
+                Error play();
+
+                /**
+                 * @brief Transitions the playback transport to Paused.
+                 *
+                 * Pauses the pacing-stage clock; downstream pacing-aware
+                 * sinks naturally stop pulling, frames in flight finish
+                 * their current command and the pump idles cleanly.
+                 * Pre-conditions identical to @ref play.
+                 *
+                 * @return @c Error::Ok / @c Error::NotSupported / @c Error::NotOpen
+                 *         per @ref play.
+                 */
+                Error pause();
+
+                /**
+                 * @brief Convenience: pause when Playing, play otherwise.
+                 *
+                 * Returns the same error codes as @ref play / @ref pause.
+                 * No-op (returns @c Error::Ok) when the transport is in
+                 * a state other than Playing or Paused (Idle / Seeking /
+                 * Ended) so UI bindings can wire it as a single button.
+                 */
+                Error togglePlayPause();
+
+                /**
+                 * @brief Returns the current playback rate.
+                 *
+                 * Reads from the pacing port group when the transport is
+                 * resolved.  Returns @c 1.0 (the default) when no pacing
+                 * stage is configured or the pipeline is not yet running.
+                 */
+                double rate() const;
+
+                /**
+                 * @brief Sets the per-pacing-group playback rate.
+                 *
+                 * Forwards to @ref MediaIOPortGroup::setRate on the pacing
+                 * stage.  See @ref MediaIOPortGroup::setRate for the rate
+                 * semantics (1.0 normal, 0.5 slow-mo, 2.0 fast-forward,
+                 * negative for reverse, 0.0 for hold).  Pre-conditions are
+                 * identical to @ref play.  Non-finite @p r is rejected
+                 * with @c Error::InvalidArgument.
+                 *
+                 * Emits @ref rateChangedSignal on success.
+                 */
+                Error setRate(double r);
+
+                /**
+                 * @brief Returns the pacing group's current frame.
+                 *
+                 * Reads from the pacing port group when the transport is
+                 * resolved.  Returns an invalid @ref FrameNumber when no
+                 * pacing stage is configured or the pipeline is not yet
+                 * running.
+                 */
+                FrameNumber currentFrame() const;
+
+                /**
+                 * @brief Seeks the pacing group to @p pos.
+                 *
+                 * Pauses the pacing clock first (so the post-seek display
+                 * frame is held), dispatches the seek through
+                 * @ref MediaIOPortGroup::seekToFrame, and parks the
+                 * transport in @ref PlaybackState::Paused on completion.
+                 * @ref PlaybackState::Seeking is emitted while the seek
+                 * is in flight.
+                 *
+                 * @param pos  Target frame number.
+                 * @param mode Seek mode (@c SeekDefault picks the
+                 *             backend's preferred mode, typically
+                 *             @c SeekExact for file backends).
+                 * @return @c Error::Ok / @c Error::NotSupported /
+                 *         @c Error::NotOpen per @ref play, plus
+                 *         @c Error::IllegalSeek when the pacing group
+                 *         reports it is not seekable.
+                 */
+                Error seek(FrameNumber pos, MediaIOSeekMode mode = MediaIO_SeekDefault);
+
+                /**
+                 * @brief Advances the transport by @p n frames forward.
+                 *
+                 * Implemented as @ref pause followed by
+                 * @ref seek(currentFrame()+n).  The transport stays in
+                 * @ref PlaybackState::Paused.
+                 *
+                 * @param n Number of frames to step (default 1).
+                 * @return Same error codes as @ref seek.
+                 */
+                Error stepForward(int64_t n = 1);
+
+                /**
+                 * @brief Retreats the transport by @p n frames.
+                 *
+                 * Counterpart to @ref stepForward — equivalent to
+                 * @c stepForward(-n).
+                 *
+                 * @param n Number of frames to step backwards (default 1).
+                 * @return Same error codes as @ref seek.
+                 */
+                Error stepBackward(int64_t n = 1);
+
+                // ------------------------------------------------------------
+                // Capture transport
+                // ------------------------------------------------------------
+
+                /**
+                 * @brief Returns the current capture-transport state.
+                 *
+                 * @ref CaptureState::Idle outside @ref State::Running.
+                 * Inside @ref State::Running for a Capture pipeline,
+                 * follows the configured trigger and the explicit
+                 * arm / start / pause / resume / stop calls.
+                 */
+                CaptureState captureState() const { return _captureState; }
+
+                /**
+                 * @brief Arms the capture transport.
+                 *
+                 * If a trigger has been installed via @ref setCaptureTrigger
+                 * the pipeline transitions to @ref CaptureState::Armed
+                 * (sink gate closed, frames evaluated per-frame against
+                 * the trigger).  Without a trigger this collapses to
+                 * @ref startCapture for the same effect — recording
+                 * begins immediately.
+                 *
+                 * @return @c Error::Ok on success.  @c Error::NotSupported
+                 *         when the pipeline is not @c Kind::Capture, or
+                 *         @c Error::NotOpen when not Running.
+                 */
+                Error armCapture();
+
+                /**
+                 * @brief Manually transitions the capture transport to Recording.
+                 *
+                 * Skips the trigger gate — useful as a manual override
+                 * (operator UI button) on an armed pipeline that has
+                 * not yet matched, or as a one-shot record-now on an
+                 * Idle pipeline.  Stamps @c Metadata::ForceKeyframe on
+                 * the first admitted frame so the encoder cuts a
+                 * clean IDR at the recording start.
+                 *
+                 * @return Same error codes as @ref armCapture.
+                 */
+                Error startCapture();
+
+                /**
+                 * @brief Pauses an in-progress recording.
+                 *
+                 * Closes the capture sink's gate; frames still flow
+                 * through the rest of the pipeline (preview, monitor)
+                 * but are not handed to the capture sink.  The
+                 * pipeline transitions to @ref CaptureState::Paused.
+                 * @ref resumeCapture stamps @c ForceKeyframe on the
+                 * next admitted frame so the encoder restarts cleanly.
+                 *
+                 * @return Same error codes as @ref armCapture, plus
+                 *         @c Error::Ok no-op when not currently
+                 *         Recording.
+                 */
+                Error pauseCapture();
+
+                /**
+                 * @brief Resumes a paused recording.
+                 *
+                 * Re-opens the capture sink's gate; the next frame
+                 * delivered to the capture sink carries
+                 * @c Metadata::ForceKeyframe so the downstream
+                 * encoder emits an IDR.  The pipeline transitions
+                 * back to @ref CaptureState::Recording.
+                 *
+                 * @return Same error codes as @ref armCapture, plus
+                 *         @c Error::Ok no-op when not currently
+                 *         Paused.
+                 */
+                Error resumeCapture();
+
+                /**
+                 * @brief Disarms / stops the capture transport.
+                 *
+                 * Closes the capture sink's gate, clears any installed
+                 * trigger arming state, and transitions to
+                 * @ref CaptureState::Idle.  The pipeline lifecycle
+                 * stays @c Running — the caller drives @ref close /
+                 * @ref stop separately when ready to tear down.
+                 *
+                 * @return Same error codes as @ref armCapture.
+                 */
+                Error stopCapture();
+
+                /**
+                 * @brief Plug-in trigger for the @c Armed → @c Recording transition.
+                 *
+                 * Replaces the lambda overload's predicate with a
+                 * pre-built trigger.  Pass an empty @ref UniquePtr to
+                 * clear (equivalent to @ref clearCaptureTrigger).
+                 *
+                 * @param trig The trigger to install (transferring
+                 *             ownership), or empty to clear.
+                 * @return @c Error::Ok / @c Error::NotSupported per
+                 *         @ref armCapture.
+                 */
+                Error setCaptureTrigger(MediaPipelineTrigger::UPtr trig);
+
+                /**
+                 * @brief Plug-in trigger from a callable.
+                 *
+                 * Convenience: wraps @p fn in a
+                 * @ref MediaPipelineFunctionTrigger and installs it
+                 * via @ref setCaptureTrigger.  An empty function
+                 * clears any installed trigger.
+                 */
+                Error setCaptureTrigger(std::function<bool(const Frame &)> fn);
+
+                /**
+                 * @brief Plug-in trigger from a VariantQuery expression.
+                 *
+                 * Parses @p queryExpr via @ref MediaPipelineQueryTrigger::parse
+                 * and installs the resulting trigger on success.
+                 *
+                 * @param queryExpr A VariantQuery<Frame> source expression
+                 *                  (e.g. @c "Meta.FrameKeyframe == true").
+                 * @return @c Error::Ok on success; the parser's error
+                 *         on parse failure; @c Error::NotSupported
+                 *         when the pipeline is not @c Kind::Capture.
+                 */
+                Error setCaptureTrigger(const String &queryExpr);
+
+                /** @brief Removes any installed capture trigger. */
+                Error clearCaptureTrigger();
+
+                // ------------------------------------------------------------
                 // Introspection
                 // ------------------------------------------------------------
 
@@ -403,6 +700,51 @@ class MediaPipeline : public ObjectBase {
                  * @signal
                  */
                 PROMEKI_SIGNAL(statsUpdated, MediaPipelineStats);
+
+                /**
+                 * @brief Emitted on every playback-transport state transition.
+                 *
+                 * Fires after @ref play / @ref pause / @ref togglePlayPause
+                 * (and, in later phases, @c seek / @c stepForward / EOS
+                 * latching).  Subscribers using @ref subscribe receive the
+                 * same transition wrapped in a
+                 * @ref PipelineEvent::Kind::TransportStateChanged event;
+                 * direct consumers can listen on this signal for the typed
+                 * payload.
+                 * @signal
+                 */
+                PROMEKI_SIGNAL(playbackStateChanged, PlaybackState);
+
+                /**
+                 * @brief Emitted on every @ref setRate transition.
+                 *
+                 * Carries the new rate value.  Subscribers using
+                 * @ref subscribe receive the same transition mirrored
+                 * through @ref PipelineEvent::Kind::TransportStateChanged
+                 * with @c metadata["scope"] == @c "rate".
+                 * @signal
+                 */
+                PROMEKI_SIGNAL(rateChanged, double);
+
+                /**
+                 * @brief Emitted after a seek completes.
+                 *
+                 * Carries the post-seek frame position so UI bindings can
+                 * update scrubbers without polling @ref currentFrame.
+                 * @signal
+                 */
+                PROMEKI_SIGNAL(positionChanged, FrameNumber);
+
+                /**
+                 * @brief Emitted on every capture-transport state transition.
+                 *
+                 * Carries the new @ref CaptureState.  Subscribers using
+                 * @ref subscribe receive the same transition mirrored
+                 * through @ref PipelineEvent::Kind::TransportStateChanged
+                 * with @c metadata["scope"] == @c "capture".
+                 * @signal
+                 */
+                PROMEKI_SIGNAL(captureStateChanged, CaptureState);
 
                 // ------------------------------------------------------------
                 // Event subscription
@@ -545,6 +887,88 @@ class MediaPipeline : public ObjectBase {
                  *        @ref State and publishes it.
                  */
                 void publishStateChanged();
+
+                /**
+                 * @brief Builds a @ref PipelineEvent::Kind::TransportStateChanged
+                 *        event with the named scope and dispatches it.
+                 *
+                 * @param scope    @c "playback" or @c "capture".
+                 * @param newState String form of the new transport state
+                 *                 (e.g. @c "Playing", @c "Paused").
+                 */
+                void publishTransportStateChanged(const String &scope, const String &newState);
+
+                /**
+                 * @brief Updates @ref _playbackState, fires the transport
+                 *        signal, and publishes the matching PipelineEvent.
+                 *
+                 * No-op when @p s equals the current state.  The signal /
+                 * event are only fired on real transitions.
+                 */
+                void setPlaybackState(PlaybackState s);
+
+                /**
+                 * @brief Resolves the pacing stage / port-group / clock
+                 *        from the configured @c pacesPipeline flag.
+                 *
+                 * Called from @ref open after every stage is open so each
+                 * stage's port group exists.  For @c Kind::Playback configs
+                 * with exactly one pacing stage, populates
+                 * @ref _pacingStage / @ref _pacingGroup / @ref _pacingClock
+                 * and returns @c Error::Ok.  For @c Kind::Capture configs
+                 * the resolution is skipped.  For Playback configs missing
+                 * a pacer the pacing fields are left null and the call
+                 * returns @c Error::Ok with a warning — Phase 1 keeps the
+                 * legacy behavior, the @c play / @c pause API surfaces
+                 * @c Error::NotSupported when the fields are unset.
+                 */
+                Error resolvePacingStage();
+
+                /**
+                 * @brief Resolves capture-sink stages from configured
+                 *        @c captureSink flags and caches them for the
+                 *        capture-transport API.
+                 *
+                 * Capture pipelines may flag multiple stages as capture
+                 * sinks (multi-recorder mirroring); the gate, trigger
+                 * stamp, and pause/resume calls fan out to every flagged
+                 * sink.  Called from @ref open alongside
+                 * @ref resolvePacingStage.
+                 */
+                Error resolveCaptureSinks();
+
+                /**
+                 * @brief Updates @ref _captureState, fires the capture
+                 *        signal, and publishes the matching PipelineEvent.
+                 */
+                void setCaptureState(CaptureState s);
+
+                /**
+                 * @brief Per-frame inspector wired into the capture-side
+                 *        connection's @ref MediaIOPortConnection::setFrameInspector.
+                 *
+                 * Evaluates the installed trigger while the pipeline is
+                 * @c CaptureState::Armed and, on a match, opens the
+                 * capture-sink gates so the matched frame becomes the
+                 * first recorded frame (with @c ForceKeyframe stamped
+                 * by the gate's open-transition path).
+                 */
+                void onCaptureFrame(const Frame &frame);
+
+                /**
+                 * @brief Sets every capture-sink connection's gate.
+                 *
+                 * Convenience used by the capture-transport methods to
+                 * open / close every connection that feeds a flagged
+                 * capture sink in one go.
+                 */
+                void setCaptureGates(bool open);
+
+                /** @brief Installs the per-frame inspector on every capture-side connection. */
+                void installCaptureInspectorIfNeeded();
+
+                /** @brief Removes the per-frame inspector from every capture-side connection. */
+                void removeCaptureInspector();
 
                 /**
                  * @brief Builds and publishes a stage-state event with the
@@ -690,6 +1114,23 @@ class MediaPipeline : public ObjectBase {
 
                 MediaPipelineConfig                                  _config;
                 State                                                _state = State::Empty;
+                PlaybackState                                        _playbackState = PlaybackState::Idle;
+                CaptureState                                         _captureState = CaptureState::Idle;
+
+                // Pacing-stage resolution (Playback only).  Populated by
+                // @ref resolvePacingStage during @ref open, cleared by
+                // @ref destroyStages.  Null when the kind is Capture or
+                // when no stage in the config flagged @c pacesPipeline=true.
+                MediaIO          *_pacingStage = nullptr;
+                MediaIOPortGroup *_pacingGroup = nullptr;
+                Clock::Ptr        _pacingClock;
+
+                // Capture-sink resolution (Capture only).  Populated by
+                // @ref resolveCaptureSinks during @ref open, cleared by
+                // @ref destroyStages.  Empty when the kind is Playback
+                // or when no stage in the config flagged @c captureSink=true.
+                List<MediaIO *>            _captureSinks;
+                MediaPipelineTrigger::UPtr _captureTrigger;
                 Map<String, MediaIO *>                      _stages;
                 Map<String, MediaIO *>                      _injected;
                 Map<String, MediaIOStatsCollector *>        _statsCollectors;

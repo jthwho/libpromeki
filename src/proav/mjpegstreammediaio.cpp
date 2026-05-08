@@ -348,7 +348,7 @@ Error MjpegStreamMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
 
         Buffer jpeg;
         TimeStamp   encodedAt;
-        Error       err = encodeFrame(*cmd.frame, &jpeg, &encodedAt);
+        Error       err = encodeFrame(cmd.frame, &jpeg, &encodedAt);
         if (err.isError()) {
                 Mutex::Locker lk(_stateMutex);
                 _stats.framesEncodeError++;

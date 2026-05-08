@@ -98,7 +98,7 @@ PROMEKI_NAMESPACE_BEGIN
  * MediaIO::Config cfg = MediaIOFactory::defaultConfig("TPG");
  * MediaIO *io = MediaIO::create(cfg);
  * io->open(MediaIO::Source);
- * Frame::Ptr frame;
+ * Frame frame;
  * io->readFrame(frame);
  * io->close();
  * delete io;

@@ -54,6 +54,9 @@ namespace {
                 // project-wide scratch-location override.
                 sink.path = (Dir::temp().path() / "mediapipelineconfig_sample.dpx").toString();
                 sink.role = MediaPipelineConfig::StageRole::Sink;
+                // Default Kind is Playback; flag the terminal sink as the
+                // pacing stage so validate() finds exactly one pacer.
+                sink.pacesPipeline = true;
                 cfg.addStage(sink);
 
                 cfg.addRoute("src", "csc");
@@ -468,4 +471,128 @@ TEST_CASE("MediaPipelineConfig_SaveLoadFile") {
         MediaPipelineConfig round = MediaPipelineConfig::loadFromFile(path, &err);
         CHECK(err.isOk());
         CHECK(round == orig);
+}
+
+// ============================================================================
+// Transport-control foundations: Kind / startPaused / per-stage flags
+// ============================================================================
+
+TEST_CASE("MediaPipelineConfig_KindNameRoundTrip") {
+        CHECK(MediaPipelineConfig::kindName(MediaPipelineConfig::Kind::Playback) == "Playback");
+        CHECK(MediaPipelineConfig::kindName(MediaPipelineConfig::Kind::Capture) == "Capture");
+
+        Error err;
+        CHECK(MediaPipelineConfig::kindFromName("Playback", &err) == MediaPipelineConfig::Kind::Playback);
+        CHECK(err.isOk());
+        CHECK(MediaPipelineConfig::kindFromName("Capture", &err) == MediaPipelineConfig::Kind::Capture);
+        CHECK(err.isOk());
+
+        // Empty string defaults to Playback (matches the in-memory default).
+        CHECK(MediaPipelineConfig::kindFromName("", &err) == MediaPipelineConfig::Kind::Playback);
+        CHECK(err.isOk());
+
+        // Unknown name yields Playback fallback but flags the error.
+        CHECK(MediaPipelineConfig::kindFromName("Bogus", &err) == MediaPipelineConfig::Kind::Playback);
+        CHECK(err.isError());
+}
+
+TEST_CASE("MediaPipelineConfig_KindDefaultsToPlayback") {
+        MediaPipelineConfig cfg;
+        CHECK(cfg.kind() == MediaPipelineConfig::Kind::Playback);
+        CHECK_FALSE(cfg.startPaused());
+}
+
+TEST_CASE("MediaPipelineConfig_StageDefaultFlagsAreOff") {
+        MediaPipelineConfig::Stage s;
+        CHECK_FALSE(s.pacesPipeline);
+        CHECK_FALSE(s.captureSink);
+}
+
+TEST_CASE("MediaPipelineConfig_KindAndStartPausedSurviveJsonRoundTrip") {
+        MediaPipelineConfig cfg = makeSample();
+        cfg.setKind(MediaPipelineConfig::Kind::Capture);
+        cfg.setStartPaused(true);
+        // makeSample() has already flagged the sink as a pacing
+        // stage; for a Capture pipeline the captureSink flag is what
+        // matters, so set it on the same terminal stage.
+        for (auto &stage : cfg.stages()) {
+                if (stage.name == "sink") {
+                        stage.captureSink = true;
+                        stage.pacesPipeline = false;
+                }
+        }
+
+        JsonObject j = cfg.toJson();
+        CHECK(j.getString("kind") == "Capture");
+        CHECK(j.getBool("startPaused"));
+
+        Error               err;
+        MediaPipelineConfig round = MediaPipelineConfig::fromJson(j, &err);
+        CHECK(err.isOk());
+        CHECK(round.kind() == MediaPipelineConfig::Kind::Capture);
+        CHECK(round.startPaused());
+        const auto *sink = round.findStage("sink");
+        REQUIRE(sink != nullptr);
+        CHECK(sink->captureSink);
+        CHECK_FALSE(sink->pacesPipeline);
+        CHECK(round == cfg);
+}
+
+TEST_CASE("MediaPipelineConfig_PlaybackDefaultsAreTerseInJson") {
+        // The default Kind::Playback and startPaused=false stay out of
+        // the JSON so existing playback configs round-trip without a
+        // visible diff.
+        MediaPipelineConfig cfg = makeSample();
+        JsonObject          j = cfg.toJson();
+        CHECK_FALSE(j.contains("kind"));
+        CHECK_FALSE(j.contains("startPaused"));
+}
+
+TEST_CASE("MediaPipelineConfig_StageFlagsSurviveDataStreamRoundTrip") {
+        MediaPipelineConfig orig = makeSample();
+        orig.setKind(MediaPipelineConfig::Kind::Capture);
+        orig.setStartPaused(true);
+        for (auto &stage : orig.stages()) {
+                if (stage.name == "sink") {
+                        stage.captureSink = true;
+                        stage.pacesPipeline = false;
+                }
+        }
+
+        Buffer         buf(16384);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        {
+                DataStream w = DataStream::createWriter(&dev);
+                w << orig;
+                REQUIRE(w.status() == DataStream::Ok);
+        }
+        dev.seek(0);
+        MediaPipelineConfig round;
+        {
+                DataStream r = DataStream::createReader(&dev);
+                r >> round;
+                REQUIRE(r.status() == DataStream::Ok);
+        }
+        CHECK(round == orig);
+        CHECK(round.kind() == MediaPipelineConfig::Kind::Capture);
+        CHECK(round.startPaused());
+        const auto *sink = round.findStage("sink");
+        REQUIRE(sink != nullptr);
+        CHECK(sink->captureSink);
+}
+
+TEST_CASE("MediaPipelineConfig_StageEqualityHonorsTransportFlags") {
+        MediaPipelineConfig::Stage a;
+        a.name = "n";
+        a.type = "TPG";
+        a.role = MediaPipelineConfig::StageRole::Source;
+        MediaPipelineConfig::Stage b = a;
+        CHECK(a == b);
+
+        b.pacesPipeline = true;
+        CHECK(a != b);
+        b.pacesPipeline = false;
+        b.captureSink = true;
+        CHECK(a != b);
 }

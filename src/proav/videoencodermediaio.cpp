@@ -259,7 +259,7 @@ Error VideoEncoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                 _capacityWarned = true;
         }
 
-        const Frame &frame = *cmd.frame;
+        const Frame &frame = cmd.frame;
 
         // The payload's native pts threads through to the encoded
         // packet — most encoders record the input pts and stamp it
@@ -271,10 +271,10 @@ Error VideoEncoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         if (vids.isEmpty()) {
                 // No image to encode — let the frame pass through so
                 // audio / metadata-only inputs aren't lost.
-                Frame::Ptr outFrame = Frame::Ptr::create();
-                outFrame.modify()->metadata() = frame.metadata();
+                Frame outFrame = Frame();
+                outFrame.metadata() = frame.metadata();
                 for (const AudioPayload::Ptr &ap : frame.audioPayloads()) {
-                        if (ap.isValid()) outFrame.modify()->addPayload(ap);
+                        if (ap.isValid()) outFrame.addPayload(ap);
                 }
                 _outputQueue.pushToBack(std::move(outFrame));
                 return Error::Ok;
@@ -339,18 +339,17 @@ void VideoEncoderMediaIO::drainEncoderInto() {
                 // everything previously; in that case the output
                 // still carries the payload but with no audio /
                 // frame metadata.
-                Frame::Ptr origin;
+                Frame origin;
                 if (!_pendingSrcFrames.isEmpty()) {
                         origin = _pendingSrcFrames.front();
                         _pendingSrcFrames.remove(0);
                 }
 
-                Frame::Ptr outFrame = Frame::Ptr::create();
-                Frame     *out = outFrame.modify();
+                Frame outFrame = Frame();
                 if (origin.isValid()) {
-                        out->metadata() = origin->metadata();
-                        for (const AudioPayload::Ptr &ap : origin->audioPayloads()) {
-                                if (ap.isValid()) out->addPayload(ap);
+                        outFrame.metadata() = origin.metadata();
+                        for (const AudioPayload::Ptr &ap : origin.audioPayloads()) {
+                                if (ap.isValid()) outFrame.addPayload(ap);
                         }
                 }
 
@@ -362,14 +361,14 @@ void VideoEncoderMediaIO::drainEncoderInto() {
                 // descriptor so downstream muxers can size their
                 // track entries correctly.
                 Size2Du32 imgSize;
-                auto      originVids = origin.isValid() ? origin->videoPayloads() : VideoPayload::PtrList();
+                auto      originVids = origin.isValid() ? origin.videoPayloads() : VideoPayload::PtrList();
                 if (!originVids.isEmpty() && originVids[0].isValid()) {
                         imgSize = originVids[0]->desc().size();
                 }
                 if (imgSize.isValid()) {
                         outPayload.modify()->desc().setSize(imgSize);
                 }
-                out->addPayload(outPayload);
+                outFrame.addPayload(outPayload);
                 _outputQueue.pushToBack(std::move(outFrame));
                 _packetsOut++;
         }
@@ -379,7 +378,7 @@ Error VideoEncoderMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         if (_outputQueue.isEmpty()) {
                 return _closed ? Error::EndOfFile : Error::TryAgain;
         }
-        Frame::Ptr frame = std::move(_outputQueue.front());
+        Frame frame = std::move(_outputQueue.front());
         _outputQueue.remove(0);
         _readCount++;
         cmd.frame = std::move(frame);

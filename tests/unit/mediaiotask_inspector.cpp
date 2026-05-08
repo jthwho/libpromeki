@@ -41,7 +41,7 @@ namespace {
         // surface for tests that pump frames serially.  Failure
         // propagates as the wait() result; on success the frame is
         // pulled off the resolved CmdRead's typed payload.
-        Error syncRead(MediaIOSource *src, Frame::Ptr &out) {
+        Error syncRead(MediaIOSource *src, Frame &out) {
                 MediaIORequest req = src->readFrame();
                 Error          err = req.wait();
                 if (err.isOk()) {
@@ -137,7 +137,7 @@ namespace {
 
         void pumpFrames(InspectorRig &rig, int frameCount) {
                 for (int i = 0; i < frameCount; i++) {
-                        Frame::Ptr frame;
+                        Frame frame;
                         REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
                         REQUIRE(frame.isValid());
                         REQUIRE(rig.inspectorIo->sink(0)->writeFrame(frame).wait().isOk());
@@ -235,7 +235,7 @@ TEST_CASE("Inspector flags a frame-number jump as a discontinuity") {
                 /*audioEnabled=*/false);
 
         for (int i = 0; i < 10; i++) {
-                Frame::Ptr frame;
+                Frame frame;
                 REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
                 if (i == 4) continue; // skip frame 4 — TPG advances anyway
                 REQUIRE(rig.inspectorIo->sink(0)->writeFrame(frame).wait().isOk());
@@ -326,7 +326,7 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         // has been left-shifted by 1 sample — under strict tolerance
         // even that tiny shift must register.
         for (int i = 0; i < 10; i++) {
-                Frame::Ptr frame;
+                Frame frame;
                 REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
                 REQUIRE(rig.inspectorIo->sink(0)->writeFrame(frame).wait().isOk());
         }
@@ -335,10 +335,10 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         // marker waveform by 1 sample on channel 0.  The frame is
         // freshly created by the TPG so we own the only reference and
         // can write into its audio buffer directly.
-        Frame::Ptr shifted;
+        Frame shifted;
         REQUIRE(syncRead(rig.tpg->source(0), shifted).isOk());
         REQUIRE(shifted.isValid());
-        auto auds = shifted->audioPayloads();
+        auto auds = shifted.audioPayloads();
         REQUIRE(auds.size() == 1);
         AudioPayload::Ptr apBase = auds[0];
         REQUIRE(apBase.isValid());
@@ -377,7 +377,7 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         // modified one so the writer sees our edits (the uap clone we
         // built via CoW-modify() isn't the one still in the frame's
         // payload list).
-        for (MediaPayload::Ptr &p : shifted.modify()->payloadList()) {
+        for (MediaPayload::Ptr &p : shifted.payloadList()) {
                 if (p.isValid() && p->kind() == MediaPayloadKind::Audio) {
                         p = uap;
                         break;
@@ -487,7 +487,7 @@ TEST_CASE("Inspector relatches frame rate from per-frame metadata "
         // a SyncOffsetChange discontinuity on every frame past the
         // first match (at strict tolerance = 0).
         for (int i = 0; i < 20; ++i) {
-                Frame::Ptr frame;
+                Frame frame;
                 REQUIRE(syncRead(tpg->source(0), frame).isOk());
                 REQUIRE(inspector->sink(0)->writeFrame(frame).wait().isOk());
         }
@@ -540,7 +540,7 @@ TEST_CASE("Inspector periodic log fires when interval elapses") {
         REQUIRE(rig.inspectorIo->open().wait().isOk());
 
         for (int i = 0; i < 10; i++) {
-                Frame::Ptr frame;
+                Frame frame;
                 REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
                 REQUIRE(rig.inspectorIo->sink(0)->writeFrame(frame).wait().isOk());
         }
@@ -698,11 +698,11 @@ TEST_CASE("Inspector baseline absorbs a constant phase between audio and video")
         // then report 0 deviation on every subsequent frame.
         const size_t kPhaseShift = 7;
         for (int frameNo = 0; frameNo < 30; ++frameNo) {
-                Frame::Ptr frame;
+                Frame frame;
                 REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
                 REQUIRE(frame.isValid());
 
-                auto auds = frame->audioPayloads();
+                auto auds = frame.audioPayloads();
                 REQUIRE(auds.size() == 1);
                 AudioPayload::Ptr apBase = auds[0];
                 REQUIRE(apBase.isValid());
@@ -723,7 +723,7 @@ TEST_CASE("Inspector baseline absorbs a constant phase between audio and video")
                                 data[s * channels + ch] = 0.0f;
                         }
                 }
-                for (MediaPayload::Ptr &p : frame.modify()->payloadList()) {
+                for (MediaPayload::Ptr &p : frame.payloadList()) {
                         if (p.isValid() && p->kind() == MediaPayloadKind::Audio) {
                                 p = uap;
                                 break;
@@ -910,9 +910,9 @@ namespace {
         // @p shiftNs nanoseconds (in the offset field of the
         // MediaTimeStamp, so the underlying TimeStamp is untouched).
         // Returns the number of payloads modified.
-        int shiftAudioPts(Frame::Ptr &frame, int64_t shiftNs) {
+        int shiftAudioPts(Frame &frame, int64_t shiftNs) {
                 int n = 0;
-                for (MediaPayload::Ptr &p : frame.modify()->payloadList()) {
+                for (MediaPayload::Ptr &p : frame.payloadList()) {
                         if (!p.isValid()) continue;
                         if (p->kind() != MediaPayloadKind::Audio) continue;
                         auto ap = sharedPointerCast<AudioPayload>(p);
@@ -931,9 +931,9 @@ namespace {
         // Walks @p frame's video payloads and shifts every video PTS
         // by @p shiftNs nanoseconds (offset field).  Returns the
         // number modified.
-        int shiftVideoPts(Frame::Ptr &frame, int64_t shiftNs) {
+        int shiftVideoPts(Frame &frame, int64_t shiftNs) {
                 int n = 0;
-                for (MediaPayload::Ptr &p : frame.modify()->payloadList()) {
+                for (MediaPayload::Ptr &p : frame.payloadList()) {
                         if (!p.isValid()) continue;
                         if (p->kind() != MediaPayloadKind::Video) continue;
                         auto vp = sharedPointerCast<VideoPayload>(p);
@@ -966,7 +966,7 @@ TEST_CASE("Inspector flags an audio PTS jump as AudioTimestampReanchor") {
         });
         pumpFrames(rig, 5);
 
-        Frame::Ptr shifted;
+        Frame shifted;
         REQUIRE(syncRead(rig.tpg->source(0), shifted).isOk());
         REQUIRE(shifted.isValid());
         REQUIRE(shiftAudioPts(shifted, /*shiftNs=*/50'000'000) >= 1);
@@ -1004,7 +1004,7 @@ TEST_CASE("Inspector flags a video PTS jump as VideoTimestampReanchor") {
         });
         pumpFrames(rig, 5);
 
-        Frame::Ptr shifted;
+        Frame shifted;
         REQUIRE(syncRead(rig.tpg->source(0), shifted).isOk());
         REQUIRE(shifted.isValid());
         REQUIRE(shiftVideoPts(shifted, /*shiftNs=*/50'000'000) >= 1);
@@ -1084,19 +1084,19 @@ TEST_CASE("Inspector tolerates bursty audio (frame with no audio + double-sized 
         // 0/2x/0/2x/... pattern.  The resulting cumulative samples
         // and audio timeline are identical to the steady delivery —
         // the inspector should report identical results.
-        Frame::Ptr held;
+        Frame held;
         for (int i = 0; i < 30; i++) {
-                Frame::Ptr frame;
+                Frame frame;
                 REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
                 REQUIRE(frame.isValid());
 
                 if ((i % 2) == 0) {
                         // Strip audio from this frame; remember it for
                         // the next iteration.
-                        for (MediaPayload::Ptr &p : frame.modify()->payloadList()) {
+                        for (MediaPayload::Ptr &p : frame.payloadList()) {
                                 if (p.isValid() && p->kind() == MediaPayloadKind::Audio) {
-                                        held = Frame::Ptr::create();
-                                        held.modify()->addPayload(p);
+                                        held = Frame();
+                                        held.addPayload(p);
                                         p = MediaPayload::Ptr();
                                 }
                         }
@@ -1106,12 +1106,12 @@ TEST_CASE("Inspector tolerates bursty audio (frame with no audio + double-sized 
                         // chunk is the canonical anchor for the bursty
                         // delivery; the inspector's stream view sees
                         // back-to-back chunks regardless.
-                        for (const MediaPayload::Ptr &p : held->payloadList()) {
+                        for (const MediaPayload::Ptr &p : held.payloadList()) {
                                 if (p.isValid() && p->kind() == MediaPayloadKind::Audio) {
-                                        frame.modify()->addPayload(p);
+                                        frame.addPayload(p);
                                 }
                         }
-                        held = Frame::Ptr();
+                        held = Frame();
                 }
                 REQUIRE(rig.inspectorIo->sink(0)->writeFrame(frame).wait().isOk());
         }
@@ -1209,10 +1209,10 @@ TEST_CASE("Inspector flags an AudioChannelMismatch when channels are swapped") {
         // payload's plane buffer and swap channel 0 ↔ channel 1
         // before handing it to the inspector.
         for (int i = 0; i < 4; ++i) {
-                Frame::Ptr frame;
+                Frame frame;
                 REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
                 REQUIRE(frame.isValid());
-                for (MediaPayload::Ptr &p : frame.modify()->payloadList()) {
+                for (MediaPayload::Ptr &p : frame.payloadList()) {
                         if (!p.isValid() || p->kind() != MediaPayloadKind::Audio) continue;
                         auto *pcm = static_cast<PcmAudioPayload *>(p.modify());
                         REQUIRE(pcm != nullptr);
@@ -1271,17 +1271,17 @@ TEST_CASE("Inspector flags an AudioDataDecodeFailure when a codeword's CRC is co
         // subsequent corruption surfaces as a discontinuity rather
         // than being suppressed as a probable false sync lock.
         {
-                Frame::Ptr frame;
+                Frame frame;
                 REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
                 REQUIRE(rig.inspectorIo->sink(0)->writeFrame(frame).wait().isOk());
         }
 
         // Corrupt one payload bit on every subsequent frame's audio chunk.
         for (int i = 0; i < 4; ++i) {
-                Frame::Ptr frame;
+                Frame frame;
                 REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
                 REQUIRE(frame.isValid());
-                for (MediaPayload::Ptr &p : frame.modify()->payloadList()) {
+                for (MediaPayload::Ptr &p : frame.payloadList()) {
                         if (!p.isValid() || p->kind() != MediaPayloadKind::Audio) continue;
                         auto         *pcm = static_cast<PcmAudioPayload *>(p.modify());
                         const size_t  channels = pcm->desc().channels();
@@ -1369,7 +1369,7 @@ TEST_CASE("Inspector flags an AudioDataLengthAnomaly when codeword length deviat
         // this priming pass is required before the corrupt frames
         // below can register as anomalies.
         {
-                Frame::Ptr frame;
+                Frame frame;
                 REQUIRE(syncRead(tpg->source(0), frame).isOk());
                 REQUIRE(insp->sink(0)->writeFrame(frame).wait().isOk());
         }
@@ -1383,10 +1383,10 @@ TEST_CASE("Inspector flags an AudioDataLengthAnomaly when codeword length deviat
         REQUIRE(bigEnc.isValid());
 
         for (int i = 0; i < 4; ++i) {
-                Frame::Ptr frame;
+                Frame frame;
                 REQUIRE(syncRead(tpg->source(0), frame).isOk());
                 REQUIRE(frame.isValid());
-                for (MediaPayload::Ptr &p : frame.modify()->payloadList()) {
+                for (MediaPayload::Ptr &p : frame.payloadList()) {
                         if (!p.isValid() || p->kind() != MediaPayloadKind::Audio) continue;
                         auto *pcm = static_cast<PcmAudioPayload *>(p.modify());
                         REQUIRE(pcm->sampleCount() >= bigEnc.packetSamples());
@@ -1455,27 +1455,27 @@ TEST_CASE("Inspector decodes AudioData codewords that straddle audio chunk bound
         // Repeat the bursty pattern from the audio-PTS test: strip
         // audio off even-indexed frames, attach two chunks worth on
         // odd-indexed frames.
-        Frame::Ptr held;
+        Frame held;
         for (int i = 0; i < 20; i++) {
-                Frame::Ptr frame;
+                Frame frame;
                 REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
                 REQUIRE(frame.isValid());
 
                 if ((i % 2) == 0) {
-                        for (MediaPayload::Ptr &p : frame.modify()->payloadList()) {
+                        for (MediaPayload::Ptr &p : frame.payloadList()) {
                                 if (p.isValid() && p->kind() == MediaPayloadKind::Audio) {
-                                        held = Frame::Ptr::create();
-                                        held.modify()->addPayload(p);
+                                        held = Frame();
+                                        held.addPayload(p);
                                         p = MediaPayload::Ptr();
                                 }
                         }
                 } else if (held.isValid()) {
-                        for (const MediaPayload::Ptr &p : held->payloadList()) {
+                        for (const MediaPayload::Ptr &p : held.payloadList()) {
                                 if (p.isValid() && p->kind() == MediaPayloadKind::Audio) {
-                                        frame.modify()->addPayload(p);
+                                        frame.addPayload(p);
                                 }
                         }
-                        held = Frame::Ptr();
+                        held = Frame();
                 }
                 REQUIRE(rig.inspectorIo->sink(0)->writeFrame(frame).wait().isOk());
         }

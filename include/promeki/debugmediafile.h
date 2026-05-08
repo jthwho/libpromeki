@@ -187,7 +187,7 @@ class DebugMediaFile : public ObjectBase {
                  * @param frame The frame to write.  Must be valid.
                  * @return @c Error::Ok on success, or an I/O error.
                  */
-                Error writeFrame(const Frame::Ptr &frame);
+                Error writeFrame(const Frame &frame);
 
                 /** @brief Number of frames written since open, or the last read frame index + 1 on read. */
                 FrameCount framesWritten() const { return _framesWritten; }
@@ -204,7 +204,7 @@ class DebugMediaFile : public ObjectBase {
                  * @return @c Error::Ok, @c Error::EndOfFile, or an
                  *         I/O / corruption error.
                  */
-                Error readFrame(Frame::Ptr &out);
+                Error readFrame(Frame &out);
 
                 /**
                  * @brief Reads the frame with the given zero-based index.
@@ -219,7 +219,7 @@ class DebugMediaFile : public ObjectBase {
                  *         when @p frameNumber is past the end, or an
                  *         I/O / corruption error.
                  */
-                Error readFrameAt(const FrameNumber &frameNumber, Frame::Ptr &out);
+                Error readFrameAt(const FrameNumber &frameNumber, Frame &out);
 
                 /**
                  * @brief Positions the next @ref readFrame at

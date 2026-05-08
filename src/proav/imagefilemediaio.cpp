@@ -408,9 +408,9 @@ Error ImageFileMediaIO::openSingle(MediaIOCommandOpen &cmd, MediaDesc &mediaDesc
                         return err;
                 }
 
-                _frame = Frame::Ptr::create(imgFile.frame());
+                _frame = imgFile.frame();
 
-                auto vids = _frame->videoPayloads();
+                auto vids = _frame.videoPayloads();
                 if (!vids.isEmpty() && vids[0].isValid()) {
                         const ImageDesc &idesc = vids[0]->desc();
                         mediaDesc.imageList().pushToBack(idesc);
@@ -419,7 +419,7 @@ Error ImageFileMediaIO::openSingle(MediaIOCommandOpen &cmd, MediaDesc &mediaDesc
                 // Surface embedded audio (e.g. DPX user-data AUDIO blocks)
                 // in the descriptor so downstream consumers wire up an
                 // audio sink.
-                auto auds = _frame->audioPayloads();
+                auto auds = _frame.audioPayloads();
                 if (!auds.isEmpty() && auds[0].isValid()) {
                         const AudioDesc &adesc = auds[0]->desc();
                         if (adesc.isValid()) {
@@ -427,7 +427,7 @@ Error ImageFileMediaIO::openSingle(MediaIOCommandOpen &cmd, MediaDesc &mediaDesc
                         }
                 }
 
-                Metadata meta = _frame->metadata();
+                Metadata meta = _frame.metadata();
                 meta.set(Metadata::FrameRateSource, frSource);
                 mediaDesc.metadata() = meta;
                 frameCount = FrameCount(1);
@@ -922,7 +922,14 @@ Error ImageFileMediaIO::executeCmd(MediaIOCommandRead &cmd) {
 }
 
 Error ImageFileMediaIO::readSingle(MediaIOCommandRead &cmd) {
-        if (_loaded && cmd.step != 0) return Error::EndOfFile;
+        // Single-image mode is one frame total — re-reads with any
+        // forward / reverse motion are EOF; only an explicit hold
+        // (rate=0, which surfaces as nextStep()==0) can re-vend the
+        // cached frame.  Consume the per-tick step regardless so the
+        // group's accumulator stays in sync if the caller later
+        // switches to a sequence-mode sibling source.
+        const int step = (cmd.group != nullptr) ? cmd.group->nextStep() : 1;
+        if (_loaded && step != 0) return Error::EndOfFile;
         cmd.frame = _frame;
         _loaded = true;
         ++_readCount;
@@ -959,8 +966,8 @@ Error ImageFileMediaIO::readSequence(MediaIOCommandRead &cmd) {
                 return err;
         }
 
-        Frame::Ptr frame = Frame::Ptr::create(imgFile.frame());
-        Metadata  &fm = frame.modify()->metadata();
+        Frame frame = imgFile.frame();
+        Metadata  &fm = frame.metadata();
         fm.merge(_seqMetadata);
         fm.set(Metadata::FrameNumber, FrameNumber(frameNum));
 
@@ -972,24 +979,23 @@ Error ImageFileMediaIO::readSequence(MediaIOCommandRead &cmd) {
                         promekiErr("ImageFileMediaIO: sidecar audio read failed: %s", audioErr.name().cstr());
                         return audioErr;
                 }
-                Frame                *fmut = frame.modify();
                 MediaPayload::PtrList keep;
-                keep.reserve(fmut->payloadList().size());
-                for (MediaPayload::Ptr &p : fmut->payloadList()) {
+                keep.reserve(frame.payloadList().size());
+                for (MediaPayload::Ptr &p : frame.payloadList()) {
                         if (!p.isValid()) {
                                 keep.pushToBack(p);
                                 continue;
                         }
                         if (p->kind() != MediaPayloadKind::Audio) keep.pushToBack(p);
                 }
-                fmut->payloadList() = std::move(keep);
-                if (sidecarPayload.isValid()) fmut->addPayload(sidecarPayload);
+                frame.payloadList() = std::move(keep);
+                if (sidecarPayload.isValid()) frame.addPayload(sidecarPayload);
         }
 
         cmd.frame = frame;
         cmd.currentFrame = _seqIndex + int64_t(1);
 
-        int step = cmd.step;
+        const int step = (cmd.group != nullptr) ? cmd.group->nextStep() : 1;
         if (step == 0) {
                 // Hold on the same frame — no state change.
         } else {
@@ -1006,7 +1012,7 @@ Error ImageFileMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
 }
 
 Error ImageFileMediaIO::writeSingle(MediaIOCommandWrite &cmd) {
-        Frame    frame = *cmd.frame;
+        Frame    frame = cmd.frame;
         Metadata merged = _writeContainerMetadata;
         merged.merge(frame.metadata());
         frame.metadata() = std::move(merged);
@@ -1029,7 +1035,7 @@ Error ImageFileMediaIO::writeSequence(MediaIOCommandWrite &cmd) {
         int64_t frameNum = _seqHead.value() + _writeCount.value();
         String  fn = (_seqDir / _seqName.name(static_cast<int>(frameNum))).toString();
 
-        Frame    frame = *cmd.frame;
+        Frame    frame = cmd.frame;
         Metadata merged = _writeContainerMetadata;
         merged.merge(frame.metadata());
         frame.metadata() = std::move(merged);
@@ -1044,7 +1050,7 @@ Error ImageFileMediaIO::writeSequence(MediaIOCommandWrite &cmd) {
         }
 
         if (_sidecarAudioOpen) {
-                auto                   auds = cmd.frame->audioPayloads();
+                auto                   auds = cmd.frame.audioPayloads();
                 const PcmAudioPayload *uap = nullptr;
                 if (!auds.isEmpty() && auds[0].isValid()) {
                         uap = auds[0]->as<PcmAudioPayload>();

@@ -53,14 +53,14 @@ Error MediaIOSource::proposeOutput(const MediaDesc &requested, MediaDesc *achiev
         return io->proposeOutput(requested, achievable);
 }
 
-int MediaIOSource::step() const {
+double MediaIOSource::rate() const {
         MediaIOPortGroup *g = group();
-        return g != nullptr ? g->step() : 1;
+        return g != nullptr ? g->rate() : 1.0;
 }
 
-void MediaIOSource::setStep(int val) {
+void MediaIOSource::setRate(double r) {
         MediaIOPortGroup *g = group();
-        if (g != nullptr) g->setStep(val);
+        if (g != nullptr) g->setRate(r);
 }
 
 FrameNumber MediaIOSource::currentFrame() const {

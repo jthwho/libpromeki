@@ -427,7 +427,7 @@ namespace {
                                         // higher-level hook that VideoEncoderMediaIO
                                         // translates into requestKeyframe(); setting
                                         // both here just documents the intent.
-                                        frame.modify()->metadata().set(Metadata::ForceKeyframe, true);
+                                        frame.metadata().set(Metadata::ForceKeyframe, true);
                                         enc->requestKeyframe();
                                 }
                                 if (submitImage(enc, std::move(frame)) != Error::Ok) {
@@ -1220,7 +1220,7 @@ namespace {
                         int    packets = 0;
                         for (int i = 0; i < numFrames; ++i) {
                                 Img frame = nv12;
-                                frame.modify()->metadata().set(Metadata::Timecode, tc);
+                                frame.metadata().set(Metadata::Timecode, tc);
                                 if (submitImage(enc, std::move(frame)) != Error::Ok) {
                                         submitOk = false;
                                         break;
@@ -1445,7 +1445,7 @@ namespace {
                         Timecode       tc(mode, 1, 0, 0, 0);
                         for (int i = 0; i < numFrames; ++i) {
                                 Img f = p010;
-                                f.modify()->metadata().set(Metadata::Timecode, tc);
+                                f.metadata().set(Metadata::Timecode, tc);
                                 ++tc;
                                 frames.pushToBack(f);
                         }
@@ -1532,7 +1532,7 @@ namespace {
                         Timecode       tc(mode, 10, 0, 0, 0);
                         for (int i = 0; i < numFrames; ++i) {
                                 Img f = nv12;
-                                f.modify()->metadata().set(Metadata::Timecode, tc);
+                                f.metadata().set(Metadata::Timecode, tc);
                                 ++tc;
                                 frames.pushToBack(f);
                         }

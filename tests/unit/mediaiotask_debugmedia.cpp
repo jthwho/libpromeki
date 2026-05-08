@@ -36,14 +36,14 @@ namespace {
         // Builds a minimal Frame with one video + one audio payload so
         // DebugMediaFile has something non-trivial to serialise on the
         // write side and the reader has a real desc set to recover.
-        Frame::Ptr makeSmokeFrame() {
-                Frame::Ptr f = Frame::Ptr::create();
-                f.modify()->metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_30));
+        Frame makeSmokeFrame() {
+                Frame f = Frame();
+                f.metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_30));
 
                 UncompressedVideoPayload::Ptr vp = UncompressedVideoPayload::allocate(
                         ImageDesc(Size2Du32(16, 8), PixelFormat(PixelFormat::RGB8_sRGB)));
-                if (!vp.isValid()) return Frame::Ptr();
-                f.modify()->addPayload(vp);
+                if (!vp.isValid()) return Frame();
+                f.addPayload(vp);
 
                 AudioDesc    adesc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
                 const size_t samples = 32;
@@ -51,8 +51,8 @@ namespace {
                 abuf.setSize(adesc.bufferSize(samples));
                 BufferView           aview(abuf, 0, abuf.size());
                 PcmAudioPayload::Ptr ap = PcmAudioPayload::Ptr::create(adesc, samples, aview);
-                if (!ap.isValid()) return Frame::Ptr();
-                f.modify()->addPayload(ap);
+                if (!ap.isValid()) return Frame();
+                f.addPayload(ap);
 
                 return f;
         }
@@ -64,7 +64,7 @@ namespace {
                 const String   path = Dir::temp().path().toString() + String("/promeki-pmdf-sourceopen-test.pmdf");
                 DebugMediaFile df;
                 REQUIRE(df.open(path, DebugMediaFile::Write).isOk());
-                Frame::Ptr f = makeSmokeFrame();
+                Frame f = makeSmokeFrame();
                 REQUIRE(f.isValid());
                 REQUIRE(df.writeFrame(f).isOk());
                 REQUIRE(df.close().isOk());
@@ -122,10 +122,10 @@ TEST_CASE("DebugMediaMediaIO: source open populates mediaDesc/audioDesc") {
         REQUIRE(re.isOk());
         const auto *cr = readReq.commandAs<MediaIOCommandRead>();
         REQUIRE(cr != nullptr);
-        Frame::Ptr first = cr->frame;
+        Frame first = cr->frame;
         REQUIRE(first.isValid());
-        CHECK(first->videoPayloads().size() == 1u);
-        CHECK(first->audioPayloads().size() == 1u);
+        CHECK(first.videoPayloads().size() == 1u);
+        CHECK(first.audioPayloads().size() == 1u);
 
         (void)io->close().wait();
         delete io;

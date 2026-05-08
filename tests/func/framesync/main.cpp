@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
                 return 1;
         }
 
-        const MediaDesc mdesc = source->mediaDesc();
+        const MediaDesc mdesc = source.mediaDesc();
         const AudioDesc adesc = source->audioDesc();
         if (mdesc.imageList().isEmpty()) {
                 std::fprintf(stderr, "Error: source has no video — FrameSync smoke test "
@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
                                 std::fprintf(stderr, "Source read error: %s\n", e.name().cstr());
                                 continue;
                         }
-                        Frame::Ptr frame;
+                        Frame frame;
                         if (const auto *cr = readReq.commandAs<MediaIOCommandRead>()) {
                                 frame = cr->frame;
                         }

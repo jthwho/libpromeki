@@ -19,6 +19,40 @@ The full design notes (signal plumbing details, JSON schema example,
 copy-on-write safety, the original "follow-on" sections about codec
 config forwarding) live in git history and in `docs/mediaio.dox`.
 
+## Playback + capture transport — SHIPPED (2026-05-07)
+
+`MediaPipeline` now exposes orthogonal transport controls on top of the
+lifecycle state machine.  Shipped in this commit:
+
+- `MediaPipeline::PlaybackState` enum (`Idle/Playing/Paused/Seeking/Ended`)
+  and `MediaPipeline::CaptureState` enum (`Idle/Armed/Recording/Paused`).
+- Playback transport: `play()`, `pause()`, `togglePlayPause()`,
+  `setRate(double)`, `rate()`, `currentFrame()`, `seek(FrameNumber, mode)`,
+  `stepForward(n)`, `stepBackward(n)`.  Pacing stage / port-group / clock
+  resolved at `open()`; pause/resume route through `MediaIOPortGroup::clock()`.
+- Capture transport: `armCapture()`, `startCapture()`, `pauseCapture()`,
+  `resumeCapture()`, `stopCapture()`, `setCaptureTrigger(fn|queryExpr)`,
+  `clearCaptureTrigger()`.  Trigger evaluated per-frame while `Armed`;
+  `MediaPipelineFunctionTrigger` (lambda) and `MediaPipelineQueryTrigger`
+  (VariantQuery expression) ship as stock implementations in
+  `include/promeki/mediapipelinetrigger.h`.
+- `MediaPipelineConfig::Kind` (`Playback`/`Capture`), `startPaused()`, and
+  `pacesPipeline` + `captureSink` stage flags.
+- `PipelineEvent::Kind::TransportStateChanged` with `metadata["scope"]`
+  (`"playback"` / `"capture"` / `"rate"`) on the event bus.
+- `MediaIOClock` and `SyntheticClock` upgraded to
+  `ClockPauseMode::PausesRawKeepsRunning` (raw counter keeps advancing;
+  base `Clock` cancels the advance via its pause-offset accumulator so
+  `now()` freezes for the duration of the pause).
+- 28 new `mediapipeline.cpp` test cases covering all transport state
+  transitions, signal emission, rate rejection, seek rejection,
+  kind-gate guards, startPaused, trigger-fires, clearCaptureTrigger,
+  pauseCapture/resumeCapture hook, and MediaIO::setIngestPaused interaction.
+- `docs/mediapipeline.md` updated with a **Transport controls** section.
+- `Frame` promoted to value-type CoW handle (`SharedPtr<Data>` internal,
+  `Frame::Ptr` deleted); `Metadata` and `JsonObject`/`JsonArray` likewise.
+  All MediaIO command structs and 200+ test sites updated.
+
 ## Remaining work
 
 - [ ] **`docs/mediapipeline.dox`** — authoring guide, JSON schema,

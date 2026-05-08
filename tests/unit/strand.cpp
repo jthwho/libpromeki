@@ -313,7 +313,7 @@ TEST_CASE("Strand_SubmitUrgentCancelledByCancelPending") {
         // Urgent tasks sitting in the pending queue are swept up by
         // cancelPending() just like normal tasks — there is no separate
         // priority lane to protect.  MediaIO::stats() relies on this:
-        // when a seek or setStep clears the queue, an in-flight urgent
+        // when a seek or setRate clears the queue, an in-flight urgent
         // stats call resolves with Cancelled and the caller simply
         // polls again on the next tick.
         ThreadPool pool(2);

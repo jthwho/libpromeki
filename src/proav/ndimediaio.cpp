@@ -242,9 +242,9 @@ void NdiMediaIO::cancelBlockingWork() {
 }
 
 Error NdiMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
-        if (cmd.frame.isNull()) return Error::InvalidArgument;
+        if (!cmd.frame.isValid()) return Error::InvalidArgument;
         if (!_send) return Error::NotOpen;
-        const Frame &frame = *cmd.frame;
+        const Frame &frame = cmd.frame;
 
         Error firstErr = Error::Ok;
 
@@ -338,8 +338,8 @@ Error NdiMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 }
         }
 
-        Frame::Ptr frame = Frame::Ptr::create();
-        frame.modify()->addPayload(std::move(vp));
+        Frame frame = Frame();
+        frame.addPayload(std::move(vp));
 
         // Drain whatever audio has accumulated since the last video
         // frame.  The natural sample count varies with NDI's send
@@ -385,7 +385,7 @@ Error NdiMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                                 // Ring is now empty — the next ingest
                                 // sets _audioFirstSampleTicks afresh.
                                 _audioFirstSampleTicks = 0;
-                                frame.modify()->addPayload(std::move(audioPayload));
+                                frame.addPayload(std::move(audioPayload));
                         }
                 }
         }
@@ -396,7 +396,7 @@ Error NdiMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         {
                 Mutex::Locker lk(_metadataMutex);
                 if (_hasPendingMetadata) {
-                        frame.modify()->metadata() = _pendingMetadata;
+                        frame.metadata() = _pendingMetadata;
                         _hasPendingMetadata        = false;
                         _pendingMetadata           = Metadata();
                 }
@@ -411,7 +411,7 @@ Error NdiMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         // has been refreshed.  Skip for an invalid rate (which would
         // overwrite any FrameRate downstream may have derived).
         if (_frameRate.isValid()) {
-                frame.modify()->metadata().set(Metadata::FrameRate, _frameRate);
+                frame.metadata().set(Metadata::FrameRate, _frameRate);
         }
 
         cmd.frame        = frame;

@@ -51,10 +51,10 @@ TEST_CASE("MediaIO auto-fills missing native pts and video duration on read") {
         REQUIRE(readReq.wait().isOk());
         const auto *cr = readReq.commandAs<MediaIOCommandRead>();
         REQUIRE(cr != nullptr);
-        Frame::Ptr frame = cr->frame;
+        Frame frame = cr->frame;
         REQUIRE(frame.isValid());
 
-        auto vids = frame->videoPayloads();
+        auto vids = frame.videoPayloads();
         REQUIRE_FALSE(vids.isEmpty());
         REQUIRE(vids[0].isValid());
         const VideoPayload &vp = *vids[0];
@@ -70,7 +70,7 @@ TEST_CASE("MediaIO auto-fills missing native pts and video duration on read") {
         const Duration oneFrame = FrameRate(FrameRate::FPS_30).frameDuration();
         CHECK(vp.duration() == oneFrame);
 
-        auto auds = frame->audioPayloads();
+        auto auds = frame.audioPayloads();
         REQUIRE_FALSE(auds.isEmpty());
         REQUIRE(auds[0].isValid());
         const AudioPayload &ap = *auds[0];
@@ -99,9 +99,9 @@ TEST_CASE("MediaIO does not overwrite a producer-supplied pts") {
         REQUIRE(readReq2.wait().isOk());
         const auto *cr2 = readReq2.commandAs<MediaIOCommandRead>();
         REQUIRE(cr2 != nullptr);
-        Frame::Ptr frame = cr2->frame;
+        Frame frame = cr2->frame;
         REQUIRE(frame.isValid());
-        auto vids = frame->videoPayloads();
+        auto vids = frame.videoPayloads();
         REQUIRE_FALSE(vids.isEmpty());
         // After MediaIO auto-fill the pts domain is Synthetic.  If we
         // stamp our own pts on a cloned payload and run it through

@@ -63,7 +63,7 @@ PROMEKI_NAMESPACE_BEGIN
  * MediaIO *io = MediaIO::create(cfg);
  * io->open(MediaIO::Transform);
  * io->writeFrame(inputFrame);
- * Frame::Ptr outputFrame;
+ * Frame outputFrame;
  * io->readFrame(outputFrame);
  * io->close();
  * delete io;
@@ -94,13 +94,13 @@ class SrcMediaIO : public SharedThreadMediaIO {
                 Error executeCmd(MediaIOCommandStats &cmd) override;
 
         private:
-                Error convertFrame(const Frame::Ptr &input, Frame::Ptr &output);
+                Error convertFrame(const Frame &input, Frame &output);
 
                 AudioFormat::ID _outputAudioDataType = AudioFormat::Invalid;
                 bool            _outputAudioDataTypeSet = false;
                 int             _capacity = 4;
 
-                List<Frame::Ptr> _outputQueue;
+                Frame::List _outputQueue;
                 FrameCount       _frameCount{0};
                 int64_t          _readCount = 0;
                 FrameCount       _framesConverted{0};

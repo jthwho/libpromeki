@@ -79,6 +79,23 @@ class MediaPipelineConfig {
                 };
 
                 /**
+                 * @brief Pipeline-wide kind classification.
+                 *
+                 * A pipeline is either a playback pipeline (frames flow
+                 * from a source to a presenting sink that paces output)
+                 * or a capture pipeline (frames flow from an ingest
+                 * source to a recording sink whose write flow can be
+                 * gated and stamped).  The kind is set at config time
+                 * and never flips at run time — transport controls on
+                 * @c MediaPipeline are kind-aware and reject calls that
+                 * don't apply to the current pipeline kind.
+                 */
+                enum class Kind {
+                        Playback = 0, ///< @brief Source → presenting sink; play / pause / seek / rate.
+                        Capture       ///< @brief Source → recording sink; arm / record / pause / trigger.
+                };
+
+                /**
                  * @brief Declarative description of one @ref MediaIO stage.
                  *
                  * A stage is either a registered backend (identified by
@@ -103,6 +120,35 @@ class MediaPipelineConfig {
                                 MediaConfig config;
                                 /** @brief Per-stage metadata overrides (empty == accept backend defaults). */
                                 Metadata metadata;
+
+                                /**
+                                 * @brief Marks this stage's clock as the playback pacer.
+                                 *
+                                 * Only meaningful for @ref Kind::Playback configs.
+                                 * @ref MediaPipeline resolves the stage flagged with
+                                 * @c pacesPipeline at @c open() time and routes
+                                 * playback-transport pause / resume through that
+                                 * stage's port-group clock.  Exactly one stage in
+                                 * a Playback config must carry this flag;
+                                 * @ref validate enforces the invariant.  Ignored
+                                 * for Capture configs.
+                                 */
+                                bool pacesPipeline = false;
+
+                                /**
+                                 * @brief Marks this stage as the capture sink.
+                                 *
+                                 * Only meaningful for @ref Kind::Capture configs.
+                                 * Capture-transport pause and resume gate the
+                                 * frame flow to every connection that lands on
+                                 * a stage flagged with @c captureSink, and the
+                                 * keyframe-stamp on resume targets the same
+                                 * connections.  At least one stage in a Capture
+                                 * config must carry this flag; @ref validate
+                                 * enforces the invariant.  Ignored for Playback
+                                 * configs.
+                                 */
+                                bool captureSink = false;
 
                                 /** @brief True if the two Stage records have identical contents. */
                                 bool operator==(const Stage &other) const;
@@ -192,6 +238,39 @@ class MediaPipelineConfig {
 
                 /** @brief Appends a simple @p from → @p to route. */
                 void addRoute(const String &from, const String &to);
+
+                // ------------------------------------------------------------
+                // Pipeline kind / transport defaults
+                // ------------------------------------------------------------
+
+                /**
+                 * @brief Returns the pipeline kind (Playback or Capture).
+                 *
+                 * Defaults to @ref Kind::Playback so existing
+                 * playback-shaped configs round-trip without explicit
+                 * annotation.  Capture-shaped configs must call
+                 * @ref setKind before @c validate with @c Kind::Capture.
+                 */
+                Kind kind() const { return _kind; }
+
+                /** @brief Sets the pipeline kind. */
+                void setKind(Kind k) { _kind = k; }
+
+                /**
+                 * @brief Returns true if @c MediaPipeline::start should
+                 *        immediately pause the playback transport.
+                 *
+                 * When set, the pipeline transitions through
+                 * @c PlaybackState::Playing → @c Paused on @c start so a
+                 * caller (typically a UI) can build a pipeline and have
+                 * it park on the first frame without racing a separate
+                 * @c pause() call.  Only meaningful for
+                 * @ref Kind::Playback configs.  Defaults to @c false.
+                 */
+                bool startPaused() const { return _startPaused; }
+
+                /** @brief Sets the @c startPaused flag. */
+                void setStartPaused(bool v) { _startPaused = v; }
 
                 // ------------------------------------------------------------
                 // Pipeline-wide metadata
@@ -391,12 +470,30 @@ class MediaPipelineConfig {
                  */
                 static StageRole roleFromName(const String &name, Error *err = nullptr);
 
+                /**
+                 * @brief Renders a @ref Kind as a stable name.
+                 *
+                 * Used by JSON round-trip.  Unknown values produce
+                 * @c "Playback".
+                 */
+                static String kindName(Kind kind);
+
+                /**
+                 * @brief Parses a kind name produced by @ref kindName.
+                 * @param name The kind string.
+                 * @param err  Optional error — @c Error::Invalid on unknown name.
+                 * @return The parsed kind (defaults to Playback).
+                 */
+                static Kind kindFromName(const String &name, Error *err = nullptr);
+
         private:
                 StageList  _stages;
                 RouteList  _routes;
                 Metadata   _pipelineMetadata;
                 FrameCount _frameCount;
                 int        _statsWindowSize = 256;
+                Kind       _kind = Kind::Playback;
+                bool       _startPaused = false;
 };
 
 // ============================================================================

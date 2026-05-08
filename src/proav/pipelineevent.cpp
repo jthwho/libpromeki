@@ -19,6 +19,7 @@ namespace {
         constexpr const char *kKindStatsUpdated = "StatsUpdated";
         constexpr const char *kKindPlanResolved = "PlanResolved";
         constexpr const char *kKindLog = "Log";
+        constexpr const char *kKindTransportStateChanged = "TransportStateChanged";
 
         bool isComplexKind(PipelineEvent::Kind k) {
                 return k == PipelineEvent::Kind::StatsUpdated || k == PipelineEvent::Kind::PlanResolved;
@@ -34,6 +35,7 @@ String PipelineEvent::kindToString(Kind k) {
                 case Kind::StatsUpdated: return String(kKindStatsUpdated);
                 case Kind::PlanResolved: return String(kKindPlanResolved);
                 case Kind::Log: return String(kKindLog);
+                case Kind::TransportStateChanged: return String(kKindTransportStateChanged);
         }
         return String(kKindStateChanged);
 }
@@ -46,6 +48,7 @@ PipelineEvent::Kind PipelineEvent::kindFromString(const String &s, bool *ok) {
         if (s == kKindStatsUpdated) return Kind::StatsUpdated;
         if (s == kKindPlanResolved) return Kind::PlanResolved;
         if (s == kKindLog) return Kind::Log;
+        if (s == kKindTransportStateChanged) return Kind::TransportStateChanged;
         if (ok != nullptr) *ok = false;
         return Kind::StateChanged;
 }

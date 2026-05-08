@@ -340,12 +340,12 @@ Error TpgMediaIO::executeCmd(MediaIOCommandClose &cmd) {
 }
 
 Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
-        int s = cmd.step;
-
-        // The TPG ignores step direction for the timecode generator's run mode;
-        // each read processes |step| advances.  (Previously the TPG cached this
-        // via setStep on the base class — now it's per-read so the task is
-        // stateless from MediaIO's perspective.)
+        // The TPG ignores rate direction for the timecode generator's run
+        // mode; each read processes |step| advances.  Pull the integer
+        // per-tick advance out of the group's fractional-rate accumulator
+        // so the TPG honours slow-motion (rate=0.5 → alternating 0/1
+        // advances) and fast-forward (rate=2 → +2 per tick).
+        const int s = (cmd.group != nullptr) ? cmd.group->nextStep() : 1;
         if (_timecodeEnabled) {
                 if (s > 0)
                         _tcGen.setRunMode(TimecodeGenerator::Forward);
@@ -355,7 +355,7 @@ Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                         _tcGen.setRunMode(TimecodeGenerator::Still);
         }
 
-        Frame::Ptr frame = Frame::Ptr::create();
+        Frame frame = Frame();
 
         // Advance timecode by |step| frames (or hold at step=0).
         Timecode tc;
@@ -385,7 +385,7 @@ Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 _audioPattern->setPcmMarkerFrameNumber(_frameCount.value());
                 auto payload = _audioPattern->createPayload(samples, tc);
                 if (payload.isValid()) {
-                        frame.modify()->addPayload(payload);
+                        frame.addPayload(payload);
                 }
         }
 
@@ -404,7 +404,7 @@ Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                                 // via VideoPayload::desc().metadata().
                                 payload.modify()->desc().metadata().set(Metadata::Timecode, tc);
                         }
-                        frame.modify()->addPayload(payload);
+                        frame.addPayload(payload);
                 }
         }
 
@@ -412,9 +412,9 @@ Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         // resolves so {Meta.Timecode}, {Meta.FrameRate}, and {VideoFormat}
         // all pick it up.  FrameRate is required for VideoFormat to
         // render its rate component.
-        frame.modify()->metadata().set(Metadata::FrameRate, _frameRate);
+        frame.metadata().set(Metadata::FrameRate, _frameRate);
         if (_timecodeEnabled) {
-                frame.modify()->metadata().set(Metadata::Timecode, tc);
+                frame.metadata().set(Metadata::Timecode, tc);
         }
 
         // Resolve and apply the burn / data-encoder against the
@@ -430,8 +430,8 @@ Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         // the payload when it's shared — the virtual clone hook
         // preserves the @c UncompressedVideoPayload type — so the
         // subsequent @c static_cast is safe.
-        auto lastVideoPayloadSlot = [&](Frame *f) -> MediaPayload::Ptr * {
-                MediaPayload::PtrList &list = f->payloadList();
+        auto lastVideoPayloadSlot = [&](Frame &f) -> MediaPayload::Ptr * {
+                MediaPayload::PtrList &list = f.payloadList();
                 for (size_t i = list.size(); i > 0; --i) {
                         MediaPayload::Ptr &slot = list[i - 1];
                         if (!slot.isValid()) continue;
@@ -441,9 +441,9 @@ Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         };
 
         if (_videoEnabled && _burnEnabled && !_burnTextTemplate.isEmpty()) {
-                String burnText = VariantLookup<Frame>::format(*frame, _burnTextTemplate);
+                String burnText = VariantLookup<Frame>::format(frame, _burnTextTemplate);
                 if (!burnText.isEmpty()) {
-                        if (MediaPayload::Ptr *slot = lastVideoPayloadSlot(frame.modify())) {
+                        if (MediaPayload::Ptr *slot = lastVideoPayloadSlot(frame)) {
                                 auto *uvp = static_cast<UncompressedVideoPayload *>(slot->modify());
                                 uvp->ensureExclusive();
                                 Error burnErr = _videoPattern.applyBurn(*uvp, burnText);
@@ -472,7 +472,7 @@ Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 List<ImageDataEncoder::Item> items;
                 items.pushToBack({0, _dataEncoderRepeat, frameId});
                 items.pushToBack({_dataEncoderRepeat, _dataEncoderRepeat, tcBcd});
-                if (MediaPayload::Ptr *slot = lastVideoPayloadSlot(frame.modify())) {
+                if (MediaPayload::Ptr *slot = lastVideoPayloadSlot(frame)) {
                         auto *uvp = static_cast<UncompressedVideoPayload *>(slot->modify());
                         uvp->ensureExclusive();
                         Error encErr = _dataEncoder.encode(*uvp, items);

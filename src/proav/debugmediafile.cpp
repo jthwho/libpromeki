@@ -313,7 +313,7 @@ Error DebugMediaFile::readSessionChunk() {
 
 // ---- Write path --------------------------------------------
 
-Error DebugMediaFile::writeFrame(const Frame::Ptr &frame) {
+Error DebugMediaFile::writeFrame(const Frame &frame) {
         if (_mode != Write) return Error::NotOpen;
         if (!frame.isValid()) return Error::InvalidArgument;
 
@@ -327,14 +327,14 @@ Error DebugMediaFile::writeFrame(const Frame::Ptr &frame) {
         DataStream s = DataStream::createWriter(&dev);
 
         s << static_cast<uint64_t>(_framesWritten.value());
-        s << frame->metadata();
-        s << frame->configUpdate();
+        s << frame.metadata();
+        s << frame.configUpdate();
 
         // Payload list — each entry round-trips via the MediaPayload
         // DataStream operators, which dispatch to the concrete leaf
         // by its subclass FourCC.  Null payloads survive as the
         // fourcc == 0 sentinel inside the operator.
-        const MediaPayload::PtrList &payloads = frame->payloadList();
+        const MediaPayload::PtrList &payloads = frame.payloadList();
         s << static_cast<uint32_t>(payloads.size());
         for (const MediaPayload::Ptr &p : payloads) s << p;
 
@@ -428,7 +428,7 @@ Error DebugMediaFile::appendFooter() {
 
 // ---- Read path ---------------------------------------------
 
-Error DebugMediaFile::readFrame(Frame::Ptr &out) {
+Error DebugMediaFile::readFrame(Frame &out) {
         if (_mode != Read) return Error::NotOpen;
 
         uint32_t fourCC = 0, flags = 0;
@@ -463,16 +463,15 @@ Error DebugMediaFile::readFrame(Frame::Ptr &out) {
         s >> frameIdx >> md >> cfg >> payloadCount;
         if (s.status() != DataStream::Ok) return Error::CorruptData;
 
-        Frame::Ptr frame = Frame::Ptr::create();
-        Frame     *raw = frame.modify();
-        raw->metadata() = std::move(md);
-        raw->configUpdate() = std::move(cfg);
+        Frame frame = Frame();
+        frame.metadata() = std::move(md);
+        frame.configUpdate() = std::move(cfg);
 
         for (uint32_t i = 0; i < payloadCount; ++i) {
                 MediaPayload::Ptr payload;
                 s >> payload;
                 if (s.status() != DataStream::Ok) return Error::CorruptData;
-                raw->addPayload(std::move(payload));
+                frame.addPayload(std::move(payload));
         }
 
         // Trailer magic.
@@ -619,7 +618,7 @@ Error DebugMediaFile::seek(const FrameNumber &frameNumber) {
         return Error::Ok;
 }
 
-Error DebugMediaFile::readFrameAt(const FrameNumber &frameNumber, Frame::Ptr &out) {
+Error DebugMediaFile::readFrameAt(const FrameNumber &frameNumber, Frame &out) {
         if (Error e = seek(frameNumber); e.isError()) return e;
         return readFrame(out);
 }

@@ -195,7 +195,7 @@ class MediaIOSink : public MediaIOPort {
                  *         can ignore it and read the resolution from
                  *         the request instead.
                  */
-                MediaIORequest writeFrame(const Frame::Ptr &frame);
+                MediaIORequest writeFrame(const Frame &frame);
 
                 // ---- Signals ----
 

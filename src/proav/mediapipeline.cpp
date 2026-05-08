@@ -7,6 +7,8 @@
 
 #include <promeki/mediapipeline.h>
 
+#include <cmath>
+
 #include <promeki/eventloop.h>
 #include <promeki/logger.h>
 #include <promeki/mediaiocommand.h>
@@ -182,6 +184,22 @@ Error MediaPipeline::destroyStages() {
         _sources.clear();
         _topoOrder.clear();
         _terminalSinksRemaining = 0;
+
+        // Pacing-stage pointers became dangling above; clear them so a
+        // subsequent build/open cycle starts from a known state.  The
+        // transport state collapses to Idle only here (close path) —
+        // stop() already handled the Running → Stopped path.
+        _pacingStage = nullptr;
+        _pacingGroup = nullptr;
+        _pacingClock.clear();
+        _playbackState = PlaybackState::Idle;
+        // Capture-sink list and trigger are also stage-bound; drop
+        // them so a subsequent build/open cycle resolves fresh.  The
+        // trigger ownership is held by the pipeline itself so dropping
+        // here also frees the user's installed predicate.
+        _captureSinks.clear();
+        _captureTrigger.clear();
+        _captureState = CaptureState::Idle;
         return Error::Ok;
 }
 
@@ -465,7 +483,144 @@ Error MediaPipeline::open() {
         }
         _state = State::Open;
         publishStateChanged();
+
+        // Resolve the pacing stage / clock once every stage's port
+        // group exists.  Capture pipelines skip this; Playback
+        // pipelines without a flagged pacer get a warning here and
+        // surface NotSupported on play / pause downstream.
+        Error pacingErr = resolvePacingStage();
+        (void)pacingErr;
+        // Resolve capture-sink stages so the capture-transport API
+        // can fan gate / trigger calls out without re-walking the
+        // config on every call.
+        Error captureErr = resolveCaptureSinks();
+        (void)captureErr;
+        // Capture pipelines start with the sink gate closed (Idle)
+        // until armCapture / startCapture explicitly opens it, so
+        // pre-arm setup doesn't leak frames past a record-button.
+        if (_config.kind() == MediaPipelineConfig::Kind::Capture) {
+                setCaptureGates(false);
+        }
         return Error::Ok;
+}
+
+Error MediaPipeline::resolvePacingStage() {
+        _pacingStage = nullptr;
+        _pacingGroup = nullptr;
+        _pacingClock.clear();
+
+        if (_config.kind() != MediaPipelineConfig::Kind::Playback) return Error::Ok;
+
+        const MediaPipelineConfig::StageList &stages = _config.stages();
+        size_t                                pacers = 0;
+        const MediaPipelineConfig::Stage     *pickedCfgStage = nullptr;
+        for (size_t i = 0; i < stages.size(); ++i) {
+                if (!stages[i].pacesPipeline) continue;
+                ++pacers;
+                if (pickedCfgStage == nullptr) pickedCfgStage = &stages[i];
+        }
+        if (pacers == 0) {
+                promekiWarn("MediaPipeline::open: Playback config has no stage with pacesPipeline=true; "
+                            "play/pause will return NotSupported.");
+                return Error::Ok;
+        }
+        if (pacers > 1) {
+                promekiWarn("MediaPipeline::open: Playback config has %zu stages with pacesPipeline=true; "
+                            "using the first ('%s') and ignoring the rest.",
+                            pacers, pickedCfgStage->name.cstr());
+        }
+
+        MediaIO *io = _stages.contains(pickedCfgStage->name) ? _stages[pickedCfgStage->name] : nullptr;
+        if (io == nullptr) {
+                promekiErr("MediaPipeline::open: pacing stage '%s' not instantiated.",
+                           pickedCfgStage->name.cstr());
+                return Error::Invalid;
+        }
+        if (io->portGroupCount() == 0) {
+                promekiErr("MediaPipeline::open: pacing stage '%s' has no port group.",
+                           pickedCfgStage->name.cstr());
+                return Error::Invalid;
+        }
+        _pacingStage = io;
+        _pacingGroup = io->portGroup(0);
+        _pacingClock = _pacingGroup->clock();
+        return Error::Ok;
+}
+
+Error MediaPipeline::resolveCaptureSinks() {
+        _captureSinks.clear();
+        if (_config.kind() != MediaPipelineConfig::Kind::Capture) return Error::Ok;
+
+        const MediaPipelineConfig::StageList &stages = _config.stages();
+        for (size_t i = 0; i < stages.size(); ++i) {
+                if (!stages[i].captureSink) continue;
+                MediaIO *io = _stages.contains(stages[i].name) ? _stages[stages[i].name] : nullptr;
+                if (io == nullptr) continue;
+                _captureSinks.pushToBack(io);
+        }
+        if (_captureSinks.isEmpty()) {
+                promekiWarn("MediaPipeline::open: Capture config has no resolved capture-sink stage; "
+                            "capture-transport calls will return NotSupported.");
+        }
+        return Error::Ok;
+}
+
+void MediaPipeline::setCaptureGates(bool open) {
+        // Walk every connection that targets one of our capture sinks
+        // and flip its per-sink gate.  In Phase 4 the capture sink is
+        // typically a single terminal stage and only one connection
+        // ends at it, but the loop tolerates fan-out (multi-sink
+        // mirroring) without extra bookkeeping.
+        for (auto it = _sources.begin(); it != _sources.end(); ++it) {
+                MediaIOPortConnection *c = it->second.connection;
+                if (c == nullptr) continue;
+                for (size_t i = 0; i < _captureSinks.size(); ++i) {
+                        MediaIO *captureIO = _captureSinks[i];
+                        if (captureIO == nullptr || captureIO->sinkCount() == 0) continue;
+                        c->setSinkGate(captureIO->sink(0), open);
+                }
+        }
+}
+
+void MediaPipeline::onCaptureFrame(const Frame &frame) {
+        // The connection's pump invokes this for every successful read
+        // while we have an inspector installed.  We only act in
+        // CaptureState::Armed — once Recording the gate is already
+        // open and the pump dispatches normally; in Idle/Paused the
+        // inspector is left installed but is a no-op.
+        if (_captureState != CaptureState::Armed) return;
+        if (!frame.isValid()) return;
+        if (!_captureTrigger) return;
+        if (!_captureTrigger->match(frame)) return;
+
+        // Trigger fired — open every capture-sink gate.  The
+        // closed→open transition arms a one-shot ForceKeyframe stamp
+        // on the next frame each affected sink sees, which is *this*
+        // frame because the gate change runs before the pump's per-
+        // sink dispatch loop.
+        setCaptureGates(true);
+        setCaptureState(CaptureState::Recording);
+}
+
+void MediaPipeline::installCaptureInspectorIfNeeded() {
+        if (_captureSinks.isEmpty()) return;
+        // Install on every source-rooted connection.  The inspector
+        // runs once per source read and is a fast no-op outside
+        // CaptureState::Armed, so the cost when the trigger isn't
+        // fully wired yet is negligible.
+        for (auto it = _sources.begin(); it != _sources.end(); ++it) {
+                MediaIOPortConnection *c = it->second.connection;
+                if (c == nullptr || c->hasFrameInspector()) continue;
+                c->setFrameInspector([this](const Frame &frm) { onCaptureFrame(frm); });
+        }
+}
+
+void MediaPipeline::removeCaptureInspector() {
+        for (auto it = _sources.begin(); it != _sources.end(); ++it) {
+                MediaIOPortConnection *c = it->second.connection;
+                if (c == nullptr) continue;
+                c->setFrameInspector(MediaIOPortConnection::FrameInspector());
+        }
 }
 
 void MediaPipeline::wireConnectionsForOpenedStage(const String &name) {
@@ -534,6 +689,25 @@ Error MediaPipeline::start() {
                 return Error::NotOpen;
         }
 
+        // Honour MediaPipelineConfig::startPaused for Playback configs:
+        // pre-pause the pacing clock before flipping any signals so the
+        // first frame is staged but no pull happens until play() lands.
+        const bool isPlayback = _config.kind() == MediaPipelineConfig::Kind::Playback;
+        const bool wantStartPaused = isPlayback && _config.startPaused();
+        if (wantStartPaused) {
+                if (_pacingClock.isValid() && _pacingClock->canPause()) {
+                        Error e = _pacingClock.modify()->setPause(true);
+                        if (e.isError()) {
+                                promekiWarn("MediaPipeline::start: pacing clock setPause(true) failed: %s; "
+                                            "startPaused request ignored.",
+                                            e.desc().cstr());
+                        }
+                } else {
+                        promekiWarn("MediaPipeline::start: startPaused=true but no pause-capable pacing clock; "
+                                    "request ignored.");
+                }
+        }
+
         // Connections were created and wired during @ref open; here we
         // just announce the lifecycle transition for every stage and
         // arm the pumps.
@@ -561,6 +735,309 @@ Error MediaPipeline::start() {
                 }
         }
 
+        // Seed the playback transport state.  Capture pipelines stay
+        // Idle (capture transport lands in Phase 4); Playback pipelines
+        // land in Paused when startPaused honoured the request, else
+        // Playing.
+        if (isPlayback) {
+                if (wantStartPaused && _pacingClock.isValid() && _pacingClock->isPaused()) {
+                        setPlaybackState(PlaybackState::Paused);
+                } else {
+                        setPlaybackState(PlaybackState::Playing);
+                }
+        }
+
+        return Error::Ok;
+}
+
+Error MediaPipeline::play() {
+        if (_state != State::Running) {
+                promekiErr("MediaPipeline::play: pipeline is not Running.");
+                return Error::NotOpen;
+        }
+        if (_config.kind() != MediaPipelineConfig::Kind::Playback) {
+                promekiErr("MediaPipeline::play: pipeline kind is not Playback.");
+                return Error::NotSupported;
+        }
+        if (!_pacingClock.isValid() || !_pacingClock->canPause()) {
+                promekiErr("MediaPipeline::play: no pause-capable pacing clock resolved.");
+                return Error::NotSupported;
+        }
+        Error err = _pacingClock.modify()->setPause(false);
+        if (err.isError()) {
+                promekiErr("MediaPipeline::play: pacing clock setPause(false) failed: %s",
+                           err.desc().cstr());
+                return err;
+        }
+        setPlaybackState(PlaybackState::Playing);
+        return Error::Ok;
+}
+
+Error MediaPipeline::pause() {
+        if (_state != State::Running) {
+                promekiErr("MediaPipeline::pause: pipeline is not Running.");
+                return Error::NotOpen;
+        }
+        if (_config.kind() != MediaPipelineConfig::Kind::Playback) {
+                promekiErr("MediaPipeline::pause: pipeline kind is not Playback.");
+                return Error::NotSupported;
+        }
+        if (!_pacingClock.isValid() || !_pacingClock->canPause()) {
+                promekiErr("MediaPipeline::pause: no pause-capable pacing clock resolved.");
+                return Error::NotSupported;
+        }
+        Error err = _pacingClock.modify()->setPause(true);
+        if (err.isError()) {
+                promekiErr("MediaPipeline::pause: pacing clock setPause(true) failed: %s",
+                           err.desc().cstr());
+                return err;
+        }
+        setPlaybackState(PlaybackState::Paused);
+        return Error::Ok;
+}
+
+Error MediaPipeline::togglePlayPause() {
+        switch (_playbackState) {
+                case PlaybackState::Playing: return pause();
+                case PlaybackState::Paused:  return play();
+                default:
+                        // Idle / Seeking / Ended — leave the transport
+                        // alone; the caller can drive these explicitly
+                        // via play() / pause() / seek() once the pipeline
+                        // has progressed.
+                        return Error::Ok;
+        }
+}
+
+double MediaPipeline::rate() const {
+        if (_pacingGroup == nullptr) return 1.0;
+        return _pacingGroup->rate();
+}
+
+Error MediaPipeline::setRate(double r) {
+        if (_state != State::Running) {
+                promekiErr("MediaPipeline::setRate: pipeline is not Running.");
+                return Error::NotOpen;
+        }
+        if (_config.kind() != MediaPipelineConfig::Kind::Playback) {
+                promekiErr("MediaPipeline::setRate: pipeline kind is not Playback.");
+                return Error::NotSupported;
+        }
+        if (_pacingGroup == nullptr) {
+                promekiErr("MediaPipeline::setRate: no pacing group resolved.");
+                return Error::NotSupported;
+        }
+        if (!std::isfinite(r)) {
+                promekiErr("MediaPipeline::setRate: rate must be finite (got %f).", r);
+                return Error::InvalidArgument;
+        }
+        const double prev = _pacingGroup->rate();
+        _pacingGroup->setRate(r);
+        if (_pacingGroup->rate() != prev) {
+                rateChangedSignal.emit(r);
+                Variant payload(r);
+                PipelineEvent ev;
+                ev.setKind(PipelineEvent::Kind::TransportStateChanged);
+                ev.setPayload(payload);
+                Metadata m;
+                m.set(Metadata::ID(String("scope")), String("rate"));
+                ev.setMetadata(m);
+                publish(ev);
+        }
+        return Error::Ok;
+}
+
+FrameNumber MediaPipeline::currentFrame() const {
+        if (_pacingGroup == nullptr) return FrameNumber();
+        return _pacingGroup->currentFrame();
+}
+
+Error MediaPipeline::seek(FrameNumber pos, MediaIOSeekMode mode) {
+        if (_state != State::Running) {
+                promekiErr("MediaPipeline::seek: pipeline is not Running.");
+                return Error::NotOpen;
+        }
+        if (_config.kind() != MediaPipelineConfig::Kind::Playback) {
+                promekiErr("MediaPipeline::seek: pipeline kind is not Playback.");
+                return Error::NotSupported;
+        }
+        if (_pacingGroup == nullptr) {
+                promekiErr("MediaPipeline::seek: no pacing group resolved.");
+                return Error::NotSupported;
+        }
+        if (!_pacingGroup->canSeek()) {
+                promekiErr("MediaPipeline::seek: pacing group is not seekable.");
+                return Error::IllegalSeek;
+        }
+
+        // Pause the pacing clock before dispatching the seek so the
+        // post-seek display frame is held — matches the user-stated
+        // contract: "seek puts transport in pause, changes frame, and
+        // updates output frame".
+        if (_pacingClock.isValid() && _pacingClock->canPause() && !_pacingClock->isPaused()) {
+                Error pe = _pacingClock.modify()->setPause(true);
+                if (pe.isError()) {
+                        promekiWarn("MediaPipeline::seek: pacing clock setPause(true) failed: %s",
+                                    pe.desc().cstr());
+                }
+        }
+
+        setPlaybackState(PlaybackState::Seeking);
+
+        MediaIORequest req = _pacingGroup->seekToFrame(pos, mode);
+        Error          err = req.wait();
+        if (err.isError()) {
+                // Fail back to Paused so the caller has a defined state
+                // to recover from.  positionChanged is not emitted on
+                // failure — the seek did not land.
+                setPlaybackState(PlaybackState::Paused);
+                promekiErr("MediaPipeline::seek: seekToFrame(%lld) failed: %s",
+                           static_cast<long long>(pos.value()), err.desc().cstr());
+                return err;
+        }
+
+        setPlaybackState(PlaybackState::Paused);
+        positionChangedSignal.emit(_pacingGroup->currentFrame());
+        return Error::Ok;
+}
+
+Error MediaPipeline::stepForward(int64_t n) {
+        if (_state != State::Running) return Error::NotOpen;
+        if (_config.kind() != MediaPipelineConfig::Kind::Playback) return Error::NotSupported;
+        if (_pacingGroup == nullptr) return Error::NotSupported;
+        if (n == 0) return Error::Ok;
+
+        // Force-pause first; seek() also pauses, but doing it here
+        // first gets the transport into the documented Paused state
+        // before the seek dispatch even if the seek itself fails.
+        if (_playbackState == PlaybackState::Playing) {
+                Error e = pause();
+                if (e.isError()) return e;
+        }
+        FrameNumber cur = _pacingGroup->currentFrame();
+        // FrameNumber addition over int64_t handles negative steps too,
+        // so stepBackward can route through here unchanged.
+        FrameNumber target = cur.isValid() ? FrameNumber(cur.value() + n) : FrameNumber(n);
+        if (target.value() < 0) target = FrameNumber(0);
+        return seek(target, MediaIO_SeekExact);
+}
+
+Error MediaPipeline::stepBackward(int64_t n) {
+        return stepForward(-n);
+}
+
+// ============================================================================
+// Capture transport
+// ============================================================================
+
+Error MediaPipeline::armCapture() {
+        if (_state != State::Running) return Error::NotOpen;
+        if (_config.kind() != MediaPipelineConfig::Kind::Capture) return Error::NotSupported;
+        if (_captureSinks.isEmpty()) return Error::NotSupported;
+
+        // Without a trigger, arming collapses to immediate recording —
+        // matches the "no predicate" UX where pressing record means
+        // record-now.
+        if (!_captureTrigger) return startCapture();
+
+        // Make sure the gate is closed; install the inspector so the
+        // trigger gets evaluated per frame.  Pump catches up via the
+        // inspector path the next time the source emits frameReady.
+        setCaptureGates(false);
+        installCaptureInspectorIfNeeded();
+        setCaptureState(CaptureState::Armed);
+        return Error::Ok;
+}
+
+Error MediaPipeline::startCapture() {
+        if (_state != State::Running) return Error::NotOpen;
+        if (_config.kind() != MediaPipelineConfig::Kind::Capture) return Error::NotSupported;
+        if (_captureSinks.isEmpty()) return Error::NotSupported;
+        // setCaptureGates(true) on a previously-closed gate stamps
+        // ForceKeyframe on the next admitted frame — that's the
+        // record-start IDR.  Same path is used by trigger-fired
+        // recording in onCaptureFrame.
+        setCaptureGates(true);
+        setCaptureState(CaptureState::Recording);
+        return Error::Ok;
+}
+
+Error MediaPipeline::pauseCapture() {
+        if (_state != State::Running) return Error::NotOpen;
+        if (_config.kind() != MediaPipelineConfig::Kind::Capture) return Error::NotSupported;
+        if (_captureSinks.isEmpty()) return Error::NotSupported;
+        if (_captureState != CaptureState::Recording) return Error::Ok;
+        setCaptureGates(false);
+        // Notify every backend that opted into the
+        // setIngestPaused hook so it can do extra teardown
+        // (HW encoder low-power, network heartbeat stop, ...).
+        for (size_t i = 0; i < _captureSinks.size(); ++i) {
+                if (_captureSinks[i] != nullptr) _captureSinks[i]->setIngestPaused(true);
+        }
+        setCaptureState(CaptureState::Paused);
+        return Error::Ok;
+}
+
+Error MediaPipeline::resumeCapture() {
+        if (_state != State::Running) return Error::NotOpen;
+        if (_config.kind() != MediaPipelineConfig::Kind::Capture) return Error::NotSupported;
+        if (_captureSinks.isEmpty()) return Error::NotSupported;
+        if (_captureState != CaptureState::Paused) return Error::Ok;
+        // Notify backends first so any cold-start setup can run
+        // before the gate opens and frames start flowing.
+        for (size_t i = 0; i < _captureSinks.size(); ++i) {
+                if (_captureSinks[i] != nullptr) _captureSinks[i]->setIngestPaused(false);
+        }
+        // setCaptureGates(true) on a closed gate arms the
+        // ForceKeyframe stamp on the next frame for each affected
+        // sink, just like startCapture.
+        setCaptureGates(true);
+        setCaptureState(CaptureState::Recording);
+        return Error::Ok;
+}
+
+Error MediaPipeline::stopCapture() {
+        if (_state != State::Running) return Error::NotOpen;
+        if (_config.kind() != MediaPipelineConfig::Kind::Capture) return Error::NotSupported;
+        setCaptureGates(false);
+        removeCaptureInspector();
+        setCaptureState(CaptureState::Idle);
+        return Error::Ok;
+}
+
+Error MediaPipeline::setCaptureTrigger(MediaPipelineTrigger::UPtr trig) {
+        if (_config.kind() != MediaPipelineConfig::Kind::Capture) return Error::NotSupported;
+        _captureTrigger = std::move(trig);
+        // Installing a trigger while Armed implicitly retests on the
+        // next frame; we don't fast-path that — the inspector is
+        // already installed when Armed and will pick up the new
+        // _captureTrigger pointer on the next call.
+        return Error::Ok;
+}
+
+Error MediaPipeline::setCaptureTrigger(std::function<bool(const Frame &)> fn) {
+        if (_config.kind() != MediaPipelineConfig::Kind::Capture) return Error::NotSupported;
+        if (!fn) return clearCaptureTrigger();
+        _captureTrigger = MediaPipelineTrigger::UPtr::takeOwnership(
+                new MediaPipelineFunctionTrigger(std::move(fn)));
+        return Error::Ok;
+}
+
+Error MediaPipeline::setCaptureTrigger(const String &queryExpr) {
+        if (_config.kind() != MediaPipelineConfig::Kind::Capture) return Error::NotSupported;
+        Result<MediaPipelineTrigger::UPtr> parsed = MediaPipelineQueryTrigger::parse(queryExpr);
+        if (parsed.second().isError()) {
+                promekiErr("MediaPipeline::setCaptureTrigger: parse failed for '%s': %s",
+                           queryExpr.cstr(), parsed.second().desc().cstr());
+                return parsed.second();
+        }
+        _captureTrigger = std::move(parsed.first());
+        return Error::Ok;
+}
+
+Error MediaPipeline::clearCaptureTrigger() {
+        if (_config.kind() != MediaPipelineConfig::Kind::Capture) return Error::NotSupported;
+        _captureTrigger.clear();
         return Error::Ok;
 }
 
@@ -596,6 +1073,12 @@ Error MediaPipeline::stop() {
         _state = State::Stopped;
         publishStateChanged();
         stopStatsTimer();
+        // Transport collapses to Idle when the drain halts — there is
+        // no clock left running for play/pause to act on, and no
+        // capture gate to honor.
+        setPlaybackState(PlaybackState::Idle);
+        setCaptureState(CaptureState::Idle);
+        removeCaptureInspector();
         return Error::Ok;
 }
 
@@ -1009,6 +1492,27 @@ namespace {
                 return "Empty";
         }
 
+        const char *playbackStateName(MediaPipeline::PlaybackState s) {
+                switch (s) {
+                        case MediaPipeline::PlaybackState::Idle: return "Idle";
+                        case MediaPipeline::PlaybackState::Playing: return "Playing";
+                        case MediaPipeline::PlaybackState::Paused: return "Paused";
+                        case MediaPipeline::PlaybackState::Seeking: return "Seeking";
+                        case MediaPipeline::PlaybackState::Ended: return "Ended";
+                }
+                return "Idle";
+        }
+
+        const char *captureStateName(MediaPipeline::CaptureState s) {
+                switch (s) {
+                        case MediaPipeline::CaptureState::Idle: return "Idle";
+                        case MediaPipeline::CaptureState::Armed: return "Armed";
+                        case MediaPipeline::CaptureState::Recording: return "Recording";
+                        case MediaPipeline::CaptureState::Paused: return "Paused";
+                }
+                return "Idle";
+        }
+
         const char *logLevelName(Logger::LogLevel level) {
                 switch (level) {
                         case Logger::Force: return "Force";
@@ -1101,6 +1605,30 @@ void MediaPipeline::publishStageState(const String &stageName, const String &tra
         ev.setStageName(stageName);
         ev.setPayload(Variant(transition));
         publish(ev);
+}
+
+void MediaPipeline::publishTransportStateChanged(const String &scope, const String &newState) {
+        PipelineEvent ev;
+        ev.setKind(PipelineEvent::Kind::TransportStateChanged);
+        ev.setPayload(Variant(newState));
+        Metadata m;
+        m.set(Metadata::ID(String("scope")), scope);
+        ev.setMetadata(m);
+        publish(ev);
+}
+
+void MediaPipeline::setPlaybackState(PlaybackState s) {
+        if (s == _playbackState) return;
+        _playbackState = s;
+        playbackStateChangedSignal.emit(s);
+        publishTransportStateChanged(String("playback"), String(playbackStateName(s)));
+}
+
+void MediaPipeline::setCaptureState(CaptureState s) {
+        if (s == _captureState) return;
+        _captureState = s;
+        captureStateChangedSignal.emit(s);
+        publishTransportStateChanged(String("capture"), String(captureStateName(s)));
 }
 
 void MediaPipeline::installLoggerTap() {

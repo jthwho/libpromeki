@@ -67,13 +67,13 @@ namespace {
 // (e.g. silently dropping the subdump again) is caught here rather
 // than in pmdf-inspect's output.
 TEST_CASE("Frame::dump: video + audio payload subdumps") {
-        Frame::Ptr f = Frame::Ptr::create();
-        f.modify()->metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_30));
+        Frame f = Frame();
+        f.metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_30));
 
         UncompressedVideoPayload::Ptr vp =
                 UncompressedVideoPayload::allocate(ImageDesc(Size2Du32(16, 8), PixelFormat(PixelFormat::RGB8_sRGB)));
         REQUIRE(vp.isValid());
-        f.modify()->addPayload(vp);
+        f.addPayload(vp);
 
         AudioDesc    adesc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
         const size_t samples = 32;
@@ -82,9 +82,9 @@ TEST_CASE("Frame::dump: video + audio payload subdumps") {
         BufferView           aview(abuf, 0, abuf.size());
         PcmAudioPayload::Ptr ap = PcmAudioPayload::Ptr::create(adesc, samples, aview);
         REQUIRE(ap.isValid());
-        f.modify()->addPayload(ap);
+        f.addPayload(ap);
 
-        const StringList lines = f->dump();
+        const StringList lines = f.dump();
 
         // Header lines still show up.
         CHECK(containsKeyLine(lines, String("Video[0]")));
@@ -135,29 +135,29 @@ namespace {
 } // namespace
 
 TEST_CASE("Frame: default construction is empty") {
-        Frame::Ptr f = Frame::Ptr::create();
-        CHECK(f->payloadList().isEmpty());
-        CHECK(f->videoPayloads().isEmpty());
-        CHECK(f->audioPayloads().isEmpty());
+        Frame f = Frame();
+        CHECK(f.payloadList().isEmpty());
+        CHECK(f.videoPayloads().isEmpty());
+        CHECK(f.audioPayloads().isEmpty());
 }
 
 TEST_CASE("Frame::addPayload / payloadList: round-trips payloads") {
-        Frame::Ptr f = Frame::Ptr::create();
+        Frame f = Frame();
         auto       vp = makeVideoPayload();
         auto       ap = makeAudioPayload();
         REQUIRE(vp.isValid());
         REQUIRE(ap.isValid());
 
-        f.modify()->addPayload(vp);
-        f.modify()->addPayload(ap);
+        f.addPayload(vp);
+        f.addPayload(ap);
 
-        CHECK(f->payloadList().size() == 2u);
-        CHECK(f->payloadList()[0].ptr() == vp.ptr());
-        CHECK(f->payloadList()[1].ptr() == ap.ptr());
+        CHECK(f.payloadList().size() == 2u);
+        CHECK(f.payloadList()[0].ptr() == vp.ptr());
+        CHECK(f.payloadList()[1].ptr() == ap.ptr());
 }
 
 TEST_CASE("Frame::videoPayloads: filters only video-kind entries") {
-        Frame::Ptr f = Frame::Ptr::create();
+        Frame f = Frame();
         auto       vp1 = makeVideoPayload(16, 8);
         auto       vp2 = makeVideoPayload(32, 16);
         auto       ap = makeAudioPayload();
@@ -165,55 +165,55 @@ TEST_CASE("Frame::videoPayloads: filters only video-kind entries") {
         REQUIRE(vp2.isValid());
         REQUIRE(ap.isValid());
 
-        f.modify()->addPayload(vp1);
-        f.modify()->addPayload(ap);
-        f.modify()->addPayload(vp2);
+        f.addPayload(vp1);
+        f.addPayload(ap);
+        f.addPayload(vp2);
 
-        auto vids = f->videoPayloads();
+        auto vids = f.videoPayloads();
         CHECK(vids.size() == 2u);
         // Order is preserved.
         CHECK(vids[0].ptr() == vp1.ptr());
         CHECK(vids[1].ptr() == vp2.ptr());
 
-        auto auds = f->audioPayloads();
+        auto auds = f.audioPayloads();
         CHECK(auds.size() == 1u);
         CHECK(auds[0].ptr() == ap.ptr());
 }
 
 TEST_CASE("Frame::audioPayloads: empty when no audio present") {
-        Frame::Ptr f = Frame::Ptr::create();
-        f.modify()->addPayload(makeVideoPayload());
-        CHECK(f->audioPayloads().isEmpty());
-        CHECK(f->videoPayloads().size() == 1u);
+        Frame f = Frame();
+        f.addPayload(makeVideoPayload());
+        CHECK(f.audioPayloads().isEmpty());
+        CHECK(f.videoPayloads().size() == 1u);
 }
 
 TEST_CASE("Frame::videoFormat: valid when frame-rate metadata is set") {
-        Frame::Ptr f = Frame::Ptr::create();
-        f.modify()->metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_30));
-        f.modify()->addPayload(makeVideoPayload(1920, 1080));
+        Frame f = Frame();
+        f.metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_30));
+        f.addPayload(makeVideoPayload(1920, 1080));
 
-        VideoFormat vf = f->videoFormat(0);
+        VideoFormat vf = f.videoFormat(0);
         CHECK(vf.isValid());
         CHECK(vf.raster() == Size2Du32(1920, 1080));
         CHECK(vf.frameRate() == FrameRate(FrameRate::FPS_30));
 }
 
 TEST_CASE("Frame::videoFormat: out-of-range index returns invalid VideoFormat") {
-        Frame::Ptr f = Frame::Ptr::create();
-        f.modify()->metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_30));
-        f.modify()->addPayload(makeVideoPayload(1920, 1080));
+        Frame f = Frame();
+        f.metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_30));
+        f.addPayload(makeVideoPayload(1920, 1080));
 
-        CHECK_FALSE(f->videoFormat(1).isValid());
-        CHECK_FALSE(f->videoFormat(99).isValid());
+        CHECK_FALSE(f.videoFormat(1).isValid());
+        CHECK_FALSE(f.videoFormat(99).isValid());
 }
 
 TEST_CASE("Frame::videoFormat: returns invalid when no frame-rate in metadata") {
-        Frame::Ptr f = Frame::Ptr::create();
+        Frame f = Frame();
         // No FrameRate set in metadata.
-        f.modify()->addPayload(makeVideoPayload(1920, 1080));
+        f.addPayload(makeVideoPayload(1920, 1080));
 
         // A missing frame rate makes the VideoFormat invalid.
-        CHECK_FALSE(f->videoFormat(0).isValid());
+        CHECK_FALSE(f.videoFormat(0).isValid());
 }
 
 // ---------------------------------------------------------------
@@ -221,42 +221,42 @@ TEST_CASE("Frame::videoFormat: returns invalid when no frame-rate in metadata") 
 // ---------------------------------------------------------------
 
 TEST_CASE("Frame VariantLookup: resolves MediaPayload base scalars via video payload") {
-        Frame::Ptr     f = Frame::Ptr::create();
+        Frame     f = Frame();
         auto           vp = makeVideoPayload(1920, 1080);
         MediaTimeStamp pts(TimeStamp::now(), ClockDomain(ClockDomain::SystemMonotonic));
         vp.modify()->setPts(pts);
         vp.modify()->setDuration(Duration::fromNanoseconds(40000000));
         vp.modify()->setStreamIndex(7);
-        f.modify()->addPayload(vp);
+        f.addPayload(vp);
 
         // PTS / Duration / StreamIndex / Kind live on MediaPayload;
         // reaching them through Video[0] exercises both the
         // Frame.indexedChild lookup and the VariantLookup<VideoPayload>
         // inheritsFrom<MediaPayload> cascade.
-        auto ptsVal = VariantLookup<Frame>::resolve(*f, "Video[0].PTS");
+        auto ptsVal = VariantLookup<Frame>::resolve(f, "Video[0].PTS");
         REQUIRE(ptsVal.has_value());
         MediaTimeStamp ptsResolved = ptsVal->get<MediaTimeStamp>();
         CHECK(ptsResolved.isValid());
 
-        auto si = VariantLookup<Frame>::resolve(*f, "Video[0].StreamIndex");
+        auto si = VariantLookup<Frame>::resolve(f, "Video[0].StreamIndex");
         REQUIRE(si.has_value());
         CHECK(si->get<int32_t>() == 7);
 
-        auto kind = VariantLookup<Frame>::resolve(*f, "Video[0].Kind");
+        auto kind = VariantLookup<Frame>::resolve(f, "Video[0].Kind");
         REQUIRE(kind.has_value());
         CHECK(kind->get<String>() == "Video");
 }
 
 TEST_CASE("Frame VariantLookup: resolves VideoPayload intermediate scalars") {
-        Frame::Ptr f = Frame::Ptr::create();
+        Frame f = Frame();
         auto       vp = makeVideoPayload(1920, 1080);
-        f.modify()->addPayload(vp);
+        f.addPayload(vp);
 
-        auto w = VariantLookup<Frame>::resolve(*f, "Video[0].Width");
+        auto w = VariantLookup<Frame>::resolve(f, "Video[0].Width");
         REQUIRE(w.has_value());
         CHECK(w->get<uint32_t>() == 1920u);
 
-        auto pf = VariantLookup<Frame>::resolve(*f, "Video[0].PixelFormat");
+        auto pf = VariantLookup<Frame>::resolve(f, "Video[0].PixelFormat");
         REQUIRE(pf.has_value());
         CHECK(pf->get<PixelFormat>().id() == PixelFormat::RGB8_sRGB);
 }
@@ -265,15 +265,15 @@ TEST_CASE("Frame VariantLookup: ImageDesc fields are flat on the payload") {
         // ImageDesc fields are re-surfaced directly on VideoPayload
         // rather than hidden behind a Desc.* composition — pipeline
         // queries stay one hop deep.
-        Frame::Ptr f = Frame::Ptr::create();
+        Frame f = Frame();
         auto       vp = makeVideoPayload(1280, 720);
-        f.modify()->addPayload(vp);
+        f.addPayload(vp);
 
-        auto w = VariantLookup<Frame>::resolve(*f, "Video[0].Width");
+        auto w = VariantLookup<Frame>::resolve(f, "Video[0].Width");
         REQUIRE(w.has_value());
         CHECK(w->get<uint32_t>() == 1280u);
 
-        auto fpc = VariantLookup<Frame>::resolve(*f, "Video[0].FormatPlaneCount");
+        auto fpc = VariantLookup<Frame>::resolve(f, "Video[0].FormatPlaneCount");
         REQUIRE(fpc.has_value());
         CHECK(fpc->get<uint64_t>() == 1u); // RGB8 packed = one format plane
 }
@@ -284,64 +284,64 @@ TEST_CASE("Frame VariantLookup: polymorphic dispatch picks up CompressedVideoPay
         // IsParameterSet must be reachable through the base lookup
         // because VariantLookup<VideoPayload>::resolve dispatches
         // through variantLookupResolve.
-        Frame::Ptr f = Frame::Ptr::create();
+        Frame f = Frame();
         ImageDesc  desc(Size2Du32(1920, 1080), PixelFormat(PixelFormat::H264));
         auto       pkt = CompressedVideoPayload::Ptr::create(desc);
         pkt.modify()->setFrameType(FrameType::IDR);
         pkt.modify()->markParameterSet(true);
-        f.modify()->addPayload(pkt);
+        f.addPayload(pkt);
 
-        auto ft = VariantLookup<Frame>::resolve(*f, "Video[0].FrameType");
+        auto ft = VariantLookup<Frame>::resolve(f, "Video[0].FrameType");
         REQUIRE(ft.has_value());
         CHECK(ft->get<String>() == "IDR");
 
-        auto ps = VariantLookup<Frame>::resolve(*f, "Video[0].IsParameterSet");
+        auto ps = VariantLookup<Frame>::resolve(f, "Video[0].IsParameterSet");
         REQUIRE(ps.has_value());
         CHECK(ps->get<bool>() == true);
 }
 
 TEST_CASE("Frame VariantLookup: PcmAudioPayload.SampleCount via Audio[0]") {
-        Frame::Ptr f = Frame::Ptr::create();
+        Frame f = Frame();
         auto       ap = makeAudioPayload(/*samples=*/128);
-        f.modify()->addPayload(ap);
+        f.addPayload(ap);
 
-        auto sc = VariantLookup<Frame>::resolve(*f, "Audio[0].SampleCount");
+        auto sc = VariantLookup<Frame>::resolve(f, "Audio[0].SampleCount");
         REQUIRE(sc.has_value());
         CHECK(sc->get<uint64_t>() == 128u);
 
         // Descriptor-level fields are flat on the payload.
-        auto sr = VariantLookup<Frame>::resolve(*f, "Audio[0].SampleRate");
+        auto sr = VariantLookup<Frame>::resolve(f, "Audio[0].SampleRate");
         REQUIRE(sr.has_value());
         CHECK(sr->get<float>() == doctest::Approx(48000.0f));
 }
 
 TEST_CASE("Frame VariantLookup: Buffer[N] exposes per-slice details") {
-        Frame::Ptr f = Frame::Ptr::create();
+        Frame f = Frame();
         // An uncompressed 16x8 RGB8 payload has a single 384-byte
         // plane backed by one Buffer.  Buffer[0].{Offset,Size,Index}
         // should resolve deterministically.
         auto vp = makeVideoPayload(16, 8);
-        f.modify()->addPayload(vp);
+        f.addPayload(vp);
 
-        auto off = VariantLookup<Frame>::resolve(*f, "Video[0].Buffer[0].Offset");
+        auto off = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[0].Offset");
         REQUIRE(off.has_value());
         CHECK(off->get<uint64_t>() == 0u);
 
-        auto size = VariantLookup<Frame>::resolve(*f, "Video[0].Buffer[0].Size");
+        auto size = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[0].Size");
         REQUIRE(size.has_value());
         CHECK(size->get<uint64_t>() == 16u * 8u * 3u);
 
-        auto idx = VariantLookup<Frame>::resolve(*f, "Video[0].Buffer[0].Index");
+        auto idx = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[0].Index");
         REQUIRE(idx.has_value());
         CHECK(idx->get<uint64_t>() == 0u);
 
-        auto valid = VariantLookup<Frame>::resolve(*f, "Video[0].Buffer[0].IsValid");
+        auto valid = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[0].IsValid");
         REQUIRE(valid.has_value());
         CHECK(valid->get<bool>() == true);
 
         // Out-of-range index cleanly reports OutOfRange.
         Error err;
-        auto  miss = VariantLookup<Frame>::resolve(*f, "Video[0].Buffer[5].Size", &err);
+        auto  miss = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[5].Size", &err);
         CHECK_FALSE(miss.has_value());
         CHECK(err == Error::OutOfRange);
 }
@@ -365,20 +365,20 @@ TEST_CASE("Frame VariantLookup: Buffer[N] sees sliced multi-plane payloads") {
         auto vp = UncompressedVideoPayload::Ptr::create(
                 ImageDesc(Size2Du32(16, 8), PixelFormat(PixelFormat::RGB8_sRGB)), view);
 
-        Frame::Ptr f = Frame::Ptr::create();
-        f.modify()->addPayload(vp);
+        Frame f = Frame();
+        f.addPayload(vp);
 
         for (size_t i = 0; i < 3; ++i) {
                 String key = String::sprintf("Video[0].Buffer[%zu].Index", i);
-                auto   v = VariantLookup<Frame>::resolve(*f, key);
+                auto   v = VariantLookup<Frame>::resolve(f, key);
                 REQUIRE(v.has_value());
                 CHECK(v->get<uint64_t>() == (i < 2 ? 0u : 1u));
         }
 
         // Sizes round-trip the slice records.
-        auto sz0 = VariantLookup<Frame>::resolve(*f, "Video[0].Buffer[0].Size");
-        auto sz1 = VariantLookup<Frame>::resolve(*f, "Video[0].Buffer[1].Size");
-        auto sz2 = VariantLookup<Frame>::resolve(*f, "Video[0].Buffer[2].Size");
+        auto sz0 = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[0].Size");
+        auto sz1 = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[1].Size");
+        auto sz2 = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[2].Size");
         REQUIRE(sz0.has_value());
         REQUIRE(sz1.has_value());
         REQUIRE(sz2.has_value());
@@ -386,7 +386,7 @@ TEST_CASE("Frame VariantLookup: Buffer[N] sees sliced multi-plane payloads") {
         CHECK(sz1->get<uint64_t>() == 50u);
         CHECK(sz2->get<uint64_t>() == 128u);
 
-        auto off1 = VariantLookup<Frame>::resolve(*f, "Video[0].Buffer[1].Offset");
+        auto off1 = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[1].Offset");
         REQUIRE(off1.has_value());
         CHECK(off1->get<uint64_t>() == 100u);
 }
@@ -400,10 +400,10 @@ TEST_CASE("Frame::dump: Buffer[N] sub-sections appear for every plane") {
 
         auto vp = UncompressedVideoPayload::Ptr::create(ImageDesc(Size2Du32(4, 4), PixelFormat(PixelFormat::RGB8_sRGB)),
                                                         view);
-        Frame::Ptr f = Frame::Ptr::create();
-        f.modify()->addPayload(vp);
+        Frame f = Frame();
+        f.addPayload(vp);
 
-        StringList lines = f->dump();
+        StringList lines = f.dump();
         CHECK(dumpContains(lines, String("Buffer:")));
         // Both slices' byte sizes should render through the
         // recursive dump of the indexedChildByValue binding.
@@ -421,12 +421,12 @@ TEST_CASE("Frame VariantLookup: Meta on video payload reaches descriptor metadat
         // descriptor's metadata on a VideoPayload.  Setting via
         // payload.metadata() (the virtual) and reading via the
         // lookup path must land on the same store.
-        Frame::Ptr f = Frame::Ptr::create();
+        Frame f = Frame();
         auto       vp = makeVideoPayload(16, 8);
         vp.modify()->metadata().set(Metadata::FrameNumber, Variant(FrameNumber(static_cast<int64_t>(42))));
-        f.modify()->addPayload(vp);
+        f.addPayload(vp);
 
-        auto fn = VariantLookup<Frame>::resolve(*f, "Video[0].Meta.FrameNumber");
+        auto fn = VariantLookup<Frame>::resolve(f, "Video[0].Meta.FrameNumber");
         REQUIRE(fn.has_value());
         CHECK(fn->get<FrameNumber>().value() == 42);
 
@@ -440,15 +440,15 @@ TEST_CASE("Frame VariantLookup: Meta on video payload reaches descriptor metadat
 // ---------------------------------------------------------------
 
 TEST_CASE("Frame::dump: video payload section has single Meta block") {
-        Frame::Ptr f = Frame::Ptr::create();
+        Frame f = Frame();
         auto       vp = makeVideoPayload(1920, 1080);
         // Both keys land on the same store (desc metadata) — virtual
         // metadata() collapses payload + descriptor into one.
         vp.modify()->metadata().set(Metadata::FrameNumber, Variant(FrameNumber(static_cast<int64_t>(7))));
         vp.modify()->desc().metadata().set(Metadata::FrameRate, Variant(FrameRate(FrameRate::FPS_30)));
-        f.modify()->addPayload(vp);
+        f.addPayload(vp);
 
-        StringList lines = f->dump();
+        StringList lines = f.dump();
 
         // Flat MediaPayload scalars (cascade).
         CHECK(dumpContains(lines, String("PTS [")));
@@ -472,14 +472,14 @@ TEST_CASE("Frame::dump: video payload section has single Meta block") {
 }
 
 TEST_CASE("Frame::dump: compressed video payload section includes leaf scalars") {
-        Frame::Ptr f = Frame::Ptr::create();
+        Frame f = Frame();
         ImageDesc  desc(Size2Du32(1920, 1080), PixelFormat(PixelFormat::H264));
         auto       pkt = CompressedVideoPayload::Ptr::create(desc);
         pkt.modify()->setFrameType(FrameType::IDR);
         pkt.modify()->markParameterSet(true);
-        f.modify()->addPayload(pkt);
+        f.addPayload(pkt);
 
-        StringList lines = f->dump();
+        StringList lines = f.dump();
 
         // Concrete-leaf fields visible via dump too.
         CHECK(dumpContains(lines, String("FrameType [")));
@@ -488,12 +488,12 @@ TEST_CASE("Frame::dump: compressed video payload section includes leaf scalars")
 }
 
 TEST_CASE("Frame::dump: audio payload section is flat (SampleCount + AudioDesc fields)") {
-        Frame::Ptr f = Frame::Ptr::create();
+        Frame f = Frame();
         auto       ap = makeAudioPayload(/*samples=*/64);
         ap.modify()->desc().metadata().set(Metadata::FrameRate, Variant(FrameRate(FrameRate::FPS_48)));
-        f.modify()->addPayload(ap);
+        f.addPayload(ap);
 
-        StringList lines = f->dump();
+        StringList lines = f.dump();
 
         // Uncompressed-leaf specific.
         CHECK(dumpContains(lines, String("SampleCount [")));
@@ -564,12 +564,12 @@ PROMEKI_LOOKUP_REGISTER(SyntheticPayload)
         .scalar("Tag", [](const SyntheticPayload &p) -> std::optional<Variant> { return Variant(p.tag()); });
 
 TEST_CASE("Frame::dump: non-video / non-audio payload section is detailed") {
-        Frame::Ptr f = Frame::Ptr::create();
+        Frame f = Frame();
         auto       sp = SyntheticPayload::Ptr::create();
         sp.modify()->setTag("world");
-        f.modify()->addPayload(sp);
+        f.addPayload(sp);
 
-        StringList lines = f->dump();
+        StringList lines = f.dump();
 
         // Header uses the kind name, not a hard-coded Video / Audio label.
         CHECK(dumpContains(lines, String("Subtitle[0]:")));
@@ -582,21 +582,21 @@ TEST_CASE("Frame::dump: non-video / non-audio payload section is detailed") {
 }
 
 TEST_CASE("Frame::videoFormat: skips audio payloads to find the nth video") {
-        Frame::Ptr f = Frame::Ptr::create();
-        f.modify()->metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_25));
-        f.modify()->addPayload(makeAudioPayload());
-        f.modify()->addPayload(makeVideoPayload(640, 480));
-        f.modify()->addPayload(makeAudioPayload());
-        f.modify()->addPayload(makeVideoPayload(1280, 720));
+        Frame f = Frame();
+        f.metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_25));
+        f.addPayload(makeAudioPayload());
+        f.addPayload(makeVideoPayload(640, 480));
+        f.addPayload(makeAudioPayload());
+        f.addPayload(makeVideoPayload(1280, 720));
 
         // index 0 is the 640x480 video, index 1 is 1280x720.
-        VideoFormat vf0 = f->videoFormat(0);
+        VideoFormat vf0 = f.videoFormat(0);
         CHECK(vf0.isValid());
         CHECK(vf0.raster() == Size2Du32(640, 480));
 
-        VideoFormat vf1 = f->videoFormat(1);
+        VideoFormat vf1 = f.videoFormat(1);
         CHECK(vf1.isValid());
         CHECK(vf1.raster() == Size2Du32(1280, 720));
 
-        CHECK_FALSE(f->videoFormat(2).isValid());
+        CHECK_FALSE(f.videoFormat(2).isValid());
 }

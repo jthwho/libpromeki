@@ -79,17 +79,17 @@ When in doubt, prefer a data object. Most classes in a library like this are dat
 
 ### Sharing Data Objects Across Threads
 
-Data objects are not internally thread-safe — concurrent reads and writes to the same instance require external synchronization. The standard pattern for sharing data between threads is to use the `Ptr` typedef (`SharedPtr`). The reference counting in `SharedPtr` is atomic, so passing a `Ptr` to another thread is safe. The pointed-to object itself is not synchronized, so the pattern relies on ownership handoff: once you pass a `Ptr` to another thread, you should not mutate the underlying object from the original thread.
+Data objects are not internally thread-safe — concurrent reads and writes to the same instance require external synchronization. Sharing across threads splits two ways: (1) for value-type handles that wrap an internal `SharedPtr<Data>` (`Frame`, `Buffer`, `String`, `VariantDatabase`), copy by value; (2) for objects that still expose a `Ptr` typedef (`MediaPayload::Ptr`, `Image::Ptr`, ...), wrap in the `Ptr`. Both rely on the same atomic refcount, so the pattern is identical at the call site — only the type spelling differs. Either way: once you pass a value or `Ptr` to another thread, the consuming thread treats it as its own; the producing thread should not continue to mutate it.
 
-**Pattern 1: Share a single data object via Ptr.**
+**Pattern 1: Share an internally-CoW value type.**
 
-When you need to pass one data object to another thread (e.g., pushing a `Frame::Ptr` through a pipeline, or emitting a signal with an `Image::Ptr`), wrap it in its `Ptr` type:
+`Frame`, `Buffer`, `String`, and `VariantDatabase` are value-type handles. Copy a `Frame` to ship it across a thread boundary; mutators perform copy-on-write so each consumer transparently gets its own clone the first time it writes:
 
 ```cpp
 // Producer thread
-Frame::Ptr frame = Frame::Ptr::create(desc);
+Frame frame;
 // ... fill frame data ...
-link.pushFrame(frame);  // Ptr safely crosses thread boundary
+link.pushFrame(frame);  // value crosses thread boundary; refcount bump
 
 // Consumer thread
 auto [frame, err] = link.pullFrame();

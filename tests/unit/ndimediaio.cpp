@@ -151,8 +151,8 @@ TEST_CASE("NdiMediaIO: open as Sink, write a synthetic UYVY frame, close") {
                 bytes[i + 3] = 128;
         }
 
-        Frame::Ptr frame = Frame::Ptr::create();
-        frame.modify()->addPayload(vp);
+        Frame frame = Frame();
+        frame.addPayload(vp);
 
         Error werr = io->sink(0)->writeFrame(frame).wait();
         CHECK(werr.isOk());
@@ -363,8 +363,8 @@ TEST_CASE("NdiMediaIO: hermetic sender->receiver round-trip in one process") {
         TimeStamp        sentinelTs(sentinelV);
         vp.modify()->setPts(MediaTimeStamp(sentinelTs, NdiClock::domain()));
 
-        Frame::Ptr frame = Frame::Ptr::create();
-        frame.modify()->addPayload(vp);
+        Frame frame = Frame();
+        frame.addPayload(vp);
 
         std::atomic<bool> stopSender{false};
         std::thread       senderThread([&] {
@@ -432,7 +432,7 @@ TEST_CASE("NdiMediaIO: hermetic sender->receiver round-trip in one process") {
         // wait leaves an in-flight Read on the strand, and a backlog
         // of stranded Reads delays close-time cleanup.
         int        framesRead = 0;
-        Frame::Ptr received;
+        Frame received;
         {
                 MediaIORequest readReq = srcIo->source(0)->readFrame();
                 Error          rerr    = readReq.wait(10'000);
@@ -456,7 +456,7 @@ TEST_CASE("NdiMediaIO: hermetic sender->receiver round-trip in one process") {
         //         TimeStamp::now() at the moment our capture thread
         //         saw the packet, in the SystemMonotonic domain.
         if (received.isValid()) {
-                auto rxVids = received->videoPayloads();
+                auto rxVids = received.videoPayloads();
                 REQUIRE(!rxVids.isEmpty());
                 CHECK(rxVids[0].isValid());
                 if (rxVids[0].isValid()) {
@@ -490,8 +490,8 @@ TEST_CASE("NdiMediaIO: hermetic sender->receiver round-trip in one process") {
                 // Without this, a 29.97 source would be predicted at
                 // a 30/1 cadence and accumulate ~1.6 sample/frame
                 // drift in the A/V sync offset.
-                REQUIRE(received->metadata().contains(Metadata::FrameRate));
-                FrameRate rxFr = received->metadata()
+                REQUIRE(received.metadata().contains(Metadata::FrameRate));
+                FrameRate rxFr = received.metadata()
                                          .get(Metadata::FrameRate)
                                          .get<FrameRate>();
                 CHECK(rxFr.isValid());

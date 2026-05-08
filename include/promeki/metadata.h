@@ -27,11 +27,18 @@ class StringList;
  * Stores metadata entries keyed by well-known string-registered IDs.
  * Each value is stored as a Variant, supporting types such as String,
  * int, double, bool, Timecode, and Rational. Supports JSON
- * serialization and deserialization. When shared ownership is needed,
- * use Metadata::Ptr.
+ * serialization and deserialization.
  *
  * Each ID is declared via @ref declareID with a mandatory @ref VariantSpec
  * that captures the accepted type, default value, and description.
+ *
+ * @par Storage and copy semantics
+ * Metadata is a value type with internal copy-on-write sharing,
+ * inherited from its @ref VariantDatabase base.  Copying a Metadata
+ * is O(1); the entry map is only deep-copied when one of the aliased
+ * handles is mutated.  This is the property that lets Metadata ride
+ * on every Frame copy through a pipeline without deep-copying the
+ * entry map at every stage.
  *
  * @par Example
  * @code
@@ -44,11 +51,7 @@ class StringList;
  * @endcode
  */
 class Metadata : public VariantDatabase<"Metadata"> {
-                PROMEKI_SHARED_FINAL(Metadata)
         public:
-                /** @brief Shared pointer type for Metadata. */
-                using Ptr = SharedPtr<Metadata>;
-
                 /** @brief Base class alias. */
                 using Base = VariantDatabase<"Metadata">;
 

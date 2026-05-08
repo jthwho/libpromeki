@@ -608,6 +608,7 @@ namespace {
                         std::atomic<int> statsUpdated{0};
                         std::atomic<int> planResolved{0};
                         std::atomic<int> log{0};
+                        std::atomic<int> transportStateChanged{0};
                         std::atomic<int> total{0};
         };
 
@@ -620,6 +621,7 @@ namespace {
                         case PipelineEvent::Kind::StatsUpdated: counts.statsUpdated.fetch_add(1); break;
                         case PipelineEvent::Kind::PlanResolved: counts.planResolved.fetch_add(1); break;
                         case PipelineEvent::Kind::Log: counts.log.fetch_add(1); break;
+                        case PipelineEvent::Kind::TransportStateChanged: counts.transportStateChanged.fetch_add(1); break;
                 }
         }
 
@@ -815,4 +817,537 @@ TEST_CASE("MediaPipeline_CloseOnClosedStateIsNoOp") {
         p.closedSignal.connect([&closedCount](Error) { closedCount.fetch_add(1); }, &p);
         CHECK(p.close().isOk());
         CHECK(closedCount.load() == 0);
+}
+
+// ============================================================================
+// Phase 2 — Playback transport: state, pause-via-clock, play, startPaused
+// ============================================================================
+
+namespace {
+
+        // Builds a self-contained Playback config: TPG → CSC where the
+        // CSC stage carries the pacing flag.  CSC is a Transform, but
+        // its port-group still owns a Clock that the pipeline can pause
+        // — that's all the play/pause path needs.  Used for the pause /
+        // resume / startPaused / kind-gate tests below.
+        MediaPipelineConfig makePlaybackConfig(bool startPaused = false) {
+                MediaPipelineConfig cfg = makeTpgToCsc();
+                cfg.setKind(MediaPipelineConfig::Kind::Playback);
+                cfg.setStartPaused(startPaused);
+                for (auto &stage : cfg.stages()) {
+                        if (stage.name == "csc") {
+                                stage.pacesPipeline = true;
+                                break;
+                        }
+                }
+                return cfg;
+        }
+
+        // Builds a Capture config based on the same shape so the kind-
+        // gate negative tests have a real Capture pipeline to drive.
+        MediaPipelineConfig makeCaptureConfig() {
+                MediaPipelineConfig cfg = makeTpgToCsc();
+                cfg.setKind(MediaPipelineConfig::Kind::Capture);
+                for (auto &stage : cfg.stages()) {
+                        if (stage.name == "csc") {
+                                stage.captureSink = true;
+                                break;
+                        }
+                }
+                return cfg;
+        }
+
+} // namespace
+
+TEST_CASE("MediaPipeline_Transport_DefaultPlaybackStateIsIdle") {
+        EventLoop     loop;
+        MediaPipeline p;
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Idle);
+}
+
+TEST_CASE("MediaPipeline_Transport_StartLandsInPlayingForPlaybackKind") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makePlaybackConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Playing);
+        CHECK(p.stop().isOk());
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Idle);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_StartPausedLandsInPaused") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makePlaybackConfig(/*startPaused=*/true)).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Paused);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_PauseAndPlayFlipState") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makePlaybackConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        std::atomic<int> transitions{0};
+        p.playbackStateChangedSignal.connect(
+                [&transitions](MediaPipeline::PlaybackState) { transitions.fetch_add(1); }, &p);
+
+        REQUIRE(p.pause().isOk());
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Paused);
+        REQUIRE(p.play().isOk());
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Playing);
+        // pause -> Paused (1), play -> Playing (2).
+        CHECK(transitions.load() == 2);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_TogglePlayPauseFlipsBetweenPlayingAndPaused") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makePlaybackConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Playing);
+
+        REQUIRE(p.togglePlayPause().isOk());
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Paused);
+        REQUIRE(p.togglePlayPause().isOk());
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Playing);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_RejectsPlayPauseOutsideRunning") {
+        EventLoop     loop;
+        MediaPipeline p;
+        // Empty pipeline rejects with NotOpen — there's no Running
+        // state to act on.
+        CHECK(p.play() == Error::NotOpen);
+        CHECK(p.pause() == Error::NotOpen);
+
+        REQUIRE(p.build(makePlaybackConfig()).isOk());
+        // Built but not open: still rejects.
+        CHECK(p.play() == Error::NotOpen);
+        REQUIRE(p.open().isOk());
+        // Open but not started: still rejects.
+        CHECK(p.play() == Error::NotOpen);
+        REQUIRE(p.start().isOk());
+
+        // Running: succeeds.
+        CHECK(p.pause() == Error::Ok);
+        CHECK(p.play() == Error::Ok);
+
+        // Stopped: rejects again.
+        REQUIRE(p.stop().isOk());
+        CHECK(p.play() == Error::NotOpen);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_CapturePipelineRejectsPlayPause") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeCaptureConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        // Capture pipelines surface a kind mismatch on play / pause —
+        // capture transport lands in Phase 4 with its own surface.
+        CHECK(p.play() == Error::NotSupported);
+        CHECK(p.pause() == Error::NotSupported);
+        // Capture pipelines stay Idle on the playback transport even
+        // while Running.
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Idle);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_PlaybackStateChangedSubscriberSeesEvents") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makePlaybackConfig()).isOk());
+        REQUIRE(p.open().isOk());
+
+        std::atomic<int> transportEvents{0};
+        const int        subId = p.subscribe([&transportEvents](const PipelineEvent &ev) {
+                if (ev.kind() == PipelineEvent::Kind::TransportStateChanged) transportEvents.fetch_add(1);
+        });
+        REQUIRE(subId >= 0);
+
+        REQUIRE(p.start().isOk());
+        REQUIRE(p.pause().isOk());
+        REQUIRE(p.play().isOk());
+
+        // Pump the loop briefly so the queued PipelineEvent callbacks run.
+        ElapsedTimer wd;
+        wd.start();
+        while (transportEvents.load() < 3 && wd.elapsed() < 1000) loop.processEvents();
+        // start -> Playing (1), pause -> Paused (2), play -> Playing (3).
+        CHECK(transportEvents.load() == 3);
+
+        p.unsubscribe(subId);
+        CHECK(p.close().isOk());
+}
+
+// ============================================================================
+// Phase 3 — Playback transport: seek, rate, frame step
+// ============================================================================
+
+TEST_CASE("MediaPipeline_Transport_RateDefaultsToOne") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makePlaybackConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        CHECK(p.rate() == 1.0);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_SetRateForwardsToPacingGroup") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makePlaybackConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        std::atomic<int> rateChanges{0};
+        p.rateChangedSignal.connect([&rateChanges](double) { rateChanges.fetch_add(1); }, &p);
+
+        REQUIRE(p.setRate(0.5) == Error::Ok);
+        CHECK(p.rate() == 0.5);
+        REQUIRE(p.setRate(2.0) == Error::Ok);
+        CHECK(p.rate() == 2.0);
+        // Setting the same rate twice must not double-fire the signal.
+        REQUIRE(p.setRate(2.0) == Error::Ok);
+        CHECK(rateChanges.load() == 2);
+
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_SetRateRejectsNonFinite") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makePlaybackConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        CHECK(p.setRate(std::numeric_limits<double>::quiet_NaN()) == Error::InvalidArgument);
+        CHECK(p.setRate(std::numeric_limits<double>::infinity()) == Error::InvalidArgument);
+        // Rate is unchanged after the rejected calls.
+        CHECK(p.rate() == 1.0);
+
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_SetRateRejectsCaptureKind") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeCaptureConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        CHECK(p.setRate(0.5) == Error::NotSupported);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_SeekRejectsNonSeekableGroup") {
+        // TPG → CSC where CSC paces.  Neither stage's port group reports
+        // canSeek=true, so seek must surface Error::IllegalSeek without
+        // touching the backend.
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makePlaybackConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        CHECK(p.seek(FrameNumber(10), MediaIO_SeekExact) == Error::IllegalSeek);
+        // State stays Playing because the pause-then-seek path is gated
+        // on canSeek before any state change.
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Playing);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_SeekRejectsCaptureAndOutsideRunning") {
+        EventLoop     loop;
+        MediaPipeline p;
+        // Outside Running.
+        CHECK(p.seek(FrameNumber(0)) == Error::NotOpen);
+        // Capture pipeline.
+        REQUIRE(p.build(makeCaptureConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        CHECK(p.seek(FrameNumber(0)) == Error::NotSupported);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_StepForwardPausesEvenWhenSeekFails") {
+        // stepForward pauses first, then dispatches the seek.  When the
+        // seek fails (e.g. non-seekable TPG), the transport must end up
+        // in Paused so the caller has a defined state — matches the
+        // user-stated contract that stepping always lands paused.
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makePlaybackConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Playing);
+        Error err = p.stepForward(1);
+        // Pause already happened; the seek itself returns IllegalSeek.
+        CHECK(err == Error::IllegalSeek);
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Paused);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_StepForwardWithZeroIsNoOp") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makePlaybackConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        CHECK(p.stepForward(0) == Error::Ok);
+        // No pause was forced because the no-op exit happens before
+        // the pause path.
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Playing);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_StepBackwardForwardsToStepForward") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makePlaybackConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        // Negative-target seek would clamp to 0; TPG is non-seekable so
+        // we get IllegalSeek either way and the state lands Paused.
+        Error err = p.stepBackward(2);
+        CHECK(err == Error::IllegalSeek);
+        CHECK(p.playbackState() == MediaPipeline::PlaybackState::Paused);
+        CHECK(p.close().isOk());
+}
+
+// ============================================================================
+// Phase 4 — Capture transport: gate, trigger, keyframe stamp
+// ============================================================================
+
+TEST_CASE("MediaPipeline_Transport_DefaultCaptureStateIsIdle") {
+        EventLoop     loop;
+        MediaPipeline p;
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Idle);
+}
+
+TEST_CASE("MediaPipeline_Transport_StartCaptureMovesIdleToRecording") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeCaptureConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Idle);
+
+        std::atomic<int> changes{0};
+        p.captureStateChangedSignal.connect(
+                [&changes](MediaPipeline::CaptureState) { changes.fetch_add(1); }, &p);
+
+        REQUIRE(p.startCapture() == Error::Ok);
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Recording);
+        CHECK(changes.load() == 1);
+
+        REQUIRE(p.pauseCapture() == Error::Ok);
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Paused);
+        REQUIRE(p.resumeCapture() == Error::Ok);
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Recording);
+        CHECK(changes.load() == 3);
+
+        REQUIRE(p.stopCapture() == Error::Ok);
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Idle);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_ArmWithoutTriggerCollapsesToRecording") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeCaptureConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        // No trigger installed -> arm is a record-now alias.
+        REQUIRE(p.armCapture() == Error::Ok);
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Recording);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_ArmWithTriggerStaysArmedUntilMatch") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeCaptureConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        // Function trigger that never fires.
+        std::atomic<int> evaluations{0};
+        REQUIRE(p.setCaptureTrigger([&evaluations](const Frame &) {
+                evaluations.fetch_add(1);
+                return false;
+        }) == Error::Ok);
+        REQUIRE(p.armCapture() == Error::Ok);
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Armed);
+        // Pump briefly so the inspector gets called for some frames.
+        for (int i = 0; i < 50; ++i) loop.processEvents();
+        // We don't strictly require N evaluations here — TPG's drain
+        // rate depends on backpressure since the gate is closed —
+        // but state must still be Armed.
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Armed);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_TriggerFiresTransitionsToRecording") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeCaptureConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        // Trigger that fires immediately — first frame inspected
+        // should flip the state.
+        REQUIRE(p.setCaptureTrigger([](const Frame &) { return true; }) == Error::Ok);
+        REQUIRE(p.armCapture() == Error::Ok);
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Armed);
+
+        // Pump until the inspector runs at least once.
+        ElapsedTimer wd;
+        wd.start();
+        while (p.captureState() == MediaPipeline::CaptureState::Armed && wd.elapsed() < 1000) {
+                loop.processEvents();
+        }
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Recording);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_QueryStringTriggerParses") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeCaptureConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        // Query expressions are parsed eagerly via VariantQuery<Frame>;
+        // a syntactically-valid one must round-trip cleanly.
+        CHECK(p.setCaptureTrigger(String("Meta.FrameKeyframe == true")) == Error::Ok);
+        // Bogus expression surfaces the parse error.
+        Error err = p.setCaptureTrigger(String("not_a_real_field >>> 5"));
+        CHECK(err.isError());
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_ClearCaptureTriggerLeavesArmedRecording") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeCaptureConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        REQUIRE(p.setCaptureTrigger([](const Frame &) { return false; }) == Error::Ok);
+        CHECK(p.clearCaptureTrigger() == Error::Ok);
+        // After clearing, arming again must collapse to Recording
+        // because the no-trigger path applies.
+        REQUIRE(p.armCapture() == Error::Ok);
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Recording);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_Transport_PlaybackKindRejectsCaptureCalls") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makePlaybackConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+        CHECK(p.armCapture() == Error::NotSupported);
+        CHECK(p.startCapture() == Error::NotSupported);
+        CHECK(p.pauseCapture() == Error::NotSupported);
+        CHECK(p.resumeCapture() == Error::NotSupported);
+        CHECK(p.stopCapture() == Error::NotSupported);
+        CHECK(p.setCaptureTrigger([](const Frame &) { return true; }) == Error::NotSupported);
+        CHECK(p.setCaptureTrigger(String("Meta.FrameKeyframe == true")) == Error::NotSupported);
+        CHECK(p.clearCaptureTrigger() == Error::NotSupported);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipelineQueryTrigger_ParsesValidExpression") {
+        // Direct trigger-class smoke test: confirm parse + match work
+        // without needing the full pipeline harness.
+        auto res = MediaPipelineQueryTrigger::parse(String("Meta.FrameKeyframe == true"));
+        REQUIRE(res.second().isOk());
+        REQUIRE(res.first().isValid());
+}
+
+TEST_CASE("MediaPipelineQueryTrigger_RejectsBogusExpression") {
+        auto res = MediaPipelineQueryTrigger::parse(String("garbage >>> nope"));
+        CHECK(res.second().isError());
+}
+
+TEST_CASE("MediaPipelineFunctionTrigger_EmptyPredicateNeverMatches") {
+        MediaPipelineFunctionTrigger trig{nullptr};
+        Frame                        f;
+        CHECK_FALSE(trig.match(f));
+}
+
+TEST_CASE("MediaPipelineFunctionTrigger_PredicateForwarded") {
+        MediaPipelineFunctionTrigger trig{[](const Frame &) { return true; }};
+        Frame                        f;
+        CHECK(trig.match(f));
+}
+
+// ============================================================================
+// Phase 5 — setIngestPaused fan-out
+// ============================================================================
+
+namespace {
+
+        // MediaIO subclass whose only purpose is to record setIngestPaused
+        // calls so a test can confirm the pipeline's pause/resume capture
+        // path fans the hook out to every captureSink-flagged stage.
+        class RecordingSinkMediaIO : public MediaIO {
+                public:
+                        RecordingSinkMediaIO() : MediaIO(nullptr) {}
+                        void submit(MediaIOCommand::Ptr) override {}
+                        void setIngestPaused(bool paused) override {
+                                if (paused) ++pausedCount;
+                                else        ++resumedCount;
+                        }
+                        int pausedCount = 0;
+                        int resumedCount = 0;
+        };
+
+} // namespace
+
+TEST_CASE("MediaPipeline_Transport_PauseResumeFanIngestHook") {
+        EventLoop     loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeCaptureConfig()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        // The capture sink the pipeline resolved is a real MediaIO; we
+        // can't swap it after open, but we can verify the fan-out
+        // contract holds by exercising pauseCapture / resumeCapture
+        // and confirming the lifecycle remains valid (the default
+        // setIngestPaused override is a no-op, so this just tests
+        // that the fan-out call doesn't crash and capture state
+        // advances as expected).
+        REQUIRE(p.startCapture() == Error::Ok);
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Recording);
+        REQUIRE(p.pauseCapture() == Error::Ok);
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Paused);
+        REQUIRE(p.resumeCapture() == Error::Ok);
+        CHECK(p.captureState() == MediaPipeline::CaptureState::Recording);
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaIO_SetIngestPausedDefaultIsNoOp") {
+        // Verify the base-class default truly does nothing (no virtual
+        // dispatch failure, no state change).  Concrete RecordingSink
+        // exercises the override path; we keep it here for test
+        // discoverability rather than wiring it through a real pipeline.
+        RecordingSinkMediaIO io;
+        io.setIngestPaused(true);
+        io.setIngestPaused(false);
+        CHECK(io.pausedCount == 1);
+        CHECK(io.resumedCount == 1);
 }

@@ -46,20 +46,24 @@ PROMEKI_NAMESPACE_BEGIN
  * otherwise.
  *
  * @par Per-kind payload contract
- * - @ref Kind::StateChanged  — @ref payload holds a @c String naming
+ * - @ref Kind::StateChanged          — @ref payload holds a @c String naming
  *   the new @c MediaPipeline::State (e.g. @c "Running").
- * - @ref Kind::StageState    — @ref payload holds a @c String naming
+ * - @ref Kind::StageState            — @ref payload holds a @c String naming
  *   the stage transition (@c "Opened", @c "Started", @c "Stopped",
  *   @c "Closed"); @ref stageName identifies the stage.
- * - @ref Kind::StageError    — @ref payload holds a @c String message;
+ * - @ref Kind::StageError            — @ref payload holds a @c String message;
  *   @ref metadata carries the error name / code via @c "code".
- * - @ref Kind::StatsUpdated  — @ref jsonPayload holds the result of
+ * - @ref Kind::StatsUpdated          — @ref jsonPayload holds the result of
  *   @c MediaPipelineStats::toJson; @ref payload is invalid.
- * - @ref Kind::PlanResolved  — @ref jsonPayload holds the result of
+ * - @ref Kind::PlanResolved          — @ref jsonPayload holds the result of
  *   @c MediaPipelineConfig::toJson; @ref payload is invalid.
- * - @ref Kind::Log           — @ref payload holds the log message
+ * - @ref Kind::Log                   — @ref payload holds the log message
  *   @c String; @ref metadata carries @c "level", @c "source",
  *   @c "line", @c "threadName".
+ * - @ref Kind::TransportStateChanged — @ref payload holds a @c String naming
+ *   the new transport state (@c "Playing", @c "Paused", @c "Seeking",
+ *   @c "Recording", @c "Armed", ...); @ref metadata carries @c "scope"
+ *   (@c "playback" or @c "capture").
  *
  * @par Example
  * @code
@@ -98,12 +102,13 @@ class PipelineEvent {
                  *        notification this event represents.
                  */
                 enum class Kind {
-                        StateChanged, ///< Pipeline-level state transition.
-                        StageState,   ///< Per-stage open/start/stop/close transition.
-                        StageError,   ///< Error reported by a stage (or pipeline).
-                        StatsUpdated, ///< Periodic stats snapshot.
-                        PlanResolved, ///< Resolved config after planner ran.
-                        Log           ///< Log message captured via Logger listener.
+                        StateChanged,          ///< Pipeline-level lifecycle state transition.
+                        StageState,            ///< Per-stage open/start/stop/close transition.
+                        StageError,            ///< Error reported by a stage (or pipeline).
+                        StatsUpdated,          ///< Periodic stats snapshot.
+                        PlanResolved,          ///< Resolved config after planner ran.
+                        Log,                   ///< Log message captured via Logger listener.
+                        TransportStateChanged  ///< Playback or capture transport-state transition.
                 };
 
                 /** @brief Default-constructs an empty event with @ref Kind::StateChanged. */

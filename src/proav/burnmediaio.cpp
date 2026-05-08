@@ -111,7 +111,7 @@ Error BurnMediaIO::executeCmd(MediaIOCommandClose &cmd) {
         return Error::Ok;
 }
 
-Error BurnMediaIO::burnFrame(const Frame::Ptr &input, Frame::Ptr &output) {
+Error BurnMediaIO::burnFrame(const Frame &input, Frame &output) {
         if (!input.isValid()) {
                 return Error::Invalid;
         }
@@ -121,19 +121,18 @@ Error BurnMediaIO::burnFrame(const Frame::Ptr &input, Frame::Ptr &output) {
                 return Error::Ok;
         }
 
-        Frame::Ptr outFrame = Frame::Ptr::create();
-        Frame     *outRaw = outFrame.modify();
-        outRaw->metadata() = input->metadata();
+        Frame outFrame = Frame();
+        outFrame.metadata() = input.metadata();
 
         // Pass every payload through by reference; the burn loop below
         // calls modify() on each UncompressedVideoPayload slot to
         // CoW-clone before painting, so upstream frames sharing the
         // same Ptr stay unpainted.
-        for (const MediaPayload::Ptr &srcP : input->payloadList()) {
-                if (srcP.isValid()) outRaw->addPayload(srcP);
+        for (const MediaPayload::Ptr &srcP : input.payloadList()) {
+                if (srcP.isValid()) outFrame.addPayload(srcP);
         }
 
-        String burnText = VariantLookup<Frame>::format(*outFrame, _burnTextTemplate);
+        String burnText = VariantLookup<Frame>::format(outFrame, _burnTextTemplate);
         if (!burnText.isEmpty()) {
                 // Burn operates payload-native: walk every
                 // @ref UncompressedVideoPayload slot in the output's
@@ -148,7 +147,7 @@ Error BurnMediaIO::burnFrame(const Frame::Ptr &input, Frame::Ptr &output) {
                 // @ref Frame::resyncVideoPayloadsFromImageList — the
                 // payload is the canonical representation downstream
                 // stages read.
-                for (MediaPayload::Ptr &payloadPtr : outRaw->payloadList()) {
+                for (MediaPayload::Ptr &payloadPtr : outFrame.payloadList()) {
                         if (!payloadPtr.isValid()) continue;
                         if (!payloadPtr->as<UncompressedVideoPayload>()) continue;
 
@@ -187,7 +186,7 @@ Error BurnMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                 _capacityWarned = true;
         }
 
-        Frame::Ptr outFrame;
+        Frame outFrame;
         Error      err = burnFrame(cmd.frame, outFrame);
         if (err.isError()) {
                 return err;
@@ -206,7 +205,7 @@ Error BurnMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 return Error::TryAgain;
         }
 
-        Frame::Ptr frame = std::move(_outputQueue.front());
+        Frame frame = std::move(_outputQueue.front());
         _outputQueue.remove(0);
         _readCount++;
         cmd.frame = std::move(frame);

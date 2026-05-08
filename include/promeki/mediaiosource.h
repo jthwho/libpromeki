@@ -51,7 +51,7 @@ class MediaIORequest;
  * current-frame, and seek state.  The multi-source "atomic
  * distribute one frame per source per @ref MediaIOCommandRead" path
  * is reserved for a future phase — today @ref MediaIOCommandRead
- * carries a single @c Frame::Ptr targeted at one source within the
+ * carries a single @c Frame targeted at one source within the
  * group, and sources advance their queues one read at a time.
  * Sources in single-port groups behave independently.
  */
@@ -153,7 +153,7 @@ class MediaIOSource : public MediaIOPort {
                  * MediaIORequest req = source->readFrame();
                  * Error err = req.wait();
                  * if (err.isOk()) {
-                 *     Frame::Ptr frame = req.commandAs<MediaIOCommandRead>()->frame;
+                 *     Frame frame = req.commandAs<MediaIOCommandRead>()->frame;
                  *     // ... use frame ...
                  * }
                  * @endcode
@@ -195,11 +195,11 @@ class MediaIOSource : public MediaIOPort {
 
                 // ---- Navigation (forwards to the port group) ----
 
-                /** @brief Returns @c group()->step(). */
-                int step() const;
+                /** @brief Returns @c group()->rate(). */
+                double rate() const;
 
-                /** @brief Forwards to @c group()->setStep(). */
-                void setStep(int val);
+                /** @brief Forwards to @c group()->setRate(). */
+                void setRate(double r);
 
                 /** @brief Returns @c group()->currentFrame(). */
                 FrameNumber currentFrame() const;

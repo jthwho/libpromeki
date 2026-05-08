@@ -526,7 +526,7 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 void  onDataPacket(const RtpPacket &pkt);
                 void  emitVideoFrame();
                 void  emitDataMessage();
-                void  pushReaderFrame(Frame::Ptr frame);
+                void  pushReaderFrame(Frame frame);
 
                 void  buildSdp();
                 Error writeSdpFile(const String &path);
@@ -590,7 +590,7 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 PixelFormat _videoWirePixelFormat;
 
                 // Reader runtime
-                Queue<Frame::Ptr> _readerQueue;
+                Queue<Frame> _readerQueue;
                 int               _readerMaxDepth = 4;
                 int               _readerJitterMs = 50;
                 FrameCount        _readerFramesReceived{0};

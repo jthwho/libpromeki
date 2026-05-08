@@ -7,8 +7,11 @@
 
 #pragma once
 
+#include <functional>
+
 #include <promeki/atomic.h>
 #include <promeki/error.h>
+#include <promeki/frame.h>
 #include <promeki/framecount.h>
 #include <promeki/list.h>
 #include <promeki/mediaiorequest.h>
@@ -237,7 +240,81 @@ class MediaIOPortConnection : public ObjectBase {
                 /** @brief True once every attached sink has stopped. */
                 bool allSinksDone() const { return _allSinksDoneEmitted; }
 
+                // ---- Per-sink gate (capture transport) ----
+
+                /**
+                 * @brief Opens or closes the per-sink delivery gate.
+                 *
+                 * When a sink's gate is closed, the pump still drains
+                 * source reads but skips @c writeFrame on that sink —
+                 * other sinks on this connection (e.g. a monitor /
+                 * preview path) keep receiving frames.  When the gate
+                 * transitions from closed back to open, the next frame
+                 * delivered to that sink is stamped with
+                 * @c Metadata::ForceKeyframe via a clone (so other
+                 * sinks see the original payload), giving downstream
+                 * encoders a clean restart point.
+                 *
+                 * Safe to call from any thread / state.  Calling
+                 * @c setSinkGate on a sink that was never attached via
+                 * @ref addSink is a no-op.  Setting the gate to its
+                 * current value is also a no-op (does not arm the
+                 * keyframe stamp or fire @c sinkGateChanged).
+                 *
+                 * @param sink The sink whose gate to toggle.
+                 * @param open @c true to admit frames, @c false to gate
+                 *             this sink off.
+                 */
+                void setSinkGate(MediaIOSink *sink, bool open);
+
+                /**
+                 * @brief Returns the gate state for @p sink.
+                 *
+                 * Defaults to @c true (open) for every newly-attached
+                 * sink.  Returns @c true for unknown sinks too — the
+                 * default-open contract makes existing single-sink
+                 * connections behave unchanged.
+                 */
+                bool sinkGate(MediaIOSink *sink) const;
+
+                /**
+                 * @brief Per-frame inspector signature for capture triggers.
+                 *
+                 * Invoked once per successful source read, before the
+                 * per-sink dispatch loop runs.  The callback may call
+                 * @ref setSinkGate to flip a gate based on frame
+                 * inspection — the gate change takes effect on the
+                 * same frame because the per-sink loop reads the
+                 * updated state.
+                 */
+                using FrameInspector = std::function<void(const Frame &)>;
+
+                /**
+                 * @brief Installs a per-frame inspector callback.
+                 *
+                 * Used by @ref MediaPipeline 's capture transport to
+                 * evaluate a @c MediaPipelineTrigger against each frame
+                 * while the pipeline is in @c CaptureState::Armed.
+                 * Pass an empty function to clear.
+                 *
+                 * Safe to call from any thread; the inspector itself
+                 * runs on the connection's pump thread.
+                 */
+                void setFrameInspector(FrameInspector cb);
+
+                /** @brief Returns @c true while a non-empty inspector is installed. */
+                bool hasFrameInspector() const { return static_cast<bool>(_frameInspector); }
+
                 // ---- Signals ----
+
+                /**
+                 * @brief Emitted on every gate transition.
+                 * @signal
+                 *
+                 * Carries the affected sink and the new gate state
+                 * (@c true for open, @c false for closed).
+                 */
+                PROMEKI_SIGNAL(sinkGateChanged, MediaIOSink *, bool);
 
                 /**
                  * @brief Emitted when the source reports end-of-stream.
@@ -313,6 +390,18 @@ class MediaIOPortConnection : public ObjectBase {
                                 int64_t      framesWritten = 0;
                                 bool         doneByLimit = false;
                                 bool         stopped = false;
+                                /** @brief Capture-transport gate (default open). */
+                                bool         gateOpen = true;
+                                /**
+                                 * @brief One-shot flag: stamp the next admitted frame
+                                 *        with @c Metadata::ForceKeyframe.
+                                 *
+                                 * Set when the gate transitions from closed to open
+                                 * so a downstream encoder gets a clean IDR after a
+                                 * pause / resume.  Cleared when the next frame is
+                                 * delivered to this sink.
+                                 */
+                                bool         pendingForceKeyframe = false;
                 };
 
                 void              pump();
@@ -326,6 +415,7 @@ class MediaIOPortConnection : public ObjectBase {
 
                 MediaIOSource           *_source = nullptr;
                 List<SinkState> _sinks;
+                FrameInspector           _frameInspector;
                 // The pump holds the most recent in-flight read
                 // request across iterations.  When @ref readFrame
                 // returns a request whose payload has not yet

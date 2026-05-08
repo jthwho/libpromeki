@@ -91,8 +91,8 @@ MediaIORequest req = io->source(0)->readFrame();
 if (req.wait().isOk()) {
     const auto *cmd = req.commandAs<MediaIOCommandRead>();
     if (cmd != nullptr) {
-        Frame::Ptr frame = cmd->frame;
-        FrameNumber n    = cmd->currentFrame;
+        Frame       frame = cmd->frame;
+        FrameNumber n     = cmd->currentFrame;
     }
 }
 ```
@@ -166,7 +166,7 @@ MediaIOSource    *aud = grp->source(1);
 MediaIORequest req = src->readFrame();
 if (req.wait().isOk()) {
     const auto *cmd = req.commandAs<MediaIOCommandRead>();
-    Frame::Ptr  frame = cmd->frame;
+    Frame       frame = cmd->frame;
     // ... consume frame ...
 }
 ```

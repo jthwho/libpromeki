@@ -430,9 +430,9 @@ TEST_CASE("ImageDataEncoder end-to-end via TPG MediaIO") {
         REQUIRE(readReq.wait().isOk());
         const auto *cr = readReq.commandAs<MediaIOCommandRead>();
         REQUIRE(cr != nullptr);
-        Frame::Ptr frame = cr->frame;
+        Frame frame = cr->frame;
         REQUIRE(frame.isValid());
-        auto vids = frame->videoPayloads();
+        auto vids = frame.videoPayloads();
         REQUIRE(vids.size() == 1);
         const auto *uvp = vids[0]->as<UncompressedVideoPayload>();
         REQUIRE(uvp != nullptr);

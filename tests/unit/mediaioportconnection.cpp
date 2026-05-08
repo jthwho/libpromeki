@@ -635,7 +635,7 @@ class CascadeCloseSourceMediaIO : public PausedTestMediaIO {
                         return PausedTestMediaIO::executeCmd(cmd);
                 }
                 Error executeCmd(MediaIOCommandRead &cmd) override {
-                        cmd.frame = Frame::Ptr::takeOwnership(new Frame());
+                        cmd.frame = Frame();
                         cmd.currentFrame = FrameNumber(_frameNum++);
                         return Error::Ok;
                 }
@@ -806,7 +806,7 @@ class SlowFirstReadMediaIO : public DedicatedThreadMediaIO {
                                 _firstRead = false;
                                 Thread::sleepMs(_firstReadDelayMs);
                         }
-                        cmd.frame = Frame::Ptr::takeOwnership(new Frame());
+                        cmd.frame = Frame();
                         cmd.currentFrame = FrameNumber(_frameNum++);
                         return Error::Ok;
                 }
@@ -895,7 +895,7 @@ class CancelledReadSourceMediaIO : public PausedTestMediaIO {
                         onRead = [this](MediaIOCommandRead &cmd) -> Error {
                                 (void)cmd;
                                 if (_cancelOnNext.load()) return Error::Cancelled;
-                                cmd.frame = Frame::Ptr::takeOwnership(new Frame());
+                                cmd.frame = Frame();
                                 cmd.currentFrame = FrameNumber(_frameNum++);
                                 return Error::Ok;
                         };

@@ -1931,7 +1931,7 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         // model means the copy is cheap when no decompression is
         // needed; when it is, the compressed entries get replaced
         // in-place with freshly-allocated decoded images.
-        Frame work = *cmd.frame;
+        Frame work = cmd.frame;
         decompressImages(work);
 
         initDecoders(work);

@@ -79,7 +79,7 @@ class Clock;
  * io->setExpectedDesc(upstreamDesc);
  * io->open(MediaIO::Transform);
  * io->writeFrame(sourceFrame);
- * Frame::Ptr outputFrame;
+ * Frame outputFrame;
  * io->readFrame(outputFrame);
  * io->close();
  * delete io;

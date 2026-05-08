@@ -96,7 +96,7 @@ class QuickTimeMediaIO : public DedicatedThreadMediaIO {
                 // the planner-inserted CSC stays cheap.
                 static PixelFormat pickSupportedPixelFormat(const PixelFormat &offered);
 
-                Error readVideoFrame(const FrameNumber &frameIndex, Frame::Ptr &outFrame);
+                Error readVideoFrame(const FrameNumber &frameIndex, Frame &outFrame);
                 Error readAudioSlice(uint64_t startSample, size_t samples, MediaPayload::Ptr &out);
                 Error setupWriterFromFrame(const Frame &frame);
                 Error drainWriterAudio(bool flush);

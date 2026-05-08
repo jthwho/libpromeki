@@ -159,7 +159,7 @@ class ImageFileMediaIO : public DedicatedThreadMediaIO {
                 FrameRate   _writerFrameRate;
 
                 // Single-file state
-                Frame::Ptr _frame;
+                Frame _frame;
                 FrameCount _readCount{0};
                 FrameCount _writeCount{0};
                 bool       _loaded = false;

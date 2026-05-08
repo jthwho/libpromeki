@@ -44,6 +44,33 @@ reference counting.
 | `ContentLightLevel` | HDR content light level (MaxCLL / MaxFALL, CTA-861.3) |
 | `MasteringDisplay` | HDR mastering display color volume (SMPTE ST 2086) |
 
+## Internally-CoW value-type handles {#cow_handles}
+
+Plain value types that wrap an internal `SharedPtr<Data>` to provide
+copy-on-write semantics.  Copying one is O(1) — an atomic refcount
+bump on the shared storage — and any mutator detaches a private copy
+on first write.  These types deliberately do **not** expose a `Ptr`
+alias: a value is already as cheap to pass around as a raw shared
+pointer would be, so adding an extra layer of pointer indirection
+only obscures the model.
+
+| Class | Description |
+|-------|-------------|
+| `String` | Text everywhere; rides through every API |
+| `Buffer` | Cross-thread / cross-domain memory handoff |
+| `VariantDatabase` | Typed key/value store; base of `Metadata` and friends |
+| `Metadata` | Typed key-value metadata (CoW via `VariantDatabase`) |
+| `Frame` | Pipeline-wide container of payloads + metadata |
+| `JsonObject` | JSON object container wrapping `nlohmann::json` |
+| `JsonArray` | JSON array container wrapping `nlohmann::json` |
+
+```cpp
+// All of these are O(1) — no deep copy until someone mutates.
+JsonObject obj = build();      // returned by value, refcount bump
+JsonObject alias = obj;        // refcount bump
+alias.set("k", "v");           // CoW: alias detaches; obj unchanged
+```
+
 ## Shareable {#shareable}
 
 Value types that store their data directly as member variables (no internal
@@ -53,8 +80,8 @@ class provides a `Ptr` typedef:
 
 ```cpp
 // Explicit shared ownership at the call site
-Metadata::Ptr meta = Metadata::Ptr::create();
-meta.modify()->set(Metadata::Title, String("Hello"));
+MediaPipelineConfig::Ptr cfg = MediaPipelineConfig::Ptr::create();
+cfg.modify()->setName(String("MyPipeline"));
 ```
 
 When used as a local variable or as a member of another class, no
@@ -66,14 +93,9 @@ Shareable classes also provide convenience type aliases for collections:
 
 | Class | Description |
 |-------|-------------|
-| `String` | std::string wrapper |
-| `Buffer` | Aligned memory buffer |
 | `AudioDesc` | Audio format descriptor |
 | `ImageDesc` | Image format descriptor |
 | `MediaDesc` | Media format descriptor |
-| `Metadata` | Typed key-value metadata |
-| `JsonObject` | JSON object wrapper |
-| `JsonArray` | JSON array wrapper |
 | `List` | Generic list (std::vector wrapper) |
 | `Map` | Ordered map (std::map wrapper) |
 | `Set` | Ordered set (std::set wrapper) |
@@ -83,7 +105,6 @@ Shareable classes also provide convenience type aliases for collections:
 | `Array` | Fixed-size array (std::array wrapper) |
 | `Image` | Image descriptor + pixel buffer planes (compressed images carry an attached `VideoPacket`) |
 | `Audio` | Audio descriptor + sample buffer (compressed audio carries an attached `AudioPacket`) |
-| `Frame` | Container of images, audio, and metadata |
 | `MediaPacket` | Abstract polymorphic base for encoded bitstream access units |
 | `VideoPacket` | Encoded video access unit — attached to a compressed `Image` |
 | `AudioPacket` | Encoded audio access unit — attached to a compressed `Audio` |
@@ -93,26 +114,46 @@ Shareable classes also provide convenience type aliases for collections:
 
 Data objects are not internally thread-safe. Concurrent reads and writes
 to the same instance require external synchronization. The recommended
-pattern for sharing data between threads is to use `Ptr` (`SharedPtr`)
-with ownership handoff: once you pass a `Ptr` to another thread, do not
-mutate the underlying object from the original thread.
+pattern for sharing data between threads depends on whether the object
+already manages internal copy-on-write storage (`Frame`, `String`,
+`VariantDatabase`, `Metadata`, `Buffer`, `JsonObject`, `JsonArray`) or
+exposes a `Ptr` type for explicit shared ownership: once you pass a
+value or `Ptr` to another thread, do not mutate the underlying object
+from the original thread.
 
-### Pattern 1: Share a single object via Ptr {#thread_ptr}
+### Pattern 1: Share an internally-CoW object by value {#thread_value_cow}
 
-When you need to pass a data object to another thread (e.g., pushing a
-frame through a pipeline or emitting a signal), wrap it in its `Ptr`
-type. The atomic reference counting in `SharedPtr` makes the pointer
-itself safe to copy across threads.
+`Frame`, `Buffer`, `String`, `VariantDatabase` (and its `Metadata`
+subclass), `JsonObject`, and `JsonArray` are value-type handles that
+wrap an internal `SharedPtr<Data>`. Copying one is an atomic refcount
+bump, so a value-typed `Frame` (for example) is just as cheap to pass
+between threads as a raw `Frame::Ptr` was — and the mutators do
+copy-on-write internally so each consumer gets its own private clone
+the first time it writes.
 
 ```cpp
 // Producer thread
-Frame::Ptr frame = Frame::Ptr::create(desc);
+Frame frame;
 // ... fill frame data ...
-link.pushFrame(frame);  // Ptr safely crosses thread boundary
+link.pushFrame(frame);  // value crosses thread boundary; refcount bump
 
 // Consumer thread
 auto [frame, err] = link.pullFrame();
-// frame is now exclusively accessed by this thread
+// frame is now exclusively accessed by this thread; mutators CoW
+```
+
+### Pattern 1b: Share a `Ptr`-managed object {#thread_ptr}
+
+For data objects that still expose a `Ptr` type (e.g.
+`MediaPayload::Ptr`, `Image::Ptr`), wrap the object in its `Ptr` type
+when handing it across threads. The atomic reference counting in
+`SharedPtr` makes the pointer itself safe to copy across threads.
+
+```cpp
+// Producer thread
+MediaPayload::Ptr payload = ...;
+// ... fill payload data ...
+sink.submit(payload);   // Ptr safely crosses thread boundary
 ```
 
 ### Pattern 2: Composite structure via Ptr {#thread_composite}

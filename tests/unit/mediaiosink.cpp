@@ -59,7 +59,7 @@ MediaIO::Config inspectorConfig() {
         return cfg;
 }
 
-Frame::Ptr grabOneFrame(MediaIO *src) {
+Frame grabOneFrame(MediaIO *src) {
         MediaIORequest req = src->source(0)->readFrame();
         REQUIRE(req.wait().isOk());
         const auto *cr = req.commandAs<MediaIOCommandRead>();
@@ -162,7 +162,7 @@ TEST_CASE("MediaIOSink: writeFrame returns TryAgain when sink is full") {
         // Tight depth: only one write may be in flight at a time.
         sink->sink(0)->setWriteDepth(1);
 
-        Frame::Ptr frame = grabOneFrame(src);
+        Frame frame = grabOneFrame(src);
 
         // Burst submit WITHOUT waiting between submissions — that
         // way the strand has at most one cmd in flight while we
@@ -226,7 +226,7 @@ TEST_CASE("MediaIOSink: writesAccepted reflects in-flight count") {
         // so writesAccepted before any submission equals writeDepth.
         CHECK(initial == 1);
 
-        Frame::Ptr frame = grabOneFrame(src);
+        Frame frame = grabOneFrame(src);
 
         MediaIORequest req = sink->sink(0)->writeFrame(frame);
         // Request is valid (the gate let it through).
@@ -270,7 +270,7 @@ TEST_CASE("MediaIOSink: writeFrame returns NotOpen after close completes") {
         REQUIRE(sink->setPendingMediaDesc(src->mediaDesc()).isOk());
         REQUIRE(sink->open().wait().isOk());
 
-        Frame::Ptr frame = grabOneFrame(src);
+        Frame frame = grabOneFrame(src);
 
         // Close synchronously, then writeFrame — the post-close gate
         // is the same isOpen() check that pre-open uses.  After

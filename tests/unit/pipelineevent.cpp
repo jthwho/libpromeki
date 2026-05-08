@@ -31,6 +31,7 @@ TEST_CASE("PipelineEvent_KindRoundTrip") {
                 {PipelineEvent::Kind::StatsUpdated, "StatsUpdated"},
                 {PipelineEvent::Kind::PlanResolved, "PlanResolved"},
                 {PipelineEvent::Kind::Log, "Log"},
+                {PipelineEvent::Kind::TransportStateChanged, "TransportStateChanged"},
         };
         for (const Pair &p : pairs) {
                 CHECK(PipelineEvent::kindToString(p.k) == String(p.name));

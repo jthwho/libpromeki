@@ -176,20 +176,20 @@ Error FrameBridgeMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         // the bridge's abort flag.
         for (;;) {
                 Error      rerr;
-                Frame::Ptr f = _bridge->readFrame(&rerr);
+                Frame f = _bridge->readFrame(&rerr);
                 if (rerr.isError()) return rerr;
-                if (f) {
+                if (f.isValid()) {
                         // Stamp the source name for downstream correlation.
-                        f.modify()->metadata().set(Metadata::stringToID(String("SourceName")), _bridge->name());
+                        f.metadata().set(Metadata::stringToID(String("SourceName")), _bridge->name());
                         // Stamp the publisher's queue timestamp.  The
                         // FrameBridge wire protocol carries a steady_clock
                         // value, which is SystemMonotonic on POSIX and
                         // comparable across processes on the same host.
-                        f.modify()->metadata().set(
+                        f.metadata().set(
                                 Metadata::FrameBridgeTimeStamp,
                                 MediaTimeStamp(_bridge->lastFrameTimeStamp(), ClockDomain::SystemMonotonic));
                         cmd.frame = f;
-                        cmd.currentFrame = f->metadata().getAs<int64_t>(Metadata::FrameNumber, int64_t(0));
+                        cmd.currentFrame = f.metadata().getAs<int64_t>(Metadata::FrameNumber, int64_t(0));
                         return Error::Ok;
                 }
                 if (_bridge->isAborted()) return Error::Cancelled;
@@ -209,7 +209,7 @@ void FrameBridgeMediaIO::cancelBlockingWork() {
 Error FrameBridgeMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         // Write to the bridge (we were opened in Output mode).
         if (!_isOutput) return Error::NotSupported;
-        if (!cmd.frame) return Error::Invalid;
+        if (!cmd.frame.isValid()) return Error::Invalid;
         // Service pending accepts so a newly-arriving consumer joins
         // before the next TICK.
         _bridge->service();

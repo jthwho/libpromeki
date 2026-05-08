@@ -706,11 +706,11 @@ struct FrameBridge::Impl {
                 }
 
                 // -------------- Slot read --------------
-                Frame::Ptr readSlot(uint64_t index, Error *errOut) {
+                Frame readSlot(uint64_t index, Error *errOut) {
                         const uint8_t *base = slotBase(index);
                         if (base == nullptr) {
                                 if (errOut) *errOut = Error::NotOpen;
-                                return Frame::Ptr();
+                                return Frame();
                         }
 
                         // Seqlock: read seq1, copy, read seq2; retry on torn read
@@ -737,7 +737,7 @@ struct FrameBridge::Impl {
                                 // Build the Frame.  We copy everything into fresh
                                 // buffers so the reader doesn't hold stale slot
                                 // memory past the seqlock window.
-                                Frame::Ptr frame = Frame::Ptr::create();
+                                Frame frame = Frame();
 
                                 // Metadata
                                 Metadata meta;
@@ -790,11 +790,10 @@ struct FrameBridge::Impl {
                                 uint64_t seq2 = loadSeq(base + slotOff.seqOff);
                                 if (seq1 != seq2) continue; // torn — retry
 
-                                Frame *mut = frame.modify();
-                                if (videoPayload) mut->addPayload(videoPayload);
-                                if (audioPayload) mut->addPayload(audioPayload);
-                                mut->metadata() = meta;
-                                mut->metadata().set(Metadata::FrameNumber, FrameNumber(int64_t(frameNumber)));
+                                if (videoPayload) frame.addPayload(videoPayload);
+                                if (audioPayload) frame.addPayload(audioPayload);
+                                frame.metadata() = meta;
+                                frame.metadata().set(Metadata::FrameNumber, FrameNumber(int64_t(frameNumber)));
                                 if (errOut) *errOut = Error::Ok;
                                 (void)ptsNum;
                                 (void)ptsDen;
@@ -803,7 +802,7 @@ struct FrameBridge::Impl {
                         }
 
                         if (errOut) *errOut = Error::TryAgain;
-                        return Frame::Ptr();
+                        return Frame();
                 }
 
                 // -------------- Byte-packing helpers --------------
@@ -1279,9 +1278,9 @@ size_t FrameBridge::connectionCount() const {
         return n;
 }
 
-Error FrameBridge::writeFrame(const Frame::Ptr &frame) {
+Error FrameBridge::writeFrame(const Frame &frame) {
         if (_d->role != Impl::RoleOutput) return Error::NotOpen;
-        if (!frame) return Error::Invalid;
+        if (!frame.isValid()) return Error::Invalid;
         if (_d->abortFlag.value()) {
                 return Error::Cancelled;
         }
@@ -1324,7 +1323,7 @@ Error FrameBridge::writeFrame(const Frame::Ptr &frame) {
         // back from _d->lastPublishTs (set inside writeSlot) for the
         // on-wire value to keep the public accessor and the TICK in
         // lockstep.
-        Error err = _d->writeSlot(idx, *frame);
+        Error err = _d->writeSlot(idx, frame);
         if (err.isError()) return err;
         int64_t tsNs = _d->lastPublishTs.nanoseconds();
 
@@ -1347,10 +1346,10 @@ Error FrameBridge::writeFrame(const Frame::Ptr &frame) {
         return Error::Ok;
 }
 
-Frame::Ptr FrameBridge::readFrame(Error *err) {
+Frame FrameBridge::readFrame(Error *err) {
         if (_d->role != Impl::RoleInput) {
                 if (err) *err = Error::NotOpen;
-                return Frame::Ptr();
+                return Frame();
         }
 
         // Drain pending TICKs, keeping the newest.
@@ -1360,12 +1359,12 @@ Frame::Ptr FrameBridge::readFrame(Error *err) {
                 Error     e = r.readFrame(f, MaxHandshakeValueBytes);
                 if (e.isError()) {
                         if (err) *err = e;
-                        return Frame::Ptr();
+                        return Frame();
                 }
                 if (f.key == KeyBYE) {
                         if (_d->owner) _d->owner->peerDisconnectedSignal.emit();
                         if (err) *err = Error::EndOfFile;
-                        return Frame::Ptr();
+                        return Frame();
                 }
                 if (f.key != KeyTICK) continue;
                 if (f.value.size() < TickPayloadBytes) continue;
@@ -1394,10 +1393,10 @@ Frame::Ptr FrameBridge::readFrame(Error *err) {
         // real TICK finally arrived the consumer would see it as a burst.
         if (!_d->haveFreshTick) {
                 if (err) *err = Error::Ok;
-                return Frame::Ptr();
+                return Frame();
         }
-        Frame::Ptr f = _d->readSlot(_d->lastTickSlot, err);
-        if (f) {
+        Frame f = _d->readSlot(_d->lastTickSlot, err);
+        if (f.isValid()) {
                 _d->haveFreshTick = false;
                 // Ack the TICK we just consumed so the publisher can
                 // proceed (sync mode only; no-op otherwise).

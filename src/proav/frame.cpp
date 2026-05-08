@@ -23,7 +23,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 VideoPayload::PtrList Frame::videoPayloads() const {
         VideoPayload::PtrList out;
-        for (const MediaPayload::Ptr &p : _payloads) {
+        for (const MediaPayload::Ptr &p : _d->_payloads) {
                 if (!p.isValid()) continue;
                 if (p->kind() != MediaPayloadKind::Video) continue;
                 VideoPayload::Ptr vp = sharedPointerCast<VideoPayload>(p);
@@ -34,7 +34,7 @@ VideoPayload::PtrList Frame::videoPayloads() const {
 
 AudioPayload::PtrList Frame::audioPayloads() const {
         AudioPayload::PtrList out;
-        for (const MediaPayload::Ptr &p : _payloads) {
+        for (const MediaPayload::Ptr &p : _d->_payloads) {
                 if (!p.isValid()) continue;
                 if (p->kind() != MediaPayloadKind::Audio) continue;
                 AudioPayload::Ptr ap = sharedPointerCast<AudioPayload>(p);
@@ -46,8 +46,8 @@ AudioPayload::PtrList Frame::audioPayloads() const {
 bool Frame::isSafeCutPoint(CutPointScope scope) const {
         const bool wantVideo = (scope == CutPointVideoOnly || scope == CutPointAudioVideo);
         const bool wantAudio = (scope == CutPointAudioOnly || scope == CutPointAudioVideo);
-        for (size_t i = 0; i < _payloads.size(); ++i) {
-                const MediaPayload::Ptr &p = _payloads[i];
+        for (size_t i = 0; i < _d->_payloads.size(); ++i) {
+                const MediaPayload::Ptr &p = _d->_payloads[i];
                 if (!p.isValid()) continue;
                 const MediaPayloadKind &k = p->kind();
                 if (k == MediaPayloadKind::Video && wantVideo) {
@@ -61,7 +61,7 @@ bool Frame::isSafeCutPoint(CutPointScope scope) const {
 
 VideoFormat Frame::videoFormat(size_t index) const {
         size_t videoIdx = 0;
-        for (const MediaPayload::Ptr &p : _payloads) {
+        for (const MediaPayload::Ptr &p : _d->_payloads) {
                 if (!p.isValid()) continue;
                 if (p->kind() != MediaPayloadKind::Video) continue;
                 if (videoIdx != index) {
@@ -71,15 +71,15 @@ VideoFormat Frame::videoFormat(size_t index) const {
                 const auto *vp = p->as<VideoPayload>();
                 if (vp == nullptr) return VideoFormat();
                 const ImageDesc &d = vp->desc();
-                return VideoFormat(d.size(), _metadata.getAs<FrameRate>(Metadata::FrameRate), d.videoScanMode());
+                return VideoFormat(d.size(), _d->_metadata.getAs<FrameRate>(Metadata::FrameRate), d.videoScanMode());
         }
         return VideoFormat();
 }
 
 MediaDesc Frame::mediaDesc() const {
         MediaDesc md;
-        md.setFrameRate(_metadata.getAs<FrameRate>(Metadata::FrameRate));
-        for (const MediaPayload::Ptr &p : _payloads) {
+        md.setFrameRate(_d->_metadata.getAs<FrameRate>(Metadata::FrameRate));
+        for (const MediaPayload::Ptr &p : _d->_payloads) {
                 if (!p.isValid()) continue;
                 if (const auto *vp = p->as<VideoPayload>()) {
                         md.imageList().pushToBack(vp->desc());
@@ -87,7 +87,7 @@ MediaDesc Frame::mediaDesc() const {
                         md.audioList().pushToBack(ap->desc());
                 }
         }
-        md.metadata() = _metadata;
+        md.metadata() = _d->_metadata;
         return md;
 }
 
@@ -100,17 +100,17 @@ StringList Frame::dump(const String &indent) const {
                 }
         });
 
-        StringList mdLines = _metadata.dump();
+        StringList mdLines = _d->_metadata.dump();
         if (!mdLines.isEmpty()) {
                 out += indent + "Meta:";
                 String sub = indent + "  ";
                 for (const String &ln : mdLines) out += sub + ln;
         }
 
-        if (!_configUpdate.isEmpty()) {
+        if (!_d->_configUpdate.isEmpty()) {
                 out += indent + "ConfigUpdate:";
                 String sub = indent + "  ";
-                _configUpdate.forEach([&out, &sub](MediaConfig::ID id, const Variant &value) {
+                _d->_configUpdate.forEach([&out, &sub](MediaConfig::ID id, const Variant &value) {
                         String s = id.name();
                         s += " [";
                         s += value.typeName();
@@ -128,7 +128,7 @@ StringList Frame::dump(const String &indent) const {
         // we never silently skip a payload section again.
         const String     sub = indent + "  ";
         Map<int, size_t> kindIdx;
-        for (const MediaPayload::Ptr &p : _payloads) {
+        for (const MediaPayload::Ptr &p : _d->_payloads) {
                 if (!p.isValid()) {
                         out += indent + "<null payload>";
                         continue;

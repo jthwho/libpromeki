@@ -250,14 +250,14 @@ namespace {
         }
 
         int cmdFrame(DebugMediaFile &f, int64_t idx) {
-                Frame::Ptr frame;
+                Frame frame;
                 Error      e = f.readFrameAt(idx, frame);
                 if (e.isError()) {
                         std::fprintf(stderr, "Failed to read frame %lld: %s\n", static_cast<long long>(idx),
                                      e.name().cstr());
                         return 1;
                 }
-                printFrameDump(idx, *frame);
+                printFrameDump(idx, frame);
                 return 0;
         }
 
@@ -285,17 +285,17 @@ namespace {
                 int64_t matches = 0;
                 int64_t lastMatch = start - 1; // for --minimal delta; first hit is i - start + 1 frames in
                 for (int64_t i = start; i < fc; ++i) {
-                        Frame::Ptr frame;
+                        Frame frame;
                         Error      e = f.readFrameAt(i, frame);
                         if (e.isError()) {
                                 std::fprintf(stderr, "read frame %lld: %s\n", static_cast<long long>(i),
                                              e.name().cstr());
                                 return 1;
                         }
-                        if (!query.match(*frame)) continue;
+                        if (!query.match(frame)) continue;
                         ++matches;
                         if (!args.format.isEmpty()) {
-                                String s = VariantLookup<Frame>::format(*frame, args.format);
+                                String s = VariantLookup<Frame>::format(frame, args.format);
                                 std::printf("%s\n", s.cstr());
                         } else if (args.quiet) {
                                 std::printf("%lld\n", static_cast<long long>(i));
@@ -304,7 +304,7 @@ namespace {
                                 std::printf("%lld +%lld\n", static_cast<long long>(i), static_cast<long long>(delta));
                         } else {
                                 // Default: full dump, same layout as --frame* output.
-                                printFrameDump(i, *frame);
+                                printFrameDump(i, frame);
                         }
                         lastMatch = i;
                         if (!args.findAll) break;
@@ -329,25 +329,23 @@ namespace {
                 return 0;
         }
 
-        Frame::Ptr trimForImage(const Frame::Ptr &in, int imageIdx) {
-                if (!in.isValid()) return Frame::Ptr();
-                auto vids = in->videoPayloads();
-                if (imageIdx < 0 || static_cast<size_t>(imageIdx) >= vids.size()) return Frame::Ptr();
-                Frame::Ptr out = Frame::Ptr::create();
-                Frame     *raw = out.modify();
-                raw->metadata() = in->metadata();
-                raw->addPayload(vids[imageIdx]);
+        Frame trimForImage(const Frame &in, int imageIdx) {
+                if (!in.isValid()) return Frame();
+                auto vids = in.videoPayloads();
+                if (imageIdx < 0 || static_cast<size_t>(imageIdx) >= vids.size()) return Frame();
+                Frame out = Frame();
+                out.metadata() = in.metadata();
+                out.addPayload(vids[imageIdx]);
                 return out;
         }
 
-        Frame::Ptr trimForAudio(const Frame::Ptr &in, int audioIdx) {
-                if (!in.isValid()) return Frame::Ptr();
-                auto auds = in->audioPayloads();
-                if (audioIdx < 0 || static_cast<size_t>(audioIdx) >= auds.size()) return Frame::Ptr();
-                Frame::Ptr out = Frame::Ptr::create();
-                Frame     *raw = out.modify();
-                raw->metadata() = in->metadata();
-                raw->addPayload(auds[audioIdx]);
+        Frame trimForAudio(const Frame &in, int audioIdx) {
+                if (!in.isValid()) return Frame();
+                auto auds = in.audioPayloads();
+                if (audioIdx < 0 || static_cast<size_t>(audioIdx) >= auds.size()) return Frame();
+                Frame out = Frame();
+                out.metadata() = in.metadata();
+                out.addPayload(auds[audioIdx]);
                 return out;
         }
 
@@ -422,7 +420,7 @@ namespace {
 
                 int  imageIdx = args.imageIndex;
                 int  audioIdx = args.audioIndex;
-                auto mutate = [isImage, imageIdx, audioIdx](const Frame::Ptr &in, int64_t) -> Frame::Ptr {
+                auto mutate = [isImage, imageIdx, audioIdx](const Frame &in, int64_t) -> Frame {
                         return isImage ? trimForImage(in, imageIdx) : trimForAudio(in, audioIdx);
                 };
 
@@ -445,7 +443,7 @@ namespace {
                                 Error          rerr = readReq.wait();
                                 if (rerr == Error::EndOfFile) break;
                                 if (rerr.isError()) return {copied, rerr};
-                                Frame::Ptr in;
+                                Frame in;
                                 if (const auto *cr = readReq.commandAs<MediaIOCommandRead>()) {
                                         in = cr->frame;
                                 }
@@ -454,7 +452,7 @@ namespace {
                                         ++skipped;
                                         continue;
                                 }
-                                Frame::Ptr out = fn(in, copied);
+                                Frame out = fn(in, copied);
                                 if (!out.isValid()) continue;
                                 Error werr = d->writeFrame(out).wait();
                                 if (werr.isError()) return {copied, werr};

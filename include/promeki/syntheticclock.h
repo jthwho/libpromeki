@@ -35,7 +35,11 @@ PROMEKI_NAMESPACE_BEGIN
  * - @ref resolutionNs returns 1 (the stored counter is ns-accurate).
  * - @ref jitter returns @c {0, 0} — a SyntheticClock is perfect.
  * - @ref rateRatio returns @c 1.0.
- * - Cannot be paused.
+ * - Pause mode: @ref ClockPauseMode::PausesRawKeepsRunning.  The raw
+ *   counter keeps reflecting whatever the caller has advanced it to;
+ *   the base @ref Clock applies its pause-offset accumulator so
+ *   @ref now stops moving while paused even if @ref advance is still
+ *   being called underneath.
  *
  * @par sleepUntilNs
  *

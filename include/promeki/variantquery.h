@@ -159,7 +159,7 @@ namespace detail {
  * @code
  * auto [q, err] = VariantQuery<Frame>::parse("Meta.Timecode >= \"01:00:00:00\"");
  * if(err.isError()) throw ...;
- * for(const Frame::Ptr &f : frames) {
+ * for(const Frame &f : frames) {
  *     if(q.match(*f)) std::cout << "match\n";
  * }
  *

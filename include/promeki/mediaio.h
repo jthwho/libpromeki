@@ -97,7 +97,7 @@ class MediaIORequest;
  * Inherits @ref ObjectBase &mdash; thread-affine.  MediaIO is intended
  * to be driven from a single user thread.  Public methods
  * (@c open / @c close / @c readFrame / @c writeFrame /
- * @c seekToFrame / @c setStep etc.) are not safe to call
+ * @c seekToFrame / @c setRate etc.) are not safe to call
  * concurrently from multiple threads.  Cached state is updated
  * inside @ref completeCommand on the strategy's chosen execution
  * thread; user-thread reads of cached accessors must observe the
@@ -708,7 +708,7 @@ class MediaIO : public ObjectBase {
                  *        command on the strategy's executor.
                  *
                  * Called by @ref MediaIOPortGroup::seekToFrame and
-                 * @ref MediaIOPortGroup::setStep to drop stale
+                 * @ref MediaIOPortGroup::setRate to drop stale
                  * prefetched reads before submitting the new
                  * navigation command.  Default is a no-op (no
                  * executor backlog to clear); strategies with their
@@ -730,6 +730,32 @@ class MediaIO : public ObjectBase {
                  * concurrent strand activity.
                  */
                 virtual int pendingInternalWrites() const { return 0; }
+
+                /**
+                 * @brief Optional capture-side pause hook.
+                 *
+                 * The pipeline-level capture pause valve already lives
+                 * on @ref MediaIOPortConnection — every backend gets
+                 * pause / resume for free without cooperating, because
+                 * the pump simply skips @c writeFrame on a gated sink.
+                 *
+                 * Backends that need to do extra work when the gate
+                 * closes (e.g. an HW encoder dropping into a low-power
+                 * state, a network sender stopping its pacing
+                 * heartbeat, a recorder freeing scratch buffers) can
+                 * override this hook.  @ref MediaPipeline::pauseCapture
+                 * fans the call out to every flagged capture sink with
+                 * @c paused=true; @ref MediaPipeline::resumeCapture
+                 * with @c paused=false.  Default is a no-op so
+                 * existing backends see no behaviour change.
+                 *
+                 * Called from the pipeline's owning EventLoop.
+                 * Implementations must be thread-safe with respect to
+                 * concurrent @c executeCmd dispatch.
+                 *
+                 * @param paused @c true on pause, @c false on resume.
+                 */
+                virtual void setIngestPaused(bool paused) { (void)paused; }
 
                 /** @brief Sets the configuration. */
                 void setConfig(const Config &config) { _config = config; }
@@ -928,7 +954,7 @@ class MediaIO : public ObjectBase {
                  * @param frame The frame to measure.
                  * @return The total payload size in bytes.
                  */
-                static int64_t frameByteSize(const Frame::Ptr &frame);
+                static int64_t frameByteSize(const Frame &frame);
 
                 /**
                  * @brief Populates the standard MediaIOStats keys.

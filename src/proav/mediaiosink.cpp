@@ -33,13 +33,13 @@ String defaultSinkName(const String &name, int index) {
 // duration on any payloads that came in without timing.  The matching
 // read-side copy lives in mediaio.cpp; both share the same body so a
 // frame produced or consumed by any backend ships fully-stamped.
-void ensurePayloadTiming(Frame::Ptr &frame, const MediaTimeStamp &synMts, const FrameRate &frameRate) {
+void ensurePayloadTiming(Frame &frame, const MediaTimeStamp &synMts, const FrameRate &frameRate) {
         if (!frame.isValid()) return;
         const Duration oneFrame = frameRate.isValid() ? frameRate.frameDuration() : Duration();
-        for (size_t i = 0; i < frame->payloadList().size(); ++i) {
-                const MediaPayload::Ptr &p = frame->payloadList()[i];
+        for (size_t i = 0; i < frame.payloadList().size(); ++i) {
+                const MediaPayload::Ptr &p = frame.payloadList()[i];
                 if (!p.isValid()) continue;
-                MediaPayload *mp = frame.modify()->payloadList()[i].modify();
+                MediaPayload *mp = frame.payloadList()[i].modify();
                 if (!mp->pts().isValid()) mp->setPts(synMts);
                 if (mp->hasDuration() && mp->duration().isZero() && !oneFrame.isZero()) {
                         mp->setDuration(oneFrame);
@@ -101,7 +101,7 @@ int MediaIOSink::writesAccepted() const {
         return avail > 0 ? avail : 0;
 }
 
-MediaIORequest MediaIOSink::writeFrame(const Frame::Ptr &frame) {
+MediaIORequest MediaIOSink::writeFrame(const Frame &frame) {
         MediaIO *io = mediaIO();
         if (io == nullptr) return MediaIORequest::resolved(Error::Invalid);
         if (!io->isOpen() || io->isClosing()) return MediaIORequest::resolved(Error::NotOpen);

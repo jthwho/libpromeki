@@ -45,7 +45,12 @@ class MediaIOPortGroup;
  *   yet valid).
  * - Jitter: symmetric, ± half a frame period — the underlying source
  *   can only report time at frame boundaries.
- * - Cannot be paused.
+ * - Pause mode: @ref ClockPauseMode::PausesRawKeepsRunning — the
+ *   raw frame-position read keeps reporting the live group counter
+ *   while paused, with the base @ref Clock applying its
+ *   pause-bookkeeping offset so @ref now freezes for the duration
+ *   of the pause.  Pipelines built on this clock are pauseable
+ *   without backend cooperation.
  *
  * @par sleepUntilNs
  * A no-op — @ref MediaIOPortGroup::currentFrame is the authoritative

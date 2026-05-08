@@ -252,13 +252,14 @@ Error AudioFileMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 return err;
         }
 
-        cmd.frame = Frame::Ptr::create();
-        if (payload.isValid()) cmd.frame.modify()->addPayload(payload);
+        cmd.frame = Frame();
+        if (payload.isValid()) cmd.frame.addPayload(payload);
         ++_currentFrame;
 
-        // The read already advanced one frame; honour step by seeking
+        // The read already advanced one frame; honour the per-tick
+        // step (derived from the group's fractional rate) by seeking
         // (step - 1) additional frames forward / backward.
-        int s = cmd.step;
+        const int s = (cmd.group != nullptr) ? cmd.group->nextStep() : 1;
         if (s != 1) {
                 FrameNumber target = _currentFrame + int64_t(s - 1);
                 if (!target.isValid()) target = FrameNumber(0);
@@ -270,7 +271,7 @@ Error AudioFileMediaIO::executeCmd(MediaIOCommandRead &cmd) {
 }
 
 Error AudioFileMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
-        auto auds = cmd.frame->audioPayloads();
+        auto auds = cmd.frame.audioPayloads();
         if (auds.isEmpty()) {
                 promekiWarn("AudioFileMediaIO: write with no audio");
                 return Error::InvalidArgument;

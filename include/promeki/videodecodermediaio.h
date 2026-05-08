@@ -64,7 +64,7 @@ PROMEKI_NAMESPACE_BEGIN
  * dec->setExpectedDesc(compressedDesc);
  * dec->open(MediaIO::Transform);
  * dec->writeFrame(packetFrame);
- * Frame::Ptr decoded;
+ * Frame decoded;
  * dec->readFrame(decoded);
  * dec->close();
  * @endcode
@@ -77,7 +77,7 @@ PROMEKI_NAMESPACE_BEGIN
  * dec->setExpectedDesc(compressedDesc);
  * dec->open(MediaIO::Transform);
  * dec->writeFrame(packetFrame);   // codec resolved here
- * Frame::Ptr decoded;
+ * Frame decoded;
  * dec->readFrame(decoded);
  * dec->close();
  * @endcode
@@ -128,7 +128,7 @@ class VideoDecoderMediaIO : public SharedThreadMediaIO {
                 PixelFormat        _outputPixelFormat;
                 bool               _outputPixelFormatSet = false;
                 int                _capacity = 8;
-                List<Frame::Ptr>   _outputQueue;
+                Frame::List   _outputQueue;
 
                 // FIFO of source Frames awaiting a decoded image.  One
                 // entry is pushed per packet handed to @c submitPacket
@@ -137,7 +137,7 @@ class VideoDecoderMediaIO : public SharedThreadMediaIO {
                 // buffer are stamped with the wrong input Frame's
                 // metadata, which shows up as off-by-N timecode /
                 // audio after an encode/decode round trip.
-                List<Frame::Ptr> _pendingSrcFrames;
+                Frame::List _pendingSrcFrames;
                 FrameCount       _frameCount{0};
                 int64_t          _readCount = 0;
                 int64_t          _packetsDecoded = 0;

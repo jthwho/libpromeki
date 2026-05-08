@@ -211,7 +211,7 @@ class MediaIORequest {
                  * @code
                  * MediaIORequest req = source->readFrame();
                  * if (req.wait().isOk()) {
-                 *     Frame::Ptr frame = req.commandAs<MediaIOCommandRead>()->frame;
+                 *     Frame frame = req.commandAs<MediaIOCommandRead>()->frame;
                  * }
                  * @endcode
                  */

@@ -184,7 +184,7 @@ namespace benchutil {
                                 //   - prime the decoder slice / CSC cache
                                 // 8 frames is comfortably more than the LTC lock-in
                                 // window at 30 fps and keeps the warmup tiny.
-                                auto readSync = [&](Frame::Ptr &out) {
+                                auto readSync = [&](Frame &out) {
                                         MediaIORequest req = tpgSrc->readFrame();
                                         Error          err = req.wait();
                                         if (err.isOk()) {
@@ -197,7 +197,7 @@ namespace benchutil {
                                 };
 
                                 for (int i = 0; i < 8; i++) {
-                                        Frame::Ptr frame;
+                                        Frame frame;
                                         if (readSync(frame).isError()) break;
                                         inspSink->writeFrame(frame).wait();
                                 }
@@ -206,7 +206,7 @@ namespace benchutil {
                                 // iteration.
                                 for (auto _ : state) {
                                         (void)_;
-                                        Frame::Ptr frame;
+                                        Frame frame;
                                         readSync(frame);
                                         inspSink->writeFrame(frame).wait();
                                 }

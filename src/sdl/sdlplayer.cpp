@@ -310,7 +310,7 @@ Error SDLPlayerMediaIO::executeCmd(MediaIOCommandClose &cmd) {
 }
 
 Error SDLPlayerMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
-        const Frame::Ptr &frame = cmd.frame;
+        const Frame &frame = cmd.frame;
         if (!frame.isValid()) return Error::InvalidArgument;
 
         // Work begins now — the framework bills pushFrame back-pressure
@@ -319,8 +319,8 @@ Error SDLPlayerMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         // Pre-decode compressed images on the strand so the pull
         // thread only deals with display-ready frames.  Any decode
         // failure is counted and the frame is discarded.
-        Frame::Ptr outFrame = frame;
-        auto       vids = frame->videoPayloads();
+        Frame outFrame = frame;
+        auto       vids = frame.videoPayloads();
         if (!vids.isEmpty() && vids[0].isValid() && vids[0]->isCompressed()) {
                 auto cvp = sharedPointerCast<CompressedVideoPayload>(vids[0]);
                 if (cvp.isValid() && cvp->planeCount() > 0) {
@@ -362,12 +362,12 @@ Error SDLPlayerMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                                 cmd.frameCount = MediaIO::FrameCountInfinite;
                                 return Error::Ok;
                         }
-                        outFrame = Frame::Ptr::create();
-                        outFrame.modify()->addPayload(decoded);
-                        for (const AudioPayload::Ptr &ap : frame->audioPayloads()) {
-                                if (ap.isValid()) outFrame.modify()->addPayload(ap);
+                        outFrame = Frame();
+                        outFrame.addPayload(decoded);
+                        for (const AudioPayload::Ptr &ap : frame.audioPayloads()) {
+                                if (ap.isValid()) outFrame.addPayload(ap);
                         }
-                        outFrame.modify()->metadata() = frame->metadata();
+                        outFrame.metadata() = frame.metadata();
                 }
         }
 
@@ -401,7 +401,7 @@ void SDLPlayerMediaIO::pullLoop() {
                 if (!pr.frame.isValid()) continue;
 
                 // Video → hand off to the widget for main-thread paint.
-                auto pullVids = pr.frame->videoPayloads();
+                auto pullVids = pr.frame.videoPayloads();
                 if (!pullVids.isEmpty() && pullVids[0].isValid() && _widget != nullptr) {
                         auto uvp = sharedPointerCast<UncompressedVideoPayload>(pullVids[0]);
                         if (uvp.isValid()) _widget->presentVideo(uvp);
@@ -409,7 +409,7 @@ void SDLPlayerMediaIO::pullLoop() {
 
                 // Audio → push to the output.
                 if (_audioConfigured && _audioOutput != nullptr) {
-                        for (const AudioPayload::Ptr &ap : pr.frame->audioPayloads()) {
+                        for (const AudioPayload::Ptr &ap : pr.frame.audioPayloads()) {
                                 if (!ap.isValid()) continue;
                                 const auto *uap = ap->as<PcmAudioPayload>();
                                 if (uap != nullptr) _audioOutput->pushAudio(*uap);

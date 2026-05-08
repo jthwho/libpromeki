@@ -89,7 +89,7 @@ Error RawBitstreamMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                 return Error::NotSupported;
         }
 
-        const Frame &frame = *cmd.frame;
+        const Frame &frame = cmd.frame;
         bool         anyPacket = false;
         for (const VideoPayload::Ptr &vp : frame.videoPayloads()) {
                 if (!vp.isValid()) continue;

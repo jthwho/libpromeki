@@ -12,6 +12,7 @@
 #include <promeki/mediaiorequest.h>
 #include <promeki/mediaiosink.h>
 #include <promeki/mediaiosource.h>
+#include <promeki/metadata.h>
 #include <promeki/objectbase.tpp>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -61,6 +62,34 @@ bool MediaIOPortConnection::sinkStopped(MediaIOSink *sink) const {
         const SinkState *ss = findSinkState(sink);
         if (ss == nullptr) return true;
         return ss->stopped || ss->doneByLimit;
+}
+
+void MediaIOPortConnection::setSinkGate(MediaIOSink *sink, bool open) {
+        SinkState *ss = findSinkState(sink);
+        if (ss == nullptr) return;
+        if (ss->gateOpen == open) return;
+        const bool wasClosed = !ss->gateOpen;
+        ss->gateOpen = open;
+        if (open && wasClosed) {
+                // closed -> open: stamp ForceKeyframe on the next frame
+                // we deliver to this sink so a downstream encoder gets
+                // a clean restart point.  Cleared in pump after stamp.
+                ss->pendingForceKeyframe = true;
+                // Re-arm the pump so a backlog accumulated on the source
+                // gets flushed without waiting for the next frameReady.
+                schedulePump();
+        }
+        sinkGateChangedSignal.emit(sink, open);
+}
+
+bool MediaIOPortConnection::sinkGate(MediaIOSink *sink) const {
+        const SinkState *ss = findSinkState(sink);
+        if (ss == nullptr) return true;
+        return ss->gateOpen;
+}
+
+void MediaIOPortConnection::setFrameInspector(FrameInspector cb) {
+        _frameInspector = std::move(cb);
 }
 
 MediaIOPortConnection::SinkState *MediaIOPortConnection::findSinkState(MediaIOSink *sink) {
@@ -284,7 +313,7 @@ void MediaIOPortConnection::pump() {
         // fast path in @ref MediaIOCommand::waitForCompletion and
         // returns immediately.
         Error      rerr = _pendingRead.wait();
-        Frame::Ptr frame;
+        Frame frame;
         if (rerr.isOk()) {
                 if (const auto *cr = _pendingRead.commandAs<MediaIOCommandRead>()) {
                         frame = cr->frame;
@@ -349,6 +378,12 @@ void MediaIOPortConnection::pump() {
         }
 
         if (!_allSinksDoneEmitted) {
+                // Capture-trigger / general inspector hook.  Runs once
+                // per successful read, before the per-sink dispatch
+                // loop, so it can flip a sink gate (via setSinkGate)
+                // and have the change take effect on this very frame.
+                if (_frameInspector) _frameInspector(frame);
+
                 bool deliveredAny = false;
                 for (size_t i = 0; i < _sinks.size(); ++i) {
                         SinkState &ss = _sinks[i];
@@ -363,10 +398,32 @@ void MediaIOPortConnection::pump() {
                         // dropped for this sink and the sink stops
                         // accepting further writes.
                         if (ss.frameLimit.isFinite() && !ss.frameLimit.isEmpty() &&
-                            ss.framesWritten >= ss.frameLimit.value() && frame->isSafeCutPoint()) {
+                            ss.framesWritten >= ss.frameLimit.value() && frame.isSafeCutPoint()) {
                                 ss.doneByLimit = true;
                                 sinkLimitReachedSignal.emit(ss.sink);
                                 continue;
+                        }
+
+                        // Capture-transport gate.  When the sink's gate
+                        // is closed the pump still drains the source
+                        // read (so other sinks on this connection see
+                        // the frame), but skips writeFrame on this
+                        // sink.  No deliveredAny / framesWritten bump.
+                        if (!ss.gateOpen) continue;
+
+                        // Per-sink ForceKeyframe stamp.  Set when the
+                        // gate transitioned closed→open so the next
+                        // admitted frame becomes a downstream IDR.  We
+                        // clone the Frame (Frame is COW; modify()
+                        // detaches a fresh copy) and stamp on the
+                        // clone so other sinks on this connection
+                        // continue to see the unmodified original.
+                        Frame toWrite = frame;
+                        if (ss.pendingForceKeyframe) {
+                                Frame stamped = frame;
+                                stamped.metadata().set(Metadata::ForceKeyframe, true);
+                                toWrite = stamped;
+                                ss.pendingForceKeyframe = false;
                         }
 
                         // Submit the write.  Only the
@@ -387,7 +444,7 @@ void MediaIOPortConnection::pump() {
                         // @c writeError on failure, both
                         // connected in @ref start, so the strand
                         // resolution naturally drives pump.
-                        MediaIORequest writeReq = ss.sink->writeFrame(frame);
+                        MediaIORequest writeReq = ss.sink->writeFrame(toWrite);
                         if (writeReq.isReady()) {
                                 Error werr = writeReq.wait();
                                 if (werr == Error::TryAgain) {
@@ -412,7 +469,7 @@ void MediaIOPortConnection::pump() {
                         // limit-th write closes the pipeline as soon
                         // as the last expected frame has landed.
                         if (ss.frameLimit.isFinite() && !ss.frameLimit.isEmpty() &&
-                            ss.framesWritten >= ss.frameLimit.value() && frame->isSafeCutPoint()) {
+                            ss.framesWritten >= ss.frameLimit.value() && frame.isSafeCutPoint()) {
                                 ss.doneByLimit = true;
                                 sinkLimitReachedSignal.emit(ss.sink);
                         }

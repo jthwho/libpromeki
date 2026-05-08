@@ -124,7 +124,7 @@ Always-on lightweight counters populating the standard `MediaIOStats` keys. Chea
 **Shipped — MediaIO base wiring:**
 
 - `MediaIO` owns a `RateTracker _rateTracker` and three `Atomic<int64_t>` counters (`_framesDroppedTotal` / `_framesRepeatedTotal` / `_framesLateTotal`). Reset in `resolveIdentifiersAndBenchmark()` on every `open()` so reopened stages see fresh numbers.
-- A new static `MediaIO::frameByteSize(const Frame::Ptr &)` helper sums every image-plane buffer plus every audio buffer's `size()` to feed the rate tracker.
+- A new static `MediaIO::frameByteSize(const Frame &)` helper sums every image-plane buffer plus every audio buffer's `size()` to feed the rate tracker.
 - The writer and reader strand lambdas in `MediaIO::writeFrame` / `MediaIO::submitReadCommand` call `_rateTracker.record(frameByteSize(frame))` on the success path. Every backend (TPG, ImageFile, QuickTime, AudioFile, RTP, Converter, SDLPlayer) gets the rate for free with zero migration.
 - Added `MediaIOStats::FramesPerSecond` next to `BytesPerSecond` (new standard key).
 - A new private `MediaIO::populateStandardStats()` post-processes the backend's stats bag in `MediaIO::stats()`: overlays `BytesPerSecond` / `FramesPerSecond` from the tracker, copies `FramesDropped` / `FramesRepeated` / `FramesLate` from the atomics, and — when `_benchmarkEnabled && _benchmarkReporter != nullptr` — derives `AverageLatencyMs` / `PeakLatencyMs` by summing the consecutive `enqueue→dequeue` / `dequeue→taskBegin` / `taskBegin→taskEnd` step stats (readers skip the enqueue hop). `BenchmarkReporter` only tracks consecutive entry pairs, so direct `stepStats(enqueue, taskEnd)` would come back empty.

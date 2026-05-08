@@ -28,7 +28,7 @@ class MediaIOPort;
 class MediaIORequest;
 
 /**
- * @brief Grouping of @ref MediaIOPort siblings sharing a clock and step.
+ * @brief Grouping of @ref MediaIOPort siblings sharing a clock and rate.
  * @ingroup mediaio_user
  *
  * Every @ref MediaIOPort on a @ref MediaIO belongs to exactly one
@@ -40,15 +40,15 @@ class MediaIORequest;
  *    for the same group position, then dispatched as a single
  *    backend @ref MediaIOCommandWrite.
  *  - Ports in a single-port group are independent — their group is
- *    just a holder for that port's clock and step state.
+ *    just a holder for that port's clock and rate state.
  *
  * @par Per-source reads (Phase 1)
- * Today @ref MediaIOCommandRead carries a single @c Frame::Ptr and
+ * Today @ref MediaIOCommandRead carries a single @c Frame and
  * targets a specific source within the group.  The multi-source
  * "atomic distribute one frame per source" path is reserved for a
  * later phase — this page documents the per-source shape that ships.
  *
- * The @ref step value, current frame number, frame count, seekability,
+ * The @ref rate value, current frame number, frame count, seekability,
  * and seek dispatch all live on the group, since by definition every
  * port in the group shares them.  The group also owns the @ref Clock
  * for that timing reference; ports access the clock through their
@@ -72,7 +72,7 @@ class MediaIORequest;
  * every port.  A group must not outlive its @ref MediaIO.
  *
  * @par Phase 1 scope
- * This is a structural scaffold.  Per-position state members (step,
+ * This is a structural scaffold.  Per-position state members (rate,
  * current frame, frame count, canSeek, seek dispatch, full Clock
  * wiring) are added as Phase 3 / Phase 4 of the multi-port refactor
  * migrate them off @ref MediaIO.
@@ -225,24 +225,71 @@ class MediaIOPortGroup : public ObjectBase {
                 FrameNumber currentFrame() const { return _currentFrame; }
 
                 /**
-                 * @brief Returns the per-group step value.
+                 * @brief Returns the per-group playback rate.
                  *
-                 * Step is the per-group playback speed / direction:
-                 * 1 for forward, 0 for hold, -1 for reverse, larger
-                 * magnitudes for fast-forward / rewind.
+                 * Rate is the per-group playback speed / direction
+                 * as a fractional multiplier:
+                 * - @c 1.0 : normal-speed forward.
+                 * - @c 0.5 : half-speed forward (slow motion).
+                 * - @c 2.0 : double-speed forward (fast forward).
+                 * - @c 0.0 : hold — backend re-emits the cached
+                 *            current frame.
+                 * - @c <0 : reverse playback at the magnitude shown.
+                 *
+                 * Backends do not consume the fractional value
+                 * directly.  They call @ref nextStep() once per
+                 * read to translate the accumulated rate into the
+                 * integer per-tick advance, which keeps slow-motion
+                 * frame repetition and fast-forward frame skipping
+                 * accurate over time.
                  */
-                int step() const { return _step; }
+                double rate() const { return _rate; }
 
                 /**
-                 * @brief Sets the group's step.
+                 * @brief Sets the group's playback rate.
                  *
                  * Outstanding prefetched reads were submitted with
-                 * the old step; they're stale relative to the new
+                 * the old rate; they're stale relative to the new
                  * direction and are cancelled.  Also clears the EOF
                  * latch — the new direction may make more frames
-                 * available (e.g. flipping forward-EOF to reverse).
+                 * available (e.g. flipping forward-EOF to reverse) —
+                 * and resets the @ref nextStep accumulator so the
+                 * next tick's advance is computed from a fresh
+                 * baseline.
+                 *
+                 * @param r The new rate.  Must be a finite double
+                 *          (NaN and infinities are rejected via
+                 *          @c assert in debug builds and silently
+                 *          ignored otherwise).
                  */
-                void setStep(int val);
+                void setRate(double r);
+
+                /**
+                 * @brief Returns and consumes the next per-tick frame advance.
+                 *
+                 * Backends call this once per @ref MediaIOCommandRead
+                 * to translate the group's fractional @ref rate into
+                 * an integer step (positive = forward N frames,
+                 * negative = backward N frames, 0 = hold on the
+                 * current frame).  Internally maintains a running
+                 * accumulator so that slow-motion playback (e.g.
+                 * @c rate=0.5 ) repeats every other frame and
+                 * fast-forward (e.g. @c rate=2.5 ) alternates between
+                 * advancing 2 and 3 frames per tick — averaging out
+                 * to the requested rate over time.
+                 *
+                 * The accumulator is reset to zero on
+                 * @ref setRate and on @ref seekToFrame so that the
+                 * tick following a rate change or seek lands on the
+                 * intended frame without phase carry-over from the
+                 * previous configuration.
+                 *
+                 * Not const — mutates the internal accumulator.
+                 * Intended to be called from the backend strand
+                 * thread that owns the read; not safe to call
+                 * concurrently from multiple threads.
+                 */
+                int nextStep();
 
                 /**
                  * @brief Seeks every source in the group to @p frameNumber.
@@ -337,7 +384,8 @@ class MediaIOPortGroup : public ObjectBase {
                 Atomic<int64_t>   _framesDroppedTotal{0};
                 Atomic<int64_t>   _framesRepeatedTotal{0};
                 Atomic<int64_t>   _framesLateTotal{0};
-                int               _step = 1;
+                double            _rate = 1.0;
+                double            _rateAccumulator = 0.0;
                 bool              _canSeek = false;
                 bool              _atEnd = false;
 };

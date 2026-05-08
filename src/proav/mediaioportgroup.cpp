@@ -14,6 +14,7 @@
 #include <promeki/mediaioreadcache.h>
 #include <promeki/strand.h>
 #include <cassert>
+#include <cmath>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -32,10 +33,16 @@ void MediaIOPortGroup::addPort(MediaIOPort *port) {
         _ports += port;
 }
 
-void MediaIOPortGroup::setStep(int val) {
-        if (val == _step) return;
+void MediaIOPortGroup::setRate(double r) {
+        // Reject non-finite rates outright.  In debug builds we trip
+        // an assert so the misuse surfaces immediately; in release we
+        // silently no-op rather than corrupt the accumulator.
+        assert(std::isfinite(r) && "MediaIOPortGroup::setRate rejects non-finite rate");
+        if (!std::isfinite(r)) return;
+
+        if (r == _rate) return;
         // Outstanding prefetched reads were submitted with the old
-        // step; they're stale relative to the new direction.  Cancel
+        // rate; they're stale relative to the new direction.  Cancel
         // them and discard any results that already came back.  Also
         // clear the EOF latch — the new direction may make more frames
         // available (e.g. flipping forward-EOF to reverse).
@@ -49,7 +56,19 @@ void MediaIOPortGroup::setStep(int val) {
                 }
                 _atEnd = false;
         }
-        _step = val;
+        _rate = r;
+        _rateAccumulator = 0.0;
+}
+
+int MediaIOPortGroup::nextStep() {
+        // Truncate-toward-zero accumulator: emits |floor(|acc|)| of
+        // the right sign, then drains that many whole units back out.
+        // For rate=0.5 the sequence is 0,1,0,1; for rate=2.5 it's
+        // 2,3,2,3; for rate=-0.5 it's 0,-1,0,-1; for rate=0 always 0.
+        _rateAccumulator += _rate;
+        int step = static_cast<int>(_rateAccumulator);
+        _rateAccumulator -= static_cast<double>(step);
+        return step;
 }
 
 MediaIORequest MediaIOPortGroup::setClock(const Clock::Ptr &clock) {
@@ -83,6 +102,10 @@ MediaIORequest MediaIOPortGroup::seekToFrame(const FrameNumber &frameNumber, Med
         // Seeking past EOF clears the EOF latch — the new position
         // may be valid even if the previous one was end-of-stream.
         _atEnd = false;
+        // Reset the rate accumulator so the post-seek tick lands at
+        // the requested frame rather than carrying fractional phase
+        // from the pre-seek position.
+        _rateAccumulator = 0.0;
 
         auto *cmdSeek = new MediaIOCommandSeek();
         cmdSeek->frameNumber = frameNumber;

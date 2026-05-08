@@ -25,7 +25,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 bool MediaPipelineConfig::Stage::operator==(const Stage &other) const {
         return name == other.name && type == other.type && path == other.path && role == other.role &&
-               config == other.config && metadata == other.metadata;
+               config == other.config && metadata == other.metadata && pacesPipeline == other.pacesPipeline &&
+               captureSink == other.captureSink;
 }
 
 // ============================================================================
@@ -50,6 +51,22 @@ MediaPipelineConfig::StageRole MediaPipelineConfig::roleFromName(const String &n
         if (name == "NotOpen" || name.isEmpty()) return StageRole::NotOpen;
         if (err) *err = Error::Invalid;
         return StageRole::NotOpen;
+}
+
+String MediaPipelineConfig::kindName(Kind kind) {
+        switch (kind) {
+                case Kind::Capture: return String("Capture");
+                case Kind::Playback:
+                default: return String("Playback");
+        }
+}
+
+MediaPipelineConfig::Kind MediaPipelineConfig::kindFromName(const String &name, Error *err) {
+        if (err) *err = Error::Ok;
+        if (name == "Playback" || name.isEmpty()) return Kind::Playback;
+        if (name == "Capture") return Kind::Capture;
+        if (err) *err = Error::Invalid;
+        return Kind::Playback;
 }
 
 // ============================================================================
@@ -78,7 +95,8 @@ void MediaPipelineConfig::addRoute(const String &from, const String &to) {
 
 bool MediaPipelineConfig::operator==(const MediaPipelineConfig &other) const {
         return _stages == other._stages && _routes == other._routes && _pipelineMetadata == other._pipelineMetadata &&
-               _frameCount == other._frameCount && _statsWindowSize == other._statsWindowSize;
+               _frameCount == other._frameCount && _statsWindowSize == other._statsWindowSize &&
+               _kind == other._kind && _startPaused == other._startPaused;
 }
 
 // ============================================================================
@@ -99,6 +117,14 @@ JsonObject MediaPipelineConfig::toJson() const {
         if (_statsWindowSize != 256) {
                 j.set("statsWindowSize", static_cast<int64_t>(_statsWindowSize));
         }
+        // Kind defaults to Playback; only serialize when overridden so
+        // existing playback-shaped configs stay terse.
+        if (_kind != Kind::Playback) {
+                j.set("kind", kindName(_kind));
+        }
+        if (_startPaused) {
+                j.set("startPaused", true);
+        }
 
         JsonArray stageArr;
         for (size_t i = 0; i < _stages.size(); ++i) {
@@ -110,6 +136,8 @@ JsonObject MediaPipelineConfig::toJson() const {
                 sj.set("mode", roleName(s.role));
                 sj.set("config", s.config.toJson());
                 if (!s.metadata.isEmpty()) sj.set("metadata", s.metadata.toJson());
+                if (s.pacesPipeline) sj.set("pacesPipeline", true);
+                if (s.captureSink) sj.set("captureSink", true);
                 stageArr.add(sj);
         }
         j.set("stages", stageArr);
@@ -165,6 +193,20 @@ MediaPipelineConfig MediaPipelineConfig::fromJson(const JsonObject &obj, Error *
                 }
         }
 
+        if (obj.contains("kind")) {
+                const String  kindStr = obj.getString("kind");
+                Error         kErr;
+                cfg._kind = kindFromName(kindStr, &kErr);
+                if (kErr.isError()) {
+                        promekiWarn("MediaPipelineConfig::fromJson: unknown kind '%s'.", kindStr.cstr());
+                        good = false;
+                }
+        }
+
+        if (obj.contains("startPaused")) {
+                cfg._startPaused = obj.getBool("startPaused");
+        }
+
         if (obj.valueIsArray("stages")) {
                 JsonArray stages = obj.getArray("stages");
                 for (int i = 0; i < stages.size(); ++i) {
@@ -208,6 +250,8 @@ MediaPipelineConfig MediaPipelineConfig::fromJson(const JsonObject &obj, Error *
                                 s.metadata = Metadata::fromJson(sj.getObject("metadata"), &mErr);
                                 if (mErr.isError()) good = false;
                         }
+                        if (sj.contains("pacesPipeline")) s.pacesPipeline = sj.getBool("pacesPipeline");
+                        if (sj.contains("captureSink")) s.captureSink = sj.getBool("captureSink");
                         cfg._stages.pushToBack(std::move(s));
                 }
         }
@@ -479,6 +523,55 @@ Error MediaPipelineConfig::validate() const {
                 }
         }
 
+        // 5. Kind-specific transport-role checks.
+        //    Playback needs exactly one pacing stage so pause/resume
+        //    routes through one well-defined clock; Capture needs at
+        //    least one capture-sink stage so the gate has a target.
+        //    Phase 1 surfaces misconfiguration as warnings only — the
+        //    transport API that consumes these flags lands in Phase 2,
+        //    and that's where the strict-error gate moves to so legacy
+        //    configs without transport intent continue to validate.
+        //    The cross-flag warnings (Playback config carrying
+        //    captureSink, Capture config carrying pacesPipeline,
+        //    Capture config setting startPaused) are pure-misconfig
+        //    diagnostics regardless of phase.
+        size_t pacers = 0;
+        size_t captureSinks = 0;
+        for (size_t i = 0; i < _stages.size(); ++i) {
+                if (_stages[i].pacesPipeline) ++pacers;
+                if (_stages[i].captureSink) ++captureSinks;
+        }
+        if (_kind == Kind::Playback) {
+                if (pacers == 0) {
+                        promekiWarn("MediaPipelineConfig::validate: Playback config has no stage with "
+                                    "pacesPipeline=true; playback-transport pause/resume will be unavailable.");
+                }
+                if (pacers > 1) {
+                        promekiWarn("MediaPipelineConfig::validate: Playback config has %zu stages with "
+                                    "pacesPipeline=true; exactly one will be required when transport lands.",
+                                    pacers);
+                }
+                if (captureSinks > 0) {
+                        promekiWarn("MediaPipelineConfig::validate: Playback config has %zu stage(s) with "
+                                    "captureSink=true; the flag is ignored for Playback kinds.",
+                                    captureSinks);
+                }
+        } else { // Kind::Capture
+                if (captureSinks == 0) {
+                        promekiWarn("MediaPipelineConfig::validate: Capture config has no stage with "
+                                    "captureSink=true; capture-transport gate will be unavailable.");
+                }
+                if (pacers > 0) {
+                        promekiWarn("MediaPipelineConfig::validate: Capture config has %zu stage(s) with "
+                                    "pacesPipeline=true; the flag is ignored for Capture kinds.",
+                                    pacers);
+                }
+                if (_startPaused) {
+                        promekiWarn("MediaPipelineConfig::validate: Capture config sets startPaused=true; "
+                                    "the flag is ignored for Capture kinds.");
+                }
+        }
+
         return Error::Ok;
 }
 
@@ -571,6 +664,8 @@ DataStream &operator<<(DataStream &stream, const MediaPipelineConfig::Stage &s) 
         stream << static_cast<int32_t>(s.role);
         stream << s.config;
         stream << s.metadata;
+        stream << s.pacesPipeline;
+        stream << s.captureSink;
         return stream;
 }
 
@@ -587,6 +682,8 @@ DataStream &operator>>(DataStream &stream, MediaPipelineConfig::Stage &s) {
         s.role = static_cast<MediaPipelineConfig::StageRole>(m);
         stream >> s.config;
         stream >> s.metadata;
+        stream >> s.pacesPipeline;
+        stream >> s.captureSink;
         return stream;
 }
 
@@ -618,6 +715,8 @@ DataStream &operator<<(DataStream &stream, const MediaPipelineConfig &c) {
         stream << c.routes();
         stream << c.frameCount();
         stream << static_cast<int32_t>(c.statsWindowSize());
+        stream << static_cast<int32_t>(c.kind());
+        stream << c.startPaused();
         return stream;
 }
 
@@ -631,16 +730,22 @@ DataStream &operator>>(DataStream &stream, MediaPipelineConfig &c) {
         MediaPipelineConfig::RouteList routeList;
         FrameCount                     frameCount;
         int32_t                        statsWindow = 256;
+        int32_t                        kindRaw = static_cast<int32_t>(MediaPipelineConfig::Kind::Playback);
+        bool                           startPaused = false;
         stream >> meta;
         stream >> stageList;
         stream >> routeList;
         stream >> frameCount;
         stream >> statsWindow;
+        stream >> kindRaw;
+        stream >> startPaused;
         c.setPipelineMetadata(meta);
         c.stages() = std::move(stageList);
         c.routes() = std::move(routeList);
         c.setFrameCount(frameCount);
         c.setStatsWindowSize(static_cast<int>(statsWindow));
+        c.setKind(static_cast<MediaPipelineConfig::Kind>(kindRaw));
+        c.setStartPaused(startPaused);
         return stream;
 }
 

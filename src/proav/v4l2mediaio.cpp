@@ -1463,8 +1463,8 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 _lastCaptureTime = ct;
         }
 
-        Frame::Ptr frame = Frame::Ptr::create();
-        frame.modify()->addPayload(std::move(imgPtr));
+        Frame frame = Frame();
+        frame.addPayload(std::move(imgPtr));
 
         // Wait for enough audio samples to fill this frame.  The
         // audio capture thread pushes continuously at the ALSA rate;
@@ -1541,7 +1541,7 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandRead &cmd) {
                         TimeStamp audioTs;
                         audioTs.setValue(TimeStamp::Value(std::chrono::nanoseconds(firstSampleWallNs)));
                         audioPayload.modify()->setPts(MediaTimeStamp(audioTs, AlsaClock));
-                        frame.modify()->addPayload(audioPayload);
+                        frame.addPayload(audioPayload);
                 }
 
                 // Sample the ring level for the periodic average

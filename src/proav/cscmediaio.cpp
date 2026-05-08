@@ -257,14 +257,13 @@ Error CscMediaIO::convertPayload(const UncompressedVideoPayload &input,
         return Error::Ok;
 }
 
-Error CscMediaIO::convertFrame(const Frame::Ptr &input, Frame::Ptr &output) {
+Error CscMediaIO::convertFrame(const Frame &input, Frame &output) {
         if (!input.isValid()) {
                 return Error::Invalid;
         }
 
-        Frame::Ptr outFrame = Frame::Ptr::create();
-        Frame     *outRaw = outFrame.modify();
-        outRaw->metadata() = input->metadata();
+        Frame outFrame = Frame();
+        outFrame.metadata() = input.metadata();
 
         // Read video from the new MediaPayload world.  CSC is a raster
         // transform — compressed payloads are rejected here rather
@@ -272,7 +271,7 @@ Error CscMediaIO::convertFrame(const Frame::Ptr &input, Frame::Ptr &output) {
         // UncompressedVideoPayload::convert runs CSC natively on the
         // payload; we push the destination payload directly into the
         // output frame so we skip the Image bridge round-trip.
-        for (const VideoPayload::Ptr &srcVp : input->videoPayloads()) {
+        for (const VideoPayload::Ptr &srcVp : input.videoPayloads()) {
                 if (!srcVp.isValid()) continue;
                 const auto *srcUvp = srcVp->as<UncompressedVideoPayload>();
                 if (srcUvp == nullptr) {
@@ -284,13 +283,13 @@ Error CscMediaIO::convertFrame(const Frame::Ptr &input, Frame::Ptr &output) {
                 Error                         err = convertPayload(*srcUvp, dstPayload);
                 if (err.isError()) return err;
                 if (!dstPayload.isValid()) return Error::ConversionFailed;
-                outRaw->addPayload(dstPayload);
+                outFrame.addPayload(dstPayload);
         }
 
         // Audio is pure pass-through — just forward the audio payload
         // pointers into the output frame.
-        for (const AudioPayload::Ptr &srcAp : input->audioPayloads()) {
-                if (srcAp.isValid()) outRaw->addPayload(srcAp);
+        for (const AudioPayload::Ptr &srcAp : input.audioPayloads()) {
+                if (srcAp.isValid()) outFrame.addPayload(srcAp);
         }
 
         output = std::move(outFrame);
@@ -309,7 +308,7 @@ Error CscMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                 _capacityWarned = true;
         }
 
-        Frame::Ptr outFrame;
+        Frame outFrame;
         Error      err = convertFrame(cmd.frame, outFrame);
         if (err.isError()) {
                 return err;
@@ -328,7 +327,7 @@ Error CscMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 return Error::TryAgain;
         }
 
-        Frame::Ptr frame = std::move(_outputQueue.front());
+        Frame frame = std::move(_outputQueue.front());
         _outputQueue.remove(0);
         _readCount++;
         cmd.frame = std::move(frame);

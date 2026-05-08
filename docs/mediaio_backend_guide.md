@@ -251,7 +251,7 @@ Error FooMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         // cmd.step is the current step value (positive = forward,
         // negative = reverse, 0 = repeat).
 
-        Frame::Ptr f;
+        Frame f;
         Error err = _file.readNext(&f);
         if (err == Error::EndOfFile) return Error::EndOfFile;
         if (err.isError()) return err;
@@ -411,7 +411,7 @@ returned into `cmd->result`.
   via `MediaIORequest::then(...)`.
 - Backend-internal threads (capture callback threads, network
   receive threads) coordinate with `executeCmd` themselves —
-  typically by buffering into a `Queue<Frame::Ptr>` that
+  typically by buffering into a `Queue<Frame>` that
   `executeCmd(Read)` drains.
 
 ## Live capture pattern {#mediaio_backend_capture}
@@ -420,7 +420,7 @@ Capture devices produce frames on their own clock and need to be
 decoupled from the user's `readFrame()` calls.
 
 1. During `executeCmd(Open)`, start a callback or thread that
-   feeds a bounded `Queue<Frame::Ptr>`.
+   feeds a bounded `Queue<Frame>`.
 2. `executeCmd(Read)` pops from the queue (blocking if empty),
    stamps per-frame metadata, returns the frame.
 3. Set `cmd.defaultPrefetchDepth = 2..4` so MediaIO keeps a small

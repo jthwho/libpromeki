@@ -401,20 +401,24 @@ class MediaIOCommandRead : public MediaIOCommand {
                  */
                 MediaIOPortGroup *group = nullptr;
                 /**
-                 * @brief Per-group step at submit time.
+                 * @brief Per-group rate at submit time.
                  *
-                 * Mirror of @ref MediaIOPortGroup::step copied at
+                 * Mirror of @ref MediaIOPortGroup::rate copied at
                  * submit time so the backend doesn't have to re-read
-                 * the live group state during @c executeCmd
-                 * (positive = forward, 0 = repeat / hold,
-                 * negative = reverse).
+                 * the live group state during @c executeCmd.  Backends
+                 * that care about per-tick advance call
+                 * @ref MediaIOPortGroup::nextStep() on @ref group to
+                 * fold the fractional rate through the accumulator and
+                 * recover the integer step for this read; backends
+                 * that need only direction can inspect the sign of
+                 * this field directly.
                  */
-                int               step = 1;
+                double            rate = 1.0;
 
                 // ---- Outputs ----
 
                 /** @brief The frame the backend produced.  Required on @c Error::Ok. */
-                Frame::Ptr  frame;
+                Frame  frame;
                 /** @brief Backend-reported position of @ref frame within the group. */
                 FrameNumber currentFrame;
 
@@ -465,7 +469,7 @@ class MediaIOCommandWrite : public MediaIOCommand {
                  */
                 MediaIOSink      *sink = nullptr;
                 /** @brief The frame to write.  Required. */
-                Frame::Ptr        frame;
+                Frame        frame;
 
                 // ---- Outputs ----
 

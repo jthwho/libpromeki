@@ -104,7 +104,7 @@ namespace {
                 MediaIORequest readReq = rig.tpg->source(0)->readFrame();
                 Error          rerr = readReq.wait();
                 if (rerr.isError()) return rerr;
-                Frame::Ptr frame;
+                Frame frame;
                 if (const auto *cr = readReq.commandAs<MediaIOCommandRead>()) {
                         frame = cr->frame;
                 }

@@ -45,13 +45,13 @@ namespace {
 // downstream consumers see a fully-stamped frame regardless of how
 // careful the backend was.  Mirror copy of the helper in
 // mediaiosink.cpp's write path.
-void ensurePayloadTiming(Frame::Ptr &frame, const MediaTimeStamp &synMts, const FrameRate &frameRate) {
+void ensurePayloadTiming(Frame &frame, const MediaTimeStamp &synMts, const FrameRate &frameRate) {
         if (!frame.isValid()) return;
         const Duration oneFrame = frameRate.isValid() ? frameRate.frameDuration() : Duration();
-        for (size_t i = 0; i < frame->payloadList().size(); ++i) {
-                const MediaPayload::Ptr &p = frame->payloadList()[i];
+        for (size_t i = 0; i < frame.payloadList().size(); ++i) {
+                const MediaPayload::Ptr &p = frame.payloadList()[i];
                 if (!p.isValid()) continue;
-                MediaPayload *mp = frame.modify()->payloadList()[i].modify();
+                MediaPayload *mp = frame.payloadList()[i].modify();
                 if (!mp->pts().isValid()) mp->setPts(synMts);
                 if (mp->hasDuration() && mp->duration().isZero() && !oneFrame.isZero()) {
                         mp->setDuration(oneFrame);
@@ -504,7 +504,7 @@ MediaDesc MediaIO::applyOutputOverrides(const MediaDesc &input, const MediaConfi
 
 MediaIO::MediaIO(ObjectBase *parent) : ObjectBase(parent) {}
 
-int64_t MediaIO::frameByteSize(const Frame::Ptr &frame) {
+int64_t MediaIO::frameByteSize(const Frame &frame) {
         // Walks the frame once and sums every payload's plane bytes.
         // "Logical" is important: we use BufferView::size() (content)
         // rather than allocSize() (allocation) so that partially-
@@ -513,7 +513,7 @@ int64_t MediaIO::frameByteSize(const Frame::Ptr &frame) {
         // backends build frames lazily.
         if (!frame.isValid()) return 0;
         int64_t total = 0;
-        for (const MediaPayload::Ptr &p : frame->payloadList()) {
+        for (const MediaPayload::Ptr &p : frame.payloadList()) {
                 if (!p.isValid()) continue;
                 for (size_t i = 0; i < p->planeCount(); ++i) {
                         total += static_cast<int64_t>(p->plane(i).size());
@@ -703,11 +703,11 @@ void MediaIO::completeCommand(MediaIOCommand::Ptr cmd) {
                                                 // optional
                                                 // MediaDescChanged,
                                                 // and a payload pts.
-                                                Frame::Ptr      &fp = cr->frame;
+                                                Frame      &fp = cr->frame;
                                                 const FrameRate &rate = g->frameRate();
-                                                fp.modify()->metadata().set(Metadata::FrameNumber, g->_currentFrame);
+                                                fp.metadata().set(Metadata::FrameNumber, g->_currentFrame);
                                                 if (cr->mediaDescChanged) {
-                                                        fp.modify()->metadata().set(Metadata::MediaDescChanged, true);
+                                                        fp.metadata().set(Metadata::MediaDescChanged, true);
                                                 }
                                                 int64_t ns = rate.cumulativeTicks(
                                                         INT64_C(1000000000),

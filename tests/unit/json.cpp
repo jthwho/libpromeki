@@ -79,7 +79,7 @@ TEST_CASE("JsonObject_Nested") {
 }
 
 // ============================================================================
-// JsonObject copy semantics (plain value, no internal COW)
+// JsonObject copy semantics (internal copy-on-write)
 // ============================================================================
 
 TEST_CASE("JsonObject_CopyIsIndependent") {
@@ -102,6 +102,49 @@ TEST_CASE("JsonObject_CopyAddKeyIndependent") {
         copy.set("b", 2);
         CHECK(obj.size() == 1);
         CHECK(copy.size() == 2);
+}
+
+TEST_CASE("JsonObject_MutatingOriginalAfterAliasIsIndependent") {
+        // CoW must detach when *either* side mutates, not just the copy.
+        JsonObject obj;
+        obj.set("key", "original");
+
+        JsonObject alias = obj;
+        obj.set("key", "modified");
+
+        CHECK(obj.getString("key") == "modified");
+        CHECK(alias.getString("key") == "original");
+}
+
+TEST_CASE("JsonObject_ClearOnAliasLeavesOriginalIntact") {
+        JsonObject obj;
+        obj.set("a", 1);
+        obj.set("b", 2);
+
+        JsonObject alias = obj;
+        alias.clear();
+
+        CHECK(alias.size() == 0);
+        CHECK(obj.size() == 2);
+        CHECK(obj.getInt("a") == 1);
+}
+
+TEST_CASE("JsonObject_GetObjectReturnsIndependentSubtree") {
+        // A subtree pulled out via getObject must not share storage with
+        // the parent — mutating either side leaves the other unchanged.
+        JsonObject inner;
+        inner.set("value", 1);
+
+        JsonObject outer;
+        outer.set("inner", inner);
+
+        JsonObject pulled = outer.getObject("inner");
+        pulled.set("value", 99);
+
+        CHECK(pulled.getInt("value") == 99);
+        // Parent's nested copy is unchanged.
+        JsonObject reread = outer.getObject("inner");
+        CHECK(reread.getInt("value") == 1);
 }
 
 // ============================================================================
@@ -238,7 +281,7 @@ TEST_CASE("JsonArray_Parse") {
 }
 
 // ============================================================================
-// JsonArray copy semantics (plain value, no internal COW)
+// JsonArray copy semantics (internal copy-on-write)
 // ============================================================================
 
 TEST_CASE("JsonArray_CopyIsIndependent") {
@@ -251,6 +294,35 @@ TEST_CASE("JsonArray_CopyIsIndependent") {
         copy.add(3);
         CHECK(arr.size() == 2);
         CHECK(copy.size() == 3);
+}
+
+TEST_CASE("JsonArray_MutatingOriginalAfterAliasIsIndependent") {
+        // CoW must detach when *either* side mutates.
+        JsonArray arr;
+        arr.add(1);
+        arr.add(2);
+
+        JsonArray alias = arr;
+        arr.add(3);
+
+        CHECK(arr.size() == 3);
+        CHECK(alias.size() == 2);
+}
+
+TEST_CASE("JsonArray_GetArrayReturnsIndependentSubtree") {
+        JsonArray inner;
+        inner.add(10);
+
+        JsonArray outer;
+        outer.add(inner);
+
+        JsonArray pulled = outer.getArray(0);
+        pulled.add(20);
+
+        CHECK(pulled.size() == 2);
+        // Parent's nested array is unchanged.
+        JsonArray reread = outer.getArray(0);
+        CHECK(reread.size() == 1);
 }
 
 // ============================================================================
@@ -362,4 +434,375 @@ TEST_CASE("JsonArray_Null") {
         CHECK(arr.size() == 2);
         CHECK(arr.valueIsNull(0));
         CHECK(!arr.valueIsNull(1));
+}
+
+// ============================================================================
+// JsonValue type queries
+// ============================================================================
+
+TEST_CASE("JsonValue_DefaultIsNull") {
+        JsonValue v;
+        CHECK(v.type() == JsonValue::Null);
+        CHECK(v.isNull());
+        CHECK(!v.isUndefined());
+        CHECK(!v.isBool());
+        CHECK(!v.isDouble());
+        CHECK(!v.isString());
+}
+
+TEST_CASE("JsonValue_Undefined") {
+        JsonValue v = JsonValue::undefined();
+        CHECK(v.type() == JsonValue::Undefined);
+        CHECK(v.isUndefined());
+        CHECK(!v.isNull());
+}
+
+TEST_CASE("JsonValue_FromPrimitives") {
+        CHECK(JsonValue(true).type() == JsonValue::Bool);
+        CHECK(JsonValue(true).toBool() == true);
+        CHECK(JsonValue(42).type() == JsonValue::Double);
+        CHECK(JsonValue(42).toInt() == 42);
+        CHECK(JsonValue(int64_t{-7}).toInt() == -7);
+        CHECK(JsonValue(uint64_t{99}).toUInt() == 99);
+        CHECK(JsonValue(3.5).toDouble() > 3.49);
+        CHECK(JsonValue("hi").type() == JsonValue::String);
+        CHECK(JsonValue("hi").toString() == "hi");
+        CHECK(JsonValue(String("there")).toString() == "there");
+}
+
+TEST_CASE("JsonValue_DefaultsOnTypeMismatch") {
+        JsonValue v(42);
+        // toBool on a number returns the default
+        CHECK(v.toBool(true) == true);
+        CHECK(v.toBool(false) == false);
+        CHECK(v.toString("fallback") == "fallback");
+}
+
+TEST_CASE("JsonValue_FromObjectSharesStorage") {
+        // Constructing a JsonValue from a JsonObject must not deep-copy
+        // the tree; refcount on the source data should bump.
+        JsonObject obj;
+        obj.set("a", 1);
+        obj.set("b", 2);
+        JsonValue v = obj;
+        CHECK(v.isObject());
+        // Round-trip back to JsonObject — should still see the same data.
+        JsonObject got = v.toObject();
+        CHECK(got.size() == 2);
+        CHECK(got.getInt("b") == 2);
+}
+
+TEST_CASE("JsonValue_FromArraySharesStorage") {
+        JsonArray arr;
+        arr.add(10);
+        arr.add(20);
+        JsonValue v = arr;
+        CHECK(v.isArray());
+        JsonArray got = v.toArray();
+        CHECK(got.size() == 2);
+        CHECK(got.getInt(1) == 20);
+}
+
+TEST_CASE("JsonValue_ToVariantPrimitives") {
+        Variant b = JsonValue(true).toVariant();
+        CHECK(b.get<bool>() == true);
+        Variant n = JsonValue(int64_t{42}).toVariant();
+        CHECK(n.get<int64_t>() == 42);
+}
+
+TEST_CASE("JsonValue_FromVariant") {
+        Variant   v(int64_t{99});
+        JsonValue jv = JsonValue::fromVariant(v);
+        CHECK(jv.isDouble());
+        CHECK(jv.toInt() == 99);
+}
+
+TEST_CASE("JsonValue_Equality") {
+        CHECK(JsonValue(42) == JsonValue(42));
+        CHECK(JsonValue(42) != JsonValue(43));
+        CHECK(JsonValue::undefined() == JsonValue::undefined());
+        CHECK(JsonValue::undefined() != JsonValue());  // undefined != null
+}
+
+// ============================================================================
+// JsonObject operator[] / value() / keys
+// ============================================================================
+
+TEST_CASE("JsonObject_OperatorBracketReturnsValue") {
+        JsonObject obj;
+        obj.set("x", 10);
+        obj.set("name", "promeki");
+
+        CHECK(obj["x"].toInt() == 10);
+        CHECK(obj["name"].toString() == "promeki");
+        CHECK(obj["missing"].isUndefined());
+}
+
+TEST_CASE("JsonObject_ValueOnMissingKeyReturnsUndefined") {
+        JsonObject obj;
+        obj.setNull("present_null");
+
+        CHECK(obj.value("present_null").isNull());
+        CHECK(!obj.value("present_null").isUndefined());
+        CHECK(obj.value("absent").isUndefined());
+        CHECK(!obj.value("absent").isNull());
+}
+
+TEST_CASE("JsonObject_Keys") {
+        JsonObject obj;
+        obj.set("alpha", 1);
+        obj.set("beta", 2);
+        obj.set("gamma", 3);
+
+        auto k = obj.keys();
+        CHECK(k.size() == 3);
+        CHECK(k.contains("alpha"));
+        CHECK(k.contains("beta"));
+        CHECK(k.contains("gamma"));
+}
+
+TEST_CASE("JsonObject_IsEmptyCount") {
+        JsonObject obj;
+        CHECK(obj.isEmpty());
+        CHECK(obj.count() == 0);
+        obj.set("k", 1);
+        CHECK(!obj.isEmpty());
+        CHECK(obj.count() == 1);
+}
+
+TEST_CASE("JsonObject_Remove") {
+        JsonObject obj;
+        obj.set("a", 1);
+        obj.set("b", 2);
+
+        CHECK(obj.remove("a"));
+        CHECK(!obj.contains("a"));
+        CHECK(obj.size() == 1);
+        CHECK(!obj.remove("missing"));
+}
+
+TEST_CASE("JsonObject_Take") {
+        JsonObject obj;
+        obj.set("a", 42);
+
+        JsonValue taken = obj.take("a");
+        CHECK(taken.toInt() == 42);
+        CHECK(!obj.contains("a"));
+
+        JsonValue absent = obj.take("missing");
+        CHECK(absent.isUndefined());
+}
+
+TEST_CASE("JsonObject_RemoveDoesNotMutateAlias") {
+        JsonObject obj;
+        obj.set("a", 1);
+        obj.set("b", 2);
+        JsonObject alias = obj;
+
+        obj.remove("a");
+        CHECK(obj.size() == 1);
+        CHECK(alias.size() == 2);
+}
+
+// ============================================================================
+// JsonObject move-set
+// ============================================================================
+
+TEST_CASE("JsonObject_MoveSetEquivalentResult") {
+        JsonObject child;
+        child.set("inner", 99);
+
+        JsonObject parent;
+        parent.set("child", std::move(child));
+
+        // Move-overload must produce the same observable result
+        // as the lvalue overload.
+        JsonObject got = parent.getObject("child");
+        CHECK(got.getInt("inner") == 99);
+}
+
+TEST_CASE("JsonObject_MoveSetWithSharedRvalue") {
+        // When the rvalue is shared (an lvalue passed via std::move with
+        // an alias still alive), the move-overload must still produce
+        // correct semantics — the alias must not see the move-out.
+        JsonObject child;
+        child.set("v", 7);
+        JsonObject alias = child;
+
+        JsonObject parent;
+        parent.set("c", std::move(child));
+
+        // Alias keeps its data unchanged.
+        CHECK(alias.getInt("v") == 7);
+        CHECK(parent.getObject("c").getInt("v") == 7);
+}
+
+// ============================================================================
+// JsonObject Variant bulk
+// ============================================================================
+
+TEST_CASE("JsonObject_VariantMapRoundTrip") {
+        VariantMap in;
+        in.insert("name", Variant(String("clip")));
+        in.insert("width", Variant(int64_t{1920}));
+        in.insert("hdr", Variant(true));
+
+        JsonObject obj = JsonObject::fromVariantMap(in);
+        CHECK(obj.size() == 3);
+        CHECK(obj.getString("name") == "clip");
+        CHECK(obj.getInt("width") == 1920);
+        CHECK(obj.getBool("hdr") == true);
+
+        VariantMap out = obj.toVariantMap();
+        CHECK(out.size() == 3);
+        CHECK(out.value("name").get<String>() == "clip");
+}
+
+// ============================================================================
+// JsonArray Qt-style accessors
+// ============================================================================
+
+TEST_CASE("JsonArray_AtOperatorBracket") {
+        JsonArray arr;
+        arr.add(10);
+        arr.add("hi");
+
+        CHECK(arr.at(0).toInt() == 10);
+        CHECK(arr[1].toString() == "hi");
+        CHECK(arr.at(99).isUndefined());
+        CHECK(arr.at(-1).isUndefined());
+}
+
+TEST_CASE("JsonArray_FirstLast") {
+        JsonArray empty;
+        CHECK(empty.first().isUndefined());
+        CHECK(empty.last().isUndefined());
+
+        JsonArray arr;
+        arr.add(1);
+        arr.add(2);
+        arr.add(3);
+        CHECK(arr.first().toInt() == 1);
+        CHECK(arr.last().toInt() == 3);
+}
+
+TEST_CASE("JsonArray_RemoveAtTakeAt") {
+        JsonArray arr;
+        arr.add(10);
+        arr.add(20);
+        arr.add(30);
+
+        JsonValue taken = arr.takeAt(1);
+        CHECK(taken.toInt() == 20);
+        CHECK(arr.size() == 2);
+        CHECK(arr.getInt(1) == 30);
+
+        CHECK(arr.removeAt(0));
+        CHECK(arr.size() == 1);
+        CHECK(!arr.removeAt(5));
+}
+
+TEST_CASE("JsonArray_InsertPrepend") {
+        JsonArray arr;
+        arr.add(2);
+        arr.add(3);
+        arr.insert(0, JsonValue(1));
+        CHECK(arr.size() == 3);
+        CHECK(arr.getInt(0) == 1);
+        CHECK(arr.getInt(2) == 3);
+
+        arr.prepend(JsonValue(0));
+        CHECK(arr.getInt(0) == 0);
+
+        // Out-of-range clamps to size().
+        arr.insert(99, JsonValue(99));
+        CHECK(arr.last().toInt() == 99);
+}
+
+TEST_CASE("JsonArray_AppendAlias") {
+        JsonArray arr;
+        arr.append(1);
+        arr.append("hello");
+        CHECK(arr.size() == 2);
+        CHECK(arr.getInt(0) == 1);
+        CHECK(arr.getString(1) == "hello");
+}
+
+TEST_CASE("JsonArray_RangeFor") {
+        JsonArray arr;
+        arr.add(10);
+        arr.add(20);
+        arr.add(30);
+
+        int sum = 0;
+        for (const JsonValue &v : arr) {
+                sum += static_cast<int>(v.toInt());
+        }
+        CHECK(sum == 60);
+}
+
+TEST_CASE("JsonArray_IsEmptyCount") {
+        JsonArray arr;
+        CHECK(arr.isEmpty());
+        CHECK(arr.count() == 0);
+        arr.add(1);
+        CHECK(!arr.isEmpty());
+        CHECK(arr.count() == 1);
+}
+
+// ============================================================================
+// JsonArray move-add
+// ============================================================================
+
+TEST_CASE("JsonArray_MoveAddEquivalentResult") {
+        JsonObject child;
+        child.set("v", 7);
+
+        JsonArray arr;
+        arr.add(std::move(child));
+
+        JsonObject got = arr.getObject(0);
+        CHECK(got.getInt("v") == 7);
+}
+
+TEST_CASE("JsonArray_VariantListRoundTrip") {
+        VariantList in;
+        in.pushToBack(Variant(int64_t{1}));
+        in.pushToBack(Variant(String("two")));
+        in.pushToBack(Variant(true));
+
+        JsonArray arr = JsonArray::fromVariantList(in);
+        CHECK(arr.size() == 3);
+        CHECK(arr.getInt(0) == 1);
+        CHECK(arr.getString(1) == "two");
+        CHECK(arr.getBool(2) == true);
+
+        VariantList out = arr.toVariantList();
+        CHECK(out.size() == 3);
+        CHECK(out[0].get<int64_t>() == 1);
+}
+
+// ============================================================================
+// JsonObject set(JsonValue)
+// ============================================================================
+
+TEST_CASE("JsonObject_SetJsonValue") {
+        JsonObject obj;
+        obj.set("a", JsonValue(42));
+        obj.set("b", JsonValue("hi"));
+        obj.set("c", JsonValue::undefined()); // should store null
+
+        CHECK(obj.getInt("a") == 42);
+        CHECK(obj.getString("b") == "hi");
+        CHECK(obj.valueIsNull("c"));
+}
+
+TEST_CASE("JsonArray_AddJsonValue") {
+        JsonArray arr;
+        arr.add(JsonValue(1));
+        arr.add(JsonValue("hi"));
+        arr.add(JsonValue::undefined()); // should store null
+        CHECK(arr.getInt(0) == 1);
+        CHECK(arr.getString(1) == "hi");
+        CHECK(arr.valueIsNull(2));
 }
