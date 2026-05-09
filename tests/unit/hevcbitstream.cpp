@@ -239,3 +239,36 @@ TEST_CASE("HevcDecoderConfig::toAnnexB") {
                                          0x42, 0x01, 0xbb, 0x00, 0x00, 0x00, 0x01, 0x44, 0x01, 0xcc};
         CHECK(bytesOf(annexB) == expected);
 }
+
+TEST_CASE("HevcDecoderConfig::isIrapAnnexB") {
+
+        SUBCASE("IDR_W_RADL (type 19) is recognised as IRAP") {
+                std::vector<uint8_t> au = {
+                        0x00, 0x00, 0x00, 0x01, 0x40, 0x01, 0x0c, 0x01,       // VPS (type 32)
+                        0x00, 0x00, 0x00, 0x01, 0x42, 0x01, 0x01, 0x01,       // SPS (type 33)
+                        0x00, 0x00, 0x00, 0x01, 0x44, 0x01, 0xc1, 0x73,       // PPS (type 34)
+                        0x00, 0x00, 0x00, 0x01, 0x26, 0x01, 0xaf, 0x01, 0x07, // IDR_W_RADL (type 19)
+                };
+                auto buf = makeBuffer(au);
+                CHECK(HevcDecoderConfig::isIrapAnnexB(viewOf(buf)));
+        }
+
+        SUBCASE("CRA_NUT (type 21) is recognised as IRAP") {
+                // CRA_NUT byte0: (21 << 1) | 0 = 0x2A
+                std::vector<uint8_t> au = {0x00, 0x00, 0x00, 0x01, 0x2A, 0x01, 0xa0, 0x07};
+                auto                 buf = makeBuffer(au);
+                CHECK(HevcDecoderConfig::isIrapAnnexB(viewOf(buf)));
+        }
+
+        SUBCASE("non-IRAP (TRAIL_R type 1) is rejected") {
+                // TRAIL_R byte0: (1 << 1) | 0 = 0x02
+                std::vector<uint8_t> au = {0x00, 0x00, 0x00, 0x01, 0x02, 0x01, 0xa0, 0x07};
+                auto                 buf = makeBuffer(au);
+                CHECK_FALSE(HevcDecoderConfig::isIrapAnnexB(viewOf(buf)));
+        }
+
+        SUBCASE("empty input returns false") {
+                BufferView empty;
+                CHECK_FALSE(HevcDecoderConfig::isIrapAnnexB(empty));
+        }
+}

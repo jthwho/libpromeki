@@ -8,6 +8,8 @@
 #include <promeki/rtpsession.h>
 #include <promeki/logger.h>
 #include <promeki/packettransport.h>
+#include <promeki/rtcppacket.h>
+#include <promeki/rtpstreamclock.h>
 #include <promeki/thread.h>
 #include <promeki/udpsocket.h>
 #include <promeki/udpsockettransport.h>
@@ -82,13 +84,35 @@ class RtpSession::ReceiveThread : public Thread {
                                         // datagram — poll again.
                                         continue;
                                 }
+                                if (n < 4) {
+                                        // Too short to even hold an
+                                        // RTCP common header.  Drop.
+                                        continue;
+                                }
+                                buf.setSize(static_cast<size_t>(n));
+
+                                // RTCP / RTP demux.  We advertise rtcp-
+                                // mux in SDP so the same socket carries
+                                // both protocols.  RTP packet types are
+                                // 0..127 (byte 1 is M | PT, with M
+                                // optionally setting bit 7); RTCP
+                                // packet types are 200..223.  The
+                                // 192..199 / 224..255 ranges are
+                                // reserved.  Distinguishing on the
+                                // 200..223 RTCP range is unambiguous
+                                // and what RFC 5761 §4 prescribes.
+                                const uint8_t pt = static_cast<const uint8_t *>(buf.data())[1];
+                                if (pt >= 200u && pt <= 223u) {
+                                        _session->handleRtcp(static_cast<const uint8_t *>(buf.data()),
+                                                             static_cast<size_t>(n));
+                                        continue;
+                                }
+
                                 if (static_cast<size_t>(n) < RtpPacket::HeaderSize) {
                                         // Too short to contain a
                                         // fixed RTP header; drop.
                                         continue;
                                 }
-                                buf.setSize(static_cast<size_t>(n));
-
                                 RtpPacket pkt(buf, 0, static_cast<size_t>(n));
                                 if (!pkt.isValid()) {
                                         // Not a valid RTP packet
@@ -205,6 +229,15 @@ void RtpSession::fillHeader(RtpPacket &pkt, uint8_t pt, bool marker, uint32_t ti
         pkt.setSsrc(_ssrc);
 }
 
+void RtpSession::fillTransportHeader(RtpPacket &pkt) {
+        // Caller (TX thread) has already stamped marker and
+        // timestamp.  We only fill the transport-owned fields here.
+        pkt.setVersion(2);
+        pkt.setPayloadType(_payloadType);
+        pkt.setSequenceNumber(_sequenceNumber++);
+        pkt.setSsrc(_ssrc);
+}
+
 Error RtpSession::sendPacket(const Buffer &payload, uint32_t timestamp, uint8_t payloadType, bool marker) {
         if (!_running || _transport == nullptr) return Error::NotOpen;
         if (_remote.isNull()) return Error::InvalidArgument;
@@ -218,42 +251,50 @@ Error RtpSession::sendPacket(const Buffer &payload, uint32_t timestamp, uint8_t 
         return Error::Ok;
 }
 
-Error RtpSession::sendPackets(RtpPacket::List &packets, uint32_t timestamp, bool markerOnLast) {
+Error RtpSession::sendPackets(RtpPacketBatch &batch) {
         if (!_running || _transport == nullptr) return Error::NotOpen;
         if (_remote.isNull()) return Error::InvalidArgument;
-        if (packets.isEmpty()) return Error::Ok;
+        if (batch.packets.isEmpty()) return Error::Ok;
 
-        // Fill headers in place and build a parallel Datagram batch
-        // referencing the shared backing buffer (zero copy — the
-        // transport's batch send does the kernel copy).
-        PacketTransport::DatagramList batch;
-        batch.reserve(packets.size());
-        for (size_t i = 0; i < packets.size(); i++) {
-                auto &pkt = packets[i];
+        // VBR compressed-video path stamps a per-frame rate cap on
+        // each batch.  Apply it here so the kernel @c fq qdisc has a
+        // chance to spread the bytes before we hand them over.
+        if (batch.rateCapBps > 0) {
+                (void)_transport->setPacingRate(batch.rateCapBps / 8u);
+        }
+
+        // The TX thread has already stamped marker + RTP-TS on each
+        // packet.  We fill the transport-owned header fields and
+        // build a parallel Datagram batch referencing the shared
+        // backing buffer (zero copy — the transport's batch send does
+        // the kernel copy).
+        PacketTransport::DatagramList dgs;
+        dgs.reserve(batch.packets.size());
+        for (size_t i = 0; i < batch.packets.size(); i++) {
+                auto &pkt = batch.packets[i];
                 if (pkt.isNull() || pkt.size() < RtpPacket::HeaderSize) continue;
 
-                bool marker = markerOnLast && (i == packets.size() - 1);
-                fillHeader(pkt, _payloadType, marker, timestamp);
+                fillTransportHeader(pkt);
 
                 PacketTransport::Datagram d;
                 d.data = pkt.data();
                 d.size = pkt.size();
                 d.dest = _remote;
-                batch.pushToBack(d);
+                dgs.pushToBack(d);
         }
-        if (batch.isEmpty()) return Error::Ok;
+        if (dgs.isEmpty()) return Error::Ok;
 
         // sendmmsg may not accept all datagrams in one call when
         // the socket buffer is full (common for large uncompressed
         // video frames that produce thousands of packets).  Loop
         // to drain the remainder.
         size_t offset = 0;
-        while (offset < batch.size()) {
+        while (offset < dgs.size()) {
                 PacketTransport::DatagramList sub;
-                size_t                        remaining = batch.size() - offset;
+                size_t                        remaining = dgs.size() - offset;
                 sub.reserve(remaining);
-                for (size_t i = offset; i < batch.size(); i++) {
-                        sub.pushToBack(batch[i]);
+                for (size_t i = offset; i < dgs.size(); i++) {
+                        sub.pushToBack(dgs[i]);
                 }
                 int sent = _transport->sendPackets(sub);
                 if (sent < 0) return Error::IOError;
@@ -263,127 +304,128 @@ Error RtpSession::sendPackets(RtpPacket::List &packets, uint32_t timestamp, bool
         return Error::Ok;
 }
 
-Error RtpSession::sendPackets(RtpPacket::List &packets, uint32_t startTimestamp, uint32_t timestampStride,
-                              bool marker) {
-        if (!_running || _transport == nullptr) return Error::NotOpen;
-        if (_remote.isNull()) return Error::InvalidArgument;
-        if (packets.isEmpty()) return Error::Ok;
-
-        // Fill headers in place with monotonically advancing
-        // timestamps, then hand the whole batch to the transport so
-        // sendmmsg() (or a future DPDK burst) can see all packets at
-        // once.
-        PacketTransport::DatagramList batch;
-        batch.reserve(packets.size());
-        uint32_t ts = startTimestamp;
-        for (size_t i = 0; i < packets.size(); i++) {
-                auto &pkt = packets[i];
-                if (pkt.isNull() || pkt.size() < RtpPacket::HeaderSize) continue;
-
-                fillHeader(pkt, _payloadType, marker, ts);
-                ts += timestampStride;
-
-                PacketTransport::Datagram d;
-                d.data = pkt.data();
-                d.size = pkt.size();
-                d.dest = _remote;
-                batch.pushToBack(d);
-        }
-        if (batch.isEmpty()) return Error::Ok;
-
-        size_t offset = 0;
-        while (offset < batch.size()) {
-                PacketTransport::DatagramList sub;
-                size_t                        remaining = batch.size() - offset;
-                sub.reserve(remaining);
-                for (size_t i = offset; i < batch.size(); i++) {
-                        sub.pushToBack(batch[i]);
-                }
-                int sent = _transport->sendPackets(sub);
-                if (sent < 0) return Error::IOError;
-                if (sent == 0) return Error::IOError;
-                offset += static_cast<size_t>(sent);
-        }
-        return Error::Ok;
-}
-
-Error RtpSession::sendPacketsPaced(RtpPacket::List &packets, uint32_t timestamp, const Duration &spreadInterval,
-                                   bool markerOnLast) {
-        if (!_running || _transport == nullptr) return Error::NotOpen;
-        if (_remote.isNull()) return Error::InvalidArgument;
-        if (packets.isEmpty()) return Error::Ok;
-
-        // Pace by absolute deadlines so the call always lasts
-        // exactly @p spreadInterval regardless of how many packets
-        // there are.  Per-packet deadlines are spaced
-        // @c spreadInterval/N apart starting at @c startTime, so
-        // packet @c i is dispatched at @c startTime+i*(interval/N)
-        // and the call returns at @c startTime+spreadInterval
-        // (after a final sleep past the last packet).  This makes
-        // sendPacketsPaced safe to use as a frame-rate enforcer:
-        // a caller that hands it one frame interval gets exactly
-        // one frame interval of wall-clock pacing per call, even
-        // for single-packet frames where the previous "spread
-        // between packets" formulation collapsed to a no-op and
-        // bypassed pacing entirely.
-        //
-        // All time arithmetic uses promeki::TimeStamp +
-        // promeki::Duration directly via the operator overloads
-        // declared in @ref timestamp.h, so no double round-trip is
-        // required to convert between the library's portable
-        // Duration and the platform's clock duration.
-        const TimeStamp startTime = TimeStamp::now();
-        const TimeStamp endTime = startTime + spreadInterval;
-
-        const int64_t n = static_cast<int64_t>(packets.size());
-        // Skip the sleepUntil() syscall when the deadline is so close
-        // that the kernel will overshoot it anyway.  On a normally-
-        // loaded Linux box @c std::this_thread::sleep_until granularity
-        // is ~50 µs even with high-resolution timers, so per-packet
-        // pacing for high-rate streams (raw RFC 4175 video at 60 fps —
-        // ~2300 packets per frame, ~7 µs target spacing) ends up
-        // calling sleep_until ~2300 times per frame and burning
-        // millisecond-scale syscall overhead on deadlines that are
-        // already past.  The threshold here is the empirical minimum
-        // wakeup overhead; sleep_until still pays its cost for any
-        // gap larger than that, and short gaps are absorbed by the
-        // natural overhead of @c sendto + the loop body.
-        constexpr int64_t kSleepThresholdUs = 100;
-        const Duration    sleepThreshold = Duration::fromMicroseconds(kSleepThresholdUs);
-        for (int64_t i = 0; i < n; i++) {
-                auto &pkt = packets[i];
-                if (pkt.isNull() || pkt.size() < RtpPacket::HeaderSize) continue;
-
-                bool marker = markerOnLast && (i == n - 1);
-                fillHeader(pkt, _payloadType, marker, timestamp);
-
-                // Absolute per-packet deadline = startTime + i*(interval/n).
-                // The first packet (i=0) goes out immediately;
-                // subsequent packets sleep until their slot, but only
-                // when the gap is large enough to be worth the syscall.
-                if (i > 0) {
-                        const TimeStamp pktDeadline = startTime + (spreadInterval * i) / n;
-                        const Duration  remaining = pktDeadline - TimeStamp::now();
-                        if (remaining > sleepThreshold) {
-                                pktDeadline.sleepUntil();
-                        }
-                }
-
-                ssize_t sent = _transport->sendPacket(pkt.data(), pkt.size(), _remote);
-                if (sent < 0) return Error::IOError;
-        }
-
-        // Hold the call open for the remainder of the interval so
-        // the total wall-clock duration matches @p spreadInterval
-        // regardless of packet count.  This is what makes
-        // single-packet frames pace correctly.
-        endTime.sleepUntil();
-        return Error::Ok;
-}
-
 Error RtpSession::setPacingRate(uint64_t bytesPerSec) {
         if (_transport == nullptr) return Error::NotOpen;
         return _transport->setPacingRate(bytesPerSec);
+}
+
+void RtpSession::setRtpAnchor(NtpTime captureNtp, uint32_t rtpTs) {
+        Mutex::Locker lock(_rtcpMutex);
+        _anchorNtp = captureNtp;
+        _anchorRtpTs = rtpTs;
+}
+
+NtpTime RtpSession::anchorNtp() const {
+        Mutex::Locker lock(_rtcpMutex);
+        return _anchorNtp;
+}
+
+uint32_t RtpSession::anchorRtpTs() const {
+        Mutex::Locker lock(_rtcpMutex);
+        return _anchorRtpTs;
+}
+
+void RtpSession::noteRtpEmission(uint32_t rtpTs) {
+        Mutex::Locker lock(_rtcpMutex);
+        _lastEmissionRtpTs = rtpTs;
+        _hasEmission = true;
+}
+
+bool RtpSession::hasEmissionRecord() const {
+        Mutex::Locker lock(_rtcpMutex);
+        return _hasEmission;
+}
+
+RtpSession::ReceivedSr RtpSession::receivedSr() const {
+        Mutex::Locker lock(_rtcpMutex);
+        return _lastReceivedSr;
+}
+
+void RtpSession::handleRtcp(const uint8_t *data, size_t size) {
+        // Walk the compound for SRs.  Anything else (SDES / BYE /
+        // APP / RR / forward-compatible types we don't recognise) is
+        // dropped silently — RTCP is forward-compatible by design.
+        const auto srs = RtcpPacket::findSenderReports(data, size);
+        if (srs.isEmpty()) return;
+        // Take the last SR in the compound — RFC 3550 §6.4 lets a
+        // single compound carry multiple SRs (one per source the
+        // sender is also receiving) but for our point-to-point
+        // model the sender's own SR is always present and is the
+        // one we care about.  When multiple SRs share the same
+        // SSRC the last entry wins; that's also what an RFC-compliant
+        // sender would intend (later == newer accounting).
+        const auto       &sr = srs[srs.size() - 1];
+        Mutex::Locker     lock(_rtcpMutex);
+        _lastReceivedSr.ntp = sr.ntp;
+        _lastReceivedSr.rtpTs = sr.rtpTimestamp;
+        _lastReceivedSr.arrivedAt = TimeStamp::now();
+        _lastReceivedSr.valid = true;
+}
+
+NtpTime RtpSession::currentSrNtp() const {
+        Mutex::Locker lock(_rtcpMutex);
+        if (_clockRate == 0) return _anchorNtp;
+        return RtpStreamClock(_anchorNtp, _anchorRtpTs, _clockRate).toNtp(_lastEmissionRtpTs);
+}
+
+Error RtpSession::emitRtcpSr(uint32_t senderPacketCount, uint32_t senderOctetCount) {
+        if (!_running || _transport == nullptr) return Error::NotOpen;
+        if (_remote.isNull()) return Error::InvalidArgument;
+
+        // The SR's (NTP, RTP_TS) pair is derived deterministically
+        // from the capture-anchor and the most-recently emitted
+        // RTP-TS — never sampled from the system clock at emission
+        // time.  This is what lets multi-stream receivers align
+        // essences in a common wallclock domain even when the
+        // sender's @c steady_clock and @c system_clock disagree by
+        // parts-per-million: every stream from this RtpMediaIO
+        // shares the same anchor NTP, so the receiver's
+        // @c (anchor, rtpTs) → NTP arithmetic produces a
+        // cross-stream-consistent wallclock for the original
+        // capture instant, regardless of how the wire pacing
+        // diverges from the source clock.
+        NtpTime  ntp;
+        uint32_t rtpTs = 0;
+        bool     hasEmission = false;
+        {
+                Mutex::Locker lock(_rtcpMutex);
+                hasEmission = _hasEmission;
+                rtpTs = _lastEmissionRtpTs;
+                if (_clockRate == 0) {
+                        ntp = _anchorNtp;
+                } else {
+                        ntp = RtpStreamClock(_anchorNtp, _anchorRtpTs, _clockRate).toNtp(_lastEmissionRtpTs);
+                }
+        }
+        if (!hasEmission) {
+                // Caller should have skipped us via
+                // @ref hasEmissionRecord — but if they didn't, the
+                // SR is still structurally legal: NTP equals the
+                // anchor, RTP-TS = 0.  Just less useful for sync
+                // until the first RTP packet flows.
+                rtpTs = 0;
+        }
+
+        Buffer sr = RtcpPacket::buildSenderReport(_ssrc, ntp, rtpTs, senderPacketCount, senderOctetCount);
+        Buffer sdes = RtcpPacket::buildSourceDescriptionCname(_ssrc, _cname);
+        List<Buffer> compoundParts;
+        compoundParts.pushToBack(sr);
+        compoundParts.pushToBack(sdes);
+        Buffer compound = RtcpPacket::compound(compoundParts);
+
+        // Send via the transport.  rtcp-mux is what we advertise in
+        // SDP, so the same socket carries both RTP and RTCP — the
+        // RTCP packet type field (200 / 202) is what receivers use to
+        // demux.  No batched / paced send needed for one small
+        // datagram per few seconds.
+        PacketTransport::Datagram d;
+        d.data = compound.data();
+        d.size = compound.size();
+        d.dest = _remote;
+        PacketTransport::DatagramList list;
+        list.pushToBack(d);
+        int sent = _transport->sendPackets(list);
+        return sent <= 0 ? Error::IOError : Error::Ok;
 }
 
 PROMEKI_NAMESPACE_END

@@ -8,11 +8,13 @@
 #        scripts/rtp-rx-ffplay.sh -s /tmp/stream.sdp
 #
 #   2. Pass stream parameters and let the script synthesize a
-#      minimal SDP file on the fly (useful when testing MJPEG TX
-#      against a known destination without running the sender with
-#      RtpSaveSdpPath):
+#      minimal SDP file on the fly (useful when testing MJPEG /
+#      H.264 / H.265 TX against a known destination without running
+#      the sender with RtpSaveSdpPath):
 #        scripts/rtp-rx-ffplay.sh -a 239.0.0.1 -p 5004 \
 #                                 -t video -m MJPEG -c 90000
+#        scripts/rtp-rx-ffplay.sh -a 127.0.0.1 -p 5004 -m H264
+#        scripts/rtp-rx-ffplay.sh -a 127.0.0.1 -p 5004 -m H265
 #
 # The script writes a temporary SDP file, runs ffplay with the
 # protocol whitelist needed for RTP over UDP, and cleans up the
@@ -29,7 +31,10 @@ PORT=""
 MEDIA="video"
 PAYLOAD="MJPEG"
 CLOCK_RATE="90000"
-PAYLOAD_TYPE="26"
+# Empty until argument parsing finishes; if still empty, the
+# format-specific default is chosen below (26 for MJPEG, 96 for
+# the dynamic-PT codecs like H.264 / H.265 / raw).
+PAYLOAD_TYPE=""
 KEEP_TMP=false
 EXTRA_ARGS=()
 
@@ -37,7 +42,8 @@ usage() {
         cat <<EOF
 Usage:
   $0 -s <sdp-file> [-- <extra ffplay args>]
-  $0 -a <address> -p <port> [-t video|audio] [-m MJPEG|raw|L16|L24]
+  $0 -a <address> -p <port> [-t video|audio]
+      [-m MJPEG|H264|H265|raw|L16|L24]
       [-c <clock-rate>] [-P <payload-type>] [-- <extra ffplay args>]
 
 Modes:
@@ -47,9 +53,10 @@ Modes:
 
 Stream shape (only used in synthesized-SDP mode):
   -t KIND       video (default) or audio.
-  -m FORMAT     MJPEG | raw | L16 | L24 (default: MJPEG).
+  -m FORMAT     MJPEG | H264 | H265 | raw | L16 | L24 (default: MJPEG).
   -c RATE       RTP clock rate in Hz (default 90000 for video).
-  -P TYPE       RTP payload type number (default 26 for MJPEG).
+  -P TYPE       RTP payload type number (default: 26 for MJPEG,
+                96 for every other format).
 
 Other:
   -k, --keep    Do not delete the temporary SDP file on exit.
@@ -103,13 +110,36 @@ else
                 exit 1
         fi
 
-        # Default payload type per media/format.
+        # Per-format rtpmap, optional fmtp, and default payload type.
+        # The H.264 / H.265 fmtp lines mirror what
+        # ImageDesc::toSdp produces from RtpMediaIO so a synthesized
+        # SDP and an exported one accept the same wire packets.
+        FMTP=""
         case "$MEDIA" in
                 video)
                         case "$PAYLOAD" in
-                                MJPEG) RTPMAP="JPEG/${CLOCK_RATE}" ;;
-                                raw)   RTPMAP="raw/${CLOCK_RATE}" ;;
-                                *)     echo "error: unknown video format '$PAYLOAD'" >&2; exit 1 ;;
+                                MJPEG)
+                                        RTPMAP="JPEG/${CLOCK_RATE}"
+                                        : "${PAYLOAD_TYPE:=26}"
+                                        ;;
+                                H264|h264)
+                                        RTPMAP="H264/${CLOCK_RATE}"
+                                        FMTP="packetization-mode=1"
+                                        : "${PAYLOAD_TYPE:=96}"
+                                        ;;
+                                H265|h265|HEVC|hevc)
+                                        RTPMAP="H265/${CLOCK_RATE}"
+                                        FMTP="sprop-max-don-diff=0"
+                                        : "${PAYLOAD_TYPE:=96}"
+                                        ;;
+                                raw)
+                                        RTPMAP="raw/${CLOCK_RATE}"
+                                        : "${PAYLOAD_TYPE:=96}"
+                                        ;;
+                                *)
+                                        echo "error: unknown video format '$PAYLOAD'" >&2
+                                        exit 1
+                                        ;;
                         esac
                         ;;
                 audio)
@@ -120,6 +150,7 @@ else
                                 L24) RTPMAP="L24/${CLOCK_RATE}/2" ;;
                                 *)   echo "error: unknown audio format '$PAYLOAD'" >&2; exit 1 ;;
                         esac
+                        : "${PAYLOAD_TYPE:=96}"
                         ;;
                 *)
                         echo "error: media kind must be 'video' or 'audio'" >&2
@@ -136,6 +167,9 @@ else
                 echo "t=0 0"
                 echo "m=${MEDIA} ${PORT} RTP/AVP ${PAYLOAD_TYPE}"
                 echo "a=rtpmap:${PAYLOAD_TYPE} ${RTPMAP}"
+                if [[ -n "$FMTP" ]]; then
+                        echo "a=fmtp:${PAYLOAD_TYPE} ${FMTP}"
+                fi
         } > "$TMP_SDP"
 
         SDP_PATH="$TMP_SDP"

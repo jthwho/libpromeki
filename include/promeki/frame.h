@@ -15,6 +15,7 @@
 #include <promeki/mediapayload.h>
 #include <promeki/videopayload.h>
 #include <promeki/audiopayload.h>
+#include <promeki/mediatimestamp.h>
 #include <promeki/metadata.h>
 #include <promeki/list.h>
 #include <promeki/stringlist.h>
@@ -191,6 +192,59 @@ class Frame {
                 MediaDesc mediaDesc() const;
 
                 /**
+                 * @brief Returns the frame-level capture timestamp.
+                 *
+                 * Distinct from per-payload @c pts() — the
+                 * captureTime represents the instant the source
+                 * captured this Frame as a whole (the analog of
+                 * "shutter open" for a camera, "first sample of
+                 * buffer" for an audio capture, "render-completion
+                 * time" for a synthetic source).  Per-essence pts
+                 * carries the timing for that specific essence,
+                 * which can differ from the Frame's wallclock
+                 * capture instant when the backend re-derives the
+                 * frame (e.g. CSC or framesync producing output at
+                 * a moment that has nothing to do with capture).
+                 *
+                 * Backends that own a hardware capture clock
+                 * (V4L2, NDI, ST 2110 RX, PTP-locked sources)
+                 * fill in their authoritative capture instant via
+                 * @ref setCaptureTime before the Frame leaves the
+                 * backend.  Backends without one rely on the
+                 * MediaIO write-path default-stamper, which fills
+                 * in @c (TimeStamp::now(), ClockDomain::SystemMonotonic)
+                 * if the inbound Frame still has none — mirroring
+                 * the MediaIO default-stamping behaviour for
+                 * per-payload @c pts.
+                 *
+                 * Used by RTP TX to derive the SR's NTP timestamp
+                 * from a single observed instant per opening, so
+                 * receivers can correlate cross-stream capture
+                 * timing instead of having to assume the wire
+                 * emission instant maps cleanly to capture.
+                 *
+                 * @return The capture timestamp, or an invalid
+                 *         @ref MediaTimeStamp if none was set.
+                 */
+                const MediaTimeStamp &captureTime() const { return _d->_captureTime; }
+
+                /**
+                 * @brief Sets the frame-level capture timestamp.
+                 *
+                 * Overwrites whatever timestamp was previously
+                 * present.  Triggers copy-on-write — the
+                 * underlying @c Data is detached if it is
+                 * currently shared.  CoW Frame copies preserve
+                 * the timestamp without restamping, so a Frame
+                 * that arrived with an authoritative timestamp
+                 * keeps it across pipeline copies even if a
+                 * downstream stage clones the Frame.
+                 *
+                 * @param ts The capture timestamp to record.
+                 */
+                void setCaptureTime(const MediaTimeStamp &ts) { _d.modify()->_captureTime = ts; }
+
+                /**
                  * @brief Returns a const reference to the config update delta.
                  *
                  * When non-empty, the config update is applied by the
@@ -292,6 +346,7 @@ class Frame {
                                 MediaPayload::PtrList _payloads;
                                 Metadata              _metadata;
                                 MediaConfig           _configUpdate;
+                                MediaTimeStamp        _captureTime;
                 };
                 SharedPtr<Data> _d = SharedPtr<Data>::create();
 };

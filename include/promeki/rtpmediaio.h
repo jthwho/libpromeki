@@ -8,6 +8,7 @@
 #pragma once
 
 #include <atomic>
+#include <promeki/atomic.h>
 #include <promeki/audiobuffer.h>
 #include <promeki/audiodesc.h>
 #include <promeki/clockdomain.h>
@@ -19,11 +20,15 @@
 #include <promeki/mediaiofactory.h>
 #include <promeki/mutex.h>
 #include <promeki/namespace.h>
+#include <promeki/ntptime.h>
 #include <promeki/pacinggate.h>
 #include <promeki/pcmaudiopayload.h>
 #include <promeki/pixelformat.h>
 #include <promeki/queue.h>
 #include <promeki/rtppacket.h>
+#include <promeki/rtppacketizerthread.h>
+#include <promeki/rtpstreamclock.h>
+#include <promeki/rtptxthread.h>
 #include <promeki/sdpsession.h>
 #include <promeki/socketaddress.h>
 #include <promeki/string.h>
@@ -53,23 +58,45 @@ class Thread;
  *
  * @par Supported streams (writer mode)
  *
- * - **Video** — MJPEG (RFC 2435) via @ref RtpPayloadJpeg when the
- *   input @ref PixelFormat is in the JPEG family, or RFC 4175 raw
- *   video via @ref RtpPayloadRawVideo for 8-bit interleaved
- *   uncompressed formats (first pass; proper ST 2110-20 pgroup
- *   sizing for 10/12-bit lands later).  @b Pick @b the @b right
- *   @b JPEG @b sub-format: JFIF / RFC 2435 has no standard way to
- *   signal YCbCr matrix (Rec.601 vs Rec.709) or range (limited
- *   vs full) inside the bitstream, so a strict JFIF consumer
- *   like ffplay always decodes with Rec.601 full-range math.
- *   For correct playback in ffplay / browsers / any libjpeg-based
- *   receiver, use @c PixelFormat::JPEG_YUV8_422_Rec601_Full or
- *   @c PixelFormat::JPEG_YUV8_420_Rec601_Full.  Broadcast / SDI /
- *   ST 2110 pipelines that expect limited-range Rec.709 JPEG
- *   should use the unsuffixed @c JPEG_YUV8_422_Rec709 variant
- *   (the library-wide YCbCr default).  See the
- *   @ref pixelformat.h enum documentation for the full 2 × 2 × 2
- *   matrix × range × subsampling grid.
+ * - **Video** — one of:
+ *   - **MJPEG** (RFC 2435) via @ref RtpPayloadJpeg when the input
+ *     @ref PixelFormat is in the JPEG family.  @b Pick @b the
+ *     @b right @b JPEG @b sub-format: JFIF / RFC 2435 has no
+ *     standard way to signal YCbCr matrix (Rec.601 vs Rec.709)
+ *     or range (limited vs full) inside the bitstream, so a
+ *     strict JFIF consumer like ffplay always decodes with
+ *     Rec.601 full-range math.  For correct playback in
+ *     ffplay / browsers / any libjpeg-based receiver, use
+ *     @c PixelFormat::JPEG_YUV8_422_Rec601_Full or
+ *     @c PixelFormat::JPEG_YUV8_420_Rec601_Full.  Broadcast /
+ *     SDI / ST 2110 pipelines that expect limited-range Rec.709
+ *     JPEG should use the unsuffixed @c JPEG_YUV8_422_Rec709
+ *     variant (the library-wide YCbCr default).  See the
+ *     @ref pixelformat.h enum documentation for the full
+ *     2 × 2 × 2 matrix × range × subsampling grid.
+ *   - **JPEG XS** (RFC 9134) via @ref RtpPayloadJpegXs for the
+ *     ST 2110-22 family of @c PixelFormat::JPEG_XS_* variants.
+ *   - **H.264 / AVC** (RFC 6184) via @ref RtpPayloadH264 when
+ *     the input @c PixelFormat is @c PixelFormat::H264.  The
+ *     encoder is expected to feed Annex-B byte streams (start
+ *     codes between NALs); @c RtpPayloadH264 fragments large
+ *     NAL units into FU-A packets and sends small NALs as
+ *     single-NAL packets.  Parameter sets (SPS / PPS) ship
+ *     in-band as part of each IDR access unit; the SDP fmtp
+ *     line carries @c packetization-mode=1 but does not
+ *     currently carry @c sprop-parameter-sets — that
+ *     out-of-band path is a planned follow-up (see @c
+ *     _videoSpropParameterSets below).
+ *   - **H.265 / HEVC** (RFC 7798) via @ref RtpPayloadH265 when
+ *     the input @c PixelFormat is @c PixelFormat::HEVC.  Same
+ *     in-band parameter-set policy as H.264 (VPS / SPS / PPS
+ *     accompany each IRAP); the SDP fmtp asserts
+ *     @c sprop-max-don-diff=0 to match the writer's no-DON
+ *     emission ordering.
+ *   - **Raw video** (RFC 4175) via @ref RtpPayloadRawVideo for
+ *     8-bit interleaved uncompressed formats (first pass;
+ *     proper ST 2110-20 pgroup sizing for 10/12-bit lands
+ *     later).
  * - **Audio** — L16 (RFC 3551 / AES67) via @ref RtpPayloadL16.
  *   Input can arrive in any PCM data type that @ref AudioBuffer
  *   can convert to @c PCMI_S16BE (signed 16 / float32 / float64 at
@@ -106,6 +133,31 @@ class Thread;
  * rejected — an RTP sink and an RTP source are conceptually
  * different streams and should not share a MediaIO.
  *
+ * @par Parameter-set delivery (H.264 / H.265)
+ *
+ * For the temporal codecs the decoder needs out-of-band parameter
+ * sets (H.264: SPS + PPS; HEVC: VPS + SPS + PPS) before it can
+ * decode the first VCL slice.  Two paths exist:
+ *
+ *  - **In-band** — the encoder prefixes each IDR / IRAP access unit
+ *    with its parameter sets, which then ride through @ref
+ *    RtpPayloadH264 / @ref RtpPayloadH265 as ordinary NAL units.
+ *    Every reasonable receiver (ffmpeg, GStreamer, browsers, all
+ *    NVDec-based consumers) decodes correctly.  This is what the
+ *    library does today.
+ *  - **Out-of-band via SDP** — the writer publishes
+ *    @c sprop-parameter-sets (H.264) or
+ *    @c sprop-vps / @c sprop-sps / @c sprop-pps (H.265) in the
+ *    @c a=fmtp line of the saved SDP so a receiver that parses the
+ *    SDP before the first packet (some hardware ST 2110 decoders)
+ *    can initialize its decoder ahead of time.  This requires
+ *    capturing parameter sets at open time, before any frame has
+ *    been encoded — either by deferring SDP emission until after
+ *    the first IDR or by demanding the encoder publish its
+ *    parameter sets via the @ref MediaConfig before open.  This
+ *    path is not yet wired; the slot @c _videoSpropParameterSets is
+ *    reserved for it.
+ *
  * @par Reader auto-config via SDP
  *
  * When @ref MediaConfig::RtpSdp is set, the reader parses
@@ -136,7 +188,7 @@ class Thread;
  * |------------|-----------|
  * | @c Auto      | Probe the best available mechanism at open time.  Resolves to @c KernelFq on Linux and @c Userspace elsewhere.  This is the default — explicit modes only need to be set when overriding. |
  * | @c None      | Burst all packets at once (loopback / LAN only). |
- * | @c Userspace | @ref RtpSession::sendPacketsPaced() — sleeps between sends. |
+ * | @c Userspace | Per-stream TX thread paces via the @ref Cadence helper — anchored deadlines spaced at @c frameInterval / packetCount drive @c std::this_thread::sleep_until between per-packet sends. |
  * | @c KernelFq  | @ref RtpSession::setPacingRate() — @c SO_MAX_PACING_RATE via the @c fq qdisc (Linux default). |
  * | @c TxTime    | Per-packet @c SCM_TXTIME deadlines via the ETF qdisc (deferred; falls back to @c KernelFq). |
  *
@@ -145,10 +197,11 @@ class Thread;
  * from the video descriptor for uncompressed inputs, and from
  * @c sampleRate @c × @c channels @c × @c bytesPerSample for audio.
  * Compressed video streams (JPEG / JPEG XS) without an explicit
- * @c VideoRtpTargetBitrate are paced per frame instead: every
- * call to @c sendVideo recomputes the rate cap from that frame's
- * actual packed byte count and sets it via @ref RtpSession::setPacingRate
- * before dispatching, so the kernel @c fq qdisc spaces a VBR
+ * @c VideoRtpTargetBitrate are paced per frame instead: the
+ * per-stream @c VideoPacketizerThread recomputes the rate cap
+ * from that frame's actual packed byte count and the
+ * @c VideoTxThread applies it via @ref RtpSession::setPacingRate
+ * before dispatch, so the kernel @c fq qdisc spaces a VBR
  * frame's bytes over exactly one frame interval without needing
  * to know the bitrate in advance.  The cap is always set to the
  * exact source rate (no headroom) so the socket's send buffer
@@ -325,6 +378,27 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 static inline const MediaIOStats::ID StatsRxVideoFrameIntervalUs{"RxVideoFrameIntervalUs"};
                 /** @brief String — pretty-printed video RX frame-assemble-time histogram (us). */
                 static inline const MediaIOStats::ID StatsRxVideoFrameAssembleUs{"RxVideoFrameAssembleUs"};
+                /**
+                 * @brief int64_t — cumulative AES67 silence packets
+                 *        emitted by @c AudioTxThread when its
+                 *        @c PacketQueue was empty at the cadence
+                 *        deadline.  Aggregated across all audio
+                 *        streams.  A non-zero value means the source
+                 *        stalled at least once during the run; very
+                 *        large values point to upstream pacing
+                 *        problems.  See also @ref
+                 *        StatsAudioSilenceSamplesEmitted.
+                 */
+                static inline const MediaIOStats::ID StatsAudioSilencePacketsEmitted{"AudioSilencePacketsEmitted"};
+                /**
+                 * @brief int64_t — cumulative PCM samples (per
+                 *        stream, per channel — i.e. one tick of the
+                 *        AES67 cadence at @c packetSamples advances
+                 *        the counter by @c packetSamples regardless
+                 *        of channel count) emitted as silence by
+                 *        @c AudioTxThread.
+                 */
+                static inline const MediaIOStats::ID StatsAudioSilenceSamplesEmitted{"AudioSilenceSamplesEmitted"};
 
                 /** @brief Params command name: return the SDP text in @c result["Sdp"]. */
                 static inline const MediaIOParamsID ParamGetSdp{"GetSdp"};
@@ -348,15 +422,16 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                  * @brief Accepts an external pacing clock for writer mode.
                  *
                  * In writer mode the supplied @ref Clock paces the
-                 * frame-level cadence: each @c sendVideo sleeps until
-                 * the clock reports the next frame deadline before
-                 * handing packets to the per-stream TX worker.  The
+                 * frame-level cadence on the strand: the strand
+                 * sleeps until the clock reports the next frame
+                 * deadline before pushing the Frame onto every
+                 * active stream's @c PayloadQueue.  Per-stream
                  * intra-frame packet spread (kernel-FQ /
                  * @c RtpPacingMode::Userspace / None) is unaffected
-                 * and continues to use its own timing logic.  Audio
-                 * blocks are not paced by this clock — AES67 packet
-                 * timing is governed by the per-packet RTP timestamp
-                 * stride that the audio FIFO already maintains.
+                 * and continues to use its own timing logic in the
+                 * per-stream TX threads.  Audio is not paced by
+                 * this clock — AES67 packet timing is governed by
+                 * the @c AudioTxThread's @c Cadence helper.
                  *
                  * Reader mode returns @c Error::NotSupported.  A null
                  * @c cmd.clock detaches the external clock and lets
@@ -390,101 +465,468 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                  * dispatch in @c executeCmd(MediaIOCommandWrite&) can
                  * iterate over active streams uniformly.
                  */
+                // Per-stream packetizer + TX worker classes.  Each
+                // active stream gets one of each: the packetizer
+                // pulls Frames off the strand-side @c PayloadQueue
+                // and emits payload-bytes-only packets onto the
+                // sink-side queue; the TX thread pops the latter,
+                // stamps the full RTP header, and dispatches to
+                // the wire.  Packetizer and TX talk only through
+                // their own per-stream @c Queue, so stream-level
+                // jitter (heavy IDR encode, audio cadence) never
+                // bleeds across stream boundaries.  Concrete
+                // subclasses live as nested classes inside
+                // @c rtpmediaio.cpp because they need access to
+                // RtpMediaIO state (parameter-set cache, pacing
+                // mode, SDP sprop refresh, etc.).
+                class VideoPacketizerThread;
+                class AudioPacketizerThread;
+                class DataPacketizerThread;
+                class VideoTxThread;
+                class AudioTxThread;
+                class DataTxThread;
+
                 /**
-                 * @brief Work item dispatched to a per-stream SendThread.
+                 * @brief Per-stream RTP state — kind-agnostic, mode-agnostic base.
+                 *
+                 * Carries identity fields shared by every kind and
+                 * every mode: transport / session / payload pointer,
+                 * destination address, RTP / SDP descriptors
+                 * (payloadType / clockRate / rtpmap / fmtp / mediaType),
+                 * SSRC, DSCP, the @c active gate set by openStream /
+                 * openReaderStream, and the SDP-derived clock domain.
+                 *
+                 * Mode-specific state lives on the writer-side / reader-
+                 * side subclasses:
+                 *
+                 *  - @ref WriterStream — TX threads, TX stats counters,
+                 *    TX histograms.  All three writer-mode subclasses
+                 *    (@ref VideoStream / @ref AudioStream /
+                 *    @ref DataStream) inherit from @c WriterStream.
+                 *  - @ref ReaderStream — reassembly state, RX stats
+                 *    counters, RX histograms, JPEG-discovered
+                 *    @c readerImageDesc.  All three reader-mode
+                 *    subclasses (@ref VideoReaderStream /
+                 *    @ref AudioReaderStream / @ref DataReaderStream)
+                 *    inherit from @c ReaderStream.
+                 *
+                 * Helpers that read only identity fields take a
+                 * @c Stream & — e.g. the RTCP scheduler's
+                 * @c emitForStream, the SDP builder's @c addStream.
+                 * Helpers whose work is mode-bound take the matching
+                 * subclass — e.g. @c openStream takes
+                 * @c WriterStream &, @c openReaderStream takes
+                 * @c ReaderStream &.
                  */
-                struct TxWorkItem {
-                                std::function<Error()> work;
-                                Queue<Error>          *resultQueue;
-                };
-
-                class SendThread;
-
                 struct Stream {
+                                Stream() = default;
+                                Stream(Stream &&o) noexcept
+                                    : transport(o.transport),
+                                      session(o.session),
+                                      payload(o.payload),
+                                      destination(std::move(o.destination)),
+                                      payloadType(o.payloadType),
+                                      clockRate(o.clockRate),
+                                      dscp(o.dscp),
+                                      ssrc(o.ssrc),
+                                      mediaType(std::move(o.mediaType)),
+                                      rtpmap(std::move(o.rtpmap)),
+                                      fmtp(std::move(o.fmtp)),
+                                      active(o.active),
+                                      clockDomain(o.clockDomain),
+                                      ptpGrandmaster(o.ptpGrandmaster) {
+                                        // Null pointers on the moved-
+                                        // from instance so a stray
+                                        // reset can't double-delete.
+                                        o.transport = nullptr;
+                                        o.session = nullptr;
+                                        o.payload = nullptr;
+                                }
+                                Stream(const Stream &) = delete;
+                                Stream &operator=(const Stream &) = delete;
+                                Stream &operator=(Stream &&) = delete;
                                 UdpSocketTransport *transport = nullptr;
                                 RtpSession         *session = nullptr;
                                 RtpPayload         *payload = nullptr;
-                                SendThread         *txThread = nullptr;
                                 SocketAddress       destination;
                                 uint8_t             payloadType = 0;
                                 uint32_t            clockRate = 90000;
                                 int                 dscp = 0;
                                 uint32_t            ssrc = 0;
-                                int64_t             packetsSent = 0;
-                                int64_t             bytesSent = 0;
-                                int64_t             packetsReceived = 0;
-                                int64_t             bytesReceived = 0;
-                                FrameCount          framesReceived{0};
-                                int64_t             packetsLost = 0;
                                 String              mediaType; ///< @brief "video", "audio", "data"
                                 String              rtpmap;    ///< @brief SDP a=rtpmap:... value
                                 String              fmtp;      ///< @brief SDP a=fmtp:... value, optional
                                 bool                active = false;
                                 ClockDomain         clockDomain;    ///< @brief Clock domain derived from SDP ts-refclk.
                                 EUI64               ptpGrandmaster; ///< @brief PTP grandmaster ID from SDP ts-refclk.
+                };
 
-                                // Reader-mode per-stream reassembly state.
-                                ImageDesc readerImageDesc;
-                                AudioDesc readerAudioDesc;
-                                uint32_t  reasmTimestamp = 0;
-                                bool      reasmHasTimestamp = false;
-                                uint16_t  reasmLastSeq = 0;
-                                bool      reasmHaveLastSeq = false;
-                                bool      reasmSynced = false; ///< @brief True once a marker boundary has been seen.
+                /**
+                 * @brief Writer-mode stream state.
+                 *
+                 * Holds the per-stream packetizer + TX thread pointers
+                 * (@c packetizer + @c tx), the cumulative TX stats
+                 * counters that the TX thread bumps and the strand-side
+                 * @c executeCmd(Stats) reads back, and the TX-side
+                 * timing histograms.  @c Atomic<int64_t> for the
+                 * counters keeps the TX-thread → strand handoff
+                 * lock-free (acquire/release semantics — no torn
+                 * reads).  Histograms are written only by the TX-side
+                 * worker that owns the stream and read by the strand
+                 * during the close-time dump and stats query.
+                 */
+                struct WriterStream : Stream {
+                                WriterStream() = default;
+                                WriterStream(WriterStream &&o) noexcept
+                                    : Stream(std::move(o)),
+                                      packetizer(o.packetizer),
+                                      tx(o.tx),
+                                      packetsSent(o.packetsSent.value()),
+                                      bytesSent(o.bytesSent.value()),
+                                      senderOctets(o.senderOctets.value()),
+                                      txFrameInterval(std::move(o.txFrameInterval)),
+                                      txSendDuration(std::move(o.txSendDuration)),
+                                      txLastSendStart(o.txLastSendStart),
+                                      txHasLastSend(o.txHasLastSend) {
+                                        o.packetizer = nullptr;
+                                        o.tx = nullptr;
+                                }
+                                WriterStream(const WriterStream &) = delete;
+                                WriterStream &operator=(const WriterStream &) = delete;
+                                WriterStream &operator=(WriterStream &&) = delete;
+                                RtpPacketizerThread *packetizer = nullptr;
+                                RtpTxThread         *tx = nullptr;
+                                Atomic<int64_t>     packetsSent{0};
+                                Atomic<int64_t>     bytesSent{0};
+                                Atomic<int64_t>     senderOctets{0}; ///< @brief Total RTP payload bytes (no header) — for RTCP SR.
+                                Histogram           txFrameInterval; ///< @brief µs between successive packetizer-thread entries (one push per frame)
+                                Histogram           txSendDuration;  ///< @brief µs from packetize → wire emission (queue + send time)
+                                TimeStamp           txLastSendStart; ///< @brief Last per-frame packetizer entry (writer's video packetizer thread only)
+                                bool                txHasLastSend = false;
+                };
+
+                /**
+                 * @brief Reader-mode stream state.
+                 *
+                 * Holds the reassembly state (current packet list,
+                 * latched RTP timestamp, sync gate) the per-session
+                 * RX thread accumulates between marker bits, the RX
+                 * stats counters, and the RX-side timing histograms.
+                 * The JPEG-discovered @c readerImageDesc / generic
+                 * @c readerAudioDesc descriptors live here too —
+                 * they are populated by @c emitVideoFrame /
+                 * @c onAudioPacket from the wire bytes plus the SDP's
+                 * advertised shape, never by the writer side.
+                 */
+                struct ReaderStream : Stream {
+                                ReaderStream() = default;
+                                ReaderStream(ReaderStream &&o) noexcept
+                                    : Stream(std::move(o)),
+                                      packetsReceived(o.packetsReceived.value()),
+                                      bytesReceived(o.bytesReceived.value()),
+                                      framesReceived(o.framesReceived),
+                                      packetsLost(o.packetsLost.value()),
+                                      readerImageDesc(std::move(o.readerImageDesc)),
+                                      readerAudioDesc(std::move(o.readerAudioDesc)),
+                                      reasmTimestamp(o.reasmTimestamp),
+                                      reasmHasTimestamp(o.reasmHasTimestamp),
+                                      reasmLastSeq(o.reasmLastSeq),
+                                      reasmHaveLastSeq(o.reasmHaveLastSeq),
+                                      reasmSynced(o.reasmSynced),
+                                      reasmPackets(std::move(o.reasmPackets)),
+                                      rxPacketInterval(std::move(o.rxPacketInterval)),
+                                      rxFrameInterval(std::move(o.rxFrameInterval)),
+                                      rxFrameAssembleTime(std::move(o.rxFrameAssembleTime)),
+                                      rxLastPacketTime(o.rxLastPacketTime),
+                                      rxLastFrameTime(o.rxLastFrameTime),
+                                      rxFrameStartTime(o.rxFrameStartTime),
+                                      rxHasLastPacket(o.rxHasLastPacket),
+                                      rxHasLastFrame(o.rxHasLastFrame),
+                                      rxHasFrameStart(o.rxHasFrameStart),
+                                      streamClock(std::move(o.streamClock)),
+                                      lastSrArrivedAt(o.lastSrArrivedAt),
+                                      hasSr(o.hasSr) {}
+                                ReaderStream(const ReaderStream &) = delete;
+                                ReaderStream &operator=(const ReaderStream &) = delete;
+                                ReaderStream &operator=(ReaderStream &&) = delete;
+                                Atomic<int64_t> packetsReceived{0};
+                                Atomic<int64_t> bytesReceived{0};
+                                FrameCount      framesReceived{0};
+                                Atomic<int64_t> packetsLost{0};
+                                ImageDesc       readerImageDesc;
+                                AudioDesc       readerAudioDesc;
+                                uint32_t        reasmTimestamp = 0;
+                                bool            reasmHasTimestamp = false;
+                                uint16_t        reasmLastSeq = 0;
+                                bool            reasmHaveLastSeq = false;
+                                bool            reasmSynced = false; ///< @brief True once a marker boundary has been seen.
                                 RtpPacket::List reasmPackets;
+                                Histogram       rxPacketInterval;    ///< @brief µs between received packets
+                                Histogram       rxFrameInterval;     ///< @brief µs between completed frames
+                                Histogram       rxFrameAssembleTime; ///< @brief µs first packet -> marker
+                                TimeStamp       rxLastPacketTime;    ///< @brief Last received packet time
+                                TimeStamp       rxLastFrameTime;     ///< @brief Last emitted frame time
+                                TimeStamp       rxFrameStartTime;    ///< @brief First packet of current reassembly
+                                bool            rxHasLastPacket = false;
+                                bool            rxHasLastFrame = false;
+                                bool            rxHasFrameStart = false;
+                                /// @brief Most-recently refreshed
+                                ///        @ref RtpStreamClock for this
+                                ///        stream.  Built from the SR
+                                ///        the receive thread parsed
+                                ///        out of the RTCP demux path
+                                ///        and updated on every packet
+                                ///        whose @c session->receivedSr
+                                ///        snapshot has advanced.
+                                ///        Invalid until the first SR
+                                ///        for this stream lands —
+                                ///        consumers must fall back to
+                                ///        the non-wallclock-aware path
+                                ///        until then.
+                                RtpStreamClock streamClock;
+                                /// @brief @c arrivedAt of the SR this
+                                ///        @ref streamClock was last
+                                ///        refreshed from.  Used to
+                                ///        detect "has a fresh SR
+                                ///        landed since I last
+                                ///        looked?" cheaply on every
+                                ///        incoming packet.
+                                TimeStamp lastSrArrivedAt;
+                                /// @brief Set once the first SR has
+                                ///        seeded the stream clock.
+                                bool hasSr = false;
+                };
 
-                                // Timing instrumentation.  Each histogram is
-                                // updated only by the worker thread that owns
-                                // the stream — the TX worker for writer mode,
-                                // the per-session RX thread for reader mode —
-                                // so they need no internal locking.  Stats
-                                // queries read them via @c executeCmd
-                                // (MediaIOCommandStats&) and serialise the
-                                // toString() form into the @ref MediaIOStats
-                                // payload.  All durations are tracked in
-                                // microseconds for compactness; nanoseconds
-                                // would push past the bucket layout's useful
-                                // range for the long tail.
-                                Histogram txFrameInterval;     ///< @brief us between sendVideo entries
-                                Histogram txSendDuration;      ///< @brief us spent inside sendVideo
-                                Histogram rxPacketInterval;    ///< @brief us between received packets
-                                Histogram rxFrameInterval;     ///< @brief us between completed frames
-                                Histogram rxFrameAssembleTime; ///< @brief us first packet -> marker
-                                TimeStamp txLastSendStart;     ///< @brief Last entry into sendVideo (TX worker only)
-                                TimeStamp rxLastPacketTime;    ///< @brief Last received packet time (RX thread only)
-                                TimeStamp rxLastFrameTime;     ///< @brief Last emitted frame time (RX thread only)
-                                TimeStamp rxFrameStartTime;    ///< @brief First packet of current reassembly
-                                bool      txHasLastSend = false;
-                                bool      rxHasLastPacket = false;
-                                bool      rxHasLastFrame = false;
-                                bool      rxHasFrameStart = false;
+                /**
+                 * @brief Writer-mode video stream state.
+                 *
+                 * Inherits @ref WriterStream and adds the H.264 / HEVC
+                 * parameter-set cache.  Cached SPS / PPS / VPS NAL
+                 * payloads (no start codes, no length prefixes) hold
+                 * the most-recently-observed copies pulled out of the
+                 * input Annex-B bitstream by @ref VideoPacketizerThread.
+                 * The self-healing parameter-set injector reads these
+                 * to prepend parameter sets to any IDR / IRAP access
+                 * unit whose upstream encoder did not emit them
+                 * in-band.  Empty until the first SPS / PPS / VPS is
+                 * observed; cleared on close.  Meaningful only for
+                 * H.264 (@c cachedSps / @c cachedPps) and HEVC
+                 * (@c cachedVps / @c cachedSps / @c cachedPps).
+                 */
+                struct VideoStream : WriterStream {
+                                VideoStream() = default;
+                                VideoStream(VideoStream &&o) noexcept
+                                    : WriterStream(std::move(o)),
+                                      imageDesc(std::move(o.imageDesc)),
+                                      cachedSps(std::move(o.cachedSps)),
+                                      cachedPps(std::move(o.cachedPps)),
+                                      cachedVps(std::move(o.cachedVps)) {}
+                                VideoStream(const VideoStream &) = delete;
+                                VideoStream &operator=(const VideoStream &) = delete;
+                                VideoStream &operator=(VideoStream &&) = delete;
+                                /// @brief Source image descriptor as
+                                ///        configured at open time.
+                                ///        Used by @ref refreshSdpSprop
+                                ///        to look up the codec ID
+                                ///        when deciding whether to
+                                ///        build H.264 sprop-parameter-
+                                ///        sets or HEVC sprop-vps /
+                                ///        sps / pps SDP lines.
+                                ImageDesc imageDesc;
+                                Buffer cachedSps;
+                                Buffer cachedPps;
+                                Buffer cachedVps;
+                };
+
+                /**
+                 * @brief Writer-mode data stream state.
+                 *
+                 * Inherits @ref WriterStream with no kind-specific
+                 * fields today.  Exists to symmetrize the per-kind
+                 * type hierarchy with @ref VideoStream and
+                 * @ref AudioStream so callers can write
+                 * @c DataStream &ds parameters that document what the
+                 * helper expects.
+                 */
+                struct DataStream : WriterStream {
+                                DataStream() = default;
+                                DataStream(DataStream &&o) noexcept = default;
+                                DataStream(const DataStream &) = delete;
+                                DataStream &operator=(const DataStream &) = delete;
+                                DataStream &operator=(DataStream &&) = delete;
+                };
+
+                /**
+                 * @brief Writer-mode audio stream state.
+                 *
+                 * Inherits @ref WriterStream and adds the AES67
+                 * wire-format packetisation parameters and silence-
+                 * stats counters.  The AudioBuffer FIFO and per-packet
+                 * RTP-TS counter live inside
+                 * @ref AudioPacketizerThread / @ref AudioTxThread
+                 * respectively (see @c rtpmediaio.cpp).
+                 *
+                 * @c RtpMediaIO holds these in a list (@c _audios) so
+                 * the surrounding code is structurally ready for
+                 * sessions that carry more than one independent audio
+                 * stream — e.g. an English mix on one m=audio line and
+                 * a localized mix on the next, or a SMPTE 2110-30
+                 * deliverable that splits a multichannel program
+                 * across multiple network streams.
+                 */
+                struct AudioStream : WriterStream {
+                                AudioStream() = default;
+                                AudioStream(AudioStream &&o) noexcept
+                                    : WriterStream(std::move(o)),
+                                      storageDesc(std::move(o.storageDesc)),
+                                      packetSamples(o.packetSamples),
+                                      packetBytes(o.packetBytes),
+                                      packetTimeUs(o.packetTimeUs),
+                                      prerollSamples(o.prerollSamples),
+                                      silencePacketsEmitted(
+                                              o.silencePacketsEmitted.value()),
+                                      silenceSamplesEmitted(
+                                              o.silenceSamplesEmitted.value()) {}
+                                AudioStream(const AudioStream &) = delete;
+                                AudioStream &operator=(const AudioStream &) = delete;
+                                AudioStream &operator=(AudioStream &&) = delete;
+                                /// @brief Storage descriptor used by the
+                                ///        AudioPacketizerThread's FIFO and
+                                ///        the AudioTxThread's silence filler.
+                                ///        Resolved at configure time
+                                ///        from the upstream AudioDesc; the
+                                ///        wire format is always
+                                ///        @c PCMI_S16BE for L16.
+                                AudioDesc storageDesc;
+                                /// @brief Samples per AES67 packet, after MTU clamping.
+                                size_t packetSamples = 0;
+                                /// @brief Bytes per AES67 packet (samples × channels × 2).
+                                size_t packetBytes = 0;
+                                /// @brief Resolved packet time in microseconds.
+                                int packetTimeUs = 0;
+                                /// @brief Number of samples the
+                                ///        AudioPacketizerThread waits for in
+                                ///        its FIFO before producing the
+                                ///        first packet.  Resolved from
+                                ///        @ref MediaConfig::AudioRtpPrerollMs
+                                ///        at configure time.  0 means no
+                                ///        preroll (begin emitting on first
+                                ///        source push).
+                                size_t prerollSamples = 0;
+                                /// @brief Cumulative AES67 packets the
+                                ///        @c AudioTxThread emitted as
+                                ///        silence when its @c PacketQueue
+                                ///        was empty at a cadence
+                                ///        deadline.  Read by
+                                ///        @c executeCmd(Stats); surfaced
+                                ///        through
+                                ///        @ref StatsAudioSilencePacketsEmitted.
+                                Atomic<int64_t> silencePacketsEmitted{0};
+                                /// @brief Cumulative PCM samples emitted
+                                ///        as silence (counts per packet
+                                ///        × @c packetSamples).  See
+                                ///        @ref silencePacketsEmitted.
+                                Atomic<int64_t> silenceSamplesEmitted{0};
+                };
+
+                /**
+                 * @brief Reader-mode video stream state.
+                 *
+                 * Inherits @ref ReaderStream with no kind-specific
+                 * fields today — RFC 4175 / RFC 2435 / H.264 / H.265
+                 * reader state lives entirely on the base.  Exists
+                 * to type-tag the @c _videoReaders list and document
+                 * what helpers like @c onVideoPacket / @c emitVideoFrame
+                 * expect.
+                 */
+                struct VideoReaderStream : ReaderStream {
+                                VideoReaderStream() = default;
+                                VideoReaderStream(VideoReaderStream &&) noexcept = default;
+                                VideoReaderStream(const VideoReaderStream &) = delete;
+                                VideoReaderStream &operator=(const VideoReaderStream &) = delete;
+                                VideoReaderStream &operator=(VideoReaderStream &&) = delete;
+                };
+
+                /**
+                 * @brief Reader-mode audio stream state.
+                 *
+                 * Inherits @ref ReaderStream and owns the L16
+                 * reassembly FIFO.  The per-session RX thread pushes
+                 * arriving samples into @c fifo; the audio-only
+                 * fallback path inside @c onAudioPacket drains it
+                 * into per-frame @c PcmAudioPayload chunks at the
+                 * SDP-advertised frame rate.  When a video stream is
+                 * also active, the aggregator-side
+                 * @c ReaderAggregator::audioFifo takes the role of
+                 * sample buffer instead.
+                 */
+                struct AudioReaderStream : ReaderStream {
+                                AudioReaderStream() = default;
+                                AudioReaderStream(AudioReaderStream &&o) noexcept
+                                    : ReaderStream(std::move(o)),
+                                      fifo(std::move(o.fifo)) {}
+                                AudioReaderStream(const AudioReaderStream &) = delete;
+                                AudioReaderStream &operator=(const AudioReaderStream &) = delete;
+                                AudioReaderStream &operator=(AudioReaderStream &&) = delete;
+                                AudioBuffer fifo;
+                };
+
+                /**
+                 * @brief Reader-mode data stream state.
+                 *
+                 * Inherits @ref ReaderStream with no kind-specific
+                 * fields today — JSON metadata reassembly + parsing
+                 * lives entirely on the base.
+                 */
+                struct DataReaderStream : ReaderStream {
+                                DataReaderStream() = default;
+                                DataReaderStream(DataReaderStream &&) noexcept = default;
+                                DataReaderStream(const DataReaderStream &) = delete;
+                                DataReaderStream &operator=(const DataReaderStream &) = delete;
+                                DataReaderStream &operator=(DataReaderStream &&) = delete;
                 };
 
                 Error configureVideoStream(const MediaIO::Config &cfg, const MediaDesc &mediaDesc);
                 Error configureAudioStream(const MediaIO::Config &cfg, const MediaDesc &mediaDesc);
                 Error configureDataStream(const MediaIO::Config &cfg);
 
-                Error openStream(Stream &s, bool enableMulticastLoopback);
-                Error openReaderStream(Stream &s, bool enableMulticastLoopback);
+                Error openStream(WriterStream &s, bool enableMulticastLoopback);
+                Error openReaderStream(ReaderStream &s, bool enableMulticastLoopback);
 
                 /**
-                 * @brief Sends one video frame on the @c _video stream.
+                 * @brief Self-healing parameter-set injector for
+                 *        H.264 / HEVC.
                  *
-                 * Called from the per-stream transmit thread via
-                 * @c executeCmd(MediaIOCommandWrite&).  The frame
-                 * index is passed in (rather than read from
-                 * @c _frameCount) so the worker thread does not race
-                 * with the strand thread that owns the counter.
+                 * Inspects the Annex-B bytes at @p data / @p size in
+                 * preparation for sending: every parameter-set NAL
+                 * (H.264 SPS / PPS, HEVC VPS / SPS / PPS) is copied
+                 * into the per-stream cache so the most-recent copy
+                 * is always available, and if the access unit is an
+                 * IDR / IRAP that does not already carry the cached
+                 * parameter sets, a fresh Annex-B blob is built that
+                 * prepends them.
                  *
-                 * @param payload    The video payload (uncompressed
-                 *                   raster or compressed bitstream)
-                 *                   to packetise.
-                 * @param frameIndex Zero-based frame index for this
-                 *                   transmission, used to compute
-                 *                   the RTP timestamp via
-                 *                   @ref FrameRate::cumulativeTicks.
+                 * The result lets a late-joining receiver decode
+                 * starting at the next IDR / IRAP regardless of
+                 * whether the upstream encoder is configured to
+                 * repeat parameter sets — once the writer has seen
+                 * the parameter sets even once, every IDR / IRAP it
+                 * sends will be self-contained.
+                 *
+                 * @param data  Pointer to the Annex-B bytes (input).
+                 * @param size  Byte count of the input.
+                 * @param healed  Receives a freshly allocated Annex-B
+                 *                blob when prepending was needed.
+                 *                On entry it must be empty; on
+                 *                successful return it is either
+                 *                empty (no change required — the
+                 *                caller should ship the original
+                 *                bytes) or non-empty (the caller
+                 *                must ship @p healed instead).
+                 * @return @ref Error::Ok always; the helper is
+                 *         best-effort and never blocks the send.
                  */
-                Error sendVideo(const VideoPayload &payload, const FrameNumber &frameIndex);
+                Error injectParameterSets(const uint8_t *data, size_t size, Buffer &healed);
 
                 /**
                  * @brief Paces the next video frame against
@@ -502,21 +944,56 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                  */
                 bool paceVideoFrame();
 
-                /**
-                 * @brief Sends one audio chunk on the @c _audio stream.
-                 *
-                 * Audio packetisation maintains its own monotonic
-                 * sample counter inside @c _audioState, so no frame
-                 * index is needed here.
-                 */
-                Error sendAudio(const PcmAudioPayload &payload);
+                // sendVideo / sendAudio / sendData were per-stream
+                // strand-side helpers in the previous architecture.
+                // They are gone in Phase 2; their packetization
+                // logic lives in the per-stream
+                // @c VideoPacketizerThread / @c AudioPacketizerThread
+                // / @c DataPacketizerThread (declared as nested
+                // classes inside @c rtpmediaio.cpp), and their wire-
+                // pacing logic lives in the matching
+                // @c VideoTxThread / @c AudioTxThread /
+                // @c DataTxThread.
 
                 /**
-                 * @brief Sends one metadata blob on the @c _data stream.
-                 * @param metadata   The metadata to serialise.
-                 * @param frameIndex Zero-based frame index for the RTP timestamp.
+                 * @brief Refreshes @c s.streamClock from the
+                 *        session's most-recent received SR if a fresh
+                 *        one has arrived.
+                 *
+                 * Cheap to call on every incoming packet: takes the
+                 * @ref RtpSession::receivedSr snapshot once and
+                 * compares its @c arrivedAt against
+                 * @c s.lastSrArrivedAt; only on change does it rebuild
+                 * the @ref RtpStreamClock.  Sets @c s.hasSr the first
+                 * time an SR lands so the wallclock-aligned reader
+                 * paths can start consulting the clock instead of
+                 * falling back to the legacy per-frame-index
+                 * @c samplesPerFrame drain.
+                 *
+                 * @param s The reader stream to refresh.
                  */
-                Error sendData(const Metadata &metadata, const FrameNumber &frameIndex);
+                void refreshStreamClock(ReaderStream &s);
+
+                /**
+                 * @brief Converts a wallclock NTP value back to a
+                 *        local steady @ref TimeStamp via the per-
+                 *        session @c (steady, NTP) anchor pinned at
+                 *        open time.
+                 *
+                 * Used when stamping the per-Frame
+                 * @ref Frame::captureTime on the receive side: each
+                 * Frame's wallclock NTP — derived from its video
+                 * stream's @ref RtpStreamClock — needs to land in a
+                 * @c MediaTimeStamp that downstream consumers can
+                 * compare against locally-sampled timestamps.
+                 *
+                 * Returns @c TimeStamp() when the anchor has not yet
+                 * been pinned (e.g. before the first @c executeCmd
+                 * @c (Open) seeds it).
+                 *
+                 * @param ntp The NTP wallclock instant to convert.
+                 */
+                TimeStamp ntpToSteady(const NtpTime &ntp) const;
 
                 // Reader path.
                 Error applySdp(const SdpSession &sdp, MediaIO::Config &cfg, MediaDesc &mediaDesc);
@@ -531,36 +1008,44 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 void  buildSdp();
                 Error writeSdpFile(const String &path);
 
-                void resetStream(Stream &s);
+                /// @brief Common reset: tears down the
+                ///        transport / session / payload / pointer
+                ///        identity fields shared across modes.
+                ///        Called by @ref resetWriterStream and
+                ///        @ref resetReaderStream below.
+                void resetStreamCommon(Stream &s);
+                /// @brief Writer-mode reset: stops the packetizer +
+                ///        TX threads, deletes them, then runs
+                ///        @ref resetStreamCommon, then clears writer-
+                ///        only stats / histograms.
+                void resetWriterStream(WriterStream &s);
+                /// @brief Reader-mode reset: stops the per-session
+                ///        receive thread (via @c session->stopReceiving),
+                ///        runs @ref resetStreamCommon, then clears
+                ///        reader-only reassembly state and stats.
+                void resetReaderStream(ReaderStream &s);
                 void resetAll();
 
-                // Streams — indexed by kind.
-                Stream _video;
-                Stream _audio;
-                Stream _data;
-
-                /**
-                 * @brief Audio-specific send state.
-                 *
-                 * The @ref AudioBuffer stores samples in the
-                 * network-order wire format (@c PCMI_S16BE for L16)
-                 * and accepts any compatible input format on push,
-                 * transparently converting bit depth / endian / float
-                 * vs int.  Samples that do not align to a full AES67
-                 * packet are left in the FIFO and drained on the next
-                 * writeFrame.  @c nextTimestamp advances by exactly
-                 * @c packetSamples per emitted packet, so the audio
-                 * clock never drifts regardless of what the video
-                 * frame rate or writeFrame cadence looks like.
-                 */
-                struct AudioSendState {
-                                AudioBuffer fifo;           ///< @brief Ring-buffered PCM FIFO in wire format.
-                                size_t   packetSamples = 0; ///< @brief Samples per AES67 packet (after MTU clamping).
-                                size_t   packetBytes = 0;   ///< @brief Bytes per AES67 packet.
-                                int      packetTimeUs = 0;  ///< @brief Resolved packet time in microseconds.
-                                uint32_t nextTimestamp = 0; ///< @brief RTP timestamp for the next packet to emit.
-                };
-                AudioSendState _audioState;
+                // Per-mode stream lists — writer-mode populates the
+                // first three, reader-mode the last three.  Reader
+                // and writer modes are mutually exclusive on a
+                // single @c RtpMediaIO instance, so only one set is
+                // populated at any given time.  Each kind is a list
+                // (instead of a single slot) so the routing, SDP
+                // builder, RTCP scheduler, and per-stream threads
+                // can iterate uniformly regardless of how many
+                // streams of each kind a session carries.  Today's
+                // @c configureVideoStream / @c configureAudioStream /
+                // @c configureDataStream populate one entry per kind
+                // on the matching list (per @c _readerMode); the
+                // collective shape is ready for multi-stream config
+                // that lands later.
+                List<VideoStream>       _videos;
+                List<AudioStream>       _audios;
+                List<DataStream>        _datas;
+                List<VideoReaderStream> _videoReaders;
+                List<AudioReaderStream> _audioReaders;
+                List<DataReaderStream>  _dataReaders;
 
                 // Transport-global config
                 SocketAddress _localAddress;
@@ -583,7 +1068,8 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
 
                 // RFC 4175 wire-format PixelFormat.  When the input
                 // pixel format doesn't match what RFC 4175 expects
-                // on the wire (e.g. YUYV vs UYVY), sendVideo() calls
+                // on the wire (e.g. YUYV vs UYVY), the
+                // VideoPacketizerThread calls
                 // UncompressedVideoPayload::convert() to the wire
                 // format before packing.  Invalid means no conversion
                 // needed.
@@ -643,6 +1129,39 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                 FrameNumber videoFrameIndex{0};
                                 /// @brief Max wait (ms) for audio before emitting without it.
                                 int audioTimeoutMs = 50;
+                                /// @brief RTP timestamp of the audio
+                                ///        sample currently at FIFO
+                                ///        front.  Tracked so the
+                                ///        wallclock-aligned aggregator
+                                ///        can map any FIFO position
+                                ///        to a wire-RTP-TS and from
+                                ///        there (via the audio
+                                ///        @ref RtpStreamClock) to a
+                                ///        wallclock NTP.  Updated
+                                ///        every push (set on first
+                                ///        push, realigned on a packet
+                                ///        gap) and every pop (advance
+                                ///        by sample count).
+                                uint32_t audioFifoFrontRtpTs = 0;
+                                /// @brief @c true once at least one
+                                ///        audio packet has seeded
+                                ///        @ref audioFifoFrontRtpTs.
+                                bool audioFifoHasFront = false;
+                                /// @brief Anchor instant used to
+                                ///        convert NTP wallclock back
+                                ///        to a local @c steady_clock
+                                ///        @ref TimeStamp when stamping
+                                ///        the per-Frame
+                                ///        @ref Frame::captureTime.
+                                ///        Captured once at open time
+                                ///        as @c (steadyNow, ntpNow)
+                                ///        — every subsequent emit
+                                ///        computes
+                                ///        @c steadyAnchor + (frameNtp
+                                ///        @c - @c ntpAnchor).
+                                TimeStamp steadyAnchor;
+                                NtpTime   ntpAnchor;
+                                bool      hasAnchor = false;
                 };
                 ReaderAggregator _readerAgg;
 
@@ -655,6 +1174,34 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 SdpSession _sdpSession;
                 String     _sdpPath;
 
+                // RTCP — one scheduler thread per RtpMediaIO.  Wakes
+                // every @c _rtcpIntervalMs and emits an SR + SDES
+                // compound on every active stream's RtpSession.  The
+                // wallclock anchor captured at open time is shared
+                // across all streams so a single receiver-side
+                // observation of any stream's first SR is sufficient
+                // for cross-stream correlation.  Disabled in reader
+                // mode (we are not a sender there) and when
+                // @c MediaConfig::RtpRtcpEnabled is @c false.
+                class RtcpScheduler;
+                RtcpScheduler *_rtcpScheduler = nullptr;
+                bool           _rtcpEnabled = true;
+                int            _rtcpIntervalMs = 5000;
+                String         _rtcpCname;
+
+                // SR-anchor seeding gate.  At @c openStream time
+                // every active session is anchored with
+                // @c (NtpTime::now(), 0) so an SR can be emitted
+                // even before the first frame arrives (better than
+                // a structurally-invalid SR for late receivers).
+                // The very first @c executeCmd(Write) refines the
+                // anchor from the Frame's @ref Frame::captureTime —
+                // we use a compare-exchange on this flag so even
+                // future changes that take the Write path off the
+                // single-threaded strand still seed exactly once
+                // per opening.
+                Atomic<bool> _anchorSeeded;
+
                 // External writer-mode video pacing — null clock means
                 // the upstream pump's natural cadence is the only
                 // timing source.  Set via
@@ -665,6 +1212,44 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 // packet timing is governed by the per-packet RTP
                 // timestamp stride that the audio FIFO maintains.
                 PacingGate _videoGate;
+
+                // Out-of-band parameter sets for H.264 / HEVC writers,
+                // populated lazily by injectParameterSets() the first
+                // time a complete set passes through the bitstream
+                // (typically frame 0).  Stored as the base64-encoded
+                // SDP-ready string — for H.264 it's
+                // @c "<sps-base64>,<pps-base64>" (matches RFC 6184
+                // @c sprop-parameter-sets); for HEVC it's the three
+                // separate sprop-vps / -sps / -pps strings (the bool
+                // tracks whether they have been populated).  Empty
+                // until the encoder's first IDR / IRAP flows through;
+                // once populated, buildSdp() embeds them in the
+                // @c a=fmtp line so a receiver that reads the SDP
+                // (e.g. ffplay) can populate its decoder's extradata
+                // before the first packet arrives.  ffmpeg's H.264 RTP
+                // demuxer requires this — without it, a receiver that
+                // joins after the first IDR fails its initial codec
+                // probe and never recovers, even with in-band
+                // parameter sets repeated on every IDR.
+                String _h264SpropParameterSets;
+                String _h265SpropVps;
+                String _h265SpropSps;
+                String _h265SpropPps;
+
+                /**
+                 * @brief Updates @c _h264SpropParameterSets /
+                 *        @c _h265Sprop* from the cached parameter
+                 *        sets and, if @p path is set and the SDP
+                 *        sprop value changed, rewrites the SDP file.
+                 *
+                 * Called from @ref injectParameterSets the first
+                 * time a complete parameter-set set is observed for
+                 * the active codec, so the SDP file ends up
+                 * containing @c sprop-parameter-sets (H.264) or
+                 * @c sprop-vps / @c sprop-sps / @c sprop-pps (HEVC)
+                 * before any external process reads it.
+                 */
+                void refreshSdpSprop();
 };
 
 /**
@@ -679,7 +1264,7 @@ class RtpFactory : public MediaIOFactory {
                 String displayName() const override { return String("RTP Stream"); }
                 String description() const override {
                         return String("RTP video + audio + metadata reader / writer "
-                                      "(MJPEG / JPEG XS / raw / L16 / JSON)");
+                                      "(MJPEG / JPEG XS / H.264 / H.265 / raw / L16 / JSON)");
                 }
                 // An SDP file on disk implies the Rtp reader; writers
                 // never open via a filesystem path, but extension-based

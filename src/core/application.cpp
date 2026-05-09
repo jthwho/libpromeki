@@ -8,6 +8,8 @@
 
 #include <promeki/application.h>
 #include <promeki/thread.h>
+#include <promeki/cpumonitor.h>
+#include <promeki/duration.h>
 #include <promeki/eventloop.h>
 #include <promeki/logger.h>
 #include <promeki/fileiodevice.h>
@@ -51,6 +53,7 @@ Application::Application(int argc, char **argv) {
 }
 
 Application::~Application() {
+        stopCpuMonitor();
         stopDebugServer();
         SignalHandler::uninstall();
         CrashHandler::uninstall();
@@ -245,5 +248,24 @@ DebugServer *Application::debugServer() {
 void Application::maybeStartDebugServerFromEnv() {}
 
 #endif // PROMEKI_ENABLE_HTTP
+
+Error Application::startCpuMonitor(const Duration &interval) {
+        if (data().cpuMonitor) {
+                if (data().cpuMonitor->isRunning()) return Error::AlreadyOpen;
+        } else {
+                data().cpuMonitor = UniquePtr<CpuMonitor>::create();
+        }
+        return data().cpuMonitor->start(interval);
+}
+
+void Application::stopCpuMonitor() {
+        if (!data().cpuMonitor) return;
+        data().cpuMonitor->stop();
+        data().cpuMonitor.clear();
+}
+
+CpuMonitor *Application::cpuMonitor() {
+        return data().cpuMonitor.get();
+}
 
 PROMEKI_NAMESPACE_END

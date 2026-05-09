@@ -276,4 +276,18 @@ Error HevcDecoderConfig::toAnnexB(Buffer &outBuf) const {
         return H264Bitstream::wrapNalsAsAnnexB(nals, outBuf);
 }
 
+bool HevcDecoderConfig::isIrapAnnexB(const BufferView &au) {
+        // HEVC IRAP NAL unit types: 16-23 (BLA / IDR / CRA + reserved
+        // RAP slot).  See ISO/IEC 23008-2 Table 7-1.
+        bool found = false;
+        H264Bitstream::forEachAnnexBNal(au, [&](const H264Bitstream::NalUnit &nal) -> Error {
+                uint8_t t = static_cast<uint8_t>((nal.header0 >> 1) & 0x3f);
+                if (t >= 16 && t <= 23) {
+                        found = true;
+                }
+                return Error::Ok;
+        });
+        return found;
+}
+
 PROMEKI_NAMESPACE_END

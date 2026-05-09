@@ -459,3 +459,29 @@ TEST_CASE("H264Bitstream::wrapNalsAsAnnexB") {
                 CHECK(bytesOf(out) == expected);
         }
 }
+
+TEST_CASE("AvcDecoderConfig::isIdrAnnexB") {
+
+        SUBCASE("returns true for an access unit containing an IDR slice") {
+                std::vector<uint8_t> au = {
+                        0x00, 0x00, 0x00, 0x01, 0x67, 0x42, 0xe0, 0x1e,       // SPS (type 7)
+                        0x00, 0x00, 0x00, 0x01, 0x68, 0xce, 0x3c, 0x80,       // PPS (type 8)
+                        0x00, 0x00, 0x00, 0x01, 0x65, 0x88, 0x11, 0x22, 0x33, // IDR slice (type 5)
+                };
+                auto buf = makeBuffer(au);
+                CHECK(AvcDecoderConfig::isIdrAnnexB(viewOf(buf)));
+        }
+
+        SUBCASE("returns false for a P-slice access unit") {
+                std::vector<uint8_t> au = {
+                        0x00, 0x00, 0x00, 0x01, 0x41, 0x9a, 0x01, 0x02, // P slice (type 1)
+                };
+                auto buf = makeBuffer(au);
+                CHECK_FALSE(AvcDecoderConfig::isIdrAnnexB(viewOf(buf)));
+        }
+
+        SUBCASE("returns false for empty input") {
+                BufferView empty;
+                CHECK_FALSE(AvcDecoderConfig::isIdrAnnexB(empty));
+        }
+}

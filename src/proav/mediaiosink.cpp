@@ -134,6 +134,20 @@ MediaIORequest MediaIOSink::writeFrame(const Frame &frame) {
                 TimeStamp        synTs = g->originTime() + Duration::fromNanoseconds(ns);
                 MediaTimeStamp   synMts(synTs, ClockDomain::Synthetic);
                 ensurePayloadTiming(cmdWrite->frame, synMts, rate);
+                // Default-stamp the Frame-level capture timestamp.
+                // Backends with a hardware capture clock (V4L2,
+                // NDI, ST 2110 RX, PTP-locked sources) overwrite
+                // this before the Frame reaches writeFrame, so
+                // their authoritative value passes through
+                // unchanged.  Synthetic / file-replay sources have
+                // no native capture instant and end up with the
+                // SystemMonotonic now() — the closest the writer
+                // can get to "the moment this Frame became
+                // present".  RTP TX consumes captureTime to seed
+                // its SR anchor.
+                if (!cmdWrite->frame.captureTime().isValid()) {
+                        cmdWrite->frame.setCaptureTime(MediaTimeStamp(TimeStamp::now(), ClockDomain::SystemMonotonic));
+                }
                 _writeFrameCount++;
         }
 

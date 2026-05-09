@@ -800,3 +800,363 @@ TEST_CASE("RtpPayloadJson") {
                 }
         }
 }
+
+// ============================================================================
+// RtpPayloadH264 / RtpPayloadH265 helpers
+// ============================================================================
+
+// Build an Annex-B access unit from a list of NAL payloads.  Each NAL
+// is preceded by a 4-byte start code.  Used by both H.264 and H.265
+// tests since the framing layer is shared.
+static std::vector<uint8_t> buildAnnexB(const std::vector<std::vector<uint8_t>> &nals) {
+        std::vector<uint8_t> out;
+        for (const auto &nal : nals) {
+                out.push_back(0x00);
+                out.push_back(0x00);
+                out.push_back(0x00);
+                out.push_back(0x01);
+                for (uint8_t b : nal) out.push_back(b);
+        }
+        return out;
+}
+
+// Walk a reassembled Annex-B byte stream and split it back into NAL
+// payloads (no start codes).  Used by tests to compare round-trip
+// output without depending on the specific start-code length the
+// implementation emits.
+static std::vector<std::vector<uint8_t>> splitAnnexB(const uint8_t *data, size_t size) {
+        std::vector<std::vector<uint8_t>> out;
+        size_t                            i = 0;
+        // Skip leading bytes until first start code.
+        while (i + 3 < size &&
+               !(data[i] == 0x00 && data[i + 1] == 0x00 &&
+                 (data[i + 2] == 0x01 || (data[i + 2] == 0x00 && data[i + 3] == 0x01)))) {
+                i++;
+        }
+        while (i < size) {
+                // Skip start code.
+                size_t scLen = 0;
+                if (i + 3 < size && data[i] == 0x00 && data[i + 1] == 0x00 && data[i + 2] == 0x00 && data[i + 3] == 0x01) {
+                        scLen = 4;
+                } else if (i + 2 < size && data[i] == 0x00 && data[i + 1] == 0x00 && data[i + 2] == 0x01) {
+                        scLen = 3;
+                } else {
+                        break;
+                }
+                i += scLen;
+                size_t start = i;
+                while (i + 2 < size) {
+                        if (data[i] == 0x00 && data[i + 1] == 0x00 &&
+                            (data[i + 2] == 0x01 ||
+                             (data[i + 2] == 0x00 && i + 3 < size && data[i + 3] == 0x01))) {
+                                break;
+                        }
+                        i++;
+                }
+                size_t end = (i + 2 < size) ? i : size;
+                if (end > start) {
+                        out.emplace_back(data + start, data + end);
+                }
+                if (i + 2 >= size) break;
+        }
+        return out;
+}
+
+TEST_CASE("RtpPayloadH264") {
+
+        SUBCASE("construction defaults") {
+                RtpPayloadH264 payload;
+                CHECK(payload.payloadType() == 96);
+                CHECK(payload.clockRate() == 90000);
+                CHECK(payload.maxPayloadSize() == 1200);
+        }
+
+        SUBCASE("setPayloadType") {
+                RtpPayloadH264 payload;
+                payload.setPayloadType(100);
+                CHECK(payload.payloadType() == 100);
+        }
+
+        SUBCASE("pack empty data") {
+                RtpPayloadH264 payload;
+                auto           packets = payload.pack(nullptr, 0);
+                CHECK(packets.isEmpty());
+        }
+
+        SUBCASE("single small NAL becomes one packet") {
+                RtpPayloadH264 payload;
+                // SPS NAL (type 7, NRI 3) — short, fits in one packet.
+                std::vector<uint8_t> sps{0x67, 0x42, 0x00, 0x1f, 0x96, 0x54};
+                auto                 input = buildAnnexB({sps});
+                auto                 packets = payload.pack(input.data(), input.size());
+                REQUIRE(packets.size() == 1);
+                CHECK(packets[0].payloadSize() == sps.size());
+                CHECK(std::memcmp(packets[0].payload(), sps.data(), sps.size()) == 0);
+        }
+
+        SUBCASE("multiple small NALs each get their own packet") {
+                RtpPayloadH264 payload;
+                std::vector<uint8_t> sps{0x67, 0x42, 0x00, 0x1f, 0x96, 0x54};
+                std::vector<uint8_t> pps{0x68, 0xce, 0x06, 0xe2};
+                std::vector<uint8_t> idr;
+                idr.push_back(0x65);                     // IDR slice header
+                for (int i = 0; i < 50; i++) idr.push_back(static_cast<uint8_t>(i + 1));
+                auto input = buildAnnexB({sps, pps, idr});
+                auto packets = payload.pack(input.data(), input.size());
+                REQUIRE(packets.size() == 3);
+                CHECK(packets[0].payloadSize() == sps.size());
+                CHECK(packets[1].payloadSize() == pps.size());
+                CHECK(packets[2].payloadSize() == idr.size());
+        }
+
+        SUBCASE("oversize NAL gets fragmented as FU-A") {
+                RtpPayloadH264 payload;
+                payload.setMaxPayloadSize(100); // tight MTU forces FU-A
+                // Build a NAL larger than 100 bytes; first byte is the
+                // H.264 NAL header (type 5 = IDR slice, NRI = 3).
+                std::vector<uint8_t> idr;
+                idr.push_back(0x65);
+                for (int i = 0; i < 250; i++) idr.push_back(static_cast<uint8_t>((i * 7 + 3) & 0xFF));
+                auto input = buildAnnexB({idr});
+                auto packets = payload.pack(input.data(), input.size());
+                REQUIRE(packets.size() >= 3);
+
+                for (size_t i = 0; i < packets.size(); i++) {
+                        const uint8_t *pl = packets[i].payload();
+                        REQUIRE(pl != nullptr);
+                        // Every packet has FU indicator type = 28
+                        CHECK((pl[0] & 0x1F) == 28);
+                        // F | NRI bits should match the source NAL header.
+                        CHECK((pl[0] & 0xE0) == 0x60);
+                        const uint8_t fuHdr = pl[1];
+                        CHECK((fuHdr & 0x1F) == 5); // original NAL type carried in FU header
+                        const bool s = (fuHdr & 0x80) != 0;
+                        const bool e = (fuHdr & 0x40) != 0;
+                        if (i == 0) {
+                                CHECK(s);
+                                CHECK_FALSE(e);
+                        } else if (i == packets.size() - 1) {
+                                CHECK_FALSE(s);
+                                CHECK(e);
+                        } else {
+                                CHECK_FALSE(s);
+                                CHECK_FALSE(e);
+                        }
+                }
+        }
+
+        SUBCASE("round-trip: SPS + PPS + small IDR") {
+                RtpPayloadH264       payload;
+                std::vector<uint8_t> sps{0x67, 0x42, 0x00, 0x1f, 0x96, 0x54};
+                std::vector<uint8_t> pps{0x68, 0xce, 0x06, 0xe2};
+                std::vector<uint8_t> idr{0x65, 0x88, 0x84, 0x00, 0x10, 0xff, 0x00, 0x12};
+                auto                 input = buildAnnexB({sps, pps, idr});
+
+                auto   packets = payload.pack(input.data(), input.size());
+                Buffer out = payload.unpack(packets);
+                auto   reNals = splitAnnexB(static_cast<const uint8_t *>(out.data()), out.size());
+                REQUIRE(reNals.size() == 3);
+                CHECK(reNals[0] == sps);
+                CHECK(reNals[1] == pps);
+                CHECK(reNals[2] == idr);
+        }
+
+        SUBCASE("round-trip: oversize NAL via FU-A") {
+                RtpPayloadH264 payload;
+                payload.setMaxPayloadSize(200);
+                std::vector<uint8_t> idr;
+                idr.push_back(0x65);
+                for (int i = 0; i < 1000; i++) idr.push_back(static_cast<uint8_t>((i * 13 + 7) & 0xFF));
+                auto input = buildAnnexB({idr});
+
+                auto   packets = payload.pack(input.data(), input.size());
+                REQUIRE(packets.size() >= 5);
+                Buffer out = payload.unpack(packets);
+                auto   reNals = splitAnnexB(static_cast<const uint8_t *>(out.data()), out.size());
+                REQUIRE(reNals.size() == 1);
+                CHECK(reNals[0] == idr);
+        }
+
+        SUBCASE("round-trip: mixed single + FU-A NALs") {
+                RtpPayloadH264 payload;
+                payload.setMaxPayloadSize(150);
+                std::vector<uint8_t> sps{0x67, 0x42, 0x00, 0x1f, 0x96, 0x54};
+                std::vector<uint8_t> pps{0x68, 0xce, 0x06, 0xe2};
+                std::vector<uint8_t> idr;
+                idr.push_back(0x65);
+                for (int i = 0; i < 600; i++) idr.push_back(static_cast<uint8_t>((i * 11 + 5) & 0xFF));
+                auto input = buildAnnexB({sps, pps, idr});
+
+                auto   packets = payload.pack(input.data(), input.size());
+                Buffer out = payload.unpack(packets);
+                auto   reNals = splitAnnexB(static_cast<const uint8_t *>(out.data()), out.size());
+                REQUIRE(reNals.size() == 3);
+                CHECK(reNals[0] == sps);
+                CHECK(reNals[1] == pps);
+                CHECK(reNals[2] == idr);
+        }
+
+        SUBCASE("unpack handles STAP-A aggregation") {
+                // Hand-crafted STAP-A: type 24, NRI 3, then two
+                // length-prefixed NALs.
+                std::vector<uint8_t> sps{0x67, 0x42, 0x00, 0x1f, 0x96, 0x54};
+                std::vector<uint8_t> pps{0x68, 0xce, 0x06, 0xe2};
+                std::vector<uint8_t> stap;
+                stap.push_back(0x78); // F=0, NRI=3, type=24 (STAP-A)
+                stap.push_back(static_cast<uint8_t>(sps.size() >> 8));
+                stap.push_back(static_cast<uint8_t>(sps.size() & 0xFF));
+                for (auto b : sps) stap.push_back(b);
+                stap.push_back(static_cast<uint8_t>(pps.size() >> 8));
+                stap.push_back(static_cast<uint8_t>(pps.size() & 0xFF));
+                for (auto b : pps) stap.push_back(b);
+
+                RtpPacket pkt(RtpPacket::HeaderSize + stap.size());
+                pkt.setPayloadType(96);
+                std::memcpy(pkt.payload(), stap.data(), stap.size());
+                RtpPacket::List list;
+                list.pushToBack(pkt);
+
+                RtpPayloadH264 payload;
+                Buffer         out = payload.unpack(list);
+                auto           reNals = splitAnnexB(static_cast<const uint8_t *>(out.data()), out.size());
+                REQUIRE(reNals.size() == 2);
+                CHECK(reNals[0] == sps);
+                CHECK(reNals[1] == pps);
+        }
+
+        SUBCASE("packets share a single backing buffer") {
+                RtpPayloadH264 payload;
+                payload.setMaxPayloadSize(200);
+                std::vector<uint8_t> idr;
+                idr.push_back(0x65);
+                for (int i = 0; i < 1500; i++) idr.push_back(static_cast<uint8_t>(i & 0xFF));
+                auto input = buildAnnexB({idr});
+                auto packets = payload.pack(input.data(), input.size());
+                REQUIRE(packets.size() > 1);
+                for (size_t i = 1; i < packets.size(); i++) {
+                        CHECK(packets[i].buffer().impl().ptr() == packets[0].buffer().impl().ptr());
+                }
+        }
+}
+
+TEST_CASE("RtpPayloadH265") {
+
+        SUBCASE("construction defaults") {
+                RtpPayloadH265 payload;
+                CHECK(payload.payloadType() == 96);
+                CHECK(payload.clockRate() == 90000);
+                CHECK(payload.maxPayloadSize() == 1200);
+        }
+
+        SUBCASE("single small NAL becomes one packet") {
+                RtpPayloadH265 payload;
+                // VPS NAL: type 32, layerId=0, TID=1 → byte0 = 0x40, byte1 = 0x01.
+                std::vector<uint8_t> vps{0x40, 0x01, 0x0c, 0x01, 0xff, 0xff};
+                auto                 input = buildAnnexB({vps});
+                auto                 packets = payload.pack(input.data(), input.size());
+                REQUIRE(packets.size() == 1);
+                CHECK(packets[0].payloadSize() == vps.size());
+                CHECK(std::memcmp(packets[0].payload(), vps.data(), vps.size()) == 0);
+        }
+
+        SUBCASE("oversize NAL gets fragmented as FU") {
+                RtpPayloadH265 payload;
+                payload.setMaxPayloadSize(100);
+                // IDR_W_RADL: type 19, layerId=0, TID=1 → byte0 = (19<<1)|0 = 0x26, byte1 = 0x01
+                std::vector<uint8_t> idr;
+                idr.push_back(0x26);
+                idr.push_back(0x01);
+                for (int i = 0; i < 250; i++) idr.push_back(static_cast<uint8_t>((i * 5 + 11) & 0xFF));
+                auto input = buildAnnexB({idr});
+                auto packets = payload.pack(input.data(), input.size());
+                REQUIRE(packets.size() >= 3);
+
+                for (size_t i = 0; i < packets.size(); i++) {
+                        const uint8_t *pl = packets[i].payload();
+                        REQUIRE(pl != nullptr);
+                        // type = 49 (FU)
+                        const uint8_t type = (pl[0] >> 1) & 0x3F;
+                        CHECK(type == 49);
+                        // PHdr1 should match source NAL byte 1 (layerId/TID).
+                        CHECK(pl[1] == 0x01);
+                        const uint8_t fuHdr = pl[2];
+                        CHECK((fuHdr & 0x3F) == 19); // original type
+                        const bool s = (fuHdr & 0x80) != 0;
+                        const bool e = (fuHdr & 0x40) != 0;
+                        if (i == 0) {
+                                CHECK(s);
+                                CHECK_FALSE(e);
+                        } else if (i == packets.size() - 1) {
+                                CHECK_FALSE(s);
+                                CHECK(e);
+                        } else {
+                                CHECK_FALSE(s);
+                                CHECK_FALSE(e);
+                        }
+                }
+        }
+
+        SUBCASE("round-trip: VPS + SPS + PPS + small IDR") {
+                RtpPayloadH265       payload;
+                std::vector<uint8_t> vps{0x40, 0x01, 0x0c, 0x01, 0xff, 0xff};
+                std::vector<uint8_t> sps{0x42, 0x01, 0x01, 0x01, 0x60, 0x00};
+                std::vector<uint8_t> pps{0x44, 0x01, 0xc1, 0x73};
+                std::vector<uint8_t> idr{0x26, 0x01, 0xaf, 0x01, 0x07, 0xa6, 0x42, 0x9c};
+                auto                 input = buildAnnexB({vps, sps, pps, idr});
+
+                auto   packets = payload.pack(input.data(), input.size());
+                Buffer out = payload.unpack(packets);
+                auto   reNals = splitAnnexB(static_cast<const uint8_t *>(out.data()), out.size());
+                REQUIRE(reNals.size() == 4);
+                CHECK(reNals[0] == vps);
+                CHECK(reNals[1] == sps);
+                CHECK(reNals[2] == pps);
+                CHECK(reNals[3] == idr);
+        }
+
+        SUBCASE("round-trip: oversize NAL via FU") {
+                RtpPayloadH265 payload;
+                payload.setMaxPayloadSize(200);
+                std::vector<uint8_t> idr;
+                idr.push_back(0x26);
+                idr.push_back(0x01);
+                for (int i = 0; i < 1000; i++) idr.push_back(static_cast<uint8_t>((i * 17 + 9) & 0xFF));
+                auto input = buildAnnexB({idr});
+
+                auto   packets = payload.pack(input.data(), input.size());
+                REQUIRE(packets.size() >= 5);
+                Buffer out = payload.unpack(packets);
+                auto   reNals = splitAnnexB(static_cast<const uint8_t *>(out.data()), out.size());
+                REQUIRE(reNals.size() == 1);
+                CHECK(reNals[0] == idr);
+        }
+
+        SUBCASE("unpack handles AP aggregation") {
+                std::vector<uint8_t> vps{0x40, 0x01, 0x0c, 0x01};
+                std::vector<uint8_t> sps{0x42, 0x01, 0x01, 0x01, 0x60};
+                // AP NAL header: type=48, layerId=0, TID=1
+                // byte0 = (48<<1)|0 = 0x60, byte1 = 0x01
+                std::vector<uint8_t> ap;
+                ap.push_back(0x60);
+                ap.push_back(0x01);
+                ap.push_back(static_cast<uint8_t>(vps.size() >> 8));
+                ap.push_back(static_cast<uint8_t>(vps.size() & 0xFF));
+                for (auto b : vps) ap.push_back(b);
+                ap.push_back(static_cast<uint8_t>(sps.size() >> 8));
+                ap.push_back(static_cast<uint8_t>(sps.size() & 0xFF));
+                for (auto b : sps) ap.push_back(b);
+
+                RtpPacket pkt(RtpPacket::HeaderSize + ap.size());
+                pkt.setPayloadType(96);
+                std::memcpy(pkt.payload(), ap.data(), ap.size());
+                RtpPacket::List list;
+                list.pushToBack(pkt);
+
+                RtpPayloadH265 payload;
+                Buffer         out = payload.unpack(list);
+                auto           reNals = splitAnnexB(static_cast<const uint8_t *>(out.data()), out.size());
+                REQUIRE(reNals.size() == 2);
+                CHECK(reNals[0] == vps);
+                CHECK(reNals[1] == sps);
+        }
+}

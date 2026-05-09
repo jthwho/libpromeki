@@ -24,6 +24,8 @@ class Thread;
 class IODevice;
 class DebugServer;
 class SocketAddress;
+class CpuMonitor;
+class Duration;
 PROMEKI_NAMESPACE_END
 
 PROMEKI_NAMESPACE_BEGIN
@@ -408,6 +410,52 @@ class Application {
                 static DebugServer *debugServer();
 
                 /**
+                 * @brief Starts the per-thread CPU usage sampler.
+                 *
+                 * Constructs (if needed) the application-owned
+                 * @ref CpuMonitor and starts it with the given
+                 * sample @p interval.  Each tick logs a one-line
+                 * summary at @c Info level showing the top CPU
+                 * consumers among the process's threads, sorted
+                 * descending — see @ref CpuMonitor::formatReport.
+                 * Useful for diagnosing where pipeline time is
+                 * being spent without attaching a profiler.
+                 *
+                 * Calling this while the monitor is already
+                 * running returns @ref Error::AlreadyOpen — call
+                 * @ref stopCpuMonitor first or update the cadence
+                 * via @ref CpuMonitor::setInterval.  An interval
+                 * of zero / negative falls back to the
+                 * @ref CpuMonitor default.
+                 *
+                 * @param interval Sample period.
+                 * @return @ref Error::Ok on success or
+                 *         @ref Error::AlreadyOpen.
+                 */
+                static Error startCpuMonitor(const Duration &interval);
+
+                /**
+                 * @brief Stops the CPU usage sampler if it is running.
+                 *
+                 * No-op if @ref startCpuMonitor was never called or
+                 * has already been stopped.  The owned
+                 * @ref CpuMonitor instance is destroyed; a
+                 * subsequent @ref startCpuMonitor constructs a
+                 * fresh one.
+                 */
+                static void stopCpuMonitor();
+
+                /**
+                 * @brief Returns the active @ref CpuMonitor, or @c nullptr.
+                 *
+                 * Useful for tests and for callers that want to
+                 * install a custom @ref CpuMonitor::ReportFunction
+                 * (for example to forward the data into a HUD or
+                 * a JSON-lines stats file).
+                 */
+                static CpuMonitor *cpuMonitor();
+
+                /**
                  * @brief Runs the main event loop until quit() is called.
                  *
                  * Thin wrapper around @c mainEventLoop()->exec().  The
@@ -438,6 +486,7 @@ class Application {
                                 Atomic<bool>           shouldQuit{false};
                                 QuitRequestHandler     quitHandler;
                                 UniquePtr<DebugServer> debugServer;
+                                UniquePtr<CpuMonitor>  cpuMonitor;
                 };
                 static Data &data();
 

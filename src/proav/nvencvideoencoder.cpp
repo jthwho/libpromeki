@@ -782,6 +782,24 @@ class NvencVideoEncoder::Impl {
                 // state.
                 FrameRate _sessionFrameRate;
 
+                // Annex-B blob carrying the codec parameter sets for
+                // the active session — SPS+PPS for H.264, VPS+SPS+PPS
+                // for HEVC.  Pulled once via @c nvEncGetSequenceParams
+                // immediately after @c nvEncInitializeEncoder succeeds
+                // (NVENC has the bitstream headers fully resolved at
+                // that point) and stamped onto every emitted
+                // @ref CompressedVideoPayload via
+                // @ref Metadata::CodecParameterSets.  Each downstream
+                // MediaIO that needs out-of-band parameter sets — RTP
+                // for SDP @c sprop-*, MP4 / MOV for @c avcC / @c hvcC,
+                // future SRT and ST 2110 sinks — reads it directly off
+                // the frame instead of waiting for the first IDR to
+                // flow through self-healing.  Cleared by
+                // @ref destroySession.  Reconfigure recaptures it
+                // because the parameter sets can change with codec
+                // config (profile / level / size).
+                String _paramSetsBlob;
+
                 std::vector<Slot>  _slots;
                 std::deque<Slot *> _freeSlots;
                 std::deque<Slot *> _inFlight;
@@ -1239,9 +1257,55 @@ class NvencVideoEncoder::Impl {
                                 return err;
                         }
 
+                        captureSequenceParams();
+
                         _sessionOpen = true;
                         clearError();
                         return Error::Ok;
+                }
+
+                // Pull the Annex-B SPS/PPS (H.264) or VPS/SPS/PPS
+                // (HEVC) out of the now-initialized encoder via
+                // @c nvEncGetSequenceParams and stash them in
+                // @ref _paramSetsBlob so every emitted packet can
+                // republish them through @ref Metadata::CodecParameterSets.
+                //
+                // Best-effort: a failed lookup just leaves the blob
+                // empty.  In that case downstream MediaIOs fall back
+                // to the existing self-healing path (cache parameter
+                // sets as they pass in-band on the first IDR).  No
+                // session-level error is raised because the encoder
+                // itself is fully usable — only the out-of-band
+                // signaling channel is missing.
+                void captureSequenceParams() {
+                        _paramSetsBlob = String();
+                        if (_encoder == nullptr) return;
+
+                        constexpr size_t kSeqParamBufBytes = 1024;
+                        Buffer           buf(kSeqParamBufBytes);
+                        if (!buf) return;
+
+                        NV_ENC_SEQUENCE_PARAM_PAYLOAD spp{};
+                        spp.version = NV_ENC_SEQUENCE_PARAM_PAYLOAD_VER;
+                        spp.inBufferSize = static_cast<uint32_t>(buf.size());
+                        spp.spsppsBuffer = buf.data();
+                        uint32_t outSize = 0;
+                        spp.outSPSPPSPayloadSize = &outSize;
+
+                        NVENCSTATUS st = gNvenc.nvEncGetSequenceParams(_encoder, &spp);
+                        if (st != NV_ENC_SUCCESS) {
+                                promekiWarn("NvencVideoEncoder: nvEncGetSequenceParams failed (%d); "
+                                            "Metadata::CodecParameterSets will be empty.",
+                                            (int)st);
+                                return;
+                        }
+                        if (outSize == 0 || outSize > buf.size()) {
+                                promekiWarn("NvencVideoEncoder: nvEncGetSequenceParams returned an "
+                                            "out-of-range payload size (%u, buffer = %zu); skipping.",
+                                            outSize, buf.size());
+                                return;
+                        }
+                        _paramSetsBlob = String(static_cast<const char *>(buf.data()), outSize);
                 }
 
                 Error retainCudaContext() {
@@ -1518,6 +1582,18 @@ class NvencVideoEncoder::Impl {
                                 pmeta.set(Metadata::CodecAvgMotionVectorX, avgMVX);
                                 pmeta.set(Metadata::CodecAvgMotionVectorY, avgMVY);
                         }
+
+                        // Out-of-band parameter sets — published on
+                        // every emitted packet so downstream MediaIO
+                        // stages have an in-frame channel for SPS /
+                        // PPS / VPS, independent of any in-band
+                        // repetition the bitstream carries.  Stamping
+                        // per frame is cheap (a few hundred bytes)
+                        // and means consumers don't need to track
+                        // first-frame state.
+                        if (!_paramSetsBlob.isEmpty()) {
+                                pmeta.set(Metadata::CodecParameterSets, _paramSetsBlob);
+                        }
                         return pkt;
                 }
 
@@ -1550,6 +1626,7 @@ class NvencVideoEncoder::Impl {
                         _frameIdx = 0;
                         _lastKeyDisplayIdx = 0;
                         _eosPending = false;
+                        _paramSetsBlob = String();
                 }
 
                 std::deque<CompressedVideoPayload::Ptr> _pendingPackets;

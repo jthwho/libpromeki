@@ -1083,9 +1083,21 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
 
                 /// @brief bool — emit SPS/PPS (H.264), VPS/SPS/PPS (HEVC),
                 /// or Sequence Header (AV1) with every IDR/key frame.
+                ///
+                /// Defaults to @c true because every streaming sink in
+                /// the library — RTP, SRT, NDI, ST 2110 — expects
+                /// late joiners to be able to start decoding at the
+                /// next IDR without out-of-band parameter sets, and
+                /// HLS / DASH segmenters require it too.  MP4 / MOV
+                /// writers strip the duplicate parameter sets out of
+                /// the @c mdat samples via
+                /// @ref H264Bitstream::annexBToAvccFiltered while
+                /// pulling them into the @c avcC / @c hvcC sample
+                /// description, so the duplicate-on-IDR cost lands on
+                /// the wire only.
                 PROMEKI_DECLARE_ID(VideoRepeatHeaders, VariantSpec()
                                                                .setType(Variant::TypeBool)
-                                                               .setDefault(false)
+                                                               .setDefault(true)
                                                                .setDescription("Emit parameter sets / sequence headers "
                                                                                "with every IDR."));
 
@@ -1559,6 +1571,43 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                            .setDefault(String())
                                                            .setDescription("File path to write generated SDP to."));
 
+                /// @brief bool — emit RFC 3550 RTCP Sender Reports on
+                /// every active stream.  Required for cross-stream
+                /// (audio/video) lip-sync at the receiver: each SR
+                /// carries an @c (NTP, RTP-TS) pair the receiver uses
+                /// to map both streams' RTP clocks onto a common wall
+                /// clock.  Default @c true — RTCP is mandatory in
+                /// RFC 3550 §6.1 for any RTP session.
+                PROMEKI_DECLARE_ID(RtpRtcpEnabled, VariantSpec()
+                                                           .setType(Variant::TypeBool)
+                                                           .setDefault(true)
+                                                           .setDescription("Emit RTCP Sender Reports."));
+
+                /// @brief int — RTCP SR emission interval in
+                /// milliseconds.  RFC 3550 §6.2 sets the minimum at
+                /// 5 sec (computed dynamically from session
+                /// bandwidth); for typical broadcast use the default
+                /// is fine.  Lower values improve sync convergence
+                /// at startup but add wire chatter.
+                PROMEKI_DECLARE_ID(RtpRtcpIntervalMs,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(5000))
+                                           .setMin(int32_t(100))
+                                           .setDescription("RTCP Sender Report interval in ms."));
+
+                /// @brief String — CNAME emitted in RTCP SDES.  An
+                /// empty value (default) auto-generates a stable
+                /// per-process CNAME of the form
+                /// @c "promeki-&lt;hostname&gt;-&lt;pid&gt;".  Streams that
+                /// share a CNAME (typical for an audio + video pair
+                /// from the same sender) are correlated by receivers
+                /// even if the SSRCs are unrelated.
+                PROMEKI_DECLARE_ID(RtpRtcpCname, VariantSpec()
+                                                         .setType(Variant::TypeString)
+                                                         .setDefault(String())
+                                                         .setDescription("RTCP SDES CNAME (empty = auto)."));
+
                 /// @brief Polymorphic reader-side SDP input.  Accepts either:
                 /// - @c String: interpreted as a filesystem path.
                 /// - @ref SdpSession - consumed directly, no filesystem access.
@@ -1653,6 +1702,17 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                          .setDefault(String())
                                                          .setDescription("Raw SDP a=fmtp value for the video stream."));
 
+                /// @brief String — RTP @c rtpmap encoding name for the video stream
+                ///        (e.g. @c "JPEG", @c "jxsv", @c "H264", @c "H265", @c "raw").
+                ///        Populated by the reader from the parsed SDP and used by
+                ///        @c RtpMediaIO to instantiate the right payload class when
+                ///        no in-band geometry is available yet.
+                PROMEKI_DECLARE_ID(VideoRtpEncoding,
+                                   VariantSpec()
+                                           .setType(Variant::TypeString)
+                                           .setDefault(String())
+                                           .setDescription("RTP rtpmap encoding name for the video stream."));
+
                 // --- Audio stream ---
 
                 /// @brief SocketAddress — destination for the audio stream. Empty = disabled.
@@ -1697,6 +1757,43 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setDefault(int32_t(1000))
                                            .setMin(int32_t(1))
                                            .setDescription("Audio RTP packet time in microseconds."));
+
+                /// @brief int — audio TX preroll in milliseconds.  The
+                /// per-stream audio TX worker waits for this much
+                /// source content to accumulate in its FIFO before it
+                /// begins emitting RTP packets.  Two effects:
+                ///
+                /// - **Startup A/V matching** — when the upstream
+                ///   pipeline routes video through a high-latency
+                ///   stage (an H.264 / HEVC encoder that adds frames
+                ///   of look-ahead, or a deep frame queue) but
+                ///   audio bypasses it, raw audio arrives at this
+                ///   stage seconds before video does.  Receivers
+                ///   running at low buffer depth (ffplay with
+                ///   @c -fflags @c nobuffer / @c -flags @c low_delay,
+                ///   for example) play whatever arrives and audio
+                ///   leads visible video.  Setting preroll to roughly
+                ///   match the upstream video latency delays our wire
+                ///   audio to coincide with the matching video frame.
+                /// - **Stall absorption** — heavy IDR encodes or
+                ///   per-frame work spikes upstream can stall the
+                ///   strand for tens of milliseconds.  During the
+                ///   stall the audio TX worker still drains at audio
+                ///   cadence; without preroll the FIFO depletes and
+                ///   the worker skips ticks (audible dropouts).
+                ///   Preroll provides headroom equal to the configured
+                ///   value, so a stall ≤ preroll never causes wire
+                ///   silence.
+                ///
+                /// Default 0 (no preroll — audio emits immediately on
+                /// first source push).  Typical values: 100-500 ms
+                /// depending on upstream pipeline latency.
+                PROMEKI_DECLARE_ID(AudioRtpPrerollMs,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Audio TX preroll buffer in milliseconds."));
 
                 // --- Data / metadata stream ---
 

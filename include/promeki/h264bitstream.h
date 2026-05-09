@@ -329,6 +329,18 @@ struct AvcDecoderConfig {
          * record out of an MP4 container.
          */
                 Error toAnnexB(Buffer &outBuf) const;
+
+                /**
+                 * @brief Returns @c true when the Annex-B access unit
+                 *        contains at least one IDR slice NAL (type 5).
+                 *
+                 * Streams without an IDR are P / B / SP / SI access units
+                 * — useful for stamping the @c MediaPayload::Keyframe
+                 * flag on RTP receive paths that just have the bytes,
+                 * without forcing a full SPS / PPS reparse.  Returns
+                 * @c false on empty / corrupt inputs.
+                 */
+                static bool isIdrAnnexB(const BufferView &au);
 };
 
 PROMEKI_NAMESPACE_END

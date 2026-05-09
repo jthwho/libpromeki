@@ -64,6 +64,7 @@ namespace mediaplay {
                         bool            verbose = false;
                         bool memStats = false; ///< Dump MemSpace::Stats for every registered memory space on shutdown.
                         double statsInterval = 0.0; ///< Seconds between live-telemetry prints (0 = off).
+                        double cpuMonInterval = 0.0; ///< Seconds between Application::CpuMonitor reports (0 = off).
                         bool   probe = false;       ///< Query and print device capabilities, then exit.
 
                         /**

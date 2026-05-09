@@ -200,6 +200,36 @@ class Strand {
                         return _queue.size();
                 }
 
+                /**
+                 * @brief Sets the @ref ThreadPool::WorkTag this Strand
+                 *        attaches to its pool submissions.
+                 *
+                 * Affects only future @c runNext dispatches.  In-flight
+                 * pool submissions retain whatever tag they were
+                 * launched with.  Pass a default-constructed (invalid)
+                 * @ref ThreadPool::WorkTag to revert to the untagged
+                 * pool bucket.
+                 *
+                 * Used by @ref SharedThreadMediaIO so per-instance
+                 * pool time accumulates against a tag named after the
+                 * MediaIO's class (and optionally its config name),
+                 * surfacing in @ref ThreadPool::snapshotWorkStats.
+                 *
+                 * Safe to call from any thread.
+                 *
+                 * @param tag The new tag, or an invalid tag for "untagged".
+                 */
+                void setWorkTag(ThreadPool::WorkTag tag) {
+                        Mutex::Locker lock(_mutex);
+                        _workTag = tag;
+                }
+
+                /// @brief Returns the configured @ref ThreadPool::WorkTag.
+                ThreadPool::WorkTag workTag() const {
+                        Mutex::Locker lock(_mutex);
+                        return _workTag;
+                }
+
         private:
                 /**
                  * @brief A single queued task with its run + cancel hooks.
@@ -240,7 +270,8 @@ class Strand {
                                 promise->setError(Error::Cancelled);
                         };
 
-                        bool needSpawn = false;
+                        ThreadPool::WorkTag spawnTag;
+                        bool                needSpawn = false;
                         {
                                 Mutex::Locker lock(_mutex);
                                 if (urgent) {
@@ -252,9 +283,10 @@ class Strand {
                                         _running = true;
                                         needSpawn = true;
                                 }
+                                spawnTag = _workTag;
                         }
                         if (needSpawn) {
-                                _pool.submit([this] { runNext(); });
+                                _pool.submit(spawnTag, [this] { runNext(); });
                         }
                         return future;
                 }
@@ -293,15 +325,21 @@ class Strand {
                         }
 
                         if (reSpawn) {
-                                _pool.submit([this] { runNext(); });
+                                ThreadPool::WorkTag tag;
+                                {
+                                        Mutex::Locker lock(_mutex);
+                                        tag = _workTag;
+                                }
+                                _pool.submit(tag, [this] { runNext(); });
                         }
                 }
 
-                ThreadPool       &_pool;
-                mutable Mutex     _mutex;
-                WaitCondition     _idleCv;
-                std::deque<Entry> _queue;
-                bool              _running = false;
+                ThreadPool         &_pool;
+                mutable Mutex       _mutex;
+                WaitCondition       _idleCv;
+                std::deque<Entry>   _queue;
+                ThreadPool::WorkTag _workTag;
+                bool                _running = false;
 };
 
 PROMEKI_NAMESPACE_END

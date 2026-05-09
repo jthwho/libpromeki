@@ -26,6 +26,7 @@
 #include <promeki/application.h>
 #include <promeki/audiodesc.h>
 #include <promeki/datetime.h>
+#include <promeki/duration.h>
 #include <promeki/error.h>
 #include <promeki/eventloop.h>
 #include <promeki/file.h>
@@ -338,7 +339,8 @@ int main(int argc, char **argv) {
         // live reporting — --stats and --verbose both route their
         // output through the logger, and silently eating it because
         // of an elevated default would be a lousy experience.
-        const bool reportingEnabled = (opts.statsInterval > 0.0) || opts.verbose;
+        const bool reportingEnabled =
+                (opts.statsInterval > 0.0) || opts.verbose || (opts.cpuMonInterval > 0.0);
         if (reportingEnabled && Logger::defaultLogger().level() > Logger::LogLevel::Info) {
                 Logger::defaultLogger().setLogLevel(Logger::LogLevel::Info);
         }
@@ -350,6 +352,18 @@ int main(int argc, char **argv) {
 
         Application  app(argc, argv);
         SdlSubsystem sdl;
+
+        // Optional per-thread CPU sampler.  Started early so the
+        // first tick covers everything from configure through
+        // pipeline build.  CpuMonitor::stop() is idempotent and is
+        // also called by Application::~Application as a safety net.
+        if (opts.cpuMonInterval > 0.0) {
+                Error cpuErr = Application::startCpuMonitor(
+                        Duration::fromMicroseconds(static_cast<int64_t>(opts.cpuMonInterval * 1.0e6)));
+                if (cpuErr.isError()) {
+                        fprintf(stderr, "Warning: --cpumon failed to start: %s\n", cpuErr.desc().cstr());
+                }
+        }
 
         // Default SDL sink when the user did not pass any -d and did
         // not ask to load a preset.  Saved presets carry their own

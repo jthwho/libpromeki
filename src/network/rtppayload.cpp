@@ -6,6 +6,8 @@
  */
 
 #include <promeki/rtppayload.h>
+#include <promeki/h264bitstream.h>
+#include <promeki/list.h>
 #include <cstring>
 #include <algorithm>
 
@@ -930,6 +932,442 @@ Buffer RtpPayloadJpegXs::unpack(const RtpPacket::List &packets) {
                 const size_t   frag = plSize - HeaderSize;
                 std::memcpy(dst + pos, pl + HeaderSize, frag);
                 pos += frag;
+        }
+        return result;
+}
+
+// ============================================================================
+// RtpPayloadH264 (RFC 6184)  &  RtpPayloadH265 (RFC 7798)
+// ============================================================================
+//
+// Both codecs share Annex-B / NAL / FU framing structure, with the
+// only differences being:
+//   - H.264 NAL header is 1 byte; H.265 NAL header is 2 bytes
+//   - H.264 FU type is 28; H.265 FU type is 49
+//   - H.264 STAP-A type is 24; H.265 AP type is 48
+//
+// To keep this readable we split the codec specifics into the two
+// classes below and share helpers for start-code scanning and
+// shared-buffer packet allocation.
+
+namespace {
+
+        /// @brief View of one NAL unit inside an Annex-B byte stream — payload only.
+        struct AnnexBNal {
+                        const uint8_t *data; ///< First byte of the NAL payload (excludes start code).
+                        size_t         size; ///< NAL payload size in bytes.
+        };
+
+        /// @brief Walks an Annex-B byte stream and collects each NAL payload (no start code).
+        ///
+        /// Implemented on top of @ref H264Bitstream::forEachAnnexBNal so
+        /// the start-code disambiguation (3- vs 4-byte form, leading
+        /// zero coalescing) is shared with the codec-bitstream layer.
+        /// Empty NAL payloads are dropped so callers can iterate
+        /// without bounds-checking each entry.
+        List<AnnexBNal> collectAnnexBNals(const uint8_t *data, size_t size) {
+                List<AnnexBNal> nals;
+                if (data == nullptr || size == 0) return nals;
+                // wrapHost is a non-owning view; the visitor only reads.
+                Buffer wrap = Buffer::wrapHost(const_cast<uint8_t *>(data), size);
+                wrap.setSize(size);
+                BufferView view(wrap, 0, size);
+                H264Bitstream::forEachAnnexBNal(view, [&](const H264Bitstream::NalUnit &nal) -> Error {
+                        if (nal.view.size() > 0) {
+                                AnnexBNal e{nal.view.data(), nal.view.size()};
+                                nals.pushToBack(e);
+                        }
+                        return Error::Ok;
+                });
+                return nals;
+        }
+
+        /// @brief Appends a 4-byte Annex-B start code followed by @p len bytes from @p src to @p out.
+        void appendNalAnnexB(List<uint8_t> &out, const uint8_t *src, size_t len) {
+                out.pushToBack(0x00);
+                out.pushToBack(0x00);
+                out.pushToBack(0x00);
+                out.pushToBack(0x01);
+                for (size_t k = 0; k < len; k++) out.pushToBack(src[k]);
+        }
+
+} // namespace
+
+// -- H.264 --------------------------------------------------------------------
+
+RtpPayloadH264::RtpPayloadH264(uint8_t payloadType) : _payloadType(payloadType) {}
+
+RtpPacket::List RtpPayloadH264::pack(const void *mediaData, size_t size) {
+        RtpPacket::List packets;
+        if (size == 0 || mediaData == nullptr) return packets;
+
+        const uint8_t *src = static_cast<const uint8_t *>(mediaData);
+        const auto     nals = collectAnnexBNals(src, size);
+        if (nals.isEmpty()) return packets;
+
+        const size_t maxPayload = maxPayloadSize();
+        if (maxPayload < 3) return packets; // need room for at least the FU header
+
+        // Per-NAL plan: count packet sizes so RtpPacket::createList can
+        // pack them into a single shared buffer.  For each NAL we
+        // either emit one single-NAL packet or N FU-A fragments.
+        // Each FU-A fragment carries (NAL byte 0..N-1 of payload bytes)
+        // + 2 bytes of FU framing; the original NAL header byte is
+        // consumed by the FU and not retransmitted.
+        const size_t fuBodyMax = maxPayload - 2; // FU indicator + FU header
+        RtpPacket::SizeList sizes;
+        struct PlanEntry {
+                        const AnnexBNal *nal = nullptr;
+                        bool             isFu = false;
+                        size_t           fuOffset = 0; // bytes consumed from NAL payload (after byte 0)
+                        size_t           fuChunk = 0;
+                        bool             fuStart = false;
+                        bool             fuEnd = false;
+        };
+        List<PlanEntry> plan;
+        plan.reserve(nals.size());
+
+        for (size_t n = 0; n < nals.size(); n++) {
+                const AnnexBNal &nal = nals[n];
+                if (nal.size == 0) continue;
+                if (nal.size <= maxPayload) {
+                        PlanEntry e;
+                        e.nal = &nals[n];
+                        e.isFu = false;
+                        plan.pushToBack(e);
+                        sizes.pushToBack(RtpPacket::HeaderSize + nal.size);
+                } else {
+                        // Fragment the NAL payload (NAL[1..size-1]) into
+                        // chunks of fuBodyMax bytes.  The original NAL
+                        // header byte is encoded into the FU header
+                        // instead of being carried in the payload.
+                        const size_t bodyTotal = nal.size - 1; // skip header byte
+                        size_t       bodyOff = 0;
+                        bool         first = true;
+                        while (bodyOff < bodyTotal) {
+                                const size_t chunk = std::min(fuBodyMax, bodyTotal - bodyOff);
+                                const bool   last = (bodyOff + chunk >= bodyTotal);
+                                PlanEntry    e;
+                                e.nal = &nals[n];
+                                e.isFu = true;
+                                e.fuOffset = bodyOff;
+                                e.fuChunk = chunk;
+                                e.fuStart = first;
+                                e.fuEnd = last;
+                                plan.pushToBack(e);
+                                sizes.pushToBack(RtpPacket::HeaderSize + 2 + chunk);
+                                bodyOff += chunk;
+                                first = false;
+                        }
+                }
+        }
+
+        if (sizes.isEmpty()) return packets;
+        packets = RtpPacket::createList(sizes);
+        if (packets.size() != plan.size()) return RtpPacket::List();
+
+        for (size_t i = 0; i < plan.size(); i++) {
+                const PlanEntry &e = plan[i];
+                const AnnexBNal &nal = *e.nal;
+                uint8_t         *pl = packets[i].payload();
+                if (pl == nullptr) continue;
+
+                if (!e.isFu) {
+                        std::memcpy(pl, nal.data, nal.size);
+                } else {
+                        const uint8_t orig = nal.data[0];
+                        const uint8_t fNri = orig & 0xE0;       // F | NRI bits
+                        const uint8_t origType = orig & 0x1F;   // original NAL type
+                        // FU indicator: F | NRI | type=28
+                        pl[0] = static_cast<uint8_t>(fNri | NalTypeFuA);
+                        // FU header: S | E | R(=0) | type
+                        uint8_t fuHdr = origType;
+                        if (e.fuStart) fuHdr |= 0x80;
+                        if (e.fuEnd) fuHdr |= 0x40;
+                        pl[1] = fuHdr;
+                        // NAL payload chunk (NAL bytes [1 + fuOffset .. ]).
+                        std::memcpy(pl + 2, nal.data + 1 + e.fuOffset, e.fuChunk);
+                }
+        }
+        return packets;
+}
+
+Buffer RtpPayloadH264::unpack(const RtpPacket::List &packets) {
+        if (packets.isEmpty()) return Buffer();
+
+        // Output buffer accumulates Annex-B bytes (start code + NAL).
+        // Reserve a conservative upper bound based on summed payloads
+        // so we avoid reallocations during the assembly.
+        size_t reserveBytes = 0;
+        for (size_t i = 0; i < packets.size(); i++) {
+                const RtpPacket &p = packets[i];
+                if (!p.isNull() && p.payloadSize() > 0) reserveBytes += p.payloadSize() + 4;
+        }
+        List<uint8_t> out;
+        out.reserve(reserveBytes);
+
+        // FU-A reassembly state.  H.264 RFC 6184 allows fragments to
+        // be interleaved with single-NAL packets only when packetisation
+        // mode = 2 (interleaved); for mode 1 a FU sequence is delivered
+        // contiguously in coding order.  We track an in-progress
+        // accumulator and reset it on any out-of-band condition.
+        List<uint8_t> fuBuf;
+        bool          fuActive = false;
+        uint8_t       fuOrigByte0 = 0;
+
+        for (size_t i = 0; i < packets.size(); i++) {
+                const RtpPacket &p = packets[i];
+                if (p.isNull() || p.payloadSize() == 0) continue;
+                const uint8_t *pl = p.payload();
+                const size_t   plSize = p.payloadSize();
+                const uint8_t  type = pl[0] & 0x1F;
+
+                if (type >= 1 && type <= 23) {
+                        // Single NAL packet.  If a FU was in progress
+                        // but never closed, drop the partial NAL — the
+                        // sender clearly moved on.
+                        if (fuActive) {
+                                fuBuf.clear();
+                                fuActive = false;
+                        }
+                        appendNalAnnexB(out, pl, plSize);
+                } else if (type == NalTypeStapA) {
+                        // STAP-A: walk the inner NAL list (2-byte BE
+                        // length prefixes).  See RFC 6184 §5.7.1.
+                        if (fuActive) {
+                                fuBuf.clear();
+                                fuActive = false;
+                        }
+                        size_t off = 1; // skip STAP-A NAL header byte
+                        while (off + 2 <= plSize) {
+                                size_t nalLen = (static_cast<size_t>(pl[off]) << 8) | pl[off + 1];
+                                off += 2;
+                                if (nalLen == 0 || off + nalLen > plSize) break;
+                                appendNalAnnexB(out, pl + off, nalLen);
+                                off += nalLen;
+                        }
+                } else if (type == NalTypeFuA) {
+                        // FU-A fragment.  Need at least 2 bytes:
+                        // FU indicator + FU header.
+                        if (plSize < 2) continue;
+                        const uint8_t fuInd = pl[0];
+                        const uint8_t fuHdr = pl[1];
+                        const bool    s = (fuHdr & 0x80) != 0;
+                        const bool    e = (fuHdr & 0x40) != 0;
+                        const uint8_t origType = fuHdr & 0x1F;
+
+                        if (s) {
+                                // Start a new NAL accumulator.  Reconstruct
+                                // the original NAL header byte from the FU
+                                // indicator (F | NRI) and FU header (type).
+                                fuBuf.clear();
+                                fuOrigByte0 = static_cast<uint8_t>((fuInd & 0xE0) | origType);
+                                fuBuf.pushToBack(fuOrigByte0);
+                                fuActive = true;
+                        }
+                        if (!fuActive) continue;
+                        // Append fragment payload (skip 2-byte FU framing).
+                        for (size_t k = 2; k < plSize; k++) fuBuf.pushToBack(pl[k]);
+                        if (e) {
+                                appendNalAnnexB(out, fuBuf.data(), fuBuf.size());
+                                fuBuf.clear();
+                                fuActive = false;
+                        }
+                }
+                // STAP-B (25), MTAP16 (26), MTAP24 (27), FU-B (29) are
+                // not handled in v1 — they appear only in interleaved
+                // mode, which no real-world sender uses.
+        }
+
+        Buffer result(out.size());
+        result.setSize(out.size());
+        if (!out.isEmpty()) {
+                std::memcpy(result.data(), out.data(), out.size());
+        }
+        return result;
+}
+
+// -- H.265 / HEVC -------------------------------------------------------------
+
+RtpPayloadH265::RtpPayloadH265(uint8_t payloadType) : _payloadType(payloadType) {}
+
+RtpPacket::List RtpPayloadH265::pack(const void *mediaData, size_t size) {
+        RtpPacket::List packets;
+        if (size == 0 || mediaData == nullptr) return packets;
+
+        const uint8_t *src = static_cast<const uint8_t *>(mediaData);
+        const auto     nals = collectAnnexBNals(src, size);
+        if (nals.isEmpty()) return packets;
+
+        const size_t maxPayload = maxPayloadSize();
+        if (maxPayload < 4) return packets; // need 2-byte payload header + 1-byte FU header
+
+        // For each NAL: single packet when ≤ MTU, else FU.  An FU
+        // packet's framing is 3 bytes (PayloadHdr 2 + FU header 1)
+        // and the original NAL header (2 bytes) is encoded into them
+        // — so the NAL payload (NAL bytes [2..]) is what gets
+        // distributed across fragments.
+        const size_t        fuBodyMax = maxPayload - 3;
+        RtpPacket::SizeList sizes;
+        struct PlanEntry {
+                        const AnnexBNal *nal = nullptr;
+                        bool             isFu = false;
+                        size_t           fuOffset = 0;
+                        size_t           fuChunk = 0;
+                        bool             fuStart = false;
+                        bool             fuEnd = false;
+        };
+        List<PlanEntry> plan;
+        plan.reserve(nals.size());
+
+        for (size_t n = 0; n < nals.size(); n++) {
+                const AnnexBNal &nal = nals[n];
+                if (nal.size < 2) continue; // HEVC NAL header is 2 bytes
+                if (nal.size <= maxPayload) {
+                        PlanEntry e;
+                        e.nal = &nals[n];
+                        e.isFu = false;
+                        plan.pushToBack(e);
+                        sizes.pushToBack(RtpPacket::HeaderSize + nal.size);
+                } else {
+                        const size_t bodyTotal = nal.size - 2; // skip 2-byte header
+                        size_t       bodyOff = 0;
+                        bool         first = true;
+                        while (bodyOff < bodyTotal) {
+                                const size_t chunk = std::min(fuBodyMax, bodyTotal - bodyOff);
+                                const bool   last = (bodyOff + chunk >= bodyTotal);
+                                PlanEntry    e;
+                                e.nal = &nals[n];
+                                e.isFu = true;
+                                e.fuOffset = bodyOff;
+                                e.fuChunk = chunk;
+                                e.fuStart = first;
+                                e.fuEnd = last;
+                                plan.pushToBack(e);
+                                sizes.pushToBack(RtpPacket::HeaderSize + 3 + chunk);
+                                bodyOff += chunk;
+                                first = false;
+                        }
+                }
+        }
+
+        if (sizes.isEmpty()) return packets;
+        packets = RtpPacket::createList(sizes);
+        if (packets.size() != plan.size()) return RtpPacket::List();
+
+        for (size_t i = 0; i < plan.size(); i++) {
+                const PlanEntry &e = plan[i];
+                const AnnexBNal &nal = *e.nal;
+                uint8_t         *pl = packets[i].payload();
+                if (pl == nullptr) continue;
+
+                if (!e.isFu) {
+                        std::memcpy(pl, nal.data, nal.size);
+                } else {
+                        const uint8_t b0 = nal.data[0];
+                        const uint8_t b1 = nal.data[1];
+                        const uint8_t origType = static_cast<uint8_t>((b0 >> 1) & 0x3F);
+                        // Payload header: keep F (bit 7) and the LayerId
+                        // top bit (bit 0); replace the 6-bit type with 49.
+                        const uint8_t fBit = b0 & 0x80;
+                        const uint8_t layerHi = b0 & 0x01;
+                        pl[0] = static_cast<uint8_t>(fBit | (NalTypeFu << 1) | layerHi);
+                        pl[1] = b1;
+                        // FU header: S | E | FuType (original type, 6 bits).
+                        uint8_t fuHdr = origType;
+                        if (e.fuStart) fuHdr |= 0x80;
+                        if (e.fuEnd) fuHdr |= 0x40;
+                        pl[2] = fuHdr;
+                        // Original NAL bytes from offset 2, advanced by fuOffset.
+                        std::memcpy(pl + 3, nal.data + 2 + e.fuOffset, e.fuChunk);
+                }
+        }
+        return packets;
+}
+
+Buffer RtpPayloadH265::unpack(const RtpPacket::List &packets) {
+        if (packets.isEmpty()) return Buffer();
+
+        size_t reserveBytes = 0;
+        for (size_t i = 0; i < packets.size(); i++) {
+                const RtpPacket &p = packets[i];
+                if (!p.isNull() && p.payloadSize() > 0) reserveBytes += p.payloadSize() + 4;
+        }
+        List<uint8_t> out;
+        out.reserve(reserveBytes);
+
+        // FU reassembly state: the reconstructed NAL header (2 bytes)
+        // followed by the accumulated NAL payload bytes.
+        List<uint8_t> fuBuf;
+        bool          fuActive = false;
+
+        for (size_t i = 0; i < packets.size(); i++) {
+                const RtpPacket &p = packets[i];
+                if (p.isNull() || p.payloadSize() < 2) continue;
+                const uint8_t *pl = p.payload();
+                const size_t   plSize = p.payloadSize();
+                const uint8_t  type = static_cast<uint8_t>((pl[0] >> 1) & 0x3F);
+
+                if (type < NalTypeAp /*48*/) {
+                        // Single NAL.
+                        if (fuActive) {
+                                fuBuf.clear();
+                                fuActive = false;
+                        }
+                        appendNalAnnexB(out, pl, plSize);
+                } else if (type == NalTypeAp) {
+                        // Aggregation Packet (no DON / DONL — assumes
+                        // sprop-max-don-diff=0, which RFC 7798 §4.4.2
+                        // allows the receiver to assume by default).
+                        if (fuActive) {
+                                fuBuf.clear();
+                                fuActive = false;
+                        }
+                        size_t off = 2; // skip AP payload header
+                        while (off + 2 <= plSize) {
+                                size_t nalLen = (static_cast<size_t>(pl[off]) << 8) | pl[off + 1];
+                                off += 2;
+                                if (nalLen == 0 || off + nalLen > plSize) break;
+                                appendNalAnnexB(out, pl + off, nalLen);
+                                off += nalLen;
+                        }
+                } else if (type == NalTypeFu) {
+                        // Fragmentation Unit.  Need ≥ 3 bytes: 2-byte
+                        // payload header + 1-byte FU header.
+                        if (plSize < 3) continue;
+                        const uint8_t b0 = pl[0];
+                        const uint8_t b1 = pl[1];
+                        const uint8_t fuHdr = pl[2];
+                        const bool    s = (fuHdr & 0x80) != 0;
+                        const bool    e = (fuHdr & 0x40) != 0;
+                        const uint8_t origType = fuHdr & 0x3F;
+
+                        if (s) {
+                                fuBuf.clear();
+                                // Reconstruct the 2-byte NAL header:
+                                // byte0 = (PayloadHdr0 & 0x81) | (origType << 1)
+                                // byte1 = PayloadHdr1
+                                const uint8_t hdr0 =
+                                        static_cast<uint8_t>((b0 & 0x81) | (origType << 1));
+                                fuBuf.pushToBack(hdr0);
+                                fuBuf.pushToBack(b1);
+                                fuActive = true;
+                        }
+                        if (!fuActive) continue;
+                        for (size_t k = 3; k < plSize; k++) fuBuf.pushToBack(pl[k]);
+                        if (e) {
+                                appendNalAnnexB(out, fuBuf.data(), fuBuf.size());
+                                fuBuf.clear();
+                                fuActive = false;
+                        }
+                }
+                // PACI (50) and reserved types are dropped silently.
+        }
+
+        Buffer result(out.size());
+        result.setSize(out.size());
+        if (!out.isEmpty()) {
+                std::memcpy(result.data(), out.data(), out.size());
         }
         return result;
 }

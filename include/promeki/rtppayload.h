@@ -28,6 +28,10 @@ PROMEKI_NAMESPACE_BEGIN
  * - RtpPayloadL16 — 16-bit linear audio
  * - RtpPayloadRawVideo — RFC 4175 raw video (ST 2110-20)
  * - RtpPayloadJpeg — RFC 2435 JPEG (Motion JPEG)
+ * - RtpPayloadJpegXs — RFC 9134 JPEG XS
+ * - RtpPayloadH264 — RFC 6184 H.264 / AVC
+ * - RtpPayloadH265 — RFC 7798 H.265 / HEVC
+ * - RtpPayloadJson — JSON metadata
  */
 class RtpPayload {
         public:
@@ -488,6 +492,200 @@ class RtpPayloadJpegXs : public RtpPayload {
                 int     _height;
                 uint8_t _payloadType;
                 uint8_t _frameCounter = 0;
+};
+
+/**
+ * @brief RTP payload handler for RFC 6184 H.264 / AVC.
+ * @ingroup network
+ *
+ * Implements the H.264 RTP payload format defined in RFC 6184.
+ * Operates in **non-interleaved mode** (@c packetization-mode=1):
+ * each access unit is delivered as a sequence of single-NAL packets
+ * and FU-A fragmentation units, in coding order, with the RTP marker
+ * bit set on the last packet of the access unit.
+ *
+ * @par Input format (writer side)
+ * @ref pack expects an Annex-B byte stream — one or more NAL units,
+ * each preceded by a 3- or 4-byte start code (@c 00 00 01 or
+ * @c 00 00 00 01).  This is what NVENC, x264, and most software
+ * encoders emit by default.  AVCC (length-prefixed) inputs are not
+ * accepted; convert with @ref H264Bitstream::avccToAnnexB first.
+ *
+ * @par Wire format (writer side)
+ * For each NAL in the input:
+ *  - **Single-NAL packet** when @c nalSize ≤ @ref maxPayloadSize:
+ *    the NAL bytes are copied verbatim into the RTP payload (the
+ *    first byte is the original H.264 NAL header — @c F | @c NRI |
+ *    @c type, with @c type in @c 1..23).
+ *  - **FU-A fragmentation** when @c nalSize > @ref maxPayloadSize:
+ *    the NAL is split into two or more fragments, each prefixed
+ *    with a 2-byte FU header.  The original NAL header byte is
+ *    consumed by the FU; only the NAL payload bytes are
+ *    re-distributed across fragments:
+ *    @code
+ *    +---------------+---------------+----- payload bytes -----+
+ *    | FU indicator  |  FU header    |  NAL payload fragment   |
+ *    | F NRI 28      | S E R type    |   (NAL[1 .. ])          |
+ *    +---------------+---------------+-------------------------+
+ *    @endcode
+ *    @c S=1 marks the first fragment, @c E=1 the last; the
+ *    reconstructed NAL header on the receive side is
+ *    @c (FU.indicator & 0xE0) | (FU.header & 0x1F).
+ *
+ * STAP-A aggregation (multiple small NALs in one packet) is *not*
+ * emitted by this writer in v1 — every NAL becomes its own packet
+ * pair (single or FU-A).  @ref unpack still recognises STAP-A on
+ * receive for interop with senders that aggregate.
+ *
+ * @par Reader behaviour
+ * @ref unpack reassembles a packet list (which the caller has
+ * collected up to the RTP marker bit) back into an Annex-B access
+ * unit with 4-byte start codes.  Recognised packet types:
+ *  - @c type @c 1..23 — single NAL.
+ *  - @c type @c 24 — STAP-A aggregation; inner NALs are extracted
+ *    using the standard 2-byte length-prefix layout.
+ *  - @c type @c 28 — FU-A; fragments are accumulated until @c E=1
+ *    delivers the assembled NAL.
+ *  - Other types (STAP-B, MTAP16, MTAP24, FU-B) are silently
+ *    skipped — no real-world sender uses them in
+ *    @c packetization-mode=1, but rejecting outright would refuse
+ *    streams that have a single stray packet.
+ *
+ * @par RTP timing
+ * All packets that belong to one access unit share the same RTP
+ * timestamp (90 kHz clock per RFC 6184 §5.1).  The timestamp and
+ * marker-bit policy are managed by @ref RtpSession; @ref pack only
+ * builds the payload bytes.
+ *
+ * @par Parameter sets
+ * SPS / PPS NAL units carried in the access unit are packetised the
+ * same way as VCL NALs (single-NAL or FU-A), so an in-band IDR with
+ * its own SPS/PPS round-trips without special handling.  Out-of-band
+ * delivery via the SDP @c sprop-parameter-sets fmtp parameter is a
+ * separate path managed by @ref RtpMediaIO and does not pass through
+ * this class.
+ *
+ * @par Example
+ * @code
+ * RtpPayloadH264 payload(96);
+ * auto packets = payload.pack(annexBBytes, annexBSize);
+ * @endcode
+ */
+class RtpPayloadH264 : public RtpPayload {
+        public:
+                /// @brief RTP clock rate for H.264 (fixed at 90 kHz per RFC 6184).
+                static constexpr uint32_t ClockRate = 90000;
+
+                /// @brief NAL unit type for FU-A fragmentation units (RFC 6184 §5.8).
+                static constexpr uint8_t NalTypeFuA = 28;
+
+                /// @brief NAL unit type for STAP-A aggregation packets (RFC 6184 §5.7.1).
+                static constexpr uint8_t NalTypeStapA = 24;
+
+                /**
+                 * @brief Constructs an H.264 RTP payload handler.
+                 * @param payloadType Dynamic RTP payload type (96-127, default 96).
+                 */
+                explicit RtpPayloadH264(uint8_t payloadType = 96);
+
+                /** @copydoc RtpPayload::payloadType() */
+                uint8_t payloadType() const override { return _payloadType; }
+                /** @copydoc RtpPayload::clockRate() */
+                uint32_t clockRate() const override { return ClockRate; }
+                /** @copydoc RtpPayload::pack() */
+                RtpPacket::List pack(const void *mediaData, size_t size) override;
+                /** @copydoc RtpPayload::unpack() */
+                Buffer unpack(const RtpPacket::List &packets) override;
+
+                /// @brief Overrides the RTP payload type number.
+                void setPayloadType(uint8_t pt) { _payloadType = pt; }
+
+        private:
+                uint8_t _payloadType;
+};
+
+/**
+ * @brief RTP payload handler for RFC 7798 H.265 / HEVC.
+ * @ingroup network
+ *
+ * Implements the HEVC RTP payload format defined in RFC 7798.  The
+ * writer operates in **non-interleaved, no-DON mode** (the receiver
+ * is expected to advertise @c sprop-max-don-diff=0 in its SDP) and
+ * emits one of two packet shapes per source NAL:
+ *  - **Single NAL** when @c nalSize ≤ @ref maxPayloadSize: NAL bytes
+ *    copied verbatim; payload type field is the original 6-bit HEVC
+ *    @c nal_unit_type (@c 0..47).
+ *  - **Fragmentation Unit (FU)** when @c nalSize > @ref maxPayloadSize:
+ *    split into two or more fragments.  HEVC's NAL header is two
+ *    bytes (versus H.264's one), so an FU packet's header is three
+ *    bytes total:
+ *    @code
+ *    +-------+-------+-------+----- payload bytes -----+
+ *    | PHdr0 | PHdr1 | FUHdr |  NAL payload fragment   |
+ *    | F  49 layerId | S E T |   (NAL[2 .. ])          |
+ *    +---------------+-------+-------------------------+
+ *    @endcode
+ *    The 2-byte payload header carries the same @c F /
+ *    @c nuh_layer_id / @c nuh_temporal_id_plus1 as the source NAL,
+ *    with @c nal_unit_type replaced by 49 (FU).  The 1-byte FU
+ *    header has @c S=1 on the first fragment, @c E=1 on the last,
+ *    and the original NAL type in the low 6 bits.  Reassembly
+ *    rebuilds the original 2-byte NAL header as
+ *    @c byte0 = (PHdr0 & 0x81) | ((FUHdr & 0x3F) << 1) and
+ *    @c byte1 = PHdr1.
+ *
+ * @par Reader behaviour
+ * @ref unpack reassembles a packet list back into an Annex-B access
+ * unit with 4-byte start codes.  Recognised packet types:
+ *  - @c type @c 0..47 — single NAL.
+ *  - @c type @c 48 — Aggregation Packet (AP); inner NALs are
+ *    extracted using the standard 2-byte length-prefix layout, with
+ *    no DONL / DOND bytes (sprop-max-don-diff=0 assumed).
+ *  - @c type @c 49 — Fragmentation Unit; assembled across
+ *    @c S..E fragments.
+ *  - @c type @c 50 — PACI; not implemented (rare).
+ *
+ * @par RTP timing
+ * All packets that belong to one access unit share the same RTP
+ * timestamp (90 kHz clock per RFC 7798 §4.1).
+ *
+ * @par Example
+ * @code
+ * RtpPayloadH265 payload(96);
+ * auto packets = payload.pack(annexBBytes, annexBSize);
+ * @endcode
+ */
+class RtpPayloadH265 : public RtpPayload {
+        public:
+                /// @brief RTP clock rate for HEVC (fixed at 90 kHz per RFC 7798).
+                static constexpr uint32_t ClockRate = 90000;
+
+                /// @brief NAL unit type for HEVC Fragmentation Unit packets (RFC 7798 §4.4.3).
+                static constexpr uint8_t NalTypeFu = 49;
+
+                /// @brief NAL unit type for HEVC Aggregation Packets (RFC 7798 §4.4.2).
+                static constexpr uint8_t NalTypeAp = 48;
+
+                /**
+                 * @brief Constructs an H.265 / HEVC RTP payload handler.
+                 * @param payloadType Dynamic RTP payload type (96-127, default 96).
+                 */
+                explicit RtpPayloadH265(uint8_t payloadType = 96);
+
+                /** @copydoc RtpPayload::payloadType() */
+                uint8_t payloadType() const override { return _payloadType; }
+                /** @copydoc RtpPayload::clockRate() */
+                uint32_t clockRate() const override { return ClockRate; }
+                /** @copydoc RtpPayload::pack() */
+                RtpPacket::List pack(const void *mediaData, size_t size) override;
+                /** @copydoc RtpPayload::unpack() */
+                Buffer unpack(const RtpPacket::List &packets) override;
+
+                /// @brief Overrides the RTP payload type number.
+                void setPayloadType(uint8_t pt) { _payloadType = pt; }
+
+        private:
+                uint8_t _payloadType;
 };
 
 PROMEKI_NAMESPACE_END

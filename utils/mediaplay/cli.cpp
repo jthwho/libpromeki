@@ -189,6 +189,11 @@ namespace mediaplay {
                                 "                            second by default.\n"
                                 "  --stats-interval <SEC>    Override the --stats print interval\n"
                                 "                            in seconds (default 1.0).\n"
+                                "  --cpumon <SEC>            Sample per-thread CPU usage every\n"
+                                "                            SEC seconds and log a one-line\n"
+                                "                            summary at Info level showing the\n"
+                                "                            top consumers, sorted descending.\n"
+                                "                            Disabled by default.\n"
                                 "  --memstats                Print MemSpace allocation\n"
                                 "                            statistics for every registered\n"
                                 "                            memory space on shutdown.\n"
@@ -401,6 +406,15 @@ namespace mediaplay {
                                          return 1;
                                  }
                                  opts.statsInterval = v;
+                                 return 0;
+                         })},
+                        {0, "cpumon", "Per-thread CPU usage report every <SEC> seconds",
+                         CmdLineParser::OptionDoubleCallback([&](double v) {
+                                 if (v <= 0.0) {
+                                         fprintf(stderr, "Error: --cpumon must be > 0\n");
+                                         return 1;
+                                 }
+                                 opts.cpuMonInterval = v;
                                  return 0;
                          })},
                         {0, "memstats", "Dump MemSpace stats for every registered memory space on shutdown",

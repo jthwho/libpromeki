@@ -10,13 +10,18 @@
 #include <cstdint>
 #include <functional>
 #include <promeki/atomic.h>
+#include <promeki/mutex.h>
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
 #include <promeki/buffer.h>
 #include <promeki/duration.h>
 #include <promeki/socketaddress.h>
+#include <promeki/ntptime.h>
 #include <promeki/rtppacket.h>
+#include <promeki/rtppacketbatch.h>
 #include <promeki/packettransport.h>
+#include <promeki/string.h>
+#include <promeki/timestamp.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -66,8 +71,13 @@ class Thread;
  * session.start(SocketAddress::any(0));
  *
  * RtpPayloadJpeg payload(1920, 1080);
- * auto packets = payload.pack(jpegData, jpegSize);
- * session.sendPackets(packets, timestamp, true);
+ * RtpPacketBatch  batch;
+ * batch.packets = payload.pack(jpegData, jpegSize);
+ * for (size_t i = 0; i < batch.packets.size(); i++) {
+ *         batch.packets[i].setTimestamp(timestamp);
+ *         batch.packets[i].setMarker(i + 1 == batch.packets.size());
+ * }
+ * session.sendPackets(batch);
  * @endcode
  */
 class RtpSession : public ObjectBase {
@@ -141,73 +151,42 @@ class RtpSession : public ObjectBase {
                 Error sendPacket(const Buffer &payload, uint32_t timestamp, uint8_t payloadType, bool marker = false);
 
                 /**
-                 * @brief Sends pre-packed RTP packets from a payload handler.
+                 * @brief Sends a packetizer-prepared @ref RtpPacketBatch
+                 *        on the wire.
                  *
-                 * Fills in the RTP header fields on each packet and
-                 * transmits them in one batch through the transport.
-                 * The marker bit is set on the last packet in the
-                 * list when @p markerOnLast is true (end of
-                 * frame/access unit).
+                 * The TX thread is the single owner of per-packet
+                 * RTP-TS and marker — those fields must already be
+                 * stamped on every packet in @ref RtpPacketBatch::packets
+                 * before this call.  The session fills the
+                 * transport-side header fields the packetizer cannot
+                 * know (RTP version, sequence number, SSRC, payload
+                 * type), then dispatches the resulting datagram batch
+                 * to the transport.  When @ref RtpPacketBatch::rateCapBps
+                 * is non-zero the transport's per-second rate cap is
+                 * updated before the batch flies — used by the VBR
+                 * compressed-video path so each frame's bytes are
+                 * spread by kernel @c fq over exactly one frame
+                 * interval.
                  *
-                 * @param packets The pre-packed packet list.  Modified
-                 *                in-place: RTP header fields are
-                 *                overwritten before transmission.
-                 * @param timestamp The RTP timestamp for this frame.
-                 * @param markerOnLast If true, set marker bit on the
-                 *                     last packet.
+                 * @param batch The packet batch to transmit.  Caller
+                 *              owns the underlying packet buffers;
+                 *              the session writes only the header
+                 *              fields enumerated above and never
+                 *              touches @ref RtpPacketBatch::packets'
+                 *              payload bytes or the batch struct's
+                 *              other fields.
                  * @return Error::Ok on success, or an error on failure.
+                 *
+                 * The legacy @c sendPackets(packets, ts, markerOnLast),
+                 * @c sendPackets(packets, startTs, stride, marker), and
+                 * @c sendPacketsPaced(...) overloads were deleted in
+                 * Phase 3 of the RTP TX refactor.  Pacing strategy now
+                 * lives in the per-stream TX thread (see
+                 * @c VideoTxThread::run inside @c rtpmediaio.cpp),
+                 * driven by the @c Cadence helper for userspace pacing
+                 * and by @c setPacingRate() for kernel @c fq pacing.
                  */
-                Error sendPackets(RtpPacket::List &packets, uint32_t timestamp, bool markerOnLast = true);
-
-                /**
-                 * @brief Sends a list of packets with per-packet timestamps.
-                 *
-                 * Each packet is stamped with @c startTimestamp @c +
-                 * @c i @c * @c timestampStride so consecutive packets
-                 * carry monotonically advancing RTP timestamps.  This
-                 * is the AES67 / ST 2110-30 audio path, where every
-                 * packet-time interval gets its own timestamp
-                 * reflecting the exact sample index at the start of
-                 * that packet.
-                 *
-                 * Sequence numbers still come from the session's
-                 * monotonic counter and the marker bit is applied
-                 * uniformly (audio streams should pass @p marker =
-                 * @c false).  Packets are handed to the transport as
-                 * a single batch via @ref PacketTransport::sendPackets().
-                 *
-                 * @param packets The pre-packed packet list, modified
-                 *                in-place.
-                 * @param startTimestamp The RTP timestamp for the
-                 *                       first packet's first sample.
-                 * @param timestampStride Increment applied per
-                 *                        successive packet.
-                 * @param marker Marker bit applied to every packet.
-                 * @return Error::Ok on success, or an error on failure.
-                 */
-                Error sendPackets(RtpPacket::List &packets, uint32_t startTimestamp, uint32_t timestampStride,
-                                  bool marker = false);
-
-                /**
-                 * @brief Sends pre-packed RTP packets with userspace pacing.
-                 *
-                 * Spreads packet transmission evenly across the given
-                 * duration by sleeping between sends.  Implements
-                 * ST 2110-21-style userspace sender pacing and is the
-                 * fallback when kernel pacing is unavailable.  For
-                 * kernel pacing, prefer @ref setPacingRate().
-                 *
-                 * @param packets The pre-packed packet list.  Modified
-                 *                in-place.
-                 * @param timestamp The RTP timestamp for this frame.
-                 * @param spreadInterval The total duration over which
-                 *        to spread packet transmission.
-                 * @param markerOnLast If true, set marker bit on the
-                 *                     last packet.
-                 * @return Error::Ok on success, or an error on failure.
-                 */
-                Error sendPacketsPaced(RtpPacket::List &packets, uint32_t timestamp, const Duration &spreadInterval,
-                                       bool markerOnLast = true);
+                Error sendPackets(RtpPacketBatch &batch);
 
                 /**
                  * @brief Signature of the per-packet receive callback.
@@ -330,6 +309,185 @@ class RtpSession : public ObjectBase {
                 uint32_t clockRate() const { return _clockRate; }
 
                 /**
+                 * @brief Anchors this session's RTP-timestamp clock to
+                 *        a known capture-wallclock instant.
+                 *
+                 * The anchor establishes the reference pair the SR
+                 * uses to derive NTP from any subsequent RTP-TS:
+                 * @f$ NTP(t) = anchor.ntp + (t - anchor.rtpTs) /
+                 * clockRate @f$, with the subtraction taken modulo
+                 * @c uint32_t so wraparound is handled uniformly on
+                 * both sides.  Receivers run the same arithmetic
+                 * against the SR they receive, so the wallclock
+                 * mapping survives end-to-end without needing a
+                 * shared grandmaster.
+                 *
+                 * Writer-only.  Called by @ref RtpMediaIO at open
+                 * time (default @c NtpTime::now() / @c 0) and
+                 * refined the first time a Frame with a valid
+                 * @ref Frame::captureTime arrives — the upstream
+                 * code converts the captureTime's
+                 * @c MediaTimeStamp to NTP using a single observed
+                 * @c (steady, wall) reference instant.
+                 *
+                 * Multiple sessions in the same RtpMediaIO are
+                 * seeded with the same NTP so receivers can
+                 * cross-correlate their RTP-TS streams against one
+                 * shared wallclock domain — a single SR observation
+                 * per stream is sufficient for cross-stream sync.
+                 *
+                 * @param captureNtp The NTP wallclock value
+                 *                   corresponding to RTP-TS
+                 *                   @p rtpTs on this stream.
+                 * @param rtpTs      The RTP-TS that aligns with
+                 *                   @p captureNtp.  Conventionally
+                 *                   @c 0 at the first frame /
+                 *                   sample, but any deterministic
+                 *                   pair works.
+                 */
+                void setRtpAnchor(NtpTime captureNtp, uint32_t rtpTs);
+
+                /**
+                 * @brief Returns the most-recently configured anchor
+                 *        NTP timestamp.
+                 *
+                 * Inspect-only — receivers and tests use it to
+                 * cross-check the SR derivation; production callers
+                 * should not need to read it back.
+                 */
+                NtpTime anchorNtp() const;
+
+                /**
+                 * @brief Returns the most-recently configured anchor
+                 *        RTP-TS.  See @ref anchorNtp.
+                 */
+                uint32_t anchorRtpTs() const;
+
+                /**
+                 * @brief Records the RTP timestamp of the most-recent
+                 *        packet that was actually placed on the wire.
+                 *
+                 * @ref emitRtcpSr derives the SR's NTP wallclock
+                 * deterministically from this rtpTs and the anchor —
+                 * no system-clock sample is taken at emission time.
+                 * That keeps SRs aligned with the stream's nominal
+                 * wire-RTP-TS clock even when the sender's
+                 * @c steady_clock disagrees with @c system_clock by
+                 * parts-per-million; receivers run the same anchor
+                 * arithmetic so any drift between the two domains
+                 * has no effect on the receiver-side mapping.
+                 *
+                 * Silence packets emitted by an audio TX thread
+                 * whose source has stalled count exactly like
+                 * real-content packets — they are real wire
+                 * emissions, the SR's RTP-TS must reflect them, and
+                 * @ref hasEmissionRecord must return true so the
+                 * RTCP scheduler keeps the SR cadence going for an
+                 * audio session that's currently producing only
+                 * silence.
+                 *
+                 * @param rtpTs The RTP timestamp of the packet that
+                 *              was just emitted.  For multi-packet
+                 *              batches the convention is the
+                 *              timestamp of the FIRST packet so the
+                 *              SR's wallclock mapping references
+                 *              the same instant a receiver would
+                 *              see for that packet.
+                 */
+                void noteRtpEmission(uint32_t rtpTs);
+
+                /**
+                 * @brief True if this session has captured at least
+                 *        one RTP emission via @ref noteRtpEmission.
+                 *
+                 * Used by the RTCP scheduler to skip sending an SR for
+                 * streams that have not emitted any packets yet — an
+                 * SR with garbage (NTP, RTP) fields gives receivers a
+                 * worse sync starting point than no SR at all.
+                 */
+                bool hasEmissionRecord() const;
+
+                /// @brief Returns the configured CNAME for RTCP SDES.
+                const String &cname() const { return _cname; }
+
+                /// @brief Sets the CNAME emitted in RTCP SDES.
+                void setCname(const String &cname) { _cname = cname; }
+
+                /**
+                 * @brief Builds and transmits a single RTCP compound
+                 *        packet (SR + SDES/CNAME) on this session's
+                 *        transport.
+                 *
+                 * Best-effort: returns @c Error::NotOpen when the
+                 * session is not running, otherwise the transport's
+                 * sendmsg result.  The NTP timestamp is derived
+                 * from the active @ref setRtpAnchor and the
+                 * most-recent @ref noteRtpEmission rtpTs — no
+                 * caller has to compute it explicitly.
+                 *
+                 * @param senderPacketCount Cumulative RTP packets the
+                 *                          stream has emitted (drawn
+                 *                          from the per-stream stats
+                 *                          counter — RtpSession does
+                 *                          not maintain its own).
+                 * @param senderOctetCount  Cumulative RTP-payload
+                 *                          octets (excludes RTP
+                 *                          headers).
+                 */
+                Error emitRtcpSr(uint32_t senderPacketCount, uint32_t senderOctetCount);
+
+                /**
+                 * @brief Snapshot of the most-recently parsed
+                 *        Sender Report received on this session.
+                 *
+                 * @ref valid stays @c false until at least one SR
+                 * has been parsed; the other fields are zero in
+                 * that case.  Once an SR has arrived, @ref ntp /
+                 * @ref rtpTs hold the SR's @c (NTP, RTP-TS) anchor
+                 * pair (a receiver-side @ref RtpStreamClock can be
+                 * built directly from these), and @ref arrivedAt
+                 * is the local @c steady_clock instant the receive
+                 * thread parsed the packet at — useful for "has a
+                 * fresh SR landed since I last looked?" checks.
+                 */
+                struct ReceivedSr {
+                        NtpTime   ntp;
+                        uint32_t  rtpTs = 0;
+                        TimeStamp arrivedAt;
+                        bool      valid = false;
+                };
+
+                /**
+                 * @brief Returns the most-recent SR snapshot parsed
+                 *        by the receive thread.
+                 *
+                 * Invalid (@c valid == false) until the first SR has
+                 * arrived.  Some senders delay emission of the first
+                 * SR (RFC 3550 lets the first interval be randomized
+                 * to spread RTCP load), so receivers that rely on
+                 * SR-driven sync must tolerate a brief startup
+                 * window where this returns invalid.
+                 */
+                ReceivedSr receivedSr() const;
+
+                /**
+                 * @brief Computes the NTP wallclock timestamp the SR
+                 *        would carry right now without sending it.
+                 *
+                 * Pure-function preview into the SR-derivation logic
+                 * so unit tests can pin the
+                 * @f$ anchor.ntp + (rtpTs - anchor.rtpTs) /
+                 * clockRate @f$ arithmetic without standing up a
+                 * transport.  Returns the anchor NTP unchanged when
+                 * no emission has been recorded yet — @p rtpTs
+                 * defaults to @c 0 in that case so the result is
+                 * deterministic.
+                 *
+                 * @return The derived NTP timestamp.
+                 */
+                NtpTime currentSrNtp() const;
+
+                /**
                  * @brief Returns the active packet transport.
                  *
                  * This is the transport the session is currently
@@ -359,7 +517,39 @@ class RtpSession : public ObjectBase {
                 class ReceiveThread;
                 friend class ReceiveThread;
 
+                /**
+                 * @brief Consumes an inbound RTCP datagram.
+                 *
+                 * Walks the compound packet for Sender Reports and
+                 * caches the most-recent one in @c _lastReceivedSr so
+                 * @ref receivedSr can surface it to reader-side
+                 * aggregators.  All other packet types (SDES, BYE,
+                 * APP, RR, …) are dropped silently — RTCP is
+                 * forward-compatible by design.
+                 *
+                 * Called from the receive thread for every datagram
+                 * whose second byte is in the @c [200..223] RTCP
+                 * packet-type range.
+                 *
+                 * @param data Pointer to the first byte of the RTCP
+                 *             datagram (which may be a compound).
+                 * @param size Bytes available at @p data.
+                 */
+                void handleRtcp(const uint8_t *data, size_t size);
+
                 void fillHeader(RtpPacket &pkt, uint8_t pt, bool marker, uint32_t timestamp);
+                /**
+                 * @brief Fills only the transport-side RTP header
+                 *        fields on @p pkt.
+                 *
+                 * Sets version, payload type, sequence number, and
+                 * SSRC.  Leaves marker and timestamp untouched —
+                 * those are filled by the caller (TX thread) before
+                 * @ref sendPackets dispatches the packet.  Used by
+                 * the @ref RtpPacketBatch send path; @ref fillHeader
+                 * is the all-fields helper used by @ref sendPacket.
+                 */
+                void fillTransportHeader(RtpPacket &pkt);
                 void generateSsrc();
 
                 PacketTransport      *_transport = nullptr;
@@ -370,6 +560,37 @@ class RtpSession : public ObjectBase {
                 uint16_t              _sequenceNumber = 0;
                 uint8_t               _payloadType = 96;
                 uint32_t              _clockRate = 90000;
+
+                // RTCP SR / SDES state.  CNAME is the SDES item every
+                // SR-bearing compound packet carries.  The
+                // capture-anchor is established once at openStream
+                // time and refined by the first arriving Frame's
+                // @ref Frame::captureTime; thereafter, @c emitRtcpSr
+                // derives the SR's NTP from
+                // @c anchorNtp + (lastEmissionRtpTs - anchorRtpTs) /
+                // clockRate without sampling the system clock.
+                // @c _hasEmission gates SR emission on whether any
+                // packet has actually gone out, so the scheduler
+                // never sends an SR for a session that has yet to
+                // produce wire activity.  Mutex-guarded because the
+                // noter runs on the per-stream TX thread while the
+                // scheduler runs on its own thread.
+                mutable Mutex _rtcpMutex;
+                NtpTime       _anchorNtp;
+                uint32_t      _anchorRtpTs = 0;
+                uint32_t      _lastEmissionRtpTs = 0;
+                bool          _hasEmission = false;
+                String        _cname;
+
+                // Most-recently parsed inbound SR.  The receive thread
+                // demuxes RTCP from RTP via the second byte of every
+                // datagram (PT in [200..223] → RTCP) and walks each
+                // RTCP compound for SRs.  Reader-side helpers like
+                // @ref RtpStreamClock pick this up via
+                // @ref receivedSr to map any future RTP-TS on this
+                // session to a wallclock instant for cross-stream
+                // alignment.
+                ReceivedSr _lastReceivedSr;
 
                 // Receive path
                 using ReceiveThreadUPtr = UniquePtr<ReceiveThread>;

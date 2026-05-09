@@ -7,7 +7,10 @@
 
 #include <promeki/sharedthreadmediaio.h>
 
+#include <typeinfo>
+
 #include <promeki/mediaiostats.h>
+#include <promeki/system.h>
 #include <promeki/threadpool.h>
 #include <promeki/timestamp.h>
 
@@ -20,7 +23,10 @@ ThreadPool &SharedThreadMediaIO::pool() {
         // alive past main().
         struct PoolHolder {
                         ThreadPool tp;
-                        PoolHolder() { tp.setNamePrefix("media"); }
+                        PoolHolder() {
+                                tp.setNamePrefix("media");
+                                tp.setName("media");
+                        }
         };
         static PoolHolder h;
         return h.tp;
@@ -45,7 +51,36 @@ void SharedThreadMediaIO::cancelPendingWork() {
         _strand.cancelPending();
 }
 
+void SharedThreadMediaIO::refreshStrandWorkTag() {
+        // typeid(*this) resolves to the most-derived type once
+        // construction completes, which is what we want for
+        // attribution.  demangleSymbol caches results so subsequent
+        // calls are an unordered_map lookup.
+        String cls = System::demangleSymbol(typeid(*this).name());
+        // Strip the promeki:: namespace prefix so reports stay
+        // terse — "RtpMediaIO[name]" rather than
+        // "promeki::RtpMediaIO[name]".  The prefix is universal
+        // across the library so dropping it never aliases.
+        static const String kNamespacePrefix("promeki::");
+        if (cls.startsWith(kNamespacePrefix)) {
+                cls = cls.mid(kNamespacePrefix.length());
+        }
+        const String label = name();
+        const String tagName = label.isEmpty() ? cls : (cls + "[" + label + "]");
+        if (tagName != _lastWorkTagName) {
+                _lastWorkTagName = tagName;
+                _strand.setWorkTag(ThreadPool::WorkTag(tagName));
+        }
+}
+
 void SharedThreadMediaIO::submit(MediaIOCommand::Ptr cmd) {
+        // Refresh the strand's work tag so per-instance pool-time
+        // accounting tracks rename via MediaConfig::Name without
+        // callers having to plumb anything explicitly.  No-op when
+        // the tag hasn't changed (string compare against the cached
+        // value).
+        refreshStrandWorkTag();
+
         // Cancellation contract (devplan §Cancellation):
         //   • not yet dispatched → short-circuit with Error::Cancelled
         //     (handled inside the runner, before dispatch runs).

@@ -328,3 +328,150 @@ TEST_CASE("Queue_IsEmpty") {
         auto [val, err] = q.pop();
         CHECK(q.isEmpty());
 }
+
+// ============================================================================
+// Bounded queue: setMaxSize / pushBlocking
+// ============================================================================
+
+TEST_CASE("Queue_SetMaxSizeDefaultsToUnbounded") {
+        Queue<int> q;
+        CHECK(q.maxSize() == 0);
+}
+
+TEST_CASE("Queue_SetMaxSizeRoundTrip") {
+        Queue<int> q;
+        q.setMaxSize(4);
+        CHECK(q.maxSize() == 4);
+        q.setMaxSize(0);
+        CHECK(q.maxSize() == 0);
+}
+
+TEST_CASE("Queue_PlainPushIgnoresCap") {
+        // The non-blocking overload is documented to ignore the cap —
+        // it always inserts so existing callers do not change semantics.
+        Queue<int> q;
+        q.setMaxSize(2);
+        q.push(1);
+        q.push(2);
+        q.push(3);
+        CHECK(q.size() == 3);
+}
+
+TEST_CASE("Queue_PushBlockingFastPathWhenUnbounded") {
+        Queue<int> q;
+        // No cap → blocking push returns immediately.
+        CHECK(q.pushBlocking(42).isOk());
+        CHECK(q.size() == 1);
+}
+
+TEST_CASE("Queue_PushBlockingTimeoutWhenFull") {
+        Queue<int> q;
+        q.setMaxSize(2);
+        CHECK(q.pushBlocking(1, 50).isOk());
+        CHECK(q.pushBlocking(2, 50).isOk());
+        // Now full — third push should time out.
+        Error err = q.pushBlocking(3, 50);
+        CHECK(err == Error::Timeout);
+        CHECK(q.size() == 2);
+}
+
+TEST_CASE("Queue_PushBlockingResumesOnPop") {
+        Queue<int> q;
+        q.setMaxSize(1);
+        CHECK(q.pushBlocking(7, 50).isOk());
+        std::atomic<bool> done{false};
+        Error             pushErr = Error::Timeout;
+        std::thread       producer([&] {
+                pushErr = q.pushBlocking(8, 5000);
+                done.store(true, std::memory_order_release);
+        });
+        // Producer should be parked because the queue is full.  Drain
+        // one slot — it must wake, push, and report Ok.
+        auto [val, err] = q.pop();
+        CHECK(err.isOk());
+        CHECK(val == 7);
+        producer.join();
+        CHECK(done.load(std::memory_order_acquire));
+        CHECK(pushErr.isOk());
+        CHECK(q.size() == 1);
+}
+
+TEST_CASE("Queue_EmplaceBlockingHonorsCap") {
+        Queue<std::pair<int, std::string>> q;
+        q.setMaxSize(1);
+        CHECK(q.emplaceBlocking(0, 42, "answer").isOk());
+        // Full now — emplaceBlocking with 50ms timeout should report timeout.
+        Error err = q.emplaceBlocking(50, 7, "lucky");
+        CHECK(err == Error::Timeout);
+        CHECK(q.size() == 1);
+}
+
+// ============================================================================
+// cancelWaiters
+// ============================================================================
+
+TEST_CASE("Queue_CancelWaitersUnblocksPop") {
+        Queue<int>        q;
+        std::atomic<bool> done{false};
+        Error             popErr = Error::Ok;
+        std::thread       consumer([&] {
+                auto r = q.pop();
+                popErr = r.second();
+                done.store(true, std::memory_order_release);
+        });
+        // Give the consumer a moment to park on the empty queue.
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        q.cancelWaiters();
+        consumer.join();
+        CHECK(done.load(std::memory_order_acquire));
+        CHECK(popErr == Error::Cancelled);
+        CHECK(q.isCancelled());
+}
+
+TEST_CASE("Queue_CancelWaitersUnblocksProducer") {
+        Queue<int> q;
+        q.setMaxSize(1);
+        CHECK(q.pushBlocking(1, 50).isOk());
+        std::atomic<bool> done{false};
+        Error             pushErr = Error::Ok;
+        std::thread       producer([&] {
+                pushErr = q.pushBlocking(2, 0);
+                done.store(true, std::memory_order_release);
+        });
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        q.cancelWaiters();
+        producer.join();
+        CHECK(done.load(std::memory_order_acquire));
+        CHECK(pushErr == Error::Cancelled);
+}
+
+TEST_CASE("Queue_CancelLatchAffectsLaterPop") {
+        Queue<int> q;
+        q.cancelWaiters();
+        // Already cancelled — pop returns Cancelled immediately.
+        auto [val, err] = q.pop();
+        CHECK(err == Error::Cancelled);
+}
+
+TEST_CASE("Queue_PopDrainsBeforeCancelTakesEffect") {
+        Queue<int> q;
+        q.push(1);
+        q.push(2);
+        q.cancelWaiters();
+        // Items in the queue are still drained — cancel only governs
+        // blocking waits, not data already enqueued.
+        CHECK(q.pop().first() == 1);
+        CHECK(q.pop().first() == 2);
+        // Now empty + cancelled — pop returns Cancelled.
+        CHECK(q.pop().second() == Error::Cancelled);
+}
+
+TEST_CASE("Queue_ResetClearsCancelLatch") {
+        Queue<int> q;
+        q.cancelWaiters();
+        CHECK(q.isCancelled());
+        q.reset();
+        CHECK_FALSE(q.isCancelled());
+        // Reset re-arms — pushBlocking works again on the live queue.
+        CHECK(q.pushBlocking(99, 50).isOk());
+}

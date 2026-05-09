@@ -118,6 +118,21 @@ struct HevcDecoderConfig {
          *        that order.
          */
                 Error toAnnexB(Buffer &outBuf) const;
+
+                /**
+                 * @brief Returns @c true when the Annex-B access unit
+                 *        contains at least one IRAP NAL (types 16-23).
+                 *
+                 * IRAP — Intra Random Access Point — is HEVC's umbrella
+                 * for any access unit that the decoder can begin at
+                 * without history: BLA (16-18), IDR (19-20), and
+                 * CRA (21).  The reserved range 22-23 is included so a
+                 * future spec extension is treated as random-access by
+                 * default.  This is the natural mapping for the
+                 * @c MediaPayload::Keyframe flag on an HEVC RTP receive
+                 * path.  Returns @c false on empty / corrupt inputs.
+                 */
+                static bool isIrapAnnexB(const BufferView &au);
 };
 
 PROMEKI_NAMESPACE_END

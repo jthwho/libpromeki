@@ -509,10 +509,10 @@ inline const QuickTimeLayout QuickTimeLayout::Fragmented{1};
  * - @c None     — burst all packets at once.  Appropriate only
  *                 for loopback / LAN tests or when the downstream
  *                 network is guaranteed to absorb the burst.
- * - @c Userspace — pace by sleeping between sends (the
- *                 @c RtpSession::sendPacketsPaced() path).  Works
+ * - @c Userspace — pace by sleeping between sends (the per-stream
+ *                 TX thread + @c Cadence helper).  Works
  *                 everywhere without kernel configuration but ties
- *                 up the worker thread during the pacing window.
+ *                 up the TX thread during the pacing window.
  * - @c KernelFq — push the rate to @c SO_MAX_PACING_RATE and let
  *                 the @c fq qdisc space the packets with zero
  *                 per-packet CPU cost.

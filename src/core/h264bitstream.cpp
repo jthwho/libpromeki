@@ -461,4 +461,15 @@ Error H264Bitstream::wrapNalsAsAnnexB(const List<BufferView> &nals, Buffer &outB
         return Error::Ok;
 }
 
+bool AvcDecoderConfig::isIdrAnnexB(const BufferView &au) {
+        bool found = false;
+        H264Bitstream::forEachAnnexBNal(au, [&](const H264Bitstream::NalUnit &nal) -> Error {
+                if ((nal.header0 & 0x1f) == H264NalTypeSliceIdr) {
+                        found = true;
+                }
+                return Error::Ok;
+        });
+        return found;
+}
+
 PROMEKI_NAMESPACE_END

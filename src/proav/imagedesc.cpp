@@ -150,6 +150,24 @@ ImageDesc ImageDesc::fromSdp(const SdpMediaDescription &md) {
                 return ImageDesc(Size2Du32(static_cast<uint32_t>(w), static_cast<uint32_t>(h)), PixelFormat(pdId));
         }
 
+        if (rm.encoding == "H264" || rm.encoding == "h264") {
+                // RFC 6184 H.264.  Geometry is in the bitstream (SPS),
+                // not in the SDP — the reader's first-frame inspector
+                // populates width / height from the first decoded SPS.
+                // We return a descriptor with size 0×0 and the
+                // compressed PixelFormat so the planner can route to
+                // an H.264-aware backend even before geometry is
+                // known; downstream layers refine the descriptor
+                // as parameter sets arrive.
+                return ImageDesc(Size2Du32(0, 0), PixelFormat(PixelFormat::H264));
+        }
+
+        if (rm.encoding == "H265" || rm.encoding == "h265" || rm.encoding == "HEVC" ||
+            rm.encoding == "hevc") {
+                // RFC 7798 HEVC.  Same geometry-deferred policy as H.264.
+                return ImageDesc(Size2Du32(0, 0), PixelFormat(PixelFormat::HEVC));
+        }
+
         if (rm.encoding == "JPEG" || rm.encoding == "jpeg") {
                 // RFC 2435 MJPEG.  Geometry is normally in the per-
                 // packet RTP/JPEG header, so the SDP-derived ImageDesc
@@ -312,6 +330,33 @@ SdpMediaDescription ImageDesc::toSdp(uint8_t payloadType) const {
                         fmtp += String(";RANGE=") + String(range);
                 }
                 md.setAttribute("fmtp", ptStr + String(" ") + fmtp);
+        } else if (pd.isCompressed() && pd.videoCodec().id() == VideoCodec::H264) {
+                // RFC 6184 H.264.  Geometry is in the bitstream (SPS),
+                // not in the SDP — receivers ignore any width/height
+                // hint here and learn them from the first IDR.  We
+                // emit @c packetization-mode=1 (non-interleaved with
+                // STAP-A / FU-A allowed) which matches what
+                // @ref RtpPayloadH264 produces.  @c profile-level-id
+                // and @c sprop-parameter-sets are out-of-band hints
+                // that the @ref RtpMediaIO writer fills in when it
+                // has the encoder's parameter sets to share; from the
+                // PixelFormat alone we have no way to derive them, so
+                // this static path emits only the framing parameters
+                // and leaves codec configuration to be carried in-band.
+                md.addPayloadType(payloadType);
+                String ptStr = String::number(payloadType);
+                md.setAttribute("rtpmap", ptStr + String(" H264/90000"));
+                md.setAttribute("fmtp", ptStr + String(" packetization-mode=1"));
+        } else if (pd.isCompressed() && pd.videoCodec().id() == VideoCodec::HEVC) {
+                // RFC 7798 H.265 / HEVC.  Same in-band-geometry policy
+                // as H.264.  @c sprop-max-don-diff=0 is asserted
+                // because @ref RtpPayloadH265 emits NAL units in
+                // decoding order with no DON / DONL fields, which
+                // matches what every modern receiver expects.
+                md.addPayloadType(payloadType);
+                String ptStr = String::number(payloadType);
+                md.setAttribute("rtpmap", ptStr + String(" H265/90000"));
+                md.setAttribute("fmtp", ptStr + String(" sprop-max-don-diff=0"));
         } else {
                 return SdpMediaDescription();
         }

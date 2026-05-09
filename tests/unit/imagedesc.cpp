@@ -443,3 +443,56 @@ TEST_CASE("ImageDesc_toSdp_fromSdp_Jpeg_roundtrip") {
         CHECK(recovered.width() == 640);
         CHECK(recovered.height() == 480);
 }
+
+TEST_CASE("ImageDesc_toSdp_H264_emitsRtpmapAndPacketizationMode") {
+        // H.264 SDP carries no geometry — width/height live in the SPS.
+        // The rtpmap and packetization-mode hint must still appear.
+        ImageDesc img(Size2Du32(1920, 1080), PixelFormat(PixelFormat::H264));
+        SdpMediaDescription md = img.toSdp(96);
+        String rtpmap, fmtp;
+        for (size_t i = 0; i < md.attributes().size(); i++) {
+                if (md.attributes()[i].first() == "rtpmap") rtpmap = md.attributes()[i].second();
+                if (md.attributes()[i].first() == "fmtp") fmtp = md.attributes()[i].second();
+        }
+        CHECK(rtpmap.contains("H264/90000"));
+        CHECK(fmtp.contains("packetization-mode=1"));
+}
+
+TEST_CASE("ImageDesc_toSdp_HEVC_emitsRtpmapAndSpropMaxDonDiff") {
+        ImageDesc img(Size2Du32(3840, 2160), PixelFormat(PixelFormat::HEVC));
+        SdpMediaDescription md = img.toSdp(96);
+        String rtpmap, fmtp;
+        for (size_t i = 0; i < md.attributes().size(); i++) {
+                if (md.attributes()[i].first() == "rtpmap") rtpmap = md.attributes()[i].second();
+                if (md.attributes()[i].first() == "fmtp") fmtp = md.attributes()[i].second();
+        }
+        CHECK(rtpmap.contains("H265/90000"));
+        CHECK(fmtp.contains("sprop-max-don-diff=0"));
+}
+
+TEST_CASE("ImageDesc_fromSdp_H264_recognised") {
+        SdpMediaDescription md;
+        md.setMediaType("video");
+        md.setProtocol("RTP/AVP");
+        md.addPayloadType(96);
+        md.setAttribute("rtpmap", String("96 H264/90000"));
+        md.setAttribute("fmtp", String("96 packetization-mode=1"));
+        ImageDesc img = ImageDesc::fromSdp(md);
+        CHECK(img.pixelFormat().id() == PixelFormat::H264);
+        // Geometry deferred to bitstream — width/height should be 0.
+        CHECK(img.width() == 0);
+        CHECK(img.height() == 0);
+}
+
+TEST_CASE("ImageDesc_fromSdp_HEVC_recognised") {
+        SdpMediaDescription md;
+        md.setMediaType("video");
+        md.setProtocol("RTP/AVP");
+        md.addPayloadType(96);
+        md.setAttribute("rtpmap", String("96 H265/90000"));
+        md.setAttribute("fmtp", String("96 sprop-max-don-diff=0"));
+        ImageDesc img = ImageDesc::fromSdp(md);
+        CHECK(img.pixelFormat().id() == PixelFormat::HEVC);
+        CHECK(img.width() == 0);
+        CHECK(img.height() == 0);
+}

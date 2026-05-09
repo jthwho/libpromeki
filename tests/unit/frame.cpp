@@ -600,3 +600,52 @@ TEST_CASE("Frame::videoFormat: skips audio payloads to find the nth video") {
 
         CHECK_FALSE(f.videoFormat(2).isValid());
 }
+
+// ============================================================================
+// Frame::captureTime — first-class wallclock anchor used by RTP TX
+// ============================================================================
+
+TEST_CASE("Frame::captureTime: default-constructed frame has invalid captureTime") {
+        Frame f;
+        CHECK_FALSE(f.captureTime().isValid());
+}
+
+TEST_CASE("Frame::captureTime: setter / getter round-trip") {
+        Frame          f;
+        TimeStamp       ts = TimeStamp::now();
+        MediaTimeStamp  mts(ts, ClockDomain::SystemMonotonic, Duration::fromNanoseconds(1000));
+        f.setCaptureTime(mts);
+        CHECK(f.captureTime().isValid());
+        CHECK(f.captureTime().domain() == ClockDomain::SystemMonotonic);
+        CHECK(f.captureTime() == mts);
+}
+
+TEST_CASE("Frame::captureTime: copies share the timestamp without restamping") {
+        Frame                src;
+        TimeStamp            ts = TimeStamp::now();
+        const MediaTimeStamp mts(ts, ClockDomain::SystemMonotonic);
+        src.setCaptureTime(mts);
+
+        Frame copy = src;
+        // CoW share — copy reflects src's timestamp, no detach yet.
+        CHECK(copy.captureTime() == src.captureTime());
+        CHECK(copy.captureTime() == mts);
+}
+
+TEST_CASE("Frame::captureTime: mutation triggers CoW detach") {
+        Frame                a;
+        TimeStamp            tsA = TimeStamp::now();
+        const MediaTimeStamp mtsA(tsA, ClockDomain::SystemMonotonic);
+        a.setCaptureTime(mtsA);
+
+        Frame b = a;
+        // Both share a's timestamp.
+        CHECK(b.captureTime() == mtsA);
+
+        TimeStamp            tsB = tsA + Duration::fromMilliseconds(100);
+        const MediaTimeStamp mtsB(tsB, ClockDomain::SystemMonotonic);
+        b.setCaptureTime(mtsB);
+        // After mutation, a is unchanged; b carries the new timestamp.
+        CHECK(a.captureTime() == mtsA);
+        CHECK(b.captureTime() == mtsB);
+}

@@ -80,6 +80,24 @@ class SharedThreadMediaIO : public CommandMediaIO {
                 void submit(MediaIOCommand::Ptr cmd) override;
 
                 /**
+                 * @brief Recomputes and applies the strand's
+                 *        @ref ThreadPool::WorkTag from the current
+                 *        backend identity.
+                 *
+                 * Builds @c "<ClassName>" or
+                 * @c "<ClassName>[<MediaConfig::Name>]" depending on
+                 * whether the instance has been named via
+                 * @ref MediaConfig::Name, and pushes the result to
+                 * @ref Strand::setWorkTag.  Invoked automatically on
+                 * each @ref submit so per-instance pool-time
+                 * accounting tracks config rename without callers
+                 * having to plumb anything; may also be called
+                 * explicitly from a subclass when it changes its own
+                 * presentation in some other way.
+                 */
+                void refreshStrandWorkTag();
+
+                /**
                  * @brief Returns a reference to the per-instance strand.
                  *
                  * Available to subclasses that need to schedule
@@ -119,6 +137,11 @@ class SharedThreadMediaIO : public CommandMediaIO {
 
         private:
                 Strand _strand{pool()};
+                /// Last @c "<Class>[<Name>]" string installed on the
+                /// strand.  Stored to avoid re-registering the same
+                /// tag every command — a hot-path StringRegistry
+                /// lookup is cheap, but a string compare is cheaper.
+                String _lastWorkTagName;
 };
 
 PROMEKI_NAMESPACE_END

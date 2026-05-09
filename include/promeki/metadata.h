@@ -833,6 +833,37 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                            .setDefault(int32_t(0))
                                            .setDescription("Average motion vector Y (codec-defined units)."));
 
+                /// @brief Out-of-band codec parameter sets describing this
+                /// stream, as a raw Annex-B byte sequence.
+                ///
+                /// Holds the start-code-prefixed NAL units a decoder needs
+                /// to initialize before any slice data:
+                /// - H.264: SPS + PPS (RFC 6184 sprop-parameter-sets)
+                /// - HEVC : VPS + SPS + PPS (RFC 7798 sprop-vps/sps/pps)
+                /// - AV1  : OBU_SEQUENCE_HEADER
+                ///
+                /// A @ref VideoEncoder MediaIO populates this on every
+                /// emitted @ref CompressedVideoPayload (the contents are
+                /// stable across the GOP, copying them per-frame is
+                /// cheap), giving downstream MediaIO stages a config-free
+                /// channel for parameter sets.  The transport sinks use it
+                /// to seed out-of-band signaling — @ref RtpMediaIO embeds
+                /// the values in the SDP @c sprop-* fmtp parameters before
+                /// the first RTP packet flies, so receivers reading the
+                /// SDP file can probe successfully without waiting for the
+                /// first IDR to arrive.
+                ///
+                /// The byte stream is identical in shape to what
+                /// @ref H264Bitstream / @ref HevcBitstream Annex-B walkers
+                /// expect, so consumers can run a single forEachAnnexBNal
+                /// over it and classify each NAL by type.
+                PROMEKI_DECLARE_ID(CodecParameterSets,
+                                   VariantSpec()
+                                           .setType(Variant::TypeString)
+                                           .setDefault(String())
+                                           .setDescription("Out-of-band codec parameter sets "
+                                                           "(Annex-B SPS/PPS/VPS or AV1 sequence header)."));
+
                 // ============================================================
                 // Frontend layout hints
                 //

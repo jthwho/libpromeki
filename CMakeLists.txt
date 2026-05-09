@@ -1571,6 +1571,7 @@ set(PROMEKI_HEADERS
     include/promeki/buildinfo.h
     ${CMAKE_CURRENT_BINARY_DIR}/include/promeki/buildident.h
     include/promeki/bytearray.h
+    include/promeki/cadence.h
     include/promeki/char.h
     include/promeki/ciepoint.h
     include/promeki/ciewavelengthtable.h
@@ -1584,6 +1585,7 @@ set(PROMEKI_HEADERS
     include/promeki/color.h
     include/promeki/colormodel.h
     include/promeki/configoption.h
+    include/promeki/cpumonitor.h
     include/promeki/cuda.h
     include/promeki/datetime.h
     include/promeki/dir.h
@@ -1704,6 +1706,7 @@ set(PROMEKI_SOURCES
     src/core/bufferiodevice.cpp
     src/core/bufferpool.cpp
     src/core/hostbufferimpl.cpp
+    src/core/cadence.cpp
     src/core/char.cpp
     src/core/ciepoint.cpp
     src/core/clock.cpp
@@ -1712,6 +1715,7 @@ set(PROMEKI_SOURCES
     src/core/color.cpp
     src/core/colormodel.cpp
     src/core/contentlightlevel.cpp
+    src/core/cpumonitor.cpp
     src/core/masteringdisplay.cpp
     src/core/audiochannelmap.cpp
     src/core/audiocodec.cpp
@@ -1833,10 +1837,16 @@ if(PROMEKI_ENABLE_NETWORK)
         include/promeki/networkaddress.h
         include/promeki/packettransport.h
         include/promeki/prioritysocket.h
+        include/promeki/ntptime.h
         include/promeki/rawsocket.h
+        include/promeki/rtcppacket.h
         include/promeki/rtppacket.h
+        include/promeki/rtppacketbatch.h
+        include/promeki/rtppacketizerthread.h
         include/promeki/rtppayload.h
         include/promeki/rtpsession.h
+        include/promeki/rtpstreamclock.h
+        include/promeki/rtptxthread.h
         include/promeki/sdpsession.h
         include/promeki/socketaddress.h
         include/promeki/sslcontext.h
@@ -1862,8 +1872,12 @@ if(PROMEKI_ENABLE_NETWORK)
         src/network/packettransport.cpp
         src/network/prioritysocket.cpp
         src/network/rawsocket.cpp
+        src/network/rtcppacket.cpp
+        src/network/rtppacketizerthread.cpp
         src/network/rtppayload.cpp
         src/network/rtpsession.cpp
+        src/network/rtpstreamclock.cpp
+        src/network/rtptxthread.cpp
         src/network/sdpsession.cpp
         src/network/socketaddress.cpp
         src/network/tcpserver.cpp
@@ -1991,6 +2005,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/compressedvideopayload.h
         include/promeki/audiopayload.h
         include/promeki/pcmaudiopayload.h
+        include/promeki/pcmsilencefiller.h
         include/promeki/compressedaudiopayload.h
         include/promeki/nvencvideoencoder.h
         include/promeki/nvdecvideodecoder.h
@@ -2065,6 +2080,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediapayload.cpp
         src/proav/uncompressedvideopayload.cpp
         src/proav/pcmaudiopayload.cpp
+        src/proav/pcmsilencefiller.cpp
         src/proav/cscmediaio.cpp
         src/proav/srcmediaio.cpp
         src/proav/burnmediaio.cpp
@@ -2790,10 +2806,12 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/cmdlineparser.cpp
         tests/unit/color.cpp
         tests/unit/colormodel.cpp
+        tests/unit/cadence.cpp
         tests/unit/configoption.cpp
         tests/unit/crashhandler.cpp
         tests/unit/clock.cpp
         tests/unit/clockdomain.cpp
+        tests/unit/cpumonitor.cpp
         tests/unit/crc.cpp
         tests/unit/cuda.cpp
         tests/unit/datastream.cpp
@@ -2923,9 +2941,12 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/network/networkaddress.cpp
             tests/unit/network/prioritysocket.cpp
             tests/unit/network/rawsocket.cpp
+            tests/unit/network/rtcppacket.cpp
             tests/unit/network/rtppacket.cpp
+            tests/unit/network/rtppacketbatch.cpp
             tests/unit/network/rtppayload.cpp
             tests/unit/network/rtpsession.cpp
+            tests/unit/network/rtpstreamclock.cpp
             tests/unit/network/sdpsession.cpp
             tests/unit/network/socketaddress.cpp
             tests/unit/network/tcpserver.cpp
@@ -2980,6 +3001,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/audioencoder.cpp
             tests/unit/audiofilefactory.cpp
             tests/unit/audiotestpattern.cpp
+            tests/unit/pcmsilencefiller.cpp
             $<$<BOOL:${PROMEKI_ENABLE_OPUS}>:tests/unit/opusaudiocodec.cpp>
             tests/unit/encodeddesc.cpp
             tests/unit/fastfont.cpp

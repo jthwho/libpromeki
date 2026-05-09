@@ -10,6 +10,8 @@
 #include <thread>
 #include <vector>
 #include <doctest/doctest.h>
+#include <promeki/rtcppacket.h>
+#include <promeki/rtppacketbatch.h>
 #include <promeki/rtpsession.h>
 #include <promeki/udpsocket.h>
 #include <promeki/loopbacktransport.h>
@@ -230,7 +232,16 @@ TEST_CASE("RtpSession") {
                 auto packets = payload.pack(data, dataSize);
                 REQUIRE(packets.size() > 0);
 
-                Error err = session.sendPackets(packets, 5000, true);
+                // Caller (TX thread role) stamps RTP-TS + marker
+                // before handing the batch to the session.  The
+                // session fills version / seq / SSRC / PT.
+                RtpPacketBatch batch;
+                batch.packets = std::move(packets);
+                for (size_t i = 0; i < batch.packets.size(); i++) {
+                        batch.packets[i].setTimestamp(5000);
+                        batch.packets[i].setMarker(i + 1 == batch.packets.size());
+                }
+                Error err = session.sendPackets(batch);
                 CHECK(err.isOk());
 
                 // Receive and verify
@@ -273,16 +284,23 @@ TEST_CASE("RtpSession") {
                 auto packets = payload.pack(data.data(), dataSize);
                 REQUIRE(packets.size() > 1);
 
-                Error err = session.sendPackets(packets, 10000, true);
+                RtpPacketBatch batch;
+                batch.packets = std::move(packets);
+                const size_t nPackets = batch.packets.size();
+                for (size_t i = 0; i < nPackets; i++) {
+                        batch.packets[i].setTimestamp(10000);
+                        batch.packets[i].setMarker(i + 1 == nPackets);
+                }
+                Error err = session.sendPackets(batch);
                 CHECK(err.isOk());
 
                 // Receive all packets and check marker bits
-                for (size_t i = 0; i < packets.size(); i++) {
+                for (size_t i = 0; i < nPackets; i++) {
                         uint8_t buf[2048];
                         int64_t n = receiver.readDatagram(buf, sizeof(buf));
                         REQUIRE(n > 12);
                         bool marker = (buf[1] & 0x80) != 0;
-                        if (i == packets.size() - 1) {
+                        if (i == nPackets - 1) {
                                 CHECK(marker); // Last packet has marker
                         } else {
                                 CHECK_FALSE(marker); // Others don't
@@ -294,8 +312,9 @@ TEST_CASE("RtpSession") {
         SUBCASE("sendPackets not started fails") {
                 RtpSession session;
                 session.setRemote(SocketAddress::localhost(5004));
-                auto  pkts = RtpPacket::createList(3, 100);
-                Error err = session.sendPackets(pkts, 0);
+                RtpPacketBatch batch;
+                batch.packets = RtpPacket::createList(3, 100);
+                Error err = session.sendPackets(batch);
                 CHECK(err == Error::NotOpen);
         }
 
@@ -312,8 +331,13 @@ TEST_CASE("RtpSession") {
                 Error err = session.start(&txPort);
                 REQUIRE(err.isOk());
 
-                auto pkts = RtpPacket::createList(4, 200);
-                err = session.sendPackets(pkts, 0x00010203, true);
+                RtpPacketBatch loopBatch;
+                loopBatch.packets = RtpPacket::createList(4, 200);
+                for (size_t i = 0; i < loopBatch.packets.size(); i++) {
+                        loopBatch.packets[i].setTimestamp(0x00010203);
+                        loopBatch.packets[i].setMarker(i + 1 == loopBatch.packets.size());
+                }
+                err = session.sendPackets(loopBatch);
                 CHECK(err.isOk());
                 CHECK(rxPort.pendingPackets() == 4);
 
@@ -338,71 +362,13 @@ TEST_CASE("RtpSession") {
                 session.stop();
         }
 
-        SUBCASE("sendPacketsPaced spreads multi-packet frame across interval") {
-                // Verify that sendPacketsPaced holds the call open
-                // for the requested spread interval when there are
-                // many packets, so the writer can use it as a
-                // frame-rate enforcer that bounds the per-frame
-                // dispatch duration to one frame interval.
-                LoopbackTransport txPort, rxPort;
-                LoopbackTransport::pair(&txPort, &rxPort);
-                txPort.open();
-                rxPort.open();
-
-                RtpSession session;
-                session.setRemote(SocketAddress(Ipv4Address::loopback(), 5004));
-                REQUIRE(session.start(&txPort).isOk());
-
-                auto           pkts = RtpPacket::createList(8, 200);
-                const Duration interval = Duration::fromMilliseconds(50);
-
-                TimeStamp start = TimeStamp::now();
-                Error     err = session.sendPacketsPaced(pkts, 0, interval, true);
-                int64_t   elapsedMs = start.elapsedMilliseconds();
-
-                CHECK(err.isOk());
-                CHECK(rxPort.pendingPackets() == 8);
-                // Allow a small jitter window — the call should
-                // last at least the requested interval and not
-                // wildly more (the loopback transport adds
-                // microseconds at most).
-                CHECK(elapsedMs >= 45);
-                CHECK(elapsedMs <= 100);
-
-                session.stop();
-        }
-
-        SUBCASE("sendPacketsPaced paces single-packet frames too") {
-                // Single-packet frames previously bypassed pacing
-                // entirely (the function returned immediately
-                // because there was nothing to spread "between"
-                // packets), which broke the writer's frame-rate
-                // pacing for very small compressed frames.  The
-                // call should now last spreadInterval regardless
-                // of packet count.
-                LoopbackTransport txPort, rxPort;
-                LoopbackTransport::pair(&txPort, &rxPort);
-                txPort.open();
-                rxPort.open();
-
-                RtpSession session;
-                session.setRemote(SocketAddress(Ipv4Address::loopback(), 5004));
-                REQUIRE(session.start(&txPort).isOk());
-
-                auto           pkts = RtpPacket::createList(1, 200);
-                const Duration interval = Duration::fromMilliseconds(40);
-
-                TimeStamp start = TimeStamp::now();
-                Error     err = session.sendPacketsPaced(pkts, 0, interval, true);
-                int64_t   elapsedMs = start.elapsedMilliseconds();
-
-                CHECK(err.isOk());
-                CHECK(rxPort.pendingPackets() == 1);
-                CHECK(elapsedMs >= 35);
-                CHECK(elapsedMs <= 80);
-
-                session.stop();
-        }
+        // sendPacketsPaced was deleted in Phase 3 — userspace pacing
+        // now lives in the per-stream TX thread + Cadence helper.
+        // The Cadence-based pacing has its own dedicated coverage
+        // in tests/unit/cadence.cpp; the equivalent of the
+        // previous "spread N packets across one interval" check
+        // is exercised by Cadence::next monotonicity + the 10k-tick
+        // drift-free assertion.
 
         SUBCASE("setPacingRate via RtpSession") {
                 RtpSession session;
@@ -503,7 +469,14 @@ TEST_CASE("RtpSession") {
                 std::vector<uint8_t> audio(64, 0);
                 auto                 packets = payload.pack(audio.data(), audio.size());
                 REQUIRE(!packets.isEmpty());
-                err = txSession.sendPackets(packets, 12345, false);
+                RtpPacketBatch rxBatch;
+                rxBatch.packets = std::move(packets);
+                for (size_t i = 0; i < rxBatch.packets.size(); i++) {
+                        rxBatch.packets[i].setTimestamp(12345);
+                        rxBatch.packets[i].setMarker(false);
+                }
+                rxBatch.markerOnLast = false;
+                err = txSession.sendPackets(rxBatch);
                 CHECK(err.isOk());
 
                 // Wait up to 500 ms for delivery.
@@ -553,6 +526,319 @@ TEST_CASE("RtpSession") {
                 REQUIRE(session.startReceiving([](const RtpPacket &, const SocketAddress &) {}).isOk());
                 Error err = session.startReceiving([](const RtpPacket &, const SocketAddress &) {});
                 CHECK(err == Error::Busy);
+                session.stopReceiving();
+                session.stop();
+        }
+
+        // ====================================================================
+        // SR anchor: setRtpAnchor / noteRtpEmission / currentSrNtp arithmetic
+        // ====================================================================
+        SUBCASE("setRtpAnchor stores the anchor pair") {
+                RtpSession session;
+                NtpTime    anchor(0xAA00BB00, 0x00112233);
+                session.setRtpAnchor(anchor, 1000);
+                CHECK(session.anchorNtp() == anchor);
+                CHECK(session.anchorRtpTs() == 1000u);
+        }
+
+        SUBCASE("currentSrNtp returns anchor when no emission yet") {
+                RtpSession session;
+                session.setClockRate(48000);
+                NtpTime anchor(0x10, 0x20);
+                session.setRtpAnchor(anchor, 100);
+                // Last emission rtpTs is 0 — but with no emission
+                // recorded yet, currentSrNtp still runs the
+                // arithmetic on whatever rtpTs is in place.  The
+                // value here is anchor + (0 - 100)/clockRate, taken
+                // modulo uint32_t — i.e. a very large negative
+                // delta.  The interesting test is that the function
+                // is pure and deterministic, not the precise value.
+                NtpTime ntp = session.currentSrNtp();
+                // It still returns a valid value (no nullptr / crash).
+                (void)ntp;
+        }
+
+        SUBCASE("currentSrNtp adds (rtpTs - anchorRtpTs) / clockRate to anchor") {
+                RtpSession session;
+                session.setClockRate(48000);
+                // Anchor pair: NTP @ 100s.0, rtpTs = 0.
+                NtpTime anchor(100, 0);
+                session.setRtpAnchor(anchor, 0);
+                // After 48000 ticks the SR's NTP must read exactly
+                // anchor + 1 second, i.e. seconds=101, fraction=0.
+                session.noteRtpEmission(48000);
+                NtpTime ntp = session.currentSrNtp();
+                CHECK(ntp.seconds() == 101u);
+                CHECK(ntp.fraction() == 0u);
+                // After 24000 ticks the SR's NTP must read anchor +
+                // 0.5 second — fraction = 2^31 (one half of 2^32).
+                session.noteRtpEmission(24000);
+                ntp = session.currentSrNtp();
+                CHECK(ntp.seconds() == 100u);
+                CHECK(ntp.fraction() == 0x80000000u);
+        }
+
+        SUBCASE("currentSrNtp handles uint32_t wrap on rtpTs") {
+                RtpSession session;
+                session.setClockRate(48000);
+                // Anchor near the high end of the rtpTs space.
+                NtpTime anchor(200, 0);
+                session.setRtpAnchor(anchor, 0xFFFFFF00u);
+                // Emit a packet 0x100 ticks past the anchor — wraps
+                // to rtpTs = 0.  Modular subtraction must still
+                // yield a delta of 0x100, i.e. 0x100 / 48000 ≈
+                // 5.333...µs.  fraction = 0x100 * 2^32 / 48000.
+                session.noteRtpEmission(0x00000000u);
+                NtpTime ntp = session.currentSrNtp();
+                CHECK(ntp.seconds() == 200u);
+                const uint64_t expectedFrac =
+                        (static_cast<uint64_t>(0x100) << 32) / static_cast<uint64_t>(48000);
+                CHECK(static_cast<uint64_t>(ntp.fraction()) == expectedFrac);
+        }
+
+        SUBCASE("currentSrNtp is monotone non-decreasing across consecutive emissions") {
+                RtpSession session;
+                session.setClockRate(90000);
+                NtpTime anchor(500, 0x12345678);
+                session.setRtpAnchor(anchor, 0);
+                NtpTime prev = session.currentSrNtp();
+                for (uint32_t i = 1; i <= 1000; ++i) {
+                        session.noteRtpEmission(i * 90);  // 1ms per tick
+                        NtpTime cur = session.currentSrNtp();
+                        CHECK(cur.toUint64() >= prev.toUint64());
+                        prev = cur;
+                }
+        }
+
+        SUBCASE("hasEmissionRecord starts false and latches after noteRtpEmission") {
+                RtpSession session;
+                CHECK_FALSE(session.hasEmissionRecord());
+                session.noteRtpEmission(0);  // even rtpTs=0 counts as wire activity
+                CHECK(session.hasEmissionRecord());
+        }
+
+        SUBCASE("emitRtcpSr carries anchor-derived NTP / RTP-TS pair on the wire") {
+                // Wire-level integration test: drive the full
+                // setRtpAnchor → noteRtpEmission → emitRtcpSr path
+                // through a LoopbackTransport, parse the resulting
+                // RTCP datagram, and pin the (NTP, RTP_TS) bytes
+                // against the anchor-derivation formula.
+                LoopbackTransport txPort, rxPort;
+                LoopbackTransport::pair(&txPort, &rxPort);
+                txPort.open();
+                rxPort.open();
+
+                RtpSession session;
+                session.setSsrc(0x12345678u);
+                session.setClockRate(48000);
+                session.setCname(String("smoke@host"));
+                session.setRemote(SocketAddress(Ipv4Address::loopback(), 6000));
+                REQUIRE(session.start(&txPort).isOk());
+
+                // Pin the anchor at NTP 100s.0 / rtpTs=0 and emit a
+                // packet 1.5 seconds further on (rtpTs = 72000 ticks
+                // at 48 kHz).  The SR's NTP must equal 101.5s.
+                session.setRtpAnchor(NtpTime(100u, 0u), 0u);
+                session.noteRtpEmission(72000u);
+                CHECK(session.hasEmissionRecord());
+                Error err = session.emitRtcpSr(/*pkts=*/3u, /*octs=*/120u);
+                CHECK(err.isOk());
+
+                // The compound packet (SR + SDES) should land on the
+                // loopback peer.  SR is the first packet — first 28
+                // bytes of the compound datagram.
+                CHECK(rxPort.pendingPackets() == 1);
+                uint8_t buf[1024];
+                ssize_t n = rxPort.receivePacket(buf, sizeof(buf));
+                REQUIRE(n >= 28);
+                CHECK(buf[0] == 0x80u);
+                CHECK(buf[1] == 200u);  // PT=SR
+                // SSRC
+                const uint32_t ssrc = (static_cast<uint32_t>(buf[4]) << 24) |
+                                      (static_cast<uint32_t>(buf[5]) << 16) |
+                                      (static_cast<uint32_t>(buf[6]) << 8) | static_cast<uint32_t>(buf[7]);
+                CHECK(ssrc == 0x12345678u);
+                // NTP seconds = 101 (anchor.seconds + 1)
+                const uint32_t ntpSec = (static_cast<uint32_t>(buf[8]) << 24) |
+                                        (static_cast<uint32_t>(buf[9]) << 16) |
+                                        (static_cast<uint32_t>(buf[10]) << 8) | static_cast<uint32_t>(buf[11]);
+                CHECK(ntpSec == 101u);
+                // NTP fraction = 0.5 second = 2^31
+                const uint32_t ntpFrac = (static_cast<uint32_t>(buf[12]) << 24) |
+                                         (static_cast<uint32_t>(buf[13]) << 16) |
+                                         (static_cast<uint32_t>(buf[14]) << 8) | static_cast<uint32_t>(buf[15]);
+                CHECK(ntpFrac == 0x80000000u);
+                // Wire RTP-TS == last emission rtpTs
+                const uint32_t wireRtpTs = (static_cast<uint32_t>(buf[16]) << 24) |
+                                           (static_cast<uint32_t>(buf[17]) << 16) |
+                                           (static_cast<uint32_t>(buf[18]) << 8) | static_cast<uint32_t>(buf[19]);
+                CHECK(wireRtpTs == 72000u);
+                // Sender packet / octet counts
+                const uint32_t pkts = (static_cast<uint32_t>(buf[20]) << 24) |
+                                      (static_cast<uint32_t>(buf[21]) << 16) |
+                                      (static_cast<uint32_t>(buf[22]) << 8) | static_cast<uint32_t>(buf[23]);
+                CHECK(pkts == 3u);
+                const uint32_t octs = (static_cast<uint32_t>(buf[24]) << 24) |
+                                      (static_cast<uint32_t>(buf[25]) << 16) |
+                                      (static_cast<uint32_t>(buf[26]) << 8) | static_cast<uint32_t>(buf[27]);
+                CHECK(octs == 120u);
+
+                session.stop();
+        }
+
+        // ====================================================================
+        // Reader-side SR consumption: receivedSr / RTCP demux
+        // ====================================================================
+        SUBCASE("receivedSr is invalid before any SR has arrived") {
+                RtpSession session;
+                RtpSession::ReceivedSr sr = session.receivedSr();
+                CHECK(sr.valid == false);
+                CHECK(sr.rtpTs == 0u);
+        }
+
+        SUBCASE("ReceiveThread parses a Sender Report from a compound RTCP datagram") {
+                // Set up two paired loopback transports.  The "sender"
+                // side just emits a compound RTCP datagram (SR + SDES)
+                // through its transport; the "receiver" side runs an
+                // RtpSession bound to the paired transport with a
+                // receive thread up.  The receive thread must demux
+                // the RTCP packet via byte[1] in [200..223], parse
+                // the SR, and update receivedSr().
+                LoopbackTransport txPort, rxPort;
+                LoopbackTransport::pair(&txPort, &rxPort);
+                txPort.open();
+                rxPort.open();
+
+                RtpSession session;
+                session.setClockRate(48000);
+                session.setRemote(SocketAddress(Ipv4Address::loopback(), 6000));
+                REQUIRE(session.start(&rxPort).isOk());
+
+                std::atomic<int> rtpCalls{0};
+                REQUIRE(session.startReceiving([&](const RtpPacket &, const SocketAddress &) {
+                        rtpCalls.fetch_add(1);
+                }).isOk());
+
+                // Build a compound carrying one SR + one SDES.
+                const NtpTime srNtp(3'913'056'000u, 0x80000000u);
+                Buffer        sr = RtcpPacket::buildSenderReport(0xCAFEBABEu, srNtp,
+                                                                 /*rtpTs=*/72000u,
+                                                                 /*pkts=*/3u,
+                                                                 /*octs=*/120u);
+                Buffer        sdes = RtcpPacket::buildSourceDescriptionCname(0xCAFEBABEu, String("test@host"));
+                List<Buffer>  parts;
+                parts.pushToBack(sr);
+                parts.pushToBack(sdes);
+                Buffer compound = RtcpPacket::compound(parts);
+
+                // Send the compound through the paired transport.
+                txPort.sendPacket(compound.data(), compound.size(),
+                                  SocketAddress(Ipv4Address::loopback(), 6000));
+
+                // Wait briefly for the receive thread to drain the
+                // datagram and update its state.  The loopback
+                // transport delivers synchronously on the queue but
+                // the consumer thread still has to wake.
+                const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+                while (std::chrono::steady_clock::now() < deadline) {
+                        if (session.receivedSr().valid) break;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                }
+
+                RtpSession::ReceivedSr got = session.receivedSr();
+                CHECK(got.valid);
+                CHECK(got.ntp == srNtp);
+                CHECK(got.rtpTs == 72000u);
+                // arrivedAt was sampled when the receive thread
+                // processed the packet — it must be a non-default
+                // timestamp (i.e. past the steady-clock epoch).
+                CHECK(got.arrivedAt.nanoseconds() != 0);
+                // The RTCP packet must NOT have been delivered to the
+                // RTP callback — RTCP demux happens before the RTP
+                // path.
+                CHECK(rtpCalls.load() == 0);
+
+                session.stopReceiving();
+                session.stop();
+        }
+
+        SUBCASE("ReceiveThread keeps the most-recent SR when multiple arrive") {
+                LoopbackTransport txPort, rxPort;
+                LoopbackTransport::pair(&txPort, &rxPort);
+                txPort.open();
+                rxPort.open();
+
+                RtpSession session;
+                session.setClockRate(90000);
+                session.setRemote(SocketAddress(Ipv4Address::loopback(), 6000));
+                REQUIRE(session.start(&rxPort).isOk());
+                REQUIRE(session.startReceiving([](const RtpPacket &, const SocketAddress &) {}).isOk());
+
+                auto sendSr = [&](const NtpTime &n, uint32_t rtpTs) {
+                        Buffer       sr = RtcpPacket::buildSenderReport(0x1u, n, rtpTs, 0u, 0u);
+                        List<Buffer> parts;
+                        parts.pushToBack(sr);
+                        Buffer compound = RtcpPacket::compound(parts);
+                        txPort.sendPacket(compound.data(), compound.size(),
+                                          SocketAddress(Ipv4Address::loopback(), 6000));
+                };
+                auto waitForSrRtp = [&](uint32_t target) {
+                        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+                        while (std::chrono::steady_clock::now() < deadline) {
+                                auto s = session.receivedSr();
+                                if (s.valid && s.rtpTs == target) return true;
+                                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                        }
+                        return false;
+                };
+
+                sendSr(NtpTime(100u, 0u), 1000u);
+                CHECK(waitForSrRtp(1000u));
+                sendSr(NtpTime(200u, 0u), 2000u);
+                CHECK(waitForSrRtp(2000u));
+                sendSr(NtpTime(300u, 0u), 3000u);
+                CHECK(waitForSrRtp(3000u));
+
+                RtpSession::ReceivedSr got = session.receivedSr();
+                CHECK(got.valid);
+                CHECK(got.ntp == NtpTime(300u, 0u));
+                CHECK(got.rtpTs == 3000u);
+
+                session.stopReceiving();
+                session.stop();
+        }
+
+        SUBCASE("ReceiveThread silently drops unknown / malformed RTCP") {
+                LoopbackTransport txPort, rxPort;
+                LoopbackTransport::pair(&txPort, &rxPort);
+                txPort.open();
+                rxPort.open();
+
+                RtpSession session;
+                session.setRemote(SocketAddress(Ipv4Address::loopback(), 6000));
+                REQUIRE(session.start(&rxPort).isOk());
+                REQUIRE(session.startReceiving([](const RtpPacket &, const SocketAddress &) {}).isOk());
+
+                // SDES-only RTCP compound — legal but carries no SR
+                // for the receiver to pick up.
+                Buffer       sdes = RtcpPacket::buildSourceDescriptionCname(0x1u, String("y"));
+                List<Buffer> parts;
+                parts.pushToBack(sdes);
+                Buffer compound = RtcpPacket::compound(parts);
+                txPort.sendPacket(compound.data(), compound.size(),
+                                  SocketAddress(Ipv4Address::loopback(), 6000));
+
+                // Forward-compatibility: an unknown RTCP packet type
+                // (PT=210, reserved range).  Must drop without
+                // disrupting subsequent traffic.
+                uint8_t unknown[8] = {0x80u, 210u, 0x00u, 0x01u, 0x12u, 0x34u, 0x56u, 0x78u};
+                txPort.sendPacket(unknown, sizeof(unknown),
+                                  SocketAddress(Ipv4Address::loopback(), 6000));
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+                CHECK(session.receivedSr().valid == false);
+
                 session.stopReceiving();
                 session.stop();
         }
