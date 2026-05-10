@@ -2094,6 +2094,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/mediadesc.h
         include/promeki/mediaiodescription.h
         include/promeki/videotestpattern.h
+        include/promeki/motionband.h
     )
     list(APPEND PROMEKI_SOURCES
         src/proav/audioblock.cpp
@@ -2186,6 +2187,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/quicktime_writer.cpp
         src/proav/mediadesc.cpp
         src/proav/videotestpattern.cpp
+        src/proav/motionband.cpp
     )
 
     # Feature-gated proav sources
@@ -3036,6 +3038,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/network/rtpaudiopacketizerthread.cpp
             tests/unit/network/rtpaudiotxthread.cpp
             tests/unit/network/rtpdatadepacketizerthread.cpp
+            tests/unit/network/rtpmediaio.cpp
             tests/unit/network/rtppacket.cpp
             tests/unit/network/rtppacketbatch.cpp
             tests/unit/network/rtppayload.cpp
@@ -3168,6 +3171,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/videocodec_registry.cpp
             tests/unit/quicktime.cpp
             tests/unit/videotestpattern.cpp
+            tests/unit/motionband.cpp
         )
         if(PROMEKI_ENABLE_CSC)
             list(APPEND UNITTEST_SOURCES

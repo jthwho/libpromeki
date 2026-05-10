@@ -293,8 +293,10 @@ Error FrameSyncMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *prefer
         return Error::Ok;
 }
 
-Error FrameSyncMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+Error FrameSyncMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable,
+                                      MediaConfig *configDelta) const {
         if (achievable == nullptr) return Error::Invalid;
+        (void)configDelta;
         *achievable = MediaIO::applyOutputOverrides(requested, config());
         return Error::Ok;
 }

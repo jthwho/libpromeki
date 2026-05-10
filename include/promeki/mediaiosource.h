@@ -131,9 +131,12 @@ class MediaIOSource : public MediaIOPort {
                  * Forwards to the backend task's @c proposeOutput
                  * virtual.  The backend examines @p requested and
                  * returns @p achievable — what it could actually
-                 * produce given that request.
+                 * produce given that request.  When @p configDelta is
+                 * non-null the backend may populate it with the
+                 * @ref MediaConfig keys needed to drive @p achievable.
                  */
-                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const;
+                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable,
+                                    MediaConfig *configDelta = nullptr) const;
 
                 // ---- Read API ----
 

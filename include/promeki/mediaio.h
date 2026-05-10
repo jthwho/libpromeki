@@ -671,11 +671,26 @@ class MediaIO : public ObjectBase {
                  * @p achievable cleared; the legacy shim and Phase-12+
                  * native backends override.
                  *
-                 * @param requested   The MediaDesc the planner would prefer.
-                 * @param achievable  Receives the desc the backend can produce.
+                 * When @p configDelta is non-null and the backend
+                 * accepts the request, the override should populate
+                 * @p configDelta with the @ref MediaConfig keys that —
+                 * when merged into the source stage's config — would
+                 * make the backend produce @p requested natively.  The
+                 * pipeline planner uses this to renegotiate a source
+                 * stage's output shape so it matches a downstream
+                 * sink's preferred input, avoiding a wasted CSC /
+                 * resampler bridge.  Backends that have no such config
+                 * lever (transforms, sinks, fixed-format readers) may
+                 * leave @p configDelta untouched.
+                 *
+                 * @param requested    The MediaDesc the planner would prefer.
+                 * @param achievable   Receives the desc the backend can produce.
+                 * @param configDelta  Optional out — receives the config
+                 *                     keys that drive @p achievable.
                  * @return @c Error::Ok or @c Error::NotSupported.
                  */
-                virtual Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const;
+                virtual Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable,
+                                            MediaConfig *configDelta = nullptr) const;
 
                 /**
                  * @brief Returns true when the underlying executor has

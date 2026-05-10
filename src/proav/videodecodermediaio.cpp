@@ -385,8 +385,10 @@ Error VideoDecoderMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *pre
         return Error::Ok;
 }
 
-Error VideoDecoderMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+Error VideoDecoderMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable,
+                                         MediaConfig *configDelta) const {
         if (achievable == nullptr) return Error::Invalid;
+        (void)configDelta;
         const MediaConfig &cfg = config();
 
         // Start from the input shape and apply any explicit

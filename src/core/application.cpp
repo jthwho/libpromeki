@@ -22,6 +22,13 @@
 #include <promeki/debugserver.h>
 #endif
 
+#ifdef PROMEKI_PLATFORM_WINDOWS
+#include <process.h>
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+
 PROMEKI_NAMESPACE_BEGIN
 
 const char *Application::DebugServerEnv = "PROMEKI_DEBUG_SERVER";
@@ -77,6 +84,14 @@ const UUID &Application::appUUID() {
 void Application::setAppUUID(const UUID &uuid) {
         data().appUUID = uuid;
         return;
+}
+
+int64_t Application::pid() {
+#ifdef PROMEKI_PLATFORM_WINDOWS
+        return static_cast<int64_t>(::GetCurrentProcessId());
+#else
+        return static_cast<int64_t>(::getpid());
+#endif
 }
 
 const String &Application::appName() {

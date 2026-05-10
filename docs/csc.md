@@ -59,7 +59,7 @@ Fast paths are registered at static initialization via
 that converts one scanline from source to target format, bypassing
 all pipeline stages.
 
-Registered fast paths (54 total):
+Registered fast paths (56 total):
 
 | Standard | Bit Depth | Formats |
 |----------|-----------|---------|
@@ -70,7 +70,7 @@ Registered fast paths (54 total):
 | BT.601   | 8-bit     | YUYV, UYVY, NV12, Planar 420 ↔ RGBA8 |
 | BT.2020  | 10-bit LE | UYVY, Planar 420 ↔ RGBA10 LE |
 | BT.2020  | 12-bit LE | UYVY, Planar 420 ↔ RGBA12 LE |
-| Format   | 8-bit     | BGRA↔RGBA, RGBA↔RGB |
+| Format   | 8-bit     | BGRA↔RGBA, RGBA↔RGB, RGB↔BGRA |
 
 Fast paths use fixed-point integer arithmetic with standard
 broadcast coefficients (e.g. BT.709: Y = 66R + 129G + 25B). They

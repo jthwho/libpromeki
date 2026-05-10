@@ -21,6 +21,12 @@ that history now lives in git. What remains here is the open work.
 ## Shipped backends (for navigation)
 
 - **TpgMediaIO** — test pattern generator (video + audio + timecode).
+  Gained `MotionBand` overlay (`VideoMotionBandEnabled` /
+  `VideoMotionBandHeight` config keys; on by default); burn-in text
+  template updated to `{Meta.Timecode:smpte}\n{VideoFormat}`; frame
+  counter ordering fixed so `currentFrame` is 0-indexed on first read;
+  `proposeOutput(configDelta)` now populates the delta so the planner
+  can renegotiate the TPG output format without inserting a CSC.
 - **ImageFileMediaIO** — DPX, Cineon, TGA, SGI, PNM, PNG, JPEG, JPEG XS,
   RawYUV. Includes the BWF sidecar audio path and `.imgseq` sequence
   index.
@@ -39,6 +45,11 @@ that history now lives in git. What remains here is the open work.
   anchored; per-frame `Metadata::FrameRate` relatch so NDI and other
   late-rate backends drive the cadence math against the real rate),
   continuity checks, `--filter` queries.
+  `InspectorSnapshot` gained `discontinuitiesByKind[]` (per-kind
+  counters indexed by `InspectorDiscontinuity::Kind`).
+  `FrameNumberJump` check now uses the inspector's monotonic frame
+  index to compute the expected upstream delta so intermediate
+  picture-data-band decode failures do not false-positive a jump.
 - **VideoEncoderMediaIO** / **VideoDecoderMediaIO** — generic codec
   wrappers over the `VideoCodec` registry. JPEG, JPEG XS, NVENC,
   NVDEC backends are registered.

@@ -254,6 +254,26 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setDescription("Draw background rectangle behind burn-in text."));
 
                 // ============================================================
+                // Video motion band — scrolling marker for stutter detection
+                // ============================================================
+
+                /// @brief bool — enable the @ref MotionBand overlay.
+                PROMEKI_DECLARE_ID(VideoMotionBandEnabled,
+                                   VariantSpec()
+                                           .setType(Variant::TypeBool)
+                                           .setDefault(false)
+                                           .setDescription("Enable the scrolling motion band overlay used to "
+                                                           "make frame stutter / drop / repeat visually obvious."));
+
+                /// @brief int — motion band height in scan lines (0 = default).
+                PROMEKI_DECLARE_ID(VideoMotionBandHeight,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Motion band height in scan lines (0 = default)."));
+
+                // ============================================================
                 // Audio — shared across backends
                 // ============================================================
 
@@ -1599,12 +1619,23 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setDescription("RTCP Sender Report interval in ms."));
 
                 /// @brief String — CNAME emitted in RTCP SDES.  An
-                /// empty value (default) auto-generates a stable
-                /// per-process CNAME of the form
-                /// @c "promeki-&lt;hostname&gt;-&lt;pid&gt;".  Streams that
-                /// share a CNAME (typical for an audio + video pair
-                /// from the same sender) are correlated by receivers
-                /// even if the SSRCs are unrelated.
+                /// empty value (default) auto-generates a CNAME of
+                /// the RFC 3550 §6.5.1 @c user@host form,
+                /// @c "promeki-&lt;pid&gt;-&lt;objectId&gt;@&lt;egress-ip&gt;",
+                /// where @c egress-ip is the source IP of the
+                /// network interface used to reach the first
+                /// configured destination (resolved through
+                /// @ref NetworkInterface::findRoutesTo).  When no
+                /// routable destination is available the host
+                /// portion falls back to the first non-loopback
+                /// interface IP and finally to @ref System::hostname.
+                /// All streams on a single @ref RtpMediaIO share the
+                /// derived CNAME so receivers can correlate an A/V
+                /// pair from the same sender even when the SSRCs
+                /// are unrelated; @c objectId distinguishes
+                /// concurrent @ref RtpMediaIO objects within one
+                /// process and @c pid distinguishes processes on
+                /// the same host.
                 PROMEKI_DECLARE_ID(RtpRtcpCname, VariantSpec()
                                                          .setType(Variant::TypeString)
                                                          .setDefault(String())

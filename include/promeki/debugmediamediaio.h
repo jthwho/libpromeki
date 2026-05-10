@@ -50,7 +50,8 @@ class DebugMediaMediaIO : public SharedThreadMediaIO {
                 ~DebugMediaMediaIO() override;
 
                 Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
-                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const override;
+                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable,
+                                    MediaConfig *configDelta = nullptr) const override;
 
         protected:
                 Error executeCmd(MediaIOCommandOpen &cmd) override;

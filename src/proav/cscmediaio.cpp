@@ -390,8 +390,9 @@ Error CscMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *preferred) c
         return Error::Ok;
 }
 
-Error CscMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+Error CscMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable, MediaConfig *configDelta) const {
         if (achievable == nullptr) return Error::Invalid;
+        (void)configDelta;
 
         // CSC's output shape is fully determined by the input shape
         // plus its OutputPixelFormat config (and any other Output*

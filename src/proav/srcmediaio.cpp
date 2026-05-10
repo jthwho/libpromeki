@@ -262,8 +262,9 @@ Error SrcMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *preferred) c
         return Error::Ok;
 }
 
-Error SrcMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+Error SrcMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable, MediaConfig *configDelta) const {
         if (achievable == nullptr) return Error::Invalid;
+        (void)configDelta;
         *achievable = MediaIO::applyOutputOverrides(requested, config());
         return Error::Ok;
 }

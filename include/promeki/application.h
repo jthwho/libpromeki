@@ -103,6 +103,25 @@ class Application {
                 static void setAppUUID(const UUID &uuid);
 
                 /**
+                 * @brief Returns the operating-system process identifier.
+                 *
+                 * Cross-platform wrapper over POSIX @c getpid and
+                 * Windows @c GetCurrentProcessId.  Returned as
+                 * @c int64_t so the value is wide enough for the
+                 * Windows @c DWORD range and the POSIX @c pid_t range
+                 * on every supported platform.
+                 *
+                 * Independent of @ref Application construction — the
+                 * accessor reads the OS directly and is safe to call
+                 * before or after any @ref Application instance
+                 * exists.  The value is constant for the life of the
+                 * process.
+                 *
+                 * @return The current process ID.
+                 */
+                static int64_t pid();
+
+                /**
                  * @brief Returns the application name used for UUID v3/v5 generation.
                  * @return The application name string.
                  */

@@ -54,14 +54,24 @@ TEST_SUITE("MediaIOClock") {
                 REQUIRE(isOk(r0));
                 CHECK(value(r0) == 0);
 
-                // Read a frame; currentFrame() advances and the clock tracks.
+                // Read the first frame.  The TPG reports the frame
+                // number it just produced (0-indexed), so after one
+                // read currentFrame() is 0 and the clock is still at 0.
                 REQUIRE(io->source(0)->readFrame().wait().isOk());
-                CHECK(group->currentFrame().value() >= 1);
+                CHECK(group->currentFrame().value() == 0);
 
                 const int64_t periodNs = fps.frameDuration().nanoseconds();
                 auto          r1 = clock->nowNs();
                 REQUIRE(isOk(r1));
-                CHECK(value(r1) == group->currentFrame().value() * periodNs);
+                CHECK(value(r1) == 0);
+
+                // Read a second frame; currentFrame advances to 1 and
+                // the clock tracks one period.
+                REQUIRE(io->source(0)->readFrame().wait().isOk());
+                CHECK(group->currentFrame().value() == 1);
+                auto r2 = clock->nowNs();
+                REQUIRE(isOk(r2));
+                CHECK(value(r2) == periodNs);
 
                 io->close().wait();
                 delete io;
@@ -92,8 +102,12 @@ TEST_SUITE("MediaIOClock") {
                 CHECK(clock->pauseMode() == ClockPauseMode::PausesRawKeepsRunning);
                 CHECK(clock->isPaused() == false);
 
-                // Read a frame so the group's currentFrame advances and
-                // we have a non-zero baseline for now().
+                // Read two frames so the group's currentFrame advances
+                // past 0 (TPG reports the frame just produced, 0-indexed,
+                // so after one read currentFrame == 0 and nowNs == 0).
+                // Two reads gives us currentFrame == 1 and a non-zero
+                // baseline for now().
+                io->source(0)->readFrame().wait();
                 io->source(0)->readFrame().wait();
                 auto beforePauseRes = clock->nowNs();
                 REQUIRE(isOk(beforePauseRes));

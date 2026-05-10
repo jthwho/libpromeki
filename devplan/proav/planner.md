@@ -75,11 +75,21 @@ pain shows up in real workflows.
 
 ### Source-side `proposeOutput` polish
 
-`TPG` overrides `proposeOutput` to accept any uncompressed shape (the
-planner can re-configure TPG instead of inserting a CSC). `V4L2`
-should do the same against its enumerated mode set. Other sources
-(file readers, RTP receivers) genuinely produce what their content
-dictates and correctly use the `NotSupported` default.
+`proposeOutput` now accepts an optional `configDelta` out-parameter.
+When a source backend populates it, the planner merges the delta onto
+the source stage's config and skips the CSC/SRC bridge entirely (the
+no-bridge path).  `TPG` is the first backend to implement this:
+`TpgMediaIO::proposeOutput` returns `VideoPixelFormat` (and optionally
+`VideoFormat` + audio keys) in the delta so the planner can re-
+configure TPG to produce whatever a sink prefers without inserting a
+CSC.  Two planner unit tests cover the paths
+(`MediaPipelinePlanner_SourceRenegotiation_TpgAdoptsSinkPixelFormat`
+and `..._FallsBackToCSCWhenNoDelta`).
+
+Remaining open items:
+- `V4L2` should populate the delta against its enumerated mode set.
+  Other sources (file readers, RTP receivers) genuinely produce what
+  their content dictates and correctly use the `NotSupported` default.
 
 ### `mediaplay --plan --json`
 

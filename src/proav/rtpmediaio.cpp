@@ -47,6 +47,7 @@
 #include <promeki/rtpstreamclock.h>
 #include <promeki/mutex.h>
 #include <promeki/sdpsession.h>
+#include <promeki/application.h>
 #include <promeki/system.h>
 #include <promeki/thread.h>
 #include <promeki/waitcondition.h>
@@ -572,6 +573,8 @@ MediaIO *RtpFactory::create(const Config &config, ObjectBase *parent) const {
 
 // ----- Ctor / dtor -----
 
+Atomic<uint64_t> RtpMediaIO::_nextObjectId{0};
+
 RtpMediaIO::RtpMediaIO(ObjectBase *parent) : DedicatedThreadMediaIO(parent) {
         // Streams of all three kinds are appended on demand by the
         // matching @c configureVideoStream / @c configureAudioStream /
@@ -580,6 +583,7 @@ RtpMediaIO::RtpMediaIO(ObjectBase *parent) : DedicatedThreadMediaIO(parent) {
         // sets its own @c mediaType so the SDP builder, RTCP
         // scheduler, and reader-side dispatcher can identify it
         // without dynamic dispatch.
+        _objectId = _nextObjectId.fetchAndAdd(uint64_t(1)) + uint64_t(1);
 }
 
 RtpMediaIO::~RtpMediaIO() {
@@ -588,6 +592,51 @@ RtpMediaIO::~RtpMediaIO() {
 }
 
 // ----- Helpers -----
+
+String RtpMediaIO::buildDefaultCname(int64_t pid, uint64_t objectId, const String &host) {
+        String out = String("promeki-") + String::number(pid) + String("-") +
+                     String::number(static_cast<int64_t>(objectId));
+        if (!host.isEmpty()) {
+                out += String("@");
+                out += host;
+        }
+        return out;
+}
+
+String RtpMediaIO::pickEgressHostForCname(const SocketAddress &destination) {
+        // Prefer the egress interface for the destination — that's
+        // the interface whose source IP will appear in the outbound
+        // RTP packets, which is what RFC 3550 §6.5.1 asks for.
+        if (!destination.isNull()) {
+                if (destination.isIPv4()) {
+                        NetworkInterface::List ifaces = NetworkInterface::findRoutesTo(destination.address().toIpv4());
+                        for (const NetworkInterface &iface : ifaces) {
+                                Ipv4Address::List addrs = iface.ipv4Addresses();
+                                if (!addrs.isEmpty()) return addrs.front().toString();
+                        }
+                } else if (destination.isIPv6()) {
+                        NetworkInterface::List ifaces = NetworkInterface::findRoutesTo(destination.address().toIpv6());
+                        for (const NetworkInterface &iface : ifaces) {
+                                Ipv6Address::List addrs = iface.ipv6Addresses();
+                                if (!addrs.isEmpty()) return String("[") + addrs.front().toString() + String("]");
+                        }
+                }
+        }
+
+        // No routable destination — fall back to the first
+        // non-loopback interface.  IPv4 wins if present (most common
+        // SDES form); IPv6 if that's all we've got.  Brackets on the
+        // IPv6 fallback so the @ separator in the CNAME stays
+        // unambiguous.
+        NetworkInterface fallback = NetworkInterface::firstNonLoopback();
+        if (fallback.isValid()) {
+                Ipv4Address::List v4 = fallback.ipv4Addresses();
+                if (!v4.isEmpty()) return v4.front().toString();
+                Ipv6Address::List v6 = fallback.ipv6Addresses();
+                if (!v6.isEmpty()) return String("[") + v6.front().toString() + String("]");
+        }
+        return String();
+}
 
 void RtpMediaIO::resetStreamCommon(Stream &s) {
         // Identity teardown shared by writer and reader modes.
@@ -2699,8 +2748,37 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _rtcpIntervalMs = cfg.getAs<int>(MediaConfig::RtpRtcpIntervalMs, 5000);
         _rtcpCname = cfg.getAs<String>(MediaConfig::RtpRtcpCname, String());
         if (_rtcpCname.isEmpty()) {
-                _rtcpCname = String("promeki-") + System::hostname() + String("-") +
-                             String::number(static_cast<int64_t>(::getpid()));
+                // RFC 3550 §6.5.1 recommends user@host with @c host being
+                // either the FQDN or — failing that — the IP address of
+                // the interface used for the RTP session.  Pick the first
+                // configured destination across video → audio → data
+                // (writer mode) or their reader-side counterparts and
+                // ask NetworkInterface for the egress IP for that
+                // destination.  All sessions on this RtpMediaIO share
+                // the resulting CNAME so receivers can group an A/V
+                // pair from one source even when the SSRCs are
+                // unrelated; pid + objectId disambiguate concurrent
+                // RtpMediaIO instances on the same host.
+                SocketAddress firstDest;
+                auto pickFrom = [&firstDest](const auto &streamList) {
+                        if (!firstDest.isNull()) return;
+                        for (const auto &s : streamList) {
+                                if (!s.destination.isNull()) {
+                                        firstDest = s.destination;
+                                        return;
+                                }
+                        }
+                };
+                pickFrom(_videos);
+                pickFrom(_audios);
+                pickFrom(_datas);
+                pickFrom(_videoReaders);
+                pickFrom(_audioReaders);
+                pickFrom(_dataReaders);
+
+                String host = pickEgressHostForCname(firstDest);
+                if (host.isEmpty()) host = System::hostname();
+                _rtcpCname = buildDefaultCname(Application::pid(), _objectId, host);
         }
         if (!_readerMode) {
                 // Seed every active session with a default

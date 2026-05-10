@@ -868,6 +868,43 @@ phases:
   first packet.  The Phase 3 stream-class split is the natural
   place to expose this through a typed accessor instead of a
   raw struct field.
+- **Default RTCP SDES CNAME on RFC 3550 §6.5.1 form**
+  (*Landed 2026-05-09*).  The auto-generated CNAME used to be
+  `promeki-<hostname>-<pid>` — structurally legal but using
+  `gethostname(2)`, which is often unqualified, sometimes
+  literally `localhost`, and ambiguous on multi-homed hosts.
+  With the `NetworkInterface` API now in place, the default
+  shape is `promeki-<pid>-<objectId>@<egress-ip>` (§6.5.1
+  `user@host`), where:
+  - `<pid>` comes from a new cross-platform
+    `Application::pid()` (`include/promeki/application.h`,
+    `src/core/application.cpp`) — POSIX `getpid` /
+    Windows `GetCurrentProcessId` returned as `int64_t`.
+  - `<objectId>` is a per-process atomic counter on
+    `RtpMediaIO` (`static Atomic<uint64_t> _nextObjectId` /
+    `uint64_t _objectId`); first instance gets 1.  Two
+    `RtpMediaIO` objects in one process get distinct CNAMEs.
+  - `<egress-ip>` is the source IP of the interface
+    `NetworkInterface::findRoutesTo` returns for the first
+    configured destination across video → audio → data
+    (writer mode) or their reader-side counterparts.  IPv6
+    is bracket-wrapped.  Fallback chain: routable destination
+    → `firstNonLoopback().ipv4Addresses().front()` →
+    `firstNonLoopback().ipv6Addresses().front()` →
+    `System::hostname()` floor.
+  - All sessions on a single `RtpMediaIO` share the derived
+    CNAME (picked once at `executeCmd(Open)` time) so
+    receivers can correlate the A/V pair from one source —
+    a per-stream split would silently break that grouping
+    when video and audio destinations land on different
+    NICs.
+  - Helpers exposed for testability:
+    `RtpMediaIO::buildDefaultCname(pid, objectId, host)` and
+    `RtpMediaIO::pickEgressHostForCname(destination)`.
+    Unit cases:
+    `tests/unit/network/rtpmediaio.cpp` (6 cases) +
+    `Application::pid` regression in
+    `tests/unit/application.cpp`.
 
 ## Library additions
 

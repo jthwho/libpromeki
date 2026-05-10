@@ -1303,7 +1303,22 @@ void InspectorMediaIO::runContinuityCheck(InspectorEvent &event) {
                         event.discontinuities.pushToBack(d);
                 }
 
-                const uint32_t expectedNext = _previousFrameNumber + 1;
+                // Expected next pictureFrameNumber accounts for the
+                // gap in successful decodes since the last one: when
+                // the band fails to decode on intermediate frames
+                // (a known issue for RFC 4175 raw on some pixel
+                // formats — see ImageDataDecodeFailure), the frame
+                // index advances but @c _previousFrameNumber is
+                // frozen at the last successful read.  Using a flat
+                // @c _previousFrameNumber+1 would then false-positive
+                // a FrameNumberJump for every intermediate decode
+                // failure, even though the upstream stream was
+                // perfectly sequential.  Use the inspector's own
+                // monotonic frame index to compute the right delta.
+                const FrameNumber currentIdx = event.frameIndex;
+                const int64_t     idxDelta =
+                        currentIdx.value() - _previousFrameIndexAtDecode.value();
+                const uint32_t expectedNext = _previousFrameNumber + static_cast<uint32_t>(idxDelta);
                 if (event.pictureFrameNumber != expectedNext) {
                         InspectorDiscontinuity d;
                         d.kind = InspectorDiscontinuity::FrameNumberJump;
@@ -1349,6 +1364,7 @@ void InspectorMediaIO::runContinuityCheck(InspectorEvent &event) {
 
         _hasPreviousPicture = true;
         _previousFrameNumber = event.pictureFrameNumber;
+        _previousFrameIndexAtDecode = event.frameIndex;
         _previousStreamId = event.pictureStreamId;
         _previousPictureTc = event.pictureTimecode;
 
@@ -2080,8 +2096,17 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
 
                 // Re-anchor counters mirror the per-frame discontinuity
                 // events so consumers can read the totals from the
-                // snapshot without scanning every event.
+                // snapshot without scanning every event.  Per-kind
+                // counts are also accumulated here so callers that
+                // only care about specific kinds (e.g. tests asserting
+                // "frames arrived in sequence") can check them
+                // directly instead of treating every discontinuity as
+                // fatal.
                 for (const auto &d : event.discontinuities) {
+                        const size_t idx = static_cast<size_t>(d.kind);
+                        if (idx < _stats.discontinuitiesByKind.size()) {
+                                _stats.discontinuitiesByKind[idx]++;
+                        }
                         if (d.kind == InspectorDiscontinuity::AudioTimestampReanchor) {
                                 _stats.audioReanchorCount++;
                         } else if (d.kind == InspectorDiscontinuity::VideoTimestampReanchor) {

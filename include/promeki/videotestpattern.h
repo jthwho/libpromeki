@@ -18,6 +18,7 @@
 #include <promeki/timecode.h>
 #include <promeki/enums.h>
 #include <promeki/fastfont.h>
+#include <promeki/motionband.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -202,6 +203,30 @@ class VideoTestPattern {
                 void setBurnPosition(BurnPosition pos) { _burnPosition = pos; }
 
                 /**
+                 * @brief Returns the number of scan lines reserved at
+                 *        the top of the image that the burn must not
+                 *        overlap.
+                 */
+                int burnTopReserved() const { return _burnTopReserved; }
+
+                /**
+                 * @brief Reserves a band of scan lines at the top of
+                 *        the image that the burn-in must not overlap.
+                 *
+                 * Callers that overlay other content at the very top
+                 * of the frame (e.g. @ref ImageDataEncoder writing a
+                 * VITC-style data band starting at line 0) use this
+                 * to push the burn down below that band.  The reserved
+                 * band shifts @c TopLeft / @c TopCenter / @c TopRight
+                 * burns down so their first line begins at or below
+                 * the reserved range, and clamps @c Center burns down
+                 * the same way when the natural center would put the
+                 * burn inside the reserved region.  @c Bottom* burns
+                 * are unaffected.  Pass @c 0 (the default) to disable.
+                 */
+                void setBurnTopReserved(int lines) { _burnTopReserved = (lines > 0) ? lines : 0; }
+
+                /**
                  * @brief Creates a new Image and renders the pattern into it.
                  *
                  * For static patterns (not @c Noise) called with
@@ -268,6 +293,39 @@ class VideoTestPattern {
                  */
                 MediaIOAllocator::Ptr allocator() const { return _allocator; }
 
+                // ---- Motion band ----
+
+                /**
+                 * @brief Returns the embedded @ref MotionBand for direct
+                 *        configuration.
+                 *
+                 * The motion band is parallel to burn-in: callers
+                 * configure it through this accessor and then invoke
+                 * @ref applyMotionBand per frame between
+                 * @ref createPayload and @ref applyBurn.  When enabled
+                 * the band's @ref MotionBand::reservedLines value is
+                 * automatically respected by @ref applyBurn so
+                 * @c Bottom* burn positions are pushed clear of the
+                 * band.
+                 */
+                MotionBand &motionBand() { return _motionBand; }
+
+                /** @copydoc motionBand() */
+                const MotionBand &motionBand() const { return _motionBand; }
+
+                /**
+                 * @brief Stamps the motion band frame for @p frameCount
+                 *        into @p inout.
+                 *
+                 * Convenience wrapper around @ref MotionBand::apply.
+                 * @p inout must be valid and exclusively owned by the
+                 * caller (call @c ensureExclusive first).  Returns
+                 * @c Error::Ok with no work when the band is disabled.
+                 */
+                Error applyMotionBand(UncompressedVideoPayload &inout, uint64_t frameCount) const {
+                        return _motionBand.apply(inout, frameCount);
+                }
+
         private:
                 // Background pattern state
                 VideoPattern _pattern = VideoPattern::ColorBars;
@@ -288,6 +346,7 @@ class VideoTestPattern {
                 Color        _burnBackgroundColor = Color::Black;
                 bool         _burnDrawBackground = true;
                 BurnPosition _burnPosition = BurnPosition::BottomCenter;
+                int          _burnTopReserved = 0;
 
                 // Generic image cache: a small fixed array of slots
                 // shared by all patterns.  Slot meanings are local to
@@ -317,6 +376,12 @@ class VideoTestPattern {
                 // constructed VideoTestPatterns behave exactly as
                 // before the allocator framework existed.
                 MediaIOAllocator::Ptr _allocator;
+
+                // Embedded motion band — parallel to burn-in.  Owns
+                // its own pre-rendered cache of N band frames in the
+                // target pixel format and stamps the appropriate one
+                // into the frame from applyMotionBand().
+                MotionBand _motionBand;
 
                 // Burn font — lazily constructed the first time burn
                 // actually runs, because FastFont needs a PaintEngine

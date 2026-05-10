@@ -357,7 +357,8 @@ namespace {
 
         Error resolveRoute(const MediaPipelineConfig::Route &route, MediaIO *fromStage, MediaIO *toStage,
                            const MediaDesc &producedDesc, const MediaPipelinePlanner::Policy &policy,
-                           MediaPipelineConfig *out, int *bridgeCounter, MediaDesc *postDesc, String *diagnostic) {
+                           MediaPipelineConfig *out, int *bridgeCounter, MediaDesc *postDesc,
+                           MediaDesc *renegotiatedFromDesc, String *diagnostic) {
                 if (toStage == nullptr) {
                         appendDiagnostic(diagnostic,
                                          String("MediaPipelinePlanner: stage '") + route.to + "' is missing.");
@@ -389,6 +390,36 @@ namespace {
                 // care return Ok with a populated `preferred`; pure passthroughs
                 // return Ok with preferred==offered (already handled above).
                 MediaDesc target = (pe == Error::Ok && preferred.isValid()) ? preferred : producedDesc;
+
+                // Source-side renegotiation.  Before splicing in a bridge,
+                // ask the upstream stage whether it can produce @p target
+                // directly via a config-key change.  Backends that can
+                // (TPG, generators, format-flexible readers) populate
+                // @c proposeOutput's @c configDelta with the
+                // @ref MediaConfig keys that drive the new shape; the
+                // planner merges those into the source stage's config in
+                // @p out and skips the bridge.  Backends with no such
+                // lever leave the delta empty, which we take as a hard
+                // signal to fall through to the bridge solver.
+                if (fromStage != nullptr && !target.formatEquals(producedDesc)) {
+                        MediaDesc   achievable;
+                        MediaConfig delta;
+                        Error       oe = fromStage->proposeOutput(target, &achievable, &delta);
+                        if (oe == Error::Ok && achievable.isValid() && achievable.formatEquals(target) &&
+                            !delta.isEmpty()) {
+                                MediaPipelineConfig::StageList &stages = out->stages();
+                                for (size_t si = 0; si < stages.size(); ++si) {
+                                        if (stages[si].name == route.from) {
+                                                stages[si].config.merge(delta);
+                                                break;
+                                        }
+                                }
+                                out->addRoute(route);
+                                if (renegotiatedFromDesc != nullptr) *renegotiatedFromDesc = achievable;
+                                if (postDesc != nullptr) *postDesc = propagateThroughStage(toStage, achievable);
+                                return Error::Ok;
+                        }
+                }
 
                 List<BridgeStep>       chain;
                 List<BridgeTraceEntry> trace;
@@ -478,8 +509,7 @@ namespace {
                 if (postDesc != nullptr) {
                         *postDesc = propagateThroughStage(toStage, target);
                 }
-                (void)fromStage; // currently unused; reserved for proposeOutput-driven
-                                 // source negotiation in a later phase.
+                (void)fromStage;
                 return Error::Ok;
         }
 
@@ -704,12 +734,21 @@ Error MediaPipelinePlanner::plan(const MediaPipelineConfig &in, MediaPipelineCon
                         const MediaDesc producedDesc =
                                 producedBy.contains(fromName) ? producedBy[fromName] : MediaDesc();
                         MediaDesc postDesc;
+                        MediaDesc renegotiatedFromDesc;
                         Error     rerr = resolveRoute(r, stages[r.from], stages[r.to], producedDesc, policy, out,
-                                                      &bridgeCounter, &postDesc, diagnostic);
+                                                      &bridgeCounter, &postDesc, &renegotiatedFromDesc, diagnostic);
                         if (rerr.isError()) {
                                 destroyOwnedStages(stages, ownedNames);
                                 *out = MediaPipelineConfig();
                                 return rerr;
+                        }
+                        // When the source's output was renegotiated to
+                        // match the sink's preferred input (no-CSC
+                        // path), update the producer cache so any
+                        // downstream fan-out routes see the new shape
+                        // instead of the original.
+                        if (renegotiatedFromDesc.isValid()) {
+                                producedBy.insert(r.from, renegotiatedFromDesc);
                         }
                         producedBy.insert(r.to, postDesc);
                 }

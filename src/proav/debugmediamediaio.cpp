@@ -235,8 +235,10 @@ Error DebugMediaMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *prefe
         return Error::Ok;
 }
 
-Error DebugMediaMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+Error DebugMediaMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable,
+                                       MediaConfig *configDelta) const {
         if (achievable == nullptr) return Error::Invalid;
+        (void)configDelta;
         *achievable = requested;
         return Error::Ok;
 }

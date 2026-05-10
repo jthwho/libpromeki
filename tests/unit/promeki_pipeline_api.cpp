@@ -459,7 +459,7 @@ TEST_CASE("ApiRoutes - CRUD lifecycle for a TPG to NullPacing pipeline") {
         CHECK(descMissing.status == 404);
 }
 
-TEST_CASE("ApiRoutes - autoplan inserts bridge stage for TPG to MjpegStream") {
+TEST_CASE("ApiRoutes - autoplan renegotiates TPG output to satisfy MjpegStream") {
         ApiFixture fix;
 
         JsonObject body;
@@ -493,16 +493,30 @@ TEST_CASE("ApiRoutes - autoplan inserts bridge stage for TPG to MjpegStream") {
         }
         CHECK(!userHasBridge);
 
-        // resolvedConfig must contain at least one bridge stage.
+        // resolvedConfig must NOT contain a bridge — the planner's
+        // source-side renegotiation takes the cheaper path: it
+        // mutates the TPG stage's VideoPixelFormat config key to a
+        // JPEG-encoder-friendly value rather than splicing in a CSC.
         JsonObject resolvedCfg = buildJson.getObject("resolvedConfig");
         JsonArray  resolvedStages = resolvedCfg.getArray("stages", &e2);
         REQUIRE(e2.isOk());
-        bool resolvedHasBridge = false;
+        bool   resolvedHasBridge = false;
+        String tpgVideoPixelFormat;
         for (int i = 0; i < resolvedStages.size(); ++i) {
-                const String n = resolvedStages.getObject(i).getString("name");
+                JsonObject   stage = resolvedStages.getObject(i);
+                const String n = stage.getString("name");
                 if (bridgeName.match(n)) resolvedHasBridge = true;
+                if (n == "tpg1") {
+                        JsonObject stageCfg = stage.getObject("config");
+                        tpgVideoPixelFormat = stageCfg.getString("VideoPixelFormat");
+                }
         }
-        CHECK(resolvedHasBridge);
+        CHECK(!resolvedHasBridge);
+        // The source got renegotiated away from BGRA8_sRGB — that's
+        // not a JPEG-encoder-friendly format on this build, so the
+        // delta must have changed it to something the encoder accepts.
+        CHECK(tpgVideoPixelFormat != "BGRA8_sRGB");
+        CHECK(!tpgVideoPixelFormat.isEmpty());
 
         // Tear down.
         doRequest(fix.port, "POST", String("/api/pipelines/") + id + "/close");

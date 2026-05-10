@@ -558,13 +558,13 @@ template <CompiledString Name> class VariantDatabase {
                  * return the result, enabling nested resolution chains.
                  * A returned @c std::nullopt (or an absent resolver)
                  * leaves the key unresolved: the output gets the
-                 * literal text @c "[UNKNOWN KEY: <name>]" and @p err is
+                 * literal text @c "?<name>?" and @p err is
                  * set to @c Error::IdNotFound.
                  *
                  * @p err is set to @c Error::Ok when every token was
                  * either found in this database or resolved by the
                  * callback, and to @c Error::IdNotFound if @em any
-                 * token fell through to the @c "[UNKNOWN KEY: …]"
+                 * token fell through to the @c "?…?"
                  * path.  The output string is always returned (never
                  * empty on partial resolution) so the caller can both
                  * surface a clear error and still render best-effort
@@ -663,9 +663,9 @@ template <CompiledString Name> class VariantDatabase {
                                                         target = promekiResolveVariantPath(target, tailPath, &pe);
                                                         if (pe.isError() || !target.isValid()) {
                                                                 sawUnresolved = true;
-                                                                out += "[UNKNOWN KEY: ";
+                                                                out += '?';
                                                                 out.append(keyView.data(), keyView.size());
-                                                                out += ']';
+                                                                out += '?';
                                                                 i = end + 1;
                                                                 continue;
                                                         }
@@ -682,9 +682,9 @@ template <CompiledString Name> class VariantDatabase {
                                                         out.append(r.cstr(), r.byteCount());
                                                 } else {
                                                         sawUnresolved = true;
-                                                        out += "[UNKNOWN KEY: ";
+                                                        out += '?';
                                                         out.append(keyView.data(), keyView.size());
-                                                        out += ']';
+                                                        out += '?';
                                                 }
                                         }
                                         i = end + 1;
@@ -709,7 +709,7 @@ template <CompiledString Name> class VariantDatabase {
                  * @brief Convenience overload of @ref format with no resolver callback.
                  *
                  * Equivalent to calling the resolver overload with @c nullptr.
-                 * Missing keys produce @c "[UNKNOWN KEY: <name>]" in the
+                 * Missing keys produce @c "?<name>?" in the
                  * output and set @p err to @c Error::IdNotFound.
                  *
                  * @param tmpl Template string with @c {Key[:spec]} placeholders.

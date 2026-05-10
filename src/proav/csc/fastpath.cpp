@@ -24,6 +24,8 @@ namespace promeki {
                 HWY_EXPORT(FastPathRGBA8toBGRA8);
                 HWY_EXPORT(FastPathRGBA8toRGB8);
                 HWY_EXPORT(FastPathRGB8toRGBA8);
+                HWY_EXPORT(FastPathRGB8toBGRA8);
+                HWY_EXPORT(FastPathBGRA8toRGB8);
                 HWY_EXPORT(FastPathYUYV8toRGBA8);
                 HWY_EXPORT(FastPathRGBA8toYUYV8);
                 HWY_EXPORT(FastPathNV12toRGBA8);
@@ -94,6 +96,8 @@ namespace promeki {
                 CSC_DISPATCH(FastPathRGBA8toBGRA8)
                 CSC_DISPATCH(FastPathRGBA8toRGB8)
                 CSC_DISPATCH(FastPathRGB8toRGBA8)
+                CSC_DISPATCH(FastPathRGB8toBGRA8)
+                CSC_DISPATCH(FastPathBGRA8toRGB8)
                 CSC_DISPATCH(FastPathYUYV8toRGBA8)
                 CSC_DISPATCH(FastPathRGBA8toYUYV8)
                 CSC_DISPATCH(FastPathNV12toRGBA8)
@@ -169,6 +173,10 @@ namespace promeki {
                                             dispatch_FastPathRGBA8toRGB8);
                                         reg(PixelFormat::RGB8_sRGB, PixelFormat::RGBA8_sRGB,
                                             dispatch_FastPathRGB8toRGBA8);
+                                        reg(PixelFormat::RGB8_sRGB, PixelFormat::BGRA8_sRGB,
+                                            dispatch_FastPathRGB8toBGRA8);
+                                        reg(PixelFormat::BGRA8_sRGB, PixelFormat::RGB8_sRGB,
+                                            dispatch_FastPathBGRA8toRGB8);
 
                                         // YUYV interleaved
                                         reg(PixelFormat::YUV8_422_Rec709, PixelFormat::RGBA8_sRGB,

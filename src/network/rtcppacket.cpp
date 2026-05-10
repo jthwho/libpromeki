@@ -53,7 +53,6 @@ Buffer RtcpPacket::buildSenderReport(uint32_t ssrc, const NtpTime &ntp, uint32_t
         constexpr size_t kSize = 28;
         Buffer           buf(kSize);
         uint8_t         *p = static_cast<uint8_t *>(buf.data());
-        std::memset(p, 0, kSize);
         writeCommonHeader(p, /*rc=*/0, /*pt=*/SenderReport, /*lengthWordsMinus1=*/6);
         writeU32BE(p + 4, ssrc);
         writeU32BE(p + 8, ntp.seconds());
@@ -77,7 +76,6 @@ Buffer RtcpPacket::buildReceiverReport(uint32_t ssrc, const List<ReportBlock> &b
 
         Buffer   buf(total);
         uint8_t *p = static_cast<uint8_t *>(buf.data());
-        std::memset(p, 0, total);
         writeCommonHeader(p, /*rc=*/static_cast<uint8_t>(count), /*pt=*/ReceiverReport,
                           /*lengthWordsMinus1=*/static_cast<uint16_t>(totalWords - 1));
         writeU32BE(p + 4, ssrc);
@@ -111,7 +109,6 @@ Buffer RtcpPacket::buildBye(uint32_t ssrc) {
         constexpr size_t kSize = 8;
         Buffer           buf(kSize);
         uint8_t         *p = static_cast<uint8_t *>(buf.data());
-        std::memset(p, 0, kSize);
         writeCommonHeader(p, /*rc=*/1, /*pt=*/Goodbye, /*lengthWordsMinus1=*/1);
         writeU32BE(p + 4, ssrc);
         buf.setSize(kSize);

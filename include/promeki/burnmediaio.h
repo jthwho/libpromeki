@@ -113,7 +113,8 @@ class BurnMediaIO : public SharedThreadMediaIO {
                 ~BurnMediaIO() override;
 
                 Error proposeInput(const MediaDesc &offered, MediaDesc *preferred) const override;
-                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const override;
+                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable,
+                                    MediaConfig *configDelta = nullptr) const override;
                 int   pendingInternalWrites() const override;
 
         protected:

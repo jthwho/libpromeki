@@ -2017,7 +2017,7 @@ template <typename T> class VariantLookup {
                  * A returned @c std::optional<String> holding a value is
                  * substituted as-is.  A returned @c std::nullopt (or an
                  * absent resolver) leaves the key unresolved: the output
-                 * gets the literal text @c "[UNKNOWN KEY: <name>]" and
+                 * gets the literal text @c "?<name>?" and
                  * @p err is set to @c Error::IdNotFound.
                  *
                  * @tparam Resolver Callable with signature
@@ -2077,9 +2077,9 @@ template <typename T> class VariantLookup {
                                                         out.append(r.cstr(), r.byteCount());
                                                 } else {
                                                         sawUnresolved = true;
-                                                        out += "[UNKNOWN KEY: ";
+                                                        out += '?';
                                                         out.append(keyView.data(), keyView.size());
-                                                        out += ']';
+                                                        out += '?';
                                                 }
                                         }
                                         i = end + 1;
@@ -2104,7 +2104,7 @@ template <typename T> class VariantLookup {
                  * @brief Convenience overload of @ref format with no resolver callback.
                  *
                  * Equivalent to calling the resolver overload with @c nullptr.
-                 * Missing keys produce @c "[UNKNOWN KEY: <name>]" in the
+                 * Missing keys produce @c "?<name>?" in the
                  * output and set @p err to @c Error::IdNotFound.
                  */
                 static String format(const T &instance, const String &tmpl, Error *err = nullptr) {

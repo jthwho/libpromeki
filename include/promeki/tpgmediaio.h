@@ -56,7 +56,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | @ref MediaConfig::VideoBurnEnabled   | bool      | true       | Enable text burn-in on the pattern. |
  * | @ref MediaConfig::VideoBurnFontPath  | String    | ""         | TrueType font path. Empty = bundled default font. |
  * | @ref MediaConfig::VideoBurnFontSize  | int       | 0          | Font size in pixels. 0 = auto-scale from image height (36px at 1080p). |
- * | @ref MediaConfig::VideoBurnText      | String    | "{Timecode:smpte}" | @ref VariantLookup<Frame>::format template for the burn text.  Resolved per-frame against the assembled @ref Frame after all per-frame metadata has been added.  Empty string disables the burn for the call.  Use newline characters inside the template to span multiple lines. |
+ * | @ref MediaConfig::VideoBurnText      | String    | "{Meta.Timecode:smpte}\n{VideoFormat}" | @ref VariantLookup<Frame>::format template for the burn text.  Resolved per-frame against the assembled @ref Frame after all per-frame metadata has been added.  Empty string disables the burn for the call.  Use newline characters inside the template to span multiple lines. |
  * | @ref MediaConfig::VideoBurnPosition  | Enum @ref BurnPosition | BottomCenter | Position preset. |
  * | @ref MediaConfig::VideoBurnTextColor | Color     | White      | Burn text foreground color. |
  * | @ref MediaConfig::VideoBurnBgColor   | Color     | Black      | Burn text background color. |
@@ -121,7 +121,8 @@ class TpgMediaIO : public SharedThreadMediaIO {
                 ~TpgMediaIO() override;
 
                 Error describe(MediaIODescription *out) const override;
-                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const override;
+                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable,
+                                    MediaConfig *configDelta = nullptr) const override;
 
         protected:
                 Error executeCmd(MediaIOCommandOpen &cmd) override;
@@ -143,6 +144,7 @@ class TpgMediaIO : public SharedThreadMediaIO {
                 bool             _videoEnabled = false;
                 bool             _burnEnabled = false;
                 String           _burnTextTemplate;
+                bool             _motionBandEnabled = false;
 
                 // Binary data encoder pass (VITC-style frame stamp).
                 ImageDataEncoder _dataEncoder;

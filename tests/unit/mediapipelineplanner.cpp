@@ -350,6 +350,72 @@ TEST_CASE("MediaPipelineConfig_isResolved_ReturnsFalseOnGap") {
 }
 
 // ============================================================================
+// Source-side renegotiation
+// ============================================================================
+//
+// When a source backend's @c proposeOutput accepts the sink's preferred
+// shape AND populates a config delta, the planner mutates the source
+// stage's config and skips the bridge entirely.  TPG is the canonical
+// backend that supports this (any uncompressed @ref PixelFormat).
+
+TEST_CASE("MediaPipelinePlanner_SourceRenegotiation_TpgAdoptsSinkPixelFormat") {
+        // TPG defaults to RGB8_sRGB at 1080p29.97; the sink wants
+        // BGRA8_sRGB at 29.97 — pixel-format gap only.  The planner
+        // should mutate the TPG stage's @c VideoPixelFormat key
+        // rather than splicing a CSC.
+        MediaPipelineConfig cfg;
+
+        MediaPipelineConfig::Stage src;
+        src.name = "tpg";
+        src.type = "TPG";
+        src.role = MediaPipelineConfig::StageRole::Source;
+        src.config = MediaIOFactory::defaultConfig("TPG");
+        cfg.addStage(src);
+
+        MediaPipelineConfig::Stage sink;
+        sink.name = "sink";
+        sink.type = "PlannerSyntheticSink";
+        sink.role = MediaPipelineConfig::StageRole::Sink;
+        sink.config.set(PlannerAcceptedDesc, PixelFormat(PixelFormat::BGRA8_sRGB));
+        sink.config.set(PlannerAcceptedRate, FrameRate(FrameRate::FPS_29_97));
+        cfg.addStage(sink);
+
+        cfg.addRoute("tpg", "sink");
+
+        MediaPipelineConfig out;
+        String              diag;
+        REQUIRE(MediaPipelinePlanner::plan(cfg, &out, {}, &diag) == Error::Ok);
+        CHECK(diag.isEmpty());
+
+        // No bridge inserted — the source got renegotiated.
+        REQUIRE(out.stages().size() == 2);
+        REQUIRE(out.routes().size() == 1);
+        CHECK(out.routes()[0].from == "tpg");
+        CHECK(out.routes()[0].to == "sink");
+
+        // The TPG stage's config was mutated to produce BGRA8 directly.
+        CHECK(out.stages()[0].name == "tpg");
+        CHECK(out.stages()[0].config.getAs<PixelFormat>(MediaConfig::VideoPixelFormat).id() ==
+              PixelFormat::BGRA8_sRGB);
+}
+
+TEST_CASE("MediaPipelinePlanner_SourceRenegotiation_FallsBackToCSCWhenNoDelta") {
+        // The PlannerSyntheticSrc backend doesn't override proposeOutput,
+        // so it can't renegotiate via config delta.  The planner falls
+        // back to the existing bridge solver and inserts a CSC.
+        const MediaPipelineConfig in =
+                makeSrcSinkConfig(PixelFormat::RGBA8_sRGB, PixelFormat::BGRA8_sRGB);
+
+        MediaPipelineConfig out;
+        String              diag;
+        REQUIRE(MediaPipelinePlanner::plan(in, &out, {}, &diag) == Error::Ok);
+        CHECK(diag.isEmpty());
+
+        REQUIRE(out.stages().size() == 3);
+        CHECK(stageTypeAt(out, 2, "CSC"));
+}
+
+// ============================================================================
 // Excluded bridges
 // ============================================================================
 

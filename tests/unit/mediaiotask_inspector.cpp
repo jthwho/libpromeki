@@ -6,7 +6,9 @@
  */
 
 #include <doctest/doctest.h>
+#include <algorithm>
 #include <atomic>
+#include <cstring>
 #include <vector>
 #include <promeki/inspectormediaio.h>
 #include <promeki/mediaio.h>
@@ -275,6 +277,78 @@ TEST_CASE("Inspector flags a frame-number jump as a discontinuity") {
         }
         CHECK(foundJump);
         CHECK(foundReanchor);
+
+        // The per-kind counter should track the same events the
+        // raw discontinuity list reports, so callers that only
+        // care about specific kinds (e.g. tests narrowing their
+        // fail gate to upstream frame-loss only) can read these
+        // directly.
+        CHECK(snap.discontinuitiesByKind[InspectorDiscontinuity::FrameNumberJump] == 1);
+        CHECK(snap.discontinuitiesByKind[InspectorDiscontinuity::VideoTimestampReanchor] == 1);
+        CHECK(snap.discontinuitiesByKind[InspectorDiscontinuity::AudioTimestampReanchor] == 0);
+}
+
+// ============================================================================
+// FrameNumberJump uses the inspector's monotonic frame index to compute
+// the expected upstream delta, NOT a flat previous+1.  When the picture-
+// data band fails to decode on intermediate frames (a known quirk on
+// some pixel formats — RFC 4175 raw on this codebase), the inspector's
+// frame counter still advances even though @c _previousFrameNumber stays
+// frozen at the last successful read.  Without the index-aware delta,
+// every subsequent successful decode would false-positive a jump even
+// if the upstream stream is perfectly sequential.  This test pushes a
+// synthetic frame whose first 32 raster lines are zeroed at index 4
+// (forcing the picture-data band decode to fail), then verifies that
+// the next real frame at index 5 with @c pictureFrameNumber == 5 does
+// NOT fire a FrameNumberJump.
+// ============================================================================
+
+TEST_CASE("Inspector tolerates sparse picture-data band decodes (no false FrameNumberJump)") {
+        InspectorRig rig;
+        buildRig(rig, 0xCAFEBABEu, {}, /*audioEnabled=*/false);
+
+        for (int i = 0; i < 10; i++) {
+                Frame frame;
+                REQUIRE(syncRead(rig.tpg->source(0), frame).isOk());
+                if (i == 4) {
+                        // Wipe the first @c _imageDataRepeatLines × 2
+                        // raster lines so the band decoder fails.  The
+                        // inspector's default repeat lines is 16, so
+                        // zeroing 32 lines covers both bands.  Advance
+                        // the inspector's index by writing the frame
+                        // even though its band can't be read — that's
+                        // exactly the scenario this test exists to
+                        // cover.
+                        auto vids = frame.videoPayloads();
+                        REQUIRE_FALSE(vids.isEmpty());
+                        VideoPayload::Ptr vp = vids[0];
+                        REQUIRE(vp.isValid());
+                        auto             *uvp = vp.modify()->as<UncompressedVideoPayload>();
+                        REQUIRE(uvp != nullptr);
+                        BufferView::Entry plane0 = uvp->plane(0);
+                        REQUIRE(plane0.isValid());
+                        const ImageDesc &id = uvp->desc();
+                        const size_t     stride = id.pixelFormat().lineStride(0, id);
+                        const uint32_t   rowsToWipe =
+                                std::min<uint32_t>(32u, id.size().height());
+                        const size_t bytesToWipe = std::min<size_t>(
+                                static_cast<size_t>(rowsToWipe) * stride, plane0.size());
+                        std::memset(plane0.data(), 0, bytesToWipe);
+                }
+                REQUIRE(rig.inspectorIo->sink(0)->writeFrame(frame).wait().isOk());
+        }
+
+        InspectorSnapshot snap = rig.inspector->snapshot();
+        CHECK(snap.framesProcessed == 10);
+        // The wiped frame fires ImageDataDecodeFailure.  Critical
+        // assertion: ZERO FrameNumberJump events even though
+        // @c _previousFrameNumber froze at 3 across the gap.  The
+        // next successful decode at inspector index 5 sees
+        // @c pictureFrameNumber == 5 and the index-aware delta
+        // computes @c expectedNext = 3 + (5 - 3) = 5 — matching
+        // exactly, so no jump fires.
+        CHECK(snap.discontinuitiesByKind[InspectorDiscontinuity::FrameNumberJump] == 0);
+        CHECK(snap.discontinuitiesByKind[InspectorDiscontinuity::ImageDataDecodeFailure] >= 1);
 }
 
 // ============================================================================

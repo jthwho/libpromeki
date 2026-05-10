@@ -846,6 +846,8 @@ TEST_CASE("CSC fast-path cross-validation") {
         Pair pairs[] = {
                 {PixelFormat::RGBA8_sRGB, PixelFormat::RGB8_sRGB, 0},
                 {PixelFormat::RGB8_sRGB, PixelFormat::RGBA8_sRGB, 0},
+                {PixelFormat::RGB8_sRGB, PixelFormat::BGRA8_sRGB, 0},
+                {PixelFormat::BGRA8_sRGB, PixelFormat::RGB8_sRGB, 0},
                 {PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_Rec709, 35},
                 {PixelFormat::YUV8_422_Rec709, PixelFormat::RGBA8_sRGB, 35},
                 {PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_UYVY_Rec709, 35},

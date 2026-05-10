@@ -90,11 +90,17 @@ MediaIOFactory::Config::SpecMap TpgFactory::configSpecs() const {
         s(MediaConfig::VideoBurnEnabled, true);
         s(MediaConfig::VideoBurnFontPath, String());
         s(MediaConfig::VideoBurnFontSize, int32_t(0));
-        s(MediaConfig::VideoBurnText, String("{Meta.Timecode:smpte}"));
+        s(MediaConfig::VideoBurnText, String("{Meta.Timecode:smpte}\n{VideoFormat}"));
         s(MediaConfig::VideoBurnPosition, BurnPosition::BottomCenter);
         s(MediaConfig::VideoBurnTextColor, Color::White);
         s(MediaConfig::VideoBurnBgColor, Color::Black);
         s(MediaConfig::VideoBurnDrawBg, true);
+        // Motion band — on by default so the plain TPG stream gives
+        // an observer an immediate visual cue for frame stutter / drop
+        // / repeat.  Cycle length is computed from the configured
+        // FrameRate at open time; height 0 picks the default.
+        s(MediaConfig::VideoMotionBandEnabled, true);
+        s(MediaConfig::VideoMotionBandHeight, int32_t(0));
         // Audio — enabled by default with a @c PcmMarker on every
         // channel so the plain TPG stream stamps each channel with
         // its own @c [stream:8][channel:8][frame:48] codeword.  The
@@ -251,6 +257,33 @@ Error TpgMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                                 return Error::InvalidArgument;
                         }
                         _videoPattern.setBurnPosition(BurnPosition(posEnum.value()));
+                        // Reserve the data-encoder band at the top of
+                        // the frame so a Top-* burn doesn't get
+                        // overwritten by the encoder pass that runs
+                        // after applyBurn.  The encoder stamps two
+                        // bands of @c _dataEncoderRepeat scan lines
+                        // each, starting at line 0.
+                        const int reservedLines =
+                                (_dataEncoderEnabled) ? static_cast<int>(2u * _dataEncoderRepeat) : 0;
+                        _videoPattern.setBurnTopReserved(reservedLines);
+                }
+
+                // Motion band — parallel to burn-in.  Cycle length is
+                // rounded num/den so 29.97 → 30 frames, 23.976 → 24,
+                // etc., giving the marker a once-per-second wrap that
+                // lands on the same pixel each cycle.  Burn-in's
+                // bottom-position math automatically respects the
+                // band's reservedLines, so nothing else needs to know
+                // it's enabled.
+                _motionBandEnabled = cfg.getAs<bool>(MediaConfig::VideoMotionBandEnabled, true);
+                _videoPattern.motionBand().setEnabled(_motionBandEnabled);
+                if (_motionBandEnabled) {
+                        const int bandHeight = cfg.getAs<int>(MediaConfig::VideoMotionBandHeight, 0);
+                        _videoPattern.motionBand().setHeight(bandHeight);
+                        const unsigned int num = _frameRate.numerator();
+                        const unsigned int den = _frameRate.denominator();
+                        const int          seqLen = (den > 0) ? static_cast<int>((num + den / 2u) / den) : 0;
+                        _videoPattern.motionBand().setSequenceLength(seqLen);
                 }
         }
 
@@ -387,6 +420,9 @@ Error TpgMediaIO::executeCmd(MediaIOCommandClose &cmd) {
         _dataEncoder = ImageDataEncoder();
         _dataEncoderEnabled = false;
         _videoPattern.setBurnEnabled(false);
+        _videoPattern.setBurnTopReserved(0);
+        _videoPattern.motionBand().setEnabled(false);
+        _motionBandEnabled = false;
         _burnEnabled = false;
         _burnTextTemplate = String();
         return Error::Ok;
@@ -493,6 +529,22 @@ Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 return nullptr;
         };
 
+        // Motion band — runs before burn so the burn lands on top of
+        // the band (in practice they're spatially disjoint because
+        // burn-position math respects MotionBand::reservedLines, but
+        // the order is well-defined just in case a caller forces a
+        // Bottom* burn into the band region anyway).
+        if (_videoEnabled && _motionBandEnabled) {
+                if (MediaPayload::Ptr *slot = lastVideoPayloadSlot(frame)) {
+                        auto *uvp = static_cast<UncompressedVideoPayload *>(slot->modify());
+                        uvp->ensureExclusive();
+                        Error mbErr = _videoPattern.applyMotionBand(*uvp, _frameCount.value());
+                        if (mbErr.isError()) {
+                                promekiWarn("TpgMediaIO: applyMotionBand failed: %s", mbErr.name().cstr());
+                        }
+                }
+        }
+
         if (_videoEnabled && _burnEnabled && !_burnTextTemplate.isEmpty()) {
                 String burnText = VariantLookup<Frame>::format(frame, _burnTextTemplate);
                 if (!burnText.isEmpty()) {
@@ -551,8 +603,13 @@ Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         }
 
         cmd.frame = std::move(frame);
-        ++_frameCount;
+        // Report the frame number that was just produced — the in-frame
+        // payloads (audio PcmMarker, motion band cycle index, data
+        // encoder frameId) all consumed _frameCount before this point,
+        // so currentFrame must mirror that pre-increment value to keep
+        // every per-frame identifier in lockstep starting at 0.
         cmd.currentFrame = toFrameNumber(_frameCount);
+        ++_frameCount;
         return Error::Ok;
 }
 
@@ -605,7 +662,7 @@ Error TpgMediaIO::describe(MediaIODescription *out) const {
         return Error::Ok;
 }
 
-Error TpgMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+Error TpgMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable, MediaConfig *configDelta) const {
         // TPG can synthesise at any reasonable shape.  The planner
         // can ask for an alternative pixel format / raster / frame
         // rate via @p requested; we accept any uncompressed
@@ -621,6 +678,41 @@ Error TpgMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievabl
                 }
         }
         *achievable = requested;
+
+        // When the planner asks for a config delta, translate the
+        // requested shape into the @ref MediaConfig keys that drive
+        // it.  The pipeline planner merges this onto the source
+        // stage's config so TPG opens with the negotiated shape and
+        // no CSC / resampler bridge is needed downstream.
+        if (configDelta != nullptr) {
+                if (!requested.imageList().isEmpty()) {
+                        const ImageDesc &img = requested.imageList()[0];
+                        if (img.pixelFormat().isValid()) {
+                                configDelta->set(MediaConfig::VideoPixelFormat, img.pixelFormat());
+                        }
+                        // Stamp VideoFormat when the requested raster
+                        // and frame rate are both valid — the planner
+                        // may have asked for a different shape, so we
+                        // build a matching VideoFormat from the
+                        // ad-hoc components rather than relying on
+                        // the well-known table.
+                        if (img.size().isValid() && requested.frameRate().isValid()) {
+                                VideoFormat vfmt(img.size(), requested.frameRate(), img.videoScanMode());
+                                if (vfmt.isValid()) {
+                                        configDelta->set(MediaConfig::VideoFormat, vfmt);
+                                }
+                        }
+                }
+                if (!requested.audioList().isEmpty()) {
+                        const AudioDesc &aud = requested.audioList()[0];
+                        if (aud.sampleRate() > 0.0f) {
+                                configDelta->set(MediaConfig::AudioRate, aud.sampleRate());
+                        }
+                        if (aud.channels() > 0) {
+                                configDelta->set(MediaConfig::AudioChannels, static_cast<int32_t>(aud.channels()));
+                        }
+                }
+        }
         return Error::Ok;
 }
 

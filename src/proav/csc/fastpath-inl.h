@@ -127,6 +127,65 @@ namespace promeki {
                         }
 
                         // =========================================================================
+                        // RGB8 <-> BGRA8 (fused swizzle + alpha add/drop)
+                        // =========================================================================
+                        //
+                        // Without these the conversion falls through to the generic
+                        // float-SoA pipeline (unpack -> alpha-fill -> range-in ->
+                        // range-out -> pack), which is ~5 SIMD passes for what is
+                        // really a single LoadInterleaved3 / StoreInterleaved4 byte
+                        // shuffle.  Same colormodel on both sides so no transfer or
+                        // gamut math is required.
+
+                        void FastPathRGB8toBGRA8(const void *const *srcPlanes, const size_t *srcStrides,
+                                                 void *const *dstPlanes, const size_t *dstStrides, size_t width,
+                                                 CSCContext &ctx) {
+                                const uint8_t *src = static_cast<const uint8_t *>(srcPlanes[0]);
+                                uint8_t       *dst = static_cast<uint8_t *>(dstPlanes[0]);
+
+                                const hn::Rebind<uint8_t, hn::ScalableTag<float>> du8q;
+                                const size_t                                      Nq = hn::Lanes(du8q);
+                                const auto                                        alpha = hn::Set(du8q, uint8_t(255));
+
+                                size_t x = 0;
+                                for (; x + Nq <= width; x += Nq) {
+                                        hn::Vec<decltype(du8q)> r, g, b;
+                                        hn::LoadInterleaved3(du8q, src + x * 3, r, g, b);
+                                        hn::StoreInterleaved4(b, g, r, alpha, du8q, dst + x * 4);
+                                }
+                                for (; x < width; x++) {
+                                        dst[x * 4 + 0] = src[x * 3 + 2]; // B <- src R-position holds R; BGRA[0]=B
+                                        dst[x * 4 + 1] = src[x * 3 + 1]; // G
+                                        dst[x * 4 + 2] = src[x * 3 + 0]; // R
+                                        dst[x * 4 + 3] = 255;
+                                }
+                                return;
+                        }
+
+                        void FastPathBGRA8toRGB8(const void *const *srcPlanes, const size_t *srcStrides,
+                                                 void *const *dstPlanes, const size_t *dstStrides, size_t width,
+                                                 CSCContext &ctx) {
+                                const uint8_t *src = static_cast<const uint8_t *>(srcPlanes[0]);
+                                uint8_t       *dst = static_cast<uint8_t *>(dstPlanes[0]);
+
+                                const hn::Rebind<uint8_t, hn::ScalableTag<float>> du8q;
+                                const size_t                                      Nq = hn::Lanes(du8q);
+
+                                size_t x = 0;
+                                for (; x + Nq <= width; x += Nq) {
+                                        hn::Vec<decltype(du8q)> b, g, r, a;
+                                        hn::LoadInterleaved4(du8q, src + x * 4, b, g, r, a);
+                                        hn::StoreInterleaved3(r, g, b, du8q, dst + x * 3);
+                                }
+                                for (; x < width; x++) {
+                                        dst[x * 3 + 0] = src[x * 4 + 2]; // R
+                                        dst[x * 3 + 1] = src[x * 4 + 1]; // G
+                                        dst[x * 3 + 2] = src[x * 4 + 0]; // B
+                                }
+                                return;
+                        }
+
+                        // =========================================================================
                         // BT.709 8-bit YCbCr <-> RGBA8 fast paths (limited range)
                         // =========================================================================
                         //

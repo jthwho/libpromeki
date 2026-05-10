@@ -1066,9 +1066,10 @@ Error MediaIO::proposeInput(const MediaDesc &offered, MediaDesc *preferred) cons
         return Error::Ok;
 }
 
-Error MediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+Error MediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable, MediaConfig *configDelta) const {
         // Default base behavior matches @ref proposeInput.
         (void)requested;
+        (void)configDelta;
         if (achievable != nullptr) *achievable = MediaDesc();
         return Error::NotSupported;
 }

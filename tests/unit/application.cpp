@@ -14,6 +14,9 @@
 #include <atomic>
 #include <chrono>
 #include <thread>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 using namespace promeki;
 
@@ -78,6 +81,17 @@ TEST_CASE("Application: stderrDevice returns writable device") {
         REQUIRE(dev != nullptr);
         CHECK(dev->isOpen());
         CHECK(dev->isWritable());
+}
+
+TEST_CASE("Application: pid returns the OS process id and is constant") {
+        // No Application instance — accessor must work standalone.
+        const int64_t a = Application::pid();
+        const int64_t b = Application::pid();
+        CHECK(a > 0);
+        CHECK(a == b);
+#ifndef _WIN32
+        CHECK(a == static_cast<int64_t>(::getpid()));
+#endif
 }
 
 TEST_CASE("Application: not copyable or movable") {

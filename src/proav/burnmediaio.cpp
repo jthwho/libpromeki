@@ -262,8 +262,9 @@ Error BurnMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *preferred) 
         return Error::Ok;
 }
 
-Error BurnMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+Error BurnMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable, MediaConfig *configDelta) const {
         if (achievable == nullptr) return Error::Invalid;
+        (void)configDelta;
         // Pure passthrough transform: whatever shape comes in is the
         // shape that goes out.
         *achievable = requested;

@@ -107,6 +107,10 @@ void VideoTestPattern::setAllocator(MediaIOAllocator::Ptr allocator) {
                 _allocator = allocator;
                 invalidatePayloadCache();
         }
+        // Mirror the allocator into the embedded MotionBand so its
+        // cached band frames land in the same memory space (e.g.
+        // SystemCow) as the background.
+        _motionBand.setAllocator(allocator);
 }
 
 ImageDesc VideoTestPattern::rgbScratchDesc(const ImageDesc &target) const {
@@ -310,27 +314,43 @@ Error VideoTestPattern::applyBurn(UncompressedVideoPayload &inout, const String 
 void VideoTestPattern::computeBurnPosition(int frameW, int frameH, int textW, int totalH, int ascender, int &x,
                                            int &y) const {
         const int margin = ascender / 2;
+        // Lowest baseline y the first line may use without crossing
+        // into the top-reserved band.  When _burnTopReserved is 0
+        // (the default) this collapses to the original margin+ascender.
+        const int topY = (_burnTopReserved > 0) ? (_burnTopReserved + margin + ascender) : (margin + ascender);
+        // Reserve the motion band at the bottom so Bottom-* burn
+        // positions get pushed up clear of the band.  When the band is
+        // disabled this is 0 and the calculation collapses back to the
+        // original frameH-margin baseline.
+        const int bandReserve = _motionBand.reservedLines();
+        const int bottomY = frameH - bandReserve - margin - totalH + ascender;
         if (_burnPosition == BurnPosition::TopLeft) {
                 x = margin;
-                y = margin + ascender;
+                y = topY;
         } else if (_burnPosition == BurnPosition::TopCenter) {
                 x = (frameW - textW) / 2;
-                y = margin + ascender;
+                y = topY;
         } else if (_burnPosition == BurnPosition::TopRight) {
                 x = frameW - textW - margin;
-                y = margin + ascender;
+                y = topY;
         } else if (_burnPosition == BurnPosition::BottomLeft) {
                 x = margin;
-                y = frameH - margin - totalH + ascender;
+                y = bottomY;
         } else if (_burnPosition == BurnPosition::BottomCenter) {
                 x = (frameW - textW) / 2;
-                y = frameH - margin - totalH + ascender;
+                y = bottomY;
         } else if (_burnPosition == BurnPosition::BottomRight) {
                 x = frameW - textW - margin;
-                y = frameH - margin - totalH + ascender;
+                y = bottomY;
         } else if (_burnPosition == BurnPosition::Center) {
                 x = (frameW - textW) / 2;
                 y = (frameH - totalH) / 2 + ascender;
+                if (y < topY) y = topY;
+                // Clamp center burns up if they would otherwise drift
+                // into the bottom-reserved band.
+                const int maxBaselineY = frameH - bandReserve - margin;
+                if (y + (totalH - ascender) > maxBaselineY) y = maxBaselineY - (totalH - ascender);
+                if (y < topY) y = topY;
         }
 }
 

@@ -512,6 +512,55 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 /** @brief Destructor. Closes any still-open streams. */
                 ~RtpMediaIO() override;
 
+                /**
+                 * @brief Returns the per-process unique RtpMediaIO instance ID.
+                 *
+                 * Assigned at construction from a process-local atomic
+                 * counter that starts at 1 and never repeats.  Two
+                 * @ref RtpMediaIO objects in the same process get
+                 * distinct IDs; a fresh process restart resets the
+                 * counter to 1.  Combined with @ref Application::pid
+                 * (and an egress IP) this is what gives every
+                 * @ref RtpMediaIO a stable, distinguishable RTCP
+                 * SDES @c CNAME by default.
+                 */
+                uint64_t objectId() const { return _objectId; }
+
+                /**
+                 * @brief Composes the auto-generated RTCP SDES CNAME string.
+                 *
+                 * Pure formatting helper, exposed for testability.
+                 * Builds @c "promeki-&lt;pid&gt;-&lt;objectId&gt;@&lt;host&gt;"
+                 * (RFC 3550 §6.5.1 @c user@host shape).  IPv6 hosts
+                 * must be supplied already bracket-wrapped (e.g.
+                 * @c "[2001:db8::42]") so the @c '@' separator is
+                 * unambiguous.  When @p host is empty the @c "@"
+                 * separator is omitted entirely so callers that
+                 * exhaust every host-derivation fallback still emit
+                 * a structurally valid CNAME.
+                 */
+                static String buildDefaultCname(int64_t pid, uint64_t objectId, const String &host);
+
+                /**
+                 * @brief Picks the host portion of the auto-generated CNAME.
+                 *
+                 * Strategy: if @p destination has an IP, ask
+                 * @ref NetworkInterface::findRoutesTo for the egress
+                 * interface and take its first IPv4 (or first IPv6,
+                 * bracket-wrapped) address.  When no interface
+                 * matches — destination unroutable, hostname-only,
+                 * or empty — fall back to
+                 * @ref NetworkInterface::firstNonLoopback's first
+                 * address.  When even that fails (loopback-only host,
+                 * no backend), return an empty string and let the
+                 * caller decide on a hostname / empty fallback.
+                 *
+                 * Static / pure-of-instance-state so a single derived
+                 * value can be shared across every session of one
+                 * @ref RtpMediaIO.
+                 */
+                static String pickEgressHostForCname(const SocketAddress &destination);
+
         protected:
                 Error executeCmd(MediaIOCommandOpen &cmd) override;
                 Error executeCmd(MediaIOCommandClose &cmd) override;
@@ -1460,6 +1509,13 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 bool           _rtcpEnabled = true;
                 int            _rtcpIntervalMs = 5000;
                 String         _rtcpCname;
+
+                // Process-local monotonic counter that gives every
+                // RtpMediaIO a distinct id within one process — see
+                // objectId() and buildDefaultCname().  Starts at 0,
+                // first instance gets 1.
+                static Atomic<uint64_t> _nextObjectId;
+                uint64_t                _objectId = 0;
 
                 // SR-anchor seeding gate.  At @c openStream time
                 // every active session is anchored with

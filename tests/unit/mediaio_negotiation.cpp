@@ -139,9 +139,10 @@ namespace {
                                         return Error::Ok;
                                 }
 
-                                Error proposeOutput(const MediaDesc &requested,
-                                                    MediaDesc       *achievable) const override {
+                                Error proposeOutput(const MediaDesc &requested, MediaDesc *achievable,
+                                                    MediaConfig *configDelta = nullptr) const override {
                                         if (achievable == nullptr) return Error::Invalid;
+                                        (void)configDelta;
                                         // Synthetic source can switch raster freely as
                                         // long as the requested pixel format is RGBA8_sRGB.
                                         if (requested.imageList().isEmpty()) return Error::NotSupported;

@@ -44,13 +44,13 @@ void MediaIOSource::setPrefetchDepth(int n) {
         _prefetchDepthExplicit = true;
 }
 
-Error MediaIOSource::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+Error MediaIOSource::proposeOutput(const MediaDesc &requested, MediaDesc *achievable, MediaConfig *configDelta) const {
         MediaIO *io = mediaIO();
         if (io == nullptr) {
                 if (achievable != nullptr) *achievable = MediaDesc();
                 return Error::NotSupported;
         }
-        return io->proposeOutput(requested, achievable);
+        return io->proposeOutput(requested, achievable, configDelta);
 }
 
 double MediaIOSource::rate() const {

@@ -544,8 +544,10 @@ Error VideoEncoderMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *pre
         return Error::Ok;
 }
 
-Error VideoEncoderMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+Error VideoEncoderMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable,
+                                         MediaConfig *configDelta) const {
         if (achievable == nullptr) return Error::Invalid;
+        (void)configDelta;
 
         // Resolve the codec from a live session when open, or from
         // the stage config during planning (the same fallback used

@@ -17,6 +17,7 @@
 #include <promeki/imagedatadecoder.h>
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
+#include <promeki/array.h>
 #include <promeki/audiobuffer.h>
 #include <promeki/buffer.h>
 #include <promeki/framerate.h>
@@ -117,6 +118,10 @@ struct InspectorDiscontinuity {
                         /// path is rate-shifting the codeword
                         /// substantially.
                         AudioDataLengthAnomaly,
+
+                        /// Sentinel — number of @ref Kind values.  Used to size
+                        /// the per-kind counter array on @ref InspectorSnapshot.
+                        KindCount
                 };
 
                 Kind   kind;          ///< Which kind of discontinuity this is.
@@ -434,6 +439,16 @@ struct InspectorSnapshot {
                 /// Total number of discontinuities of any kind, summed over all
                 /// frames.
                 int64_t totalDiscontinuities = 0;
+                /// Per-kind discontinuity counts, indexed by
+                /// @ref InspectorDiscontinuity::Kind cast to @c size_t.
+                /// @ref totalDiscontinuities equals the sum of every
+                /// entry here.  Tests that only care about specific
+                /// kinds (e.g. @ref InspectorDiscontinuity::FrameNumberJump
+                /// for an "RX frames are sequential" check) read this
+                /// directly instead of treating every discontinuity as
+                /// fatal.
+                Array<int64_t, static_cast<size_t>(InspectorDiscontinuity::KindCount)>
+                        discontinuitiesByKind{};
 
                 // ---- Per-essence PTS jitter accumulators (jitter is
                 // measured against the prediction; see
@@ -797,12 +812,23 @@ class InspectorMediaIO : public SharedThreadMediaIO {
                 Buffer _audioDrainScratch;
 
                 // ---- Continuity tracking ----
-                bool     _hasPreviousPicture = false;
-                uint32_t _previousFrameNumber = 0;
-                uint32_t _previousStreamId = 0;
-                Timecode _previousPictureTc;
-                bool     _hasPreviousLtc = false;
-                Timecode _previousLtcTc;
+                bool        _hasPreviousPicture = false;
+                uint32_t    _previousFrameNumber = 0;
+                uint32_t    _previousStreamId = 0;
+                Timecode    _previousPictureTc;
+                /// Inspector frame index of the most recent
+                /// successfully-decoded picture data band.  The
+                /// FrameNumberJump check uses
+                /// @c (currentFrameIndex - _previousFrameIndexAtDecode)
+                /// to compute the expected upstream frame-number
+                /// delta — without this, a sequence of failed band
+                /// decodes between two successful ones would look
+                /// like upstream frames had been lost when in fact
+                /// the inspector simply could not read the band
+                /// (a known issue on some pixel formats).
+                FrameNumber _previousFrameIndexAtDecode{0};
+                bool        _hasPreviousLtc = false;
+                Timecode    _previousLtcTc;
                 /// Inferred frame-rate mode for the picture timecode.
                 /// The picture data band only carries digits + the DF
                 /// flag, so the picture TC has no native @ref Timecode::Mode.

@@ -778,8 +778,8 @@ TEST_CASE("VariantDatabase: format applies std::format spec to primitives") {
 TEST_CASE("VariantDatabase: format replaces missing key with sentinel") {
         using DB = VariantDatabase<"FmtTagMiss">;
         DB db;
-        CHECK(db.format("Value: {NotThere}") == String("Value: [UNKNOWN KEY: NotThere]"));
-        CHECK(db.format("Value: {NotThere:smpte}") == String("Value: [UNKNOWN KEY: NotThere]"));
+        CHECK(db.format("Value: {NotThere}") == String("Value: ?NotThere?"));
+        CHECK(db.format("Value: {NotThere:smpte}") == String("Value: ?NotThere?"));
 }
 
 TEST_CASE("VariantDatabase: format reports IdNotFound when a key is missing") {
@@ -791,7 +791,7 @@ TEST_CASE("VariantDatabase: format reports IdNotFound when a key is missing") {
         Error  err;
         String s = db.format("{Present} and {Absent}", &err);
         CHECK(err == Error::IdNotFound);
-        CHECK(s == String("1 and [UNKNOWN KEY: Absent]"));
+        CHECK(s == String("1 and ?Absent?"));
 
         // All keys resolved -> Error::Ok.
         Error  ok;
@@ -819,7 +819,7 @@ TEST_CASE("VariantDatabase: format consults resolver for missing keys") {
         // C is still unresolved, so err must report IdNotFound, but the
         // resolver-supplied B value is interpolated cleanly.
         CHECK(err == Error::IdNotFound);
-        CHECK(s == String("7/B-resolved(custom)/[UNKNOWN KEY: C]"));
+        CHECK(s == String("7/B-resolved(custom)/?C?"));
 }
 
 TEST_CASE("VariantDatabase: format resolver enables database nesting") {
@@ -853,7 +853,7 @@ TEST_CASE("VariantDatabase: format resolver returning nullopt falls back to sent
         String s = db.format(
                 "{X}", [](const String &, const String &) -> std::optional<String> { return std::nullopt; }, &err);
         CHECK(err == Error::IdNotFound);
-        CHECK(s == String("[UNKNOWN KEY: X]"));
+        CHECK(s == String("?X?"));
 }
 
 TEST_CASE("VariantDatabase: format honors {{ and }} escapes") {
@@ -928,7 +928,7 @@ TEST_CASE("VariantDatabase: format reports unknown nested key cleanly") {
         Error  err;
         String s = db.format("{Who.missing}", &err);
         CHECK(err == Error::IdNotFound);
-        CHECK(s == String("[UNKNOWN KEY: Who.missing]"));
+        CHECK(s == String("?Who.missing?"));
 }
 
 // ============================================================================
