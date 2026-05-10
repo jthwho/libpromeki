@@ -74,6 +74,24 @@ class MemSpace {
                                 2, ///< CUDA device memory (GPU VRAM).  Not host-accessible.  Registered by CudaBootstrap when PROMEKI_ENABLE_CUDA is on.
                         CudaHost =
                                 3, ///< CUDA pinned host memory (page-locked).  Host-accessible; enables async DMA with CudaDevice.  Registered by CudaBootstrap.
+                        /**
+                         * @brief System (CPU) memory backed by a sealed memfd region.
+                         *
+                         * After @c Buffer::seal(), clones detach via @c MAP_PRIVATE
+                         * and pay only for the pages they dirty (page-level CoW).
+                         * On non-Linux builds (@c PROMEKI_ENABLE_MEMFD off) silently
+                         * falls back to a plain @c HostBufferImpl — correctness
+                         * preserved, no CoW optimisation; @c isCowBacked() returns
+                         * false in the fallback.
+                         *
+                         * @par Concurrency contract
+                         * Stricter than other host backends — concurrent reads of
+                         * @c Buffer::data() on sibling handles during @c seal() /
+                         * @c ensureExclusive() are unsafe.  Use
+                         * @c Buffer::isCowBacked() to branch.
+                         */
+                        SystemCow =
+                                4,
                         Default = System,  ///< Alias for System memory.
                         UserDefined = 1024 ///< First ID available for user-registered types.
                 };
@@ -118,6 +136,19 @@ class MemSpace {
                                                 uint64_t liveBytes = 0; ///< Outstanding bytes at snapshot time.
                                                 uint64_t peakCount = 0; ///< Highest liveCount ever observed.
                                                 uint64_t peakBytes = 0; ///< Highest liveBytes ever observed.
+                                                /**
+                                                 * @brief Highest @c BufferImpl::residentBytes() value
+                                                 *        observed at impl-destruction time.
+                                                 *
+                                                 * Approximate (only catches values at destruction)
+                                                 * but near-zero cost; gives a useful lower bound on
+                                                 * peak physical RSS for sparse / CoW backends.
+                                                 * @c liveBytes / @c peakBytes still count virtual
+                                                 * address space — the gap is the saving.  For CoW
+                                                 * backends, see @c MemSpace::residentBytesSnapshot
+                                                 * for a precise on-demand readout.
+                                                 */
+                                                uint64_t peakResidentBytes = 0;
                                 };
 
                                 Atomic<uint64_t> allocCount{0};     ///< @see Snapshot::allocCount
@@ -135,6 +166,7 @@ class MemSpace {
                                 Atomic<uint64_t> liveBytes{0};      ///< @see Snapshot::liveBytes
                                 Atomic<uint64_t> peakCount{0};      ///< @see Snapshot::peakCount
                                 Atomic<uint64_t> peakBytes{0};      ///< @see Snapshot::peakBytes
+                                Atomic<uint64_t> peakResidentBytes{0}; ///< @see Snapshot::peakResidentBytes
 
                                 Stats() = default;
                                 Stats(const Stats &) = delete;
@@ -171,6 +203,16 @@ class MemSpace {
                          * cumulative and live counters.
                          */
                                 void recordRelease(uint64_t bytes);
+
+                                /**
+                         * @brief Internal: bumps the @ref peakResidentBytes
+                         *        watermark if @p bytes exceeds it.
+                         *
+                         * Called by @ref BufferImpl destructors that
+                         * track sparse residency (notably
+                         * @c MemfdBufferImpl).  CAS-loop; lock-free.
+                         */
+                                void recordResidentBytes(uint64_t bytes);
                 };
 
                 /**

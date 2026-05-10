@@ -6,9 +6,14 @@
  */
 
 #include <promeki/bufferfactory.h>
+#include <promeki/config.h>
 #include <promeki/hostbufferimpl.h>
 #include <promeki/map.h>
 #include <promeki/mutex.h>
+
+#if PROMEKI_ENABLE_MEMFD
+#include <promeki/memfdbufferimpl.h>
+#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -31,6 +36,21 @@ struct FactoryRegistry {
                         });
                         entries.insert(MemSpace::SystemSecure, [](const MemSpace &ms, size_t bytes, size_t align) -> BufferImplPtr {
                                 return BufferImplPtr::takeOwnership(new HostSecureBufferImpl(ms, bytes, align));
+                        });
+                        // SystemCow: memfd-backed CoW backend on Linux,
+                        // graceful fallback to plain HostBufferImpl on
+                        // builds without memfd_create + F_ADD_SEALS.
+                        // The MemSpace ID is registered either way, so
+                        // call sites that don't care about CoW
+                        // optimisation get correct behaviour
+                        // transparently — they just lose the page-CoW
+                        // savings on non-Linux.
+                        entries.insert(MemSpace::SystemCow, [](const MemSpace &ms, size_t bytes, size_t align) -> BufferImplPtr {
+#if PROMEKI_ENABLE_MEMFD
+                                return BufferImplPtr::takeOwnership(new MemfdBufferImpl(ms, bytes, align));
+#else
+                                return BufferImplPtr::takeOwnership(new HostBufferImpl(ms, bytes, align));
+#endif
                         });
                 }
 };

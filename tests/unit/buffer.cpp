@@ -333,3 +333,72 @@ TEST_CASE("Buffer_CopyFrom") {
                 CHECK(err == Error::Invalid);
         }
 }
+
+// ============================================================================
+// Generic seal / residentBytes / isCowBacked / isShared (Phase B.1)
+// ============================================================================
+
+TEST_CASE("Buffer_seal_default_isOk") {
+        // The default BufferImpl::seal() returns Ok unconditionally, so
+        // call sites can issue seal() without knowing the backend.
+        Buffer b(1024);
+        REQUIRE(b.isValid());
+        CHECK(b.seal() == Error::Ok);
+        CHECK(b.seal() == Error::Ok); // idempotent default
+}
+
+TEST_CASE("Buffer_seal_invalid_returnsInvalid") {
+        Buffer b;
+        CHECK(b.seal() == Error::Invalid);
+}
+
+TEST_CASE("Buffer_isCowBacked_defaultBackend_false") {
+        Buffer b(1024);
+        REQUIRE(b.isValid());
+        CHECK_FALSE(b.isCowBacked());
+
+        Buffer empty;
+        CHECK_FALSE(empty.isCowBacked());
+}
+
+TEST_CASE("Buffer_residentBytes_defaultBackend_equalsAllocSize") {
+        // For HostBufferImpl, the entire allocation is resident.
+        Buffer b(4096);
+        REQUIRE(b.isValid());
+        CHECK(b.residentBytes() == b.allocSize());
+
+        Buffer empty;
+        CHECK(empty.residentBytes() == 0);
+}
+
+TEST_CASE("Buffer_isShared_singleHandle_false") {
+        Buffer b(1024);
+        REQUIRE(b.isValid());
+        CHECK_FALSE(b.isShared());
+        CHECK(b.isExclusive());
+}
+
+TEST_CASE("Buffer_isShared_twoHandles_true") {
+        Buffer a(1024);
+        Buffer b = a; // copy = refcount bump
+        CHECK(a.isShared());
+        CHECK(b.isShared());
+        CHECK_FALSE(a.isExclusive());
+        CHECK_FALSE(b.isExclusive());
+}
+
+TEST_CASE("Buffer_isShared_afterHandleDrops_false") {
+        Buffer a(1024);
+        {
+                Buffer b = a;
+                CHECK(a.isShared());
+        }
+        CHECK_FALSE(a.isShared());
+        CHECK(a.isExclusive());
+}
+
+TEST_CASE("Buffer_isShared_invalid_false") {
+        Buffer b;
+        CHECK_FALSE(b.isShared());
+        CHECK_FALSE(b.isExclusive());
+}

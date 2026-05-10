@@ -13,6 +13,7 @@
 #include <promeki/result.h>
 #include <promeki/color.h>
 #include <promeki/imagedesc.h>
+#include <promeki/mediaioallocator.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/timecode.h>
 #include <promeki/enums.h>
@@ -242,6 +243,31 @@ class VideoTestPattern {
                  */
                 void render(UncompressedVideoPayload &img, double motionOffset = 0.0) const;
 
+                /**
+                 * @brief Installs a custom @ref MediaIOAllocator for
+                 *        the cached payload slots.
+                 *
+                 * Used by @ref TpgMediaIO to route the cached
+                 * background through @ref MemSpace::SystemCow so per-
+                 * frame burn-in detaches into a @c MAP_PRIVATE clone
+                 * rather than triggering a full-frame @c memcpy.  Pass
+                 * a null Ptr to revert to
+                 * @ref MediaIOAllocator::defaultAllocator (heap-backed
+                 * @c MemSpace::Default).
+                 *
+                 * Setting the allocator after a cache slot has been
+                 * populated does not retro-actively re-allocate that
+                 * slot; the next allocator that triggers
+                 * @ref invalidatePayloadCache (typically a descriptor
+                 * change) is what picks up the new policy.
+                 */
+                void setAllocator(MediaIOAllocator::Ptr allocator);
+
+                /**
+                 * @brief Returns the currently-installed allocator (or null if default).
+                 */
+                MediaIOAllocator::Ptr allocator() const { return _allocator; }
+
         private:
                 // Background pattern state
                 VideoPattern _pattern = VideoPattern::ColorBars;
@@ -286,6 +312,12 @@ class VideoTestPattern {
                 mutable size_t _cacheH = 0;
                 mutable int    _cachePixelFormatId = 0;
 
+                // Optional allocator override.  Null = use
+                // MediaIOAllocator::defaultAllocator() so freshly-
+                // constructed VideoTestPatterns behave exactly as
+                // before the allocator framework existed.
+                MediaIOAllocator::Ptr _allocator;
+
                 // Burn font — lazily constructed the first time burn
                 // actually runs, because FastFont needs a PaintEngine
                 // (and thus a pixel format) at construction time.
@@ -322,8 +354,25 @@ class VideoTestPattern {
                         }
                         auto &slot = _cachedPayloads[slotIndex];
                         if (!slot.isValid()) {
-                                slot = UncompressedVideoPayload::allocate(desc);
-                                if (slot.isValid()) build(slot);
+                                // Route allocation through the
+                                // installed allocator (typically
+                                // SystemCow when wired by TpgMediaIO).
+                                // Null _allocator falls back to the
+                                // process-wide default — no behaviour
+                                // change for callers that never wire
+                                // one up.
+                                slot = _allocator.isValid() ? _allocator->allocateVideoPayload(desc)
+                                                            : UncompressedVideoPayload::allocate(desc);
+                                if (slot.isValid()) {
+                                        build(slot);
+                                        // Seal the cached payload so
+                                        // subsequent ensureExclusive()
+                                        // detaches a SystemCow-backed
+                                        // buffer cheaply (MAP_PRIVATE
+                                        // clone, not full-frame memcpy).
+                                        // Default backends no-op.
+                                        (void)slot->data().seal();
+                                }
                         }
                         return slot;
                 }

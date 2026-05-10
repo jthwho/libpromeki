@@ -185,6 +185,21 @@ void BufferView::ensureExclusive() {
         }
 }
 
+Error BufferView::seal() const {
+        // Walk the deduplicated buffer table — each unique impl is
+        // visited at most once.  Capture the first error but keep
+        // sealing the rest so a single bad backend doesn't strand
+        // sibling planes in producer phase.
+        Error firstErr = Error::Ok;
+        for (size_t i = 0; i < _buffers.size(); ++i) {
+                const Buffer &b = _buffers[i];
+                if (!b.isValid()) continue;
+                Error e = b.seal();
+                if (e.isError() && firstErr.isOk()) firstErr = e;
+        }
+        return firstErr;
+}
+
 // ============================================================================
 // VariantLookup registration for BufferView::Entry
 //

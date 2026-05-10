@@ -108,7 +108,8 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(Empty, NONE, "Container or queue is empty"),
         DEFINE_ERROR(NotFound, NONE, "Requested element or value was not found"),
         DEFINE_ERROR(BuildIdentMismatch, NONE,
-                     "Library build identity does not match caller's compile-time identity (stale binary)")};
+                     "Library build identity does not match caller's compile-time identity (stale binary)"),
+        DEFINE_ERROR(NotReady, NONE, "Resource exists but is not yet in the state required for this operation")};
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {
         static StructDatabase<int, Error::Code> sysdb = []() {

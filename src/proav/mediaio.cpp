@@ -1115,6 +1115,22 @@ MediaIORequest MediaIO::sendParams(const String &name, const MediaIOParams &para
         return req;
 }
 
+MediaIOAllocator::Ptr MediaIO::allocator() const {
+        // Default-initialise lazily so freshly-constructed MediaIOs
+        // that never install an override still resolve to the
+        // process-wide default — the contract is "never returns null."
+        if (_allocator.isValid()) return _allocator;
+        return MediaIOAllocator::defaultAllocator();
+}
+
+void MediaIO::setAllocator(MediaIOAllocator::Ptr a) {
+        // Null clears and reverts to defaultAllocator() on the next
+        // allocator() read.  Stored as-is so a backend that wants to
+        // hot-swap (e.g. when re-opening with a different placement
+        // policy) sees the new pointer immediately.
+        _allocator = a;
+}
+
 MediaIORequest MediaIO::stats() {
         if (!isOpen() || isClosing()) return MediaIORequest::resolved(Error::NotOpen);
 

@@ -125,10 +125,14 @@ class HostMappedBufferImpl : public BufferImpl {
                         return BufferRequest::resolved(BufferCommand::Ptr::takeOwnership(cmd));
                 }
 
-                void    *_hostPtr = nullptr;
-                size_t   _allocSize = 0;
-                size_t   _align = 0;
-                MemSpace _memSpace;
+                // _hostPtr is mutable because backends with a producer→post-producer
+                // transition (e.g. MemfdBufferImpl::seal()) need to swap the pointer
+                // through a const seal API.  The Buffer wrapper always re-fetches
+                // through mappedHostData(); no caller caches across the swap.
+                mutable void    *_hostPtr = nullptr;
+                size_t           _allocSize = 0;
+                size_t           _align = 0;
+                MemSpace         _memSpace;
 };
 
 /**

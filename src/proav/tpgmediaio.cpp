@@ -9,6 +9,7 @@
 #include <promeki/tpgmediaio.h>
 #include <promeki/videoformat.h>
 #include <promeki/frame.h>
+#include <promeki/memspace.h>
 #include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
@@ -22,6 +23,47 @@
 #include <promeki/mediaiorequest.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+namespace {
+        /**
+         * @brief MediaIOAllocator that hands out SystemCow-backed
+         *        video planes for cheap per-frame burn-in detach.
+         *
+         * TPG caches its rendered background once per
+         * (descriptor + pattern + solid colour) configuration.  The
+         * per-frame burn-in then writes a small text band on top.
+         * Without SystemCow, the @c ensureExclusive() that detaches
+         * the cached payload before burning copies the entire frame
+         * (~8.3 MB at 1080p RGBA8, ~33 MB at 4K) — pure CPU memory
+         * traffic with no algorithmic value.
+         *
+         * With SystemCow, the cached payload is sealed once at the
+         * end of populate; per-frame @c ensureExclusive maps a fresh
+         * @c MAP_PRIVATE clone of the sealed memfd.  Pages that
+         * @c applyBurn doesn't dirty stay shared with the cache;
+         * only the burn band's pages CoW.
+         *
+         * Audio + generic bytes fall through to the base allocator
+         * (default heap) — there's no SystemCow win for those paths.
+         */
+        class TpgAllocator : public MediaIOAllocator {
+                public:
+                        PROMEKI_SHARED_DERIVED(TpgAllocator)
+
+                        String name() const override { return String("TpgAllocator"); }
+
+                        Buffer allocateVideoPlane(const ImageDesc &desc, int planeIndex) const override {
+                                const PixelFormat &pf = desc.pixelFormat();
+                                if (!pf.isValid() || !desc.size().isValid()) return Buffer();
+                                if (planeIndex < 0 || planeIndex >= static_cast<int>(pf.planeCount())) return Buffer();
+                                const size_t bytes = pf.planeSize(static_cast<size_t>(planeIndex), desc);
+                                if (bytes == 0) return Buffer();
+                                Buffer buf(bytes, Buffer::DefaultAlign, MemSpace::SystemCow);
+                                if (buf.isValid()) buf.setSize(bytes);
+                                return buf;
+                        }
+        };
+}
 
 PROMEKI_REGISTER_MEDIAIO_FACTORY(TpgFactory)
 
@@ -317,6 +359,17 @@ Error TpgMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         group->setFrameCount(MediaIO::FrameCountInfinite);
 
         if (addSource(group, mediaDesc) == nullptr) return Error::Invalid;
+
+        // Install the SystemCow-routing allocator so the cached video
+        // background is sealed once after populate; per-frame burn-in
+        // detaches the cached payload via MAP_PRIVATE clone instead of
+        // memcpy'ing the full frame.  ROLLBACK POINT: removing the
+        // next two lines reverts placement to the default heap-backed
+        // allocator without disturbing any of the SystemCow / allocator
+        // infrastructure — see devplan/core/systemcow-mediaio-allocator.md.
+        auto allocator = MediaIOAllocator::Ptr::takeOwnership(new TpgAllocator());
+        setAllocator(allocator);
+        _videoPattern.setAllocator(allocator);
         return Error::Ok;
 }
 

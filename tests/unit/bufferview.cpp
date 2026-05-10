@@ -224,4 +224,25 @@ TEST_CASE("BufferViewList domain operations") {
                 // clones (not the same one).
                 CHECK(list[0].buffer().impl().ptr() != list[1].buffer().impl().ptr());
         }
+
+        SUBCASE("seal: empty list returns Ok") {
+                BufferView list;
+                CHECK(list.seal() == Error::Ok);
+        }
+
+        SUBCASE("seal: default-backend slices return Ok") {
+                // BufferImpl::seal() defaults to Ok for HostBufferImpl,
+                // so a multi-plane payload of default-allocated buffers
+                // sees a no-op success across every unique entry.
+                Buffer a(1024);
+                Buffer b(2048);
+                a.setSize(1024);
+                b.setSize(2048);
+                BufferView list = {
+                        BufferView(a, 0, 512),
+                        BufferView(a, 512, 512), // same impl as the first slice
+                        BufferView(b, 0, 2048),
+                };
+                CHECK(list.seal() == Error::Ok);
+        }
 }

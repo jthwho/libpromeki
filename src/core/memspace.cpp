@@ -51,6 +51,7 @@ MemSpace::Stats::Snapshot MemSpace::Stats::snapshot() const {
         s.liveBytes = liveBytes.value();
         s.peakCount = peakCount.value();
         s.peakBytes = peakBytes.value();
+        s.peakResidentBytes = peakResidentBytes.value();
         return s;
 }
 
@@ -70,6 +71,7 @@ void MemSpace::Stats::reset() {
         liveBytes.setValue(0);
         peakCount.setValue(0);
         peakBytes.setValue(0);
+        peakResidentBytes.setValue(0);
 }
 
 void MemSpace::Stats::recordAlloc(uint64_t bytes) {
@@ -101,6 +103,13 @@ void MemSpace::Stats::recordRelease(uint64_t bytes) {
         releaseBytes.fetchAndAdd(bytes);
         liveCount.fetchAndSub(1);
         liveBytes.fetchAndSub(bytes);
+}
+
+void MemSpace::Stats::recordResidentBytes(uint64_t bytes) {
+        uint64_t prev = peakResidentBytes.value();
+        while (bytes > prev && !peakResidentBytes.compareAndSwap(prev, bytes)) {
+                // prev is updated by compareAndSwap on failure.
+        }
 }
 
 // ---------------------------------------------------------------------------
@@ -156,6 +165,40 @@ struct MemSpaceRegistry {
                                 },
                                 .fill = [](void *ptr, size_t bytes, char value) -> Error {
                                         // Wrapper guarantees: ptr != nullptr.
+                                        PROMEKI_ASSERT(ptr != nullptr);
+                                        std::memset(ptr, value, bytes);
+                                        return Error::Ok;
+                                },
+                                .stats = makeStats()};
+
+                        // SystemCow.  All real allocation/release/copy/fill goes
+                        // through MemfdBufferImpl (see bufferfactory.cpp); the Ops
+                        // entries here exist to surface the MemSpace name + stats
+                        // in operator dashboards.  Backend is Linux-only — on
+                        // non-memfd builds the SystemCow factory falls back to
+                        // HostBufferImpl, but the MemSpace itself is always
+                        // registered so call sites get correct (if non-CoW)
+                        // behaviour transparently.
+                        entries[MemSpace::SystemCow] = {
+                                .id = MemSpace::SystemCow,
+                                .name = "SystemCow",
+                                .isHostAccessible = [](const MemAllocation &) -> bool { return true; },
+                                .alloc = [](MemAllocation &) -> void {
+                                        // Allocation lives entirely on MemfdBufferImpl;
+                                        // MemSpace::alloc is dead code for this MemSpace.
+                                        PROMEKI_ASSERT(false && "MemSpace::SystemCow alloc must go through BufferImpl factory");
+                                },
+                                .release = [](MemAllocation &) -> void {
+                                        PROMEKI_ASSERT(false && "MemSpace::SystemCow release must go through BufferImpl");
+                                },
+                                .copy = [](const MemAllocation &, const MemAllocation &, size_t) -> Error {
+                                        return Error::NotSupported;
+                                },
+                                .fill = [](void *ptr, size_t bytes, char value) -> Error {
+                                        // Defensive fill — buffers never reach here under the
+                                        // BufferImpl path, but if a caller routes raw bytes
+                                        // through MemSpace::fill (legacy path), do the right
+                                        // thing rather than crash.
                                         PROMEKI_ASSERT(ptr != nullptr);
                                         std::memset(ptr, value, bytes);
                                         return Error::Ok;
@@ -244,9 +287,10 @@ StringList MemSpace::statsReport() const {
                                          Units::fromByteCount(s.maxAllocBytes).cstr()));
         lines.pushToBack(String::sprintf("  release: %llu calls, %s", (unsigned long long)s.releaseCount,
                                          Units::fromByteCount(s.releaseBytes).cstr()));
-        lines.pushToBack(String::sprintf("  live:    %llu outstanding, %s  (peak: %llu, %s)",
+        lines.pushToBack(String::sprintf("  live:    %llu outstanding, %s  (peak: %llu, %s; peak resident: %s)",
                                          (unsigned long long)s.liveCount, Units::fromByteCount(s.liveBytes).cstr(),
-                                         (unsigned long long)s.peakCount, Units::fromByteCount(s.peakBytes).cstr()));
+                                         (unsigned long long)s.peakCount, Units::fromByteCount(s.peakBytes).cstr(),
+                                         Units::fromByteCount(s.peakResidentBytes).cstr()));
         lines.pushToBack(String::sprintf("  copy:    %llu calls, %s  (fail: %llu)", (unsigned long long)s.copyCount,
                                          Units::fromByteCount(s.copyBytes).cstr(),
                                          (unsigned long long)s.copyFailCount));

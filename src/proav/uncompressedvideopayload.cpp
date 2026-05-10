@@ -8,6 +8,7 @@
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/cscpipeline.h>
 #include <promeki/mediaconfig.h>
+#include <promeki/mediaioallocator.h>
 #include <promeki/paintengine.h>
 #include <promeki/variantlookup.h>
 #include <promeki/variantdatabase.h>
@@ -47,19 +48,11 @@ PaintEngine UncompressedVideoPayload::createPaintEngine() const {
 }
 
 UncompressedVideoPayload::Ptr UncompressedVideoPayload::allocate(const ImageDesc &desc) {
-        const PixelFormat &pd = desc.pixelFormat();
-        if (!pd.isValid() || !desc.size().isValid()) return Ptr();
-        const int planeCount = pd.planeCount();
-        if (planeCount <= 0) return Ptr();
-        BufferView planes;
-        for (int i = 0; i < planeCount; ++i) {
-                const size_t bytes = pd.planeSize(static_cast<size_t>(i), desc);
-                if (bytes == 0) return Ptr();
-                auto buf = Buffer(bytes);
-                buf.setSize(bytes);
-                planes.pushToBack(buf, 0, bytes);
-        }
-        return Ptr::create(desc, planes);
+        // Route through the process-wide default MediaIOAllocator —
+        // backends that want a different placement policy fetch their
+        // own allocator (port->allocator()->allocateVideoPayload(desc))
+        // instead of going through this static helper.
+        return MediaIOAllocator::defaultAllocator()->allocateVideoPayload(desc);
 }
 
 // ============================================================================

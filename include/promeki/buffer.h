@@ -408,6 +408,71 @@ class Buffer {
                 bool isExclusive() const { return _d.isValid() && _d.referenceCount() < 2; }
 
                 /**
+                 * @brief Returns true when more than one handle references this backing storage.
+                 *
+                 * Inverse of @ref isExclusive for invalid Buffers
+                 * (which return false from both — they have no
+                 * backing).  Convenience used by call sites that want
+                 * to skip @ref ensureExclusive when they're already
+                 * the sole holder.
+                 */
+                bool isShared() const { return _d.isValid() && _d.referenceCount() >= 2; }
+
+                /**
+                 * @brief Transitions the underlying backing out of its producer phase.
+                 *
+                 * Forwards to @ref BufferImpl::seal.  For backends
+                 * without a seal concept this is a no-op success —
+                 * call sites can issue @c seal() unconditionally.  For
+                 * @ref MemSpace::SystemCow buffers, this is the
+                 * deterministic "populate done" point that switches
+                 * the backing to CoW clone semantics.
+                 *
+                 * Returns @ref Error::Invalid for invalid Buffers.
+                 *
+                 * @par Concurrency contract
+                 * For backends that mutate internal state on seal
+                 * (notably @ref MemSpace::SystemCow), concurrent reads
+                 * of @ref data() on sibling Buffer handles during
+                 * @c seal() / @ref ensureExclusive are unsafe.
+                 * Backends where seal is a no-op (every other backend
+                 * today) accept concurrent reads.  Use
+                 * @ref isCowBacked to query.
+                 */
+                [[nodiscard]] Error seal() const {
+                        if (!_d.isValid()) return Error::Invalid;
+                        return _d->seal();
+                }
+
+                /**
+                 * @brief Returns the resident-set size of this Buffer in bytes.
+                 *
+                 * Forwards to @ref BufferImpl::residentBytes.  For
+                 * non-CoW backends this equals @ref allocSize; for
+                 * CoW backends it reports the actual page-resident
+                 * count (typically far less than the allocation).
+                 * Returns 0 for invalid Buffers.
+                 */
+                size_t residentBytes() const {
+                        return _d.isValid() ? _d->residentBytes() : 0;
+                }
+
+                /**
+                 * @brief Returns true when this Buffer is backed by a copy-on-write backend.
+                 *
+                 * Forwards to @ref BufferImpl::isCowBacked.  Today
+                 * only @ref MemSpace::SystemCow returns true.  Generic
+                 * code branches on this predicate to honour the
+                 * stricter concurrent-access contract that CoW
+                 * backends impose around @ref seal and
+                 * @ref ensureExclusive.  Returns false for invalid
+                 * Buffers.
+                 */
+                bool isCowBacked() const {
+                        return _d.isValid() && _d->isCowBacked();
+                }
+
+                /**
                  * @brief Returns the underlying BufferImpl handle.
                  *
                  * Used by @ref BufferView's deduplication table to

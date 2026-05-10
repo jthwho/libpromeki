@@ -118,7 +118,8 @@ class Error {
                         InspectorDiscontinuityDetected, ///< Inspector observed at least one discontinuity during its run.
                         Empty,                          ///< Container or queue has no element to return.
                         NotFound, ///< Requested element or value was not present in the searched container.
-                        BuildIdentMismatch ///< Library build identity does not match the caller's compile-time identity (stale binary).
+                        BuildIdentMismatch, ///< Library build identity does not match the caller's compile-time identity (stale binary).
+                        NotReady ///< Resource exists but is not yet in the state required for this operation (will become ready later).
                 };
 
                 /**
