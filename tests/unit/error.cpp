@@ -227,3 +227,22 @@ TEST_CASE("Error: syserr(std::error_code) with system_category") {
         Error           e2 = Error::syserr(ec2);
         CHECK(e2.code() == Error::IOError);
 }
+
+TEST_CASE("Error: NotReady has name and desc") {
+        Error e(Error::NotReady);
+        CHECK(e.isError());
+        CHECK_FALSE(e.name().isEmpty());
+        CHECK_FALSE(e.desc().isEmpty());
+}
+
+TEST_CASE("Error: NotReady is distinct from adjacent codes") {
+        Error nr(Error::NotReady);
+        Error bim(Error::BuildIdentMismatch);
+        Error nf(Error::NotFound);
+        Error empty(Error::Empty);
+        CHECK(nr != bim);
+        CHECK(nr != nf);
+        CHECK(nr != empty);
+        CHECK(nr.name() != bim.name());
+        CHECK(nr.name() != nf.name());
+}

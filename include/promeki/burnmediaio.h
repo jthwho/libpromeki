@@ -70,6 +70,22 @@ PROMEKI_NAMESPACE_BEGIN
  * | QueueDepth    | int64_t | Current FIFO depth. |
  * | QueueCapacity | int64_t | Maximum FIFO depth. |
  *
+ * @par Allocator policy
+ *
+ * BurnMediaIO does not install its own @ref MediaIOAllocator override.
+ * It is a transform that mutates the upstream payload via
+ * @c MediaPayload::Ptr::modify() + @c UncompressedVideoPayload::ensureExclusive() —
+ * the upstream allocator decides where the buffer lives, and the
+ * burn pass inherits whatever CoW story that allocator provides.
+ * In particular, when the upstream is fed by an
+ * @ref MemSpace::SystemCow allocator (e.g. @ref TpgMediaIO with the
+ * default policy), the per-frame burn band CoWs only the dirtied
+ * pages instead of memcpy'ing the full frame.  Conversely, an
+ * upstream that picks a DMA-friendly placement (pinned host for NDI,
+ * page-aligned pool for DeckLink) gives BurnMediaIO no page-level CoW
+ * benefit — that is the documented trade-off operators make at the
+ * upstream's allocator-install site, not here.
+ *
  * @par Example
  * @code
  * MediaIO::Config cfg;

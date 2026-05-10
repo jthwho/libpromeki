@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <atomic>
 #include <doctest/doctest.h>
 #include <promeki/videotestpattern.h>
 #include <promeki/enums.h>
@@ -458,3 +459,289 @@ TEST_CASE("VideoTestPattern_AvSyncCacheRebuildsOnDescChange") {
         CHECK(payloadPixelMatches(*b, 255, 255, 255));
         CHECK(b->plane(0).data() != a->plane(0).data());
 }
+
+// ============================================================================
+// Allocator wiring (Phase D — VideoTestPattern routes through MediaIOAllocator)
+// ============================================================================
+
+#include <promeki/mediaioallocator.h>
+#include <promeki/memspace.h>
+
+namespace {
+        struct VtpStampingAllocator : public MediaIOAllocator {
+                        PROMEKI_SHARED_DERIVED(VtpStampingAllocator)
+                        mutable std::atomic<int> planeCalls{0};
+                        String name() const override { return String("VtpStampingAllocator"); }
+                        Buffer allocateVideoPlane(const ImageDesc &desc, int planeIndex) const override {
+                                planeCalls.fetch_add(1);
+                                return MediaIOAllocator::allocateVideoPlane(desc, planeIndex);
+                        }
+        };
+}
+
+TEST_CASE("VideoTestPattern_Allocator_RoutesCachedPayload") {
+        VideoTestPattern gen;
+        gen.setPattern(VideoPattern::ColorBars); // static => cached
+        auto alloc = MediaIOAllocator::Ptr::takeOwnership(new VtpStampingAllocator());
+        gen.setAllocator(alloc);
+
+        ImageDesc desc(320, 240, PixelFormat::RGB8_sRGB);
+        auto      a = gen.createPayload(desc, 0.0);
+        REQUIRE(a.isValid());
+
+        // Each call after the first should hit the cache (no further
+        // plane allocations).  ColorBars is single-plane RGB8.
+        const auto *typed = static_cast<const VtpStampingAllocator *>(alloc.ptr());
+        const int   afterFirst = typed->planeCalls.load();
+        CHECK(afterFirst >= 1);
+
+        auto b = gen.createPayload(desc, 0.0);
+        REQUIRE(b.isValid());
+        CHECK(typed->planeCalls.load() == afterFirst); // no fresh allocation
+        // Same impl pointer means we're sharing the cache slot.
+        CHECK(a->plane(0).buffer().impl().ptr() == b->plane(0).buffer().impl().ptr());
+}
+
+TEST_CASE("VideoTestPattern_Allocator_ChangeInvalidatesCache") {
+        VideoTestPattern gen;
+        gen.setPattern(VideoPattern::ColorBars);
+
+        ImageDesc desc(320, 240, PixelFormat::RGB8_sRGB);
+        auto      first = gen.createPayload(desc, 0.0);
+        REQUIRE(first.isValid());
+        const BufferImpl *firstImpl = first->plane(0).buffer().impl().ptr();
+
+        // Install a new allocator — the cached payload should be
+        // dropped so the next call re-allocates through the new
+        // policy.
+        auto alloc = MediaIOAllocator::Ptr::takeOwnership(new VtpStampingAllocator());
+        gen.setAllocator(alloc);
+        auto second = gen.createPayload(desc, 0.0);
+        REQUIRE(second.isValid());
+        const BufferImpl *secondImpl = second->plane(0).buffer().impl().ptr();
+        CHECK(firstImpl != secondImpl);
+}
+
+#if PROMEKI_ENABLE_MEMFD
+
+namespace {
+        struct TpgLikeAlloc : public MediaIOAllocator {
+                        PROMEKI_SHARED_DERIVED(TpgLikeAlloc)
+                        String name() const override { return String("TpgLikeAlloc"); }
+                        Buffer allocateVideoPlane(const ImageDesc &desc, int planeIndex) const override {
+                                const PixelFormat &pf = desc.pixelFormat();
+                                if (planeIndex < 0 || planeIndex >= static_cast<int>(pf.planeCount())) return Buffer();
+                                const size_t bytes = pf.planeSize(static_cast<size_t>(planeIndex), desc);
+                                if (bytes == 0) return Buffer();
+                                Buffer b(bytes, Buffer::DefaultAlign, MemSpace::SystemCow);
+                                if (b.isValid()) b.setSize(bytes);
+                                return b;
+                        }
+        };
+}
+
+TEST_CASE("VideoTestPattern_SystemCow_TpgFlowReplica") {
+        // Mimic the EXACT TpgMediaIO::executeCmd(Read) flow:
+        //   1. createPayload returns the cached Ptr
+        //   2. payload.modify() (timecode metadata write) — refcount=2 → detach
+        //   3. frame's slot holds the moved Ptr (refcount=1)
+        //   4. slot->modify() — refcount=1, no detach
+        //   5. uvp->ensureExclusive() — Buffer impls had refcount=2, detach each
+        //   6. applyBurn writes to the fresh CoW clone
+        // Verify burn pixels actually appear post-burn.
+        VideoTestPattern gen;
+        gen.setPattern(VideoPattern::ColorBars);
+        gen.setBurnEnabled(true);
+        gen.setBurnFontSize(48);
+        gen.setBurnTextColor(Color::White);
+        gen.setBurnDrawBackground(true);
+        gen.setBurnBackgroundColor(Color::Black);
+        gen.setAllocator(MediaIOAllocator::Ptr::takeOwnership(new TpgLikeAlloc()));
+
+        ImageDesc desc(640, 480, PixelFormat::RGB8_sRGB);
+
+        // Drive frame 1
+        auto payload = gen.createPayload(desc, 0.0);
+        REQUIRE(payload.isValid());
+
+        // Step 2: timecode write (forces payload.modify() to detach)
+        payload.modify()->desc().metadata().set(Metadata::Timecode, Timecode());
+
+        // Step 3: simulate frame.addPayload — wrap as MediaPayload Ptr
+        MediaPayload::Ptr framePayload(payload);
+
+        // Step 4-5: burn pass equivalent
+        auto *uvp = static_cast<UncompressedVideoPayload *>(framePayload.modify());
+        uvp->ensureExclusive();
+
+        // Save buffer pointer before burn — should match plane(0).data()
+        const uint8_t *bufBeforeBurn = static_cast<const uint8_t *>(uvp->plane(0).data());
+        REQUIRE(bufBeforeBurn != nullptr);
+
+        // Snapshot a small region — bars are in this region but for a
+        // 640x480 image with 48-pixel-tall burn at BottomCenter, the
+        // burn band is in the bottom rows; the top rows should still
+        // be just bars.
+        const size_t bytes = uvp->plane(0).size();
+
+        Error burnErr = gen.applyBurn(*uvp, String("HELLO"));
+        REQUIRE(burnErr == Error::Ok);
+
+        // After burn, the buffer should still be the same pointer
+        // (no further detach happened in applyBurn).
+        const uint8_t *bufAfterBurn = static_cast<const uint8_t *>(uvp->plane(0).data());
+        CHECK(bufAfterBurn == bufBeforeBurn);
+
+        // Bottom 96 rows (where burn lives) should have at least one
+        // pixel that's *not* a pure ColorBars value — the burn text
+        // anti-aliasing produces grayscale pixels that aren't part of
+        // the strict bar palette.
+        const size_t stride = desc.pixelFormat().lineStride(0, desc);
+        const size_t startRow = desc.size().height() - 96;
+        bool         foundBurnBand = false;
+        for (size_t y = startRow; y < desc.size().height() && !foundBurnBand; ++y) {
+                const uint8_t *row = bufAfterBurn + y * stride;
+                for (size_t x = 0; x < desc.size().width() && !foundBurnBand; ++x) {
+                        const uint8_t r = row[x * 3 + 0];
+                        const uint8_t g = row[x * 3 + 1];
+                        const uint8_t b = row[x * 3 + 2];
+                        // Bars: pure 0/255 values per channel.  Anything
+                        // in between is from the burn (anti-aliased text).
+                        if ((r != 0 && r != 255) || (g != 0 && g != 255) || (b != 0 && b != 255)) {
+                                foundBurnBand = true;
+                        }
+                }
+        }
+        CHECK(foundBurnBand);
+        (void)bytes;
+}
+
+TEST_CASE("VideoTestPattern_SystemCow_BurnTextActuallyAppears") {
+        // Reproduces the full TpgMediaIO burn flow against a
+        // SystemCow-backed cached payload to verify pixels actually
+        // change in the burn band.  This is the property TPG users
+        // see as "did the timecode appear on the picture?"
+        VideoTestPattern gen;
+        gen.setPattern(VideoPattern::SolidColor);
+        gen.setSolidColor(Color::Black);
+        gen.setBurnEnabled(true);
+        gen.setBurnFontSize(24);
+        gen.setBurnTextColor(Color::White);
+        gen.setBurnBackgroundColor(Color::Black);
+        gen.setBurnDrawBackground(false);
+        gen.setAllocator(MediaIOAllocator::Ptr::takeOwnership(new TpgLikeAlloc()));
+
+        ImageDesc desc(640, 480, PixelFormat::RGB8_sRGB);
+        // First call seeds the cache (background pattern + seal)
+        auto cached = gen.createPayload(desc, 0.0);
+        REQUIRE(cached.isValid());
+        REQUIRE(cached->plane(0).buffer().isCowBacked());
+
+        // Per-frame: detach the cached UVP via the SharedPtr<UVP>::modify()
+        // path that TpgMediaIO uses on the frame's payload list, then
+        // ensureExclusive() the underlying buffers, then apply the burn.
+        auto perFrame = cached;
+        perFrame.detach(); // payload-level CoW
+        perFrame.modify()->ensureExclusive();
+
+        // Sanity: the per-frame UVP's plane 0 impl is now a CoW
+        // clone, not the cached impl.
+        CHECK(perFrame->plane(0).buffer().impl().ptr() != cached->plane(0).buffer().impl().ptr());
+
+        // Snapshot a small region in the upper-left where burn text
+        // should not yet have been drawn.  Black background, so all
+        // bytes are 0 (RGB8: R,G,B).
+        const uint8_t *pre = static_cast<const uint8_t *>(perFrame->plane(0).data());
+        REQUIRE(pre != nullptr);
+        bool preIsBlack = true;
+        for (size_t i = 0; i < 256; ++i) {
+                if (pre[i] != 0) { preIsBlack = false; break; }
+        }
+        CHECK(preIsBlack);
+
+        // Apply burn — text should land somewhere in the image.
+        Error burnErr = gen.applyBurn(*perFrame.modify(), String("HELLO"));
+        REQUIRE(burnErr == Error::Ok);
+
+        // After burn, the per-frame UVP's plane(0) should have at
+        // least one non-zero byte somewhere in the image (the burn
+        // text or its background).
+        const uint8_t *post = static_cast<const uint8_t *>(perFrame->plane(0).data());
+        REQUIRE(post != nullptr);
+        const size_t bytes = perFrame->plane(0).size();
+        bool         hasBurn = false;
+        for (size_t i = 0; i < bytes; ++i) {
+                if (post[i] != 0) { hasBurn = true; break; }
+        }
+        CHECK(hasBurn);
+
+        // The cached payload must remain unchanged — burn went to the
+        // CoW clone, not to the cached source.
+        const uint8_t *cachedPx = static_cast<const uint8_t *>(cached->plane(0).data());
+        REQUIRE(cachedPx != nullptr);
+        bool cachedStillBlack = true;
+        for (size_t i = 0; i < bytes; ++i) {
+                if (cachedPx[i] != 0) { cachedStillBlack = false; break; }
+        }
+        CHECK(cachedStillBlack);
+}
+
+TEST_CASE("VideoTestPattern_SystemCow_PerFrameDetachIsCheap") {
+        // Use the same TpgAllocator pattern TpgMediaIO installs:
+        // SystemCow for video planes.  Verify that
+        //   (a) the cached payload's planes report isCowBacked() true,
+        //   (b) seal()'s effect persists across cache hits, and
+        //   (c) ensureExclusive() on a sibling handle to the cached
+        //       payload produces a fresh BufferImpl (the CoW clone) —
+        //       which is the property TPG burn-in trades on.
+        struct CowAlloc : public MediaIOAllocator {
+                        PROMEKI_SHARED_DERIVED(CowAlloc)
+                        String name() const override { return String("CowAlloc"); }
+                        Buffer allocateVideoPlane(const ImageDesc &desc, int planeIndex) const override {
+                                const PixelFormat &pf = desc.pixelFormat();
+                                if (planeIndex < 0 || planeIndex >= static_cast<int>(pf.planeCount())) return Buffer();
+                                const size_t bytes = pf.planeSize(static_cast<size_t>(planeIndex), desc);
+                                if (bytes == 0) return Buffer();
+                                Buffer b(bytes, Buffer::DefaultAlign, MemSpace::SystemCow);
+                                if (b.isValid()) b.setSize(bytes);
+                                return b;
+                        }
+        };
+        VideoTestPattern gen;
+        gen.setPattern(VideoPattern::ColorBars);
+        gen.setAllocator(MediaIOAllocator::Ptr::takeOwnership(new CowAlloc()));
+
+        ImageDesc desc(640, 480, PixelFormat::RGBA8_sRGB);
+
+        auto first = gen.createPayload(desc, 0.0);
+        REQUIRE(first.isValid());
+        REQUIRE(first->plane(0).buffer().isCowBacked());
+        // After populate, the cached payload is sealed and
+        // residentBytes drops to the actually-resident set
+        // (Private_Dirty is 0 for the source — its pages live in
+        // the file-cache half of the memfd, not in private clones).
+        CHECK(first->plane(0).buffer().residentBytes() == 0);
+
+        // Sibling handle through a fresh cache hit — both Ptrs
+        // reference the same UVP impl (cache hit, no fresh allocation).
+        auto secondHandle = gen.createPayload(desc, 0.0);
+        REQUIRE(secondHandle.isValid());
+        CHECK(first->plane(0).buffer().impl().ptr() == secondHandle->plane(0).buffer().impl().ptr());
+
+        // Per-frame applyBurn() prologue: detach the payload-level Ptr
+        // so we can mutate without disturbing the cache, then
+        // ensureExclusive() on the underlying plane Buffer to switch
+        // to a private MAP_PRIVATE clone of the sealed memfd region.
+        auto cloned = secondHandle;
+        cloned.detach(); // payload-level CoW (UncompressedVideoPayload's _promeki_clone)
+        // After payload detach, the UVP is fresh but its BufferView
+        // still references the cached Buffers (refcount-bumped).
+        // ensureExclusive on the plane Buffer triggers the cheap
+        // MAP_PRIVATE clone of the sealed memfd region.
+        Buffer plane0 = cloned->data()[0].buffer();
+        plane0.ensureExclusive();
+        CHECK(plane0.impl().ptr() != first->plane(0).buffer().impl().ptr());
+        CHECK(plane0.isCowBacked());
+}
+
+#endif // PROMEKI_ENABLE_MEMFD

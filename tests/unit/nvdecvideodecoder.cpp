@@ -19,14 +19,18 @@
 
 #include <promeki/videoencoder.h>
 #include <promeki/videodecoder.h>
+#include <promeki/nvdecvideodecoder.h>
 #include <promeki/videocodec.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixelformat.h>
+#include <promeki/audiodesc.h>
 #include <promeki/cuda.h>
 #include <promeki/enums.h>
+#include <promeki/memspace.h>
 #include <promeki/compressedvideopayload.h>
 #include <promeki/uncompressedvideopayload.h>
+#include <promeki/mediaioallocator.h>
 #include <cstdint>
 #include <cstring>
 
@@ -174,6 +178,187 @@ TEST_CASE("NvdecVideoDecoder: HEVC encode/decode round trip") {
                         if (!img.isValid()) break;
                         CHECK(img->desc().width() == kWidth);
                         CHECK(img->desc().height() == kHeight);
+                        ++decoded;
+                }
+        }
+        dec->flush();
+        while (true) {
+                UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
+                if (!img.isValid()) break;
+                ++decoded;
+        }
+
+        CHECK(decoded >= 1);
+        delete dec;
+}
+
+TEST_CASE("VideoDecoder::allocator(): defaults to MediaIOAllocator::defaultAllocator()") {
+        // Use NVDEC as a concrete VideoDecoder — the API is on the base
+        // class, so this exercise covers any decoder.  No GPU needed; we
+        // never actually submit a frame.
+        auto r = VideoCodec(VideoCodec::H264).createDecoder();
+        REQUIRE(isOk(r));
+        VideoDecoder *dec = value(r);
+
+        MediaIOAllocator::Ptr alloc = dec->allocator();
+        REQUIRE(alloc.isValid());
+        CHECK(alloc.ptr() == MediaIOAllocator::defaultAllocator().ptr());
+
+        // setAllocator(null) is a clear; allocator() reverts to default.
+        dec->setAllocator(MediaIOAllocator::Ptr());
+        CHECK(dec->allocator().ptr() == MediaIOAllocator::defaultAllocator().ptr());
+
+        delete dec;
+}
+
+TEST_CASE("VideoDecoder::setAllocator(): override is preserved") {
+        auto r = VideoCodec(VideoCodec::H264).createDecoder();
+        REQUIRE(isOk(r));
+        VideoDecoder *dec = value(r);
+
+        auto custom = NvdecVideoDecoder::makeDeviceResidentAllocator();
+        REQUIRE(custom.isValid());
+        dec->setAllocator(custom);
+        CHECK(dec->allocator().ptr() == custom.ptr());
+        CHECK(dec->allocator()->name() == String("NvdecAllocator"));
+
+        // Null clears.
+        dec->setAllocator(MediaIOAllocator::Ptr());
+        CHECK(dec->allocator().ptr() == MediaIOAllocator::defaultAllocator().ptr());
+
+        delete dec;
+}
+
+TEST_CASE("NvdecAllocator: vends CudaDevice planes for video; defaults audio + bytes") {
+        auto alloc = NvdecVideoDecoder::makeDeviceResidentAllocator();
+        REQUIRE(alloc.isValid());
+        CHECK(alloc->name() == String("NvdecAllocator"));
+
+        // Video plane lands in CudaDevice — only meaningful when CUDA
+        // is initialised at runtime, otherwise the Buffer falls back
+        // to invalid (factory not registered).  Skip the placement
+        // assertion when CUDA isn't available, but still run the
+        // shape checks.
+        ImageDesc desc(Size2Du32(320, 240),
+                       PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
+        if (CudaDevice::isAvailable()) {
+                // Force the CUDA factories to register before we ask
+                // the allocator for a CudaDevice buffer.  Without this
+                // the test passes only when a sibling test (e.g. the
+                // round-trip case) ran first and bootstrapped CUDA;
+                // when run in isolation the factory falls back to
+                // System and the placement assertion fails.
+                REQUIRE(CudaBootstrap::ensureRegistered().isOk());
+                Buffer plane0 = alloc->allocateVideoPlane(desc, 0);
+                REQUIRE(plane0.isValid());
+                CHECK(plane0.memSpace().id() == MemSpace::CudaDevice);
+                CHECK(plane0.allocSize() >= static_cast<size_t>(320 * 240));
+
+                Buffer plane1 = alloc->allocateVideoPlane(desc, 1);
+                REQUIRE(plane1.isValid());
+                CHECK(plane1.memSpace().id() == MemSpace::CudaDevice);
+        }
+
+        // Audio + bytes fall through to the default — System placement.
+        AudioDesc adesc(48000.0f, 2);
+        Buffer    audio = alloc->allocateAudioChunk(adesc, 1024);
+        REQUIRE(audio.isValid());
+        CHECK(audio.memSpace().id() == MemSpace::System);
+
+        Buffer bytes = alloc->allocateBytes(4096);
+        REQUIRE(bytes.isValid());
+        CHECK(bytes.memSpace().id() == MemSpace::System);
+
+        // Invalid plane index returns an invalid Buffer.
+        Buffer invalid = alloc->allocateVideoPlane(desc, 99);
+        CHECK(!invalid.isValid());
+}
+
+TEST_CASE("NvdecVideoDecoder: device-resident allocator produces CudaDevice planes") {
+        if (!CudaDevice::isAvailable()) return;
+
+        constexpr int kWidth  = 256;
+        constexpr int kHeight = 128;
+        constexpr int kFrames = 4;
+
+        auto packets = encodeBurst(VideoCodec::H264, kWidth, kHeight, kFrames);
+        if (packets.isEmpty()) return; // NVENC runtime missing
+
+        auto r = VideoCodec(VideoCodec::H264).createDecoder();
+        REQUIRE(isOk(r));
+        VideoDecoder *dec = value(r);
+        dec->setAllocator(NvdecVideoDecoder::makeDeviceResidentAllocator());
+        dec->configure(MediaConfig());
+
+        int decoded = 0;
+        for (const auto &pkt : packets) {
+                Error err = dec->submitPayload(pkt);
+                if (err.isError()) {
+                        delete dec;
+                        return;
+                }
+                while (true) {
+                        UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
+                        if (!img.isValid()) break;
+                        REQUIRE(img->planeCount() == 2);
+                        // Both planes must be CudaDevice-resident — the
+                        // whole point of installing the allocator.
+                        CHECK(img->data()[0].buffer().memSpace().id() == MemSpace::CudaDevice);
+                        CHECK(img->data()[1].buffer().memSpace().id() == MemSpace::CudaDevice);
+                        // Buffer::data() returns nullptr on a
+                        // non-host-mapped buffer — confirm we're not
+                        // accidentally back on the host path.
+                        CHECK(img->data()[0].buffer().data() == nullptr);
+                        ++decoded;
+                }
+        }
+        dec->flush();
+        while (true) {
+                UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
+                if (!img.isValid()) break;
+                REQUIRE(img->planeCount() == 2);
+                CHECK(img->data()[0].buffer().memSpace().id() == MemSpace::CudaDevice);
+                CHECK(img->data()[1].buffer().memSpace().id() == MemSpace::CudaDevice);
+                ++decoded;
+        }
+
+        CHECK(decoded >= 1);
+        delete dec;
+}
+
+TEST_CASE("NvdecVideoDecoder: default allocator preserves System-memory output") {
+        if (!CudaDevice::isAvailable()) return;
+
+        constexpr int kWidth  = 256;
+        constexpr int kHeight = 128;
+        constexpr int kFrames = 4;
+
+        auto packets = encodeBurst(VideoCodec::H264, kWidth, kHeight, kFrames);
+        if (packets.isEmpty()) return;
+
+        auto r = VideoCodec(VideoCodec::H264).createDecoder();
+        REQUIRE(isOk(r));
+        VideoDecoder *dec = value(r);
+        // No setAllocator — default path.  Confirms the existing
+        // behaviour stayed intact through the refactor.
+        dec->configure(MediaConfig());
+
+        int decoded = 0;
+        for (const auto &pkt : packets) {
+                Error err = dec->submitPayload(pkt);
+                if (err.isError()) {
+                        delete dec;
+                        return;
+                }
+                while (true) {
+                        UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
+                        if (!img.isValid()) break;
+                        REQUIRE(img->planeCount() == 2);
+                        CHECK(img->data()[0].buffer().memSpace().id() == MemSpace::System);
+                        CHECK(img->data()[1].buffer().memSpace().id() == MemSpace::System);
+                        // Host-readable: Buffer::data() returns a real
+                        // pointer.
+                        CHECK(img->data()[0].buffer().data() != nullptr);
                         ++decoded;
                 }
         }

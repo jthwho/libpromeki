@@ -74,6 +74,70 @@ class MemSpace {
                                 2, ///< CUDA device memory (GPU VRAM).  Not host-accessible.  Registered by CudaBootstrap when PROMEKI_ENABLE_CUDA is on.
                         CudaHost =
                                 3, ///< CUDA pinned host memory (page-locked).  Host-accessible; enables async DMA with CudaDevice.  Registered by CudaBootstrap.
+                        /**
+                         * @brief System (CPU) memory backed by a sealed memfd region.
+                         *
+                         * After @c Buffer::seal(), clones detach via @c MAP_PRIVATE
+                         * and pay only for the pages they dirty (page-level CoW).
+                         * On non-Linux builds (@c PROMEKI_ENABLE_MEMFD off) silently
+                         * falls back to a plain @c HostBufferImpl — correctness
+                         * preserved, no CoW optimisation; @c isCowBacked() returns
+                         * false in the fallback.
+                         *
+                         * @par Concurrency contract
+                         * Stricter than other host backends — concurrent reads of
+                         * @c Buffer::data() on sibling handles during @c seal() /
+                         * @c ensureExclusive() are unsafe.  Use
+                         * @c Buffer::isCowBacked() to branch.
+                         */
+                        SystemCow =
+                                4,
+                        /**
+                         * @brief System (CPU) memory page-locked via @c mlock.
+                         *
+                         * Backs DMA-friendly host placements for I/O
+                         * backends whose SDKs DMA directly out of host
+                         * memory (NDI is the first consumer).  Always
+                         * host-accessible; lives in @c MemDomain::Host.
+                         *
+                         * @par Soft fail on @c RLIMIT_MEMLOCK
+                         * If @c mlock fails (limit exhausted, missing
+                         * @c CAP_IPC_LOCK), the allocation still
+                         * succeeds — it just isn't pinned.  See
+                         * @ref PinnedHostBufferImpl for details.
+                         *
+                         * @par Distinct from @c CudaHost
+                         * @c CudaHost uses @c cudaMallocHost (CUDA
+                         * pinned + GPU-DMA-mapped); @c PinnedHost is
+                         * pure @c mlock.  Use @c CudaHost when the
+                         * downstream consumer is CUDA; use
+                         * @c PinnedHost for non-CUDA SDKs that need
+                         * page locking only.
+                         */
+                        PinnedHost =
+                                5,
+                        /**
+                         * @brief NUMA-bound page-locked host memory.
+                         *
+                         * The "default-node" / kernel-preferred entry
+                         * (i.e. @ref Numa::NodeAny — let the kernel
+                         * pick).  Per-specific-node MemSpaces are
+                         * registered lazily via
+                         * @c NumaHost::forNode(int) and live above
+                         * @c UserDefined (each call returns a unique
+                         * ID).
+                         *
+                         * @par Soft-fail
+                         * On UMA boxes (most laptops, single-socket
+                         * workstations, all Apple Silicon) and on
+                         * non-Linux builds, allocations fall through
+                         * to plain page-aligned host memory and the
+                         * @p node argument is ignored — same fallback
+                         * shape as @ref PinnedHost.  See
+                         * @ref Numa::isAvailable.
+                         */
+                        NumaHost =
+                                6,
                         Default = System,  ///< Alias for System memory.
                         UserDefined = 1024 ///< First ID available for user-registered types.
                 };
@@ -118,6 +182,19 @@ class MemSpace {
                                                 uint64_t liveBytes = 0; ///< Outstanding bytes at snapshot time.
                                                 uint64_t peakCount = 0; ///< Highest liveCount ever observed.
                                                 uint64_t peakBytes = 0; ///< Highest liveBytes ever observed.
+                                                /**
+                                                 * @brief Highest @c BufferImpl::residentBytes() value
+                                                 *        observed at impl-destruction time.
+                                                 *
+                                                 * Approximate (only catches values at destruction)
+                                                 * but near-zero cost; gives a useful lower bound on
+                                                 * peak physical RSS for sparse / CoW backends.
+                                                 * @c liveBytes / @c peakBytes still count virtual
+                                                 * address space — the gap is the saving.  For CoW
+                                                 * backends, see @c MemSpace::residentBytesSnapshot
+                                                 * for a precise on-demand readout.
+                                                 */
+                                                uint64_t peakResidentBytes = 0;
                                 };
 
                                 Atomic<uint64_t> allocCount{0};     ///< @see Snapshot::allocCount
@@ -135,6 +212,7 @@ class MemSpace {
                                 Atomic<uint64_t> liveBytes{0};      ///< @see Snapshot::liveBytes
                                 Atomic<uint64_t> peakCount{0};      ///< @see Snapshot::peakCount
                                 Atomic<uint64_t> peakBytes{0};      ///< @see Snapshot::peakBytes
+                                Atomic<uint64_t> peakResidentBytes{0}; ///< @see Snapshot::peakResidentBytes
 
                                 Stats() = default;
                                 Stats(const Stats &) = delete;
@@ -171,6 +249,16 @@ class MemSpace {
                          * cumulative and live counters.
                          */
                                 void recordRelease(uint64_t bytes);
+
+                                /**
+                         * @brief Internal: bumps the @ref peakResidentBytes
+                         *        watermark if @p bytes exceeds it.
+                         *
+                         * Called by @ref BufferImpl destructors that
+                         * track sparse residency (notably
+                         * @c MemfdBufferImpl).  CAS-loop; lock-free.
+                         */
+                                void recordResidentBytes(uint64_t bytes);
                 };
 
                 /**

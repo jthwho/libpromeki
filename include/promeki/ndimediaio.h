@@ -24,6 +24,7 @@
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaiofactory.h>
+#include <promeki/mediaioallocator.h>
 #include <promeki/mediaiostats.h>
 #include <promeki/metadata.h>
 #include <promeki/mutex.h>
@@ -152,6 +153,34 @@ class NdiMediaIO : public DedicatedThreadMediaIO {
                  *        contiguous silence fill).
                  */
                 static inline const MediaIOStats::ID StatsAudioGapEvents{"NdiAudioGapEvents"};
+
+                /**
+                 * @brief Returns a fresh @ref MediaIOAllocator that
+                 *        vends @ref MemSpace::PinnedHost host buffers.
+                 *
+                 * Installed automatically on @c executeCmd(Open).
+                 * Exposed as a public factory so other backends can
+                 * adopt the same placement policy by calling
+                 * @c MediaIO::setAllocator on whichever consumer
+                 * benefits from page-locked host memory.
+                 *
+                 * The vended allocator overrides
+                 * @ref MediaIOAllocator::allocateVideoPlane and
+                 * @ref MediaIOAllocator::allocateAudioChunk to land in
+                 * @ref MemSpace::PinnedHost; @c allocateBytes also
+                 * routes to PinnedHost (NDI's receive path allocates
+                 * the whole packed payload as a single byte buffer
+                 * and benefits from the same pinning).  Stateless;
+                 * trivially thread-safe.
+                 *
+                 * On builds without working @c mlock (or when
+                 * @c RLIMIT_MEMLOCK is exhausted), the underlying
+                 * @ref MemSpace::PinnedHost backend silently falls
+                 * back to plain heap with a warning — see
+                 * @ref PinnedHostBufferImpl.  Allocations still
+                 * succeed; they just lose the DMA-pin benefit.
+                 */
+                static MediaIOAllocator::Ptr makePinnedHostAllocator();
 
                 /** @brief Constructs an NdiMediaIO. */
                 NdiMediaIO(ObjectBase *parent = nullptr);

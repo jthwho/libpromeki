@@ -293,6 +293,21 @@ class BufferView {
                  */
                 void ensureExclusive();
 
+                /**
+                 * @brief Seals every unique backing @ref Buffer.
+                 *
+                 * Walks the deduplicated buffer table and forwards
+                 * @ref Buffer::seal to each entry — a multi-plane
+                 * payload transitions in one call.  For backends
+                 * without a seal concept (everything except
+                 * @ref MemSpace::SystemCow today) this is a no-op
+                 * success.  Returns the first non-Ok error encountered
+                 * (subsequent unique buffers are still sealed); the
+                 * caller can re-issue if a partial-seal scenario is
+                 * meaningful for their backend mix.
+                 */
+                [[nodiscard]] Error seal() const;
+
         private:
                 struct View {
                                 size_t bufferIdx = 0;

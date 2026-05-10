@@ -25,6 +25,7 @@
 #include <promeki/mediatimestamp.h>
 #include <promeki/mediaiotypes.h>
 #include <promeki/mediaiocommand.h>
+#include <promeki/mediaioallocator.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -815,6 +816,51 @@ class MediaIO : public ObjectBase {
                  */
                 MediaIORequest stats();
 
+                /**
+                 * @brief Returns the buffer allocator this MediaIO uses.
+                 *
+                 * Buffers allocated on behalf of this MediaIO (for
+                 * frames, payloads, packet scratch) flow through the
+                 * returned allocator.  Backends install their preferred
+                 * allocator from @c executeCmd(Open) once they know what
+                 * placement policy they want — e.g. NDI uses pinned
+                 * host memory for ingress, NVDEC routes everything
+                 * through device memory, TPG uses
+                 * @ref MemSpace::SystemCow so per-frame burn-in
+                 * detaches cheaply.
+                 *
+                 * Never returns null — when no override has been
+                 * installed, returns @ref MediaIOAllocator::defaultAllocator
+                 * (a stateless singleton that defers to
+                 * @c BufferAllocator::defaultAllocator's heap-backed
+                 * MemSpace::Default allocator).  Existing call sites
+                 * that don't know about the allocator framework see no
+                 * behaviour change.
+                 *
+                 * @par Thread safety
+                 * Safe to call from any thread once the MediaIO has been
+                 * constructed; the allocator pointer is updated only
+                 * by @ref setAllocator (typically from the open command
+                 * on the backend's worker), so user-thread callers
+                 * should sequence after `open()` resolves to read the
+                 * backend-installed allocator.
+                 */
+                MediaIOAllocator::Ptr allocator() const;
+
+                /**
+                 * @brief Installs a per-MediaIO allocator override.
+                 *
+                 * Pass null to clear and revert to
+                 * @ref MediaIOAllocator::defaultAllocator.  Typically
+                 * called by a backend's @c executeCmd(Open) once it
+                 * has determined what placement policy it wants — the
+                 * single line that performs this install is also the
+                 * documented rollback point if a SystemCow / pinned-
+                 * host migration ever needs to be reverted in
+                 * production.
+                 */
+                void setAllocator(MediaIOAllocator::Ptr a);
+
                 /** @brief Emitted when an error occurs. @signal */
                 PROMEKI_SIGNAL(errorOccurred, Error);
 
@@ -978,6 +1024,13 @@ class MediaIO : public ObjectBase {
                 void populateStandardStats(MediaIOStats &stats) const;
 
                 Config                 _config;
+                // Allocator policy for buffers vended on behalf of
+                // this MediaIO.  Default-initialised lazily through
+                // allocator() to MediaIOAllocator::defaultAllocator(),
+                // so a freshly-constructed MediaIO that never installs
+                // an override transparently routes through the
+                // process-wide default.
+                MediaIOAllocator::Ptr   _allocator;
                 // _open / _closing are read from arbitrary threads
                 // (e.g. the EventLoop thread in
                 // @ref MediaIOReadCache::submitOneLocked) while the

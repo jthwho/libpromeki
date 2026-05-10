@@ -6,9 +6,17 @@
  */
 
 #include <promeki/bufferfactory.h>
+#include <promeki/config.h>
 #include <promeki/hostbufferimpl.h>
+#include <promeki/numa.h>
+#include <promeki/numahostbufferimpl.h>
+#include <promeki/pinnedhostbufferimpl.h>
 #include <promeki/map.h>
 #include <promeki/mutex.h>
+
+#if PROMEKI_ENABLE_MEMFD
+#include <promeki/memfdbufferimpl.h>
+#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -31,6 +39,40 @@ struct FactoryRegistry {
                         });
                         entries.insert(MemSpace::SystemSecure, [](const MemSpace &ms, size_t bytes, size_t align) -> BufferImplPtr {
                                 return BufferImplPtr::takeOwnership(new HostSecureBufferImpl(ms, bytes, align));
+                        });
+                        // SystemCow: memfd-backed CoW backend on Linux,
+                        // graceful fallback to plain HostBufferImpl on
+                        // builds without memfd_create + F_ADD_SEALS.
+                        // The MemSpace ID is registered either way, so
+                        // call sites that don't care about CoW
+                        // optimisation get correct behaviour
+                        // transparently — they just lose the page-CoW
+                        // savings on non-Linux.
+                        entries.insert(MemSpace::SystemCow, [](const MemSpace &ms, size_t bytes, size_t align) -> BufferImplPtr {
+#if PROMEKI_ENABLE_MEMFD
+                                return BufferImplPtr::takeOwnership(new MemfdBufferImpl(ms, bytes, align));
+#else
+                                return BufferImplPtr::takeOwnership(new HostBufferImpl(ms, bytes, align));
+#endif
+                        });
+                        // PinnedHost: aligned_alloc + mlock.  The mlock step
+                        // is best-effort (RLIMIT_MEMLOCK / CAP_IPC_LOCK can
+                        // make it fail), so the impl falls back to a plain
+                        // unlocked allocation with a warning rather than
+                        // failing the whole construction — see
+                        // PinnedHostBufferImpl for the rationale.
+                        entries.insert(MemSpace::PinnedHost, [](const MemSpace &ms, size_t bytes, size_t align) -> BufferImplPtr {
+                                return BufferImplPtr::takeOwnership(new PinnedHostBufferImpl(ms, bytes, align));
+                        });
+                        // NumaHost (default-node / kernel-preferred).
+                        // Per-specific-node MemSpaces are registered
+                        // lazily by NumaHost::forNode() with their own
+                        // factory closures that capture the node ID;
+                        // this entry handles the @c MemSpace::NumaHost
+                        // built-in ID, which always uses Numa::NodeAny.
+                        entries.insert(MemSpace::NumaHost, [](const MemSpace &ms, size_t bytes, size_t align) -> BufferImplPtr {
+                                return BufferImplPtr::takeOwnership(
+                                        new NumaHostBufferImpl(ms, bytes, align, Numa::NodeAny));
                         });
                 }
 };

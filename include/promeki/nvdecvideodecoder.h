@@ -10,6 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/config.h>
 #include <promeki/videodecoder.h>
+#include <promeki/mediaioallocator.h>
 #include <promeki/uniqueptr.h>
 
 #if PROMEKI_ENABLE_NVDEC
@@ -44,11 +45,24 @@ PROMEKI_NAMESPACE_BEGIN
  *   @ref RawBitstreamMediaIO writes).  AVCC length-prefixed
  *   input can be added later via a small adapter.
  * - NV12 output (8-bit, 4:2:0 semi-planar, Rec.709 assumed).
- * - System-memory output: each decoded frame is copied off the
- *   GPU to host memory so downstream stages that don't know about
- *   CUDA (SDL, ImageFile writers) can display / consume it as a
- *   regular @ref Image.  A zero-copy device-memory output path is
- *   a follow-up.
+ *
+ * @par Output placement
+ * Default behaviour: each decoded frame is copied off the GPU
+ * into host memory so downstream stages that don't know about
+ * CUDA (SDL, ImageFile writers) can display / consume it as a
+ * regular @ref Image.
+ *
+ * For device-resident output, install
+ * @ref makeDeviceResidentAllocator via
+ * @ref VideoDecoder::setAllocator before the first
+ * @ref submitPayload.  The decoder then allocates planes in
+ * @ref MemSpace::CudaDevice and issues
+ * @c cudaMemcpyDeviceToDevice — the decoded frame stays on the
+ * GPU.  Downstream consumers that need host memory get an
+ * automatic device→host copy on first @c Buffer::data() /
+ * @c Buffer::copyTo access via the registered cudaCopy entry
+ * (see @ref MemSpace).  Useful when feeding NVENC, a CUDA-aware
+ * CSC stage, or any other GPU-resident consumer.
  *
  * @par Example
  * @code
@@ -88,6 +102,28 @@ class NvdecVideoDecoder : public VideoDecoder {
                  * Exposed for the @ref VideoCodec backend registry.
                  */
                 static List<int> supportedOutputList();
+
+                /**
+                 * @brief Returns a fresh @ref MediaIOAllocator that
+                 *        vends @ref MemSpace::CudaDevice planes.
+                 *
+                 * Install via @ref VideoDecoder::setAllocator to skip
+                 * the device→host copy for decoded frames; the decoder
+                 * issues @c cudaMemcpyDeviceToDevice instead and the
+                 * emitted @ref UncompressedVideoPayload's planes stay
+                 * on the GPU.  Downstream consumers that need host
+                 * memory will trigger the registered
+                 * @c CudaDevice→System @c cudaCopy on first
+                 * @c Buffer::data() / @c Buffer::copyTo access — same
+                 * behaviour as any other CudaDevice-backed payload.
+                 *
+                 * Without this allocator installed, NVDEC keeps
+                 * emitting System-memory NV12 (the default).  This
+                 * factory is the documented rollback point if the
+                 * device-resident path ever needs to be reverted in
+                 * production.
+                 */
+                static MediaIOAllocator::Ptr makeDeviceResidentAllocator();
 
                 void                          configure(const MediaConfig &config) override;
                 Error                         submitPayload(const CompressedVideoPayload::Ptr &payload) override;

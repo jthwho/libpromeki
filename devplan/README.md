@@ -17,7 +17,8 @@ devplan/
 │   ├── streams.md       TextStream type ops, ObjectBase saveState/loadState
 │   ├── utilities.md     String / Variant / RegEx enhancements
 │   ├── ownership.md     Heap-ownership Phase C migration backlog
-│   └── logger_ring_buffer.md  Crash-handler-readable retained log
+│   ├── logger_ring_buffer.md  Crash-handler-readable retained log
+│   └── systemcow-mediaio-allocator.md  MemfdRegion + SystemCow Buffer + MediaIOAllocator
 ├── network/             Network library work
 │   ├── sockets.md       Phase 3A — complete; deferred items
 │   ├── avoverip.md      Phase 3C — PtpClock + RTP follow-ups

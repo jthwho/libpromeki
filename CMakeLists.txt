@@ -321,6 +321,33 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     endif()
 endif()
 option(PROMEKI_ENABLE_V4L2 "Include V4L2 video capture + ALSA audio capture (Linux only)" ${PROMEKI_ENABLE_V4L2_DEFAULT})
+# memfd_create + F_SEAL_WRITE are Linux-only and were added in kernel
+# 3.17 / 4.16 respectively.  When available, the SystemCow MemSpace
+# uses them to back Buffers with a sealed memfd region whose clones
+# are MAP_PRIVATE — giving page-level CoW for free on detach.  Without
+# this, SystemCow silently falls back to HostBufferImpl (correctness
+# preserved, no CoW optimisation).
+set(PROMEKI_ENABLE_MEMFD_DEFAULT OFF)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    include(CheckCXXSourceCompiles)
+    check_cxx_source_compiles("
+        #define _GNU_SOURCE
+        #include <sys/mman.h>
+        #include <fcntl.h>
+        int main() {
+            int fd = memfd_create(\"probe\", MFD_CLOEXEC | MFD_ALLOW_SEALING);
+            (void)F_ADD_SEALS;
+            (void)F_SEAL_WRITE;
+            (void)F_SEAL_SHRINK;
+            (void)F_SEAL_GROW;
+            return fd < 0 ? 1 : 0;
+        }
+    " PROMEKI_HAVE_MEMFD_CREATE)
+    if(PROMEKI_HAVE_MEMFD_CREATE)
+        set(PROMEKI_ENABLE_MEMFD_DEFAULT ON)
+    endif()
+endif()
+option(PROMEKI_ENABLE_MEMFD "Use memfd_create-backed sealed regions for the SystemCow MemSpace (Linux only)" ${PROMEKI_ENABLE_MEMFD_DEFAULT})
 # CUDA support: device-memory + pinned-host MemSpace backends and the
 # per-process CudaBootstrap.  Required by every GPU-accelerated codec
 # backend that follows (NVENC, NVDEC, etc.).  Default ON when the CUDA
@@ -1564,6 +1591,7 @@ set(PROMEKI_HEADERS
     include/promeki/benchmark.h
     include/promeki/benchmarkrunner.h
     include/promeki/buffer.h
+    include/promeki/bufferallocator.h
     include/promeki/bufferediodevice.h
     include/promeki/bufferiodevice.h
     include/promeki/bufferpool.h
@@ -1622,7 +1650,12 @@ set(PROMEKI_HEADERS
     include/promeki/md5.h
     include/promeki/mediaduration.h
     include/promeki/mempool.h
+    include/promeki/memfdbufferimpl.h
+    include/promeki/memfdregion.h
     include/promeki/memspace.h
+    include/promeki/numa.h
+    include/promeki/numahostbufferimpl.h
+    include/promeki/pinnedhostbufferimpl.h
     include/promeki/metadata.h
     include/promeki/mouseevent.h
     include/promeki/mutex.h
@@ -1699,6 +1732,7 @@ set(PROMEKI_SOURCES
     src/core/benchmark.cpp
     src/core/benchmarkrunner.cpp
     src/core/buffer.cpp
+    src/core/bufferallocator.cpp
     src/core/buffercommand.cpp
     src/core/bufferfactory.cpp
     src/core/bufferview.cpp
@@ -1760,6 +1794,11 @@ set(PROMEKI_SOURCES
     src/core/mediaduration.cpp
     src/core/mediatimestamp.cpp
     src/core/md5.cpp
+    src/core/memfdbufferimpl.cpp
+    src/core/memfdregion.cpp
+    src/core/numa.cpp
+    src/core/numahostbufferimpl.cpp
+    src/core/pinnedhostbufferimpl.cpp
     src/core/mempool.cpp
     src/core/memdomain.cpp
     src/core/memspace.cpp
@@ -2025,6 +2064,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/ltcdecoder.h
         include/promeki/ltcencoder.h
         include/promeki/mediaio.h
+        include/promeki/mediaioallocator.h
         include/promeki/mediaioport.h
         include/promeki/mediaiosink.h
         include/promeki/mediaiosource.h
@@ -2092,6 +2132,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/ltcdecoder.cpp
         src/proav/ltcencoder.cpp
         src/proav/mediaio.cpp
+        src/proav/mediaioallocator.cpp
         src/proav/mediaiofactory.cpp
         src/proav/commandmediaio.cpp
         src/proav/inlinemediaio.cpp
@@ -2829,6 +2870,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/typeregistry_isolation.cpp
         tests/unit/benchmarkrunner.cpp
         tests/unit/buffer.cpp
+        tests/unit/bufferallocator.cpp
         tests/unit/buffercommand.cpp
         tests/unit/buffercopy.cpp
         tests/unit/bufferediodevice.cpp
@@ -2894,9 +2936,14 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/mediaduration.cpp
         tests/unit/mediatimestamp.cpp
         tests/unit/md5.cpp
+        tests/unit/memfdbufferimpl.cpp
+        tests/unit/memfdregion.cpp
         tests/unit/mempool.cpp
         tests/unit/memspace.cpp
         tests/unit/metadata.cpp
+        tests/unit/numa.cpp
+        tests/unit/numahostbufferimpl.cpp
+        tests/unit/pinnedhostbufferimpl.cpp
         tests/unit/mutex.cpp
         tests/unit/numname.cpp
         tests/unit/obfuscatedstring.cpp
@@ -3079,6 +3126,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/ltcencoder.cpp
             tests/unit/mediadesc.cpp
             tests/unit/mediaio.cpp
+            tests/unit/mediaioallocator.cpp
             tests/unit/mediaioclock.cpp
             tests/unit/mediaiodescription.cpp
             tests/unit/mediaioportgroup.cpp

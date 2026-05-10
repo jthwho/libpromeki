@@ -13,6 +13,7 @@
 #include <promeki/mediadesc.h>
 #include <promeki/metadata.h>
 #include <promeki/string.h>
+#include <promeki/mediaioallocator.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -123,6 +124,22 @@ class MediaIOPort : public ObjectBase {
 
                 /** @brief Returns the @ref MediaIO that owns this port. */
                 MediaIO *mediaIO() const { return _mediaIO; }
+
+                /**
+                 * @brief Returns the allocator the owning @ref MediaIO
+                 *        currently uses.
+                 *
+                 * Convenience wrapper around @c mediaIO()->allocator()
+                 * — never returns null.  Reserved for code that already
+                 * holds a port and would otherwise have to hop through
+                 * @ref mediaIO every time it needed to allocate.  A
+                 * per-port override is intentionally not exposed in
+                 * v1; if a backend ever needs different placement on
+                 * different ports of the same MediaIO it can vend
+                 * different allocators by routing through this
+                 * accessor's underlying virtual.
+                 */
+                MediaIOAllocator::Ptr allocator() const;
 
                 /** @brief Returns the per-type port index. */
                 int index() const { return _index; }

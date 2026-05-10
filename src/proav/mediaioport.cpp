@@ -20,4 +20,13 @@ MediaIOPort::MediaIOPort(MediaIOPortGroup *group, const String &name, int index)
 
 MediaIOPort::~MediaIOPort() = default;
 
+MediaIOAllocator::Ptr MediaIOPort::allocator() const {
+        // Always non-null — MediaIO::allocator() resolves to the
+        // process-wide default when no override has been installed.
+        // Defensive null check on _mediaIO so a port being torn down
+        // mid-shutdown doesn't crash on cleanup paths.
+        if (_mediaIO == nullptr) return MediaIOAllocator::defaultAllocator();
+        return _mediaIO->allocator();
+}
+
 PROMEKI_NAMESPACE_END

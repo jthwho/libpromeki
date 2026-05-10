@@ -97,6 +97,18 @@ void VideoTestPattern::invalidatePayloadCache() const {
         _cachePixelFormatId = 0;
 }
 
+void VideoTestPattern::setAllocator(MediaIOAllocator::Ptr allocator) {
+        // Drop the cache so the next createPayload() call re-allocates
+        // through the new policy.  Without this, slots already
+        // populated through the previous allocator stay live and the
+        // installed policy doesn't take effect until something else
+        // (e.g. a descriptor change) invalidates the cache.
+        if (_allocator != allocator) {
+                _allocator = allocator;
+                invalidatePayloadCache();
+        }
+}
+
 ImageDesc VideoTestPattern::rgbScratchDesc(const ImageDesc &target) const {
         // Use RGBA8_sRGB as the scratch format rather than RGB16 so
         // the fallback scratch -> target CSC lands on an already-

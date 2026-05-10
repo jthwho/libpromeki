@@ -212,6 +212,65 @@ class BufferImpl {
                  */
                 virtual bool canClone() const { return true; }
 
+                // ---- Producer→post-producer transition (seal) ----
+
+                /**
+                 * @brief Transitions the buffer out of its producer phase.
+                 *
+                 * "Seal" is a generic backend hook for the producer→
+                 * post-producer transition that some backends support:
+                 * the @ref MemSpace::SystemCow / memfd backend uses it
+                 * to drop the writable shared mapping and switch to
+                 * @c MAP_PRIVATE clone views (page-level CoW); a
+                 * future read-only-snapshot or GPU-publish backend
+                 * would use it to freeze a NIC-RX buffer or flush
+                 * host→device.  Backends without a seal concept return
+                 * @ref Error::Ok unconditionally — call sites can
+                 * issue @c seal() without knowing the backend.
+                 *
+                 * Idempotent.  After a successful seal the impl is
+                 * either cloneable (if @ref canClone is true) or
+                 * permanently fixed.  Mutates internal state, but is
+                 * declared @c const so a const @ref Buffer handle can
+                 * forward through @c _d-> without losing const-ness;
+                 * subclasses use @c mutable members or appropriate
+                 * synchronization.
+                 */
+                virtual Error seal() const { return Error::Ok; }
+
+                /**
+                 * @brief Returns the resident-set size of this allocation in bytes.
+                 *
+                 * For the default (non-CoW) backends the entire
+                 * allocation is resident, so the default implementation
+                 * returns @ref allocSize.  Sparse / CoW backends
+                 * (@ref MemfdBufferImpl post-seal, future swap-aware
+                 * backends) override with the actual page-resident
+                 * count read from the kernel (e.g. via
+                 * @c /proc/self/smaps Private_Dirty).
+                 *
+                 * Used by production telemetry to surface the difference
+                 * between virtual address space (@c allocSize, what
+                 * @ref MemSpace::Stats::liveBytes counts) and physical
+                 * page residency.  May be relatively expensive on
+                 * sparse backends — call from monitoring paths, not
+                 * the per-frame hot path.
+                 */
+                virtual size_t residentBytes() const { return allocSize(); }
+
+                /**
+                 * @brief Returns true when this backend uses copy-on-write semantics.
+                 *
+                 * CoW backends (today: @ref MemfdBufferImpl backed by
+                 * @ref MemSpace::SystemCow) carry a stricter
+                 * concurrent-access contract — @ref seal and
+                 * @c Buffer::ensureExclusive race with concurrent
+                 * @c data() reads on sibling handles.  Generic code
+                 * branches on this predicate to honour the contract
+                 * without a downcast.  Default: false.
+                 */
+                virtual bool isCowBacked() const { return false; }
+
         protected:
                 /**
                  * @brief Subclass helper: increments the refcount for @p domain.
