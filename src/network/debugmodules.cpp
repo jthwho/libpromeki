@@ -250,10 +250,13 @@ namespace {
                 EventLoop               *wsLoop = EventLoop::current();
                 ObjectBasePtr<WebSocket> wsPtr(ws);
 
+                static const auto kSendLabel    = EventLoop::Label{"DebugServer.wsSend"};
+                static const auto kCleanupLabel = EventLoop::Label{"DebugServer.wsCleanup"};
+
                 Logger::ListenerHandle handle = Logger::defaultLogger().installListener(
                         [wsPtr, wsLoop](const Logger::LogEntry &entry, const String &threadName) {
                                 const String json = logEntryToJson(entry, threadName).toString();
-                                wsLoop->postCallable([wsPtr, json]() mutable {
+                                wsLoop->postCallable(kSendLabel, [wsPtr, json]() mutable {
                                         if (!wsPtr.isValid()) return;
                                         WebSocket *ws = wsPtr.data();
                                         if (!ws->isConnected()) return;
@@ -264,7 +267,7 @@ namespace {
 
                 ws->disconnectedSignal.connect([handle, ws, wsLoop]() {
                         Logger::defaultLogger().removeListener(handle);
-                        wsLoop->postCallable([ws]() { delete ws; });
+                        wsLoop->postCallable(kCleanupLabel, [ws]() { delete ws; });
                 });
         }
 

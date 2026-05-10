@@ -54,7 +54,18 @@ template <typename... Args>
 void ObjectBase::connect(Signal<Args...> *signal, Slot<Args...> *slot) {
         if(signal == nullptr || slot == nullptr) return;
 
-        signal->connect([signal, slot](Args... args) {
+        // Mint the per-loop label from the signal's prototype string
+        // ONCE at connect time so cross-thread emits don't pay a
+        // registry lookup on every fire.  Empty / null prototypes
+        // (raw Signals not declared via PROMEKI_SIGNAL) fall back to
+        // the invalid Label, which the labeled postCallable treats
+        // as unlabeled.
+        const char       *proto = signal->prototype();
+        EventLoop::Label  postLabel = (proto != nullptr && *proto != '\0')
+                                              ? EventLoop::Label{proto}
+                                              : EventLoop::Label{};
+
+        signal->connect([signal, slot, postLabel](Args... args) {
                 ObjectBase *signalObject = static_cast<ObjectBase *>(signal->owner());
                 ObjectBase *slotObject = static_cast<ObjectBase *>(slot->owner());
 
@@ -72,6 +83,7 @@ void ObjectBase::connect(Signal<Args...> *signal, Slot<Args...> *slot) {
                         VariantList packed = Signal<Args...>::pack(args...);
                         ObjectBasePtr senderTracker(signalObject);
                         slotLoop->postCallable(
+                                postLabel,
                                 [slot, slotObject, packed = std::move(packed),
                                  senderTracker = std::move(senderTracker)]() {
                                         ObjectBase *prevSender = slotObject->_signalSender;
@@ -116,8 +128,18 @@ size_t Signal<Args...>::connect(Function slot, ObjectBase *owner) {
         // overload with @c nullptr instead.
         PROMEKI_ASSERT(owner != nullptr);
 
+        // Mint the per-loop label from this Signal's prototype string
+        // once so cross-thread emits don't pay a registry lookup on
+        // every fire.  Empty / null prototypes (raw Signals not
+        // declared via PROMEKI_SIGNAL) fall back to the invalid
+        // Label, treated as "unlabeled" by the labeled postCallable.
+        const char       *proto = this->prototype();
+        EventLoop::Label  postLabel = (proto != nullptr && *proto != '\0')
+                                              ? EventLoop::Label{proto}
+                                              : EventLoop::Label{};
+
         const size_t id = connect(
-                [slot = std::move(slot), ownerPtr = ObjectBasePtr<>(owner)](Args... args) {
+                [slot = std::move(slot), ownerPtr = ObjectBasePtr<>(owner), postLabel](Args... args) {
                         // Liveness gate #1: catch the rare same-thread
                         // case where the receiver has already started
                         // destruction before the emit reaches us.
@@ -136,6 +158,7 @@ size_t Signal<Args...>::connect(Function slot, ObjectBase *owner) {
                         // callable that was queued just before the
                         // receiver died doesn't fire on dead memory.
                         ownerLoop->postCallable(
+                                postLabel,
                                 [slot, ownerPtr, tup = std::make_tuple(std::move(args)...)]() {
                                         if(!ownerPtr.isValid()) return;
                                         std::apply(slot, tup);

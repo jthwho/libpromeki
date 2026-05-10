@@ -9,7 +9,7 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-const Event::Type MouseEvent::Mouse = Event::registerType();
+const Event::Type MouseEvent::Mouse = Event::registerType("Mouse");
 
 String MouseEvent::buttonName(Button button) {
         switch (button) {

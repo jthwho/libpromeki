@@ -317,7 +317,8 @@ void WebSocket::adoptUpgradedSocket(TcpSocket *socket) {
         // a chance to wire up its receivers between adoption and the
         // first data event.
         if (_loop != nullptr) {
-                _loop->postCallable([this]() {
+                static const auto kConnectedLabel = EventLoop::Label{"WebSocket.deferredConnected"};
+                _loop->postCallable(kConnectedLabel, [this]() {
                         if (_state == Connected) connectedSignal.emit();
                 });
         }

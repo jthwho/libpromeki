@@ -9,8 +9,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-const Event::Type KeyEvent::KeyPress = Event::registerType();
-const Event::Type KeyEvent::KeyRelease = Event::registerType();
+const Event::Type KeyEvent::KeyPress = Event::registerType("KeyPress");
+const Event::Type KeyEvent::KeyRelease = Event::registerType("KeyRelease");
 
 String KeyEvent::keyName(Key key) {
         switch (key) {

@@ -90,7 +90,8 @@ void SDLPlayerWidget::presentVideo(const UncompressedVideoPayload::Ptr &payload)
 void SDLPlayerWidget::wakeMainThread() {
         SdlSubsystem *app = SdlSubsystem::instance();
         if (app != nullptr && app->eventLoop() != nullptr) {
-                app->eventLoop()->postCallable([this]() { renderPending(); });
+                static const auto kRenderLabel = EventLoop::Label{"SdlPlayerWidget.render"};
+                app->eventLoop()->postCallable(kRenderLabel, [this]() { renderPending(); });
         }
         SDL_Event event = {};
         event.type = userEventType();

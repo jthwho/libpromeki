@@ -686,8 +686,9 @@ Future<HttpResponse> HttpClient::dispatch(HttpRequest request) {
         // Hop the actual work onto the owning loop so the I/O
         // state machine runs on a single, predictable thread even
         // when send() is called cross-thread.
-        PendingPtr pin = pending;
-        _loop->postCallable([pin]() {
+        PendingPtr        pin = pending;
+        static const auto kStartLabel = EventLoop::Label{"HttpClient.startPending"};
+        _loop->postCallable(kStartLabel, [pin]() {
                 Pending *self = const_cast<Pending *>(pin.ptr());
                 if (self != nullptr && self->client != nullptr) self->start();
         });

@@ -86,6 +86,38 @@ deliveries.
 - `Thread` provides a built-in EventLoop. The main thread's
   EventLoop is set up by `Application`.
 
+### EventLoop activity stats {#thread_eventloop_stats}
+
+`EventLoop` exposes a per-loop activity sampler that breaks the
+loop's wallclock into named buckets — `sleep`, `events`, `timers`,
+`callables`, `io`, plus `overhead` for whatever didn't land in
+those — and emits a one-line report at `Info` level on a
+configurable cadence. Pair with `--cpumon` (per-thread CPU%) when
+you have a hot thread but want to know *what* the loop on that
+thread is doing.
+
+- Per-loop: `EventLoop::installMonitor(interval, fn)` arms a
+  sampler on a single loop. The reporter callback runs on the
+  loop's own thread.
+- Process-wide: `Application::startEventLoopMonitors(interval)`
+  arms the main loop and every future `EventLoop` construction to
+  install one too. New worker `Thread`s pick it up automatically.
+- The events bucket is broken down per `Event::type()` so a
+  pipeline strand can identify which event class dominates.
+- The callables bucket can be similarly partitioned. Pass an
+  optional `EventLoop::Label` to `postCallable` and the
+  callable's wallclock contribution lands in
+  `Report::callablesByLabel` keyed by the label's id (a hash
+  minted via the `EventLoopLabel` `StringRegistry`).
+  Cross-thread signal dispatch tags its posted callable with
+  the signal's prototype string automatically, so per-tick
+  reports identify hot signals (e.g.
+  `cb:frameReady(Frame*)=...`) without any caller wiring.
+- Disabled by default with no per-dispatch cost — the bracket
+  reads a single relaxed atomic per dispatch site.
+
+`mediaplay` exposes the process-wide form via `--elstats <SEC>`.
+
 ## Concurrency Primitives {#thread_primitives}
 
 promeki provides wrapper classes for standard C++ synchronization

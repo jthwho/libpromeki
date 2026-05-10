@@ -11,9 +11,13 @@
 #include <functional>
 #include <promeki/namespace.h>
 #include <promeki/atomic.h>
+#include <promeki/duration.h>
+#include <promeki/hashmap.h>
 #include <promeki/mutex.h>
 #include <promeki/queue.h>
 #include <promeki/list.h>
+#include <promeki/string.h>
+#include <promeki/stringregistry.h>
 #include <promeki/timestamp.h>
 #include <promeki/event.h>
 #include <promeki/uniqueptr.h>
@@ -79,6 +83,24 @@ class EventLoop {
                 };
 
                 /**
+                 * @brief Optional integer-ID tag for a posted callable.
+                 *
+                 * Items minted from a string via the
+                 * @c StringRegistry probe path; the same string
+                 * across translation units yields the same id.
+                 * Default-constructed (invalid) Items are
+                 * treated as "unlabeled" by the labeled
+                 * @ref postCallable overload — equivalent to
+                 * the unlabeled overload.
+                 *
+                 * Used to partition the @ref Report::callables
+                 * bucket into per-call-site sub-buckets so the
+                 * monitor can identify which posters dominate
+                 * a loop's wallclock.
+                 */
+                using Label = StringRegistry<"EventLoopLabel">::Item;
+
+                /**
                  * @brief Returns the EventLoop running on the current thread.
                  * @return The current thread's EventLoop, or nullptr if none.
                  */
@@ -141,6 +163,37 @@ class EventLoop {
                  * @param func The callable to execute.
                  */
                 void postCallable(std::function<void()> func);
+
+                /**
+                 * @brief Posts a tagged callable for per-label bucketing in the activity monitor.
+                 *
+                 * Equivalent to the unlabeled overload except that
+                 * the callable's wallclock contribution is also
+                 * recorded in @ref Report::callablesByLabel keyed
+                 * on @c label.id().  An invalid (default-constructed)
+                 * @p label is treated as "unlabeled" — the call
+                 * behaves exactly like the unlabeled overload.
+                 *
+                 * Use to attach a stable id to high-volume posters
+                 * (cross-thread signal slots, pipeline-strand
+                 * worker callables, etc.) so a per-tick activity
+                 * report can identify the heaviest contributors
+                 * to the @ref Report::callables bucket.
+                 *
+                 * Thread-safe.  Cost when no monitor is installed
+                 * is one extra @c uint64_t field stored in the
+                 * queued item; no registry lookup or
+                 * accumulator update happens on the dispatch
+                 * path.
+                 *
+                 * @param label Per-call-site tag.  Construct from
+                 *              a string literal at the call site
+                 *              via @c Label{"name"}, or pre-mint
+                 *              once and reuse — both forms hash
+                 *              to the same id.
+                 * @param func  The callable to execute.
+                 */
+                void postCallable(Label label, std::function<void()> func);
 
                 /**
                  * @brief Posts an Event to this EventLoop for delivery to a receiver.
@@ -311,9 +364,231 @@ class EventLoop {
                  */
                 void removeIoSource(int handle);
 
+                /**
+                 * @brief One snapshot of where this loop spent its wallclock time.
+                 *
+                 * Produced by @ref peekStats and @ref consumeStats.
+                 * All buckets PLUS every entry in
+                 * @ref eventsByType and @ref callablesByLabel sum
+                 * (within measurement noise) to @ref wallElapsed.
+                 *
+                 * @par Partition rule
+                 * Each nanosecond is attributed to exactly one
+                 * bucket.  Specifically:
+                 *  - An event dispatch with a registered
+                 *    @c Event::type lands in
+                 *    @ref eventsByType keyed on that type — never
+                 *    in the aggregate @ref events bucket.
+                 *  - A callable dispatch with a non-invalid
+                 *    @ref Label lands in @ref callablesByLabel
+                 *    keyed on the label id — never in the
+                 *    aggregate @ref callables bucket.
+                 *  - The aggregate @ref events / @ref callables
+                 *    buckets carry only the "unlabeled remainder":
+                 *    events posted with @c Event::InvalidType, and
+                 *    callables posted via the unlabeled
+                 *    @c postCallable overload.
+                 *
+                 * @ref sleep and @ref queueWait are mutually
+                 * exclusive — one is always zero depending on
+                 * whether the loop is using POSIX wake fds (the
+                 * @c poll() path) or the queue-based fallback
+                 * (@c Queue::pop).  Inspecting which sibling is
+                 * non-zero identifies the wait strategy.
+                 *
+                 * @par Practical implication
+                 * In a fully-labeled workload @ref callablesCount
+                 * goes to zero — the aggregate becomes a "TODO:
+                 * label me" indicator for any new @c postCallable
+                 * site that omits a label.  Same for
+                 * @ref eventsCount.
+                 */
+                struct Report {
+                        /**
+                         * @brief Per-event-type elapsed time and dispatch count.
+                         *
+                         * Carries both the total time spent in the
+                         * @c event() handler for this type and the
+                         * number of dispatches, so callers can
+                         * compute average per-event latency
+                         * (@c elapsed / @c count) for diagnostic
+                         * output.  The default formatter sorts
+                         * descending on @c elapsed when emitting.
+                         */
+                        struct EventStat {
+                                Duration elapsed;
+                                int64_t  count = 0;
+                        };
+
+                        String   loopName;          ///< From @ref setName; empty if never set.
+                        Duration wallElapsed;       ///< Wall time covered by this snapshot.
+                        Duration sleep;             ///< Time blocked in poll() / wake fd (POSIX wait path).
+                        Duration queueWait;         ///< Time blocked in @c Queue::pop (non-POSIX fallback).  0 on POSIX.
+                        Duration timers;            ///< Time inside timer callbacks.
+                        Duration events;            ///< Time inside @c event() dispatch.
+                        Duration callables;         ///< Time inside posted-callable execution.
+                        Duration io;                ///< Time inside IO source callbacks.
+                        Duration overhead;          ///< @ref wallElapsed minus the sum of the above.
+
+                        int64_t  timersCount    = 0; ///< Number of timer callbacks dispatched this snapshot.
+                        int64_t  eventsCount    = 0; ///< Number of events dispatched this snapshot.
+                        int64_t  callablesCount = 0; ///< Number of posted callables dispatched.
+                        int64_t  ioCount        = 0; ///< Number of IO callback fires.
+
+                        /// Per-Event::type() breakdown of the @ref events bucket.
+                        HashMap<int, EventStat> eventsByType;
+
+                        /// Per-label breakdown of the @ref callables bucket.
+                        ///
+                        /// Keys are @ref Label::id() values minted
+                        /// at @c postCallable time.  Reverse
+                        /// lookup via @c Label::fromId(id).name().
+                        /// The default formatter renders the
+                        /// top-N entries with a @c cb: prefix
+                        /// mirroring the @c evt: rendering of
+                        /// @ref eventsByType.
+                        HashMap<uint64_t, EventStat> callablesByLabel;
+                };
+
+                /**
+                 * @brief Reporter callback signature for @ref installMonitor.
+                 *
+                 * Invoked from the loop's own thread once per
+                 * sampling interval.  When the same function is
+                 * installed on every loop in the process (via
+                 * @c Application::startEventLoopMonitors), it is
+                 * invoked concurrently from every loop's thread —
+                 * the callback is responsible for its own
+                 * thread-safety in that mode.
+                 */
+                using ReportFunction = std::function<void(const Report &)>;
+
+                /**
+                 * @brief Sets the loop's human-readable identity.
+                 *
+                 * The name is copied into every @ref Report so
+                 * diagnostics can name the loop without resorting
+                 * to a hex pointer.  Distinct from
+                 * @c Thread::name() — the convention is for
+                 * @c Thread::start to push the thread name down
+                 * into the loop on its way up, but the two are
+                 * settable independently.
+                 *
+                 * Thread-safe; the name is copied under an
+                 * internal lock.  An empty name is tolerated and
+                 * causes the default formatter to fall back to a
+                 * hex pointer.
+                 *
+                 * @param name The loop's human-readable name.
+                 */
+                void setName(const String &name);
+
+                /**
+                 * @brief Returns the loop's human-readable identity.
+                 * @return The name set by @ref setName, or empty.
+                 */
+                String name() const;
+
+                /**
+                 * @brief Installs a periodic stats monitor on this loop.
+                 *
+                 * Thread-safe; may be called from any thread.  The
+                 * internal sampling timer is armed via @ref startTimer
+                 * so the reporter callback runs on this loop's own
+                 * thread.  Replaces any monitor already installed —
+                 * accumulators are zeroed and the new reporter and
+                 * cadence take effect immediately.
+                 *
+                 * @warning Must NOT be called synchronously from a
+                 *          callable, event, timer, or IO handler
+                 *          running on @e this loop.  The internal
+                 *          stats mutex is non-recursive and is already
+                 *          held by the dispatch bracket; the call
+                 *          would deadlock.  From inside such a
+                 *          handler, defer the install via
+                 *          @c postCallable.  External threads (and
+                 *          handlers running on a different loop) may
+                 *          call freely.
+                 *
+                 * @param interval Sample period.  Sub-second values
+                 *                 are honoured; very short intervals
+                 *                 (< 100 ms) spend most of their
+                 *                 wallclock budget on the monitor
+                 *                 itself.
+                 * @param fn       Reporter callback.  Pass an empty
+                 *                 function to use the default
+                 *                 one-line @c promekiInfo formatter.
+                 */
+                void installMonitor(const Duration &interval, ReportFunction fn = {});
+
+                /**
+                 * @brief Removes any installed monitor.
+                 *
+                 * Thread-safe.  Pending stats are discarded.
+                 * No-op if no monitor is installed.
+                 *
+                 * @note A late timer fire may still invoke the
+                 *       reporter once on the loop's own thread
+                 *       after this call returns — the timer cancel
+                 *       races the already-queued fire.  The
+                 *       snapshot it sees will be all-zero because
+                 *       the monitor gate is cleared first, so the
+                 *       reporter receives a clean no-op invocation.
+                 *
+                 * @warning Same re-entrancy restriction as
+                 *          @ref installMonitor: not safe to call
+                 *          synchronously from a handler running on
+                 *          this loop; defer via @c postCallable.
+                 */
+                void removeMonitor();
+
+                /**
+                 * @brief Returns @c true while a monitor is installed on this loop.
+                 *
+                 * Useful for tests; the dispatch hot path uses an
+                 * internal atomic for the same check.
+                 *
+                 * @return @c true while a monitor is installed.
+                 */
+                bool hasMonitor() const;
+
+                /**
+                 * @brief Returns a stats snapshot WITHOUT touching the accumulators.
+                 *
+                 * Safe to call repeatedly from any thread.  Returns
+                 * an all-zero @ref Report (with a zero
+                 * @c wallElapsed) when no monitor is installed.
+                 * Useful for ad-hoc inspection and for tests that
+                 * want to observe in-flight counters without
+                 * resetting them.
+                 *
+                 * @return A snapshot of the current accumulators.
+                 */
+                Report peekStats() const;
+
+                /**
+                 * @brief Returns a stats snapshot and atomically zeros the accumulators.
+                 *
+                 * Called by the monitor's sampling timer; exposed
+                 * for tests.  Returns an all-zero @ref Report when
+                 * no monitor is installed.
+                 *
+                 * @return A snapshot of the accumulators since the
+                 *         previous @c consumeStats call.
+                 */
+                Report consumeStats();
+
         private:
                 struct CallableItem {
                                 std::function<void()> func;
+                                /// Per-call-site label id for activity-monitor
+                                /// bucketing.  @c Label::InvalidID for
+                                /// unlabeled posts.  Stored unconditionally
+                                /// (i.e. even when no monitor is installed)
+                                /// to keep the dispatch path branch-free; the
+                                /// cost is one @c uint64_t per queued
+                                /// callable.
+                                uint64_t              labelId = Label::InvalidID;
                 };
                 struct EventItem {
                                 ObjectBase *receiver;
@@ -401,6 +676,86 @@ class EventLoop {
                 // still compile and behave as before (minus
                 // IoSource support).
                 void waitOnSources(unsigned int waitMs);
+
+                // ----------------------------------------------------
+                // Stats / monitor support.  The hot-path bracket reads
+                // _monitorActive once at construction; when false it
+                // skips the timestamp grab, the lock, and the
+                // accumulator update.  When true it stamps once on
+                // construction and once on destruction, takes the
+                // mutex, adds the elapsed nanoseconds + 1 to the
+                // attributed duration / count buckets, and updates
+                // _eventsByType when an event-type is supplied.
+                // ----------------------------------------------------
+
+                struct EventStatNs {
+                                int64_t elapsed = 0;
+                                int64_t count   = 0;
+                };
+
+                Atomic<bool>                _monitorActive;
+                mutable Mutex               _statsMutex;
+                TimeStamp                   _statsLastSnapshot;
+
+                int64_t                     _sleepNs        = 0;
+                int64_t                     _queueWaitNs    = 0;
+                int64_t                     _timersNs       = 0;
+                int64_t                     _eventsNs       = 0;
+                int64_t                     _callablesNs    = 0;
+                int64_t                     _ioNs           = 0;
+
+                int64_t                     _timersCount    = 0;
+                int64_t                     _eventsCount    = 0;
+                int64_t                     _callablesCount = 0;
+                int64_t                     _ioCount        = 0;
+
+                HashMap<int, EventStatNs>   _eventsByType;
+
+                /// Per-label callable accumulators.  Same shape
+                /// as @ref _eventsByType, keyed on @ref Label
+                /// ids; consumeStats clears it.
+                HashMap<uint64_t, EventStatNs> _callablesByLabel;
+
+                int                         _monitorTimerId = 0;
+                ReportFunction              _monitorFn;
+                String                      _name;
+
+                // RAII helper that brackets a single dispatch site.
+                // Reads _monitorActive ONCE in the constructor and
+                // caches the boolean; both the constructor's
+                // TimeStamp::now() grab and the destructor's
+                // accumulator update key off that cached value so
+                // an enable-mid-bracket cannot leave the destructor
+                // trying to attribute time without a start
+                // timestamp.  When the cached gate is false, no
+                // timestamp is stored and the destructor early-outs
+                // without locking.
+                class StatsBracket {
+                                public:
+                                        StatsBracket(EventLoop *loop, int64_t *durBucket,
+                                                     int64_t *countBucket);
+                                        ~StatsBracket();
+                                        void attributeEventType(int type) { _eventType = type; }
+                                        void attributeCallableLabel(uint64_t labelId) {
+                                                _callableLabel = labelId;
+                                        }
+
+                                private:
+                                        EventLoop  *_loop;
+                                        int64_t    *_durBucket;
+                                        int64_t    *_countBucket;
+                                        TimeStamp   _start;
+                                        int         _eventType = -1;
+                                        uint64_t    _callableLabel = Label::InvalidID;
+                                        bool        _active = false;
+                };
+
+                friend class StatsBracket;
+
+                // Default formatter used when _monitorFn is empty.
+                // Defined in eventloop.cpp and exposed via
+                // installMonitor's "empty fn = default" semantics.
+                static void defaultMonitorReporter(const Report &r);
 };
 
 PROMEKI_NAMESPACE_END

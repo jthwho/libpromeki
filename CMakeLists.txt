@@ -2909,6 +2909,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/error.cpp
         tests/unit/event.cpp
         tests/unit/eventloop.cpp
+        tests/unit/eventloop_stats.cpp
         tests/unit/file.cpp
         tests/unit/fileformatfactory.cpp
         tests/unit/fileinfo.cpp

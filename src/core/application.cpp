@@ -46,6 +46,7 @@ Application::Application(int argc, char **argv) {
         // queried — so subsystems (SDL, TUI) constructed immediately
         // after this Application on the stack see a ready-made main
         // EventLoop via Application::mainEventLoop().
+        _eventLoop.setName("main");
         data().arguments = StringList(static_cast<size_t>(argc), const_cast<const char **>(argv));
         data().mainThread = Thread::adoptCurrentThread();
         LibraryOptions::instance().loadFromEnvironment();
@@ -263,6 +264,66 @@ DebugServer *Application::debugServer() {
 void Application::maybeStartDebugServerFromEnv() {}
 
 #endif // PROMEKI_ENABLE_HTTP
+
+Error Application::startEventLoopMonitors(const Duration &interval, EventLoop::ReportFunction fn) {
+        // Update the auto-install trio under the dedicated mutex.
+        // We deliberately do NOT hold the mutex across the
+        // installMonitor call below: installMonitor takes its own
+        // _statsMutex and we don't want a nested-lock dependency
+        // chain visible from external callers of startEventLoopMonitors.
+        EventLoop::ReportFunction effectiveFn;
+        Duration                  effectiveInterval;
+        {
+                Mutex::Locker lock(data().elMonitorMutex);
+                data().elMonitorEnabled = true;
+                data().elMonitorInterval = interval;
+                data().elMonitorFn = fn;
+                effectiveFn = fn;
+                effectiveInterval = interval;
+        }
+        // Pick up the new config on the existing main loop so the
+        // user does not have to relaunch the process to see the
+        // change.  Subsystems that constructed their own loops
+        // before the first call still need an explicit
+        // installMonitor.
+        EventLoop *mainLoop = mainEventLoop();
+        if (mainLoop != nullptr) {
+                mainLoop->installMonitor(effectiveInterval, effectiveFn);
+        }
+        return Error::Ok;
+}
+
+void Application::stopEventLoopMonitors() {
+        Mutex::Locker lock(data().elMonitorMutex);
+        data().elMonitorEnabled = false;
+        data().elMonitorFn = nullptr;
+        return;
+}
+
+bool Application::eventLoopMonitorsEnabled() {
+        Mutex::Locker lock(data().elMonitorMutex);
+        return data().elMonitorEnabled;
+}
+
+void Application::installEventLoopMonitorIfEnabled(EventLoop *loop) {
+        if (loop == nullptr) return;
+        // Copy the trio out under the global mutex, then release
+        // before calling installMonitor — installMonitor takes its
+        // own _statsMutex and we don't want a nested-lock chain
+        // exposed to construction-time callers.
+        bool                      enabled = false;
+        Duration                  interval;
+        EventLoop::ReportFunction fn;
+        {
+                Mutex::Locker lock(data().elMonitorMutex);
+                enabled = data().elMonitorEnabled;
+                interval = data().elMonitorInterval;
+                fn = data().elMonitorFn;
+        }
+        if (!enabled) return;
+        loop->installMonitor(interval, fn);
+        return;
+}
 
 Error Application::startCpuMonitor(const Duration &interval) {
         if (data().cpuMonitor) {

@@ -10,6 +10,7 @@
 #include <atomic>
 #include <cstdint>
 #include <promeki/namespace.h>
+#include <promeki/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -50,6 +51,43 @@ class Event {
                  * @return A unique Type value.
                  */
                 static Type registerType();
+
+                /**
+                 * @brief Allocates a unique event type ID and records a human-readable name for it.
+                 *
+                 * Equivalent to @ref registerType() except the supplied
+                 * @p name is stored in an internal registry keyed by the
+                 * returned Type value, so @ref typeName can look it up
+                 * later.  Built-in event types are registered with names
+                 * by the library.  User-defined types should prefer this
+                 * overload over the parameterless one so diagnostic
+                 * output (e.g. the per-loop event-stat formatter)
+                 * surfaces the type name instead of a bare integer.
+                 *
+                 * Thread-safe.  Names are not required to be unique —
+                 * the registry is purely for human-readable lookup —
+                 * but reusing a name across distinct registrations is
+                 * confusing and discouraged.
+                 *
+                 * @param name Human-readable name for the new type.
+                 * @return A unique Type value.
+                 */
+                static Type registerType(const String &name);
+
+                /**
+                 * @brief Returns the name registered for an event type ID.
+                 *
+                 * Returns the name supplied to @ref registerType when
+                 * the type was created.  Types created via the
+                 * parameterless @ref registerType() overload, and
+                 * unknown / @ref InvalidType ids, return an empty
+                 * @ref String.  Thread-safe; the registry is locked
+                 * for the duration of the lookup.
+                 *
+                 * @param type The event type ID to look up.
+                 * @return The registered name, or an empty String.
+                 */
+                static String typeName(Type type);
 
                 /** @brief Event type for TimerEvent. */
                 static const Type Timer;

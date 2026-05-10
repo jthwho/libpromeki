@@ -54,7 +54,8 @@ void BufferCommand::markCompleted() {
         if (!cb) return;
         const Error err = result;
         if (loop != nullptr) {
-                loop->postCallable([cb = std::move(cb), err]() mutable { cb(err); });
+                static const auto kReplyLabel = EventLoop::Label{"BufferCommand.reply"};
+                loop->postCallable(kReplyLabel, [cb = std::move(cb), err]() mutable { cb(err); });
         } else {
                 cb(err);
         }
@@ -95,7 +96,8 @@ void BufferCommand::setCompletionCallback(std::function<void(Error)> cb, EventLo
         if (!fireNow) return;
         const Error err = result;
         if (loop != nullptr) {
-                loop->postCallable([cb = std::move(cb), err]() mutable { cb(err); });
+                static const auto kReplyLabel = EventLoop::Label{"BufferCommand.reply"};
+                loop->postCallable(kReplyLabel, [cb = std::move(cb), err]() mutable { cb(err); });
         } else {
                 cb(err);
         }

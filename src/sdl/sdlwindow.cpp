@@ -111,6 +111,7 @@ void SDLWindow::paintAll() {
         }
 
         SDL_RenderPresent(_sdlRenderer);
+
         clearDirty();
         return;
 }

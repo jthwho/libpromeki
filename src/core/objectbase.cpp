@@ -62,7 +62,8 @@ void ObjectBase::deleteLater() {
         // before our callable lands) can null us out and the
         // callable becomes a no-op rather than a use-after-free.
         ObjectBasePtr<> selfPtr(this);
-        _eventLoop->postCallable([selfPtr]() mutable {
+        static const auto kDeleteLaterLabel = EventLoop::Label{"ObjectBase.deleteLater"};
+        _eventLoop->postCallable(kDeleteLaterLabel, [selfPtr]() mutable {
                 ObjectBase *self = selfPtr.data();
                 if (self == nullptr) return;
                 self->setParent(nullptr);

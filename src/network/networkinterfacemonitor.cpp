@@ -125,7 +125,8 @@ void NetworkInterfaceMonitor::kickDebounce() {
                 runDiff();
                 return;
         }
-        loop->postCallable([this]() {
+        static const auto kKickLabel = EventLoop::Label{"NetIfMonitor.kickDebounce"};
+        loop->postCallable(kKickLabel, [this]() {
                 if (!_running) return;
                 if (_debounceTimer >= 0) {
                         stopTimer(_debounceTimer);

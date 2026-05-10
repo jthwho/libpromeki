@@ -12,8 +12,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-const Event::Type PaintEvent::Paint = Event::registerType();
-const Event::Type ResizeEvent::Resize = Event::registerType();
+const Event::Type PaintEvent::Paint = Event::registerType("Paint");
+const Event::Type ResizeEvent::Resize = Event::registerType("Resize");
 
 Widget::Widget(ObjectBase *parent) : ObjectBase(parent) {}
 

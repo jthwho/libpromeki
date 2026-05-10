@@ -147,7 +147,8 @@ void MediaIOPortConnection::schedulePump() {
         if (!_pumpScheduled.compareAndSwap(expected, true)) return;
         EventLoop *loop = EventLoop::current();
         if (loop != nullptr) {
-                loop->postCallable([this]() { pump(); });
+                static const auto kPumpLabel = EventLoop::Label{"PortConnection.pump"};
+                loop->postCallable(kPumpLabel, [this]() { pump(); });
         } else {
                 // No loop on this thread — fall back to a synchronous
                 // call.  This typically only happens when a test

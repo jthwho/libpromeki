@@ -339,8 +339,8 @@ int main(int argc, char **argv) {
         // live reporting — --stats and --verbose both route their
         // output through the logger, and silently eating it because
         // of an elevated default would be a lousy experience.
-        const bool reportingEnabled =
-                (opts.statsInterval > 0.0) || opts.verbose || (opts.cpuMonInterval > 0.0);
+        const bool reportingEnabled = (opts.statsInterval > 0.0) || opts.verbose ||
+                                      (opts.cpuMonInterval > 0.0) || (opts.elStatsInterval > 0.0);
         if (reportingEnabled && Logger::defaultLogger().level() > Logger::LogLevel::Info) {
                 Logger::defaultLogger().setLogLevel(Logger::LogLevel::Info);
         }
@@ -363,6 +363,16 @@ int main(int argc, char **argv) {
                 if (cpuErr.isError()) {
                         fprintf(stderr, "Warning: --cpumon failed to start: %s\n", cpuErr.desc().cstr());
                 }
+        }
+
+        // Optional per-EventLoop activity sampler.  Arming this
+        // here means the main loop and every loop constructed
+        // afterwards (worker threads spun up by the pipeline,
+        // RTP TX/RX strands, MediaIO backends, ...) auto-install
+        // a monitor at the same cadence.
+        if (opts.elStatsInterval > 0.0) {
+                Application::startEventLoopMonitors(
+                        Duration::fromMicroseconds(static_cast<int64_t>(opts.elStatsInterval * 1.0e6)));
         }
 
         // Default SDL sink when the user did not pass any -d and did

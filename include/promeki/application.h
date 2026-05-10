@@ -12,8 +12,10 @@
 
 #include <promeki/namespace.h>
 #include <promeki/atomic.h>
+#include <promeki/duration.h>
 #include <promeki/eventloop.h>
 #include <promeki/error.h>
+#include <promeki/mutex.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
 #include <promeki/uniqueptr.h>
@@ -25,7 +27,6 @@ class IODevice;
 class DebugServer;
 class SocketAddress;
 class CpuMonitor;
-class Duration;
 PROMEKI_NAMESPACE_END
 
 PROMEKI_NAMESPACE_BEGIN
@@ -475,6 +476,82 @@ class Application {
                 static CpuMonitor *cpuMonitor();
 
                 /**
+                 * @brief Installs an @ref EventLoop monitor on the main loop and arms every future
+                 *        @ref EventLoop construction to install one too.
+                 *
+                 * Idempotent reconfigure — re-call to change the
+                 * sample @p interval or @p fn.  Reconfigure
+                 * semantics are intentionally finite-grained:
+                 *
+                 *  - @b Loops constructed before the first call do
+                 *    @em not auto-install.  Call
+                 *    @ref EventLoop::installMonitor on them
+                 *    directly.
+                 *  - The currently-running main loop is updated
+                 *    in-place on every (re)call.
+                 *  - @b Loops constructed between two calls keep
+                 *    the configuration that was active at their
+                 *    construction time.  There is no registry, so
+                 *    we cannot walk them to update their monitors.
+                 *    Reconfigure with care.
+                 *
+                 * @param interval Sample period for every monitored
+                 *                 loop.  Sub-second values are
+                 *                 honoured but very short
+                 *                 intervals (< 100 ms) burn most
+                 *                 of their wallclock on the
+                 *                 monitor itself.
+                 * @param fn       Reporter; pass an empty function
+                 *                 to use the default one-line
+                 *                 @c promekiInfo formatter.  The
+                 *                 same function is used by every
+                 *                 monitored loop, so it MUST be
+                 *                 thread-safe in this mode.
+                 * @return @ref Error::Ok on success.
+                 */
+                static Error startEventLoopMonitors(const Duration &interval,
+                                                    EventLoop::ReportFunction fn = {});
+
+                /**
+                 * @brief Disables the auto-install hook for future loops.
+                 *
+                 * Does NOT remove monitors already attached to
+                 * existing loops — there is no registry of live
+                 * @ref EventLoop instances to walk.  Call
+                 * @ref EventLoop::removeMonitor on them
+                 * individually if needed.
+                 *
+                 * In practice the hook stays on for the lifetime
+                 * of the process, so this is mostly here for
+                 * symmetry and tests.
+                 */
+                static void stopEventLoopMonitors();
+
+                /**
+                 * @brief Returns @c true if @ref startEventLoopMonitors is in effect.
+                 * @return @c true while the auto-install hook is armed.
+                 */
+                static bool eventLoopMonitorsEnabled();
+
+                /**
+                 * @brief Installs the current auto-install monitor on @p loop, if armed.
+                 *
+                 * Called from @ref EventLoop::EventLoop() so newly
+                 * constructed loops pick up the
+                 * @ref startEventLoopMonitors configuration as
+                 * they come online.  No-op if no auto-install is
+                 * armed or @p loop is @c nullptr.
+                 *
+                 * Public so the @ref EventLoop constructor can
+                 * call it without a friend declaration; not part
+                 * of the application-author-facing API.
+                 *
+                 * @param loop The newly-constructed event loop to
+                 *             arm.
+                 */
+                static void installEventLoopMonitorIfEnabled(EventLoop *loop);
+
+                /**
                  * @brief Runs the main event loop until quit() is called.
                  *
                  * Thin wrapper around @c mainEventLoop()->exec().  The
@@ -506,6 +583,22 @@ class Application {
                                 QuitRequestHandler     quitHandler;
                                 UniquePtr<DebugServer> debugServer;
                                 UniquePtr<CpuMonitor>  cpuMonitor;
+
+                                // Auto-install hook for new
+                                // EventLoops.  Guarded by
+                                // elMonitorMutex because
+                                // ReportFunction is std::function
+                                // and not safe to read across
+                                // threads without a barrier; we
+                                // copy the trio under the lock at
+                                // every read site so the global
+                                // mutex is never held while
+                                // installMonitor (which takes its
+                                // own mutex) runs.
+                                bool                      elMonitorEnabled = false;
+                                Duration                  elMonitorInterval;
+                                EventLoop::ReportFunction elMonitorFn;
+                                mutable Mutex             elMonitorMutex;
                 };
                 static Data &data();
 

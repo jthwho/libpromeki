@@ -108,7 +108,8 @@ void TuiSubsystem::markNeedsRepaint() {
         // always runs on the EventLoop thread.
         if (_eventLoop == nullptr) return;
         if (_repaintQueued.exchange(true)) return;
-        _eventLoop->postCallable([this] { doPaint(); });
+        static const auto kPaintLabel = EventLoop::Label{"TuiSubsystem.paint"};
+        _eventLoop->postCallable(kPaintLabel, [this] { doPaint(); });
 }
 
 void TuiSubsystem::doPaint() {
@@ -134,7 +135,9 @@ void TuiSubsystem::setupEventSources() {
         EventLoop *loop = _eventLoop;
         _winchSubscription = SignalHandler::subscribe(SIGWINCH, [this, loop](int) {
                 if (loop != nullptr) {
-                        loop->postCallable([this] { handleResize(); });
+                        static const auto kResizeLabel =
+                                EventLoop::Label{"TuiSubsystem.resize"};
+                        loop->postCallable(kResizeLabel, [this] { handleResize(); });
                 }
         });
 #endif // PROMEKI_PLATFORM_POSIX

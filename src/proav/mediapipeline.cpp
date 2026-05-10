@@ -1583,12 +1583,14 @@ void MediaPipeline::publish(PipelineEvent ev) {
                 }
         }
 
+        static const auto kPublishLabel = EventLoop::Label{"MediaPipeline.publishEventToSubscriber"};
         for (size_t i = 0; i < snapshot.size(); ++i) {
                 Subscriber &s = snapshot[i];
                 if (s.loop == nullptr || !s.fn) continue;
                 EventCallback fn = s.fn;
                 PipelineEvent copy = ev;
-                s.loop->postCallable([fn = std::move(fn), copy]() mutable { fn(copy); });
+                s.loop->postCallable(kPublishLabel,
+                                     [fn = std::move(fn), copy]() mutable { fn(copy); });
         }
 }
 
@@ -1650,7 +1652,10 @@ void MediaPipeline::installLoggerTap() {
                                 m.set(Metadata::ID(String("threadName")), threadName);
                         }
                         ev.setMetadata(m);
-                        ownerLoop->postCallable([this, ev]() { publish(ev); });
+                        static const auto kLoggerTapLabel =
+                                EventLoop::Label{"MediaPipeline.loggerTap"};
+                        ownerLoop->postCallable(kLoggerTapLabel,
+                                                [this, ev]() { publish(ev); });
                 },
                 0);
 }

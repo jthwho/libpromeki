@@ -194,6 +194,11 @@ namespace mediaplay {
                                 "                            summary at Info level showing the\n"
                                 "                            top consumers, sorted descending.\n"
                                 "                            Disabled by default.\n"
+                                "  --elstats <SEC>           Sample per-EventLoop activity every\n"
+                                "                            SEC seconds and log a one-line\n"
+                                "                            summary at Info level breaking each\n"
+                                "                            loop's wallclock into named buckets.\n"
+                                "                            Disabled by default.\n"
                                 "  --memstats                Print MemSpace allocation\n"
                                 "                            statistics for every registered\n"
                                 "                            memory space on shutdown.\n"
@@ -415,6 +420,15 @@ namespace mediaplay {
                                          return 1;
                                  }
                                  opts.cpuMonInterval = v;
+                                 return 0;
+                         })},
+                        {0, "elstats", "Per-EventLoop activity report every <SEC> seconds",
+                         CmdLineParser::OptionDoubleCallback([&](double v) {
+                                 if (v <= 0.0) {
+                                         fprintf(stderr, "Error: --elstats must be > 0\n");
+                                         return 1;
+                                 }
+                                 opts.elStatsInterval = v;
                                  return 0;
                          })},
                         {0, "memstats", "Dump MemSpace stats for every registered memory space on shutdown",

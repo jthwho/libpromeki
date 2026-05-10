@@ -327,13 +327,21 @@ String Thread::name() const {
 }
 
 void Thread::setName(const String &n) {
+        EventLoop *loopForName = nullptr;
         {
                 Mutex::Locker locker(_mutex);
                 _name = n;
+                // Capture the loop pointer under the same lock so a
+                // racing tear-down (which clears _threadLoop under
+                // _mutex) cannot leave us dereferencing freed
+                // storage.  The loop's setName is itself
+                // thread-safe.
+                loopForName = _threadLoop;
         }
         if (_running.value()) {
                 applyOsName();
         }
+        if (loopForName != nullptr) loopForName->setName(n);
         return;
 }
 
@@ -448,6 +456,15 @@ void Thread::threadEntry() {
                 Mutex::Locker locker(_mutex);
                 _threadLoop = loop.get();
         }
+        // Propagate the Thread's user-visible name down into the
+        // EventLoop so per-loop diagnostics (EventLoop's monitor
+        // formatter, debug-server snapshots) can identify the
+        // loop without having to traverse the Thread object.
+        // Bare-string copy is intentional — Thread::setName already
+        // stores the name locally even before the OS-name call
+        // succeeds, so reading it here is safe whether or not
+        // setName was issued before start().
+        if (!_name.isEmpty()) loop->setName(_name);
         _running.setValue(true);
         applyOsName();
 
