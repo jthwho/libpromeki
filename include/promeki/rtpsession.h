@@ -8,13 +8,15 @@
 #pragma once
 
 #include <cstdint>
-#include <functional>
 #include <promeki/atomic.h>
+#include <promeki/list.h>
 #include <promeki/mutex.h>
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
 #include <promeki/buffer.h>
 #include <promeki/duration.h>
+#include <promeki/queue.h>
+#include <promeki/rtcppacket.h>
 #include <promeki/socketaddress.h>
 #include <promeki/ntptime.h>
 #include <promeki/rtppacket.h>
@@ -26,6 +28,8 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class Thread;
+class RtpSeqTracker;
+class RtpSeqReorderBuffer;
 
 /**
  * @brief RTP session for sending and receiving packets (RFC 3550).
@@ -189,22 +193,67 @@ class RtpSession : public ObjectBase {
                 Error sendPackets(RtpPacketBatch &batch);
 
                 /**
-                 * @brief Signature of the per-packet receive callback.
+                 * @brief Per-stream RX dispatch entry plumbed
+                 *        through the @ref startReceiving overload
+                 *        below.
                  *
-                 * Invoked from the receive thread for every RTP
-                 * packet arriving on the transport.  The @c packet
-                 * view references a Buffer owned by the session; its
-                 * backing memory is valid only for the duration of
-                 * the call.  Consumers that need to retain the bytes
-                 * must copy them into an independent allocation
-                 * (storing the @ref Buffer by value is not enough —
-                 * subsequent datagrams reuse the same backing
-                 * storage).
+                 * Each entry describes how the recv socket thread
+                 * should route packets that match a given RTP
+                 * payload type:
+                 * - Update the per-source @ref RtpSeqTracker with
+                 *   the packet's seq / RTP-TS / @c arrivalSteady
+                 *   (RFC 3550 §A.1 / §A.3 / §A.8 bookkeeping).
+                 * - Push the packet through the
+                 *   @ref RtpSeqReorderBuffer for in-order /
+                 *   deadline-fill / drop-oldest dispatch into the
+                 *   per-stream @c outQueue, where the matching
+                 *   per-stream depacketizer thread consumes it.
                  *
-                 * @param packet The parsed RTP packet.
-                 * @param sender The datagram sender's address.
+                 * All pointers are caller-owned and must outlive
+                 * the receive loop.  The recv thread does not take
+                 * ownership; @ref stopReceiving releases the
+                 * receivers list before the storage is freed.
                  */
-                using PacketCallback = std::function<void(const RtpPacket &packet, const SocketAddress &sender)>;
+                struct StreamReceiver {
+                                /// @brief Per-stream post-reorder
+                                ///        output queue.  The
+                                ///        depacketizer thread
+                                ///        consumes from here.
+                                Queue<RtpPacket> *outQueue = nullptr;
+
+                                /// @brief Per-source seq /
+                                ///        loss / jitter tracker.
+                                RtpSeqTracker *seqTracker = nullptr;
+
+                                /// @brief Windowed reorder buffer
+                                ///        sitting in front of
+                                ///        @ref outQueue.
+                                RtpSeqReorderBuffer *reorderBuffer = nullptr;
+
+                                /// @brief Per-stream RTP clock
+                                ///        rate in Hz; plumbed
+                                ///        into the seq tracker
+                                ///        via implicit init for
+                                ///        §A.8 jitter accounting,
+                                ///        and into the
+                                ///        depacketizer's
+                                ///        @c StreamAnchor for
+                                ///        pre-SR @c captureTime
+                                ///        interpolation.
+                                uint32_t clockRateHz = 0;
+
+                                /// @brief RTP payload-type byte
+                                ///        the recv thread matches
+                                ///        against on dispatch.
+                                ///        Today's single-stream-
+                                ///        per-session case uses
+                                ///        a one-entry list and
+                                ///        the dispatch is a
+                                ///        no-op; multi-stream
+                                ///        sessions (later) will
+                                ///        select by PT.
+                                uint8_t payloadType = 0;
+                };
 
                 /**
                  * @brief Starts the per-session RTP receive loop.
@@ -213,10 +262,18 @@ class RtpSession : public ObjectBase {
                  * @c "rtp-rx" that calls
                  * @ref PacketTransport::receivePacket in a loop,
                  * wraps each datagram in an @ref RtpPacket view of
-                 * an owned @ref Buffer, and delivers the packet to
-                 * @p callback.  The existing @c packetReceived
-                 * signal is also emitted for consumers that prefer
-                 * event-loop dispatch.
+                 * an owned @ref Buffer, demuxes RTCP via byte[1] in
+                 * the @c [200..223] range, and routes RTP packets
+                 * through the supplied per-stream @ref StreamReceiver
+                 * entries: the recv socket thread updates each
+                 * entry's seq tracker and pushes through its
+                 * reorder buffer into its post-reorder
+                 * @c Queue<RtpPacket>.  The matching per-stream
+                 * depacketizer thread consumes from the queue on
+                 * its own thread, so the recv thread never runs
+                 * reassembly / payload->unpack / FIFO push work
+                 * inline.  See @c devplan/network/rtp-rx.md for
+                 * the full threading topology.
                  *
                  * The session must already be running
                  * (@ref isRunning() == true) — call one of the
@@ -225,22 +282,27 @@ class RtpSession : public ObjectBase {
                  * The receive thread polls the stop flag every few
                  * hundred milliseconds using @c SO_RCVTIMEO on the
                  * underlying socket, so @ref stopReceiving() returns
-                 * within one poll interval.  If the transport is not
-                 * a UDP socket the poll timeout is a best-effort —
-                 * transports that cannot expose a non-blocking
-                 * receive may stall @ref stopReceiving until a
-                 * packet arrives.
+                 * within one poll interval.
                  *
-                 * @param callback The per-packet callback (required).
+                 * The @ref packetReceived signal still fires for
+                 * external consumers (test fixtures, future
+                 * diagnostic UIs) that prefer event-loop dispatch.
+                 *
+                 * @param receivers  Per-stream dispatch entries.
+                 *                   Empty list is rejected with
+                 *                   @c Error::InvalidArgument.
                  * @param threadName Thread name surfaced to
-                 *        debuggers and OS monitors.  Defaults to
-                 *        @c "rtp-rx".
-                 * @return Error::Ok on success, Error::Busy if
-                 *         already receiving, Error::NotOpen if the
-                 *         session has not been started, or
-                 *         Error::InvalidArgument on a null callback.
+                 *                   debuggers and OS monitors.
+                 *                   Defaults to @c "rtp-rx".
+                 * @return @c Error::Ok on success,
+                 *         @c Error::Busy if already receiving,
+                 *         @c Error::NotOpen if the session has
+                 *         not been started, or
+                 *         @c Error::InvalidArgument on a malformed
+                 *         receivers list.
                  */
-                Error startReceiving(PacketCallback callback, const String &threadName = "rtp-rx");
+                Error startReceiving(List<StreamReceiver> receivers,
+                                     const String &threadName = "rtp-rx");
 
                 /**
                  * @brief Stops the receive loop and joins the receive thread.
@@ -437,6 +499,38 @@ class RtpSession : public ObjectBase {
                 Error emitRtcpSr(uint32_t senderPacketCount, uint32_t senderOctetCount);
 
                 /**
+                 * @brief Emits a Receiver Report compound (RR + SDES).
+                 *
+                 * @c block describes the source the receiver is
+                 * reporting on; @c lsr / @c dlsr are derived from
+                 * @ref receivedSr — when no SR has been observed yet
+                 * the RFC 3550 §6.4.1 convention is to leave both
+                 * fields zero, which @ref RtcpPacket::buildReceiverReport
+                 * does naturally.
+                 *
+                 * The compound includes an SDES with this session's
+                 * CNAME so receivers correlate this session with any
+                 * other streams sharing the CNAME.
+                 *
+                 * @return @c Error::NotOpen when the session has not
+                 *         started, otherwise the transport's send
+                 *         result.
+                 */
+                Error emitRtcpRr(const RtcpPacket::ReportBlock &block);
+
+                /**
+                 * @brief Emits a Goodbye / BYE compound for this
+                 *        session's SSRC.
+                 *
+                 * Called on clean shutdown so receivers can drop the
+                 * source immediately rather than waiting for a
+                 * timeout.  The compound includes a final SDES so
+                 * the receiver still has a CNAME for any cross-stream
+                 * correlation it has cached.
+                 */
+                Error emitRtcpBye();
+
+                /**
                  * @brief Snapshot of the most-recently parsed
                  *        Sender Report received on this session.
                  *
@@ -469,6 +563,28 @@ class RtpSession : public ObjectBase {
                  * window where this returns invalid.
                  */
                 ReceivedSr receivedSr() const;
+
+                /**
+                 * @brief Returns the cumulative count of SRs the
+                 *        receive thread has parsed for this session.
+                 *
+                 * Zero until the first SR arrives.  Surfaced through
+                 * @ref RtpMediaIO::StatsRxSrObserved.  Wraps
+                 * silently after 2^32 SRs (~6800 years at the
+                 * default 5-second RTCP interval).
+                 */
+                uint32_t srObservedCount() const;
+
+                /**
+                 * @brief Returns the local steady-clock timestamp
+                 *        of the first SR observed for this session.
+                 *
+                 * Default-constructed (epoch) until the first SR
+                 * arrives.  Surfaced indirectly via
+                 * @ref RtpMediaIO::StatsRxFirstSrLatency, which
+                 * subtracts the session's open-time anchor.
+                 */
+                TimeStamp firstSrAt() const;
 
                 /**
                  * @brief Computes the NTP wallclock timestamp the SR
@@ -512,6 +628,35 @@ class RtpSession : public ObjectBase {
 
                 /** @brief Emitted when an SSRC collision is detected. @signal */
                 PROMEKI_SIGNAL(ssrcCollision, uint32_t);
+
+                /**
+                 * @brief Emitted when the queue-mode receive loop
+                 *        detects a sustained SSRC change on an
+                 *        active stream and resets per-source state.
+                 *
+                 * Parameters: @c oldSsrc (the SSRC the recv thread
+                 * had pinned), @c newSsrc (the SSRC the wire is
+                 * carrying now), and the @c payloadType the change
+                 * was observed on.  Distinct from
+                 * @ref ssrcCollision, which fires only when the
+                 * incoming SSRC equals our own outgoing SSRC.
+                 *
+                 * @signal
+                 */
+                PROMEKI_SIGNAL(ssrcChange, uint32_t, uint32_t, uint8_t);
+
+                /**
+                 * @brief Emitted when an inbound RTCP BYE is
+                 *        observed for the given SSRC.
+                 *
+                 * The recv thread parses BYE inside @ref handleRtcp
+                 * and emits this signal so RtpMediaIO can flush
+                 * the affected stream's depacketizer + aggregator
+                 * and surface EoS to the strand.
+                 *
+                 * @signal
+                 */
+                PROMEKI_SIGNAL(byeReceived, uint32_t);
 
         private:
                 class ReceiveThread;
@@ -581,6 +726,17 @@ class RtpSession : public ObjectBase {
                 uint32_t      _lastEmissionRtpTs = 0;
                 bool          _hasEmission = false;
                 String        _cname;
+                /// @brief Cumulative count of SRs parsed by the
+                ///        receive thread.  Mutex-guarded against
+                ///        @ref srObservedCount readers on other
+                ///        threads (RTCP scheduler, stats path).
+                uint32_t      _srObservedCount = 0;
+                /// @brief Local steady-clock timestamp of the
+                ///        first SR observed.  Default-constructed
+                ///        until the first SR arrives.  Used by
+                ///        @ref firstSrAt + @ref RtpMediaIO to
+                ///        compute @c firstSrLatency.
+                TimeStamp     _firstSrAt;
 
                 // Most-recently parsed inbound SR.  The receive thread
                 // demuxes RTCP from RTP via the second byte of every
@@ -592,12 +748,28 @@ class RtpSession : public ObjectBase {
                 // alignment.
                 ReceivedSr _lastReceivedSr;
 
-                // Receive path
+                // Receive path.  @c _streamReceivers is populated
+                // by @ref startReceiving and consumed by the recv
+                // socket thread; per-stream depacketizer threads
+                // pull from the post-reorder queues each entry
+                // points at.
                 using ReceiveThreadUPtr = UniquePtr<ReceiveThread>;
-                ReceiveThreadUPtr _receiveThread;
-                PacketCallback    _receiveCallback;
-                Atomic<bool>      _receiving;
-                unsigned int      _receivePollMs = 200;
+                ReceiveThreadUPtr    _receiveThread;
+                List<StreamReceiver> _streamReceivers;
+                Atomic<bool>         _receiving;
+                unsigned int         _receivePollMs = 200;
+
+                // Per-stream-receiver SSRC pin state.  Sized to
+                // match @c _streamReceivers.size() at
+                // @c startReceiving time.  Index-parallel — entry
+                // @c i tracks the SSRC pin for receivers[i].
+                struct SsrcPinState {
+                                uint32_t  expectedSsrc = 0;
+                                bool      pinned = false;
+                                uint32_t  mismatchCount = 0;
+                                TimeStamp mismatchFirstTime;
+                };
+                List<SsrcPinState> _ssrcPinStates;
 };
 
 PROMEKI_NAMESPACE_END

@@ -14,6 +14,7 @@
 #include <promeki/clockdomain.h>
 #include <promeki/dedicatedthreadmediaio.h>
 #include <promeki/eui64.h>
+#include <promeki/macaddress.h>
 #include <promeki/frame.h>
 #include <promeki/histogram.h>
 #include <promeki/imagedesc.h>
@@ -25,10 +26,21 @@
 #include <promeki/pcmaudiopayload.h>
 #include <promeki/pixelformat.h>
 #include <promeki/queue.h>
+#include <promeki/rtcpscheduler.h>
+#include <promeki/rtpaggregatorthread.h>
+#include <promeki/rtpaudiodepacketizerthread.h>
+#include <promeki/rtpaudiopacketizerthread.h>
+#include <promeki/rtpaudiotxthread.h>
+#include <promeki/rtpdatadepacketizerthread.h>
+#include <promeki/rtpdepacketizerthread.h>
+#include <promeki/rtpvideodepacketizerthread.h>
 #include <promeki/rtppacket.h>
 #include <promeki/rtppacketizerthread.h>
+#include <promeki/rtpseqreorderbuffer.h>
+#include <promeki/rtpseqtracker.h>
 #include <promeki/rtpstreamclock.h>
 #include <promeki/rtptxthread.h>
+#include <promeki/rxpayloadbundle.h>
 #include <promeki/sdpsession.h>
 #include <promeki/socketaddress.h>
 #include <promeki/string.h>
@@ -126,12 +138,20 @@ class Thread;
  * @ref UdpSocketTransport bound to the port in the corresponding
  * @c *RtpDestination key, joins the multicast group if the
  * destination is a group address, and runs an @ref RtpSession
- * receive thread that hands packets to a per-stream reassembler.
- * The reassembler emits completed @ref Frame objects into a shared
- * thread-safe output queue that @c executeCmd(MediaIOCommandRead)
- * drains with a bounded timeout.  @c ReadWrite is explicitly
- * rejected — an RTP sink and an RTP source are conceptually
- * different streams and should not share a MediaIO.
+ * receive thread that pushes packets through the per-stream
+ * @ref RtpSeqTracker / @ref RtpSeqReorderBuffer into a post-reorder
+ * @c Queue<RtpPacket>.  A per-stream depacketizer worker thread
+ * pops the queue, runs reassembly + @c payload->unpack + JPEG
+ * geometry probe / JSON parse, and produces typed bundles
+ * (@c RxVideoFrame / @c RxAudioChunk / @c RxDataMessage) onto
+ * its per-stream payload queue.  A single @c RtpAggregatorThread
+ * per @ref RtpMediaIO consumes those queues, merges across the
+ * video / audio / data domains, and pushes completed @ref Frame
+ * objects into a thread-safe output queue that
+ * @c executeCmd(MediaIOCommandRead) drains with a bounded timeout.
+ * @c ReadWrite is explicitly rejected — an RTP sink and an RTP
+ * source are conceptually different streams and should not share
+ * a MediaIO.
  *
  * @par Parameter-set delivery (H.264 / H.265)
  *
@@ -400,6 +420,87 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                  */
                 static inline const MediaIOStats::ID StatsAudioSilenceSamplesEmitted{"AudioSilenceSamplesEmitted"};
 
+                // ----------------------------------------------------------
+                // Reader-side per-stream RFC 3550 §A counters,
+                // aggregated across every active reader stream
+                // (video + audio + data).  All published by
+                // @c executeCmd(MediaIOCommandStats); see
+                // @c devplan/network/rtp-rx.md for the full
+                // ReaderStream::Stats block these correspond to.
+                // ----------------------------------------------------------
+
+                /** @brief uint32_t — most-recent extended-highest-seq across all reader streams. */
+                static inline const MediaIOStats::ID StatsRxExtendedHighestSeq{"RxExtendedHighestSeq"};
+                /** @brief uint32_t — total packets RFC 3550 §6.4.1 expected (per first reader stream). */
+                static inline const MediaIOStats::ID StatsRxPacketsExpected{"RxPacketsExpected"};
+                /** @brief int32_t — RFC 3550 §6.4.1 cumulative-lost (signed, summed across reader streams). */
+                static inline const MediaIOStats::ID StatsRxCumulativeLost{"RxCumulativeLost"};
+                /** @brief uint8_t — RFC 3550 §6.4.1 fraction-lost from the first reader stream. */
+                static inline const MediaIOStats::ID StatsRxFractionLost{"RxFractionLost"};
+                /** @brief int64_t — duplicate packets observed across all reader streams. */
+                static inline const MediaIOStats::ID StatsRxDuplicatePackets{"RxDuplicatePackets"};
+                /** @brief int64_t — reordered packets observed across all reader streams. */
+                static inline const MediaIOStats::ID StatsRxReorderedPackets{"RxReorderedPackets"};
+                /** @brief uint32_t — RFC 3550 §A.8 interarrival jitter (RTP-TS units) from the first reader stream. */
+                static inline const MediaIOStats::ID StatsRxInterarrivalJitter{"RxInterarrivalJitter"};
+
+                /** @brief int64_t — debounced SSRC-change events summed across all reader streams. */
+                static inline const MediaIOStats::ID StatsRxSsrcChanges{"RxSsrcChanges"};
+
+                /** @brief int64_t — reorder-buffer in-order emissions across all reader streams. */
+                static inline const MediaIOStats::ID StatsRxReorderEmittedInOrder{"RxReorderEmittedInOrder"};
+                /** @brief int64_t — reorder-buffer deadline-driven gap-fill emissions across all reader streams. */
+                static inline const MediaIOStats::ID StatsRxReorderEmittedOnDeadline{"RxReorderEmittedOnDeadline"};
+                /** @brief int64_t — reorder-buffer overflow drops across all reader streams. */
+                static inline const MediaIOStats::ID StatsRxReorderDroppedOverflow{"RxReorderDroppedOverflow"};
+                /** @brief int64_t — reorder-buffer duplicate-seq drops across all reader streams. */
+                static inline const MediaIOStats::ID StatsRxReorderDroppedDuplicate{"RxReorderDroppedDuplicate"};
+
+                /** @brief int64_t — current depth of the per-stream video PayloadQueue (first reader). */
+                static inline const MediaIOStats::ID StatsRxVideoQueueDepth{"RxVideoQueueDepth"};
+                /** @brief int64_t — current depth of the per-stream audio PayloadQueue (first reader). */
+                static inline const MediaIOStats::ID StatsRxAudioQueueDepth{"RxAudioQueueDepth"};
+                /** @brief int64_t — current depth of the per-stream data PayloadQueue (first reader). */
+                static inline const MediaIOStats::ID StatsRxDataQueueDepth{"RxDataQueueDepth"};
+                /** @brief int64_t — current depth of the aggregator's reader-output queue. */
+                static inline const MediaIOStats::ID StatsRxReaderQueueDepth{"RxReaderQueueDepth"};
+
+                /** @brief int64_t — frames the depacketizers have successfully reassembled
+                 *         and pushed onto a payload queue (summed across reader streams).
+                 *         Audio counts each @c RxAudioChunk; video / data counts each
+                 *         emitted bundle. */
+                static inline const MediaIOStats::ID StatsRxFramesReassembled{"RxFramesReassembled"};
+                /** @brief int64_t — frames dropped by @c RtpPayload::validate returning
+                 *         @c DropSilently (e.g. mid-frame join, partial reassembly,
+                 *         pre-IDR compressed video).  Summed across reader streams. */
+                static inline const MediaIOStats::ID StatsRxFramesDroppedValidate{"RxFramesDroppedValidate"};
+                /** @brief int64_t — frames waiting on out-of-band parameter sets
+                 *         (@c validate returning @c Wait) — typically H.264 / HEVC
+                 *         streams without an SPS/PPS or VPS yet observed.  Summed
+                 *         across reader streams. */
+                static inline const MediaIOStats::ID StatsRxFramesWaitingParamSets{"RxFramesWaitingParamSets"};
+                /** @brief int64_t — frames dropped due to an SSRC reset epoch flush
+                 *         (i.e. the depacketizer had a partial reassembly when the
+                 *         recv thread bumped the reset epoch and chose to discard
+                 *         rather than emit a now-stale bundle).  Summed across
+                 *         reader streams. */
+                static inline const MediaIOStats::ID StatsRxFramesDroppedSsrcReset{"RxFramesDroppedSsrcReset"};
+
+                /** @brief int64_t — cumulative count of SRs the receive thread has
+                 *         parsed across every active reader-side RtpSession.  Zero
+                 *         until the first SR arrives. */
+                static inline const MediaIOStats::ID StatsRxSrObserved{"RxSrObserved"};
+                /** @brief int64_t microseconds — age of the most-recent SR observed
+                 *         on the first reader stream that has one (i.e. the
+                 *         @c (now − arrivedAt) gap on the freshest @c receivedSr
+                 *         snapshot).  Zero until the first SR has arrived. */
+                static inline const MediaIOStats::ID StatsRxLastSrAgeUs{"RxLastSrAgeUs"};
+                /** @brief int64_t microseconds — duration from the
+                 *         @c executeCmd(MediaIOCommandOpen) entry point to the
+                 *         first SR observed on any reader-side RtpSession.  Zero
+                 *         until the first SR has arrived. */
+                static inline const MediaIOStats::ID StatsRxFirstSrLatencyUs{"RxFirstSrLatencyUs"};
+
                 /** @brief Params command name: return the SDP text in @c result["Sdp"]. */
                 static inline const MediaIOParamsID ParamGetSdp{"GetSdp"};
                 /** @brief Key used in @c GetSdp result. */
@@ -534,7 +635,11 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                       fmtp(std::move(o.fmtp)),
                                       active(o.active),
                                       clockDomain(o.clockDomain),
-                                      ptpGrandmaster(o.ptpGrandmaster) {
+                                      tsRefClkMode(o.tsRefClkMode),
+                                      ptpGrandmaster(o.ptpGrandmaster),
+                                      ptpDomain(o.ptpDomain),
+                                      refClockLocalMac(std::move(o.refClockLocalMac)),
+                                      mediaClkOffset(o.mediaClkOffset) {
                                         // Null pointers on the moved-
                                         // from instance so a stray
                                         // reset can't double-delete.
@@ -558,7 +663,11 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                 String              fmtp;      ///< @brief SDP a=fmtp:... value, optional
                                 bool                active = false;
                                 ClockDomain         clockDomain;    ///< @brief Clock domain derived from SDP ts-refclk.
-                                EUI64               ptpGrandmaster; ///< @brief PTP grandmaster ID from SDP ts-refclk.
+                                RtpRefClockMode     tsRefClkMode = RtpRefClockMode::None; ///< @brief Drives buildSdp ts-refclk emission.
+                                EUI64               ptpGrandmaster; ///< @brief PTP grandmaster ID for SDP ts-refclk:ptp.
+                                uint8_t             ptpDomain = 0;  ///< @brief PTP domain number for SDP ts-refclk:ptp.
+                                MacAddress          refClockLocalMac; ///< @brief MAC for SDP ts-refclk:localmac.
+                                int32_t             mediaClkOffset = 0; ///< @brief SDP mediaclk:direct=&lt;offset&gt;.
                 };
 
                 /**
@@ -609,14 +718,17 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                  * @brief Reader-mode stream state.
                  *
                  * Holds the reassembly state (current packet list,
-                 * latched RTP timestamp, sync gate) the per-session
-                 * RX thread accumulates between marker bits, the RX
-                 * stats counters, and the RX-side timing histograms.
-                 * The JPEG-discovered @c readerImageDesc / generic
+                 * latched RTP timestamp) the per-stream depacketizer
+                 * thread accumulates between marker bits, the RX
+                 * stats counters, the per-stream RFC 3550 §A
+                 * @ref RtpSeqTracker / @ref RtpSeqReorderBuffer +
+                 * post-reorder queue + depacketizer pointer, and
+                 * the RX-side timing histograms.  The
+                 * JPEG-discovered @c readerImageDesc / generic
                  * @c readerAudioDesc descriptors live here too —
-                 * they are populated by @c emitVideoFrame /
-                 * @c onAudioPacket from the wire bytes plus the SDP's
-                 * advertised shape, never by the writer side.
+                 * they are populated by the depacketizer thread
+                 * from the wire bytes plus the SDP's advertised
+                 * shape, never by the writer side.
                  */
                 struct ReaderStream : Stream {
                                 ReaderStream() = default;
@@ -632,7 +744,6 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                       reasmHasTimestamp(o.reasmHasTimestamp),
                                       reasmLastSeq(o.reasmLastSeq),
                                       reasmHaveLastSeq(o.reasmHaveLastSeq),
-                                      reasmSynced(o.reasmSynced),
                                       reasmPackets(std::move(o.reasmPackets)),
                                       rxPacketInterval(std::move(o.rxPacketInterval)),
                                       rxFrameInterval(std::move(o.rxFrameInterval)),
@@ -645,7 +756,16 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                       rxHasFrameStart(o.rxHasFrameStart),
                                       streamClock(std::move(o.streamClock)),
                                       lastSrArrivedAt(o.lastSrArrivedAt),
-                                      hasSr(o.hasSr) {}
+                                      hasSr(o.hasSr),
+                                      seqTracker(std::move(o.seqTracker)),
+                                      reorderBuffer(std::move(o.reorderBuffer)),
+                                      reorderQueue(std::move(o.reorderQueue)),
+                                      depacketizer(std::move(o.depacketizer)),
+                                      ssrcChanges(o.ssrcChanges.value()),
+                                      framesReassembled(o.framesReassembled.value()),
+                                      framesDroppedValidate(o.framesDroppedValidate.value()),
+                                      framesWaitingParamSets(o.framesWaitingParamSets.value()),
+                                      framesDroppedSsrcReset(o.framesDroppedSsrcReset.value()) {}
                                 ReaderStream(const ReaderStream &) = delete;
                                 ReaderStream &operator=(const ReaderStream &) = delete;
                                 ReaderStream &operator=(ReaderStream &&) = delete;
@@ -659,7 +779,6 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                 bool            reasmHasTimestamp = false;
                                 uint16_t        reasmLastSeq = 0;
                                 bool            reasmHaveLastSeq = false;
-                                bool            reasmSynced = false; ///< @brief True once a marker boundary has been seen.
                                 RtpPacket::List reasmPackets;
                                 Histogram       rxPacketInterval;    ///< @brief µs between received packets
                                 Histogram       rxFrameInterval;     ///< @brief µs between completed frames
@@ -695,6 +814,133 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                 /// @brief Set once the first SR has
                                 ///        seeded the stream clock.
                                 bool hasSr = false;
+
+                                /// @brief Per-source RFC 3550 §A
+                                ///        seq / loss / jitter
+                                ///        tracker.  Owned per
+                                ///        ReaderStream; the recv
+                                ///        socket thread updates it
+                                ///        via the @c StreamReceiver
+                                ///        list passed to
+                                ///        @ref RtpSession::startReceiving.
+                                ///        @c nullptr until
+                                ///        @c openReaderStream
+                                ///        instantiates it.
+                                UniquePtr<RtpSeqTracker> seqTracker;
+
+                                /// @brief Per-stream windowed
+                                ///        reorder buffer in front
+                                ///        of the depacketizer
+                                ///        thread.
+                                UniquePtr<RtpSeqReorderBuffer> reorderBuffer;
+
+                                /// @brief Post-reorder packet
+                                ///        queue.  Recv thread
+                                ///        pushes via the reorder
+                                ///        buffer's
+                                ///        @c pushDropOldest path;
+                                ///        @c depacketizer pops in
+                                ///        its run loop.
+                                UniquePtr<Queue<RtpPacket>> reorderQueue;
+
+                                /// @brief Owned per-stream
+                                ///        depacketizer worker.
+                                ///        Concrete type
+                                ///        (Video / Audio / Data)
+                                ///        is selected in
+                                ///        @c rtpmediaio.cpp where
+                                ///        the nested subclass
+                                ///        definitions live.
+                                UniquePtr<RtpDepacketizerThread> depacketizer;
+
+                                /// @brief Monotone counter the recv
+                                ///        thread bumps on every SSRC
+                                ///        reset.  The depacketizer
+                                ///        thread compares against its
+                                ///        last-observed value at the
+                                ///        top of @c handlePacket; on
+                                ///        mismatch it drains its
+                                ///        reassembly state and
+                                ///        @c StreamAnchor before
+                                ///        processing the new packet.
+                                ///        Wraparound is harmless —
+                                ///        only equality matters.
+                                Atomic<uint32_t> resetEpoch{0};
+
+                                /// @brief Nanoseconds-since-epoch of
+                                ///        the most recent packet seen
+                                ///        on this stream's
+                                ///        depacketizer.  Updated by
+                                ///        the depacketizer thread on
+                                ///        every observed packet; read
+                                ///        by the RTCP scheduler's
+                                ///        wire-silence watchdog.  Zero
+                                ///        until the first packet
+                                ///        arrives.
+                                Atomic<int64_t> lastPacketArrivalNs{0};
+
+                                /// @brief @c true once the wire-
+                                ///        silence watchdog has
+                                ///        signalled EoS for this
+                                ///        stream.  Owned by the
+                                ///        watchdog (RTCP scheduler
+                                ///        thread) — never written
+                                ///        from any other thread.
+                                bool wireSilenceEosSignaled = false;
+
+                                /// @brief Cumulative count of debounced
+                                ///        SSRC-change events observed on
+                                ///        this stream.  Incremented by
+                                ///        the recv socket thread (via the
+                                ///        @c ssrcChangeSignal slot) every
+                                ///        time the SSRC pin is updated to
+                                ///        a new sustained value.  Used as
+                                ///        the boundary marker when
+                                ///        consumers compare seq-tracker
+                                ///        deltas across resets.
+                                Atomic<int64_t> ssrcChanges{0};
+
+                                /// @brief Cumulative count of bundles the
+                                ///        per-stream depacketizer has
+                                ///        successfully pushed onto its
+                                ///        @c payloadQueue.  Bumped by the
+                                ///        depacketizer thread once per
+                                ///        successful @c emitFrame /
+                                ///        @c emitMessage / per-packet
+                                ///        audio chunk.  Surfaced through
+                                ///        @ref StatsRxFramesReassembled.
+                                Atomic<int64_t> framesReassembled{0};
+
+                                /// @brief Cumulative count of frames
+                                ///        dropped because
+                                ///        @ref RtpPayload::validate
+                                ///        returned @c DropSilently —
+                                ///        partial reassembly, mid-frame
+                                ///        join, pre-IDR compressed video.
+                                ///        Audio depacketizer leaves this
+                                ///        zero.  Surfaced through
+                                ///        @ref StatsRxFramesDroppedValidate.
+                                Atomic<int64_t> framesDroppedValidate{0};
+
+                                /// @brief Cumulative count of frames
+                                ///        held back because
+                                ///        @ref RtpPayload::validate
+                                ///        returned @c Wait — typically
+                                ///        compressed video gated on
+                                ///        an SPS/PPS or VPS that has
+                                ///        not yet been observed.
+                                ///        Surfaced through
+                                ///        @ref StatsRxFramesWaitingParamSets.
+                                Atomic<int64_t> framesWaitingParamSets{0};
+
+                                /// @brief Cumulative count of in-flight
+                                ///        frames discarded when the
+                                ///        depacketizer observes a new
+                                ///        @ref resetEpoch and chooses to
+                                ///        flush rather than emit a now-
+                                ///        stale bundle.  Surfaced through
+                                ///        @ref StatsRxFramesDroppedSsrcReset.
+                                Atomic<int64_t> framesDroppedSsrcReset{0};
                 };
 
                 /**
@@ -832,43 +1078,73 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 /**
                  * @brief Reader-mode video stream state.
                  *
-                 * Inherits @ref ReaderStream with no kind-specific
-                 * fields today — RFC 4175 / RFC 2435 / H.264 / H.265
-                 * reader state lives entirely on the base.  Exists
-                 * to type-tag the @c _videoReaders list and document
-                 * what helpers like @c onVideoPacket / @c emitVideoFrame
-                 * expect.
+                 * Inherits @ref ReaderStream and adds the typed
+                 * @c Queue<RxVideoFrame> the
+                 * @c VideoDepacketizerThread (sole producer) and
+                 * @c RtpAggregatorThread (sole consumer) share.
+                 * RFC 4175 / RFC 2435 / H.264 / H.265 reader state
+                 * lives entirely on the base.
                  */
                 struct VideoReaderStream : ReaderStream {
                                 VideoReaderStream() = default;
-                                VideoReaderStream(VideoReaderStream &&) noexcept = default;
+                                VideoReaderStream(VideoReaderStream &&o) noexcept
+                                    : ReaderStream(std::move(o)),
+                                      payloadQueue(std::move(o.payloadQueue)) {}
                                 VideoReaderStream(const VideoReaderStream &) = delete;
                                 VideoReaderStream &operator=(const VideoReaderStream &) = delete;
                                 VideoReaderStream &operator=(VideoReaderStream &&) = delete;
+                                /// @brief Typed bundle queue between the
+                                ///        @c VideoDepacketizerThread
+                                ///        (sole producer) and
+                                ///        @c RtpAggregatorThread
+                                ///        (sole consumer).  Bounded
+                                ///        at @ref VideoPayloadQueueDepth;
+                                ///        block-on-full so the
+                                ///        depacketizer back-pressures
+                                ///        rather than dropping post-
+                                ///        reassembly bundles.
+                                UniquePtr<Queue<RxVideoFrame>> payloadQueue;
                 };
 
                 /**
                  * @brief Reader-mode audio stream state.
                  *
-                 * Inherits @ref ReaderStream and owns the L16
-                 * reassembly FIFO.  The per-session RX thread pushes
-                 * arriving samples into @c fifo; the audio-only
-                 * fallback path inside @c onAudioPacket drains it
-                 * into per-frame @c PcmAudioPayload chunks at the
-                 * SDP-advertised frame rate.  When a video stream is
-                 * also active, the aggregator-side
-                 * @c ReaderAggregator::audioFifo takes the role of
-                 * sample buffer instead.
+                 * Inherits @ref ReaderStream and adds a typed
+                 * @c Queue<RxAudioChunk> that the
+                 * @c AudioDepacketizerThread fills and the
+                 * @c RtpAggregatorThread drains.  The aggregator
+                 * owns the AudioBuffer FIFO that re-assembles
+                 * samples into per-Frame slices, so this struct
+                 * no longer carries one of its own.
+                 *
+                 * The unused legacy @c fifo field is retained for
+                 * binary compatibility during the staged Phase
+                 * 2.B → Phase 5 cleanup; it will go away with the
+                 * rest of the legacy-receive-path scaffolding.
                  */
                 struct AudioReaderStream : ReaderStream {
                                 AudioReaderStream() = default;
                                 AudioReaderStream(AudioReaderStream &&o) noexcept
                                     : ReaderStream(std::move(o)),
-                                      fifo(std::move(o.fifo)) {}
+                                      fifo(std::move(o.fifo)),
+                                      payloadQueue(std::move(o.payloadQueue)) {}
                                 AudioReaderStream(const AudioReaderStream &) = delete;
                                 AudioReaderStream &operator=(const AudioReaderStream &) = delete;
                                 AudioReaderStream &operator=(AudioReaderStream &&) = delete;
+                                /// @brief Audio-only-mode FIFO used when
+                                ///        no video reader is active and
+                                ///        the aggregator emits one
+                                ///        Frame per audio cadence
+                                ///        boundary.  Unused when video
+                                ///        is active — in that case the
+                                ///        aggregator owns its own FIFO
+                                ///        and pulls from
+                                ///        @ref payloadQueue.
                                 AudioBuffer fifo;
+                                /// @brief Typed bundle queue between the
+                                ///        @c AudioDepacketizerThread
+                                ///        and @c RtpAggregatorThread.
+                                UniquePtr<Queue<RxAudioChunk>> payloadQueue;
                 };
 
                 /**
@@ -880,15 +1156,40 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                  */
                 struct DataReaderStream : ReaderStream {
                                 DataReaderStream() = default;
-                                DataReaderStream(DataReaderStream &&) noexcept = default;
+                                DataReaderStream(DataReaderStream &&o) noexcept
+                                    : ReaderStream(std::move(o)),
+                                      payloadQueue(std::move(o.payloadQueue)) {}
                                 DataReaderStream(const DataReaderStream &) = delete;
                                 DataReaderStream &operator=(const DataReaderStream &) = delete;
                                 DataReaderStream &operator=(DataReaderStream &&) = delete;
+                                /// @brief Typed bundle queue between the
+                                ///        @c DataDepacketizerThread
+                                ///        and @c RtpAggregatorThread.
+                                UniquePtr<Queue<RxDataMessage>> payloadQueue;
                 };
+
+                /// @brief Per-stream payload queue depths.  Sized by
+                ///        the devplan's "latency budget × cadence"
+                ///        rule for audio (100 ms × 1 ms cadence = 100
+                ///        chunks); video is bounded at 4 frames so a
+                ///        stuck aggregator surfaces back-pressure
+                ///        rather than OOMing on 4K HEVC; data is 8
+                ///        messages because data is sparse.
+                static constexpr size_t VideoPayloadQueueDepth = 4;
+                static constexpr size_t AudioPayloadQueueDepth = 100;
+                static constexpr size_t DataPayloadQueueDepth = 8;
 
                 Error configureVideoStream(const MediaIO::Config &cfg, const MediaDesc &mediaDesc);
                 Error configureAudioStream(const MediaIO::Config &cfg, const MediaDesc &mediaDesc);
                 Error configureDataStream(const MediaIO::Config &cfg);
+
+                /// @brief Resolves the writer-side ts-refclk / mediaclk
+                ///        config and stamps the result onto every active
+                ///        writer @ref Stream entry.  Picks the localmac
+                ///        autodetect default via @ref NetworkInterface
+                ///        when @ref MediaConfig::RtpRefClock = @c Auto
+                ///        and no PTP grandmaster is configured.
+                void applyClockReferenceConfig(const MediaIO::Config &cfg);
 
                 Error openStream(WriterStream &s, bool enableMulticastLoopback);
                 Error openReaderStream(ReaderStream &s, bool enableMulticastLoopback);
@@ -998,11 +1299,6 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 // Reader path.
                 Error applySdp(const SdpSession &sdp, MediaIO::Config &cfg, MediaDesc &mediaDesc);
                 Error openAllReaders();
-                void  onVideoPacket(const RtpPacket &pkt);
-                void  onAudioPacket(const RtpPacket &pkt);
-                void  onDataPacket(const RtpPacket &pkt);
-                void  emitVideoFrame();
-                void  emitDataMessage();
                 void  pushReaderFrame(Frame frame);
 
                 void  buildSdp();
@@ -1021,10 +1317,24 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 void resetWriterStream(WriterStream &s);
                 /// @brief Reader-mode reset: stops the per-session
                 ///        receive thread (via @c session->stopReceiving),
+                ///        joins the per-stream depacketizer thread,
                 ///        runs @ref resetStreamCommon, then clears
                 ///        reader-only reassembly state and stats.
                 void resetReaderStream(ReaderStream &s);
                 void resetAll();
+
+                /// @brief Builds the @ref RtcpSchedulerContext handed
+                ///        to the scheduler at construction time.
+                ///        Populates per-stream views from the
+                ///        @ref _videos / @ref _audios / @ref _datas /
+                ///        @ref _videoReaders / @ref _audioReaders /
+                ///        @ref _dataReaders lists, the wire-silence
+                ///        timeout, and an EoS callback that performs
+                ///        the receiver-side cancel + depacketizer-stop
+                ///        cascade when the watchdog trips.  Called
+                ///        once at @c executeCmd(Open) time after the
+                ///        sessions / depacketizers are wired up.
+                RtcpSchedulerContext buildRtcpSchedulerContext();
 
                 // Per-mode stream lists — writer-mode populates the
                 // first three, reader-mode the last three.  Reader
@@ -1079,6 +1389,8 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 Queue<Frame> _readerQueue;
                 int               _readerMaxDepth = 4;
                 int               _readerJitterMs = 50;
+                int               _wireSilenceTimeoutMs = 0; ///< @brief 0 = derive as 10 × _rtcpIntervalMs.
+                bool              _videoWatchdogEnabled = false; ///< @brief Off by default — see @ref MediaConfig::RtpVideoWatchdogEnabled.
                 FrameCount        _readerFramesReceived{0};
                 // Set by cancelBlockingWork() so the executeCmd(Read)
                 // pop loop can break out of its short-timeout polling
@@ -1089,81 +1401,37 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 std::atomic<bool> _readCancelled{false};
 
                 /**
-                 * @brief Reader-side frame aggregator.
+                 * @brief Reader-side anchor for NTP-↔-steady mapping.
                  *
-                 * The three RTP RX threads (video, audio, data)
-                 * receive packets independently and at different
-                 * cadences.  Without aggregation, each stream would
-                 * push separate Frame objects into @c _readerQueue,
-                 * which breaks the SDL player's audio-led pacing
-                 * model (it expects each Frame to carry both video
-                 * and audio, like every other reader backend).
+                 * Captured once at open time as @c (steadyNow, ntpNow).
+                 * Every subsequent emit computes
+                 * @c steadyAnchor @c + @c (frameNtp @c - @c ntpAnchor)
+                 * to convert a stream's wallclock NTP capture instant
+                 * to a local steady-clock @ref TimeStamp for
+                 * @ref Frame::captureTime stamping.
                  *
-                 * This aggregator uses the video stream as the
-                 * frame clock: when a complete video frame is
-                 * reassembled (marker bit), @c emitVideoFrame
-                 * drains one frame's worth of audio from the FIFO
-                 * and merges the latest metadata snapshot, then
-                 * pushes a single combined Frame that downstream
-                 * consumers can process as a coherent A/V unit.
-                 *
-                 * Audio that arrives ahead of video accumulates in
-                 * the FIFO.  If audio is late, @c emitVideoFrame
-                 * waits up to @c audioTimeoutMs for the samples to
-                 * appear before emitting with partial or no audio.
-                 * The AudioBuffer will eventually support resampling
-                 * which lets us compensate for long-term clock drift
-                 * between audio and video RTP sources; for now the
-                 * pass-through rate must match.
+                 * Distinct from the per-stream @c StreamAnchor on
+                 * @ref RtpDepacketizerThread, which interpolates
+                 * per-frame @c captureTime when no SR has yet been
+                 * observed.  Both are static configuration captured
+                 * at open time.
                  */
-                struct ReaderAggregator {
-                                /// @brief FIFO accumulating L16 samples from the audio RX thread.
-                                AudioBuffer audioFifo;
-                                /// @brief Latest metadata snapshot from the data RX thread.
-                                Metadata pendingMetadata;
-                                /// @brief Protects @c pendingMetadata and @c hasMetadata.
-                                Mutex dataMutex;
-                                /// @brief True when @c pendingMetadata has been updated since the last video frame.
-                                bool hasMetadata = false;
-                                /// @brief Zero-based frame index for @c samplesPerFrame.
-                                FrameNumber videoFrameIndex{0};
-                                /// @brief Max wait (ms) for audio before emitting without it.
-                                int audioTimeoutMs = 50;
-                                /// @brief RTP timestamp of the audio
-                                ///        sample currently at FIFO
-                                ///        front.  Tracked so the
-                                ///        wallclock-aligned aggregator
-                                ///        can map any FIFO position
-                                ///        to a wire-RTP-TS and from
-                                ///        there (via the audio
-                                ///        @ref RtpStreamClock) to a
-                                ///        wallclock NTP.  Updated
-                                ///        every push (set on first
-                                ///        push, realigned on a packet
-                                ///        gap) and every pop (advance
-                                ///        by sample count).
-                                uint32_t audioFifoFrontRtpTs = 0;
-                                /// @brief @c true once at least one
-                                ///        audio packet has seeded
-                                ///        @ref audioFifoFrontRtpTs.
-                                bool audioFifoHasFront = false;
-                                /// @brief Anchor instant used to
-                                ///        convert NTP wallclock back
-                                ///        to a local @c steady_clock
-                                ///        @ref TimeStamp when stamping
-                                ///        the per-Frame
-                                ///        @ref Frame::captureTime.
-                                ///        Captured once at open time
-                                ///        as @c (steadyNow, ntpNow)
-                                ///        — every subsequent emit
-                                ///        computes
-                                ///        @c steadyAnchor + (frameNtp
-                                ///        @c - @c ntpAnchor).
-                                TimeStamp steadyAnchor;
-                                NtpTime   ntpAnchor;
-                                bool      hasAnchor = false;
-                };
-                ReaderAggregator _readerAgg;
+                TimeStamp _readerSteadyAnchor;
+                NtpTime   _readerNtpAnchor;
+                bool      _readerHasAnchor = false;
+                /// @brief Steady-clock instant at which
+                ///        @c executeCmd(MediaIOCommandOpen) entered
+                ///        in reader mode.  Used to compute the
+                ///        @c StatsRxFirstSrLatencyUs reading.  Reset
+                ///        on @ref resetAll.
+                TimeStamp _openedAt;
+                /// @brief Owned per-RtpMediaIO aggregator thread.
+                ///        Spawned on reader-mode open after the
+                ///        depacketizers; joined on close before the
+                ///        depacketizers (so the cancel path doesn't
+                ///        lose in-flight Frames).  Concrete class
+                ///        definition lives in @c rtpmediaio.cpp.
+                UniquePtr<RtpAggregatorThread> _aggregator;
 
                 // SDP — the active session description built at
                 // open time.  Reader mode leaves this empty (the
@@ -1176,15 +1444,19 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
 
                 // RTCP — one scheduler thread per RtpMediaIO.  Wakes
                 // every @c _rtcpIntervalMs and emits an SR + SDES
-                // compound on every active stream's RtpSession.  The
-                // wallclock anchor captured at open time is shared
-                // across all streams so a single receiver-side
-                // observation of any stream's first SR is sufficient
-                // for cross-stream correlation.  Disabled in reader
-                // mode (we are not a sender there) and when
-                // @c MediaConfig::RtpRtcpEnabled is @c false.
-                class RtcpScheduler;
-                RtcpScheduler *_rtcpScheduler = nullptr;
+                // compound on every active writer stream's
+                // RtpSession plus an RR for every active reader
+                // stream.  The wallclock anchor captured at open
+                // time is shared across all streams so a single
+                // receiver-side observation of any stream's first
+                // SR is sufficient for cross-stream correlation.
+                // Disabled in reader mode (we are not a sender
+                // there) and when @c MediaConfig::RtpRtcpEnabled
+                // is @c false.  The scheduler itself lives in
+                // @c rtcpscheduler.h; this io populates an
+                // @c RtcpSchedulerContext at @c executeCmd(Open)
+                // time and hands it to the scheduler's constructor.
+                UniquePtr<RtcpScheduler> _rtcpScheduler;
                 bool           _rtcpEnabled = true;
                 int            _rtcpIntervalMs = 5000;
                 String         _rtcpCname;

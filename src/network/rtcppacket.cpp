@@ -6,6 +6,7 @@
  */
 
 #include <promeki/rtcppacket.h>
+#include <algorithm>
 #include <cstring>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -60,6 +61,59 @@ Buffer RtcpPacket::buildSenderReport(uint32_t ssrc, const NtpTime &ntp, uint32_t
         writeU32BE(p + 16, rtpTimestamp);
         writeU32BE(p + 20, senderPacketCount);
         writeU32BE(p + 24, senderOctetCount);
+        buf.setSize(kSize);
+        return buf;
+}
+
+Buffer RtcpPacket::buildReceiverReport(uint32_t ssrc, const List<ReportBlock> &blocks) {
+        // RFC 3550 §6.4.2.  The RC field is 5 bits, so cap at 31
+        // report blocks.  Total size is 8 (header + sender SSRC) +
+        // 24 × RC.
+        constexpr size_t kHeaderAndSsrc = 8;
+        constexpr size_t kBlockSize = 24;
+        const size_t     count = std::min<size_t>(blocks.size(), 31);
+        const size_t     total = kHeaderAndSsrc + count * kBlockSize;
+        const size_t     totalWords = total / 4;
+
+        Buffer   buf(total);
+        uint8_t *p = static_cast<uint8_t *>(buf.data());
+        std::memset(p, 0, total);
+        writeCommonHeader(p, /*rc=*/static_cast<uint8_t>(count), /*pt=*/ReceiverReport,
+                          /*lengthWordsMinus1=*/static_cast<uint16_t>(totalWords - 1));
+        writeU32BE(p + 4, ssrc);
+        size_t off = 8;
+        for (size_t i = 0; i < count; i++) {
+                const ReportBlock &b = blocks[i];
+                writeU32BE(p + off, b.ssrc);
+                // Byte 4 is fractionLost (8 bits), bytes 5-7 carry the
+                // 24-bit signed cumulativeLost.  Two's-complement
+                // reduction matches RFC 3550 §A.3.
+                const int32_t  cumClamped = std::max(-0x800000, std::min(0x7FFFFF, b.cumulativeLost));
+                const uint32_t cumU = static_cast<uint32_t>(cumClamped) & 0x00FFFFFFu;
+                p[off + 4] = b.fractionLost;
+                p[off + 5] = static_cast<uint8_t>((cumU >> 16) & 0xFFu);
+                p[off + 6] = static_cast<uint8_t>((cumU >> 8) & 0xFFu);
+                p[off + 7] = static_cast<uint8_t>(cumU & 0xFFu);
+                writeU32BE(p + off + 8, b.extendedHighestSeq);
+                writeU32BE(p + off + 12, b.interarrivalJitter);
+                writeU32BE(p + off + 16, b.lsr);
+                writeU32BE(p + off + 20, b.dlsr);
+                off += kBlockSize;
+        }
+        buf.setSize(total);
+        return buf;
+}
+
+Buffer RtcpPacket::buildBye(uint32_t ssrc) {
+        // Minimal BYE shape: 4-byte common header (RC=1, PT=203,
+        // length=1) + 4-byte source SSRC.  Total 8 bytes; length
+        // field carries (8/4) - 1 = 1.
+        constexpr size_t kSize = 8;
+        Buffer           buf(kSize);
+        uint8_t         *p = static_cast<uint8_t *>(buf.data());
+        std::memset(p, 0, kSize);
+        writeCommonHeader(p, /*rc=*/1, /*pt=*/Goodbye, /*lengthWordsMinus1=*/1);
+        writeU32BE(p + 4, ssrc);
         buf.setSize(kSize);
         return buf;
 }
@@ -149,6 +203,33 @@ bool RtcpPacket::parseSenderReport(const uint8_t *data, size_t size, SenderRepor
         out->senderPacketCount = readU32BE(data + 20);
         out->senderOctetCount = readU32BE(data + 24);
         return true;
+}
+
+List<uint32_t> RtcpPacket::findByeSources(const uint8_t *data, size_t size) {
+        List<uint32_t> out;
+        if (data == nullptr) return out;
+        size_t off = 0;
+        while (off + 4 <= size) {
+                const Header h = parseHeader(data + off, size - off);
+                if (!h.isValid()) break;
+                if (h.lengthBytes == 0 || off + h.lengthBytes > size) break;
+                if (h.pt == Goodbye) {
+                        // BYE format: 4-byte common header + RC × 4-byte
+                        // source SSRCs + optional reason text.  We
+                        // surface the SSRCs only — reason is purely
+                        // diagnostic and not consumed today.
+                        const size_t srcBytes = static_cast<size_t>(h.rc) * 4u;
+                        if (4u + srcBytes <= h.lengthBytes && off + 4u + srcBytes <= size) {
+                                for (uint8_t i = 0; i < h.rc; i++) {
+                                        const uint32_t ssrc =
+                                                readU32BE(data + off + 4u + (i * 4u));
+                                        out.pushToBack(ssrc);
+                                }
+                        }
+                }
+                off += h.lengthBytes;
+        }
+        return out;
 }
 
 List<RtcpPacket::SenderReportInfo> RtcpPacket::findSenderReports(const uint8_t *data, size_t size) {

@@ -6,9 +6,12 @@
  */
 
 #include <promeki/rtpsession.h>
+#include <algorithm>
 #include <promeki/logger.h>
 #include <promeki/packettransport.h>
 #include <promeki/rtcppacket.h>
+#include <promeki/rtpseqreorderbuffer.h>
+#include <promeki/rtpseqtracker.h>
 #include <promeki/rtpstreamclock.h>
 #include <promeki/thread.h>
 #include <promeki/udpsocket.h>
@@ -26,8 +29,12 @@ PROMEKI_NAMESPACE_BEGIN
 // a forward-friend) so that the thread can reach into the session's
 // private members without exposing them further.  The thread runs a
 // blocking receivePacket() loop on the session's PacketTransport,
-// wraps each datagram in an RtpPacket view of an owned Buffer, and
-// hands it off via the configured callback.  The receive socket's
+// wraps each datagram in an RtpPacket view of an owned Buffer,
+// demuxes RTCP via byte[1] in [200..223], and dispatches RTP packets
+// through the per-stream @c StreamReceiver entries: SSRC pin / change
+// detection → @ref RtpSeqTracker observe → @ref RtpSeqReorderBuffer
+// insert → post-reorder @c Queue<RtpPacket>.  The matching depacketizer
+// thread consumes the queue on its own thread.  The receive socket's
 // SO_RCVTIMEO is used (for UDP transports) to poll the stop flag
 // between datagrams.
 // ----------------------------------------------------------------------------
@@ -75,9 +82,19 @@ class RtpSession::ReceiveThread : public Thread {
                         }
 
                         while (!_stopRequested.value()) {
-                                Buffer   buf = Buffer(kMaxPacketSize);
-                                SocketAddress sender;
-                                ssize_t n = _session->_transport->receivePacket(buf.data(), kMaxPacketSize, &sender);
+                                Buffer  buf = Buffer(kMaxPacketSize);
+                                ssize_t n = _session->_transport->receivePacket(buf.data(), kMaxPacketSize);
+                                // Stamp the per-packet arrival anchor as
+                                // close to @c receivePacket return as
+                                // possible, before any further work
+                                // adds scheduling jitter to subsequent
+                                // @c TimeStamp::now() calls.  The
+                                // post-Phase-2 path uses this for
+                                // RFC 3550 §A.8 interarrival jitter and
+                                // for stream-anchor @c captureTime
+                                // interpolation in the depacketizer
+                                // thread.
+                                const TimeStamp arrivalSteady = TimeStamp::now();
                                 if (n <= 0) {
                                         // Timeout (EAGAIN on UDP),
                                         // transient error, or empty
@@ -120,18 +137,139 @@ class RtpSession::ReceiveThread : public Thread {
                                         // extension, etc.) — drop.
                                         continue;
                                 }
+                                pkt.arrivalSteady = arrivalSteady;
 
-                                if (_session->_receiveCallback) {
-                                        _session->_receiveCallback(pkt, sender);
-                                }
+                                // Dispatch through the per-stream
+                                // queue-mode receivers.  An empty
+                                // list is rejected at
+                                // @ref startReceiving time so the
+                                // recv loop never runs without one.
+                                dispatchToReceivers(pkt);
                                 _session->packetReceivedSignal.emit(buf, pkt.timestamp(), pkt.payloadType(),
                                                                     pkt.marker());
                         }
                 }
 
         private:
+                /**
+                 * @brief Queue-mode dispatch for one parsed packet.
+                 *
+                 * Selects the receiver entry whose @c payloadType
+                 * matches the packet's PT, runs the SSRC pin /
+                 * change machinery, then updates the per-source
+                 * @ref RtpSeqTracker and pushes through the
+                 * receiver's @ref RtpSeqReorderBuffer into the
+                 * post-reorder output queue.  Single-receiver
+                 * sessions (today's case) get a one-entry list and
+                 * the PT match is trivial.
+                 */
+                void dispatchToReceivers(RtpPacket &pkt) {
+                        const uint8_t pt = pkt.payloadType();
+                        const uint32_t ssrc = pkt.ssrc();
+                        for (size_t i = 0; i < _session->_streamReceivers.size(); ++i) {
+                                RtpSession::StreamReceiver &r = _session->_streamReceivers[i];
+                                if (r.payloadType != pt) continue;
+                                RtpSession::SsrcPinState &pin = _session->_ssrcPinStates[i];
+                                if (!checkSsrcPin(pt, ssrc, pin, r, pkt.arrivalSteady)) {
+                                        // SSRC mismatch is being debounced —
+                                        // drop the packet without polluting
+                                        // the seq tracker / reorder buffer.
+                                        return;
+                                }
+                                if (r.seqTracker == nullptr || r.reorderBuffer == nullptr ||
+                                    r.outQueue == nullptr) {
+                                        // Receiver entry is malformed —
+                                        // surface as a one-shot warning
+                                        // and skip dispatch.  The session
+                                        // keeps running so a partial
+                                        // configuration error doesn't
+                                        // wedge the recv thread.
+                                        if (!_warnedMissing) {
+                                                promekiWarn("RtpSession: StreamReceiver pt=%u "
+                                                            "missing tracker / reorderBuffer / outQueue "
+                                                            "— packet dropped",
+                                                            static_cast<unsigned>(pt));
+                                                _warnedMissing = true;
+                                        }
+                                        return;
+                                }
+                                auto obs = r.seqTracker->observe(pkt.sequenceNumber(),
+                                                                  pkt.timestamp(),
+                                                                  pkt.arrivalSteady);
+                                if (obs.duplicate) {
+                                        // Tracker flagged the packet as a
+                                        // very-large-jump candidate; drop
+                                        // before the reorder buffer.
+                                        return;
+                                }
+                                r.reorderBuffer->insert(pkt, obs.extendedSeq, pkt.arrivalSteady,
+                                                         *r.outQueue);
+                                return;
+                        }
+                        // PT did not match any receiver — drop.  No
+                        // log because pre-handshake / mismatched-PT
+                        // packets are common on a multicast group.
+                }
+
+                /**
+                 * @brief SSRC pin / debounced-change implementation.
+                 *
+                 * @return @c true if the recv thread should accept
+                 *         the packet, @c false to drop it (because
+                 *         the SSRC change has not yet been
+                 *         confirmed).
+                 *
+                 * Single stray packets from a wrong SSRC are
+                 * ignored — only a sustained mismatch (≥
+                 * @c kSsrcDebounceCount distinct packets within
+                 * @c kSsrcDebounceWindowMs) triggers a reset.
+                 */
+                bool checkSsrcPin(uint8_t pt, uint32_t ssrc, RtpSession::SsrcPinState &pin,
+                                  RtpSession::StreamReceiver &r, const TimeStamp &arrivalSteady) {
+                        if (!pin.pinned) {
+                                pin.expectedSsrc = ssrc;
+                                pin.pinned = true;
+                                pin.mismatchCount = 0;
+                                return true;
+                        }
+                        if (ssrc == pin.expectedSsrc) {
+                                pin.mismatchCount = 0;
+                                return true;
+                        }
+                        // First mismatch in this stretch → start
+                        // debouncing.  Subsequent mismatches outside
+                        // the window also restart the count.
+                        const auto windowDuration =
+                                arrivalSteady.value() - pin.mismatchFirstTime.value();
+                        const int64_t windowMs =
+                                std::chrono::duration_cast<std::chrono::milliseconds>(windowDuration).count();
+                        if (pin.mismatchCount == 0 ||
+                            windowMs < 0 ||
+                            windowMs > static_cast<int64_t>(kSsrcDebounceWindowMs)) {
+                                pin.mismatchFirstTime = arrivalSteady;
+                                pin.mismatchCount = 1;
+                                return false; // drop the stray
+                        }
+                        pin.mismatchCount++;
+                        if (pin.mismatchCount < kSsrcDebounceCount) {
+                                return false; // still debouncing
+                        }
+                        // Sustained mismatch — accept the new SSRC.
+                        const uint32_t oldSsrc = pin.expectedSsrc;
+                        pin.expectedSsrc = ssrc;
+                        pin.mismatchCount = 0;
+                        if (r.seqTracker) r.seqTracker->reset();
+                        if (r.reorderBuffer) r.reorderBuffer->clear();
+                        _session->ssrcChangeSignal.emit(oldSsrc, ssrc, pt);
+                        return true;
+                }
+
+                static constexpr uint32_t kSsrcDebounceCount = 5;
+                static constexpr uint32_t kSsrcDebounceWindowMs = 1000;
+
                 RtpSession  *_session = nullptr;
                 Atomic<bool> _stopRequested;
+                bool         _warnedMissing = false;
 };
 
 RtpSession::RtpSession(ObjectBase *parent) : ObjectBase(parent) {
@@ -186,15 +324,32 @@ void RtpSession::stop() {
         _running = false;
 }
 
-Error RtpSession::startReceiving(PacketCallback callback, const String &threadName) {
+Error RtpSession::startReceiving(List<StreamReceiver> receivers, const String &threadName) {
         if (!_running || _transport == nullptr) return Error::NotOpen;
         if (_receiving.value()) return Error::Busy;
-        if (!callback) {
-                promekiErr("RtpSession::startReceiving: null callback");
+        if (receivers.isEmpty()) {
+                promekiErr("RtpSession::startReceiving: empty receivers list");
                 return Error::InvalidArgument;
         }
-
-        _receiveCallback = std::move(callback);
+        for (const StreamReceiver &r : receivers) {
+                if (r.outQueue == nullptr || r.seqTracker == nullptr ||
+                    r.reorderBuffer == nullptr) {
+                        promekiErr("RtpSession::startReceiving: receiver has null pointer");
+                        return Error::InvalidArgument;
+                }
+                // Plumb the per-stream clock rate into the tracker
+                // so §A.8 jitter accounting fires from the very first
+                // observe() call.  initSource() is intentionally NOT
+                // called here — the tracker's implicit init on the
+                // first @ref RtpSeqTracker::observe sets the right
+                // base seq for the actual stream.
+                if (r.clockRateHz > 0) r.seqTracker->setClockRateHz(r.clockRateHz);
+        }
+        _streamReceivers = std::move(receivers);
+        _ssrcPinStates.clear();
+        for (size_t i = 0; i < _streamReceivers.size(); ++i) {
+                _ssrcPinStates.pushToBack(SsrcPinState{});
+        }
         _receiveThread = ReceiveThreadUPtr::create(this, threadName);
         _receiving.setValue(true);
         _receiveThread->start();
@@ -207,17 +362,18 @@ void RtpSession::stopReceiving() {
         if (_receiveThread.isValid()) {
                 _receiveThread->requestStop();
                 // Delete the Thread object — Thread's destructor
-                // joins the underlying std::thread.  If we are
-                // ourselves running on the receive thread (the
-                // callback is calling us), skip the join — the
-                // destructor path will be reached after the callback
-                // unwinds and the loop checks the stop flag.
+                // joins the underlying std::thread.  Skip the join
+                // when we are ourselves running on the receive
+                // thread; the destructor path then runs after the
+                // current callback unwinds and the loop observes
+                // the stop flag.
                 if (!_receiveThread->isCurrentThread()) {
                         _receiveThread.clear();
                 }
         }
         _receiving.setValue(false);
-        _receiveCallback = nullptr;
+        _streamReceivers.clear();
+        _ssrcPinStates.clear();
 }
 
 void RtpSession::fillHeader(RtpPacket &pkt, uint8_t pt, bool marker, uint32_t timestamp) {
@@ -341,25 +497,44 @@ RtpSession::ReceivedSr RtpSession::receivedSr() const {
         return _lastReceivedSr;
 }
 
+uint32_t RtpSession::srObservedCount() const {
+        Mutex::Locker lock(_rtcpMutex);
+        return _srObservedCount;
+}
+
+TimeStamp RtpSession::firstSrAt() const {
+        Mutex::Locker lock(_rtcpMutex);
+        return _firstSrAt;
+}
+
 void RtpSession::handleRtcp(const uint8_t *data, size_t size) {
-        // Walk the compound for SRs.  Anything else (SDES / BYE /
+        // Walk the compound for SRs and BYEs.  Anything else (SDES /
         // APP / RR / forward-compatible types we don't recognise) is
         // dropped silently — RTCP is forward-compatible by design.
         const auto srs = RtcpPacket::findSenderReports(data, size);
-        if (srs.isEmpty()) return;
-        // Take the last SR in the compound — RFC 3550 §6.4 lets a
-        // single compound carry multiple SRs (one per source the
-        // sender is also receiving) but for our point-to-point
-        // model the sender's own SR is always present and is the
-        // one we care about.  When multiple SRs share the same
-        // SSRC the last entry wins; that's also what an RFC-compliant
-        // sender would intend (later == newer accounting).
-        const auto       &sr = srs[srs.size() - 1];
-        Mutex::Locker     lock(_rtcpMutex);
-        _lastReceivedSr.ntp = sr.ntp;
-        _lastReceivedSr.rtpTs = sr.rtpTimestamp;
-        _lastReceivedSr.arrivedAt = TimeStamp::now();
-        _lastReceivedSr.valid = true;
+        if (!srs.isEmpty()) {
+                // Take the last SR in the compound — RFC 3550 §6.4
+                // lets a single compound carry multiple SRs (one per
+                // source the sender is also receiving) but for our
+                // point-to-point model the sender's own SR is always
+                // present and is the one we care about.  When
+                // multiple SRs share the same SSRC the last entry
+                // wins; that's also what an RFC-compliant sender
+                // would intend (later == newer accounting).
+                const auto   &sr = srs[srs.size() - 1];
+                const TimeStamp now = TimeStamp::now();
+                Mutex::Locker lock(_rtcpMutex);
+                _lastReceivedSr.ntp = sr.ntp;
+                _lastReceivedSr.rtpTs = sr.rtpTimestamp;
+                _lastReceivedSr.arrivedAt = now;
+                _lastReceivedSr.valid = true;
+                _srObservedCount += static_cast<uint32_t>(srs.size());
+                if (_firstSrAt.nanoseconds() == 0) _firstSrAt = now;
+        }
+        const auto byeSsrcs = RtcpPacket::findByeSources(data, size);
+        for (size_t i = 0; i < byeSsrcs.size(); i++) {
+                byeReceivedSignal.emit(byeSsrcs[i]);
+        }
 }
 
 NtpTime RtpSession::currentSrNtp() const {
@@ -418,6 +593,79 @@ Error RtpSession::emitRtcpSr(uint32_t senderPacketCount, uint32_t senderOctetCou
         // RTCP packet type field (200 / 202) is what receivers use to
         // demux.  No batched / paced send needed for one small
         // datagram per few seconds.
+        PacketTransport::Datagram d;
+        d.data = compound.data();
+        d.size = compound.size();
+        d.dest = _remote;
+        PacketTransport::DatagramList list;
+        list.pushToBack(d);
+        int sent = _transport->sendPackets(list);
+        return sent <= 0 ? Error::IOError : Error::Ok;
+}
+
+Error RtpSession::emitRtcpRr(const RtcpPacket::ReportBlock &block) {
+        if (!_running || _transport == nullptr) return Error::NotOpen;
+        if (_remote.isNull()) return Error::InvalidArgument;
+
+        // Augment the caller's block with lsr / dlsr from
+        // _lastReceivedSr — they are receiver-side derivations and
+        // belong here rather than at every caller.  Per RFC 3550
+        // §6.4.1, both stay zero when no SR has been observed.
+        RtcpPacket::ReportBlock b = block;
+        {
+                Mutex::Locker lock(_rtcpMutex);
+                if (_lastReceivedSr.valid) {
+                        b.lsr = _lastReceivedSr.ntp.toCompact32();
+                        const Duration delta = TimeStamp::now() - _lastReceivedSr.arrivedAt;
+                        // dlsr is in 1/65536 s.  Clamp to non-negative.
+                        const int64_t deltaNs = std::max<int64_t>(0, delta.nanoseconds());
+                        // (deltaNs * 65536 / 1e9) — split to avoid overflow on long delays.
+                        const uint64_t deltaUnits =
+                                (static_cast<uint64_t>(deltaNs) * 65536ull) / 1'000'000'000ull;
+                        b.dlsr = static_cast<uint32_t>(deltaUnits & 0xFFFFFFFFull);
+                }
+        }
+
+        List<RtcpPacket::ReportBlock> blocks;
+        blocks.pushToBack(b);
+        Buffer       rr = RtcpPacket::buildReceiverReport(_ssrc, blocks);
+        Buffer       sdes = RtcpPacket::buildSourceDescriptionCname(_ssrc, _cname);
+        List<Buffer> compoundParts;
+        compoundParts.pushToBack(rr);
+        compoundParts.pushToBack(sdes);
+        Buffer compound = RtcpPacket::compound(compoundParts);
+
+        PacketTransport::Datagram d;
+        d.data = compound.data();
+        d.size = compound.size();
+        d.dest = _remote;
+        PacketTransport::DatagramList list;
+        list.pushToBack(d);
+        int sent = _transport->sendPackets(list);
+        return sent <= 0 ? Error::IOError : Error::Ok;
+}
+
+Error RtpSession::emitRtcpBye() {
+        if (!_running || _transport == nullptr) return Error::NotOpen;
+        if (_remote.isNull()) return Error::InvalidArgument;
+
+        Buffer       sdes = RtcpPacket::buildSourceDescriptionCname(_ssrc, _cname);
+        Buffer       bye = RtcpPacket::buildBye(_ssrc);
+        // RFC 3550 §6.6 — BYE must come AFTER an SR or RR in a
+        // compound.  We don't track whether this session ever
+        // emitted an SR vs only RRs, so synthesise a minimal RR with
+        // no report blocks (legal per §6.1) to satisfy the
+        // "compound starts with SR or RR" rule.  The SDES sits in
+        // between for the CNAME.
+        List<RtcpPacket::ReportBlock> noBlocks;
+        Buffer                        leadingRr =
+                RtcpPacket::buildReceiverReport(_ssrc, noBlocks);
+        List<Buffer> compoundParts;
+        compoundParts.pushToBack(leadingRr);
+        compoundParts.pushToBack(sdes);
+        compoundParts.pushToBack(bye);
+        Buffer compound = RtcpPacket::compound(compoundParts);
+
         PacketTransport::Datagram d;
         d.data = compound.data();
         d.size = compound.size();

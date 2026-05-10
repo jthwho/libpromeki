@@ -290,4 +290,180 @@ bool HevcDecoderConfig::isIrapAnnexB(const BufferView &au) {
         return found;
 }
 
+namespace {
+
+        // Same RBSP de-emulation as the H.264 path — moved into a
+        // separate helper here so we don't tangle our cpp's lifetime
+        // with H264Bitstream's anonymous namespace.
+        Buffer hevcStripEmulationPrevention(const uint8_t *src, size_t len) {
+                Buffer buf(len);
+                buf.setSize(len);
+                uint8_t *dst = static_cast<uint8_t *>(buf.data());
+                size_t   w = 0;
+                for (size_t i = 0; i < len; ++i) {
+                        if (i + 2 < len && src[i] == 0x00 && src[i + 1] == 0x00 && src[i + 2] == 0x03) {
+                                dst[w++] = src[i];
+                                dst[w++] = src[i + 1];
+                                i += 2;
+                        } else {
+                                dst[w++] = src[i];
+                        }
+                }
+                buf.setSize(w);
+                return buf;
+        }
+
+        // MSB-first bit reader for the HEVC SPS RBSP walk.  Same shape
+        // as the H.264 reader; kept private here to avoid pulling in
+        // a shared bit-reader translation unit just for these two
+        // call sites.
+        class HevcBitReader {
+                public:
+                        HevcBitReader(const uint8_t *data, size_t bytes) : _data(data), _bytes(bytes) {}
+
+                        bool eof() const { return _bitOffset >= _bytes * 8; }
+
+                        uint32_t readBits(int n) {
+                                uint32_t v = 0;
+                                for (int i = 0; i < n; ++i) {
+                                        if (eof()) return v;
+                                        const size_t byteIdx = _bitOffset / 8;
+                                        const int    bitIdx = 7 - static_cast<int>(_bitOffset % 8);
+                                        v = (v << 1) | ((_data[byteIdx] >> bitIdx) & 1u);
+                                        _bitOffset++;
+                                }
+                                return v;
+                        }
+
+                        uint32_t readUe() {
+                                int zeros = 0;
+                                while (!eof() && readBits(1) == 0 && zeros < 32) zeros++;
+                                if (zeros == 0) return 0;
+                                const uint32_t suffix = readBits(zeros);
+                                return (1u << zeros) - 1u + suffix;
+                        }
+
+                private:
+                        const uint8_t *_data;
+                        size_t         _bytes;
+                        size_t         _bitOffset = 0;
+        };
+
+        // Skip an HEVC profile_tier_level structure with @p maxSubLayers
+        // sub-layers (= sps_max_sub_layers_minus1).  See ISO/IEC 23008-2
+        // §7.3.3.  Returns false if the underlying reader runs short.
+        bool skipProfileTierLevel(HevcBitReader &r, uint32_t maxSubLayersMinus1) {
+                // general_profile_space (2) | general_tier_flag (1) |
+                // general_profile_idc (5)
+                r.readBits(8);
+                // general_profile_compatibility_flags (32)
+                r.readBits(32);
+                // general constraint indicator flags (48)
+                r.readBits(32);
+                r.readBits(16);
+                // general_level_idc (8)
+                r.readBits(8);
+
+                if (maxSubLayersMinus1 == 0) return !r.eof() ? true : true;
+
+                // Sub-layer profile / level present flags table — 2 bits
+                // per sub-layer, then padded with reserved zero bits to a
+                // byte boundary (§7.3.3 specifies the loop runs for
+                // maxNumSubLayersMinus1 sub-layers, then up to 8 reserved
+                // zero bits to align).
+                uint32_t subProfilePresent[8] = {0};
+                uint32_t subLevelPresent[8] = {0};
+                for (uint32_t i = 0; i < maxSubLayersMinus1 && i < 8; ++i) {
+                        subProfilePresent[i] = r.readBits(1);
+                        subLevelPresent[i] = r.readBits(1);
+                }
+                if (maxSubLayersMinus1 > 0) {
+                        const uint32_t pad = 2u * (8u - maxSubLayersMinus1);
+                        if (pad > 0 && pad < 32) r.readBits(static_cast<int>(pad));
+                }
+                for (uint32_t i = 0; i < maxSubLayersMinus1 && i < 8; ++i) {
+                        if (subProfilePresent[i] != 0) {
+                                // Same 88-bit shape as the general profile
+                                // structure (excluding general_level_idc).
+                                r.readBits(8);
+                                r.readBits(32);
+                                r.readBits(32);
+                                r.readBits(16);
+                        }
+                        if (subLevelPresent[i] != 0) {
+                                r.readBits(8); // sub_layer_level_idc
+                        }
+                }
+                return true;
+        }
+
+} // namespace
+
+Error HevcDecoderConfig::parseSpsResolution(const BufferView &sps, SpsInfo &out) {
+        out = SpsInfo{};
+        if (sps.size() < 5) return Error::CorruptData;
+        const uint8_t *raw = sps.data();
+        const uint8_t  hdr0 = raw[0];
+        const uint8_t  type = static_cast<uint8_t>((hdr0 >> 1) & 0x3f);
+        if (type != HevcNalTypeSps) return Error::InvalidArgument;
+
+        // HEVC NAL header is 2 bytes; RBSP starts at byte 2.
+        Buffer rbsp = hevcStripEmulationPrevention(raw + 2, sps.size() - 2);
+        if (rbsp.size() < 4) return Error::CorruptData;
+        HevcBitReader r(static_cast<const uint8_t *>(rbsp.data()), rbsp.size());
+
+        r.readBits(4); // sps_video_parameter_set_id
+        const uint32_t maxSubLayersMinus1 = r.readBits(3);
+        r.readBits(1); // sps_temporal_id_nesting_flag
+
+        if (!skipProfileTierLevel(r, maxSubLayersMinus1)) return Error::CorruptData;
+
+        r.readUe(); // sps_seq_parameter_set_id
+        const uint32_t chromaFormatIdc = r.readUe();
+        if (chromaFormatIdc > 3) return Error::CorruptData;
+        if (chromaFormatIdc == 3) r.readBits(1); // separate_colour_plane_flag
+        out.chromaFormatIdc = static_cast<uint8_t>(chromaFormatIdc);
+
+        const uint32_t picWidth = r.readUe();
+        const uint32_t picHeight = r.readUe();
+
+        const bool conformanceWindowFlag = r.readBits(1) != 0;
+        uint32_t   confLeft = 0, confRight = 0, confTop = 0, confBottom = 0;
+        if (conformanceWindowFlag) {
+                confLeft = r.readUe();
+                confRight = r.readUe();
+                confTop = r.readUe();
+                confBottom = r.readUe();
+        }
+
+        const uint32_t bitDepthLumaMinus8 = r.readUe();
+        const uint32_t bitDepthChromaMinus8 = r.readUe();
+        if (bitDepthLumaMinus8 > 8 || bitDepthChromaMinus8 > 8) {
+                // Out-of-range values usually mean we lost bit-stream
+                // sync somewhere.  Carry the parsed dimensions but flag
+                // the bit depths as unknown so the caller doesn't take
+                // garbage too literally.
+                out.bitDepthLumaMinus8 = 0;
+                out.bitDepthChromaMinus8 = 0;
+        } else {
+                out.bitDepthLumaMinus8 = static_cast<uint8_t>(bitDepthLumaMinus8);
+                out.bitDepthChromaMinus8 = static_cast<uint8_t>(bitDepthChromaMinus8);
+        }
+
+        // Per ISO/IEC 23008-2 §7.4.3.2.1: SubWidthC / SubHeightC come
+        // from chroma_format_idc.  The conformance window crop is
+        // expressed in the chroma sample grid (not luma), so the crop
+        // shrinks from the boundary by SubWidthC × confX and
+        // SubHeightC × confY.
+        const uint32_t subWidthC = (chromaFormatIdc == 1 || chromaFormatIdc == 2) ? 2u : 1u;
+        const uint32_t subHeightC = (chromaFormatIdc == 1) ? 2u : 1u;
+        const uint32_t cropX = (confLeft + confRight) * subWidthC;
+        const uint32_t cropY = (confTop + confBottom) * subHeightC;
+        if (cropX > picWidth || cropY > picHeight) return Error::CorruptData;
+
+        out.width = picWidth - cropX;
+        out.height = picHeight - cropY;
+        return Error::Ok;
+}
+
 PROMEKI_NAMESPACE_END

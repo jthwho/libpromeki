@@ -66,6 +66,90 @@ class RtpPayload {
                 virtual Buffer unpack(const RtpPacket::List &packets) = 0;
 
                 /**
+                 * @brief Outcome of @ref validate.
+                 *
+                 * Codec-aware mid-stream-join gating: the
+                 * depacketizer thread calls @ref validate after
+                 * each successful @ref unpack to decide whether the
+                 * reassembled payload should be emitted to
+                 * downstream stages.  Three values:
+                 * - @c Accept — the payload is decodable; emit it.
+                 * - @c DropSilently — the payload is incomplete or
+                 *   pre-decodable (e.g. the receiver joined
+                 *   mid-frame); drop without logging.
+                 * - @c Wait — the codec needs out-of-band
+                 *   information (paramSets / IDR) before this
+                 *   payload makes sense; drop and log once per
+                 *   distinct cause so an operator can see the
+                 *   decoder is waiting.
+                 *
+                 * The base @ref validate returns @c Accept for any
+                 * non-empty buffer and @c DropSilently for empty.
+                 * Codec subclasses override with format-specific
+                 * gating in Phase 4 (H.264 / H.265 paramSet + IDR).
+                 */
+                enum class ValidateResult {
+                        Accept,
+                        DropSilently,
+                        Wait,
+                };
+
+                /**
+                 * @brief Codec-aware payload validation hook.
+                 *
+                 * Called by the per-stream depacketizer thread on
+                 * each reassembled @c Buffer the @ref unpack call
+                 * produced.  Default implementation accepts any
+                 * non-empty buffer; codec subclasses override
+                 * (@ref RtpPayloadH264 / @ref RtpPayloadH265) to
+                 * enforce mid-stream-join requirements such as
+                 * SPS/PPS observed before the first IDR access
+                 * unit is shipped to the decoder.
+                 *
+                 * Non-const because the override may update
+                 * internal mid-join state — e.g. latching
+                 * @c paramSets-observed once an SPS / PPS is seen
+                 * in-band, or arming the IDR-required gate.  The
+                 * depacketizer that owns the @ref RtpPayload calls
+                 * this through a non-const pointer.
+                 *
+                 * @param unpacked The buffer returned by @ref unpack.
+                 * @return One of @ref ValidateResult.
+                 */
+                virtual ValidateResult validate(const Buffer &unpacked) {
+                        return unpacked.size() > 0 ? ValidateResult::Accept
+                                                   : ValidateResult::DropSilently;
+                }
+
+                /**
+                 * @brief Clears any out-of-band parameter-set state
+                 *        the codec is tracking.
+                 *
+                 * Called by the depacketizer on SSRC reset / stream
+                 * restart so the codec's mid-join gate (e.g.
+                 * H.264 SPS/PPS observed) re-arms.  Default is a
+                 * no-op for codecs without paramSet state
+                 * (RFC 4175, RFC 2435).
+                 */
+                virtual void clearParamSets() {}
+
+                /**
+                 * @brief Returns @c true if this payload carries JFIF
+                 *        / RFC 2435 MJPEG bitstreams.
+                 *
+                 * The video depacketizer uses this to gate
+                 * @ref JpegGeometryProbe — only RFC 2435 streams need
+                 * the JFIF marker walk to discover dimensions.  Other
+                 * codecs either carry geometry in the SDP fmtp line
+                 * (RFC 4175, RFC 9134) or in their bitstream's SPS
+                 * (H.264 / HEVC) which @c configureVideoStream parses
+                 * separately.
+                 *
+                 * Default is @c false; @ref RtpPayloadJpeg overrides.
+                 */
+                virtual bool isJpeg() const { return false; }
+
+                /**
                  * @brief Returns the maximum payload size per packet.
                  *
                  * Default is 1200 bytes (MTU-safe, accounts for IP/UDP
@@ -374,6 +458,8 @@ class RtpPayloadJpeg : public RtpPayload {
                 RtpPacket::List pack(const void *mediaData, size_t size) override;
                 /** @copydoc RtpPayload::unpack() */
                 Buffer unpack(const RtpPacket::List &packets) override;
+                /** @copydoc RtpPayload::isJpeg() */
+                bool isJpeg() const override { return true; }
 
                 /** @brief Returns the image width. */
                 int width() const { return _width; }
@@ -582,6 +668,15 @@ class RtpPayloadH264 : public RtpPayload {
                 /// @brief NAL unit type for STAP-A aggregation packets (RFC 6184 §5.7.1).
                 static constexpr uint8_t NalTypeStapA = 24;
 
+                /// @brief NAL unit type for an IDR-coded slice (RFC 6184 / ISO 14496-10 §7.4.1.2.1).
+                static constexpr uint8_t NalTypeIdr = 5;
+
+                /// @brief NAL unit type for a Sequence Parameter Set.
+                static constexpr uint8_t NalTypeSps = 7;
+
+                /// @brief NAL unit type for a Picture Parameter Set.
+                static constexpr uint8_t NalTypePps = 8;
+
                 /**
                  * @brief Constructs an H.264 RTP payload handler.
                  * @param payloadType Dynamic RTP payload type (96-127, default 96).
@@ -597,11 +692,75 @@ class RtpPayloadH264 : public RtpPayload {
                 /** @copydoc RtpPayload::unpack() */
                 Buffer unpack(const RtpPacket::List &packets) override;
 
+                /**
+                 * @brief Codec-aware mid-stream-join gate.
+                 *
+                 * Walks @p unpacked for SPS (NAL type 7), PPS (NAL
+                 * type 8), and IDR (NAL type 5) NALs, updating the
+                 * per-stream paramSet-observed and IDR-latched
+                 * flags.  Returns:
+                 *  - @c Wait if either SPS or PPS has not yet been
+                 *    observed (in-band or via
+                 *    @ref setSpropParameterSets).  Logs once per
+                 *    distinct cause.
+                 *  - @c DropSilently if the AU is pre-IDR — the
+                 *    decoder cannot start here.
+                 *  - @c Accept once the first IDR has been seen and
+                 *    paramSets are present, plus all subsequent
+                 *    AUs (P / B frames) until @ref clearParamSets
+                 *    re-arms the latch.
+                 */
+                ValidateResult validate(const Buffer &unpacked) override;
+
+                /**
+                 * @brief Re-arms the mid-stream-join gate.
+                 *
+                 * Called by the depacketizer on SSRC reset / stream
+                 * restart so a brand-new GOP starts under the same
+                 * paramSet-and-IDR gate as a fresh open.
+                 */
+                void clearParamSets() override;
+
+                /**
+                 * @brief Seeds @ref validate paramSet state from an
+                 *        SDP @c sprop-parameter-sets fmtp value.
+                 *
+                 * RFC 6184 §8.1: comma-separated list of base64-
+                 * encoded NAL units (typically one SPS and one
+                 * PPS, in either order).  Decoding errors and
+                 * unrecognised NAL types are silently ignored —
+                 * the in-band path will fill in any gap on the
+                 * first IDR.
+                 *
+                 * @param csv The raw value of the
+                 *            @c sprop-parameter-sets fmtp parameter
+                 *            (no @c "sprop-parameter-sets=" prefix).
+                 */
+                void setSpropParameterSets(const String &csv);
+
+                /// @brief Returns @c true once an SPS has been
+                ///        observed (in-band or via
+                ///        @ref setSpropParameterSets).
+                bool spsObserved() const { return _spsObserved; }
+
+                /// @brief Returns @c true once a PPS has been
+                ///        observed.
+                bool ppsObserved() const { return _ppsObserved; }
+
+                /// @brief Returns @c true once the first IDR has
+                ///        been latched and subsequent AUs are
+                ///        being accepted.
+                bool idrLatched() const { return _idrLatched; }
+
                 /// @brief Overrides the RTP payload type number.
                 void setPayloadType(uint8_t pt) { _payloadType = pt; }
 
         private:
                 uint8_t _payloadType;
+                bool    _spsObserved = false;
+                bool    _ppsObserved = false;
+                bool    _idrLatched = false;
+                bool    _loggedWaitForParamSets = false;
 };
 
 /**
@@ -666,6 +825,22 @@ class RtpPayloadH265 : public RtpPayload {
                 /// @brief NAL unit type for HEVC Aggregation Packets (RFC 7798 §4.4.2).
                 static constexpr uint8_t NalTypeAp = 48;
 
+                /// @brief NAL unit type for a Video Parameter Set (HEVC §7.3.2.1).
+                static constexpr uint8_t NalTypeVps = 32;
+
+                /// @brief NAL unit type for a Sequence Parameter Set (HEVC §7.3.2.2).
+                static constexpr uint8_t NalTypeSps = 33;
+
+                /// @brief NAL unit type for a Picture Parameter Set (HEVC §7.3.2.3).
+                static constexpr uint8_t NalTypePps = 34;
+
+                /// @brief Lowest NAL unit type in the IRAP range (HEVC §7.4.2.2: BLA_W_LP).
+                static constexpr uint8_t IrapNalTypeMin = 16;
+
+                /// @brief Highest NAL unit type in the IRAP range (HEVC §7.4.2.2: reserved
+                ///        random-access type, treated as IRAP for keyframe gating).
+                static constexpr uint8_t IrapNalTypeMax = 23;
+
                 /**
                  * @brief Constructs an H.265 / HEVC RTP payload handler.
                  * @param payloadType Dynamic RTP payload type (96-127, default 96).
@@ -681,11 +856,73 @@ class RtpPayloadH265 : public RtpPayload {
                 /** @copydoc RtpPayload::unpack() */
                 Buffer unpack(const RtpPacket::List &packets) override;
 
+                /**
+                 * @brief Codec-aware mid-stream-join gate (HEVC).
+                 *
+                 * Walks @p unpacked for VPS (NAL type 32), SPS
+                 * (33), PPS (34), and IRAP (16-23) NALs.  Returns:
+                 *  - @c Wait until VPS, SPS, and PPS have all been
+                 *    observed.  Logs once per distinct cause.
+                 *  - @c DropSilently for pre-IRAP AUs.
+                 *  - @c Accept once the first IRAP has been seen
+                 *    and all three paramSets are present, plus all
+                 *    subsequent AUs until @ref clearParamSets
+                 *    re-arms the latch.
+                 */
+                ValidateResult validate(const Buffer &unpacked) override;
+
+                /**
+                 * @brief Re-arms the mid-stream-join gate.
+                 *
+                 * Called by the depacketizer on SSRC reset.
+                 */
+                void clearParamSets() override;
+
+                /**
+                 * @brief Seeds VPS-observed state from an SDP
+                 *        @c sprop-vps fmtp value.
+                 *
+                 * RFC 7798 §7.1: comma-separated list of base64-
+                 * encoded VPS NALs.  Decoding errors and NALs of
+                 * an unexpected type are ignored.
+                 */
+                void setSpropVps(const String &csv);
+
+                /// @brief Like @ref setSpropVps, for SPS NALs
+                ///        (sprop-sps fmtp).
+                void setSpropSps(const String &csv);
+
+                /// @brief Like @ref setSpropVps, for PPS NALs
+                ///        (sprop-pps fmtp).
+                void setSpropPps(const String &csv);
+
+                /// @brief Returns @c true once a VPS has been
+                ///        observed.
+                bool vpsObserved() const { return _vpsObserved; }
+
+                /// @brief Returns @c true once an SPS has been
+                ///        observed.
+                bool spsObserved() const { return _spsObserved; }
+
+                /// @brief Returns @c true once a PPS has been
+                ///        observed.
+                bool ppsObserved() const { return _ppsObserved; }
+
+                /// @brief Returns @c true once the first IRAP has
+                ///        been latched and subsequent AUs are
+                ///        being accepted.
+                bool irapLatched() const { return _irapLatched; }
+
                 /// @brief Overrides the RTP payload type number.
                 void setPayloadType(uint8_t pt) { _payloadType = pt; }
 
         private:
                 uint8_t _payloadType;
+                bool    _vpsObserved = false;
+                bool    _spsObserved = false;
+                bool    _ppsObserved = false;
+                bool    _irapLatched = false;
+                bool    _loggedWaitForParamSets = false;
 };
 
 PROMEKI_NAMESPACE_END

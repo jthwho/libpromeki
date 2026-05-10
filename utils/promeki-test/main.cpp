@@ -563,6 +563,7 @@ int main(int argc, char **argv) {
         registerAudioCases();
         registerFrameBridgeCases();
         registerRtpCases();
+        registerRtpChaosCases();
         registerNdiCases();
 
         const List<TestCase> &all = TestRunner::registeredCases();

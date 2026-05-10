@@ -475,3 +475,122 @@ TEST_CASE("Queue_ResetClearsCancelLatch") {
         // Reset re-arms — pushBlocking works again on the live queue.
         CHECK(q.pushBlocking(99, 50).isOk());
 }
+
+TEST_CASE("Queue_PushDropOldestUnboundedNeverDrops") {
+        Queue<int> q;
+        for (int i = 0; i < 100; ++i) {
+                CHECK(q.pushDropOldest(i) == 0);
+        }
+        CHECK(q.size() == 100);
+}
+
+TEST_CASE("Queue_PushDropOldestEvictsOldestAtCapacity") {
+        Queue<int> q;
+        q.setMaxSize(3);
+        CHECK(q.pushDropOldest(1) == 0);
+        CHECK(q.pushDropOldest(2) == 0);
+        CHECK(q.pushDropOldest(3) == 0);
+        CHECK(q.size() == 3);
+        // Fourth push evicts the front and inserts.
+        CHECK(q.pushDropOldest(4) == 1);
+        CHECK(q.size() == 3);
+        CHECK(q.pop().first() == 2);
+        CHECK(q.pop().first() == 3);
+        CHECK(q.pop().first() == 4);
+}
+
+TEST_CASE("Queue_PushDropOldestRespectsShrunkCap") {
+        Queue<int> q;
+        q.setMaxSize(5);
+        for (int i = 0; i < 5; ++i) q.pushDropOldest(i);
+        CHECK(q.size() == 5);
+        // Shrinking the cap below current size never drops mid-call;
+        // it kicks in on the next pushDropOldest.
+        q.setMaxSize(2);
+        CHECK(q.size() == 5);
+        // The new push must drop until size < cap, then push.  That
+        // means evicting four entries (size 5 → 1 + push → 2).
+        CHECK(q.pushDropOldest(99) == 4);
+        CHECK(q.size() == 2);
+        CHECK(q.pop().first() == 4);
+        CHECK(q.pop().first() == 99);
+}
+
+TEST_CASE("Queue_PushDropOldestRvaluePreservesValue") {
+        Queue<std::string> q;
+        q.setMaxSize(2);
+        q.pushDropOldest(std::string("first"));
+        q.pushDropOldest(std::string("second"));
+        const size_t dropped = q.pushDropOldest(std::string("third"));
+        CHECK(dropped == 1);
+        CHECK(q.pop().first() == std::string("second"));
+        CHECK(q.pop().first() == std::string("third"));
+}
+
+TEST_CASE("Queue_PushDropOldestNoOpWhenCancelled") {
+        Queue<int> q;
+        q.setMaxSize(2);
+        q.pushDropOldest(1);
+        q.cancelWaiters();
+        // Cancelled queue ignores drop-oldest pushes — neither
+        // dropping nor pushing.  This way callers in their shutdown
+        // path don't have to special-case the cancel.
+        CHECK(q.pushDropOldest(2) == 0);
+        CHECK(q.pushDropOldest(3) == 0);
+        // The cancel latch lets remaining items drain via tryPop;
+        // exactly one entry (the pre-cancel push) remains.
+        CHECK(q.tryPop().first() == 1);
+        CHECK(q.tryPop().second() == Error::Empty);
+}
+
+TEST_CASE("Queue_PushDropOldestRaceSafeConcurrentProducerConsumer") {
+        // Single producer (drop-oldest) racing a single consumer.
+        // The cap is intentionally smaller than the producer's burst
+        // size so eviction must happen frequently; the consumer must
+        // never observe a half-rotated queue (i.e. a missing front
+        // or duplicate entry) since the lock is held for the full
+        // drop-and-push window.
+        Queue<int> q;
+        q.setMaxSize(8);
+
+        constexpr int kProduce = 5000;
+        std::atomic<size_t> totalDropped{0};
+        std::atomic<bool>   producerDone{false};
+        std::atomic<bool>   consumerSawCorruption{false};
+
+        std::thread producer([&] {
+                for (int i = 0; i < kProduce; ++i) {
+                        size_t d = q.pushDropOldest(i);
+                        totalDropped.fetch_add(d, std::memory_order_relaxed);
+                }
+                producerDone.store(true, std::memory_order_release);
+        });
+        std::thread consumer([&] {
+                int prev = -1;
+                while (!producerDone.load(std::memory_order_acquire) || !q.isEmpty()) {
+                        auto r = q.tryPop();
+                        if (r.second() == Error::Empty) {
+                                std::this_thread::yield();
+                                continue;
+                        }
+                        // Strict monotonic increase: producer pushes
+                        // 0..N-1 in order, drop-oldest only ever
+                        // evicts head entries, so consumer always
+                        // sees a strictly increasing prefix.
+                        if (r.first() <= prev) {
+                                consumerSawCorruption.store(true, std::memory_order_release);
+                        }
+                        prev = r.first();
+                }
+        });
+        producer.join();
+        consumer.join();
+        CHECK_FALSE(consumerSawCorruption.load(std::memory_order_acquire));
+        // Sum invariant: pushed = popped + dropped.  We pushed
+        // exactly kProduce items; the consumer's prev tracks the
+        // last popped value, so popped ≥ 1 (otherwise prev is -1).
+        // We can't easily count popped without instrumenting
+        // tryPop, but the corruption check above is the load-bearing
+        // assertion — the dropped count is just a sanity probe.
+        CHECK(totalDropped.load(std::memory_order_relaxed) <= kProduce);
+}

@@ -88,6 +88,18 @@ namespace promekitest {
         void registerRtpCases();
 
         /**
+         * @brief Registers RTP receiver-correctness chaos cases.
+         *
+         * Each case spins up a TPG → RFC 2435 JPEG RTP loopback round-trip
+         * with an @ref RtpChaosShim between TX and RX so the receiver-
+         * correctness machinery (sequence tracker, reorder buffer, SSRC
+         * pin debounce, stream-anchor captureTime fallback) gets stressed
+         * under controlled adversity (loss / reorder / dup / late /
+         * ssrcchange / rtcpblocked).
+         */
+        void registerRtpChaosCases();
+
+        /**
          * @brief Registers NDI transport roundtrip cases.
          *
          * Each case runs two pipelines on the main event loop —

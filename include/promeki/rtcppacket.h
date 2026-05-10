@@ -105,6 +105,71 @@ class RtcpPacket {
                                                 uint32_t senderPacketCount, uint32_t senderOctetCount);
 
                 /**
+                 * @brief One RFC 3550 §6.4.1 report block.
+                 *
+                 * Each report block describes the receiver's view of
+                 * one source.  An RR or SR can carry up to 31 blocks
+                 * (RC field is 5 bits).
+                 *
+                 * @c lsr is the middle 32 bits of the most recently
+                 * received SR's NTP timestamp from this source —
+                 * @c (sr.ntp.seconds() & 0xFFFF) << 16 |
+                 * @c (sr.ntp.fraction() >> 16).  Zero when no SR has
+                 * been received yet.
+                 *
+                 * @c dlsr is the delay (in 1/65536 s units) between
+                 * receiving the last SR and emitting this RR.
+                 * Combined with the sender's clock at
+                 * @c (lastSrSendTime + lsr - now) it lets the sender
+                 * compute round-trip time.  Zero when no SR has been
+                 * received yet.
+                 */
+                struct ReportBlock {
+                        uint32_t ssrc = 0;              ///< @brief Source SSRC this block describes.
+                        uint8_t  fractionLost = 0;      ///< @brief 8-bit fraction lost since last RR.
+                        int32_t  cumulativeLost = 0;    ///< @brief 24-bit signed cumulative loss.
+                        uint32_t extendedHighestSeq = 0; ///< @brief @c (cycles << 16) | maxSeq.
+                        uint32_t interarrivalJitter = 0; ///< @brief §A.8 EWMA, RTP-TS units.
+                        uint32_t lsr = 0;               ///< @brief Middle 32 bits of last SR's NTP.
+                        uint32_t dlsr = 0;              ///< @brief Delay since last SR, 1/65536 s.
+                };
+
+                /**
+                 * @brief Builds a Receiver Report (PT=201).
+                 *
+                 * Produces a 4-byte common header + 4-byte sender
+                 * SSRC + N × 24-byte report blocks.  Each report block
+                 * shape follows RFC 3550 §6.4.1 verbatim.
+                 *
+                 * @c blocks may be empty — RFC 3550 §6.1 explicitly
+                 * allows an RR with RC=0, which is the right shape
+                 * for a receiver that has not yet observed any
+                 * source.  The compound packet rule (RR / SR must be
+                 * the first sub-packet) holds either way.
+                 *
+                 * @param ssrc   The receiver's SSRC.
+                 * @param blocks Up to 31 report blocks (one per source
+                 *               the receiver is reporting on).  Lists
+                 *               longer than 31 are truncated.
+                 */
+                static Buffer buildReceiverReport(uint32_t ssrc, const List<ReportBlock> &blocks);
+
+                /**
+                 * @brief Builds a Goodbye / BYE (PT=203) packet for one
+                 *        SSRC with no reason text.
+                 *
+                 * RFC 3550 §6.6 — the source shall emit a BYE just
+                 * before disappearing so receivers can mark the
+                 * source as gone without waiting for a timeout.
+                 * Multi-SSRC and reason-text variants are intentionally
+                 * not surfaced here; the receivers we care about
+                 * tolerate the minimal one-SSRC form.
+                 *
+                 * @param ssrc The departing SSRC.
+                 */
+                static Buffer buildBye(uint32_t ssrc);
+
+                /**
                  * @brief Builds a Source Description (PT=202) packet
                  *        carrying a single chunk with a single CNAME
                  *        item.
@@ -237,6 +302,24 @@ class RtcpPacket {
                  *         empty when the compound carried none).
                  */
                 static List<SenderReportInfo> findSenderReports(const uint8_t *data, size_t size);
+
+                /**
+                 * @brief Walks a compound RTCP datagram and extracts
+                 *        every BYE source SSRC it contains.
+                 *
+                 * The recv-thread path uses this to surface
+                 * @c byeReceived signals so the receiver can mark a
+                 * stream as ended at sender-initiated EoS.  Unknown /
+                 * malformed sub-packets terminate the walk.
+                 *
+                 * @param data First byte of the compound packet.
+                 * @param size Bytes available at @p data.
+                 * @return List of source SSRCs from every BYE
+                 *         sub-packet.  An RFC-legal multi-source BYE
+                 *         contributes one SSRC per source; the typical
+                 *         sender emits a single-SSRC BYE.
+                 */
+                static List<uint32_t> findByeSources(const uint8_t *data, size_t size);
 };
 
 PROMEKI_NAMESPACE_END

@@ -542,6 +542,47 @@ inline const RtpPacingMode RtpPacingMode::TxTime{3};
 inline const RtpPacingMode RtpPacingMode::Auto{4};
 
 /**
+ * @brief Well-known Enum type for the SDP @c ts-refclk source.
+ *
+ * Selects which clock-reference attribute the writer emits in its
+ * SDP and seeds onto every active stream, per RFC 7273 / SMPTE
+ * ST 2110-10:
+ *
+ * - @c Auto     — emit @c localmac for the autodetected primary
+ *                 interface MAC; if @ref MediaConfig::RtpPtpGrandmaster
+ *                 is non-null, upgrade to @c Ptp automatically.  This
+ *                 is the default.
+ * - @c LocalMac — force @c ts-refclk:localmac=&lt;mac&gt;; use
+ *                 @ref MediaConfig::RtpRefClockLocalMac to override
+ *                 the autodetected MAC.
+ * - @c Ptp      — emit
+ *                 @c ts-refclk:ptp=&lt;profile&gt;:&lt;gmid&gt;:&lt;domain&gt;
+ *                 from @ref MediaConfig::RtpPtpProfile,
+ *                 @ref MediaConfig::RtpPtpGrandmaster, and
+ *                 @ref MediaConfig::RtpPtpDomain.  Required for
+ *                 SMPTE ST 2110 deployments.
+ * - @c None     — suppress @c ts-refclk emission; receivers fall
+ *                 back to "trust the SR pair" tracking.
+ */
+class RtpRefClockMode : public TypedEnum<RtpRefClockMode> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("RtpRefClockMode", 0, {"Auto", 0}, {"LocalMac", 1},
+                                           {"Ptp", 2}, {"None", 3}); // default: Auto
+
+                using TypedEnum<RtpRefClockMode>::TypedEnum;
+
+                static const RtpRefClockMode Auto;
+                static const RtpRefClockMode LocalMac;
+                static const RtpRefClockMode Ptp;
+                static const RtpRefClockMode None;
+};
+
+inline const RtpRefClockMode RtpRefClockMode::Auto{0};
+inline const RtpRefClockMode RtpRefClockMode::LocalMac{1};
+inline const RtpRefClockMode RtpRefClockMode::Ptp{2};
+inline const RtpRefClockMode RtpRefClockMode::None{3};
+
+/**
  * @brief Well-known Enum type for the metadata-stream wire format over RTP.
  *
  * Selects how the @c RtpMediaIO metadata stream serializes
@@ -1725,6 +1766,57 @@ inline const NdiReceiveBitDepth NdiReceiveBitDepth::Auto{0};
 inline const NdiReceiveBitDepth NdiReceiveBitDepth::Bits10{10};
 inline const NdiReceiveBitDepth NdiReceiveBitDepth::Bits12{12};
 inline const NdiReceiveBitDepth NdiReceiveBitDepth::Bits16{16};
+
+/**
+ * @brief Coarse category of a @ref NetworkInterface.
+ *
+ * Backends populate this from OS metadata (Linux sysfs, BSD/macOS
+ * @c if_data.ifi_type, Windows @c IfType, …) so applications can
+ * filter without parsing per-platform identifiers.
+ *
+ * - @c Unknown      — Backend could not classify the interface.
+ * - @c Ethernet     — Wired Ethernet (IEEE 802.3).
+ * - @c Wifi         — Wireless 802.11.
+ * - @c Loopback     — The OS loopback (@c lo, @c lo0, etc.).
+ * - @c Tunnel       — Generic tunnel (tun, ip6tnl, sit, gre, …).
+ * - @c Bridge       — Software bridge over other interfaces.
+ * - @c Vlan         — 802.1Q VLAN trunk member.
+ * - @c Virtual      — Bonding/teaming aggregator or other software-
+ *                     synthesized interface that doesn't fit a more
+ *                     specific category.
+ * - @c Cellular     — Mobile broadband (LTE, 5G, …).
+ * - @c PointToPoint — Generic point-to-point link (PPP, etc.).
+ */
+class NetworkInterfaceKind : public TypedEnum<NetworkInterfaceKind> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("NetworkInterfaceKind", 0, {"Unknown", 0}, {"Ethernet", 1}, {"Wifi", 2},
+                                           {"Loopback", 3}, {"Tunnel", 4}, {"Bridge", 5}, {"Vlan", 6}, {"Virtual", 7},
+                                           {"Cellular", 8}, {"PointToPoint", 9}); // default: Unknown
+
+                using TypedEnum<NetworkInterfaceKind>::TypedEnum;
+
+                static const NetworkInterfaceKind Unknown;
+                static const NetworkInterfaceKind Ethernet;
+                static const NetworkInterfaceKind Wifi;
+                static const NetworkInterfaceKind Loopback;
+                static const NetworkInterfaceKind Tunnel;
+                static const NetworkInterfaceKind Bridge;
+                static const NetworkInterfaceKind Vlan;
+                static const NetworkInterfaceKind Virtual;
+                static const NetworkInterfaceKind Cellular;
+                static const NetworkInterfaceKind PointToPoint;
+};
+
+inline const NetworkInterfaceKind NetworkInterfaceKind::Unknown{0};
+inline const NetworkInterfaceKind NetworkInterfaceKind::Ethernet{1};
+inline const NetworkInterfaceKind NetworkInterfaceKind::Wifi{2};
+inline const NetworkInterfaceKind NetworkInterfaceKind::Loopback{3};
+inline const NetworkInterfaceKind NetworkInterfaceKind::Tunnel{4};
+inline const NetworkInterfaceKind NetworkInterfaceKind::Bridge{5};
+inline const NetworkInterfaceKind NetworkInterfaceKind::Vlan{6};
+inline const NetworkInterfaceKind NetworkInterfaceKind::Virtual{7};
+inline const NetworkInterfaceKind NetworkInterfaceKind::Cellular{8};
+inline const NetworkInterfaceKind NetworkInterfaceKind::PointToPoint{9};
 
 /** @} */
 

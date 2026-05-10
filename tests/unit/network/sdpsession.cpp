@@ -11,6 +11,7 @@
 #include <promeki/sdpsession.h>
 #include <promeki/clockdomain.h>
 #include <promeki/eui64.h>
+#include <promeki/macaddress.h>
 #include <promeki/stringlist.h>
 
 using namespace promeki;
@@ -410,6 +411,96 @@ TEST_CASE("SdpSession ts-refclk semantic interpretation") {
                 auto [gm, gmErr] = EUI64::fromString(parts[1]);
                 CHECK(gmErr.isOk());
                 CHECK(gm.toString() == "aa-bb-cc-dd-ee-ff-00-11");
+        }
+}
+
+TEST_CASE("SdpSession ts-refclk RFC 7273 / SMPTE ST 2110-10 grammar") {
+        SUBCASE("ptp with version, grandmaster, and domain round-trips") {
+                SdpSession sdp;
+                sdp.setSessionName("st2110");
+                sdp.setOrigin("-", 1, 1);
+                SdpMediaDescription md;
+                md.setMediaType("video");
+                md.setPort(5004);
+                md.setProtocol("RTP/AVP");
+                md.addPayloadType(96);
+                md.setAttribute("rtpmap", "96 raw/90000");
+                md.setAttribute("ts-refclk", "ptp=IEEE1588-2008:00-1A-2B-FF-FE-3C-4D-5E:127");
+                md.setAttribute("mediaclk", "direct=0");
+                sdp.addMediaDescription(md);
+
+                String text = sdp.toString();
+                auto [parsed, err] = SdpSession::fromString(text);
+                REQUIRE(err.isOk());
+                REQUIRE(parsed.mediaDescriptions().size() == 1);
+
+                String tsRefClk = parsed.mediaDescriptions()[0].attribute("ts-refclk");
+                CHECK(tsRefClk == "ptp=IEEE1588-2008:00-1A-2B-FF-FE-3C-4D-5E:127");
+                StringList parts = tsRefClk.split("=")[1].split(":");
+                REQUIRE(parts.size() == 3);
+                CHECK(parts[0] == "IEEE1588-2008");
+                auto [gm, gmErr] = EUI64::fromString(parts[1]);
+                CHECK(gmErr.isOk());
+                CHECK(gm.toString() == "00-1a-2b-ff-fe-3c-4d-5e");
+                Error de;
+                int   domainNum = parts[2].toInt(&de);
+                CHECK(de.isOk());
+                CHECK(domainNum == 127);
+                CHECK(parsed.mediaDescriptions()[0].attribute("mediaclk") == "direct=0");
+        }
+
+        SUBCASE("localmac shape parses with hyphen and colon separators") {
+                String sdpText = "v=0\r\n"
+                                 "o=- 1 1 IN IP4 0.0.0.0\r\n"
+                                 "s=lm-test\r\n"
+                                 "t=0 0\r\n"
+                                 "m=video 5004 RTP/AVP 96\r\n"
+                                 "a=rtpmap:96 raw/90000\r\n"
+                                 "a=ts-refclk:localmac=aa-bb-cc-dd-ee-ff\r\n"
+                                 "a=mediaclk:direct=0\r\n";
+                auto [sdp, err] = SdpSession::fromString(sdpText);
+                REQUIRE(err.isOk());
+                String tsRefClk = sdp.mediaDescriptions()[0].attribute("ts-refclk");
+                REQUIRE(tsRefClk.startsWith("localmac="));
+                String macStr = tsRefClk.mid(9);
+                auto [mac, mErr] = MacAddress::fromString(macStr);
+                CHECK(mErr.isOk());
+                CHECK_FALSE(mac.isNull());
+
+                String sdpText2 = "v=0\r\n"
+                                  "o=- 1 1 IN IP4 0.0.0.0\r\n"
+                                  "s=lm-test\r\n"
+                                  "t=0 0\r\n"
+                                  "m=video 5004 RTP/AVP 96\r\n"
+                                  "a=rtpmap:96 raw/90000\r\n"
+                                  "a=ts-refclk:localmac=aa:bb:cc:dd:ee:ff\r\n";
+                auto [sdp2, err2] = SdpSession::fromString(sdpText2);
+                REQUIRE(err2.isOk());
+                String tsRefClk2 = sdp2.mediaDescriptions()[0].attribute("ts-refclk");
+                String macStr2 = tsRefClk2.mid(9);
+                auto [mac2, mErr2] = MacAddress::fromString(macStr2);
+                CHECK(mErr2.isOk());
+                CHECK(mac == mac2);
+        }
+
+        SUBCASE("ptp without grandmaster (legacy RFC 7273 sender)") {
+                SdpMediaDescription md;
+                md.setMediaType("audio");
+                md.setPort(5006);
+                md.setProtocol("RTP/AVP");
+                md.addPayloadType(97);
+                md.setAttribute("ts-refclk", "ptp=IEEE1588-2008");
+                String     ptpValue = md.attribute("ts-refclk").split("=")[1];
+                StringList parts = ptpValue.split(":");
+                CHECK(parts.size() == 1);
+                CHECK(parts[0] == "IEEE1588-2008");
+        }
+
+        SUBCASE("mediaclk:direct=<offset> parses non-zero offsets") {
+                Error e;
+                int   off = String("direct=4096").mid(7).toInt(&e);
+                CHECK(e.isOk());
+                CHECK(off == 4096);
         }
 }
 

@@ -10,9 +10,13 @@
 #include <thread>
 #include <vector>
 #include <doctest/doctest.h>
+#include <promeki/queue.h>
 #include <promeki/rtcppacket.h>
+#include <promeki/rtppacket.h>
 #include <promeki/rtppacketbatch.h>
 #include <promeki/rtpsession.h>
+#include <promeki/rtpseqreorderbuffer.h>
+#include <promeki/rtpseqtracker.h>
 #include <promeki/udpsocket.h>
 #include <promeki/loopbacktransport.h>
 #include <promeki/rtppayload.h>
@@ -22,6 +26,38 @@
 #include <cstring>
 
 using namespace promeki;
+
+namespace {
+
+// Owning bundle of the per-stream queue-mode receiver dependencies
+// required by RtpSession::startReceiving — the post-reorder output
+// queue, the seq tracker, and the reorder buffer.  Tests wrap one
+// of these in a StreamReceiver pointing at its members so the
+// startReceiving call has stable storage.
+struct TestReceiver {
+        Queue<RtpPacket>    outQueue;
+        RtpSeqTracker       seqTracker;
+        RtpSeqReorderBuffer reorderBuffer;
+
+        RtpSession::StreamReceiver makeEntry(uint8_t pt, uint32_t clockRateHz) {
+                RtpSession::StreamReceiver e;
+                e.outQueue      = &outQueue;
+                e.seqTracker    = &seqTracker;
+                e.reorderBuffer = &reorderBuffer;
+                e.payloadType   = pt;
+                e.clockRateHz   = clockRateHz;
+                return e;
+        }
+};
+
+// Build a one-entry StreamReceiver list pointing at @p tr.
+List<RtpSession::StreamReceiver> makeReceiverList(TestReceiver &tr, uint8_t pt, uint32_t hz) {
+        List<RtpSession::StreamReceiver> list;
+        list.pushToBack(tr.makeEntry(pt, hz));
+        return list;
+}
+
+} // namespace
 
 TEST_CASE("RtpSession") {
 
@@ -404,31 +440,40 @@ TEST_CASE("RtpSession") {
         }
 
         SUBCASE("startReceiving before start fails") {
-                RtpSession session;
-                Error      err = session.startReceiving([](const RtpPacket &, const SocketAddress &) {});
+                RtpSession   session;
+                TestReceiver tr;
+                Error        err = session.startReceiving(makeReceiverList(tr, 97, 48000));
                 CHECK(err == Error::NotOpen);
                 CHECK_FALSE(session.isReceiving());
         }
 
-        SUBCASE("startReceiving with null callback fails") {
-                // Need a running session first.
-                UdpSocket receiver;
-                receiver.open(IODevice::ReadWrite);
-                receiver.bind(SocketAddress::any(0));
-
+        SUBCASE("startReceiving with empty receivers list fails") {
                 RtpSession session;
                 REQUIRE(session.start(SocketAddress::any(0)).isOk());
-                Error err = session.startReceiving(RtpSession::PacketCallback{});
+                Error err = session.startReceiving(List<RtpSession::StreamReceiver>{});
                 CHECK(err == Error::InvalidArgument);
                 CHECK_FALSE(session.isReceiving());
                 session.stop();
         }
 
-        SUBCASE("receive loop delivers packets to callback") {
+        SUBCASE("startReceiving with malformed receiver fails") {
+                RtpSession session;
+                REQUIRE(session.start(SocketAddress::any(0)).isOk());
+                List<RtpSession::StreamReceiver> bad;
+                bad.pushToBack(RtpSession::StreamReceiver{});
+                Error err = session.startReceiving(std::move(bad));
+                CHECK(err == Error::InvalidArgument);
+                CHECK_FALSE(session.isReceiving());
+                session.stop();
+        }
+
+        SUBCASE("receive loop delivers packets to post-reorder queue") {
                 // sender: RtpSession transmitting onto a well-known
                 //         loopback port
                 // receiver: second RtpSession with startReceiving
-                //           listening on that port
+                //           listening on that port — packets land
+                //           in the queue-mode receiver's
+                //           post-reorder Queue<RtpPacket>.
                 UdpSocket pickport;
                 pickport.open(IODevice::ReadWrite);
                 pickport.bind(SocketAddress::any(0));
@@ -440,16 +485,8 @@ TEST_CASE("RtpSession") {
                 Error err = rxSession.start(SocketAddress::any(port));
                 REQUIRE(err.isOk());
 
-                std::atomic<int>      count{0};
-                std::atomic<uint32_t> lastTimestamp{0};
-                std::atomic<uint8_t>  lastPayloadType{0};
-                std::atomic<uint32_t> lastSsrc{0};
-                err = rxSession.startReceiving([&](const RtpPacket &pkt, const SocketAddress &) {
-                        lastTimestamp.store(pkt.timestamp());
-                        lastPayloadType.store(pkt.payloadType());
-                        lastSsrc.store(pkt.ssrc());
-                        count.fetch_add(1);
-                });
+                TestReceiver tr;
+                err = rxSession.startReceiving(makeReceiverList(tr, /*pt=*/97, /*hz=*/48000));
                 REQUIRE(err.isOk());
                 CHECK(rxSession.isReceiving());
 
@@ -479,10 +516,13 @@ TEST_CASE("RtpSession") {
                 err = txSession.sendPackets(rxBatch);
                 CHECK(err.isOk());
 
-                // Wait up to 500 ms for delivery.
-                for (int i = 0; i < 50 && count.load() == 0; i++) {
+                // Wait up to 500 ms for delivery to the post-reorder
+                // queue.  Since seq numbers arrive contiguously the
+                // reorder buffer emits in-order on every insert.
+                for (int i = 0; i < 50 && tr.outQueue.isEmpty(); i++) {
                         Thread::sleepMs(10);
                 }
+                Result<RtpPacket> popped = tr.outQueue.tryPop();
 
                 rxSession.stopReceiving();
                 CHECK_FALSE(rxSession.isReceiving());
@@ -490,16 +530,19 @@ TEST_CASE("RtpSession") {
                 txSession.stop();
                 rxSession.stop();
 
-                CHECK(count.load() >= 1);
-                CHECK(lastTimestamp.load() == 12345);
-                CHECK(lastPayloadType.load() == 97);
-                CHECK(lastSsrc.load() == 0xCAFEBABE);
+                CHECK(popped.second().isOk());
+                if (popped.second().isOk()) {
+                        CHECK(popped.first().timestamp() == 12345u);
+                        CHECK(popped.first().payloadType() == 97u);
+                        CHECK(popped.first().ssrc() == 0xCAFEBABEu);
+                }
         }
 
         SUBCASE("stopReceiving is idempotent") {
                 RtpSession session;
                 REQUIRE(session.start(SocketAddress::any(0)).isOk());
-                REQUIRE(session.startReceiving([](const RtpPacket &, const SocketAddress &) {}).isOk());
+                TestReceiver tr;
+                REQUIRE(session.startReceiving(makeReceiverList(tr, 97, 48000)).isOk());
                 session.stopReceiving();
                 CHECK_FALSE(session.isReceiving());
                 session.stopReceiving(); // second call is a no-op
@@ -521,10 +564,11 @@ TEST_CASE("RtpSession") {
         }
 
         SUBCASE("startReceiving twice returns Busy") {
-                RtpSession session;
+                RtpSession   session;
                 REQUIRE(session.start(SocketAddress::any(0)).isOk());
-                REQUIRE(session.startReceiving([](const RtpPacket &, const SocketAddress &) {}).isOk());
-                Error err = session.startReceiving([](const RtpPacket &, const SocketAddress &) {});
+                TestReceiver tr1, tr2;
+                REQUIRE(session.startReceiving(makeReceiverList(tr1, 97, 48000)).isOk());
+                Error err = session.startReceiving(makeReceiverList(tr2, 97, 48000));
                 CHECK(err == Error::Busy);
                 session.stopReceiving();
                 session.stop();
@@ -714,10 +758,8 @@ TEST_CASE("RtpSession") {
                 session.setRemote(SocketAddress(Ipv4Address::loopback(), 6000));
                 REQUIRE(session.start(&rxPort).isOk());
 
-                std::atomic<int> rtpCalls{0};
-                REQUIRE(session.startReceiving([&](const RtpPacket &, const SocketAddress &) {
-                        rtpCalls.fetch_add(1);
-                }).isOk());
+                TestReceiver tr;
+                REQUIRE(session.startReceiving(makeReceiverList(tr, 96, 48000)).isOk());
 
                 // Build a compound carrying one SR + one SDES.
                 const NtpTime srNtp(3'913'056'000u, 0x80000000u);
@@ -754,9 +796,9 @@ TEST_CASE("RtpSession") {
                 // timestamp (i.e. past the steady-clock epoch).
                 CHECK(got.arrivedAt.nanoseconds() != 0);
                 // The RTCP packet must NOT have been delivered to the
-                // RTP callback — RTCP demux happens before the RTP
-                // path.
-                CHECK(rtpCalls.load() == 0);
+                // post-reorder queue — RTCP demux happens before the
+                // RTP path.
+                CHECK(tr.outQueue.size() == 0);
 
                 session.stopReceiving();
                 session.stop();
@@ -772,7 +814,8 @@ TEST_CASE("RtpSession") {
                 session.setClockRate(90000);
                 session.setRemote(SocketAddress(Ipv4Address::loopback(), 6000));
                 REQUIRE(session.start(&rxPort).isOk());
-                REQUIRE(session.startReceiving([](const RtpPacket &, const SocketAddress &) {}).isOk());
+                TestReceiver tr;
+                REQUIRE(session.startReceiving(makeReceiverList(tr, 96, 90000)).isOk());
 
                 auto sendSr = [&](const NtpTime &n, uint32_t rtpTs) {
                         Buffer       sr = RtcpPacket::buildSenderReport(0x1u, n, rtpTs, 0u, 0u);
@@ -794,6 +837,7 @@ TEST_CASE("RtpSession") {
 
                 sendSr(NtpTime(100u, 0u), 1000u);
                 CHECK(waitForSrRtp(1000u));
+                const TimeStamp firstSeenAfter1 = session.firstSrAt();
                 sendSr(NtpTime(200u, 0u), 2000u);
                 CHECK(waitForSrRtp(2000u));
                 sendSr(NtpTime(300u, 0u), 3000u);
@@ -803,6 +847,34 @@ TEST_CASE("RtpSession") {
                 CHECK(got.valid);
                 CHECK(got.ntp == NtpTime(300u, 0u));
                 CHECK(got.rtpTs == 3000u);
+
+                // Three SRs arrived; counter must reflect that.
+                CHECK(session.srObservedCount() == 3u);
+                // firstSrAt was set on the first arrival and must
+                // not move when subsequent SRs arrive.
+                CHECK(firstSeenAfter1.nanoseconds() != 0);
+                CHECK(session.firstSrAt() == firstSeenAfter1);
+
+                session.stopReceiving();
+                session.stop();
+        }
+
+        SUBCASE("ReceiveThread reports zero SR-observation state until the first SR") {
+                LoopbackTransport txPort, rxPort;
+                LoopbackTransport::pair(&txPort, &rxPort);
+                txPort.open();
+                rxPort.open();
+
+                RtpSession session;
+                session.setClockRate(90000);
+                session.setRemote(SocketAddress(Ipv4Address::loopback(), 6000));
+                REQUIRE(session.start(&rxPort).isOk());
+                TestReceiver tr;
+                REQUIRE(session.startReceiving(makeReceiverList(tr, 96, 90000)).isOk());
+
+                CHECK(session.srObservedCount() == 0u);
+                CHECK(session.firstSrAt().nanoseconds() == 0);
+                CHECK_FALSE(session.receivedSr().valid);
 
                 session.stopReceiving();
                 session.stop();
@@ -817,7 +889,8 @@ TEST_CASE("RtpSession") {
                 RtpSession session;
                 session.setRemote(SocketAddress(Ipv4Address::loopback(), 6000));
                 REQUIRE(session.start(&rxPort).isOk());
-                REQUIRE(session.startReceiving([](const RtpPacket &, const SocketAddress &) {}).isOk());
+                TestReceiver tr;
+                REQUIRE(session.startReceiving(makeReceiverList(tr, 96, 90000)).isOk());
 
                 // SDES-only RTCP compound — legal but carries no SR
                 // for the receiver to pick up.

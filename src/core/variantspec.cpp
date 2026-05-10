@@ -26,6 +26,8 @@
 #include <promeki/windowedstat.h>
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_NETWORK
+#include <promeki/eui64.h>
+#include <promeki/macaddress.h>
 #include <promeki/socketaddress.h>
 #endif
 
@@ -422,6 +424,18 @@ namespace {
                                 // to parse successfully.
                                 if (str.isEmpty()) return Variant(SocketAddress());
                                 auto r = SocketAddress::fromString(str);
+                                if (r.second().isError()) break;
+                                return Variant(r.first());
+                        }
+                        case Variant::TypeMacAddress: {
+                                if (str.isEmpty()) return Variant(MacAddress());
+                                auto r = MacAddress::fromString(str);
+                                if (r.second().isError()) break;
+                                return Variant(r.first());
+                        }
+                        case Variant::TypeEUI64: {
+                                if (str.isEmpty()) return Variant(EUI64());
+                                auto r = EUI64::fromString(str);
                                 if (r.second().isError()) break;
                                 return Variant(r.first());
                         }

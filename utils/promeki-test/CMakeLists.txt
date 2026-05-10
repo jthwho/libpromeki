@@ -9,6 +9,8 @@ add_executable(promeki-test
     cases/ndi.cpp
     cases/roundtrip.cpp
     cases/rtp.cpp
+    cases/rtpchaos.cpp
+    cases/rtpchaosshim.cpp
 )
 
 target_include_directories(promeki-test PRIVATE

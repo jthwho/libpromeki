@@ -13,11 +13,13 @@
 #include <promeki/string.h>
 #include <promeki/result.h>
 #include <promeki/array.h>
+#include <promeki/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class Ipv4Address;
 class Ipv6Address;
+class MacAddress;
 class TextStream;
 
 /**
@@ -47,6 +49,9 @@ class MacAddress {
         public:
                 /** @brief Raw 6-byte storage format for a MAC address. */
                 using DataFormat = Array<uint8_t, 6>;
+
+                /** @brief List of MAC addresses. */
+                using List = ::promeki::List<MacAddress>;
 
                 /**
                  * @brief Parses a MAC address from a string.

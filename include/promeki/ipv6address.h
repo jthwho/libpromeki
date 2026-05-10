@@ -14,6 +14,7 @@
 #include <promeki/result.h>
 #include <promeki/array.h>
 #include <promeki/platform.h>
+#include <promeki/list.h>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
 #include <winsock2.h>
@@ -25,6 +26,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class Ipv4Address;
+class Ipv6Address;
 class MacAddress;
 class TextStream;
 
@@ -55,6 +57,9 @@ class Ipv6Address {
         public:
                 /** @brief Raw 16-byte storage format for an IPv6 address. */
                 using DataFormat = Array<uint8_t, 16>;
+
+                /** @brief List of IPv6 addresses. */
+                using List = ::promeki::List<Ipv6Address>;
 
                 /**
                  * @brief Parses an IPv6 address from colon-hex notation.

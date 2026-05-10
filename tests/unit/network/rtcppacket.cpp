@@ -336,3 +336,119 @@ TEST_CASE("RtcpPacket: compound concatenates packets") {
         for (int i = 0; i < 4; i++) CHECK(p[i] == 0xAAu);
         for (int i = 4; i < 12; i++) CHECK(p[i] == 0xBBu);
 }
+
+TEST_CASE("RtcpPacket: RR shape — header + sender SSRC + zero blocks") {
+        List<RtcpPacket::ReportBlock> blocks;
+        Buffer                        rr = RtcpPacket::buildReceiverReport(0x12345678u, blocks);
+        REQUIRE(rr.size() == 8u);
+        const uint8_t *p = static_cast<const uint8_t *>(rr.data());
+        // V=2, P=0, RC=0
+        CHECK(p[0] == 0x80u);
+        // PT=201
+        CHECK(p[1] == RtcpPacket::ReceiverReport);
+        // length = (8/4) - 1 = 1
+        CHECK(p[2] == 0x00u);
+        CHECK(p[3] == 0x01u);
+        // sender SSRC
+        CHECK(((static_cast<uint32_t>(p[4]) << 24) | (static_cast<uint32_t>(p[5]) << 16) |
+               (static_cast<uint32_t>(p[6]) << 8) | p[7]) == 0x12345678u);
+}
+
+TEST_CASE("RtcpPacket: RR with one report block matches RFC 3550 §6.4.2 layout") {
+        RtcpPacket::ReportBlock b;
+        b.ssrc = 0xAABBCCDDu;
+        b.fractionLost = 0x42u;
+        b.cumulativeLost = -3;
+        b.extendedHighestSeq = 0x00010032u;
+        b.interarrivalJitter = 0x01020304u;
+        b.lsr = 0x40000000u;
+        b.dlsr = 0x00010000u;
+        List<RtcpPacket::ReportBlock> blocks;
+        blocks.pushToBack(b);
+        Buffer rr = RtcpPacket::buildReceiverReport(0xDEADBEEFu, blocks);
+        REQUIRE(rr.size() == 32u); // 8 + 24
+        const uint8_t *p = static_cast<const uint8_t *>(rr.data());
+        // V=2, P=0, RC=1
+        CHECK(p[0] == 0x81u);
+        CHECK(p[1] == RtcpPacket::ReceiverReport);
+        // length = (32/4) - 1 = 7
+        CHECK(p[2] == 0x00u);
+        CHECK(p[3] == 0x07u);
+        // Sender SSRC at offset 4
+        CHECK(p[4] == 0xDEu);
+        CHECK(p[5] == 0xADu);
+        CHECK(p[6] == 0xBEu);
+        CHECK(p[7] == 0xEFu);
+        // Block SSRC at offset 8
+        CHECK(p[8] == 0xAAu);
+        CHECK(p[9] == 0xBBu);
+        CHECK(p[10] == 0xCCu);
+        CHECK(p[11] == 0xDDu);
+        // fractionLost
+        CHECK(p[12] == 0x42u);
+        // cumulativeLost = -3 -> 0xFFFFFD in 24-bit two's complement
+        CHECK(p[13] == 0xFFu);
+        CHECK(p[14] == 0xFFu);
+        CHECK(p[15] == 0xFDu);
+        // extendedHighestSeq
+        CHECK(p[16] == 0x00u);
+        CHECK(p[17] == 0x01u);
+        CHECK(p[18] == 0x00u);
+        CHECK(p[19] == 0x32u);
+        // interarrivalJitter
+        CHECK(p[20] == 0x01u);
+        CHECK(p[21] == 0x02u);
+        CHECK(p[22] == 0x03u);
+        CHECK(p[23] == 0x04u);
+        // lsr
+        CHECK(p[24] == 0x40u);
+        CHECK(p[25] == 0x00u);
+        CHECK(p[26] == 0x00u);
+        CHECK(p[27] == 0x00u);
+        // dlsr
+        CHECK(p[28] == 0x00u);
+        CHECK(p[29] == 0x01u);
+        CHECK(p[30] == 0x00u);
+        CHECK(p[31] == 0x00u);
+}
+
+TEST_CASE("RtcpPacket: RR truncates excess blocks at RC=31") {
+        List<RtcpPacket::ReportBlock> blocks;
+        for (int i = 0; i < 40; i++) {
+                RtcpPacket::ReportBlock b;
+                b.ssrc = static_cast<uint32_t>(i + 1);
+                blocks.pushToBack(b);
+        }
+        Buffer rr = RtcpPacket::buildReceiverReport(0u, blocks);
+        // Header + sender SSRC + 31 × 24 = 8 + 744 = 752
+        REQUIRE(rr.size() == 752u);
+        const uint8_t *p = static_cast<const uint8_t *>(rr.data());
+        CHECK((p[0] & 0x1Fu) == 31u);
+}
+
+TEST_CASE("RtcpPacket: BYE shape — 8 bytes, PT=203, RC=1") {
+        Buffer bye = RtcpPacket::buildBye(0x55667788u);
+        REQUIRE(bye.size() == 8u);
+        const uint8_t *p = static_cast<const uint8_t *>(bye.data());
+        CHECK(p[0] == 0x81u); // V=2, P=0, RC=1
+        CHECK(p[1] == RtcpPacket::Goodbye);
+        CHECK(p[2] == 0x00u);
+        CHECK(p[3] == 0x01u);
+        CHECK(p[4] == 0x55u);
+        CHECK(p[5] == 0x66u);
+        CHECK(p[6] == 0x77u);
+        CHECK(p[7] == 0x88u);
+}
+
+TEST_CASE("RtcpPacket: findByeSources surfaces every BYE SSRC") {
+        Buffer       sr = RtcpPacket::buildSenderReport(0xAAu, NtpTime(1u, 0u), 1u, 0u, 0u);
+        Buffer       bye = RtcpPacket::buildBye(0xBBu);
+        List<Buffer> parts;
+        parts.pushToBack(sr);
+        parts.pushToBack(bye);
+        Buffer         compound = RtcpPacket::compound(parts);
+        List<uint32_t> ssrcs = RtcpPacket::findByeSources(
+                static_cast<const uint8_t *>(compound.data()), compound.size());
+        REQUIRE(ssrcs.size() == 1u);
+        CHECK(ssrcs[0] == 0xBBu);
+}

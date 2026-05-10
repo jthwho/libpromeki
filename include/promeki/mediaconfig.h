@@ -13,6 +13,8 @@
 #include <promeki/enumlist.h>
 #include <promeki/url.h>
 #include <promeki/duration.h>
+#include <promeki/eui64.h>
+#include <promeki/macaddress.h>
 #include <promeki/mediaduration.h>
 #include <promeki/timecode.h>
 
@@ -1617,6 +1619,70 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setTypes({Variant::TypeString, Variant::TypeSdpSession})
                                 .setDescription("SDP input: file path (String) or session object (SdpSession)."));
 
+                /// @brief Enum @ref RtpRefClockMode — SDP @c ts-refclk source per RFC 7273 / SMPTE ST 2110-10.
+                PROMEKI_DECLARE_ID(RtpRefClock,
+                                   VariantSpec()
+                                           .setType(Variant::TypeEnum)
+                                           .setDefault(RtpRefClockMode::Auto)
+                                           .setEnumType(RtpRefClockMode::Type)
+                                           .setDescription("SDP ts-refclk source mode."));
+
+                /// @brief MacAddress — explicit MAC for @c ts-refclk:localmac (overrides autodetect).
+                ///
+                /// Used in @c "auto" / @c "localmac" modes to override
+                /// the @ref NetworkInterface::firstNonLoopback default.
+                /// A null MAC (the default) leaves autodetection in
+                /// charge.
+                PROMEKI_DECLARE_ID(RtpRefClockLocalMac,
+                                   VariantSpec()
+                                           .setType(Variant::TypeMacAddress)
+                                           .setDefault(MacAddress())
+                                           .setDescription("Override MAC for SDP ts-refclk:localmac."));
+
+                /// @brief String — PTP profile identifier for SDP @c ts-refclk.
+                ///
+                /// Per RFC 7273: @c "IEEE1588-2008" or @c "IEEE1588-2019".
+                /// SMPTE ST 2110-10 §6.3 currently mandates @c IEEE1588-2008.
+                PROMEKI_DECLARE_ID(RtpPtpProfile,
+                                   VariantSpec()
+                                           .setType(Variant::TypeString)
+                                           .setDefault(String("IEEE1588-2008"))
+                                           .setDescription("PTP profile for SDP ts-refclk:ptp."));
+
+                /// @brief EUI64 — PTP grandmaster identifier.
+                ///
+                /// A null EUI-64 (the default) leaves the grandmaster
+                /// field out of the @c ts-refclk:ptp value, which
+                /// receivers tolerate per RFC 7273 §4.5.
+                PROMEKI_DECLARE_ID(RtpPtpGrandmaster,
+                                   VariantSpec()
+                                           .setType(Variant::TypeEUI64)
+                                           .setDefault(EUI64())
+                                           .setDescription("PTP grandmaster EUI-64 for SDP ts-refclk:ptp."));
+
+                /// @brief int — PTP domain number (0-255).
+                ///
+                /// Default 0 (the default IEEE 1588 domain).  SMPTE
+                /// ST 2110-10 deployments commonly use domain 127.
+                PROMEKI_DECLARE_ID(RtpPtpDomain,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(0))
+                                           .setRange(int32_t(0), int32_t(255))
+                                           .setDescription("PTP domain number for SDP ts-refclk:ptp."));
+
+                /// @brief int — SDP @c mediaclk:direct offset value.
+                ///
+                /// Default 0 (the offset SMPTE ST 2110 mandates and
+                /// the only value the writer's RTP-TS counter aligns
+                /// with today).  Override only when interoperating with
+                /// a receiver that expects a non-zero direct offset.
+                PROMEKI_DECLARE_ID(RtpMediaClkOffset,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(0))
+                                           .setDescription("SDP mediaclk:direct=<offset> value."));
+
                 /// @brief int — reader-side jitter buffer depth in milliseconds.
                 PROMEKI_DECLARE_ID(RtpJitterMs, VariantSpec()
                                                         .setType(Variant::TypeS32)
@@ -1625,12 +1691,51 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                         .setDescription("Reader jitter buffer depth in ms."));
 
                 /// @brief int — reader-side output frame queue capacity.
+                ///        Bounded with block-on-full so a stuck strand
+                ///        backs the aggregator off without silently
+                ///        dropping Frames; load-shedding instead surfaces
+                ///        upstream as @c reorderOutputDropped on the
+                ///        per-stream reorder buffer.
                 PROMEKI_DECLARE_ID(RtpMaxReadQueueDepth,
                                    VariantSpec()
                                            .setType(Variant::TypeS32)
-                                           .setDefault(int32_t(4))
+                                           .setDefault(int32_t(8))
                                            .setMin(int32_t(1))
                                            .setDescription("Reader output frame queue capacity."));
+
+                /// @brief int — wire-silence timeout in milliseconds
+                /// after which the reader signals EoS.  Default is
+                /// 0 = derive as 10 × @ref RtpRtcpIntervalMs.  A
+                /// positive value overrides the default.  Set to a
+                /// large value (e.g. INT32_MAX) to effectively
+                /// disable the watchdog when the source is bursty
+                /// or expected to pause for long stretches.
+                PROMEKI_DECLARE_ID(RtpWireSilenceTimeoutMs,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Reader wire-silence EoS timeout in ms (0 = 10 × RTCP)."));
+
+                /// @brief bool — enable the video-stalled watchdog
+                ///        which emits audio-only-continuation Frames
+                ///        at the SDP-advertised video rate when the
+                ///        sender pauses for a few frame durations.
+                ///
+                /// Off by default because the continuation Frames
+                /// carry an audio payload but no video — downstream
+                /// stages that hard-require a CompressedVideoPayload
+                /// (e.g. @ref VideoDecoderMediaIO) will reject them.
+                /// Enable when the consumer tolerates intermittent
+                /// video-less Frames (audio-priority playout, ST
+                /// 2110-30/31 monitoring) so audio playback continues
+                /// smoothly across encoder pauses or brief network
+                /// stalls.
+                PROMEKI_DECLARE_ID(RtpVideoWatchdogEnabled,
+                                   VariantSpec()
+                                           .setType(Variant::TypeBool)
+                                           .setDefault(false)
+                                           .setDescription("Enable video-stall watchdog (audio-only continuation Frames)."));
 
                 /// @brief int — desired kernel @c SO_RCVBUF size in bytes.
                 PROMEKI_DECLARE_ID(

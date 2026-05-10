@@ -27,9 +27,17 @@
  * timestamps — so a broken depacketizer or a dropped audio packet
  * surfaces as a discontinuity, not just a missing frame.
  *
- * The matrix today covers the wire formats RtpMediaIO actually
- * implements: MJPEG (RFC 2435) variants and 8-bit interleaved
- * uncompressed (RFC 4175).  10/12-bit uncompressed is excluded
+ * The matrix covers every wire format the RtpMediaIO backend ships
+ * today:
+ *   - MJPEG (RFC 2435) — 4:2:2 and 4:2:0 sub-format variants;
+ *   - 8-bit interleaved uncompressed (RFC 4175) — RGB and YUV;
+ *   - H.264 (RFC 6184) — 4:2:0 and 4:2:2 input subsampling;
+ *   - H.265 / HEVC (RFC 7798) — 4:2:0 and 4:2:2 input subsampling.
+ *
+ * The H.264 / H.265 cases register only when both an encoder and a
+ * decoder backend are available for the codec; otherwise the
+ * matrix entry is omitted (no Skip noise on machines without the
+ * codec backend).  10/12-bit uncompressed is still excluded
  * pending the ST 2110-20 pgroup work the backend's docstring calls
  * out as deferred.  Audio is L16 (RFC 3551 / AES67) on every case.
  *
@@ -82,8 +90,14 @@ namespace promekitest {
 
                 struct Case {
                                 String      name;        // dotted identifier registered with TestRunner
-                                String      family;      // "jpeg" / "raw" — used to label the case sub-group
-                                PixelFormat pixelFormat; // wire format on the RTP path (compressed for JPEG, uncompressed for raw)
+                                String      family;      // "jpeg" / "raw" / "h264" / "h265" — used to label the case sub-group
+                                PixelFormat pixelFormat; // wire format on the RTP path (compressed for codec cases, uncompressed for raw)
+                                PixelFormat tpgPixelFormat; // optional: pixel format the TPG should emit before the
+                                                         // encoder (drives 4:2:0 vs 4:2:2 subsampling for codecs whose
+                                                         // wire @ref PixelFormat does not encode subsampling, e.g.
+                                                         // @c PixelFormat::H264 / @c PixelFormat::HEVC).  Empty for
+                                                         // JPEG (subsampling already lives in the JPEG_* wire format)
+                                                         // and for raw (TPG emits the wire format directly).
                                 VideoCodec  codec;       // valid for compressed paths only — drives an encoder stage on TX and a decoder stage on RX
                                 bool        audio = true;
                 };
@@ -99,26 +113,59 @@ namespace promekitest {
                 List<Case> buildMatrix() {
                         List<Case>       matrix;
                         const VideoCodec jpeg(VideoCodec::JPEG);
+                        const VideoCodec h264(VideoCodec::H264);
+                        const VideoCodec hevc(VideoCodec::HEVC);
 
                         // JPEG (RFC 2435).  Two YUV422 variants exercise the two
                         // matrices the JPEG family commonly carries; the
                         // YUV420 entry catches a 4:2:0 packing path that
                         // the others don't.
                         matrix.pushToBack({String("rtp.jpeg.yuv8_422_rec709"), String("jpeg"),
-                                           PixelFormat(PixelFormat::JPEG_YUV8_422_Rec709), jpeg, true});
+                                           PixelFormat(PixelFormat::JPEG_YUV8_422_Rec709), PixelFormat(), jpeg, true});
                         matrix.pushToBack({String("rtp.jpeg.yuv8_420_rec709"), String("jpeg"),
-                                           PixelFormat(PixelFormat::JPEG_YUV8_420_Rec709), jpeg, true});
+                                           PixelFormat(PixelFormat::JPEG_YUV8_420_Rec709), PixelFormat(), jpeg, true});
                         matrix.pushToBack({String("rtp.jpeg.yuv8_422_rec601_full"), String("jpeg"),
-                                           PixelFormat(PixelFormat::JPEG_YUV8_422_Rec601_Full), jpeg, true});
+                                           PixelFormat(PixelFormat::JPEG_YUV8_422_Rec601_Full), PixelFormat(), jpeg,
+                                           true});
 
                         // RFC 4175 uncompressed.  8-bit interleaved is
                         // what the backend currently supports — see the
                         // @ref RtpMediaIO docstring for why 10/12-bit
                         // is gated on ST 2110-20 pgroup support.
                         matrix.pushToBack({String("rtp.raw.rgb8_srgb"), String("raw"),
-                                           PixelFormat(PixelFormat::RGB8_sRGB), VideoCodec(), true});
+                                           PixelFormat(PixelFormat::RGB8_sRGB), PixelFormat(), VideoCodec(), true});
                         matrix.pushToBack({String("rtp.raw.yuv8_422_rec709"), String("raw"),
-                                           PixelFormat(PixelFormat::YUV8_422_Rec709), VideoCodec(), true});
+                                           PixelFormat(PixelFormat::YUV8_422_Rec709), PixelFormat(), VideoCodec(),
+                                           true});
+
+                        // RFC 6184 H.264.  Wire format is @c PixelFormat::H264 —
+                        // codec-only, no subsampling.  The TPG output
+                        // (@ref Case::tpgPixelFormat) drives the encoder's
+                        // input subsampling so the matrix can exercise both
+                        // 4:2:0 and 4:2:2 round-trips even though the wire
+                        // PixelFormat is a single enum value.  Skip if no
+                        // H.264 codec backend has both encoder and decoder.
+                        if (h264.canEncode() && h264.canDecode()) {
+                                matrix.pushToBack({String("rtp.h264.yuv8_420_rec709"), String("h264"),
+                                                   PixelFormat(PixelFormat::H264),
+                                                   PixelFormat(PixelFormat::YUV8_420_Planar_Rec709), h264, true});
+                                matrix.pushToBack({String("rtp.h264.yuv8_422_rec709"), String("h264"),
+                                                   PixelFormat(PixelFormat::H264),
+                                                   PixelFormat(PixelFormat::YUV8_422_Rec709), h264, true});
+                        }
+
+                        // RFC 7798 H.265 / HEVC.  Same shape as H.264 — the
+                        // wire @ref PixelFormat is codec-only and the
+                        // @ref Case::tpgPixelFormat selects the encoder
+                        // input subsampling.
+                        if (hevc.canEncode() && hevc.canDecode()) {
+                                matrix.pushToBack({String("rtp.h265.yuv8_420_rec709"), String("h265"),
+                                                   PixelFormat(PixelFormat::HEVC),
+                                                   PixelFormat(PixelFormat::YUV8_420_Planar_Rec709), hevc, true});
+                                matrix.pushToBack({String("rtp.h265.yuv8_422_rec709"), String("h265"),
+                                                   PixelFormat(PixelFormat::HEVC),
+                                                   PixelFormat(PixelFormat::YUV8_422_Rec709), hevc, true});
+                        }
                         return matrix;
                 }
 
@@ -217,16 +264,27 @@ namespace promekitest {
                                                   int frames, uint32_t streamId) {
                         MediaPipelineConfig cfg;
 
-                        // Raw cases let TPG emit the matrix's pixel
-                        // format directly so the RTP sink dispatches
-                        // RFC 4175 raw on its own.  JPEG cases keep
-                        // TPG on the backend default and route through
-                        // a VideoEncoder stage that compresses to the
-                        // matrix's compressed sub-format — the RTP
-                        // sink then dispatches RFC 2435 because its
-                        // input arrives in a JPEG-family
-                        // @ref PixelFormat.
-                        const PixelFormat tpgPd = c.codec.isValid() ? PixelFormat() : c.pixelFormat;
+                        // TPG output policy:
+                        //  - raw cases: TPG emits the matrix's pixel
+                        //    format directly so the RTP sink dispatches
+                        //    RFC 4175 raw on its own.
+                        //  - JPEG cases: TPG stays on the backend default
+                        //    and the encoder converts to the matrix's
+                        //    JPEG-family @ref PixelFormat — RFC 2435
+                        //    dispatch follows from the encoder's output
+                        //    pixel format.
+                        //  - H.264 / H.265 cases: TPG emits the
+                        //    @ref Case::tpgPixelFormat (uncompressed
+                        //    YUV422 or YUV420) so the encoder's input
+                        //    subsampling matches what the matrix entry
+                        //    asks for.  Without this, every matrix
+                        //    entry per codec would produce the same
+                        //    wire bytes (the codec @ref PixelFormat
+                        //    has no subsampling axis).
+                        PixelFormat tpgPd;
+                        if (c.tpgPixelFormat.isValid()) tpgPd = c.tpgPixelFormat;
+                        else if (!c.codec.isValid())
+                                tpgPd = c.pixelFormat;
                         cfg.addStage(makeTpgStage(streamId, tpgPd));
                         String prev = String("tpg");
                         if (c.codec.isValid()) {

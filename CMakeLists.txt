@@ -1826,7 +1826,9 @@ if(PROMEKI_ENABLE_NETWORK)
     list(APPEND PROMEKI_HEADERS
         include/promeki/abstractsocket.h
         include/promeki/ipv4address.h
+        include/promeki/ipv4subnet.h
         include/promeki/ipv6address.h
+        include/promeki/ipv6subnet.h
         include/promeki/klvframe.h
         include/promeki/localserver.h
         include/promeki/localsocket.h
@@ -1835,18 +1837,32 @@ if(PROMEKI_ENABLE_NETWORK)
         include/promeki/multicastmanager.h
         include/promeki/multicastreceiver.h
         include/promeki/networkaddress.h
+        include/promeki/networkinterface.h
+        include/promeki/networkinterfacebackend.h
+        include/promeki/networkinterfaceimpl.h
         include/promeki/packettransport.h
         include/promeki/prioritysocket.h
         include/promeki/ntptime.h
         include/promeki/rawsocket.h
         include/promeki/rtcppacket.h
+        include/promeki/rtcpscheduler.h
+        include/promeki/rtpaggregatorthread.h
+        include/promeki/rtpaudiodepacketizerthread.h
+        include/promeki/rtpaudiopacketizerthread.h
+        include/promeki/rtpaudiotxthread.h
+        include/promeki/rtpdatadepacketizerthread.h
+        include/promeki/rtpdepacketizerthread.h
         include/promeki/rtppacket.h
         include/promeki/rtppacketbatch.h
         include/promeki/rtppacketizerthread.h
         include/promeki/rtppayload.h
+        include/promeki/rtpseqreorderbuffer.h
+        include/promeki/rtpseqtracker.h
         include/promeki/rtpsession.h
         include/promeki/rtpstreamclock.h
         include/promeki/rtptxthread.h
+        include/promeki/rtpvideodepacketizerthread.h
+        include/promeki/rxpayloadbundle.h
         include/promeki/sdpsession.h
         include/promeki/socketaddress.h
         include/promeki/sslcontext.h
@@ -1859,7 +1875,9 @@ if(PROMEKI_ENABLE_NETWORK)
         src/network/abstractsocket.cpp
         src/network/sslcontext.cpp
         src/network/ipv4address.cpp
+        src/network/ipv4subnet.cpp
         src/network/ipv6address.cpp
+        src/network/ipv6subnet.cpp
         src/network/eui64.cpp
         src/network/klvframe.cpp
         src/network/localserver.cpp
@@ -1869,15 +1887,33 @@ if(PROMEKI_ENABLE_NETWORK)
         src/network/multicastmanager.cpp
         src/network/multicastreceiver.cpp
         src/network/networkaddress.cpp
+        src/network/emscriptennetworkinterfacebackend.cpp
+        src/network/linuxnetworkinterfacemonitor.cpp
+        src/network/networkinterface.cpp
+        src/network/networkinterfacebackend.cpp
+        src/network/networkinterfacemonitor.cpp
+        src/network/networkrouting.cpp
         src/network/packettransport.cpp
+        src/network/posixnetworkinterfacebackend.cpp
+        src/network/posixnetworkrouting.cpp
         src/network/prioritysocket.cpp
         src/network/rawsocket.cpp
         src/network/rtcppacket.cpp
+        src/network/rtcpscheduler.cpp
+        src/network/rtpaggregatorthread.cpp
+        src/network/rtpaudiodepacketizerthread.cpp
+        src/network/rtpaudiopacketizerthread.cpp
+        src/network/rtpaudiotxthread.cpp
+        src/network/rtpdatadepacketizerthread.cpp
+        src/network/rtpdepacketizerthread.cpp
         src/network/rtppacketizerthread.cpp
         src/network/rtppayload.cpp
+        src/network/rtpseqreorderbuffer.cpp
+        src/network/rtpseqtracker.cpp
         src/network/rtpsession.cpp
         src/network/rtpstreamclock.cpp
         src/network/rtptxthread.cpp
+        src/network/rtpvideodepacketizerthread.cpp
         src/network/sdpsession.cpp
         src/network/socketaddress.cpp
         src/network/tcpserver.cpp
@@ -1984,6 +2020,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/imagefile.h
         include/promeki/imagefileio.h
         include/promeki/imgseq.h
+        include/promeki/jpeggeometryprobe.h
         include/promeki/jpegvideocodec.h
         include/promeki/ltcdecoder.h
         include/promeki/ltcencoder.h
@@ -2044,6 +2081,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/imagefile.cpp
         src/proav/imagefileio.cpp
         src/proav/imgseq.cpp
+        src/proav/jpeggeometryprobe.cpp
         src/proav/imagefileio_rawyuv.cpp
         src/proav/imagefileio_dpx.cpp
         src/proav/imagefileio_cin.cpp
@@ -2939,14 +2977,27 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/network/multicastmanager.cpp
             tests/unit/network/multicastreceiver.cpp
             tests/unit/network/networkaddress.cpp
+            tests/unit/network/networkinterface.cpp
+            tests/unit/network/networkinterfacemonitor.cpp
+            tests/unit/network/networkrouting.cpp
             tests/unit/network/prioritysocket.cpp
             tests/unit/network/rawsocket.cpp
             tests/unit/network/rtcppacket.cpp
+            tests/unit/network/rtcpscheduler.cpp
+            tests/unit/network/rtpaggregatorthread.cpp
+            tests/unit/network/rtpaudiodepacketizerthread.cpp
+            tests/unit/network/rtpaudiopacketizerthread.cpp
+            tests/unit/network/rtpaudiotxthread.cpp
+            tests/unit/network/rtpdatadepacketizerthread.cpp
             tests/unit/network/rtppacket.cpp
             tests/unit/network/rtppacketbatch.cpp
             tests/unit/network/rtppayload.cpp
+            tests/unit/network/rtpseqreorderbuffer.cpp
+            tests/unit/network/rtpseqtracker.cpp
             tests/unit/network/rtpsession.cpp
             tests/unit/network/rtpstreamclock.cpp
+            tests/unit/network/rtpvideodepacketizerthread.cpp
+            tests/unit/network/rxpayloadbundle.cpp
             tests/unit/network/sdpsession.cpp
             tests/unit/network/socketaddress.cpp
             tests/unit/network/tcpserver.cpp
@@ -3022,6 +3073,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/imagefileio_sgi.cpp
             tests/unit/imagefileio_pnm.cpp
             tests/unit/imgseq.cpp
+            tests/unit/jpeggeometryprobe.cpp
             tests/unit/jpegvideocodec.cpp
             tests/unit/ltcdecoder.cpp
             tests/unit/ltcencoder.cpp

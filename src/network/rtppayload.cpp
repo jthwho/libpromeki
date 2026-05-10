@@ -6,8 +6,11 @@
  */
 
 #include <promeki/rtppayload.h>
+#include <promeki/base64.h>
 #include <promeki/h264bitstream.h>
 #include <promeki/list.h>
+#include <promeki/logger.h>
+#include <promeki/string.h>
 #include <cstring>
 #include <algorithm>
 
@@ -1187,6 +1190,77 @@ Buffer RtpPayloadH264::unpack(const RtpPacket::List &packets) {
         return result;
 }
 
+void RtpPayloadH264::clearParamSets() {
+        _spsObserved = false;
+        _ppsObserved = false;
+        _idrLatched = false;
+        _loggedWaitForParamSets = false;
+}
+
+void RtpPayloadH264::setSpropParameterSets(const String &csv) {
+        if (csv.isEmpty()) return;
+        // RFC 6184 §8.1: comma-separated base64 NAL units.  The
+        // sender typically packs SPS first, then PPS, but the
+        // ordering is not normative — we trust the type byte.
+        StringList parts = csv.split(",");
+        for (size_t i = 0; i < parts.size(); i++) {
+                String item = parts[i];
+                Error  derr;
+                Buffer nal = Base64::decode(item, &derr);
+                if (derr.isError() || nal.size() < 1) continue;
+                const uint8_t hdr = static_cast<const uint8_t *>(nal.data())[0];
+                const uint8_t type = hdr & 0x1F;
+                if (type == NalTypeSps) _spsObserved = true;
+                else if (type == NalTypePps)
+                        _ppsObserved = true;
+        }
+}
+
+RtpPayload::ValidateResult RtpPayloadH264::validate(const Buffer &unpacked) {
+        if (unpacked.size() == 0) return ValidateResult::DropSilently;
+
+        // Walk the AU once to update paramSet-observed and detect
+        // an IDR slice.  H264Bitstream::forEachAnnexBNal handles
+        // both 3- and 4-byte start codes; we only need the first
+        // byte of each NAL for the type field.
+        bool       sawIdrThisAu = false;
+        BufferView view(unpacked, 0, unpacked.size());
+        H264Bitstream::forEachAnnexBNal(view, [&](const H264Bitstream::NalUnit &nal) -> Error {
+                const uint8_t type = nal.header0 & 0x1F;
+                if (type == NalTypeSps) _spsObserved = true;
+                else if (type == NalTypePps)
+                        _ppsObserved = true;
+                else if (type == NalTypeIdr)
+                        sawIdrThisAu = true;
+                return Error::Ok;
+        });
+
+        // Once latched, every subsequent AU is decodable (P / B
+        // frames reference the first IDR's GOP).  The latch is
+        // re-armed only by clearParamSets() on SSRC reset.
+        if (_idrLatched) return ValidateResult::Accept;
+
+        if (!_spsObserved || !_ppsObserved) {
+                if (!_loggedWaitForParamSets) {
+                        _loggedWaitForParamSets = true;
+                        promekiInfo("RtpPayloadH264: waiting for SPS/PPS before "
+                                    "shipping AUs to the decoder (sps=%s pps=%s)",
+                                    _spsObserved ? "ok" : "missing",
+                                    _ppsObserved ? "ok" : "missing");
+                }
+                return ValidateResult::Wait;
+        }
+
+        if (sawIdrThisAu) {
+                _idrLatched = true;
+                return ValidateResult::Accept;
+        }
+
+        // ParamSets known but no IDR yet — pre-decodable AU,
+        // drop without logging.
+        return ValidateResult::DropSilently;
+}
+
 // -- H.265 / HEVC -------------------------------------------------------------
 
 RtpPayloadH265::RtpPayloadH265(uint8_t payloadType) : _payloadType(payloadType) {}
@@ -1370,6 +1444,93 @@ Buffer RtpPayloadH265::unpack(const RtpPacket::List &packets) {
                 std::memcpy(result.data(), out.data(), out.size());
         }
         return result;
+}
+
+void RtpPayloadH265::clearParamSets() {
+        _vpsObserved = false;
+        _spsObserved = false;
+        _ppsObserved = false;
+        _irapLatched = false;
+        _loggedWaitForParamSets = false;
+}
+
+namespace {
+
+        // Decode a comma-separated base64 list of HEVC NAL payloads
+        // and set @p flag if any decoded NAL has the expected
+        // (>>1)&0x3F NAL type.  Used by the three sprop-* setters.
+        void seedHevcSpropFlag(const String &csv, uint8_t expectedType, bool &flag) {
+                if (csv.isEmpty()) return;
+                StringList parts = csv.split(",");
+                for (size_t i = 0; i < parts.size(); i++) {
+                        Error  derr;
+                        Buffer nal = Base64::decode(parts[i], &derr);
+                        if (derr.isError() || nal.size() < 1) continue;
+                        const uint8_t hdr = static_cast<const uint8_t *>(nal.data())[0];
+                        const uint8_t type = static_cast<uint8_t>((hdr >> 1) & 0x3F);
+                        if (type == expectedType) {
+                                flag = true;
+                                return;
+                        }
+                }
+        }
+
+} // namespace
+
+void RtpPayloadH265::setSpropVps(const String &csv) {
+        seedHevcSpropFlag(csv, NalTypeVps, _vpsObserved);
+}
+
+void RtpPayloadH265::setSpropSps(const String &csv) {
+        seedHevcSpropFlag(csv, NalTypeSps, _spsObserved);
+}
+
+void RtpPayloadH265::setSpropPps(const String &csv) {
+        seedHevcSpropFlag(csv, NalTypePps, _ppsObserved);
+}
+
+RtpPayload::ValidateResult RtpPayloadH265::validate(const Buffer &unpacked) {
+        if (unpacked.size() == 0) return ValidateResult::DropSilently;
+
+        // HEVC NAL header is two bytes; nal_unit_type lives in
+        // bits 1-6 of the first byte.  We only need the first
+        // byte to classify, so the H264 walker (which is
+        // agnostic to NAL header semantics) suffices.
+        bool       sawIrapThisAu = false;
+        BufferView view(unpacked, 0, unpacked.size());
+        H264Bitstream::forEachAnnexBNal(view, [&](const H264Bitstream::NalUnit &nal) -> Error {
+                const uint8_t type = static_cast<uint8_t>((nal.header0 >> 1) & 0x3F);
+                if (type == NalTypeVps) _vpsObserved = true;
+                else if (type == NalTypeSps)
+                        _spsObserved = true;
+                else if (type == NalTypePps)
+                        _ppsObserved = true;
+                if (type >= IrapNalTypeMin && type <= IrapNalTypeMax) {
+                        sawIrapThisAu = true;
+                }
+                return Error::Ok;
+        });
+
+        if (_irapLatched) return ValidateResult::Accept;
+
+        if (!_vpsObserved || !_spsObserved || !_ppsObserved) {
+                if (!_loggedWaitForParamSets) {
+                        _loggedWaitForParamSets = true;
+                        promekiInfo("RtpPayloadH265: waiting for VPS/SPS/PPS before "
+                                    "shipping AUs to the decoder (vps=%s sps=%s pps=%s)",
+                                    _vpsObserved ? "ok" : "missing",
+                                    _spsObserved ? "ok" : "missing",
+                                    _ppsObserved ? "ok" : "missing");
+                }
+                return ValidateResult::Wait;
+        }
+
+        if (sawIrapThisAu) {
+                _irapLatched = true;
+                return ValidateResult::Accept;
+        }
+
+        return ValidateResult::DropSilently;
 }
 
 // ============================================================================

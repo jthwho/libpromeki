@@ -13,6 +13,7 @@
 #include <promeki/string.h>
 #include <promeki/result.h>
 #include <promeki/platform.h>
+#include <promeki/list.h>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
 #include <winsock2.h>
@@ -23,6 +24,7 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class Ipv4Address;
 class Ipv6Address;
 class MacAddress;
 class TextStream;
@@ -52,6 +54,9 @@ class TextStream;
  */
 class Ipv4Address {
         public:
+                /** @brief List of IPv4 addresses. */
+                using List = ::promeki::List<Ipv4Address>;
+
                 /**
                  * @brief Parses an IPv4 address from dotted-quad notation.
                  * @param str The string to parse (e.g. "192.168.1.1").

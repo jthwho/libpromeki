@@ -217,6 +217,57 @@ class H264Bitstream {
                  * @return @ref Error::Ok, or an allocation failure.
                  */
                 static Error wrapNalsAsAnnexB(const List<BufferView> &nals, Buffer &outBuf);
+
+                /**
+                 * @brief Selected fields parsed out of an H.264 SPS
+                 *        NAL.
+                 *
+                 * Populated by @ref parseSpsResolution.  The width
+                 * and height are post-cropping luma samples — the
+                 * dimensions a decoder will produce on its output —
+                 * and match the values an H.264 decoder reports for
+                 * the same stream.  @c chromaFormatIdc reports the
+                 * subsampling family (0 = monochrome, 1 = 4:2:0,
+                 * 2 = 4:2:2, 3 = 4:4:4).  @c bitDepthLumaMinus8 /
+                 * @c bitDepthChromaMinus8 round-trip the bit depth
+                 * field as carried in the SPS.
+                 */
+                struct SpsInfo {
+                                uint32_t width = 0;
+                                uint32_t height = 0;
+                                uint8_t  chromaFormatIdc = 1;
+                                uint8_t  bitDepthLumaMinus8 = 0;
+                                uint8_t  bitDepthChromaMinus8 = 0;
+                };
+
+                /**
+                 * @brief Extracts the picture resolution from an
+                 *        H.264 SPS NAL (RBSP-decoded, post-cropping).
+                 *
+                 * Decodes only the fields required to compute the
+                 * cropped luma resolution and the chroma format —
+                 * everything an RTP receiver needs to populate
+                 * @ref ImageDesc::size before the first packet
+                 * arrives.  RBSP emulation-prevention bytes are
+                 * stripped internally; the caller passes the raw
+                 * NAL payload (no start code, no length prefix,
+                 * including the 1-byte NAL header).
+                 *
+                 * Streams that carry scaling lists in the SPS are
+                 * not supported — they require a full scaling-list
+                 * decoder we don't ship.  Such inputs return
+                 * @ref Error::NotSupported.
+                 *
+                 * @param sps  Raw SPS NAL payload.
+                 * @param out  Receives the parsed fields.
+                 * @return @ref Error::Ok on success,
+                 *         @ref Error::InvalidArgument if @p sps is
+                 *         not an SPS (NAL type ≠ 7),
+                 *         @ref Error::CorruptData on malformed RBSP,
+                 *         @ref Error::NotSupported if the SPS uses
+                 *         scaling-list signalling we don't decode.
+                 */
+                static Error parseSpsResolution(const BufferView &sps, SpsInfo &out);
 };
 
 /**

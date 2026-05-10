@@ -203,6 +203,81 @@ template <typename T> class Queue {
                 }
 
                 /**
+                 * @brief Pushes @p val onto the back, evicting the oldest
+                 *        entries when the queue is at capacity.
+                 *
+                 * Bounded-mode drop-oldest insertion: if @ref setMaxSize
+                 * has installed a cap and @c size() has reached @p
+                 * _maxSize, drops the head element repeatedly until
+                 * exactly one slot is free, then pushes @p val.  When
+                 * the queue is unbounded the call degenerates to a
+                 * non-blocking @ref push.
+                 *
+                 * The drop-and-push window is atomic against concurrent
+                 * pops: the queue lock is held for the entire eviction
+                 * + insertion sequence, so a consumer never observes
+                 * the queue half-rotated.  Pop-side waiters are woken
+                 * after the new item is in place.
+                 *
+                 * @par Rationale
+                 * Lossy front-edge stages — RTP reorder buffers,
+                 * realtime metrics ring buffers — would rather drop the
+                 * oldest already-buffered item than back-pressure into
+                 * a producer that cannot block (e.g. an RX socket
+                 * thread, where blocking would let the kernel UDP
+                 * ring overflow on the next datagram).  Promoting this
+                 * pattern out of the per-call-site lambda also gives
+                 * us one well-tested implementation across the
+                 * codebase rather than one per stage.
+                 *
+                 * @par Cancellation
+                 * Returns @c 0 without modifying the queue when the
+                 * queue is in the cancelled state — callers in their
+                 * shutdown path do not need to special-case the
+                 * cancel because the dropped-count semantics
+                 * naturally collapse to "nothing dropped, nothing
+                 * pushed."  Use @ref isCancelled to detect the
+                 * shutdown if you need to distinguish.
+                 *
+                 * @param val Value to enqueue.
+                 * @return Number of elements evicted from the head to
+                 *         make room.  @c 0 means the queue had space
+                 *         (or was unbounded) and only the push
+                 *         happened; positive values count the
+                 *         oldest-first drop sequence.
+                 */
+                size_t pushDropOldest(const T &val) {
+                        Mutex::Locker locker(_mutex);
+                        if (_cancelled) return 0;
+                        size_t dropped = 0;
+                        while (_maxSize > 0 && _queue.size() >= _maxSize) {
+                                _queue.pop();
+                                ++dropped;
+                        }
+                        _queue.push(val);
+                        _cv.wakeOne();
+                        if (dropped > 0) _notFull.wakeAll();
+                        return dropped;
+                }
+
+                /**
+                 * @brief Move-form drop-oldest push.  See @ref pushDropOldest.
+                 */
+                size_t pushDropOldest(T &&val) {
+                        Mutex::Locker locker(_mutex);
+                        if (_cancelled) return 0;
+                        size_t dropped = 0;
+                        while (_maxSize > 0 && _queue.size() >= _maxSize) {
+                                _queue.pop();
+                                ++dropped;
+                        }
+                        _queue.push(std::move(val));
+                        _cv.wakeOne();
+                        if (dropped > 0) _notFull.wakeAll();
+                        return dropped;
+                }
+
+                /**
                  * @brief Removes and returns the front element, blocking until
                  *        one is available or the timeout expires.
                  * @param timeoutMs Maximum time to wait in milliseconds.  A value

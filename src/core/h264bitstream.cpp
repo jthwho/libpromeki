@@ -472,4 +472,181 @@ bool AvcDecoderConfig::isIdrAnnexB(const BufferView &au) {
         return found;
 }
 
+namespace {
+
+        // Strip H.264 / HEVC RBSP emulation-prevention bytes.  Whenever
+        // the byte sequence 00 00 03 appears in the NAL payload after
+        // the NAL header, the 0x03 is an inserted "emulation prevention
+        // byte" that must be removed before parsing the bitstream.
+        // Returns a freshly allocated Buffer with the stripped RBSP.
+        Buffer stripEmulationPrevention(const uint8_t *src, size_t len) {
+                Buffer buf(len);
+                buf.setSize(len);
+                uint8_t *dst = static_cast<uint8_t *>(buf.data());
+                size_t   w = 0;
+                for (size_t i = 0; i < len; ++i) {
+                        if (i + 2 < len && src[i] == 0x00 && src[i + 1] == 0x00 && src[i + 2] == 0x03) {
+                                dst[w++] = src[i];
+                                dst[w++] = src[i + 1];
+                                i += 2; // skip 0x03
+                        } else {
+                                dst[w++] = src[i];
+                        }
+                }
+                buf.setSize(w);
+                return buf;
+        }
+
+        // Minimal MSB-first bit reader over a contiguous byte buffer.
+        // Used only to walk the SPS RBSP — caller passes the bytes
+        // after the NAL header.
+        class BitReader {
+                public:
+                        BitReader(const uint8_t *data, size_t bytes) : _data(data), _bytes(bytes) {}
+
+                        bool eof() const { return _bitOffset >= _bytes * 8; }
+
+                        uint32_t readBits(int n) {
+                                uint32_t v = 0;
+                                for (int i = 0; i < n; ++i) {
+                                        if (eof()) return v;
+                                        const size_t byteIdx = _bitOffset / 8;
+                                        const int    bitIdx = 7 - static_cast<int>(_bitOffset % 8);
+                                        v = (v << 1) | ((_data[byteIdx] >> bitIdx) & 1u);
+                                        _bitOffset++;
+                                }
+                                return v;
+                        }
+
+                        // Unsigned Exp-Golomb (ue(v)) per H.264 §9.1.
+                        uint32_t readUe() {
+                                int zeros = 0;
+                                while (!eof() && readBits(1) == 0 && zeros < 32) zeros++;
+                                if (zeros == 0) return 0;
+                                const uint32_t suffix = readBits(zeros);
+                                return (1u << zeros) - 1u + suffix;
+                        }
+
+                        // Signed Exp-Golomb (se(v)).
+                        int32_t readSe() {
+                                const uint32_t code = readUe();
+                                if (code == 0) return 0;
+                                if (code & 1u) return static_cast<int32_t>((code + 1u) >> 1);
+                                return -static_cast<int32_t>(code >> 1);
+                        }
+
+                private:
+                        const uint8_t *_data;
+                        size_t         _bytes;
+                        size_t         _bitOffset = 0;
+        };
+
+        // Returns true when @p profileIdc is one of the H.264 high
+        // profiles whose SPS carries chroma_format_idc / bit-depth
+        // fields (§7.3.2.1.1).
+        bool isH264HighProfile(uint8_t profileIdc) {
+                switch (profileIdc) {
+                        case 44:
+                        case 83:
+                        case 86:
+                        case 100:
+                        case 110:
+                        case 118:
+                        case 122:
+                        case 128:
+                        case 134:
+                        case 135:
+                        case 138:
+                        case 139:
+                        case 244: return true;
+                        default: return false;
+                }
+        }
+
+} // namespace
+
+Error H264Bitstream::parseSpsResolution(const BufferView &sps, SpsInfo &out) {
+        out = SpsInfo{};
+        if (sps.size() < 4) return Error::CorruptData;
+        const uint8_t *raw = sps.data();
+        const uint8_t  hdr = raw[0];
+        if ((hdr & 0x1f) != H264NalTypeSps) return Error::InvalidArgument;
+
+        Buffer rbsp = stripEmulationPrevention(raw + 1, sps.size() - 1);
+        if (rbsp.size() < 3) return Error::CorruptData;
+        BitReader r(static_cast<const uint8_t *>(rbsp.data()), rbsp.size());
+
+        const uint8_t profileIdc = static_cast<uint8_t>(r.readBits(8));
+        r.readBits(8); // constraint_set flags + reserved zero bits
+        r.readBits(8); // level_idc
+        r.readUe();    // seq_parameter_set_id
+
+        uint8_t chromaFormatIdc = 1;
+        if (isH264HighProfile(profileIdc)) {
+                chromaFormatIdc = static_cast<uint8_t>(r.readUe());
+                if (chromaFormatIdc == 3) r.readBits(1); // separate_colour_plane_flag
+                out.bitDepthLumaMinus8 = static_cast<uint8_t>(r.readUe());
+                out.bitDepthChromaMinus8 = static_cast<uint8_t>(r.readUe());
+                r.readBits(1); // qpprime_y_zero_transform_bypass_flag
+                if (r.readBits(1) != 0) {
+                        // seq_scaling_matrix_present_flag — full scaling-
+                        // list decode required to reach the resolution
+                        // fields.  Bail out rather than ship dimensions
+                        // we can't trust.
+                        return Error::NotSupported;
+                }
+        }
+        out.chromaFormatIdc = chromaFormatIdc;
+
+        r.readUe(); // log2_max_frame_num_minus4
+        const uint32_t picOrderCntType = r.readUe();
+        if (picOrderCntType == 0) {
+                r.readUe(); // log2_max_pic_order_cnt_lsb_minus4
+        } else if (picOrderCntType == 1) {
+                r.readBits(1); // delta_pic_order_always_zero_flag
+                r.readSe();    // offset_for_non_ref_pic
+                r.readSe();    // offset_for_top_to_bottom_field
+                const uint32_t numRefFrames = r.readUe();
+                for (uint32_t i = 0; i < numRefFrames; ++i) r.readSe();
+        }
+        r.readUe();    // max_num_ref_frames
+        r.readBits(1); // gaps_in_frame_num_value_allowed_flag
+        const uint32_t picWidthInMbsMinus1 = r.readUe();
+        const uint32_t picHeightInMapUnitsMinus1 = r.readUe();
+        const bool     frameMbsOnlyFlag = r.readBits(1) != 0;
+        if (!frameMbsOnlyFlag) r.readBits(1); // mb_adaptive_frame_field_flag
+        r.readBits(1); // direct_8x8_inference_flag
+        const bool frameCroppingFlag = r.readBits(1) != 0;
+
+        uint32_t cropLeft = 0, cropRight = 0, cropTop = 0, cropBottom = 0;
+        if (frameCroppingFlag) {
+                cropLeft = r.readUe();
+                cropRight = r.readUe();
+                cropTop = r.readUe();
+                cropBottom = r.readUe();
+        }
+
+        // Compute luma resolution per H.264 §6.4 / §7.4.2.1.1.
+        const uint32_t widthSamples = (picWidthInMbsMinus1 + 1u) * 16u;
+        const uint32_t heightSamples =
+                (picHeightInMapUnitsMinus1 + 1u) * 16u * (frameMbsOnlyFlag ? 1u : 2u);
+
+        // SubWidthC / SubHeightC per §6.2 Table 6-1.
+        const uint32_t subWidthC =
+                (chromaFormatIdc == 1 || chromaFormatIdc == 2) ? 2u : 1u;
+        const uint32_t subHeightC = (chromaFormatIdc == 1) ? 2u : 1u;
+        const uint32_t cropUnitX = (chromaFormatIdc == 0) ? 1u : subWidthC;
+        const uint32_t cropUnitY =
+                (chromaFormatIdc == 0) ? (2u - (frameMbsOnlyFlag ? 1u : 0u))
+                                       : subHeightC * (2u - (frameMbsOnlyFlag ? 1u : 0u));
+
+        const uint32_t cropX = (cropLeft + cropRight) * cropUnitX;
+        const uint32_t cropY = (cropTop + cropBottom) * cropUnitY;
+        if (cropX > widthSamples || cropY > heightSamples) return Error::CorruptData;
+
+        out.width = widthSamples - cropX;
+        out.height = heightSamples - cropY;
+        return Error::Ok;
+}
+
 PROMEKI_NAMESPACE_END

@@ -133,6 +133,52 @@ struct HevcDecoderConfig {
                  * path.  Returns @c false on empty / corrupt inputs.
                  */
                 static bool isIrapAnnexB(const BufferView &au);
+
+                /**
+                 * @brief Selected fields parsed out of an HEVC SPS NAL.
+                 *
+                 * Populated by @ref parseSpsResolution.  The width
+                 * and height are post-cropping luma samples (a
+                 * decoder's output dimensions for this SPS).
+                 */
+                struct SpsInfo {
+                                uint32_t width = 0;
+                                uint32_t height = 0;
+                                uint8_t  chromaFormatIdc = 1;     ///< 0=monochrome, 1=4:2:0, 2=4:2:2, 3=4:4:4
+                                uint8_t  bitDepthLumaMinus8 = 0;
+                                uint8_t  bitDepthChromaMinus8 = 0;
+                };
+
+                /**
+                 * @brief Extracts the picture resolution from an HEVC
+                 *        SPS NAL (post-cropping).
+                 *
+                 * Decodes the fields required to compute the cropped
+                 * luma resolution and the chroma format.  The HEVC
+                 * SPS carries width / height directly as ue(v) values
+                 * (no macroblock-derived calculation as in H.264) so
+                 * the parser is structurally simpler — the only
+                 * tricky stretch is the @c profile_tier_level
+                 * structure, which is fixed-length when
+                 * @c sps_max_sub_layers_minus1 = 0 (the common
+                 * case).
+                 *
+                 * Streams with @c sps_max_sub_layers_minus1 > 0 and
+                 * non-trivial sub-layer profile/level present flags
+                 * are partially supported — the parser walks the
+                 * sub-layer flag table but does not validate the
+                 * sub-layer profile bytes that follow.
+                 *
+                 * @param sps  Raw HEVC SPS NAL payload (no start
+                 *             code or length prefix; includes the
+                 *             2-byte NAL header).
+                 * @param out  Receives the parsed fields.
+                 * @return @ref Error::Ok on success,
+                 *         @ref Error::InvalidArgument if @p sps is
+                 *         not an HEVC SPS (NAL type ≠ 33),
+                 *         @ref Error::CorruptData on malformed RBSP.
+                 */
+                static Error parseSpsResolution(const BufferView &sps, SpsInfo &out);
 };
 
 PROMEKI_NAMESPACE_END

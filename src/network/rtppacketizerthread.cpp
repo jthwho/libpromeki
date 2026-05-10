@@ -46,13 +46,29 @@ void RtpPacketizerThread::run() {
                 auto r = _payloadQueue.pop();
                 if (r.second().isError()) {
                         // Cancelled or fatal queue error — exit
-                        // cleanly without invoking the subclass.
-                        // Spurious queue errors during normal
-                        // operation are not expected; if one shows
-                        // up, observing the stop flag on the next
-                        // iteration will break us out anyway.
+                        // the steady-state loop and fall into the
+                        // drain phase below.
                         break;
                 }
+                packetize(r.first());
+        }
+        // Drain phase: when @ref requestStop fires the cancel
+        // wakes any blocked @c pop with @c Error::Cancelled, but
+        // items already enqueued by the strand on the way to
+        // close stay in @c _payloadQueue until somebody reads
+        // them.  Without this drain, a clean
+        // executeCmd(Close) cascade would silently lose every
+        // frame the strand pushed but the packetizer hadn't yet
+        // seen — empirically ~3-4 video frames at 60 fps
+        // because the strand is faster than the packetizer for
+        // those few frames.  @c tryPop returns immediately when
+        // the queue is empty (and the cancel latch is set, so it
+        // won't re-block on an empty-and-cancelled queue), so
+        // the drain is bounded by the queue depth and the
+        // packetizer's per-frame cost.
+        while (true) {
+                auto r = _payloadQueue.tryPop();
+                if (r.second().isError()) break;
                 packetize(r.first());
         }
         onStop();

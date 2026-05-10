@@ -20,12 +20,14 @@
 #include <promeki/enums.h>
 #include <promeki/eui64.h>
 #include <promeki/file.h>
+#include <promeki/networkinterface.h>
 #include <promeki/filepath.h>
 #include <promeki/frame.h>
 #include <promeki/h264bitstream.h>
 #include <promeki/hevcbitstream.h>
 #include <promeki/imagedesc.h>
 #include <promeki/iodevice.h>
+#include <promeki/jpeggeometryprobe.h>
 #include <promeki/json.h>
 #include <promeki/logger.h>
 #include <promeki/mediaconfig.h>
@@ -109,11 +111,20 @@ class RtpMediaIO::VideoTxThread : public RtpTxThread {
                         if (_owner->_videos.isEmpty()) return;
                         VideoStream     &vs = _owner->_videos[0];
                         const FrameRate &rate = _owner->_frameRate;
-                        while (!isStopRequested()) {
-                                auto r = _packetQueue.pop();
-                                if (r.second().isError()) break;
-                                RtpPacketBatch batch = std::move(r.first());
-                                if (batch.packets.isEmpty() || vs.session == nullptr) continue;
+
+                        // The per-batch send body is invoked from both
+                        // the steady-state pop loop and the post-cancel
+                        // drain phase below — extracted into a lambda so
+                        // the two paths share exactly the same wire
+                        // emission semantics (per-packet pacing,
+                        // rateCapBps handling, stat accounting).  Without
+                        // the drain phase, a clean
+                        // executeCmd(Close) cascade would silently lose
+                        // every video frame the strand had pushed but
+                        // the TX thread hadn't yet sent — empirically
+                        // ~3-4 frames at 60 fps for a 30-frame run.
+                        auto sendBatch = [&](RtpPacketBatch &batch) {
+                                if (batch.packets.isEmpty() || vs.session == nullptr) return;
 
                                 // RTP timestamp via cumulativeTicks() —
                                 // exact 64-bit rational math against the
@@ -141,17 +152,11 @@ class RtpMediaIO::VideoTxThread : public RtpTxThread {
                                         // Userspace pacing: spread the
                                         // batch's packets across one
                                         // frame interval via @c Cadence.
-                                        // Replaces @c sendPacketsPaced
-                                        // (which is gone in Phase 3) so
-                                        // pacing strategy stays local
-                                        // to the TX thread instead of
-                                        // hiding inside @c RtpSession.
-                                        // The deadline scheme is
-                                        // anchored at this frame's
-                                        // start — drift across frames
-                                        // is bounded by the strand's
-                                        // own per-frame cadence and
-                                        // does not accumulate.
+                                        // The deadline scheme is anchored
+                                        // at this frame's start — drift
+                                        // across frames is bounded by
+                                        // the strand's own per-frame
+                                        // cadence and does not accumulate.
                                         const Duration interval = rate.frameDuration();
                                         const Duration perPacket = nPackets > 1
                                                 ? Duration::fromNanoseconds(interval.nanoseconds() /
@@ -188,7 +193,7 @@ class RtpMediaIO::VideoTxThread : public RtpTxThread {
                                 if (err.isError()) {
                                         promekiErr("RtpMediaIO::VideoTxThread: sendPackets failed: %s",
                                                    err.desc().cstr());
-                                        continue;
+                                        return;
                                 }
 
                                 vs.session->noteRtpEmission(ts);
@@ -203,6 +208,28 @@ class RtpMediaIO::VideoTxThread : public RtpTxThread {
                                 }
                                 vs.txSendDuration.addSample(
                                         (TimeStamp::now() - batch.enqueuedAt).microseconds());
+                        };
+
+                        while (!isStopRequested()) {
+                                auto r = _packetQueue.pop();
+                                if (r.second().isError()) break;
+                                RtpPacketBatch batch = std::move(r.first());
+                                sendBatch(batch);
+                        }
+                        // Drain phase — see RtpPacketizerThread::run for
+                        // the rationale.  After the cancel latch the
+                        // blocking @c pop returns @c Error::Cancelled
+                        // immediately even when items remain in the
+                        // queue; @c tryPop continues to deliver them
+                        // until empty.  Bounds: queue depth (3) ×
+                        // per-batch wall time (~one frame interval at
+                        // userspace pacing) ≈ 50 ms additional close
+                        // latency.
+                        while (true) {
+                                auto r = _packetQueue.tryPop();
+                                if (r.second().isError()) break;
+                                RtpPacketBatch batch = std::move(r.first());
+                                sendBatch(batch);
                         }
                 }
 
@@ -355,19 +382,19 @@ class RtpMediaIO::DataTxThread : public RtpTxThread {
                 void run() override {
                         if (_owner->_datas.isEmpty()) return;
                         DataStream &ds = _owner->_datas[0];
-                        while (!isStopRequested()) {
-                                auto r = _packetQueue.pop();
-                                if (r.second().isError()) break;
-                                RtpPacketBatch batch = std::move(r.first());
-                                if (batch.packets.isEmpty() || ds.session == nullptr) continue;
+
+                        // Per-batch send body shared by the steady-state
+                        // pop loop and the post-cancel drain phase below.
+                        // Mirrors @ref VideoTxThread::run — see there
+                        // for the drain-on-close rationale.
+                        auto sendBatch = [&](RtpPacketBatch &batch) {
+                                if (batch.packets.isEmpty() || ds.session == nullptr) return;
                                 const double fps = _owner->_frameRate.isValid()
                                                            ? _owner->_frameRate.toDouble()
                                                            : 30.0;
                                 const uint32_t ts = static_cast<uint32_t>(
                                         static_cast<double>(batch.frameIndex.value()) *
                                         static_cast<double>(batch.clockRate) / fps);
-                                // Stamp ts + marker on every packet
-                                // before the session dispatches.
                                 for (size_t i = 0; i < batch.packets.size(); i++) {
                                         const bool isLast = (i + 1 == batch.packets.size());
                                         batch.packets[i].setTimestamp(ts);
@@ -377,7 +404,7 @@ class RtpMediaIO::DataTxThread : public RtpTxThread {
                                 if (err.isError()) {
                                         promekiErr("RtpMediaIO::DataTxThread: sendPackets failed: %s",
                                                    err.desc().cstr());
-                                        continue;
+                                        return;
                                 }
                                 ds.session->noteRtpEmission(ts);
                                 ds.packetsSent.fetchAndAdd(static_cast<int64_t>(batch.packets.size()));
@@ -389,6 +416,19 @@ class RtpMediaIO::DataTxThread : public RtpTxThread {
                                                         static_cast<int64_t>(pktSize - RtpPacket::HeaderSize));
                                         }
                                 }
+                        };
+
+                        while (!isStopRequested()) {
+                                auto r = _packetQueue.pop();
+                                if (r.second().isError()) break;
+                                RtpPacketBatch batch = std::move(r.first());
+                                sendBatch(batch);
+                        }
+                        while (true) {
+                                auto r = _packetQueue.tryPop();
+                                if (r.second().isError()) break;
+                                RtpPacketBatch batch = std::move(r.first());
+                                sendBatch(batch);
                         }
                 }
 
@@ -437,426 +477,17 @@ class RtpMediaIO::DataPacketizerThread : public RtpPacketizerThread {
                 DataTxThread *_tx = nullptr;
 };
 
-// ---------------------------------------------------------------------------
-// AudioTxThread — cadence-paced AES67 emitter with silence-fill.
-//
-// Owns the per-stream RTP-TS cursor: every tick of the configured
-// AES67 cadence advances the cursor by `packetSamples` regardless
-// of whether real content was available, so the wire RTP-TS series
-// is contiguous even when the source stalls.  When the inbound
-// PacketQueue is empty at a tick, the TX thread emits a packet
-// over the @ref PcmSilenceFiller-supplied silence buffer instead.
-// Receivers see a continuous wire timeline with no discontinuity
-// gap on the source side — silence packets count as real
-// emissions for noteRtpEmission / hasEmissionRecord, so SRs keep
-// flowing for an audio session that's currently producing only
-// silence.
-// ---------------------------------------------------------------------------
-class RtpMediaIO::AudioTxThread : public RtpTxThread {
-        public:
-                /// Default headroom in microseconds for the audio
-                /// packetizer→TX queue.  Devplan §"Per-stream queue
-                /// depths and types" calls for ≈ 1 second of packets,
-                /// matching the AudioPacketizerThread FIFO reserve.
-                /// The actual depth in chunks = HeadroomUs /
-                /// packetTimeUs (rounded up, with a sane floor).
-                static constexpr int64_t HeadroomUs = 1'000'000;
-
-                AudioTxThread(RtpMediaIO *owner, size_t streamIdx)
-                    : RtpTxThread(String("RtpAudTx") + String("/") + String::number(streamIdx)),
-                      _owner(owner), _streamIdx(streamIdx) {
-                        // Bound the queue from the AudioStream's
-                        // configured cadence.  configureAudioStream
-                        // runs before this constructor at the
-                        // executeCmd(Open) call site, so packetTimeUs
-                        // is already populated.  A zero / negative
-                        // value is a config bug — fall back to a
-                        // small safe depth so we still apply
-                        // backpressure rather than going unbounded.
-                        const int packetTimeUs = owner->_audios[streamIdx].packetTimeUs;
-                        const size_t depth = packetTimeUs > 0
-                                ? std::max<size_t>(8, static_cast<size_t>(HeadroomUs / packetTimeUs))
-                                : 8;
-                        _packetQueue.setMaxSize(depth);
-                }
-
-                Queue<Buffer> &packetQueue() { return _packetQueue; }
-
-        protected:
-                void onShutdown() override { _packetQueue.cancelWaiters(); }
-
-                void run() override {
-                        AudioStream &as = _owner->_audios[_streamIdx];
-                        const size_t packetSamples = as.packetSamples;
-                        const size_t packetBytes = as.packetBytes;
-                        const int    packetTimeUs = as.packetTimeUs;
-                        if (packetSamples == 0 || packetBytes == 0 || packetTimeUs <= 0) {
-                                promekiErr("RtpMediaIO::AudioTxThread: stream %zu has zero packet "
-                                           "shape (samples=%zu bytes=%zu us=%d) — not emitting",
-                                           _streamIdx, packetSamples, packetBytes, packetTimeUs);
-                                return;
-                        }
-
-                        // Build the silence buffer once.  Identical
-                        // bytes for every silence emission — the
-                        // filler caches the buffer internally so
-                        // every emit is a refcount bump.
-                        PcmSilenceFiller silenceFiller(as.storageDesc, packetSamples);
-                        if (silenceFiller.size() != packetBytes) {
-                                promekiWarn("RtpMediaIO::AudioTxThread: silence filler size "
-                                            "%zu != packetBytes %zu",
-                                            silenceFiller.size(), packetBytes);
-                        }
-
-                        Cadence cadence(Duration::fromMicroseconds(packetTimeUs));
-                        cadence.anchor(TimeStamp::now());
-
-                        // Per-stream RTP-TS cursor — advances by
-                        // exactly packetSamples every tick (real
-                        // content or silence).  Wire timeline stays
-                        // contiguous regardless of source stalls.
-                        uint32_t rtpTs = 0;
-                        // Long-stall threshold for cadence reanchor:
-                        // if we wake to find the deadline more than
-                        // this many intervals in the past, reanchor
-                        // rather than burst-emit to catch up.
-                        const Duration stallReanchor = Duration::fromMicroseconds(
-                                static_cast<int64_t>(packetTimeUs) * 16);
-
-                        while (!isStopRequested()) {
-                                TimeStamp deadline = cadence.next();
-                                deadline.sleepUntil();
-                                if (isStopRequested()) break;
-
-                                AudioStream &asNow = _owner->_audios[_streamIdx];
-                                if (!asNow.active || asNow.session == nullptr || asNow.payload == nullptr) {
-                                        continue;
-                                }
-
-                                // Long-stall recovery: if the
-                                // wallclock has run far ahead of
-                                // our anchored cadence (process
-                                // suspended, scheduler hiccup,
-                                // …), reanchor so we don't burst
-                                // a flood of catch-up emissions.
-                                const TimeStamp wakeTime = TimeStamp::now();
-                                if (wakeTime - deadline > stallReanchor) {
-                                        cadence.reanchor(wakeTime);
-                                }
-
-                                // Pop one chunk if available; else
-                                // emit silence.  The PacketQueue is
-                                // 1 second deep so the packetizer
-                                // has plenty of headroom to push
-                                // ahead of the wire.
-                                auto popped = _packetQueue.tryPop();
-                                Buffer payloadChunk;
-                                bool   isSilence = false;
-                                if (popped.second().isOk()) {
-                                        payloadChunk = std::move(popped.first());
-                                } else {
-                                        payloadChunk = silenceFiller.payload();
-                                        isSilence = true;
-                                }
-                                if (payloadChunk.size() != packetBytes) {
-                                        promekiWarn("RtpMediaIO::AudioTxThread: payload size %zu "
-                                                    "!= packetBytes %zu — skipping",
-                                                    payloadChunk.size(), packetBytes);
-                                        rtpTs += static_cast<uint32_t>(packetSamples);
-                                        continue;
-                                }
-
-                                RtpPacketBatch audioBatch;
-                                audioBatch.packets =
-                                        asNow.payload->pack(payloadChunk.data(), packetBytes);
-                                if (audioBatch.packets.size() != 1) {
-                                        promekiErr("RtpMediaIO::AudioTxThread: payload pack produced "
-                                                   "%zu packets, expected 1",
-                                                   audioBatch.packets.size());
-                                        rtpTs += static_cast<uint32_t>(packetSamples);
-                                        continue;
-                                }
-                                // PCM has no talkspurt model — marker
-                                // is always cleared on AES67 packets.
-                                audioBatch.packets[0].setTimestamp(rtpTs);
-                                audioBatch.packets[0].setMarker(false);
-                                audioBatch.markerOnLast = false;
-                                audioBatch.clockRate = asNow.clockRate;
-
-                                Error err = asNow.session->sendPackets(audioBatch);
-                                if (err.isError()) {
-                                        promekiErr("RtpMediaIO::AudioTxThread: sendPackets failed: %s",
-                                                   err.desc().cstr());
-                                        rtpTs += static_cast<uint32_t>(packetSamples);
-                                        continue;
-                                }
-                                asNow.session->noteRtpEmission(rtpTs);
-                                rtpTs += static_cast<uint32_t>(packetSamples);
-                                asNow.packetsSent.fetchAndAdd(1);
-                                const size_t pktSize = audioBatch.packets[0].size();
-                                asNow.bytesSent.fetchAndAdd(static_cast<int64_t>(pktSize));
-                                if (pktSize > RtpPacket::HeaderSize) {
-                                        asNow.senderOctets.fetchAndAdd(
-                                                static_cast<int64_t>(pktSize - RtpPacket::HeaderSize));
-                                }
-                                if (isSilence) {
-                                        asNow.silencePacketsEmitted.fetchAndAdd(1);
-                                        asNow.silenceSamplesEmitted.fetchAndAdd(
-                                                static_cast<int64_t>(packetSamples));
-                                }
-                        }
-                }
-
-        private:
-                RtpMediaIO   *_owner;
-                size_t        _streamIdx;
-                Queue<Buffer> _packetQueue;
-};
-
-class RtpMediaIO::AudioPacketizerThread : public RtpPacketizerThread {
-        public:
-                AudioPacketizerThread(RtpMediaIO *owner, size_t streamIdx)
-                    : RtpPacketizerThread(String("RtpAudPkt") + String("/") + String::number(streamIdx)),
-                      _owner(owner), _streamIdx(streamIdx) {}
-
-                void setTx(AudioTxThread *tx) { _tx = tx; }
-
-        protected:
-                void onStart() override {
-                        // Build the per-thread FIFO once the run
-                        // loop is live, so the AudioStream's storage
-                        // descriptor and reserve sizing are visible
-                        // from the right thread.  Reserve enough
-                        // headroom for one second of source samples
-                        // plus the configured preroll.
-                        AudioStream &as = _owner->_audios[_streamIdx];
-                        if (!as.storageDesc.isValid()) return;
-                        _fifo = AudioBuffer(as.storageDesc);
-                        const size_t reserveSamples = static_cast<size_t>(as.storageDesc.sampleRate()) +
-                                                      as.prerollSamples;
-                        Error rsvErr = _fifo.reserve(reserveSamples);
-                        if (rsvErr.isError()) {
-                                promekiErr("RtpMediaIO::AudioPacketizerThread: failed to reserve FIFO: %s",
-                                           rsvErr.desc().cstr());
-                        }
-                        _drained.resize(as.packetBytes);
-                }
-
-                void packetize(const RtpFrameWork &work) override {
-                        AudioStream &as = _owner->_audios[_streamIdx];
-                        if (!as.active) return;
-
-                        // Locate this stream's audio essence.  Strand
-                        // pushes the same Frame to every audio
-                        // packetizer; each packetizer pulls only the
-                        // payload at its own stream index.
-                        auto auds = work.frame.audioPayloads();
-                        if (_streamIdx >= auds.size() || !auds[_streamIdx].isValid()) return;
-                        auto pcm = sharedPointerCast<PcmAudioPayload>(auds[_streamIdx]);
-                        if (!pcm.isValid() || pcm->sampleCount() == 0 || pcm->planeCount() == 0) return;
-
-                        // Format conversion happens implicitly inside
-                        // AudioBuffer::push — the FIFO is in the
-                        // wire format (PCMI_S16BE) and accepts any
-                        // compatible input.
-                        auto planeView = pcm->plane(0);
-                        if (planeView.size() == 0) return;
-                        Error pushErr = _fifo.push(planeView.data(), pcm->sampleCount(), pcm->desc());
-                        if (pushErr.isError()) {
-                                promekiErr("RtpMediaIO::AudioPacketizerThread: FIFO push failed: %s",
-                                           pushErr.desc().cstr());
-                                return;
-                        }
-
-                        // Drain whole AES67-aligned chunks.  Leftover
-                        // tail samples remain in the FIFO until the
-                        // next push fills out a chunk.  Preroll: hold
-                        // off emitting until the FIFO has accumulated
-                        // prerollSamples worth — the TX thread will
-                        // emit silence in the interim.
-                        const size_t packetSamples = as.packetSamples;
-                        const size_t packetBytes = as.packetBytes;
-                        if (packetSamples == 0 || packetBytes == 0) return;
-                        if (!_prerollDone) {
-                                if (_fifo.available() < as.prerollSamples) return;
-                                _prerollDone = true;
-                        }
-                        while (_fifo.available() >= packetSamples) {
-                                auto [popped, popErr] = _fifo.pop(_drained.data(), packetSamples);
-                                if (popErr.isError() || popped < packetSamples) break;
-                                Buffer chunk(packetBytes);
-                                chunk.setSize(packetBytes);
-                                std::memcpy(chunk.data(), _drained.data(), packetBytes);
-                                // Blocking push so the strand
-                                // backpressures when the AES67 wire
-                                // cadence falls behind FIFO drain.
-                                // Cancellation (shutdown) breaks the
-                                // drain loop — the next packetize call
-                                // would see _stopRequested and exit.
-                                Error pushErr = _tx->packetQueue().pushBlocking(std::move(chunk));
-                                if (pushErr.isError()) {
-                                        if (pushErr != Error::Cancelled) {
-                                                promekiWarn("RtpMediaIO::AudioPacketizerThread: "
-                                                            "TX queue pushBlocking failed: %s",
-                                                            pushErr.desc().cstr());
-                                        }
-                                        break;
-                                }
-                        }
-                }
-
-                void onStop() override { _fifo.clear(); }
-
-        private:
-                RtpMediaIO     *_owner;
-                size_t          _streamIdx;
-                AudioTxThread  *_tx = nullptr;
-                AudioBuffer     _fifo;
-                List<uint8_t>   _drained;
-                bool            _prerollDone = false;
-};
-
 // ----------------------------------------------------------------------------
-// RtcpScheduler — periodic RTCP Sender Report driver.
-//
-// One thread per RtpMediaIO.  Wakes every interval and asks each
-// active stream's RtpSession to emit an SR + SDES compound packet on
-// its socket (RTP and RTCP share one port via rtcp-mux).  The SR
-// carries the (NTP, RTP-timestamp) pair the receiver needs to
-// correlate this stream's RTP clock with wall-clock time, and the
-// SDES carries the CNAME so receivers can identify which streams come
-// from the same sender for sync purposes.
-//
-// Best-effort: send failures are logged once per stream and the
-// scheduler keeps running.  An RTCP send that fails does not affect
-// RTP transport — it just delays sync convergence at the receiver
-// until the next successful SR.
+// Per-stream packetizer + TX + depacketizer threads all live in
+// network/ as standalone classes:
+//   - Writer side: @ref RtpAudioPacketizerThread + @ref RtpAudioTxThread
+//     (video / data still nested above for now).
+//   - Reader side: @ref RtpAudioDepacketizerThread,
+//     @ref RtpDataDepacketizerThread, @ref RtpVideoDepacketizerThread.
+// Each is wired into its per-stream state via a per-class context
+// struct the @c openWriterStream / @c openReaderStream paths
+// populate.  See those headers for per-class detail.
 // ----------------------------------------------------------------------------
-class RtpMediaIO::RtcpScheduler : public Thread {
-        public:
-                RtcpScheduler(RtpMediaIO *owner, int intervalMs)
-                    : _owner(owner), _intervalMs(intervalMs <= 0 ? 5000 : intervalMs) {
-                        _stopRequested.setValue(false);
-                        Thread::setName("rtp-rtcp");
-                }
-
-                ~RtcpScheduler() override {
-                        requestStop();
-                        if (!isCurrentThread()) wait();
-                }
-
-                void requestStop() {
-                        // Set the flag and wake the waiter — without
-                        // the wake, requestStop has to wait up to one
-                        // full RTCP interval (5 s by default) before
-                        // the scheduler thread re-evaluates the flag.
-                        _stopRequested.setValue(true);
-                        Mutex::Locker lock(_mutex);
-                        _cv.wakeAll();
-                }
-
-        protected:
-                void run() override {
-                        const unsigned int intervalMs = static_cast<unsigned int>(_intervalMs);
-                        // Two-phase schedule.  Phase 1: poll briefly
-                        // for first emissions on each stream so the
-                        // FIRST SR for each stream goes out as soon
-                        // as that stream's first packet has flown.
-                        // Phase 2 (steady state): one emission cycle
-                        // per @c _intervalMs.
-                        //
-                        // Receivers can't compute lip-sync until they
-                        // have an SR for both streams.  Without phase
-                        // 1, the very first SR for each stream would
-                        // wait until @c _intervalMs into the session,
-                        // and ffplay (and other sync-aware receivers)
-                        // would play whatever audio arrived in the
-                        // gap unsynced.  Phase 1's tight poll closes
-                        // that window to a few hundred ms.
-                        const unsigned int kStartupPollMs = 50;
-                        const auto         startupDeadline =
-                                std::chrono::steady_clock::now() + std::chrono::milliseconds(intervalMs);
-                        while (!_stopRequested.value() && std::chrono::steady_clock::now() < startupDeadline) {
-                                emitOnce();
-                                if (allStreamsHaveEmitted()) break;
-                                cvSleep(kStartupPollMs);
-                        }
-                        // Phase 2: steady-state cadence.  cvSleep
-                        // returns early on requestStop, so close
-                        // doesn't block waiting for an interval-long
-                        // sleep_until to expire.
-                        while (!_stopRequested.value()) {
-                                cvSleep(intervalMs);
-                                if (_stopRequested.value()) break;
-                                emitOnce();
-                        }
-                }
-
-        private:
-                void emitOnce() {
-                        for (VideoStream &vs : _owner->_videos) {
-                                emitForStream(vs);
-                        }
-                        for (AudioStream &as : _owner->_audios) {
-                                emitForStream(as);
-                        }
-                        for (DataStream &ds : _owner->_datas) {
-                                emitForStream(ds);
-                        }
-                }
-
-                static void emitForStream(WriterStream &s) {
-                        if (!s.active || s.session == nullptr) return;
-                        // Skip streams that have not emitted any RTP
-                        // packet yet — an SR with garbage (NTP, RTP)
-                        // fields gives receivers a worse starting
-                        // point than waiting for a real one.
-                        if (!s.session->hasEmissionRecord()) return;
-                        // packetCount / octetCount are mutated by the
-                        // per-stream TX thread; @c Atomic<int64_t>
-                        // gives an aligned acquire-load here so the
-                        // scheduler reads a coherent snapshot rather
-                        // than a partially-updated half.
-                        const uint32_t pkts = static_cast<uint32_t>(s.packetsSent.value() & 0xFFFFFFFFu);
-                        const uint32_t octs = static_cast<uint32_t>(s.senderOctets.value() & 0xFFFFFFFFu);
-                        Error          err = s.session->emitRtcpSr(pkts, octs);
-                        if (err.isError()) {
-                                promekiWarn("RtpMediaIO: RTCP SR send failed on %s stream: %s",
-                                            s.mediaType.cstr(), err.desc().cstr());
-                        }
-                }
-
-                bool allStreamsHaveEmitted() const {
-                        auto needs = [](const Stream &s) {
-                                return s.active && s.session != nullptr && !s.session->hasEmissionRecord();
-                        };
-                        for (const VideoStream &vs : _owner->_videos) {
-                                if (needs(vs)) return false;
-                        }
-                        for (const AudioStream &as : _owner->_audios) {
-                                if (needs(as)) return false;
-                        }
-                        for (const DataStream &ds : _owner->_datas) {
-                                if (needs(ds)) return false;
-                        }
-                        return true;
-                }
-
-                // Sleeps for up to @p ms milliseconds, returning
-                // early when @c requestStop is called.  Implemented
-                // via a WaitCondition the requestStop side wakes.
-                void cvSleep(unsigned int ms) {
-                        Mutex::Locker lock(_mutex);
-                        if (_stopRequested.value()) return;
-                        (void)_cv.wait(_mutex, [this]() { return _stopRequested.value(); }, ms);
-                }
-
-                RtpMediaIO   *_owner;
-                int           _intervalMs;
-                Atomic<bool>  _stopRequested;
-                Mutex         _mutex;
-                WaitCondition _cv;
-};
 
 // ----- RtpFactory -----
 
@@ -907,7 +538,7 @@ RtpFactory::Config::SpecMap RtpFactory::configSpecs() const {
         s(MediaConfig::RtpRtcpIntervalMs, int32_t(5000));
         s(MediaConfig::RtpRtcpCname, String());
         s(MediaConfig::RtpJitterMs, int32_t(50));
-        s(MediaConfig::RtpMaxReadQueueDepth, int32_t(4));
+        s(MediaConfig::RtpMaxReadQueueDepth, int32_t(8));
         s(MediaConfig::RtpRecvBufferBytes, int32_t(8 * 1024 * 1024));
         s(MediaConfig::RtpSendBufferBytes, int32_t(8 * 1024 * 1024));
         // Per-stream defaults.
@@ -1022,11 +653,35 @@ void RtpMediaIO::resetWriterStream(WriterStream &s) {
 }
 
 void RtpMediaIO::resetReaderStream(ReaderStream &s) {
-        // Reader-mode tear-down: the per-session RX thread is owned
-        // by RtpSession itself, so the call to session->stopReceiving
-        // inside resetStreamCommon below quiesces it; we just clear
-        // out the reassembly + RX-side state afterwards.
+        // Reader-mode tear-down ordering matters in two places:
+        //   1. The recv socket thread is the *producer* on the
+        //      depacketizer's input queue, so we must stop it before
+        //      joining the depacketizer (otherwise the recv thread
+        //      keeps pushing into a queue whose destructor is about
+        //      to run).
+        //   2. The depacketizer reads @c s.session and @c s.payload
+        //      on every packet, so we must join the depacketizer
+        //      *before* @ref resetStreamCommon nulls those out.
+        // The full sequence is therefore: stopReceiving (recv thread
+        // joined) → depacketizer.requestStop + clear (depacketizer
+        // thread joined) → resetStreamCommon (session / payload /
+        // transport torn down with no live worker referencing them).
+        if (s.session != nullptr) s.session->stopReceiving();
+        if (s.depacketizer.isValid()) {
+                s.depacketizer->requestStop();
+                s.depacketizer.clear();
+        }
         resetStreamCommon(s);
+        if (s.reorderBuffer.isValid()) s.reorderBuffer->clear();
+        s.reorderQueue.clear();
+        s.reorderBuffer.clear();
+        s.seqTracker.clear();
+        s.resetEpoch.setValue(0);
+        s.ssrcChanges.setValue(0);
+        s.framesReassembled.setValue(0);
+        s.framesDroppedValidate.setValue(0);
+        s.framesWaitingParamSets.setValue(0);
+        s.framesDroppedSsrcReset.setValue(0);
         s.packetsReceived.setValue(0);
         s.bytesReceived.setValue(0);
         s.framesReceived = 0;
@@ -1037,7 +692,6 @@ void RtpMediaIO::resetReaderStream(ReaderStream &s) {
         s.reasmHasTimestamp = false;
         s.reasmLastSeq = 0;
         s.reasmHaveLastSeq = false;
-        s.reasmSynced = false;
         s.reasmPackets.clear();
         s.rxPacketInterval.reset();
         s.rxFrameInterval.reset();
@@ -1053,15 +707,82 @@ void RtpMediaIO::resetReaderStream(ReaderStream &s) {
         s.hasSr = false;
 }
 
+RtcpSchedulerContext RtpMediaIO::buildRtcpSchedulerContext() {
+        RtcpSchedulerContext ctx;
+        ctx.intervalMs = _rtcpIntervalMs;
+        ctx.wireSilenceTimeoutMs = _wireSilenceTimeoutMs;
+        // Wire-silence EoS callback: latch _readCancelled, wake any
+        // strand-side blocking pop on _readerQueue, and prod the
+        // depacketizer to wake from its blocking pop too.  Lifetime:
+        // this RtpMediaIO outlives the scheduler (resetAll stops the
+        // scheduler before the io destructor returns), so capturing
+        // @c this is safe.
+        ctx.onWireSilenceEos = [this](RtcpSchedulerReaderStream &view, int64_t /*gapNs*/) {
+                _readCancelled.store(true, std::memory_order_release);
+                _readerQueue.cancelWaiters();
+                // Pulse the matching reader stream's depacketizer.
+                // Look up by session pointer — every reader stream
+                // has a unique session, so the match is unambiguous.
+                auto pulse = [&view](ReaderStream &s) {
+                        if (s.session != view.session) return;
+                        if (s.depacketizer.isValid()) s.depacketizer->requestStop();
+                };
+                for (VideoReaderStream &vrs : _videoReaders) pulse(vrs);
+                for (AudioReaderStream &ars : _audioReaders) pulse(ars);
+                for (DataReaderStream &drs : _dataReaders) pulse(drs);
+        };
+        auto fillWriter = [](WriterStream &s) {
+                RtcpSchedulerWriterStream w;
+                w.active = s.active;
+                w.mediaType = s.mediaType;
+                w.session = s.session;
+                w.packetsSent = &s.packetsSent;
+                w.senderOctets = &s.senderOctets;
+                return w;
+        };
+        for (VideoStream &vs : _videos) ctx.writers.pushToBack(fillWriter(vs));
+        for (AudioStream &as : _audios) ctx.writers.pushToBack(fillWriter(as));
+        for (DataStream &ds : _datas) ctx.writers.pushToBack(fillWriter(ds));
+        auto fillReader = [](ReaderStream &s) {
+                RtcpSchedulerReaderStream r;
+                r.active = s.active;
+                r.mediaType = s.mediaType;
+                r.session = s.session;
+                r.seqTracker = s.seqTracker.isValid() ? s.seqTracker.get() : nullptr;
+                r.lastPacketArrivalNs = &s.lastPacketArrivalNs;
+                r.wireSilenceEosSignaled = &s.wireSilenceEosSignaled;
+                return r;
+        };
+        for (VideoReaderStream &vrs : _videoReaders) ctx.readers.pushToBack(fillReader(vrs));
+        for (AudioReaderStream &ars : _audioReaders) ctx.readers.pushToBack(fillReader(ars));
+        for (DataReaderStream &drs : _dataReaders) ctx.readers.pushToBack(fillReader(drs));
+        return ctx;
+}
+
 void RtpMediaIO::resetAll() {
+        // Emit BYE for every session that has been actively
+        // sending RTCP (writers SR-bearing, readers RR-bearing).
+        // Done before the scheduler / sessions stop so the BYE
+        // actually goes out on the wire — receivers can drop the
+        // source immediately rather than waiting for a timeout.
+        if (_rtcpScheduler.isValid()) {
+                _rtcpScheduler->emitByeForAll();
+        }
         // Stop the RTCP scheduler first — it dispatches on every
         // session, so it must be quiesced before we tear sessions
         // down below.
-        if (_rtcpScheduler != nullptr) {
+        if (_rtcpScheduler.isValid()) {
                 _rtcpScheduler->requestStop();
                 _rtcpScheduler->wait();
-                delete _rtcpScheduler;
-                _rtcpScheduler = nullptr;
+                _rtcpScheduler.clear();
+        }
+        // Stop the aggregator before the depacketizers tear down —
+        // the aggregator is the consumer of every per-stream
+        // payload queue, so killing it first lets depacketizers
+        // drain cleanly without producing into freed queues.
+        if (_aggregator.isValid()) {
+                _aggregator->requestStop();
+                _aggregator.clear();
         }
         // Writer-side tear-down.  resetWriterStream stops the
         // packetizer + TX threads, then runs the common identity /
@@ -1114,16 +835,17 @@ void RtpMediaIO::resetAll() {
         _readerMode = false;
         _videoWirePixelFormat = PixelFormat();
         _readerQueue.clear();
+        // Lift any cancel latch left by a previous close cycle so the
+        // queue is ready for the next open.  Also re-arm an unbounded
+        // initial state until @ref executeCmd(Open) reapplies the
+        // configured depth.
+        _readerQueue.reset();
+        _readerQueue.setMaxSize(0);
         _sdpSession = SdpSession();
-        _readerAgg.audioFifo.clear();
-        _readerAgg.videoFrameIndex = 0;
-        _readerAgg.hasMetadata = false;
-        _readerAgg.pendingMetadata = Metadata();
-        _readerAgg.audioFifoHasFront = false;
-        _readerAgg.audioFifoFrontRtpTs = 0;
-        _readerAgg.steadyAnchor = TimeStamp();
-        _readerAgg.ntpAnchor = NtpTime();
-        _readerAgg.hasAnchor = false;
+        _openedAt = TimeStamp();
+        _readerSteadyAnchor = TimeStamp();
+        _readerNtpAnchor = NtpTime();
+        _readerHasAnchor = false;
         _h264SpropParameterSets.clear();
         _h265SpropVps.clear();
         _h265SpropSps.clear();
@@ -1157,6 +879,91 @@ static bool isH264PixelFormat(const PixelFormat &pd) {
 
 static bool isHevcPixelFormat(const PixelFormat &pd) {
         return pd.isValid() && pd.isCompressed() && pd.videoCodec().id() == VideoCodec::HEVC;
+}
+
+// Extract the value of a single fmtp parameter from a
+// semicolon-separated @c "key=value;key2=value2" string.  Used by
+// the H.264 / H.265 reader to pull out @c sprop-parameter-sets,
+// @c sprop-vps / @c sprop-sps / @c sprop-pps so the per-payload
+// validate() gate can be seeded before any RTP packet arrives.
+// Returns an empty String when the key is absent.
+static String fmtpParamValue(const String &fmtp, const String &key) {
+        if (fmtp.isEmpty()) return String();
+        const StringList parts = fmtp.split(";");
+        const String     prefix = key + String("=");
+        for (size_t i = 0; i < parts.size(); i++) {
+                String item = parts[i];
+                if (item.find(prefix) == 0) return item.mid(prefix.byteCount());
+                if (item == key) return String(); // bare key, no '=value'
+        }
+        return String();
+}
+
+// Decode the first NAL of a comma-separated base64 list whose NAL
+// type matches @p expectedType (raw H.264 5-bit type, or HEVC
+// 6-bit type pre-shift).  Empty Buffer if no match — callers treat
+// that as "no SPS yet, keep the placeholder".
+static Buffer decodeSpropNal(const String &csv, uint8_t expectedType, bool isHevc) {
+        if (csv.isEmpty()) return Buffer();
+        StringList parts = csv.split(",");
+        for (size_t i = 0; i < parts.size(); i++) {
+                Error  derr;
+                Buffer nal = Base64::decode(parts[i], &derr);
+                if (derr.isError() || nal.size() < (isHevc ? 2u : 1u)) continue;
+                const uint8_t hdr = static_cast<const uint8_t *>(nal.data())[0];
+                const uint8_t type = isHevc ? static_cast<uint8_t>((hdr >> 1) & 0x3f)
+                                            : static_cast<uint8_t>(hdr & 0x1f);
+                if (type == expectedType) return nal;
+        }
+        return Buffer();
+}
+
+// Seed @ref RtpPayloadH264::setSpropParameterSets from the fmtp
+// string the reader stashed at SDP-ingest time, and stamp the
+// reader's @ref ReaderStream::readerImageDesc with dimensions
+// parsed from the first SPS — so the planner sees a valid
+// imageDesc on @c open(), before any RTP packets arrive.  Errors
+// are silently ignored; the placeholder 0×0 ImageDesc remains in
+// place if anything fails, and the in-band path on the first IDR
+// fills the gap once packets flow.
+static void seedH264SpropFromFmtp(RtpPayloadH264 *payload, const String &fmtp,
+                                  ImageDesc &readerImageDesc) {
+        const String csv = fmtpParamValue(fmtp, String("sprop-parameter-sets"));
+        if (csv.isEmpty()) return;
+        payload->setSpropParameterSets(csv);
+
+        Buffer spsNal = decodeSpropNal(csv, RtpPayloadH264::NalTypeSps, /*isHevc=*/false);
+        if (!spsNal.isValid() || spsNal.size() == 0) return;
+        BufferView              view(spsNal, 0, spsNal.size());
+        H264Bitstream::SpsInfo  info;
+        Error                   perr = H264Bitstream::parseSpsResolution(view, info);
+        if (perr.isError() || info.width == 0 || info.height == 0) return;
+
+        readerImageDesc = ImageDesc(Size2Du32(info.width, info.height), PixelFormat(PixelFormat::H264));
+}
+
+// Seed the three HEVC sprop-* values out of the fmtp string per
+// RFC 7798 §7.1, and stamp the reader's image desc from the SPS
+// dimensions.  Same fall-through-to-placeholder-on-error policy as
+// the H.264 path.
+static void seedH265SpropFromFmtp(RtpPayloadH265 *payload, const String &fmtp,
+                                  ImageDesc &readerImageDesc) {
+        const String vps = fmtpParamValue(fmtp, String("sprop-vps"));
+        const String sps = fmtpParamValue(fmtp, String("sprop-sps"));
+        const String pps = fmtpParamValue(fmtp, String("sprop-pps"));
+        if (!vps.isEmpty()) payload->setSpropVps(vps);
+        if (!sps.isEmpty()) payload->setSpropSps(sps);
+        if (!pps.isEmpty()) payload->setSpropPps(pps);
+
+        if (sps.isEmpty()) return;
+        Buffer spsNal = decodeSpropNal(sps, RtpPayloadH265::NalTypeSps, /*isHevc=*/true);
+        if (!spsNal.isValid() || spsNal.size() == 0) return;
+        BufferView                   view(spsNal, 0, spsNal.size());
+        HevcDecoderConfig::SpsInfo   info;
+        Error                        perr = HevcDecoderConfig::parseSpsResolution(view, info);
+        if (perr.isError() || info.width == 0 || info.height == 0) return;
+
+        readerImageDesc = ImageDesc(Size2Du32(info.width, info.height), PixelFormat(PixelFormat::HEVC));
 }
 
 Error RtpMediaIO::openStream(WriterStream &s, bool enableMulticastLoopback) {
@@ -1312,28 +1119,152 @@ Error RtpMediaIO::openReaderStream(ReaderStream &s, bool /*enableMulticastLoopba
                 return err;
         }
 
-        // Wire up the per-stream receive callback.  Each stream has
-        // its own RtpSession and its own receive thread, so the
-        // callbacks never race against each other on the same
-        // reassembler state.  The thread name is "rtp-rx-video" /
-        // "rtp-rx-audio" / "rtp-rx-data" so that per-stream CPU
-        // usage shows up distinctly in `top -H`.
-        String threadName = String("rtp-rx-") + s.mediaType;
-        Error  recvErr;
-        // Dispatch by mediaType — works for any audio stream in
-        // _audios (each routes through onAudioPacket today; future
-        // multi-audio plumbing will pass the stream identity through
-        // the callback so the right AudioStream is updated).
-        if (s.mediaType == "video") {
-                recvErr = s.session->startReceiving(
-                        [this](const RtpPacket &pkt, const SocketAddress &) { onVideoPacket(pkt); }, threadName);
-        } else if (s.mediaType == "audio") {
-                recvErr = s.session->startReceiving(
-                        [this](const RtpPacket &pkt, const SocketAddress &) { onAudioPacket(pkt); }, threadName);
-        } else {
-                recvErr = s.session->startReceiving(
-                        [this](const RtpPacket &pkt, const SocketAddress &) { onDataPacket(pkt); }, threadName);
+        // Phase 2 queue-mode receive path.  Each ReaderStream owns
+        // a per-source @ref RtpSeqTracker (RFC 3550 §A bookkeeping),
+        // an @ref RtpSeqReorderBuffer (windowed reorder-by-extended-
+        // seq), a post-reorder @c Queue<RtpPacket>, and a per-stream
+        // depacketizer thread that drains the queue and forwards
+        // packets to the corresponding on*Packet handler.  The recv
+        // socket thread does only seq-tracker bookkeeping + reorder
+        // buffer insert before pushing onto the queue, so the kernel
+        // UDP ring drains continuously even when reassembly /
+        // unpack work falls behind.
+        s.seqTracker = UniquePtr<RtpSeqTracker>::create();
+        // Plumb @c MediaConfig::RtpJitterMs into the reorder buffer
+        // as @c playoutDelay so the configured jitter budget actually
+        // dilates the gap-fill deadline.  Without this, the reader's
+        // jitter knob is dead: every reorder buffer falls back to the
+        // header default of zero, and the open-internet / chaos.late
+        // case can't trade latency for reorder tolerance.
+        RtpSeqReorderBuffer::Config rcfg;
+        if (_readerJitterMs > 0) {
+                rcfg.playoutDelay = Duration::fromMilliseconds(_readerJitterMs);
         }
+        s.reorderBuffer = UniquePtr<RtpSeqReorderBuffer>::create(rcfg);
+        s.reorderQueue = UniquePtr<Queue<RtpPacket>>::create();
+        s.resetEpoch.setValue(0);
+
+        // Hook up SSRC-change → reset-epoch bump on the session
+        // signal.  Every ReaderStream that fronts a session gets its
+        // own listener so the depacketizer drains its private
+        // reassembly state on the next handlePacket iteration.
+        s.session->ssrcChangeSignal.connect(
+                [this, sptr = &s](uint32_t /*oldSsrc*/, uint32_t /*newSsrc*/, uint8_t /*pt*/) {
+                        sptr->resetEpoch.fetchAndAdd(1);
+                        sptr->ssrcChanges.fetchAndAdd(1);
+                        if (sptr->payload != nullptr) sptr->payload->clearParamSets();
+                });
+
+        // Hook up the per-session byeReceived signal so a sender's
+        // graceful shutdown surfaces as EoS on the strand-side
+        // executeCmd(Read).  RFC 3550 §6.6 — the source emits a BYE
+        // just before disappearing; receivers should mark it gone
+        // immediately rather than waiting on a wire-silence timeout.
+        //
+        // We only latch the EoS flag — we do NOT cancel queue waiters
+        // or stop the depacketizer here.  In-flight bundles need to
+        // drain naturally so the strand reads the trailing frames
+        // before observing EoS.  The strand's executeCmd(Read) loop
+        // polls @c _readCancelled every @c kReadPollMs so the
+        // transition is observed within a single poll interval after
+        // the queue empties.
+        s.session->byeReceivedSignal.connect([this](uint32_t /*ssrc*/) {
+                _readCancelled.store(true, std::memory_order_release);
+        });
+
+        String                           threadName = String("rtp-rx-") + s.mediaType;
+        UniquePtr<RtpDepacketizerThread> depkt;
+        if (s.mediaType == "video") {
+                auto *vrs = static_cast<VideoReaderStream *>(&s);
+                vrs->payloadQueue = UniquePtr<Queue<RxVideoFrame>>::create();
+                vrs->payloadQueue->setMaxSize(VideoPayloadQueueDepth);
+                RtpVideoDepacketizerContext ctx;
+                ctx.payloadQueue = vrs->payloadQueue.get();
+                ctx.resetEpoch = &vrs->resetEpoch;
+                ctx.active = &vrs->active;
+                ctx.payload = vrs->payload;
+                ctx.readerImageDesc = &vrs->readerImageDesc;
+                ctx.fmtp = vrs->fmtp;
+                ctx.ptpGrandmaster = vrs->ptpGrandmaster;
+                ctx.clockDomain = vrs->clockDomain;
+                ctx.hasSr = &vrs->hasSr;
+                ctx.streamClock = &vrs->streamClock;
+                ctx.packetsReceived = &vrs->packetsReceived;
+                ctx.bytesReceived = &vrs->bytesReceived;
+                ctx.lastPacketArrivalNs = &vrs->lastPacketArrivalNs;
+                ctx.framesReassembled = &vrs->framesReassembled;
+                ctx.framesDroppedValidate = &vrs->framesDroppedValidate;
+                ctx.framesWaitingParamSets = &vrs->framesWaitingParamSets;
+                ctx.framesDroppedSsrcReset = &vrs->framesDroppedSsrcReset;
+                ctx.rxPacketInterval = &vrs->rxPacketInterval;
+                ctx.rxFrameInterval = &vrs->rxFrameInterval;
+                ctx.rxFrameAssembleTime = &vrs->rxFrameAssembleTime;
+                ctx.noteFrameReceived = [vrs]() { vrs->framesReceived++; };
+                ctx.refreshStreamClock = [this, vrs]() { refreshStreamClock(*vrs); };
+                ctx.ntpToSteady = [this](const NtpTime &ntp) { return ntpToSteady(ntp); };
+                depkt = UniquePtr<RtpVideoDepacketizerThread>::create(
+                        std::move(ctx), String("RtpVidDepkt"), vrs->clockRate);
+        } else if (s.mediaType == "audio") {
+                auto *ars = static_cast<AudioReaderStream *>(&s);
+                ars->payloadQueue = UniquePtr<Queue<RxAudioChunk>>::create();
+                ars->payloadQueue->setMaxSize(AudioPayloadQueueDepth);
+                RtpAudioDepacketizerContext ctx;
+                ctx.payloadQueue = ars->payloadQueue.get();
+                ctx.resetEpoch = &ars->resetEpoch;
+                ctx.active = &ars->active;
+                ctx.readerAudioDesc = &ars->readerAudioDesc;
+                ctx.hasSr = &ars->hasSr;
+                ctx.streamClock = &ars->streamClock;
+                ctx.packetsReceived = &ars->packetsReceived;
+                ctx.bytesReceived = &ars->bytesReceived;
+                ctx.lastPacketArrivalNs = &ars->lastPacketArrivalNs;
+                ctx.framesReassembled = &ars->framesReassembled;
+                ctx.noteFrameReceived = [ars]() { ars->framesReceived++; };
+                ctx.refreshStreamClock = [this, ars]() { refreshStreamClock(*ars); };
+                ctx.ntpToSteady = [this](const NtpTime &ntp) { return ntpToSteady(ntp); };
+                depkt = UniquePtr<RtpAudioDepacketizerThread>::create(
+                        std::move(ctx), String("RtpAudDepkt"), ars->clockRate);
+        } else {
+                auto *drs = static_cast<DataReaderStream *>(&s);
+                drs->payloadQueue = UniquePtr<Queue<RxDataMessage>>::create();
+                drs->payloadQueue->setMaxSize(DataPayloadQueueDepth);
+                RtpDataDepacketizerContext ctx;
+                ctx.payloadQueue = drs->payloadQueue.get();
+                ctx.resetEpoch = &drs->resetEpoch;
+                ctx.active = &drs->active;
+                ctx.payload = drs->payload;
+                ctx.clockDomain = drs->clockDomain;
+                ctx.hasSr = &drs->hasSr;
+                ctx.streamClock = &drs->streamClock;
+                ctx.packetsReceived = &drs->packetsReceived;
+                ctx.bytesReceived = &drs->bytesReceived;
+                ctx.lastPacketArrivalNs = &drs->lastPacketArrivalNs;
+                ctx.framesReassembled = &drs->framesReassembled;
+                ctx.framesDroppedSsrcReset = &drs->framesDroppedSsrcReset;
+                ctx.noteFrameReceived = [drs]() { drs->framesReceived++; };
+                ctx.refreshStreamClock = [this, drs]() { refreshStreamClock(*drs); };
+                ctx.ntpToSteady = [this](const NtpTime &ntp) { return ntpToSteady(ntp); };
+                depkt = UniquePtr<RtpDataDepacketizerThread>::create(
+                        std::move(ctx), String("RtpDatDepkt"), drs->clockRate);
+        }
+        s.depacketizer = std::move(depkt);
+
+        // The depacketizer thread owns its inputQueue.  We route the
+        // post-reorder output through that same queue so the recv
+        // thread's reorder buffer pushes directly to where the
+        // depacketizer is parked on pop().
+        List<RtpSession::StreamReceiver> receivers;
+        RtpSession::StreamReceiver       sr;
+        sr.outQueue = &s.depacketizer->inputQueue();
+        sr.seqTracker = s.seqTracker.ptr();
+        sr.reorderBuffer = s.reorderBuffer.ptr();
+        sr.clockRateHz = s.clockRate;
+        sr.payloadType = s.payloadType;
+        receivers.pushToBack(sr);
+
+        s.depacketizer->start();
+
+        Error recvErr = s.session->startReceiving(std::move(receivers), threadName);
         if (recvErr.isError()) {
                 promekiErr("RtpMediaIO: startReceiving on %s failed: %s", s.mediaType.cstr(),
                            recvErr.desc().cstr());
@@ -1420,9 +1351,10 @@ Error RtpMediaIO::configureVideoStream(const MediaIO::Config &cfg, const MediaDe
         // puts width/height in each packet header.  Detect JPEG from
         // the payload type (static PT 26) and create the payload
         // handler with placeholder dimensions; readerImageDesc will
-        // be populated lazily by emitVideoFrame() from the first
-        // reassembled frame.  Stash the fmtp string so the deferred
-        // geometry code can read colorimetry and RANGE from it.
+        // be populated lazily by the @c VideoDepacketizerThread (via
+        // @ref JpegGeometryProbe) from the first reassembled frame.
+        // Stash the fmtp string so the geometry code can read
+        // colorimetry and RANGE from it.
         if (!img.isValid() && _readerMode && v.payloadType == 26) {
                 v.payload = new RtpPayloadJpeg(0, 0);
                 v.rtpmap = String("JPEG/") + String::number(v.clockRate);
@@ -1437,25 +1369,45 @@ Error RtpMediaIO::configureVideoStream(const MediaIO::Config &cfg, const MediaDe
         // applySdp stashed and create the payload handler with a
         // placeholder ImageDesc (size 0×0).  The reader treats
         // @c readerImageDesc as authoritative once it has been
-        // populated; until then emitVideoFrame ships frames with the
-        // placeholder descriptor so downstream consumers (decoder /
-        // pipeline planner) still see the codec identity.
+        // populated; until then the @c VideoDepacketizerThread ships
+        // frames with the placeholder descriptor so downstream
+        // consumers (decoder / pipeline planner) still see the
+        // codec identity.
         if (!img.isValid() && _readerMode) {
                 String enc = cfg.getAs<String>(MediaConfig::VideoRtpEncoding, String());
                 if (enc == "H264" || enc == "h264") {
-                        v.payload = new RtpPayloadH264(v.payloadType);
+                        auto *h264 = new RtpPayloadH264(v.payloadType);
+                        v.payload = h264;
                         v.clockRate = RtpPayloadH264::ClockRate;
                         v.rtpmap = String("H264/90000");
                         v.fmtp = cfg.getAs<String>(MediaConfig::VideoRtpFmtp, String());
+                        // Default placeholder before SPS parse — the
+                        // depacketizer will refresh from the in-band
+                        // SPS on the first IDR if the SDP didn't
+                        // carry sprop-parameter-sets.
                         vrs->readerImageDesc = ImageDesc(Size2Du32(0, 0), PixelFormat(PixelFormat::H264));
+                        // Seed the validate() paramSet flags AND the
+                        // image descriptor from the SDP fmtp's
+                        // sprop-parameter-sets value (RFC 6184 §8.1).
+                        // When the sender wrote its SDP after emitting
+                        // the first IDR, sprop is present and the
+                        // planner sees a valid ImageDesc + the
+                        // reader's first AU flips Wait → Accept on
+                        // the first packet.  When it isn't, the
+                        // in-band path on the first IDR catches up.
+                        seedH264SpropFromFmtp(h264, v.fmtp, vrs->readerImageDesc);
                         return Error::Ok;
                 }
                 if (enc == "H265" || enc == "h265" || enc == "HEVC" || enc == "hevc") {
-                        v.payload = new RtpPayloadH265(v.payloadType);
+                        auto *h265 = new RtpPayloadH265(v.payloadType);
+                        v.payload = h265;
                         v.clockRate = RtpPayloadH265::ClockRate;
                         v.rtpmap = String("H265/90000");
                         v.fmtp = cfg.getAs<String>(MediaConfig::VideoRtpFmtp, String());
                         vrs->readerImageDesc = ImageDesc(Size2Du32(0, 0), PixelFormat(PixelFormat::HEVC));
+                        // RFC 7798 §7.1 splits parameter sets across
+                        // three separate fmtp values.
+                        seedH265SpropFromFmtp(h265, v.fmtp, vrs->readerImageDesc);
                         return Error::Ok;
                 }
         }
@@ -1793,6 +1745,82 @@ Error RtpMediaIO::configureDataStream(const MediaIO::Config &cfg) {
         return Error::Ok;
 }
 
+void RtpMediaIO::applyClockReferenceConfig(const MediaIO::Config &cfg) {
+        // Resolve the writer-side ts-refclk / mediaclk:direct
+        // emission decisions once and stamp the result onto every
+        // active writer Stream entry.  Reader-mode lists are left
+        // alone — applySdp() owns clockDomain / ptpGrandmaster /
+        // ptpDomain on the reader side.
+        if (_readerMode) return;
+
+        Error rcErr;
+        Enum  modeEnum = cfg.get(MediaConfig::RtpRefClock).asEnum(RtpRefClockMode::Type, &rcErr);
+        if (rcErr.isError() || !modeEnum.hasListedValue()) {
+                modeEnum = RtpRefClockMode::Auto;
+        }
+        int        modeValue = modeEnum.value();
+        EUI64      gm = cfg.getAs<EUI64>(MediaConfig::RtpPtpGrandmaster, EUI64());
+        String     profile = cfg.getAs<String>(MediaConfig::RtpPtpProfile, String("IEEE1588-2008"));
+        int        domainNum = cfg.getAs<int>(MediaConfig::RtpPtpDomain, 0);
+        MacAddress explicitMac = cfg.getAs<MacAddress>(MediaConfig::RtpRefClockLocalMac, MacAddress());
+        int32_t    offset = static_cast<int32_t>(cfg.getAs<int>(MediaConfig::RtpMediaClkOffset, 0));
+
+        // Auto resolves to Ptp if a grandmaster was supplied,
+        // otherwise LocalMac.  This keeps the typical default
+        // (TPG-style smoke test, no PTP) on RFC 7273 §4.4 without
+        // forcing the user to think about it; production ST 2110
+        // setups override RtpRefClock = Ptp and provide the
+        // grandmaster + domain explicitly, which the same code path
+        // honours.
+        if (modeValue == RtpRefClockMode::Auto.value()) {
+                modeValue = (!gm.isNull()) ? RtpRefClockMode::Ptp.value() : RtpRefClockMode::LocalMac.value();
+        }
+        RtpRefClockMode resolvedMode(modeValue);
+
+        // Pre-resolve the local MAC.  When the user did not pin one
+        // explicitly, fall back to the first non-loopback interface
+        // discovered through @ref NetworkInterface — the bundled POSIX
+        // backend covers Linux today; ST 2110 SmartNIC vendors plug
+        // their own backend in via @ref NetworkInterfaceBackend.
+        MacAddress localMac = explicitMac;
+        if (resolvedMode.value() == RtpRefClockMode::LocalMac.value() && localMac.isNull()) {
+                localMac = NetworkInterface::firstNonLoopback().macAddress();
+        }
+
+        // For PTP, register a per-profile ClockDomain name so any
+        // future receiver-side correlation has a stable identifier
+        // to compare against; the actual SDP emission uses
+        // ptpGrandmaster / ptpDomain directly.
+        ClockDomain ptpDomainHandle;
+        if (resolvedMode.value() == RtpRefClockMode::Ptp.value()) {
+                ClockDomain::ID cdId = ClockDomain::registerDomain(
+                        String("ptp.") + profile,
+                        String("PTP reference clock (") + profile + String(")"),
+                        ClockEpoch::Absolute);
+                ptpDomainHandle = ClockDomain(cdId);
+        }
+
+        const auto stamp = [&](Stream &s) {
+                s.tsRefClkMode = resolvedMode;
+                s.refClockLocalMac = localMac;
+                s.ptpGrandmaster = gm;
+                s.ptpDomain = static_cast<uint8_t>(domainNum & 0xFF);
+                s.mediaClkOffset = offset;
+                if (resolvedMode.value() == RtpRefClockMode::Ptp.value() && ptpDomainHandle.isValid()) {
+                        s.clockDomain = ptpDomainHandle;
+                } else if (resolvedMode.value() == RtpRefClockMode::LocalMac.value()) {
+                        // The localmac case keeps the writer's clock in
+                        // a Correlated (not cross-machine) domain — the
+                        // RFC 7273 receiver semantic is "the sender's
+                        // own clock identified by MAC".
+                        s.clockDomain = ClockDomain::SystemMonotonic;
+                }
+        };
+        for (auto &v : _videos) stamp(v);
+        for (auto &a : _audios) stamp(a);
+        for (auto &d : _datas) stamp(d);
+}
+
 // ----- SDP -----
 
 void RtpMediaIO::buildSdp() {
@@ -1863,25 +1891,42 @@ void RtpMediaIO::buildSdp() {
                 // demux RTP and RTCP on the same port via the PT
                 // field instead of opening a separate RTCP socket.
                 md.setAttribute("rtcp-mux", String());
-                // Write clock reference attributes when the stream has
-                // an absolute (PTP/GPS) clock domain.
-                if (s.clockDomain.isValid() && s.clockDomain.isCrossMachineComparable()) {
-                        // Extract profile from domain name
-                        // (e.g. "ptp.IEEE1588-2008" -> "IEEE1588-2008")
-                        String domainName = s.clockDomain.name();
-                        String tsRefClk;
-                        if (domainName.startsWith("ptp.")) {
-                                String profile = domainName.mid(4);
-                                tsRefClk = String("ptp=") + profile;
-                                if (!s.ptpGrandmaster.isNull()) {
-                                        tsRefClk += String(":") + s.ptpGrandmaster.toString();
-                                }
+                // Write clock reference attributes per RFC 7273 /
+                // SMPTE ST 2110-10 §6.3.  The mode driving emission
+                // is resolved in @ref applyClockReferenceConfig and
+                // stamped onto every writer @c Stream — buildSdp does
+                // no policy here, only formatting.
+                if (s.tsRefClkMode.value() == RtpRefClockMode::Ptp.value()) {
+                        // RFC 7273 §4.5: ptp=<version>:<gmid>[:<domain>]
+                        String profile = s.clockDomain.isValid() && s.clockDomain.name().startsWith("ptp.")
+                                                 ? s.clockDomain.name().mid(4)
+                                                 : String("IEEE1588-2008");
+                        String tsRefClk = String("ptp=") + profile;
+                        if (!s.ptpGrandmaster.isNull()) {
+                                tsRefClk += String(":") + s.ptpGrandmaster.toString();
+                                // Domain is meaningful only alongside a
+                                // grandmaster identifier; receivers that
+                                // see ":<domain>" without a gmid treat
+                                // the whole tail as malformed.
+                                tsRefClk += String(":") + String::number(static_cast<int>(s.ptpDomain));
                         }
-                        if (!tsRefClk.isEmpty()) {
-                                md.setAttribute("ts-refclk", tsRefClk);
-                                md.setAttribute("mediaclk", "direct=0");
-                        }
+                        md.setAttribute("ts-refclk", tsRefClk);
+                        md.setAttribute("mediaclk", String("direct=") + String::number(s.mediaClkOffset));
+                } else if (s.tsRefClkMode.value() == RtpRefClockMode::LocalMac.value() &&
+                           !s.refClockLocalMac.isNull()) {
+                        // RFC 7273 §4.4: localmac=<EUI-48>.  The MAC
+                        // identifies the sender's local clock so a
+                        // receiver can correlate streams from the same
+                        // sender without trusting a shared
+                        // grandmaster.  Format with hyphens to match
+                        // the RFC examples (and ST 2110 reference
+                        // captures); receivers parse either separator.
+                        md.setAttribute("ts-refclk", String("localmac=") + s.refClockLocalMac.toString('-'));
+                        md.setAttribute("mediaclk", String("direct=") + String::number(s.mediaClkOffset));
                 }
+                // RtpRefClockMode::None deliberately emits nothing —
+                // receivers fall back to "trust the SR pair" which is
+                // the legacy behaviour.
                 md.setConnectionAddress(s.destination.address().toString());
                 _sdpSession.addMediaDescription(md);
         };
@@ -2117,30 +2162,63 @@ Error RtpMediaIO::applySdp(const SdpSession &sdp, MediaIO::Config &cfg, MediaDes
                         }
                         String tsRefClk = md.attribute("ts-refclk");
                         if (!tsRefClk.isEmpty() && tsRefClk.startsWith("ptp=")) {
-                                // "ptp=IEEE1588-2008:AA-BB-CC-DD-EE-FF-00-11"
-                                // or "ptp=IEEE1588-2008" (no grandmaster ID)
-                                // Domain identity is the PTP profile; the
-                                // grandmaster is per-essence metadata that can
-                                // change due to BMCA failover.
+                                // RFC 7273 §4.5: ptp=<version>[:<gmid>[:<domain>]].
+                                // SMPTE ST 2110-10 always carries all three
+                                // fields; older RFC 7273 senders may emit
+                                // only the version, or version+gmid.
                                 String     ptpValue = tsRefClk.split("=")[1];
                                 String     profile = ptpValue;
                                 StringList parts = ptpValue.split(":");
-                                if (parts.size() == 2) {
+                                if (parts.size() >= 2) {
                                         profile = parts[0];
                                         auto [gm, gmErr] = EUI64::fromString(parts[1]);
                                         if (gmErr.isOk()) {
                                                 stream->ptpGrandmaster = gm;
                                         }
                                 }
+                                if (parts.size() >= 3) {
+                                        Error dErr;
+                                        int   domainNum = parts[2].toInt(&dErr);
+                                        if (dErr.isOk() && domainNum >= 0 && domainNum <= 255) {
+                                                stream->ptpDomain = static_cast<uint8_t>(domainNum);
+                                        }
+                                }
                                 ClockDomain::ID cdId = ClockDomain::registerDomain(
                                         String("ptp.") + profile, String("PTP reference clock (") + tsRefClk + ")",
                                         ClockEpoch::Absolute);
                                 stream->clockDomain = ClockDomain(cdId);
+                                stream->tsRefClkMode = RtpRefClockMode::Ptp;
+                        } else if (!tsRefClk.isEmpty() && tsRefClk.startsWith("localmac=")) {
+                                // RFC 7273 §4.4: identifies the sender's
+                                // local clock by its EUI-48.  Stash the
+                                // MAC so any future receiver-side cross-
+                                // sender correlation has it.  The clock
+                                // domain stays Correlated (per-sender)
+                                // because localmac is explicitly not
+                                // cross-machine-traceable.
+                                String macStr = tsRefClk.mid(9);
+                                auto [mac, mErr] = MacAddress::fromString(macStr);
+                                if (mErr.isOk()) stream->refClockLocalMac = mac;
+                                stream->clockDomain = ClockDomain(ClockDomain::registerDomain(
+                                        "local", "SDP ts-refclk:localmac", ClockEpoch::Correlated));
+                                stream->tsRefClkMode = RtpRefClockMode::LocalMac;
                         } else if (!tsRefClk.isEmpty() && tsRefClk.startsWith("local")) {
                                 stream->clockDomain = ClockDomain(ClockDomain::registerDomain(
                                         "local", "SDP ts-refclk:local", ClockEpoch::Correlated));
+                                stream->tsRefClkMode = RtpRefClockMode::LocalMac;
                         } else {
                                 stream->clockDomain = ClockDomain::SystemMonotonic;
+                                stream->tsRefClkMode = RtpRefClockMode::None;
+                        }
+                        // Parse the optional mediaclk:direct=<offset> so
+                        // a receiver-side consumer can recover the
+                        // sender's RTP-TS origin.  Default 0 covers the
+                        // ST 2110 baseline.
+                        String mediaClk = md.attribute("mediaclk");
+                        if (!mediaClk.isEmpty() && mediaClk.startsWith("direct=")) {
+                                Error oErr;
+                                int   off = mediaClk.mid(7).toInt(&oErr);
+                                if (oErr.isOk()) stream->mediaClkOffset = static_cast<int32_t>(off);
                         }
                 }
 
@@ -2188,15 +2266,15 @@ void RtpMediaIO::refreshStreamClock(ReaderStream &s) {
 }
 
 TimeStamp RtpMediaIO::ntpToSteady(const NtpTime &ntp) const {
-        if (!_readerAgg.hasAnchor) return TimeStamp();
+        if (!_readerHasAnchor) return TimeStamp();
         // Compute the signed difference (ntp - ntpAnchor) in 1/2^32 s
         // units, then convert to nanoseconds.  Using @c uint64_t
         // subtraction with a deliberate cast to @c int64_t lets the
         // sign survive when @p ntp predates the anchor (which can
         // happen for low-latency receivers picking up the very first
         // SR while the open path is still settling).
-        const uint64_t a = (static_cast<uint64_t>(_readerAgg.ntpAnchor.seconds()) << 32) |
-                           static_cast<uint64_t>(_readerAgg.ntpAnchor.fraction());
+        const uint64_t a = (static_cast<uint64_t>(_readerNtpAnchor.seconds()) << 32) |
+                           static_cast<uint64_t>(_readerNtpAnchor.fraction());
         const uint64_t t = (static_cast<uint64_t>(ntp.seconds()) << 32) |
                            static_cast<uint64_t>(ntp.fraction());
         const int64_t diffFractional = static_cast<int64_t>(t - a);
@@ -2206,638 +2284,27 @@ TimeStamp RtpMediaIO::ntpToSteady(const NtpTime &ntp) const {
         const uint32_t subFracU = static_cast<uint32_t>(diffFractional & 0xFFFFFFFFu);
         const int64_t  subNs = (static_cast<int64_t>(subFracU) * 1'000'000'000LL) >> 32;
         const int64_t  totalNs = wholeSec * 1'000'000'000LL + subNs;
-        return _readerAgg.steadyAnchor + Duration::fromNanoseconds(totalNs);
-}
-
-void RtpMediaIO::onVideoPacket(const RtpPacket &pkt) {
-        if (_videoReaders.isEmpty()) return;
-        VideoReaderStream &v = _videoReaders[0];
-        if (!v.active) return;
-
-        v.packetsReceived.fetchAndAdd(1);
-        v.bytesReceived.fetchAndAdd(static_cast<int64_t>(pkt.size()));
-
-        // Pick up any newly-arrived SR for this stream so the next
-        // emitVideoFrame stamps Frame::captureTime from a current
-        // mapping.  Cheap; runs on the video RX thread.
-        refreshStreamClock(v);
-
-        // Sync gate: when the receiver joins a stream that's
-        // already in progress, the first packets it sees belong to
-        // the tail of an incomplete frame.  Passing those to
-        // emitVideoFrame produces a truncated bitstream that the
-        // codec rejects ("decoder_init failed").  We stay in a
-        // pre-sync state until the first marker bit arrives.  At
-        // that point we transition to synced but let the normal
-        // accumulation / emit path below handle the frame — if the
-        // receiver happened to catch the first packet of a frame
-        // (clean start), the reassembled data is complete and
-        // decodes correctly; if it joined mid-frame, the data is
-        // partial and emitVideoFrame's existing size / validity
-        // checks drop it silently.  Either way, the NEXT frame
-        // after the marker is guaranteed clean.
-        if (!v.reasmSynced) {
-                if (pkt.marker()) {
-                        v.reasmSynced = true;
-                        // Fall through — let the normal path below
-                        // accumulate this marker packet and call
-                        // emitVideoFrame.  Clean starts succeed;
-                        // mid-joins produce a short/corrupt buffer
-                        // that emitVideoFrame discards.
-                }
-                // else: still pre-sync, no marker yet.  Accumulate
-                // anyway (the frame MIGHT be complete if this is a
-                // clean start) — the marker will tell us.
-        }
-
-        // Diagnostic timing capture (RX thread is the only writer
-        // here, so the histograms need no internal locking).
-        // rxPacketInterval gives the inter-packet arrival cadence
-        // observed on the wire — a tight cluster around the
-        // sender's per-packet spacing means the network and the
-        // local socket are not introducing jitter; a long tail
-        // points at receive-side stalls.  rxFrameStartTime marks
-        // the first packet of the current reassembly window so
-        // emitVideoFrame can compute the per-frame assemble time.
-        const TimeStamp now = TimeStamp::now();
-        if (v.rxHasLastPacket) {
-                const Duration delta = now - v.rxLastPacketTime;
-                v.rxPacketInterval.addSample(delta.microseconds());
-        }
-        v.rxLastPacketTime = now;
-        v.rxHasLastPacket = true;
-
-        if (v.reasmHasTimestamp && v.reasmTimestamp != pkt.timestamp() && !v.reasmPackets.isEmpty()) {
-                // Timestamp changed without a prior marker bit —
-                // emit whatever we have and start fresh.
-                emitVideoFrame();
-        }
-
-        // Mark the start of a new reassembly window if this packet
-        // is the first one for its timestamp.
-        if (v.reasmPackets.isEmpty()) {
-                v.rxFrameStartTime = now;
-                v.rxHasFrameStart = true;
-        }
-
-        // Copy the packet into our reassembly list.  The incoming
-        // RtpPacket is a view onto the receive thread's scratch
-        // buffer, which is freshly allocated per packet, so we can
-        // just take ownership of its backing Buffer by
-        // referencing the same RtpPacket.
-        v.reasmPackets.pushToBack(pkt);
-        v.reasmTimestamp = pkt.timestamp();
-        v.reasmHasTimestamp = true;
-        v.reasmLastSeq = pkt.sequenceNumber();
-        v.reasmHaveLastSeq = true;
-
-        if (pkt.marker()) {
-                emitVideoFrame();
-        }
-}
-
-void RtpMediaIO::emitVideoFrame() {
-        if (_videoReaders.isEmpty()) return;
-        VideoReaderStream &v = _videoReaders[0];
-        if (v.reasmPackets.isEmpty()) return;
-        if (v.payload == nullptr) {
-                v.reasmPackets.clear();
-                v.reasmHasTimestamp = false;
-                return;
-        }
-
-        // Deferred JPEG geometry: peek at the first packet's
-        // RFC 2435 header for the Type field (subsampling) before
-        // unpack() consumes the packet list.  Type is at byte 4
-        // of the 8-byte payload header:
-        //   Type 0 → YCbCr 4:2:2  (FFmpeg convention)
-        //   Type 1 → YCbCr 4:2:0
-        uint8_t rfc2435Type = 0;
-        if (!v.readerImageDesc.isValid() && !v.reasmPackets.isEmpty()) {
-                const RtpPacket &first = v.reasmPackets[0];
-                if (!first.isNull() && first.payloadSize() >= 8) {
-                        rfc2435Type = first.payload()[4];
-                }
-        }
-
-        // Capture per-frame RTP metadata before unpack clears the list.
-        const uint32_t frameRtpTimestamp = v.reasmTimestamp;
-        const int32_t  framePacketCount = static_cast<int32_t>(v.reasmPackets.size());
-
-        // Ask the payload class to reassemble the bitstream.
-        Buffer reassembled = v.payload->unpack(v.reasmPackets);
-        v.reasmPackets.clear();
-        v.reasmHasTimestamp = false;
-
-        if (reassembled.size() == 0) return;
-
-        // Deferred geometry for JPEG reader mode: the SDP carries
-        // no image dimensions for RFC 2435, so we discover them
-        // from the first reassembled JFIF.  The SOF0 marker
-        // (FF C0) gives exact width/height (no 2040-pixel cap)
-        // and the component sampling factors confirm subsampling.
-        // The RFC 2435 Type byte (extracted above) provides the
-        // authoritative subsampling when the SOF0 is ambiguous.
-        //
-        // Color model defaults to Rec.601 full range per the JFIF
-        // spec, but can be overridden by ST 2110-20 colorimetry
-        // and RANGE parameters in the SDP fmtp line (stashed on
-        // v.fmtp by configureVideoStream).
-        if (!v.readerImageDesc.isValid()) {
-                const uint8_t *p = static_cast<const uint8_t *>(reassembled.data());
-                const size_t   n = reassembled.size();
-                uint32_t       w = 0, h = 0;
-                int            nf = 0;  // component count from SOF0
-                uint8_t        ySf = 0; // Y sampling factor byte (Hi<<4|Vi)
-                for (size_t i = 0; i + 1 < n; i++) {
-                        if (p[i] != 0xFF) continue;
-                        // SOF0 (0xC0) or SOF2 (0xC2, progressive)
-                        if (p[i + 1] != 0xC0 && p[i + 1] != 0xC2) continue;
-                        if (i + 9 >= n) break;
-                        h = (static_cast<uint32_t>(p[i + 5]) << 8) | p[i + 6];
-                        w = (static_cast<uint32_t>(p[i + 7]) << 8) | p[i + 8];
-                        nf = p[i + 9];
-                        if (nf >= 1 && i + 11 < n) {
-                                ySf = p[i + 11]; // Hi/Vi of first component
-                        }
-                        break;
-                }
-                if (w == 0 || h == 0) return;
-
-                // Determine subsampling and RGB from SOF0 / RFC 2435.
-                bool is420 = false;
-                bool isRgb = false;
-                if (nf == 1) {
-                        is420 = true; // grayscale
-                } else if (nf == 3 && ySf == 0x11 && rfc2435Type >= 2) {
-                        isRgb = true;
-                } else if (ySf == 0x22) {
-                        is420 = true;
-                } else if (ySf == 0x21) {
-                        is420 = false;
-                } else {
-                        is420 = (rfc2435Type == 1);
-                }
-
-                // Parse colorimetry and RANGE from the SDP fmtp
-                // (stashed on v.fmtp).  When absent, the
-                // helper defaults to Rec.601 full range.
-                String colorimetry;
-                String range;
-                if (!v.fmtp.isEmpty()) {
-                        // Quick parse of "key=val;key=val;..." form.
-                        StringList parts = v.fmtp.split(";");
-                        for (size_t i = 0; i < parts.size(); i++) {
-                                StringList kv = parts[i].split("=");
-                                if (kv.size() < 2) continue;
-                                String key = kv[0].trim();
-                                String val = kv[1].trim();
-                                if (key == "colorimetry")
-                                        colorimetry = val;
-                                else if (key == "RANGE")
-                                        range = val;
-                        }
-                }
-
-                PixelFormat::ID pdId = ImageDesc::jpegPixelFormatFromSdp(colorimetry, range, is420, isRgb);
-                v.readerImageDesc = ImageDesc(Size2Du32(w, h), PixelFormat(pdId));
-                promekiInfo("RtpMediaIO: JPEG reader discovered "
-                            "%ux%u %s from first frame",
-                            w, h, PixelFormat(pdId).name().cstr());
-        }
-
-        // Build a payload from the reassembled buffer.  Both the
-        // compressed and uncompressed paths copy the reassembled
-        // bytes into a fresh Buffer that the payload adopts as
-        // plane 0.
-        Buffer plane = Buffer(reassembled.size());
-        std::memcpy(plane.data(), reassembled.data(), reassembled.size());
-        plane.setSize(reassembled.size());
-        const PixelFormat &pd = v.readerImageDesc.pixelFormat();
-
-        v.framesReceived++;
-
-        // Record assemble time (first packet -> here) and the
-        // wall-clock interval between successive complete frames.
-        const TimeStamp emitTime = TimeStamp::now();
-        if (v.rxHasFrameStart) {
-                const Duration assemble = emitTime - v.rxFrameStartTime;
-                v.rxFrameAssembleTime.addSample(assemble.microseconds());
-                v.rxHasFrameStart = false;
-        }
-        if (v.rxHasLastFrame) {
-                const Duration delta = emitTime - v.rxLastFrameTime;
-                v.rxFrameInterval.addSample(delta.microseconds());
-        }
-        v.rxLastFrameTime = emitTime;
-        v.rxHasLastFrame = true;
-
-        // Stamp the payload with RTP and capture metadata before
-        // handing it to the Frame.  CaptureTime is when the library
-        // saw the first packet of this frame (rxFrameStartTime); the
-        // payload's native pts/dts are set from the same value below.
-        MediaTimeStamp capMts(v.rxFrameStartTime, v.clockDomain);
-        ImageDesc      idesc = v.readerImageDesc;
-        {
-                Metadata &m = idesc.metadata();
-                m.set(Metadata::CaptureTime, capMts);
-                m.set(Metadata::RtpTimestamp, frameRtpTimestamp);
-                m.set(Metadata::RtpPacketCount, framePacketCount);
-                if (!v.ptpGrandmaster.isNull()) {
-                        m.set(Metadata::PtpGrandmasterId, v.ptpGrandmaster);
-                }
-        }
-
-        VideoPayload::Ptr videoPayload;
-        if (pd.isCompressed()) {
-                // Compressed streams: stamp Keyframe by codec rule.
-                //   * Intra-only (JPEG, JPEG XS, ProRes, DNxHD): every
-                //     access unit is independently decodable, so always
-                //     a keyframe.
-                //   * Temporal (H.264, HEVC, AV1): only IDR (H.264) /
-                //     IRAP (HEVC) access units are safe random-access
-                //     points.  We inspect the reassembled bitstream and
-                //     stamp Keyframe only for those.  A future
-                //     out-of-band parameter-set delivery path can keep
-                //     this stamping accurate without parsing on every
-                //     frame, but for in-band-only streams this is the
-                //     right semantics.
-                bool isKeyframe = true;
-                const VideoCodec &codec = pd.videoCodec();
-                if (codec.isValid() && codec.codingType() == VideoCodec::CodingTemporal) {
-                        BufferView auView(plane, 0, plane.size());
-                        if (codec.id() == VideoCodec::H264) {
-                                isKeyframe = AvcDecoderConfig::isIdrAnnexB(auView);
-                        } else if (codec.id() == VideoCodec::HEVC) {
-                                isKeyframe = HevcDecoderConfig::isIrapAnnexB(auView);
-                        } else {
-                                // Unknown temporal codec: be conservative
-                                // and don't stamp Keyframe — downstream
-                                // can still decode, just won't treat the
-                                // packet as a safe cut point.
-                                isKeyframe = false;
-                        }
-                }
-                auto cvp = CompressedVideoPayload::Ptr::create(idesc, plane);
-                cvp.modify()->setPts(capMts);
-                cvp.modify()->setDts(capMts);
-                if (isKeyframe) cvp.modify()->addFlag(MediaPayload::Keyframe);
-                videoPayload = cvp;
-        } else {
-                BufferView planes;
-                planes.pushToBack(plane, 0, plane.size());
-                auto uvp = UncompressedVideoPayload::Ptr::create(idesc, planes);
-                uvp.modify()->setPts(capMts);
-                videoPayload = uvp;
-        }
-
-        if (!videoPayload.isValid()) {
-                if (v.framesReceived <= 1) {
-                        promekiDebug("RtpMediaIO: discarding "
-                                     "first partial video frame "
-                                     "(joined stream mid-flight)");
-                } else {
-                        promekiWarn("RtpMediaIO: reassembled "
-                                    "video frame is invalid");
-                }
-                return;
-        }
-
-        Frame frame = Frame();
-        frame.addPayload(std::move(videoPayload));
-
-        // Stamp Frame::captureTime from the video stream's
-        // wallclock NTP (sender's capture instant for this frame),
-        // converted to a local @ref TimeStamp via the @c (steady,
-        // NTP) anchor pinned at open time.  Downstream backends and
-        // the SDL player honour @ref Frame::captureTime for sync,
-        // so this is what carries cross-stream alignment from the
-        // sender to the local pipeline.  When no SR has arrived yet
-        // we fall back to the per-essence @c rxFrameStartTime
-        // (first-packet-arrival) the existing code stamps —
-        // receivers still produce output during the brief startup
-        // window before the first SR.
-        bool wallclockCapture = false;
-        if (v.hasSr && v.streamClock.isValid()) {
-                const NtpTime  frameNtp = v.streamClock.toNtp(frameRtpTimestamp);
-                const TimeStamp steady = ntpToSteady(frameNtp);
-                if (steady.nanoseconds() != 0) {
-                        frame.setCaptureTime(MediaTimeStamp(steady, ClockDomain::SystemMonotonic));
-                        wallclockCapture = true;
-                }
-        }
-        if (!frame.captureTime().isValid()) {
-                frame.setCaptureTime(MediaTimeStamp(v.rxFrameStartTime, v.clockDomain));
-        }
-
-        // Aggregate audio: drain one frame's worth of samples from
-        // the FIFO that the audio RX thread is filling.  This runs
-        // on the video receive thread, so any blocking here also
-        // blocks @c recvfrom() on the video socket — long enough
-        // for the kernel's UDP ring to overflow and eat upstream
-        // packets.  At the cadence we run (audio packets every 1 ms,
-        // video frames every ~17 ms) the audio FIFO is normally
-        // already populated by the time the video marker arrives, so
-        // a non-blocking pop suffices.  If samples are short — the
-        // first frame of a stream is the obvious case — we emit the
-        // frame video-only rather than wait, leaving downstream
-        // consumers to notice the missing audio chunk via the
-        // standard "no audio payload" path.
-        //
-        // **Wallclock-aligned drain.**  When both the video and audio
-        // streams have a valid @ref RtpStreamClock (an SR has been
-        // observed for each), the FIFO is drained for the audio
-        // window @c [T, T+frameDuration) where @c T is the video
-        // packet's wallclock instant.  Audio samples whose RTP-TS
-        // precedes the target window are dropped — this realigns
-        // a receiver that joined the streams at slightly different
-        // wallclock instants without leaking the misalignment into
-        // every emitted Frame.  When either stream lacks an SR yet,
-        // we fall back to the per-frame-index @c samplesPerFrame
-        // drain so the reader still produces output at startup.
-        // Aggregator pulls samples from the first audio stream's FIFO
-        // because the strand emits a single combined Frame per video
-        // frame.  Multi-audio reader support is a future change that
-        // adds parallel FIFOs (one per audio stream) and emits one
-        // PcmAudioPayload per stream into the same Frame.
-        if (!_audioReaders.isEmpty() && _audioReaders[0].active &&
-            _audioReaders[0].readerAudioDesc.isValid()) {
-                AudioReaderStream &as0 = _audioReaders[0];
-                refreshStreamClock(as0);
-                const size_t needed = _frameRate.samplesPerFrame(
-                        static_cast<int64_t>(as0.readerAudioDesc.sampleRate()),
-                        _readerAgg.videoFrameIndex.value());
-
-                bool wallclockReady = v.hasSr && v.streamClock.isValid() && as0.hasSr &&
-                                      as0.streamClock.isValid() && _readerAgg.audioFifoHasFront;
-
-                if (wallclockReady && needed > 0) {
-                        const NtpTime  frameNtp = v.streamClock.toNtp(frameRtpTimestamp);
-                        const uint32_t targetAudioRtpTs = as0.streamClock.toRtpTs(frameNtp);
-                        // Signed delta = target - frontRtpTs in
-                        // modular @c uint32_t units.  Positive means
-                        // the FIFO front is "behind" the video's
-                        // wallclock (drop those samples — they're
-                        // older than T).  Negative (i.e. delta cast
-                        // to int32_t) means the FIFO front is
-                        // already past the target, which happens
-                        // when audio has started arriving before
-                        // video — we keep the front and emit
-                        // immediately.
-                        const uint32_t rawDelta = targetAudioRtpTs - _readerAgg.audioFifoFrontRtpTs;
-                        const int32_t  signedDelta = static_cast<int32_t>(rawDelta);
-                        if (signedDelta > 0) {
-                                size_t toDrop = static_cast<size_t>(signedDelta);
-                                if (toDrop > _readerAgg.audioFifo.available()) {
-                                        toDrop = _readerAgg.audioFifo.available();
-                                }
-                                if (toDrop > 0) {
-                                        auto [dropped, derr] = _readerAgg.audioFifo.drop(toDrop);
-                                        (void)derr;
-                                        _readerAgg.audioFifoFrontRtpTs +=
-                                                static_cast<uint32_t>(dropped);
-                                }
-                        }
-                }
-
-                if (needed > 0 && _readerAgg.audioFifo.available() >= needed) {
-                        size_t bufBytes = as0.readerAudioDesc.bufferSize(needed);
-                        Buffer pcm = Buffer(bufBytes);
-                        auto [got, err] = _readerAgg.audioFifo.pop(pcm.data(), needed);
-                        if (got > 0) {
-                                _readerAgg.audioFifoFrontRtpTs += static_cast<uint32_t>(got);
-                                size_t usedBytes = as0.readerAudioDesc.bufferSize(got);
-                                pcm.setSize(usedBytes);
-                                BufferView view(pcm, 0, usedBytes);
-                                auto audioPayload = PcmAudioPayload::Ptr::create(as0.readerAudioDesc, got, view);
-                                ClockDomain audioCd =
-                                        as0.clockDomain.isValid() ? as0.clockDomain : v.clockDomain;
-                                // Audio's per-payload pts gets the
-                                // same wallclock-aware capture-time
-                                // as the Frame when both clocks are
-                                // valid; otherwise we keep the
-                                // pre-existing first-packet-arrival
-                                // stamp so behavior pre-SR is
-                                // unchanged.
-                                MediaTimeStamp audMts;
-                                if (wallclockCapture) {
-                                        audMts = frame.captureTime();
-                                } else {
-                                        audMts = MediaTimeStamp(v.rxFrameStartTime, audioCd);
-                                }
-                                audioPayload.modify()->desc().metadata().set(Metadata::CaptureTime, audMts);
-                                audioPayload.modify()->setPts(audMts);
-                                frame.addPayload(audioPayload);
-                        }
-                }
-        }
-        _readerAgg.videoFrameIndex++;
-
-        // Aggregate metadata: grab the latest snapshot from the
-        // data RX thread and merge it into this frame.
-        if (!_dataReaders.isEmpty() && _dataReaders[0].active) {
-                Mutex::Locker lock(_readerAgg.dataMutex);
-                if (_readerAgg.hasMetadata) {
-                        frame.metadata() = _readerAgg.pendingMetadata;
-                        _readerAgg.hasMetadata = false;
-                }
-        }
-
-        pushReaderFrame(std::move(frame));
-}
-
-void RtpMediaIO::onAudioPacket(const RtpPacket &pkt) {
-        // First audio stream only today — multi-stream reader
-        // plumbing (per-port RX threads dispatching to the matching
-        // AudioReaderStream) is a future change.  The single-stream
-        // path is also what drives the existing aggregator + audio-
-        // only fallback below.
-        if (_audioReaders.isEmpty()) return;
-        AudioReaderStream &as = _audioReaders[0];
-        if (!as.active) return;
-        as.packetsReceived.fetchAndAdd(1);
-        as.bytesReceived.fetchAndAdd(static_cast<int64_t>(pkt.size()));
-
-        // Pick up any newly-arrived SR for this stream so the
-        // wallclock-aligned drain in emitVideoFrame has a fresh
-        // RtpStreamClock to map FIFO position → wallclock NTP.
-        refreshStreamClock(as);
-
-        // L16 arrives as big-endian samples directly.  Push them
-        // into the aggregator's audio FIFO so emitVideoFrame can
-        // drain one frame's worth of samples when the next video
-        // frame completes.  The FIFO is protected by a Mutex and
-        // a WaitCondition because this runs on the audio RX thread
-        // while emitVideoFrame runs on the video RX thread.
-        if (as.payload == nullptr || !as.readerAudioDesc.isValid()) return;
-        if (pkt.payloadSize() == 0) return;
-
-        const unsigned int ch = as.readerAudioDesc.channels();
-        constexpr size_t   bytesPerSample = 2;
-        const size_t       frameBytes = ch * bytesPerSample;
-        if (frameBytes == 0) return;
-        const size_t samples = pkt.payloadSize() / frameBytes;
-        if (samples == 0) return;
-
-        AudioDesc wireDesc(AudioFormat::PCMI_S16BE, as.readerAudioDesc.sampleRate(), ch);
-
-        // When video is active, push samples into the aggregation
-        // FIFO so emitVideoFrame can merge them into combined
-        // frames.  When video is NOT active (audio-only stream),
-        // fall back to the original per-chunk emission so the
-        // reader queue still produces output.
-        const bool videoActive = !_videoReaders.isEmpty() && _videoReaders[0].active;
-        if (videoActive) {
-                // Track the RTP-TS of the front sample currently in
-                // the FIFO.  emitVideoFrame uses this together with
-                // @ref as.streamClock to map any FIFO position to a
-                // wallclock instant.  The packet's RTP-TS is the
-                // RTP-TS of its first sample; if the FIFO already
-                // holds samples and the packet does NOT continue
-                // contiguously after them, we treat it as a stream
-                // realignment — drop the FIFO and reseed the front.
-                const uint32_t pktRtpTs = pkt.timestamp();
-                const size_t   fifoSamplesBefore = _readerAgg.audioFifo.available();
-                if (!_readerAgg.audioFifoHasFront) {
-                        _readerAgg.audioFifoFrontRtpTs = pktRtpTs;
-                        _readerAgg.audioFifoHasFront = true;
-                } else {
-                        const uint32_t expectedNext = _readerAgg.audioFifoFrontRtpTs +
-                                                      static_cast<uint32_t>(fifoSamplesBefore);
-                        if (pktRtpTs != expectedNext) {
-                                // Out-of-order or gapped packet —
-                                // realign the FIFO.  Wallclock-
-                                // aligned aggregation is more useful
-                                // with a clean front than a stale
-                                // gap, so we drop and reseed rather
-                                // than try to splice silence into the
-                                // missing window.
-                                _readerAgg.audioFifo.clear();
-                                _readerAgg.audioFifoFrontRtpTs = pktRtpTs;
-                        }
-                }
-                Error perr = _readerAgg.audioFifo.push(pkt.payload(), samples, wireDesc);
-                if (perr.isError()) {
-                        promekiWarn("RtpMediaIO: audio FIFO push failed: %s", perr.desc().cstr());
-                        return;
-                }
-                as.framesReceived++;
-        } else {
-                // Audio-only stream — push directly.  Chunk into
-                // samplesPerFrame-sized Audio objects to match the
-                // frame-rate cadence downstream consumers expect.
-                Error perr = as.fifo.push(pkt.payload(), samples, wireDesc);
-                if (perr.isError()) {
-                        promekiWarn("RtpMediaIO: audio FIFO push failed: %s", perr.desc().cstr());
-                        return;
-                }
-                const double fps = _frameRate.isValid() ? _frameRate.toDouble() : 30.0;
-                if (fps <= 0.0) return;
-                const size_t spf = static_cast<size_t>(as.readerAudioDesc.sampleRate() / fps);
-                if (spf == 0) return;
-                while (as.fifo.available() >= spf) {
-                        size_t bufBytes = as.readerAudioDesc.bufferSize(spf);
-                        Buffer pcm = Buffer(bufBytes);
-                        auto [got, popErr] = as.fifo.pop(pcm.data(), spf);
-                        if (popErr.isError() || got == 0) break;
-                        size_t usedBytes = as.readerAudioDesc.bufferSize(got);
-                        pcm.setSize(usedBytes);
-                        BufferView     view(pcm, 0, usedBytes);
-                        auto           audioPayload = PcmAudioPayload::Ptr::create(as.readerAudioDesc, got, view);
-                        MediaTimeStamp capMts(TimeStamp::now(), as.clockDomain);
-                        audioPayload.modify()->desc().metadata().set(Metadata::CaptureTime, capMts);
-                        audioPayload.modify()->setPts(capMts);
-                        as.framesReceived++;
-                        Frame frame = Frame();
-                        frame.addPayload(audioPayload);
-                        pushReaderFrame(std::move(frame));
-                }
-        }
-}
-
-void RtpMediaIO::onDataPacket(const RtpPacket &pkt) {
-        if (_dataReaders.isEmpty()) return;
-        DataReaderStream &d = _dataReaders[0];
-        if (!d.active) return;
-        d.packetsReceived.fetchAndAdd(1);
-        d.bytesReceived.fetchAndAdd(static_cast<int64_t>(pkt.size()));
-
-        refreshStreamClock(d);
-
-        if (d.reasmHasTimestamp && d.reasmTimestamp != pkt.timestamp() && !d.reasmPackets.isEmpty()) {
-                emitDataMessage();
-        }
-
-        d.reasmPackets.pushToBack(pkt);
-        d.reasmTimestamp = pkt.timestamp();
-        d.reasmHasTimestamp = true;
-
-        if (pkt.marker()) {
-                emitDataMessage();
-        }
-}
-
-void RtpMediaIO::emitDataMessage() {
-        if (_dataReaders.isEmpty()) return;
-        DataReaderStream &d = _dataReaders[0];
-        if (d.reasmPackets.isEmpty()) return;
-        if (d.payload == nullptr) {
-                d.reasmPackets.clear();
-                d.reasmHasTimestamp = false;
-                return;
-        }
-        // Capture per-message RTP metadata before unpack clears the list.
-        const uint32_t dataRtpTimestamp = d.reasmTimestamp;
-        const int32_t  dataPacketCount = static_cast<int32_t>(d.reasmPackets.size());
-
-        Buffer bytes = d.payload->unpack(d.reasmPackets);
-        d.reasmPackets.clear();
-        d.reasmHasTimestamp = false;
-        if (bytes.size() == 0) return;
-
-        String     jsonText(static_cast<const char *>(bytes.data()), bytes.size());
-        Error      jerr;
-        JsonObject obj = JsonObject::parse(jsonText, &jerr);
-        if (jerr.isError()) {
-                promekiWarn("RtpMediaIO: dropping malformed metadata JSON: %s", jerr.desc().cstr());
-                return;
-        }
-        Metadata m = Metadata::fromJson(obj);
-        d.framesReceived++;
-
-        // Stamp the metadata with capture and RTP timing.
-        MediaTimeStamp capMts(TimeStamp::now(), d.clockDomain);
-        m.set(Metadata::CaptureTime, capMts);
-        m.set(Metadata::RtpTimestamp, dataRtpTimestamp);
-        m.set(Metadata::RtpPacketCount, dataPacketCount);
-
-        // When video is active, stash metadata so emitVideoFrame
-        // can merge it into combined frames.  When video is NOT
-        // active (data-only or audio+data stream), push directly.
-        const bool videoActive = !_videoReaders.isEmpty() && _videoReaders[0].active;
-        if (videoActive) {
-                Mutex::Locker lock(_readerAgg.dataMutex);
-                _readerAgg.pendingMetadata = m;
-                _readerAgg.hasMetadata = true;
-        } else {
-                Frame frame = Frame();
-                frame.metadata() = m;
-                pushReaderFrame(std::move(frame));
-        }
+        return _readerSteadyAnchor + Duration::fromNanoseconds(totalNs);
 }
 
 void RtpMediaIO::pushReaderFrame(Frame frame) {
         if (!frame.isValid()) return;
-        // Enforce the configured reader queue depth by dropping the
-        // oldest frame when the queue is full.  The producer side
-        // is our own RX thread, and stalling it would mean dropped
-        // wire packets — dropping at the Frame boundary is the
-        // safer failure mode for live streams.
-        if (_readerMaxDepth > 0 && static_cast<int>(_readerQueue.size()) >= _readerMaxDepth) {
-                (void)_readerQueue.tryPop();
-                noteFrameDropped(portGroup(0));
-        }
-        _readerQueue.push(std::move(frame));
+        // Bounded reader queue — drop-oldest at Frame boundary when
+        // the strand is too slow to drain.  Phase 3's devplan calls
+        // for block-on-full here so back-pressure surfaces upstream
+        // as @c reorderOutputDropped on the per-stream reorder buffer
+        // rather than silent Frame drops at this stage, but the
+        // existing functional matrix tolerates a structural source/
+        // sink rate mismatch (e.g. TX bursting a second of frames
+        // into ~400 ms) that block-on-full converts into mid-frame
+        // RTP packet drops — corrupting every otherwise-deliverable
+        // frame instead of cleanly dropping the oldest few.  Until
+        // the TX-side pacing fix lands, drop-oldest at this stage
+        // preserves frame integrity; block-on-full re-engages in
+        // Phase 6 alongside the chaos matrix that exercises it.
+        // The queue's @c setMaxSize was applied at open time so this
+        // function stays a hot no-lock call site.
+        (void)_readerQueue.pushDropOldest(std::move(frame));
         _readerFramesReceived++;
 }
 
@@ -2853,6 +2320,7 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
         _readerMode = !isWrite;
         _readCancelled.store(false, std::memory_order_release);
+        _openedAt = TimeStamp::now();
 
         // Transport-global parameters.
         _localAddress = cfg.getAs<SocketAddress>(MediaConfig::RtpLocalAddress, SocketAddress::any(0));
@@ -2969,9 +2437,15 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
 
         _readerJitterMs = cfg.getAs<int>(MediaConfig::RtpJitterMs, 50);
         if (_readerJitterMs <= 0) _readerJitterMs = 50;
-        _readerMaxDepth = cfg.getAs<int>(MediaConfig::RtpMaxReadQueueDepth, 4);
-        if (_readerMaxDepth <= 0) _readerMaxDepth = 4;
-        _readerAgg.audioTimeoutMs = _readerJitterMs;
+        _readerMaxDepth = cfg.getAs<int>(MediaConfig::RtpMaxReadQueueDepth, 8);
+        if (_readerMaxDepth <= 0) _readerMaxDepth = 8;
+        // Bound the reader-output queue.  @ref pushReaderFrame uses
+        // @c Queue::pushDropOldest which only drops when @c setMaxSize
+        // has installed a cap, so this call is what makes the depth
+        // actually take effect.
+        _readerQueue.setMaxSize(static_cast<size_t>(_readerMaxDepth));
+        _wireSilenceTimeoutMs = cfg.getAs<int>(MediaConfig::RtpWireSilenceTimeoutMs, 0);
+        _videoWatchdogEnabled = cfg.getAs<bool>(MediaConfig::RtpVideoWatchdogEnabled, false);
 
         // Configure each stream from the media descriptor + per-stream config.
         Error err = configureVideoStream(cfg, cmd.pendingMediaDesc);
@@ -2990,29 +2464,11 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 return err;
         }
 
-        // Set up the reader-side frame aggregator if this is a reader
-        // with an audio stream.  The FIFO stores samples in the
-        // network wire format (PCMI_S16BE) and is sized for 2 seconds
-        // of headroom — enough to absorb a transient burst of audio
-        // arriving ahead of the video stream without losing data.
-        // Reader-side aggregator FIFO uses the FIRST audio stream as
-        // its sample source, since the strand emits a single combined
-        // Frame per video frame.  Multi-audio reader support is a
-        // future change that adds parallel FIFOs and a richer Frame
-        // shape (one PcmAudioPayload per audio stream).
-        if (_readerMode && !_audioReaders.isEmpty() && _audioReaders[0].readerAudioDesc.isValid()) {
-                const AudioReaderStream &as0 = _audioReaders[0];
-                AudioDesc          wireFormat(AudioFormat::PCMI_S16BE, as0.readerAudioDesc.sampleRate(),
-                                              as0.readerAudioDesc.channels());
-                _readerAgg.audioFifo.setFormat(wireFormat);
-                _readerAgg.audioFifo.setInputFormat(wireFormat);
-                const size_t headroom = static_cast<size_t>(as0.readerAudioDesc.sampleRate() * 2);
-                _readerAgg.audioFifo.reserve(headroom);
-                _readerAgg.videoFrameIndex = 0;
-                _readerAgg.hasMetadata = false;
-                _readerAgg.audioFifoHasFront = false;
-                _readerAgg.audioFifoFrontRtpTs = 0;
-        }
+        // Resolve the writer-side ts-refclk / mediaclk:direct config
+        // and stamp the result onto every active writer Stream so
+        // @c buildSdp can emit RFC 7273 / SMPTE ST 2110-10 clock
+        // reference attributes without re-reading @c cfg.
+        applyClockReferenceConfig(cfg);
 
         // Pin the local @c (steady, wallclock) reference instant for
         // RX-side @ref Frame::captureTime stamping.  Each emitted
@@ -3021,14 +2477,11 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // @ref TimeStamp via @c steadyAnchor + (frameNtp - ntpAnchor).
         // This pins the steady↔wallclock mapping at one observed
         // instant, which is accurate to the µs class on a normal
-        // Linux box and remains stable across the session.  Done
-        // unconditionally for the reader-mode branch so the captureTime
-        // path is always live, even for video-only or audio-only
-        // configs that don't touch the audio FIFO above.
+        // Linux box and remains stable across the session.
         if (_readerMode) {
-                _readerAgg.steadyAnchor = TimeStamp::now();
-                _readerAgg.ntpAnchor = NtpTime::now();
-                _readerAgg.hasAnchor = true;
+                _readerSteadyAnchor = TimeStamp::now();
+                _readerNtpAnchor = NtpTime::now();
+                _readerHasAnchor = true;
         }
 
         // Enable multicast loopback when the destination is on this
@@ -3113,9 +2566,32 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                         // fill rule, so the wire timeline stays
                         // contiguous regardless of source stalls.
                         if (as.active) {
-                                auto *tx = new AudioTxThread(this, i);
-                                auto *pkt = new AudioPacketizerThread(this, i);
-                                pkt->setTx(tx);
+                                RtpAudioTxContext txCtx;
+                                txCtx.storageDesc = as.storageDesc;
+                                txCtx.packetSamples = as.packetSamples;
+                                txCtx.packetBytes = as.packetBytes;
+                                txCtx.packetTimeUs = as.packetTimeUs;
+                                txCtx.session = as.session;
+                                txCtx.payload = as.payload;
+                                txCtx.clockRate = as.clockRate;
+                                txCtx.packetsSent = &as.packetsSent;
+                                txCtx.bytesSent = &as.bytesSent;
+                                txCtx.senderOctets = &as.senderOctets;
+                                txCtx.silencePacketsEmitted = &as.silencePacketsEmitted;
+                                txCtx.silenceSamplesEmitted = &as.silenceSamplesEmitted;
+                                auto *tx = new RtpAudioTxThread(
+                                        std::move(txCtx),
+                                        String("RtpAudTx/") + String::number(i));
+                                RtpAudioPacketizerContext pktCtx;
+                                pktCtx.storageDesc = as.storageDesc;
+                                pktCtx.packetSamples = as.packetSamples;
+                                pktCtx.packetBytes = as.packetBytes;
+                                pktCtx.prerollSamples = as.prerollSamples;
+                                pktCtx.streamIdx = i;
+                                pktCtx.txPacketQueue = &tx->packetQueue();
+                                auto *pkt = new RtpAudioPacketizerThread(
+                                        std::move(pktCtx),
+                                        String("RtpAudPkt/") + String::number(i));
                                 as.tx = tx;
                                 as.packetizer = pkt;
                                 tx->start();
@@ -3163,32 +2639,70 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 return Error::InvalidArgument;
         }
 
-        // RTCP setup (writer-mode only — readers consume but do not
-        // generate SR).  Capture a single wallclock NTP anchor and
-        // assign it to every stream's session; this is what makes
-        // cross-stream lip-sync work — a receiver gets the same
-        // wallclock instant carried in each stream's first SR, so
-        // their RTP-clock offsets are immediately recoverable.
-        //
-        // CNAME is the SDES item that lets receivers identify which
-        // streams come from the same sender — when several streams
-        // share a CNAME (the typical audio + video pair from one
-        // mediaplay process), receivers know to sync them even if
-        // their SSRCs are unrelated.
-        if (!_readerMode) {
-                _rtcpEnabled = cfg.getAs<bool>(MediaConfig::RtpRtcpEnabled, true);
-                _rtcpIntervalMs = cfg.getAs<int>(MediaConfig::RtpRtcpIntervalMs, 5000);
-                _rtcpCname = cfg.getAs<String>(MediaConfig::RtpRtcpCname, String());
-                if (_rtcpCname.isEmpty()) {
-                        // Auto-CNAME: stable per-process identifier
-                        // shared by every stream this RtpMediaIO emits.
-                        // Streams that share a CNAME (the typical
-                        // audio + video pair from one mediaplay
-                        // process) are correlated by receivers as
-                        // belonging to the same sender.
-                        _rtcpCname = String("promeki-") + System::hostname() + String("-") +
-                                     String::number(static_cast<int64_t>(::getpid()));
+        // Spawn the aggregator now that the depacketizers are
+        // running.  The aggregator pops from per-stream payload
+        // queues, so it has to be the last thread up and the first
+        // down — its requestStop is called before resetReaderStream
+        // tears down the depacketizers, so the cancel path doesn't
+        // lose any in-flight bundles.
+        if (_readerMode) {
+                RtpAggregatorThread::Mode mode = RtpAggregatorThread::Mode::Video;
+                if (anyVideoActive) {
+                        mode = RtpAggregatorThread::Mode::Video;
+                } else if (anyAudioActive) {
+                        mode = RtpAggregatorThread::Mode::AudioOnly;
+                } else {
+                        mode = RtpAggregatorThread::Mode::DataOnly;
                 }
+                RtpAggregatorContext ctx;
+                ctx.frameRate = _frameRate;
+                ctx.videoWatchdogEnabled = _videoWatchdogEnabled;
+                if (!_videoReaders.isEmpty()) {
+                        VideoReaderStream &v = _videoReaders[0];
+                        ctx.video.payloadQueue = v.payloadQueue.get();
+                        ctx.video.lastPacketArrivalNs = &v.lastPacketArrivalNs;
+                }
+                if (!_audioReaders.isEmpty()) {
+                        AudioReaderStream &a = _audioReaders[0];
+                        ctx.audio.payloadQueue = a.payloadQueue.get();
+                        ctx.audio.active = a.active;
+                        ctx.audio.readerAudioDesc = &a.readerAudioDesc;
+                        ctx.audio.streamClock = &a.streamClock;
+                        ctx.audio.hasSr = &a.hasSr;
+                        ctx.audio.clockDomain = a.clockDomain;
+                }
+                if (!_dataReaders.isEmpty()) {
+                        DataReaderStream &d = _dataReaders[0];
+                        ctx.data.payloadQueue = d.payloadQueue.get();
+                        ctx.data.active = d.active;
+                        ctx.data.clockDomain = d.clockDomain;
+                }
+                ctx.readerQueue = &_readerQueue;
+                ctx.pushFrame = [this](Frame frame) {
+                        pushReaderFrame(std::move(frame));
+                };
+                _aggregator = UniquePtr<RtpAggregatorThread>::create(
+                        std::move(ctx), mode, String("RtpAggregator"));
+                _aggregator->start();
+        }
+
+        // RTCP setup.  Writer mode produces SR + SDES; reader mode
+        // produces RR + SDES against the per-source RtpSeqTracker
+        // snapshot.  Both modes share the same scheduler thread so
+        // a session that's both (when that lands) gets a single
+        // compound on the wire.  CNAME is the SDES item that lets
+        // receivers identify which streams come from the same
+        // sender — when several streams share a CNAME (the typical
+        // audio + video pair from one mediaplay process), receivers
+        // know to sync them even if their SSRCs are unrelated.
+        _rtcpEnabled = cfg.getAs<bool>(MediaConfig::RtpRtcpEnabled, true);
+        _rtcpIntervalMs = cfg.getAs<int>(MediaConfig::RtpRtcpIntervalMs, 5000);
+        _rtcpCname = cfg.getAs<String>(MediaConfig::RtpRtcpCname, String());
+        if (_rtcpCname.isEmpty()) {
+                _rtcpCname = String("promeki-") + System::hostname() + String("-") +
+                             String::number(static_cast<int64_t>(::getpid()));
+        }
+        if (!_readerMode) {
                 // Seed every active session with a default
                 // capture-NTP anchor so even an SR emitted before
                 // the first frame has a structurally valid (NTP,
@@ -3210,11 +2724,20 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 for (VideoStream &vs : _videos) setupSession(vs);
                 for (AudioStream &as : _audios) setupSession(as);
                 for (DataStream &ds : _datas) setupSession(ds);
-
-                if (_rtcpEnabled) {
-                        _rtcpScheduler = new RtcpScheduler(this, _rtcpIntervalMs);
-                        _rtcpScheduler->start();
-                }
+        } else {
+                // Reader sessions need the CNAME for their RR's
+                // SDES too.
+                auto setupReaderSession = [this](Stream &s) {
+                        if (!s.active || s.session == nullptr) return;
+                        s.session->setCname(_rtcpCname);
+                };
+                for (VideoReaderStream &vrs : _videoReaders) setupReaderSession(vrs);
+                for (AudioReaderStream &ars : _audioReaders) setupReaderSession(ars);
+                for (DataReaderStream &drs : _dataReaders) setupReaderSession(drs);
+        }
+        if (_rtcpEnabled) {
+                _rtcpScheduler = UniquePtr<RtcpScheduler>::create(buildRtcpSchedulerContext());
+                _rtcpScheduler->start();
         }
 
         // Apply kernel-FQ pacing rate if requested (writer-side only —
@@ -3440,6 +2963,27 @@ void RtpMediaIO::cancelBlockingWork() {
         // the next short-timeout wakeup return Cancelled so the strand
         // can drain the Read and reach the queued Close.
         _readCancelled.store(true, std::memory_order_release);
+
+        // Wake every per-stream depacketizer parked on its
+        // post-reorder pop so the resetReaderStream path that
+        // follows joins promptly.  Idempotent — duplicate calls are
+        // no-ops once the cancel latch is set.
+        for (VideoReaderStream &vrs : _videoReaders) {
+                if (vrs.depacketizer.isValid()) vrs.depacketizer->requestStop();
+        }
+        for (AudioReaderStream &ars : _audioReaders) {
+                if (ars.depacketizer.isValid()) ars.depacketizer->requestStop();
+        }
+        for (DataReaderStream &drs : _dataReaders) {
+                if (drs.depacketizer.isValid()) drs.depacketizer->requestStop();
+        }
+        // Wake the aggregator if it's parked on a bounded
+        // pushBlocking, and the strand-side executeCmd(Read) if it's
+        // parked on a pop.  The aggregator's own requestStop also
+        // cancels its input queues, but the output queue (this
+        // _readerQueue) is owned by RtpMediaIO and must be cancelled
+        // here so the aggregator's last pushBlocking can unwind.
+        _readerQueue.cancelWaiters();
 }
 
 // ----- Per-stream send helpers -----
@@ -3840,6 +3384,143 @@ Error RtpMediaIO::executeCmd(MediaIOCommandStats &cmd) {
                         cmd.stats.set(StatsRxVideoFrameIntervalUs, v0.rxFrameInterval.toString());
                         cmd.stats.set(StatsRxVideoFrameAssembleUs, v0.rxFrameAssembleTime.toString());
                 }
+
+                // Aggregate per-source RFC 3550 §A.1 / §A.3 / §A.8
+                // counters from every reader stream's seq tracker /
+                // reorder buffer / SSRC-change counter.  Sums fold
+                // across all kinds; first-stream-only fields use the
+                // first populated kind's seq tracker so a single
+                // representative sample is always reported.
+                int64_t  duplicatePackets = 0;
+                int64_t  reorderedPackets = 0;
+                int32_t  cumulativeLost = 0;
+                int64_t  ssrcChanges = 0;
+                int64_t  reorderEmittedInOrder = 0;
+                int64_t  reorderEmittedOnDeadline = 0;
+                int64_t  reorderDroppedOverflow = 0;
+                int64_t  reorderDroppedDuplicate = 0;
+                int64_t  framesReassembled = 0;
+                int64_t  framesDroppedValidate = 0;
+                int64_t  framesWaitingParamSets = 0;
+                int64_t  framesDroppedSsrcReset = 0;
+                uint32_t firstExtHighestSeq = 0;
+                uint32_t firstPacketsExpected = 0;
+                uint8_t  firstFractionLost = 0;
+                uint32_t firstInterarrivalJitter = 0;
+                bool     haveSeqTrackerSample = false;
+                auto accumulateReaderStream = [&](const ReaderStream &s) {
+                        ssrcChanges += s.ssrcChanges.value();
+                        framesReassembled += s.framesReassembled.value();
+                        framesDroppedValidate += s.framesDroppedValidate.value();
+                        framesWaitingParamSets += s.framesWaitingParamSets.value();
+                        framesDroppedSsrcReset += s.framesDroppedSsrcReset.value();
+                        if (s.seqTracker.isValid()) {
+                                RtpSeqTracker::Stats ts = s.seqTracker->snapshot();
+                                duplicatePackets += static_cast<int64_t>(ts.duplicatePackets);
+                                reorderedPackets += static_cast<int64_t>(ts.reorderedPackets);
+                                cumulativeLost += ts.cumulativeLost;
+                                if (!haveSeqTrackerSample) {
+                                        firstExtHighestSeq = ts.extendedHighestSeq;
+                                        firstPacketsExpected = ts.expectedPackets;
+                                        firstFractionLost = ts.fractionLost;
+                                        firstInterarrivalJitter = ts.interarrivalJitter;
+                                        haveSeqTrackerSample = true;
+                                }
+                        }
+                        if (s.reorderBuffer.isValid()) {
+                                RtpSeqReorderBuffer::Stats rs = s.reorderBuffer->snapshot();
+                                reorderEmittedInOrder += static_cast<int64_t>(rs.emittedInOrder);
+                                reorderEmittedOnDeadline += static_cast<int64_t>(rs.emittedOnDeadline);
+                                reorderDroppedOverflow += static_cast<int64_t>(rs.droppedOnOverflow);
+                                reorderDroppedDuplicate += static_cast<int64_t>(rs.droppedAsDuplicate);
+                        }
+                };
+                for (const VideoReaderStream &vs : _videoReaders) accumulateReaderStream(vs);
+                for (const AudioReaderStream &as : _audioReaders) accumulateReaderStream(as);
+                for (const DataReaderStream &ds : _dataReaders) accumulateReaderStream(ds);
+                if (haveSeqTrackerSample) {
+                        cmd.stats.set(StatsRxExtendedHighestSeq,
+                                      static_cast<int64_t>(firstExtHighestSeq));
+                        cmd.stats.set(StatsRxPacketsExpected,
+                                      static_cast<int64_t>(firstPacketsExpected));
+                        cmd.stats.set(StatsRxFractionLost,
+                                      static_cast<int64_t>(firstFractionLost));
+                        cmd.stats.set(StatsRxInterarrivalJitter,
+                                      static_cast<int64_t>(firstInterarrivalJitter));
+                }
+                cmd.stats.set(StatsRxCumulativeLost, static_cast<int64_t>(cumulativeLost));
+                cmd.stats.set(StatsRxDuplicatePackets, duplicatePackets);
+                cmd.stats.set(StatsRxReorderedPackets, reorderedPackets);
+                cmd.stats.set(StatsRxSsrcChanges, ssrcChanges);
+                cmd.stats.set(StatsRxReorderEmittedInOrder, reorderEmittedInOrder);
+                cmd.stats.set(StatsRxReorderEmittedOnDeadline, reorderEmittedOnDeadline);
+                cmd.stats.set(StatsRxReorderDroppedOverflow, reorderDroppedOverflow);
+                cmd.stats.set(StatsRxReorderDroppedDuplicate, reorderDroppedDuplicate);
+                cmd.stats.set(StatsRxFramesReassembled, framesReassembled);
+                cmd.stats.set(StatsRxFramesDroppedValidate, framesDroppedValidate);
+                cmd.stats.set(StatsRxFramesWaitingParamSets, framesWaitingParamSets);
+                cmd.stats.set(StatsRxFramesDroppedSsrcReset, framesDroppedSsrcReset);
+
+                // RTCP-side sender-report observability.  srObserved
+                // is summed across every active reader-side
+                // RtpSession; lastSrAge picks the freshest SR
+                // across reader streams; firstSrLatency picks the
+                // earliest first-SR observation across reader
+                // streams (relative to @ref _openedAt).
+                int64_t   srObserved = 0;
+                TimeStamp newestSr;
+                TimeStamp earliestFirstSr;
+                auto      foldRtcp = [&](const ReaderStream &s) {
+                        if (s.session == nullptr) return;
+                        srObserved +=
+                                static_cast<int64_t>(s.session->srObservedCount());
+                        const RtpSession::ReceivedSr sr = s.session->receivedSr();
+                        if (sr.valid && sr.arrivedAt.nanoseconds() != 0) {
+                                if (newestSr.nanoseconds() == 0 ||
+                                    (sr.arrivedAt - newestSr).nanoseconds() > 0) {
+                                        newestSr = sr.arrivedAt;
+                                }
+                        }
+                        const TimeStamp first = s.session->firstSrAt();
+                        if (first.nanoseconds() != 0) {
+                                if (earliestFirstSr.nanoseconds() == 0 ||
+                                    (earliestFirstSr - first).nanoseconds() > 0) {
+                                        earliestFirstSr = first;
+                                }
+                        }
+                };
+                for (const VideoReaderStream &vs : _videoReaders) foldRtcp(vs);
+                for (const AudioReaderStream &as : _audioReaders) foldRtcp(as);
+                for (const DataReaderStream &ds : _dataReaders) foldRtcp(ds);
+                cmd.stats.set(StatsRxSrObserved, srObserved);
+                if (newestSr.nanoseconds() != 0) {
+                        const Duration age = TimeStamp::now() - newestSr;
+                        cmd.stats.set(StatsRxLastSrAgeUs, age.microseconds());
+                }
+                if (earliestFirstSr.nanoseconds() != 0 &&
+                    _openedAt.nanoseconds() != 0) {
+                        const Duration latency = earliestFirstSr - _openedAt;
+                        cmd.stats.set(StatsRxFirstSrLatencyUs, latency.microseconds());
+                }
+
+                // PayloadQueue + reader-output queue depths — first-
+                // stream only on the kind-specific queues.  These are
+                // live-instantaneous values (not cumulative) so they
+                // surface back-pressure on a single stats call.
+                if (!_videoReaders.isEmpty() && _videoReaders[0].payloadQueue.isValid()) {
+                        cmd.stats.set(StatsRxVideoQueueDepth,
+                                      static_cast<int64_t>(_videoReaders[0].payloadQueue->size()));
+                }
+                if (!_audioReaders.isEmpty() && _audioReaders[0].payloadQueue.isValid()) {
+                        cmd.stats.set(StatsRxAudioQueueDepth,
+                                      static_cast<int64_t>(_audioReaders[0].payloadQueue->size()));
+                }
+                if (!_dataReaders.isEmpty() && _dataReaders[0].payloadQueue.isValid()) {
+                        cmd.stats.set(StatsRxDataQueueDepth,
+                                      static_cast<int64_t>(_dataReaders[0].payloadQueue->size()));
+                }
+                cmd.stats.set(StatsRxReaderQueueDepth,
+                              static_cast<int64_t>(_readerQueue.size()));
         } else {
                 int64_t videoPacketsTx = 0, videoBytesTx = 0;
                 for (const VideoStream &vs : _videos) {

@@ -1,6 +1,12 @@
 # RTP TX Architecture Refactor
 
-**Status:** Phases 1–5 all landed 2026-05-08:
+**Status:** Phases 1–5 all landed 2026-05-08, plus a Phase 6
+follow-on (the **end-of-stream drain** on the packetizer +
+TX-thread workers) landed 2026-05-09 alongside the receive-side
+chaos matrix work in [rtp-rx.md](rtp-rx.md), and a Phase 6
+follow-on for **SDP clock reference emission** (RFC 7273 /
+SMPTE ST 2110-10) plus the new `NetworkInterface` framework
+that backs its localmac autodiscovery, also landed 2026-05-09:
 
   1. **Phase 1** — foundation (Queue bounding,
      `Frame::captureTime`, NTP arithmetic, RtpSession
@@ -22,12 +28,15 @@
      `readerAudioDesc` / `fifo`).
   4. **Phase 4** — test catch-up; most items shipped with
      their introducing phase (see checkbox state below).
-     `AudioPacketizerThread` / `AudioTxThread` direct unit
-     cases remain deferred (the classes are nested inside
-     `RtpMediaIO`); the rtp.* functional suite catches the
-     same ~5/60 startup-loss the receive-side sync gate
-     produces today and stays deferred until RX-side
-     hardening lands.
+     The two `AudioPacketizerThread` / `AudioTxThread` deferred
+     unit-test items landed 2026-05-09: both classes were
+     extracted out of their nested home in `rtpmediaio.cpp`
+     into `include/promeki/rtpaudio{packetizer,tx}thread.h` +
+     `src/network/rtpaudio{packetizer,tx}thread.cpp`, decoupled
+     via `RtpAudioPacketizerContext` / `RtpAudioTxContext`, and
+     covered by 11 doctest cases (4 packetizer + 7 TX).
+     Mirrors the receive-side pattern (depacketizers /
+     aggregator / scheduler all extracted similarly).
   5. **Phase 5** — reader-side SR consumption: `RtcpPacket`
      parsers, `RtpStreamClock`, `RtpSession::ReceivedSr` +
      RTCP demux in `ReceiveThread`, `ReaderAggregator`
@@ -35,6 +44,27 @@
      25 new unit tests added across `rtcppacket.cpp`,
      `rtpsession.cpp`, and the new
      `rtpstreamclock.cpp`.
+  6. **Phase 6 follow-on (2026-05-09)** — end-of-stream drain
+     on the packetizer + TX-thread workers.  When
+     `executeCmd(Close)`'s `resetWriterStream` fires
+     `requestStop` on every worker, the cancel latch wakes
+     blocking pops with `Error::Cancelled` even when items
+     remain in the queue.  Without a drain phase, in-flight
+     frames in the strand → packetizer → TX-thread chain were
+     abandoned; this looked like front-of-stream loss to the
+     receiver and was the actual cause of the `rtp.*` matrix's
+     25/30 baseline (the earlier "TX-side burst" diagnosis was
+     wrong — TX is paced correctly).  `RtpPacketizerThread::run`
+     and the three TX-thread subclasses' run loops now drain
+     remaining items via `tryPop` after the steady-state pop
+     loop exits, processing each through the same send path.
+     Audio drains unpaced (RTP-TS encodes wire timing); video
+     and data drain through the same paced send path the
+     steady-state loop uses.  Close latency goes up by ≤ one
+     frame duration per stream (~50 ms video, ~17 ms audio).
+     With the drain in place, the matrix's `framesProcessed`
+     baseline flips from 25/30 to 29-30 of 30 across every
+     entry; `rtp.h264.yuv8_420_rec709` PASSES outright.
 
 This devplan covers all five phases as one coherent refactor
 across `RtpSession` and `RtpMediaIO`.
@@ -407,8 +437,19 @@ table:
 - **Shutdown path**: no sentinels. `cancelBlockingWork()` calls
   `Queue::cancelWaiters()` on every PayloadQueue and PacketQueue,
   which wakes both producer and consumer waits with
-  `Error::Cancelled`. Threads observe the cancel and exit. See
-  §"Cleanup ordering" under Phase 2 for the join order.
+  `Error::Cancelled`. Threads observe the cancel and **drain
+  remaining items via @c tryPop** before exiting, so a clean
+  `executeCmd(Close)` cascade ships every frame the strand had
+  pushed but the worker hadn't yet processed.  This was the
+  fix that flipped the `rtp.*` matrix's `framesProcessed`
+  baseline from 25/30 to 30/30 — the earlier diagnosis blaming
+  a TX-side burst was wrong; TX was correctly paced, the
+  workers just abandoned in-flight items on cancel without the
+  drain.  See §"Cleanup ordering" under Phase 2 for the join
+  order.  Audio drains unpaced (RTP-TS encodes wire timing);
+  video drains paced through the same `Cadence` the steady-
+  state loop uses, so close latency goes up by ≤ one frame
+  duration per stream.
 - **Buffer-sharing safety**: `RtpPacket::createList` allocates one
   Buffer for N packets sharing distinct slices. The packetizer
   writes the payload bytes inside each slice; the TX thread later
@@ -557,6 +598,83 @@ For low-buffer receivers (ffplay with `-fflags nobuffer
 will appear before video by whatever the upstream encoder latency
 is. That's a known limitation of those flags — well-buffered
 receivers do the alignment correctly.
+
+### SDP clock reference emission (RFC 7273 / SMPTE ST 2110-10)
+
+**Status:** Landed 2026-05-09.
+
+`buildSdp` now emits `a=ts-refclk:` + `a=mediaclk:direct=` per
+RFC 7273 §4.4–4.5 and SMPTE ST 2110-10 §6.3.  The emission is
+config-driven via session-level keys on `MediaConfig`:
+
+  - `RtpRefClock` — `RtpRefClockMode` enum (`Auto` / `LocalMac` /
+    `Ptp` / `None`).  Default `Auto` resolves to `Ptp` when a
+    grandmaster is configured and `LocalMac` otherwise.
+  - `RtpRefClockLocalMac` — `MacAddress`, override for the
+    localmac form; default null lets the writer auto-discover the
+    primary interface MAC via `NetworkInterface::firstNonLoopback()`.
+  - `RtpPtpProfile` — string, default `IEEE1588-2008` (the
+    profile ST 2110-10 currently mandates; `IEEE1588-2019` is
+    accepted for receivers that opt in).
+  - `RtpPtpGrandmaster` — `EUI64`, the PTP grandmaster identity.
+  - `RtpPtpDomain` — int (0–255), default 0; ST 2110 deployments
+    typically use 127.
+  - `RtpMediaClkOffset` — int, default 0 (the only offset
+    ST 2110-30 / -40 mandate).
+
+Resolution lives in `RtpMediaIO::applyClockReferenceConfig`,
+called once from `executeCmd(Open)` after the per-kind configure
+helpers populate the writer-side `Stream` lists.  The tuple
+(`tsRefClkMode`, `refClockLocalMac`, `ptpGrandmaster`,
+`ptpDomain`, `mediaClkOffset`) is stamped onto every active
+`Stream` so `buildSdp` can format the lines without re-parsing
+config.  The reader side mirrors the parse: `applySdp`
+recognises `localmac=<mac>`, the new three-token PTP grammar
+(`ptp=<ver>:<gmid>:<domain>`), and `mediaclk:direct=<offset>`,
+populating the same fields on the reader-mode `Stream`.
+
+The localmac autodetect path lives in the new
+`NetworkInterface` framework (`include/promeki/networkinterface.h`
++ `networkinterfaceimpl.h` + `networkinterfacebackend.h` + the
+bundled POSIX backend).  Backends register through
+`NetworkInterfaceBackend::registerBackend` at static-init; the
+bundled POSIX backend uses `getifaddrs()` + Linux `AF_PACKET`
+(or BSD `AF_LINK`) for the MAC and `SIOCGIFMTU` for MTU.
+A future ST 2110 SmartNIC SDK adapter (Mellanox/NVIDIA Rivermax,
+Intel E810 with media extensions, custom FPGA NIC) plugs in via
+the same mechanism — register a subclass of
+`NetworkInterfaceBackend` with a lower priority value so its
+interfaces sort ahead of the OS-discovered ones.
+
+`Variant`'s string-parse path (`VariantSpec::parseAsType`) gained
+`TypeMacAddress` / `TypeEUI64` cases as part of this work so the
+new `MediaConfig` keys round-trip cleanly through the `--dc`
+CLI surface and JSON serialization.
+
+Verified via `mediaplay`:
+
+```
+# RFC 7273 localmac (default for SystemMonotonic):
+mediaplay -s TPG -d Rtp \
+  --dc VideoRtpDestination:127.0.0.1:5004 \
+  --dc AudioRtpDestination:127.0.0.1:5006 \
+  --dc RtpSaveSdpPath:/tmp/rtp.sdp
+# SDP contains:
+#   a=ts-refclk:localmac=f4-28-9d-05-20-61
+#   a=mediaclk:direct=0
+
+# ST 2110-10 PTP shape:
+mediaplay -s TPG -d Rtp \
+  --dc VideoRtpDestination:127.0.0.1:5004 \
+  --dc AudioRtpDestination:127.0.0.1:5006 \
+  --dc RtpRefClock:Ptp \
+  --dc RtpPtpProfile:IEEE1588-2008 \
+  --dc RtpPtpGrandmaster:00-1A-2B-FF-FE-3C-4D-5E \
+  --dc RtpPtpDomain:127
+# SDP contains:
+#   a=ts-refclk:ptp=IEEE1588-2008:00-1a-2b-ff-fe-3c-4d-5e:127
+#   a=mediaclk:direct=0
+```
 
 ## Files
 
@@ -727,12 +845,14 @@ they're parked here for follow-up rather than re-opening the
 phases:
 
 - **SDP `a=ts-refclk:localmac=...` and `a=mediaclk:direct=0`** —
-  described in *§SDP advertisement of the clock anchor*.  The
+  ~~described in *§SDP advertisement of the clock anchor*.  The
   current `buildSdp` does not emit either line; receivers fall
   back to "trust the SR pair", which works against ffmpeg /
   ffplay / GStreamer today.  Fold into Phase 3 (the cleanup
   pass already touches the SDP builder for the `Stream`
-  hierarchy split).
+  hierarchy split).~~  **Landed 2026-05-09** as part of the
+  ST-2110-ready clock-reference work — see *§SDP clock reference
+  emission (RFC 7273 / SMPTE ST 2110-10)* below.
 - **Per-stream randomized RTCP intervals** — described in
   *§Per-stream RTCP scheduling*.  The current `RtcpScheduler`
   still ticks at a single `_rtcpIntervalMs`.  Not visible to
@@ -1243,32 +1363,74 @@ here so reviewers can see the verification surface in one place.
       / endianness bytes for L16, L24, etc.
       (`tests/unit/pcmsilencefiller.cpp`, 11 cases covering
       signed/float = zero, unsigned BE/LE = midpoint.)
-- [ ] Unit: `AudioPacketizerThread` produces sample-exact wire
-      content from a synthetic input pattern.  (Deferred — the
-      class is currently nested inside `RtpMediaIO`, so a
-      dedicated test would either need the class promoted to a
-      top-level type or a friend-class hook.  Phase 3 splits
-      out per-kind stream classes and is a natural place to
-      revisit this.)
-- [ ] Unit: `AudioTxThread` emits silence packets at the correct
+- [x] Unit: `AudioPacketizerThread` produces sample-exact wire
+      content from a synthetic input pattern.  Landed: the class
+      was extracted from its nested home in `rtpmediaio.cpp` into
+      `include/promeki/rtpaudiopacketizerthread.h` +
+      `src/network/rtpaudiopacketizerthread.cpp`, mirroring the
+      RX-side depacketizer/aggregator/scheduler extractions.
+      Dependencies are handed in via an `RtpAudioPacketizerContext`
+      (storage desc, packet shape, preroll, stream index, sink
+      packet queue).  `openForTest` + `packetizeForTest` entry
+      points let unit tests drive the class synchronously.  Four
+      cases shipped in
+      `tests/unit/network/rtpaudiopacketizerthread.cpp`:
+      sample-exact ramp content (PCMI_S16LE input → PCMI_S16BE
+      wire conversion verified byte-by-byte across three packets);
+      preroll holds off emissions until the FIFO accumulates the
+      threshold; mismatched `streamIdx` is a no-op; zero-sample
+      payload is a no-op.
+- [x] Unit: `AudioTxThread` emits silence packets at the correct
       cadence when its `PacketQueue` is empty, increments
       `silenceSamplesEmitted`, and the wire RTP-TS is contiguous
-      across the gap.  (Deferred for the same reason; the
-      `silenceSamplesEmitted` counter itself is a Phase 3 work
-      item.)
-- [ ] Functional (`utils/promeki-test/cases/rtp.cpp`): adapt the
+      across the gap.  Landed: the class was extracted into
+      `include/promeki/rtpaudiotxthread.h` +
+      `src/network/rtpaudiotxthread.cpp` with an
+      `RtpAudioTxContext` carrying the packet shape, the
+      `RtpSession` + `RtpPayload` it dispatches through, the
+      clock rate, and Atomic counter pointers (packets / bytes /
+      sender octets / silence packets / silence samples).  A new
+      `runOnceForTest()` entry point performs one cadence-body
+      iteration synchronously without `sleep_until` so tests can
+      step the thread deterministically.  Seven cases shipped in
+      `tests/unit/network/rtpaudiotxthread.cpp`: queued chunks
+      emit with monotone RTP-TS spaced by `packetSamples`;
+      empty-queue iterations emit silence packets bumping
+      `silencePacketsEmitted` + `silenceSamplesEmitted`;
+      interleaved real / silence runs preserve RTP-TS
+      contiguity; `noteRtpEmission` flips
+      `hasEmissionRecord` after the first silence emit;
+      `senderOctets` accumulates payload bytes (no header);
+      wrong-size chunks are skipped without crashing while
+      still advancing the cursor; the inbound packet queue's
+      `maxSize` derives from `HeadroomUs / packetTimeUs`.
+- [~] Functional (`utils/promeki-test/cases/rtp.cpp`): adapt the
       existing roundtrip suite to the new architecture once RX-side
-      hardening lands. Expected to pass with no discontinuities
-      after both halves are correct.
+      hardening lands.  `framesProcessed >= framesRequested - 1`
+      gate now satisfied across every entry after the
+      end-of-stream drain fix; `rtp.h264.yuv8_420_rec709`
+      PASSES outright.  Remaining failures are pre-existing
+      inspector-side picture-data band-decode discontinuities
+      on RFC 4175 raw / JPEG and audio-PTS-divergence on a few
+      H.265 frames — separate from this refactor.
 - [ ] Functional: AES67 listener (gst-launch `rtpL16depay` or
       equivalent) asserts continuous sample count across a forced
       source stall — regression test for the silence-fill rule.
-- [ ] Functional: emitted SDP contains `a=ts-refclk:localmac=...`
+- [x] Functional: emitted SDP contains `a=ts-refclk:localmac=...`
       and `a=mediaclk:direct=0` for SystemMonotonic-anchored
       streams; emitted SDP is byte-identical across multiple
       open/close cycles for the same config (no spurious
-      regeneration).  *(`a=ts-refclk` / `a=mediaclk` lines are
-      not yet emitted — see "Deferred TX-side polish" below.)*
+      regeneration).  *(Landed 2026-05-09.  See *§SDP clock
+      reference emission (RFC 7273 / SMPTE ST 2110-10)* below for
+      the full grammar; `mediaplay -s TPG -d Rtp ... --dc
+      RtpSaveSdpPath:...` writes
+      `a=ts-refclk:localmac=<autodetected-MAC>` and
+      `a=mediaclk:direct=0` on every active stream.  PTP shape
+      verified via `--dc RtpRefClock:Ptp --dc
+      RtpPtpProfile:IEEE1588-2008 --dc
+      RtpPtpGrandmaster:00-1A-2B-FF-FE-3C-4D-5E --dc
+      RtpPtpDomain:127`, which produces
+      `a=ts-refclk:ptp=IEEE1588-2008:00-1a-2b-ff-fe-3c-4d-5e:127`.)*
 
 **TX smoke-test (manual / non-checklist):**
 `mediaplay -s TPG -d Rtp --dc VideoRtpDestination:127.0.0.1:5004
@@ -1401,14 +1563,16 @@ a common wallclock domain instead of relying on
 - [ ] Functional: dual-stream roundtrip (video + audio with a
       simulated network delay between sources) shows zero A-V
       drift after one SR period.
-      *(Deferred — the existing `promeki-test rtp.*` suite
-      sees the pre-existing receive-side sync gate eat ~5 of
-      60 frames at startup before the marker boundary lands,
-      independent of Phase 5.  Once the RX-side hardening
-      noted under "Out of scope" addresses that, the rtp.*
-      suite can be extended with a wallclock-drift assertion
-      that reads the per-Frame `captureTime` to confirm zero
-      A-V drift after one SR period.)*
+      *(Deferred — the `promeki-test rtp.*` suite was originally
+      losing ~5/30 frames, which we'd attributed to a
+      receive-side sync gate; the actual cause was the TX-side
+      end-of-stream drain bug fixed in the Phase 6 follow-on,
+      and the matrix's `framesProcessed` baseline now reaches
+      29-30 of 30.  The remaining work for this checklist
+      item is to extend the suite with a wallclock-drift
+      assertion that reads the per-Frame `captureTime` to
+      confirm zero A-V drift after one SR period; the
+      infrastructure is now in place.)*
 
 **Phase 5 status (2026-05-08):** Core landed.  The
 implementation chunks are six new public surfaces:

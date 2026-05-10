@@ -10,6 +10,7 @@
 #include <cassert>
 #include <cstring>
 #include <promeki/bufferview.h>
+#include <promeki/timestamp.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -327,6 +328,31 @@ class RtpPacket : public BufferView {
                         std::memset(data(), 0, size());
                         setVersion(2);
                 }
+
+                /**
+                 * @brief Local @c TimeStamp::now() snapshot taken at
+                 *        @c recvfrom() return on the RX socket
+                 *        thread, before any further processing.
+                 *
+                 * Default-constructed packets carry an epoch
+                 * timestamp; the RX path overwrites this immediately
+                 * after the kernel hands the bytes back.  Downstream
+                 * stages (per-source seq tracker, reorder buffer,
+                 * depacketizer) read it as the single jitter-free
+                 * arrival anchor for that packet — using a single
+                 * stamp prevents the per-stage @c TimeStamp::now()
+                 * calls from each contributing their own scheduling
+                 * jitter to derived measurements (interarrival
+                 * jitter, stream-anchor @c captureTime
+                 * interpolation).
+                 *
+                 * Plain @c TimeStamp value type, not a const member
+                 * (so the recv thread can mutate it after parsing
+                 * the packet); thread-safety on this field is
+                 * provided by the producer / consumer ordering of
+                 * the queue handoff downstream of the recv thread.
+                 */
+                TimeStamp arrivalSteady;
 
         private:
                 const uint8_t *hdr() const {

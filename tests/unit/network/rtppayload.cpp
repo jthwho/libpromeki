@@ -6,6 +6,7 @@
  */
 
 #include <doctest/doctest.h>
+#include <promeki/base64.h>
 #include <promeki/rtppayload.h>
 #include <cstring>
 #include <cstdlib>
@@ -1158,5 +1159,223 @@ TEST_CASE("RtpPayloadH265") {
                 REQUIRE(reNals.size() == 2);
                 CHECK(reNals[0] == vps);
                 CHECK(reNals[1] == sps);
+        }
+}
+
+// ============================================================================
+// Validate-gate state machines (Phase 4 — codec-aware mid-stream-join)
+// ============================================================================
+
+namespace {
+
+        // Pack a vector of NAL bytes into a Buffer suitable for
+        // passing to validate().  The validate() implementation
+        // walks Annex-B start codes, so we build that framing
+        // here.
+        Buffer makeAuBuffer(const std::vector<std::vector<uint8_t>> &nals) {
+                std::vector<uint8_t> bytes = buildAnnexB(nals);
+                Buffer               buf(bytes.size());
+                buf.setSize(bytes.size());
+                if (!bytes.empty()) std::memcpy(buf.data(), bytes.data(), bytes.size());
+                return buf;
+        }
+
+        // H.264 NAL type bytes: F=0, NRI=3 → high bits 0x60.
+        std::vector<uint8_t> h264NalSps() { return {0x67, 0x42, 0x00, 0x1f, 0x96, 0x54}; }
+        std::vector<uint8_t> h264NalPps() { return {0x68, 0xce, 0x06, 0xe2}; }
+        std::vector<uint8_t> h264NalIdr() { return {0x65, 0x88, 0x84, 0x00, 0x10}; }
+        std::vector<uint8_t> h264NalNonIdr() { return {0x61, 0x9a, 0x12, 0x00}; }
+
+        // H.265 NAL bytes: byte0 = (type<<1) | layerIdHi, byte1 = layerIdLo|TID.
+        // For type=N and layerId=0 / TID=1: byte0 = (N<<1), byte1 = 0x01.
+        std::vector<uint8_t> h265NalVps() { return {0x40, 0x01, 0x0c, 0x01, 0xff, 0xff}; }
+        std::vector<uint8_t> h265NalSps() { return {0x42, 0x01, 0x01, 0x01, 0x60, 0x00}; }
+        std::vector<uint8_t> h265NalPps() { return {0x44, 0x01, 0xc1, 0x73}; }
+        // IDR_W_RADL = type 19 → byte0 = 0x26.
+        std::vector<uint8_t> h265NalIdr() { return {0x26, 0x01, 0xaf, 0x01, 0x07, 0xa6}; }
+        // CRA = type 21 → byte0 = 0x2a.  Different IRAP variant.
+        std::vector<uint8_t> h265NalCra() { return {0x2a, 0x01, 0xaf, 0x01, 0x07}; }
+        // TRAIL_R = type 1 → byte0 = 0x02.  Non-IRAP, non-paramSet.
+        std::vector<uint8_t> h265NalTrail() { return {0x02, 0x01, 0xff, 0x00}; }
+
+} // namespace
+
+TEST_CASE("RtpPayloadH264::validate") {
+        SUBCASE("empty buffer drops silently") {
+                RtpPayloadH264 p;
+                Buffer         empty;
+                CHECK(p.validate(empty) == RtpPayload::ValidateResult::DropSilently);
+        }
+
+        SUBCASE("paramSets missing → Wait, then catch up in-band") {
+                RtpPayloadH264 p;
+                CHECK_FALSE(p.spsObserved());
+                CHECK_FALSE(p.ppsObserved());
+
+                // No SPS / PPS yet — first AU is a non-IDR slice.
+                Buffer au0 = makeAuBuffer({h264NalNonIdr()});
+                CHECK(p.validate(au0) == RtpPayload::ValidateResult::Wait);
+
+                // SPS arrives in-band — still missing PPS, still Wait.
+                Buffer au1 = makeAuBuffer({h264NalSps()});
+                CHECK(p.validate(au1) == RtpPayload::ValidateResult::Wait);
+                CHECK(p.spsObserved());
+                CHECK_FALSE(p.ppsObserved());
+
+                // PPS observed — paramSets complete, but no IDR yet.
+                Buffer au2 = makeAuBuffer({h264NalPps()});
+                CHECK(p.validate(au2) == RtpPayload::ValidateResult::DropSilently);
+                CHECK(p.ppsObserved());
+                CHECK_FALSE(p.idrLatched());
+
+                // First IDR — flips Accept and latches.
+                Buffer au3 = makeAuBuffer({h264NalIdr()});
+                CHECK(p.validate(au3) == RtpPayload::ValidateResult::Accept);
+                CHECK(p.idrLatched());
+
+                // Subsequent non-IDR AUs accepted.
+                Buffer au4 = makeAuBuffer({h264NalNonIdr()});
+                CHECK(p.validate(au4) == RtpPayload::ValidateResult::Accept);
+        }
+
+        SUBCASE("paramSets+IDR in same AU → Accept on first call") {
+                RtpPayloadH264 p;
+                Buffer         au = makeAuBuffer({h264NalSps(), h264NalPps(), h264NalIdr()});
+                CHECK(p.validate(au) == RtpPayload::ValidateResult::Accept);
+                CHECK(p.idrLatched());
+        }
+
+        SUBCASE("seeded paramSets via setSpropParameterSets") {
+                RtpPayloadH264 p;
+                // Build the canonical RFC 6184 sprop-parameter-sets
+                // value: base64(SPS) "," base64(PPS).
+                auto                 spsNal = h264NalSps();
+                auto                 ppsNal = h264NalPps();
+                String               sprop = Base64::encode(spsNal.data(), spsNal.size()) + String(",") +
+                               Base64::encode(ppsNal.data(), ppsNal.size());
+                p.setSpropParameterSets(sprop);
+                CHECK(p.spsObserved());
+                CHECK(p.ppsObserved());
+
+                // No in-band IDR yet — pre-IDR AU drops silently.
+                Buffer pre = makeAuBuffer({h264NalNonIdr()});
+                CHECK(p.validate(pre) == RtpPayload::ValidateResult::DropSilently);
+
+                // First IDR gates open.
+                Buffer idr = makeAuBuffer({h264NalIdr()});
+                CHECK(p.validate(idr) == RtpPayload::ValidateResult::Accept);
+        }
+
+        SUBCASE("malformed sprop ignored gracefully") {
+                RtpPayloadH264 p;
+                p.setSpropParameterSets(String("***not-base64***"));
+                CHECK_FALSE(p.spsObserved());
+                CHECK_FALSE(p.ppsObserved());
+                p.setSpropParameterSets(String());
+                CHECK_FALSE(p.spsObserved());
+        }
+
+        SUBCASE("clearParamSets re-arms latch on SSRC reset") {
+                RtpPayloadH264 p;
+                Buffer         au = makeAuBuffer({h264NalSps(), h264NalPps(), h264NalIdr()});
+                CHECK(p.validate(au) == RtpPayload::ValidateResult::Accept);
+                CHECK(p.idrLatched());
+
+                p.clearParamSets();
+                CHECK_FALSE(p.spsObserved());
+                CHECK_FALSE(p.ppsObserved());
+                CHECK_FALSE(p.idrLatched());
+
+                // After reset, an immediate non-IDR AU returns Wait
+                // (no paramSets yet) — same gate as a fresh open.
+                Buffer post = makeAuBuffer({h264NalNonIdr()});
+                CHECK(p.validate(post) == RtpPayload::ValidateResult::Wait);
+        }
+}
+
+TEST_CASE("RtpPayloadH265::validate") {
+        SUBCASE("empty buffer drops silently") {
+                RtpPayloadH265 p;
+                Buffer         empty;
+                CHECK(p.validate(empty) == RtpPayload::ValidateResult::DropSilently);
+        }
+
+        SUBCASE("paramSets missing → Wait, in-band catch-up") {
+                RtpPayloadH265 p;
+                Buffer         pre = makeAuBuffer({h265NalTrail()});
+                CHECK(p.validate(pre) == RtpPayload::ValidateResult::Wait);
+
+                // VPS arrives — SPS / PPS still missing.
+                Buffer vpsOnly = makeAuBuffer({h265NalVps()});
+                CHECK(p.validate(vpsOnly) == RtpPayload::ValidateResult::Wait);
+                CHECK(p.vpsObserved());
+
+                Buffer spsOnly = makeAuBuffer({h265NalSps()});
+                CHECK(p.validate(spsOnly) == RtpPayload::ValidateResult::Wait);
+                CHECK(p.spsObserved());
+
+                Buffer ppsOnly = makeAuBuffer({h265NalPps()});
+                // All paramSets in — but no IRAP yet.
+                CHECK(p.validate(ppsOnly) == RtpPayload::ValidateResult::DropSilently);
+                CHECK(p.ppsObserved());
+                CHECK_FALSE(p.irapLatched());
+
+                Buffer idr = makeAuBuffer({h265NalIdr()});
+                CHECK(p.validate(idr) == RtpPayload::ValidateResult::Accept);
+                CHECK(p.irapLatched());
+
+                Buffer trail = makeAuBuffer({h265NalTrail()});
+                CHECK(p.validate(trail) == RtpPayload::ValidateResult::Accept);
+        }
+
+        SUBCASE("CRA also opens the IRAP gate") {
+                RtpPayloadH265 p;
+                Buffer         au = makeAuBuffer({h265NalVps(), h265NalSps(), h265NalPps(), h265NalCra()});
+                CHECK(p.validate(au) == RtpPayload::ValidateResult::Accept);
+                CHECK(p.irapLatched());
+        }
+
+        SUBCASE("seeded sprops via setSpropVps/Sps/Pps") {
+                RtpPayloadH265 p;
+                auto           vps = h265NalVps();
+                auto           sps = h265NalSps();
+                auto           pps = h265NalPps();
+                p.setSpropVps(Base64::encode(vps.data(), vps.size()));
+                p.setSpropSps(Base64::encode(sps.data(), sps.size()));
+                p.setSpropPps(Base64::encode(pps.data(), pps.size()));
+                CHECK(p.vpsObserved());
+                CHECK(p.spsObserved());
+                CHECK(p.ppsObserved());
+
+                Buffer pre = makeAuBuffer({h265NalTrail()});
+                CHECK(p.validate(pre) == RtpPayload::ValidateResult::DropSilently);
+
+                Buffer idr = makeAuBuffer({h265NalIdr()});
+                CHECK(p.validate(idr) == RtpPayload::ValidateResult::Accept);
+        }
+
+        SUBCASE("setSprop ignores type-mismatched payloads") {
+                RtpPayloadH265 p;
+                // Feed a SPS into setSpropVps — type mismatch, no flag set.
+                auto           sps = h265NalSps();
+                p.setSpropVps(Base64::encode(sps.data(), sps.size()));
+                CHECK_FALSE(p.vpsObserved());
+                CHECK_FALSE(p.spsObserved()); // setSpropVps only flips _vpsObserved
+        }
+
+        SUBCASE("clearParamSets re-arms HEVC latch") {
+                RtpPayloadH265 p;
+                Buffer         au = makeAuBuffer({h265NalVps(), h265NalSps(), h265NalPps(), h265NalIdr()});
+                CHECK(p.validate(au) == RtpPayload::ValidateResult::Accept);
+                CHECK(p.irapLatched());
+
+                p.clearParamSets();
+                CHECK_FALSE(p.vpsObserved());
+                CHECK_FALSE(p.spsObserved());
+                CHECK_FALSE(p.ppsObserved());
+                CHECK_FALSE(p.irapLatched());
+
+                Buffer post = makeAuBuffer({h265NalTrail()});
+                CHECK(p.validate(post) == RtpPayload::ValidateResult::Wait);
         }
 }

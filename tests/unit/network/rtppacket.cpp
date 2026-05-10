@@ -7,6 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/rtppacket.h>
+#include <promeki/timestamp.h>
 #include <cstring>
 
 using namespace promeki;
@@ -382,5 +383,20 @@ TEST_CASE("RtpPacket") {
                 // First packet is too small — version not set since size < HeaderSize
                 CHECK_FALSE(pkts[0].isValid());
                 CHECK(pkts[1].isValid());
+        }
+
+        SUBCASE("arrivalSteady defaults to epoch and round-trips through copy") {
+                RtpPacket pkt(100);
+                CHECK(pkt.arrivalSteady == TimeStamp());
+
+                const TimeStamp now = TimeStamp::now();
+                pkt.arrivalSteady = now;
+                CHECK(pkt.arrivalSteady == now);
+
+                // Copy preserves the field (default copy ctor synthesised
+                // by the compiler — RtpPacket has no explicit copy
+                // operations).
+                RtpPacket copy = pkt;
+                CHECK(copy.arrivalSteady == now);
         }
 }
