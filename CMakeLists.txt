@@ -1653,6 +1653,9 @@ set(PROMEKI_HEADERS
     include/promeki/memfdbufferimpl.h
     include/promeki/memfdregion.h
     include/promeki/memspace.h
+    include/promeki/numa.h
+    include/promeki/numahostbufferimpl.h
+    include/promeki/pinnedhostbufferimpl.h
     include/promeki/metadata.h
     include/promeki/mouseevent.h
     include/promeki/mutex.h
@@ -1793,6 +1796,9 @@ set(PROMEKI_SOURCES
     src/core/md5.cpp
     src/core/memfdbufferimpl.cpp
     src/core/memfdregion.cpp
+    src/core/numa.cpp
+    src/core/numahostbufferimpl.cpp
+    src/core/pinnedhostbufferimpl.cpp
     src/core/mempool.cpp
     src/core/memdomain.cpp
     src/core/memspace.cpp
@@ -2897,6 +2903,9 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/mempool.cpp
         tests/unit/memspace.cpp
         tests/unit/metadata.cpp
+        tests/unit/numa.cpp
+        tests/unit/numahostbufferimpl.cpp
+        tests/unit/pinnedhostbufferimpl.cpp
         tests/unit/mutex.cpp
         tests/unit/numname.cpp
         tests/unit/obfuscatedstring.cpp

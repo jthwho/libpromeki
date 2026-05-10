@@ -19,14 +19,17 @@
 #include <promeki/clockdomain.h>
 #include <promeki/error.h>
 #include <promeki/frame.h>
+#include <promeki/imagedesc.h>
 #include <promeki/list.h>
 #include <promeki/logger.h>
+#include <promeki/mediaioallocator.h>
 #include <promeki/mediaiocommand.h>
 #include <promeki/mediaioport.h>
 #include <promeki/mediaioportgroup.h>
 #include <promeki/mediaiorequest.h>
 #include <promeki/mediaiostats.h>
 #include <promeki/mediatimestamp.h>
+#include <promeki/memspace.h>
 #include <promeki/metadata.h>
 #include <promeki/ndidiscovery.h>
 #include <promeki/ndiformat.h>
@@ -112,6 +115,60 @@ namespace {
                 if (host.toLower() == me.toLower()) return true;
                 return stripDomain(host).toLower() == stripDomain(me).toLower();
         }
+
+        // Allocator that lands every NDI-related host buffer in
+        // MemSpace::PinnedHost.  The NDI SDK reads sender frames
+        // directly out of host memory for DMA — pinning the upstream
+        // producer's planes means the SDK avoids a staging copy on
+        // ingress.  Symmetrically, NDI's receive path memcpys the
+        // SDK frame into a Buffer; landing that copy in PinnedHost
+        // lets downstream consumers (e.g. NVENC, NVDEC, RTP TX)
+        // DMA off it directly.  Audio + bytes follow the same logic.
+        //
+        // Stateless; trivially thread-safe.  Installed by
+        // executeCmd(Open) on every NdiMediaIO; exposed publicly
+        // through NdiMediaIO::makePinnedHostAllocator() so other
+        // call sites can re-use the same policy.
+        class NdiAllocator : public MediaIOAllocator {
+                public:
+                        PROMEKI_SHARED_DERIVED(NdiAllocator)
+
+                        NdiAllocator()           = default;
+                        ~NdiAllocator() override = default;
+
+                        String name() const override { return String("NdiAllocator"); }
+
+                        Buffer allocateVideoPlane(const ImageDesc &desc, int planeIndex) const override {
+                                const PixelFormat &pf = desc.pixelFormat();
+                                if (!pf.isValid() || !desc.size().isValid()) return Buffer();
+                                if (planeIndex < 0 || planeIndex >= static_cast<int>(pf.planeCount()))
+                                        return Buffer();
+                                const size_t bytes = pf.planeSize(static_cast<size_t>(planeIndex), desc);
+                                if (bytes == 0) return Buffer();
+                                Buffer buf(bytes, Buffer::DefaultAlign,
+                                           MemSpace(MemSpace::PinnedHost));
+                                if (buf.isValid()) buf.setSize(bytes);
+                                return buf;
+                        }
+
+                        Buffer allocateAudioChunk(const AudioDesc &desc, size_t samples) const override {
+                                if (!desc.isValid() || samples == 0) return Buffer();
+                                const size_t bytes = desc.bufferSize(samples);
+                                if (bytes == 0) return Buffer();
+                                Buffer buf(bytes, Buffer::DefaultAlign,
+                                           MemSpace(MemSpace::PinnedHost));
+                                if (buf.isValid()) buf.setSize(bytes);
+                                return buf;
+                        }
+
+                        Buffer allocateBytes(size_t bytes, size_t align = 0) const override {
+                                if (bytes == 0) return Buffer();
+                                const size_t a = (align == 0) ? Buffer::DefaultAlign : align;
+                                Buffer       buf(bytes, a, MemSpace(MemSpace::PinnedHost));
+                                if (buf.isValid()) buf.setSize(bytes);
+                                return buf;
+                        }
+        };
 
 } // namespace
 
@@ -221,8 +278,25 @@ Error NdiMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 }
         }
 
+        // Install the pinned-host allocator on this MediaIO.  Upstream
+        // producers feeding sink mode reach it via port->allocator()
+        // and land their planes in PinnedHost so the SDK's submit
+        // doesn't need to stage-copy.  Receive-mode allocations also
+        // route through this allocator (see captureLoop / audio drain)
+        // so downstream consumers can DMA off the pinned region.  This
+        // is the documented rollback point if the policy ever needs to
+        // be reverted in production — comment-out this single line.
+        setAllocator(makePinnedHostAllocator());
+
         cmd.frameCount = MediaIO::FrameCountInfinite;
         return Error::Ok;
+}
+
+MediaIOAllocator::Ptr NdiMediaIO::makePinnedHostAllocator() {
+        // Stateless allocator — fresh instance per call is fine; callers
+        // that want one shared instance install the same Ptr on multiple
+        // MediaIOs themselves.
+        return MediaIOAllocator::Ptr::takeOwnership(new NdiAllocator());
 }
 
 Error NdiMediaIO::executeCmd(MediaIOCommandClose &cmd) {
@@ -352,7 +426,20 @@ Error NdiMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 if (avail > 0 && _audioRing.format().isValid()) {
                         AudioDesc   nativeDesc = _audioRing.format();
                         size_t      bufBytes   = nativeDesc.bufferSize(avail);
-                        Buffer pcm        = Buffer(bufBytes);
+                        // Audio drain rides the same allocator as the
+                        // video receive so pinned-host upgrade applies
+                        // symmetrically.
+                        Buffer pcm = allocator()->allocateBytes(bufBytes);
+                        if (!pcm.isValid()) {
+                                // Allocation failure — log and skip the
+                                // audio drain for this frame.  The video
+                                // payload still propagates downstream;
+                                // the audio gap is recoverable on the
+                                // next read.
+                                promekiErr("NdiMediaIO: audio drain allocator returned invalid Buffer "
+                                           "for %zu bytes",
+                                           bufBytes);
+                        } else {
                         auto [got, err]        = _audioRing.pop(pcm.data(), avail);
                         if (err.isOk() && got > 0) {
                                 size_t     usedBytes = nativeDesc.bufferSize(got);
@@ -386,6 +473,7 @@ Error NdiMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                                 // sets _audioFirstSampleTicks afresh.
                                 _audioFirstSampleTicks = 0;
                                 frame.addPayload(std::move(audioPayload));
+                        }
                         }
                 }
         }
@@ -1177,7 +1265,23 @@ void NdiMediaIO::captureLoop() {
                                         totalBytes = static_cast<size_t>(vframe.line_stride_in_bytes) *
                                                      static_cast<size_t>(vframe.yres);
                                 }
-                                Buffer buf = Buffer(totalBytes);
+                                // Route the receive-side allocation through
+                                // this MediaIO's installed allocator so the
+                                // copied frame lands in PinnedHost (default
+                                // for NDI; see executeCmd(Open)).
+                                // Downstream DMA consumers benefit from the
+                                // pinned region.  Falls back to default heap
+                                // automatically when the operator clears the
+                                // override via setAllocator(nullptr).
+                                Buffer buf = allocator()->allocateBytes(totalBytes);
+                                if (!buf.isValid()) {
+                                        promekiErr("NdiMediaIO: receive allocator returned invalid Buffer for "
+                                                   "%zu bytes",
+                                                   totalBytes);
+                                        api->recv_free_video_v2(_recv, &vframe);
+                                        _droppedReceives.fetch_add(1, std::memory_order_relaxed);
+                                        break;
+                                }
                                 std::memcpy(buf.data(), vframe.p_data, totalBytes);
                                 BufferView                    view(buf, 0, totalBytes);
                                 UncompressedVideoPayload::Ptr vp =

@@ -37,6 +37,19 @@ void VideoDecoder::clearError() {
         _lastErrorMessage = String();
 }
 
+MediaIOAllocator::Ptr VideoDecoder::allocator() const {
+        if (_allocator.isValid()) return _allocator;
+        return MediaIOAllocator::defaultAllocator();
+}
+
+void VideoDecoder::setAllocator(MediaIOAllocator::Ptr a) {
+        // Null clears and reverts to defaultAllocator() on the next
+        // allocator() read.  Stored as-is so a backend that wants to
+        // read the override directly (without the default fallback)
+        // can detect "user installed nothing" by checking isValid().
+        _allocator = a;
+}
+
 namespace {
 
         struct DecoderRegistry {

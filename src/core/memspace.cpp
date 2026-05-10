@@ -205,6 +205,74 @@ struct MemSpaceRegistry {
                                 },
                                 .stats = makeStats()};
 
+                        // NumaHost (default-node / Numa::NodeAny).
+                        // Real allocation lives on NumaHostBufferImpl
+                        // (see bufferfactory.cpp); the Ops here exist so
+                        // the MemSpace name + stats surface in operator
+                        // dashboards.  Per-specific-node entries are
+                        // registered lazily by NumaHost::forNode().
+                        entries[MemSpace::NumaHost] = {
+                                .id = MemSpace::NumaHost,
+                                .name = "NumaHost",
+                                .isHostAccessible = [](const MemAllocation &) -> bool { return true; },
+                                .alloc = [](MemAllocation &) -> void {
+                                        PROMEKI_ASSERT(false && "MemSpace::NumaHost alloc must go through BufferImpl factory");
+                                },
+                                .release = [](MemAllocation &) -> void {
+                                        PROMEKI_ASSERT(false && "MemSpace::NumaHost release must go through BufferImpl");
+                                },
+                                .copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
+                                        PROMEKI_ASSERT(src.ptr != nullptr && dst.ptr != nullptr);
+                                        MemSpace::ID did = dst.ms.id();
+                                        if (did == MemSpace::System || did == MemSpace::SystemSecure ||
+                                            did == MemSpace::PinnedHost || did == MemSpace::NumaHost) {
+                                                std::memcpy(dst.ptr, src.ptr, bytes);
+                                                return Error::Ok;
+                                        }
+                                        return Error::NotSupported;
+                                },
+                                .fill = [](void *ptr, size_t bytes, char value) -> Error {
+                                        PROMEKI_ASSERT(ptr != nullptr);
+                                        std::memset(ptr, value, bytes);
+                                        return Error::Ok;
+                                },
+                                .stats = makeStats()};
+
+                        // PinnedHost.  Real allocation/release lives on
+                        // PinnedHostBufferImpl (see bufferfactory.cpp);
+                        // the Ops entries here exist so the MemSpace
+                        // resolves correctly and surfaces a name + stats
+                        // line in operator dashboards.
+                        entries[MemSpace::PinnedHost] = {
+                                .id = MemSpace::PinnedHost,
+                                .name = "PinnedHost",
+                                .isHostAccessible = [](const MemAllocation &) -> bool { return true; },
+                                .alloc = [](MemAllocation &) -> void {
+                                        PROMEKI_ASSERT(false && "MemSpace::PinnedHost alloc must go through BufferImpl factory");
+                                },
+                                .release = [](MemAllocation &) -> void {
+                                        PROMEKI_ASSERT(false && "MemSpace::PinnedHost release must go through BufferImpl");
+                                },
+                                .copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> Error {
+                                        // Pinned host memory is plain bytes
+                                        // for the CPU; a copy peer in the
+                                        // Host domain just memcpys.
+                                        PROMEKI_ASSERT(src.ptr != nullptr && dst.ptr != nullptr);
+                                        MemSpace::ID did = dst.ms.id();
+                                        if (did == MemSpace::System || did == MemSpace::SystemSecure ||
+                                            did == MemSpace::PinnedHost) {
+                                                std::memcpy(dst.ptr, src.ptr, bytes);
+                                                return Error::Ok;
+                                        }
+                                        return Error::NotSupported;
+                                },
+                                .fill = [](void *ptr, size_t bytes, char value) -> Error {
+                                        PROMEKI_ASSERT(ptr != nullptr);
+                                        std::memset(ptr, value, bytes);
+                                        return Error::Ok;
+                                },
+                                .stats = makeStats()};
+
                         entries[MemSpace::SystemSecure] = {
                                 .id = MemSpace::SystemSecure,
                                 .name = "SystemSecure",

@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/bufferimpl.h>
@@ -29,7 +30,7 @@ class Buffer;
 using BufferImplPtr = SharedPtr<BufferImpl, false>;
 
 /**
- * @brief Function pointer type for constructing a BufferImpl for a MemSpace.
+ * @brief Callable type for constructing a BufferImpl for a MemSpace.
  * @ingroup util
  *
  * The factory receives the originating @ref MemSpace plus the size
@@ -38,8 +39,15 @@ using BufferImplPtr = SharedPtr<BufferImpl, false>;
  * @ref BufferImplPtr on failure (the underlying alloc returned
  * nullptr); the registered MemSpace stats already record the
  * failure count.
+ *
+ * Stored as @c std::function so factory closures may capture extra
+ * state — e.g. @c NumaHost::forNode registers a unique factory per
+ * NUMA node, capturing the node ID in the closure rather than
+ * requiring a side-channel map.  Plain function pointers and
+ * captureless lambdas implicitly convert.
  */
-using BufferImplFactory = BufferImplPtr (*)(const MemSpace &ms, size_t bytes, size_t align);
+using BufferImplFactory =
+        std::function<BufferImplPtr(const MemSpace &ms, size_t bytes, size_t align)>;
 
 /**
  * @brief Registers a factory function for a MemSpace ID.

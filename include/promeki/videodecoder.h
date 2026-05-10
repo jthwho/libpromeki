@@ -17,6 +17,7 @@
 #include <promeki/backendweight.h>
 #include <promeki/compressedvideopayload.h>
 #include <promeki/uncompressedvideopayload.h>
+#include <promeki/mediaioallocator.h>
 #include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -134,6 +135,50 @@ class VideoDecoder {
                 /** @brief Returns a human-readable message for the last error. */
                 const String &lastErrorMessage() const { return _lastErrorMessage; }
 
+                /**
+                 * @brief Returns the buffer allocator this decoder uses
+                 *        for its emitted uncompressed payloads.
+                 *
+                 * Backends that support placement control route every
+                 * payload allocation through this accessor.  When no
+                 * override has been installed via @ref setAllocator,
+                 * returns @ref MediaIOAllocator::defaultAllocator (a
+                 * stateless singleton that defers to
+                 * @c BufferAllocator::defaultAllocator's heap-backed
+                 * @ref MemSpace::Default allocator) — existing call
+                 * sites that don't know about the allocator framework
+                 * see no behaviour change.
+                 *
+                 * Never returns null.
+                 *
+                 * @par Thread safety
+                 * Safe to call from any thread once the decoder has
+                 * been constructed.  The pointer is updated only by
+                 * @ref setAllocator on the user thread before the
+                 * first @ref submitPayload — readers on the decode
+                 * strand observe the most-recently-installed value.
+                 */
+                MediaIOAllocator::Ptr allocator() const;
+
+                /**
+                 * @brief Installs a per-decoder allocator override.
+                 *
+                 * Pass null to clear and revert to
+                 * @ref MediaIOAllocator::defaultAllocator.  Typically
+                 * called by the pipeline / caller once it knows what
+                 * placement policy fits the downstream consumer.  An
+                 * NVDEC backend, for example, hands out
+                 * @ref MemSpace::CudaDevice planes through its own
+                 * allocator subclass so decoded frames stay device-
+                 * resident; the install line is the documented
+                 * rollback point if that policy ever needs reverting.
+                 *
+                 * Default no-op implementation on the base stores the
+                 * pointer.  Backends that need to thread the allocator
+                 * into a private worker / Impl override and forward.
+                 */
+                virtual void setAllocator(MediaIOAllocator::Ptr a);
+
                 // ---- Backend registry ----
 
                 /**
@@ -163,6 +208,17 @@ class VideoDecoder {
 
                 /** @brief Clears the error state. */
                 void clearError();
+
+                /**
+                 * @brief Per-decoder allocator override.
+                 *
+                 * Cleared (invalid) by default; @ref allocator falls
+                 * back to @ref MediaIOAllocator::defaultAllocator when
+                 * unset.  Subclasses may read this directly when they
+                 * dispatch allocation onto a private worker that can't
+                 * conveniently call back through the public accessor.
+                 */
+                MediaIOAllocator::Ptr _allocator;
 
         private:
                 VideoCodec _codec;

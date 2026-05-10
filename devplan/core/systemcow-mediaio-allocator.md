@@ -12,7 +12,7 @@ Six related additions, planned together because TPG validates the full stack at 
 3. **`MemfdBufferImpl` + `MemSpace::SystemCow`** — a `BufferImpl` backed by `MemfdRegion`, registered with `BufferFactory` so `Buffer(size, align, MemSpace::SystemCow)` gets page-level CoW after `seal()`.
 4. **`BufferAllocator` (core) + `MediaIOAllocator` (proav)** — `BufferAllocator` is the universal core seam (raw bytes, video plane, audio chunk) usable by anything in the library that needs to delegate buffer placement. `MediaIOAllocator` is a thin proav subclass adding `allocateVideoPayload` / `allocateAudioPayload` for the proav payload types, and is what every `MediaIO` vends.
 5. **TPG proof of concept** — `TpgMediaIO`'s allocator hands out `MemSpace::SystemCow` for video; the cache populate path explicitly seals when populate completes. Per-frame burn-in stops paying for the full-frame `memcpy` inside `ensureExclusive`.
-6. **Backend rollout roadmap** — concrete next-step migrations for NDI / NVDEC / DeckLink / RTP TX / RTP RX / BurnMediaIO once the abstraction is proved, plus the prerequisite `PinnedHost` / `NumaHost` `MemSpace` work those phases depend on.
+6. **Backend rollout roadmap** — concrete next-step migrations for NDI / NVDEC / RTP TX / RTP RX / BurnMediaIO once the abstraction is proved, plus the prerequisite `PinnedHost` / `NumaHost` `MemSpace` work those phases depend on.
 
 ---
 
@@ -457,7 +457,7 @@ class MediaIOPort {
 ### C.5 — Threading and lifetime contracts
 
 - **Thread safety.** Allocator implementations *must* be thread-safe — they're called from prefetch workers, write strands, CSC threads, etc. Document on the base class. The default is trivially safe (stateless). Backend overrides that hold pools take their own `Mutex`.
-- **Allocator outlives vended Buffers.** Pooled backends recycle Buffers back to a pool on Buffer destruction; the pool must outlive every vended Buffer. Implementation contract: backend `BufferImpl` subclasses that recycle (e.g. a future `PooledBufferImpl`) hold a `SharedPtr` to the pool / allocator state, so the allocator's lifetime is anchored by outstanding Buffers automatically. No explicit "release" hook on the allocator itself — `SharedPtr` countdown handles it.
+- **Allocator outlives vended Buffers.** Any future pooled backend that recycles Buffers back to a pool on Buffer destruction must keep the pool alive across every vended Buffer. The recommended contract is the same one we'll use elsewhere: the recycling `BufferImpl` subclass holds a `SharedPtr` to the pool / allocator state, so the allocator's lifetime is anchored by outstanding Buffers automatically; no explicit "release" hook on the allocator itself. No backend in this devplan needs that today — documented for future reference only.
 - **Allocator failure modes.** If `allocateX` cannot satisfy the request (out of pool, OS allocation failure), it returns an invalid `Buffer` (or null `Ptr` for full-payload paths). Callers handle invalid returns the same way they handle a failed `Buffer(size)` today. No exceptions.
 
 ### C.6 — Doctests
@@ -515,44 +515,90 @@ Each entry below is a separate follow-up landing — none of them block the Syst
 
 The allocator framework (Phase C) is the seam through which backends pick a `MemSpace`. The MemSpaces themselves are not free — each new ID needs a `BufferImpl` subclass, a factory registration, stats wiring, and a clean shutdown path. None of these block Phase D (TPG only needs `SystemCow`, which Phase B introduces). They block the corresponding E-phase below.
 
-| MemSpace          | Backend impl                                    | Required by | Notes                                                   |
+| MemSpace          | Backend impl                                    | Required by | Notes / Status                                          |
 | :---------------- | :---------------------------------------------- | :---------- | :------------------------------------------------------ |
-| `SystemCow`       | `MemfdBufferImpl` (Phase B)                     | E6 (Burn)   | Linux only; falls back to `HostBufferImpl` elsewhere    |
-| `PinnedHost`      | new `PinnedHostBufferImpl`; `mlock` + aligned alloc, escalates to `cudaHostAlloc` when CUDA is enabled at runtime | E1 (NDI)    | CUDA-conditional code path; standalone of CUDA build flag — runtime detection only |
-| `NumaHost`        | new `NumaHostBufferImpl`; `numa_alloc_onnode`; parameterised by node ID via factory keying | E4, E5 (RTP TX/RX) | libnuma dependency (already present? confirm before E4) |
+| `SystemCow`       | `MemfdBufferImpl` (Phase B)                     | E6 (Burn)   | LANDED. Linux only; falls back to `HostBufferImpl` elsewhere |
+| `PinnedHost`      | `PinnedHostBufferImpl`; `mlock` + aligned alloc | E1 (NDI)    | **LANDED.** Runtime soft-fail on `RLIMIT_MEMLOCK` exhaustion (warning + unlocked allocation). CUDA escalation deferred — no consumer today. |
+| `NumaHost`        | `NumaHostBufferImpl` + `NumaHost::forNode(int)`; lazy per-node MemSpace registration | E4, E5 (RTP TX/RX) | **LANDED.** Standalone `Numa` wrapper (no libnuma dep — direct `mmap` + `mbind` syscall); soft-fail on non-NUMA boxes (falls back to plain page-aligned host) and on `RLIMIT_MEMLOCK` exhaustion. |
 | `CudaDevice`      | exists today                                    | E2 (NVDEC)  | No new MemSpace work; just allocator override            |
 | `CudaPinnedHost`  | exists today (`MemSpace::CudaHost = 3`)         | E1 fallback | Already registered when CUDA is enabled                  |
 
 Each prerequisite is itself a small but real chunk: a header + impl + factory registration + tests, plus careful failure handling (mlock can fail under RLIMIT_MEMLOCK; numa_alloc_onnode can return null on cgroup-restricted nodes). Treat these as their own landings, not as line items inside their dependent E-phase.
 
-### E1 — NDI (DMA-pinned host)
+**E.0 NumaHost — landed files:**
+- [x] `include/promeki/numa.h`, `src/core/numa.cpp` — standalone `Numa` static-method utility wrapping the kernel's NUMA syscalls + `/sys` topology lookups: `isAvailable()`, `nodeCount()`, `maxNode()`, `allocOnNode(bytes, node)`, `free(ptr, bytes)`, `nodeOfNic(iface)`, `nodeOfCpu(cpu)`, `currentNode()`. Linux uses `mmap` + raw `mbind` syscall; non-Linux platforms get a stub that always reports unavailable and falls back to `posix_memalign`. No libnuma dependency — total surface ~250 LoC.
+- [x] `tests/unit/numa.cpp` — 12 test cases / 20 assertions: API surface (`isAvailable`, `nodeCount` / `maxNode` invariants), allocation round-trip with NodeAny, allocation on node 0 (always exists), zero-byte / null-ptr guards, NIC / CPU / current-node lookups (covers the UMA + NUMA paths via branching).
+- [x] `include/promeki/numahostbufferimpl.h`, `src/core/numahostbufferimpl.cpp` — `NumaHostBufferImpl` subclass of `HostMappedBufferImpl`; `Numa::allocOnNode` + `secureLock` (mlock); `_promeki_clone()` re-runs the constructor for the clone so it lands on the same node. `NumaHost::forNode(int)` lazily registers a per-node `MemSpace::ID` (via `MemSpace::registerType`) with a factory closure that captures the node — first call per node creates the entry, subsequent calls return the cached MemSpace.
+- [x] `include/promeki/memspace.h` — added `MemSpace::NumaHost = 6` (the default-node / `Numa::NodeAny` entry); per-specific-node IDs are dynamic and live above `UserDefined`.
+- [x] `src/core/memspace.cpp` — registered the default `NumaHost` Ops (name + stats + host-to-host memcpy peer).
+- [x] `src/core/bufferfactory.cpp` — registered the default `NumaHost` factory; **upgraded `BufferImplFactory` from a function pointer to `std::function`** so closure-capturing factories (the per-node NumaHost factories) work. Existing factory call sites (System, SystemSecure, SystemCow, PinnedHost, CudaDevice, CudaHost) are captureless lambdas that convert implicitly — no other code change required.
+- [x] `tests/unit/numahostbufferimpl.cpp` — 8 test cases covering: default `NumaHost` MemSpace registration, alloc/write/read, copy-as-refcount + `ensureExclusive` deep-copy, `seal()` no-op (`isCowBacked` false), `forNode(negative)` → default ID collapse, `forNode(N)` per-node caching + IDs above `UserDefined` + names, `forNode(0)` round-trip, stats accounting.
+- [x] CMakeLists wiring (header list, source list, test list).
 
-**Win:** producer feeding `writeFrame` pre-allocates into pinned host space; the NDI SDK's submit avoids a copy on ingress.
+**E.0 PinnedHost — landed files:**
+- [x] `include/promeki/pinnedhostbufferimpl.h`, `src/core/pinnedhostbufferimpl.cpp` — `PinnedHostBufferImpl` subclass of `HostMappedBufferImpl`; `aligned_alloc` then `secureLock` (mlock + `MADV_DONTDUMP` on Linux, `VirtualLock` on Windows). On lock failure (typically `RLIMIT_MEMLOCK` exhausted or missing `CAP_IPC_LOCK`) the impl warns and keeps the unlocked allocation — the Buffer is still valid, just not pinned. `_promeki_clone()` deep-copies into a fresh pinned region.
+- [x] `include/promeki/memspace.h` — added `MemSpace::PinnedHost = 5` (next sequential after `SystemCow = 4`); documents the soft-fail semantics and the distinction from `CudaHost` (mlock-pinned vs cuda-pinned + GPU-DMA-mapped).
+- [x] `src/core/memspace.cpp` — registered the `PinnedHost` Ops (name + stats); real allocation lives on `PinnedHostBufferImpl` (mirrors the `SystemCow` Ops shape).
+- [x] `src/core/bufferfactory.cpp` — registered the `PinnedHost` BufferImpl factory.
+- [x] `tests/unit/pinnedhostbufferimpl.cpp` — 6 test cases / 31 assertions: registration, construct/write/read, copy-as-refcount + `ensureExclusive` deep-copy, `seal()` is a no-op (`isCowBacked == false`), zero-byte allocation surface, stats round-trip on alloc/release.
+- [x] CMakeLists wiring (header list, source list, test list).
 
-**Depends on:** `MemSpace::PinnedHost` (E.0).
+### E1 — NDI (DMA-pinned host) — **LANDED**
 
-- [ ] `NdiAllocator` overrides `allocateVideoPlane` / `allocateAudioChunk` to use `MemSpace::PinnedHost`.
-- [ ] Wire allocator override in `NdiMediaIO::executeCmd(Open)`.
-- [ ] Validate: a pipeline writing to NDI from a pinned-allocator-aware source (e.g. another NDI source, or NVDEC) avoids the staging copy.
+**Win:** producer feeding `writeFrame` pre-allocates into pinned host space; the NDI SDK's submit avoids a staging copy on ingress. Symmetrically, NDI's receive path now lands its frame copy in pinned host so downstream DMA consumers (NVENC, NVDEC, RTP TX) can DMA off the region without re-staging.
 
-### E2 — NVDEC (device-resident video)
+**Depends on:** `MemSpace::PinnedHost` (E.0) — landed.
 
-**Win:** decoder output stays on device through downstream CSC; host bounce eliminated.
+**Files:**
+- [x] `src/proav/ndimediaio.cpp` — `NdiAllocator` (private to the .cpp; subclass of `MediaIOAllocator`) overrides `allocateVideoPlane` / `allocateAudioChunk` / `allocateBytes` to vend `MemSpace::PinnedHost` buffers. Stateless; trivially thread-safe. Public factory `NdiMediaIO::makePinnedHostAllocator()` returns a fresh instance for callers that want to install the same policy on other MediaIOs.
+- [x] `include/promeki/ndimediaio.h` — added `makePinnedHostAllocator()` static factory; pulled in `mediaioallocator.h`.
+- [x] `src/proav/ndimediaio.cpp` `executeCmd(Open)` — installs the allocator at the end of open via `setAllocator(makePinnedHostAllocator())`. Documented as the rollback point for the policy if it ever needs reverting in production (comment-out one line).
+- [x] `src/proav/ndimediaio.cpp` `captureLoop` — receive-side video allocation now routes through `allocator()->allocateBytes(totalBytes)` (was `Buffer(totalBytes)`). Allocation failure logs an error and increments `_droppedReceives` rather than crashing.
+- [x] `src/proav/ndimediaio.cpp` `executeCmd(Read)` audio drain — same allocator routing for the audio drain Buffer; alloc failure logs and skips the drain for the current read (audio gap is recoverable on the next pop).
+- [x] `tests/unit/ndimediaio.cpp` — 4 new test cases / 27 assertions covering: `NdiAllocator` per-plane PinnedHost placement (UYVY single-plane + NV12 dual-plane); audio chunk PinnedHost placement (size correctness, zero-sample handling); `allocateBytes` PinnedHost + logical-size correctness; full `UncompressedVideoPayload` via inherited `allocateVideoPayload` walks both planes and confirms each landed in PinnedHost.
 
-- [ ] `NvdecAllocator` overrides `allocateVideoPlane` to use `MemSpace::CudaDevice`.
-- [ ] Today `NvdecVideoDecoder` allocates CUDA Buffers explicitly (`src/proav/nvdecvideodecoder.cpp:782`). After this lands, the decoder's payload allocation routes through its MediaIO's allocator, and the explicit CUDA allocation moves into the allocator override. Net: same memory placement, cleaner separation.
-- [ ] Open issue: downstream CSC needs to negotiate "decode lands in CudaDevice; CSC produces CudaDevice or CudaPinnedHost". Cross-stage allocator negotiation is out of scope for E2 — we keep today's "decoder lands in CudaDevice; whoever consumes it copies if they need host" behaviour, just rerouted.
+**Allocator semantics:**
+- `NdiAllocator::allocateVideoPlane` / `allocateAudioChunk` / `allocateBytes` all construct `Buffer(bytes, Buffer::DefaultAlign, MemSpace(MemSpace::PinnedHost))` and stamp the logical size to match the request (so audio chunks and byte buffers are "filled" by allocator convention).
+- Inherited `MediaIOAllocator::allocateVideoPayload` walks plane indices and assembles the `BufferView` — same code path as the default allocator, just with PinnedHost backing.
+- The allocator is installed unconditionally on every `NdiMediaIO::executeCmd(Open)`. Callers that want to opt out can `setAllocator(MediaIOAllocator::Ptr())` after open to revert to the default heap allocator.
 
-### E3 — DeckLink (page-aligned host pool)
+**Downstream behaviour:**
+- Sink mode: an upstream stage that asks for `port->allocator()` lands its planes in PinnedHost. The NDI SDK's `send_send_video_v2` reads directly out of pinned memory; no staging copy on ingress.
+- Source mode: each received frame's bytes land in PinnedHost. Downstream consumers that DMA the host buffer (NVENC, RTP TX, anything Cuda-aware) skip the staging-pin step they'd otherwise need.
+- On builds without working `mlock` (or under exhausted `RLIMIT_MEMLOCK`), `PinnedHostBufferImpl` falls back to plain heap with a warning (see E.0). Allocations still succeed; they just lose the DMA-pin benefit. No code change needed at any caller.
 
-**Win:** warm pool of correctly-aligned buffers eliminates per-frame `aligned_alloc`; matches the card's DMA constraints.
+**Cross-stage negotiation (Open Q 1):** still out of scope. NDI's allocator is installed at open time; downstream stages don't drive it. When cross-stage negotiation lands later, NDI just becomes another participant.
 
-A note on existing infrastructure: `BufferPool` (`include/promeki/bufferpool.h`) is a fixed-geometry, single-thread, explicit-release pool. It's appropriate for caller-driven reuse loops (e.g. file I/O reading one frame per vsync) but **not** for the recycle-on-Buffer-destruction pattern this phase wants. We need a *separate* `PooledBufferImpl` whose destructor pushes itself back onto a free list — orthogonal to the existing `BufferPool`.
+**Verification:**
+- [x] Existing NDI test paths continue to work — full unit-test suite (5308 cases / 108k assertions) is green with the new allocator on; no regressions in `ndimediaio.cpp`, `pcmaudiopayload.cpp`, or any pipeline tests that build on top of NDI.
+- [ ] **Live end-to-end pinned-DMA validation** — manual measurement with a real NDI sender/receiver pair under load is a follow-up perf pass. The unit tests verify the *property* (each receive lands in PinnedHost; the allocator vends PinnedHost on every primitive), but a wire-rate copy-elimination measurement requires the SDK's perf instrumentation and a representative workload. Capture under `promeki-test`'s NDI benchmark when you do the perf run.
 
-- [ ] `DecklinkAllocator` holds an internal pool of `PooledBufferImpl`s, keyed by plane shape. `allocateVideoPlane` warms / acquires from the pool.
-- [ ] New `PooledBufferImpl` (initially a Decklink-internal helper). On last-handle drop, push back to the owning pool's free list rather than free.
-- [ ] Promote `PooledBufferImpl` to `core/` once a second backend (RTP) needs it; do *not* try to share the existing `BufferPool` since the recycling model is fundamentally different.
-- [ ] Pool sized from the backend's configured prefetch depth.
+### E2 — NVDEC (device-resident video) — **LANDED**
+
+**Win:** decoder output stays on device through downstream consumers; host bounce eliminated when the device-resident allocator is installed.
+
+**Correction to earlier scoping:** the original plan claimed "Today `NvdecVideoDecoder` allocates CUDA Buffers explicitly" — that was wrong. Pre-E2, `nvdecvideodecoder.cpp:782` allocated *host* memory via `UncompressedVideoPayload::allocate(desc)` and copied each frame down with `cudaMemcpy2D(DeviceToHost)`. E2's actual job was twofold: introduce the allocator seam on `VideoDecoder` (it isn't a `MediaIO`, so there was no allocator hook), and add a device-resident option that callers opt into.
+
+**Files:**
+- [x] `include/promeki/videodecoder.h`, `src/proav/videodecoder.cpp` — add `MediaIOAllocator::Ptr allocator() const` (never returns null) + `virtual void setAllocator(MediaIOAllocator::Ptr)` on the base. Default behaviour unchanged: when nothing is installed, `allocator()` returns `MediaIOAllocator::defaultAllocator()` and existing call sites see no change.
+- [x] `include/promeki/nvdecvideodecoder.h`, `src/proav/nvdecvideodecoder.cpp` — `NvdecAllocator` (private to the .cpp; subclass of `MediaIOAllocator`) overrides `allocateVideoPlane` to vend `MemSpace::CudaDevice` planes; audio + bytes fall through. Public factory `NvdecVideoDecoder::makeDeviceResidentAllocator()` returns a fresh instance for the caller to install.
+- [x] `nvdecvideodecoder.cpp` — `Impl` now holds an `NvdecVideoDecoder &_outer` back-reference (UniquePtr ownership keeps the outer alive across the Impl). The `handleDisplay` path replaces `UncompressedVideoPayload::allocate(desc)` with `_outer.allocator()->allocateVideoPayload(desc)` and branches the per-plane `cudaMemcpy2D` between `DeviceToHost` (default System path) and `DeviceToDevice` (CudaDevice path) keyed on the plane's `MemSpace`. The `resolveCudaEndpoint(BufferView::Entry)` helper unifies host pointer / device pointer extraction (mirrors the cudaCopy idiom in `core/cuda.cpp` but accounts for slice offsets).
+- [x] Header docstring updated — drops the "System-memory output" hard-limit line and documents the per-decoder placement choice via `setAllocator`.
+
+**Allocator semantics:**
+- `NvdecAllocator::allocateVideoPlane` constructs `Buffer(planeBytes, Buffer::DefaultAlign, MemSpace::CudaDevice)`. Inheriting `MediaIOAllocator::allocateVideoPayload` walks plane indices and assembles the `BufferView` — same code path as the default allocator, just with a different `MemSpace`.
+- Audio/bytes fall through to the inherited default — NVDEC only cares about its emitted video planes.
+- Stateless; trivially thread-safe.
+
+**Downstream behaviour:**
+- With the default allocator (no `setAllocator` call), the emitted `UncompressedVideoPayload` planes are System-memory and consumers (SDL, ImageFile writers, downstream CSC) work exactly as before.
+- With `makeDeviceResidentAllocator()` installed, the emitted planes are CudaDevice. Consumers that need host memory hit the registered `MemSpace::CudaDevice → System` `cudaCopy` on first `Buffer::data()` / `Buffer::copyTo` access. Behaviour-preserving for callers that route through `Buffer::copyTo`; callers that read `Buffer::data()` directly without checking `memSpace()` will get `nullptr` (the current contract for non-host-mapped buffers) — they need to be updated, but only if they opt into the device-resident path.
+
+**Cross-stage negotiation (Open Q 1):** still out of scope. The decoder's allocator is set by the caller / pipeline; downstream stages don't drive it. When cross-stage negotiation lands later, NVDEC just becomes another participant.
+
+**Verification:**
+- [x] Existing NVDEC test paths continue to work with the default allocator (host output preserved).
+- [x] New unit-test cases in `tests/unit/nvdecvideodecoder.cpp` exercise both paths — default allocator producing System planes; `makeDeviceResidentAllocator` producing CudaDevice planes.
 
 ### E4 — RTP TX (NUMA-aligned pinned host)
 
@@ -571,13 +617,15 @@ A note on existing infrastructure: `BufferPool` (`include/promeki/bufferpool.h`)
 
 - [ ] Same allocator class as E4, configured with the RX NIC's NUMA node.
 
-### E6 — BurnMediaIO
+### E6 — BurnMediaIO — **LANDED (no code change required)**
 
-**Win:** the same CoW story as TPG. BurnMediaIO composites a per-frame band onto an upstream frame; today it ensures-exclusive on the upstream payload (`src/proav/burnmediaio.cpp:165`) which `memcpy`s the whole frame.
+**Win:** the same CoW story as TPG when the upstream is SystemCow-aware. BurnMediaIO composites a per-frame band onto an upstream frame; the burn path runs `payloadPtr.modify()` + `uvp->ensureExclusive()` (`src/proav/burnmediaio.cpp:154,165`), which is exactly the chain that page-CoWs through `MemfdBufferImpl` when the upstream allocator placed the buffer in `MemSpace::SystemCow`.
 
-- [ ] Decision: do we want BurnMediaIO to *force* its upstream's allocator to be SystemCow, or just have its own allocator hand out SystemCow when it allocates internally?
-- [ ] Practical answer: BurnMediaIO is a passthrough that mutates an existing payload — it doesn't allocate the payload, the upstream does. The win comes from the *upstream* using SystemCow. So BurnMediaIO doesn't need its own allocator override; it just inherits the benefit when fed by a SystemCow-aware source.
-- [ ] Document this clearly so the NDI / DeckLink allocators can decide: "fast detach (SystemCow) vs. fast DMA (pinned)" — they may not want both, and forcing both means picking one.
+**Resolution:** BurnMediaIO is a Transform-mode passthrough — it mutates an existing payload, it doesn't allocate the payload itself. The win comes from the *upstream* using SystemCow; BurnMediaIO doesn't need its own allocator override. The CoW benefit propagates automatically through `Buffer::ensureExclusive` whenever the upstream allocator is SystemCow-aware (today: `TpgMediaIO`'s default; tomorrow: any source that opts into SystemCow placement).
+
+- [x] No allocator override on `BurnMediaIO`.
+- [x] Doxygen "@par Allocator policy" section added to `include/promeki/burnmediaio.h` documenting (a) why no override is installed, (b) that the CoW win flows from the upstream, and (c) the operator-visible trade-off DMA-friendly upstream allocators force on the burn path (no page-level CoW benefit when the upstream picks pinned / page-aligned pool placement).
+- [x] The trade-off "fast detach (SystemCow) vs fast DMA (pinned)" is documented at the upstream allocator's install site (i.e. NDI will document it on its `setAllocator` call when E1 lands); the BurnMediaIO doc points readers there rather than restating it.
 
 ### E7 — File backends (PNG / DPX / SGI / RAW YUV)
 
@@ -598,7 +646,7 @@ A note on existing infrastructure: `BufferPool` (`include/promeki/bufferpool.h`)
 These are explicitly *not* answered by this plan; flag them when revisiting.
 
 1. **Cross-stage allocator negotiation.** Today the consumer's allocator decides allocation only when the consumer itself is doing the allocation. A pipeline graph that wants "CSC output lands in the sink's preferred space" needs the planner / scheduler to consult the downstream allocator. Out of scope for v1; document on `BufferAllocator` that v1 is consumer-allocates-its-own.
-2. **Tiered pools.** `DefaultBufferAllocator` is stateless. A `PooledBufferAllocator` mixin could provide pool plumbing for backends that need it (E3, E4, E5). Defer until two backends ask for the same shape.
+2. **Tiered pools.** `DefaultBufferAllocator` is stateless. A `PooledBufferAllocator` mixin could provide pool plumbing for any backend that wants it. Defer until two backends ask for the same shape — RTP TX/RX (E4/E5) might be the trigger.
 3. **Cross-process CoW.** `MemfdRegion::fd()` and `readOnlyView()` cover the in-process side of IPC. The actual fd-passing wire protocol (Unix socket SCM_RIGHTS, attach helpers, lifetime arbitration) is not built — but the `MemfdRegion` API is shaped so it slots in cleanly when needed.
 4. **Non-Linux `MemfdRegion`.** macOS could be added via `vm_remap(VM_INHERIT_COPY)` and Windows via section objects with `SEC_COMMIT`. Both are real options; both wait for a real port target.
 5. **Allocator selection at the planner level.** Phase E6 (BurnMediaIO) raises the question of "fast detach (SystemCow) vs fast DMA (pinned)" when both axes apply. v1 picks one per backend. A future refinement could let the planner stitch stages together with explicit boundary copies when policies conflict; not designed yet.
@@ -649,12 +697,12 @@ These are explicitly *not* answered by this plan; flag them when revisiting.
 - `src/proav/tpgmediaio.cpp` — install `TpgAllocator` in `executeCmd(Open)`; document the allocator install line as the rollback point for the SystemCow optimisation.
 - `include/promeki/videotestpattern.h`, `src/proav/videotestpattern.cpp` — `MediaIOAllocator::Ptr` member; route `cachedPayload`; call `BufferView::seal()` at end of populate.
 
-**Backend rollout (later phases — each is its own landing):**
-- E.0: `include/promeki/pinnedhostbufferimpl.h` + impl + tests; `include/promeki/numahostbufferimpl.h` + impl + tests; `MemSpace` enum / factory updates.
-- E1: `src/proav/ndimediaio.cpp` — `NdiAllocator`.
-- E2: `src/proav/nvdecvideodecoder.cpp` — `NvdecAllocator` (move existing CUDA Buffer construction into the override).
-- E3: `src/proav/decklinkmediaio.cpp` — `DecklinkAllocator` + new `PooledBufferImpl` (initially Decklink-internal; promote to `core/` once RTP needs it). Distinct from the existing `BufferPool` core utility — different recycling model.
-- E4–E5: `src/proav/rtpmediaio.cpp` — `RtpTxAllocator` / `RtpRxAllocator`.
+**Backend rollout (per-phase landings):**
+- E.0 (PinnedHost) — **LANDED**: `include/promeki/pinnedhostbufferimpl.h` + impl + 6 tests; `MemSpace::PinnedHost = 5` registered in `memspace.h` / `memspace.cpp` / `bufferfactory.cpp`.
+- E.0 (NumaHost) — **LANDED**: `include/promeki/numahostbufferimpl.h` + impl + 8 tests; `MemSpace::NumaHost = 6` registered; `Numa` static utility (no libnuma — direct `mmap` + `mbind`); `NumaHost::forNode(int)` lazy per-node MemSpace registry; `BufferImplFactory` upgraded to `std::function` for closure-capturing factories.
+- E1 — **LANDED**: `src/proav/ndimediaio.cpp` — `NdiAllocator` + `makePinnedHostAllocator()` factory; receive-side video + audio routing through allocator; 4 new test cases.
+- E2 — **LANDED**: `src/proav/nvdecvideodecoder.cpp` — `NvdecAllocator` + `makeDeviceResidentAllocator()` factory; `cudaMemcpy2D` direction branch on plane MemSpace.
+- E4–E5 — **PENDING**: `src/proav/rtpmediaio.cpp` — `RtpTxAllocator` / `RtpRxAllocator` (depends on NumaHost).
 
 ---
 

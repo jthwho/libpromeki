@@ -92,6 +92,52 @@ class MemSpace {
                          */
                         SystemCow =
                                 4,
+                        /**
+                         * @brief System (CPU) memory page-locked via @c mlock.
+                         *
+                         * Backs DMA-friendly host placements for I/O
+                         * backends whose SDKs DMA directly out of host
+                         * memory (NDI is the first consumer).  Always
+                         * host-accessible; lives in @c MemDomain::Host.
+                         *
+                         * @par Soft fail on @c RLIMIT_MEMLOCK
+                         * If @c mlock fails (limit exhausted, missing
+                         * @c CAP_IPC_LOCK), the allocation still
+                         * succeeds — it just isn't pinned.  See
+                         * @ref PinnedHostBufferImpl for details.
+                         *
+                         * @par Distinct from @c CudaHost
+                         * @c CudaHost uses @c cudaMallocHost (CUDA
+                         * pinned + GPU-DMA-mapped); @c PinnedHost is
+                         * pure @c mlock.  Use @c CudaHost when the
+                         * downstream consumer is CUDA; use
+                         * @c PinnedHost for non-CUDA SDKs that need
+                         * page locking only.
+                         */
+                        PinnedHost =
+                                5,
+                        /**
+                         * @brief NUMA-bound page-locked host memory.
+                         *
+                         * The "default-node" / kernel-preferred entry
+                         * (i.e. @ref Numa::NodeAny — let the kernel
+                         * pick).  Per-specific-node MemSpaces are
+                         * registered lazily via
+                         * @c NumaHost::forNode(int) and live above
+                         * @c UserDefined (each call returns a unique
+                         * ID).
+                         *
+                         * @par Soft-fail
+                         * On UMA boxes (most laptops, single-socket
+                         * workstations, all Apple Silicon) and on
+                         * non-Linux builds, allocations fall through
+                         * to plain page-aligned host memory and the
+                         * @p node argument is ignored — same fallback
+                         * shape as @ref PinnedHost.  See
+                         * @ref Numa::isAvailable.
+                         */
+                        NumaHost =
+                                6,
                         Default = System,  ///< Alias for System memory.
                         UserDefined = 1024 ///< First ID available for user-registered types.
                 };

@@ -41,6 +41,8 @@
 #include <promeki/pixelformat.h>
 #include <promeki/buffer.h>
 #include <promeki/cuda.h>
+#include <promeki/cudabufferimpl.h>
+#include <promeki/mediaioallocator.h>
 #include <promeki/logger.h>
 #include <promeki/metadata.h>
 #include <promeki/videocodec.h>
@@ -373,7 +375,64 @@ namespace {
                         bool _pushed = false;
         };
 
+        // Resolves a payload plane (BufferView::Entry) to a raw byte
+        // pointer suitable for cudaMemcpy / cudaMemcpy2D.  For host-
+        // resident MemSpaces the host pointer from Entry::data() already
+        // includes the buffer's shift and the slice offset.  CudaDevice
+        // buffers have no host mapping, so we go through the
+        // CudaDeviceBufferImpl back door for the raw device pointer and
+        // re-apply the shift + slice offset ourselves — same idiom as
+        // the inter-MemSpace cudaCopy registration in core/cuda.cpp,
+        // generalised to handle BufferView slice offsets.
+        void *resolveCudaEndpoint(const BufferView::Entry &e) {
+                const Buffer &b = e.buffer();
+                if (b.memSpace().id() == MemSpace::CudaDevice) {
+                        if (!b.impl().isValid()) return nullptr;
+                        const auto *dimpl =
+                                dynamic_cast<const CudaDeviceBufferImpl *>(b.impl().ptr());
+                        if (dimpl == nullptr) return nullptr;
+                        void *base = dimpl->devicePtr();
+                        if (base == nullptr) return nullptr;
+                        return static_cast<uint8_t *>(base) + dimpl->shift() + e.offset();
+                }
+                return e.data();
+        }
+
+        // Allocator that hands out CudaDevice-resident planes for NVDEC's
+        // emitted UncompressedVideoPayloads.  Audio chunks and generic
+        // bytes fall through to the default allocator — NVDEC only owns
+        // the video output side.  Stateless; trivially thread-safe.
+        //
+        // Installation is opt-in: callers wire this up via
+        // VideoDecoder::setAllocator() when they want the decoder to skip
+        // the device→host bounce and keep frames on the GPU for downstream
+        // CSC / GPU consumers.  Without an installed allocator, NVDEC
+        // continues to emit System-memory NV12 (the prior behaviour).
+        class NvdecAllocator : public MediaIOAllocator {
+                public:
+                        PROMEKI_SHARED_DERIVED(NvdecAllocator)
+
+                        NvdecAllocator()           = default;
+                        ~NvdecAllocator() override = default;
+
+                        String name() const override { return String("NvdecAllocator"); }
+
+                        Buffer allocateVideoPlane(const ImageDesc &desc, int planeIndex) const override {
+                                const PixelFormat &pf = desc.pixelFormat();
+                                if (!pf.isValid() || !desc.size().isValid()) return Buffer();
+                                if (planeIndex < 0 || planeIndex >= static_cast<int>(pf.planeCount()))
+                                        return Buffer();
+                                const size_t bytes = pf.planeSize(static_cast<size_t>(planeIndex), desc);
+                                if (bytes == 0) return Buffer();
+                                Buffer buf(bytes, Buffer::DefaultAlign,
+                                           MemSpace(MemSpace::CudaDevice));
+                                if (buf.isValid()) buf.setSize(bytes);
+                                return buf;
+                        }
+        };
+
 } // namespace
+
 
 // ---------------------------------------------------------------------------
 // NvdecVideoDecoder::Impl
@@ -381,7 +440,7 @@ namespace {
 
 class NvdecVideoDecoder::Impl {
         public:
-                explicit Impl(Codec codec) : _codec(codec) {}
+                Impl(Codec codec, NvdecVideoDecoder &outer) : _codec(codec), _outer(outer) {}
 
                 ~Impl() { destroySession(); }
 
@@ -475,7 +534,8 @@ class NvdecVideoDecoder::Impl {
                 PixelFormat outputPixelFormat() const { return PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709); }
 
         private:
-                Codec _codec;
+                Codec              _codec;
+                NvdecVideoDecoder &_outer;
 
                 CUdevice  _device = 0;
                 CUcontext _cudaCtx = nullptr;
@@ -775,18 +835,29 @@ class NvdecVideoDecoder::Impl {
                                 return 0;
                         }
 
-                        // Build a system-memory NV12 payload sized to
-                        // the display rectangle, then cudaMemcpy2D
-                        // luma + chroma planes down from device.
+                        // Build the output NV12 payload through the
+                        // installed allocator.  The default allocator
+                        // returns System-memory planes (cudaMemcpy2D
+                        // copies device→host below); NvdecAllocator
+                        // returns CudaDevice-resident planes
+                        // (cudaMemcpy2D copies device→device, no host
+                        // bounce, downstream consumers see the frame
+                        // on the GPU).  Either way the cuvid frame
+                        // queue still owns the source mapping until
+                        // UnmapVideoFrame64 below — the copy
+                        // decouples our payload from the queue's
+                        // limited depth.
                         ImageDesc             desc(Size2Du32(_displayW, _displayH), outputPixelFormat());
-                        auto                  img = UncompressedVideoPayload::allocate(desc);
+                        auto                  img = _outer.allocator()->allocateVideoPayload(desc);
                         const PixelMemLayout &outMl = desc.pixelFormat().memLayout();
                         bool                  copyOk = img.isValid() && img->planeCount() >= 2;
                         if (copyOk) {
-                                UncompressedVideoPayload *imgRaw = img.modify();
-                                void                     *yDst = imgRaw->data()[0].data();
-                                void                     *uvDst = imgRaw->data()[1].data();
-                                const size_t              yStride = outMl.lineStride(0, _displayW);
+                                UncompressedVideoPayload *imgRaw   = img.modify();
+                                BufferView::Entry         yEntry   = imgRaw->data()[0];
+                                BufferView::Entry         uvEntry  = imgRaw->data()[1];
+                                void                     *yDst     = resolveCudaEndpoint(yEntry);
+                                void                     *uvDst    = resolveCudaEndpoint(uvEntry);
+                                const size_t              yStride  = outMl.lineStride(0, _displayW);
                                 const size_t              uvStride = outMl.lineStride(1, _displayW);
                                 // cuvidMapVideoFrame64 returns a
                                 // device pointer whose Y plane
@@ -804,15 +875,43 @@ class NvdecVideoDecoder::Impl {
                                 const unsigned long long uvDev =
                                         devPtr + static_cast<unsigned long long>(pitch) * _displayH;
 
-                                cudaError_t ce = cudaMemcpy2D(yDst, yStride, reinterpret_cast<const void *>(yDev),
-                                                              pitch, _displayW, _displayH, cudaMemcpyDeviceToHost);
-                                if (ce != cudaSuccess) {
-                                        promekiErr("NVDEC: cudaMemcpy2D(Y) failed: %s", cudaGetErrorString(ce));
+                                // Pick the right copy direction per
+                                // plane.  Two paths today: System (host)
+                                // — DeviceToHost; CudaDevice — DeviceToDevice.
+                                // Future host-resident MemSpaces
+                                // (CudaHost / pinned) all want
+                                // DeviceToHost; the predicate keys on
+                                // CudaDevice specifically rather than
+                                // "is host" so future MemSpaces don't
+                                // need this site updated.
+                                auto memcpyKind = [](const BufferView::Entry &e) {
+                                        return e.buffer().memSpace().id() == MemSpace::CudaDevice
+                                                 ? cudaMemcpyDeviceToDevice
+                                                 : cudaMemcpyDeviceToHost;
+                                };
+                                if (yDst == nullptr || uvDst == nullptr) {
+                                        promekiErr("NVDEC: NV12 plane endpoint resolved null "
+                                                   "(memSpace=%s/%s)",
+                                                   yEntry.buffer().memSpace().name().cstr(),
+                                                   uvEntry.buffer().memSpace().name().cstr());
                                         copyOk = false;
                                 }
                                 if (copyOk) {
-                                        ce = cudaMemcpy2D(uvDst, uvStride, reinterpret_cast<const void *>(uvDev), pitch,
-                                                          _displayW, _displayH / 2, cudaMemcpyDeviceToHost);
+                                        cudaError_t ce = cudaMemcpy2D(
+                                                yDst, yStride,
+                                                reinterpret_cast<const void *>(yDev), pitch,
+                                                _displayW, _displayH, memcpyKind(yEntry));
+                                        if (ce != cudaSuccess) {
+                                                promekiErr("NVDEC: cudaMemcpy2D(Y) failed: %s",
+                                                           cudaGetErrorString(ce));
+                                                copyOk = false;
+                                        }
+                                }
+                                if (copyOk) {
+                                        cudaError_t ce = cudaMemcpy2D(
+                                                uvDst, uvStride,
+                                                reinterpret_cast<const void *>(uvDev), pitch,
+                                                _displayW, _displayH / 2, memcpyKind(uvEntry));
                                         if (ce != cudaSuccess) {
                                                 promekiErr("NVDEC: cudaMemcpy2D(UV) failed: %s",
                                                            cudaGetErrorString(ce));
@@ -931,12 +1030,19 @@ class NvdecVideoDecoder::Impl {
 // Thin NvdecVideoDecoder façade that forwards to Impl.
 // ---------------------------------------------------------------------------
 
-NvdecVideoDecoder::NvdecVideoDecoder(Codec codec) : _impl(ImplPtr::create(codec)), _codec(codec) {}
+NvdecVideoDecoder::NvdecVideoDecoder(Codec codec) : _impl(ImplPtr::create(codec, *this)), _codec(codec) {}
 
 NvdecVideoDecoder::~NvdecVideoDecoder() = default;
 
 List<int> NvdecVideoDecoder::supportedOutputList() {
         return {static_cast<int>(PixelFormat::YUV8_420_SemiPlanar_Rec709)};
+}
+
+MediaIOAllocator::Ptr NvdecVideoDecoder::makeDeviceResidentAllocator() {
+        // Stateless allocator — fresh instance per call is fine; callers
+        // that share one allocator across decoders just install the same
+        // Ptr on each via VideoDecoder::setAllocator.
+        return MediaIOAllocator::Ptr::takeOwnership(new NvdecAllocator());
 }
 
 void NvdecVideoDecoder::configure(const MediaConfig &config) {

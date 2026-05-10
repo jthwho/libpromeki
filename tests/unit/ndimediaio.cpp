@@ -29,12 +29,14 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaioallocator.h>
 #include <promeki/mediaiocommand.h>
 #include <promeki/mediaiofactory.h>
 #include <promeki/mediaiorequest.h>
 #include <promeki/mediaiosink.h>
 #include <promeki/mediaiosource.h>
 #include <promeki/mediatimestamp.h>
+#include <promeki/memspace.h>
 #include <promeki/metadata.h>
 #include <promeki/ndiclock.h>
 #include <promeki/ndidiscovery.h>
@@ -853,6 +855,78 @@ TEST_CASE("NdiMediaIO: undefined timestamp skips gap detection") {
         // Next-sample anchor unchanged from frame 0 — undefined
         // timestamps don't move it.
         CHECK(NdiMediaIOTestAccess::nextSampleTicks(io) == ts0 + durTicks);
+}
+
+// ---------------------------------------------------------------------------
+// NdiAllocator (E1) — pinned-host allocator vended by NdiMediaIO.
+// ---------------------------------------------------------------------------
+
+TEST_CASE("NdiAllocator: vends PinnedHost video planes") {
+        auto alloc = NdiMediaIO::makePinnedHostAllocator();
+        REQUIRE(alloc.isValid());
+        CHECK(alloc->name() == String("NdiAllocator"));
+
+        // UYVY single-plane: one Buffer in PinnedHost.
+        ImageDesc uyvy(Size2Du32(320, 240),
+                       PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709));
+        Buffer    plane0 = alloc->allocateVideoPlane(uyvy, 0);
+        REQUIRE(plane0.isValid());
+        CHECK(plane0.memSpace().id() == MemSpace::PinnedHost);
+        CHECK(plane0.allocSize() >= 320u * 240u * 2u);
+
+        // NV12 two-plane: both planes land in PinnedHost.
+        ImageDesc nv12(Size2Du32(320, 240),
+                       PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
+        Buffer    p0 = alloc->allocateVideoPlane(nv12, 0);
+        Buffer    p1 = alloc->allocateVideoPlane(nv12, 1);
+        REQUIRE(p0.isValid());
+        REQUIRE(p1.isValid());
+        CHECK(p0.memSpace().id() == MemSpace::PinnedHost);
+        CHECK(p1.memSpace().id() == MemSpace::PinnedHost);
+
+        // Out-of-range plane index returns an invalid Buffer.
+        Buffer bad = alloc->allocateVideoPlane(uyvy, 99);
+        CHECK_FALSE(bad.isValid());
+}
+
+TEST_CASE("NdiAllocator: vends PinnedHost audio chunks") {
+        auto alloc = NdiMediaIO::makePinnedHostAllocator();
+        REQUIRE(alloc.isValid());
+
+        AudioDesc desc(AudioFormat(AudioFormat::PCMI_Float32LE), 48000.0f, 2);
+        Buffer    chunk = alloc->allocateAudioChunk(desc, 1024);
+        REQUIRE(chunk.isValid());
+        CHECK(chunk.memSpace().id() == MemSpace::PinnedHost);
+        // Two channels, float32, 1024 samples = 8192 bytes minimum.
+        CHECK(chunk.allocSize() >= 8192u);
+
+        // Zero-sample request returns an invalid Buffer.
+        Buffer empty = alloc->allocateAudioChunk(desc, 0);
+        CHECK_FALSE(empty.isValid());
+}
+
+TEST_CASE("NdiAllocator: allocateBytes lands in PinnedHost") {
+        auto alloc = NdiMediaIO::makePinnedHostAllocator();
+        REQUIRE(alloc.isValid());
+        Buffer raw = alloc->allocateBytes(4096);
+        REQUIRE(raw.isValid());
+        CHECK(raw.memSpace().id() == MemSpace::PinnedHost);
+        CHECK(raw.allocSize() >= 4096u);
+        CHECK(raw.size() == 4096u); // logical size matches request
+}
+
+TEST_CASE("NdiAllocator: full UncompressedVideoPayload via inherited base") {
+        auto alloc = NdiMediaIO::makePinnedHostAllocator();
+        REQUIRE(alloc.isValid());
+        ImageDesc desc(Size2Du32(640, 480),
+                       PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
+        UncompressedVideoPayload::Ptr vp = alloc->allocateVideoPayload(desc);
+        REQUIRE(vp.isValid());
+        REQUIRE(vp->planeCount() == 2);
+        // The base class assembles per-plane allocations into a
+        // BufferView.  Confirm both planes inherited the policy.
+        CHECK(vp->data()[0].buffer().memSpace().id() == MemSpace::PinnedHost);
+        CHECK(vp->data()[1].buffer().memSpace().id() == MemSpace::PinnedHost);
 }
 
 #endif // PROMEKI_ENABLE_NDI
