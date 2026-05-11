@@ -23,8 +23,8 @@
 #include <promeki/flvtag.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
+#include <promeki/h264bitstream.h>
 #include <promeki/imagedesc.h>
-#include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
 #include <promeki/mediaiofactory.h>
@@ -69,6 +69,13 @@ class FakeRtmpServer {
                 std::atomic<int>              videoSequenceHeaders{0};
                 std::atomic<int>              audioSequenceHeaders{0};
                 std::atomic<int>              videoKeyframes{0};
+                // Number of received non-SequenceHeader video tags
+                // whose AVCC payload carries at least one H.264 SPS
+                // NAL (nal_unit_type == 7).  Used by the
+                // RtmpRepeatParameterSets test to assert that every
+                // IDR after the first one ships with in-band
+                // parameter sets re-injected by the packetizer.
+                std::atomic<int>              videoKeyframesWithSps{0};
                 std::atomic<bool>             stop{false};
 
                 void run() {
@@ -236,6 +243,18 @@ class FakeRtmpServer {
                                 if (tag.frameType == FlvVideoTag::Keyframe ||
                                     tag.frameType == FlvVideoTag::GeneratedKeyframe) {
                                         ++videoKeyframes;
+                                        if (tag.packetType == FlvVideoTag::Nalu) {
+                                                BufferView avccView(tag.data, 0, tag.data.size());
+                                                bool       hasSps = false;
+                                                H264Bitstream::forEachAvccNal(
+                                                        avccView, /*lenSize=*/4,
+                                                        [&hasSps](const H264Bitstream::NalUnit &nu)
+                                                                        -> Error {
+                                                                if ((nu.header0 & 0x1F) == 7) hasSps = true;
+                                                                return Error::Ok;
+                                                        });
+                                                if (hasSps) ++videoKeyframesWithSps;
+                                        }
                                 }
                         }
                 }
@@ -295,6 +314,26 @@ Buffer makeFakeAnnexBKeyframe() {
         std::memcpy(p, kStartCode, sizeof(kStartCode));     p += sizeof(kStartCode);
         std::memcpy(p, kPps, sizeof(kPps));                 p += sizeof(kPps);
         std::memcpy(p, kStartCode, sizeof(kStartCode));     p += sizeof(kStartCode);
+        std::memcpy(p, kIdr, sizeof(kIdr));
+        return out;
+}
+
+/// @brief Builds an Annex-B IDR access unit with @e only the slice NAL — no SPS/PPS.
+///
+/// Represents the case where the encoder emits a keyframe whose
+/// parameter sets are not re-included inline.  The packetizer should
+/// detect the missing parameter sets and prepend the cached ones from
+/// the first IDR (RtmpRepeatParameterSets policy).
+Buffer makeIdrOnlyAnnexB() {
+        static const uint8_t kIdr[] = { 0x65, 0x88, 0x84, 0x21,
+                                        0xFF, 0xEF, 0xFF };
+        static const uint8_t kStartCode[] = { 0x00, 0x00, 0x00, 0x01 };
+        size_t total = sizeof(kStartCode) + sizeof(kIdr);
+        Buffer out(total);
+        out.setSize(total);
+        uint8_t *p = static_cast<uint8_t *>(out.data());
+        std::memcpy(p, kStartCode, sizeof(kStartCode));
+        p += sizeof(kStartCode);
         std::memcpy(p, kIdr, sizeof(kIdr));
         return out;
 }
@@ -604,6 +643,195 @@ TEST_CASE("RtmpMediaIO sink: peer-disconnect mid-stream surfaces as writeFrame e
         CHECK(io->close().wait() == Error::Ok);
         delete io;
         serverThread.join();
+}
+
+// ---------------------------------------------------------------------------
+// In-band parameter-set re-injection (RtmpRepeatParameterSets)
+// ---------------------------------------------------------------------------
+
+namespace {
+
+/// @brief Spins up a FakeRtmpServer and a sink built from @p extra-applied config.
+///
+/// Returns ownership of every piece so the caller can drive a sequence
+/// of writes and inspect the server-side observations before unwinding.
+struct InjectionScenario {
+                std::unique_ptr<TcpServer>     server;
+                std::thread                    serverThread;
+                std::atomic<bool>              running{true};
+                std::atomic<int>               videoSeqHeadersSeen{0};
+                std::atomic<int>               keyframesSeen{0};
+                std::atomic<int>               keyframesWithSpsSeen{0};
+                std::atomic<bool>              publishSeen{false};
+                MediaIO                       *io = nullptr;
+                MediaIOSink                   *sink = nullptr;
+
+                ~InjectionScenario() {
+                        running = false;
+                        if (io != nullptr) {
+                                io->close().wait();
+                                delete io;
+                        }
+                        if (serverThread.joinable()) serverThread.join();
+                }
+};
+
+std::unique_ptr<InjectionScenario> openInjectionScenario(
+        std::function<void(MediaConfig &)> extra) {
+        auto scn = std::make_unique<InjectionScenario>();
+        scn->server = std::make_unique<TcpServer>();
+        REQUIRE(scn->server->listen(SocketAddress::localhost(0)) == Error::Ok);
+        const uint16_t port = scn->server->serverAddress().port();
+
+        scn->serverThread = std::thread([scn = scn.get()]() {
+                while (scn->running.load()) {
+                        Error err = scn->server->waitForNewConnection(200);
+                        if (err == Error::Timeout) continue;
+                        if (err.isError()) return;
+                        TcpSocket *client = scn->server->nextPendingConnection();
+                        if (client == nullptr) continue;
+                        FakeRtmpServer fake(client);
+                        std::thread fakeThread([&]() { fake.run(); });
+                        while (scn->running.load()) {
+                                scn->publishSeen.store(fake.publishSeen);
+                                scn->videoSeqHeadersSeen.store(fake.videoSequenceHeaders.load());
+                                scn->keyframesSeen.store(fake.videoKeyframes.load());
+                                scn->keyframesWithSpsSeen.store(fake.videoKeyframesWithSps.load());
+                                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                        }
+                        fake.stop = true;
+                        scn->publishSeen.store(fake.publishSeen);
+                        scn->videoSeqHeadersSeen.store(fake.videoSequenceHeaders.load());
+                        scn->keyframesSeen.store(fake.videoKeyframes.load());
+                        scn->keyframesWithSpsSeen.store(fake.videoKeyframesWithSps.load());
+                        fakeThread.join();
+                        delete client;
+                        return;
+                }
+        });
+
+        MediaConfig cfg;
+        cfg.set(MediaConfig::Type, String("Rtmp"));
+        cfg.set(MediaConfig::RtmpUrl, localhostUrl(port, "live/myStream"));
+        cfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
+        cfg.set(MediaConfig::RtmpConnectTimeoutMs, int32_t(5000));
+        cfg.set(MediaConfig::RtmpCommandTimeoutMs, int32_t(5000));
+        extra(cfg);
+
+        scn->io = MediaIO::create(cfg);
+        REQUIRE(scn->io != nullptr);
+        REQUIRE(scn->io->open().wait() == Error::Ok);
+        REQUIRE(scn->io->isOpen());
+        scn->sink = scn->io->sink(0);
+        REQUIRE(scn->sink != nullptr);
+        return scn;
+}
+
+}  // namespace
+
+TEST_CASE("RtmpMediaIO sink: RtmpRepeatParameterSets=true injects SPS on bare IDRs") {
+        auto scn = openInjectionScenario([](MediaConfig &cfg) {
+                cfg.set(MediaConfig::RtmpRepeatParameterSets, true);
+        });
+
+        const ImageDesc videoDesc(Size2Du32(320, 240), PixelFormat(PixelFormat::H264));
+        const AudioDesc audioDesc(AudioFormat(AudioFormat::AAC), 48000.0f, 2);
+        Buffer          fullKeyframe = makeFakeAnnexBKeyframe();
+        Buffer          bareIdr      = makeIdrOnlyAnnexB();
+
+        // First keyframe — carries SPS/PPS/IDR.  The packetizer
+        // populates its parameter-set cache from this frame.
+        {
+                Frame f;
+                CompressedVideoPayload::Ptr cv =
+                        CompressedVideoPayload::Ptr::create(videoDesc, fullKeyframe);
+                cv.modify()->addFlag(MediaPayload::Keyframe);
+                f.addPayload(cv);
+                CompressedAudioPayload::Ptr ca =
+                        CompressedAudioPayload::Ptr::create(audioDesc, makeFakeAacFrame(0x30));
+                f.addPayload(ca);
+                CHECK(scn->sink->writeFrame(f).wait() == Error::Ok);
+        }
+        // Second keyframe — only the IDR slice, no SPS/PPS.  Without
+        // RtmpRepeatParameterSets the packetizer would forward the
+        // bare IDR; with the policy active it must prepend the cached
+        // parameter sets.
+        {
+                Frame f;
+                CompressedVideoPayload::Ptr cv =
+                        CompressedVideoPayload::Ptr::create(videoDesc, bareIdr);
+                cv.modify()->addFlag(MediaPayload::Keyframe);
+                f.addPayload(cv);
+                CHECK(scn->sink->writeFrame(f).wait() == Error::Ok);
+        }
+
+        // Wait for the wire to actually drain to the fixture.  The
+        // injection scenario polls the server fixture's counters every
+        // 10 ms.
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        while (std::chrono::steady_clock::now() < deadline) {
+                if (scn->publishSeen.load()
+                    && scn->videoSeqHeadersSeen.load() >= 1
+                    && scn->keyframesSeen.load() >= 2) {
+                        break;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+        // Give the inspector loop one more tick to refresh.
+        std::this_thread::sleep_for(std::chrono::milliseconds(60));
+
+        CHECK(scn->publishSeen.load());
+        CHECK(scn->videoSeqHeadersSeen.load() >= 1);
+        CHECK(scn->keyframesSeen.load() >= 2);
+        // Both keyframes' AVCC payloads should carry an SPS NAL:
+        //   - frame 1: SPS came in via the source Annex-B itself
+        //   - frame 2: SPS was injected by the packetizer's cache
+        CHECK(scn->keyframesWithSpsSeen.load() >= 2);
+}
+
+TEST_CASE("RtmpMediaIO sink: RtmpRepeatParameterSets=false skips SPS injection") {
+        auto scn = openInjectionScenario([](MediaConfig &cfg) {
+                cfg.set(MediaConfig::RtmpRepeatParameterSets, false);
+        });
+
+        const ImageDesc videoDesc(Size2Du32(320, 240), PixelFormat(PixelFormat::H264));
+        const AudioDesc audioDesc(AudioFormat(AudioFormat::AAC), 48000.0f, 2);
+        Buffer          fullKeyframe = makeFakeAnnexBKeyframe();
+        Buffer          bareIdr      = makeIdrOnlyAnnexB();
+
+        {
+                Frame f;
+                CompressedVideoPayload::Ptr cv =
+                        CompressedVideoPayload::Ptr::create(videoDesc, fullKeyframe);
+                cv.modify()->addFlag(MediaPayload::Keyframe);
+                f.addPayload(cv);
+                CompressedAudioPayload::Ptr ca =
+                        CompressedAudioPayload::Ptr::create(audioDesc, makeFakeAacFrame(0x31));
+                f.addPayload(ca);
+                CHECK(scn->sink->writeFrame(f).wait() == Error::Ok);
+        }
+        {
+                Frame f;
+                CompressedVideoPayload::Ptr cv =
+                        CompressedVideoPayload::Ptr::create(videoDesc, bareIdr);
+                cv.modify()->addFlag(MediaPayload::Keyframe);
+                f.addPayload(cv);
+                CHECK(scn->sink->writeFrame(f).wait() == Error::Ok);
+        }
+
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        while (std::chrono::steady_clock::now() < deadline) {
+                if (scn->publishSeen.load() && scn->keyframesSeen.load() >= 2) break;
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(60));
+
+        CHECK(scn->publishSeen.load());
+        CHECK(scn->keyframesSeen.load() >= 2);
+        // Only the first keyframe carried SPS (in the source Annex-B);
+        // the second was a bare IDR and we asked the packetizer not to
+        // re-inject parameter sets.
+        CHECK(scn->keyframesWithSpsSeen.load() == 1);
 }
 
 // ---------------------------------------------------------------------------

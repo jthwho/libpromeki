@@ -1632,6 +1632,26 @@ tears down the RTMP stage on the next write.  One regression
 test added (`rtmpmediaio.cpp`: peer-disconnect mid-stream surfaces
 as writeFrame error).
 
+**Update (2026-05-10) — robustness round:**
+
+- **Sink-side `RtmpRepeatParameterSets` enforcement.**  Cached
+  parameter-set NALs are now prepended ahead of every IDR whose
+  Annex-B access unit doesn't carry them inline.  Late-joining
+  subscribers (mediamtx LL-HLS, browser MSE consumers) recover
+  cleanly without waiting for the encoder's next out-of-band
+  sequence-header refresh.
+- **Source-side `MediaDesc` recovery from `SequenceHeader`.**  The
+  depacketizer parses `avcC` / `hvcC` and `AudioSpecificConfig`
+  into the on-frame descriptors so resolution and audio
+  rate/channels flow downstream automatically.
+- **Source-side parameter-set propagation.**  A `ParameterSet`-
+  flagged `CompressedVideoPayload` carrying the VPS/SPS/PPS NALs
+  is now emitted from each `SequenceHeader` tag so out-of-band
+  decoders can prime before any NALU frame lands.
+- **`onMetaData` pass-through.**  Inbound script-data is emitted
+  as a metadata-only Frame on the reader queue instead of being
+  silently dropped.
+
 **Known limitation (RTMP wire format):** RTMP timestamps are
 32-bit milliseconds, so fractional source rates (29.97, 59.94,
 etc.) inherently produce ±1 ms part-duration jitter on the wire
@@ -1890,12 +1910,18 @@ Cross-thread shutdown via the existing `Queue::cancelWaiters` /
       Phase 4 `FakeRtmpServer`).  Validates handshake → connect →
       publish → message exchange end-to-end, sequence-header
       ordering (AVC + AAC), and keyframe / inter-frame routing.
-- [ ] **Pacing doctest** (new, in `tests/unit/network/rtmpmediaio.cpp`):
-      - `Internal` mode + a `ManualClock` substituted for the
-        gate's internal wall clock — feed N frames synchronously,
-        assert the gate slept the expected accumulated period
-        (within tolerance) and that no `Skip` verdicts fire on a
-        real-time feeder.
+- [x] **Pacing doctests** (in `tests/unit/network/rtmpmediaio.cpp`):
+      - `RtmpVideoPacing=None` — no gate waits, queue-bounded
+        backpressure only.
+      - `RtmpVideoPacing=Internal` paces against the configured
+        `FrameRate` (100 fps test asserts the strand sleeps the
+        expected accumulated interval before the third frame).
+      - `RtmpVideoPacing=External` stays a no-op until
+        `executeCmd(MediaIOCommandSetClock)` binds a clock, then
+        switches to "external" (verified via `StatsPacingClockKind`),
+        and reverts to "none" on detach.
+
+      Carry-overs from the original plan (still TODO):
       - `Internal` + flood the strand faster than realtime —
         assert `StatsPacingTicksSkipped` matches the configured
         skip-threshold math and that `noteFrameDropped` is called.
@@ -1931,18 +1957,15 @@ Cross-thread shutdown via the existing `Queue::cancelWaiters` /
 
 **Deviations from the plan / carry-overs:**
 
-- **Strand-side `PacingGate` not yet wired.**  The current sink
-  pumps frames into the per-kind PayloadQueues at the strand's
-  natural rate — no `RtmpVideoPacing` honoring, no
-  `executeCmd(MediaIOCommandSetClock)` override, no
-  `Stats*` pacing keys.  In practice this is fine against an
-  upstream that delivers at real-time rate (a capture board
-  driving the planner), and the bounded `MessageQueue` keeps a
-  flooded sink from running away forever — but a synthetic feeder
-  (TPG, file relay) will burst a full GOP onto the wire on every
-  IDR.  The Phase 5 "Video pacing on the strand" step is the
-  authoritative plan; landing it is the next sink-side
-  deliverable.
+- **Strand-side `PacingGate` wired (2026-05-10 follow-up).**  All
+  three `RtmpVideoPacing` modes (`Internal` / `External` / `None`)
+  are honored end-to-end, with the gate clock swappable mid-stream
+  via `executeCmd(MediaIOCommandSetClock)` and the pacing stats
+  (`StatsPacingTicksOnTime` / `Late` / `Skipped`, `StatsPacingReanchors`,
+  `StatsPacingClockKind`) populated.  Doctest coverage is in
+  `tests/unit/network/rtmpmediaio.cpp` (`RtmpVideoPacing=None
+  disables pacing`, `=Internal paces against FrameRate`,
+  `=External waits for setClock binding`).
 - **Stats coverage subset.**  The cumulative counters (`StatsFramesSent`,
   `StatsBytesSent`, `StatsVideoMessagesSent`, etc.) and the
   `StatsConnectDurationMs` / `StatsHandshakeDurationMs` /
@@ -1963,27 +1986,43 @@ Cross-thread shutdown via the existing `Queue::cancelWaiters` /
   sequence header is not yet built; the bitstream still flows.
   This matches what the planner's `VideoEncoderMediaIO` upstream
   typically produces today (Annex-B).
-- **`RtmpRepeatParameterSets` is read but not yet enforced.**  The
-  packetizer ships the encoder's bytes verbatim; in-band SPS/PPS
-  repeat is the encoder's responsibility for now.  Landing the
-  inline re-injection at IDR boundaries is a small additive change.
+- **`RtmpRepeatParameterSets` is enforced (2026-05-10 follow-up).**
+  The packetizer caches the parameter sets parsed from the first
+  IDR's Annex-B access unit and, on every subsequent IDR that
+  arrives without inline SPS/PPS (and VPS for HEVC), prepends the
+  cached NALs as length-prefixed AVCC bytes ahead of the IDR
+  slice.  A late-joining subscriber can therefore decode the
+  next IDR without waiting for an out-of-band sequence-header
+  refresh.  Annex-B input only — AVCC-direct encoder output is
+  forwarded verbatim (parameter-set introspection on AVCC is the
+  encoder's responsibility).  Doctest coverage:
+  `tests/unit/network/rtmpmediaio.cpp` (`RtmpRepeatParameterSets=true
+  injects SPS on bare IDRs` / `=false skips SPS injection`).
 - **`RtmpDropUntilKeyframe` honored.**  Pre-IDR access units are
   dropped and counted via `StatsVideoFramesDroppedPreIdr`.
-- **Source-mode `MediaDesc`** is a `H.264 / 48 kHz stereo AAC`
-  placeholder until the first `SequenceHeader` arrives.  The
-  proper mid-stream descriptor update (`MediaIOCommandRead`'s
-  `mediaDescChanged` / `updatedMediaDesc` outputs) lands when the
-  depacketizer wires the parsed `AvcDecoderConfig` /
-  `AacDecoderConfig` back into the strand-side cache.
-- **Source-mode parameter-set propagation.**  The depacketizer
-  detects `SequenceHeader` tags but does not yet emit a
-  `CompressedVideoPayload(ParameterSet)` for downstream decoders —
-  most decoders cope when the encoder repeats parameter sets
-  in-band on every IDR, which the major destinations do.
-- **`onMetaData` consumption** is a placeholder.  The depacketizer
-  drains the `RtmpClient::takeMetadata` queue and discards.
-  Walking the AMF0 object into `Metadata` keys lands when a
-  consumer of those keys exists.
+- **Source-mode `MediaDesc` derived from `SequenceHeader`
+  (2026-05-10 follow-up).**  The depacketizer parses the inbound
+  `avcC` / `hvcC` (and AAC `AudioSpecificConfig`) blobs, recovers
+  resolution via `H264Bitstream::parseSpsResolution` /
+  `HevcDecoderConfig::parseSpsResolution`, and stamps every
+  subsequent `CompressedVideoPayload` / `CompressedAudioPayload`
+  with the recovered `ImageDesc` / `AudioDesc`.  The strand-side
+  `mediaDescChanged` / `updatedMediaDesc` plumbing is not yet
+  wired, but the per-payload descriptors carry the truth.
+- **Source-mode parameter-set propagation (2026-05-10 follow-up).**
+  The depacketizer emits a `CompressedVideoPayload(ParameterSet)`
+  whose AVCC bytes hold the parsed VPS/SPS/PPS NALs, so decoders
+  that prefer an out-of-band primer (NVDEC, ffmpeg's
+  `h264_cuvid`) can configure themselves before any NALU frame
+  lands.  Decoders that already cope with in-band parameter sets
+  see one extra ParameterSet-flagged Frame and are otherwise
+  unaffected.
+- **`onMetaData` pass-through (2026-05-10 follow-up).**  The
+  depacketizer drains `RtmpClient::takeMetadata` and emits each
+  blob as a metadata-only Frame onto the reader queue.  Mapping
+  the AMF0 object into specific `Metadata` keys is informational
+  and not driven by any consumer today; the raw object is on the
+  Frame's metadata for callers that want to inspect it.
 - **`RtmpMediaIO`'s `MediaConfig::Filename` fallback.**  Not
   implemented; users open RTMP streams via `MediaConfig::RtmpUrl`
   or `MediaIO::createFromUrl`.
@@ -2091,9 +2130,12 @@ Phase 4 ── RtmpClient ───────────► tests + demo  ✅
                                   │
                                   ▼
 Phase 5 ── RtmpMediaIO ──────────► doctest landed ✅ first cut (2026-05-10);
+                                  │                  PacingGate, parameter-set
+                                  │                  repeat, source-side desc /
+                                  │                  metadata wired (2026-05-10);
                                   │                  promeki-test matrix +
-                                  │                  stats / params +
-                                  │                  PacingGate follow-ups still TODO
+                                  │                  remaining stats keys +
+                                  │                  MediaIOCommandParams TODO
                                   ▼
 Phase 6 ── docs + CMake + demo wiring   (next)
 ```

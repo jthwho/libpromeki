@@ -113,21 +113,103 @@ uint32_t timestampMs(const MediaTimeStamp &mts) {
 }
 
 /// @brief Builds an @c avcC blob from an Annex-B access unit's parameter sets.
-Error buildAvccSequenceHeader(const BufferView &au, Buffer &outAvcc) {
-        AvcDecoderConfig cfg;
-        Error            err = AvcDecoderConfig::fromAnnexB(au, cfg);
+///
+/// Populates @p outCfg as a side effect so the caller can cache the
+/// parameter-set NALs for in-band re-injection ahead of subsequent IDRs
+/// (the @ref MediaConfig::RtmpRepeatParameterSets policy).
+Error buildAvccSequenceHeader(const BufferView &au, Buffer &outAvcc, AvcDecoderConfig &outCfg) {
+        Error err = AvcDecoderConfig::fromAnnexB(au, outCfg);
         if (err.isError()) return err;
-        if (cfg.sps.isEmpty() || cfg.pps.isEmpty()) return Error::InvalidArgument;
-        return cfg.serialize(outAvcc);
+        if (outCfg.sps.isEmpty() || outCfg.pps.isEmpty()) return Error::InvalidArgument;
+        return outCfg.serialize(outAvcc);
 }
 
 /// @brief Builds an @c hvcC blob from an Annex-B access unit's parameter sets.
-Error buildHvccSequenceHeader(const BufferView &au, Buffer &outHvcc) {
-        HevcDecoderConfig cfg;
-        Error             err = HevcDecoderConfig::fromAnnexB(au, cfg);
+///
+/// Populates @p outCfg as a side effect so the caller can cache the
+/// parameter-set NALs for in-band re-injection ahead of subsequent IDRs.
+Error buildHvccSequenceHeader(const BufferView &au, Buffer &outHvcc, HevcDecoderConfig &outCfg) {
+        Error err = HevcDecoderConfig::fromAnnexB(au, outCfg);
         if (err.isError()) return err;
-        if (cfg.vps.isEmpty() || cfg.sps.isEmpty() || cfg.pps.isEmpty()) return Error::InvalidArgument;
-        return cfg.serialize(outHvcc);
+        if (outCfg.vps.isEmpty() || outCfg.sps.isEmpty() || outCfg.pps.isEmpty()) return Error::InvalidArgument;
+        return outCfg.serialize(outHvcc);
+}
+
+/// @brief NAL types of interest for in-band parameter-set detection.
+enum AnnexBNalCategory {
+        NalCategoryUnknown = 0,
+        NalCategoryH264Sps = 1,        ///< H.264 nal_unit_type == 7
+        NalCategoryH264Pps = 1 << 1,   ///< H.264 nal_unit_type == 8
+        NalCategoryHevcVps = 1 << 2,   ///< HEVC nal_unit_type == 32
+        NalCategoryHevcSps = 1 << 3,   ///< HEVC nal_unit_type == 33
+        NalCategoryHevcPps = 1 << 4,   ///< HEVC nal_unit_type == 34
+};
+
+/// @brief Walks @p au and returns a bitmask of which parameter-set NALs are present.
+///
+/// Bits use the @ref AnnexBNalCategory layout.  Codec-aware so the
+/// caller can distinguish "H.264 SPS missing" from "HEVC SPS missing"
+/// in the same access unit.
+unsigned int detectAnnexBParameterSets(const BufferView &au, bool isHevc) {
+        unsigned int mask = 0;
+        (void)H264Bitstream::forEachAnnexBNal(au,
+                [&mask, isHevc](const H264Bitstream::NalUnit &nu) -> Error {
+                        if (isHevc) {
+                                const uint8_t nalType = static_cast<uint8_t>((nu.header0 >> 1) & 0x3F);
+                                if (nalType == 32) mask |= NalCategoryHevcVps;
+                                else if (nalType == 33) mask |= NalCategoryHevcSps;
+                                else if (nalType == 34) mask |= NalCategoryHevcPps;
+                        } else {
+                                const uint8_t nalType = static_cast<uint8_t>(nu.header0 & 0x1F);
+                                if (nalType == 7) mask |= NalCategoryH264Sps;
+                                else if (nalType == 8) mask |= NalCategoryH264Pps;
+                        }
+                        return Error::Ok;
+                });
+        return mask;
+}
+
+/// @brief Builds a length-prefixed AVCC blob containing every NAL in @p nals.
+///
+/// Each NAL receives a 4-byte big-endian length prefix (matching the
+/// @c lengthSizeMinusOne = 3 default RTMP picks).  Returns an empty
+/// buffer when @p nals is empty.
+Buffer buildNalsAsAvcc4(const List<Buffer> &nals) {
+        size_t total = 0;
+        for (size_t i = 0; i < nals.size(); ++i) {
+                total += 4 + nals[i].size();
+        }
+        Buffer out;
+        if (total == 0) return out;
+        out = Buffer(total);
+        out.setSize(total);
+        uint8_t *p = static_cast<uint8_t *>(out.data());
+        for (size_t i = 0; i < nals.size(); ++i) {
+                const Buffer  &n = nals[i];
+                const uint32_t sz = static_cast<uint32_t>(n.size());
+                p[0] = static_cast<uint8_t>((sz >> 24) & 0xFF);
+                p[1] = static_cast<uint8_t>((sz >> 16) & 0xFF);
+                p[2] = static_cast<uint8_t>((sz >>  8) & 0xFF);
+                p[3] = static_cast<uint8_t>( sz        & 0xFF);
+                if (n.size() > 0) {
+                        std::memcpy(p + 4, n.data(), n.size());
+                }
+                p += 4 + n.size();
+        }
+        return out;
+}
+
+/// @brief Concatenate two buffers into a single fresh one (zero-copy if @p a is empty).
+Buffer concatBuffers(const Buffer &a, const Buffer &b) {
+        if (a.size() == 0) return b;
+        if (b.size() == 0) return a;
+        const size_t total = a.size() + b.size();
+        Buffer       out(total);
+        out.setSize(total);
+        uint8_t *p = static_cast<uint8_t *>(out.data());
+        std::memcpy(p, a.data(), a.size());
+        std::memcpy(p + a.size(), b.data(), b.size());
+        return out;
 }
 
 } // namespace
@@ -258,11 +340,12 @@ class RtmpMediaIO::PacketizerThread : public Thread {
                         // sequence header on the first frame and rely
                         // on out-of-band signaling once that path lands.
                         const bool annexB = looksLikeAnnexB(data);
+                        const bool isHevc = (codec.id() == VideoCodec::HEVC);
                         if (!_videoSequenceSent && isKey && annexB) {
                                 Buffer seq;
-                                Error  err = (codec.id() == VideoCodec::HEVC)
-                                                     ? buildHvccSequenceHeader(data, seq)
-                                                     : buildAvccSequenceHeader(data, seq);
+                                Error  err = isHevc
+                                                     ? buildHvccSequenceHeader(data, seq, _hevcConfig)
+                                                     : buildAvccSequenceHeader(data, seq, _avcConfig);
                                 if (err.isOk() && seq.size() > 0) {
                                         FlvVideoTag tag;
                                         tag.frameType = FlvVideoTag::Keyframe;
@@ -277,6 +360,7 @@ class RtmpMediaIO::PacketizerThread : public Thread {
                                                 return;
                                         }
                                         _videoSequenceSent = true;
+                                        _haveCachedParameterSets = true;
                                 }
                         }
 
@@ -296,6 +380,54 @@ class RtmpMediaIO::PacketizerThread : public Thread {
                         }
 
                         if (avccPayload.size() == 0) return;
+
+                        // In-band parameter-set repeat: ahead of every
+                        // IDR, ensure SPS/PPS (and VPS for HEVC) are
+                        // present in the AVCC payload itself so a
+                        // subscriber joining mid-stream can decode the
+                        // next IDR without waiting for the next
+                        // out-of-band sequence-header refresh.  Only
+                        // active on Annex-B input (we need to inspect
+                        // NAL types to avoid double-injection) and only
+                        // when the caller asked for it.
+                        if (isKey && annexB && _haveCachedParameterSets
+                            && _owner->_repeatParameterSets) {
+                                const unsigned int present =
+                                        detectAnnexBParameterSets(data, isHevc);
+                                List<Buffer> missing;
+                                if (isHevc) {
+                                        if ((present & NalCategoryHevcVps) == 0) {
+                                                for (size_t i = 0; i < _hevcConfig.vps.size(); ++i) {
+                                                        missing.pushToBack(_hevcConfig.vps[i]);
+                                                }
+                                        }
+                                        if ((present & NalCategoryHevcSps) == 0) {
+                                                for (size_t i = 0; i < _hevcConfig.sps.size(); ++i) {
+                                                        missing.pushToBack(_hevcConfig.sps[i]);
+                                                }
+                                        }
+                                        if ((present & NalCategoryHevcPps) == 0) {
+                                                for (size_t i = 0; i < _hevcConfig.pps.size(); ++i) {
+                                                        missing.pushToBack(_hevcConfig.pps[i]);
+                                                }
+                                        }
+                                } else {
+                                        if ((present & NalCategoryH264Sps) == 0) {
+                                                for (size_t i = 0; i < _avcConfig.sps.size(); ++i) {
+                                                        missing.pushToBack(_avcConfig.sps[i]);
+                                                }
+                                        }
+                                        if ((present & NalCategoryH264Pps) == 0) {
+                                                for (size_t i = 0; i < _avcConfig.pps.size(); ++i) {
+                                                        missing.pushToBack(_avcConfig.pps[i]);
+                                                }
+                                        }
+                                }
+                                if (!missing.isEmpty()) {
+                                        Buffer prefix = buildNalsAsAvcc4(missing);
+                                        avccPayload = concatBuffers(prefix, avccPayload);
+                                }
+                        }
 
                         FlvVideoTag tag;
                         tag.frameType = isKey ? FlvVideoTag::Keyframe : FlvVideoTag::InterFrame;
@@ -398,6 +530,19 @@ class RtmpMediaIO::PacketizerThread : public Thread {
                 Atomic<bool>       _started{false};
                 bool               _videoSequenceSent = false;
                 bool               _audioSequenceSent = false;
+
+                // Parameter-set cache populated from the first IDR's
+                // Annex-B access unit.  Used by the
+                // @ref MediaConfig::RtmpRepeatParameterSets policy to
+                // prepend SPS / PPS (and VPS for HEVC) ahead of every
+                // IDR access unit that doesn't already carry them
+                // in-band, so a subscriber joining mid-stream can
+                // decode the next IDR without waiting for a fresh
+                // out-of-band sequence header.  Only one of the two
+                // configs is populated per stream (codec-dependent).
+                bool               _haveCachedParameterSets = false;
+                AvcDecoderConfig   _avcConfig;
+                HevcDecoderConfig  _hevcConfig;
 };
 
 // ----------------------------------------------------------------------------
@@ -482,25 +627,9 @@ class RtmpMediaIO::DepacketizerThread : public Thread {
                 void handleVideo(const FlvVideoTag &tag) {
                         if (tag.data.size() == 0) return;
 
-                        // The first SequenceHeader tag of each kind
-                        // carries the parameter sets we need for
-                        // downstream decode.  Skip the in-band payload
-                        // for v1 — emit only the bitstream NALs.
-                        if (tag.packetType == FlvVideoTag::SequenceHeader) {
-                                _videoSequenceSeen = true;
-                                // Defer emission until we know how
-                                // downstream wants to consume parameter
-                                // sets.  Many decoders are happy with
-                                // the in-band SPS/PPS that the encoder
-                                // is expected to re-include on each
-                                // keyframe.
-                                return;
-                        }
-                        if (tag.packetType != FlvVideoTag::Nalu) return;
-
-                        // Build an ImageDesc using the tag's codec.
-                        // For Enhanced-RTMP we use the FourCC to map
-                        // back to HEVC; legacy AVC is straightforward.
+                        // Map the FLV codec to a PixelFormat once per
+                        // tag — used by both the SequenceHeader and
+                        // Nalu paths.
                         PixelFormat pf;
                         if (tag.codec == FlvVideoTag::ExHevc) {
                                 pf = PixelFormat(PixelFormat::HEVC);
@@ -509,14 +638,98 @@ class RtmpMediaIO::DepacketizerThread : public Thread {
                         } else {
                                 return;
                         }
-                        ImageDesc desc{Size2Du32(), pf};
+                        const bool isHevc = (tag.codec == FlvVideoTag::ExHevc);
+
+                        // SequenceHeader: parse the avcC / hvcC blob,
+                        // cache the parameter sets, extract resolution
+                        // from the first SPS, and emit a
+                        // CompressedVideoPayload tagged ParameterSet so
+                        // downstream decoders that prefer an
+                        // out-of-band primer (NVDEC, ffmpeg's
+                        // h264_cuvid) can configure themselves.
+                        if (tag.packetType == FlvVideoTag::SequenceHeader) {
+                                _videoSequenceSeen = true;
+                                BufferView cfgView(tag.data, 0, tag.data.size());
+
+                                List<Buffer> psNals;
+                                Size2Du32    spsRes;
+                                if (isHevc) {
+                                        HevcDecoderConfig cfg;
+                                        Error             err = HevcDecoderConfig::parse(cfgView, cfg);
+                                        if (err.isError()) {
+                                                promekiWarn("RtmpMediaIO: hvcC parse failed: %s",
+                                                            err.desc().cstr());
+                                                return;
+                                        }
+                                        for (size_t i = 0; i < cfg.vps.size(); ++i) psNals.pushToBack(cfg.vps[i]);
+                                        for (size_t i = 0; i < cfg.sps.size(); ++i) psNals.pushToBack(cfg.sps[i]);
+                                        for (size_t i = 0; i < cfg.pps.size(); ++i) psNals.pushToBack(cfg.pps[i]);
+                                        if (!cfg.sps.isEmpty()) {
+                                                HevcDecoderConfig::SpsInfo info;
+                                                if (HevcDecoderConfig::parseSpsResolution(
+                                                            BufferView(cfg.sps[0], 0, cfg.sps[0].size()),
+                                                            info).isOk()) {
+                                                        spsRes = Size2Du32(info.width, info.height);
+                                                }
+                                        }
+                                } else {
+                                        AvcDecoderConfig cfg;
+                                        Error            err = AvcDecoderConfig::parse(cfgView, cfg);
+                                        if (err.isError()) {
+                                                promekiWarn("RtmpMediaIO: avcC parse failed: %s",
+                                                            err.desc().cstr());
+                                                return;
+                                        }
+                                        for (size_t i = 0; i < cfg.sps.size(); ++i) psNals.pushToBack(cfg.sps[i]);
+                                        for (size_t i = 0; i < cfg.pps.size(); ++i) psNals.pushToBack(cfg.pps[i]);
+                                        if (!cfg.sps.isEmpty()) {
+                                                H264Bitstream::SpsInfo info;
+                                                if (H264Bitstream::parseSpsResolution(
+                                                            BufferView(cfg.sps[0], 0, cfg.sps[0].size()),
+                                                            info).isOk()) {
+                                                        spsRes = Size2Du32(info.width, info.height);
+                                                }
+                                        }
+                                }
+
+                                _videoDesc = ImageDesc(spsRes, pf);
+
+                                // Emit a parameter-set Frame so a
+                                // downstream decoder can configure
+                                // itself before any NALU frames land.
+                                // The payload carries the AVCC bytes
+                                // (length-prefixed parameter-set NALs)
+                                // that exactly match what subsequent
+                                // Nalu payloads carry.
+                                if (!psNals.isEmpty()) {
+                                        Buffer psPayload = buildNalsAsAvcc4(psNals);
+                                        CompressedVideoPayload::Ptr cv =
+                                                CompressedVideoPayload::Ptr::create(_videoDesc, psPayload);
+                                        cv.modify()->markParameterSet(true);
+                                        Frame f;
+                                        f.addPayload(cv);
+                                        (void)_owner->_readerQueue.pushDropOldest(std::move(f));
+                                        _owner->_readerFramesReceived.fetchAndAdd(1);
+                                }
+                                return;
+                        }
+                        if (tag.packetType != FlvVideoTag::Nalu) return;
+
+                        // If we never saw a SequenceHeader (server
+                        // joined-late, broken publisher) fall back to a
+                        // descriptor with the codec only — downstream
+                        // gets unknown resolution but can still decode
+                        // when the encoder re-injects SPS/PPS in band.
+                        if (_videoDesc.pixelFormat().id() != pf.id()) {
+                                _videoDesc = ImageDesc(Size2Du32(), pf);
+                        }
 
                         Buffer payload(tag.data.size());
                         payload.setSize(tag.data.size());
                         std::memcpy(payload.data(), tag.data.data(), tag.data.size());
 
                         CompressedVideoPayload::Ptr cv =
-                                CompressedVideoPayload::Ptr::create(desc, payload);
+                                CompressedVideoPayload::Ptr::create(_videoDesc, payload);
                         if (tag.frameType == FlvVideoTag::Keyframe ||
                             tag.frameType == FlvVideoTag::GeneratedKeyframe) {
                                 cv.modify()->addFlag(MediaPayload::Keyframe);
@@ -532,27 +745,52 @@ class RtmpMediaIO::DepacketizerThread : public Thread {
                         if (tag.format != FlvAudioTag::Aac) return;
                         if (tag.aacPacketType == FlvAudioTag::AudioSpecificConfig) {
                                 _audioSequenceSeen = true;
+                                AacDecoderConfig cfg;
+                                BufferView       view(tag.data, 0, tag.data.size());
+                                Error            err = AacDecoderConfig::parse(view, cfg);
+                                if (err.isError()) {
+                                        promekiWarn("RtmpMediaIO: AudioSpecificConfig parse failed: %s",
+                                                    err.desc().cstr());
+                                        return;
+                                }
+                                _audioDesc = cfg.toAudioDesc();
                                 return;
                         }
                         if (tag.data.size() == 0) return;
 
-                        AudioDesc desc{AudioFormat(AudioFormat::AAC), 48000.0f, 2u};
-                        Buffer    payload(tag.data.size());
+                        // Fall back to a sensible default when no
+                        // SequenceHeader has arrived — most subscribers
+                        // start at 48 kHz stereo and the FLV
+                        // soundrate / soundtype fields are coarse
+                        // 4 kHz / mono-or-stereo enums anyway.
+                        if (!_audioSequenceSeen) {
+                                _audioDesc = AudioDesc(AudioFormat(AudioFormat::AAC), 48000.0f, 2u);
+                        }
+
+                        Buffer payload(tag.data.size());
                         payload.setSize(tag.data.size());
                         std::memcpy(payload.data(), tag.data.data(), tag.data.size());
 
                         CompressedAudioPayload::Ptr ca =
-                                CompressedAudioPayload::Ptr::create(desc, payload);
+                                CompressedAudioPayload::Ptr::create(_audioDesc, payload);
                         Frame f;
                         f.addPayload(ca);
                         (void)_owner->_readerQueue.pushDropOldest(std::move(f));
                         _owner->_readerFramesReceived.fetchAndAdd(1);
                 }
 
-                void handleMetadata(const Metadata &) {
-                        // v1: surface as no-op.  The metadata-emitting
-                        // path lands when the planner needs to consume
-                        // it (e.g. width / height from onMetaData).
+                void handleMetadata(const Metadata &m) {
+                        // Pass the @c onMetaData blob through as a
+                        // metadata-only frame so a downstream Pipeline
+                        // stage can read width / height / framerate /
+                        // bitrate hints out of the publisher's
+                        // announcement.  This is informational only —
+                        // the wire-side parameter-set + sample-rate
+                        // recovery above is the authoritative source.
+                        Frame f;
+                        f.metadata() = m;
+                        (void)_owner->_readerQueue.pushDropOldest(std::move(f));
+                        _owner->_readerFramesReceived.fetchAndAdd(1);
                 }
 
                 RtmpMediaIO *_owner;
@@ -560,6 +798,14 @@ class RtmpMediaIO::DepacketizerThread : public Thread {
                 Atomic<bool> _started{false};
                 bool         _videoSequenceSeen = false;
                 bool         _audioSequenceSeen = false;
+
+                // Descriptors built from the most recent SequenceHeader.
+                // ImageDesc carries the SPS-derived resolution; AudioDesc
+                // carries the AudioSpecificConfig-derived rate / channels.
+                // Reset only when a fresh SequenceHeader arrives, so any
+                // mid-stream parameter change is honored.
+                ImageDesc _videoDesc;
+                AudioDesc _audioDesc{AudioFormat(AudioFormat::AAC), 48000.0f, 2u};
 };
 
 // ----------------------------------------------------------------------------
