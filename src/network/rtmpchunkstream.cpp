@@ -154,12 +154,25 @@ int RtmpChunkStream::defaultCsidForType(RtmpMessage::Type type) const {
 // ---------------------------------------------------------------------------
 
 Error RtmpChunkStream::writeBytes(const uint8_t *data, size_t len) {
-        if (_device == nullptr) return Error::Invalid;
+        if (_device == nullptr) {
+                promekiWarn("RtmpChunkStream::writeBytes: no device attached (len=%zu)", len);
+                return Error::Invalid;
+        }
         size_t off = 0;
         while (off < len) {
                 int64_t n = _device->write(data + off, static_cast<int64_t>(len - off));
-                if (n < 0) return Error::IOError;
-                if (n == 0) return Error::IOError;
+                if (n < 0) {
+                        promekiWarn("RtmpChunkStream::writeBytes: write failed "
+                                    "(wanted=%zu, sent=%zu, returned=%lld)",
+                                    len, off, static_cast<long long>(n));
+                        return Error::IOError;
+                }
+                if (n == 0) {
+                        promekiWarn("RtmpChunkStream::writeBytes: write returned 0 "
+                                    "(peer half-closed; wanted=%zu, sent=%zu)",
+                                    len, off);
+                        return Error::IOError;
+                }
                 off += static_cast<size_t>(n);
         }
         _bytesSent.setValue(_bytesSent.value() + static_cast<int64_t>(len));
@@ -167,7 +180,10 @@ Error RtmpChunkStream::writeBytes(const uint8_t *data, size_t len) {
 }
 
 Error RtmpChunkStream::readBytesExact(uint8_t *data, size_t len, unsigned int timeoutMs) {
-        if (_device == nullptr) return Error::Invalid;
+        if (_device == nullptr) {
+                promekiWarn("RtmpChunkStream::readBytesExact: no device attached (len=%zu)", len);
+                return Error::Invalid;
+        }
         size_t off = 0;
         ElapsedTimer timer;
         timer.start();
@@ -183,16 +199,32 @@ Error RtmpChunkStream::readBytesExact(uint8_t *data, size_t len, unsigned int ti
                 // immediately when no bytes are present.
                 if (_device->bytesAvailable() == 0) {
                         bool ready = _device->waitForReadyRead(remaining);
-                        if (!ready) return (timeoutMs == 0) ? Error::IOError : Error::Timeout;
+                        if (!ready) {
+                                if (timeoutMs == 0) {
+                                        promekiWarn("RtmpChunkStream::readBytesExact: "
+                                                    "waitForReadyRead failed (no timeout, "
+                                                    "wanted=%zu, got=%zu) — treating as IOError",
+                                                    len, off);
+                                        return Error::IOError;
+                                }
+                                return Error::Timeout;
+                        }
                 }
                 int64_t n = _device->read(data + off, static_cast<int64_t>(len - off));
-                if (n < 0) return Error::IOError;
+                if (n < 0) {
+                        promekiWarn("RtmpChunkStream::readBytesExact: read failed "
+                                    "(wanted=%zu, got=%zu, returned=%lld)",
+                                    len, off, static_cast<long long>(n));
+                        return Error::IOError;
+                }
                 if (n == 0) {
                         // recv() returning zero on a TCP socket is EOF
                         // — the peer half-closed before sending the
                         // bytes we needed.  Treat as IOError; looping
                         // would spin since POLLHUP makes the next
                         // waitForReadyRead return instantly.
+                        promekiWarn("RtmpChunkStream::readBytesExact: peer EOF "
+                                    "(wanted=%zu, got=%zu)", len, off);
                         return Error::IOError;
                 }
                 off += static_cast<size_t>(n);
@@ -323,17 +355,36 @@ void RtmpChunkStream::handleControl(const RtmpMessage &msg) {
 // ---------------------------------------------------------------------------
 
 Error RtmpChunkStream::writeMessage(const RtmpMessage &msg) {
-        if (_device == nullptr) return Error::Invalid;
+        if (_device == nullptr) {
+                promekiWarn("RtmpChunkStream::writeMessage: no device attached "
+                            "(type=%d, msid=%u, size=%zu)",
+                            static_cast<int>(msg.type), msg.streamId, msg.payload.size());
+                return Error::Invalid;
+        }
 
         uint32_t csid = msg.chunkStreamId;
         if (csid == 0) csid = static_cast<uint32_t>(defaultCsidForType(msg.type));
-        if (csid < 2) return Error::InvalidArgument;
-        if (csid > 65599) return Error::InvalidArgument;
+        if (csid < 2) {
+                promekiWarn("RtmpChunkStream::writeMessage: invalid csid %u "
+                            "(type=%d, msid=%u) — csid must be >= 2",
+                            csid, static_cast<int>(msg.type), msg.streamId);
+                return Error::InvalidArgument;
+        }
+        if (csid > 65599) {
+                promekiWarn("RtmpChunkStream::writeMessage: invalid csid %u "
+                            "(type=%d, msid=%u) — csid must be <= 65599",
+                            csid, static_cast<int>(msg.type), msg.streamId);
+                return Error::InvalidArgument;
+        }
 
         const uint8_t *body = static_cast<const uint8_t *>(msg.payload.data());
         const uint32_t bodyLen = static_cast<uint32_t>(msg.payload.size());
         const int      chunkSize = _localChunkSize.value();
-        if (chunkSize <= 0) return Error::Invalid;
+        if (chunkSize <= 0) {
+                promekiWarn("RtmpChunkStream::writeMessage: invalid local chunk size %d",
+                            chunkSize);
+                return Error::Invalid;
+        }
 
         Mutex::Locker lk(_writeMutex);
 

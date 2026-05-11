@@ -276,19 +276,29 @@ class RtmpClient : public ObjectBase {
                 /** @brief Fires once for every received @c onMetaData payload. @signal */
                 PROMEKI_SIGNAL(metadataReceived, Metadata);
 
-        private:
-                class WriterThread;
-                class ReaderThread;
-
                 /**
                  * @brief Splits @p url's path into @c app and
                  *        @c streamKey segments.
                  *
-                 * Everything before the last `/` is the app; the
-                 * trailing segment is the stream key.  An empty path
-                 * yields empty strings.
+                 * When the path has two or more segments, everything
+                 * before the last `/` is the app and the trailing
+                 * segment is the stream key.  When the path has a
+                 * single segment (e.g. @c rtmp://host/live2), the
+                 * segment is the app and the stream key is empty —
+                 * callers can supply the key out-of-band via
+                 * @c MediaConfig::RtmpStreamKey or the
+                 * @ref publish() / @ref play() arguments.  An empty
+                 * path yields empty strings.
+                 *
+                 * Exposed as a public static so tests and callers can
+                 * reason about how a URL maps to RTMP `app` /
+                 * `streamKey` without instantiating a client.
                  */
                 static void splitPath(const Url &url, String &app, String &streamKey);
+
+        private:
+                class WriterThread;
+                class ReaderThread;
 
                 void teardown(Error reason);
                 void startMediaThreads();

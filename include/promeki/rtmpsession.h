@@ -371,6 +371,29 @@ class RtmpSession : public ObjectBase {
                         bool     completed = false;
                         Amf0Value commandObject;   ///< Snapshot of the reply body for inspection.
                         Amf0Value info;             ///< The 4th AMF0 value in the reply (info object).
+                        /**
+                         * @brief Message-stream-id we expect the reply
+                         *        to arrive on, or 0 if the reply is
+                         *        correlated purely by transaction id.
+                         *
+                         * Required for @c publish / @c play because
+                         * the server's @c onStatus reply carries
+                         * @c txnId = 0 per RTMP §7.2.2 — correlation
+                         * has to fall back to the msid the command
+                         * was issued on.  @c connect /
+                         * @c createStream leave this at 0 because
+                         * their replies (@c _result on the
+                         * NetConnection csid) correlate by txnId.
+                         */
+                        uint32_t expectedMsid = 0;
+                        /**
+                         * @brief Last command name we registered this
+                         *        transaction for ("publish", "play",
+                         *        "connect", "createStream").  Used for
+                         *        diagnostic logging when a reply is
+                         *        unmatched or fails.
+                         */
+                        String   commandName;
                 };
 
                 Error    sendCommand(uint32_t csid, uint32_t msid,

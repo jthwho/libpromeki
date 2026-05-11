@@ -1407,10 +1407,26 @@ struct RtmpConnectOptions {
 ## Phase 4 — Standalone client classes (publisher + subscriber)
 
 **Status (2026-05-10):** Phase 4 is **complete**.  RtmpClient landed
-with 8 doctest cases (30 assertions).  End-to-end publish round-trip
+with 10 doctest cases (44 assertions).  End-to-end publish round-trip
 via a local TCP fixture (`FakeRtmpServer` reused across phases) is
-green.  Full ctest passes at 5709 cases / 115,321 assertions; zero
-warnings in our code.
+green; a second loopback fixture (`FakeRtmpServerZeroTxn`) covers the
+RTMP §7.2.2 `onStatus` txnId=0 path.  Full ctest passes at
+5747 cases / 122,521 assertions; zero warnings in our code.
+
+**Bugfix iteration (2026-05-10) — successful 1080p29.97 YouTube Live stream:**
+- `splitPath`: single-segment URL paths (e.g. `rtmp://a.rtmp.youtube.com/live2`)
+  now map the segment to `app` (not `streamKey`).  YouTube's AMF0 `connect`
+  call rejects an empty `app`; the stream key is supplied out-of-band via
+  `MediaConfig::RtmpStreamKey` or `publish()`'s argument.
+- `RtmpSession::handleInboundCommand`: `onStatus` correlation now handles
+  `txnId=0` (the real-world path per RTMP §7.2.2).  When `txnId` is zero
+  the handler scans `_pending` for a transaction whose `expectedMsid` matches
+  the inbound message-stream-id.  `PendingTransaction` gains `expectedMsid`
+  and `commandName` fields; all callers (`connect`, `createStream`, `publish`,
+  `play`) stamp them.
+- Comprehensive `promekiWarn` instrumentation throughout
+  `rtmpchunkstream.cpp`, `rtmpclient.cpp`, and `rtmpsession.cpp` for all
+  error branches; previously silent failures now log context.
 
 Files:
 - [x] `include/promeki/rtmpclient.h`
@@ -1522,7 +1538,7 @@ class RtmpClient : public ObjectBase {
 
 **Tests:**
 
-- [x] **Loopback round-trip:** `FakeRtmpServer` fixture in
+- [x] **Loopback round-trip (txnId echo):** `FakeRtmpServer` fixture in
       `tests/unit/network/rtmpclient.cpp` drives the server-side
       handshake + connect-flow inside the same process.  The test
       publishes a synthetic AVC video + AAC audio sequence and
@@ -1532,6 +1548,13 @@ class RtmpClient : public ObjectBase {
       `tests/unit/rtmpserverfixture.h` — moving it out as a shared
       header lands when Phase 5 (`RtmpMediaIO`) tests need to reuse
       it.
+- [x] **Loopback round-trip (txnId=0 / §7.2.2 path):**
+      `FakeRtmpServerZeroTxn` sends `onStatus` with `txnId=0.0`
+      (matching real YouTube / Twitch / nginx-rtmp behavior per RTMP
+      §7.2.2); exercises the `expectedMsid` scan path in
+      `RtmpSession::handleInboundCommand`.
+- [x] **splitPath corner cases:** 5 subcases — empty path, two-segment,
+      multi-segment, single-segment (YouTube `live2` form), trailing slash.
 - [x] **URL scheme rejection:** `http://` and empty-host URLs are
       rejected with `Error::InvalidArgument`.
 - [x] **Refused-connection cleanup:** opening to a port nothing is

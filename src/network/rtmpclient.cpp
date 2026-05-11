@@ -86,12 +86,26 @@ class RtmpClient::WriterThread : public Thread {
                                 if (got.second().isError()) {
                                         if (got.second() == Error::Cancelled) return;
                                         if (got.second() == Error::Timeout) continue;
+                                        promekiWarn("RtmpClient::WriterThread: write queue pop "
+                                                    "failed: %s — exiting writer",
+                                                    got.second().desc().cstr());
                                         return;
                                 }
                                 RtmpSession *s = _owner->_session.get();
-                                if (s == nullptr) return;
+                                if (s == nullptr) {
+                                        promekiWarn("RtmpClient::WriterThread: session vanished "
+                                                    "while draining write queue — exiting writer");
+                                        return;
+                                }
                                 Error err = s->sendMessage(got.first());
                                 if (err.isError()) {
+                                        promekiWarn("RtmpClient::WriterThread: sendMessage failed "
+                                                    "(type=%d, msid=%u, ts=%u, size=%zu): %s",
+                                                    static_cast<int>(got.first().type),
+                                                    got.first().streamId,
+                                                    got.first().timestamp,
+                                                    got.first().payload.size(),
+                                                    err.desc().cstr());
                                         _owner->teardown(err);
                                         return;
                                 }
@@ -128,10 +142,17 @@ class RtmpClient::ReaderThread : public Thread {
                         for (;;) {
                                 if (_owner->_stopping.value()) return;
                                 RtmpSession *s = _owner->_session.get();
-                                if (s == nullptr) return;
+                                if (s == nullptr) {
+                                        promekiWarn("RtmpClient::ReaderThread: session vanished "
+                                                    "— exiting reader");
+                                        return;
+                                }
                                 Result<RtmpMessage> got = s->readMessage(250);
                                 if (got.second() == Error::Timeout) continue;
                                 if (got.second().isError()) {
+                                        promekiWarn("RtmpClient::ReaderThread: readMessage failed: "
+                                                    "%s — tearing down client",
+                                                    got.second().desc().cstr());
                                         _owner->teardown(got.second());
                                         return;
                                 }
@@ -212,14 +233,22 @@ void RtmpClient::splitPath(const Url &url, String &app, String &streamKey) {
         }
         // Strip the leading '/' for the AMF0 `app` field.
         size_t start = (path.charAt(0) == '/') ? 1 : 0;
-        // Find the last '/' separator.
+        // Find the last '/' separator (after the leading one).
         int lastSlash = -1;
         for (size_t i = start; i < path.length(); i++) {
                 if (path.charAt(i) == '/') lastSlash = static_cast<int>(i);
         }
         if (lastSlash < 0) {
-                app.clear();
-                streamKey = path.substr(start);
+                // Single segment after the host: the AMF0 `connect`
+                // call needs a non-empty `app`, so treat the segment
+                // as the app and leave the stream key empty.  Callers
+                // can supply the stream key via
+                // @c MediaConfig::RtmpStreamKey or the publish() /
+                // play() arguments — e.g. YouTube's
+                // `rtmp://a.rtmp.youtube.com/live2` with the key
+                // pinned out-of-band.
+                app = path.substr(start);
+                streamKey.clear();
         } else {
                 app = path.substr(start, lastSlash - static_cast<int>(start));
                 streamKey = path.substr(lastSlash + 1);
@@ -247,7 +276,11 @@ void RtmpClient::teardown(Error reason) {
 
 Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
                        unsigned int timeoutMs) {
-        if (_open.value()) return Error::Exists;
+        if (_open.value()) {
+                promekiWarn("RtmpClient::open: already open (url='%s')",
+                            url.toString().cstr());
+                return Error::Exists;
+        }
 
         _url = url;
         const String &scheme = url.scheme();
@@ -257,17 +290,28 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
         } else if (scheme == "rtmp") {
                 isTls = false;
         } else {
-                promekiWarn("RtmpClient: unsupported URL scheme '%s'", scheme.cstr());
+                promekiWarn("RtmpClient::open: unsupported URL scheme '%s' (url='%s')",
+                            scheme.cstr(), url.toString().cstr());
                 return Error::InvalidArgument;
         }
 
 #if !defined(PROMEKI_ENABLE_TLS)
-        if (isTls) return Error::NotSupported;
+        if (isTls) {
+                promekiWarn("RtmpClient::open: rtmps:// requested but TLS is not "
+                            "enabled in this build (url='%s')", url.toString().cstr());
+                return Error::NotSupported;
+        }
 #endif
 
-        if (url.host().isEmpty()) return Error::InvalidArgument;
+        if (url.host().isEmpty()) {
+                promekiWarn("RtmpClient::open: empty host in URL '%s'",
+                            url.toString().cstr());
+                return Error::InvalidArgument;
+        }
 
         splitPath(url, _app, _streamKey);
+        promekiDebug("RtmpClient::open: url='%s' app='%s' urlKey='%s'",
+                     url.toString().cstr(), _app.cstr(), _streamKey.cstr());
 
         // Open the right socket.
 #if defined(PROMEKI_ENABLE_TLS)
@@ -286,6 +330,8 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
         _socket = UniquePtr<TcpSocket>::takeOwnership(new TcpSocket());
 #endif
         if (Error err = _socket->open(IODevice::ReadWrite); err.isError()) {
+                promekiWarn("RtmpClient::open: socket open failed (url='%s'): %s",
+                            url.toString().cstr(), err.desc().cstr());
                 _socket.reset();
                 return err;
         }
@@ -293,6 +339,8 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
         // Resolve + connect.
         uint32_t ipv4 = 0;
         if (Error err = resolveHost(url.host(), ipv4); err.isError()) {
+                promekiWarn("RtmpClient::open: DNS resolution failed for host '%s': %s",
+                            url.host().cstr(), err.desc().cstr());
                 _socket.reset();
                 return err;
         }
@@ -300,6 +348,8 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
                                               : (isTls ? kDefaultRtmpsPort : kDefaultRtmpPort));
         if (Error err = _socket->connectToHost(SocketAddress(Ipv4Address(ipv4), port));
             err.isError()) {
+                promekiWarn("RtmpClient::open: TCP connect to %s:%u failed: %s",
+                            Ipv4Address(ipv4).toString().cstr(), port, err.desc().cstr());
                 _socket.reset();
                 return err;
         }
@@ -310,6 +360,8 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
         if (isTls) {
                 SslSocket *ssl = static_cast<SslSocket *>(_socket.get());
                 if (Error err = ssl->startEncryption(url.host()); err.isError() && err != Error::TryAgain) {
+                        promekiWarn("RtmpClient::open: TLS startEncryption(%s) failed: %s",
+                                    url.host().cstr(), err.desc().cstr());
                         _socket.reset();
                         return err;
                 }
@@ -318,17 +370,23 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
                 while (!ssl->isEncrypted()) {
                         int64_t elapsedMs = timer.elapsedUs() / 1000;
                         if (elapsedMs >= static_cast<int64_t>(timeoutMs)) {
+                                promekiWarn("RtmpClient::open: TLS handshake timed out after %u ms",
+                                            timeoutMs);
                                 _socket.reset();
                                 return Error::Timeout;
                         }
                         Error step = ssl->continueHandshake();
                         if (step.isError() && step != Error::TryAgain) {
+                                promekiWarn("RtmpClient::open: TLS continueHandshake failed: %s",
+                                            step.desc().cstr());
                                 _socket.reset();
                                 return step;
                         }
                         if (ssl->isEncrypted()) break;
                         unsigned int rem = static_cast<unsigned int>(timeoutMs - elapsedMs);
                         if (!ssl->waitForReadyRead(rem)) {
+                                promekiWarn("RtmpClient::open: TLS waitForReadyRead timed out "
+                                            "after %u ms remaining", rem);
                                 _socket.reset();
                                 return Error::Timeout;
                         }
@@ -339,11 +397,15 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
         // Build the session and run handshake + connect.
         _session = UniquePtr<RtmpSession>::create(RtmpRole::Client, this);
         if (Error err = _session->attach(_socket.get()); err.isError()) {
+                promekiWarn("RtmpClient::open: session attach failed: %s",
+                            err.desc().cstr());
                 _session.reset();
                 _socket.reset();
                 return err;
         }
         if (Error err = _session->performHandshake(timeoutMs); err.isError()) {
+                promekiWarn("RtmpClient::open: RTMP handshake failed: %s",
+                            err.desc().cstr());
                 _session.reset();
                 _socket.reset();
                 return err;
@@ -365,7 +427,16 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
                 tcUrl += _app;
                 opts.tcUrl = tcUrl;
         }
+        if (opts.app.isEmpty()) {
+                promekiWarn("RtmpClient::open: empty AMF0 `app` field — most RTMP servers "
+                            "(YouTube, Twitch, nginx-rtmp) will reject the connect call. "
+                            "URL '%s' may need to be of the form rtmp://host/<app>[/<streamKey>].",
+                            url.toString().cstr());
+        }
         if (Error err = _session->connect(opts, timeoutMs); err.isError()) {
+                promekiWarn("RtmpClient::open: RTMP NetConnection.connect failed "
+                            "(app='%s', tcUrl='%s'): %s",
+                            opts.app.cstr(), opts.tcUrl.cstr(), err.desc().cstr());
                 _session.reset();
                 _socket.reset();
                 return err;
@@ -396,38 +467,80 @@ void RtmpClient::startMediaThreads() {
 // ---------------------------------------------------------------------------
 
 Error RtmpClient::publish(const String &streamKey, const String &mode, unsigned int timeoutMs) {
-        if (!_open.value()) return Error::Invalid;
-        if (_session.get() == nullptr) return Error::Invalid;
+        if (!_open.value()) {
+                promekiWarn("RtmpClient::publish: client is not open");
+                return Error::Invalid;
+        }
+        if (_session.get() == nullptr) {
+                promekiWarn("RtmpClient::publish: no session attached");
+                return Error::Invalid;
+        }
 
         String key = streamKey.isEmpty() ? _streamKey : streamKey;
-        if (key.isEmpty()) return Error::InvalidArgument;
+        if (key.isEmpty()) {
+                promekiWarn("RtmpClient::publish: no stream key (neither argument nor "
+                            "MediaConfig::RtmpStreamKey supplied one) — URL was '%s'",
+                            _url.toString().cstr());
+                return Error::InvalidArgument;
+        }
 
         // Most FMS-clone destinations want releaseStream + FCPublish ahead of createStream.
         _session->releaseStream(key);
         _session->fcPublish(key);
 
         Result<uint32_t> sidR = _session->createStream(timeoutMs);
-        if (sidR.second().isError()) return sidR.second();
+        if (sidR.second().isError()) {
+                promekiWarn("RtmpClient::publish: createStream failed (key='%s'): %s",
+                            key.cstr(), sidR.second().desc().cstr());
+                return sidR.second();
+        }
         _streamId.setValue(sidR.first());
 
         Error err = _session->publish(sidR.first(), key, mode, timeoutMs);
-        if (err.isOk()) startMediaThreads();
+        if (err.isError()) {
+                promekiWarn("RtmpClient::publish: publish failed "
+                            "(streamId=%u, key='%s', mode='%s'): %s",
+                            sidR.first(), key.cstr(), mode.cstr(), err.desc().cstr());
+        } else {
+                startMediaThreads();
+        }
         return err;
 }
 
 Error RtmpClient::play(const String &streamKey, unsigned int timeoutMs, bool useFcSubscribe) {
-        if (!_open.value()) return Error::Invalid;
-        if (_session.get() == nullptr) return Error::Invalid;
+        if (!_open.value()) {
+                promekiWarn("RtmpClient::play: client is not open");
+                return Error::Invalid;
+        }
+        if (_session.get() == nullptr) {
+                promekiWarn("RtmpClient::play: no session attached");
+                return Error::Invalid;
+        }
 
         String key = streamKey.isEmpty() ? _streamKey : streamKey;
-        if (key.isEmpty()) return Error::InvalidArgument;
+        if (key.isEmpty()) {
+                promekiWarn("RtmpClient::play: no stream key (neither argument nor "
+                            "MediaConfig::RtmpStreamKey supplied one) — URL was '%s'",
+                            _url.toString().cstr());
+                return Error::InvalidArgument;
+        }
 
         Result<uint32_t> sidR = _session->createStream(timeoutMs);
-        if (sidR.second().isError()) return sidR.second();
+        if (sidR.second().isError()) {
+                promekiWarn("RtmpClient::play: createStream failed (key='%s'): %s",
+                            key.cstr(), sidR.second().desc().cstr());
+                return sidR.second();
+        }
         _streamId.setValue(sidR.first());
         if (useFcSubscribe) _session->fcSubscribe(key);
         Error err = _session->play(sidR.first(), key, -2.0, -1.0, timeoutMs);
-        if (err.isOk()) startMediaThreads();
+        if (err.isError()) {
+                promekiWarn("RtmpClient::play: play failed "
+                            "(streamId=%u, key='%s'): %s",
+                            sidR.first(), key.cstr(), err.desc().cstr());
+        } else {
+                startMediaThreads();
+        }
         return err;
 }
 
