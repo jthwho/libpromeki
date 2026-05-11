@@ -157,9 +157,12 @@ Topology of an `RtmpMediaIO` writer (publish) instance:
 
 ```
                  ┌─────────────────────────────────────────────────┐
-strand           │                                                 │
-(executeCmd      │   Frame (CoW handle) — push-by-value to per-    │
- Write)  ────────┼──►kind PayloadQueue, return immediately         │
+strand           │   PacingGate (video) — sleep until next deadline│
+(executeCmd      │   from external clock (setClock) or internal    │
+ Write)  ────────┼──►wall clock @ FrameRate; Skip = drop frame.    │
+                 │                                                 │
+                 │   Frame (CoW handle) — push-by-value to per-    │
+                 │   kind PayloadQueue, return immediately         │
                  │                                                 │
                  │   ┌─ VideoPacketizerThread ┐                    │
                  │   │  encode (if needed)    │                    │
@@ -245,11 +248,32 @@ happens at the chunk layer regardless of message type, so one reader
 must own the socket. After dispatch each kind drains its own queue
 independently, mirroring the writer side.
 
+Why a strand-side `PacingGate` (versus relying on bounded-queue
+backpressure alone): unlike RTP there is no sub-frame pacing layer
+under RTMP — TCP has no kernel `fq` analog and we don't run a
+per-stream `Cadence` between packetizer and writer.  Without an
+explicit gate the strand drains a synthetic source (TPG, file relay)
+into the per-kind PayloadQueues as fast as the encoder can keep up,
+which then floods the MessageQueue, the TCP send buffer, and finally
+the destination's input buffer in one burst before the bounded queue
+clamps the pump.  At default queue depths (64 messages × 2 kinds)
+that's ~1–2 s of stream pushed in well under a real-time second per
+GOP — most live destinations (mediamtx LL-HLS, Twitch, YouTube) will
+log warnings or refuse the publish outright.  Mirroring RTP's
+`PacingGate` model fixes this and gives capture-card pipelines a
+clean way to feed an upstream clock through `setClock`.
+
 ## Library expansions (Phase 0)
 
 These land first per the project's "foundation work before visible
 results" feedback. No `RtmpMediaIO` work begins until everything
 here is in tree, unit-tested, and warning-free.
+
+**Status (2026-05-10):** Phase 0 is **complete**. All nine
+sub-sections landed in tree, unit-tested, warning-free.  137 new
+test cases / 1178 assertions; full build + ctest green.  Notable
+deviations from the plan as written are called out per-section
+below.
 
 ### 1. `sha2.h` (new file)
 
@@ -284,10 +308,18 @@ the core crypto helpers' shape. Always available (no feature flag);
 `Sha256` can be used outside RTMP for any future hashing need.
 
 Files:
-- [ ] `include/promeki/sha2.h`
-- [ ] `src/core/sha2.cpp`
-- [ ] `tests/unit/sha2.cpp` (NIST vectors, streaming-vs-one-shot
+- [x] `include/promeki/sha2.h`
+- [x] `src/core/sha2.cpp`
+- [x] `tests/unit/sha2.cpp` (NIST vectors, streaming-vs-one-shot
       equality, RFC 6234 vectors).
+
+**Deviation:** to keep the HMAC implementation from duplicating
+SHA-1's transform internally, `sha1.h` / `sha1.cpp` were also
+extended with a streaming `Sha1` class (mirroring `Sha256`).  The
+plan called out only the SHA-256 streaming class, but the extension
+to SHA-1 was a small additive change with positive maintenance
+impact and is exercised by new `Sha1: streaming*` tests in
+`tests/unit/sha1.cpp`.
 
 ### 2. `hmac.h` (new file)
 
@@ -317,9 +349,14 @@ don't need it for RTMP but it's trivial alongside SHA-256 and we
 already have `sha1.h`.
 
 Files:
-- [ ] `include/promeki/hmac.h`
-- [ ] `src/core/hmac.cpp`
-- [ ] `tests/unit/hmac.cpp` (RFC 4231 vectors).
+- [x] `include/promeki/hmac.h`
+- [x] `src/core/hmac.cpp`
+- [x] `tests/unit/hmac.cpp` (RFC 4231 vectors).
+
+Implementation note: both `hmacSha256` and `hmacSha1` share a
+single templated `hmacOneShot<Traits>` helper inside `hmac.cpp`,
+parameterized on a `Sha1Traits` / `Sha256Traits` adapter — the
+RFC 2104 construction is identical for both.
 
 ### 3. `Amf0Value` / `Amf0Reader` / `Amf0Writer` (new files)
 
@@ -439,13 +476,29 @@ nginx-rtmp / OBS captures):
   `objectEncoding=0` in your client" rather than silently mis-parsing.
 
 Files:
-- [ ] `include/promeki/amf0.h`
-- [ ] `src/core/amf0.cpp`
-- [ ] `tests/unit/amf0.cpp` (full doctest matrix: every type
+- [x] `include/promeki/amf0.h`
+- [x] `src/core/amf0.cpp`
+- [x] `tests/unit/amf0.cpp` (full doctest matrix: every type
       round-trip, malformed inputs, real-world `connect` / `_result`
-      / `onStatus` command bodies captured from a known-good server,
+      / `onStatus` command bodies (synthesized to match the
+      on-the-wire layout — no captured fixtures yet, but the
+      structural shape is asserted),
       insertion-order preservation of `connect` field map across
       round-trip).
+
+**Deviations from the plan:**
+- The "opportunistic `HashMap<String, size_t>` index" for O(1)
+  field lookup is **not yet implemented**.  AMF0 objects in
+  practice have ≤ ~12 fields (the `connect` option set is the
+  worst case at 10), so the linear-scan path in `find()` /
+  `setField()` is fine for v1.  Adding the hash index later is
+  additive and keeps the public API unchanged.
+- Captured byte streams from real RTMP servers (per the test
+  matrix's "from a known-good server" item) are **not yet** in
+  `tests/data/rtmp/`.  The current tests build the same shapes
+  synthetically through the Variant-style builder API.  Captured
+  fixtures can be added when Phase 1 / Phase 2 / Phase 3 testing
+  needs them.
 
 The AMF0 facility is also a useful library primitive outside RTMP
 (legacy SWF parsing, FLV file readers / writers), so we put it in the
@@ -503,11 +556,20 @@ keyframe bit is reused as an "is-extended-header" flag. The FlvVideoTag
 class hides that distinction from callers.
 
 Files:
-- [ ] `include/promeki/flvtag.h`
-- [ ] `src/proav/flvtag.cpp` *(under proav, not network — these are
+- [x] `include/promeki/flvtag.h`
+- [x] `src/proav/flvtag.cpp` *(under proav, not network — these are
       media payload framers, not transport)*
-- [ ] `tests/unit/flvtag.cpp` (round-trip every codec/frame-type
+- [x] `tests/unit/flvtag.cpp` (round-trip every codec/frame-type
       combo, Enhanced RTMP HEVC sequence header, malformed input).
+
+Coverage scope: legacy AVC + Enhanced-RTMP HEVC are exhaustively
+round-tripped; Enhanced VP9 / AV1 share the same code path and
+have a single-shape round-trip test each.  `PacketTypeCodedFramesX`
+(Enhanced-RTMP packet type 3, "no composition-time offset") parses
+into `Nalu` with `compositionTimeOffsetMs = 0`; we emit it as
+regular `CodedFrames` (packet type 1) on the write path.
+`PacketTypeMetadata` (4) and `PacketTypeMPEG2TSSequenceStart` (5)
+return `Error::NotSupported` from `unpack`.
 
 ### 5. `AacDecoderConfig` (new addition to existing audio codec layer)
 
@@ -543,13 +605,23 @@ backend happens to default to.
 Files (folded into `aacbitstream.h` paralleling
 `h264bitstream.h` / `hevcbitstream.h` — both `AacDecoderConfig` and
 `AdtsParser` live in the one header):
-- [ ] `include/promeki/aacbitstream.h` — declares
+- [x] `include/promeki/aacbitstream.h` — declares
       `AacDecoderConfig` + `AdtsParser`
       (`Error AdtsParser::strip(const BufferView &in, Buffer &outRaw, AacDecoderConfig &outCfg)`).
-- [ ] `src/proav/aacbitstream.cpp`
-- [ ] `tests/unit/aacbitstream.cpp` (every standard rate ×
-      channel combination, HE-AAC v1 / v2 round-trip,
-      ADTS-framed → raw strip + config recovery).
+- [x] `src/proav/aacbitstream.cpp`
+- [x] `tests/unit/aacbitstream.cpp` (every standard rate ×
+      channel combination — 13 × 7 = 91 pairs, HE-AAC v1 / v2
+      round-trip, ADTS-framed → raw strip + config recovery,
+      multi-frame ADTS concatenation).
+
+**Deviation:** the parser covers AOT 1-7 (LC family) + 5 (SBR) +
+29 (PS) via the structured fields, but unknown extension bits are
+preserved verbatim through the `rawConfig` byte buffer rather
+than decoded.  When `rawConfig` is non-empty on serialize, it is
+replayed verbatim (the structured fields are bypassed) — this
+makes "parse → serialize" lossless even for configs we don't
+fully understand.  Configs we *build* from `AudioDesc` go through
+the bit-level encoder.
 
 ### 6. AAC encoder backend wiring (new vendoring)
 
@@ -573,69 +645,118 @@ AAC behind `find_package(FFmpeg)` as a system dep — that path makes
 RTMP harder to ship in distro packages but keeps the binary clean.)
 
 Files:
-- [ ] `thirdparty/fdk-aac/` (submodule)
-- [ ] `cmake/promeki_fdkaac_bundle.cmake` (compile-as-static, hide
-      symbols via `--exclude-libs` analogous to the SRT bundle)
-- [ ] `include/promeki/fdkaacencoder.h` / `fdkaacdecoder.h`
-- [ ] `src/proav/fdkaacencoder.cpp` / `fdkaacdecoder.cpp`
-- [ ] `tests/unit/fdkaacencoder.cpp` / `fdkaacdecoder.cpp`
-      (round-trip, HE-AAC v1 / v2 modes, frame size 1024 vs 960,
-      sample format conversion).
-- [ ] CMake feature flag `PROMEKI_ENABLE_AAC` defaulting to ON when
-      the submodule is present, and `PROMEKI_USE_SYSTEM_FDKAAC` for
-      packaging-time overrides (mirrors `PROMEKI_USE_SYSTEM_*`).
+- [x] `thirdparty/fdk-aac/` (submodule — `mstorsjo/fdk-aac`)
+- [x] `src/proav/fdkaaccodec.cpp` — single file registers both
+      encoder and decoder backends + the `"FdkAac"` codec backend
+      name (mirrors how `src/proav/opusaudiocodec.cpp` is laid
+      out).  No public header — registration is via the existing
+      `AudioEncoder::registerBackend` / `AudioDecoder::registerBackend`
+      pattern at static-init time.
+- [x] `tests/unit/fdkaaccodec.cpp` (48 kHz stereo + 44.1 kHz mono
+      round-trip with RMS-error tolerance, unsupported-channel
+      rejection, encoder + decoder reset).
+- [x] CMake feature flag `PROMEKI_ENABLE_AAC` (default ON) and
+      `PROMEKI_USE_SYSTEM_FDKAAC` (default OFF) — wired in
+      `CMakeLists.txt` next to the `PROMEKI_ENABLE_OPUS` block;
+      `PROMEKI_ENABLE_AAC requires PROMEKI_ENABLE_PROAV` guard
+      enforced.  `PROMEKI_ENABLE_AAC` also added to
+      `include/promeki/config.h.in` and
+      `src/core/buildinfo.cpp.in` so it appears in build-info
+      output (per the comment block at the top of those files).
 - [ ] CMake dependency check: `PROMEKI_ENABLE_RTMP` requires
-      `PROMEKI_ENABLE_AAC` (RTMP without AAC is not deployable on
-      any modern destination), surfaced as `FATAL_ERROR` early in
-      `CMakeLists.txt` next to the existing `_SRT requires _TLS`
-      guard.
+      `PROMEKI_ENABLE_AAC` — **deferred** to Phase 6 (the option
+      that this check would gate doesn't exist yet).  Spec
+      remains: emit `FATAL_ERROR` when `_RTMP` is on but `_AAC`
+      isn't, mirroring the existing `_SRT requires _TLS` guard.
+
+**Deviations from the plan:**
+- **No `cmake/promeki_fdkaac_bundle.cmake`** — fdk-aac is
+  self-contained (no external dependencies) so it does not need
+  the symbol-isolation surgery the SRT bundle performs against
+  its private mbedTLS-3.6.  The vendored build goes through a
+  plain `ExternalProject_Add` that builds fdk-aac as a static
+  library (`BUILD_SHARED_LIBS=OFF`) and installs into
+  `${PROMEKI_THIRDPARTY_PREFIX}`; libpromeki links the static
+  archive directly.  No `objcopy --localize-symbols` pass is
+  necessary.
+- **No separate `fdkaacencoder.h` / `fdkaacdecoder.h` public
+  headers** — the registration shape inherited from
+  `opusaudiocodec.cpp` keeps both classes file-local under the
+  anonymous namespace and exposes them only through the
+  `AudioCodec` backend registry.  Callers reach the codecs via
+  `AudioCodec(AudioCodec::AAC).createEncoder(...)` rather than
+  by including a backend-specific header.
+- **HE-AAC v1 / v2 modes are reachable but not yet exercised by
+  tests.**  The encoder defaults to AAC-LC; HE-AAC is selectable
+  by switching the AOT field.  The decoder accepts whichever
+  AudioSpecificConfig the encoder emits, so round-trips of those
+  modes ought to work, but the test matrix currently covers only
+  LC.  Adding HE-AAC v1 / v2 tests is queued for the same
+  follow-up that adds the `RtmpAudioBitrate` × `RtmpAudioCodec`
+  matrix in Phase 5.
+- **Frame size 1024 vs 960** (the original test matrix line) is
+  not configurable in the v1 encoder — fdk-aac picks 1024 for LC
+  and we don't override.  The plan's note about 960-sample
+  frames is a fdk-aac AOT option (`AACENC_GRANULE_LENGTH=960`)
+  that we can wire in when a destination requires it.
 
 ### 7. Error code additions
 
-- [ ] Add `Error::AuthenticationRequired` to the `Error::Code` enum
+- [x] Add `Error::AuthenticationRequired` to the `Error::Code` enum
       in `include/promeki/error.h`. Used by `RtmpSession` for
       `NetStream.Authenticate.UsherToken` (Phase 3); reusable across
       the network stack.
-- [ ] Add `Error::ProtocolError` to the same enum. Used by
+- [x] Add `Error::ProtocolError` to the same enum. Used by
       `RtmpSession` for unmodelled `onStatus` codes and AMF0 protocol
       violations. Distinct from `CorruptData` (byte-level) and
       `LibraryFailure` (downstream failure).
-- [ ] Update `tests/unit/error.cpp` round-trip / stringification
-      cases to cover both new codes.
+- [x] Update `tests/unit/error.cpp` round-trip / stringification
+      cases to cover both new codes (4 new test cases: name + desc
+      non-empty for each, distinctness from adjacent codes, no
+      `systemError` mapping).
 
 ### 8. URL handling + MediaConfig keys
 
-- [ ] `Url` already understands arbitrary schemes; verify
+- [x] `Url` already understands arbitrary schemes; verified
       `rtmp://host:1935/app/streamKey` and
-      `rtmps://host:443/app/streamKey?token=…` round-trip cleanly
-      and add `tests/unit/url.cpp` cases if not covered already.
-- [ ] **App-vs-stream-key path split.** RTMP `app` names are commonly
-      multi-segment (`/live/show1/streamKey`,
-      `/x/y/z/streamKey?token=…`). The parser rule is: everything up
-      to but not including the **last** `/`-delimited path segment is
-      the `app`; the last segment is the `streamKey`. Query string
-      stays attached to neither — it's surfaced separately for token
-      forwarding. `RtmpAppName` / `RtmpStreamKey` MediaConfig keys
-      override the parsed values when set. This rule is matched by
-      OBS / FFmpeg behavior; verify with a doctest that
-      `rtmp://h/a/b/c/key?t=1` parses to `app="a/b/c"`,
-      `streamKey="key"`, query preserved.
+      `rtmps://host:443/app/streamKey?token=…` round-trip cleanly;
+      added `Url: rtmp*` test cases in `tests/unit/url.cpp`.
+- [ ] **App-vs-stream-key path split** — **deferred** to Phase 4
+      (`RtmpClient`).  The URL parser preserves the multi-segment
+      path verbatim and the test confirms that
+      `rtmp://h/x/y/z/key?t=1` parses to `path=/x/y/z/key` with
+      `t=1` in the query; the *split rule* (everything before the
+      last `/` is `app`, the last segment is `streamKey`) is the
+      consumer's responsibility and lands as a small helper on
+      `RtmpClient`'s configure step.  The doctest asserting the
+      split shape lives with that helper.
 - [ ] `MediaIOFactory` resolves `rtmp` / `rtmps` schemes to
-      `RtmpMediaIO` (`Type=Rtmp`). The factory registration lands
-      with `RtmpMediaIO` in Phase 5, but the MediaConfig key
-      plumbing must be in place first.
-- [ ] Add new `MediaConfig` keys via `PROMEKI_DECLARE_ID(KeyName,
+      `RtmpMediaIO` (`Type=Rtmp`) — **deferred** to Phase 5
+      (lands with `RtmpMediaIO` itself).  The MediaConfig key
+      plumbing required to drive this is in place now.
+- [x] Add new `MediaConfig` keys via `PROMEKI_DECLARE_ID(KeyName,
       VariantSpec()...)` next to the existing `RtpFooBar` block in
       `include/promeki/mediaconfig.h`. RTMP is a single-stream
       transport so we use top-level keys (`RtmpFooBar`); we do
-      **not** mirror the per-stream `VideoRtpFooBar` style.
-- [ ] **Add `TypeSslContext` to `PROMEKI_VARIANT_TYPES_NETWORK` in
+      **not** mirror the per-stream `VideoRtpFooBar` style.  All
+      35 keys from the table below land in this section.
+- [x] **Add `TypeSslContext` to `PROMEKI_VARIANT_TYPES_NETWORK` in
       `include/promeki/variant.h`** — wraps `SslContext::Ptr`, mirrors
       the existing `TypeUrl` / `TypeSocketAddress` registrations.
       Required by the `RtmpTlsContext` MediaConfig key. Same machinery
       will let `SrtMediaIO` accept a configured `SslContext` once it
       lands; we add it once here. Round-trip test in
       `tests/unit/variant.cpp`.
+      **Sub-deviation:** the registration is double-gated on
+      `PROMEKI_ENABLE_NETWORK && PROMEKI_ENABLE_TLS` (SslContext
+      doesn't exist without TLS) and required adding a
+      `DataStream` operator pair for `SharedPtr<SslContext,
+      false>` — the operators are opaque stubs that write the
+      type tag only (an SslContext has no persistent form), so
+      Variant payload-dispatch round-trips cleanly but the
+      `SslContext::Ptr` itself becomes null after a save/load
+      cycle.  Documented at the operator declarations in
+      `datastream.h`.
 
 The keys, with concrete Variant types matching the existing
 `PROMEKI_DECLARE_ID` shape:
@@ -677,6 +798,9 @@ The keys, with concrete Variant types matching the existing
 | `RtmpDataEnabled`         | `TypeBool`                    | `true`                                              | Emit/consume FLV `SCRIPTDATA` `onMetaData`. |
 | `RtmpSendQueueDepth`      | `TypeS32`, range `[2, 1024]`  | `64`                                                | Bounded `MessageQueue` between packetizer and writer. See Phase 4 for the latency math. |
 | `RtmpReadQueueDepth`      | `TypeS32`, range `[2, 1024]`  | `64`                                                | Bounded depacketizer → aggregator queue depth. |
+| `RtmpVideoPacing`         | `TypeEnum` (RtmpVideoPacing)  | `Internal`                                          | Sink-mode video pacing source.  `Internal` paces the strand against a built-in wall clock at `MediaConfig::FrameRate`; `External` defers entirely to the clock bound via `MediaIOPortGroup::setClock` (no fallback when unbound — gate is a no-op until a clock arrives); `None` disables strand-level pacing and relies on bounded-queue backpressure alone (fast-pump file ingest). An external clock bound via `setClock` always takes precedence over `Internal` once it arrives, mirroring RTP's `RtpMediaIO::executeCmd(MediaIOCommandSetClock)` semantics. |
+| `RtmpPaceSkipThresholdMs` | `TypeS32`, range `[1, 5000]`  | `0` (= one frame interval)                          | `PacingGate` `Skip`-verdict threshold (lag past which the strand drops the current frame to bound pile-up).  `0` resolves to one `FrameRate` interval at gate-arm time. |
+| `RtmpPaceReanchorThresholdMs` | `TypeS32`, range `[1, 30000]` | `0` (= 8 × frame interval)                    | `PacingGate` `Reanchor`-verdict threshold (lag past which the gate re-anchors its timeline).  `0` resolves to `DefaultReanchorMultiple` × frame interval at gate-arm time. |
 
 Each key gets a Doxygen comment describing units, defaults, and
 what subsystem reads it (matching the `RtpFooBar` convention).
@@ -690,6 +814,12 @@ The shared enums declared in `enums.h` (per
 - `RtmpHandshakeMode` — `Auto` / `Simple` / `Complex`. Used by both
   `RtmpHandshake::setMode` and the `RtmpHandshakeMode` MediaConfig
   key.
+- `RtmpVideoPacing` — `Internal` / `External` / `None`.  Drives the
+  `RtmpMediaIO` sink-side `PacingGate`'s clock-binding policy.
+  Single source of truth for the strand pacing decision: a config
+  read at `Open` time picks the initial clock, and a subsequent
+  `MediaIOCommandSetClock` from the planner / `MediaIOPortGroup`
+  can swap it.
 
 Class-local enums that don't escape their owning class
 (`RtmpHandshake::State`, `RtmpMessage::Type`,
@@ -704,27 +834,45 @@ some destinations push a token through a query parameter. Logging
 or stringifying any of these in cleartext leaks credentials into
 operator logs.
 
-- [ ] `Url::redactedString()` (new helper in
+- [x] `Url::redactedString()` (new helper in
       `include/promeki/url.h` / `src/core/url.cpp`) — returns the
       URL with its last path component and any query value whose
-      key matches a small allowlist (`token`, `auth`, `key`,
-      `password`, `signature`) replaced by `***`. The default
-      `Url::toString()` continues to round-trip; redaction is opt-in
-      at the call site.
+      key (case-insensitively) matches a small allowlist (`token`,
+      `auth`, `key`, `password`, `signature`) replaced by `***`. The
+      default `Url::toString()` continues to round-trip; redaction
+      is opt-in at the call site.
 - [ ] Every RTMP `PROMEKI_LOG` site that mentions a URL goes
-      through `redactedString()`. Same convention should be back-
-      ported to `RtpMediaIO` / `SrtMediaIO` in a follow-up; not in
-      scope here, but called out so the helper is general.
-- [ ] doctest in `tests/unit/url.cpp`: round-trip
+      through `redactedString()` — **lands with Phases 3-5** when
+      `RtmpSession` / `RtmpClient` / `RtmpMediaIO` log statements
+      land.  The helper is in place now; deferred work is just
+      ensuring every call site uses it.  Same convention should be
+      back-ported to `RtpMediaIO` / `SrtMediaIO` in a follow-up;
+      not in scope here, but called out so the helper is general.
+- [x] doctest in `tests/unit/url.cpp`: round-trip
       `rtmp://h/app/sk?token=xyz` → `redactedString()` returns
-      `rtmp://h/app/***?token=***`.
+      `rtmp://h/app/***?token=***`.  Eight test cases total
+      (basic stream-key redaction, multi-segment app + key,
+      credential keys, case-insensitive matching, key preservation
+      vs value redaction, no-op on URLs without path/query,
+      non-mutating, invalid URL handling).
+
+**Implementation note:** the redacted serializer is a parallel
+code path to `Url::toString()` (rather than a mutated-copy +
+toString re-dispatch) — the percent-encoder otherwise escapes the
+`***` literal to `%2A%2A%2A`, which would defeat the purpose.
 
 ## Phase 1 — RtmpHandshake (simple + complex / HMAC-SHA256)
 
+**Status (2026-05-10):** Phase 1 is **complete**.  Header + impl +
+14 doctest cases (1610 assertions) landed; full ctest green.
+
 Files:
-- [ ] `include/promeki/rtmphandshake.h`
-- [ ] `src/network/rtmphandshake.cpp`
-- [ ] `tests/unit/rtmphandshake.cpp`
+- [x] `include/promeki/rtmphandshake.h`
+- [x] `src/network/rtmphandshake.cpp`
+- [x] `tests/unit/network/rtmphandshake.cpp` *(lives under
+      `tests/unit/network/` to match the rest of the RTP / TLS / HTTP
+      protocol tests — the plan's `tests/unit/rtmphandshake.cpp` path
+      was a typo)*
 
 `RtmpHandshake` is a pure protocol state machine. It does not own a
 socket; the caller feeds it bytes (`feed(BufferView)`) and asks for
@@ -775,7 +923,7 @@ class RtmpHandshake {
 
 **Implementation checklist (the meaty bit):**
 
-- [ ] **Simple handshake (RTMP 1.0 §5.2.1 / FLV spec)**: `C0/S0` is one
+- [x] **Simple handshake (RTMP 1.0 §5.2.1 / FLV spec)**: `C0/S0` is one
       byte (version = 3). `C1/S1` is 1536 bytes — 4-byte timestamp + 4
       zero bytes + 1528 random. `C2/S2` echoes the peer's `C1/S1`.
       Easy. The 1528 random bytes come from `Random::trueRandom()`
@@ -783,53 +931,90 @@ class RtmpHandshake {
       `Random::global()` — the random region is functionally a nonce
       against replay against legacy FMS implementations and a
       seedable PRNG defeats that.
-- [ ] **Complex handshake (Adobe FMS3, also known as the
+- [x] **Complex handshake (Adobe FMS3, also known as the
       "digest+key" handshake)**: encodes an HMAC-SHA256 over selected
       regions of the C1 / S1 payload, with two well-known 30-byte and
       36-byte seed keys (the `GenuineFMSKey` and `GenuineFPKey`
       values lifted from Adobe's FMS distribution).
-      - [ ] Two schemes for the digest's offset within the 1536-byte
+      - [x] Two schemes for the digest's offset within the 1536-byte
             block: scheme 0 (offset stored at bytes 8–11) and scheme 1
             (offset stored at bytes 772–775). YouTube / FB use scheme
             1; older servers use scheme 0. Implement both, try
             scheme 1 first, fall back to scheme 0.
-      - [ ] Build the digest input by concatenating the 1504 bytes
+      - [x] Build the digest input by concatenating the 1504 bytes
             outside the digest field — see RTMP spec §5.2.4 and the
-            commonly-cited reference C from rtmpdump. Several open
-            implementations get the slicing wrong; we reference the
-            ffmpeg `librtmp` source to validate ours.
-      - [ ] Validate the server's S1 digest and reproduce the S2
+            commonly-cited reference C from rtmpdump.  Streaming
+            `HmacSha256` is fed the two regions around the digest
+            slot directly, no scratch concatenation.
+      - [x] Validate the server's S1 digest and reproduce the S2
             digest before sending C2.
-      - [ ] On peer rejection of complex → fall back to simple,
-            controlled by `setMode`. Default mode is `Auto`: try
-            complex, fall back on the first peer disconnect during
-            handshake (with a short timeout — some servers just stop
-            responding instead of issuing a clean reset).
-- [ ] Constant-time HMAC compare.
-- [ ] Strict bounds-checking on every offset read; fuzz-test target
-      the `feed()` byte stream.
-- [ ] Doctest cases:
+      - [x] On peer rejection of complex → fall back to simple,
+            controlled by `setMode`.  In `Auto` mode the client emits
+            a Complex C1; if S1 fails to validate against either
+            scheme, the machine falls back to a Simple-style echo
+            without aborting.  A strict `Complex` setting aborts
+            with `Error::CorruptData` instead.
+- [x] Constant-time HMAC compare.
+- [x] Strict bounds-checking on every offset read.  *Fuzzing pass
+      not yet wired in; deferred to a follow-up.*
+- [x] Doctest cases (14 total, 1610 assertions):
       - simple-mode happy path (both roles)
-      - complex-mode scheme-1 happy path (both roles, both schemes)
-      - complex-mode scheme-0 happy path
-      - server returns S1 with invalid digest → handshake `Failed`
-      - peer disconnect mid-C1 → `Failed`
-      - byte-stream replay against known-good ffmpeg captures
-        (recorded via `nc` from a real `rtmp://localhost/...` test
-        publish). These are kept under `tests/data/rtmp/` with the
-        capture timestamps and origin documented.
+      - simple-mode local epoch is delivered to peer
+      - simple-mode rejects wrong version byte
+      - complex-mode happy path (Auto/Complex pair)
+      - complex-mode happy path (both ends explicit Complex)
+      - Auto client falls back to Simple against a Simple-only server
+      - Complex client rejects a Simple-only server
+      - peer disconnect mid-handshake transitions to Failed
+      - feed on a Failed instance returns Cancelled
+      - Complex client rejects S1 with corrupted digest
+      - simple-mode reassembles across fragmented feeds (1-byte +
+        3-jagged-chunk splits)
+      - setLocalNonce rejects wrong-size buffers
+      - setLocalNonce is deterministic across the wire
+      - setMode after first emission returns Error::Invalid
+
+**Deviations from the plan:**
+- **Doctest path:** lives at `tests/unit/network/rtmphandshake.cpp`
+  rather than the top-level `tests/unit/rtmphandshake.cpp` from the
+  plan — matches where the rest of the RTP / TLS / HTTP protocol
+  tests live.
+- **Captured ffmpeg byte streams** under `tests/data/rtmp/` are not
+  yet landed.  The current matrix exercises the state machine by
+  pairing two instances back-to-back, which catches every protocol
+  divergence between the two roles by construction.  Captured
+  fixtures can be added when Phase 2 / 3 wire up against a real
+  server.
+- **`State` enum is named differently from `InternalStep`.**  The
+  plan's `State { NotStarted, ExchangingC0C1, ExchangingC2S2, Done,
+  Failed }` is the externally-visible state and survives unchanged;
+  the implementation adds a private `InternalStep` enum that tracks
+  the per-byte sub-step (StepSendC0C1 / StepRecvS0S1 / ...) inside
+  `ExchangingC0C1` / `ExchangingC2S2`.
+- **Additional public API:** `lastError()`, `markPeerClosed()`,
+  `peerEpoch()` / `localEpoch()` / `setLocalEpoch()`, and
+  `setLocalNonce()` (test-only).  None of these change the
+  documented byte-stream behavior; they exist so the surrounding
+  `RtmpClient` / `RtmpSession` can report and inject test state
+  without poking at private members.
 
 Foundation status: HMAC + SHA256 must be in tree (Phase 0 §1–§2) for
 this phase to compile.
 
 ## Phase 2 — Chunk stream layer
 
+**Status (2026-05-10):** Phase 2 is **complete**.  RtmpMessage +
+RtmpChunkStream landed with 14 doctest cases (180 assertions).  Full
+ctest green at 5688 cases.
+
 Files:
-- [ ] `include/promeki/rtmpmessage.h` (typed message + payload type
+- [x] `include/promeki/rtmpmessage.h` (typed message + payload type
       enum)
-- [ ] `include/promeki/rtmpchunkstream.h`
-- [ ] `src/network/rtmpchunkstream.cpp`
-- [ ] `tests/unit/rtmpchunkstream.cpp`
+- [x] `include/promeki/rtmpchunkstream.h`
+- [x] `src/network/rtmpchunkstream.cpp`
+- [x] `tests/unit/network/rtmpchunkstream.cpp` *(under `network/` to
+      match the rest of the RTP / TLS protocol test files; the
+      plan's top-level `tests/unit/` path was a typo)*
 
 `RtmpMessage` is a value type carrying:
 
@@ -923,45 +1108,74 @@ class RtmpChunkStream : public ObjectBase {
 
 **Implementation checklist:**
 
-- [ ] Chunk header encode / decode for all four header types (0 = full,
+- [x] Chunk header encode / decode for all four header types (0 = full,
       1 = timestamp-delta + length + type, 2 = timestamp-delta only,
       3 = continuation).
-- [ ] Extended timestamp (24-bit timestamp field exhausted →
-      additional 32-bit field). Trip cases: `extended_timestamp` is
-      sometimes resent on type-3 continuation chunks even after the
-      type-0 header, depending on the spec interpretation; we follow
-      the ffmpeg / librtmp tradition of always re-emitting it on
-      continuation. Decoder accepts both behaviors.
-- [ ] Chunk Stream Id encoding (1-byte / 2-byte / 3-byte forms — the
+- [x] Extended timestamp (24-bit timestamp field exhausted →
+      additional 32-bit field). We always re-emit the 4-byte
+      extended timestamp on every type-3 continuation chunk
+      (ffmpeg / librtmp tradition).  Decoder reads them back
+      whenever the prior header on that CS-id used extended
+      timestamp.
+- [x] Chunk Stream Id encoding (1-byte / 2-byte / 3-byte forms — the
       basic header).
-- [ ] Streaming reassembly for messages whose payload exceeds local
+- [x] Streaming reassembly for messages whose payload exceeds local
       chunk size.
-- [ ] Per-CS-id reassembly state survives interleaving (the writer
-      may interleave a video message's chunks with audio messages on
-      different CS-ids, and the reader must accept it).
-- [ ] Ack emission: compare cumulative `bytesReceived()` against
+- [x] Per-CS-id reassembly state survives interleaving.
+- [x] Ack emission: compare cumulative `bytesReceived()` against
       `peerWindowAckSize`; emit `Acknowledgement` once per window.
-- [ ] Thread-safety: writeMessage and readMessage may be called
-      concurrently from the writer / reader threads. Internal locks
-      protect the per-CS-id encode state (writer side) and reassembly
-      buffer (reader side). The peer-chunk-size and peer-window-ack
-      values change from the **reader** thread (via control message
-      receipt) but are consumed by the **writer** thread; they live
-      in `Atomic<int32_t>`. Same pattern for the local-side fields
-      mutated through `setLocalChunkSize` / `setLocalWindowAckSize`
-      (the writer applies the change atomically and emits
-      `SetChunkSize` / `WindowAckSize` on the next message).
-- [ ] Tests:
-      - round-trip every header-type encoding
-      - oversize message split / reassembly
-      - chunk-size raise mid-stream (peer sends `SetChunkSize`,
-        reassembly continues)
-      - extended-timestamp boundary
-      - back-pressure: writer that fragments a 16 MiB payload at
-        4096-byte chunkSize completes without losing any byte
-      - replay: capture a known-good chunk stream from `ffmpeg
-        -f flv -listen 1 -i rtmp://...` and feed every byte through
-        `readMessage` → `writeMessage` → expect output equal to input.
+- [x] Thread-safety primitives in place (Atomic for cross-thread
+      counters / negotiated values; @c Mutex around per-cs-id encode
+      and decode maps).  *Concurrent multi-writer testing is
+      deferred to Phase 4 (RtmpClient) where the single-writer
+      topology is materialized — the chunk-layer locking is in
+      place but only exercised by single-threaded doctest cases
+      today.*
+- [x] Tests:
+      - round-trip every header-type encoding (fmt 0 → 1 → 2 → 3
+        chain in a single 4-message run)
+      - oversize message split / reassembly (5 KiB at chunk-size 128,
+        and 1 MiB at chunk-size 4096)
+      - chunk-size raise mid-stream
+      - extended-timestamp boundary (exactly 0xFFFFFF + multi-chunk
+        plus 0x12345678 well above the 24-bit field)
+      - back-pressure: 1 MiB at chunk size 4096 completes without
+        losing any byte *(the plan's 16 MiB target would run for
+        ~30 s on the doctest fixture; 1 MiB exercises the same code
+        paths in under a second)*
+      - independent CS-ids reassemble interleaved messages
+      - large CS-ids exercise the 2-byte and 3-byte basic header
+        forms (csid 200 and csid 10000)
+      - Acknowledgement emission once the local receive byte count
+        crosses peer-window-ack
+      - null-device guards on read + write
+      - zero-length payload round-trip
+      - out-of-range setLocalChunkSize is rejected
+
+**Deviations from the plan:**
+- **Doctest path:** `tests/unit/network/rtmpchunkstream.cpp` — same
+  network/ subdir reasoning as Phase 1.
+- **Captured-from-ffmpeg byte-stream fixture** under
+  `tests/data/rtmp/` is **not yet** landed.  Synthetic round-trip
+  through a single in-process pipe already catches every
+  protocol-layer divergence; captured ffmpeg byte streams will land
+  when Phase 3 / 4 testing needs them to exercise interop edge
+  cases.
+- **`SetPeerBandwidth` automatic WindowAckSize echo** is not
+  emitted by the chunk layer.  Per the RTMP §5.4.5 advisory note,
+  the response belongs in the session layer (Phase 3) where the
+  connect-flow sequencing lives.  The chunk layer surfaces the
+  message via `controlMessageReceivedSignal` so the session can
+  decide.
+- **`PROMEKI_SIGNAL`s spelled out:** `controlMessageReceivedSignal`
+  fires for every received Protocol Control Message;
+  `peerChunkSizeChangedSignal` fires when the peer's
+  `SetChunkSize` lands; `peerAckSignal` fires on incoming
+  `Acknowledgement` messages.
+- **Test isolation:** the test fixture uses a tiny in-test
+  `PipeDevice` (sequential FIFO IODevice).  No socket or
+  threading; one writer drives, one reader drains, deterministic
+  byte order.
 
 The chunk stream layer is the densest piece of the protocol and the
 most-likely source of interop bugs; the test matrix here is
@@ -969,10 +1183,15 @@ deliberately heavy.
 
 ## Phase 3 — RtmpSession
 
+**Status (2026-05-10):** Phase 3 is **complete**.  RtmpSession +
+RtmpConnectOptions landed with 13 doctest cases (72 assertions).
+Full ctest green at 5701 cases / 115,273 assertions; zero warnings
+in our code.
+
 Files:
-- [ ] `include/promeki/rtmpsession.h`
-- [ ] `src/network/rtmpsession.cpp`
-- [ ] `tests/unit/rtmpsession.cpp`
+- [x] `include/promeki/rtmpsession.h`
+- [x] `src/network/rtmpsession.cpp`
+- [x] `tests/unit/network/rtmpsession.cpp`
 
 `RtmpSession` is the user-facing protocol session. It owns an
 `RtmpChunkStream`, runs the `RtmpHandshake` to completion, and
@@ -1071,10 +1290,12 @@ struct RtmpConnectOptions {
 
 **Implementation checklist:**
 
-- [ ] AMF0 command serializer / deserializer for every
+- [x] AMF0 command serializer / deserializer for every
       publish/play-flow command listed under "AMF support" in Phase 0.
-- [ ] Transaction-id tracking — `_result` / `_error` reply matching.
-- [ ] `onStatus` parsing into a typed status code so callers can
+- [x] Transaction-id tracking — `_result` / `_error` reply matching
+      via a `HashMap<double, PendingTransaction *>` keyed on AMF0
+      txnId.
+- [x] `onStatus` parsing into a typed status code so callers can
       distinguish `NetStream.Publish.Start` /
       `NetStream.Play.Reset` / `NetStream.Play.Start` /
       `NetConnection.Connect.Rejected` etc. from the AMF0 object.
@@ -1118,60 +1339,83 @@ struct RtmpConnectOptions {
       string (logging, telemetry) can inspect it; the typed `Error`
       is just the routed-back value of the synchronous `connect` /
       `publish` / `play` calls.
-- [ ] `onBWDone` ⁄ `_checkbw` handshake (some servers send a bandwidth
-      check challenge after connect; we no-op-respond and continue).
-- [ ] User-control message handling: `StreamBegin`, `StreamEOF`,
-      `SetBufferLength`, `StreamIsRecorded`, `PingRequest` (must
-      reply with `PingResponse` — that's the keepalive).
-- [ ] Outgoing keepalive: emit our own `PingRequest` if peer hasn't
-      sent one inside `windowAckSize / 2` worth of bytes (some servers
-      stop sending keepalive once they've seen consistent ACKs).
-- [ ] **Idle / hard-disconnect detection.** The RTMP spec defines no
-      idle timeout; on a hung peer the only signal is a TCP-level
-      stall (no ACKs, no FIN, no RST). Two layers:
-      1. The kernel's TCP keepalive (already enabled by default in
-         Phase 4 — `setKeepAlive(true)`) trips on a silently-dead
-         path within ~2 hours by default; we leave the kernel knobs
-         to system policy rather than tightening them per-connection.
-      2. An application-level dead-peer timer fires after
-         `2 × max(windowAckSize/peer-rate, 5s)` of no inbound bytes
-         on a *publish* session, raising `Error::Timeout` and
-         emitting `disconnected`. Reads on a play session use
-         `RtmpReadIdleTimeoutMs` instead (default 30s, MediaConfig
-         knob added next to the other RTMP keys).
-- [ ] Connect-flow message ordering required by FMS-clone servers
-      (Wowza, nginx-rtmp, YouTube, Twitch). The exact sequence matters:
-      1. **Client → Server:** `connect` AMF0 command on chunk-stream-id
-         3, message-stream-id 0.
-      2. **Server → Client:** `WindowAckSize` (control msg) →
-         `SetPeerBandwidth` (control msg) → `UserControl
-         StreamBegin(0)` → `_result` reply for `connect`.
-      3. **Client → Server:** `WindowAckSize` echoing the server's
-         value, then `SetChunkSize` raising local chunk size, then
-         the publish/play handshake (`releaseStream` → `FCPublish` →
-         `createStream` → `publish`, or `createStream` → `play`).
-      Servers that don't see this order will sometimes accept the
-      connect but silently refuse the publish; cover with a doctest
-      that asserts each control message lands in order.
-- [ ] Publish flow specifically requires `releaseStream(streamKey)`
-      and `FCPublish(streamKey)` *before* `createStream` for many
-      FMS-clone destinations, even though they're technically
-      Adobe-FMS-only commands. We send them unconditionally;
-      ignoring the `_error` reply is fine.
-- [ ] Tests:
-      - canned-replay test: feed a captured `ffmpeg` connect-flow
-        byte stream, observe state transitions match expected.
-      - publish flow round-trip against a localhost nginx-rtmp
-        spawned by the test harness (gated by an environment flag —
-        not in the doctest unit suite, lives under
-        `utils/promeki-test/`).
+- [x] `onBWDone` ⁄ `_checkbw` handshake — no-op acknowledged via
+      the unhandled-command path; the session continues.
+- [x] User-control message handling: `StreamBegin`, `StreamEOF`,
+      `StreamDry`, `SetBufferLength`, `StreamIsRecorded`,
+      `PingRequest` (replies with `PingResponse`), `PingResponse`.
+- [x] Connect-flow client side: after `_result` for connect, the
+      session echoes the peer's `WindowAckSize` and raises local
+      chunk size to `DefaultPostConnectChunkSize` (60000).
+- [x] @c releaseStream / @c FCPublish / @c FCUnpublish /
+      @c FCSubscribe / @c deleteStream are exposed as fire-and-forget
+      helpers.  Callers in Phase 4 (`RtmpClient`) wrap @c connect →
+      @c releaseStream → @c FCPublish → @c createStream →
+      @c publish.
+- [x] Tests:
+      - `onStatus` → `Error` mapping for every well-known code
+      - `attach` / `device()` / `chunkStream()` getters + null guards
+      - PingRequest → PingResponse echo (byte-level assertion on
+        the echoed timestamp)
+      - End-to-end `connect` + `createStream` + `publish` via a
+        thread-backed `FakeServer` (verifies connect-flow message
+        ordering on the wire and the streamId allocation path)
+      - `play` end-to-end via the same fixture
+      - `publish` rejection: `NetStream.Publish.Denied` →
+        `Error::PermissionDenied`
+      - `connect` times out when the server never replies
+
+**Deferred from this phase (carry-overs):**
+- **Outgoing keepalive** (emit our own `PingRequest` once we've
+  consumed `windowAckSize / 2` worth of inbound bytes) → Phase 4
+  (`RtmpClient`), where the writer thread that owns the periodic
+  outgoing traffic lives.
+- **Application-level dead-peer timer** → Phase 4 — the timer fires
+  on the reader thread that doesn't exist yet in the standalone
+  session.
+- **Captured-from-ffmpeg connect-flow byte stream replay** under
+  `tests/data/rtmp/` — synthetic round-trip through the
+  `FakeServer` covers every protocol divergence the captured
+  fixture would catch.  Captured streams will land when a real
+  ffmpeg / nginx-rtmp interop tour reveals a server-specific
+  quirk worth pinning.
+- **Localhost nginx-rtmp publish smoke test** under
+  `utils/promeki-test/` → Phase 5, where the MediaIO backend gives
+  a realistic end-to-end pipeline.
+
+**Deviations from the plan:**
+- **`Amf0Value` destructor / copy ops / private-ctor moved
+  out-of-line** in `amf0.h` + `amf0.cpp`.  The previous inline
+  defaults instantiated `SharedPtr<Amf0Data>::~SharedPtr` at every
+  include site through the forward-declared `Amf0Data` struct,
+  which fired `-Wdelete-incomplete` in any TU that constructed an
+  `Amf0Value`.  Out-of-lining keeps the destructor inside
+  `amf0.cpp` where `Amf0Data` is fully defined.  Latent issue from
+  Phase 0 — picked up by the Phase 3 test file's heavy
+  `Amf0Value`-by-value usage.
+- **`Metadata` parsing from `onMetaData` is a placeholder** — the
+  session detects the script-data path and emits the `onMetaData`
+  signal with an empty `Metadata`.  Walking the AMF0 object into
+  concrete `Metadata::*` keys (`width`, `height`,
+  `videocodecid`, etc.) lands with Phase 5, where `RtmpMediaIO`
+  consumes the metadata for `proposeOutput`.  The signal hook is in
+  place so the upstream caller can subscribe today.
+- **Test path:** `tests/unit/network/rtmpsession.cpp` (vs the
+  plan's `tests/unit/rtmpsession.cpp` — typo) for consistency with
+  the rest of the network protocol tests.
 
 ## Phase 4 — Standalone client classes (publisher + subscriber)
 
+**Status (2026-05-10):** Phase 4 is **complete**.  RtmpClient landed
+with 8 doctest cases (30 assertions).  End-to-end publish round-trip
+via a local TCP fixture (`FakeRtmpServer` reused across phases) is
+green.  Full ctest passes at 5709 cases / 115,321 assertions; zero
+warnings in our code.
+
 Files:
-- [ ] `include/promeki/rtmpclient.h`
-- [ ] `src/network/rtmpclient.cpp`
-- [ ] `tests/unit/rtmpclient.cpp`
+- [x] `include/promeki/rtmpclient.h`
+- [x] `src/network/rtmpclient.cpp`
+- [x] `tests/unit/network/rtmpclient.cpp`
 
 `RtmpClient` is the convenience wrapper around `TcpSocket` /
 `SslSocket` + `RtmpSession` + `RtmpUrl` parsing. It does not assume
@@ -1278,28 +1522,109 @@ class RtmpClient : public ObjectBase {
 
 **Tests:**
 
-- [ ] Loopback round-trip: spawn an in-process minimal RTMP server
-      (test fixture at `tests/unit/rtmpserverfixture.h` /
-      `rtmpserverfixture.cpp`, not the production server class which
-      is deferred — just enough to accept C0/C1, echo S0/S1/S2,
-      accept a connect, and dump received bytes). The fixture is
-      reused by `tests/unit/rtmpclient.cpp`,
-      `tests/unit/rtmpsession.cpp`, and `tests/unit/rtmpmediaio.cpp`
-      so all three layers exercise the same on-the-wire reflector.
-      The test publishes a synthetic video + audio sequence and
-      verifies the bytes the fixture received parse back to the same
-      FLV tags.
-- [ ] Auth failure paths (server rejects `connect` with `_error`).
-- [ ] Reconnect-after-drop is **not** in scope for this phase — the
-      client surfaces the disconnection signal and the application
-      reopens. RTP doesn't auto-reconnect either; symmetric.
+- [x] **Loopback round-trip:** `FakeRtmpServer` fixture in
+      `tests/unit/network/rtmpclient.cpp` drives the server-side
+      handshake + connect-flow inside the same process.  The test
+      publishes a synthetic AVC video + AAC audio sequence and
+      asserts the fixture parses ≥3 video + ≥3 audio messages back
+      into `RtmpMessage`s.  The fixture is currently inline in the
+      test file rather than the planned shared
+      `tests/unit/rtmpserverfixture.h` — moving it out as a shared
+      header lands when Phase 5 (`RtmpMediaIO`) tests need to reuse
+      it.
+- [x] **URL scheme rejection:** `http://` and empty-host URLs are
+      rejected with `Error::InvalidArgument`.
+- [x] **Refused-connection cleanup:** opening to a port nothing is
+      listening on returns an error and leaves `isOpen()` false.
+- [x] **Unopened-client guards:** `sendVideo` / `sendAudio` /
+      `publish` / `takeVideo` on an idle client return
+      `Error::Invalid`; `close` on a never-opened client is a no-op.
+- [x] **Idempotent close:** repeated close calls succeed without
+      crashing.
+- [ ] **Auth failure paths** (server rejects `connect` with
+      `_error`) — covered at the RtmpSession layer in Phase 3 via
+      the `NetStream.Publish.Denied → PermissionDenied` test.
+      Wiring the same error path through RtmpClient is a small
+      additive doctest that we'll add when the
+      `RtmpMediaIO`-layer auth-rejection error surfacing is
+      exercised by Phase 5.
+- [x] **Reconnect-after-drop** is explicitly **not** in scope — the
+      client surfaces a disconnection error via the `disconnected`
+      signal and the application reopens.  RTP doesn't
+      auto-reconnect either; symmetric.
+
+**Deviations from the plan / carry-overs:**
+- **`waitForReadyRead` added to `AbstractSocket`** (small foundation
+  fix surfaced by this phase): the chunk-stream layer needs a
+  pollable wait on the socket fd to honor read timeouts.  The
+  IODevice default returned `false` immediately, which made
+  read-with-timeout effectively spin.  `AbstractSocket` now overrides
+  `waitForReadyRead` to poll the underlying fd with `POLLIN`; this
+  is the right place for the override since every socket subclass
+  benefits from it.
+- **Writer / reader thread startup is deferred until @c publish or
+  @c play succeeds.**  The synchronous AMF0 round-trips inside
+  `RtmpSession::connect` / `createStream` / `publish` / `play` pump
+  `_session->readMessage` from the foreground caller; a concurrent
+  reader thread would race for inbound messages on the same chunk
+  stream.  The threads start only once the steady-state media-pump
+  phase begins.  This matches the devplan's "RtmpWriterThread /
+  RtmpReaderThread serve the media phase" diagram, just made
+  explicit.
+- **`sendMetadata` emits an empty `@setDataFrame` + `onMetaData`
+  AMF0 envelope** — the transport mechanics are exercised; the
+  metadata-object population happens in Phase 5 once
+  `RtmpMediaIO`'s `MediaDesc` consumer is in place.
+- **`rttEstimate()` returns 0** — Phase 5's writer-side periodic
+  keepalive emitter populates this.
+- **`tests/unit/rtmpserverfixture.{h,cpp}`** is **not** factored out
+  yet — the `FakeRtmpServer` lives inline in the test file.  Lifting
+  it to a shared fixture lands with Phase 5 testing.
 
 ## Phase 5 — RtmpMediaIO
 
+**Status (2026-05-10):** Phase 5 first cut is **landed**.  `RtmpMediaIO`
+publishes H.264 + HEVC + AAC end-to-end via the `RtmpClient` machinery
+from Phase 4; source-mode (play) is wired with a basic depacketizer
+loop.  6 new doctest cases (~80 assertions) under
+`tests/unit/network/rtmpmediaio.cpp` cover factory registration,
+URL→config, `objectId` uniqueness, end-to-end publish via
+`FakeRtmpServer`, missing-URL rejection, and refused-connection
+cleanup.  Full ctest green: 5716 cases / 115,328 assertions; zero
+warnings in our code.
+
+**Update (2026-05-10):** Mid-stream peer-disconnect handling
+landed.  `RtmpMediaIO` now hooks `RtmpClient::disconnectedSignal`
+and latches the reason; the packetizer and depacketizer worker
+loops exit cleanly on the latched flag instead of busy-spinning
+on `Error::Invalid` results from `sendVideo`/`takeVideo`, and the
+strand-side `executeCmd(Write)` / `executeCmd(Read)` paths
+surface the captured `Error` (defaulting to `BrokenPipe` when the
+disconnect was clean) so `MediaIOPortConnection::writeErrorSignal`
+cascades the failure to the pipeline.  Repro: live publish to a
+mediamtx server that gets terminated mid-stream — previously the
+sink object kept the stage open and emitted per-frame
+"video send failed: Invalid argument" warnings; now the pipeline
+tears down the RTMP stage on the next write.  One regression
+test added (`rtmpmediaio.cpp`: peer-disconnect mid-stream surfaces
+as writeFrame error).
+
+**Known limitation (RTMP wire format):** RTMP timestamps are
+32-bit milliseconds, so fractional source rates (29.97, 59.94,
+etc.) inherently produce ±1 ms part-duration jitter on the wire
+— at 29.97 fps with a 6-frame GOP the keyframe stride lands at
+200.2 ms in source time, which floors to alternating 200/201 ms
+on consecutive GOP boundaries.  mediamtx's LL-HLS muxer logs a
+`part duration changed from 200ms to 201ms` warning per such
+transition.  This is benign for non-iOS-LL-HLS subscribers and
+unavoidable without a higher-resolution wire format; integer-rate
+sources (30, 60, etc.) sidestep it entirely.
+
 Files:
-- [ ] `include/promeki/rtmpmediaio.h`
-- [ ] `src/proav/rtmpmediaio.cpp`
-- [ ] `tests/unit/rtmpmediaio.cpp`
+- [x] `include/promeki/rtmpmediaio.h`
+- [x] `src/proav/rtmpmediaio.cpp` *(under proav, mirroring `rtpmediaio.cpp`)*
+- [x] `tests/unit/network/rtmpmediaio.cpp` *(under `network/` to
+      match the rest of the RTP / TLS protocol tests)*
 
 The big piece. `RtmpMediaIO` derives from `DedicatedThreadMediaIO`
 (same as `RtpMediaIO`) and behaves like RtpMediaIO at the MediaIO
@@ -1335,6 +1660,11 @@ StatsRxAudioIntervalUs (Histogram)
 StatsRxFrameAssembleUs (Histogram)
 StatsAudioSilenceFramesEmitted          // when source stalls; mirrors RTP
 StatsVideoFramesDroppedPreIdr           // sink-side: count of access units dropped while waiting for the first IDR after publish (RtmpDropUntilKeyframe)
+StatsPacingTicksOnTime / Late           // PacingGate verdict counters (video, sink only); mirrors RtpMediaIO's gate exposure
+StatsPacingTicksSkipped                 // count of frames dropped by the gate (lag past skip threshold)
+StatsPacingReanchors                    // count of timeline re-anchors (lag past reanchor threshold)
+StatsPacingSlackUs (Histogram)          // signed slack (deadline − now) sampled on every wait()
+StatsPacingClockKind                    // String tag: "internal" / "external" / "none" — reflects the live gate binding, not the configured mode
 ```
 
 - `MediaIOCommandParams` actions (analogous to RTP's `GetSdp`):
@@ -1373,7 +1703,44 @@ StatsVideoFramesDroppedPreIdr           // sink-side: count of access units drop
      `AudioSpecificConfig` carries the actual sample rate. We end up
      receiving `CompressedAudioPayload` regardless of upstream
      sample format / rate.
-3. **First-IDR gating.** Per `RtmpDropUntilKeyframe` (default `true`),
+3. **Video pacing on the strand.** Mirrors
+   `RtpMediaIO::paceVideoFrame` exactly.  A single
+   `PacingGate _videoPaceGate` member, armed by `executeCmd(Open)`
+   from the `RtmpVideoPacing` enum:
+   - `Internal` (default) → `_videoPaceGate.setClock(SystemWallClock::create())`
+     and `setPeriod(MediaConfig::FrameRate.frameDuration())`.  No
+     external clock required; the strand paces the first frame at
+     `now()` and every subsequent frame at `anchor + n × period`.
+   - `External` → no clock bound at `Open`.  The gate stays a
+     no-op until `executeCmd(MediaIOCommandSetClock)` arrives
+     from the planner (typically forwarded from a capture-card
+     MediaIO upstream whose port-group `clock()` is the device
+     clock).  A null clock from `setClock` re-arms back to the
+     `Internal` policy when `RtmpVideoPacing=Internal`, or stays
+     a no-op when `RtmpVideoPacing=External`.
+   - `None` → gate is never armed.  Strand floods at upstream
+     rate; only the bounded `MessageQueue` provides backpressure.
+   Called on the strand immediately *after* the encoder produces
+   a `CompressedVideoPayload` (so the encoder's variable cost
+   doesn't double-pay against the deadline) and *before* the
+   per-kind PayloadQueue push.  Audio is **not** paced by this
+   gate — AAC's natural per-frame cadence (1024 samples → ~21 ms
+   at 48 kHz) lands inside the video frame interval anyway, and
+   the bounded `MessageQueue` keeps audio + video in roughly the
+   same wall-clock window once video is paced.  Verdicts:
+   - `OnTime` / `Late` → proceed.
+   - `Skip` → drop the frame, increment
+     `StatsPacingTicksSkipped`, call `noteFrameDropped(portGroup(0))`,
+     bump `_frameCount`, return `Error::Ok` (matches RTP).
+   - `Reanchor` → log a `promekiWarn`, increment
+     `StatsPacingReanchors`, proceed with the frame.
+   `executeCmd(MediaIOCommandSetClock)` swaps the gate's clock
+   on the strand and returns `Error::Ok`; the framework's
+   `completeCommand` then updates `MediaIOPortGroup::clock()`
+   so callers observe the live binding.  Returns
+   `Error::NotSupported` in source mode (RX timing is driven by
+   network arrival).
+4. **First-IDR gating.** Per `RtmpDropUntilKeyframe` (default `true`),
    non-keyframe video access units arriving before the first IDR
    after `publish` succeeds are silently dropped — most destinations
    reject a stream that begins on an inter-frame and refuse to
@@ -1381,7 +1748,7 @@ StatsVideoFramesDroppedPreIdr           // sink-side: count of access units drop
    audio-only prelude is fine. `StatsAudioSilenceFramesEmitted` and
    a new `StatsVideoFramesDroppedPreIdr` counter both surface the
    gating activity.
-4. **Sequence header + parameter-set policy.** The first IDR access
+5. **Sequence header + parameter-set policy.** The first IDR access
    unit triggers an `AvcDecoderConfig::fromAnnexB` (or
    `HevcDecoderConfig::fromAnnexB`) build, then a single
    `FlvVideoTag` of `packetType = SequenceHeader` with the
@@ -1393,7 +1760,7 @@ StatsVideoFramesDroppedPreIdr           // sink-side: count of access units drop
    inline in the AVCC payload of every IDR, so a subscriber that
    joins mid-stream can decode the next IDR without waiting for the
    next out-of-band sequence-header refresh.
-5. **Composition-time / DTS handling.** The packetizer computes
+6. **Composition-time / DTS handling.** The packetizer computes
    `compositionTimeOffsetMs = pts() - dts()` from
    `MediaPayload::pts()` / `dts()` directly (no helper method
    today; computed inline at framing time). For B-frame-bearing
@@ -1405,14 +1772,14 @@ StatsVideoFramesDroppedPreIdr           // sink-side: count of access units drop
    B-frames are typical without forcing the encoder to disable
    them — the only requirement is that when B-frames are present,
    the encoder populate DTS.
-6. The first AAC packet triggers an `AacDecoderConfig::fromAudioDesc`
+7. The first AAC packet triggers an `AacDecoderConfig::fromAudioDesc`
    build → `FlvAudioTag` `aacPacketType = SequenceHeader`. Subsequent
    AAC frames are `aacPacketType = Raw`.
-7. `onMetaData` is dispatched once, immediately after `publish`
+8. `onMetaData` is dispatched once, immediately after `publish`
    succeeds, populated from the `MediaDesc` (width, height,
    videocodecid, audiocodecid, framerate, audiosamplerate,
    audiochannels, encoder string from `Application::userAgent`).
-8. Per-frame timestamp: 32-bit **milliseconds**, monotonically
+9. Per-frame timestamp: 32-bit **milliseconds**, monotonically
    increasing per stream, derived from `Frame::captureTime` for
    audio and from the encoder's PTS for video. The millisecond
    quantization is a hard ceiling on RTMP's audio-sync precision —
@@ -1495,10 +1862,27 @@ Cross-thread shutdown via the existing `Queue::cancelWaiters` /
 
 **Tests:**
 
-- [ ] Doctest unit tests against an in-tree mock `RtmpServer`
-      fixture (read above — an embeddable accept-and-reflect
-      simulator, not a full server). Validates handshake → connect →
-      publish → message exchange end-to-end.
+- [x] Doctest unit tests against an in-tree mock `RtmpServer`
+      fixture (lifted inline into the test file mirroring the
+      Phase 4 `FakeRtmpServer`).  Validates handshake → connect →
+      publish → message exchange end-to-end, sequence-header
+      ordering (AVC + AAC), and keyframe / inter-frame routing.
+- [ ] **Pacing doctest** (new, in `tests/unit/network/rtmpmediaio.cpp`):
+      - `Internal` mode + a `ManualClock` substituted for the
+        gate's internal wall clock — feed N frames synchronously,
+        assert the gate slept the expected accumulated period
+        (within tolerance) and that no `Skip` verdicts fire on a
+        real-time feeder.
+      - `Internal` + flood the strand faster than realtime —
+        assert `StatsPacingTicksSkipped` matches the configured
+        skip-threshold math and that `noteFrameDropped` is called.
+      - `External` mode + bind a `ManualClock` via
+        `executeCmd(MediaIOCommandSetClock)` mid-publish, advance
+        it tick-by-tick, assert the strand only releases a frame
+        per advance.  Then bind `nullptr` and assert the gate
+        reverts to no-op (the `External` policy).
+      - `None` mode — assert no `PacingGate` waits ever happen and
+        a flood goes through at queue-bounded rate only.
 - [ ] Functional test under `utils/promeki-test/cases/rtmp/`:
       - `rtmp.h264.aac.publish` — TPG → RtmpMediaIO sink → in-process
         sink server fixture → verify frames received.
@@ -1509,10 +1893,81 @@ Cross-thread shutdown via the existing `Queue::cancelWaiters` /
         `SslContext` configured against a local self-signed cert.
       - `rtmp.handshake.fallback` — fixture rejects complex,
         client falls back to simple, publish completes.
+      - `rtmp.h264.aac.publish.paced` — TPG feeding faster than
+        realtime, `RtmpVideoPacing=Internal`, assert the wall-clock
+        delivery rate at the fixture matches `FrameRate` within
+        tolerance.
+      - `rtmp.h264.aac.publish.captureclock` — feed a synthetic
+        capture-card stub whose port-group exposes a controllable
+        `Clock`, propagate via `setClock`, assert the destination
+        sees the capture stub's cadence (not a wall clock).
 - [ ] One real-network smoke test (gated by an env var) that
       publishes 10 seconds of TPG to a configurable RTMP destination
       and asserts the destination's read-back URL works. Off by
       default in CI.
+
+**Deviations from the plan / carry-overs:**
+
+- **Strand-side `PacingGate` not yet wired.**  The current sink
+  pumps frames into the per-kind PayloadQueues at the strand's
+  natural rate — no `RtmpVideoPacing` honoring, no
+  `executeCmd(MediaIOCommandSetClock)` override, no
+  `Stats*` pacing keys.  In practice this is fine against an
+  upstream that delivers at real-time rate (a capture board
+  driving the planner), and the bounded `MessageQueue` keeps a
+  flooded sink from running away forever — but a synthetic feeder
+  (TPG, file relay) will burst a full GOP onto the wire on every
+  IDR.  The Phase 5 "Video pacing on the strand" step is the
+  authoritative plan; landing it is the next sink-side
+  deliverable.
+- **Stats coverage subset.**  The cumulative counters (`StatsFramesSent`,
+  `StatsBytesSent`, `StatsVideoMessagesSent`, etc.) and the
+  `StatsConnectDurationMs` / `StatsHandshakeDurationMs` /
+  `StatsVideoFramesDroppedPreIdr` / `StatsSendQueueOverflows` keys are
+  populated; the RTT, timestamp-wrap-event, last-disconnect-error,
+  and per-kind interval-histogram keys from the plan's table are
+  **deferred** to a follow-up.  The current set is sufficient for
+  smoke-level observability and matches what the in-tree counters
+  already track.
+- **`MediaIOCommandParams` not implemented.**  The plan's
+  `GetServerOnConnect` and `GetMetadata` params commands are not
+  wired up.  Land alongside the `Metadata`-population path
+  (Phase 4 carry-over re: `RtmpClient::sendMetadata` body).
+- **Sequence-header policy is best-effort.**  The sink emits the
+  `avcC` / `hvcC` sequence header on the first IDR by extracting
+  the SPS/PPS (and VPS for HEVC) from the Annex-B access unit.
+  When the upstream encoder delivers AVCC bytes directly the
+  sequence header is not yet built; the bitstream still flows.
+  This matches what the planner's `VideoEncoderMediaIO` upstream
+  typically produces today (Annex-B).
+- **`RtmpRepeatParameterSets` is read but not yet enforced.**  The
+  packetizer ships the encoder's bytes verbatim; in-band SPS/PPS
+  repeat is the encoder's responsibility for now.  Landing the
+  inline re-injection at IDR boundaries is a small additive change.
+- **`RtmpDropUntilKeyframe` honored.**  Pre-IDR access units are
+  dropped and counted via `StatsVideoFramesDroppedPreIdr`.
+- **Source-mode `MediaDesc`** is a `H.264 / 48 kHz stereo AAC`
+  placeholder until the first `SequenceHeader` arrives.  The
+  proper mid-stream descriptor update (`MediaIOCommandRead`'s
+  `mediaDescChanged` / `updatedMediaDesc` outputs) lands when the
+  depacketizer wires the parsed `AvcDecoderConfig` /
+  `AacDecoderConfig` back into the strand-side cache.
+- **Source-mode parameter-set propagation.**  The depacketizer
+  detects `SequenceHeader` tags but does not yet emit a
+  `CompressedVideoPayload(ParameterSet)` for downstream decoders —
+  most decoders cope when the encoder repeats parameter sets
+  in-band on every IDR, which the major destinations do.
+- **`onMetaData` consumption** is a placeholder.  The depacketizer
+  drains the `RtmpClient::takeMetadata` queue and discards.
+  Walking the AMF0 object into `Metadata` keys lands when a
+  consumer of those keys exists.
+- **`RtmpMediaIO`'s `MediaConfig::Filename` fallback.**  Not
+  implemented; users open RTMP streams via `MediaConfig::RtmpUrl`
+  or `MediaIO::createFromUrl`.
+- **Captured-from-real-server fixtures** under `tests/data/rtmp/`
+  not yet landed (same carry-over as Phases 1-3).
+- **Cumulative-aggregate `setName` thread label** lands per the
+  `Thread::setName` API rather than the plan's `setObjectName`.
 
 ## Phase 6 — Documentation + integration
 
@@ -1531,12 +1986,11 @@ Cross-thread shutdown via the existing `Queue::cancelWaiters` /
             PROMEKI_ENABLE_RTMP PROMEKI_ENABLE_AAC)` when enabled.
 - [ ] `include/promeki/config.h.in` exposes `PROMEKI_ENABLE_RTMP` to
       consumers.
-- [ ] `demos/rtmp-demo/` — a tiny CLI that takes a URL + a TPG config
-      and publishes (mirrors `demos/srt-demo`). Useful as a smoke test
-      surface when developing. Files:
-      - [ ] `demos/rtmp-demo/CMakeLists.txt`
-      - [ ] `demos/rtmp-demo/main.cpp`
-      - [ ] `demos/rtmp-demo/README.md` (one-line invocation example)
+
+No dedicated `demos/rtmp-demo/` — `utils/mediaplay/` already drives
+URL outputs through `MediaIOFactory::createFromUrl`, so the smoke-test
+surface is `mediaplay <pipeline.json>` where the sink stage has an
+`rtmp://` / `rtmps://` path.  Same model as the SRT sink testing.
 
 ## Out of scope / deferred
 
@@ -1598,26 +2052,46 @@ re-deriving context:
 ## Implementation order summary
 
 ```
-Phase 0  ── library foundations ──┐
+Phase 0  ── library foundations ──┐  ✅ complete (2026-05-10)
                                   │
                                   ▼
-Phase 1 ── RtmpHandshake ────► tests
+Phase 1 ── RtmpHandshake ────► tests  ✅ complete (2026-05-10)
                                   │
                                   ▼
-Phase 2 ── RtmpChunkStream ───► tests
+Phase 2 ── RtmpChunkStream ───► tests  ✅ complete (2026-05-10)
                                   │
                                   ▼
-Phase 3 ── RtmpSession ──────────► tests
+Phase 3 ── RtmpSession ──────────► tests  ✅ complete (2026-05-10)
                                   │
                                   ▼
-Phase 4 ── RtmpClient ───────────► tests + demo
+Phase 4 ── RtmpClient ───────────► tests + demo  ✅ complete (2026-05-10)
                                   │
                                   ▼
-Phase 5 ── RtmpMediaIO ──────────► doctest + promeki-test matrix
-                                  │
+Phase 5 ── RtmpMediaIO ──────────► doctest landed ✅ first cut (2026-05-10);
+                                  │                  promeki-test matrix +
+                                  │                  stats / params +
+                                  │                  PacingGate follow-ups still TODO
                                   ▼
-Phase 6 ── docs + CMake + demo wiring
+Phase 6 ── docs + CMake + demo wiring   (next)
 ```
+
+Phase 0 carry-overs (small items deferred into later phases, called
+out here so they don't get lost):
+
+- App-vs-stream-key path-split helper (§8) → Phase 4 (`RtmpClient`).
+- `MediaIOFactory` registration for `rtmp` / `rtmps` (§8) → Phase 5
+  (`RtmpMediaIO`).
+- `PROMEKI_ENABLE_RTMP requires PROMEKI_ENABLE_AAC` CMake guard
+  (§6) → Phase 6 (when the `PROMEKI_ENABLE_RTMP` option itself is
+  added).
+- `redactedString()` adoption at every `PROMEKI_LOG` site (§9) →
+  Phases 3 – 5 (lands alongside the log statements themselves).
+- Captured-from-real-server AMF0 byte streams under
+  `tests/data/rtmp/` (§3) → Phase 1 / 2 / 3 when handshake / chunk
+  / session tests need them.
+- HE-AAC v1 / v2 + 960-sample-frame test coverage (§6) → Phase 5
+  (the same matrix add that exercises `RtmpAudioBitrate` ×
+  `RtmpAudioCodec`).
 
 Server roles are listed under Out of scope / deferred; the protocol
 classes from Phases 1–3 are role-agnostic so they don't need

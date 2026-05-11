@@ -39,11 +39,14 @@ namespace {
                 const AudioDesc &b = to.audioList()[0];
 
                 // SRC only converts the sample data type today; rate /
-                // channel changes are handled by FrameSync.
+                // channel changes are handled by FrameSync, and the
+                // compressed-codec axis is handled by AudioEncoder /
+                // AudioDecoder.
                 if (a.sampleRate() != b.sampleRate()) return false;
                 if (a.channels() != b.channels()) return false;
                 if (a.format().id() == b.format().id()) return false;
                 if (b.format().id() == AudioFormat::Invalid) return false;
+                if (a.format().isCompressed() || b.format().isCompressed()) return false;
 
                 if (outConfig != nullptr) {
                         *outConfig = MediaIOFactory::defaultConfig("SRC");

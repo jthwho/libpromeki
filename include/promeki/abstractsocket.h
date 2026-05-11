@@ -205,6 +205,22 @@ class AbstractSocket : public IODevice {
                  */
                 bool isSequential() const override { return true; }
 
+                /**
+                 * @brief Waits until the socket has at least one byte
+                 *        readable, or @p timeoutMs elapses.
+                 *
+                 * Uses @c poll(2) on the socket descriptor.  Returns
+                 * @c true when bytes are pending; @c false on
+                 * timeout / error / EOF.  Required so that callers
+                 * that prefer "wait + non-blocking-read" over a
+                 * blocking @c read with @c SO_RCVTIMEO can run on
+                 * the AbstractSocket API directly.
+                 *
+                 * @param timeoutMs Timeout in milliseconds; @c 0
+                 *                  waits indefinitely.
+                 */
+                bool waitForReadyRead(unsigned int timeoutMs = 0) override;
+
                 /** @brief Emitted when a connection is established. @signal */
                 PROMEKI_SIGNAL(connected);
 

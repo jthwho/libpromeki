@@ -109,7 +109,9 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(NotFound, NONE, "Requested element or value was not found"),
         DEFINE_ERROR(BuildIdentMismatch, NONE,
                      "Library build identity does not match caller's compile-time identity (stale binary)"),
-        DEFINE_ERROR(NotReady, NONE, "Resource exists but is not yet in the state required for this operation")};
+        DEFINE_ERROR(NotReady, NONE, "Resource exists but is not yet in the state required for this operation"),
+        DEFINE_ERROR(AuthenticationRequired, NONE, "Peer demanded an authentication challenge response we don't produce"),
+        DEFINE_ERROR(ProtocolError, NONE, "Peer sent a protocol-level violation or unmodelled status code")};
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {
         static StructDatabase<int, Error::Code> sysdb = []() {

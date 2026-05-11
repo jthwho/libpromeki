@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <promeki/config.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/buffer.h>
@@ -27,6 +28,9 @@
 #include <promeki/contentlightlevel.h>
 #include <promeki/result.h>
 #include <promeki/iodevice.h>
+#if PROMEKI_ENABLE_TLS
+#include <promeki/sslcontext.h>
+#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -332,6 +336,7 @@ class DataStream {
                                 0x54, ///< @brief VariantMap (uint32 count + N (String key, Variant value) — same wire as Map<String,Variant>)
                         TypeXmlDocument = 0x55, ///< @brief XmlDocument (length-prefixed serialized XML form)
                         TypeXmlElement = 0x56,  ///< @brief XmlElement (length-prefixed serialized XML form)
+                        TypeSslContext = 0x57,  ///< @brief SslContext::Ptr — opaque, only the tag round-trips (read yields a null Ptr).
                 };
 
                 /**
@@ -580,6 +585,20 @@ class DataStream {
                 DataStream &operator<<(const SocketAddress &val);
                 /** @brief Writes an SdpSession as a tagged RFC 4566 SDP string. */
                 DataStream &operator<<(const SdpSession &val);
+#if PROMEKI_ENABLE_TLS
+                /**
+                 * @brief Writes an SslContext::Ptr — opaque, only the tag is emitted.
+                 *
+                 * SslContext has no canonical persistent form (its
+                 * mbedTLS state is process-local), so this overload
+                 * exists purely so SslContext::Ptr can travel through
+                 * the Variant infrastructure that DataStream's
+                 * round-trip dispatch table requires.  Reading the
+                 * stream back yields a null Ptr — callers that need
+                 * the actual context must wire it up out of band.
+                 */
+                DataStream &operator<<(const SharedPtr<SslContext, false> &val);
+#endif
 
                 // ============================================================
                 // Read operators — primitives
@@ -674,6 +693,16 @@ class DataStream {
                 DataStream &operator>>(SocketAddress &val);
                 /** @brief Reads an SdpSession from a tagged RFC 4566 SDP string. */
                 DataStream &operator>>(SdpSession &val);
+#if PROMEKI_ENABLE_TLS
+                /**
+                 * @brief Reads an SslContext::Ptr — yields a null Ptr.
+                 *
+                 * Pairs with the write overload above.  Sets @p val to
+                 * a default-constructed (null) Ptr regardless of the
+                 * stream contents.  See the write overload for why.
+                 */
+                DataStream &operator>>(SharedPtr<SslContext, false> &val);
+#endif
 
                 // ============================================================
                 // Result<T>-returning read API

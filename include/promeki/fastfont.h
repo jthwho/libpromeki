@@ -100,6 +100,16 @@ class FastFont : public Font {
                 int                        _ascender = 0;
                 int                        _descender = 0;
                 int                        _lineHeight = 0;
+                /// Horizontal alignment derived from the deepest chroma
+                /// subsampling of the target pixel format.  Glyph cell
+                /// widths, advance, and blit X positions are snapped to
+                /// multiples of this so per-glyph blits on chroma-
+                /// subsampled formats (NV12, YV12, ...) hit the
+                /// PaintEngine_MultiPlane same-format fast path instead
+                /// of falling back to the scalar smear-on-edge path.
+                int                        _alignX = 1;
+                /// Vertical counterpart to _alignX.
+                int                        _alignY = 1;
                 PaintEngine::Pixel         _fgPixel;
                 PaintEngine::Pixel         _bgPixel;
                 bool                       _pixelsDirty = true;

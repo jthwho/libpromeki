@@ -281,6 +281,27 @@ class Url {
                  */
                 String toString() const;
 
+                /**
+                 * @brief Serializes the URL with credential-bearing
+                 *        components redacted.
+                 *
+                 * Returns @ref toString with two redactions applied:
+                 *  - The last @c /-delimited path component is replaced
+                 *    by @c *** (RTMP-style stream keys live there).
+                 *  - The value of any query parameter whose key
+                 *    case-insensitively matches the credential
+                 *    allowlist (currently @c token, @c auth, @c key,
+                 *    @c password, @c signature) is replaced by @c ***.
+                 *
+                 * The keys themselves remain in the output so operators
+                 * can still see which credential mechanism was in use.
+                 * The default @ref toString continues to round-trip;
+                 * redaction is opt-in at the call site so @c PROMEKI_LOG
+                 * sites that mention a URL go through this helper while
+                 * configuration parsers continue to use @ref toString.
+                 */
+                String redactedString() const;
+
                 /** @brief Equality on all components. */
                 bool operator==(const Url &other) const;
 

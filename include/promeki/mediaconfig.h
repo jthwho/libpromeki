@@ -1981,6 +1981,302 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                           .setDescription("Wire format for the metadata RTP stream."));
 
                 // ============================================================
+                // RTMP / RTMPS (RtmpMediaIO)
+                //
+                // Single-connection ordered TCP transport.  One @c
+                // RtmpMediaIO instance corresponds to exactly one peer
+                // and one logical stream, so all keys are top-level
+                // (we do not mirror the per-stream @c VideoRtp* /
+                // @c AudioRtp* / @c DataRtp* style).
+                // ============================================================
+
+                /// @brief Url — `rtmp://host:1935/app/streamKey` or `rtmps://...`.  Required.
+                PROMEKI_DECLARE_ID(RtmpUrl, VariantSpec()
+                                                    .setType(Variant::TypeUrl)
+                                                    .setDescription("RTMP / RTMPS endpoint URL."));
+
+                /// @brief String — overrides the URL's last path component (some destinations
+                /// want the stream key in headers rather than the URL path).
+                PROMEKI_DECLARE_ID(RtmpStreamKey, VariantSpec()
+                                                          .setType(Variant::TypeString)
+                                                          .setDefault(String())
+                                                          .setDescription("Stream key override (last URL path segment)."));
+
+                /// @brief String — overrides the URL's app component (URL path's leading segments).
+                PROMEKI_DECLARE_ID(RtmpAppName, VariantSpec()
+                                                        .setType(Variant::TypeString)
+                                                        .setDefault(String())
+                                                        .setDescription("App-name override (URL path leading segments)."));
+
+                /// @brief String — `connect.flashVer` advertised in the AMF0 connect body.
+                PROMEKI_DECLARE_ID(RtmpFlashVer,
+                                   VariantSpec()
+                                           .setType(Variant::TypeString)
+                                           .setDefault(String("FMLE/3.0 (compatible; libpromeki)"))
+                                           .setDescription("AMF0 connect.flashVer."));
+
+                /// @brief String — `connect.tcUrl`.  Empty means reconstruct from @ref RtmpUrl.
+                PROMEKI_DECLARE_ID(RtmpTcUrl, VariantSpec()
+                                                      .setType(Variant::TypeString)
+                                                      .setDefault(String())
+                                                      .setDescription("AMF0 connect.tcUrl override."));
+
+                /// @brief String — `connect.pageUrl`.
+                PROMEKI_DECLARE_ID(RtmpPageUrl, VariantSpec()
+                                                        .setType(Variant::TypeString)
+                                                        .setDefault(String())
+                                                        .setDescription("AMF0 connect.pageUrl."));
+
+                /// @brief String — `connect.swfUrl`.
+                PROMEKI_DECLARE_ID(RtmpSwfUrl, VariantSpec()
+                                                       .setType(Variant::TypeString)
+                                                       .setDefault(String())
+                                                       .setDescription("AMF0 connect.swfUrl."));
+
+                /// @brief bool — emit Enhanced-RTMP video tag form when codec is HEVC / VP9 / AV1.
+                PROMEKI_DECLARE_ID(RtmpEnhancedRtmp, VariantSpec()
+                                                             .setType(Variant::TypeBool)
+                                                             .setDefault(true)
+                                                             .setDescription("Use Enhanced-RTMP framing for "
+                                                                             "HEVC / VP9 / AV1."));
+
+                /// @brief int — local chunk size.  RTMP §5.4.1 mandates >= 128;
+                /// most peers reject anything past 65535.  Default 60000 matches OBS / FFmpeg.
+                PROMEKI_DECLARE_ID(RtmpChunkSize, VariantSpec()
+                                                          .setType(Variant::TypeS32)
+                                                          .setDefault(int32_t(60000))
+                                                          .setRange(int32_t(128), int32_t(65535))
+                                                          .setDescription("Local RTMP chunk size in bytes."));
+
+                /// @brief int — our advertised WindowAckSize.
+                PROMEKI_DECLARE_ID(RtmpWindowAckSize, VariantSpec()
+                                                              .setType(Variant::TypeS32)
+                                                              .setDefault(int32_t(5'000'000))
+                                                              .setMin(int32_t(1024))
+                                                              .setDescription("Advertised WindowAckSize in bytes."));
+
+                /// @brief int — value emitted in the SetPeerBandwidth control message
+                /// (limit-type Dynamic).
+                PROMEKI_DECLARE_ID(RtmpPeerBandwidth, VariantSpec()
+                                                              .setType(Variant::TypeS32)
+                                                              .setDefault(int32_t(5'000'000))
+                                                              .setMin(int32_t(1024))
+                                                              .setDescription("SetPeerBandwidth value (Dynamic)."));
+
+                /// @brief Enum @ref RtmpHandshakeMode — Auto / Simple / Complex.
+                PROMEKI_DECLARE_ID(RtmpHandshakeMode, VariantSpec()
+                                                              .setType(Variant::TypeEnum)
+                                                              .setDefault(promeki::RtmpHandshakeMode::Auto)
+                                                              .setEnumType(promeki::RtmpHandshakeMode::Type)
+                                                              .setDescription("RTMP handshake mode."));
+
+                /// @brief bool — emit `FCSubscribe` before `play` (some Wowza configs require it).
+                PROMEKI_DECLARE_ID(RtmpFcSubscribe, VariantSpec()
+                                                            .setType(Variant::TypeBool)
+                                                            .setDefault(false)
+                                                            .setDescription("Emit FCSubscribe before play."));
+
+                /// @brief bool — re-inject SPS/PPS (or VPS/SPS/PPS) inline ahead of every IDR.
+                /// Helps subscribers recover from packet loss.
+                PROMEKI_DECLARE_ID(RtmpRepeatParameterSets,
+                                   VariantSpec()
+                                           .setType(Variant::TypeBool)
+                                           .setDefault(true)
+                                           .setDescription("Repeat parameter sets ahead of every IDR."));
+
+                /// @brief bool — source mode: reframe AVCC NALs to Annex-B before emitting payloads.
+                PROMEKI_DECLARE_ID(RtmpEmitAnnexB, VariantSpec()
+                                                          .setType(Variant::TypeBool)
+                                                          .setDefault(false)
+                                                          .setDescription("Source-mode: emit Annex-B framing."));
+
+                /// @brief bool — sink mode: drop video access units until the first IDR after publish.
+                /// Default true — most destinations refuse a stream that begins on an inter-frame.
+                PROMEKI_DECLARE_ID(RtmpDropUntilKeyframe,
+                                   VariantSpec()
+                                           .setType(Variant::TypeBool)
+                                           .setDefault(true)
+                                           .setDescription("Sink-mode: drop access units until first IDR."));
+
+                /// @brief bool — set @c TCP_NODELAY on the publish / play socket.  Default on.
+                PROMEKI_DECLARE_ID(RtmpStartTcpNoDelay, VariantSpec()
+                                                                .setType(Variant::TypeBool)
+                                                                .setDefault(true)
+                                                                .setDescription("Set TCP_NODELAY on the socket."));
+
+                /// @brief int — TCP connect + TLS handshake budget in ms.
+                PROMEKI_DECLARE_ID(RtmpConnectTimeoutMs, VariantSpec()
+                                                                 .setType(Variant::TypeS32)
+                                                                 .setDefault(int32_t(10000))
+                                                                 .setMin(int32_t(0))
+                                                                 .setDescription("Connect + TLS handshake budget."));
+
+                /// @brief int — RTMP handshake budget in ms.
+                PROMEKI_DECLARE_ID(RtmpHandshakeTimeoutMs,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(10000))
+                                           .setMin(int32_t(0))
+                                           .setDescription("RTMP handshake budget."));
+
+                /// @brief int — `_result`/`onStatus` reply wait per AMF0 transaction (ms).
+                PROMEKI_DECLARE_ID(RtmpCommandTimeoutMs,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(5000))
+                                           .setMin(int32_t(0))
+                                           .setDescription("AMF0 command-reply timeout."));
+
+                /// @brief int — source-mode dead-peer detector.
+                /// Declares the connection lost after this many ms with no inbound bytes.  0 disables.
+                PROMEKI_DECLARE_ID(RtmpReadIdleTimeoutMs,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(30000))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Source-mode dead-peer timeout (0 disables)."));
+
+                /// @brief int — `SO_RCVBUF`.  0 means kernel default.
+                PROMEKI_DECLARE_ID(RtmpRecvBufferBytes, VariantSpec()
+                                                               .setType(Variant::TypeS32)
+                                                               .setDefault(int32_t(0))
+                                                               .setMin(int32_t(0))
+                                                               .setDescription("SO_RCVBUF (0 = kernel default)."));
+
+                /// @brief int — `SO_SNDBUF`.
+                PROMEKI_DECLARE_ID(RtmpSendBufferBytes, VariantSpec()
+                                                               .setType(Variant::TypeS32)
+                                                               .setDefault(int32_t(1048576))
+                                                               .setMin(int32_t(0))
+                                                               .setDescription("SO_SNDBUF."));
+
+#if PROMEKI_ENABLE_TLS
+                /// @brief SslContext::Ptr — RTMPS context override.  Null means
+                /// build one with the system CA bundle.
+                PROMEKI_DECLARE_ID(RtmpTlsContext, VariantSpec()
+                                                          .setType(Variant::TypeSslContext)
+                                                          .setDescription("RTMPS SslContext override."));
+#endif
+
+                /// @brief bool — peer-verify.  Set false only for self-signed test servers.
+                PROMEKI_DECLARE_ID(RtmpTlsVerify, VariantSpec()
+                                                          .setType(Variant::TypeBool)
+                                                          .setDefault(true)
+                                                          .setDescription("RTMPS peer-verification."));
+
+                /// @brief VideoCodec — pin for the video stream.  Default H.264.
+                PROMEKI_DECLARE_ID(RtmpVideoCodec,
+                                   VariantSpec()
+                                           .setType(Variant::TypeVideoCodec)
+                                           .setDefault(promeki::VideoCodec(promeki::VideoCodec::H264))
+                                           .setDescription("Pin RTMP's video codec."));
+
+                /// @brief AudioCodec — pin for the audio stream.  Default AAC.
+                PROMEKI_DECLARE_ID(RtmpAudioCodec,
+                                   VariantSpec()
+                                           .setType(Variant::TypeAudioCodec)
+                                           .setDefault(promeki::AudioCodec(promeki::AudioCodec::AAC))
+                                           .setDescription("Pin RTMP's audio codec."));
+
+                /// @brief int — target video bitrate (bits per second).  0 = derive from FrameRate × resolution.
+                PROMEKI_DECLARE_ID(RtmpVideoBitrate, VariantSpec()
+                                                            .setType(Variant::TypeS32)
+                                                            .setDefault(int32_t(0))
+                                                            .setMin(int32_t(0))
+                                                            .setDescription("Target video bitrate (bps)."));
+
+                /// @brief int — target audio bitrate (bits per second).
+                PROMEKI_DECLARE_ID(RtmpAudioBitrate, VariantSpec()
+                                                            .setType(Variant::TypeS32)
+                                                            .setDefault(int32_t(128000))
+                                                            .setMin(int32_t(0))
+                                                            .setDescription("Target audio bitrate (bps)."));
+
+                /// @brief String — preferred video encoder backend (e.g. `"Nvidia"`).
+                PROMEKI_DECLARE_ID(RtmpVideoEncoderBackend,
+                                   VariantSpec()
+                                           .setType(Variant::TypeString)
+                                           .setDefault(String())
+                                           .setDescription("Preferred video encoder backend (e.g. Nvidia)."));
+
+                /// @brief String — preferred audio encoder backend (e.g. `"FdkAac"`).
+                PROMEKI_DECLARE_ID(RtmpAudioEncoderBackend,
+                                   VariantSpec()
+                                           .setType(Variant::TypeString)
+                                           .setDefault(String())
+                                           .setDescription("Preferred audio encoder backend."));
+
+                /// @brief int — keyframe / GOP target in seconds; forwarded to the encoder.
+                PROMEKI_DECLARE_ID(RtmpKeyframeIntervalSec,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(2))
+                                           .setMin(int32_t(1))
+                                           .setDescription("GOP target in seconds."));
+
+                /// @brief bool — emit / consume FLV `SCRIPTDATA` `onMetaData`.
+                PROMEKI_DECLARE_ID(RtmpDataEnabled, VariantSpec()
+                                                            .setType(Variant::TypeBool)
+                                                            .setDefault(true)
+                                                            .setDescription("Emit / consume onMetaData."));
+
+                /// @brief int — bounded packetizer→writer queue depth.  Trade-off
+                /// between absorbing TCP stalls and responsive backpressure.
+                PROMEKI_DECLARE_ID(RtmpSendQueueDepth, VariantSpec()
+                                                              .setType(Variant::TypeS32)
+                                                              .setDefault(int32_t(64))
+                                                              .setRange(int32_t(2), int32_t(1024))
+                                                              .setDescription("Packetizer→writer queue depth."));
+
+                /// @brief int — bounded depacketizer→aggregator queue depth.
+                PROMEKI_DECLARE_ID(RtmpReadQueueDepth, VariantSpec()
+                                                              .setType(Variant::TypeS32)
+                                                              .setDefault(int32_t(64))
+                                                              .setRange(int32_t(2), int32_t(1024))
+                                                              .setDescription("Depacketizer→aggregator queue depth."));
+
+                /// @brief Enum @ref RtmpVideoPacing — sink-mode strand video pacing source.
+                ///
+                /// `Internal` (default) paces the strand against a built-in
+                /// `WallClock` at the resolved `FrameRate`.  `External` defers
+                /// entirely to the clock bound via `MediaIOPortGroup::setClock`
+                /// (no fallback when unbound — gate is a no-op until a clock
+                /// arrives).  `None` disables strand-level pacing and relies on
+                /// bounded-queue backpressure alone.
+                PROMEKI_DECLARE_ID(RtmpVideoPacing,
+                                   VariantSpec()
+                                           .setType(Variant::TypeEnum)
+                                           .setDefault(promeki::RtmpVideoPacing::Internal)
+                                           .setEnumType(promeki::RtmpVideoPacing::Type)
+                                           .setDescription("RTMP sink video pacing source."));
+
+                /// @brief int — `PacingGate` skip-verdict lag threshold in ms.
+                ///
+                /// Lag past which the strand drops the current frame to bound
+                /// pile-up.  `0` (default) resolves to one frame interval at
+                /// gate-arm time.
+                PROMEKI_DECLARE_ID(RtmpPaceSkipThresholdMs,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(0))
+                                           .setRange(int32_t(0), int32_t(5000))
+                                           .setDescription("PacingGate skip-verdict threshold (ms); "
+                                                           "0 = one frame interval."));
+
+                /// @brief int — `PacingGate` reanchor-verdict lag threshold in ms.
+                ///
+                /// Lag past which the gate re-anchors its timeline.  `0`
+                /// (default) resolves to `PacingGate::DefaultReanchorMultiple ×
+                /// frame interval` at gate-arm time.
+                PROMEKI_DECLARE_ID(RtmpPaceReanchorThresholdMs,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(0))
+                                           .setRange(int32_t(0), int32_t(30000))
+                                           .setDescription("PacingGate reanchor-verdict threshold (ms); "
+                                                           "0 = 8 × frame interval."));
+
+                // ============================================================
                 // NDI (Network Device Interface) — NdiMediaIO
                 //
                 // The NDI MediaIO backend exposes a single

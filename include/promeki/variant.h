@@ -60,6 +60,9 @@
 #include <promeki/macaddress.h>
 #include <promeki/eui64.h>
 #endif
+#if PROMEKI_ENABLE_TLS
+#include <promeki/sslcontext.h>
+#endif
 #include <nlohmann/json.hpp>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -133,13 +136,28 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeSdpSession    | `SdpSession`        |
  * | TypeMacAddress    | `MacAddress`        |
  * | TypeEUI64         | `EUI64`             |
+ *
+ * When @c PROMEKI_ENABLE_TLS is also true, one more type is registered:
+ *
+ * | Enumerator        | C++ type            |
+ * |-------------------|---------------------|
+ * | TypeSslContext    | `SslContext::Ptr`   |
  */
 #if PROMEKI_ENABLE_NETWORK
+#if PROMEKI_ENABLE_TLS
+#define PROMEKI_VARIANT_TYPES_NETWORK                                                                                  \
+        X(TypeSocketAddress, SocketAddress)                                                                            \
+        X(TypeSdpSession, SdpSession)                                                                                  \
+        X(TypeMacAddress, MacAddress)                                                                                  \
+        X(TypeEUI64, EUI64)                                                                                            \
+        X(TypeSslContext, SslContext::Ptr)
+#else
 #define PROMEKI_VARIANT_TYPES_NETWORK                                                                                  \
         X(TypeSocketAddress, SocketAddress)                                                                            \
         X(TypeSdpSession, SdpSession)                                                                                  \
         X(TypeMacAddress, MacAddress)                                                                                  \
         X(TypeEUI64, EUI64)
+#endif
 #else
 #define PROMEKI_VARIANT_TYPES_NETWORK
 #endif

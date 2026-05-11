@@ -178,3 +178,106 @@ TEST_CASE("Url: constructor conveniences") {
         Url b(String("pmfb://x"));
         CHECK(a == b);
 }
+
+// ---- redactedString ----
+
+TEST_CASE("Url: redactedString hides last path segment") {
+        Url u = Url::fromString("rtmp://h/app/streamKey").first();
+        CHECK(u.redactedString() == "rtmp://h/app/***");
+        // Original toString unchanged.
+        CHECK(u.toString() == "rtmp://h/app/streamKey");
+}
+
+TEST_CASE("Url: redactedString hides multi-segment app stream key") {
+        Url u = Url::fromString("rtmps://live.example.com/x/y/z/key").first();
+        CHECK(u.redactedString() == "rtmps://live.example.com/x/y/z/***");
+}
+
+TEST_CASE("Url: redactedString hides credential-bearing query values") {
+        Url u = Url::fromString("rtmp://h/app/sk?token=xyz").first();
+        CHECK(u.redactedString() == "rtmp://h/app/***?token=***");
+}
+
+TEST_CASE("Url: redactedString matches credential keys case-insensitively") {
+        Url u = Url::fromString("rtmp://h/app/sk?Token=xyz&AUTH=abc&Signature=zzz").first();
+        String r = u.redactedString();
+        CHECK(r.find("Token=***") != String::npos);
+        CHECK(r.find("AUTH=***") != String::npos);
+        CHECK(r.find("Signature=***") != String::npos);
+        // Stream key still hidden.
+        CHECK(r.find("/app/***") != String::npos);
+        // Original keys are preserved (only values are redacted).
+        CHECK(r.find("xyz") == String::npos);
+        CHECK(r.find("abc") == String::npos);
+        CHECK(r.find("zzz") == String::npos);
+}
+
+TEST_CASE("Url: redactedString preserves non-credential query values") {
+        Url u = Url::fromString("rtmp://h/app/sk?app=live&framerate=30&token=secret").first();
+        String r = u.redactedString();
+        CHECK(r.find("app=live") != String::npos);
+        CHECK(r.find("framerate=30") != String::npos);
+        CHECK(r.find("token=***") != String::npos);
+        CHECK(r.find("secret") == String::npos);
+}
+
+TEST_CASE("Url: redactedString on URL without path/query is a no-op") {
+        Url u = Url::fromString("pmfb://studio-a").first();
+        CHECK(u.redactedString() == u.toString());
+}
+
+TEST_CASE("Url: redactedString of invalid Url is empty") {
+        Url u;
+        CHECK(u.redactedString().isEmpty());
+}
+
+TEST_CASE("Url: redactedString does not mutate the source") {
+        Url    u = Url::fromString("rtmp://h/app/sk?token=xyz").first();
+        String before = u.toString();
+        (void)u.redactedString();
+        CHECK(u.toString() == before);
+        CHECK(u.queryValue("token") == "xyz");
+        CHECK(u.path() == "/app/sk");
+}
+
+// ---- RTMP scheme parse — verifies the existing parser handles the form
+//      RtmpClient / RtmpMediaIO will consume ----
+
+TEST_CASE("Url: rtmp scheme parses with default port") {
+        Url u = Url::fromString("rtmp://live.example.com/app/streamKey").first();
+        CHECK(u.scheme() == "rtmp");
+        CHECK(u.host() == "live.example.com");
+        CHECK(u.port() == Url::PortUnset);
+        CHECK(u.path() == "/app/streamKey");
+}
+
+TEST_CASE("Url: rtmps scheme parses with default port") {
+        Url u = Url::fromString("rtmps://live.example.com/app/streamKey").first();
+        CHECK(u.scheme() == "rtmps");
+        CHECK(u.host() == "live.example.com");
+        CHECK(u.path() == "/app/streamKey");
+}
+
+TEST_CASE("Url: rtmp explicit port") {
+        Url u = Url::fromString("rtmp://example.com:1936/app/streamKey").first();
+        CHECK(u.host() == "example.com");
+        CHECK(u.port() == 1936);
+        CHECK(u.path() == "/app/streamKey");
+}
+
+TEST_CASE("Url: rtmp multi-segment app preserves every path segment") {
+        // Per the plan: leading segments form the app, the last segment
+        // is the streamKey.  The URL parser keeps the full path verbatim
+        // and the split is the consumer's responsibility — verify that
+        // the parser at least preserves every segment.
+        Url u = Url::fromString("rtmp://h/x/y/z/key?t=1").first();
+        CHECK(u.path() == "/x/y/z/key");
+        CHECK(u.queryValue("t") == "1");
+}
+
+TEST_CASE("Url: rtmps with token query parameter round-trips") {
+        Url u = Url::fromString("rtmps://live.example.com/app/streamKey?token=xyz").first();
+        CHECK(u.scheme() == "rtmps");
+        CHECK(u.queryValue("token") == "xyz");
+        CHECK(u.toString().contains("token=xyz"));
+}

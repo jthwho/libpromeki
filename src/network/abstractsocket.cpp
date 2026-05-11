@@ -94,6 +94,23 @@ void AbstractSocket::disconnectFromHost() {
         disconnectedSignal.emit();
 }
 
+bool AbstractSocket::waitForReadyRead(unsigned int timeoutMs) {
+        if (_fd < 0) return false;
+        struct pollfd pfd;
+        pfd.fd = _fd;
+        pfd.events = POLLIN;
+        int timeout = (timeoutMs == 0) ? -1 : static_cast<int>(timeoutMs);
+        int ret = ::poll(&pfd, 1, timeout);
+        if (ret <= 0) return false;
+        // Return true on POLLHUP / POLLERR as well as POLLIN.  POLLHUP
+        // is sticky once the peer FINs / RSTs, so a "POLLIN-only" filter
+        // would spin every subsequent caller (poll returns instantly,
+        // bytesAvailable() reports zero, we'd loop without ever calling
+        // read() to surface the EOF).  Callers must treat a subsequent
+        // read() of zero as peer-closed.
+        return (pfd.revents & (POLLIN | POLLHUP | POLLERR)) != 0;
+}
+
 Error AbstractSocket::waitForConnected(unsigned int timeoutMs) {
         if (_state == Connected) return Error::Ok;
         if (_state != Connecting) return Error::Invalid;

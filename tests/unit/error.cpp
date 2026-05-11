@@ -246,3 +246,40 @@ TEST_CASE("Error: NotReady is distinct from adjacent codes") {
         CHECK(nr.name() != bim.name());
         CHECK(nr.name() != nf.name());
 }
+
+TEST_CASE("Error: AuthenticationRequired has name and desc") {
+        Error e(Error::AuthenticationRequired);
+        CHECK(e.isError());
+        CHECK_FALSE(e.name().isEmpty());
+        CHECK_FALSE(e.desc().isEmpty());
+}
+
+TEST_CASE("Error: ProtocolError has name and desc") {
+        Error e(Error::ProtocolError);
+        CHECK(e.isError());
+        CHECK_FALSE(e.name().isEmpty());
+        CHECK_FALSE(e.desc().isEmpty());
+}
+
+TEST_CASE("Error: AuthenticationRequired distinct from neighbouring codes") {
+        Error ar(Error::AuthenticationRequired);
+        Error pe(Error::ProtocolError);
+        Error pd(Error::PermissionDenied);
+        Error cd(Error::CorruptData);
+        Error lf(Error::LibraryFailure);
+        CHECK(ar != pe);
+        CHECK(ar != pd);
+        CHECK(pe != cd);
+        CHECK(pe != lf);
+        CHECK(ar.name() != pe.name());
+        CHECK(ar.name() != pd.name());
+        CHECK(pe.name() != cd.name());
+        CHECK(pe.name() != lf.name());
+}
+
+TEST_CASE("Error: AuthenticationRequired and ProtocolError have no system errno mapping") {
+        Error ar(Error::AuthenticationRequired);
+        Error pe(Error::ProtocolError);
+        CHECK(ar.systemError() == -1);
+        CHECK(pe.systemError() == -1);
+}

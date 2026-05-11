@@ -13,6 +13,9 @@
 #include <promeki/mediatimestamp.h>
 #include <promeki/macaddress.h>
 #include <promeki/eui64.h>
+#if PROMEKI_ENABLE_TLS
+#include <promeki/sslcontext.h>
+#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -1017,6 +1020,17 @@ DataStream &DataStream::operator<<(const SdpSession &val) {
         return *this;
 }
 
+#if PROMEKI_ENABLE_TLS
+DataStream &DataStream::operator<<(const SharedPtr<SslContext, false> &val) {
+        // SslContext is process-local opaque state with no persistent
+        // form — we emit the tag so the Variant payload-dispatch table
+        // round-trips, but no body bytes follow.  See the read overload.
+        (void)val;
+        writeTag(TypeSslContext);
+        return *this;
+}
+#endif
+
 // ============================================================================
 // Variant write — dispatches by the Variant's current type
 //
@@ -1587,6 +1601,20 @@ DataStream &DataStream::operator>>(SdpSession &val) {
         val = value(r);
         return *this;
 }
+
+#if PROMEKI_ENABLE_TLS
+DataStream &DataStream::operator>>(SharedPtr<SslContext, false> &val) {
+        // Pairs with the write overload — consume the tag, set @p val
+        // to a default-constructed (null) Ptr.  The actual context
+        // can't survive serialization; see the write overload.
+        if (!readTag(TypeSslContext)) {
+                val = SharedPtr<SslContext, false>();
+                return *this;
+        }
+        val = SharedPtr<SslContext, false>();
+        return *this;
+}
+#endif
 
 // ============================================================================
 // Variant read — peeks the tag and dispatches to the right type

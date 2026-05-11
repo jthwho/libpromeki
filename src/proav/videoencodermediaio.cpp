@@ -46,9 +46,48 @@ namespace {
                 if (fromPd.isCompressed()) return false;
                 if (!toPd.isCompressed()) return false;
 
+                // Audio must already match: VideoEncoder forwards every
+                // audio payload as-is, so if the downstream sink wants a
+                // different audio shape too the planner needs a separate
+                // audio bridge.  Mirrors @c audioEncoderBridge's pixel-side
+                // strictness so the planner can chain video + audio
+                // bridges deterministically instead of picking VideoEncoder
+                // as a "single bridge solves it" winner that silently
+                // leaves the audio gap unresolved.
+                if (from.audioList().size() != to.audioList().size()) return false;
+                const size_t audioCount = from.audioList().size();
+                for (size_t i = 0; i < audioCount; ++i) {
+                        const AudioDesc &a = from.audioList()[i];
+                        const AudioDesc &b = to.audioList()[i];
+                        if (a.sampleRate() != b.sampleRate()) return false;
+                        if (a.channels() != b.channels()) return false;
+                        if (a.format().id() != b.format().id()) return false;
+                }
+
                 const VideoCodec codec = VideoCodec::fromPixelFormat(toPd);
                 if (!codec.isValid()) return false;
                 if (!codec.canEncode()) return false;
+
+                // Reject when the source PixelFormat isn't directly
+                // accepted by any registered encoder backend for this
+                // codec.  An empty supportedInputs list is the codec's
+                // "accepts anything uncompressed" contract (no backend
+                // is fussy about input — keep the legacy permissive
+                // behaviour for those).  When the list is non-empty and
+                // the source isn't on it, the planner needs to splice
+                // a CSC in front of the encoder; @ref
+                // findVideoCscEncoderChain handles that two-hop case.
+                const List<PixelFormat> supported = codec.encoderSupportedInputs();
+                if (!supported.isEmpty()) {
+                        bool ok = false;
+                        for (const PixelFormat &cand : supported) {
+                                if (cand == fromPd) {
+                                        ok = true;
+                                        break;
+                                }
+                        }
+                        if (!ok) return false;
+                }
 
                 if (outConfig != nullptr) {
                         *outConfig = MediaIOFactory::defaultConfig("VideoEncoder");

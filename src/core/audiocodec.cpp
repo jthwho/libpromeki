@@ -154,7 +154,17 @@ struct AudioCodecRegistry {
 
                 void add(AudioCodec::Data d) {
                         AudioCodec::ID id = d.id;
-                        if (id != AudioCodec::Invalid) nameMap[d.name] = id;
+                        // Register every name including the "Invalid"
+                        // sentinel so a Variant String round-trip
+                        // (toString → fromString → AudioCodec()) is
+                        // lossless.  Without the "Invalid" entry,
+                        // parsing the JSON-serialised form of a
+                        // default-constructed AudioCodec (which
+                        // toString emits as "Invalid") fails and any
+                        // spec declaring setDefault(AudioCodec())
+                        // trips VariantDatabase's spec-validation
+                        // warning on the way back in.
+                        nameMap[d.name] = id;
                         entries[id] = std::move(d);
                 }
 };
@@ -183,7 +193,11 @@ void AudioCodec::registerData(Data &&data) {
                 return;
         }
         auto &reg = registry();
-        if (data.id != Invalid) reg.nameMap[data.name] = data.id;
+        // Register every name including the "Invalid" sentinel so a
+        // Variant String round-trip (toString → fromString → AudioCodec())
+        // is lossless.  See @ref AudioCodecRegistry::add for the same
+        // rationale.
+        reg.nameMap[data.name] = data.id;
         reg.entries[data.id] = std::move(data);
 }
 
@@ -253,7 +267,11 @@ Result<AudioCodec> AudioCodec::fromString(const String &spec) {
 }
 
 String AudioCodec::toString() const {
-        if (!isValid()) return String();
+        // Always emit the registered name (including the "Invalid"
+        // sentinel) so a Variant String round-trip is lossless —
+        // returning empty here would force fromString back through
+        // its Error::Invalid early-return and trip spec validation
+        // for any default declared as setDefault(AudioCodec()).
         if (_backend.isValid()) {
                 String bn = _backend.name();
                 if (!bn.isEmpty()) return name() + ":" + bn;

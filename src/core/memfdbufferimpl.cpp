@@ -180,14 +180,18 @@ MemfdBufferImpl::MemfdBufferImpl(const MemfdBufferImpl &source, void *cloneView)
 
 MemfdBufferImpl::~MemfdBufferImpl() {
         if (_hostPtr != nullptr) {
-                // Sample resident-bytes at destruction so the MemSpace
-                // peak watermark catches the high-water value before the
-                // mapping goes away.  Production telemetry only — never
-                // on the hot path; called once per impl-destruction.
-                size_t resident = residentBytes();
-                if (resident > 0) {
-                        _memSpace.stats().recordResidentBytes(static_cast<uint64_t>(resident));
-                }
+                // NOTE (former destructor-time peak-resident sample):
+                // We used to call @c residentBytes() here so the MemSpace
+                // peak watermark caught the high-water private-dirty
+                // value before the mapping vanished.  In practice the
+                // hot paths in libpromeki (TPG burn-in, FrameBridge,
+                // etc.) destruct hundreds of MAP_PRIVATE clones per
+                // second, and each call walks all of @c /proc/self/smaps
+                // sequentially — observed at ~500 us per destruct in a
+                // mediaplay TPG → NV12 pipeline.  The peak watermark is
+                // not worth that cost on every drop; callers that want
+                // resident-byte telemetry should sample explicitly via
+                // @c Buffer::residentBytes() on live buffers.
                 if (_sealed) {
                         // Caller-owned MAP_PRIVATE / sibling clone view —
                         // release through the region.

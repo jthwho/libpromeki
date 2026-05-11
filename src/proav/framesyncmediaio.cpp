@@ -46,6 +46,11 @@ namespace {
                 if (!from.audioList().isEmpty() && !to.audioList().isEmpty()) {
                         const AudioDesc &a = from.audioList()[0];
                         const AudioDesc &b = to.audioList()[0];
+                        // FrameSync is uncompressed-PCM only: compressed
+                        // codec conversion is AudioEncoder / AudioDecoder
+                        // territory, not a sample-clock resync.  If either
+                        // side advertises a compressed AudioFormat, decline.
+                        if (a.format().isCompressed() || b.format().isCompressed()) return false;
                         audioRateDiffers = a.sampleRate() != b.sampleRate();
                         audioChannelsDiffer = a.channels() != b.channels();
                         audioDataTypeDiffers = a.format().id() != b.format().id();

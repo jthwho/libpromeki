@@ -170,6 +170,65 @@ template <typename CompType, int BitsPerComp> class PaintEngine_MultiPlane : pub
                         if (dx + sw > dw) sw = dw - dx;
                         if (dy + sh > dh) sh = dh - dy;
                         if (sw <= 0 || sh <= 0) return true;
+
+                        // Fast path: same-format scanline memcpy per plane.
+                        // Eligible when src/dst positions and the copy
+                        // extent align to every plane's subsampling — then
+                        // every dst chroma cell maps cleanly to exactly one
+                        // src chroma cell and a plane-by-plane row memcpy
+                        // produces the same bytes as the scalar loop below.
+                        // Unaligned positions on a chroma-subsampled plane
+                        // fall through to the scalar path because dst and
+                        // src chroma cell counts can differ by one at the
+                        // edges and there is no clean per-plane copy.
+                        bool aligned = true;
+                        for (size_t pi = 0; pi < _planeCount; pi++) {
+                                const PlaneInfo &p = _planes[pi];
+                                const int        hs = static_cast<int>(p.hSub);
+                                const int        vs = static_cast<int>(p.vSub);
+                                if (hs > 1 && ((sx % hs) || (dx % hs) || (sw % hs))) {
+                                        aligned = false;
+                                        break;
+                                }
+                                if (vs > 1 && ((sy % vs) || (dy % vs) || (sh % vs))) {
+                                        aligned = false;
+                                        break;
+                                }
+                        }
+                        if (aligned) {
+                                for (size_t pi = 0; pi < _planeCount; pi++) {
+                                        const PlaneInfo &p = _planes[pi];
+                                        const int        hs = static_cast<int>(p.hSub);
+                                        const int        vs = static_cast<int>(p.vSub);
+                                        const size_t     ss = p.sampleStride > 0 ? p.sampleStride : BytesPerComp;
+                                        const size_t     srcStride = _pixDesc.lineStride(pi, src.desc());
+                                        const uint8_t   *sBase = static_cast<const uint8_t *>(src.plane(pi).data());
+                                        const int        cSx = sx / hs;
+                                        const int        cSy = sy / vs;
+                                        const int        cDx = dx / hs;
+                                        const int        cDy = dy / vs;
+                                        const int        cW = sw / hs;
+                                        const int        cH = sh / vs;
+                                        if (cW <= 0 || cH <= 0) continue;
+                                        const size_t   rowBytes = static_cast<size_t>(cW) * ss;
+                                        const uint8_t *sLine = sBase + static_cast<size_t>(cSy) * srcStride +
+                                                               static_cast<size_t>(cSx) * ss;
+                                        uint8_t *dLine = p.data + static_cast<size_t>(cDy) * p.stride +
+                                                         static_cast<size_t>(cDx) * ss;
+                                        for (int r = 0; r < cH; r++) {
+                                                std::memcpy(dLine, sLine, rowBytes);
+                                                dLine += p.stride;
+                                                sLine += srcStride;
+                                        }
+                                }
+                                return true;
+                        }
+                        // Scalar fallback for sub-chroma-cell positions.
+                        // Each chroma sample is written multiple times by
+                        // adjacent luma writes; last write wins.  Matches
+                        // the pre-fast-path semantics so callers that rely
+                        // on the smear behaviour (or that simply tolerate
+                        // it) keep working at unaligned offsets.
                         for (int y = 0; y < sh; y++)
                                 for (int x = 0; x < sw; x++)
                                         writePixelAt(dx + x, dy + y, readPixelAt(src, sx + x, sy + y));
@@ -361,23 +420,72 @@ template <typename CompType, int BitsPerComp> class PaintEngine_MultiPlane : pub
                 }
 
                 void fillRectImpl(const PaintEngine::Pixel &pixel, int rx, int ry, int rw, int rh) const {
+                        // Per-plane fast fill: build the byte pattern for
+                        // one full sample (all components belonging to the
+                        // plane placed at their byteOffsets), fill the
+                        // first chroma row by replicating that sample, then
+                        // memcpy the first row down to every remaining row.
+                        // Falls through to memset when the sample is a
+                        // single byte or when every byte of the pattern is
+                        // identical (e.g. solid grey on a luma plane, or
+                        // any chroma plane where Cb == Cr after mapping).
                         const CompType *src = reinterpret_cast<const CompType *>(pixel.data());
+                        // 32 bytes is plenty for every multi-plane format
+                        // currently registered — the deepest sampleStride
+                        // is 4 (10-bit NV12 CbCr) and adding components
+                        // doesn't push past it.  Static asserted below.
+                        static_assert(sizeof(CompType) <= 4,
+                                      "CompType wider than 4 bytes is not handled by the sample-pattern buffer");
+                        constexpr size_t kSampleMax = 32;
+                        uint8_t          samplePattern[PixelMemLayout::MaxPlanes][kSampleMax] = {};
                         for (size_t c = 0; c < _compCount; c++) {
-                                const CompInfo  &ci = _comps[c];
-                                const PlaneInfo &pi = _planes[ci.planeIdx];
-                                int              hSub = static_cast<int>(pi.hSub);
-                                int              vSub = static_cast<int>(pi.vSub);
-                                int              cx0 = rx / hSub;
-                                int              cy0 = ry / vSub;
-                                int              cx1 = (rx + rw - 1) / hSub + 1;
-                                int              cy1 = (ry + rh - 1) / vSub + 1;
-                                CompType         val = src[c];
-                                for (int cy = cy0; cy < cy1; cy++) {
-                                        uint8_t *row = pi.data + cy * pi.stride;
-                                        for (int cx = cx0; cx < cx1; cx++) {
-                                                *reinterpret_cast<CompType *>(row + cx * pi.sampleStride +
-                                                                              ci.byteOffset) = val;
+                                const CompInfo &ci = _comps[c];
+                                const size_t    pi = static_cast<size_t>(ci.planeIdx);
+                                const CompType  val = src[c];
+                                // ci.byteOffset is the offset of this
+                                // component within one sample of its
+                                // plane.  Writing sizeof(CompType) bytes
+                                // matches the scalar path's per-component
+                                // store width exactly.
+                                std::memcpy(samplePattern[pi] + ci.byteOffset, &val, sizeof(CompType));
+                        }
+                        for (size_t pi = 0; pi < _planeCount; pi++) {
+                                const PlaneInfo &p = _planes[pi];
+                                const int        hSub = static_cast<int>(p.hSub);
+                                const int        vSub = static_cast<int>(p.vSub);
+                                const int        cx0 = rx / hSub;
+                                const int        cy0 = ry / vSub;
+                                const int        cx1 = (rx + rw - 1) / hSub + 1;
+                                const int        cy1 = (ry + rh - 1) / vSub + 1;
+                                if (cx1 <= cx0 || cy1 <= cy0) continue;
+                                const int    cw = cx1 - cx0;
+                                const int    ch = cy1 - cy0;
+                                const size_t ss = p.sampleStride > 0 ? p.sampleStride : BytesPerComp;
+                                uint8_t     *firstRow = p.data + static_cast<size_t>(cy0) * p.stride +
+                                                    static_cast<size_t>(cx0) * ss;
+                                const size_t rowBytes = static_cast<size_t>(cw) * ss;
+                                bool         uniform = true;
+                                for (size_t b = 1; b < ss; b++) {
+                                        if (samplePattern[pi][b] != samplePattern[pi][0]) {
+                                                uniform = false;
+                                                break;
                                         }
+                                }
+                                if (uniform) {
+                                        std::memset(firstRow, samplePattern[pi][0], rowBytes);
+                                } else {
+                                        // Replicate the multi-byte sample pattern
+                                        // across the first row, one sample at a time.
+                                        uint8_t *dst = firstRow;
+                                        for (int i = 0; i < cw; i++) {
+                                                std::memcpy(dst, samplePattern[pi], ss);
+                                                dst += ss;
+                                        }
+                                }
+                                uint8_t *rowBase = firstRow + p.stride;
+                                for (int r = 1; r < ch; r++) {
+                                        std::memcpy(rowBase, firstRow, rowBytes);
+                                        rowBase += p.stride;
                                 }
                         }
                 }

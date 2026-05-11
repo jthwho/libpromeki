@@ -729,3 +729,218 @@ TEST_CASE("PaintEngine: RGBA8 blit clipped at right/bottom edge") {
         CHECK(corner[1] == 0);
         CHECK(corner[2] == 255);
 }
+
+// ============================================================================
+// Multi-plane (NV12) paint engine fast-path tests.  These exercise the
+// PaintEngine_MultiPlane fillRect / fill / blit specialisations that
+// the regular interleaved tests above don't touch.
+// ============================================================================
+
+namespace {
+
+        size_t planeStride(const UncompressedVideoPayload &p, size_t plane) {
+                return p.desc().pixelFormat().memLayout().lineStride(plane, p.desc().width());
+        }
+
+} // namespace
+
+TEST_CASE("PaintEngine: NV12 fill writes uniform Y and CbCr planes") {
+        // fill() should paint every Y byte to a single value and every
+        // CbCr pair to a single pattern.  Picks 16x8 because the chroma
+        // plane is 8x4 — small enough to dump exhaustively without
+        // depending on stride padding.
+        auto img = makePayload(16, 8, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        REQUIRE(img.isValid());
+        PaintEngine pe = img->createPaintEngine();
+        pe.fill(pe.createPixel(Color::Red));
+
+        const uint8_t *yBuf = img->plane(0).data();
+        const uint8_t *cbBuf = img->plane(1).data();
+        const size_t   yStride = planeStride(*img, 0);
+        const size_t   cbStride = planeStride(*img, 1);
+        const uint8_t  yVal = yBuf[0];
+        const uint8_t  cb0 = cbBuf[0];
+        const uint8_t  cr0 = cbBuf[1];
+        for (int row = 0; row < 8; row++) {
+                for (int col = 0; col < 16; col++) {
+                        CHECK(yBuf[row * yStride + col] == yVal);
+                }
+        }
+        for (int row = 0; row < 4; row++) {
+                for (int col = 0; col < 8; col++) {
+                        CHECK(cbBuf[row * cbStride + col * 2 + 0] == cb0);
+                        CHECK(cbBuf[row * cbStride + col * 2 + 1] == cr0);
+                }
+        }
+}
+
+TEST_CASE("PaintEngine: NV12 fillRect at chroma-aligned coords") {
+        // Start with black background, paint a 4x4 red rect at (4, 4).
+        // Chroma-aligned origin and extent means every chroma sample of
+        // the touched 2x2 luma block carries the red CbCr pair.
+        auto img = makePayload(16, 8, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        REQUIRE(img.isValid());
+        PaintEngine pe = img->createPaintEngine();
+        pe.fill(pe.createPixel(Color::Black));
+
+        const uint8_t *yBuf = img->plane(0).data();
+        const uint8_t *cbBuf = img->plane(1).data();
+        const size_t   yStride = planeStride(*img, 0);
+        const size_t   cbStride = planeStride(*img, 1);
+        const uint8_t  bgY = yBuf[0];
+        const uint8_t  bgCb = cbBuf[0];
+        const uint8_t  bgCr = cbBuf[1];
+
+        pe.fillRect(pe.createPixel(Color::Red), Rect<int32_t>(4, 4, 4, 4));
+
+        // Probe the painted rect: Y at (4..7, 4..7) must be the rect's
+        // luma value; chroma at (2..3, 2..3) must be the rect's chroma
+        // pair.  Outside the rect both planes still hold the original
+        // black background.
+        const uint8_t fgY = yBuf[4 * yStride + 4];
+        const uint8_t fgCb = cbBuf[2 * cbStride + 4 + 0];
+        const uint8_t fgCr = cbBuf[2 * cbStride + 4 + 1];
+        CHECK(fgY != bgY);
+        const bool chromaChanged = (fgCb != bgCb) || (fgCr != bgCr);
+        CHECK(chromaChanged);
+
+        for (int y = 4; y < 8; y++) {
+                for (int x = 4; x < 8; x++) {
+                        CHECK(yBuf[y * yStride + x] == fgY);
+                }
+        }
+        for (int cy = 2; cy < 4; cy++) {
+                for (int cx = 2; cx < 4; cx++) {
+                        CHECK(cbBuf[cy * cbStride + cx * 2 + 0] == fgCb);
+                        CHECK(cbBuf[cy * cbStride + cx * 2 + 1] == fgCr);
+                }
+        }
+        // One row above the rect must still be background.
+        for (int x = 0; x < 16; x++) {
+                CHECK(yBuf[3 * yStride + x] == bgY);
+        }
+        // Chroma row above (chroma y=1) outside the rect must be unchanged.
+        for (int cx = 0; cx < 8; cx++) {
+                CHECK(cbBuf[1 * cbStride + cx * 2 + 0] == bgCb);
+                CHECK(cbBuf[1 * cbStride + cx * 2 + 1] == bgCr);
+        }
+}
+
+TEST_CASE("PaintEngine: NV12 fillRect rounds outward to chroma cells") {
+        // A rect at odd luma origin should expand to whole chroma cells
+        // (the existing semantics of the scalar fillRect, preserved by
+        // the fast path).
+        auto img = makePayload(16, 8, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        REQUIRE(img.isValid());
+        PaintEngine pe = img->createPaintEngine();
+        pe.fill(pe.createPixel(Color::Black));
+
+        const uint8_t *cbBuf = img->plane(1).data();
+        const size_t   cbStride = planeStride(*img, 1);
+        const uint8_t  bgCb = cbBuf[0];
+        const uint8_t  bgCr = cbBuf[1];
+
+        pe.fillRect(pe.createPixel(Color::Red), Rect<int32_t>(1, 1, 2, 2));
+        // Touched luma rect [1,3) x [1,3) covers chroma cells (0,0)
+        // (luma 0..1, 0..1) and (1,0), (0,0..0..), (1,1), with rounded
+        // chroma rect [0,2) x [0,2).
+        const uint8_t fgCb = cbBuf[0 * cbStride + 0 * 2 + 0];
+        const uint8_t fgCr = cbBuf[0 * cbStride + 0 * 2 + 1];
+        const bool chromaChanged = (fgCb != bgCb) || (fgCr != bgCr);
+        CHECK(chromaChanged);
+        for (int cy = 0; cy < 2; cy++) {
+                for (int cx = 0; cx < 2; cx++) {
+                        CHECK(cbBuf[cy * cbStride + cx * 2 + 0] == fgCb);
+                        CHECK(cbBuf[cy * cbStride + cx * 2 + 1] == fgCr);
+                }
+        }
+}
+
+TEST_CASE("PaintEngine: NV12 same-format blit aligned hits fast path") {
+        // Build a chroma-aligned 4x4 red source and blit at (4, 4) into
+        // an 8x8 black destination.  Same-format + chroma-aligned →
+        // fast path.  Verify Y and CbCr planes match exactly between
+        // the blitted rect and a reference fillRect of the same colour.
+        auto src = makePayload(4, 4, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        REQUIRE(src.isValid());
+        PaintEngine srcPe = src->createPaintEngine();
+        srcPe.fill(srcPe.createPixel(Color::Red));
+
+        auto dst = makePayload(8, 8, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        REQUIRE(dst.isValid());
+        PaintEngine dstPe = dst->createPaintEngine();
+        dstPe.fill(dstPe.createPixel(Color::Black));
+
+        bool ok = dstPe.blit(Point2Di32(4, 4), *src);
+        CHECK(ok);
+
+        auto ref = makePayload(8, 8, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        REQUIRE(ref.isValid());
+        PaintEngine refPe = ref->createPaintEngine();
+        refPe.fill(refPe.createPixel(Color::Black));
+        refPe.fillRect(refPe.createPixel(Color::Red), Rect<int32_t>(4, 4, 4, 4));
+
+        const uint8_t *dY = dst->plane(0).data();
+        const uint8_t *dCb = dst->plane(1).data();
+        const uint8_t *rY = ref->plane(0).data();
+        const uint8_t *rCb = ref->plane(1).data();
+        const size_t   yStride = planeStride(*dst, 0);
+        const size_t   cbStride = planeStride(*dst, 1);
+        for (int row = 0; row < 8; row++) {
+                for (int col = 0; col < 8; col++) {
+                        CHECK(dY[row * yStride + col] == rY[row * yStride + col]);
+                }
+        }
+        for (int row = 0; row < 4; row++) {
+                for (int col = 0; col < 4; col++) {
+                        CHECK(dCb[row * cbStride + col * 2 + 0] == rCb[row * cbStride + col * 2 + 0]);
+                        CHECK(dCb[row * cbStride + col * 2 + 1] == rCb[row * cbStride + col * 2 + 1]);
+                }
+        }
+}
+
+TEST_CASE("PaintEngine: NV12 same-format blit unaligned uses scalar fallback") {
+        // Odd destination position falls through to the scalar path.
+        // The luma plane should still copy correctly (no subsampling),
+        // and the chroma plane should carry the source's chroma value
+        // (allowing the documented one-cell smear at edges).
+        auto src = makePayload(4, 4, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        REQUIRE(src.isValid());
+        PaintEngine srcPe = src->createPaintEngine();
+        srcPe.fill(srcPe.createPixel(Color::Green));
+
+        auto dst = makePayload(8, 8, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        REQUIRE(dst.isValid());
+        PaintEngine dstPe = dst->createPaintEngine();
+        dstPe.fill(dstPe.createPixel(Color::Black));
+
+        // Stash the chroma sample value the green source emits via the
+        // scalar writer for comparison.
+        auto             srcRef = makePayload(2, 2, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        PaintEngine      srcRefPe = srcRef->createPaintEngine();
+        srcRefPe.fill(srcRefPe.createPixel(Color::Green));
+        const uint8_t  greenCb = srcRef->plane(1).data()[0];
+        const uint8_t  greenCr = srcRef->plane(1).data()[1];
+        const uint8_t  greenY = srcRef->plane(0).data()[0];
+
+        bool ok = dstPe.blit(Point2Di32(1, 1), *src);
+        CHECK(ok);
+
+        const uint8_t *dY = dst->plane(0).data();
+        const uint8_t *dCb = dst->plane(1).data();
+        const size_t   yStride = planeStride(*dst, 0);
+        const size_t   cbStride = planeStride(*dst, 1);
+
+        // Interior luma cells (the four pixels at (2..3, 2..3) lie
+        // entirely inside the unaligned blit and are not on any edge,
+        // so they must match the source colour exactly).
+        for (int y = 2; y <= 3; y++) {
+                for (int x = 2; x <= 3; x++) {
+                        CHECK(dY[y * yStride + x] == greenY);
+                }
+        }
+        // The interior chroma cell at (1, 1) is fully covered by the
+        // unaligned blit and must equal the source's chroma value.
+        CHECK(dCb[1 * cbStride + 1 * 2 + 0] == greenCb);
+        CHECK(dCb[1 * cbStride + 1 * 2 + 1] == greenCr);
+}

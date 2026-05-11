@@ -286,11 +286,12 @@ TEST_CASE("AudioCodec: createDecoder resolves through the backend registry") {
 }
 
 TEST_CASE("AudioCodec: canEncode / canDecode return false for a codec without a backend") {
-        // AAC has no backend registered in the unit-test build.
-        AudioCodec aac(AudioCodec::AAC);
-        REQUIRE(aac.isValid());
-        CHECK_FALSE(aac.canEncode());
-        CHECK_FALSE(aac.canDecode());
+        // FLAC has no backend registered in the unit-test build.  (AAC
+        // used to fit this slot before the fdk-aac backend landed.)
+        AudioCodec flac(AudioCodec::FLAC);
+        REQUIRE(flac.isValid());
+        CHECK_FALSE(flac.canEncode());
+        CHECK_FALSE(flac.canDecode());
 
         // Invalid codec returns Error / false.
         AudioCodec bad;

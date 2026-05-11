@@ -82,6 +82,10 @@ void VideoTestPattern::setBurnBackgroundColor(const Color &c) {
         if (_burnBackgroundColor == c) return;
         _burnBackgroundColor = c;
         _burnFontConfigDirty = true;
+        // Drop the cached bg pixel — its bytes were computed for the
+        // previous colour and have to be re-derived against the new one
+        // on the next applyBurn() call.
+        _cachedBgPixel = PaintEngine::Pixel();
 }
 
 bool VideoTestPattern::isStaticPattern() const {
@@ -295,10 +299,19 @@ Error VideoTestPattern::applyBurn(UncompressedVideoPayload &inout, const String 
         computeBurnPosition(imgWidth, imgHeight, maxTextWidth, totalHeight, ascender, x, y);
 
         if (_burnDrawBackground) {
-                const int          pad = lineHeight / 4;
-                PaintEngine::Pixel bgPixel = pe.createPixel(_burnBackgroundColor);
-                Rect<int32_t>      bgRect(x - pad, y - ascender - pad, maxTextWidth + pad * 2, totalHeight + pad * 2);
-                pe.fillRect(bgPixel, bgRect);
+                // Rebuild the cached bg pixel when the target pixel
+                // format changes — typically only on the first call
+                // after open().  Within a steady-state run the cache
+                // hits and the per-frame fillRect skips the sRGB →
+                // target-colour-model conversion that
+                // PaintEngine::createPixel(Color) would otherwise do.
+                if (_cachedBgPixel.isEmpty() || _cachedBgPixelFormat != pe.pixelFormat()) {
+                        _cachedBgPixel       = pe.createPixel(_burnBackgroundColor);
+                        _cachedBgPixelFormat = pe.pixelFormat();
+                }
+                const int     pad = lineHeight / 4;
+                Rect<int32_t> bgRect(x - pad, y - ascender - pad, maxTextWidth + pad * 2, totalHeight + pad * 2);
+                pe.fillRect(_cachedBgPixel, bgRect);
         }
 
         // Draw lines top-to-bottom, each centered inside the bounding box.

@@ -389,6 +389,18 @@ class VideoTestPattern {
                 mutable FastFont::UPtr _burnFont;
                 mutable bool           _burnFontConfigDirty = true;
 
+                // Cached @ref PaintEngine::Pixel for @ref _burnBackgroundColor.
+                // applyBurn() runs a single fillRect per frame; building
+                // that pixel via @c PaintEngine::createPixel(Color) goes
+                // through a Color::convert into the target colour model
+                // (sRGB→Rec.709 YCbCr Limited on NV12 / YUV outputs),
+                // which is non-trivial.  We cache it and invalidate
+                // whenever the configured bg colour changes (see
+                // @ref setBurnBackgroundColor) or the target pixel format
+                // changes (detected via @ref _cachedBgPixelFormat).
+                mutable PaintEngine::Pixel _cachedBgPixel;
+                mutable PixelFormat        _cachedBgPixelFormat;
+
                 bool isStaticPattern() const;
 
                 /**

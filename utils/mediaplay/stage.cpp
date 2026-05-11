@@ -15,8 +15,10 @@
 #include <promeki/mediaiofactory.h>
 #include <promeki/enums.h>
 #include <promeki/pixelformat.h>
+#include <promeki/result.h>
 #include <promeki/set.h>
 #include <promeki/size2d.h>
+#include <promeki/url.h>
 #include <promeki/videocodec.h>
 #include <promeki/textstream.h>
 #include <promeki/variantspec.h>
@@ -384,10 +386,29 @@ namespace mediaplay {
                         stage.type = kStageSdl;
                         return Error::Ok;
                 }
-                // Registered backend?
+                // Registered backend by name?
                 if (MediaIOFactory::findByName(arg) != nullptr) {
                         stage.type = arg;
                         return Error::Ok;
+                }
+                // URL with a scheme a registered backend claims?  Routes
+                // the URL through the factory's urlToConfig so callers
+                // get backend-default config + URL-derived keys + the
+                // ability to layer --dc / --sc overrides on top, instead
+                // of falling all the way through to the "file path"
+                // bucket (which leaves the stage config empty and
+                // surfaces the URL as a fake Filename).
+                if (arg.find(':') != String::npos) {
+                        Result<Url> parsed = Url::fromString(arg);
+                        if (parsed.second().isOk() && parsed.first().isValid()) {
+                                const MediaIOFactory *urlFactory =
+                                        MediaIOFactory::findByScheme(parsed.first().scheme());
+                                if (urlFactory != nullptr) {
+                                        stage.type = urlFactory->name();
+                                        stage.path = arg;
+                                        return Error::Ok;
+                                }
+                        }
                 }
                 // Fall back to "filesystem path".
                 stage.type = kStageFile;
@@ -572,6 +593,31 @@ namespace mediaplay {
                 } else {
                         MediaIO::Config cfg = MediaIOFactory::defaultConfig(working.type);
                         cfg.set(MediaConfig::Type, working.type);
+                        // URL-classified stages (e.g. -d rtmp://...) carry
+                        // the URL string in @c path: route it through the
+                        // factory's @c urlToConfig so RtmpUrl / RtpRemoteHost
+                        // / etc. land in the config before --dc overrides
+                        // are applied on top.  Clear @c path afterwards so
+                        // the emitted stage looks like a normal typed
+                        // backend (no Filename stamping in makeStage).
+                        if (!working.path.isEmpty()) {
+                                const MediaIOFactory *factory = MediaIOFactory::findByName(working.type);
+                                if (factory != nullptr) {
+                                        Result<Url> parsed = Url::fromString(working.path);
+                                        if (parsed.second().isOk() && parsed.first().isValid()) {
+                                                Error ue = factory->urlToConfig(parsed.first(), &cfg);
+                                                if (ue.isError()) {
+                                                        fprintf(stderr,
+                                                                "Error: %s: backend '%s' rejected URL "
+                                                                "'%s': %s\n",
+                                                                scopeLabel.cstr(), working.type.cstr(),
+                                                                working.path.cstr(), ue.desc().cstr());
+                                                        return ue;
+                                                }
+                                                working.path = String();
+                                        }
+                                }
+                        }
                         working.config = cfg;
                 }
 

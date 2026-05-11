@@ -49,3 +49,6 @@
 [submodule "thirdparty/srt-mbedtls"]
 	path = thirdparty/srt-mbedtls
 	url = https://github.com/Mbed-TLS/mbedtls.git
+[submodule "thirdparty/fdk-aac"]
+	path = thirdparty/fdk-aac
+	url = https://github.com/mstorsjo/fdk-aac.git

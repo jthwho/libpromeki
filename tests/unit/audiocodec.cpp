@@ -132,7 +132,10 @@ TEST_CASE("AudioCodec: default ctor is invalid") {
         CHECK(c.encoderSupportedInputs().isEmpty());
         CHECK(c.decoderSupportedOutputs().isEmpty());
         CHECK(c.supportedSampleFormats().isEmpty());
-        CHECK(c.toString().isEmpty());
+        // Invalid codec emits its registered "Invalid" sentinel name so
+        // a Variant String round-trip stays lossless — mirrors
+        // VideoCodec's behaviour.
+        CHECK(c.toString() == "Invalid");
 }
 
 TEST_CASE("AudioCodec: equality compares both Data pointer and pinned backend") {
@@ -239,9 +242,12 @@ TEST_CASE("AudioCodec::fromString: known codec + unknown backend is Error::IdNot
         CHECK(error(res).isError());
 }
 
-TEST_CASE("AudioCodec::toString: invalid codec returns an empty string") {
+TEST_CASE("AudioCodec::toString: invalid codec returns the \"Invalid\" sentinel") {
         AudioCodec c;
-        CHECK(c.toString().isEmpty());
+        // Lossless round-trip: toString emits "Invalid" so any spec
+        // declaring setDefault(AudioCodec()) survives a JSON
+        // serialise + parse cycle.
+        CHECK(c.toString() == "Invalid");
 }
 
 TEST_CASE("AudioCodec::toString: unpinned codec returns its name") {

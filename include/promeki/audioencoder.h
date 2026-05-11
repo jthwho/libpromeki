@@ -13,6 +13,7 @@
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/result.h>
+#include <promeki/uniqueptr.h>
 #include <promeki/audiocodec.h>
 #include <promeki/backendweight.h>
 #include <promeki/pcmaudiopayload.h>
@@ -82,6 +83,9 @@ class MediaConfig;
  */
 class AudioEncoder {
         public:
+                /** @brief Unique-ownership pointer to an AudioEncoder. */
+                using UPtr = UniquePtr<AudioEncoder>;
+
                 /** @brief Factory signature used by the encoder registry. */
                 using Factory = std::function<AudioEncoder *()>;
 

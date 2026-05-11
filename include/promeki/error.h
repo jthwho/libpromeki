@@ -119,7 +119,9 @@ class Error {
                         Empty,                          ///< Container or queue has no element to return.
                         NotFound, ///< Requested element or value was not present in the searched container.
                         BuildIdentMismatch, ///< Library build identity does not match the caller's compile-time identity (stale binary).
-                        NotReady ///< Resource exists but is not yet in the state required for this operation (will become ready later).
+                        NotReady, ///< Resource exists but is not yet in the state required for this operation (will become ready later).
+                        AuthenticationRequired, ///< Peer demanded an auth challenge response we don't (yet) produce. Distinct from PermissionDenied.
+                        ProtocolError ///< Peer sent a protocol-level violation or status code we don't model. Distinct from CorruptData (byte-level) and LibraryFailure (downstream).
                 };
 
                 /**

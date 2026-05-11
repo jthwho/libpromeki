@@ -7,6 +7,8 @@
 
 #include <promeki/mediapipelineplanner.h>
 
+#include <promeki/audiodesc.h>
+#include <promeki/audioformat.h>
 #include <promeki/imagedesc.h>
 #include <promeki/list.h>
 #include <promeki/logger.h>
@@ -25,6 +27,7 @@
 #include <promeki/set.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
+#include <promeki/videocodec.h>
 
 #include <climits>
 
@@ -281,6 +284,270 @@ namespace {
                 return true;
         }
 
+        // CSC + VideoEncoder two-hop: uncompressed → compressed transitions
+        // where the source PixelFormat isn't directly accepted by any
+        // registered encoder backend for the target codec.  Defers to the
+        // encoder's own @ref MediaIO::proposeInput to pick the intermediate
+        // — that path replicates the encoder's chroma-subsampling and bit-
+        // depth preference (NV12 by default), so the chosen CSC target
+        // matches what the runtime VideoEncoder would have requested if the
+        // planner had asked.  The audio axis must already match;
+        // orthogonal video + audio gaps are layered on top by
+        // @ref findOrthogonalChain.
+        bool findVideoCscEncoderChain(const MediaDesc &from, const MediaDesc &to,
+                                      const MediaPipelinePlanner::Policy &policy, List<BridgeStep> *out) {
+                if (from.imageList().isEmpty() || to.imageList().isEmpty()) return false;
+                const PixelFormat &fromPd = from.imageList()[0].pixelFormat();
+                const PixelFormat &toPd = to.imageList()[0].pixelFormat();
+                if (!fromPd.isValid() || !toPd.isValid()) return false;
+                if (fromPd.isCompressed()) return false;
+                if (!toPd.isCompressed()) return false;
+                if (policy.excludedBridges.contains("CSC")) return false;
+                if (policy.excludedBridges.contains("VideoEncoder")) return false;
+
+                // Audio must already match: this two-hop only addresses the
+                // image axis.  Orthogonal video + audio gaps go through
+                // @ref findOrthogonalChain, which calls this helper for the
+                // video leg of its split.
+                if (from.audioList().size() != to.audioList().size()) return false;
+                const size_t audioCount = from.audioList().size();
+                for (size_t i = 0; i < audioCount; ++i) {
+                        const AudioDesc &a = from.audioList()[i];
+                        const AudioDesc &b = to.audioList()[i];
+                        if (a.sampleRate() != b.sampleRate()) return false;
+                        if (a.channels() != b.channels()) return false;
+                        if (a.format().id() != b.format().id()) return false;
+                }
+
+                const VideoCodec codec = VideoCodec::fromPixelFormat(toPd);
+                if (!codec.isValid() || !codec.canEncode()) return false;
+
+                // Build a transient VideoEncoder MediaIO so we can ask it
+                // what input format it actually wants.  proposeInput knows
+                // the encoder's chroma + bit-depth preference (driven by
+                // VideoChromaSubsampling, default YUV420) and only ever
+                // returns a format the encoder backends advertise.
+                MediaIO::Config encConfig = MediaIOFactory::defaultConfig("VideoEncoder");
+                encConfig.set(MediaConfig::Type, String("VideoEncoder"));
+                encConfig.set(MediaConfig::VideoCodec, codec);
+                MediaIO *encoderProbe = MediaIO::create(encConfig);
+                if (encoderProbe == nullptr) return false;
+                MediaDesc preferred;
+                Error     pe = encoderProbe->proposeInput(from, &preferred);
+                delete encoderProbe;
+                if (pe.isError() || preferred.imageList().isEmpty()) return false;
+                const PixelFormat &preferredPf = preferred.imageList()[0].pixelFormat();
+                if (!preferredPf.isValid() || preferredPf.isCompressed()) return false;
+                // No-op intermediate would mean the encoder accepts the
+                // source directly — the single-bridge path would have
+                // handled it.  Defensive: bail rather than emit a useless
+                // CSC step.
+                if (preferredPf == fromPd) return false;
+
+                MediaDesc intermediate = from;
+                for (size_t i = 0; i < intermediate.imageList().size(); ++i) {
+                        intermediate.imageList()[i].setPixelFormat(preferredPf);
+                }
+                BridgeStep cscStep, encStep;
+                if (!findSingleBridge(from, intermediate, policy, &cscStep)) return false;
+                if (cscStep.backendName != "CSC") return false;
+                if (!findSingleBridge(intermediate, to, policy, &encStep)) return false;
+                if (encStep.backendName != "VideoEncoder") return false;
+
+                if (out != nullptr) {
+                        out->pushToBack(cscStep);
+                        out->pushToBack(encStep);
+                }
+                return true;
+        }
+
+        // Audio codec-transitive two-hop: AudioDecoder → AudioEncoder for
+        // compressed → compressed audio transitions.  Mirrors the video
+        // path above with the lingua-franca intermediate being interleaved
+        // 32-bit float PCM in the platform's native byte order — every
+        // registered audio decoder either emits this directly or can
+        // convert internally, and every encoder accepts it.
+        bool findAudioCodecTransitive(const MediaDesc &from, const MediaDesc &to,
+                                      const MediaPipelinePlanner::Policy &policy, List<BridgeStep> *out) {
+                if (from.audioList().isEmpty() || to.audioList().isEmpty()) return false;
+                const AudioFormat &fromFmt = from.audioList()[0].format();
+                const AudioFormat &toFmt = to.audioList()[0].format();
+                if (!fromFmt.isCompressed() || !toFmt.isCompressed()) return false;
+                if (policy.excludedBridges.contains("AudioDecoder")) return false;
+                if (policy.excludedBridges.contains("AudioEncoder")) return false;
+
+                MediaDesc        intermediate = to;
+                AudioDesc::List &auds = intermediate.audioList();
+                for (size_t i = 0; i < auds.size(); ++i) {
+                        auds[i].setFormat(AudioFormat(AudioFormat::NativeFloat));
+                }
+
+                BridgeStep dec, enc;
+                if (!findSingleBridge(from, intermediate, policy, &dec)) return false;
+                if (dec.backendName != "AudioDecoder") return false;
+                if (!findSingleBridge(intermediate, to, policy, &enc)) return false;
+                if (enc.backendName != "AudioEncoder") return false;
+
+                if (out != nullptr) {
+                        out->pushToBack(dec);
+                        out->pushToBack(enc);
+                }
+                return true;
+        }
+
+        // Orthogonal-axes two-hop: splice a video bridge and an audio
+        // bridge in sequence when both the image and audio sides differ
+        // and no single bridge can solve them together.  Every bridge
+        // factory (CSC, SRC, VideoEncoder, AudioEncoder, ...) is strict
+        // about the @em other axis matching, so a route like
+        // @c TPG{RGB,PCM} → @c Rtmp{H264,AAC} needs two bridges: one
+        // VideoEncoder (changes image, leaves audio) and one
+        // AudioEncoder (changes audio, leaves image).  This helper
+        // tries video-first; if that fails it tries audio-first.
+        bool findOrthogonalChain(const MediaDesc &from, const MediaDesc &to,
+                                 const MediaPipelinePlanner::Policy &policy, List<BridgeStep> *out) {
+                if (from.imageList().isEmpty() || to.imageList().isEmpty()) return false;
+                if (from.audioList().isEmpty() || to.audioList().isEmpty()) return false;
+
+                // Both axes must actually differ — single-bridge already
+                // handles single-axis gaps and we don't want to add a
+                // pointless second hop.
+                const bool imageDiffers =
+                        from.imageList()[0].pixelFormat() != to.imageList()[0].pixelFormat();
+                const bool audioDiffers =
+                        from.audioList()[0].format().id() != to.audioList()[0].format().id();
+                if (!imageDiffers || !audioDiffers) return false;
+
+                // Helper: resolve the video leg of an orthogonal split.
+                // Tries a single bridge first (CSC for uncompressed→uncompressed,
+                // VideoEncoder for uncompressed→compressed when the source
+                // is on the encoder's supported-input list); falls back to a
+                // CSC + VideoEncoder two-hop when the source needs a colour-
+                // space conversion before the encoder can consume it (e.g.
+                // TPG's default RGB into NVENC, which only accepts YUV).
+                auto findVideoLeg = [&](const MediaDesc &legFrom, const MediaDesc &legTo,
+                                        List<BridgeStep> *legOut) -> bool {
+                        BridgeStep single;
+                        if (findSingleBridge(legFrom, legTo, policy, &single)) {
+                                if (legOut != nullptr) legOut->pushToBack(single);
+                                return true;
+                        }
+                        return findVideoCscEncoderChain(legFrom, legTo, policy, legOut);
+                };
+
+                // Try video-first: from → {to.image, from.audio} → to.
+                {
+                        MediaDesc intermediate = from;
+                        intermediate.imageList() = to.imageList();
+                        List<BridgeStep> videoChain;
+                        BridgeStep       audioStep;
+                        if (findVideoLeg(from, intermediate, &videoChain) &&
+                            findSingleBridge(intermediate, to, policy, &audioStep)) {
+                                if (out != nullptr) {
+                                        for (size_t i = 0; i < videoChain.size(); ++i) {
+                                                out->pushToBack(videoChain[i]);
+                                        }
+                                        out->pushToBack(audioStep);
+                                }
+                                return true;
+                        }
+                }
+
+                // Try audio-first: from → {from.image, to.audio} → to.
+                {
+                        MediaDesc intermediate = from;
+                        intermediate.audioList() = to.audioList();
+                        BridgeStep       audioStep;
+                        List<BridgeStep> videoChain;
+                        if (findSingleBridge(from, intermediate, policy, &audioStep) &&
+                            findVideoLeg(intermediate, to, &videoChain)) {
+                                if (out != nullptr) {
+                                        out->pushToBack(audioStep);
+                                        for (size_t i = 0; i < videoChain.size(); ++i) {
+                                                out->pushToBack(videoChain[i]);
+                                        }
+                                }
+                                return true;
+                        }
+                }
+
+                return false;
+        }
+
+        // ----------------------------------------------------------------
+        // Head-bridge peeling via source-side renegotiation
+        // ----------------------------------------------------------------
+        //
+        // Complements the route-level renegotiation in @ref resolveRoute,
+        // which only asks the source whether it can produce the @em final
+        // sink target.  When the chain solver picks a multi-hop sequence
+        // whose leading step is a colour-space / sample-rate / scan
+        // conversion the source could perform internally, the route-level
+        // pass misses it: the final target is compressed (or otherwise
+        // beyond the source's reach) so the source declines.
+        //
+        // This pass walks the chain from the head, instantiates each step
+        // as a transient @ref MediaIO, queries its
+        // @ref MediaIO::proposeOutput on the @em current produced desc to
+        // learn the shape the step would emit, then asks the source the
+        // same question.  When the source accepts that shape with a
+        // non-empty @c configDelta, the delta is merged onto the source
+        // stage's emitted config and the step is dropped.  Stops on the
+        // first step the source cannot absorb.
+        //
+        // TPG → NVENC is the canonical case the route-level pass misses:
+        // the chain solver inserts a CSC to convert TPG's default RGB
+        // into the encoder's preferred NV12, but TPG can emit NV12
+        // natively when its @c VideoPixelFormat key is set — so peeling
+        // the head CSC removes a runtime stage that does no real work.
+        //
+        // Returns the descriptor the source actually produces after any
+        // renegotiation (== @p producedDesc when nothing was peeled).
+        MediaDesc peelHeadBridges(List<BridgeStep> &chain, MediaIO *fromStage, const String &fromStageName,
+                                  const MediaDesc &producedDesc, MediaPipelineConfig *out) {
+                MediaDesc currentDesc = producedDesc;
+                if (fromStage == nullptr || out == nullptr) return currentDesc;
+                while (!chain.isEmpty()) {
+                        const BridgeStep &head = chain.front();
+                        if (head.backendName.isEmpty()) break;
+                        MediaIO::Config cfg = head.config;
+                        cfg.set(MediaConfig::Type, head.backendName);
+                        MediaIO *headIO = MediaIO::create(cfg);
+                        if (headIO == nullptr) break;
+                        MediaDesc headOut;
+                        Error     po = headIO->proposeOutput(currentDesc, &headOut);
+                        delete headIO;
+                        if (po.isError() || !headOut.isValid()) break;
+                        // Bridge that produces no shape change has nothing
+                        // to renegotiate against; bail out so we don't strip
+                        // a stage that's there for non-format reasons (e.g.
+                        // queue depth).
+                        if (headOut.formatEquals(currentDesc)) break;
+
+                        MediaDesc   achievable;
+                        MediaConfig delta;
+                        Error       oe = fromStage->proposeOutput(headOut, &achievable, &delta);
+                        if (oe.isError() || !achievable.isValid() || !achievable.formatEquals(headOut) ||
+                            delta.isEmpty()) {
+                                break;
+                        }
+
+                        // Source can absorb this step.  Merge the delta
+                        // into the source stage's emitted config and drop
+                        // the head bridge.
+                        MediaPipelineConfig::StageList &stages = out->stages();
+                        for (size_t si = 0; si < stages.size(); ++si) {
+                                if (stages[si].name == fromStageName) {
+                                        stages[si].config.merge(delta);
+                                        break;
+                                }
+                        }
+                        chain.remove(static_cast<size_t>(0));
+                        currentDesc = achievable;
+                }
+                return currentDesc;
+        }
+
         // ----------------------------------------------------------------
         // Diagnostic formatting
         // ----------------------------------------------------------------
@@ -430,6 +697,18 @@ namespace {
                 } else if (policy.maxBridgeDepth >= 2 && findCodecTransitive(producedDesc, target, policy, &chain)) {
                         // Two-hop succeeded after the single-hop search filled
                         // the trace; fall through to splice.
+                } else if (policy.maxBridgeDepth >= 2 &&
+                           findVideoCscEncoderChain(producedDesc, target, policy, &chain)) {
+                        // CSC + VideoEncoder two-hop: the encoder doesn't
+                        // accept the source PixelFormat directly, so splice
+                        // a colour-space conversion in front of it.
+                } else if (policy.maxBridgeDepth >= 2 &&
+                           findAudioCodecTransitive(producedDesc, target, policy, &chain)) {
+                        // Audio decoder → encoder two-hop succeeded; splice.
+                } else if (policy.maxBridgeDepth >= 2 &&
+                           findOrthogonalChain(producedDesc, target, policy, &chain)) {
+                        // Independent image + audio gaps; splice video and
+                        // audio bridges in sequence.
                 } else {
                         appendDiagnostic(diagnostic, String("MediaPipelinePlanner: route '") + route.from + "' -> '" +
                                                              route.to + "' has a format gap and no bridge chain fits.");
@@ -470,7 +749,31 @@ namespace {
                                                          "stage so each bridge sees only one axis of change.");
                                 }
                         }
+                        if (!producedDesc.audioList().isEmpty() && !target.audioList().isEmpty()) {
+                                const AudioFormat &fromAf = producedDesc.audioList()[0].format();
+                                const AudioFormat &toAf = target.audioList()[0].format();
+                                if (fromAf.isCompressed() && toAf.isCompressed()) {
+                                        appendDiagnostic(diagnostic,
+                                                         "    audio codec-transitive (AudioDecoder+AudioEncoder): "
+                                                         "tried, no decoder/encoder pair satisfied the gap.");
+                                }
+                        }
                         return Error::NotSupported;
+                }
+
+                // Before the depth check, try to shrink the chain by
+                // peeling head steps the source can absorb via a config
+                // delta.  The chain solver picked the cheapest sequence
+                // assuming the source emits its current shape verbatim;
+                // sources that can reconfigure (TPG, generators, format-
+                // flexible readers) can render a leading CSC redundant.
+                // Peeling first also lets a chain that would otherwise
+                // exceed @c maxBridgeDepth slip under the limit when the
+                // depth was inflated by an avoidable head step.
+                MediaDesc producedAfterPeel = peelHeadBridges(chain, fromStage, route.from, producedDesc, out);
+                if (producedAfterPeel.isValid() && !producedAfterPeel.formatEquals(producedDesc) &&
+                    renegotiatedFromDesc != nullptr) {
+                        *renegotiatedFromDesc = producedAfterPeel;
                 }
 
                 if (static_cast<int>(chain.size()) > policy.maxBridgeDepth) {
@@ -710,9 +1013,29 @@ Error MediaPipelinePlanner::plan(const MediaPipelineConfig &in, MediaPipelineCon
         // Pipeline-wide settings (metadata, frame-count cap) are
         // preserved verbatim — the planner only splices bridges; the
         // user's runtime caps should survive planning unchanged.
+        //
+        // For stages the planner instantiated itself, overwrite the
+        // emitted stage's @c config with the live MediaIO's config so
+        // URL-driven backends (Rtmp, Rtp, file paths) surface their
+        // resolved RtmpUrl / Filename / scheme-derived keys in the
+        // planner output.  The live config is the same value that
+        // would land back in the MediaPipeline at run time, so this
+        // gives @c --plan an honest view of "what will actually open".
+        // Injected stages are left alone — their config belongs to the
+        // caller and the planner should not second-guess it.
         out->setPipelineMetadata(in.pipelineMetadata());
         out->setFrameCount(in.frameCount());
-        for (const auto &s : in.stages()) out->addStage(s);
+        for (const auto &s : in.stages()) {
+                MediaPipelineConfig::Stage emit = s;
+                if (ownedNames.contains(s.name)) {
+                        auto it = stages.find(s.name);
+                        if (it != stages.end() && it->second != nullptr) {
+                                emit.config = it->second->config();
+                                if (!s.type.isEmpty()) emit.config.set(MediaConfig::Type, s.type);
+                        }
+                }
+                out->addStage(emit);
+        }
 
         // 6. Walk routes in topological order so produced descs flow
         // forward correctly.

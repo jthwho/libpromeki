@@ -399,6 +399,57 @@ TEST_CASE("MediaPipelinePlanner_SourceRenegotiation_TpgAdoptsSinkPixelFormat") {
               PixelFormat::BGRA8_sRGB);
 }
 
+TEST_CASE("MediaPipelinePlanner_SourceRenegotiation_PeelsHeadCscBeforeEncoder") {
+        // TPG defaults to RGB8_sRGB at 1080p29.97; the sink demands H264.
+        // Without head-bridge peeling the planner would produce a
+        // [CSC, VideoEncoder] chain because the chain solver doesn't
+        // know the source can be reconfigured to emit NV12 natively.
+        // The peeling pass must drop the leading CSC and stamp
+        // @c VideoPixelFormat=YUV8_420_SemiPlanar_Rec709 on the TPG
+        // stage so the runtime feeds the encoder directly.
+        MediaPipelineConfig cfg;
+
+        MediaPipelineConfig::Stage src;
+        src.name = "tpg";
+        src.type = "TPG";
+        src.role = MediaPipelineConfig::StageRole::Source;
+        src.config = MediaIOFactory::defaultConfig("TPG");
+        cfg.addStage(src);
+
+        MediaPipelineConfig::Stage sink;
+        sink.name = "sink";
+        sink.type = "PlannerSyntheticSink";
+        sink.role = MediaPipelineConfig::StageRole::Sink;
+        sink.config.set(PlannerAcceptedDesc, PixelFormat(PixelFormat::H264));
+        sink.config.set(PlannerAcceptedRate, FrameRate(FrameRate::FPS_29_97));
+        cfg.addStage(sink);
+
+        cfg.addRoute("tpg", "sink");
+
+        MediaPipelineConfig out;
+        String              diag;
+        REQUIRE(MediaPipelinePlanner::plan(cfg, &out, {}, &diag) == Error::Ok);
+        CHECK(diag.isEmpty());
+
+        // Exactly one bridge (the VideoEncoder); no leading CSC.
+        REQUIRE(out.stages().size() == 3);
+        CHECK(out.stages()[0].name == "tpg");
+        CHECK(out.stages()[1].name == "sink");
+        CHECK(stageTypeAt(out, 2, "VideoEncoder"));
+
+        // TPG's VideoPixelFormat was renegotiated to the encoder's
+        // preferred input (NV12, 4:2:0 8-bit Rec.709).
+        CHECK(out.stages()[0].config.getAs<PixelFormat>(MediaConfig::VideoPixelFormat).id() ==
+              PixelFormat::YUV8_420_SemiPlanar_Rec709);
+
+        // Route topology: tpg → encoder → sink.
+        REQUIRE(out.routes().size() == 2);
+        CHECK(out.routes()[0].from == "tpg");
+        CHECK(out.routes()[0].to == out.stages()[2].name);
+        CHECK(out.routes()[1].from == out.stages()[2].name);
+        CHECK(out.routes()[1].to == "sink");
+}
+
 TEST_CASE("MediaPipelinePlanner_SourceRenegotiation_FallsBackToCSCWhenNoDelta") {
         // The PlannerSyntheticSrc backend doesn't override proposeOutput,
         // so it can't renegotiate via config delta.  The planner falls

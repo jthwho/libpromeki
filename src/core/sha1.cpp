@@ -131,4 +131,22 @@ SHA1Digest sha1(const void *data, size_t len) {
         return sha1Final(ctx);
 }
 
+struct Sha1::Impl {
+                SHA1Context ctx;
+};
+
+Sha1::Sha1() : _d(UniquePtr<Impl>::create()) {
+        sha1Init(_d->ctx);
+}
+
+Sha1::~Sha1() = default;
+
+void Sha1::update(const void *data, size_t len) {
+        sha1Update(_d->ctx, static_cast<const uint8_t *>(data), len);
+}
+
+SHA1Digest Sha1::finalize() {
+        return sha1Final(_d->ctx);
+}
+
 PROMEKI_NAMESPACE_END

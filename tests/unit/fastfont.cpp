@@ -513,3 +513,67 @@ TEST_CASE("FastFont: metrics match between deferred and direct construction") {
         CHECK(direct.ascender() == deferred.ascender());
         CHECK(direct.descender() == deferred.descender());
 }
+
+TEST_CASE("FastFont: NV12 metrics are chroma-aligned") {
+        // On chroma-subsampled formats the cached ascender/descender
+        // must be rounded up to the format's vertical subsampling so
+        // cellTop = y - ascender stays on a chroma-row boundary when
+        // the caller passes an aligned baseline y.  Otherwise the
+        // multi-plane PaintEngine blit fast path can't fire and burn-
+        // in falls back to the slow scalar per-pixel writer.
+        if (!fontAvailable()) return;
+
+        auto     img = makePayload(64, 64, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        FastFont ff(img->createPaintEngine());
+        ff.setFontSize(36);
+        ff.measureText("A");
+
+        // NV12 has vSub=2 on the chroma plane.
+        CHECK((ff.ascender() % 2) == 0);
+        CHECK((ff.descender() % 2) == 0);
+        CHECK((ff.lineHeight() % 2) == 0);
+}
+
+TEST_CASE("FastFont: NV12 drawText paints the chroma plane") {
+        // End-to-end smoke test: drawing text on NV12 must touch both
+        // the luma and chroma planes.  A regression that left the
+        // chroma plane untouched would surface as monochrome / mis-
+        // coloured text in the burn-in overlay.
+        if (!fontAvailable()) return;
+
+        auto fb = makePayload(64, 32, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        // Fill the luma plane with mid-grey and the chroma plane with
+        // a neutral pattern so the post-draw delta is unambiguous.
+        std::memset(fb.modify()->data()[0].data(), 0x10, fb->plane(0).size());
+        std::memset(fb.modify()->data()[1].data(), 0x80, fb->plane(1).size());
+
+        FastFont ff(fb->createPaintEngine());
+        ff.setFontSize(20);
+        // White / black collapse to neutral chroma (128, 128) in
+        // Rec.709 limited-range and the dst is pre-filled with the
+        // same neutral pattern — so a working blit would write
+        // chroma bytes equal to what's already there.  Use red so
+        // CbCr unambiguously differs from the dst background.
+        ff.setForegroundColor(Color::Red);
+        ff.setBackgroundColor(Color::Black);
+        REQUIRE(ff.drawText("X", 4, 24));
+
+        const uint8_t *yBuf = fb->plane(0).data();
+        const uint8_t *cbBuf = fb->plane(1).data();
+        bool           luminanceChanged = false;
+        bool           chromaChanged = false;
+        for (size_t i = 0; i < fb->plane(0).size(); i++) {
+                if (yBuf[i] != 0x10) {
+                        luminanceChanged = true;
+                        break;
+                }
+        }
+        for (size_t i = 0; i < fb->plane(1).size(); i++) {
+                if (cbBuf[i] != 0x80) {
+                        chromaChanged = true;
+                        break;
+                }
+        }
+        CHECK(luminanceChanged);
+        CHECK(chromaChanged);
+}

@@ -11,6 +11,9 @@
 #include <promeki/sdpsession.h>
 #include <promeki/url.h>
 #include <promeki/variantspec.h>
+#if PROMEKI_ENABLE_TLS
+#include <promeki/sslcontext.h>
+#endif
 #include <promeki/datastream.h>
 #include <promeki/bufferiodevice.h>
 #include <promeki/buffer.h>
@@ -846,6 +849,29 @@ TEST_CASE("Variant_SdpSession_ToStringViaGetString") {
         CHECK(s.contains("v=0"));
         CHECK(s.contains("to-string-overall"));
 }
+
+#if PROMEKI_ENABLE_TLS
+
+TEST_CASE("Variant_SslContext_NullPtrRoundtrip") {
+        // Default-constructed SslContext::Ptr is null; the Variant should
+        // accept it by type and report TypeSslContext.
+        SslContext::Ptr ptr;
+        Variant         v(ptr);
+        CHECK(v.type() == Variant::TypeSslContext);
+        SslContext::Ptr back = v.get<SslContext::Ptr>();
+        CHECK(back.isNull());
+}
+
+TEST_CASE("Variant_SslContext_LiveCtxRoundtrip") {
+        // A non-null context survives the Variant by reference (not deep-cloned).
+        SslContext::Ptr ptr = SharedPtr<SslContext, false>::create();
+        Variant         v(ptr);
+        CHECK(v.type() == Variant::TypeSslContext);
+        SslContext::Ptr back = v.get<SslContext::Ptr>();
+        CHECK(back == ptr);  // same underlying object
+}
+
+#endif // PROMEKI_ENABLE_TLS
 
 #endif // PROMEKI_ENABLE_NETWORK
 

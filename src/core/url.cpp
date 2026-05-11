@@ -323,6 +323,90 @@ String Url::toString() const {
         return out;
 }
 
+String Url::redactedString() const {
+        if (!isValid()) return String();
+
+        // Allowlist of credential-bearing query keys, matched
+        // case-insensitively.  Keep this list short and conservative —
+        // every entry hides a value an operator might otherwise see in
+        // a log line.
+        static const char  *kRedactKeys[] = {"token", "auth", "key", "password", "signature"};
+        static const size_t kRedactCount  = sizeof(kRedactKeys) / sizeof(kRedactKeys[0]);
+        static const String kRedacted("***");
+
+        // We mirror @ref toString but emit the redaction marker @c ***
+        // verbatim instead of round-tripping it through the percent
+        // encoder (which would escape the asterisks to @c %2A).
+        String out = _scheme;
+        out += ":";
+
+        if (_hasAuthority) {
+                out += "//";
+                if (!_userInfo.isEmpty()) {
+                        out += percentEncode(_userInfo, ":");
+                        out += "@";
+                }
+                if (_host.find(':') != String::npos && (_host.isEmpty() || _host.cstr()[0] != '[')) {
+                        out += "[";
+                        out += _host;
+                        out += "]";
+                } else {
+                        out += percentEncode(_host, "");
+                }
+                if (_port != PortUnset) {
+                        out += ":";
+                        out += String::number(_port);
+                }
+        }
+
+        // Path: percent-encode all segments except the final one, which
+        // is replaced by the redaction marker.
+        if (!_path.isEmpty()) {
+                size_t lastSlash = _path.rfind('/');
+                if (lastSlash == String::npos) {
+                        // Opaque-ish path with no separators — the whole
+                        // thing is the credential.
+                        out += kRedacted;
+                } else if (lastSlash + 1 == _path.length()) {
+                        // Path ends in '/' — no terminal component to
+                        // hide; emit verbatim.
+                        out += percentEncode(_path, "/:@");
+                } else {
+                        out += percentEncode(_path.left(lastSlash + 1), "/:@");
+                        out += kRedacted;
+                }
+        }
+
+        if (!_query.isEmpty()) {
+                out += "?";
+                bool first = true;
+                for (const auto &[k, v] : _query) {
+                        if (!first) out += "&";
+                        first = false;
+                        out += percentEncode(k, ":/@");
+                        out += "=";
+                        bool redact = false;
+                        for (size_t i = 0; i < kRedactCount; ++i) {
+                                if (k.compareIgnoreCase(String(kRedactKeys[i])) == 0) {
+                                        redact = true;
+                                        break;
+                                }
+                        }
+                        if (redact) {
+                                out += kRedacted;
+                        } else {
+                                out += percentEncode(v, ":/@");
+                        }
+                }
+        }
+
+        if (!_fragment.isEmpty()) {
+                out += "#";
+                out += percentEncode(_fragment, ":/@?");
+        }
+        return out;
+}
+
 bool Url::operator==(const Url &other) const {
         if (_scheme != other._scheme) return false;
         if (_hasAuthority != other._hasAuthority) return false;

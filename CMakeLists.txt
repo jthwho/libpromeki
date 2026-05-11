@@ -305,6 +305,7 @@ option(PROMEKI_ENABLE_JPEGXS   "Include JPEG XS codec (SVT-JPEG-XS, x86-64 + nas
 option(PROMEKI_ENABLE_FREETYPE "Include FreeType font rendering"        ON)
 option(PROMEKI_ENABLE_AUDIO    "Include audio file I/O (libsndfile)"    ON)
 option(PROMEKI_ENABLE_OPUS     "Include Opus audio codec (libopus)"     ON)
+option(PROMEKI_ENABLE_AAC      "Include AAC audio codec (vendored fdk-aac)" ON)
 option(PROMEKI_ENABLE_SRC      "Include audio resampling (libsamplerate)" ON)
 option(PROMEKI_ENABLE_CSC      "Include color space conversion (Highway SIMD)" ON)
 option(PROMEKI_ENABLE_CIRF     "Include the built-in :/.PROMEKI/ resource set" ON)
@@ -478,6 +479,7 @@ option(PROMEKI_USE_SYSTEM_SVT_JPEG_XS   "Use system SVT-JPEG-XS instead of vendo
 option(PROMEKI_USE_SYSTEM_FREETYPE      "Use system freetype instead of vendored"       OFF)
 option(PROMEKI_USE_SYSTEM_SNDFILE       "Use system libsndfile instead of vendored"     OFF)
 option(PROMEKI_USE_SYSTEM_OPUS          "Use system libopus instead of vendored"        OFF)
+option(PROMEKI_USE_SYSTEM_FDKAAC        "Use system fdk-aac instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_SAMPLERATE   "Use system libsamplerate instead of vendored"  OFF)
 option(PROMEKI_USE_SYSTEM_NLOHMANN_JSON "Use system nlohmann_json instead of vendored"  OFF)
 option(PROMEKI_USE_SYSTEM_PUGIXML       "Use system pugixml instead of vendored"        OFF)
@@ -571,6 +573,9 @@ if(PROMEKI_ENABLE_AUDIO AND NOT PROMEKI_ENABLE_PROAV)
 endif()
 if(PROMEKI_ENABLE_OPUS AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_OPUS requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_AAC AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_AAC requires PROMEKI_ENABLE_PROAV")
 endif()
 if(PROMEKI_ENABLE_HTTP AND NOT PROMEKI_ENABLE_NETWORK)
     message(FATAL_ERROR "PROMEKI_ENABLE_HTTP requires PROMEKI_ENABLE_NETWORK")
@@ -1520,6 +1525,43 @@ if(PROMEKI_ENABLE_OPUS)
     endif()
 endif()
 
+# --- fdk-aac ---
+# Vendored fdk-aac is a static library installed into the third-party
+# prefix.  All optional flags off (no CMake config, no pkg-config) — we
+# include the headers and link the static archive directly.
+if(PROMEKI_ENABLE_AAC)
+    if(PROMEKI_USE_SYSTEM_FDKAAC)
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(FDKAAC REQUIRED IMPORTED_TARGET fdk-aac)
+        set(PROMEKI_FDKAAC_TARGET PkgConfig::FDKAAC)
+    else()
+        ExternalProject_Add(
+            fdkaac-ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/fdk-aac
+            CMAKE_ARGS
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_INSTALL_LIBDIR:PATH=lib
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DBUILD_SHARED_LIBS=OFF
+                -DBUILD_PROGRAMS=OFF
+                -DFDK_AAC_INSTALL_CMAKE_CONFIG_MODULE=OFF
+                -DFDK_AAC_INSTALL_PKGCONFIG_MODULE=OFF
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libfdk-aac.a
+        )
+        add_library(promeki_fdkaac_vendored STATIC IMPORTED)
+        set_target_properties(promeki_fdkaac_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libfdk-aac.a
+            INTERFACE_INCLUDE_DIRECTORIES ${PROMEKI_THIRDPARTY_PREFIX}/include
+        )
+        # The header dir doesn't exist until ExternalProject installs;
+        # CMake refuses to attach a non-existent INTERFACE_INCLUDE_DIRECTORIES,
+        # so create it eagerly (the ExternalProject build will populate it).
+        file(MAKE_DIRECTORY ${PROMEKI_THIRDPARTY_PREFIX}/include)
+        add_dependencies(promeki_fdkaac_vendored fdkaac-ep)
+        set(PROMEKI_FDKAAC_TARGET promeki_fdkaac_vendored)
+    endif()
+endif()
+
 # --- libsamplerate ---
 if(PROMEKI_ENABLE_SRC)
     if(PROMEKI_USE_SYSTEM_SAMPLERATE)
@@ -1582,6 +1624,7 @@ endif()
 
 set(PROMEKI_HEADERS
     include/promeki/algorithm.h
+    include/promeki/amf0.h
     include/promeki/ansistream.h
     include/promeki/application.h
     include/promeki/array.h
@@ -1637,6 +1680,7 @@ set(PROMEKI_HEADERS
     include/promeki/future.h
     include/promeki/h264bitstream.h
     include/promeki/hevcbitstream.h
+    include/promeki/hmac.h
     include/promeki/iodevice.h
     include/promeki/json.h
     include/promeki/keyevent.h
@@ -1683,6 +1727,7 @@ set(PROMEKI_HEADERS
     include/promeki/selfpipe.h
     include/promeki/set.h
     include/promeki/sha1.h
+    include/promeki/sha2.h
     include/promeki/sharedptr.h
     include/promeki/signal.h
     include/promeki/signalhandler.h
@@ -1724,6 +1769,7 @@ set(PROMEKI_HEADERS
 
 set(PROMEKI_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
+    src/core/amf0.cpp
     src/core/ansistream.cpp
     src/core/application.cpp
     src/core/array.cpp
@@ -1780,6 +1826,7 @@ set(PROMEKI_SOURCES
     src/core/h264bitstream.cpp
     src/core/hevcbitstream.cpp
     src/core/histogram.cpp
+    src/core/hmac.cpp
     src/core/iodevice.cpp
     src/core/json.cpp
     src/core/keyevent.cpp
@@ -1823,6 +1870,7 @@ set(PROMEKI_SOURCES
     src/core/selfpipe.cpp
     src/core/set.cpp
     src/core/sha1.cpp
+    src/core/sha2.cpp
     src/core/securemem.cpp
     src/core/sharedmemory.cpp
     src/core/sharedptr.cpp
@@ -1885,6 +1933,11 @@ if(PROMEKI_ENABLE_NETWORK)
         include/promeki/rawsocket.h
         include/promeki/rtcppacket.h
         include/promeki/rtcpscheduler.h
+        include/promeki/rtmpchunkstream.h
+        include/promeki/rtmpclient.h
+        include/promeki/rtmphandshake.h
+        include/promeki/rtmpmessage.h
+        include/promeki/rtmpsession.h
         include/promeki/rtpaggregatorthread.h
         include/promeki/rtpaudiodepacketizerthread.h
         include/promeki/rtpaudiopacketizerthread.h
@@ -1939,6 +1992,10 @@ if(PROMEKI_ENABLE_NETWORK)
         src/network/rawsocket.cpp
         src/network/rtcppacket.cpp
         src/network/rtcpscheduler.cpp
+        src/network/rtmpchunkstream.cpp
+        src/network/rtmpclient.cpp
+        src/network/rtmphandshake.cpp
+        src/network/rtmpsession.cpp
         src/network/rtpaggregatorthread.cpp
         src/network/rtpaudiodepacketizerthread.cpp
         src/network/rtpaudiopacketizerthread.cpp
@@ -2046,12 +2103,14 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/audiofile.h
         include/promeki/audiofilefactory.h
         include/promeki/audiogen.h
+        include/promeki/aacbitstream.h
         include/promeki/audiotestpattern.h
         include/promeki/basicfont.h
         include/promeki/videoencoder.h
         include/promeki/videodecoder.h
         include/promeki/encodeddesc.h
         include/promeki/fastfont.h
+        include/promeki/flvtag.h
         include/promeki/font.h
         include/promeki/frame.h
         include/promeki/framebridge.h
@@ -2089,6 +2148,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/imagefilemediaio.h
         include/promeki/quicktimemediaio.h
         include/promeki/rtpmediaio.h
+        include/promeki/rtmpmediaio.h
         include/promeki/paintengine.h
         include/promeki/quicktime.h
         include/promeki/mediadesc.h
@@ -2097,6 +2157,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/motionband.h
     )
     list(APPEND PROMEKI_SOURCES
+        src/proav/aacbitstream.cpp
         src/proav/audioblock.cpp
         src/proav/audiobuffer.cpp
         src/proav/audiodecoder.cpp
@@ -2109,6 +2170,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/videoencoder.cpp
         src/proav/videodecoder.cpp
         src/proav/encodeddesc.cpp
+        src/proav/flvtag.cpp
         src/proav/frame.cpp
         src/proav/framebridge.cpp
         src/proav/framesync.cpp
@@ -2168,6 +2230,8 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/framesyncmediaio.cpp
         src/proav/videoencodermediaio.cpp
         src/proav/videodecodermediaio.cpp
+        src/proav/audioencodermediaio.cpp
+        src/proav/audiodecodermediaio.cpp
         src/proav/rawbitstreammediaio.cpp
         src/proav/imagefilemediaio.cpp
         src/proav/inspectormediaio.cpp
@@ -2175,6 +2239,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/nullpacingmediaio.cpp
         src/proav/quicktimemediaio.cpp
         src/proav/rtpmediaio.cpp
+        src/proav/rtmpmediaio.cpp
         src/proav/tpgmediaio.cpp
         src/proav/paintengine.cpp
         src/proav/paintengine_422.cpp
@@ -2222,6 +2287,13 @@ if(PROMEKI_ENABLE_PROAV)
         # directly; without the vendored or system libopus there is no
         # header to include.
         list(APPEND PROMEKI_SOURCES src/proav/opusaudiocodec.cpp)
+    endif()
+    if(PROMEKI_ENABLE_AAC)
+        # Native fdk-aac AudioEncoder / AudioDecoder backend.  Gated on
+        # PROMEKI_ENABLE_AAC for the same reason as the Opus backend —
+        # the file includes <fdk-aac/aacenc_lib.h> / <fdk-aac/aacdecoder_lib.h>
+        # directly.
+        list(APPEND PROMEKI_SOURCES src/proav/fdkaaccodec.cpp)
     endif()
     if(PROMEKI_ENABLE_NVDEC)
         # Same story as NVENC — the backend compiles only when the
@@ -2495,6 +2567,10 @@ if(PROMEKI_ENABLE_PROAV)
     if(PROMEKI_ENABLE_OPUS)
         target_link_libraries(promeki PRIVATE ${PROMEKI_OPUS_TARGET})
         target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_OPUS)
+    endif()
+    if(PROMEKI_ENABLE_AAC)
+        target_link_libraries(promeki PRIVATE ${PROMEKI_FDKAAC_TARGET})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_AAC)
     endif()
     if(PROMEKI_ENABLE_SRC)
         target_link_libraries(promeki PRIVATE ${PROMEKI_SAMPLERATE_TARGET})
@@ -2858,6 +2934,7 @@ if(PROMEKI_BUILD_TESTS)
     set(UNITTEST_SOURCES
         tests/unit/doctest_main.cpp
         tests/unit/algorithm.cpp
+        tests/unit/amf0.cpp
         tests/unit/ansistream.cpp
         tests/unit/application.cpp
         tests/unit/array.cpp
@@ -2927,6 +3004,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/hashset.cpp
         tests/unit/hevcbitstream.cpp
         tests/unit/histogram.cpp
+        tests/unit/hmac.cpp
         tests/unit/iodevice.cpp
         tests/unit/json.cpp
         tests/unit/line.cpp
@@ -2973,6 +3051,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/selfpipe.cpp
         tests/unit/set.cpp
         tests/unit/sha1.cpp
+        tests/unit/sha2.cpp
         tests/unit/sharedmemory.cpp
         tests/unit/sharedptr.cpp
         tests/unit/signal.cpp
@@ -3034,6 +3113,11 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/network/rawsocket.cpp
             tests/unit/network/rtcppacket.cpp
             tests/unit/network/rtcpscheduler.cpp
+            tests/unit/network/rtmpchunkstream.cpp
+            tests/unit/network/rtmpclient.cpp
+            tests/unit/network/rtmphandshake.cpp
+            tests/unit/network/rtmpmediaio.cpp
+            tests/unit/network/rtmpsession.cpp
             tests/unit/network/rtpaggregatorthread.cpp
             tests/unit/network/rtpaudiodepacketizerthread.cpp
             tests/unit/network/rtpaudiopacketizerthread.cpp
@@ -3101,11 +3185,14 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/audiochannelmap.cpp
             tests/unit/audiodesc.cpp
             tests/unit/audioencoder.cpp
+            tests/unit/aacbitstream.cpp
             tests/unit/audiofilefactory.cpp
             tests/unit/audiotestpattern.cpp
             tests/unit/pcmsilencefiller.cpp
             $<$<BOOL:${PROMEKI_ENABLE_OPUS}>:tests/unit/opusaudiocodec.cpp>
+            $<$<BOOL:${PROMEKI_ENABLE_AAC}>:tests/unit/fdkaaccodec.cpp>
             tests/unit/encodeddesc.cpp
+            tests/unit/flvtag.cpp
             tests/unit/fastfont.cpp
             tests/unit/basicfont.cpp
             tests/unit/debugmediafile.cpp
@@ -3161,6 +3248,8 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediaiotask_framesync.cpp
             tests/unit/mediaiotask_videoencoder.cpp
             tests/unit/mediaiotask_videodecoder.cpp
+            tests/unit/mediaiotask_audioencoder.cpp
+            tests/unit/mediaiotask_audiodecoder.cpp
             tests/unit/mediaiotask_inspector.cpp
             tests/unit/mediaiotask_mjpegstream.cpp
             tests/unit/mediaiotask_nullpacing.cpp

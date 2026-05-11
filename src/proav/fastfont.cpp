@@ -13,6 +13,27 @@
 #include <promeki/fastfont.h>
 #include <promeki/file.h>
 #include <promeki/logger.h>
+#include <promeki/pixelmemlayout.h>
+
+namespace {
+        // Round @c v up to the nearest multiple of @c a.  Safe for
+        // @c a == 1 (returns @c v unchanged) and for negative @c v
+        // (rounds toward +inf so kerning that pushes penX backwards
+        // by less than an alignment quantum collapses to zero rather
+        // than overshooting in the wrong direction).
+        inline int roundUpToAlign(int v, int a) {
+                if (a <= 1) return v;
+                if (v >= 0) return ((v + a - 1) / a) * a;
+                return -(((-v) / a) * a);
+        }
+        // Round @c v down to the nearest multiple of @c a.  Symmetric
+        // partner to @c roundUpToAlign.
+        inline int roundDownToAlign(int v, int a) {
+                if (a <= 1) return v;
+                if (v >= 0) return (v / a) * a;
+                return -(((-v + a - 1) / a) * a);
+        }
+}
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -102,6 +123,35 @@ bool FastFont::ensureFontLoaded() {
         _descender = -(face->size->metrics.descender >> 6);
         _lineHeight = _ascender + _descender;
 
+        // Snap font geometry to the target format's chroma subsampling.
+        // The multi-plane paint engine has a same-format scanline-memcpy
+        // fast path that only fires when blit positions, sizes, and
+        // strides are multiples of the deepest plane subsampling — for
+        // NV12 that's (2, 2).  Rounding _ascender and _descender up to
+        // _alignY here means cellTop = y - _ascender stays alignY-aligned
+        // when the caller passes an aligned baseline y.  drawText() / the
+        // glyph cache snap penX and cellWidth to _alignX so per-glyph
+        // blits land on the fast path too.  For RGB and other non-
+        // subsampled formats _alignX = _alignY = 1 and rounding is a
+        // no-op.
+        _alignX = 1;
+        _alignY = 1;
+        if (_paintEngine.pixelFormat().isValid()) {
+                const PixelMemLayout &ml = _paintEngine.pixelFormat().memLayout();
+                for (size_t p = 0; p < ml.planeCount(); p++) {
+                        const auto &pd = ml.planeDesc(p);
+                        const int   hs = static_cast<int>(pd.hSubsampling > 0 ? pd.hSubsampling : 1);
+                        const int   vs = static_cast<int>(pd.vSubsampling > 0 ? pd.vSubsampling : 1);
+                        if (hs > _alignX) _alignX = hs;
+                        if (vs > _alignY) _alignY = vs;
+                }
+        }
+        if (_alignY > 1) {
+                _ascender = roundUpToAlign(_ascender, _alignY);
+                _descender = roundUpToAlign(_descender, _alignY);
+                _lineHeight = _ascender + _descender;
+        }
+
         return true;
 }
 
@@ -128,14 +178,15 @@ const FastFont::CachedGlyph *FastFont::getGlyph(uint32_t codepoint) {
         int        bitmapTop = face->glyph->bitmap_top;
         int        advanceX = face->glyph->advance.x >> 6;
 
-        // Create a temporary UncompressedVideoPayload for this glyph
-        // cell and render into it using the PaintEngine, which handles
-        // all pixel format specifics.  Use allocate() so multi-plane
-        // formats get one Buffer per plane instead of a single plane-0
-        // allocation that the paint engine would dereference out of
-        // bounds.
+        // Round advance up to _alignX so accumulated penX stays aligned
+        // through every glyph.  Cell width follows so the cached glyph
+        // payload's chroma plane width is a whole number of chroma
+        // samples (NV12 needs even cellWidth for the multi-plane blit
+        // fast path).  For unsubsampled formats _alignX == 1 and this
+        // is a no-op.
+        advanceX = roundUpToAlign(advanceX, _alignX);
         int cellWidth = advanceX;
-        if (cellWidth <= 0) cellWidth = 1;
+        if (cellWidth <= 0) cellWidth = _alignX;
         PixelFormat pd = _paintEngine.pixelFormat();
         ImageDesc   cellDesc(Size2Du32(cellWidth, _lineHeight), pd);
         auto        glyphPayload = UncompressedVideoPayload::allocate(cellDesc);
@@ -184,9 +235,12 @@ bool FastFont::drawText(const String &text, int x, int y) {
         if (!ensureFontLoaded()) return false;
         ensurePixels();
 
-        // y is baseline; top of cell is at y - ascender
-        int cellTop = y - _ascender;
-        int penX = x;
+        // y is baseline; top of cell is at y - ascender.  Snap cellTop
+        // down to _alignY so the per-glyph blits land on chroma row
+        // boundaries — the multi-plane PaintEngine fast path requires
+        // it.  _alignY == 1 collapses both calls to no-ops.
+        int cellTop = roundDownToAlign(y - _ascender, _alignY);
+        int penX = roundDownToAlign(x, _alignX);
 
         FT_Face face = _kerning ? static_cast<FT_Face>(_ftFace) : nullptr;
         bool    hasKerning = face != nullptr && FT_HAS_KERNING(face);
@@ -200,6 +254,12 @@ bool FastFont::drawText(const String &text, int x, int y) {
                                 FT_Vector delta;
                                 FT_Get_Kerning(face, prevIndex, glyphIndex, FT_KERNING_DEFAULT, &delta);
                                 penX += delta.x >> 6;
+                                // Re-snap after kerning so the next blit
+                                // is still aligned.  Accumulated penX
+                                // then drifts off-grid only inside this
+                                // glyph step, not across it — keeping
+                                // every actual blit on a fast-path row.
+                                penX = roundDownToAlign(penX, _alignX);
                         }
                 }
 
@@ -235,6 +295,15 @@ int FastFont::measureText(const String &text) {
                                 FT_Vector delta;
                                 FT_Get_Kerning(face, prevIndex, glyphIndex, FT_KERNING_DEFAULT, &delta);
                                 width += delta.x >> 6;
+                                // Mirror drawText()'s snap-after-kerning
+                                // so the reported width tracks the
+                                // actual rendered advance — applyBurn
+                                // uses measureText() to size the burn
+                                // background rect and to centre each
+                                // line, and divergence would push the
+                                // background off the right edge of the
+                                // text on subsampled formats.
+                                width = roundDownToAlign(width, _alignX);
                         }
                 }
 
