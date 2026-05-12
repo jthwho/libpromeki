@@ -36,14 +36,20 @@ struct Cea608EncoderImpl; // Pimpl — defined in cea608encoder.cpp.
  *
  * @par Mode support
  *
- * Phase 3.5a (v1) implements **pop-on mode only** — the standard
- * pre-recorded caption mode where text is loaded into a hidden
- * memory and "popped" onto the screen via @c EOC at the cue's
- * start time.  Paint-on and roll-up modes are deferred to Phase
- * 3.5d (their byte-stream shape is documented in
- * @ref Cea608Encoder::Mode but not yet implemented; constructing
- * the encoder with a non-PopOn mode fails @ref setSubtitles with
- * @c Error::NotImplemented).
+ * All three CEA-608 caption modes are supported:
+ *
+ *   - @c PopOn — pre-recorded caption mode.  Text is loaded into
+ *     non-displayed memory via @c RCL, then "popped" onto the screen
+ *     via @c EOC at the cue's start time.  Cleared via @c EDM at the
+ *     cue's end time.  Standard for offline-authored captions.
+ *   - @c PaintOn — live caption mode.  Text is written directly to
+ *     displayed memory via @c RDC, character-by-character.  No
+ *     swap — characters appear as transmitted.  Cleared via @c EDM
+ *     at the cue's end time.
+ *   - @c RollUp — continuous scrolling captions.  @c RU2/3/4
+ *     initialises the mode (rows visible).  Each cue is appended as
+ *     a new row via @c CR (carriage return).  No per-cue @c EDM —
+ *     cues scroll off the top as new rows arrive.
  *
  * @par Channel support
  *
@@ -55,9 +61,12 @@ struct Cea608EncoderImpl; // Pimpl — defined in cea608encoder.cpp.
  *
  * @par Layout
  *
- * All cues are anchored to row 15 / column 0 / white / no underline
- * regardless of @ref Subtitle::anchor.  Multi-row PAC addressing
- * lands alongside the paint-on / roll-up modes that need it.
+ * Each cue's row is derived from @ref Subtitle::anchor (Top* → row
+ * 1, Middle* → row 8, Bottom* / Default → row 15).  Roll-up mode
+ * forces row 15 regardless of the cue's anchor (roll-up is bottom-
+ * anchored by spec).  Multi-column indent + Tab Offset (per-column
+ * fine shift) is not currently emitted; horizontal placement
+ * (Left / Center / Right) is dropped at the wire.
  *
  * @par Character set
  *
@@ -125,14 +134,15 @@ class Cea608Encoder {
                 /**
                  * @brief Operating mode controlling the byte-stream shape.
                  *
-                 * v1 implements only @c PopOn; the other two modes
-                 * are reserved enum values for the Phase 3.5d
-                 * follow-on.
+                 * All three modes are supported; each emits a
+                 * different control-code framing around the same
+                 * character body.  See the class doc-comment for
+                 * the per-mode byte-stream layouts.
                  */
                 enum class Mode {
-                        PopOn  = 0, ///< Pop-on (RCL → PAC → chars → EOC).  v1.
-                        PaintOn = 1, ///< Paint-on (RDC → chars).  Phase 3.5d.
-                        RollUp  = 2, ///< Roll-up (RU2/3/4 → chars → CR).  Phase 3.5d.
+                        PopOn  = 0, ///< Pop-on (RCL → PAC → chars → EOC, EDM at cue end).
+                        PaintOn = 1, ///< Paint-on (RDC → PAC → chars live, EDM at cue end).
+                        RollUp  = 2, ///< Roll-up (RUx → CR → PAC → chars; no EDM).
                 };
 
                 /**
@@ -194,13 +204,14 @@ class Cea608Encoder {
                  * @return @c Error::Ok on success.
                  *         @c Error::Invalid when the configured
                  *         @ref FrameRate is not valid.
-                 *         @c Error::NotImplemented when @ref Mode is
-                 *         not @c PopOn or @ref Channel is not @c CC1.
+                 *         @c Error::NotImplemented when @ref Channel
+                 *         is not @c CC1.
                  *         @c Error::OutOfRange when a cue's pre-roll
-                 *         would fall before frame 0, or would overlap
-                 *         the prior cue's wire stream (its pre-roll +
-                 *         EOC pair — a collision EDM elision cannot
-                 *         resolve).
+                 *         would fall before frame 0, when pre-roll
+                 *         overlaps the prior cue's wire stream, or
+                 *         when (paint-on / roll-up) the character
+                 *         pairs would overrun the cue's display
+                 *         window.
                  */
                 Error setSubtitles(const SubtitleList &subs);
 

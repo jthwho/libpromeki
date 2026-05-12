@@ -25,7 +25,8 @@ class FrameRate;
 class JsonObject;
 class Metadata;
 class SubtitleList;
-struct SubtitleImpl; // Pimpl — defined in subtitle.cpp.
+struct SubtitleImpl;     // Pimpl — defined in subtitle.cpp.
+struct SubtitleSpanImpl; // Pimpl — defined in subtitle.cpp.
 
 /**
  * @brief One styled run within a @ref Subtitle.
@@ -74,27 +75,36 @@ struct SubtitleImpl; // Pimpl — defined in subtitle.cpp.
  */
 class SubtitleSpan {
         public:
+                // -- Construction / destruction (out-of-line for pimpl) ---
+
                 /** @brief Default-constructs an empty unstyled span. */
-                SubtitleSpan() = default;
+                SubtitleSpan();
 
                 /** @brief Constructs an unstyled span carrying @p text. */
-                explicit SubtitleSpan(String text) : _text(std::move(text)) {}
+                explicit SubtitleSpan(String text);
 
                 /** @brief Full-style constructor. */
-                SubtitleSpan(String text, bool bold, bool italic, bool underline, Color color = Color())
-                    : _text(std::move(text)), _bold(bold), _italic(italic), _underline(underline), _color(color) {}
+                SubtitleSpan(String text, bool bold, bool italic, bool underline, Color color = Color());
+
+                SubtitleSpan(const SubtitleSpan &);
+                SubtitleSpan(SubtitleSpan &&) noexcept;
+                ~SubtitleSpan();
+                SubtitleSpan &operator=(const SubtitleSpan &);
+                SubtitleSpan &operator=(SubtitleSpan &&) noexcept;
+
+                // -- Read-only accessors ----------------------------------
 
                 /** @brief Span text (UTF-8). */
-                const String &text() const { return _text; }
+                const String &text() const;
 
                 /** @brief @c true when the span is rendered bold. */
-                bool bold() const { return _bold; }
+                bool bold() const;
 
                 /** @brief @c true when the span is rendered italic. */
-                bool italic() const { return _italic; }
+                bool italic() const;
 
                 /** @brief @c true when the span is rendered with an underline. */
-                bool underline() const { return _underline; }
+                bool underline() const;
 
                 /**
                  * @brief Per-span colour override.
@@ -104,24 +114,25 @@ class SubtitleSpan {
                  * the renderer or downstream encoder is expected to
                  * substitute its own default.
                  */
-                const Color &color() const { return _color; }
+                const Color &color() const;
 
                 /// @brief @c true when this span carries any style override.
-                bool hasStyle() const { return _bold || _italic || _underline || _color.isValid(); }
+                bool hasStyle() const;
 
                 /// @brief @c true when the span carries no visible text.
-                bool isEmpty() const { return _text.isEmpty(); }
+                bool isEmpty() const;
 
-                void setText(String v) { _text = std::move(v); }
-                void setBold(bool v) { _bold = v; }
-                void setItalic(bool v) { _italic = v; }
-                void setUnderline(bool v) { _underline = v; }
-                void setColor(const Color &v) { _color = v; }
+                // -- CoW mutators -----------------------------------------
 
-                bool operator==(const SubtitleSpan &o) const {
-                        return _bold == o._bold && _italic == o._italic && _underline == o._underline
-                                && _color == o._color && _text == o._text;
-                }
+                void setText(String v);
+                void setBold(bool v);
+                void setItalic(bool v);
+                void setUnderline(bool v);
+                void setColor(const Color &v);
+
+                // -- Comparison + diagnostics -----------------------------
+
+                bool operator==(const SubtitleSpan &o) const;
                 bool operator!=(const SubtitleSpan &o) const { return !(*this == o); }
 
                 /// @brief Structured JSON dump for inspection / tooling.
@@ -134,11 +145,7 @@ class SubtitleSpan {
                 using List = ::promeki::List<SubtitleSpan>;
 
         private:
-                String _text;
-                bool   _bold = false;
-                bool   _italic = false;
-                bool   _underline = false;
-                Color  _color; // Default-invalid colour means "inherit".
+                SharedPtr<SubtitleSpanImpl> _d;
 };
 
 /** @brief Writes a @ref SubtitleSpan to a @ref DataStream. */

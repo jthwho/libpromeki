@@ -669,6 +669,26 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setMin(int32_t(0))
                                            .setDescription("VANC line number stamped on TPG CEA-708 ANC packets."));
 
+                /// @brief String — path to a Scenarist SCC (`.scc`) file
+                /// whose byte-pair rows drive the TPG's per-frame caption
+                /// payload directly, bypassing the @ref Cea608Encoder.
+                /// When set, the SCC rows are looked up by frame number
+                /// (the first row anchors to TPG frame 0); the matching
+                /// byte pairs ride into the @c Cea708Cdp's cc_data list
+                /// verbatim.  Mutually exclusive with
+                /// @ref TpgAncCaptionsFile (SubRip path) — set one or
+                /// the other.  This is the "real broadcast captioner
+                /// output" test path: it proves the CDP wire layer
+                /// independently of the encoder's scheduling decisions.
+                /// Empty (default) means "no SCC override" — the
+                /// SubRip + encoder path takes over when
+                /// @ref TpgAncCaptionsFile is set.
+                PROMEKI_DECLARE_ID(TpgAncCaptionsScc,
+                                   VariantSpec()
+                                           .setType(Variant::TypeString)
+                                           .setDefault(String())
+                                           .setDescription("Path to Scenarist SCC file feeding TPG CEA-708 ANC bytes directly."));
+
                 // ============================================================
                 // Inspector sink (InspectorMediaIO)
                 // ============================================================

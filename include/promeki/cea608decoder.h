@@ -36,28 +36,36 @@ struct Cea608DecoderImpl; // Pimpl — defined in cea608decoder.cpp.
  * `cue.end` frames (modulo the inherent 1-frame quantisation of
  * the wire format).
  *
- * @par Pop-on state machine
+ * @par State machine
  *
- * The decoder tracks the spec's two memory buffers:
+ * The decoder operates as a state-driven mode automaton.  The
+ * current mode is inferred from the most recently seen mode-
+ * establishing control code:
  *
- *  - **Non-displayed** memory: where @c RCL puts the writer, and
- *    where character pairs accumulate while a cue is being loaded.
- *  - **Displayed** memory: the text currently on screen.  Swapped
- *    with non-displayed when @c EOC fires.
+ *  - @c RCL (0x14 0x20) → enter pop-on mode.
+ *  - @c RDC (0x14 0x29) → enter paint-on mode.
+ *  - @c RU2/RU3/RU4 (0x14 0x25/26/27) → enter roll-up mode.
  *
- * The state transitions:
+ * Default mode (no control code seen yet) is pop-on.  The mode
+ * controls how @c EOC, @c EDM, and @c CR are interpreted:
  *
- *  - @c RCL → clear non-displayed; remember "loading" state.
- *  - PAC (0x14 0x40..0x7F) → acknowledged; v1 ignores row/column
- *    details since the encoder only emits row 15 / col 0 / white.
- *  - Character pair (0x20..0x7F first byte) → append to
- *    non-displayed memory.
- *  - @c EOC → swap non-displayed ↔ displayed; record the current
- *    frame's @ref TimeStamp as the start of the now-visible cue.
- *  - @c EDM → finalize the visible cue with @c end = current
- *    @ref TimeStamp; emit it into the accumulated list.
- *  - @c ENM → clear non-displayed memory (rare; mostly a no-op
- *    after @c RCL has already cleared it).
+ *  - **Pop-on**: chars accumulate in a non-displayed buffer.
+ *    @c EOC swaps the buffer to displayed; @c EDM finalizes the
+ *    displayed cue.
+ *  - **Paint-on**: chars commit directly to the displayed buffer
+ *    (visible immediately).  @c EDM finalizes the cue.
+ *  - **Roll-up**: chars commit to the current row.  @c CR
+ *    finalizes the row as a cue and starts a new one.
+ *
+ * Common state transitions:
+ *
+ *  - PAC (0x10..0x17 0x40..0x7F) → sets row / colour / italic /
+ *    underline for the next text run.
+ *  - Mid-row code (0x11 0x20..0x2F) → changes colour / italic /
+ *    underline mid-line, flushing the current run as a styled span.
+ *  - Character pair (0x20..0x7F first byte) → append to the active
+ *    buffer.
+ *  - @c ENM → clear loading memory (typically after @c RCL).
  *
  * @par Spec robustness behaviours
  *
@@ -76,11 +84,11 @@ struct Cea608DecoderImpl; // Pimpl — defined in cea608decoder.cpp.
  *
  * @par Scope
  *
- * v1 implements **CC1 only** (field 1, channel 1) and pop-on mode.
- * Paint-on and roll-up modes are deferred to Phase 3.5d.  Multi-row
- * decoding lands alongside them.  Cue text reconstruction strips
- * parity but does not interpret extended character sets — the
- * basic ASCII range (0x20..0x7E) passes through verbatim.
+ * Pop-on, paint-on, and roll-up modes are supported.  The decoder
+ * decodes **CC1 only** (field 1, channel 1).  Cue text
+ * reconstruction strips parity but does not interpret extended
+ * character sets — the basic ASCII range (0x20..0x7E) passes
+ * through verbatim.
  *
  * @par Channel filtering
  *

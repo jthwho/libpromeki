@@ -1,0 +1,230 @@
+/**
+ * @file      cea708service.cpp
+ * @author    Jason Howard <jth@howardlogic.com>
+ * @copyright Howard Logic.  All rights reserved.
+ *
+ * See LICENSE file in the project root folder for license information.
+ */
+
+#include <cstdint>
+#include <doctest/doctest.h>
+#include <promeki/buffer.h>
+#include <promeki/cea708cdp.h>
+#include <promeki/cea708service.h>
+#include <promeki/string.h>
+
+using namespace promeki;
+
+namespace {
+
+        /// @brief Builds a Buffer holding the given bytes.  Convenience
+        ///        for constructing service-block data inline.
+        Buffer bytesBuf(std::initializer_list<uint8_t> bytes) {
+                Buffer b(bytes.size());
+                b.setSize(bytes.size());
+                if (bytes.size() > 0) {
+                        std::vector<uint8_t> v(bytes);
+                        b.copyFrom(v.data(), v.size(), 0);
+                }
+                return b;
+        }
+
+} // namespace
+
+// ============================================================================
+// Cea708Service
+// ============================================================================
+
+TEST_CASE("Cea708Service: default-constructed is the null block") {
+        Cea708Service s;
+        CHECK(s.serviceNumber() == 0);
+        CHECK(s.isNull());
+        CHECK_FALSE(s.isExtended());
+        CHECK(s.data().size() == 0);
+}
+
+TEST_CASE("Cea708Service: isExtended depends on service number") {
+        Cea708Service s1(1, Buffer());
+        Cea708Service s6(6, Buffer());
+        Cea708Service s7(7, Buffer());
+        Cea708Service s63(63, Buffer());
+        CHECK_FALSE(s1.isExtended());
+        CHECK_FALSE(s6.isExtended());
+        CHECK(s7.isExtended());
+        CHECK(s63.isExtended());
+}
+
+TEST_CASE("Cea708Service::fromText: G0 chars pass through, others substituted with space") {
+        Cea708Service s = Cea708Service::fromText(1, String("Hi\t!"));
+        REQUIRE(s.data().size() == 4);
+        const auto *p = static_cast<const uint8_t *>(s.data().data());
+        CHECK(p[0] == 'H');
+        CHECK(p[1] == 'i');
+        // \t (0x09) is out of G0 range — substituted with 0x20.
+        CHECK(p[2] == 0x20);
+        CHECK(p[3] == '!');
+}
+
+TEST_CASE("Cea708Service::text: recovers G0 chars from data buffer") {
+        Cea708Service s(1, bytesBuf({'A', 'B', 'C'}));
+        CHECK(s.text() == "ABC");
+}
+
+TEST_CASE("Cea708Service::text: skips C0 / C1 control bytes") {
+        // Mix of G0 + C0 (clear screen 0x03) + G0 + C1 (delete window 0x8C) + G0.
+        Cea708Service s(1, bytesBuf({'A', 0x03, 'B', 0x8C, 'C'}));
+        CHECK(s.text() == "ABC");
+}
+
+TEST_CASE("Cea708Service::fromText + text round-trip on printable ASCII") {
+        Cea708Service s = Cea708Service::fromText(1, "Hello, world.");
+        CHECK(s.text() == "Hello, world.");
+}
+
+// ============================================================================
+// Cea708DtvccPacket — payload byte layout
+// ============================================================================
+
+TEST_CASE("Cea708DtvccPacket: empty packet emits an empty payload") {
+        Cea708DtvccPacket pkt;
+        CHECK(pkt.payloadByteCount() == 0);
+        CHECK(pkt.toPayloadBytes().size() == 0);
+}
+
+TEST_CASE("Cea708DtvccPacket: standard service 1 block header layout") {
+        // Service 1, 3 bytes of data ('A','B','C').
+        //   header byte: (serviceNum<<5) | blockSize = (1<<5) | 3 = 0x23
+        //   data: 0x41 0x42 0x43
+        Cea708DtvccPacket pkt;
+        pkt.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf({'A', 'B', 'C'})));
+        Buffer payload = pkt.toPayloadBytes();
+        REQUIRE(payload.size() == 4);
+        const auto *p = static_cast<const uint8_t *>(payload.data());
+        CHECK(p[0] == 0x23);
+        CHECK(p[1] == 'A');
+        CHECK(p[2] == 'B');
+        CHECK(p[3] == 'C');
+}
+
+TEST_CASE("Cea708DtvccPacket: extended service 7 block uses 2-byte header") {
+        // Service 7, 2 bytes of data ('X','Y').
+        //   byte 0: (7<<5) | blockSize = 0xE0 | 2 = 0xE2
+        //   byte 1: serviceNumberExt = 7  → 0x07
+        //   data:   0x58 0x59
+        Cea708DtvccPacket pkt;
+        pkt.serviceBlocks().pushToBack(Cea708Service(7, bytesBuf({'X', 'Y'})));
+        Buffer payload = pkt.toPayloadBytes();
+        REQUIRE(payload.size() == 4);
+        const auto *p = static_cast<const uint8_t *>(payload.data());
+        CHECK(p[0] == 0xE2);
+        CHECK(p[1] == 0x07);
+        CHECK(p[2] == 'X');
+        CHECK(p[3] == 'Y');
+}
+
+TEST_CASE("Cea708DtvccPacket: null block emits a single 0x00 header byte") {
+        Cea708DtvccPacket pkt;
+        pkt.serviceBlocks().pushToBack(Cea708Service()); // service=0
+        Buffer payload = pkt.toPayloadBytes();
+        REQUIRE(payload.size() == 1);
+        const auto *p = static_cast<const uint8_t *>(payload.data());
+        CHECK(p[0] == 0x00);
+}
+
+TEST_CASE("Cea708DtvccPacket: parsePayloadBytes round-trips one service block") {
+        Cea708DtvccPacket orig;
+        orig.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf({'H', 'i'})));
+        Buffer payload = orig.toPayloadBytes();
+        auto [blocks, err] = Cea708DtvccPacket::parsePayloadBytes(payload.data(), payload.size());
+        REQUIRE(err.isOk());
+        REQUIRE(blocks.size() == 1);
+        CHECK(blocks[0].serviceNumber() == 1);
+        CHECK(blocks[0].text() == "Hi");
+}
+
+TEST_CASE("Cea708DtvccPacket: parsePayloadBytes round-trips extended service block") {
+        Cea708DtvccPacket orig;
+        orig.serviceBlocks().pushToBack(Cea708Service(42, bytesBuf({'O', 'k'})));
+        Buffer payload = orig.toPayloadBytes();
+        auto [blocks, err] = Cea708DtvccPacket::parsePayloadBytes(payload.data(), payload.size());
+        REQUIRE(err.isOk());
+        REQUIRE(blocks.size() == 1);
+        CHECK(blocks[0].serviceNumber() == 42);
+        CHECK(blocks[0].isExtended());
+        CHECK(blocks[0].text() == "Ok");
+}
+
+TEST_CASE("Cea708DtvccPacket: parsePayloadBytes stops at null block terminator") {
+        // Two blocks then a null terminator.
+        Cea708DtvccPacket orig;
+        orig.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf({'A'})));
+        orig.serviceBlocks().pushToBack(Cea708Service(2, bytesBuf({'B'})));
+        orig.serviceBlocks().pushToBack(Cea708Service()); // null
+        Buffer payload = orig.toPayloadBytes();
+        auto [blocks, err] = Cea708DtvccPacket::parsePayloadBytes(payload.data(), payload.size());
+        REQUIRE(err.isOk());
+        REQUIRE(blocks.size() == 3);
+        CHECK(blocks[0].serviceNumber() == 1);
+        CHECK(blocks[1].serviceNumber() == 2);
+        CHECK(blocks[2].isNull());
+}
+
+// ============================================================================
+// Cea708DtvccPacket — CcData round-trip
+// ============================================================================
+
+TEST_CASE("Cea708DtvccPacket::toCcData: first triple has cc_type=2, rest cc_type=3") {
+        Cea708DtvccPacket pkt(0, {});
+        pkt.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf({'A', 'B', 'C', 'D'})));
+        Cea708Cdp::CcDataList triples = pkt.toCcData();
+        REQUIRE(triples.size() >= 1);
+        CHECK(triples[0].type == 2); // packet start
+        for (size_t i = 1; i < triples.size(); ++i) {
+                CHECK(triples[i].type == 3); // packet data
+        }
+}
+
+TEST_CASE("Cea708DtvccPacket::toCcData header byte carries sequence + packet_size_code") {
+        Cea708DtvccPacket pkt(2, {});
+        pkt.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf({'A'})));
+        // Payload bytes: header (0x21) + 'A' = 2 bytes.
+        // packet_size_code = payloadSize + 1 = 3.
+        // header byte = (2 << 6) | 3 = 0x83.
+        Cea708Cdp::CcDataList triples = pkt.toCcData();
+        REQUIRE(triples.size() >= 1);
+        CHECK(triples[0].b1 == 0x83);
+}
+
+TEST_CASE("Cea708DtvccPacket: full round-trip via cc_data") {
+        Cea708DtvccPacket orig(1, {});
+        orig.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf({'H', 'e', 'l', 'l', 'o'})));
+        Cea708Cdp::CcDataList triples = orig.toCcData();
+        auto [parsed, err] = Cea708DtvccPacket::fromCcData(triples);
+        REQUIRE(err.isOk());
+        CHECK(parsed.sequenceNumber() == 1);
+        REQUIRE(parsed.serviceBlocks().size() == 1);
+        CHECK(parsed.serviceBlocks()[0].serviceNumber() == 1);
+        CHECK(parsed.serviceBlocks()[0].text() == "Hello");
+}
+
+TEST_CASE("Cea708DtvccPacket::fromCcData rejects a first triple with wrong cc_type") {
+        Cea708Cdp::CcDataList triples;
+        triples.pushToBack(Cea708Cdp::CcData{true, 3 /*data, expected start*/, 0x81, 0x00});
+        auto [parsed, err] = Cea708DtvccPacket::fromCcData(triples);
+        CHECK(err.code() == Error::ParseFailed);
+}
+
+TEST_CASE("Cea708DtvccPacket: triple count matches the spec formula") {
+        // Payload size = 1 (header byte) + service block bytes.
+        // Triple count = ceil((1 + payload) / 2) = ceil(packet_size / 2).
+        Cea708DtvccPacket pkt(0, {});
+        pkt.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf({'A', 'B', 'C'})));
+        // payload = 1 (header) + 1 (block hdr) + 3 (chars) = wait, the
+        // "packet payload" for the wire is the *post-header* data.
+        // packet_size in our header = payloadSize + 1.  Wire bytes
+        // emitted across triples = packet_size = payloadSize + 1.
+        // payloadSize = 4 (block hdr 0x23 + 'A' + 'B' + 'C'),
+        // packet_size = 5, triple count = ceil(5/2) = 3.
+        Cea708Cdp::CcDataList triples = pkt.toCcData();
+        CHECK(triples.size() == 3);
+}

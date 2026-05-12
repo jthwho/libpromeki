@@ -426,3 +426,105 @@ TEST_CASE("TPG: VANC line config carries through to the emitted ST 291 packet") 
         io->close().wait();
         delete io;
 }
+
+// ============================================================================
+// SCC bypass (Phase 3.5f)
+// ============================================================================
+
+namespace {
+
+        /// @brief Writes a tiny SCC fixture to a unique path.
+        String writeSccFixture(const String &body) {
+                const int64_t ns = TimeStamp::now().nanoseconds();
+                FilePath      p = Dir::temp().path()
+                                / String::sprintf("promeki_tpg_anc_scc_%lld.scc",
+                                                   static_cast<long long>(ns));
+                File          f(p.toString());
+                REQUIRE(f.open(IODevice::WriteOnly, File::Create | File::Truncate).isOk());
+                f.write(body.cstr(), static_cast<int64_t>(body.byteCount()));
+                f.close();
+                return p.toString();
+        }
+
+} // namespace
+
+TEST_CASE("TPG[SCC]: byte pairs from SCC file ride into cc_data at the matching frames") {
+        // Single SCC row with three byte pairs.  The first row anchors
+        // to TPG frame 0, so pair 0 lands on frame 0, pair 1 on frame 1,
+        // pair 2 on frame 2.  Frames 3+ get the null pair.
+        const String sccPath = writeSccFixture(
+                "Scenarist_SCC V1.0\r\n\r\n01:00:00:00\t9420 c441 cd4f\r\n");
+
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("TPG");
+        cfg.set(MediaConfig::TpgAncCaptionsEnabled, true);
+        cfg.set(MediaConfig::TpgAncCaptionsScc, sccPath);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open().wait().isOk());
+
+        AncTranslator t;
+        // Frame 0: 0x9420 (RCL b1 + b2 already stamped).
+        Frame                   f0 = readOneFrame(io);
+        AncPayload::PtrList     ancs0 = f0.ancPayloads();
+        REQUIRE(ancs0.size() == 1);
+        Result<Variant> parsed0 = t.parse(ancs0[0]->packets()[0]);
+        REQUIRE(parsed0.second().isOk());
+        Cea708Cdp cdp0 = parsed0.first().get<Cea708Cdp>();
+        REQUIRE(cdp0.ccData.size() == 1);
+        CHECK(cdp0.ccData[0].b1 == 0x94);
+        CHECK(cdp0.ccData[0].b2 == 0x20);
+
+        // Frame 1: 0xC441 (parity-stamped "D" - 'A' in 6-bit, with parity).
+        Frame                   f1 = readOneFrame(io);
+        AncPayload::PtrList     ancs1 = f1.ancPayloads();
+        REQUIRE(ancs1.size() == 1);
+        Cea708Cdp cdp1 = t.parse(ancs1[0]->packets()[0]).first().get<Cea708Cdp>();
+        REQUIRE(cdp1.ccData.size() == 1);
+        CHECK(cdp1.ccData[0].b1 == 0xC4);
+        CHECK(cdp1.ccData[0].b2 == 0x41);
+
+        // Frame 2: 0xCD4F.
+        Frame                   f2 = readOneFrame(io);
+        Cea708Cdp               cdp2 = t.parse(f2.ancPayloads()[0]->packets()[0]).first().get<Cea708Cdp>();
+        REQUIRE(cdp2.ccData.size() == 1);
+        CHECK(cdp2.ccData[0].b1 == 0xCD);
+        CHECK(cdp2.ccData[0].b2 == 0x4F);
+
+        // Frame 3: null pair.
+        Frame     f3 = readOneFrame(io);
+        Cea708Cdp cdp3 = t.parse(f3.ancPayloads()[0]->packets()[0]).first().get<Cea708Cdp>();
+        REQUIRE(cdp3.ccData.size() == 1);
+        CHECK(cdp3.ccData[0].b1 == 0x80);
+        CHECK(cdp3.ccData[0].b2 == 0x80);
+
+        io->close().wait();
+        delete io;
+}
+
+TEST_CASE("TPG[SCC]: TpgAncCaptionsFile + TpgAncCaptionsScc are mutually exclusive") {
+        const String srtPath = writeSrtFixture(
+                "1\r\n00:00:01,000 --> 00:00:02,000\r\nAB\r\n\r\n");
+        const String sccPath = writeSccFixture(
+                "Scenarist_SCC V1.0\r\n\r\n01:00:00:00\t9420\r\n");
+
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("TPG");
+        cfg.set(MediaConfig::TpgAncCaptionsEnabled, true);
+        cfg.set(MediaConfig::TpgAncCaptionsFile, srtPath);
+        cfg.set(MediaConfig::TpgAncCaptionsScc, sccPath);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        CHECK(io->open().wait().code() == Error::InvalidArgument);
+        delete io;
+}
+
+TEST_CASE("TPG[SCC]: malformed SCC file -> ParseFailed on open") {
+        const String sccPath = writeSccFixture("not-an-scc-file\r\n");
+
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("TPG");
+        cfg.set(MediaConfig::TpgAncCaptionsEnabled, true);
+        cfg.set(MediaConfig::TpgAncCaptionsScc, sccPath);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        CHECK(io->open().wait().code() == Error::ParseFailed);
+        delete io;
+}

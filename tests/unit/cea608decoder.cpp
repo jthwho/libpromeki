@@ -439,3 +439,142 @@ TEST_CASE("Cea608: bold span emits a warning but encodes the non-bold attributes
         CHECK_FALSE(span.bold()); // 608 wire cannot carry bold.
         CHECK(span.italic());     // Italic survives.
 }
+
+// ============================================================================
+// Paint-on mode (Phase 3.5d)
+// ============================================================================
+
+TEST_CASE("Cea608Decoder[paint-on]: hand-rolled RDC/PAC/chars/EDM emits one cue") {
+        Cea608Decoder dec;
+        // Frames 0..1: RDC doubled.  Mode → paint-on.
+        dec.pushFrame(FrameNumber(0), tsFromMs(0),
+                      onePair(Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        dec.pushFrame(FrameNumber(1), tsFromMs(33),
+                      onePair(Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        // Frames 2..3: PAC doubled (row 15).  Cue start set here.
+        const TimeStamp pacTs = tsFromMs(67);
+        dec.pushFrame(FrameNumber(2), pacTs,
+                      onePair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        dec.pushFrame(FrameNumber(3), tsFromMs(100),
+                      onePair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        // Frame 4: "AB" — live commit.
+        dec.pushFrame(FrameNumber(4), tsFromMs(133), onePair(0x41, 0x42));
+        // Live display visible.
+        CHECK(dec.displayedText() == "AB");
+        // Frames 5..29: null; cue continues to be live.
+        for (int64_t f = 5; f < 30; ++f) {
+                dec.pushFrame(FrameNumber(f), tsFromMs(f * 1000 / 30), onePair(0, 0));
+                CHECK(dec.displayedText() == "AB");
+        }
+        // Frames 30..31: EDM doubled — finalize the cue.
+        const TimeStamp edmTs = tsFromMs(1000);
+        dec.pushFrame(FrameNumber(30), edmTs,
+                      onePair(Cea608::EdmB1, Cea608::EdmB2));
+        dec.pushFrame(FrameNumber(31), tsFromMs(1033),
+                      onePair(Cea608::EdmB1, Cea608::EdmB2));
+        CHECK(dec.displayedText() == "");
+
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "AB");
+        // Cue start is the PAC timestamp (paint-on sets start on first
+        // PAC after RDC, refined to the moment writing actually begins).
+        CHECK(out[0].start() == pacTs);
+        CHECK(out[0].end() == edmTs);
+}
+
+TEST_CASE("Cea608Decoder[paint-on]: round-trips with Cea608Encoder") {
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        encCfg.mode = Cea608Encoder::Mode::PaintOn;
+        Cea608Encoder enc(encCfg);
+        Cea608Decoder dec;
+
+        SubtitleList in;
+        in.append(Subtitle(tsAt30fps(30), tsAt30fps(90), "HELLO "));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        runEncoderToDecoder(enc, dec, 110);
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "HELLO ");
+        // End is the EDM frame timestamp (frame 90).
+        CHECK(out[0].end() == tsAt30fps(90));
+}
+
+// ============================================================================
+// Roll-up mode (Phase 3.5d)
+// ============================================================================
+
+TEST_CASE("Cea608Decoder[roll-up]: hand-rolled RU2/CR/chars/CR emits one cue per row") {
+        Cea608Decoder dec;
+        // Frames 0..1: RU2 doubled.  Mode → roll-up; clears displayed.
+        dec.pushFrame(FrameNumber(0), tsFromMs(0),
+                      onePair(Cea608::Cc1MiscFirstByte, Cea608::MiscRU2));
+        dec.pushFrame(FrameNumber(1), tsFromMs(33),
+                      onePair(Cea608::Cc1MiscFirstByte, Cea608::MiscRU2));
+        // Frames 2..3: CR doubled.  Starts row 1.
+        const TimeStamp cr1Ts = tsFromMs(67);
+        dec.pushFrame(FrameNumber(2), cr1Ts,
+                      onePair(Cea608::Cc1MiscFirstByte, Cea608::MiscCR));
+        dec.pushFrame(FrameNumber(3), tsFromMs(100),
+                      onePair(Cea608::Cc1MiscFirstByte, Cea608::MiscCR));
+        // Frame 4..5: PAC doubled.
+        dec.pushFrame(FrameNumber(4), tsFromMs(133),
+                      onePair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        dec.pushFrame(FrameNumber(5), tsFromMs(167),
+                      onePair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        // Frame 6: "AB".
+        dec.pushFrame(FrameNumber(6), tsFromMs(200), onePair(0x41, 0x42));
+        CHECK(dec.displayedText() == "AB");
+        // Frame 7..10: nulls.
+        for (int64_t f = 7; f < 11; ++f) {
+                dec.pushFrame(FrameNumber(f), tsFromMs(f * 1000 / 30), onePair(0, 0));
+        }
+        // Frame 11..12: CR doubled — emits row 1 as cue, starts row 2.
+        const TimeStamp cr2Ts = tsFromMs(367);
+        dec.pushFrame(FrameNumber(11), cr2Ts,
+                      onePair(Cea608::Cc1MiscFirstByte, Cea608::MiscCR));
+        dec.pushFrame(FrameNumber(12), tsFromMs(400),
+                      onePair(Cea608::Cc1MiscFirstByte, Cea608::MiscCR));
+        // Frame 13: "CD".
+        dec.pushFrame(FrameNumber(13), tsFromMs(433), onePair(0x43, 0x44));
+
+        const TimeStamp finalTs = tsFromMs(500);
+        dec.pushFrame(FrameNumber(14), finalTs, onePair(0, 0));
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 2);
+        CHECK(out[0].text() == "AB");
+        CHECK(out[0].start() == cr1Ts);
+        CHECK(out[0].end() == cr2Ts);
+        CHECK(out[1].text() == "CD");
+        CHECK(out[1].start() == cr2Ts);
+        CHECK(out[1].end() == finalTs); // finalize closes last row.
+}
+
+TEST_CASE("Cea608Decoder[roll-up]: round-trips with Cea608Encoder") {
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        encCfg.mode = Cea608Encoder::Mode::RollUp;
+        encCfg.rollUpRows = 2;
+        Cea608Encoder enc(encCfg);
+        Cea608Decoder dec;
+
+        SubtitleList in;
+        in.append(Subtitle(tsAt30fps(30), tsAt30fps(120), "ABCD"));
+        in.append(Subtitle(tsAt30fps(150), tsAt30fps(240), "EFGH"));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        runEncoderToDecoder(enc, dec, 260);
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 2);
+        CHECK(out[0].text() == "ABCD");
+        CHECK(out[1].text() == "EFGH");
+        // Cue boundary in roll-up: cue 0 starts at first CR (which
+        // lands at firstFrame+2 = frame 26 = tsAt30fps(26)).  This
+        // test relies on the encoder's specific layout — looser
+        // checks just verify that the cues are emitted, not the
+        // exact timestamps.
+        CHECK(out[0].start().value() <= out[0].end().value());
+        CHECK(out[1].start().value() <= out[1].end().value());
+}

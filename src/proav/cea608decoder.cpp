@@ -84,30 +84,61 @@ namespace {
 struct Cea608DecoderImpl {
                 PROMEKI_SHARED_FINAL(Cea608DecoderImpl)
 
+                /// @brief Inferred operating mode from the most recently
+                ///        seen mode-establishing control code (@c RCL,
+                ///        @c RDC, @c RU2/3/4).  Default @c PopOn so
+                ///        streams that omit the mode setup (legacy
+                ///        captioners that don't send RCL/RDC explicitly)
+                ///        still decode the pop-on byte stream.
+                enum class CurrentMode {
+                        PopOn  = 0,
+                        PaintOn = 1,
+                        RollUp  = 2,
+                };
+
                 Cea608Decoder::Config cfg;
+                CurrentMode           currentMode = CurrentMode::PopOn;
+                /// @brief Roll-up window size (2/3/4 rows visible).
+                ///        Set on @c RUx; not currently used for cue
+                ///        emission but kept for diagnostic and future
+                ///        multi-row state.
+                int rollUpRows = 2;
 
-                // ---- Pop-on loading state (non-displayed buffer) ----
+                // ---- Loading buffer (used by all modes) ----
+                //
+                // For PopOn this is the spec's "non-displayed memory":
+                // characters accumulate here while the previous cue is
+                // on screen; the buffer is swapped to displayed on EOC.
+                //
+                // For PaintOn and RollUp the buffer is *also* the live
+                // display state — chars commit to it (and so to the
+                // displayed view) immediately.  The buffer is emitted
+                // as a cue on EDM (PaintOn) or CR / next CR / finalize
+                // (RollUp).
 
-                /// @brief Styled spans accumulated into non-displayed
-                ///        memory.  Flushed on EOC into @ref displayed.
+                /// @brief Styled spans accumulated so far.
                 SubtitleSpan::List loadingSpans;
                 /// @brief Anchor implied by the most recent PAC.
                 SubtitleAnchor loadingAnchor;
                 /// @brief Current wire style — driven by PAC + mid-row
-                ///        receipts; resets to defaults on RCL.
+                ///        receipts; resets to defaults on RCL / RDC /
+                ///        RUx.
                 WireStyle loadingStyle;
                 /// @brief Character accumulator for the *current* span
                 ///        (the run of characters that has been seen
                 ///        since the last PAC / mid-row code).  Flushed
                 ///        into @ref loadingSpans whenever the style
-                ///        changes or on EOC.
+                ///        changes or on EOC / CR / EDM.
                 String loadingText;
                 /// @brief @c true once a PAC has been received for the
-                ///        non-displayed buffer.  Drives whether we
-                ///        bother to consult the anchor / styled spans
-                ///        on EOC vs falling back to plain-text legacy
-                ///        behaviour.
+                ///        loading buffer.  Drives whether we bother to
+                ///        consult the anchor / styled spans on cue
+                ///        emission.
                 bool loadingHasPac = false;
+                /// @brief Cue start timestamp for paint-on (set on
+                ///        RDC, refined on first PAC / char) and the
+                ///        start of the current row for roll-up.
+                TimeStamp loadingStart;
 
                 // ---- Displayed state ----
 
@@ -155,13 +186,22 @@ struct Cea608DecoderImpl {
                 SubtitleList cues;
 
                 /// @brief Appends one character byte to the current
-                ///        non-displayed span's text buffer.  Drops
-                ///        anything outside 0x20..0x7E (v1 doesn't
-                ///        model the 608 extended sets).
+                ///        span's text buffer.  Drops anything outside
+                ///        0x20..0x7E (v1 doesn't model the 608
+                ///        extended sets).
+                ///
+                /// For paint-on / roll-up modes the loading buffer is
+                /// also the live display state — mirror the append
+                /// into @ref displayedFlat so the @ref displayedText
+                /// accessor stays current without callers having to
+                /// flush a temporary span.
                 void appendChar(uint8_t c) {
                         if (c < 0x20 || c > 0x7F) return;
                         char tmp[2] = {static_cast<char>(c), 0};
                         loadingText += tmp;
+                        if (currentMode == CurrentMode::PaintOn || currentMode == CurrentMode::RollUp) {
+                                displayedFlat += tmp;
+                        }
                 }
 
                 /// @brief Builds a @ref SubtitleSpan from the current
@@ -207,12 +247,7 @@ struct Cea608DecoderImpl {
                         cueDisplayed = false;
                 }
 
-                void doRCL() {
-                        // Resume Caption Loading: clear non-displayed
-                        // memory and reset the wire style to defaults
-                        // (white, no italic, no underline).  The
-                        // currently-displayed cue is untouched until
-                        // the next EOC or EDM.
+                void resetLoading() {
                         loadingSpans = SubtitleSpan::List();
                         loadingText = String();
                         loadingStyle = WireStyle();
@@ -220,20 +255,96 @@ struct Cea608DecoderImpl {
                         loadingAnchor = SubtitleAnchor::Default;
                 }
 
-                void doPac(const Cea608::PacAttr &pac) {
+                /// @brief Emits the current loading buffer as a cue
+                ///        with the given start / end timestamps and
+                ///        clears the buffer.  Also clears the live
+                ///        @ref displayedFlat mirror for paint-on /
+                ///        roll-up modes.
+                void emitLoading(const TimeStamp &start, const TimeStamp &end) {
+                        flushCurrentText();
+                        if (loadingSpans.isEmpty()) {
+                                resetLoading();
+                                if (currentMode == CurrentMode::PaintOn
+                                    || currentMode == CurrentMode::RollUp) {
+                                        displayedFlat = String();
+                                }
+                                return;
+                        }
+                        Subtitle s(start, end, loadingSpans,
+                                   loadingHasPac ? loadingAnchor : SubtitleAnchor::Default, Rect2Di32(),
+                                   String(), Metadata());
+                        cues.append(s);
+                        resetLoading();
+                        if (currentMode == CurrentMode::PaintOn || currentMode == CurrentMode::RollUp) {
+                                displayedFlat = String();
+                        }
+                }
+
+                void doRCL() {
+                        // Resume Caption Loading: enter pop-on mode and
+                        // clear non-displayed memory.  Reset the wire
+                        // style to defaults (white, no italic, no
+                        // underline).  The currently-displayed cue is
+                        // untouched until the next EOC or EDM.
+                        currentMode = CurrentMode::PopOn;
+                        resetLoading();
+                }
+
+                void doRDC(const TimeStamp &ts) {
+                        // Resume Direct Captioning: enter paint-on
+                        // mode.  Per spec, paint-on writes to displayed
+                        // memory directly.  We model that as: the
+                        // loading buffer becomes the live cue, emitted
+                        // on EDM.  Any in-flight pop-on cue is
+                        // finalized at @p ts so it doesn't bleed across
+                        // the mode change.
+                        if (cueDisplayed) emitDisplayed(ts);
+                        currentMode = CurrentMode::PaintOn;
+                        resetLoading();
+                        displayedFlat = String();
+                        loadingStart = ts;
+                }
+
+                void doRUx(int rows, const TimeStamp &ts) {
+                        // RU2/RU3/RU4: enter roll-up mode with N
+                        // visible rows.  Per spec, RUx clears displayed
+                        // memory and positions the cursor at row 15.
+                        // Any in-flight pop-on cue is finalized.
+                        if (cueDisplayed) emitDisplayed(ts);
+                        currentMode = CurrentMode::RollUp;
+                        rollUpRows = rows;
+                        resetLoading();
+                        displayedFlat = String();
+                        loadingStart = ts;
+                }
+
+                void doCR(const TimeStamp &ts) {
+                        if (currentMode != CurrentMode::RollUp) return;
+                        // Carriage Return: finalize the current row as
+                        // a cue (when non-empty) and start a new row.
+                        emitLoading(loadingStart, ts);
+                        loadingStart = ts;
+                }
+
+                void doPac(const Cea608::PacAttr &pac, const TimeStamp &ts) {
                         // PAC at the start of a line sets row + style.
                         // Mid-line PACs nominally move the cursor to a
-                        // new row; v1 collapses them to "anchor +
-                        // style update" without modeling cursor
-                        // teleport (the encoder only emits one PAC
-                        // per cue anyway, so this matches our round-
-                        // trip contract).
+                        // new row; v1 collapses them to "anchor + style
+                        // update" without modeling cursor teleport (the
+                        // encoder only emits one PAC per cue anyway,
+                        // so this matches our round-trip contract).
                         flushCurrentText();
                         loadingAnchor = rowToAnchor(pac.row);
                         loadingStyle.color = pac.color;
                         loadingStyle.italic = pac.italic;
                         loadingStyle.underline = pac.underline;
                         loadingHasPac = true;
+                        // Paint-on: PAC marks the start of a new cue
+                        // (RDC sets the mode, PAC sets the row + start).
+                        if (currentMode == CurrentMode::PaintOn && loadingSpans.isEmpty()
+                            && loadingText.isEmpty()) {
+                                loadingStart = ts;
+                        }
                 }
 
                 void doMidRow(Cea608::CaptionColor c, bool italic, bool underline) {
@@ -244,9 +355,10 @@ struct Cea608DecoderImpl {
                 }
 
                 void doEOC(const TimeStamp &ts) {
-                        // Flush the trailing text run and swap
-                        // non-displayed → displayed.  If a cue was
-                        // already on screen, it ends now.
+                        // Pop-on only: swap non-displayed → displayed.
+                        // In paint-on / roll-up mode EOC is unexpected;
+                        // we treat it as a no-op to be permissive.
+                        if (currentMode != CurrentMode::PopOn) return;
                         flushCurrentText();
                         if (cueDisplayed) emitDisplayed(ts);
 
@@ -263,11 +375,6 @@ struct Cea608DecoderImpl {
                         }
 
                         loadingSpans = SubtitleSpan::List();
-                        // RCL-style reset of the loading state — the
-                        // sender will typically send another RCL
-                        // before the next cue, but we reset here too
-                        // so a non-conforming stream doesn't leak
-                        // style across cues.
                         loadingText = String();
                         loadingStyle = WireStyle();
                         loadingHasPac = false;
@@ -275,15 +382,25 @@ struct Cea608DecoderImpl {
                 }
 
                 void doEDM(const TimeStamp &ts) {
-                        // Erase Displayed Memory: finalize the cue.
+                        // Pop-on: finalize the currently-displayed cue.
+                        // Paint-on: finalize the loading buffer (which
+                        //   was the live cue).
+                        // Roll-up: finalize the current row.
+                        if (currentMode == CurrentMode::PaintOn || currentMode == CurrentMode::RollUp) {
+                                emitLoading(loadingStart, ts);
+                                loadingStart = ts;
+                                return;
+                        }
                         if (cueDisplayed) emitDisplayed(ts);
                 }
 
                 void doENM() {
-                        // Erase Non-displayed Memory.  Common after
-                        // RCL has already done the same; harmless to
-                        // re-do.  Don't reset PAC state — ENM only
-                        // touches the buffer.
+                        // Erase Non-displayed Memory.  In pop-on
+                        // (where this is most often emitted) this
+                        // clears the load buffer.  In other modes
+                        // the loading buffer is the live cue, so
+                        // ENM still clears it but loses the current
+                        // paint-on / roll-up cue's chars.
                         loadingSpans = SubtitleSpan::List();
                         loadingText = String();
                 }
@@ -317,7 +434,7 @@ struct Cea608DecoderImpl {
                                 // 0x14 misc codes.
                                 if (Cea608::isPac(b1, b2)) {
                                         Cea608::PacAttr pac;
-                                        if (Cea608::decodePac(b1, b2, pac)) doPac(pac);
+                                        if (Cea608::decodePac(b1, b2, pac)) doPac(pac, ts);
                                 } else if (Cea608::isMidRow(b1, b2)) {
                                         Cea608::CaptionColor c;
                                         bool                 it = false, ul = false;
@@ -325,12 +442,17 @@ struct Cea608DecoderImpl {
                                 } else if (b1 == 0x14) {
                                         switch (b2) {
                                                 case Cea608::MiscRCL: doRCL(); break;
+                                                case Cea608::MiscRDC: doRDC(ts); break;
+                                                case Cea608::MiscRU2: doRUx(2, ts); break;
+                                                case Cea608::MiscRU3: doRUx(3, ts); break;
+                                                case Cea608::MiscRU4: doRUx(4, ts); break;
+                                                case Cea608::MiscCR:  doCR(ts); break;
                                                 case Cea608::MiscEDM: doEDM(ts); break;
                                                 case Cea608::MiscENM: doENM(); break;
                                                 case Cea608::MiscEOC: doEOC(ts); break;
                                                 default:
-                                                        // BS / DER / RUx / FON / RDC /
-                                                        // TR / RTD / CR — v1 ignores.
+                                                        // BS / DER / FON / TR / RTD —
+                                                        // v1 ignores.
                                                         break;
                                         }
                                 }
@@ -366,11 +488,14 @@ const Cea608Decoder::Config &Cea608Decoder::config() const { return _d->cfg; }
 
 void Cea608Decoder::reset() {
         auto *d = _d.modify();
+        d->currentMode = Cea608DecoderImpl::CurrentMode::PopOn;
+        d->rollUpRows = 2;
         d->loadingSpans = SubtitleSpan::List();
         d->loadingAnchor = SubtitleAnchor::Default;
         d->loadingStyle = WireStyle();
         d->loadingText = String();
         d->loadingHasPac = false;
+        d->loadingStart = TimeStamp();
         d->displayedSpans = SubtitleSpan::List();
         d->displayedAnchor = SubtitleAnchor::Default;
         d->displayedStart = TimeStamp();
@@ -383,16 +508,39 @@ void Cea608Decoder::reset() {
         d->cues = SubtitleList();
 }
 
-const String &Cea608Decoder::displayedText() const { return _d->displayedFlat; }
+const String &Cea608Decoder::displayedText() const {
+        // For pop-on, the live display is the swapped-in cue
+        // (displayedFlat).  For paint-on and roll-up, the loading
+        // buffer is the live display — return its flat text on the
+        // fly.  We can't return a String& from a temporary, so the
+        // pimpl caches displayedFlat for paint-on/roll-up callers
+        // via the live-update path on appendChar.
+        return _d->displayedFlat;
+}
 
 Subtitle Cea608Decoder::displayedCue() const {
-        if (!_d->cueDisplayed || _d->displayedSpans.isEmpty()) return Subtitle();
-        // End is provisional — the cue is still live; the renderer
-        // doesn't look at start/end anyway (cue selection happens
-        // upstream of the renderer).  Pass the most-recent frame
-        // timestamp so callers that *do* read the end at least see
-        // a non-decreasing value.
-        return Subtitle(_d->displayedStart, _d->lastFrameTs, _d->displayedSpans, _d->displayedAnchor,
+        const Cea608DecoderImpl *d = _d.operator->();
+        if (d->currentMode == Cea608DecoderImpl::CurrentMode::PaintOn
+            || d->currentMode == Cea608DecoderImpl::CurrentMode::RollUp) {
+                // Live state lives in the loading buffer.  Flush the
+                // trailing text run into a temp span list before
+                // returning so the renderer sees the current text.
+                SubtitleSpan::List spans = d->loadingSpans;
+                if (!d->loadingText.isEmpty()) {
+                        Color c;
+                        if (d->loadingStyle.color != Cea608::CaptionColor::White) {
+                                c = paletteColor(d->loadingStyle.color);
+                        }
+                        spans.pushToBack(SubtitleSpan(d->loadingText, false, d->loadingStyle.italic,
+                                                     d->loadingStyle.underline, c));
+                }
+                if (spans.isEmpty()) return Subtitle();
+                return Subtitle(d->loadingStart, d->lastFrameTs, spans,
+                                d->loadingHasPac ? d->loadingAnchor : SubtitleAnchor::Default,
+                                Rect2Di32(), String(), Metadata());
+        }
+        if (!d->cueDisplayed || d->displayedSpans.isEmpty()) return Subtitle();
+        return Subtitle(d->displayedStart, d->lastFrameTs, d->displayedSpans, d->displayedAnchor,
                         Rect2Di32(), String(), Metadata());
 }
 
@@ -412,15 +560,26 @@ void Cea608Decoder::pushFrame(FrameNumber /*frame*/, TimeStamp ts, const Cea708C
 
 SubtitleList Cea608Decoder::finalize() {
         auto *d = _d.modify();
-        // Close any still-displayed cue at the last-pushed timestamp.
-        if (d->cueDisplayed) d->emitDisplayed(d->lastFrameTs);
+        // Close any still-live cue at the last-pushed timestamp.
+        if (d->currentMode == Cea608DecoderImpl::CurrentMode::PaintOn
+            || d->currentMode == Cea608DecoderImpl::CurrentMode::RollUp) {
+                // Paint-on: still-painting cue gets end=lastFrameTs.
+                // Roll-up: the final row (no trailing CR / EDM) gets
+                // end=lastFrameTs.
+                d->emitLoading(d->loadingStart, d->lastFrameTs);
+        } else if (d->cueDisplayed) {
+                d->emitDisplayed(d->lastFrameTs);
+        }
         SubtitleList out = d->cues;
         // Reset for re-use.
+        d->currentMode = Cea608DecoderImpl::CurrentMode::PopOn;
+        d->rollUpRows = 2;
         d->loadingSpans = SubtitleSpan::List();
         d->loadingAnchor = SubtitleAnchor::Default;
         d->loadingStyle = WireStyle();
         d->loadingText = String();
         d->loadingHasPac = false;
+        d->loadingStart = TimeStamp();
         d->displayedSpans = SubtitleSpan::List();
         d->displayedAnchor = SubtitleAnchor::Default;
         d->displayedStart = TimeStamp();

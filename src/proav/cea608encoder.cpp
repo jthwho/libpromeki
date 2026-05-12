@@ -186,6 +186,20 @@ namespace {
                         bool                hadBold;   ///< @c true when any span requested bold (warn flag).
         };
 
+        /// @brief Pre-parity byte pair for one of the roll-up
+        ///        "set row count" control codes.
+        ScheduledPair rollUpControl(int rows) {
+                ScheduledPair p;
+                p.b1 = Cea608::Cc1MiscFirstByte;
+                switch (rows) {
+                        case 3: p.b2 = Cea608::MiscRU3; break;
+                        case 4: p.b2 = Cea608::MiscRU4; break;
+                        case 2:
+                        default: p.b2 = Cea608::MiscRU2; break;
+                }
+                return p;
+        }
+
         CueBody buildCueBody(const Subtitle &cue) {
                 CueBody body;
                 body.hadBold = false;
@@ -279,6 +293,306 @@ void Cea608Encoder::reset() { _d.modify()->schedule.clear(); }
 // Cea608Encoder — setSubtitles (scheduling)
 // ============================================================================
 
+namespace {
+
+        /// @brief Logs a one-shot bold-not-representable warning the
+        ///        first time a span requests bold.  Mutating reference
+        ///        is the latch.
+        void warnBoldOnce(bool &warned, size_t cueIndex) {
+                if (warned) return;
+                promekiWarn("Cea608Encoder::setSubtitles: bold is not representable "
+                            "in CEA-608; bold spans encode without the bold flag "
+                            "(first occurrence at cue %zu)",
+                            cueIndex);
+                warned = true;
+        }
+
+        /// @brief Per-cue character-pair sequence including a leading
+        ///        PAC pair and any mid-row codes between style runs.
+        ///        Shared by paint-on and roll-up — both emit the same
+        ///        "PAC, chars, (MR, chars)*" body shape; only the
+        ///        framing control codes differ.
+        Error buildPopOnSchedule(Cea608EncoderImpl *d, const SubtitleList &subs) {
+                // Walk cues in chronological order.  EDM scheduling is
+                // *deferred*: a cue's EDM is held aside and only
+                // committed when we know the next cue's pre-roll doesn't
+                // overlap it (real-world encoders elide the EDM in that
+                // case).
+                int64_t lastEocFrame = INT64_MIN;
+                int64_t pendingEdmFrame = INT64_MIN;
+                bool    boldWarned = false;
+                for (size_t i = 0; i < subs.size(); ++i) {
+                        const Subtitle &cue = subs[i];
+
+                        const int64_t startFrame = timeStampToFrame(cue.start(), d->cfg.frameRate);
+                        const int64_t endFrame = timeStampToFrame(cue.end(), d->cfg.frameRate);
+                        if (endFrame <= startFrame) continue;
+
+                        CueBody body = buildCueBody(cue);
+                        if (body.hadBold) warnBoldOnce(boldWarned, i);
+
+                        const size_t  preRollFrames = 2 + body.bytes.size();
+                        const int64_t firstFrame = startFrame - static_cast<int64_t>(preRollFrames);
+
+                        if (firstFrame < 0) {
+                                promekiWarn("Cea608Encoder::setSubtitles: cue %zu pre-roll "
+                                            "starts at frame %lld (before frame 0); cue.start "
+                                            "is too close to media t=0 for the cue's length",
+                                            i, static_cast<long long>(firstFrame));
+                                return Error::OutOfRange;
+                        }
+                        if (firstFrame <= lastEocFrame) {
+                                promekiWarn("Cea608Encoder::setSubtitles: cue %zu pre-roll (first "
+                                            "frame %lld) overlaps prior cue's wire stream (last "
+                                            "byte frame %lld)",
+                                            i, static_cast<long long>(firstFrame),
+                                            static_cast<long long>(lastEocFrame));
+                                return Error::OutOfRange;
+                        }
+                        if (pendingEdmFrame != INT64_MIN) {
+                                if (firstFrame > pendingEdmFrame + 1) {
+                                        d->schedule.insert(pendingEdmFrame,
+                                                           ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
+                                        d->schedule.insert(pendingEdmFrame + 1,
+                                                           ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
+                                }
+                                pendingEdmFrame = INT64_MIN;
+                        }
+
+                        int64_t f = firstFrame;
+                        d->schedule.insert(f++, ScheduledPair{Cea608::RclB1, Cea608::RclB2});
+                        d->schedule.insert(f++, ScheduledPair{Cea608::RclB1, Cea608::RclB2});
+                        for (size_t b = 0; b < body.bytes.size(); ++b) {
+                                d->schedule.insert(f++, body.bytes[b]);
+                        }
+                        d->schedule.insert(f++, ScheduledPair{Cea608::EocB1, Cea608::EocB2});
+                        d->schedule.insert(f++, ScheduledPair{Cea608::EocB1, Cea608::EocB2});
+
+                        pendingEdmFrame = endFrame;
+                        lastEocFrame = startFrame + 1;
+                }
+                if (pendingEdmFrame != INT64_MIN) {
+                        d->schedule.insert(pendingEdmFrame, ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
+                        d->schedule.insert(pendingEdmFrame + 1, ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
+                }
+                return Error::Ok;
+        }
+
+        /// @brief Schedules a paint-on cue list.
+        ///
+        /// Per-cue layout:
+        ///
+        /// @code
+        ///   [RDC,RDC, PAC,PAC, (chars|MR,MR)..., EDM,EDM]
+        /// @endcode
+        ///
+        /// Pre-roll = 4 frames (doubled RDC + doubled PAC).  Characters
+        /// land at @c startFrame... @c startFrame+N-1 (where @c N is
+        /// the body's char/MR-pair count, i.e. @c body.size()-2 for the
+        /// initial PAC pair).  EDM doubled at @c endFrame /
+        /// @c endFrame+1.
+        ///
+        /// Unlike pop-on (where the receiver-side memory swap happens
+        /// on the @c EOC pair so cue text is hidden until @c startFrame),
+        /// paint-on writes directly to displayed memory.  The first
+        /// character lands at @c startFrame so the cue's leading edge
+        /// matches the pop-on contract — receivers see the first char
+        /// appear at @c startFrame and the cue continue to paint over
+        /// the next @c N-1 frames.
+        ///
+        /// EDM scheduling mirrors pop-on's deferred-then-elide policy
+        /// for back-to-back cues.
+        Error buildPaintOnSchedule(Cea608EncoderImpl *d, const SubtitleList &subs) {
+                int64_t lastByteFrame = INT64_MIN;
+                int64_t pendingEdmFrame = INT64_MIN;
+                bool    boldWarned = false;
+                for (size_t i = 0; i < subs.size(); ++i) {
+                        const Subtitle &cue = subs[i];
+
+                        const int64_t startFrame = timeStampToFrame(cue.start(), d->cfg.frameRate);
+                        const int64_t endFrame = timeStampToFrame(cue.end(), d->cfg.frameRate);
+                        if (endFrame <= startFrame) continue;
+
+                        CueBody body = buildCueBody(cue);
+                        if (body.hadBold) warnBoldOnce(boldWarned, i);
+
+                        // Body shape from buildCueBody: [PAC,PAC,(MR,MR,)?chars...].
+                        // Paint-on splits that into:
+                        //   pre-roll (lands before startFrame): RDC,RDC + PAC,PAC = 4 frames
+                        //   live chars (land at startFrame onward): body.bytes minus the
+                        //                                           leading PAC,PAC.
+                        // Body always begins with PAC,PAC (buildCueBody contract).
+                        if (body.bytes.size() < 2) {
+                                // Defensive: should never happen, PAC pair always present.
+                                continue;
+                        }
+                        const size_t  charCount = body.bytes.size() - 2;
+                        const int64_t firstFrame = startFrame - 4; // 2 RDC + 2 PAC
+                        const int64_t lastCharFrame = startFrame + static_cast<int64_t>(charCount) - 1;
+
+                        if (firstFrame < 0) {
+                                promekiWarn("Cea608Encoder::setSubtitles[paint-on]: cue %zu pre-roll "
+                                            "starts at frame %lld (before frame 0)",
+                                            i, static_cast<long long>(firstFrame));
+                                return Error::OutOfRange;
+                        }
+                        if (firstFrame <= lastByteFrame) {
+                                promekiWarn("Cea608Encoder::setSubtitles[paint-on]: cue %zu pre-roll "
+                                            "(first frame %lld) overlaps prior cue's wire stream "
+                                            "(last byte frame %lld)",
+                                            i, static_cast<long long>(firstFrame),
+                                            static_cast<long long>(lastByteFrame));
+                                return Error::OutOfRange;
+                        }
+                        if (charCount > 0 && lastCharFrame >= endFrame) {
+                                promekiWarn("Cea608Encoder::setSubtitles[paint-on]: cue %zu has "
+                                            "%zu char pairs (%lld frames) but only %lld frames "
+                                            "of display time — chars would overrun cue end",
+                                            i, charCount, static_cast<long long>(charCount),
+                                            static_cast<long long>(endFrame - startFrame));
+                                return Error::OutOfRange;
+                        }
+                        if (pendingEdmFrame != INT64_MIN) {
+                                if (firstFrame > pendingEdmFrame + 1) {
+                                        d->schedule.insert(pendingEdmFrame,
+                                                           ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
+                                        d->schedule.insert(pendingEdmFrame + 1,
+                                                           ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
+                                }
+                                pendingEdmFrame = INT64_MIN;
+                        }
+
+                        int64_t f = firstFrame;
+                        // Doubled RDC at startFrame-4, startFrame-3.
+                        d->schedule.insert(f++, ScheduledPair{Cea608::Cc1MiscFirstByte, Cea608::MiscRDC});
+                        d->schedule.insert(f++, ScheduledPair{Cea608::Cc1MiscFirstByte, Cea608::MiscRDC});
+                        // Doubled PAC at startFrame-2, startFrame-1.
+                        d->schedule.insert(f++, body.bytes[0]);
+                        d->schedule.insert(f++, body.bytes[1]);
+                        // Live chars / mid-row pairs starting at startFrame.
+                        for (size_t b = 2; b < body.bytes.size(); ++b) {
+                                d->schedule.insert(f++, body.bytes[b]);
+                        }
+
+                        pendingEdmFrame = endFrame;
+                        lastByteFrame = lastCharFrame;
+                }
+                if (pendingEdmFrame != INT64_MIN) {
+                        d->schedule.insert(pendingEdmFrame, ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
+                        d->schedule.insert(pendingEdmFrame + 1, ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
+                }
+                return Error::Ok;
+        }
+
+        /// @brief Schedules a roll-up cue list.
+        ///
+        /// Roll-up is a continuous mode: once the receiver enters
+        /// roll-up via @c RU2/RU3/RU4 it stays there.  Each cue is a
+        /// new "row" appended via @c CR (carriage return); rows older
+        /// than the configured roll-up window scroll off the top.
+        ///
+        /// Per-cue layout:
+        ///
+        /// @code
+        ///   First cue:        [RUx,RUx, CR,CR, PAC,PAC, chars/MR..., (no EDM)]
+        ///   Subsequent cues:  [CR,CR, (PAC,PAC,)? chars/MR..., (no EDM)]
+        /// @endcode
+        ///
+        /// @c RUx is emitted once at the start of the batch.  Characters
+        /// land at the cue's start frame onward; the cue is fully
+        /// painted by @c startFrame + N - 1.
+        ///
+        /// Roll-up has no per-cue EDM — the cue scrolls off when the
+        /// next CR fires or stays visible after the final cue.
+        Error buildRollUpSchedule(Cea608EncoderImpl *d, const SubtitleList &subs, int rollUpRows) {
+                int64_t lastByteFrame = INT64_MIN;
+                bool    rollUpInitialised = false;
+                bool    boldWarned = false;
+                int     lastEmittedRow = -1; // tracks when we can skip PAC re-emission.
+                for (size_t i = 0; i < subs.size(); ++i) {
+                        const Subtitle &cue = subs[i];
+
+                        const int64_t startFrame = timeStampToFrame(cue.start(), d->cfg.frameRate);
+                        const int64_t endFrame = timeStampToFrame(cue.end(), d->cfg.frameRate);
+                        if (endFrame <= startFrame) continue;
+
+                        CueBody body = buildCueBody(cue);
+                        if (body.hadBold) warnBoldOnce(boldWarned, i);
+                        if (body.bytes.size() < 2) continue; // defensive
+
+                        // Body shape: [PAC,PAC,(MR,MR,)?chars...].
+                        // Per-cue pre-roll bytes (live chars excluded):
+                        //   First cue:        2 (RUx) + 2 (CR) + 2 (PAC) = 6
+                        //   Subsequent cues:  2 (CR) + 2 (PAC) = 4
+                        // Characters land at startFrame onward.
+                        const size_t  charCount = body.bytes.size() - 2;
+                        const size_t  preRoll = rollUpInitialised ? 4 : 6;
+                        const int64_t firstFrame = startFrame - static_cast<int64_t>(preRoll);
+                        const int64_t lastCharFrame = startFrame + static_cast<int64_t>(charCount) - 1;
+
+                        if (firstFrame < 0) {
+                                promekiWarn("Cea608Encoder::setSubtitles[roll-up]: cue %zu pre-roll "
+                                            "starts at frame %lld (before frame 0)",
+                                            i, static_cast<long long>(firstFrame));
+                                return Error::OutOfRange;
+                        }
+                        if (firstFrame <= lastByteFrame) {
+                                promekiWarn("Cea608Encoder::setSubtitles[roll-up]: cue %zu pre-roll "
+                                            "(first frame %lld) overlaps prior cue's wire stream "
+                                            "(last byte frame %lld)",
+                                            i, static_cast<long long>(firstFrame),
+                                            static_cast<long long>(lastByteFrame));
+                                return Error::OutOfRange;
+                        }
+                        if (charCount > 0 && lastCharFrame >= endFrame) {
+                                promekiWarn("Cea608Encoder::setSubtitles[roll-up]: cue %zu has "
+                                            "%zu char pairs (%lld frames) but only %lld frames "
+                                            "of display time before next cue",
+                                            i, charCount, static_cast<long long>(charCount),
+                                            static_cast<long long>(endFrame - startFrame));
+                                return Error::OutOfRange;
+                        }
+
+                        int64_t f = firstFrame;
+                        if (!rollUpInitialised) {
+                                const ScheduledPair ruPair = rollUpControl(rollUpRows);
+                                d->schedule.insert(f++, ruPair);
+                                d->schedule.insert(f++, ruPair);
+                                rollUpInitialised = true;
+                                lastEmittedRow = -1;
+                        }
+                        // Doubled CR.
+                        d->schedule.insert(f++, ScheduledPair{Cea608::Cc1MiscFirstByte, Cea608::MiscCR});
+                        d->schedule.insert(f++, ScheduledPair{Cea608::Cc1MiscFirstByte, Cea608::MiscCR});
+                        // Doubled PAC.  Roll-up always anchors row 15 by spec
+                        // regardless of cue.anchor; buildCueBody honoured cue.anchor
+                        // which we override here.  Re-encode the PAC bytes via
+                        // Cea608::encodePac to keep colour/italic/underline from the
+                        // body's leading PAC but lock the row to 15.
+                        {
+                                Cea608::PacAttr ovr;
+                                if (!Cea608::decodePac(body.bytes[0].b1, body.bytes[0].b2, ovr)) {
+                                        ovr = Cea608::PacAttr{};
+                                }
+                                ovr.row = 15;
+                                uint8_t pb1 = 0, pb2 = 0;
+                                Cea608::encodePac(ovr, pb1, pb2);
+                                d->schedule.insert(f++, ScheduledPair{pb1, pb2});
+                                d->schedule.insert(f++, ScheduledPair{pb1, pb2});
+                                lastEmittedRow = 15;
+                        }
+                        // Live chars / mid-row pairs starting at startFrame.
+                        for (size_t b = 2; b < body.bytes.size(); ++b) {
+                                d->schedule.insert(f++, body.bytes[b]);
+                        }
+                        lastByteFrame = lastCharFrame;
+                }
+                (void)lastEmittedRow;
+                return Error::Ok;
+        }
+
+} // namespace
+
 Error Cea608Encoder::setSubtitles(const SubtitleList &subs) {
         auto *d = _d.modify();
         d->schedule.clear();
@@ -287,12 +601,6 @@ Error Cea608Encoder::setSubtitles(const SubtitleList &subs) {
                 promekiWarn("Cea608Encoder::setSubtitles: invalid frame rate");
                 return Error::Invalid;
         }
-        if (d->cfg.mode != Mode::PopOn) {
-                promekiWarn("Cea608Encoder::setSubtitles: only PopOn mode is "
-                            "implemented in this phase (mode=%d)",
-                            static_cast<int>(d->cfg.mode));
-                return Error::NotImplemented;
-        }
         if (d->cfg.channel != Channel::CC1) {
                 promekiWarn("Cea608Encoder::setSubtitles: only CC1 channel is "
                             "implemented in this phase (channel=%d)",
@@ -300,111 +608,19 @@ Error Cea608Encoder::setSubtitles(const SubtitleList &subs) {
                 return Error::NotImplemented;
         }
 
-        // Walk cues in chronological order.  The caller is responsible
-        // for sorting (SubtitleList::sortByStart) before handing the
-        // list in; we proceed in the order given so a deliberately
-        // mis-sorted list surfaces a pre-roll error rather than
-        // silently re-ordering.
-        //
-        // EDM scheduling is *deferred*: a cue's EDM is held aside and
-        // only committed when we know the next cue's pre-roll doesn't
-        // overlap it.  Real-world CEA-608 encoders elide the EDM in
-        // that case — the prior cue then persists on-screen until the
-        // next cue's EOC swaps it out (a small extension of the prior
-        // cue's display).  This lets densely-packed cues (long lines,
-        // back-to-back dialog) schedule successfully where the strict
-        // "EDM is sacred" policy would have rejected them.
-        int64_t lastEocFrame = INT64_MIN;   // last byte frame of the prior cue (its second EOC).
-        int64_t pendingEdmFrame = INT64_MIN; // -1 if none pending; else first frame of prior cue's EDM pair.
-        bool    boldWarned = false;
-        for (size_t i = 0; i < subs.size(); ++i) {
-                const Subtitle &cue = subs[i];
-
-                const int64_t startFrame = timeStampToFrame(cue.start(), d->cfg.frameRate);
-                const int64_t endFrame = timeStampToFrame(cue.end(), d->cfg.frameRate);
-
-                if (endFrame <= startFrame) {
-                        // Zero-length / negative cue: skip silently.
-                        // SubRip parser allows this; encoder treats it
-                        // as a no-op rather than an error.
-                        continue;
+        switch (d->cfg.mode) {
+                case Mode::PopOn:
+                        return buildPopOnSchedule(d, subs);
+                case Mode::PaintOn:
+                        return buildPaintOnSchedule(d, subs);
+                case Mode::RollUp: {
+                        int rows = d->cfg.rollUpRows;
+                        if (rows < 2) rows = 2;
+                        if (rows > 4) rows = 4;
+                        return buildRollUpSchedule(d, subs, rows);
                 }
-
-                CueBody body = buildCueBody(cue);
-                if (body.hadBold && !boldWarned) {
-                        promekiWarn("Cea608Encoder::setSubtitles: bold is not representable "
-                                    "in CEA-608; bold spans encode without the bold flag "
-                                    "(first occurrence at cue %zu)",
-                                    i);
-                        boldWarned = true;
-                }
-
-                // Body layout: RCL,RCL,(PAC,PAC,MR?,MR?,chars...)*,EOC,EOC.
-                // The receiver's memory swap happens on the *first*
-                // EOC, so we want that first EOC to land **at**
-                // @c startFrame (with the spec-duplicate EOC at
-                // @c startFrame + 1).  That means:
-                //   firstFrame = startFrame - (2 RCL + body.size())
-                // where body already accounts for PAC + mid-rows + chars.
-                const size_t  preRollFrames = 2 + body.bytes.size(); // RCL + body
-                const int64_t firstFrame = startFrame - static_cast<int64_t>(preRollFrames);
-
-                if (firstFrame < 0) {
-                        promekiWarn("Cea608Encoder::setSubtitles: cue %zu pre-roll "
-                                    "starts at frame %lld (before frame 0); cue.start "
-                                    "is too close to media t=0 for the cue's length",
-                                    i, static_cast<long long>(firstFrame));
-                        return Error::OutOfRange;
-                }
-                if (firstFrame <= lastEocFrame) {
-                        // Pre-roll overlaps prior cue's pre-roll/EOC byte
-                        // stream.  No amount of EDM elision rescues this —
-                        // the cues are simply too dense for the wire.
-                        promekiWarn("Cea608Encoder::setSubtitles: cue %zu pre-roll (first "
-                                    "frame %lld) overlaps prior cue's wire stream (last "
-                                    "byte frame %lld)",
-                                    i, static_cast<long long>(firstFrame),
-                                    static_cast<long long>(lastEocFrame));
-                        return Error::OutOfRange;
-                }
-
-                // Commit or elide the prior cue's deferred EDM based on
-                // whether it would collide with this cue's pre-roll.
-                if (pendingEdmFrame != INT64_MIN) {
-                        if (firstFrame > pendingEdmFrame + 1) {
-                                d->schedule.insert(pendingEdmFrame,
-                                                   ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
-                                d->schedule.insert(pendingEdmFrame + 1,
-                                                   ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
-                        }
-                        // else: elide — prior cue persists until this cue's EOC.
-                        pendingEdmFrame = INT64_MIN;
-                }
-
-                // Lay out the pop-on byte stream into the schedule.
-                int64_t f = firstFrame;
-                d->schedule.insert(f++, ScheduledPair{Cea608::RclB1, Cea608::RclB2});
-                d->schedule.insert(f++, ScheduledPair{Cea608::RclB1, Cea608::RclB2});
-                for (size_t b = 0; b < body.bytes.size(); ++b) {
-                        d->schedule.insert(f++, body.bytes[b]);
-                }
-                d->schedule.insert(f++, ScheduledPair{Cea608::EocB1, Cea608::EocB2});
-                d->schedule.insert(f++, ScheduledPair{Cea608::EocB1, Cea608::EocB2});
-                // f now equals startFrame + 2; the cue is on-screen at
-                // startFrame (first EOC) and stays so until EDM or the
-                // next cue's EOC.
-
-                // Defer the EDM — the next iteration decides whether to
-                // commit or elide it based on the next cue's pre-roll.
-                pendingEdmFrame = endFrame;
-                lastEocFrame = startFrame + 1;
         }
-        // Final cue's EDM: always commit (no next cue can collide with it).
-        if (pendingEdmFrame != INT64_MIN) {
-                d->schedule.insert(pendingEdmFrame, ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
-                d->schedule.insert(pendingEdmFrame + 1, ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
-        }
-        return Error::Ok;
+        return Error::Invalid;
 }
 
 // ============================================================================
@@ -439,13 +655,26 @@ Cea708Cdp::CcDataList Cea608Encoder::nextFrame(FrameNumber frame) const {
 FrameNumber Cea608Encoder::earliestStartFor(const Subtitle &cue) const {
         if (!_d->cfg.frameRate.isValid()) return FrameNumber::unknown();
         const int64_t startFrame = timeStampToFrame(cue.start(), _d->cfg.frameRate);
-        // Pre-roll frames = 2 (RCL) + body (PAC + per-span mid-row codes
-        // + chars); the EOC pair lands *at* and after @c startFrame,
-        // not before it.  buildCueBody is the canonical source of the
-        // body layout so this diagnostic and @ref setSubtitles agree.
         const CueBody body = buildCueBody(cue);
-        const size_t  preRollFrames = 2 + body.bytes.size();
-        const int64_t firstFrame = startFrame - static_cast<int64_t>(preRollFrames);
+        int64_t firstFrame = 0;
+        switch (_d->cfg.mode) {
+                case Mode::PopOn:
+                        // Pre-roll = 2 (RCL) + body (PAC + chars + MRs).  EOC
+                        // pair lands at and after startFrame.
+                        firstFrame = startFrame - static_cast<int64_t>(2 + body.bytes.size());
+                        break;
+                case Mode::PaintOn:
+                        // Pre-roll = 4 (RDC + PAC), chars stream live from startFrame.
+                        firstFrame = startFrame - 4;
+                        break;
+                case Mode::RollUp:
+                        // First cue pre-roll = 6 (RUx + CR + PAC); subsequent cues = 4.
+                        // earliestStartFor is a single-cue diagnostic so we report the
+                        // worst case (first-cue) — callers building schedules can use
+                        // setSubtitles' actual layout.
+                        firstFrame = startFrame - 6;
+                        break;
+        }
         if (firstFrame < 0) return FrameNumber::unknown();
         return FrameNumber(firstFrame);
 }
@@ -453,36 +682,51 @@ FrameNumber Cea608Encoder::earliestStartFor(const Subtitle &cue) const {
 SubtitleList Cea608Encoder::encodableSubset(const SubtitleList &in, SubtitleList *outDropped) const {
         SubtitleList kept;
         if (!_d->cfg.frameRate.isValid()) return kept;
-        // Mirror @ref setSubtitles' pre-roll bookkeeping so a cue
-        // surfaced through @ref setSubtitles after this filter never
-        // hits an OutOfRange.  setSubtitles elides the prior cue's EDM
-        // when the next cue's pre-roll would collide with it, so the
-        // only true drop conditions are: pre-roll lands before frame 0,
-        // or pre-roll overlaps the prior kept cue's wire stream (its
-        // pre-roll + EOC pair).  We greedily walk in input order.
-        int64_t     lastEocFrame = INT64_MIN;
+        // Mirror @ref setSubtitles' per-mode pre-roll bookkeeping so a cue
+        // surfaced through @ref setSubtitles after this filter never hits
+        // an OutOfRange.  Each mode has its own collision rules; see the
+        // mode-specific schedule builders for full detail.
+        int64_t     lastByteFrame = INT64_MIN;
+        bool        rollUpInitialised = false;
         const auto &entries = in.entries();
         for (size_t i = 0; i < entries.size(); ++i) {
                 const Subtitle &cue = entries[i];
                 const int64_t   startFrame = timeStampToFrame(cue.start(), _d->cfg.frameRate);
                 const int64_t   endFrame = timeStampToFrame(cue.end(), _d->cfg.frameRate);
                 if (endFrame <= startFrame) {
-                        // Zero-length cue — encoder treats it as a
-                        // no-op rather than an error, so it doesn't
-                        // affect the back-to-back constraint and we
-                        // keep it for fidelity.
                         kept.append(cue);
                         continue;
                 }
                 const CueBody body = buildCueBody(cue);
-                const size_t  preRollFrames = 2 + body.bytes.size();
-                const int64_t firstFrame = startFrame - static_cast<int64_t>(preRollFrames);
-                if (firstFrame < 0 || firstFrame <= lastEocFrame) {
+                size_t        preRoll = 0;
+                int64_t       lastCharFrame = INT64_MIN;
+                bool          charsOverrun = false;
+                size_t        charCount = 0;
+                if (body.bytes.size() >= 2) charCount = body.bytes.size() - 2;
+                switch (_d->cfg.mode) {
+                        case Mode::PopOn:
+                                preRoll = 2 + body.bytes.size();
+                                lastCharFrame = startFrame + 1; // EOC doubled at startFrame, startFrame+1
+                                break;
+                        case Mode::PaintOn:
+                                preRoll = 4;
+                                lastCharFrame = startFrame + static_cast<int64_t>(charCount) - 1;
+                                if (charCount > 0 && lastCharFrame >= endFrame) charsOverrun = true;
+                                break;
+                        case Mode::RollUp:
+                                preRoll = rollUpInitialised ? 4 : 6;
+                                lastCharFrame = startFrame + static_cast<int64_t>(charCount) - 1;
+                                if (charCount > 0 && lastCharFrame >= endFrame) charsOverrun = true;
+                                break;
+                }
+                const int64_t firstFrame = startFrame - static_cast<int64_t>(preRoll);
+                if (firstFrame < 0 || firstFrame <= lastByteFrame || charsOverrun) {
                         if (outDropped != nullptr) outDropped->append(cue);
                         continue;
                 }
                 kept.append(cue);
-                lastEocFrame = startFrame + 1;
+                lastByteFrame = lastCharFrame;
+                if (_d->cfg.mode == Mode::RollUp) rollUpInitialised = true;
         }
         return kept;
 }

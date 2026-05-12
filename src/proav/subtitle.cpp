@@ -26,6 +26,23 @@ PROMEKI_NAMESPACE_BEGIN
 // Pimpl definitions
 // ============================================================================
 
+struct SubtitleSpanImpl {
+                PROMEKI_SHARED_FINAL(SubtitleSpanImpl)
+
+                /// @brief Span text (UTF-8).
+                String text;
+                /// @brief @c true when the span is rendered bold.
+                bool bold = false;
+                /// @brief @c true when the span is rendered italic.
+                bool italic = false;
+                /// @brief @c true when the span is rendered with an underline.
+                bool underline = false;
+                /// @brief Per-span colour override; default-invalid means "inherit".
+                Color color;
+
+                SubtitleSpanImpl() = default;
+};
+
 struct SubtitleImpl {
                 PROMEKI_SHARED_FINAL(SubtitleImpl)
 
@@ -85,35 +102,85 @@ namespace {
 } // namespace
 
 // ============================================================================
+// SubtitleSpan — construction / special members
+// ============================================================================
+
+SubtitleSpan::SubtitleSpan() : _d(SharedPtr<SubtitleSpanImpl>::create()) {}
+
+SubtitleSpan::SubtitleSpan(String text) : _d(SharedPtr<SubtitleSpanImpl>::create()) {
+        _d.modify()->text = std::move(text);
+}
+
+SubtitleSpan::SubtitleSpan(String text, bool bold, bool italic, bool underline, Color color)
+    : _d(SharedPtr<SubtitleSpanImpl>::create()) {
+        auto *d = _d.modify();
+        d->text = std::move(text);
+        d->bold = bold;
+        d->italic = italic;
+        d->underline = underline;
+        d->color = color;
+}
+
+SubtitleSpan::SubtitleSpan(const SubtitleSpan &) = default;
+SubtitleSpan::SubtitleSpan(SubtitleSpan &&) noexcept = default;
+SubtitleSpan::~SubtitleSpan() = default;
+SubtitleSpan &SubtitleSpan::operator=(const SubtitleSpan &) = default;
+SubtitleSpan &SubtitleSpan::operator=(SubtitleSpan &&) noexcept = default;
+
+// ============================================================================
+// SubtitleSpan — accessors / mutators
+// ============================================================================
+
+const String &SubtitleSpan::text() const { return _d->text; }
+bool          SubtitleSpan::bold() const { return _d->bold; }
+bool          SubtitleSpan::italic() const { return _d->italic; }
+bool          SubtitleSpan::underline() const { return _d->underline; }
+const Color  &SubtitleSpan::color() const { return _d->color; }
+
+bool SubtitleSpan::hasStyle() const { return _d->bold || _d->italic || _d->underline || _d->color.isValid(); }
+bool SubtitleSpan::isEmpty() const { return _d->text.isEmpty(); }
+
+void SubtitleSpan::setText(String v) { _d.modify()->text = std::move(v); }
+void SubtitleSpan::setBold(bool v) { _d.modify()->bold = v; }
+void SubtitleSpan::setItalic(bool v) { _d.modify()->italic = v; }
+void SubtitleSpan::setUnderline(bool v) { _d.modify()->underline = v; }
+void SubtitleSpan::setColor(const Color &v) { _d.modify()->color = v; }
+
+bool SubtitleSpan::operator==(const SubtitleSpan &o) const {
+        return _d->bold == o._d->bold && _d->italic == o._d->italic && _d->underline == o._d->underline
+                && _d->color == o._d->color && _d->text == o._d->text;
+}
+
+// ============================================================================
 // SubtitleSpan — diagnostics + DataStream
 // ============================================================================
 
 JsonObject SubtitleSpan::toJson() const {
         JsonObject obj;
-        obj.set("text", _text);
-        if (_bold) obj.set("bold", true);
-        if (_italic) obj.set("italic", true);
-        if (_underline) obj.set("underline", true);
-        if (_color.isValid()) obj.set("color", _color.toString());
+        obj.set("text", _d->text);
+        if (_d->bold) obj.set("bold", true);
+        if (_d->italic) obj.set("italic", true);
+        if (_d->underline) obj.set("underline", true);
+        if (_d->color.isValid()) obj.set("color", _d->color.toString());
         return obj;
 }
 
 String SubtitleSpan::toString() const {
         String s = "SubtitleSpan(\"";
         constexpr size_t kMaxTextChars = 48;
-        if (_text.size() <= kMaxTextChars) {
-                s += _text;
+        if (_d->text.size() <= kMaxTextChars) {
+                s += _d->text;
         } else {
-                s += _text.substr(0, kMaxTextChars);
+                s += _d->text.substr(0, kMaxTextChars);
                 s += "...";
         }
         s += "\"";
-        if (_bold) s += " B";
-        if (_italic) s += " I";
-        if (_underline) s += " U";
-        if (_color.isValid()) {
+        if (_d->bold) s += " B";
+        if (_d->italic) s += " I";
+        if (_d->underline) s += " U";
+        if (_d->color.isValid()) {
                 s += " color=";
-                s += _color.toString();
+                s += _d->color.toString();
         }
         s += ")";
         return s;

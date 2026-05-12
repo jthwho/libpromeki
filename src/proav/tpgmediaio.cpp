@@ -27,6 +27,8 @@
 #include <promeki/ancpayload.h>
 #include <promeki/anctranslateconfig.h>
 #include <promeki/cea708cdp.h>
+#include <promeki/cea608.h>
+#include <promeki/scc.h>
 #include <promeki/subrip.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -157,6 +159,7 @@ MediaIOFactory::Config::SpecMap TpgFactory::configSpecs() const {
         s(MediaConfig::TpgAncCaptionsFile, String());
         s(MediaConfig::TpgAncCaptionsOffset, Duration());
         s(MediaConfig::TpgAncCaptionsLine, int32_t(11));
+        s(MediaConfig::TpgAncCaptionsScc, String());
         return specs;
 }
 
@@ -398,6 +401,75 @@ Error TpgMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 _ancCaptionsLine = static_cast<uint16_t>(
                         cfg.getAs<int32_t>(MediaConfig::TpgAncCaptionsLine, int32_t(11)));
                 _ancSequenceCounter = 0;
+                _ancSccBypassActive = false;
+                _ancSccByFrame.clear();
+
+                const String sccPath = cfg.getAs<String>(MediaConfig::TpgAncCaptionsScc, String());
+                if (!sccPath.isEmpty() && !_ancCaptionsFile.isEmpty()) {
+                        promekiErr("TpgMediaIO: TpgAncCaptionsFile and TpgAncCaptionsScc are "
+                                   "mutually exclusive; set one or the other (file='%s', scc='%s')",
+                                   _ancCaptionsFile.cstr(), sccPath.cstr());
+                        return Error::InvalidArgument;
+                }
+                if (!sccPath.isEmpty()) {
+                        // SCC bypass: load + parse the SCC file, then
+                        // pre-compute a frame-indexed lookup of byte
+                        // pairs.  The first SCC row's TC anchors to TPG
+                        // frame 0; subsequent rows shift by the absolute
+                        // frame-count delta from the first row.
+                        File   sccFile(sccPath);
+                        Buffer sccBytes;
+                        Error  openErr = sccFile.open(IODevice::ReadOnly);
+                        if (openErr.isError()) {
+                                promekiErr("TpgMediaIO: failed to open SCC file '%s': %s",
+                                           sccPath.cstr(), openErr.name().cstr());
+                                return openErr;
+                        }
+                        Result<int64_t> szR = sccFile.size();
+                        if (szR.second().isError()) {
+                                sccFile.close();
+                                return szR.second();
+                        }
+                        const int64_t sz = szR.first();
+                        if (sz > 0) {
+                                sccBytes = Buffer(static_cast<size_t>(sz));
+                                sccBytes.setSize(static_cast<size_t>(sz));
+                                int64_t got = sccFile.read(sccBytes.data(), sz);
+                                if (got != sz) {
+                                        sccFile.close();
+                                        return Error::IOError;
+                                }
+                        }
+                        sccFile.close();
+                        Result<Scc> sccR = Scc::fromBuffer(sccBytes);
+                        if (sccR.second().isError()) {
+                                promekiErr("TpgMediaIO: SCC parse failed for '%s': %s",
+                                           sccPath.cstr(), sccR.second().name().cstr());
+                                return sccR.second();
+                        }
+                        const Scc      &doc = sccR.first();
+                        const auto      sccCcType = static_cast<uint8_t>(0); // SCC is field-1 only.
+                        FrameNumber     firstAbs = FrameNumber::unknown();
+                        for (size_t li = 0; li < doc.size(); ++li) {
+                                const Scc::Line &row = doc.lines()[li];
+                                FrameNumber      absFrame = row.start.toFrameNumber();
+                                if (!absFrame.isValid()) continue;
+                                if (!firstAbs.isValid()) firstAbs = absFrame;
+                                const int64_t relFrame = absFrame.value() - firstAbs.value();
+                                for (size_t bp = 0; bp < row.bytePairs.size(); ++bp) {
+                                        const uint16_t v = row.bytePairs[bp];
+                                        const uint8_t  b1 = static_cast<uint8_t>((v >> 8) & 0xFF);
+                                        const uint8_t  b2 = static_cast<uint8_t>(v & 0xFF);
+                                        Cea708Cdp::CcDataList list;
+                                        // SCC bytes already carry odd parity (real captioner
+                                        // output) so we pass them through verbatim — no
+                                        // additional parity stamping.
+                                        list.pushToBack(Cea708Cdp::CcData{true, sccCcType, b1, b2});
+                                        _ancSccByFrame.insert(relFrame + static_cast<int64_t>(bp), list);
+                                }
+                        }
+                        _ancSccBypassActive = true;
+                }
 
                 // Load and shift the SubRip file if one is configured.
                 // Empty path = no cues; the TPG still emits per-frame
@@ -477,28 +549,38 @@ Error TpgMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 // frames from t=0) is common and shouldn't make the
                 // whole pipeline refuse to open.  Dropped cues are
                 // logged as warnings; the rest still encode normally.
-                Cea608Encoder::Config encCfg;
-                encCfg.frameRate = _frameRate;
-                _ancCaptionEncoder = std::make_unique<Cea608Encoder>(encCfg);
-                SubtitleList dropped;
-                SubtitleList kept = _ancCaptionEncoder->encodableSubset(_ancCaptions, &dropped);
-                for (size_t di = 0; di < dropped.size(); ++di) {
-                        const Subtitle &d = dropped[di];
-                        promekiWarn("TpgMediaIO: dropping caption cue %lld..%lld (\"%s\") — too "
-                                    "close to t=0 or overlaps the prior cue's wire stream",
-                                    static_cast<long long>(d.start().value().time_since_epoch().count()),
-                                    static_cast<long long>(d.end().value().time_since_epoch().count()),
-                                    d.text().cstr());
-                }
-                _ancCaptions = kept;
-                Error encErr = _ancCaptionEncoder->setSubtitles(_ancCaptions);
-                if (encErr.isError()) {
-                        promekiErr("TpgMediaIO: Cea608Encoder::setSubtitles failed: %s "
-                                   "(check that cue start times are far enough from t=0 "
-                                   "to honour pre-roll, and that consecutive cues don't "
-                                   "overlap)",
-                                   encErr.name().cstr());
-                        return encErr;
+                //
+                // Skipped entirely when SCC bypass is active — the
+                // SCC byte pairs feed the cc_data directly without
+                // going through the encoder's state machine.
+                if (!_ancSccBypassActive) {
+                        Cea608Encoder::Config encCfg;
+                        encCfg.frameRate = _frameRate;
+                        _ancCaptionEncoder = std::make_unique<Cea608Encoder>(encCfg);
+                        SubtitleList dropped;
+                        SubtitleList kept = _ancCaptionEncoder->encodableSubset(_ancCaptions, &dropped);
+                        for (size_t di = 0; di < dropped.size(); ++di) {
+                                const Subtitle &d = dropped[di];
+                                promekiWarn(
+                                        "TpgMediaIO: dropping caption cue %lld..%lld (\"%s\") — too "
+                                        "close to t=0 or overlaps the prior cue's wire stream",
+                                        static_cast<long long>(d.start().value().time_since_epoch().count()),
+                                        static_cast<long long>(d.end().value().time_since_epoch().count()),
+                                        d.text().cstr());
+                        }
+                        _ancCaptions = kept;
+                        Error encErr = _ancCaptionEncoder->setSubtitles(_ancCaptions);
+                        if (encErr.isError()) {
+                                promekiErr(
+                                        "TpgMediaIO: Cea608Encoder::setSubtitles failed: %s "
+                                        "(check that cue start times are far enough from t=0 "
+                                        "to honour pre-roll, and that consecutive cues don't "
+                                        "overlap)",
+                                        encErr.name().cstr());
+                                return encErr;
+                        }
+                } else {
+                        _ancCaptionEncoder.reset();
                 }
                 // SMPTE 334-2 §5.1.4 frame-rate codes.  We pick the
                 // closest match for the configured FrameRate; unknowns
@@ -604,6 +686,8 @@ Error TpgMediaIO::executeCmd(MediaIOCommandClose &cmd) {
         _ancTranslator = AncTranslator();
         _ancCaptions = SubtitleList();
         _ancCaptionEncoder.reset();
+        _ancSccBypassActive = false;
+        _ancSccByFrame.clear();
         return Error::Ok;
 }
 
@@ -769,15 +853,28 @@ Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         }
 
         // -- CEA-708 caption ANC injection --
-        if (_ancCaptionsEnabled && _ancCaptionEncoder != nullptr) {
+        if (_ancCaptionsEnabled && (_ancCaptionEncoder != nullptr || _ancSccBypassActive)) {
                 // Pull the byte-pair for this frame from the SubRip-
-                // driven Cea608Encoder.  Empty frames carry the null
-                // pair (0x80, 0x80) so the receiver sees a steady
-                // stream of cc_data triples — that's what real
-                // broadcast captioners do.
-                const FrameNumber       fn(_frameCount.value());
-                Cea708Cdp::CcDataList   triples = _ancCaptionEncoder->nextFrame(fn);
-                Cea708Cdp               cdp(_ancFrameRateCode, triples, _ancSequenceCounter);
+                // driven Cea608Encoder, or from the SCC bypass map if
+                // configured.  Empty frames carry the null pair
+                // (0x80, 0x80) so the receiver sees a steady stream
+                // of cc_data triples — that's what real broadcast
+                // captioners do.
+                const FrameNumber     fn(_frameCount.value());
+                Cea708Cdp::CcDataList triples;
+                if (_ancSccBypassActive) {
+                        auto it = _ancSccByFrame.find(_frameCount.value());
+                        if (it != _ancSccByFrame.end()) {
+                                triples = it->second;
+                        } else {
+                                triples.pushToBack(Cea708Cdp::CcData{
+                                        true, 0, Cea608::withOddParity(Cea608::NullB1),
+                                        Cea608::withOddParity(Cea608::NullB2)});
+                        }
+                } else {
+                        triples = _ancCaptionEncoder->nextFrame(fn);
+                }
+                Cea708Cdp cdp(_ancFrameRateCode, triples, _ancSequenceCounter);
                 cdp.timeCodePresent = _timecodeEnabled;
                 if (_timecodeEnabled) cdp.timeCode = tc;
 

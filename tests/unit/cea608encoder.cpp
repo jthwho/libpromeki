@@ -101,14 +101,18 @@ TEST_CASE("Cea608Encoder: invalid frame rate -> setSubtitles fails Error::Invali
         CHECK(enc.setSubtitles(subs).code() == Error::Invalid);
 }
 
-TEST_CASE("Cea608Encoder: non-PopOn mode -> setSubtitles fails Error::NotImplemented") {
-        Cea608Encoder::Config cfg;
-        cfg.frameRate = FrameRate(FrameRate::FPS_30);
-        cfg.mode = Cea608Encoder::Mode::PaintOn;
-        Cea608Encoder enc(cfg);
-        SubtitleList  subs;
-        subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), "X"));
-        CHECK(enc.setSubtitles(subs).code() == Error::NotImplemented);
+TEST_CASE("Cea608Encoder: paint-on + roll-up modes are accepted") {
+        // Both modes were added in Phase 3.5d.  Mode-specific byte
+        // streams are exercised in dedicated test cases below.
+        for (auto m : {Cea608Encoder::Mode::PaintOn, Cea608Encoder::Mode::RollUp}) {
+                Cea608Encoder::Config cfg;
+                cfg.frameRate = FrameRate(FrameRate::FPS_30);
+                cfg.mode = m;
+                Cea608Encoder enc(cfg);
+                SubtitleList  subs;
+                subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), "X"));
+                CHECK(enc.setSubtitles(subs).isOk());
+        }
 }
 
 TEST_CASE("Cea608Encoder: non-CC1 channel -> setSubtitles fails Error::NotImplemented") {
@@ -380,4 +384,174 @@ TEST_CASE("Cea608Encoder: deterministic output for identical input") {
                 CHECK(t.b1 == first[f].b1);
                 CHECK(t.b2 == first[f].b2);
         }
+}
+
+// ============================================================================
+// Paint-on mode (Phase 3.5d)
+// ============================================================================
+
+TEST_CASE("Cea608Encoder[paint-on]: single 2-char cue lays out the byte stream") {
+        // At 30fps, cue starts at frame 30 (= 1000 ms), ends at frame 60.
+        //   "AB" → 1 char pair.
+        //   Pre-roll = 4 frames (2 RDC + 2 PAC).
+        //   firstFrame = startFrame - 4 = 26.
+        // Layout:
+        //   26..27: RDC doubled
+        //   28..29: PAC doubled
+        //   30:     "AB" (chars stream live at startFrame onwards)
+        //   31..59: null (cue is on-screen, painted)
+        //   60..61: EDM doubled (cue end at frame 60)
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.mode = Cea608Encoder::Mode::PaintOn;
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), "AB"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        // Frame 25: still null.
+        CHECK(tripleHasBytes(oneTriple(enc, 25), Cea608::NullB1, Cea608::NullB2));
+        // Frames 26, 27: RDC doubled.
+        CHECK(tripleHasBytes(oneTriple(enc, 26), Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        CHECK(tripleHasBytes(oneTriple(enc, 27), Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        // Frames 28, 29: PAC doubled.
+        CHECK(tripleHasBytes(oneTriple(enc, 28), Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        CHECK(tripleHasBytes(oneTriple(enc, 29), Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        // Frame 30: live "AB".
+        CHECK(tripleHasBytes(oneTriple(enc, 30), 0x41, 0x42));
+        // Frame 31..59: null (cue visible).
+        for (int64_t f = 31; f < 60; ++f) {
+                CHECK(tripleHasBytes(oneTriple(enc, f), Cea608::NullB1, Cea608::NullB2));
+        }
+        // Frames 60, 61: EDM doubled.
+        CHECK(tripleHasBytes(oneTriple(enc, 60), Cea608::EdmB1, Cea608::EdmB2));
+        CHECK(tripleHasBytes(oneTriple(enc, 61), Cea608::EdmB1, Cea608::EdmB2));
+}
+
+TEST_CASE("Cea608Encoder[paint-on]: chars overrunning cue end -> OutOfRange") {
+        // Cue 1000..1100ms = frame 30..33 (3 frame display window).
+        // "ABCDEFGH" → 4 char pairs.  lastCharFrame = 30 + 4 - 1 = 33,
+        // which is == endFrame.  The overrun check fires (lastCharFrame
+        // must be < endFrame).
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.mode = Cea608Encoder::Mode::PaintOn;
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(1000), tsFromMs(1100), "ABCDEFGH"));
+        CHECK(enc.setSubtitles(subs).code() == Error::OutOfRange);
+}
+
+TEST_CASE("Cea608Encoder[paint-on]: cue start too close to t=0 -> OutOfRange") {
+        // Pre-roll = 4 frames.  Cue at frame 3 needs firstFrame = -1.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.mode = Cea608Encoder::Mode::PaintOn;
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(100), tsFromMs(1000), "AB"));
+        CHECK(enc.setSubtitles(subs).code() == Error::OutOfRange);
+}
+
+// ============================================================================
+// Roll-up mode (Phase 3.5d)
+// ============================================================================
+
+TEST_CASE("Cea608Encoder[roll-up]: first cue lays out RUx + CR + PAC + chars") {
+        // At 30fps, cue starts at frame 30.
+        //   Pre-roll = 6 frames (2 RUx + 2 CR + 2 PAC).
+        //   firstFrame = 30 - 6 = 24.
+        // Layout:
+        //   24, 25: RU2 doubled
+        //   26, 27: CR doubled
+        //   28, 29: PAC doubled (row 15)
+        //   30:     "AB" (live)
+        //   31+ :   null (cue painted; no EDM in roll-up)
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.mode = Cea608Encoder::Mode::RollUp;
+        cfg.rollUpRows = 2;
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), "AB"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        // 24, 25: RU2 doubled.
+        CHECK(tripleHasBytes(oneTriple(enc, 24), Cea608::Cc1MiscFirstByte, Cea608::MiscRU2));
+        CHECK(tripleHasBytes(oneTriple(enc, 25), Cea608::Cc1MiscFirstByte, Cea608::MiscRU2));
+        // 26, 27: CR doubled.
+        CHECK(tripleHasBytes(oneTriple(enc, 26), Cea608::Cc1MiscFirstByte, Cea608::MiscCR));
+        CHECK(tripleHasBytes(oneTriple(enc, 27), Cea608::Cc1MiscFirstByte, Cea608::MiscCR));
+        // 28, 29: PAC doubled (row 15, white).
+        CHECK(tripleHasBytes(oneTriple(enc, 28), Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        CHECK(tripleHasBytes(oneTriple(enc, 29), Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        // 30: "AB" live.
+        CHECK(tripleHasBytes(oneTriple(enc, 30), 0x41, 0x42));
+        // 31+: null (no EDM).
+        for (int64_t f = 31; f < 90; ++f) {
+                CHECK(tripleHasBytes(oneTriple(enc, f), Cea608::NullB1, Cea608::NullB2));
+        }
+}
+
+TEST_CASE("Cea608Encoder[roll-up]: subsequent cue skips RUx (just CR + PAC + chars)") {
+        // Cue 1: frame 30, "AB".  firstFrame = 24.
+        // Cue 2: frame 120, "CD".  Pre-roll = 4 frames (no RUx
+        // re-emission).  firstFrame = 116.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.mode = Cea608Encoder::Mode::RollUp;
+        cfg.rollUpRows = 3;
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), "AB"));
+        subs.append(Subtitle(tsFromMs(4000), tsFromMs(5000), "CD"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        // 24, 25: RU3 doubled (set on first cue).
+        CHECK(tripleHasBytes(oneTriple(enc, 24), Cea608::Cc1MiscFirstByte, Cea608::MiscRU3));
+        CHECK(tripleHasBytes(oneTriple(enc, 25), Cea608::Cc1MiscFirstByte, Cea608::MiscRU3));
+
+        // 116, 117: CR doubled (cue 2 starts here; no RUx).
+        CHECK(tripleHasBytes(oneTriple(enc, 116), Cea608::Cc1MiscFirstByte, Cea608::MiscCR));
+        CHECK(tripleHasBytes(oneTriple(enc, 117), Cea608::Cc1MiscFirstByte, Cea608::MiscCR));
+        // 118, 119: PAC doubled.
+        CHECK(tripleHasBytes(oneTriple(enc, 118), Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        CHECK(tripleHasBytes(oneTriple(enc, 119), Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        // 120: "CD" live.
+        CHECK(tripleHasBytes(oneTriple(enc, 120), 0x43, 0x44));
+}
+
+TEST_CASE("Cea608Encoder[roll-up]: chars overrunning cue end -> OutOfRange") {
+        // Cue 1000..1100ms = 30..33 (3 frame display).
+        // "ABCDEFGH" → 4 char pairs.  lastCharFrame = 33 == endFrame
+        // → overrun.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.mode = Cea608Encoder::Mode::RollUp;
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(1000), tsFromMs(1100), "ABCDEFGH"));
+        CHECK(enc.setSubtitles(subs).code() == Error::OutOfRange);
+}
+
+TEST_CASE("Cea608Encoder[roll-up]: rollUpRows clamped to [2,4]") {
+        // rollUpRows out of range should be clamped at scheduling time
+        // (RU2 for <2, RU4 for >4) and still produce a valid schedule.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.mode = Cea608Encoder::Mode::RollUp;
+        cfg.rollUpRows = 1; // out of range
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), "AB"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+        // First bytes: RU2 (clamped from 1).
+        CHECK(tripleHasBytes(oneTriple(enc, 24), Cea608::Cc1MiscFirstByte, Cea608::MiscRU2));
+
+        Cea608Encoder::Config cfg2 = cfg;
+        cfg2.rollUpRows = 10;
+        Cea608Encoder enc2(cfg2);
+        REQUIRE(enc2.setSubtitles(subs).isOk());
+        // First bytes: RU4 (clamped from 10).
+        CHECK(tripleHasBytes(oneTriple(enc2, 24), Cea608::Cc1MiscFirstByte, Cea608::MiscRU4));
 }

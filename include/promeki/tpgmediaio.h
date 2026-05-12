@@ -12,8 +12,11 @@
 #include <promeki/ancdesc.h>
 #include <promeki/anctranslator.h>
 #include <promeki/cea608encoder.h>
+#include <promeki/cea708cdp.h>
 #include <promeki/sharedthreadmediaio.h>
+#include <promeki/map.h>
 #include <promeki/mediaiofactory.h>
+#include <promeki/scc.h>
 #include <promeki/videotestpattern.h>
 #include <promeki/audiotestpattern.h>
 #include <promeki/timecodegenerator.h>
@@ -185,6 +188,19 @@ class TpgMediaIO : public SharedThreadMediaIO {
                 ///        @c std::unique_ptr because the encoder is
                 ///        copy/move-deleted (stateful worker).
                 std::unique_ptr<Cea608Encoder> _ancCaptionEncoder;
+
+                /// @brief Optional SCC bypass path — when set via
+                ///        @ref MediaConfig::TpgAncCaptionsScc, the per-
+                ///        frame @c CcDataList comes from this map
+                ///        instead of @ref _ancCaptionEncoder.
+                ///
+                ///        The key is the frame index relative to TPG
+                ///        frame 0; @ref _ancSccBypassActive gates
+                ///        whether the map is consulted.  Frames not in
+                ///        the map emit the null-pair triple just like
+                ///        the encoder path.
+                Map<int64_t, Cea708Cdp::CcDataList> _ancSccByFrame;
+                bool                                _ancSccBypassActive = false;
 
                 // General state
                 FrameRate  _frameRate;

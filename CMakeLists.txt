@@ -2182,6 +2182,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/anccodec_afd.cpp
         src/proav/anccodec_atc.cpp
         src/proav/anccodec_cea708.cpp
+        src/proav/anccodec_cea708_hlssei.cpp
         src/proav/ancdesc.cpp
         src/proav/ancformat.cpp
         src/proav/ancpacket.cpp
@@ -2191,7 +2192,12 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/cea608decoder.cpp
         src/proav/cea608encoder.cpp
         src/proav/cea708cdp.cpp
+        src/proav/cea708decoder.cpp
+        src/proav/cea708encoder.cpp
+        src/proav/cea708service.cpp
+        src/proav/cea708windowstate.cpp
         src/proav/hdmiinfoframe.cpp
+        src/proav/scc.cpp
         src/proav/st291packet.cpp
         src/proav/subrip.cpp
         src/proav/subtitle.cpp
@@ -2977,6 +2983,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/anccodec_afd.cpp
         tests/unit/anccodec_atc.cpp
         tests/unit/anccodec_cea708.cpp
+        tests/unit/anccodec_cea708_hlssei.cpp
         tests/unit/ancdesc.cpp
         tests/unit/ancformat.cpp
         tests/unit/ancpacket.cpp
@@ -2987,7 +2994,12 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/cea608decoder.cpp
         tests/unit/cea608encoder.cpp
         tests/unit/cea708cdp.cpp
+        tests/unit/cea708decoder.cpp
+        tests/unit/cea708encoder.cpp
+        tests/unit/cea708service.cpp
+        tests/unit/cea708windowstate.cpp
         tests/unit/inspector_ancdata.cpp
+        tests/unit/scc.cpp
         tests/unit/subrip.cpp
         tests/unit/subtitlerenderer.cpp
         tests/unit/tpg_anc_captions.cpp
